@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Apr 22, 2002
- * Time: 5:51:22 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;
@@ -148,6 +140,7 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
     if (isValid()) {
       alignToSurrogateBoundaries();
     }
+    myEditor.getFoldingModel().clearCachedValues();
   }
 
   @Override

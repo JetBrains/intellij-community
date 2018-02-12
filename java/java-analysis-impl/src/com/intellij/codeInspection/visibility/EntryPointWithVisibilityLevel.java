@@ -16,7 +16,7 @@
 package com.intellij.codeInspection.visibility;
 
 import com.intellij.codeInspection.reference.EntryPoint;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.codeInspection.reference.RefJavaElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.util.PsiUtil;
 
@@ -39,4 +39,11 @@ public abstract class EntryPointWithVisibilityLevel extends EntryPoint {
    * Id to serialize checkbox state in visibility inspection settings
    */
   public abstract String getId();
+
+  /**
+   * Don't suggest decreasing visibility for the element, sometimes even if the entry point is disabled.
+   */
+  public boolean keepVisibilityLevel(boolean entryPointEnabled, @SuppressWarnings("unused") RefJavaElement refJavaElement) {
+    return false;
+  }
 }

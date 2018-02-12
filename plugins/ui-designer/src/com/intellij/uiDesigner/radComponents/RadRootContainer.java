@@ -58,20 +58,20 @@ public final class RadRootContainer extends RadContainer implements IRootContain
   }
 
   /**
-   * Always returns <code>false</code> because root group isn't selectable.
+   * Always returns {@code false} because root group isn't selectable.
    */
   public boolean isSelected() {
     return false;
   }
 
   /**
-   * <code>RadRootContainer</code> is not selectable
+   * {@code RadRootContainer} is not selectable
    */
   public void setSelected(final boolean ignored) { }
 
   /**
    * @return full qualified name of the class. If there is no bound class
-   * then the method returns <code>null</code>.
+   * then the method returns {@code null}.
    */
   @Nullable
   public String getClassToBind(){
@@ -162,7 +162,7 @@ public final class RadRootContainer extends RadContainer implements IRootContain
   }
 
   public RadButtonGroup[] getButtonGroups() {
-    return myButtonGroups.toArray(new RadButtonGroup[myButtonGroups.size()]);
+    return myButtonGroups.toArray(new RadButtonGroup[0]);
   }
 
   public String suggestGroupName() {
@@ -270,7 +270,7 @@ public final class RadRootContainer extends RadContainer implements IRootContain
   }
 
   public LwInspectionSuppression[] getInspectionSuppressions() {
-    return myInspectionSuppressions.toArray(new LwInspectionSuppression[myInspectionSuppressions.size()]);
+    return myInspectionSuppressions.toArray(LwInspectionSuppression.EMPTY_ARRAY);
   }
 
   public void setInspectionSuppressions(final LwInspectionSuppression[] inspectionSuppressions) {

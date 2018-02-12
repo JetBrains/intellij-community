@@ -23,12 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Aug 12, 2009
- * Time: 8:30:36 PM
- */
 public class PyHierarchyUtils {
   private static final Comparator<NodeDescriptor> NODE_DESCRIPTOR_COMPARATOR = (first, second) -> first.getIndex() - second.getIndex();
 

@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -37,9 +36,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -55,6 +53,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class MemberChooser<T extends ClassMember> extends DialogWrapper implements TypeSafeDataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.MemberChooser");
@@ -192,7 +192,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     setOKActionEnabled(myAllowEmptySelection || myElements != null && myElements.length > 0);
 
     if (selectedElements != null) {
-      selectElements(selectedElements.toArray(new ClassMember[selectedElements.size()]));
+      selectElements(selectedElements.toArray(ClassMember.EMPTY_ARRAY));
     }
     if (mySelectedElements == null || mySelectedElements.isEmpty()) {
       expandFirst();
@@ -205,31 +205,29 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   private DefaultTreeModel buildModel() {
     final DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
     final Ref<Integer> count = new Ref<>(0);
-    final FactoryMap<MemberChooserObject, ParentNode> map = new FactoryMap<MemberChooserObject, ParentNode>() {
-      @Override
-      protected ParentNode create(final MemberChooserObject key) {
-        ParentNode node = null;
-        DefaultMutableTreeNode parentNode = rootNode;
+    Ref<Map<MemberChooserObject, ParentNode>> mapRef = new Ref<>();
+    mapRef.set(FactoryMap.create(key -> {
+      ParentNode node = null;
+      DefaultMutableTreeNode parentNode1 = rootNode;
 
-        if (supportsNestedContainers() && key instanceof ClassMember) {
-          MemberChooserObject parentNodeDelegate = ((ClassMember)key).getParentNodeDelegate();
+      if (supportsNestedContainers() && key instanceof ClassMember) {
+        MemberChooserObject parentNodeDelegate = ((ClassMember)key).getParentNodeDelegate();
 
-          if (parentNodeDelegate != null) {
-            parentNode = get(parentNodeDelegate);
-          }
+        if (parentNodeDelegate != null) {
+          parentNode1 = mapRef.get().get(parentNodeDelegate);
         }
-        if (isContainerNode(key)) {
-            final ContainerNode containerNode = new ContainerNode(parentNode, key, count);
-            node = containerNode;
-            myContainerNodes.add(containerNode);
-        }
-        if (node == null) {
-          node = new ParentNode(parentNode, key, count);
-        }
-        return node;
       }
-    };
-
+      if (isContainerNode(key)) {
+        final ContainerNode containerNode = new ContainerNode(parentNode1, key, count);
+        node = containerNode;
+        myContainerNodes.add(containerNode);
+      }
+      if (node == null) {
+        node = new ParentNode(parentNode1, key, count);
+      }
+      return node;
+    }));
+    final Map<MemberChooserObject, ParentNode> map = mapRef.get();
     for (T object : myElements) {
       final ParentNode parentNode = map.get(object.getParentNodeDelegate());
       final MemberNode elementNode = createMemberNode(count, object, parentNode);
@@ -263,7 +261,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
         selectionPaths.add(new TreePath(((DefaultMutableTreeNode)treeNode).getPath()));
       }
     }
-    final TreePath[] paths = selectionPaths.toArray(new TreePath[selectionPaths.size()]);
+    final TreePath[] paths = selectionPaths.toArray(new TreePath[0]);
     myTree.setSelectionPaths(paths);
 
     if (paths.length > 0) {
@@ -284,7 +282,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     if (getHelpId() != null) {
       actions.add(getHelpAction());
     }
-    return actions.toArray(new Action[actions.size()]);
+    return actions.toArray(new Action[0]);
   }
 
   @Override
@@ -348,18 +346,14 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     group.addSeparator();
 
     ExpandAllAction expandAllAction = new ExpandAllAction();
-    expandAllAction.registerCustomShortcutSet(
-      new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_EXPAND_ALL)),
-      myTree);
+    expandAllAction.registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_EXPAND_ALL), myTree);
     group.add(expandAllAction);
 
     CollapseAllAction collapseAllAction = new CollapseAllAction();
-    collapseAllAction.registerCustomShortcutSet(
-      new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_COLLAPSE_ALL)),
-      myTree);
+    collapseAllAction.registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_COLLAPSE_ALL), myTree);
     group.add(collapseAllAction);
 
-    panel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(),
+    panel.add(ActionManager.getInstance().createActionToolbar("MemberChooser", group, true).getComponent(),
               BorderLayout.NORTH);
 
     // Tree
@@ -439,18 +433,14 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   protected void installSpeedSearch() {
-    final TreeSpeedSearch treeSpeedSearch = new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
-      @Override
-      @Nullable
-      public String convert(TreePath path) {
-        final ElementNode lastPathComponent = (ElementNode)path.getLastPathComponent();
-        if (lastPathComponent == null) return null;
-        String text = lastPathComponent.getDelegate().getText();
-        if (text != null) {
-          text = convertElementText(text);
-        }
-        return text;
+    final TreeSpeedSearch treeSpeedSearch = new TreeSpeedSearch(myTree, path -> {
+      final ElementNode lastPathComponent = (ElementNode)path.getLastPathComponent();
+      if (lastPathComponent == null) return null;
+      String text = lastPathComponent.getDelegate().getText();
+      if (text != null) {
+        text = convertElementText(text);
       }
+      return text;
     });
     treeSpeedSearch.setComparator(getSpeedSearchComparator());
   }
@@ -677,7 +667,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
 
     if (!toSelect.isEmpty()) {
-      myTree.setSelectionPaths(toSelect.toArray(new TreePath[toSelect.size()]));
+      myTree.setSelectionPaths(toSelect.toArray(new TreePath[0]));
     }
 
     ElementNode leadNode = pair.first;

@@ -17,6 +17,8 @@ Groovy script
       PsiWhiteSpace('\n  ')
       Enumeration constants
         Enumeration constant
+          Modifiers
+            <empty list>
           PsiElement(identifier)('CONST1')
       PsiErrorElement:';', '}' or new line expected
         <empty list>

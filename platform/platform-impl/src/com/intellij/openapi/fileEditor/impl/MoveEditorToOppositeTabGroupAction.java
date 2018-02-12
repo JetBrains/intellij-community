@@ -21,10 +21,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
-/**
- * User: anna
- * Date: Apr 18, 2005
- */
 public class MoveEditorToOppositeTabGroupAction extends AnAction implements DumbAware {
 
   @Override

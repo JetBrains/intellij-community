@@ -20,9 +20,9 @@ import com.intellij.psi.PsiBundle;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class SearchScope {
-  private static int hashCodeCounter = 0;
+  private static int hashCodeCounter;
 
-  @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   private final int myHashCode = hashCodeCounter++;
 
   /**

@@ -13,85 +13,74 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.intellij.plugins.relaxNG;
 
-import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.javaee.ExternalResourceManagerExImpl;
 import org.intellij.plugins.testUtil.CopyFile;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 25.07.2007
- */
 public class RngXmlValidationTest extends HighlightingTestBase {
-
-  public void testValidDocument() throws Throwable {
+  public void testValidDocument() {
     doTest("xslt.rng");
   }
 
   @CopyFile("broken.rng")
-  public void testPartiallyBrokenRng() throws Throwable {
+  public void testPartiallyBrokenRng() {
     myTestFixture.testHighlighting("broken-rng.xml");
   }
 
   @CopyFile("broken.rnc")
-  public void testPartiallyBrokenRnc() throws Throwable {
+  public void testPartiallyBrokenRnc() {
     myTestFixture.testHighlighting("broken-rnc.xml");
   }
 
   @CopyFile("entity-included.xml")
-  public void testEntityRef1() throws Throwable {
+  public void testEntityRef1() {
     doTest("entity-test-1.xml");
   }
 
   @CopyFile("entity-included.xml")
-  public void testEntityRef2() throws Throwable {
+  public void testEntityRef2() {
     doTest("entity-test-2.xml");
   }
 
-  public void testEntityRef3() throws Throwable {
+  public void testEntityRef3() {
     doTest("entity-test-3.xml");
   }
 
-  public void testTextContent() throws Throwable {
+  public void testTextContent() {
     doTest("text-content.xml");
   }
 
-  public void testCDATA() throws Throwable {
+  public void testCDATA() {
     doTest("cdata-test.xml");
   }
 
-  public void testMissingElement() throws Throwable {
+  public void testMissingElement() {
     doTest("missing-element.xml");
   }
 
-  public void testInvalidElement() throws Throwable {
+  public void testInvalidElement() {
     doTest("invalid-element.xml");
   }
 
-  public void testInvalidElementRnc() throws Throwable {
+  public void testInvalidElementRnc() {
     doTest("invalid-element-rnc.xml");
   }
 
-  public void testMissingElementRnc() throws Throwable {
+  public void testMissingElementRnc() {
     doTest("missing-element-rnc.xml");
   }
 
-  private void doTest(String name) throws Throwable {
+  private void doTest(String name) {
     doExternalToolHighlighting(name);
   }
 
   @Override
   protected void init() {
     super.init();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      final ExternalResourceManager mgr = ExternalResourceManager.getInstance();
-      mgr.addResource("urn:test:simple.rng", toAbsolutePath("validation/simple.rng"));
-      mgr.addResource("urn:test:simple.rnc", toAbsolutePath("validation/simple.rnc"));
-      //mgr.addResource("http://www.w3.org/1999/XSL/Transform", toAbsolutePath("validation/relaxng.rng"));
-    });
+
+    ExternalResourceManagerExImpl.registerResourceTemporarily("urn:test:simple.rng", toAbsolutePath("validation/simple.rng"), getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily("urn:test:simple.rnc", toAbsolutePath("validation/simple.rnc"), getTestRootDisposable());
   }
 
   @Override

@@ -27,6 +27,17 @@
       <add-to-group group-id="EditorTabPopupMenuEx" anchor="last"/>
     </reference>
 
+    <action id="EditorToggleShowBreadcrumbs" class="com.intellij.xml.breadcrumbs.ToggleBreadcrumbsAction$ShowHide">
+      <add-to-group group-id="EditorToggleActions" relative-to-action="EditorToggleShowIndentLines" anchor="after"/>
+    </action>
+
+    <group id="EditorBreadcrumbsSettings" text="Breadcrumbs" popup="true">
+      <add-to-group group-id="EditorGutterPopupMenu" relative-to-action="EditorGutterToggleGlobalIndentLines" anchor="after"/>
+      <action id="EditorBreadcrumbsShowAbove" class="com.intellij.xml.breadcrumbs.ToggleBreadcrumbsSettingsAction$ShowAbove"/>
+      <action id="EditorBreadcrumbsShowBelow" class="com.intellij.xml.breadcrumbs.ToggleBreadcrumbsSettingsAction$ShowBelow"/>
+      <action id="EditorBreadcrumbsHideBoth" class="com.intellij.xml.breadcrumbs.ToggleBreadcrumbsSettingsAction$HideBoth"/>
+    </group>
+
     <action id="DomElementsTreeView.GotoDomElementDeclarationAction"
             class="com.intellij.util.xml.tree.actions.GotoDomElementDeclarationAction"
             text="Goto Element"

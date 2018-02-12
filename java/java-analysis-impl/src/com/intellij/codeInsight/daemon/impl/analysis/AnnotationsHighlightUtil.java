@@ -38,12 +38,12 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -325,7 +325,7 @@ public class AnnotationsHighlightUtil {
   }
 
   @Nullable
-  static HighlightInfo checkValidAnnotationType(PsiType type, final PsiTypeElement typeElement) {
+  static HighlightInfo checkValidAnnotationType(PsiType type, PsiTypeElement typeElement) {
     if (type != null && type.accept(AnnotationReturnTypeVisitor.INSTANCE).booleanValue()) {
       return null;
     }
@@ -376,9 +376,10 @@ public class AnnotationsHighlightUtil {
         HighlightInfo info = checkReferenceTarget(annotation, ref);
         if (info != null) return info;
       }
-      else if (owner instanceof PsiModifierList) {
-        PsiElement nextElement = PsiTreeUtil.skipSiblingsForward((PsiModifierList)owner,
-                                                                 PsiComment.class, PsiWhiteSpace.class, PsiTypeParameterList.class);
+      else if (owner instanceof PsiModifierList || owner instanceof PsiTypeElement) {
+        PsiElement nextElement = owner instanceof PsiTypeElement
+            ? (PsiTypeElement)owner
+            : PsiTreeUtil.skipSiblingsForward((PsiModifierList)owner, PsiComment.class, PsiWhiteSpace.class, PsiTypeParameterList.class);
         if (nextElement instanceof PsiTypeElement) {
           PsiTypeElement typeElement = (PsiTypeElement)nextElement;
           PsiType type = typeElement.getType();
@@ -391,13 +392,11 @@ public class AnnotationsHighlightUtil {
             HighlightInfo info = checkReferenceTarget(annotation, ref);
             if (info != null) return info;
           }
-        }
-      }
-      else if (owner instanceof PsiTypeElement) {
-        PsiElement context = PsiTreeUtil.skipParentsOfType((PsiTypeElement)owner, PsiTypeElement.class);
-        if (context instanceof PsiClassObjectAccessExpression) {
-          String message = JavaErrorMessages.message("annotation.not.allowed.class");
-          return annotationError(annotation, message);
+          PsiElement context = PsiTreeUtil.skipParentsOfType(typeElement, PsiTypeElement.class);
+          if (context instanceof PsiClassObjectAccessExpression) {
+            String message = JavaErrorMessages.message("annotation.not.allowed.class");
+            return annotationError(annotation, message);
+          }
         }
       }
     }
@@ -460,9 +459,8 @@ public class AnnotationsHighlightUtil {
 
   @Nullable
   static HighlightInfo checkCyclicMemberType(PsiTypeElement typeElement, PsiClass aClass) {
-    LOG.assertTrue(aClass.isAnnotationType());
     PsiType type = typeElement.getType();
-    final Set<PsiClass> checked = new HashSet<>();
+    Set<PsiClass> checked = new HashSet<>();
     if (cyclicDependencies(aClass, type, checked, aClass.getManager())) {
       String description = JavaErrorMessages.message("annotation.cyclic.element.type");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
@@ -662,7 +660,7 @@ public class AnnotationsHighlightUtil {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text).create();
     }
 
-    PsiElement leftNeighbour = PsiTreeUtil.skipSiblingsBackward(parameter, PsiWhiteSpace.class);
+    PsiElement leftNeighbour = PsiTreeUtil.skipWhitespacesBackward(parameter);
     if (leftNeighbour != null && !PsiUtil.isJavaToken(leftNeighbour, JavaTokenType.LPARENTH)) {
       String text = JavaErrorMessages.message("receiver.wrong.position");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text).create();
@@ -682,16 +680,19 @@ public class AnnotationsHighlightUtil {
       enclosingClass = enclosingClass.getContainingClass();
     }
 
-    if (enclosingClass != null && !enclosingClass.equals(PsiUtil.resolveClassInType(parameter.getType()))) {
-      PsiElement range = ObjectUtils.notNull(parameter.getTypeElement(), parameter);
-      String text = JavaErrorMessages.message("receiver.type.mismatch");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(text).create();
-    }
+    if (enclosingClass != null) {
+      PsiClassType type = PsiElementFactory.SERVICE.getInstance(parameter.getProject()).createType(enclosingClass, PsiSubstitutor.EMPTY);
+      if (!type.equals(parameter.getType())) {
+        PsiElement range = ObjectUtils.notNull(parameter.getTypeElement(), parameter);
+        String text = JavaErrorMessages.message("receiver.type.mismatch");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(text).create();
+      }
 
-    PsiThisExpression identifier = parameter.getIdentifier();
-    if (enclosingClass != null && !enclosingClass.equals(PsiUtil.resolveClassInType(identifier.getType()))) {
-      String text = JavaErrorMessages.message("receiver.name.mismatch");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(text).create();
+      PsiThisExpression identifier = parameter.getIdentifier();
+      if (!enclosingClass.equals(PsiUtil.resolveClassInType(identifier.getType()))) {
+        String text = JavaErrorMessages.message("receiver.name.mismatch");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(text).create();
+      }
     }
 
     return null;
@@ -784,9 +785,15 @@ public class AnnotationsHighlightUtil {
       return getText();
     }
 
+    @Nullable
+    @Override
+    public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+      return myAnnotation;
+    }
+
     @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return true;
+      return myAnnotation.isValid();
     }
 
     @Override

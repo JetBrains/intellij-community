@@ -19,11 +19,8 @@ import com.intellij.execution.configuration.RunConfigurationExtensionsManager;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- * Date: 10/4/11
- */
 public class JavaRunConfigurationExtensionManager extends RunConfigurationExtensionsManager<RunConfigurationBase, RunConfigurationExtension> {
   private static final Logger LOG = Logger.getInstance(RunConfigurationExtension.class);
 
@@ -44,11 +41,13 @@ public class JavaRunConfigurationExtensionManager extends RunConfigurationExtens
     }
   }
 
+  @NotNull
   @Override
   protected String getIdAttrName() {
     return "name";
   }
 
+  @NotNull
   @Override
   protected String getExtensionRootAttr() {
     return "extension";

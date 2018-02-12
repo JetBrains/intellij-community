@@ -22,9 +22,9 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -33,7 +33,7 @@ import java.util.Set;
  * @author ven
  */
 public class MoveInstanceMembersUtil {
-  private static final Logger LOG = Logger.getInstance("#" + MoveInstanceMembersUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(MoveInstanceMembersUtil.class);
 
   /**
    * @param member  nonstatic class member to search for class references in

@@ -40,6 +40,7 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesDialog;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.EditExistingLibraryDialog;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ConvertModuleLibraryToRepositoryLibraryAction;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.FindUsagesInProjectStructureActionBase;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
@@ -96,7 +97,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   private final ClasspathTableModel myModel;
   private final EventDispatcher<OrderPanelListener> myListeners = EventDispatcher.create(OrderPanelListener.class);
   private List<AddItemPopupAction<?>> myPopupActions = null;
-  private AnActionButton myEditButton;
+  private final AnActionButton myEditButton;
   private final ModuleConfigurationState myState;
   private AnActionButton myRemoveButton;
 
@@ -288,6 +289,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     addChangeLibraryLevelAction(actionGroup, LibraryTablesRegistrar.PROJECT_LEVEL);
     addChangeLibraryLevelAction(actionGroup, LibraryTablesRegistrar.APPLICATION_LEVEL);
     addChangeLibraryLevelAction(actionGroup, LibraryTableImplUtil.MODULE_LEVEL);
+    actionGroup.add(new ConvertModuleLibraryToRepositoryLibraryAction(this, getStructureConfigurableContext()));
     PopupHandler.installPopupHandler(myEntryTable, actionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
   }
 
@@ -708,7 +710,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
   private static class TableItemRenderer extends ColoredTableCellRenderer {
     private final Border NO_FOCUS_BORDER = BorderFactory.createEmptyBorder(1, 1, 1, 1);
-    private StructureConfigurableContext myContext;
+    private final StructureConfigurableContext myContext;
 
     public TableItemRenderer(StructureConfigurableContext context) {
       myContext = context;

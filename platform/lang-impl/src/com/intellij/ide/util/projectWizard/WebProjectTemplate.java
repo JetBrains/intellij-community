@@ -15,12 +15,9 @@
  */
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.module.WebModuleBuilder;
 import com.intellij.openapi.module.WebModuleType;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.WebProjectGenerator;
 import org.jetbrains.annotations.NotNull;
@@ -30,33 +27,8 @@ import javax.swing.*;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 9/28/12
  */
 public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> implements ProjectTemplate {
-  private NotNullLazyValue<GeneratorPeer<T>> myPeerHolder;
-
-  public WebProjectTemplate() {
-    reset();
-    //peer stays in memory forever. So, adding hard reference is OK here
-    //todo[Dmitry]: pass some Disposable object here
-    LafManager.getInstance().addLafManagerListener(new LafManagerListener() {
-      @Override
-      public void lookAndFeelChanged(LafManager source) {
-        reset();
-      }
-    });
-  }
-
-  public void reset() {
-    myPeerHolder = new NotNullLazyValue<GeneratorPeer<T>>() {
-      @NotNull
-      @Override
-      protected GeneratorPeer<T> compute() {
-        return createPeer();
-      }
-    };
-  }
-
   @NotNull
   @Override
   public ModuleBuilder createModuleBuilder() {
@@ -66,7 +38,7 @@ public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> imple
   @Nullable
   @Override
   public ValidationInfo validateSettings() {
-    return myPeerHolder.getValue().validate();
+    return null;
   }
 
   public Icon getIcon() {
@@ -77,15 +49,10 @@ public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> imple
     return getIcon();
   }
 
-  @NotNull
-  public GeneratorPeer<T> getPeer() {
-    return myPeerHolder.getValue();
-  }
-
   /**
    * Allows to postpone first start of validation
    *
-   * @return <code>false</code> if start validation in {@link ProjectSettingsStepBase#registerValidators()} method
+   * @return {@code false} if start validation in {@link ProjectSettingsStepBase#registerValidators()} method
    */
   public boolean postponeValidation() {
     return true;

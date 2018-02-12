@@ -19,10 +19,6 @@ import com.intellij.psi.PsiAnnotationMethod;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 04.06.2007
- */
 public interface GrAnnotationMethod extends GrMethod, PsiAnnotationMethod {
 
   @Override

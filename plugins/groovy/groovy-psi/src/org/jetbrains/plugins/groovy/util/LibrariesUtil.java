@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -57,15 +57,9 @@ public class LibrariesUtil {
     if (module == null) return Library.EMPTY_ARRAY;
     final ArrayList<Library> libraries = new ArrayList<>();
 
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
-      populateOrderEntries(module, condition, libraries, false, new THashSet<>());
-    }
-    finally {
-      accessToken.finish();
-    }
+    ApplicationManager.getApplication().runReadAction(() -> populateOrderEntries(module, condition, libraries, false, new THashSet<>()));
 
-    return libraries.toArray(new Library[libraries.size()]);
+    return libraries.toArray(Library.EMPTY_ARRAY);
   }
 
   private static void populateOrderEntries(@NotNull Module module, Condition<Library> condition, ArrayList<Library> libraries, boolean exportedOnly, Set<Module> visited) {
@@ -97,7 +91,7 @@ public class LibrariesUtil {
   public static Library[] getGlobalLibraries(Condition<Library> condition) {
     LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable();
     List<Library> libs = ContainerUtil.findAll(table.getLibraries(), condition);
-    return libs.toArray(new Library[libs.size()]);
+    return libs.toArray(Library.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -125,10 +119,15 @@ public class LibrariesUtil {
   }
 
   private static VirtualFile getLocalFor(VirtualFile virtualFile) {
-    VirtualFileSystem fileSystem = virtualFile == null ? null : virtualFile.getFileSystem();
-    return fileSystem instanceof LocalFileProvider ? ((LocalFileProvider)fileSystem).getLocalVirtualFileFor(virtualFile) : null;
-  }
+    if (virtualFile != null) {
+      VirtualFileSystem fileSystem = virtualFile.getFileSystem();
+      if (fileSystem instanceof ArchiveFileSystem) {
+        return ((ArchiveFileSystem)fileSystem).getLocalByEntry(virtualFile);
+      }
+    }
 
+    return null;
+  }
 
   @Nullable
   public static String getGroovyHomePath(@NotNull Module module) {

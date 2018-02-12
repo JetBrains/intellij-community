@@ -36,6 +36,12 @@
   <item name="org.jdom.Element Element(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
+  <item name='org.jdom.Element java.lang.String getAttributeValue(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='org.jdom.Element java.util.List&lt;org.jdom.Content&gt; getContent()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="org.jdom.Element java.util.List&lt;org.jdom.Element&gt; getChildren()">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
@@ -44,9 +50,6 @@
   </item>
   <item name="org.jdom.Element java.util.List&lt;org.jdom.Element&gt; getChildren(java.lang.String, org.jdom.Namespace)">
     <annotation name="org.jetbrains.annotations.NotNull" />
-  </item>
-  <item name='org.jdom.Element java.util.List&lt;org.jdom.Content&gt; getContent()'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='org.jdom.Element org.jdom.Attribute getAttribute(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.Nullable'/>

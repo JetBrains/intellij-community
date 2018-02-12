@@ -21,9 +21,7 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -58,12 +56,7 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
   @Override
   protected List<? extends ExternalSystemNode> doBuildChildren() {
     final List<? extends ExternalSystemNode> children = super.doBuildChildren();
-    final List<ExternalSystemNode> visibleChildren = ContainerUtil.filter(children, new Condition<ExternalSystemNode>() {
-      @Override
-      public boolean value(ExternalSystemNode node) {
-        return node.isVisible();
-      }
-    });
+    final List<ExternalSystemNode> visibleChildren = ContainerUtil.filter(children, node -> node.isVisible());
     if (visibleChildren.size() == 1 && visibleChildren.get(0).getName().equals(getName())) {
       singleModuleProject = true;
       //noinspection unchecked
@@ -106,11 +99,6 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
     setNameAndTooltip(getName(), myTooltipCache, autoImportHint);
   }
 
-  @Override
-  protected SimpleTextAttributes getPlainAttributes() {
-    return super.getPlainAttributes();
-  }
-
   private String makeDescription() {
     StringBuilder desc = new StringBuilder();
     final ProjectData projectData = getData();
@@ -135,11 +123,6 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
 
   private void appendProblems(StringBuilder desc) {
     // TBD
-  }
-
-  @Override
-  protected void setNameAndTooltip(String name, @Nullable String tooltip, SimpleTextAttributes attributes) {
-    super.setNameAndTooltip(name, tooltip, attributes);
   }
 
   @Override

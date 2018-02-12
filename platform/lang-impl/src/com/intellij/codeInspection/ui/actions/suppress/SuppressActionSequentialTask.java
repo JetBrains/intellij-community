@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,26 +19,21 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.codeInspection.ui.SuppressableInspectionTreeNode;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SequentialTask;
-import com.intellij.util.containers.Queue;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -47,20 +42,17 @@ import java.util.Set;
 public class SuppressActionSequentialTask implements SequentialTask {
   private static final Logger LOG = Logger.getInstance(SuppressActionSequentialTask.class);
 
-  private SuppressableInspectionTreeNode[] myNodesToSuppress;
+  private final SuppressableInspectionTreeNode[] myNodesToSuppress;
   @NotNull private final SuppressIntentionAction mySuppressAction;
   @NotNull private final InspectionToolWrapper myWrapper;
-  @NotNull private final GlobalInspectionContextImpl myContext;
   private int myCount = 0;
 
   public SuppressActionSequentialTask(@NotNull SuppressableInspectionTreeNode[] nodesToSuppress,
                                       @NotNull SuppressIntentionAction suppressAction,
-                                      @NotNull InspectionToolWrapper wrapper,
-                                      @NotNull GlobalInspectionContextImpl context) {
+                                      @NotNull InspectionToolWrapper wrapper) {
     myNodesToSuppress = nodesToSuppress;
     mySuppressAction = suppressAction;
     myWrapper = wrapper;
-    myContext = context;
   }
 
 
@@ -110,59 +102,37 @@ public class SuppressActionSequentialTask implements SequentialTask {
     }
 
     final Project project = element.getProject();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-      try {
+    try {
 
-        PsiElement container = null;
-        if (action instanceof SuppressIntentionActionFromFix) {
-          container = ((SuppressIntentionActionFromFix)action).getContainer(element);
-        }
-        if (container == null) {
-          container = element;
-        }
+      PsiElement container = null;
+      if (action instanceof SuppressIntentionActionFromFix) {
+        container = ((SuppressIntentionActionFromFix)action).getContainer(element);
+      }
+      if (container == null) {
+        container = element;
+      }
 
-        if (action.isAvailable(project, null, element)) {
-          action.invoke(project, null, element);
+      if (action.isAvailable(project, null, element)) {
+        ThrowableRunnable<RuntimeException> runnable = () -> action.invoke(project, null, element);
+        if (action.startInWriteAction()) {
+          WriteAction.run(runnable);
         }
-        final Set<GlobalInspectionContextImpl> globalInspectionContexts =
-          ((InspectionManagerEx)InspectionManager.getInstance(element.getProject())).getRunningContexts();
-        for (GlobalInspectionContextImpl context : globalInspectionContexts) {
-          context.ignoreElement(wrapper.getTool(), container);
-          if (descriptor != null) {
-            context.getPresentation(wrapper).ignoreCurrentElementProblem(refEntity, descriptor);
-          }
-        }
-
-        final RefElement containerRef = refEntity.getRefManager().getReference(container);
-        final Set<Object> suppressedNodes = myContext.getView().getSuppressedNodes(wrapper.getShortName());
-        if (containerRef != null) {
-          Queue<RefEntity> toIgnoreInView = new Queue<>(1);
-          toIgnoreInView.addLast(containerRef);
-          while (!toIgnoreInView.isEmpty()) {
-            final RefEntity entity = toIgnoreInView.pullFirst();
-            if (node instanceof ProblemDescriptionNode) {
-              final CommonProblemDescriptor[] descriptors = myContext.getPresentation(wrapper).getIgnoredElements().get(entity);
-              if (descriptors != null) {
-                Collections.addAll(suppressedNodes, descriptors);
-              }
-            } else {
-              suppressedNodes.add(entity);
-            }
-            final List<RefEntity> children = entity.getChildren();
-            for (RefEntity child : children) {
-              toIgnoreInView.addLast(child);
-            }
-          }
-        }
-        if (node instanceof ProblemDescriptionNode) {
-          suppressedNodes.add(descriptor);
+        else {
+          runnable.run();
         }
       }
-      catch (IncorrectOperationException e1) {
-        LOG.error(e1);
+      final Set<GlobalInspectionContextImpl> globalInspectionContexts =
+        ((InspectionManagerEx)InspectionManager.getInstance(element.getProject())).getRunningContexts();
+      for (GlobalInspectionContextImpl context : globalInspectionContexts) {
+        context.resolveElement(wrapper.getTool(), container);
+        if (descriptor != null) {
+          context.getPresentation(wrapper).suppressProblem(descriptor);
+        }
       }
-    });
+    }
+    catch (IncorrectOperationException e1) {
+      LOG.error(e1);
+    }
 
     node.removeSuppressActionFromAvailable(mySuppressAction);
   }

@@ -26,7 +26,7 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.components.ApplicationComponentAdapter;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -47,13 +47,13 @@ import static java.lang.Math.max;
 /**
  * @author yole
  */
-public class UpdateCheckerComponent implements ApplicationComponentAdapter, Disposable {
+public class UpdateCheckerComponent implements Disposable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance(UpdateCheckerComponent.class);
 
   private static final long CHECK_INTERVAL = DateFormatUtil.DAY;
 
   private final Alarm myCheckForUpdatesAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private final Runnable myCheckRunnable = () -> UpdateChecker.updateAndShowResult().doWhenDone(() -> queueNextCheck(CHECK_INTERVAL));
+  private final Runnable myCheckRunnable = () -> UpdateChecker.updateAndShowResult().doWhenProcessed(() -> queueNextCheck(CHECK_INTERVAL));
   private final UpdateSettings mySettings;
 
   public UpdateCheckerComponent(@NotNull Application app, @NotNull UpdateSettings settings) {
@@ -112,7 +112,7 @@ public class UpdateCheckerComponent implements ApplicationComponentAdapter, Disp
       @Override
       public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
         BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
-        BuildNumber lastBuildChecked = BuildNumber.fromString(mySettings.getLasBuildChecked());
+        BuildNumber lastBuildChecked = BuildNumber.fromString(mySettings.getLastBuildChecked());
         long timeSinceLastCheck = max(System.currentTimeMillis() - mySettings.getLastTimeChecked(), 0);
 
         if (lastBuildChecked == null || currentBuild.compareTo(lastBuildChecked) > 0 || timeSinceLastCheck >= CHECK_INTERVAL) {

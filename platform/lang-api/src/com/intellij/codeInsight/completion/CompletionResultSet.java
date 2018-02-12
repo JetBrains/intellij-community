@@ -62,7 +62,8 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
   }
 
   /**
-   * If a given element matches the prefix, give it for further processing (which may eventually result in its appearing in the completion list)
+   * If a given element matches the prefix, give it for further processing (which may eventually result in its appearing in the completion list).
+   * @see #addAllElements(Iterable) 
    */
   public abstract void addElement(@NotNull final LookupElement element);
 
@@ -70,6 +71,16 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
     myConsumer.consume(result);
   }
 
+  /**
+   * Adds all elements from the given collection that match the prefix for further processing. The elements are processed in batch,
+   * so that they'll appear in lookup all together.<p/>
+   * This can be useful to ensure predictable order of top suggested elements.
+   * Otherwise, when the lookup is shown, most relevant elements processed to that moment are put to the top 
+   * and remain there even if more relevant elements appear later. 
+   * These "first" elements may differ from completion invocation to completion invocation due to performance fluctuations,
+   * resulting in varying preselected item in completion and worse user experience. Using {@code addAllElements} 
+   * instead of {@link #addElement(LookupElement)} helps to avoid that.
+   */
   public void addAllElements(@NotNull final Iterable<? extends LookupElement> elements) {
     int seldomCounter = 0;
     for (LookupElement element : elements) {

@@ -17,5 +17,5 @@ public interface CompilerTaskFactory {
                                       boolean headlessMode,
                                       boolean forceAsync,
                                       boolean waitForPreviousSession,
-                                      boolean compilationStartedAutomatically);
+                                      boolean compilationStartedAutomatically, boolean modal);
 }

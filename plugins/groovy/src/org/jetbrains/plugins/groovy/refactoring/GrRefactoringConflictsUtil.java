@@ -33,7 +33,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,9 +54,6 @@ import java.util.List;
 import java.util.Set;
 
 
-/**
- * Created by Max Medvedev on 9/28/13
- */
 public class GrRefactoringConflictsUtil {
   private GrRefactoringConflictsUtil() { }
 

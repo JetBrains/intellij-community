@@ -42,13 +42,12 @@ public abstract class JsonBySchemaCompletionBaseTest extends CompletionTestCase 
     Assert.assertNotNull(element);
 
     final PsiFile schemaFile = createFile(myModule, "testSchema.json", schema);
-    final JsonSchemaObject schemaObject = JsonSchemaReader.create(myProject, schemaFile.getVirtualFile()).read();
+    final JsonSchemaObject schemaObject = JsonSchemaReader.readFromFile(myProject, schemaFile.getVirtualFile());
     Assert.assertNotNull(schemaObject);
 
-    final List<LookupElement> foundVariants = JsonBySchemaObjectCompletionContributor.getCompletionVariants(schemaObject, element, element,
-                                                                                                            file.getVirtualFile());
+    final List<LookupElement> foundVariants = JsonSchemaCompletionContributor.getCompletionVariants(schemaObject, element, element);
     Collections.sort(foundVariants, Comparator.comparing(LookupElement::getLookupString));
-    myItems = foundVariants.toArray(new LookupElement[foundVariants.size()]);
+    myItems = foundVariants.toArray(LookupElement.EMPTY_ARRAY);
     assertStringItems(variants);
   }
 }

@@ -36,5 +36,6 @@ public interface Dependency extends GenericDomValue<IdeaPlugin> {
 
   @NotNull
   @Convert(DependencyConfigFileConverter.class)
+  @Stubbed
   GenericAttributeValue<PathReference> getConfigFile();
 }

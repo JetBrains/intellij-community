@@ -43,7 +43,7 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
     ApplicationManager.getApplication().getMessageBus().connect(myFixture.getTestRootDisposable()).subscribe(EditorHintListener.TOPIC, listener);
   }
 
-  public void testAllWithoutInitialSelection() throws Exception {
+  public void testAllWithoutInitialSelection() {
     init("some t<caret>ext\n" +
          "some texts\n" +
          "another text here"
@@ -54,7 +54,7 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
                 "another <selection>t<caret>ext</selection> here");
   }
 
-  public void testAllWithInitialWholeWordSelection() throws Exception {
+  public void testAllWithInitialWholeWordSelection() {
     init("some <selection>t<caret>ext</selection>\n" +
          "some texts\n" +
          "some texts\n" +
@@ -67,7 +67,7 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
     assertEquals(0, hintCount);
   }
 
-  public void testNoInitialSelection() throws Exception {
+  public void testNoInitialSelection() {
     init("some t<caret>ext\n" +
          "some texts\n" +
          "another text here"
@@ -83,7 +83,7 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
     assertEquals(0, hintCount);
   }
 
-  public void testInitialWholeWordSelection() throws Exception {
+  public void testInitialWholeWordSelection() {
     init("some <selection>t<caret>ext</selection>\n" +
          "some texts\n" +
          "another text here");
@@ -94,7 +94,7 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
     assertEquals(0, hintCount);
   }
 
-  public void testShowingHint() throws Exception {
+  public void testShowingHint() {
     init("some <selection>t<caret>ext</selection>\n" +
          "another <selection>t<caret>ext</selection> here");
     executeAction();
@@ -107,7 +107,7 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
                 "another <selection>t<caret>ext</selection> here");
   }
 
-  public void testRevert() throws Exception {
+  public void testRevert() {
     init("some <selection>t<caret>ext</selection>\n" +
          "another <selection>t<caret>ext</selection> here");
     executeReverseAction();
@@ -116,7 +116,7 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
     assertEquals(0, hintCount);
   }
 
-  public void testRevertSingleSelection() throws Exception {
+  public void testRevertSingleSelection() {
     init("some <selection>t<caret>ext</selection>\n" +
          "some texts\n" +
          "another text here");
@@ -127,7 +127,7 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
     assertEquals(0, hintCount);
   }
 
-  public void testSelectAfterHint() throws Exception {
+  public void testSelectAfterHint() {
     init("some text\n" +
          "some texts\n" +
          "another <selection>t<caret>ext</selection> here");
@@ -143,7 +143,7 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
     assertEquals(1, hintCount);
   }
 
-  public void testInitialNonWholeWordSelection() throws Exception {
+  public void testInitialNonWholeWordSelection() {
     init("some <selection>t<caret>ex</selection>t\n" +
          "some texts\n" +
          "another text here");
@@ -158,7 +158,7 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
     assertEquals(0, hintCount);
   }
 
-  public void testOccurrenceInCollapsedRegion() throws Exception {
+  public void testOccurrenceInCollapsedRegion() {
     init("normal <selection><caret>line</selection>\n" +
          "collapsed line");
     final FoldingModel foldingModel = myFixture.getEditor().getFoldingModel();
@@ -176,7 +176,7 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
     assertTrue(foldRegions[0].isExpanded());
   }
 
-  public void testSelectAfterNotFoundAndUnselect() throws Exception {
+  public void testSelectAfterNotFoundAndUnselect() {
     init("text <selection><caret>text</selection> <selection><caret>text</selection>");
     executeAction();
     executeReverseAction();
@@ -184,7 +184,7 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
     checkResult("text <selection><caret>text</selection> <selection><caret>text</selection>");
   }
 
-  public void testEscapeReturnsToInitialPosition() throws Exception {
+  public void testEscapeReturnsToInitialPosition() {
     init("l<caret>ine\n" +
          "another line");
     executeAction();
@@ -193,14 +193,14 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
                 "another line");
   }
 
-  public void testSelectingAdjacentFragments() throws Exception {
+  public void testSelectingAdjacentFragments() {
     init("fragment<selection>fragment<caret></selection>");
     executeAction();
     executeAction();
     checkResult("<selection>fragment<caret></selection><selection>fragment<caret></selection>");
   }
 
-  public void testSkippingOccurrence() throws Exception {
+  public void testSkippingOccurrence() {
     init("fr<caret>uit\n" +
          "fruits\n" +
          "fruit\n" +
@@ -216,7 +216,7 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
                 "<selection>fr<caret>uit</selection>");
   }
 
-  public void testMovingSelectionBackAndForth() throws Exception {
+  public void testMovingSelectionBackAndForth() {
     init("fr<caret>uit\n" +
          "fruits\n" +
          "fruit\n" +
@@ -234,7 +234,7 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
                 "<selection>fr<caret>uit</selection>");
   }
 
-  public void testSkipDoesNotRemovePreviousSelections() throws Exception {
+  public void testSkipDoesNotRemovePreviousSelections() {
     init("<caret>fruit\n" +
          "fruit\n" +
          "fruit");
@@ -250,7 +250,7 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
                 "<selection><caret>fruit</selection>");
   }
 
-  public void testNearInlays() throws Exception {
+  public void testNearInlays() {
     init("cat cat");
     EditorTestUtil.addInlay(myFixture.getEditor(), 0);
     EditorTestUtil.addInlay(myFixture.getEditor(), 4);

@@ -21,13 +21,6 @@ import org.intellij.plugins.relaxNG.model.*;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 04.12.2007
-* Time: 18:41:39
-* To change this template use File | Settings | File Templates.
-*/
 class OverriddenDefineSearcher extends CommonElement.Visitor {
   private final Define myDefine;
   private final TIntArrayList myIncludes = new TIntArrayList();

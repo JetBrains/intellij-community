@@ -1,0 +1,13 @@
+<html>
+<body>
+Reports classes which may be serialized or deserialized. A class
+may be serialized if it supports the <b>Serializable</b> interface,
+and its <b>readObject()</b> and <b>writeObject()</b> methods are not defined to always
+throw an exception. Serializable classes may be dangerous in code intended for secure use.
+<!-- tooltip end -->
+<p>
+Use the first checkbox below to ignore classes extending <b>Throwable</b> directly or indirectly.
+However it may be more secure to add <b>readObject()</b> and <b>writeObject()</b> methods which always throw an exception instead.
+<p><small>New in 2017.3</small>
+</body>
+</html>

@@ -75,6 +75,7 @@ public class PatternConfigurationProducer extends AbstractPatternBasedConfigurat
   public boolean isConfigurationFromContext(JUnitConfiguration unitConfiguration, ConfigurationContext context) {
     final TestObject testobject = unitConfiguration.getTestObject();
     if (testobject instanceof TestsPattern) {
+      if (differentParamSet(unitConfiguration, context.getLocation())) return false;
       final Set<String> patterns = unitConfiguration.getPersistentData().getPatterns();
       if (isConfiguredFromContext(context, patterns)) return true;
     }

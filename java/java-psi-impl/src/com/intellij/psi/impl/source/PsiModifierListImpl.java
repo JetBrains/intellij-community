@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.CheckUtil;
@@ -158,9 +157,11 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     else if (parent instanceof PsiMethod) {
       PsiClass aClass = ((PsiMethod)parent).getContainingClass();
       if (aClass != null && aClass.isInterface()) {
-        implicitModifiers.add(PUBLIC);
-        if (!explicitModifiers.contains(DEFAULT) && !explicitModifiers.contains(STATIC) && !explicitModifiers.contains(PRIVATE)) {
-          implicitModifiers.add(ABSTRACT);
+        if (!explicitModifiers.contains(PRIVATE)) {
+          implicitModifiers.add(PUBLIC);
+          if (!explicitModifiers.contains(DEFAULT) && !explicitModifiers.contains(STATIC)) {
+            implicitModifiers.add(ABSTRACT);
+          }
         }
       }
       else if (aClass != null && aClass.isEnum() && ((PsiMethod)parent).isConstructor()) {
@@ -286,7 +287,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
       return target != null && target != PsiAnnotation.TargetType.UNKNOWN;
     });
 
-    return filtered.toArray(new PsiAnnotation[filtered.size()]);
+    return filtered.toArray(PsiAnnotation.EMPTY_ARRAY);
   }
 
   @Override

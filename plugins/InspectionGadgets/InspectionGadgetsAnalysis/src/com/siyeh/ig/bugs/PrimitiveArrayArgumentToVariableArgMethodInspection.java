@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,6 @@ import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
 
 public class PrimitiveArrayArgumentToVariableArgMethodInspection extends BaseInspection {
 
@@ -82,9 +80,22 @@ public class PrimitiveArrayArgumentToVariableArgMethodInspection extends BaseIns
   private static class PrimitiveArrayArgumentToVariableArgVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
-      super.visitMethodCallExpression(call);
+    public void visitEnumConstant(PsiEnumConstant enumConstant) {
+      super.visitEnumConstant(enumConstant);
+      visitCall(enumConstant);
+    }
+
+    @Override
+    public void visitCallExpression(PsiCallExpression callExpression) {
+      super.visitCallExpression(callExpression);
+      visitCall(callExpression);
+    }
+
+    private void visitCall(@NotNull PsiCall call) {
       final PsiExpressionList argumentList = call.getArgumentList();
+      if (argumentList == null) {
+        return;
+      }
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length == 0) {
         return;
@@ -96,7 +107,7 @@ public class PrimitiveArrayArgumentToVariableArgMethodInspection extends BaseIns
       }
       final JavaResolveResult result = call.resolveMethodGenerics();
       final PsiMethod method = (PsiMethod)result.getElement();
-      if (method == null || AnnotationUtil.isAnnotated(method, Arrays.asList("java.lang.invoke.MethodHandle.PolymorphicSignature"))) {
+      if (method == null || AnnotationUtil.isAnnotated(method, CommonClassNames.JAVA_LANG_INVOKE_MH_POLYMORPHIC, 0)) {
         return;
       }
       final PsiParameterList parameterList = method.getParameterList();
@@ -116,7 +127,7 @@ public class PrimitiveArrayArgumentToVariableArgMethodInspection extends BaseIns
     }
   }
 
-  private static boolean isPrimitiveArrayType(PsiType type) {
+  static boolean isPrimitiveArrayType(PsiType type) {
     if (!(type instanceof PsiArrayType)) {
       return false;
     }
@@ -124,7 +135,7 @@ public class PrimitiveArrayArgumentToVariableArgMethodInspection extends BaseIns
     return TypeConversionUtil.isPrimitiveAndNotNull(componentType);
   }
 
-  private static boolean isDeepPrimitiveArrayType(PsiType type, PsiSubstitutor substitutor) {
+  static boolean isDeepPrimitiveArrayType(PsiType type, PsiSubstitutor substitutor) {
     if (!(type instanceof PsiEllipsisType)) {
       return false;
     }

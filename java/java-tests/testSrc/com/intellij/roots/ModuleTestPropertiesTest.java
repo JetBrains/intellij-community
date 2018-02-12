@@ -23,7 +23,7 @@ import com.intellij.testFramework.ModuleTestCase;
  * @author nik
  */
 public class ModuleTestPropertiesTest extends ModuleTestCase {
-  public void testSetAndGet() throws Exception {
+  public void testSetAndGet() {
     Module tests = createModule("tests");
     TestModuleProperties moduleProperties = TestModuleProperties.getInstance(tests);
     moduleProperties.setProductionModuleName(myModule.getName());

@@ -24,6 +24,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class TextFieldWithHistory extends ComboBox {
   private int myHistorySize = 5;
@@ -33,12 +34,6 @@ public class TextFieldWithHistory extends ComboBox {
     myModel = new MyModel();
     setModel(myModel);
     setEditable(true);
-  }
-
-  // API compatibility with 7.0.1
-  @SuppressWarnings({"UnusedDeclaration"})
-  public TextFieldWithHistory(boolean cropList) {
-    this();
   }
 
   public void addDocumentListener(DocumentListener listener) {
@@ -81,6 +76,7 @@ public class TextFieldWithHistory extends ComboBox {
     return getTextEditor().getText();
   }
 
+  @Override
   public void removeNotify() {
     super.removeNotify();
     hidePopup();
@@ -94,6 +90,7 @@ public class TextFieldWithHistory extends ComboBox {
   public void addCurrentTextToHistory() {
     final String item = getText();
     myModel.addElement(item);
+    myModel.setSelectedItem(item);
   }
 
   public void selectText() {
@@ -121,10 +118,12 @@ public class TextFieldWithHistory extends ComboBox {
 
     private Object mySelectedItem;
 
+    @Override
     public Object getElementAt(int index) {
       return myFullList.get(index);
     }
 
+    @Override
     public int getSize() {
       return Math.min(myHistorySize == -1 ? Integer.MAX_VALUE : myHistorySize, myFullList.size());
     }
@@ -132,7 +131,7 @@ public class TextFieldWithHistory extends ComboBox {
     public void addElement(Object obj) {
       String newItem = ((String)obj).trim();
 
-      if (0 == newItem.length()) {
+      if (newItem.isEmpty()) {
         return;
       }
 
@@ -149,13 +148,17 @@ public class TextFieldWithHistory extends ComboBox {
       fireIntervalAdded(this, index, index);
     }
 
+    @Override
     public Object getSelectedItem() {
       return mySelectedItem;
     }
 
+    @Override
     public void setSelectedItem(Object anItem) {
-      mySelectedItem = anItem;
-      fireContentsChanged();
+      if (!Objects.equals(anItem, mySelectedItem)) {
+        mySelectedItem = anItem;
+        fireContentsChanged();
+      }
     }
 
     public void fireContentsChanged() {
@@ -173,6 +176,7 @@ public class TextFieldWithHistory extends ComboBox {
   }
 
   protected static class TextFieldWithProcessing extends JTextField {
+    @Override
     public void processKeyEvent(KeyEvent e) {
       super.processKeyEvent(e);
     }

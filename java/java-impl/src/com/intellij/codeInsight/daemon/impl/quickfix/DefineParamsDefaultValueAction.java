@@ -50,10 +50,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 8/2/12
- */
 public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionAction implements Iconable, LowPriorityAction {
   private static final Logger LOG = Logger.getInstance(DefineParamsDefaultValueAction.class);
 
@@ -84,7 +80,7 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
     }
     final PsiMethod method = (PsiMethod)parent;
     final PsiParameterList parameterList = method.getParameterList();
-    if (parameterList.getParametersCount() == 0) {
+    if (parameterList.isEmpty()) {
       return false;
     }
     final PsiClass containingClass = method.getContainingClass();

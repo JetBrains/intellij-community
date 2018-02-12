@@ -12,6 +12,7 @@ import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.editorconfig.Utils;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,7 @@ public class EditorConfigConfigurable extends CodeStyleSettingsProvider implemen
     panel.add(myEnabled);
     final JLabel warning = new JLabel("EditorConfig may override the IDE code style settings");
     warning.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
-    warning.setBorder(IdeBorderFactory.createEmptyBorder(0, 20, 0, 0));
+    warning.setBorder(JBUI.Borders.emptyLeft(20));
     panel.add(warning);
     panel.setAlignmentY(Component.TOP_ALIGNMENT);
     result.add(panel);

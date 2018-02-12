@@ -29,12 +29,6 @@ import com.intellij.util.Consumer;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 10/25/12
- * Time: 10:22 AM
- */
 public class SvnEditCommitMessageFromFileHistoryAction extends AnAction {
   public SvnEditCommitMessageFromFileHistoryAction() {
     super("Edit Revision Comment", "Edit revision comment. Previous message is rewritten.", AllIcons.Actions.Edit);
@@ -52,7 +46,7 @@ public class SvnEditCommitMessageFromFileHistoryAction extends AnAction {
     final SvnFileRevision svnFileRevision = (SvnFileRevision) revision;
     final Consumer<String> listener = VcsDataKeys.REMOTE_HISTORY_CHANGED_LISTENER.getData(e.getDataContext());
     SvnEditCommitMessageAction.askAndEditRevision(svnFileRevision.getRevision().getNumber(), svnFileRevision.getCommitMessage(),
-                                                  (SvnRepositoryLocation)svnFileRevision.getChangedRepositoryPath(), project,
+                                                  svnFileRevision.getChangedRepositoryPath(), project,
                                                   newMessage -> {
                                                     svnFileRevision.setCommitMessage(newMessage);
                                                     if (listener != null) {

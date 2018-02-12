@@ -1,5 +1,4 @@
 class OnArrayTest {
-
     interface Cln {
        Object m(int[] i);
     }
@@ -16,9 +15,8 @@ class OnArrayTest {
         int len(T[] ta);
     }
 
-
     interface ToStr<T> {
-        String _(T[] ta);
+        String m(T[] ta);
     }
 
     interface ArrayReturnType<T> {
@@ -40,18 +38,17 @@ class OnArrayTest {
         ArrayReturnType<String[]> a1 = String[]::new;
         ArrayReturnType<String[][]> a2 = String[][]::new;
         ArrayReturnType<String[]> a3 = <error descr="Bad return type in method reference: cannot convert int[] to java.lang.String[]">int[]::new</error>;
-        
+
         ObjectArrayReturnType a4 = Foo<?>[]::new;
         ObjectArrayReturnType a5 = <error descr="Generic array creation">Foo<? extends String>[]</error>::new;
     }
 }
 
-
 class IDEA106973 {
   interface Function<T, R> {
     R apply(T t);
   }
-  
+
   {
     Function<Integer, String[]> a  = String[] :: new;
     <error descr="Incompatible types. Found: '<method reference>', required: 'IDEA106973.Function<java.lang.String,java.lang.String[]>'">Function<String, String[]> a1  = String[] :: new;</error>

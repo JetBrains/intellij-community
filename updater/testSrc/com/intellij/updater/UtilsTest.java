@@ -49,26 +49,37 @@ public class UtilsTest {
   }
 
   @Test
+  public void testDeleteReadonlyFile() throws Exception {
+    File f = tempDir.newFile("temp_dir/temp_file");
+    assertTrue(f.setWritable(false, false));
+    File d = f.getParentFile();
+    assertTrue(d.exists());
+
+    Utils.delete(d);
+    assertFalse(d.exists());
+  }
+
+  @Test
   public void testDeleteLockedFileOnWindows() throws Exception {
     assumeTrue(IS_WINDOWS);
 
     File f = tempDir.newFile("temp_file");
     assertTrue(f.exists());
 
-    long millis = 0;
+    long ts = 0;
     try (FileWriter fw = new FileWriter(f)) {
       // This locks the file on Windows, preventing it from being deleted.
       // Utils.delete() will retry for about 100 ms.
       fw.write("test");
-      millis = System.currentTimeMillis();
+      ts = System.nanoTime();
 
       Utils.delete(f);
       fail("Utils.delete did not fail with the expected IOException on Windows");
     }
     catch (IOException e) {
-      millis = System.currentTimeMillis() - millis;
+      ts = (System.nanoTime() - ts) / 1_000_000;
       assertEquals("Cannot delete: " + f.getAbsolutePath(), e.getMessage());
-      assertThat(millis).as("Utils.delete took " + millis + " ms, which is less than expected").isGreaterThanOrEqualTo(100);
+      assertThat(ts).as("Utils.delete took " + ts + " ms, which is less than expected").isGreaterThanOrEqualTo(95);
     }
   }
 
@@ -117,5 +128,18 @@ public class UtilsTest {
     Utils.delete(link);
     assertFalse(link.exists());
     assertThat(dir.listFiles()).containsExactly(file);
+  }
+
+  @Test
+  public void testDeleteDanglingSymlink() throws Exception {
+    assumeTrue(!IS_WINDOWS);
+
+    File dir = tempDir.newFolder("temp_dir");
+    File link = new File(dir, "link");
+    Utils.createLink("dangling", link);
+    assertThat(dir.listFiles()).containsExactly(link);
+
+    Utils.delete(link);
+    assertThat(dir.listFiles()).isEmpty();
   }
 }

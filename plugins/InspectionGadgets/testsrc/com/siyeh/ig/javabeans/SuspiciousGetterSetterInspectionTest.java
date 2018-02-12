@@ -16,8 +16,8 @@
 package com.siyeh.ig.javabeans;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +27,8 @@ import org.jetbrains.annotations.Nullable;
 public class SuspiciousGetterSetterInspectionTest extends LightInspectionTestCase {
 
   public void testSuspiciousGetterSetter() {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings();
+    final JavaCodeStyleSettings settings =
+      CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().getCustomSettings(JavaCodeStyleSettings.class);
     final String oldPrefix = settings.FIELD_NAME_PREFIX;
     try {
       settings.FIELD_NAME_PREFIX = "my";

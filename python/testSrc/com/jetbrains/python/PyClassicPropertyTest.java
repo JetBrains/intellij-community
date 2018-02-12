@@ -35,7 +35,7 @@ public class PyClassicPropertyTest extends PyTestCase {
     myClass = file.getTopLevelClasses().get(0);
   }
 
-  public void testV1() throws Exception {
+  public void testV1() {
     Property p;
     Maybe<PyCallable> accessor;
     p = myClass.findProperty("v1", true, null);
@@ -59,7 +59,7 @@ public class PyClassicPropertyTest extends PyTestCase {
     assertNull(accessor.value());
   }
 
-  public void testV2() throws Exception {
+  public void testV2() {
     Property p;
     Maybe<PyCallable> accessor;
     p = myClass.findProperty("v2", true, null);
@@ -84,7 +84,7 @@ public class PyClassicPropertyTest extends PyTestCase {
     assertEquals("deleter", accessor.value().getName());
   }
 
-  public void testV3() throws Exception {
+  public void testV3() {
     Maybe<PyCallable> accessor;
     Property p = myClass.findProperty("v3", true, null);
     assertNotNull(p);

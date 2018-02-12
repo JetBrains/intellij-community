@@ -32,7 +32,7 @@ public final class CommandLineArgsTest extends PyTestCase {
   /**
    * Ensures argument is returned if exists
    */
-  public void testArgsRequired() throws Exception {
+  public void testArgsRequired() {
     CommandTestTools.initFileType();
     validateNextArgument("command", "positional_argument");
   }
@@ -40,7 +40,7 @@ public final class CommandLineArgsTest extends PyTestCase {
   /**
    * Ensures option argument is returned if exists
    */
-  public void testOptionArgsRequired() throws Exception {
+  public void testOptionArgsRequired() {
     CommandTestTools.initFileType();
     validateNextArgument("command positional_argument --available-option", "option argument");
   }
@@ -48,7 +48,7 @@ public final class CommandLineArgsTest extends PyTestCase {
   /**
    * Ensures argument is not returned if not required
    */
-  public void testNoMoreArgs() throws Exception {
+  public void testNoMoreArgs() {
     CommandTestTools.initFileType();
     final CommandLineFile file = CommandTestTools.createFileByText(myFixture, "command foo bar spam eggs");
     final ValidationResult validationResult = file.getValidationResult();

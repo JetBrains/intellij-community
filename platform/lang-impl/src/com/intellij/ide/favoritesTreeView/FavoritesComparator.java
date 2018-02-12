@@ -1,8 +1,4 @@
 
-/*
- * User: anna
- * Date: 05-Apr-2007
- */
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.projectView.ProjectView;

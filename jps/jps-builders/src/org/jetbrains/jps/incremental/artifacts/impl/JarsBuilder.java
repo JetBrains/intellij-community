@@ -129,7 +129,7 @@ public class JarsBuilder {
       return null;
     }
 
-    JarInfo[] jars = myJarsToBuild.toArray(new JarInfo[myJarsToBuild.size()]);
+    JarInfo[] jars = myJarsToBuild.toArray(new JarInfo[0]);
     Arrays.sort(jars, builder.comparator());
     jars = ArrayUtil.reverseArray(jars);
     return jars;
@@ -290,7 +290,9 @@ public class JarsBuilder {
           .appendToPath(relativeOutputPath, relativePath));
 
         if (inputStream == null) {
-          addDirectoryEntry(jarOutputStream, pathInJar + "/", writtenPaths);
+          if (!pathInJar.endsWith("/")) {
+            addDirectoryEntry(jarOutputStream, pathInJar + "/", writtenPaths);
+          }
         }
         else if (writtenPaths.add(pathInJar)) {
           ZipEntry newEntry = new ZipEntry(pathInJar);

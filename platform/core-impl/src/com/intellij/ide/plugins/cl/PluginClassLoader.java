@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -28,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
 
@@ -59,7 +57,7 @@ public class PluginClassLoader extends UrlClassLoader {
   }
 
   @Override
-  public Class loadClass(@NotNull String name, final boolean resolve) throws ClassNotFoundException {
+  public Class loadClass(@NotNull String name, boolean resolve) throws ClassNotFoundException {
     Class c = tryLoadingClass(name, resolve, null);
     if (c == null) {
       throw new ClassNotFoundException(name + " " + this);
@@ -70,8 +68,11 @@ public class PluginClassLoader extends UrlClassLoader {
   // Changed sequence in which classes are searched, this is essential if plugin uses library,
   // a different version of which is used in IDEA.
   @Nullable
-  private Class tryLoadingClass(@NotNull String name, final boolean resolve, @Nullable Set<ClassLoader> visited) {
-    Class c = loadClassInsideSelf(name);
+  private Class tryLoadingClass(@NotNull String name, boolean resolve, @Nullable Set<ClassLoader> visited) {
+    Class c = null;
+    if (!mustBeLoadedByPlatform(name)) {
+      c = loadClassInsideSelf(name);
+    }
 
     if (c == null) {
       c = loadClassFromParents(name, visited);
@@ -87,10 +88,26 @@ public class PluginClassLoader extends UrlClassLoader {
     return null;
   }
 
+  private static final Set<String> KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES = ContainerUtil.set(
+    "kotlin.sequences.Sequence",
+    "kotlin.Unit",
+    "kotlin.Pair",
+    "kotlin.Triple",
+    "kotlin.jvm.internal.DefaultConstructorMarker",
+    "kotlin.reflect.KDeclarationContainer"
+  );
+
+  private static boolean mustBeLoadedByPlatform(String className) {
+    //some commonly used classes from kotlin-runtime must be loaded by the platform classloader. Otherwise if a plugin bundles its own version
+    // of kotlin-runtime.jar it won't be possible to call platform's methods with these types in signatures from such a plugin.
+    //We assume that these classes don't change between Kotlin versions so it's safe to always load them from platform's kotlin-runtime.
+    return className.startsWith("kotlin.") && (className.startsWith("kotlin.jvm.functions.") || KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES.contains(className));
+  }
+
   @Nullable
-  private Class loadClassFromParents(final String name, Set<ClassLoader> visited) {
+  private Class loadClassFromParents(String name, Set<ClassLoader> visited) {
     for (ClassLoader parent : myParents) {
-      if (visited == null) visited = ContainerUtilRt.<ClassLoader>newHashSet(this);
+      if (visited == null) visited = ContainerUtilRt.newHashSet(this);
       if (!visited.add(parent)) {
         continue;
       }
@@ -124,10 +141,7 @@ public class PluginClassLoader extends UrlClassLoader {
     try {
       c = _findClass(name);
     }
-    catch (IncompatibleClassChangeError e) {
-      throw new PluginException("While loading class " + name + ": " + e.getMessage(), e, myPluginId);
-    }
-    catch (UnsupportedClassVersionError e) {
+    catch (IncompatibleClassChangeError | UnsupportedClassVersionError e) {
       throw new PluginException("While loading class " + name + ": " + e.getMessage(), e, myPluginId);
     }
     if (c != null) {
@@ -138,26 +152,25 @@ public class PluginClassLoader extends UrlClassLoader {
   }
 
   @Override
-  public URL findResource(final String name) {
-    final URL resource = findResourceImpl(name);
+  public URL findResource(String name) {
+    URL resource = super.findResource(name);
     if (resource != null) return resource;
 
     for (ClassLoader parent : myParents) {
-      final URL parentResource = fetchResource(parent, name);
+      URL parentResource = parent.getResource(name);
       if (parentResource != null) return parentResource;
     }
 
     return null;
   }
 
-  @Nullable
   @Override
-  public InputStream getResourceAsStream(final String name) {
-    final InputStream stream = super.getResourceAsStream(name);
+  public InputStream getResourceAsStream(String name) {
+    InputStream stream = super.getResourceAsStream(name);
     if (stream != null) return stream;
 
     for (ClassLoader parent : myParents) {
-      final InputStream inputStream = parent.getResourceAsStream(name);
+      InputStream inputStream = parent.getResourceAsStream(name);
       if (inputStream != null) return inputStream;
     }
 
@@ -165,11 +178,11 @@ public class PluginClassLoader extends UrlClassLoader {
   }
 
   @Override
-  public Enumeration<URL> findResources(final String name) throws IOException {
+  public Enumeration<URL> findResources(String name) throws IOException {
     @SuppressWarnings("unchecked") Enumeration<URL>[] resources = new Enumeration[myParents.length + 1];
     resources[0] = super.findResources(name);
     for (int idx = 0; idx < myParents.length; idx++) {
-      resources[idx + 1] = fetchResources(myParents[idx], name);
+      resources[idx + 1] = myParents[idx].getResources(name);
     }
     return new DeepEnumeration(resources);
   }
@@ -195,58 +208,20 @@ public class PluginClassLoader extends UrlClassLoader {
     return null;
   }
 
-  private static URL fetchResource(ClassLoader cl, String resourceName) {
-    try {
-      Method findResource = getFindResourceMethod(cl.getClass(), "findResource");
-      return findResource != null ? (URL)findResource.invoke(cl, resourceName) : null;
-    }
-    catch (Exception e) {
-      Logger.getInstance(PluginClassLoader.class).error(e);
-      return null;
-    }
-  }
-
-  private static Enumeration<URL> fetchResources(ClassLoader cl, String resourceName) {
-    try {
-      Method findResources = getFindResourceMethod(cl.getClass(), "findResources");
-      @SuppressWarnings("unchecked") Enumeration<URL> e = findResources == null ? null : (Enumeration)findResources.invoke(cl, resourceName);
-      return e;
-    }
-    catch (Exception e) {
-      Logger.getInstance(PluginClassLoader.class).error(e);
-      return null;
-    }
-  }
-
-  private static Method getFindResourceMethod(final Class<?> clClass, final String methodName) {
-    try {
-      final Method declaredMethod = clClass.getDeclaredMethod(methodName, String.class);
-      declaredMethod.setAccessible(true);
-      return declaredMethod;
-    }
-    catch (NoSuchMethodException e) {
-      final Class superclass = clClass.getSuperclass();
-      if (superclass == null || superclass.equals(Object.class)) {
-        return null;
-      }
-      return getFindResourceMethod(superclass, methodName);
-    }
-  }
-
   public PluginId getPluginId() {
     return myPluginId;
   }
 
   @Override
   public String toString() {
-    return "PluginClassLoader[" + myPluginId + ", " + myPluginVersion + "]";
+    return "PluginClassLoader[" + myPluginId + ", " + myPluginVersion + "] " + super.toString();
   }
 
   private static class DeepEnumeration implements Enumeration<URL> {
     private final Enumeration<URL>[] myEnumerations;
-    private int myIndex = 0;
+    private int myIndex;
 
-    public DeepEnumeration(Enumeration<URL>[] enumerations) {
+    DeepEnumeration(Enumeration<URL>[] enumerations) {
       myEnumerations = enumerations;
     }
 

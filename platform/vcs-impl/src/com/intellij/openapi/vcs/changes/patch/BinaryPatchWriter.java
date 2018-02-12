@@ -25,9 +25,14 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.List;
 
+import static com.intellij.openapi.diff.impl.patch.PatchUtil.EXECUTABLE_FILE_MODE;
+import static com.intellij.openapi.diff.impl.patch.PatchUtil.REGULAR_FILE_MODE;
 import static com.intellij.openapi.vcs.changes.patch.BlobIndexUtil.NOT_COMMITTED_HASH;
 
 public class BinaryPatchWriter {
@@ -39,11 +44,6 @@ public class BinaryPatchWriter {
   private final static String INDEX_SHA1_HEADER = "index %s..%s";
   private final static String GIT_BINARY_HEADER = "GIT binary patch";
   private final static String LITERAL_HEADER = "literal %d";
-  private final static int REGULAR_FILE_MODE = 100644;
-  private final static int EXECUTABLE_FILE_MODE = 100755;
-  @SuppressWarnings("unused")
-  private final static int SYMBOLIC_LINK_MODE = 120000; //now we do not support such cases, but need to keep in mind
-
 
   public static void writeBinaries(@Nullable String basePath,
                                    @NotNull List<BinaryFilePatch> patches,
@@ -72,8 +72,7 @@ public class BinaryPatchWriter {
       writer.write(String.format(LITERAL_HEADER, afterContent == null ? 0 : afterContent.length));
       writer.write(lineSeparator);
       try {
-        BinaryEncoder
-          .encode(afterFile.exists() ? new FileInputStream(afterFile) : new ByteArrayInputStream(ArrayUtil.EMPTY_BYTE_ARRAY), writer);
+        BinaryEncoder.encode(new ByteArrayInputStream(afterContent != null ? afterContent : ArrayUtil.EMPTY_BYTE_ARRAY), writer);
       }
       catch (BinaryEncoder.BinaryPatchException e) {
         LOG.error("Can't write patch for binary file: " + afterFile.getPath(), e);

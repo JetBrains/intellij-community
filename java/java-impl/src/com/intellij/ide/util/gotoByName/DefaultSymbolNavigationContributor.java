@@ -17,6 +17,7 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.navigation.ChooseByNameContributorEx;
+import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -33,7 +34,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashSet;
@@ -42,17 +42,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class DefaultSymbolNavigationContributor implements ChooseByNameContributorEx {
+public class DefaultSymbolNavigationContributor implements ChooseByNameContributorEx, GotoClassContributor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor");
 
   @Override
   @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
-    HashSet<String> set = new HashSet<>();
-    cache.getAllMethodNames(set);
-    cache.getAllFieldNames(set);
-    cache.getAllClassNames(set);
+    Set<String> set = new HashSet<>();
+    Collections.addAll(set, cache.getAllMethodNames());
+    Collections.addAll(set, cache.getAllFieldNames());
+    Collections.addAll(set, cache.getAllClassNames());
     return ArrayUtil.toStringArray(set);
   }
 
@@ -80,9 +80,24 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
         result.add(aClass);
       }
     }
-    PsiMember[] array = result.toArray(new PsiMember[result.size()]);
+    PsiMember[] array = result.toArray(PsiMember.EMPTY_ARRAY);
     Arrays.sort(array, MyComparator.INSTANCE);
     return array;
+  }
+
+  @Nullable
+  @Override
+  public String getQualifiedName(NavigationItem item) {
+    if (item instanceof PsiClass) {
+      return DefaultClassNavigationContributor.getQualifiedNameForClass((PsiClass)item);
+    }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public String getQualifiedNameSeparator() {
+    return "$";
   }
 
   private static boolean isOpenable(PsiMember member) {

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.cmdline;
 
+import com.google.common.base.Predicate;
 import com.google.protobuf.Message;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.application.PathManager;
@@ -27,6 +28,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jgoodies.forms.layout.CellConstraints;
 import io.netty.util.NetUtil;
 import net.n3.nanoxml.IXMLBuilder;
+import org.apache.http.HttpConnection;
+import org.apache.http.client.HttpClient;
+import org.eclipse.aether.artifact.Artifact;
+import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.builders.impl.java.EclipseCompilerTool;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
@@ -44,7 +49,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/12/11
  */
 public class ClasspathBootstrap {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.ClasspathBootstrap");
@@ -56,21 +60,37 @@ public class ClasspathBootstrap {
     final Set<String> cp = ContainerUtil.newHashSet();
 
     cp.add(getResourcePath(BuildMain.class));
-    cp.add(getResourcePath(ExternalJavacProcess.class));  // jps-builders-6 part
+    cp.add(getResourcePath(ExternalJavacProcess.class));  // intellij.platform.jps.build.javac.rt part
 
-    cp.addAll(PathManager.getUtilClassPath()); // util
+    cp.addAll(PathManager.getUtilClassPath()); // intellij.platform.util
     cp.add(getResourcePath(Message.class)); // protobuf
     cp.add(getResourcePath(NetUtil.class)); // netty
     cp.add(getResourcePath(ClassWriter.class));  // asm
     cp.add(getResourcePath(ClassVisitor.class));  // asm-commons
-    cp.add(getResourcePath(JpsModel.class));  // jps-model-api
-    cp.add(getResourcePath(JpsModelImpl.class));  // jps-model-impl
-    cp.add(getResourcePath(JpsProjectLoader.class));  // jps-model-serialization
-    cp.add(getResourcePath(AlienFormFileException.class));  // forms-compiler
-    cp.add(getResourcePath(GridConstraints.class));  // forms-rt
+    cp.add(getResourcePath(JpsModel.class));  // intellij.platform.jps.model
+    cp.add(getResourcePath(JpsModelImpl.class));  // intellij.platform.jps.model.impl
+    cp.add(getResourcePath(JpsProjectLoader.class));  // intellij.platform.jps.model.serialization
+    cp.add(getResourcePath(AlienFormFileException.class));  // intellij.java.guiForms.compiler
+    cp.add(getResourcePath(GridConstraints.class));  // intellij.java.guiForms.rt
     cp.add(getResourcePath(CellConstraints.class));  // jGoodies-forms
     cp.addAll(getInstrumentationUtilRoots());
     cp.add(getResourcePath(IXMLBuilder.class));  // nano-xml
+
+    // aether-based repository libraries support
+    cp.add(getResourcePath(ArtifactRepositoryManager.class));  // intellij.java.aetherDependencyResolver
+    final String aetherPath = getResourcePath(Artifact.class); // aether-1.1.0-all.jar
+    cp.add(aetherPath);
+    cp.add(FileUtil.toSystemIndependentName(new File(new File(aetherPath).getParentFile(), "maven-aether-provider-3.3.9-all.jar").getAbsolutePath()));
+    cp.add(getResourcePath(Predicate.class));  // guava
+    cp.add(getResourcePath(HttpClient.class));  // httpclient
+    cp.add(getResourcePath(HttpConnection.class));  // httpcore
+    //noinspection UnnecessaryFullyQualifiedName
+    cp.add(getResourcePath(org.apache.commons.codec.binary.Base64.class));  // commons-codec
+    //noinspection UnnecessaryFullyQualifiedName
+    cp.add(getResourcePath(org.apache.commons.logging.LogFactory.class));  // commons-logging
+    //noinspection UnnecessaryFullyQualifiedName
+    cp.add(getResourcePath(org.slf4j.Marker.class));  // slf4j
+
     cp.addAll(getJavac8RefScannerClasspath());
     //don't forget to update CommunityStandaloneJpsBuilder.layoutJps accordingly
 
@@ -138,17 +158,22 @@ public class ClasspathBootstrap {
       else {
         // last resort
         final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
+        Class compilerClass;
         if (systemCompiler != null) {
-          final String localJarPath = FileUtil.toSystemIndependentName(getResourceFile(systemCompiler.getClass()).getPath());
-          String relPath = FileUtil.getRelativePath(localJavaHome, localJarPath, '/');
+          compilerClass = systemCompiler.getClass();
+        }
+        else {
+          compilerClass = Class.forName("com.sun.tools.javac.api.JavacTool", false, ClasspathBootstrap.class.getClassLoader());
+        }
+        String localJarPath = FileUtil.toSystemIndependentName(getResourceFile(compilerClass).getPath());
+        String relPath = FileUtil.getRelativePath(localJavaHome, localJarPath, '/');
+        if (relPath != null) {
+          if (relPath.contains("..")) {
+            relPath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(new File(localJavaHome).getParent()), localJarPath, '/');
+          }
           if (relPath != null) {
-            if (relPath.contains("..")) {
-              relPath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(new File(localJavaHome).getParent()), localJarPath, '/');
-            }
-            if (relPath != null) {
-              final File targetFile = new File(sdkHome, relPath);
-              cp.add(targetFile);  // tools.jar
-            }
+            final File targetFile = new File(sdkHome, relPath);
+            cp.add(targetFile);  // tools.jar
           }
         }
       }
@@ -178,11 +203,11 @@ public class ClasspathBootstrap {
     String instrumentationUtilPath = getResourcePath(NotNullVerifyingInstrumenter.class);
     File instrumentationUtil = new File(instrumentationUtilPath);
     if (instrumentationUtil.isDirectory()) {
-      //running from sources: load classes from .../out/production/instrumentation-util-8
-      return Arrays.asList(instrumentationUtilPath, new File(instrumentationUtil.getParentFile(), "instrumentation-util-8").getAbsolutePath());
+      //running from sources: load classes from .../out/production/intellij.java.compiler.instrumentationUtil.java8
+      return Arrays.asList(instrumentationUtilPath, new File(instrumentationUtil.getParentFile(), "intellij.java.compiler.instrumentationUtil.java8").getAbsolutePath());
     }
     else {
-      //running from jars: instrumentation-util-8 is located in the same jar
+      //running from jars: intellij.java.compiler.instrumentationUtil.java8 is located in the same jar
       return Collections.singletonList(instrumentationUtilPath);
     }
   }
@@ -191,8 +216,8 @@ public class ClasspathBootstrap {
     String instrumentationPath = getResourcePath(NotNullVerifyingInstrumenter.class);
     File instrumentationUtil = new File(instrumentationPath);
     if (instrumentationUtil.isDirectory()) {
-      //running from sources: load classes from .../out/production/javac-ref-scanner-8
-      return Collections.singletonList(new File(instrumentationUtil.getParentFile(), "javac-ref-scanner-8").getAbsolutePath());
+      //running from sources: load classes from .../out/production/intellij.java.jps.javacRefScanner8
+      return Collections.singletonList(new File(instrumentationUtil.getParentFile(), "intellij.java.jps.javacRefScanner8").getAbsolutePath());
     }
     else {
       return Collections.singletonList(instrumentationPath);

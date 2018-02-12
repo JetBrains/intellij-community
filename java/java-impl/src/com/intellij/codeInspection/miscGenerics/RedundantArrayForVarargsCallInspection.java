@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -31,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -88,7 +74,7 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
         }
         PsiMethod method = (PsiMethod)element;
         if (!method.isVarArgs() ||
-            AnnotationUtil.isAnnotated(method, Collections.singletonList("java.lang.invoke.MethodHandle.PolymorphicSignature"))) {
+            AnnotationUtil.isAnnotated(method, CommonClassNames.JAVA_LANG_INVOKE_MH_POLYMORPHIC, 0)) {
           return;
         }
         PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -112,12 +98,15 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
         }
         final PsiType substitutedLastParamType = substitutor.substitute(((PsiEllipsisType)lastParamType).toArrayType());
         final PsiType lastArgType = lastArg.getType();
-        if (lastArgType == null || !lastArgType.equals(substitutedLastParamType) && 
+        if (lastArgType == null || !lastArgType.equals(substitutedLastParamType) &&
                                    !lastArgType.equals(TypeConversionUtil.erasure(substitutedLastParamType))) {
           return;
         }
         PsiExpression[] initializers = getInitializers((PsiNewExpression)lastArg);
         if (initializers == null) {
+          return;
+        }
+        if (Arrays.stream(initializers).anyMatch(expr -> expr instanceof PsiArrayInitializerExpression)) {
           return;
         }
         if (!isSafeToFlatten(expression, method, initializers)) {
@@ -149,6 +138,7 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
           if (callExpression instanceof PsiEnumConstant) {
             final PsiEnumConstant enumConstant = (PsiEnumConstant)callExpression;
             final PsiClass containingClass = enumConstant.getContainingClass();
+            if (containingClass == null) return false;
             final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
             final PsiClassType classType = facade.getElementFactory().createType(containingClass);
             resolveResult = facade.getResolveHelper().resolveConstructor(classType, copyArgumentList, enumConstant);
@@ -159,14 +149,17 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
             if (!resolveResult.isValidResult() || resolveResult.getElement() != oldRefMethod) {
               return false;
             }
+            if (callExpression.getParent() instanceof PsiExpressionStatement) return true;
             final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes((PsiCallExpression)callExpression, false);
+            if (expectedTypes.length == 0) return false;
             final PsiType expressionType = ((PsiCallExpression)copy).getType();
+            if (expressionType == null) return false;
             for (ExpectedTypeInfo expectedType : expectedTypes) {
-              if (!expectedType.getType().isAssignableFrom(expressionType)) {
-                return false;
+              if (expectedType.getType().isAssignableFrom(expressionType)) {
+                return true;
               }
             }
-            return true;
+            return false;
           }
         }
         catch (IncorrectOperationException e) {
@@ -175,7 +168,7 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
       }
     });
     if (problems.isEmpty()) return null;
-    return problems.toArray(new ProblemDescriptor[problems.size()]);
+    return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   @Nullable

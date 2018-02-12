@@ -267,7 +267,7 @@ public class GithubRebaseAction extends DumbAwareAction {
       GithubNotifications.showInfo(project, "Success", "Successfully rebased GitHub fork");
     }
     else {
-      GitUpdateResult result = rebaser.handleRebaseFailure(handler, root, rebaseConflictDetector,
+      GitUpdateResult result = rebaser.handleRebaseFailure(handler, root, rebaseResult, rebaseConflictDetector,
                                                            untrackedFilesDetector, localChangesDetector);
       if (result == GitUpdateResult.NOTHING_TO_UPDATE ||
           result == GitUpdateResult.SUCCESS ||

@@ -17,7 +17,7 @@ package com.intellij.ide.util.gotoByName;
 
 import org.jetbrains.annotations.NotNull;
 
-public class MatchResult implements Comparable<MatchResult> {
+public class MatchResult {
   public final String elementName;
   final int matchingDegree;
   final boolean startMatch;
@@ -28,17 +28,31 @@ public class MatchResult implements Comparable<MatchResult> {
     this.startMatch = startMatch;
   }
 
-  @Override
-  public int compareTo(@NotNull MatchResult that) {
+  public int compareDegrees(@NotNull MatchResult that, boolean preferStartMatches) {
     boolean start1 = startMatch;
     boolean start2 = that.startMatch;
-    if (start1 != start2) return start1 ? -1 : 1;
+    int startMatchResult = start1 == start2 ? 0 : start1 ? -1 : 1;
+    if (preferStartMatches && startMatchResult != 0) return startMatchResult;
 
     int degree1 = matchingDegree;
     int degree2 = that.matchingDegree;
     if (degree2 < degree1) return -1;
     if (degree2 > degree1) return 1;
 
-    return elementName.compareToIgnoreCase(that.elementName);
+    return -startMatchResult;
+  }
+
+  int compareWith(@NotNull MatchResult that, boolean preferStartMatches) {
+    int result = compareDegrees(that, preferStartMatches);
+    return result != 0 ? result : elementName.compareToIgnoreCase(that.elementName);
+  }
+
+  @Override
+  public String toString() {
+    return "MatchResult{" +
+           "'" + elementName + '\'' +
+           ", degree=" + matchingDegree +
+           ", start=" + startMatch +
+           '}';
   }
 }

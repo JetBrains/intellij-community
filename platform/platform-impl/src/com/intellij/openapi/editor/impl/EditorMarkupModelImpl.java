@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Apr 19, 2002
- * Time: 2:56:43 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -54,6 +46,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBScrollBar;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
@@ -82,6 +75,10 @@ import java.util.concurrent.atomic.AtomicReference;
 public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMarkupModel {
   private static final TooltipGroup ERROR_STRIPE_TOOLTIP_GROUP = new TooltipGroup("ERROR_STRIPE_TOOLTIP_GROUP", 0);
   private static final int EDITOR_FRAGMENT_POPUP_BORDER = 1;
+
+  public int getMinMarkHeight() {
+    return JBUI.scale(myMinMarkHeight);
+  }
 
   private static int getErrorIconWidth() {
     return JBUI.scale(14);
@@ -158,6 +155,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     myEditorSourceHeight = myEditor.getPreferredHeight();
 
     dimensionsAreValid = scrollBarHeight != 0;
+  }
+
+  public void setTrafficLightIconVisible(boolean value) {
+    MyErrorPanel errorPanel = getErrorPanel();
+    if (errorPanel != null && errorPanel.myErrorStripeButton.isVisible() != value) {
+      errorPanel.myErrorStripeButton.setVisible(value);
+      repaint(-1, -1);
+    }
   }
 
   public void repaintTrafficLightIcon() {
@@ -246,8 +251,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   private int getOffset(int visualLine, boolean startLine) {
-    int logicalLine = myEditor.visualToLogicalPosition(new VisualPosition(visualLine, 0)).line;
-    return startLine? myEditor.getDocument().getLineStartOffset(logicalLine) : myEditor.getDocument().getLineEndOffset(logicalLine);
+    LogicalPosition pos = myEditor.visualToLogicalPosition(new VisualPosition(visualLine, startLine ? 0 : Integer.MAX_VALUE));
+    return myEditor.logicalPositionToOffset(pos);
   }
 
   private void collectRangeHighlighters(@NotNull MarkupModelEx markupModel, final int visualLine, @NotNull final Collection<RangeHighlighterEx> highlighters) {
@@ -284,13 +289,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private void getNearestHighlighters(@NotNull MarkupModelEx markupModel,
                                       final int scrollBarY,
                                       @NotNull final Collection<RangeHighlighter> nearest) {
-    int startOffset = yPositionToOffset(scrollBarY - myMinMarkHeight, true);
-    int endOffset = yPositionToOffset(scrollBarY + myMinMarkHeight, false);
+    int startOffset = yPositionToOffset(scrollBarY - getMinMarkHeight(), true);
+    int endOffset = yPositionToOffset(scrollBarY + getMinMarkHeight(), false);
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
       if (highlighter.getErrorStripeMarkColor() != null) {
         ProperTextRange range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset());
-        if (scrollBarY >= range.getStartOffset() - myMinMarkHeight * 2 &&
-            scrollBarY <= range.getEndOffset() + myMinMarkHeight * 2) {
+        if (scrollBarY >= range.getStartOffset() - getMinMarkHeight() * 2 &&
+            scrollBarY <= range.getEndOffset() + getMinMarkHeight() * 2) {
           nearest.add(highlighter);
         }
       }
@@ -347,9 +352,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       myEditor.getVerticalScrollBar().setPersistentUI(panel);
     }
     else {
-      myEditor.getVerticalScrollBar().setPersistentUI(EditorImpl.createEditorScrollbarUI(myEditor));
+      myEditor.getVerticalScrollBar().setPersistentUI(JBScrollBar.createUI(null));
     }
-    myEditor.setHorizontalScrollBarPersistentUI(EditorImpl.createEditorScrollbarUI(myEditor));
   }
 
   @Nullable
@@ -417,6 +421,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       Disposer.dispose((Disposable)myErrorStripeRenderer);
     }
     myErrorStripeRenderer = null;
+    myTooltipRendererProvider = new BasicTooltipRendererProvider();
+    myEditorPreviewHint = null;
     super.dispose();
   }
 
@@ -437,7 +443,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     JScrollBar bar = myEditor.getVerticalScrollBar();
-    bar.repaint(0, range.getStartOffset(), bar.getWidth(), range.getLength() + myMinMarkHeight);
+    bar.repaint(0, range.getStartOffset(), bar.getWidth(), range.getLength() + getMinMarkHeight());
   }
 
   private boolean isMirrored() {
@@ -462,7 +468,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         }
 
         if (myErrorStripeRenderer != null) {
-          int x = isMirrored() ? 0 : getThinGap() + myMinMarkHeight;
+          int x = isMirrored() ? 0 : getThinGap() + getMinMarkHeight();
           final Rectangle b = new Rectangle(x, 0, getErrorIconWidth(), getErrorIconHeight());
           myErrorStripeRenderer.paint(this, g, b);
         }
@@ -475,7 +481,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     @NotNull
     @Override
     public Dimension getPreferredSize() {
-      return new Dimension(getErrorIconWidth() + getThinGap(), getErrorIconHeight() + getThinGap());
+      return !isPreferredSizeSet()
+             ? isVisible()
+               ? new Dimension(getErrorIconWidth() + getThinGap(), getErrorIconHeight() + getThinGap())
+               : JBUI.emptySize()
+             : super.getPreferredSize();
     }
   }
   
@@ -582,7 +592,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected int getThumbOffset(int value) {
-      if (SystemInfo.isMac || Registry.is("editor.full.width.scrollbar")) return myMinMarkHeight + JBUI.scale(2);
+      if (SystemInfo.isMac || Registry.is("editor.full.width.scrollbar")) return getMinMarkHeight() + JBUI.scale(2);
       return super.getThumbOffset(value);
     }
 
@@ -602,21 +612,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       Rectangle bounds = super.getMacScrollBarBounds(baseBounds, thumb);
       bounds.width = Math.min(bounds.width, getMaxMacThumbWidth());
       int b2 =  bounds.width / 2;
-      bounds.x = getThinGap() + myMinMarkHeight+ getErrorIconWidth() /2 - b2;
+      bounds.x = getThinGap() + getMinMarkHeight() + getErrorIconWidth() / 2 - b2;
       
       return bounds;
     }
 
     @Override
-    protected void paintMaxiThumb(@NotNull Graphics2D g, @NotNull Rectangle thumbBounds) {
-      g.setColor(adjustColor(getGradientDarkColor()));
-      int arc = 3;
-      g.fillRoundRect(isMirrored() ? -3 : 2, 0, thumbBounds.width, thumbBounds.height, arc, arc);
-    }
-
-    @Override
     protected int getThickness() {
-      return getErrorIconWidth() + getThinGap() + myMinMarkHeight;
+      return getErrorIconWidth() + getThinGap() + getMinMarkHeight();
     }
     
     @Override
@@ -690,10 +693,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     private void repaint(@NotNull final Graphics g, int gutterWidth, @NotNull ProperTextRange yrange) {
-      final Rectangle clip = new Rectangle(0, yrange.getStartOffset(), gutterWidth, yrange.getLength() + myMinMarkHeight);
+      final Rectangle clip = new Rectangle(0, yrange.getStartOffset(), gutterWidth, yrange.getLength() + getMinMarkHeight());
       paintTrackBasement(g, clip);
 
-      int startOffset = yPositionToOffset(clip.y - myMinMarkHeight, true);
+      int startOffset = yPositionToOffset(clip.y - getMinMarkHeight(), true);
       int endOffset = yPositionToOffset(clip.y + clip.height, false);
 
       Shape oldClip = g.getClip();
@@ -717,7 +720,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       MarkupIterator<RangeHighlighterEx> iterator1 = markup1.overlappingIterator(startOffset, endOffset);
       MarkupIterator<RangeHighlighterEx> iterator2 = markup2.overlappingIterator(startOffset, endOffset);
       MarkupIterator<RangeHighlighterEx> iterator =
-        IntervalTreeImpl.mergeIterators(iterator1, iterator2, RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
+        MarkupIterator.mergeIterators(iterator1, iterator2, RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
       try {
         ContainerUtil.process(iterator, highlighter -> {
           Color color = highlighter.getErrorStripeMarkColor();
@@ -730,7 +733,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           ProperTextRange range = offsetsToYPositions(highlighter.getStartOffset(), highlighter.getEndOffset());
           final int ys = range.getStartOffset();
           int ye = range.getEndOffset();
-          if (ye - ys < myMinMarkHeight) ye = ys + myMinMarkHeight;
+          if (ye - ys < getMinMarkHeight()) ye = ys + getMinMarkHeight();
 
           yStart[0] = drawStripesEndingBefore(ys, ends, stripes, g, yStart[0]);
 
@@ -796,7 +799,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                                         @NotNull Graphics g, int yStart) {
       while (!ends.isEmpty()) {
         PositionedStripe endingStripe = ends.peek();
-        if (endingStripe.yEnd > ys) break;
+        if (endingStripe == null || endingStripe.yEnd > ys) break;
         ends.remove();
 
         // check whether endingStripe got obscured in the range yStart..endingStripe.yEnd
@@ -816,7 +819,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       int x;
       if (thinErrorStripeMark) {
         //noinspection SuspiciousNameCombination
-        paintWidth = myMinMarkHeight;
+        paintWidth = getMinMarkHeight();
         x = isMirrored() ? getThickness() - paintWidth : 0;
         if (yEnd - yStart < 6) {
           yStart -= 1;
@@ -824,7 +827,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         }
       }
       else {
-        x = isMirrored() ? 0 : myMinMarkHeight + getThinGap();
+        x = isMirrored() ? 0 : getMinMarkHeight() + getThinGap();
         paintWidth = getErrorIconWidth();
       }
       g.setColor(color);
@@ -854,9 +857,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     private void doMouseClicked(@NotNull MouseEvent e) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(myEditor.getContentComponent(), true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myEditor.getContentComponent(), true));
       int lineCount = getDocument().getLineCount() + myEditor.getSettings().getAdditionalLinesCount();
       if (lineCount == 0) {
         return;
@@ -882,7 +883,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       }
 
       if (e.getX() > 0 && e.getX() <= getWidth() && showToolTipByMouseMove(e)) {
-        scrollbar.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        UIUtil.setCursor(scrollbar, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return;
       }
 
@@ -1024,7 +1025,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         final Object tooltipObject = highlighter.getErrorStripeTooltip();
         if (tooltipObject == null) continue;
 
-        final String text = tooltipObject.toString();
+        final String text = tooltipObject instanceof HighlightInfo ? ((HighlightInfo)tooltipObject).getToolTip() : tooltipObject.toString();
         if (tooltips == null) {
           tooltips = new THashSet<>();
         }
@@ -1338,6 +1339,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             }
           }
         };
+        editorFragmentPreviewPanel.putClientProperty(BalloonImpl.FORCED_NO_SHADOW, Boolean.TRUE);
         myEditorPreviewHint = new LightweightHint(editorFragmentPreviewPanel) {
 
           @Override

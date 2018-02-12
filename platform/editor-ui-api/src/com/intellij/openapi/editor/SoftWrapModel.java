@@ -21,10 +21,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Defines contract for the services that bring <code>'soft wrapping'</code> to the editor.
+ * Defines contract for the services that bring {@code 'soft wrapping'} to the editor.
  * <p/>
- * <code>'Soft wrap'</code> here means representation of the line that exceeds right component viewport margin as if it is wrapped.
- * No changes are introduced to the actual document/file system during that, i.e. it's a pure <code>'view'</code> facility.
+ * {@code 'Soft wrap'} here means representation of the line that exceeds right component viewport margin as if it is wrapped.
+ * No changes are introduced to the actual document/file system during that, i.e. it's a pure {@code 'view'} facility.
  * <p/>
  * <b>Example:</b>
  * <p/>
@@ -58,11 +58,11 @@ import java.util.List;
  *      </pre>
  * <p/>
  * Another important soft wrap feature is that as soon as the user starts typing on a line which representation is affected by
- * soft wrap (e.g. starts adding new call argument after <code>"test6"</code> at example above), that soft wraps becomes
- * <code>'hard wrap'</code>, i.e. virtual changes introduced by it are flushed to the underlying document.
+ * soft wrap (e.g. starts adding new call argument after {@code "test6"} at example above), that soft wraps becomes
+ * {@code 'hard wrap'}, i.e. virtual changes introduced by it are flushed to the underlying document.
  * <p/>
  * <b>Note:</b> soft wrap is assumed to provide as user-friendly indentation for those wrapped line as possible
- * (note that <code>"test6"</code> at example below is aligned to the parameters start).
+ * (note that {@code "test6"} at example below is aligned to the parameters start).
  * <p/>
  * Implementations of this interface are not obliged to be thread-safe.
  *
@@ -72,9 +72,9 @@ import java.util.List;
 public interface SoftWrapModel {
 
   /**
-   * Allows to answer if <code>'soft wrap'</code> feature is enabled.
+   * Allows to answer if {@code 'soft wrap'} feature is enabled.
    *
-   * @return    <code>true</code> if <code>'soft wraps'</code> are enabled; <code>false</code> otherwise
+   * @return    {@code true} if {@code 'soft wraps'} are enabled; {@code false} otherwise
    */
   boolean isSoftWrappingEnabled();
 
@@ -82,7 +82,7 @@ public interface SoftWrapModel {
    * Asks current model for the soft wrap registered for the given document offset if any.
    *
    * @param offset      target document offset
-   * @return            soft wrap registered for the given offset within the current model if any; <code>null</code> otherwise
+   * @return            soft wrap registered for the given offset within the current model if any; {@code null} otherwise
    */
   @Nullable
   SoftWrap getSoftWrap(int offset);
@@ -112,7 +112,7 @@ public interface SoftWrapModel {
    * The soft wrap may be not shown if it's located, for example, inside collapsed folding region.
    *
    * @param softWrap    soft wrap to check
-   * @return            <code>true</code> if given soft wrap is visible; <code>false</code> otherwise
+   * @return            {@code true} if given soft wrap is visible; {@code false} otherwise
    */
   boolean isVisible(SoftWrap softWrap);
 
@@ -128,8 +128,8 @@ public interface SoftWrapModel {
    * Allows to answer if given visual position points to soft wrap-introduced virtual space.
    *
    * @param position    target visual position to check
-   * @return            <code>true</code> if given visual position points to soft wrap-introduced virtual space;
-   *                    <code>false</code> otherwise
+   * @return            {@code true} if given visual position points to soft wrap-introduced virtual space;
+   *                    {@code false} otherwise
    */
   boolean isInsideSoftWrap(@NotNull VisualPosition position);
 
@@ -137,8 +137,8 @@ public interface SoftWrapModel {
    * Allows to answer if given visual position points to soft wrap-introduced virtual space or points just before soft wrap.
    *
    * @param visual    target visual position to check
-   * @return          <code>true</code> if given visual position points to soft wrap-introduced virtual space;
-   *                  <code>false</code> otherwise
+   * @return          {@code true} if given visual position points to soft wrap-introduced virtual space;
+   *                  {@code false} otherwise
    */
   boolean isInsideOrBeforeSoftWrap(@NotNull VisualPosition visual);
 

@@ -16,16 +16,12 @@
 
 package com.intellij.util.containers;
 
-import java.util.Map;
+import com.intellij.util.Function;
 
 /**
- * @author peter
+ * Use {@link ConcurrentFactoryMap#createWeakMap(Function)} instead
+ * TODO to remove in IDEA 2018
  */
-public abstract class ConcurrentWeakFactoryMap<T,V> extends FactoryMap<T,V>{
-
-  @Override
-  protected Map<T, V> createMap() {
-    return ContainerUtil.createConcurrentWeakMap();
-  }
-
+@Deprecated
+public abstract class ConcurrentWeakFactoryMap<K,V> extends ConcurrentFactoryMap<K,V> {
 }

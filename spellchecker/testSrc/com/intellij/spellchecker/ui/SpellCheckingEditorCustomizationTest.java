@@ -33,7 +33,7 @@ public class SpellCheckingEditorCustomizationTest extends LightPlatformCodeInsig
     doTest(false, "missspelling");
   }
 
-  public void testEnabledEvenIfDisabledInMainProfile() throws Exception {
+  public void testEnabledEvenIfDisabledInMainProfile() {
     //todo[batrak] ((CodeInsightTestFixtureImpl)myFixture).myDisabledInspections.add(SpellCheckingInspection.SPELL_CHECKING_INSPECTION_TOOL_NAME);
     testEnabled();
   }

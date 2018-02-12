@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,11 +37,7 @@ class ConcreteClassUtil {
       return false;
     }
     final PsiType baseType = type.getDeepComponentType();
-    if (!(baseType instanceof PsiClassType)) {
-      return false;
-    }
-    final PsiClassType classType = (PsiClassType)baseType;
-    final PsiClass aClass = classType.resolve();
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(baseType);
     if (aClass == null) {
       return false;
     }

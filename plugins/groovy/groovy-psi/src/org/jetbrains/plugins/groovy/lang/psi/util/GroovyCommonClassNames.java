@@ -56,6 +56,7 @@ public interface GroovyCommonClassNames {
   String GROOVY_TRANSFORM_TYPE_CHECKED = "groovy.transform.TypeChecked";
   String GROOVY_TRANSFORM_TYPE_CHECKING_MODE = "groovy.transform.TypeCheckingMode";
   String GROOVY_TRANSFORM_INHERIT_CONSTRUCTORS = "groovy.transform.InheritConstructors";
+  String GROOVY_TRANSFORM_AUTOIMPLEMENT = "groovy.transform.AutoImplement";
   String GROOVY_LANG_IMMUTABLE = "groovy.lang.Immutable";
   String GROOVY_LANG_META_CLASS = "groovy.lang.MetaClass";
   String GROOVY_LANG_GROOVY_CALLABLE = "groovy.lang.GroovyCallable";

@@ -18,11 +18,11 @@ package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -78,6 +78,10 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   }
 
   protected Icon getIconFor(@NotNull T value) {
+    return null;
+  }
+
+  protected ListSeparator getSeparatorAbove(T value) {
     return null;
   }
 
@@ -138,6 +142,12 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
         return ComboBoxTableRenderer.this.getIconFor(value);
       }
 
+      @Nullable
+      @Override
+      public ListSeparator getSeparatorAbove(T value) {
+        return ComboBoxTableRenderer.this.getSeparatorAbove(value);
+      }
+
       public PopupStep onChosen(T selectedValue, boolean finalChoice) {
         myFinalRunnable = ComboBoxTableRenderer.this.onChosen(selectedValue);
         return FINAL_CHOICE;
@@ -170,9 +180,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   protected void customizeComponent(final T value, final JTable table, final boolean isSelected) {
     setOpaque(true);
     setText(value == null ? "" : getTextFor(value));
-    if (value != null) {
-      setIcon(getIconFor(value));
-    }
+    setIcon(value == null ? null : getIconFor(value));
     setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
     setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
   }
@@ -260,7 +268,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     myListenerList.remove(CellEditorListener.class, l);
   }
 
-  private abstract static class ListStep<T> implements ListPopupStep<T> {
+  private abstract static class ListStep<T> implements ListPopupStep<T>, SpeedSearchFilter<T> {
     private final List<T> myValues;
     private final T mySelected;
 
@@ -282,7 +290,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     }
 
     public boolean isSpeedSearchEnabled() {
-      return false;
+      return true;
     }
 
     public boolean isAutoSelectionEnabled() {
@@ -302,10 +310,6 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
       return null;
     }
 
-    public ListSeparator getSeparatorAbove(T value) {
-      return null;
-    }
-
     public int getDefaultOptionIndex() {
       return mySelected == null ? 0 : myValues.indexOf(mySelected);
     }
@@ -315,7 +319,17 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     }
 
     public SpeedSearchFilter<T> getSpeedSearchFilter() {
-      return null;
+      return this;
+    }
+
+    @Override
+    public boolean canBeHidden(T value) {
+      return true;
+    }
+
+    @Override
+    public String getIndexedString(T value) {
+      return getTextFor(value);
     }
   }
 }

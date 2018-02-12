@@ -47,11 +47,9 @@ public class GoToChangePopupBuilder {
 
   public static abstract class BaseGoToChangePopupAction<Chain extends DiffRequestChain> extends GoToChangePopupAction {
     @NotNull protected final Chain myChain;
-    @NotNull protected final Consumer<Integer> myOnSelected;
 
-    public BaseGoToChangePopupAction(@NotNull Chain chain, @NotNull Consumer<Integer> onSelected) {
+    public BaseGoToChangePopupAction(@NotNull Chain chain) {
       myChain = chain;
-      myOnSelected = onSelected;
     }
 
     @Override
@@ -97,8 +95,11 @@ public class GoToChangePopupBuilder {
   }
 
   private static class SimpleGoToChangePopupAction extends BaseGoToChangePopupAction<DiffRequestChain> {
+    @NotNull protected final Consumer<Integer> myOnSelected;
+
     public SimpleGoToChangePopupAction(@NotNull DiffRequestChain chain, @NotNull Consumer<Integer> onSelected) {
-      super(chain, onSelected);
+      super(chain);
+      myOnSelected = onSelected;
     }
 
     @NotNull

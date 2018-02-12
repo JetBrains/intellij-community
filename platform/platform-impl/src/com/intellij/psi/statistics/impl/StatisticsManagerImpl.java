@@ -180,7 +180,7 @@ public class StatisticsManagerImpl extends StatisticsManager {
   }
 
   private static int getUnitNumber(String key1) {
-    return Math.abs(key1.hashCode()) % UNIT_COUNT;
+    return Math.abs(key1.hashCode() % UNIT_COUNT);
   }
 
   private static boolean createStoreFolder(){

@@ -32,7 +32,7 @@ public class PyRemoteSdkFlavor extends CPythonSdkFlavor {
   }
 
   private final static String[] NAMES = new String[]{"python", "jython", "pypy", "python.exe", "jython.bat", "pypy.exe"};
-  private final static String[] REMOTE_SDK_HOME_PREFIXES = new String[]{"ssh:", "vagrant:", "docker:", "docker-compose:"};
+  private final static String[] REMOTE_SDK_HOME_PREFIXES = new String[]{"ssh:", "vagrant:", "docker:", "docker-compose:", "sftp:"};
 
   public static PyRemoteSdkFlavor INSTANCE = new PyRemoteSdkFlavor();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -70,21 +70,10 @@ public class ConvertClosureToMethodIntention extends Intention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
-    final GrField field;
-    if (element.getParent() instanceof GrField) {
-      field = (GrField)element.getParent();
-    }
-    else {
-      final PsiReference ref = element.getReference();
-      LOG.assertTrue(ref != null);
-      PsiElement resolved = ref.resolve();
-      if (resolved instanceof GrAccessorMethod) {
-        resolved = ((GrAccessorMethod)resolved).getProperty();
-      }
-      LOG.assertTrue(resolved instanceof GrField);
-      field = (GrField)resolved;
-    }
+    final PsiElement parent = element.getParent();
+    if (!(parent instanceof GrField)) return;
 
+    final GrField field = (GrField)parent;
     final HashSet<PsiReference> usages = new HashSet<>();
     usages.addAll(ReferencesSearch.search(field).findAll());
     final GrAccessorMethod[] getters = field.getGetters();
@@ -97,7 +86,6 @@ public class ConvertClosureToMethodIntention extends Intention {
     }
 
     final String fieldName = field.getName();
-    LOG.assertTrue(fieldName != null);
     final Collection<PsiElement> fieldUsages = new HashSet<>();
     MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     for (PsiReference usage : usages) {
@@ -213,24 +201,14 @@ public class ConvertClosureToMethodIntention extends Intention {
 
   private static class MyPredicate implements PsiElementPredicate {
     @Override
-    public boolean satisfiedBy(PsiElement element) {
+    public boolean satisfiedBy(@NotNull PsiElement element) {
       if (element.getLanguage() != GroovyLanguage.INSTANCE) return false;
-      final PsiReference ref = element.getReference();
-      GrField field;
-      if (ref != null) {
-        PsiElement resolved = ref.resolve();
-        if (resolved instanceof GrAccessorMethod) {
-          resolved = ((GrAccessorMethod)resolved).getProperty();
-        }
-        if (!(resolved instanceof GrField)) return false;
-        field = (GrField)resolved;
-      }
-      else {
-        final PsiElement parent = element.getParent();
-        if (!(parent instanceof GrField)) return false;
-        field = (GrField)parent;
-        if (field.getNameIdentifierGroovy() != element) return false;
-      }
+
+      final PsiElement parent = element.getParent();
+      if (!(parent instanceof GrField)) return false;
+
+      final GrField field = (GrField)parent;
+      if (field.getNameIdentifierGroovy() != element) return false;
 
       final PsiElement varDeclaration = field.getParent();
       if (!(varDeclaration instanceof GrVariableDeclaration)) return false;

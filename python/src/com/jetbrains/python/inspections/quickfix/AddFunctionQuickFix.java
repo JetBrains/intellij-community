@@ -21,6 +21,7 @@ import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -49,7 +50,6 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * Adds a missing top-level function to a module.
  * <br/>
  * User: dcheryasov
- * Date: Sep 15, 2010 4:34:23 PM
  * @see AddMethodQuickFix AddMethodQuickFix
  */
 public class AddFunctionQuickFix  implements LocalQuickFix {
@@ -70,6 +70,11 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
   @NotNull
   public String getFamilyName() {
     return "Create function in module";
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
@@ -116,11 +121,14 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
         }
       }
       // else: no arglist, use empty args
-      PyFunction function = builder.buildFunction(project, LanguageLevel.forElement(file));
 
-      // add to the bottom
-      function = (PyFunction) file.add(function);
-      showTemplateBuilder(function, file);
+      WriteAction.run(() -> {
+        PyFunction function = builder.buildFunction(project, LanguageLevel.forElement(file));
+
+        // add to the bottom
+        function = (PyFunction) file.add(function);
+        showTemplateBuilder(function, file);
+      });
     }
     catch (IncorrectOperationException ignored) {
       // we failed. tell about this

@@ -45,7 +45,7 @@ public class DomAnnotationsTest extends DomTestCase {
     return element;
   }
 
-  public void testResolveProblemsAreReportedOnlyOnce() throws Throwable {
+  public void testResolveProblemsAreReportedOnlyOnce() {
     final MyElement myElement = createElement("<a><my-class>abc</my-class></a>", MyElement.class);
     
     new MockDomInspection(MyElement.class).checkFile(DomUtil.getFile(myElement), InspectionManager.getInstance(getProject()), true);
@@ -60,7 +60,7 @@ public class DomAnnotationsTest extends DomTestCase {
     assertEquals(1, holder.getProblems(myElement, true, true).size());
   }
 
-  public void testMinSeverity() throws Throwable {
+  public void testMinSeverity() {
     final MyElement element = createElement("<a/>", MyElement.class);
     final DomElementsProblemsHolderImpl holder = new DomElementsProblemsHolderImpl(DomUtil.getFileElement(element));
     final DomElementProblemDescriptorImpl error = new DomElementProblemDescriptorImpl(element, "abc", HighlightSeverity.ERROR);

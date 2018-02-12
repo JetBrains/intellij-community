@@ -21,21 +21,21 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -54,13 +54,27 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   public abstract boolean canMergeWith(@NotNull MergeableLineMarkerInfo<?> info);
 
   public abstract Icon getCommonIcon(@NotNull List<MergeableLineMarkerInfo> infos);
+
   @NotNull
-  public abstract Function<? super PsiElement, String> getCommonTooltip(@NotNull List<MergeableLineMarkerInfo> infos);
+  public Function<? super PsiElement, String> getCommonTooltip(@NotNull final List<MergeableLineMarkerInfo> infos) {
+    return (Function<PsiElement, String>)element -> {
+      Set<String> tooltips = new HashSet<>(ContainerUtil.mapNotNull(infos, info -> info.getLineMarkerTooltip()));
+      StringBuilder tooltip = new StringBuilder();
+      for (String info : tooltips) {
+        if (tooltip.length() > 0) {
+          tooltip.append(UIUtil.BORDER_LINE);
+        }
+        tooltip.append(UIUtil.getHtmlBody(info));
+      }
+      return XmlStringUtil.wrapInHtml(tooltip);
+    };
+  }
+
 
   public GutterIconRenderer.Alignment getCommonIconAlignment(@NotNull List<MergeableLineMarkerInfo> infos) {
     return GutterIconRenderer.Alignment.LEFT;
   }
-  
+
   public String getElementPresentation(PsiElement element) {
     return element.getText();
   }
@@ -133,7 +147,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
           Collections.sort(infos, (o1, o2) -> o1.startOffset - o2.startOffset);
           final JBList<LineMarkerInfo> list = new JBList<>(infos);
           list.setFixedCellHeight(UIUtil.LIST_FIXED_CELL_HEIGHT);
-          IPopupChooserBuilder<LineMarkerInfo> builder  = JBPopupFactory.getInstance().createPopupChooserBuilder(list);
+          IPopupChooserBuilder<LineMarkerInfo> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(list);
           if (!markers.get(0).configurePopupAndRenderer(builder, list, infos)) {
             list.installCellRenderer(dom -> {
               if (dom instanceof LineMarkerInfo) {
@@ -145,11 +159,13 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
                 PsiElement element = ((LineMarkerInfo)dom).getElement();
                 assert element != null;
                 final String elementPresentation =
-                  dom instanceof MergeableLineMarkerInfo ? ((MergeableLineMarkerInfo)dom).getElementPresentation(element) : element.getText();
+                  dom instanceof MergeableLineMarkerInfo
+                  ? ((MergeableLineMarkerInfo)dom).getElementPresentation(element)
+                  : element.getText();
                 String text = StringUtil.first(elementPresentation, 100, true).replace('\n', ' ');
 
                 final JBLabel label = new JBLabel(text, icon, SwingConstants.LEFT);
-                label.setBorder(IdeBorderFactory.createEmptyBorder(2));
+                label.setBorder(JBUI.Borders.empty(2));
                 return label;
               }
 

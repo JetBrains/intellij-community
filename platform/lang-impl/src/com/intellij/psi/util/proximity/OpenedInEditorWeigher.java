@@ -22,20 +22,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
 */
 public class OpenedInEditorWeigher extends ProximityWeigher {
-  private static final NotNullLazyKey<VirtualFile[], ProximityLocation> OPENED_EDITORS = NotNullLazyKey.create("openedEditors", new NotNullFunction<ProximityLocation, VirtualFile[]>() {
-    @NotNull
-    @Override
-    public VirtualFile[] fun(ProximityLocation location) {
-      return FileEditorManager.getInstance(location.getProject()).getOpenFiles();
-    }
-  });
+  private static final NotNullLazyKey<VirtualFile[], ProximityLocation> OPENED_EDITORS = NotNullLazyKey.create("openedEditors",
+                                                                                                               location -> FileEditorManager.getInstance(location.getProject()).getOpenFiles());
 
   @Override
   public Comparable weigh(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {

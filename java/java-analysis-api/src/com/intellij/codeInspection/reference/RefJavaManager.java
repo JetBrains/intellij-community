@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 18-Dec-2007
- */
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.ex.EntryPointsManager;
@@ -34,12 +30,11 @@ import org.jetbrains.annotations.NotNull;
 public abstract class RefJavaManager implements RefManagerExtension<RefJavaManager> {
   @NonNls public static final String CLASS = "class";
   @NonNls public static final String METHOD = "method";
-  @NonNls public static final String IMPLICIT_CONSTRUCTOR = "implicit.constructor";
+  @NonNls static final String IMPLICIT_CONSTRUCTOR = "implicit.constructor";
   @NonNls public static final String FIELD = "field";
-  @NonNls public static final String PARAMETER = "parameter";
-  @NonNls public static final String JAVA_MODULE = "java.module";
-  //used in OfflineProjectDescriptor
-  @NonNls public static final String PACKAGE = "package";
+  @NonNls static final String PARAMETER = "parameter";
+  @NonNls static final String JAVA_MODULE = "java.module";
+  @NonNls static final String PACKAGE = "package";
   public static final Key<RefJavaManager> MANAGER = Key.create("RefJavaManager");
 
 

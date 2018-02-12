@@ -75,11 +75,6 @@ public abstract class CommitIdManager<CommitId> {
 
   @NotNull
   public Function<CommitId, String> getToStrFunction() {
-    return new Function<CommitId, String>() {
-      @Override
-      public String fun(CommitId commitId) {
-        return toStr(commitId);
-      }
-    };
+    return commitId -> toStr(commitId);
   }
 }

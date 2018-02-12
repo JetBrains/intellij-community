@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
-import com.intellij.util.Function;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
@@ -46,7 +45,7 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
   private final Condition<PsiFileSystemItem> myCondition;
 
   public MavenPathReferenceConverter() {
-    this(Conditions.<PsiFileSystemItem>alwaysTrue());
+    this(Conditions.alwaysTrue());
   }
 
   public MavenPathReferenceConverter(@NotNull Condition<PsiFileSystemItem> condition) {
@@ -154,7 +153,7 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
           return FileReferenceSet.ABSOLUTE_TOP_LEVEL.fun(file);
         }
 
-        return Collections.<PsiFileSystemItem>singletonList(root);
+        return Collections.singletonList(root);
       });
     }
 

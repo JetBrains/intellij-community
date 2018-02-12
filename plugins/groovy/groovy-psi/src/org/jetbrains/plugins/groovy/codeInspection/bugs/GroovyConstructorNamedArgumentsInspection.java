@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,13 +53,6 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
   @Override
   protected BaseInspectionVisitor buildVisitor() {
     return new MyVisitor();
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return PROBABLE_BUGS;
   }
 
   @Nls
@@ -145,7 +138,7 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
               fixes.add(GroovyQuickFixFactory.getInstance().createDynamicPropertyFix(label, (PsiClass)element));
             }
 
-            registerError(label, GroovyBundle.message("no.such.property", label.getName()), fixes.toArray(new LocalQuickFix[fixes.size()]),
+            registerError(label, GroovyBundle.message("no.such.property", label.getName()), fixes.toArray(LocalQuickFix.EMPTY_ARRAY),
                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           }
         }

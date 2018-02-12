@@ -24,7 +24,6 @@ import java.util.Collection;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 09-Nov-16
  */
 public abstract class JavaCompilerToolExtension {
    /**

@@ -1,8 +1,5 @@
 <component name="DefaultColorSchemesManager">
   <scheme name="Default" default_scheme="true" version="1">
-    <option name="LINE_SPACING" value="1.0"/>
-    <option name="EDITOR_FONT_SIZE" value="12"/>
-    <option name="EDITOR_FONT_NAME" value="Monospaced" mac="Menlo" linux="DejaVu Sans Mono"/>
     <colors>
 
       <option name="SELECTION_BACKGROUND" value="5974ab"/>
@@ -21,12 +18,20 @@
       <option name="SOFT_WRAP_SIGN_COLOR" value="c0c0c0"/>
       <option name="TEARLINE_COLOR" value="D0D0D0"/>
       <option name="SELECTED_TEARLINE_COLOR" value="9C9C9C"/>
+      <option name="SEPARATOR_ABOVE_COLOR" value=""/>
+      <option name="SEPARATOR_BELOW_COLOR" value="e4e4e4"/>
       <option name="READONLY_FRAGMENT_BACKGROUND" value="cfe7ff"/>
+      <option name="VISUAL_INDENT_GUIDE" value="eeeeee"/>
+      <option name="FOLDED_TEXT_BORDER_COLOR" value="add9c7"/>
+      <option name="INLINE_PARAMETER_HINT_SELECTION_BORDER" value="a0a0a0"/>
 
       <option name="ADDED_LINES_COLOR" value="c9dec1" deuteranopia="99ca90" protanopia="99ca90"/>
       <option name="MODIFIED_LINES_COLOR" value="c3d6e8" deuteranopia="9ca9bf" protanopia="9ca9bf"/>
       <option name="DELETED_LINES_COLOR" value="9f9f9f" deuteranopia="7f7f7f" protanopia="7f7f7f"/>
       <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="eddcbc" deuteranopia="c5cad4" protanopia="c5cad4"/>
+      <option name="IGNORED_ADDED_LINES_BORDER_COLOR" value="a0c495"/>
+      <option name="IGNORED_MODIFIED_LINES_BORDER_COLOR" value="95b2ce"/>
+      <option name="IGNORED_DELETED_LINES_BORDER_COLOR" value="9f9f9f"/>
       <option name="CONSOLE_BACKGROUND_KEY" value="ffffff" />
       <option name="DIFF_SEPARATORS_BACKGROUND" value="D9D9D9"/>
       <option name="DIFF_SEPARATORS_TOP_BORDER" value="C8C8C8"/>
@@ -427,6 +432,12 @@
           <option name="BACKGROUND" value="ededed"/>
         </value>
       </option>
+      <option name="INLINE_PARAMETER_HINT_HIGHLIGHTED">
+        <value>
+          <option name="FOREGROUND" value="5b5b5b"/>
+          <option name="BACKGROUND" value="c0c0c0"/>
+        </value>
+      </option>
       <option name="IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES">
         <value>
           <option name="FOREGROUND" value="660e7a" deuteranopia="1948a6" protanopia="1948a6"/>
@@ -559,6 +570,18 @@
       <option name="NOT_TOP_FRAME_ATTRIBUTES">
         <value>
           <option name="BACKGROUND" value="c0d0f0"/>
+        </value>
+      </option>
+
+      <option name="EVALUATED_EXPRESSION_ATTRIBUTES">
+        <value>
+          <option name="BACKGROUND" value="e5e5e5"/>
+        </value>
+      </option>
+
+      <option name="EVALUATED_EXPRESSION_EXECUTION_LINE_ATTRIBUTES">
+        <value>
+          <option name="BACKGROUND" value="bfbfbf"/>
         </value>
       </option>
 
@@ -726,6 +749,12 @@
           <option name="FOREGROUND"/>
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR" value="404040"/>
+          <option name="EFFECT_TYPE" value="3"/>
+        </value>
+      </option>
+      <option name="MARKED_FOR_REMOVAL_ATTRIBUTES">
+        <value>
+          <option name="EFFECT_COLOR" value="ff0000"/>
           <option name="EFFECT_TYPE" value="3"/>
         </value>
       </option>
@@ -1039,34 +1068,24 @@
       
         <option name="BREADCRUMBS_DEFAULT">
            <value>
-             <option name="FOREGROUND" value="323232"/>
-             <option name="BACKGROUND" value="f5f5f5"/>
-             <option name="EFFECT_COLOR" value="aaaaaa"/>
-             <option name="EFFECT_TYPE" value="0"/>
+             <option name="FOREGROUND" value="585858"/>
            </value>
         </option>
         <option name="BREADCRUMBS_HOVERED">
            <value>
-             <option name="FOREGROUND" value="323232"/>
-             <option name="BACKGROUND" value="dcdcdc"/>
-             <option name="EFFECT_COLOR" value="aaaaaa"/>
-             <option name="EFFECT_TYPE" value="0"/>
+             <option name="FOREGROUND" value="585858"/>
+             <option name="BACKGROUND" value="e0e0e0"/>
            </value>
         </option>
         <option name="BREADCRUMBS_CURRENT">
            <value>
-             <option name="FOREGROUND" value="323232"/>
-             <option name="BACKGROUND" value="fafadc"/>
-             <option name="EFFECT_COLOR" value="aaaaaa"/>
-             <option name="EFFECT_TYPE" value="0"/>
+             <option name="FOREGROUND" value="585858"/>
+             <option name="BACKGROUND" value="d6d6d6"/>
            </value>
         </option>
         <option name="BREADCRUMBS_INACTIVE">
            <value>
-             <option name="FOREGROUND" value="aaaaaa"/>
-             <option name="BACKGROUND" value="fdfdfd"/>
-             <option name="EFFECT_COLOR" value="c8c8c8"/>
-             <option name="EFFECT_TYPE" value="0"/>
+             <option name="FOREGROUND" value="585858"/>
            </value>
         </option>
     </attributes>
@@ -1074,13 +1093,13 @@
   </scheme>
 
   <scheme name="Darcula" version="1" parent_scheme="Default" default_scheme="true">
-    <option name="LINE_SPACING" value="1.0" />
-    <option name="EDITOR_FONT_SIZE" value="12" linux="14"/>
-    <option name="EDITOR_FONT_NAME" value="Monospaced" mac="Menlo" linux="Source Code Pro"/>
     <colors>
       <option name="ADDED_LINES_COLOR" value="384C38" deuteranopia="355237" protanopia="355237"/>
       <option name="MODIFIED_LINES_COLOR" value="374752" deuteranopia="345a67" protanopia="345a67"/>
       <option name="DELETED_LINES_COLOR" value="656e76"/>
+      <option name="IGNORED_ADDED_LINES_BORDER_COLOR" value="4c674c"/>
+      <option name="IGNORED_MODIFIED_LINES_BORDER_COLOR" value="455663"/>
+      <option name="IGNORED_DELETED_LINES_BORDER_COLOR" value="656e76"/>
       <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="4c4638" deuteranopia="34434d" protanopia="34434d"/>
 
       <option name="ANNOTATIONS_COLOR" value="8b999f" />
@@ -1113,6 +1132,8 @@
       <option name="RIGHT_MARGIN_COLOR" value="4d4d4d" />
       <option name="SELECTED_INDENT_GUIDE" value="505050" />
       <option name="SELECTED_TEARLINE_COLOR" value="787878" />
+      <option name="SEPARATOR_ABOVE_COLOR" value=""/>
+      <option name="SEPARATOR_BELOW_COLOR" value="393a3c"/>
       <option name="SELECTION_BACKGROUND" value="214283" />
       <option name="SELECTION_FOREGROUND" value="" />
       <option name="TEARLINE_COLOR" value="555555" />
@@ -1120,6 +1141,9 @@
       <option name="DIFF_SEPARATORS_TOP_BORDER" value="1E1E1E"/>
       <option name="DIFF_SEPARATORS_BACKGROUND" value="232323"/>
       <option name="DIFF_SEPARATORS_BOTTOM_BORDER" value="222222"/>
+      <option name="VISUAL_INDENT_GUIDE" value="3c3c3c"/>
+      <option name="FOLDED_TEXT_BORDER_COLOR" value="43474a"/>
+      <option name="INLINE_PARAMETER_HINT_SELECTION_BORDER" value="808080"/>
 
       <option name="VCS_ANNOTATIONS_COLOR_1" value="464c43"/>
       <option name="VCS_ANNOTATIONS_COLOR_2" value="444342"/>
@@ -1516,6 +1540,13 @@
           <option name="EFFECT_TYPE" value="3" />
         </value>
       </option>
+      <option name="MARKED_FOR_REMOVAL_ATTRIBUTES">
+        <value>
+          <option name="EFFECT_COLOR" value="bc3f3c" deuteranopia="e57132" protanopia="e57132"/>
+          <option name="EFFECT_TYPE" value="3"/>
+        </value>
+      </option>
+
       <option name="DIFF_CONFLICT">
         <value>
           <option name="BACKGROUND" value="45302b" deuteranopia="453900" protanopia="453900"/>
@@ -1565,6 +1596,16 @@
       <option name="NOT_TOP_FRAME_ATTRIBUTES">
         <value>
           <option name="BACKGROUND" value="243040"/>
+        </value>
+      </option>
+      <option name="EVALUATED_EXPRESSION_ATTRIBUTES">
+        <value>
+          <option name="BACKGROUND" value="424242"/>
+        </value>
+      </option>
+      <option name="EVALUATED_EXPRESSION_EXECUTION_LINE_ATTRIBUTES">
+        <value>
+          <option name="BACKGROUND" value="474747"/>
         </value>
       </option>
       <option name="FOLDED_TEXT_ATTRIBUTES">
@@ -1675,6 +1716,12 @@
           <option name="BACKGROUND" value="3b3b3b"/>
         </value>
       </option>
+      <option name="INLINE_PARAMETER_HINT_HIGHLIGHTED">
+        <value>
+          <option name="FOREGROUND" value="acacac"/>
+          <option name="BACKGROUND" value="686868"/>
+        </value>
+      </option>
       <option name="IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES">
         <value>
           <option name="FOREGROUND" value="b389c5" deuteranopia="828eba" protanopia="828eba"/>
@@ -1708,11 +1755,6 @@
         <value>
           <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
           <option name="FONT_TYPE" value="1" />
-        </value>
-      </option>
-      <option name="JSP_SCRIPTING_BACKGROUND">
-        <value>
-          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
         </value>
       </option>
       <option name="LESS_VARIABLE">
@@ -1887,7 +1929,7 @@
       <option name="SEARCH_RESULT_ATTRIBUTES">
         <value>
           <option name="BACKGROUND" value="155221" deuteranopia="404861" protanopia="404861"/>
-          <option name="ERROR_STRIPE_COLOR" deuteranopia="4b6f99" protanopia="4b6f99"/>
+          <option name="ERROR_STRIPE_COLOR" value="00530d" deuteranopia="4b6f99" protanopia="4b6f99"/>
         </value>
       </option>
       <option name="SPY-JS.FUNCTION_SCOPE">
@@ -2055,7 +2097,7 @@
       <option name="WRITE_SEARCH_RESULT_ATTRIBUTES">
         <value>
           <option name="BACKGROUND" value="532b2e" deuteranopia="2f4794" protanopia="2f4794"/>
-          <option name="ERROR_STRIPE_COLOR" deuteranopia="5fcc" protanopia="5fcc"/>
+          <option name="ERROR_STRIPE_COLOR" value="8d4457" deuteranopia="5fcc" protanopia="5fcc"/>
         </value>
       </option>
       <option name="WRONG_REFERENCES_ATTRIBUTES">
@@ -2158,33 +2200,23 @@
       <option name="BREADCRUMBS_DEFAULT">
          <value>
            <option name="FOREGROUND" value="bbbbbb"/>
-           <option name="BACKGROUND" value="65686a"/>
-           <option name="EFFECT_COLOR" value="323232"/>
-           <option name="EFFECT_TYPE" value="0"/>
          </value>
       </option>
       <option name="BREADCRUMBS_HOVERED">
          <value>
            <option name="FOREGROUND" value="bbbbbb"/>
-           <option name="BACKGROUND" value="797d7f"/>
-           <option name="EFFECT_COLOR" value="323232"/>
-           <option name="EFFECT_TYPE" value="0"/>
+           <option name="BACKGROUND" value="3a3c3e"/>
          </value>
       </option>
       <option name="BREADCRUMBS_CURRENT">
          <value>
            <option name="FOREGROUND" value="bbbbbb"/>
-           <option name="BACKGROUND" value="61614b"/>
-           <option name="EFFECT_COLOR" value="323232"/>
-           <option name="EFFECT_TYPE" value="0"/>
+           <option name="BACKGROUND" value="44474a"/>
          </value>
       </option>
       <option name="BREADCRUMBS_INACTIVE">
          <value>
            <option name="FOREGROUND" value="bbbbbb"/>
-           <option name="BACKGROUND" value="828282"/>
-           <option name="EFFECT_COLOR" value="464646"/>
-           <option name="EFFECT_TYPE" value="0"/>
          </value>
       </option>
     </attributes>

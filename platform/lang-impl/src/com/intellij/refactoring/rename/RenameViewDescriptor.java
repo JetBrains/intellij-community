@@ -46,7 +46,7 @@ public class RenameViewDescriptor implements UsageViewDescriptor{
     Set<String> codeReferences = new THashSet<>();
 
     for (final PsiElement element : myElements) {
-      LOG.assertTrue(element.isValid(), "Invalid element: " + element.toString());
+      PsiUtilCore.ensureValid(element);
       String newName = renamesMap.get(element);
 
       String prefix = "";

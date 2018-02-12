@@ -25,7 +25,6 @@ import static com.intellij.tasks.TaskTestUtil.assertTasksEqual;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 4/1/13
  */
 public class AssemblaIntegrationTest extends GenericSubtypeTestCase {
 

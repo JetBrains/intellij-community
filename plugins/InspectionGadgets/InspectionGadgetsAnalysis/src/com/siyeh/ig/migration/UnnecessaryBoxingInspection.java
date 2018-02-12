@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -79,7 +78,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(@NotNull Project project, ProblemDescriptor descriptor) {
       final PsiCallExpression expression = (PsiCallExpression)descriptor.getPsiElement();
       final PsiExpressionList argumentList = expression.getArgumentList();
       if (argumentList == null) {
@@ -91,25 +90,28 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       }
       final PsiExpression unboxedExpression = arguments[0];
       final Object value = ExpressionUtils.computeConstantExpression(unboxedExpression);
+      CommentTracker commentTracker = new CommentTracker();
       if (value != null) {
         if (value == Boolean.TRUE) {
-          PsiReplacementUtil.replaceExpression(expression, "java.lang.Boolean.TRUE");
+          PsiReplacementUtil.replaceExpression(expression, "java.lang.Boolean.TRUE", commentTracker);
           return;
         }
         else if (value == Boolean.FALSE) {
-          PsiReplacementUtil.replaceExpression(expression, "java.lang.Boolean.FALSE");
+          PsiReplacementUtil.replaceExpression(expression, "java.lang.Boolean.FALSE", commentTracker);
           return;
         }
       }
-      final String replacementText = getUnboxedExpressionText(unboxedExpression, expression);
+      final String replacementText = getUnboxedExpressionText(unboxedExpression, expression, commentTracker);
       if (replacementText == null) {
         return;
       }
-      PsiReplacementUtil.replaceExpression(expression, replacementText);
+      PsiReplacementUtil.replaceExpression(expression, replacementText, commentTracker);
     }
 
     @Nullable
-    private static String getUnboxedExpressionText(@NotNull PsiExpression unboxedExpression, @NotNull PsiExpression boxedExpression) {
+    private static String getUnboxedExpressionText(@NotNull PsiExpression unboxedExpression,
+                                                   @NotNull PsiExpression boxedExpression,
+                                                   CommentTracker commentTracker) {
       final PsiType boxedType = boxedExpression.getType();
       if (boxedType == null) {
         return null;
@@ -122,10 +124,10 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       if (unboxedType == null) {
         return null;
       }
-      final String text = unboxedExpression.getText();
+      final String text = commentTracker.text(unboxedExpression);
       if (expressionType.equals(unboxedType)) {
         final PsiElement parent = boxedExpression.getParent();
-        if (parent instanceof PsiExpression && ParenthesesUtils.areParenthesesNeeded(unboxedExpression, (PsiExpression) parent, false)) {
+        if (parent instanceof PsiExpression && ParenthesesUtils.areParenthesesNeeded(unboxedExpression, (PsiExpression)parent, false)) {
           return '(' + text + ')';
         }
         else {
@@ -271,7 +273,8 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
         final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
         return isPossibleObjectComparison(boxingExpression, polyadicExpression);
       }
-      return MethodCallUtils.isNecessaryForSurroundingMethodCall(boxingExpression, boxedExpression);
+      return MethodCallUtils.isNecessaryForSurroundingMethodCall(boxingExpression, boxedExpression) ||
+             !LambdaUtil.isSafeLambdaReturnValueReplacement(boxingExpression, boxedExpression);
     }
 
     private boolean isPossibleObjectComparison(PsiExpression expression, PsiPolyadicExpression polyadicExpression) {

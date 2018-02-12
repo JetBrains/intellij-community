@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 20.12.2006
- * Time: 15:24:28
- */
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;

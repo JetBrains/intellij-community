@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,21 +19,24 @@ import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.codeInspection.streamMigration.OperationReductionMigration.SUM_OPERATION;
 
 /**
  * @author Tagir Valeev
  */
 class SumMigration extends BaseStreamApiMigration {
 
-  SumMigration() {super("sum()");}
+  SumMigration(boolean shouldWarn) {super(shouldWarn, "sum()");}
 
   @Override
-  PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb) {
+  PsiElement migrate(@NotNull Project project, @NotNull PsiElement body, @NotNull TerminalBlock tb) {
     PsiAssignmentExpression assignment = tb.getSingleExpression(PsiAssignmentExpression.class);
     if (assignment == null) return null;
-    PsiVariable var = StreamApiMigrationInspection.extractAccumulator(assignment);
+    PsiVariable var = StreamApiMigrationInspection.extractSumAccumulator(assignment);
     if (var == null) return null;
 
     PsiExpression addend = StreamApiMigrationInspection.extractAddend(assignment);
@@ -44,11 +47,12 @@ class SumMigration extends BaseStreamApiMigration {
       type = PsiType.INT;
     }
     PsiType addendType = addend.getType();
+    CommentTracker ct = new CommentTracker();
     if(addendType != null && !TypeConversionUtil.isAssignable(type, addendType)) {
       addend = JavaPsiFacade.getElementFactory(project).createExpressionFromText(
-        "(" + type.getCanonicalText() + ")" + ParenthesesUtils.getText(addend, ParenthesesUtils.MULTIPLICATIVE_PRECEDENCE), addend);
+        "(" + type.getCanonicalText() + ")" + ct.text(addend, ParenthesesUtils.TYPE_CAST_PRECEDENCE), addend);
     }
-    String stream = tb.add(new MapOp(addend, tb.getVariable(), type)).generate()+".sum()";
-    return replaceWithNumericAddition(tb.getMainLoop(), var, stream, type);
+    String stream = tb.add(new MapOp(addend, tb.getVariable(), type)).generate(ct)+".sum()";
+    return replaceWithOperation(tb.getStreamSourceStatement(), var, stream, type, SUM_OPERATION, ct);
   }
 }

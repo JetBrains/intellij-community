@@ -28,7 +28,6 @@ import java.util.List;
 
 /**
  * @author anna
- * Date: 11-Apr-2008
  */
 public class TypeMigrationTreeStructure extends AbstractTreeStructureBase {
   private MigrationRootNode myRoot;

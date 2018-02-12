@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.util.ActionCallback;
@@ -100,7 +101,7 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
              + " folder2\n");
 
     updateFilter("fo_");
-    assertTree("+/\n");
+    assertTree("/\n");
 
     updateFilter("");
     assertTree("-/\n"
@@ -166,11 +167,11 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
     select(new Object[] {node}, false);
   }
 
-  private void updateFilter(final String text) throws Exception {
+  private void updateFilter(final String text) {
      update(text, null);
    }
 
-  private void update(final String text, @Nullable final Object selection) throws Exception {
+  private void update(final String text, @Nullable final Object selection) {
     myFilter.update(text, selection);
   }
 
@@ -198,7 +199,7 @@ public class FilteringTreeBuilderTest extends BaseTreeTestCase  {
 
     @Override
     protected SimpleNode[] buildChildren() {
-      return myKids.isEmpty() ? NO_CHILDREN : myKids.values().toArray(new Node[myKids.size()]);
+      return myKids.isEmpty() ? NO_CHILDREN : myKids.values().toArray(new Node[0]);
     }
 
     @Override

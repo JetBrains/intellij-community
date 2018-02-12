@@ -17,8 +17,12 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -46,7 +50,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 @State(name = "editorHistoryManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public final class EditorHistoryManager implements PersistentStateComponent<Element>, ProjectComponent {
+public final class EditorHistoryManager implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(EditorHistoryManager.class);
 
   private final Project myProject;
@@ -263,7 +267,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
   /**
    * @return may be null
    */
-  FileEditorProvider getSelectedProvider(final VirtualFile file) {
+  public FileEditorProvider getSelectedProvider(final VirtualFile file) {
     final HistoryEntry entry = getEntry(file);
     return entry != null ? entry.getSelectedProvider() : null;
   }
@@ -333,31 +337,13 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
   }
 
   @Override
-  public void projectOpened() {
-  }
-
-  @Override
-  public void projectClosed() {
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public synchronized void disposeComponent() {
+  public synchronized void dispose() {
     for (HistoryEntry entry : myEntriesList) {
       entry.destroy();
     }
     myEntriesList.clear();
   }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "editorHistoryManager";
-  }
-
+  
   /**
    * Updates history
    */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2015 Bas Leijdekkers
+ * Copyright 2008-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
@@ -98,22 +99,13 @@ public class EqualsCalledOnEnumConstantInspection extends BaseInspection {
         prefixExpression = null;
         not = false;
       }
-      newExpression.append(qualifier.getText());
-      if (not) {
-        newExpression.append("!=");
-      }
-      else {
-        newExpression.append("==");
-      }
+      CommentTracker commentTracker = new CommentTracker();
+      newExpression.append(commentTracker.text(qualifier));
+      newExpression.append(not ? "!=" : "==");
       if (arguments.length == 1) {
-        newExpression.append(arguments[0].getText());
+        newExpression.append(commentTracker.text(arguments[0]));
       }
-      if (not) {
-        PsiReplacementUtil.replaceExpression(prefixExpression, newExpression.toString());
-      }
-      else {
-        PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString());
-      }
+      PsiReplacementUtil.replaceExpression(not ? prefixExpression : methodCallExpression, newExpression.toString(), commentTracker);
     }
   }
 
@@ -132,7 +124,7 @@ public class EqualsCalledOnEnumConstantInspection extends BaseInspection {
       }
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier == null || !TypeUtils.expressionHasTypeOrSubtype(qualifier, CommonClassNames.JAVA_LANG_ENUM)) {
+      if (!TypeUtils.expressionHasTypeOrSubtype(qualifier, CommonClassNames.JAVA_LANG_ENUM)) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();

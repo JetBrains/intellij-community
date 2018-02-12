@@ -36,6 +36,10 @@
       <skipForDefaultProject/>
     </component>
     <component>
+      <implementation-class>com.intellij.openapi.vcs.impl.PartialLineStatusTrackerManagerState</implementation-class>
+      <option name="workspace" value="true"/>
+    </component>
+    <component>
       <implementation-class>com.intellij.openapi.vcs.update.RestoreUpdateTree</implementation-class>
       <skipForDefaultProject/>
     </component>
@@ -97,9 +101,5 @@
     <component><interface-class>com.intellij.openapi.vcs.impl.VcsBaseContentProvider</interface-class>
       <implementation-class>com.intellij.openapi.vcs.impl.VcsFileStatusProvider</implementation-class>
     </component>
-    <component><interface-class>com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotation</interface-class>
-    <implementation-class>com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationImpl</implementation-class></component>
-    <component><interface-class>com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCache</interface-class>
-      <implementation-class>com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCacheImpl</implementation-class></component>
   </project-components>
 </idea-plugin>

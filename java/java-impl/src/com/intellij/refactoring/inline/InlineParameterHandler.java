@@ -41,7 +41,6 @@ import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -133,7 +132,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
         if (def instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand((PsiExpression)def)) {
           final PsiExpression rExpr = ((PsiAssignmentExpression)def.getParent()).getRExpression();
           if (rExpr != null) {
-            PsiExpression toInline = InlineLocalHandler.getDefToInline(psiParameter, refExpr, codeBlock);
+            PsiExpression toInline = InlineLocalHandler.getDefToInline(psiParameter, refExpr, codeBlock, false);
             if (toInline != null) {
               final PsiElement[] refs = DefUseUtil.getRefs(codeBlock, psiParameter, toInline);
 

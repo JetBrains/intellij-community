@@ -16,81 +16,84 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.changes.local.*;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 /** synchronization aspect is external for this class; only logic here
  * have internal command queue; applies commands to another copy of change lists (ChangeListWorker) and sends notifications
  * (after update is done)
  */
-public class Modifier implements ChangeListsWriteOperations {
-  private ChangeListWorker myWorker;
+public class Modifier {
+  private final ChangeListWorker myWorker;
   private boolean myInsideUpdate;
   private final List<ChangeListCommand> myCommandQueue;
   private final DelayedNotificator myNotificator;
 
-  public Modifier(final ChangeListWorker worker, final DelayedNotificator notificator) {
+  public Modifier(ChangeListWorker worker, DelayedNotificator notificator) {
     myWorker = worker;
     myNotificator = notificator;
-    myCommandQueue = new LinkedList<>();
+    myCommandQueue = new ArrayList<>();
   }
 
-  public LocalChangeList addChangeList(@NotNull final String name, @Nullable final String comment, @Nullable Object data) {
-    final AddList command = new AddList(name, comment, data);
+  @NotNull
+  public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data) {
+    AddList command = new AddList(name, comment, data);
     impl(command);
     return command.getNewListCopy();
   }
 
-  public String setDefault(final String name) {
-    final SetDefault command = new SetDefault(name);
+  public void setDefault(@NotNull String name) {
+    SetDefault command = new SetDefault(name);
     impl(command);
-    return command.getPrevious();
   }
 
-  public boolean removeChangeList(@NotNull final String name) {
-    final RemoveList command = new RemoveList(name);
+  public void removeChangeList(@NotNull String name) {
+    RemoveList command = new RemoveList(name);
     impl(command);
-    return command.isRemoved();
   }
 
-  public MultiMap<LocalChangeList, Change> moveChangesTo(final String name, final Change[] changes) {
-    final MoveChanges command = new MoveChanges(name, changes);
+  public void moveChangesTo(@NotNull String name, @NotNull Change[] changes) {
+    MoveChanges command = new MoveChanges(name, changes);
     impl(command);
-    return command.getMovedFrom();
   }
 
-  private void impl(final ChangeListCommand command) {
-    command.apply(myWorker);
+  public boolean setReadOnly(@NotNull String name, boolean value) {
+    SetReadOnly command = new SetReadOnly(name, value);
+    impl(command);
+    return command.isResult();
+  }
+
+  public boolean editName(@NotNull String fromName, @NotNull String toName) {
+    EditName command = new EditName(fromName, toName);
+    impl(command);
+    return command.isResult();
+  }
+
+  @Nullable
+  public String editComment(@NotNull String fromName, @NotNull String newComment) {
+    EditComment command = new EditComment(fromName, newComment);
+    impl(command);
+    return command.getOldComment();
+  }
+
+
+  private void impl(@NotNull ChangeListCommand command) {
     if (myInsideUpdate) {
+      // apply command and store it to be applied again when update is finished
+      // notification about this invocation might be sent later if the update is cancelled
+      command.apply(myWorker);
       myCommandQueue.add(command);
-      // notify after change lsist are synchronized
-    } else {
-      // notify immediately
+    }
+    else {
+      // apply and notify immediately
+      command.apply(myWorker);
       myNotificator.callNotify(command);
     }
   }
 
-  public boolean setReadOnly(final String name, final boolean value) {
-    final SetReadOnly command = new SetReadOnly(name, value);
-    impl(command);
-    return command.isResult();
-  }
-
-  public boolean editName(@NotNull final String fromName, @NotNull final String toName) {
-    final EditName command = new EditName(fromName, toName);
-    impl(command);
-    return command.isResult();
-  }
-
-  public String editComment(@NotNull final String fromName, final String newComment) {
-    final EditComment command = new EditComment(fromName, newComment);
-    impl(command);
-    return command.getOldComment();
-  }
 
   public boolean isInsideUpdate() {
     return myInsideUpdate;
@@ -100,29 +103,18 @@ public class Modifier implements ChangeListsWriteOperations {
     myInsideUpdate = true;
   }
 
-  public void finishUpdate(final ChangeListWorker worker) {
-    exitUpdate();
-    // should be applied for notifications to be delivered (they were delayed)
-    apply(worker);
-    clearQueue();
-  }
-
-  private void exitUpdate() {
+  public void finishUpdate(@Nullable ChangeListWorker updatedWorker) {
     myInsideUpdate = false;
-  }
 
-  private void clearQueue() {
-    myCommandQueue.clear();
-  }
+    if (updatedWorker != null) {
+      for (ChangeListCommand command : myCommandQueue) {
+        command.apply(updatedWorker);
+      }
+    }
 
-  private void apply(final ChangeListWorker worker) {
     for (ChangeListCommand command : myCommandQueue) {
-      command.apply(worker);
       myNotificator.callNotify(command);
     }
-  }
-
-  public void setWorker(ChangeListWorker worker) {
-    myWorker = worker;
+    myCommandQueue.clear();
   }
 }

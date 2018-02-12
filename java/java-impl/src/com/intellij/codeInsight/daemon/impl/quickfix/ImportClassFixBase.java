@@ -46,7 +46,7 @@ import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,8 +88,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       }
     }
 
-    PsiManager manager = file.getManager();
-    return manager.isInProject(file) && !getClassesToImport(true).isEmpty();
+    return !getClassesToImport(true).isEmpty();
   }
 
   @Nullable
@@ -166,7 +165,6 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       classList = filtered;
     }
 
-    filterAlreadyImportedButUnresolved(classList);
     filerByPackageName(classList, file);
     return classList;
   }
@@ -291,6 +289,8 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
   public Result doFix(@NotNull final Editor editor, boolean allowPopup, final boolean allowCaretNearRef) {
     List<PsiClass> classesToImport = getClassesToImport();
+    //do not show popups for already imported classes when library is missing (show them for explicit action)
+    filterAlreadyImportedButUnresolved(classesToImport);
     if (classesToImport.isEmpty()) return Result.POPUP_NOT_SHOWN;
 
     try {
@@ -310,7 +310,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     if (classesToImport.size() > 1) {
       reduceSuggestedClassesBasedOnDependencyRuleViolation(psiFile, classesToImport);
     }
-    PsiClass[] classes = classesToImport.toArray(new PsiClass[classesToImport.size()]);
+    PsiClass[] classes = classesToImport.toArray(PsiClass.EMPTY_ARRAY);
     final Project project = myElement.getProject();
     CodeInsightUtil.sortIdenticalShortNamedMembers(classes, myRef);
 
@@ -428,7 +428,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     ApplicationManager.getApplication().runWriteAction(() -> {
       List<PsiClass> classesToImport = getClassesToImport(true);
-      PsiClass[] classes = classesToImport.toArray(new PsiClass[classesToImport.size()]);
+      PsiClass[] classes = classesToImport.toArray(PsiClass.EMPTY_ARRAY);
       if (classes.length == 0) return;
 
       AddImportAction action = createAddImportAction(classes, project, editor);

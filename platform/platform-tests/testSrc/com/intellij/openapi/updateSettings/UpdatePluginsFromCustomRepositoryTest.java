@@ -56,7 +56,7 @@ public class UpdatePluginsFromCustomRepositoryTest extends BareTestFixtureTestCa
   }
 
   private IdeaPluginDescriptor loadDescriptor(String filePath) throws InvalidDataException, FileNotFoundException, MalformedURLException {
-    String path = PlatformTestUtil.getCommunityPath() + "/platform/platform-tests/testData/updates/customRepositories/" + getTestName(true);
+    String path = PlatformTestUtil.getPlatformTestDataPath() + "updates/customRepositories/" + getTestName(true);
     File descriptorFile = new File(path, filePath);
     IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(descriptorFile.getParentFile());
     descriptor.readExternal(descriptorFile.toURI().toURL());

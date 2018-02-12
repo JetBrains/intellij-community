@@ -25,7 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -48,7 +48,6 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * Qualifies any names imported from that module by module name.
  * <br><small>
  * User: dcheryasov
- * Date: Sep 26, 2009 9:12:28 AM
  * </small>
  */
 public class ImportFromToImportIntention extends PyBaseIntentionAction {
@@ -240,7 +239,7 @@ public class ImportFromToImportIntention extends PyBaseIntentionAction {
         possible_targets.addAll(references.keySet());
         possible_targets.addAll(star_references);
       }
-      final Set<PsiElement> ignored = Sets.<PsiElement>newHashSet(Arrays.asList(info.myFromImportStatement.getImportElements()));
+      final Set<PsiElement> ignored = Sets.newHashSet(Arrays.asList(info.myFromImportStatement.getImportElements()));
       if (top_name != null && showConflicts(project, findDefinitions(top_name, possible_targets, ignored),
                                             top_name, info.myModuleName)) {
         return; // got conflicts

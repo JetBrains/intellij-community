@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 11-Mar-2008
- */
 package com.jetbrains.python.codeInsight.imports;
 
 import com.intellij.openapi.extensions.Extensions;
@@ -163,8 +159,7 @@ public final class PythonImportUtils {
   private static void addSymbolImportCandidates(PyElement node, String refText, @Nullable String asName, AutoImportQuickFix fix,
                                                 Set<String> seenCandidateNames, PsiFile existingImportFile) {
     Project project = node.getProject();
-    List<PsiElement> symbols = new ArrayList<>();
-    symbols.addAll(PyClassNameIndex.find(refText, project, true));
+    List<PsiElement> symbols = new ArrayList<>(PyClassNameIndex.find(refText, project, true));
     GlobalSearchScope scope = PyProjectScopeBuilder.excludeSdkTestsScope(node);
     if (!isQualifier(node)) {
       symbols.addAll(PyFunctionNameIndex.find(refText, project, scope));
@@ -236,22 +231,27 @@ public final class PythonImportUtils {
     return true;
   }
 
-  private static Collection<PsiElement> findImportableModules(PsiFile targetFile, String reftext, Project project, GlobalSearchScope scope) {
+  private static Collection<PsiElement> findImportableModules(PsiFile targetFile, String refText, Project project,
+                                                              GlobalSearchScope scope) {
     List<PsiElement> result = new ArrayList<>();
-    PsiFile[] files = FilenameIndex.getFilesByName(project, reftext + ".py", scope);
-    for (PsiFile file : files) {
-      if (isImportableModule(targetFile, file)) {
-        result.add(file);
+    // Add packages
+    FilenameIndex.processFilesByName(refText, true, item -> {
+      ProgressManager.checkCanceled();
+      final PsiDirectory candidatePackageDir = as(item, PsiDirectory.class);
+      if (candidatePackageDir != null && candidatePackageDir.findFile(PyNames.INIT_DOT_PY) != null) {
+        result.add(candidatePackageDir);
       }
-    }
-    // perhaps the module is a directory, not a file
-    PsiFile[] initFiles = FilenameIndex.getFilesByName(project, PyNames.INIT_DOT_PY, scope);
-    for (PsiFile initFile : initFiles) {
-      PsiDirectory parent = initFile.getParent();
-      if (parent != null && parent.getName().equals(reftext)) {
-        result.add(parent);
+      return true;
+    }, scope, project, null);
+    // Add modules
+    FilenameIndex.processFilesByName(refText + ".py", false, true, item -> {
+      ProgressManager.checkCanceled();
+      if (isImportableModule(targetFile, item)) {
+        result.add(item);
       }
-    }
+      return true;
+    }, scope, project, null);
+
     return result;
   }
 

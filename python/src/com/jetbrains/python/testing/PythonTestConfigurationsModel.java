@@ -22,17 +22,12 @@ import com.jetbrains.python.PyBundle;
 
 import java.util.List;
 
-/**
- * User: catherine
- */
 
 public class PythonTestConfigurationsModel extends CollectionComboBoxModel {
   public static final String PYTHONS_UNITTEST_NAME = PyBundle.message("runcfg.unittest.display_name");
-  public static final String PYTHONS_NOSETEST_NAME = PyBundle.message("runcfg.nosetests.display_name");
-  public static final String PY_TEST_NAME = PyBundle.message("runcfg.pytest.display_name");
 
   private String myTestRunner;
-  private Module myModule;
+  private final Module myModule;
 
   public PythonTestConfigurationsModel(final List items, final Object selection, Module module) {
     super(items, selection);

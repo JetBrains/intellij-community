@@ -27,7 +27,6 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -58,16 +57,13 @@ public class ScanSourceCommentsAction extends AnAction {
 
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        ProjectRootManager.getInstance(p).getFileIndex().iterateContent(new ContentIterator() {
-          @Override
-          public boolean processFile(VirtualFile fileOrDir) {
-            if (fileOrDir.isDirectory()) {
-              indicator.setText("Extracting comments");
-              indicator.setText2(fileOrDir.getPresentableUrl());
-            }
-            scanCommentsInFile(p, fileOrDir);
-            return true;
+        ProjectRootManager.getInstance(p).getFileIndex().iterateContent(fileOrDir -> {
+          if (fileOrDir.isDirectory()) {
+            indicator.setText("Extracting comments");
+            indicator.setText2(fileOrDir.getPresentableUrl());
           }
+          scanCommentsInFile(p, fileOrDir);
+          return true;
         });
 
         indicator.setText2("");

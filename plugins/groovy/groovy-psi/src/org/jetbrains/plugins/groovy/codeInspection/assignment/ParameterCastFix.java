@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
@@ -23,28 +11,32 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
+import org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitorHelper;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+
+import java.util.List;
 
 /**
  * @author Max Medvedev
  */
 public class ParameterCastFix extends GroovyFix {
-  private final GrExpression myArgument;
+  @NotNull
   private final PsiType myType;
+  @NotNull
   private final String myName;
+  private final int myPosition;
 
-  public ParameterCastFix(int param, @NotNull PsiType type, @NotNull GrExpression argument) {
-    myArgument = argument;
-    myType = PsiImplUtil.normalizeWildcardTypeByPosition(type, argument);
+  public ParameterCastFix(int position, @NotNull PsiType type) {
+    myType = type;
+    myPosition = position;
 
     StringBuilder builder = new StringBuilder();
     builder.append("Cast ");
 
-    builder.append(param + 1);
-    switch (param + 1) {
+    builder.append(position + 1);
+    switch (position + 1) {
       case 1:
         builder.append("st");
         break;
@@ -67,10 +59,14 @@ public class ParameterCastFix extends GroovyFix {
   @Override
   protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
     final PsiElement element = descriptor.getPsiElement();
-    final GrArgumentList list = element instanceof GrArgumentList ? (GrArgumentList)element :PsiUtil.getArgumentsList(element);
+    final GrArgumentList list = element instanceof GrArgumentList ? (GrArgumentList)element : PsiUtil.getArgumentsList(element);
     if (list == null) return;
 
-    GrCastFix.doCast(project, myType, myArgument);
+    List<GrExpression> callArguments = GroovyTypeCheckVisitorHelper.getExpressionArgumentsOfCall(list);
+    if (callArguments == null || myPosition >= callArguments.size()) return;
+    GrExpression expression = callArguments.get(myPosition);
+
+    GrCastFix.doSafeCast(project, myType, expression);
   }
 
   @NotNull
@@ -83,6 +79,6 @@ public class ParameterCastFix extends GroovyFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Add cast";
+    return "Add parameter cast";
   }
 }

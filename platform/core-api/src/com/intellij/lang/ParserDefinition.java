@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang;
 
 import com.intellij.lexer.Lexer;
@@ -66,7 +52,9 @@ public interface ParserDefinition {
    * @return the set of whitespace token types.
    */
   @NotNull
-  TokenSet getWhitespaceTokens();
+  default TokenSet getWhitespaceTokens() {
+    return TokenSet.WHITE_SPACE;
+  }
 
   /**
    * Returns the set of token types which are treated as comments by the PSI builder.
@@ -96,11 +84,11 @@ public interface ParserDefinition {
    * !!!WARNING!!! PSI element types should be unambiguously determined by AST node element types.
    * You can not produce different PSI elements from AST nodes of the same types (e.g. based on AST node content).
    * Typically, your code should be as simple as that:
-   * <code>
+   * <pre>{@code
    *   if (node.getElementType == MY_ELEMENT_TYPE) {
    *     return new MyPsiElement(node);
    *   }
-   * </code>
+   * }</pre>
    *
    * @param node the node for which the PSI element should be returned.
    * @return the PSI element matching the element type of the AST node.

@@ -274,7 +274,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
           each.setProcessed();
         }
 
-        execute(all.toArray(new Update[all.size()]));
+        execute(all.toArray(new Update[0]));
       }
       finally {
         myFlushing = false;
@@ -285,7 +285,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     };
 
     if (myExecuteInDispatchThread) {
-      UIUtil.invokeLaterIfNeeded(toRun);
+      UIUtil.invokeAndWaitIfNeeded(toRun);
     }
     else {
       toRun.run();

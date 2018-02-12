@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.slicer;
 
@@ -21,11 +9,11 @@ import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
  * @author cdr
  */
 public class SliceHandler implements CodeInsightActionHandler {
+  private static final Logger LOG = Logger.getInstance(SliceHandler.class);
   private final boolean myDataFlowToThis;
 
   public SliceHandler(boolean dataFlowToThis) {
@@ -49,6 +38,12 @@ public class SliceHandler implements CodeInsightActionHandler {
       return;
     }
 
+    if (!expression.isPhysical()) {
+      PsiFile expressionFile = expression.getContainingFile();
+      LOG.error("Analyzed entity should be physical. " +
+                "Analyzed element: " + expression.getText() + " (class = " + expression.getClass() + "), file = " + file +
+                " expression file = " + expressionFile + " (class = " + expressionFile.getClass() + ")");
+    }
     SliceManager sliceManager = SliceManager.getInstance(project);
     sliceManager.slice(expression,myDataFlowToThis, this);
   }
@@ -76,14 +71,13 @@ public class SliceHandler implements CodeInsightActionHandler {
   public SliceAnalysisParams askForParams(PsiElement element, boolean dataFlowToThis, SliceManager.StoredSettingsBean storedSettingsBean, String dialogTitle) {
     AnalysisScope analysisScope = new AnalysisScope(element.getContainingFile());
     Module module = ModuleUtilCore.findModuleForPsiElement(element);
-    String name = module == null ? null : module.getName();
 
     Project myProject = element.getProject();
     AnalysisUIOptions analysisUIOptions = new AnalysisUIOptions();
     analysisUIOptions.save(storedSettingsBean.analysisUIOptions);
 
     BaseAnalysisActionDialog dialog =
-      new BaseAnalysisActionDialog(dialogTitle, "Analyze scope", myProject, analysisScope, name, true, analysisUIOptions,
+      new BaseAnalysisActionDialog(dialogTitle, "Analyze scope", myProject, analysisScope, module, true, analysisUIOptions,
                                    element);
     if (!dialog.showAndGet()) {
       return null;

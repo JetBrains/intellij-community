@@ -47,6 +47,42 @@ public class CommandLineArgumentImpl extends CommandLineElement implements Comma
     return findChildByType(LITERAL_STARTS_FROM_SYMBOL);
   }
 
+  @Override
+  @Nullable
+  public PsiElement getSingleQSpacedLiteralStartsFromDigit() {
+    return findChildByType(SINGLE_Q_SPACED_LITERAL_STARTS_FROM_DIGIT);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getSingleQSpacedLiteralStartsFromLetter() {
+    return findChildByType(SINGLE_Q_SPACED_LITERAL_STARTS_FROM_LETTER);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getSingleQSpacedLiteralStartsFromSymbol() {
+    return findChildByType(SINGLE_Q_SPACED_LITERAL_STARTS_FROM_SYMBOL);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getSpacedLiteralStartsFromDigit() {
+    return findChildByType(SPACED_LITERAL_STARTS_FROM_DIGIT);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getSpacedLiteralStartsFromLetter() {
+    return findChildByType(SPACED_LITERAL_STARTS_FROM_LETTER);
+  }
+
+  @Override
+  @Nullable
+  public PsiElement getSpacedLiteralStartsFromSymbol() {
+    return findChildByType(SPACED_LITERAL_STARTS_FROM_SYMBOL);
+  }
+
   @Nullable
   public Option findOptionForOptionArgument() {
     return CommandLinePsiImplUtils.findOptionForOptionArgument(this);
@@ -60,6 +96,11 @@ public class CommandLineArgumentImpl extends CommandLineElement implements Comma
   @Nullable
   public Help findBestHelp() {
     return CommandLinePsiImplUtils.findBestHelp(this);
+  }
+
+  @NotNull
+  public String getValueNoQuotes() {
+    return CommandLinePsiImplUtils.getValueNoQuotes(this);
   }
 
 }

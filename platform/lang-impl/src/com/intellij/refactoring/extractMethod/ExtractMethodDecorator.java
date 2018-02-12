@@ -15,11 +15,12 @@
  */
 package com.intellij.refactoring.extractMethod;
 
-import com.intellij.refactoring.util.AbstractVariableData;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author oleg
  */
-public interface ExtractMethodDecorator {
-  String createMethodSignature(String methodName, AbstractVariableData[] variableDatas);
+public interface ExtractMethodDecorator<T> {
+  String createMethodSignature(@NotNull ExtractMethodSettings<T> settings);
+
 }

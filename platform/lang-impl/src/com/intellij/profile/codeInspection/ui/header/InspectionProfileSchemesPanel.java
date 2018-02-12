@@ -18,24 +18,28 @@ package com.intellij.profile.codeInspection.ui.header;
 import com.intellij.application.options.schemes.AbstractDescriptionAwareSchemesPanel;
 import com.intellij.application.options.schemes.AbstractSchemeActions;
 import com.intellij.application.options.schemes.DescriptionAwareSchemeActions;
-import com.intellij.application.options.schemes.SchemeNameGenerator;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
-import com.intellij.util.JdomKt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -44,13 +48,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.intellij.openapi.util.io.FileUtil.sanitizeFileName;
+import static com.intellij.util.JdomKt.loadElement;
 
 public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchemesPanel<InspectionProfileModifiableModel> {
   private final static Logger LOG = Logger.getInstance(InspectionProfileSchemesPanel.class);
@@ -111,6 +115,11 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
   }
 
   @Override
+  protected boolean hideDeleteActionIfUnavailable() {
+    return false;
+  }
+
+  @Override
   protected AbstractSchemeActions<InspectionProfileModifiableModel> createSchemeActions() {
     return new DescriptionAwareSchemeActions<InspectionProfileModifiableModel>(this) {
       @Nullable
@@ -140,15 +149,18 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
         descriptor.setDescription("Choose profile file");
         FileChooser.chooseFile(descriptor, myProject, null, file -> {
           if (file != null) {
-            final InspectionProfileImpl profile;
             try {
-              profile = InspectionToolsConfigurable
-                .importInspectionProfile(JDOMUtil.load(file.getInputStream()), myAppProfileManager, myProject);
+              InspectionProfileImpl profile = importInspectionProfile(loadElement(file.getInputStream()), myAppProfileManager, myProject);
+              if (profile == null) {
+                Messages.showErrorDialog(myProject, "File '" + file.getName() + "' has invalid format.", "Inspection Settings");
+                return;
+              }
               final SingleInspectionProfilePanel existed = InspectionProfileSchemesPanel.this.getModel().getProfilePanel(profile);
               if (existed != null) {
-                if (Messages.showOkCancelDialog(myProject, "Profile with name \'" +
-                                                           profile.getName() +
-                                                           "\' already exists. Do you want to overwrite it?", "Warning",
+                if (Messages.showOkCancelDialog(myProject, "Profile with name \'" + profile.getName() +
+                                                           "\' already exists. Do you want to overwrite it?",
+                                                "Overwrite Warning",
+                                                "Overwrite", "Cancel",
                                                 Messages.getInformationIcon()) != Messages.OK) {
                   return;
                 }
@@ -181,30 +193,6 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
       }
 
       @Override
-      protected void exportScheme(@NotNull InspectionProfileModifiableModel scheme, @NotNull String exporterName) {
-        FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-        descriptor.setDescription("Choose directory to store profile file");
-        FileChooser.chooseFile(descriptor, myProject, null, dir -> {
-          try {
-            LOG.assertTrue(true);
-            Element element = scheme.writeScheme(false);
-            Path file = Paths.get(dir.getPath(), sanitizeFileName(scheme.getName()) + ".xml");
-            if (Files.isRegularFile(file.toAbsolutePath()) &&
-                Messages.showOkCancelDialog(myProject, "File \'" + file + "\' already exist. Do you want to overwrite it?", "Warning",
-                                            Messages.getQuestionIcon()) != Messages.OK) {
-              return;
-            }
-
-            JdomKt.write(element, file);
-          }
-          catch (IOException e1) {
-            LOG.error(e1);
-          }
-        });
-
-      }
-
-      @Override
       protected void onSchemeChanged(@Nullable InspectionProfileModifiableModel scheme) {
         super.onSchemeChanged(scheme);
         if (scheme != null) {
@@ -233,11 +221,14 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
       }
 
       private void copyToAnotherLevel(InspectionProfileModifiableModel profile, boolean copyToProject) {
-        String name = SchemeNameGenerator.getUniqueName(profile.getName(), schemeName -> ((InspectionProfileSchemesModel)getModel()).hasName(schemeName, copyToProject));
-        final InspectionProfileModifiableModel newProfile = copyToNewProfile(profile, myProject, name, true);
-        addProfile(newProfile);
-        selectScheme(newProfile);
-        getSchemesPanel().startEdit();
+        getSchemesPanel().editNewSchemeName(
+          profile.getName(),
+          copyToProject,
+          newName -> {
+            final InspectionProfileModifiableModel newProfile = copyToNewProfile(profile, myProject, newName, true);
+            addProfile(newProfile);
+            selectScheme(newProfile);
+          });
       }
     };
   }
@@ -292,5 +283,68 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
   @Override
   protected JComponent getConfigurableFocusComponent() {
     return myConfigurable.getPreferredFocusedComponent();
+  }
+
+  @Nullable("returns null if xml has invalid format")
+  public static InspectionProfileImpl importInspectionProfile(@NotNull Element rootElement,
+                                                              @NotNull BaseInspectionProfileManager profileManager,
+                                                              @NotNull Project project) {
+    if (Comparing.strEqual(rootElement.getName(), "component")) {
+      //import right from .idea/inspectProfiles/xxx.xml
+      rootElement = rootElement.getChildren().get(0);
+    }
+
+    String profileName = getProfileName(rootElement);
+    if (profileName == null) return null;
+
+    InspectionProfileImpl profile = new InspectionProfileImpl(profileName, InspectionToolRegistrar.getInstance(), profileManager);
+    final Set<String> levels = new HashSet<>();
+    for (Element inspectElement : rootElement.getChildren("inspection_tool")) {
+      ContainerUtil.addAllNotNull(levels, inspectElement.getAttributeValue("level"));
+      for (Element s : inspectElement.getChildren("scope")) {
+        ContainerUtil.addAllNotNull(levels, s.getAttributeValue("level"));
+      }
+    }
+    for (Iterator<String> iterator = levels.iterator(); iterator.hasNext(); ) {
+      String level = iterator.next();
+      if (profileManager.getOwnSeverityRegistrar().getSeverity(level) != null) {
+        iterator.remove();
+      }
+    }
+    if (!levels.isEmpty()) {
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        if (Messages.showYesNoDialog(project, "Undefined severities detected: " +
+                                              StringUtil.join(levels, ", ") +
+                                              ". Do you want to create them?", "Warning", Messages.getWarningIcon()) ==
+            Messages.YES) {
+          for (String level : levels) {
+            final TextAttributes textAttributes = CodeInsightColors.WARNINGS_ATTRIBUTES.getDefaultAttributes();
+            HighlightInfoType.HighlightInfoTypeImpl info =
+              new HighlightInfoType.HighlightInfoTypeImpl(new HighlightSeverity(level, 50),
+                                                          TextAttributesKey
+                                                            .createTextAttributesKey(level));
+            profileManager.getOwnSeverityRegistrar()
+              .registerSeverity(new SeverityRegistrar.SeverityBasedTextAttributes(textAttributes.clone(), info),
+                                textAttributes.getErrorStripeColor());
+          }
+        }
+      } else {
+        throw new AssertionError("All of levels must exist in unit-test mode, but actual not exist levels = " + levels);
+      }
+    }
+    profile.readExternal(rootElement);
+    profile.setProjectLevel(false);
+    profile.initInspectionTools(project);
+    return profile;
+  }
+
+  private static String getProfileName(Element rootElement) {
+    for (Element option : rootElement.getChildren("option")) {
+      String optionName = option.getAttributeValue("name");
+      if (optionName.equals("myName")) {
+        return option.getAttributeValue("value");
+      }
+    }
+    return null;
   }
 }

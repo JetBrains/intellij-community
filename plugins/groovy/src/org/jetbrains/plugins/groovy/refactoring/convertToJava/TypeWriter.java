@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnonymousClassType;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 /**
@@ -61,10 +47,6 @@ public class TypeWriter extends PsiTypeVisitor<Object> {
     if (type instanceof PsiPrimitiveType) {
       builder.append(type.getCanonicalText());
       return;
-    }
-
-    if (type instanceof GrAnonymousClassType) {
-      type = ((GrAnonymousClassType)type).getSimpleClassType();
     }
 
     final boolean acceptEllipsis = isLastParameter(context);
@@ -119,6 +101,9 @@ public class TypeWriter extends PsiTypeVisitor<Object> {
     final PsiClass psiClass = classType.resolve();
     if (psiClass == null) {
       builder.append(classType.getClassName());
+    }
+    else if (psiClass instanceof GrAnonymousClassDefinition) {
+      visitClassType(((GrAnonymousClassDefinition)psiClass).getBaseClassType());
     }
     else {
       final String qname = classNameProvider.getQualifiedClassName(psiClass, context);

@@ -27,31 +27,31 @@ import org.jetbrains.annotations.NotNull;
  */
 public class JavaFxCoercingTest extends AbstractJavaFXTestCase {
 
-  public void testReferencedTag() throws Exception {
+  public void testReferencedTag() {
     doTest();
   }
 
-  public void testInvalidInteger() throws Exception {
+  public void testInvalidInteger() {
     doTest();
   }
 
-  public void testInvalidDouble() throws Exception {
+  public void testInvalidDouble() {
     doTest();
   }
 
-  public void testRootTagSubtagsCoercing() throws Exception {
+  public void testRootTagSubtagsCoercing() {
     doTest();
   }
 
-  public void testFactoryCoercing() throws Exception {
+  public void testFactoryCoercing() {
     doTest();
   }
 
-  public void testPrimitiveCoercing() throws Exception {
+  public void testPrimitiveCoercing() {
     doTest();
   }
 
-  private void doTest() throws Exception {
+  private void doTest() {
     myFixture.testHighlighting(false, false, false, getTestName(true) + ".fxml");
   }
 

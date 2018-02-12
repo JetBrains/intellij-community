@@ -15,7 +15,7 @@
  */
 package com.intellij.terminal;
 
-import com.google.common.base.Predicate;
+import com.intellij.execution.filters.ConsoleFilterProvider;
 import com.intellij.execution.filters.Filter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
@@ -70,6 +70,12 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
     setName("terminal");
 
     Disposer.register(parent, this);
+
+    for (ConsoleFilterProvider eachProvider : ConsoleFilterProvider.FILTER_PROVIDERS.getExtensions()) {
+      for (Filter filter: eachProvider.getDefaultFilters(project)) {
+        addMessageFilter(project, filter);
+      }
+    }
   }
 
   @Override
@@ -122,16 +128,13 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
     List<TerminalAction> actions = super.getActions();
     if (!mySettingsProvider.overrideIdeShortcuts()) {
       actions
-        .add(new TerminalAction("EditorEscape", new KeyStroke[]{KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)}, new Predicate<KeyEvent>() {
-          @Override
-          public boolean apply(KeyEvent input) {
-            if (!myTerminalPanel.getTerminalTextBuffer().isUsingAlternateBuffer()) {
-              ToolWindowManager.getInstance(myProject).activateEditorComponent();
-              return true;
-            }
-            else {
-              return false;
-            }
+        .add(new TerminalAction("EditorEscape", new KeyStroke[]{KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)}, input -> {
+          if (!myTerminalPanel.getTerminalTextBuffer().isUsingAlternateBuffer()) {
+            ToolWindowManager.getInstance(myProject).activateEditorComponent();
+            return true;
+          }
+          else {
+            return false;
           }
         }).withHidden(true));
     }

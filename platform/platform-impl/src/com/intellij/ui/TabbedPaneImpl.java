@@ -149,7 +149,7 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
   }
 
   /**
-   * Scrolls tab to visible area. If tabbed pane has <code>JTabbedPane.WRAP_TAB_LAYOUT</code> layout policy then
+   * Scrolls tab to visible area. If tabbed pane has {@code JTabbedPane.WRAP_TAB_LAYOUT} layout policy then
    * the method does nothing.
    * @param index index of tab to be scrolled.
    */
@@ -290,7 +290,7 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
     }
 
     /**
-     * @return value of <code>leadingTabIndex</code> field of BasicTabbedPaneUI.ScrollableTabSupport class.
+     * @return value of {@code leadingTabIndex} field of BasicTabbedPaneUI.ScrollableTabSupport class.
      */
     public int getLeadingTabIndex() {
       try {

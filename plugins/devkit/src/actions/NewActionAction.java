@@ -15,6 +15,12 @@
  */
 package org.jetbrains.idea.devkit.actions;
 
+import com.intellij.ide.actions.CreateElementActionBase;
+import com.intellij.ide.actions.CreateTemplateInPackageAction;
+import com.intellij.ide.actions.JavaCreateTemplateInPackageAction;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiClass;
@@ -22,49 +28,97 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.util.ActionType;
+import org.jetbrains.idea.devkit.util.DescriptorUtil;
+import org.jetbrains.idea.devkit.util.PsiUtil;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
-/**
- * @author yole
- */
-public class NewActionAction extends GeneratePluginClassAction {
+public class NewActionAction extends CreateElementActionBase implements DescriptorUtil.Patcher {
+  // length == 1 is important to make MyInputValidator close the dialog when
+  // module selection is canceled. That's some weird interface actually...
+  private static final PsiClass[] CANCELED = new PsiClass[1];
+
   private NewActionDialog myDialog;
+  private XmlFile pluginDescriptorToPatch;
 
   public NewActionAction() {
     super(DevKitBundle.message("new.menu.action.text"), DevKitBundle.message("new.menu.action.description"), null);
   }
 
-  protected PsiElement[] invokeDialogImpl(Project project, PsiDirectory directory) {
+  @NotNull
+  @Override
+  protected final PsiElement[] invokeDialog(Project project, PsiDirectory directory) {
+    PsiElement[] psiElements = doInvokeDialog(project, directory);
+    return psiElements == CANCELED ? PsiElement.EMPTY_ARRAY : psiElements;
+  }
+
+  private PsiElement[] doInvokeDialog(Project project, PsiDirectory directory) {
     myDialog = new NewActionDialog(project);
-    myDialog.show();
-    if (myDialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-      final MyInputValidator validator = new MyInputValidator(project, directory);
-      // this actually runs the action to create the class from template
-      validator.canClose(myDialog.getActionName());
+    try {
+      myDialog.show();
+      if (myDialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+        pluginDescriptorToPatch = DevkitActionsUtil.choosePluginModuleDescriptor(directory);
+        if (pluginDescriptorToPatch != null) {
+          MyInputValidator validator = new MyInputValidator(project, directory);
+          // this actually runs the action to create the class from template
+          validator.canClose(myDialog.getActionName());
+          return validator.getCreatedElements();
+        }
+      }
+      return PsiElement.EMPTY_ARRAY;
+    } finally {
       myDialog = null;
-      return validator.getCreatedElements();
+      pluginDescriptorToPatch = null;
     }
-    myDialog = null;
-    return PsiElement.EMPTY_ARRAY;
   }
 
-  protected String getClassTemplateName() {
-    return "Action.java";
+  @Override
+  protected boolean isAvailable(DataContext dataContext) {
+    if (!super.isAvailable(dataContext)) {
+      return false;
+    }
+
+    Module module = dataContext.getData(LangDataKeys.MODULE);
+    if (module == null || !PsiUtil.isPluginModule(module)) {
+      return false;
+    }
+
+    return CreateTemplateInPackageAction.isAvailable(dataContext, JavaModuleSourceRootTypes.SOURCES,
+                                                     JavaCreateTemplateInPackageAction::doCheckPackageExists);
   }
 
-  public void patchPluginXml(final XmlFile pluginXml, final PsiClass klass) throws IncorrectOperationException {
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @NotNull
+  @Override
+  protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
+    PsiClass createdClass = DevkitActionsUtil.createSingleClass(newName, "Action.java", directory);
+    DescriptorUtil.patchPluginXml(this, createdClass, pluginDescriptorToPatch);
+    return new PsiElement[]{createdClass};
+  }
+
+
+  @Override
+  public void patchPluginXml(XmlFile pluginXml, PsiClass klass) throws IncorrectOperationException {
     ActionType.ACTION.patchPluginXml(pluginXml, klass, myDialog);
   }
 
+  @Override
   protected String getErrorTitle() {
     return DevKitBundle.message("new.action.error");
   }
 
+  @Override
   protected String getCommandName() {
     return DevKitBundle.message("new.action.command");
   }
 
+  @Override
   protected String getActionName(PsiDirectory directory, String newName) {
     return DevKitBundle.message("new.action.action.name", directory, newName);
   }

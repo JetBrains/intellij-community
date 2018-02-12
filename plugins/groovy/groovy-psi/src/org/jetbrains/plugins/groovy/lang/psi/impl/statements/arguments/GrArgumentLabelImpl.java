@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments;
 
@@ -33,6 +19,7 @@ import org.jetbrains.plugins.groovy.extensions.NamedArgumentUtilKt;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -187,12 +174,6 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     return new TextRange(0, getTextLength());
   }
 
-  @Override
-  @Nullable
-  public PsiElement resolve() {
-    return advancedResolve().getElement();
-  }
-
   @NotNull
   @Override
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
@@ -206,7 +187,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
         ResolveResult result = results[i];
         final PsiElement element = result.getElement();
         if (element == null) {
-          results1[i] = GroovyResolveResult.EMPTY_RESULT;
+          results1[i] = EmptyGroovyResolveResult.INSTANCE;
         }
         else {
           results1[i] = new GroovyResolveResultImpl(element, true);
@@ -214,12 +195,6 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
       }
       return results1;
     }
-  }
-
-  @NotNull
-  @Override
-  public GroovyResolveResult advancedResolve() {
-    return PsiImplUtil.extractUniqueResult(multiResolve(false));
   }
 
   @Override

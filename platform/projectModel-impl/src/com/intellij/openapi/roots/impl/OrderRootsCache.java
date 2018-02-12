@@ -16,61 +16,79 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author nik
  */
-public class OrderRootsCache {
-  private final Map<CacheKey, VirtualFilePointerContainer> myRoots = ContainerUtil.newConcurrentMap();
+class OrderRootsCache {
+  private final AtomicReference<Map<CacheKey, VirtualFilePointerContainer>> myRoots = new AtomicReference<>();
   private final Disposable myParentDisposable;
+  private Disposable myRootsDisposable; // accessed in EDT
 
-  public OrderRootsCache(@NotNull Disposable parentDisposable) {
+  OrderRootsCache(@NotNull Disposable parentDisposable) {
     myParentDisposable = parentDisposable;
+    disposePointers();
   }
 
-  public VirtualFilePointerContainer setCachedRoots(OrderRootType rootType, int flags, Collection<String> urls) {
-    final VirtualFilePointerContainer container = VirtualFilePointerManager.getInstance().createContainer(myParentDisposable);
+  private void disposePointers() {
+    if (myRootsDisposable != null) {
+      Disposer.dispose(myRootsDisposable);
+    }
+    if (!Disposer.isDisposing(myParentDisposable)) {
+      Disposer.register(myParentDisposable, myRootsDisposable = Disposer.newDisposable());
+    }
+  }
+
+  VirtualFilePointerContainer setCachedRoots(@NotNull OrderRootType rootType, int flags, @NotNull Collection<String> urls) {
+    final VirtualFilePointerContainer container = VirtualFilePointerManager.getInstance().createContainer(myRootsDisposable);
     for (String url : urls) {
       container.add(url);
     }
-    myRoots.put(new CacheKey(rootType, flags), container);
+    Map<CacheKey, VirtualFilePointerContainer> map = myRoots.get();
+    if (map == null) map = ConcurrencyUtil.cacheOrGet(myRoots, ContainerUtil.newConcurrentMap());
+    map.put(new CacheKey(rootType, flags), container);
     return container;
   }
 
   @Nullable
-  public VirtualFile[] getCachedRoots(OrderRootType rootType, int flags) {
-    final VirtualFilePointerContainer cached = myRoots.get(new CacheKey(rootType, flags));
+  public VirtualFile[] getCachedRoots(@NotNull OrderRootType rootType, int flags) {
+    Map<CacheKey, VirtualFilePointerContainer> map = myRoots.get();
+    final VirtualFilePointerContainer cached = map == null ? null : map.get(new CacheKey(rootType, flags));
     return cached == null ? null : cached.getFiles();
   }
 
   @Nullable
-  public String[] getCachedUrls(OrderRootType rootType, int flags) {
-    final VirtualFilePointerContainer cached = myRoots.get(new CacheKey(rootType, flags));
+  public String[] getCachedUrls(@NotNull OrderRootType rootType, int flags) {
+    Map<CacheKey, VirtualFilePointerContainer> map = myRoots.get();
+    final VirtualFilePointerContainer cached = map == null ? null : map.get(new CacheKey(rootType, flags));
     return cached != null ? cached.getUrls() : null;
   }
 
   public void clearCache() {
-    for (VirtualFilePointerContainer container : myRoots.values()) {
-      container.killAll();
-    }
-    myRoots.clear();
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    disposePointers();
+    myRoots.set(null);
   }
 
   private static final class CacheKey {
     private final OrderRootType myRootType;
     private final int myFlags;
 
-    private CacheKey(OrderRootType rootType, int flags) {
+    private CacheKey(@NotNull OrderRootType rootType, int flags) {
       myRootType = rootType;
       myFlags = flags;
     }

@@ -17,7 +17,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
@@ -73,27 +72,20 @@ public class HgRunConflictResolverDialog extends DialogWrapper {
     VirtualFile repo = repositorySelector.getRepository().getRoot();
     HgResolveCommand command = new HgResolveCommand(project);
     final ModalityState modalityState = ApplicationManager.getApplication().getModalityStateForComponent(getRootPane());
-    command.getListAsynchronously(repo, new Consumer<Map<HgFile, HgResolveStatusEnum>>() {
-      @Override
-      public void consume(Map<HgFile, HgResolveStatusEnum> status) {
-        final DefaultListModel model = new DefaultListModel();
-        for (Map.Entry<HgFile, HgResolveStatusEnum> entry : status.entrySet()) {
-          if (entry.getValue() == HgResolveStatusEnum.UNRESOLVED) {
-            model.addElement(entry.getKey().getRelativePath());
-          }
+    command.getListAsynchronously(repo, status -> {
+      final DefaultListModel model = new DefaultListModel();
+      for (Map.Entry<HgFile, HgResolveStatusEnum> entry : status.entrySet()) {
+        if (entry.getValue() == HgResolveStatusEnum.UNRESOLVED) {
+          model.addElement(entry.getKey().getRelativePath());
         }
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-
-          @Override
-          public void run() {
-            setOKActionEnabled(!model.isEmpty());
-            if (model.isEmpty()) {
-              model.addElement("No conflicts to resolve");
-            }
-            conflictsList.setModel(model);
-          }
-        }, modalityState);
       }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        setOKActionEnabled(!model.isEmpty());
+        if (model.isEmpty()) {
+          model.addElement("No conflicts to resolve");
+        }
+        conflictsList.setModel(model);
+      }, modalityState);
     });
   }
 }

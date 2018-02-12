@@ -1,7 +1,10 @@
 try:
     from PySide import QtCore
 except:
-    from PyQt4 import QtCore
+    try:
+        from PyQt4 import QtCore
+    except:
+        from PyQt5 import QtCore
 
 class TestObject(QtCore.QObject):
     """
@@ -17,11 +20,12 @@ class TestObject(QtCore.QObject):
 class TestThread(QtCore.QThread):
 
     def run(self):
-        QtCore.QThread.sleep(2)
+        QtCore.QThread.sleep(4)
         print('Done sleeping')
 
 def on_start():
-    print('On start called')
+    print('On start called1')
+    print('On start called2')
 
 app = QtCore.QCoreApplication([])
 some_thread = TestThread()

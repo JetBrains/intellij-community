@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.Collection;
@@ -30,8 +31,8 @@ import java.util.List;
 public abstract class DevkitRelatedLineMarkerProviderBase extends RelatedItemLineMarkerProvider {
 
   @Override
-  public void collectNavigationMarkers(List<PsiElement> elements,
-                                       Collection<? super RelatedItemLineMarkerInfo> result,
+  public void collectNavigationMarkers(@NotNull List<PsiElement> elements,
+                                       @NotNull Collection<? super RelatedItemLineMarkerInfo> result,
                                        boolean forNavigation) {
     final PsiElement psiElement = ContainerUtil.getFirstItem(elements);
     if (psiElement == null ||

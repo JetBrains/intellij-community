@@ -27,9 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
 
 import java.io.IOException;
 
-/**
- * Created by Max Medvedev on 11/29/13
- */
 public class GrImportStatementElementType extends GrStubElementType<GrImportStatementStub, GrImportStatement> {
 
   public GrImportStatementElementType(String debugName) {

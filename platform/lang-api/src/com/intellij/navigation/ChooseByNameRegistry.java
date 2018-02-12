@@ -17,20 +17,17 @@ package com.intellij.navigation;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.util.containers.ContainerUtil;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Collections;
 
 /**
  * Registry of components which contribute items to "Goto Class" and "Goto Symbol" lists.
  */
 
 public class ChooseByNameRegistry {
-  private final List<ChooseByNameContributor> myGotoClassContributors = new ArrayList<>();
-  private final List<ChooseByNameContributor> myGotoSymbolContributors = new ArrayList<>();
-  private boolean myGotoClassExtensionsLoaded = false;
-  private boolean myGotoSymbolExtensionsLoaded = false;
+  private final List<ChooseByNameContributor> myGotoSymbolContributors = ContainerUtil.createLockFreeCopyOnWriteList();
 
   /**
    * Returns the singleton instance of the registry.
@@ -42,35 +39,13 @@ public class ChooseByNameRegistry {
   }
 
   /**
-   * Registers a component which contributes items to the "Goto Class" list.
-   *
-   * @param contributor the contributor instance.
-   * @see #removeContributor(ChooseByNameContributor)
-   * @deprecated use {@link com.intellij.navigation.ChooseByNameContributor#CLASS_EP_NAME} extension point instead
-   */
-  public void contributeToClasses(ChooseByNameContributor contributor) {
-    myGotoClassContributors.add(contributor);
-  }
-
-  /**
    * Registers a component which contributes items to the "Goto Symbol" list.
    *
    * @param contributor the contributor instance.
-   * @see #removeContributor(ChooseByNameContributor)
    * @deprecated use {@link com.intellij.navigation.ChooseByNameContributor#SYMBOL_EP_NAME} extension point instead
    */
   public void contributeToSymbols(ChooseByNameContributor contributor) {
     myGotoSymbolContributors.add(contributor);
-  }
-
-  /**
-   * Unregisters a contributor for "Goto Class" and "Goto Symbol" lists.
-   *
-   * @param contributor the contributor instance.
-   */
-  public void removeContributor(ChooseByNameContributor contributor) {
-    myGotoClassContributors.remove(contributor);
-    myGotoSymbolContributors.remove(contributor);
   }
 
   /**
@@ -79,11 +54,7 @@ public class ChooseByNameRegistry {
    * @return the array of contributors.
    */
   public ChooseByNameContributor[] getClassModelContributors() {
-    if (!myGotoClassExtensionsLoaded) {
-      myGotoClassExtensionsLoaded = true;
-      Collections.addAll(myGotoClassContributors, Extensions.getExtensions(ChooseByNameContributor.CLASS_EP_NAME));
-    }
-    return myGotoClassContributors.toArray(new ChooseByNameContributor[myGotoClassContributors.size()]);
+    return Extensions.getExtensions(ChooseByNameContributor.CLASS_EP_NAME);
   }
 
   /**
@@ -92,11 +63,13 @@ public class ChooseByNameRegistry {
    * @return the array of contributors.
    */
   public ChooseByNameContributor[] getSymbolModelContributors() {
-    if (!myGotoSymbolExtensionsLoaded) {
-      myGotoSymbolExtensionsLoaded = true;
-      Collections.addAll(myGotoSymbolContributors, Extensions.getExtensions(ChooseByNameContributor.SYMBOL_EP_NAME));
+    ChooseByNameContributor[] extensions = Extensions.getExtensions(ChooseByNameContributor.SYMBOL_EP_NAME);
+    if (myGotoSymbolContributors.isEmpty()) {
+      return extensions;
     }
-    return myGotoSymbolContributors.toArray(new ChooseByNameContributor[myGotoSymbolContributors.size()]);
+
+    List<ChooseByNameContributor> concat = ContainerUtil.concat(myGotoSymbolContributors, Arrays.asList(extensions));
+    return concat.toArray(new ChooseByNameContributor[0]);
   }
 
 }

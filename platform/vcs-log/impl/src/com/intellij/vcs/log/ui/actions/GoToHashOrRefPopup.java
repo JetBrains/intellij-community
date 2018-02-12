@@ -46,7 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.Collection;
 import java.util.Comparator;
@@ -66,9 +65,9 @@ public class GoToHashOrRefPopup {
   @Nullable private Future myFuture;
   @Nullable private VcsRef mySelectedRef;
 
-  public GoToHashOrRefPopup(@NotNull final Project project,
+  public GoToHashOrRefPopup(@NotNull Project project,
                             @NotNull VcsLogRefs variants,
-                            Collection<VirtualFile> roots,
+                            @NotNull Collection<VirtualFile> roots,
                             @NotNull Function<String, Future> onSelectedHash,
                             @NotNull Function<VcsRef, Future> onSelectedRef,
                             @NotNull VcsLogColorManager colorManager,
@@ -112,7 +111,7 @@ public class GoToHashOrRefPopup {
     panel.setLayout(layout);
     panel.add(label);
     panel.add(myTextField);
-    panel.setBorder(new EmptyBorder(2, 2, 2, 2));
+    panel.setBorder(JBUI.Borders.empty(2));
 
     myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, myTextField.getPreferableFocusComponent())
       .setCancelOnClickOutside(true).setCancelOnWindowDeactivation(true).setCancelKeyEnabled(true).setRequestFocus(true).createPopup();
@@ -226,10 +225,8 @@ public class GoToHashOrRefPopup {
     public LookupElementBuilder createLookupBuilder(@NotNull VcsRef item) {
       LookupElementBuilder lookupBuilder = super.createLookupBuilder(item);
       if (myColorManager.isMultipleRoots()) {
-        lookupBuilder = lookupBuilder
-          .withTypeText(getTypeText(item),
-                        JBUI.scale(new ColorIcon(15, VcsLogGraphTable.getRootBackgroundColor(item.getRoot(), myColorManager))),
-                        true);
+        ColorIcon icon = JBUI.scale(new ColorIcon(15, VcsLogGraphTable.getRootBackgroundColor(item.getRoot(), myColorManager)));
+        lookupBuilder = lookupBuilder.withTypeText(getTypeText(item), icon, true).withTypeIconRightAligned(true);
       }
       return lookupBuilder;
     }

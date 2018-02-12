@@ -1,7 +1,3 @@
-/*
- * User: anna
- * Date: 08-Aug-2008
- */
 package com.intellij.refactoring.typeMigration.rules;
 
 import com.intellij.openapi.util.Pair;
@@ -151,7 +147,7 @@ public class ListArrayConversionRule extends TypeConversionRule {
                                                                        PsiArrayType arrayType) {
     @NonNls final String methodName = method.getName();
     if (methodName.equals("toArray")) {
-      if (method.getParameterList().getParameters().length == 0) {
+      if (method.getParameterList().isEmpty()) {
         return new TypeConversionDescriptor("$qualifier$.toArray()", "$qualifier$");
       }
       return new TypeConversionDescriptor("$qualifier$.toArray($expr$)", "$qualifier$");

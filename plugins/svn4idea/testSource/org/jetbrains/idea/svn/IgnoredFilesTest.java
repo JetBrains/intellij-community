@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ public class IgnoredFilesTest extends Svn17TestCase {
         myClientRoot = new File(myTempDirFixture.getTempDirPath(), "clientroot");
         myClientRoot.mkdir();
 
-        initProject(myClientRoot, IgnoredFilesTest.this.getTestName());
+        initProject(myClientRoot, this.getTestName());
 
         ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivities();
 
@@ -83,7 +83,7 @@ public class IgnoredFilesTest extends Svn17TestCase {
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         myVcsManager.unregisterVcs(myVcs);
@@ -123,7 +123,7 @@ public class IgnoredFilesTest extends Svn17TestCase {
 
   private void dirty() {
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    myChangeListManager.scheduleUpdate(true);
+    myChangeListManager.scheduleUpdate();
     myChangeListManager.ensureUpToDate(false);
   }
 

@@ -1,6 +1,5 @@
 /*
- * User: anna
- * Date: 13-Feb-2008
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.coverage;
 
@@ -20,11 +19,16 @@ public abstract class CoverageRunner {
 
   public abstract String getPresentableName();
 
-  @NonNls
+  @NotNull
   public abstract String getId();
 
   @NonNls
   public abstract String getDataFileExtension();
+
+  @NonNls
+  public String[] getDataFileExtensions() {
+    return new String[]{getDataFileExtension()};
+  }
 
   public abstract boolean acceptsCoverageEngine(@NotNull final CoverageEngine engine);
 

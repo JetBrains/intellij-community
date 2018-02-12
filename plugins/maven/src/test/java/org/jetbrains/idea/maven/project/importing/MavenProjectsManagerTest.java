@@ -34,7 +34,6 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -47,7 +46,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     getMavenImporterSettings().setImportAutomatically(true);
   }
 
-  public void testShouldReturnNullForUnprocessedFiles() throws Exception {
+  public void testShouldReturnNullForUnprocessedFiles() {
     // this pom file doesn't belong to any of the modules, this is won't be processed
     // by MavenProjectProjectsManager and won't occur in its projects list.
     createProjectPom("<groupId>test</groupId>" +
@@ -58,7 +57,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertNull(myProjectsManager.findProject(myProjectPom));
   }
 
-  public void testUpdatingProjectsWhenAbsentManagedProjectFileAppears() throws Exception {
+  public void testUpdatingProjectsWhenAbsentManagedProjectFileAppears() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>parent</artifactId>" +
                   "<version>1</version>" +
@@ -92,7 +91,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertEquals(1, myProjectsTree.getRootProjects().size());
   }
 
-  public void testUpdatingProjectsWhenRenaming() throws Exception {
+  public void testUpdatingProjectsWhenRenaming() {
     VirtualFile p1 = createModulePom("project1",
                                      "<groupId>test</groupId>" +
                                      "<artifactId>project1</artifactId>" +
@@ -123,7 +122,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertEquals(2, myProjectsTree.getRootProjects().size());
   }
 
-  public void testUpdatingProjectsWhenMoving() throws Exception {
+  public void testUpdatingProjectsWhenMoving() {
     VirtualFile p1 = createModulePom("project1",
                                      "<groupId>test</groupId>" +
                                      "<artifactId>project1</artifactId>" +
@@ -157,7 +156,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertEquals(2, myProjectsTree.getRootProjects().size());
   }
 
-  public void testUpdatingProjectsWhenMovingModuleFile() throws Exception {
+  public void testUpdatingProjectsWhenMovingModuleFile() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
                      "<version>1</version>" +
@@ -201,7 +200,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertEquals(0, myProjectsTree.getModules(myProjectsTree.getRootProjects().get(0)).size());
   }
 
-  public void testUpdatingProjectsWhenAbsentModuleFileAppears() throws Exception {
+  public void testUpdatingProjectsWhenAbsentModuleFileAppears() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>parent</artifactId>" +
                   "<version>1</version>" +
@@ -227,7 +226,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertEquals(m, children.get(0).getFile());
   }
 
-  public void testAddingAndRemovingManagedFiles() throws Exception {
+  public void testAddingAndRemovingManagedFiles() {
     VirtualFile m1 = createModulePom("m1",
                                      "<groupId>test</groupId>" +
                                      "<artifactId>m1</artifactId>" +
@@ -251,15 +250,15 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertUnorderedElementsAreEqual(myProjectsTree.getRootProjectsFiles(), m1);
   }
 
-  public void testAddingAndRemovingManagedFilesAddsAndRemovesModules() throws Exception {
+  public void testAddingAndRemovingManagedFilesAddsAndRemovesModules() {
     doTestAddingAndRemovingAddsAndRemovesModules(true);
   }
 
-  public void testAddingAndRemovingManagedFilesAddsAndRemovesModulesInNonAutoImportMode() throws Exception {
+  public void testAddingAndRemovingManagedFilesAddsAndRemovesModulesInNonAutoImportMode() {
     doTestAddingAndRemovingAddsAndRemovesModules(false);
   }
 
-  private void doTestAddingAndRemovingAddsAndRemovesModules(boolean autoImport) throws IOException {
+  private void doTestAddingAndRemovingAddsAndRemovesModules(boolean autoImport) {
     VirtualFile m1 = createModulePom("m1",
                                      "<groupId>test</groupId>" +
                                      "<artifactId>m1</artifactId>" +
@@ -291,7 +290,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertModules("m1");
   }
 
-  public void testAddingManagedFileAndChangingAggregation() throws Exception {
+  public void testAddingManagedFileAndChangingAggregation() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>parent</artifactId>" +
                   "<version>1</version>" +
@@ -542,7 +541,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                        "jar://" + FileUtil.toSystemIndependentName(repo.getPath()) + "/junit/junit/4.0/junit-4.0.jar!/");
   }
 
-  public void testUpdatingProjectsOnProfilesXmlChange() throws Exception {
+  public void testUpdatingProjectsOnProfilesXmlChange() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -626,7 +625,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertUnorderedPathsAreEqual(childNode.getSources(), Arrays.asList(FileUtil.toSystemDependentName(getProjectPath() + "/m/value2")));
   }
 
-  public void testHandlingDirectoryWithPomFileDeletion() throws Exception {
+  public void testHandlingDirectoryWithPomFileDeletion() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<packaging>pom</packaging>" +
@@ -660,7 +659,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertEquals(1, MavenProjectsManager.getInstance(myProject).getProjects().size());
   }
 
-  public void testSavingAndLoadingState() throws Exception {
+  public void testSavingAndLoadingState() {
     MavenProjectsManagerState state = myProjectsManager.getState();
     assertTrue(state.originalFiles.isEmpty());
     assertTrue(MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().enabledProfiles.isEmpty());
@@ -718,7 +717,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                                     p1, p3);
   }
 
-  public void testSchedulingReimportWhenPomFileIsDeleted() throws Exception {
+  public void testSchedulingReimportWhenPomFileIsDeleted() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -750,7 +749,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertModules("project");
   }
 
-  public void testSchedulingResolveOfDependentProjectWhenDependencyChanges() throws Exception {
+  public void testSchedulingResolveOfDependentProjectWhenDependencyChanges() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -801,7 +800,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertModuleLibDeps("m1", "Maven: junit:junit:4.0");
   }
 
-  public void testSchedulingResolveOfDependentProjectWhenDependencyIsDeleted() throws Exception {
+  public void testSchedulingResolveOfDependentProjectWhenDependencyIsDeleted() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -862,7 +861,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertModuleLibDeps("m1", "Maven: test:m2:1");
   }
 
-  public void testDoNotScheduleResolveOfInvalidProjectsDeleted() throws Exception {
+  public void testDoNotScheduleResolveOfInvalidProjectsDeleted() {
     final boolean[] called = new boolean[1];
     myProjectsManager.addProjectsTreeListener(new MavenProjectsTree.Listener() {
       @Override
@@ -889,7 +888,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertFalse(called[0]); // on update
   }
 
-  public void testUpdatingFoldersAfterFoldersResolving() throws Exception {
+  public void testUpdatingFoldersAfterFoldersResolving() {
     createStdProjectFolders();
     createProjectSubDirs("src1", "src2");
 
@@ -926,7 +925,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertResources("project", "src/main/resources");
   }
 
-  public void testForceReimport() throws Exception {
+  public void testForceReimport() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -966,7 +965,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertModuleLibDeps("project", "Maven: junit:junit:4.0");
   }
 
-  public void testScheduleReimportWhenPluginConfigurationChangesInTagName() throws Exception {
+  public void testScheduleReimportWhenPluginConfigurationChangesInTagName() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -1008,7 +1007,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertTrue(myProjectsManager.hasScheduledImportsInTests());
   }
 
-  public void testScheduleReimportWhenPluginConfigurationChangesInValue() throws Exception {
+  public void testScheduleReimportWhenPluginConfigurationChangesInValue() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -1050,7 +1049,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertTrue(myProjectsManager.hasScheduledImportsInTests());
   }
 
-  public void testIgnoringProjectsForDeletedModules() throws Exception {
+  public void testIgnoringProjectsForDeletedModules() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -1077,7 +1076,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertTrue(myProjectsManager.isIgnored(myProjectsManager.findProject(m)));
   }
 
-  public void testDoNotRemoveMavenProjectsOnReparse() throws Exception {
+  public void testDoNotRemoveMavenProjectsOnReparse() {
     // this pom file doesn't belong to any of the modules, this is won't be processed
     // by MavenProjectProjectsManager and won't occur in its projects list.
     importProject("<groupId>test</groupId>" +

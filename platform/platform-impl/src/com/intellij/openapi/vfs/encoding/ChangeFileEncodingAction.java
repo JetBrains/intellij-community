@@ -61,7 +61,7 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
     Document document = documentManager.getDocument(virtualFile);
     if (document == null) return false;
 
-    return EncodingUtil.checkCanConvert(virtualFile) == null || EncodingUtil.checkCanReload(virtualFile).second == null;
+    return EncodingUtil.checkCanConvert(virtualFile) == null || EncodingUtil.checkCanReload(virtualFile, null) == null;
   }
 
   @Override
@@ -111,8 +111,6 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
                                               final Document document,
                                               final byte[] bytes,
                                               @Nullable final String clearItemText) {
-    final String text = document == null ? null : document.getText();
-
     return new ChooseFileEncodingAction(myFile) {
      @Override
      public void update(final AnActionEvent e) {
@@ -121,16 +119,8 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
      @NotNull
      @Override
      protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-       return createCharsetsActionGroup(clearItemText, null, charset -> {
-         assert myFile == null || myFile.isDirectory() || text != null : charset;
-         EncodingUtil.Magic8 safeToReload = myFile == null || myFile.isDirectory() ? EncodingUtil.Magic8.ABSOLUTELY : EncodingUtil.isSafeToReloadIn(myFile, text, bytes, charset);
-         boolean enabled = safeToReload != EncodingUtil.Magic8.NO_WAY;
-         if (!enabled) {
-           EncodingUtil.Magic8 safeToConvert = myFile.isDirectory() ? EncodingUtil.Magic8.ABSOLUTELY : EncodingUtil.isSafeToConvertTo(myFile, text, bytes, charset);
-           enabled = safeToConvert != EncodingUtil.Magic8.NO_WAY;
-         }
-         return enabled ? "Change encoding to '"+charset.displayName()+"'" : null;
-       }); // no 'clear'
+       return createCharsetsActionGroup(clearItemText, null, charset -> "Change encoding to '" + charset.displayName() + "'");
+       // no 'clear'
      }
 
       @Override

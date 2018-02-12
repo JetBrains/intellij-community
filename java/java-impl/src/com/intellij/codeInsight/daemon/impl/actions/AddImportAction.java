@@ -20,14 +20,13 @@ import com.intellij.application.options.editor.AutoImportOptionsConfigurable;
 import com.intellij.application.options.editor.JavaAutoImportOptions;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -208,15 +207,16 @@ public class AddImportAction implements QuestionAction {
   }
 
   private void addImport(final PsiReference ref, final PsiClass targetClass) {
-    if (!ref.getElement().isValid() || !targetClass.isValid() || ref.resolve() == targetClass) {
-      return;
-    }
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(ref.getElement())){
-      return;
-    }
+    DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> {
+      if (!ref.getElement().isValid() || !targetClass.isValid() || ref.resolve() == targetClass) {
+        return;
+      }
 
-    StatisticsManager.getInstance().incUseCount(JavaStatisticsManager.createInfo(null, targetClass));
-    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(() -> DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> _addImport(ref, targetClass))), QuickFixBundle.message("add.import"), null);
+      StatisticsManager.getInstance().incUseCount(JavaStatisticsManager.createInfo(null, targetClass));
+      WriteCommandAction.runWriteCommandAction(myProject, QuickFixBundle.message("add.import"), null,
+                                               () -> _addImport(ref, targetClass),
+                                               ref.getElement().getContainingFile());
+    });
   }
 
   private void _addImport(PsiReference ref, PsiClass targetClass) {

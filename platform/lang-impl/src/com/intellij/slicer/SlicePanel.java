@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.slicer;
 
@@ -51,15 +39,11 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeWillExpandListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
-import javax.swing.tree.TreeSelectionModel;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -147,7 +131,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
       pane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.RIGHT));
 
       boolean vertical = myToolWindow.getAnchor() == ToolWindowAnchor.LEFT || myToolWindow.getAnchor() == ToolWindowAnchor.RIGHT;
-      Splitter splitter = new Splitter(vertical, UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS);
+      Splitter splitter = new Splitter(vertical, UsageViewSettings.getInstance().getPreviewUsagesSplitterProportion());
       splitter.setFirstComponent(pane);
       myUsagePreviewPanel = new UsagePreviewPanel(myProject, new UsageViewPresentation());
       myUsagePreviewPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
@@ -171,12 +155,55 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
   @Override
   public void dispose() {
     if (myUsagePreviewPanel != null) {
-      UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS = ((Splitter)myUsagePreviewPanel.getParent()).getProportion();
+      UsageViewSettings.getInstance().setPreviewUsagesSplitterProportion(((Splitter)myUsagePreviewPanel.getParent()).getProportion());
       myUsagePreviewPanel = null;
     }
     
     isDisposed = true;
     ToolTipManager.sharedInstance().unregisterComponent(myTree);
+  }
+
+  static class MultiLanguageTreeCellRenderer implements TreeCellRenderer {
+    @NotNull
+    private final SliceUsageCellRendererBase rootRenderer;
+
+    @NotNull
+    private final Map<SliceLanguageSupportProvider, SliceUsageCellRendererBase> providersToRenderers = new HashMap<>();
+
+    public MultiLanguageTreeCellRenderer(@NotNull SliceUsageCellRendererBase rootRenderer) {
+      this.rootRenderer = rootRenderer;
+      rootRenderer.setOpaque(false);
+    }
+
+    @NotNull
+    private SliceUsageCellRendererBase getRenderer(Object value) {
+      if (!(value instanceof DefaultMutableTreeNode)) return rootRenderer;
+
+      Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
+      if (!(userObject instanceof SliceNode)) return rootRenderer;
+
+      SliceLanguageSupportProvider provider = ((SliceNode)userObject).getProvider();
+      if (provider == null) return rootRenderer;
+
+      SliceUsageCellRendererBase renderer = providersToRenderers.get(provider);
+      if (renderer == null) {
+        renderer = provider.getRenderer();
+        renderer.setOpaque(false);
+        providersToRenderers.put(provider, renderer);
+      }
+      return renderer;
+    }
+
+    @Override
+    public Component getTreeCellRendererComponent(JTree tree,
+                                                  Object value,
+                                                  boolean selected,
+                                                  boolean expanded,
+                                                  boolean leaf,
+                                                  int row,
+                                                  boolean hasFocus) {
+      return getRenderer(value).getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
+    }
   }
 
   @NotNull
@@ -192,9 +219,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     tree.setOpaque(false);
 
     tree.setToggleClickCount(-1);
-    SliceUsageCellRendererBase renderer = myProvider.getRenderer();
-    renderer.setOpaque(false);
-    tree.setCellRenderer(renderer);
+    tree.setCellRenderer(new MultiLanguageTreeCellRenderer(myProvider.getRenderer()));
     UIUtil.setLineStyleAngled(tree);
     tree.setRootVisible(false);
     
@@ -293,7 +318,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     if (key == CommonDataKeys.NAVIGATABLE_ARRAY) {
       List<Navigatable> navigatables = getNavigatables();
       if (!navigatables.isEmpty()) {
-        sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, navigatables.toArray(new Navigatable[navigatables.size()]));
+        sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, navigatables.toArray(new Navigatable[0]));
       }
     }
   }
@@ -345,7 +370,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     }
 
     myProvider.registerExtraPanelActions(actionGroup, myBuilder);
-    actionGroup.add(CommonActionsManager.getInstance().createExportToTextFileAction(new SliceToTextFileExporter(myBuilder)));
+    actionGroup.add(CommonActionsManager.getInstance().createExportToTextFileAction(new SliceToTextFileExporter(myBuilder, UsageViewSettings.getInstance())));
 
     //actionGroup.add(new ContextHelpAction(HELP_ID));
 

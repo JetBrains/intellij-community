@@ -27,7 +27,6 @@ import java.util.Properties;
 
 /**
  * @author MYakovlev
- * Date: Jul 24, 2002
  */
 public interface FileTemplate extends Cloneable {
   FileTemplate[] EMPTY_ARRAY = new FileTemplate[0];
@@ -42,6 +41,7 @@ public interface FileTemplate extends Cloneable {
   String ATTRIBUTE_RETURN_TYPE = "RETURN_TYPE";
   String ATTRIBUTE_DEFAULT_RETURN_VALUE = "DEFAULT_RETURN_VALUE";
   String ATTRIBUTE_CALL_SUPER = "CALL_SUPER";
+  String ATTRIBUTE_PLAIN_CALL_SUPER = "PLAIN_CALL_SUPER";
 
   String ATTRIBUTE_CLASS_NAME = "CLASS_NAME";
   String ATTRIBUTE_SIMPLE_CLASS_NAME = "SIMPLE_CLASS_NAME";

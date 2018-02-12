@@ -16,6 +16,8 @@
 package com.intellij.diff.requests;
 
 import com.intellij.diff.chains.DiffRequestProducer;
+import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,15 +34,15 @@ public class ErrorDiffRequest extends MessageDiffRequest {
   }
 
   public ErrorDiffRequest(@Nullable String title, @NotNull Throwable e) {
-    this(title, e.getMessage(), null, e);
+    this(title, getErrorMessage(e), null, e);
   }
 
   public ErrorDiffRequest(@NotNull Throwable e) {
-    this(null, e.getMessage(), null, e);
+    this(null, getErrorMessage(e), null, e);
   }
 
   public ErrorDiffRequest(@Nullable DiffRequestProducer producer, @NotNull Throwable e) {
-    this(producer != null ? producer.getName() : null, e.getMessage(), producer, e);
+    this(producer != null ? producer.getName() : null, getErrorMessage(e), producer, e);
   }
 
   public ErrorDiffRequest(@Nullable DiffRequestProducer producer, @NotNull String message) {
@@ -64,5 +66,11 @@ public class ErrorDiffRequest extends MessageDiffRequest {
   @Nullable
   public Throwable getException() {
     return myException;
+  }
+
+  @NotNull
+  private static String getErrorMessage(@NotNull Throwable e) {
+    String message = e.getMessage();
+    return StringUtil.isEmptyOrSpaces(message) ? DiffBundle.message("error.cant.show.diff.message") : message;
   }
 }

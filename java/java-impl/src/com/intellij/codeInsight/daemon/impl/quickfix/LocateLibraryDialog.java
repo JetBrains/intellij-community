@@ -96,7 +96,7 @@ public class LocateLibraryDialog extends DialogWrapper {
       Disposer.dispose(myDisposable);
       return myDefaultLibraryPaths;
     }
-    return showAndGet() ? getResultingLibraryPaths() : Collections.<String>emptyList();
+    return showAndGet() ? getResultingLibraryPaths() : Collections.emptyList();
   }
 
   public List<String> getResultingLibraryPaths() {

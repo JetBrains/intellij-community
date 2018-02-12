@@ -23,12 +23,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Map;
 import java.util.Properties;
 
-/**
- * User: spLeaner
- */
 public abstract class DelegateColorScheme implements EditorColorsScheme {
 
   private EditorColorsScheme myDelegate;
@@ -39,17 +35,6 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
 
   public EditorColorsScheme getDelegate() {
     return myDelegate;
-  }
-
-  @Nullable
-  @Override
-  public Map<TextAttributesKey, TextAttributes> getGeneratedTextAttributesCache() {
-    return myDelegate.getGeneratedTextAttributesCache();
-  }
-
-  @Override
-  public void dropGeneratedTextAttributesCache() {
-    myDelegate.dropGeneratedTextAttributesCache();
   }
   
   public void setDelegate(@NotNull EditorColorsScheme delegate) {
@@ -135,6 +120,7 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
     myDelegate.setEditorFontName(fontName);
   }
 
+  @NotNull
   @Override
   public Font getFont(EditorFontType key) {
     return myDelegate.getFont(key);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,21 +50,21 @@ public class PlaybackRunner {
   private boolean myStopRequested;
 
   private final boolean myUseDirectActionCall;
-  private boolean myUseTypingTargets;
+  private final boolean myUseTypingTargets;
 
   private File myScriptDir;
-  private boolean myStopOnAppDeactivation;
+  private final boolean myStopOnAppDeactivation;
   private final ApplicationActivationListener myAppListener;
 
-  private HashSet<Class> myFacadeClasses = new HashSet<>();
-  private ArrayList<StageInfo> myCurrentStageDepth = new ArrayList<>();
-  private ArrayList<StageInfo> myPassedStages = new ArrayList<>();
+  private final HashSet<Class> myFacadeClasses = new HashSet<>();
+  private final ArrayList<StageInfo> myCurrentStageDepth = new ArrayList<>();
+  private final ArrayList<StageInfo> myPassedStages = new ArrayList<>();
 
   private long myContextTimestamp;
 
-  private Map<String, String> myRegistryValues = new HashMap<>();
+  private final Map<String, String> myRegistryValues = new HashMap<>();
 
-  private Disposable myOnStop = Disposer.newDisposable();
+  private final Disposable myOnStop = Disposer.newDisposable();
 
   public PlaybackRunner(String script, StatusCallback callback, final boolean useDirectActionCall, boolean stopOnAppDeactivation, boolean useTypingTargets) {
     myScript = script;
@@ -72,7 +72,7 @@ public class PlaybackRunner {
     myUseDirectActionCall = useDirectActionCall;
     myUseTypingTargets = useTypingTargets;
     myStopOnAppDeactivation = stopOnAppDeactivation;
-    myAppListener = new ApplicationActivationListener.Adapter() {
+    myAppListener = new ApplicationActivationListener() {
       @Override
       public void applicationDeactivated(IdeFrame ideFrame) {
         if (myStopOnAppDeactivation) {
@@ -148,7 +148,7 @@ public class PlaybackRunner {
       final PlaybackContext context =
         new PlaybackContext(this, myCallback, cmdIndex, myRobot, myUseDirectActionCall, myUseTypingTargets, cmd, baseDir, (Set<Class>)myFacadeClasses.clone()) {
 
-          private long myTimeStamp = myContextTimestamp;
+          private final long myTimeStamp = myContextTimestamp;
 
           public void pushStage(StageInfo info) {
             myCurrentStageDepth.add(info);
@@ -298,10 +298,6 @@ public class PlaybackRunner {
     cmd.setScriptDir(scriptDir);
 
     return cmd;
-  }
-
-  private void setDone() {
-    myActionCallback.setDone();
   }
 
   public void stop() {

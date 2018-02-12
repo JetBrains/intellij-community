@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 28-Oct-2008
- */
 package com.intellij.psi.util;
 
 import com.intellij.psi.*;
@@ -112,8 +108,7 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
     PsiParameter[] parameters = parameterList.getParameters();
 
     PsiElement firstChild = parameterList.getFirstChild();
-    boolean addParenthesis = firstChild instanceof PsiJavaToken &&
-                             ((PsiJavaToken)firstChild).getTokenType() == JavaTokenType.LPARENTH;
+    boolean addParenthesis = PsiUtil.isJavaToken(firstChild, JavaTokenType.LPARENTH);
 
     if (addParenthesis) myBuf.append('(');
     for (int i = 0; i < parameters.length; i++) {

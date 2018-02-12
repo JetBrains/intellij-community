@@ -14,12 +14,14 @@ if sys.version_info >= (3,):
     BadZipfile = BadZipFile
 else:
     class BadZipfile(Exception): ...
+error = BadZipfile
 
 class LargeZipFile(Exception): ...
 
 class ZipFile:
     debug = ...  # type: int
     comment = ...  # type: bytes
+    filelist = ...  # type: List[ZipInfo]
     def __init__(self, file: Union[str, IO[bytes]], mode: str = ..., compression: int = ...,
                  allowZip64: bool = ...) -> None: ...
     def __enter__(self) -> ZipFile: ...

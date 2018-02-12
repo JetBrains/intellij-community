@@ -27,7 +27,7 @@ import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -155,6 +155,11 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   }
 
   public void setAttribute(Object key, Object value){
+    if (value == null && myAttributes != null) {
+      myAttributes.remove(key);
+      return;
+    }
+
     if (myAttributes == null){
       myAttributes = new HashMap<>(5);
     }

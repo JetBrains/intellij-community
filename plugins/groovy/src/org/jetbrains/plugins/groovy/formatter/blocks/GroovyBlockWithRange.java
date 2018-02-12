@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.formatter.FormattingContext;
 
-/**
- * Created by Max Medvedev on 10/7/13
- */
 public class GroovyBlockWithRange extends GroovyBlock {
 
   @NotNull private final TextRange myTextRange;

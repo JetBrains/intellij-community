@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -24,9 +10,7 @@ import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.IntroduceTargetChooser;
-import com.intellij.util.Function;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
-import org.jetbrains.plugins.groovy.editor.HandlerUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
@@ -42,12 +26,12 @@ public class DumpGroovyControlFlowAction extends AnAction implements DumbAware {
     final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
     if (editor == null) return;
 
-    final PsiFile psiFile = HandlerUtils.getPsiFile(editor, e.getDataContext());
+    final PsiFile psiFile = e.getDataContext().getData(CommonDataKeys.PSI_FILE);
     if (!(psiFile instanceof GroovyFile)) return;
 
     int offset = editor.getCaretModel().getOffset();
 
-    final List<GrControlFlowOwner> controlFlowOwners = collectControlFlowOwners(psiFile, editor, offset);
+    final List<GrControlFlowOwner> controlFlowOwners = collectControlFlowOwners(psiFile, offset);
     if (controlFlowOwners.isEmpty()) return;
     if (controlFlowOwners.size() == 1) {
       passInner(controlFlowOwners.get(0));
@@ -63,7 +47,7 @@ public class DumpGroovyControlFlowAction extends AnAction implements DumbAware {
     }
   }
 
-  private static List<GrControlFlowOwner> collectControlFlowOwners(final PsiFile file, final Editor editor, final int offset) {
+  private static List<GrControlFlowOwner> collectControlFlowOwners(final PsiFile file, final int offset) {
     final PsiElement elementAtCaret = file.findElementAt(offset);
     final List<GrControlFlowOwner> result = new ArrayList<>();
 

@@ -119,7 +119,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
   @NotNull
   @Override
   public RefreshSession createSession(boolean async, boolean recursively, @Nullable Runnable finishRunnable, @NotNull ModalityState state) {
-    return new RefreshSessionImpl(async, recursively, finishRunnable, ((TransactionGuardImpl)TransactionGuard.getInstance()).getModalityTransaction(state));
+    return new RefreshSessionImpl(async, recursively, finishRunnable, state);
   }
 
   @Override

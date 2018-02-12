@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 20-Dec-2007
- */
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -27,9 +23,16 @@ public class RefJavaFileImpl extends RefFileImpl {
   private final RefModule myRefModule;
 
   RefJavaFileImpl(PsiJavaFile elem, RefManager manager) {
-    super(elem, manager);
+    super(elem, manager, false);
     myRefModule = manager.getRefModule(ModuleUtilCore.findModuleForPsiElement(elem));
-    ((RefPackageImpl)getRefManager().getExtension(RefJavaManager.MANAGER).getPackage(elem.getPackageName())).add(this);
+    String packageName = elem.getPackageName();
+    if (!packageName.isEmpty()) {
+      ((RefPackageImpl)getRefManager().getExtension(RefJavaManager.MANAGER).getPackage(packageName)).add(this);
+    } else if (myRefModule != null) {
+      ((RefModuleImpl)myRefModule).add(this);
+    } else {
+      ((RefProjectImpl)manager.getRefProject()).add(this);
+    }
   }
 
   @Override

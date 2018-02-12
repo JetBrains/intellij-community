@@ -1,15 +1,14 @@
-from typing import List
+from typing import List, NamedTuple
 
-class struct_spwd(object):
-    sp_nam = ...  # type: str
-    sp_pwd = ...  # type: str
-    sp_lstchg = ...  # type: int
-    sp_min = ...  # type: int
-    sp_max = ...  # type: int
-    sp_warn = ...  # type: int
-    sp_inact = ...  # type: int
-    sp_expire = ...  # type: int
-    sp_flag = ...  # type: int
+struct_spwd = NamedTuple("struct_spwd", [("sp_nam", str),
+                                         ("sp_pwd", str),
+                                         ("sp_lstchg", int),
+                                         ("sp_min", int),
+                                         ("sp_max", int),
+                                         ("sp_warn", int),
+                                         ("sp_inact", int),
+                                         ("sp_expire", int),
+                                         ("sp_flag", int)])
 
-def getspall() -> List[struct_spwd]: pass
-def getspnam() -> struct_spwd: pass
+def getspall() -> List[struct_spwd]: ...
+def getspnam(name: str) -> struct_spwd: ...

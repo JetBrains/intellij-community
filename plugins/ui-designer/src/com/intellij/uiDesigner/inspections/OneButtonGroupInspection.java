@@ -37,7 +37,7 @@ public class OneButtonGroupInspection extends BaseFormInspection {
   }
 
   @Override
-  protected void checkComponentProperties(Module module, IComponent component, FormErrorCollector collector) {
+  protected void checkComponentProperties(Module module, @NotNull IComponent component, FormErrorCollector collector) {
     final IRootContainer root = FormEditingUtil.getRoot(component);
     if (root == null) return;
     String groupName = root.getButtonGroupName(component);

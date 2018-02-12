@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ClassWithoutLoggerInspectionBase extends BaseInspection {
-  protected final List<String> loggerNames = new ArrayList();
+  protected final List<String> loggerNames = new ArrayList<>();
   /**
    * @noinspection PublicField
    */

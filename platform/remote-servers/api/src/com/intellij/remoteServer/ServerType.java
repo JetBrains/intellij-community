@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator;
+import com.intellij.remoteServer.configuration.deployment.SingletonDeploymentSourceType;
 import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.ServerConnector;
 import com.intellij.remoteServer.runtime.ServerTaskExecutor;
@@ -14,7 +15,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author nik
@@ -35,12 +38,29 @@ public abstract class ServerType<C extends ServerConfiguration> {
   public abstract String getPresentableName();
 
   @NotNull
+  public String getDeploymentConfigurationTypePresentableName() {
+    return getPresentableName() + " Deployment";
+  }
+
+  @NotNull
   public String getHelpTopic() {
     return "reference.settings.clouds";
   }
 
   @NotNull
   public abstract Icon getIcon();
+
+  /**
+   * Returns whether the instance returned from {@link #createDefaultConfiguration()} has <em>reasonably good</em> chances to work correctly.
+   * The auto-detected instance is <em>not</em> required to work perfectly, connection to it will be tested, and the instance will
+   * be persisted only if the test is successful.
+   * <p/>
+   * The capability to auto-detect configurations will unlock UI elements which normally requires user to manually configure the server.
+   * E.g deployments for auto-detecting server types will be always shown in the 'New' popup in 'Edit Configurations' dialog.
+   */
+  public boolean canAutoDetectConfiguration() {
+    return false;
+  }
 
   @NotNull
   public abstract C createDefaultConfiguration();
@@ -60,6 +80,22 @@ public abstract class ServerType<C extends ServerConfiguration> {
 
   @NotNull
   public abstract DeploymentConfigurator<?, C> createDeploymentConfigurator(Project project);
+
+  /**
+   * Returns list of the singleton deployment sources types available in addition to the project-dependent deployment sources
+   * enumerated via {@link DeploymentConfigurator#getAvailableDeploymentSources()}.
+   */
+  public List<SingletonDeploymentSourceType> getSingletonDeploymentSourceTypes() {
+    return Collections.emptyList();
+  }
+
+  /**
+   * @return <code>false</code>, if all supported deployment sources are of {@link SingletonDeploymentSourceType} type, so
+   * {@link DeploymentConfigurator#getAvailableDeploymentSources()} <strong>now is and always will be</strong> empty.
+   */
+  public boolean mayHaveProjectSpecificDeploymentSources() {
+    return true;
+  }
 
   @NotNull
   public abstract ServerConnector<?> createConnector(@NotNull C configuration, @NotNull ServerTaskExecutor asyncTasksExecutor);

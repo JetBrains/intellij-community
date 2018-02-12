@@ -57,9 +57,6 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * Created by Max Medvedev on 9/9/13
- */
 public class GrConcatenationAwareInjector implements ConcatenationAwareInjector {
   private final LanguageInjectionSupport mySupport;
   private final Configuration myConfiguration;
@@ -87,8 +84,8 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
                                       boolean settingsAvailable,
                                       boolean unparsable) {
         InjectorUtils.registerInjection(language, list, file, registrar);
-        InjectorUtils.registerSupport(mySupport, settingsAvailable, registrar);
-        InjectorUtils.putInjectedFileUserData(registrar, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, unparsable);
+        InjectorUtils.registerSupport(mySupport, settingsAvailable, list.get(0).getFirst(), language);
+        InjectorUtils.putInjectedFileUserData(list.get(0).getFirst(), language, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, unparsable);
       }
 
       @Override

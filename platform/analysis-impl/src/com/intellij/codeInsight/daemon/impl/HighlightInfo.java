@@ -52,7 +52,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class HighlightInfo implements Segment {
@@ -81,7 +83,7 @@ public class HighlightInfo implements Segment {
 
   final int navigationShift;
 
-  private volatile RangeHighlighterEx highlighter;// modified in EDT only
+  volatile RangeHighlighterEx highlighter;// modified in EDT only
 
   public List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
   public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
@@ -169,6 +171,7 @@ public class HighlightInfo implements Segment {
    * modified in EDT only
    */
   public void setHighlighter(@Nullable RangeHighlighterEx highlighter) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     this.highlighter = highlighter;
   }
 
@@ -266,19 +269,19 @@ public class HighlightInfo implements Segment {
   }
 
   protected HighlightInfo(@Nullable TextAttributes forcedTextAttributes,
-                @Nullable TextAttributesKey forcedTextAttributesKey,
-                @NotNull HighlightInfoType type,
-                int startOffset,
-                int endOffset,
-                @Nullable String escapedDescription,
-                @Nullable String escapedToolTip,
-                @NotNull HighlightSeverity severity,
-                boolean afterEndOfLine,
-                @Nullable Boolean needsUpdateOnTyping,
-                boolean isFileLevelAnnotation,
-                int navigationShift,
-                ProblemGroup problemGroup,
-                GutterMark gutterIconRenderer) {
+                          @Nullable TextAttributesKey forcedTextAttributesKey,
+                          @NotNull HighlightInfoType type,
+                          int startOffset,
+                          int endOffset,
+                          @Nullable String escapedDescription,
+                          @Nullable String escapedToolTip,
+                          @NotNull HighlightSeverity severity,
+                          boolean afterEndOfLine,
+                          @Nullable Boolean needsUpdateOnTyping,
+                          boolean isFileLevelAnnotation,
+                          int navigationShift,
+                          ProblemGroup problemGroup,
+                          GutterMark gutterIconRenderer) {
     if (startOffset < 0 || startOffset > endOffset) {
       LOG.error("Incorrect highlightInfo bounds. description="+escapedDescription+"; startOffset="+startOffset+"; endOffset="+endOffset+";type="+type);
     }
@@ -629,7 +632,7 @@ public class HighlightInfo implements Segment {
   static HighlightInfo fromAnnotation(@NotNull Annotation annotation, @Nullable TextRange fixedRange, boolean batchMode) {
     final TextAttributes forcedAttributes = annotation.getEnforcedTextAttributes();
     TextAttributesKey key = annotation.getTextAttributes();
-    final TextAttributesKey forcedAttributesKey = forcedAttributes == null ? (key == HighlighterColors.NO_HIGHLIGHTING ? null : key) : null;
+    final TextAttributesKey forcedAttributesKey = forcedAttributes == null ? key == HighlighterColors.NO_HIGHLIGHTING ? null : key : null;
 
     HighlightInfo info = new HighlightInfo(forcedAttributes, forcedAttributesKey, convertType(annotation),
                                            fixedRange != null? fixedRange.getStartOffset() : annotation.getStartOffset(),
@@ -661,6 +664,7 @@ public class HighlightInfo implements Segment {
     if (type == ProblemHighlightType.LIKE_UNUSED_SYMBOL) return HighlightInfoType.UNUSED_SYMBOL;
     if (type == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) return HighlightInfoType.WRONG_REF;
     if (type == ProblemHighlightType.LIKE_DEPRECATED) return HighlightInfoType.DEPRECATED;
+    if (type == ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL) return HighlightInfoType.MARKED_FOR_REMOVAL;
     return convertSeverity(annotation.getSeverity());
   }
 
@@ -756,6 +760,10 @@ public class HighlightInfo implements Segment {
 
     boolean isError() {
       return mySeverity == null || mySeverity.compareTo(HighlightSeverity.ERROR) >= 0;
+    }
+    
+    boolean isInformation() {
+      return HighlightSeverity.INFORMATION.equals(mySeverity);
     }
 
     boolean canCleanup(@NotNull PsiElement element) {
@@ -924,11 +932,6 @@ public class HighlightInfo implements Segment {
   }
 
   public void unregisterQuickFix(@NotNull Condition<IntentionAction> condition) {
-    for (Iterator<Pair<IntentionActionDescriptor, TextRange>> it = quickFixActionRanges.iterator(); it.hasNext();) {
-      Pair<IntentionActionDescriptor, TextRange> pair = it.next();
-      if (condition.value(pair.first.getAction())) {
-        it.remove();
-      }
-    }
+    quickFixActionRanges.removeIf(pair -> condition.value(pair.first.getAction()));
   }
 }

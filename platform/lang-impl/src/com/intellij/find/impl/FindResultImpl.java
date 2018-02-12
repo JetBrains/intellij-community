@@ -26,7 +26,7 @@ public class FindResultImpl extends FindResult {
     isStringFound = true;
   }
 
-  FindResultImpl() {
+  public FindResultImpl() {
     super(0, 0);
     isStringFound = false;
   }

@@ -107,13 +107,24 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
       public boolean accepts(@NotNull final T literal, final ProcessingContext context) {
         final PsiElement parent = literal.getParent();
         if (parent instanceof PsiExpressionList) {
-          final PsiExpressionList psiExpressionList = (PsiExpressionList)parent;
-          final PsiExpression[] psiExpressions = psiExpressionList.getExpressions();
-          if (!(psiExpressions.length > index && psiExpressions[index] == literal)) return false;
-
-          return checkCall(context, psiExpressionList, methodPattern, nameCondition);
+          return hasIndex(literal, index) && checkCall(context, (PsiExpressionList)parent, methodPattern, nameCondition);
         }
         return false;
+      }
+
+      private boolean hasIndex(@NotNull T literal, int index) {
+        int currentIndex = 0;
+        PsiElement each = literal;
+        while (each != null) {
+          each = each.getPrevSibling();
+          if (each instanceof PsiExpression) {
+            currentIndex++;
+            if (currentIndex > index) return false;
+          }
+        }
+
+        if (currentIndex != index) return false;
+        return true;
       }
     });
   }

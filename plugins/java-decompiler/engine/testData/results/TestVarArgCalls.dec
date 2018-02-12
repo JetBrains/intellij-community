@@ -1,0 +1,103 @@
+package pkg;
+
+public class TestVarArgCalls {
+   public void doSmth() {
+      this.printAll("Test");// 5
+      this.printAll("Test: %s", "abc");// 6
+      this.printAll("Test: %s - %s", "abc", "DEF");// 7
+      this.printComplex("Test");// 9
+      this.printComplex("Test: %[0]s", new String[]{"abc"});// 10
+      this.printComplex("Test: %[0]s - %[0]s", new String[]{"abc"}, new String[]{"DEF"});// 11
+      String.format("Test");// 13
+      String.format("Test: %d", 123);// 14
+      String.format("Test: %d - %s", 123, "DEF");// 15
+      Object[] data = new Object[]{"Hello"};// 17
+      String.format("Test: %s", (Object)data);// 18
+      String.format("Test: %s", (Object[])data);// 19
+   }// 20
+
+   public void printAll(String fmt, String... params) {
+      System.out.println(String.format(fmt, (Object[])params));// 23
+   }// 24
+
+   public void printComplex(String fmt, String[]... params) {
+      System.out.println(String.format(fmt, (Object[])params));// 27
+   }// 28
+}
+
+class 'pkg/TestVarArgCalls' {
+   method 'doSmth ()V' {
+      1      4
+      7      4
+      b      5
+      13      5
+      16      5
+      1a      6
+      22      6
+      27      6
+      2a      6
+      2e      7
+      34      7
+      38      8
+      46      8
+      4a      8
+      4e      9
+      5c      9
+      68      9
+      6c      9
+      6f      10
+      75      10
+      79      11
+      81      11
+      83      11
+      87      11
+      8b      12
+      93      12
+      95      12
+      9b      12
+      9e      12
+      a8      13
+      ab      13
+      ac      14
+      b6      14
+      ba      15
+      bd      15
+      c0      15
+      c4      16
+   }
+
+   method 'printAll (Ljava/lang/String;[Ljava/lang/String;)V' {
+      0      19
+      5      19
+      8      19
+      b      19
+      e      20
+   }
+
+   method 'printComplex (Ljava/lang/String;[[Ljava/lang/String;)V' {
+      0      23
+      5      23
+      8      23
+      b      23
+      e      24
+   }
+}
+
+Lines mapping:
+5 <-> 5
+6 <-> 6
+7 <-> 7
+9 <-> 8
+10 <-> 9
+11 <-> 10
+13 <-> 11
+14 <-> 12
+15 <-> 13
+17 <-> 14
+18 <-> 15
+19 <-> 16
+20 <-> 17
+23 <-> 20
+24 <-> 21
+27 <-> 24
+28 <-> 25

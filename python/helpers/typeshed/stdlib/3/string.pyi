@@ -2,7 +2,7 @@
 
 # Based on http://docs.python.org/3.2/library/string.html
 
-from typing import Mapping, Sequence, Any, Optional, Union, List, Tuple, Iterable, AnyStr
+from typing import Mapping, Sequence, Any, Optional, Union, List, Tuple, Iterable
 
 ascii_letters = ...  # type: str
 ascii_lowercase = ...  # type: str
@@ -25,8 +25,8 @@ class Template:
                         **kwds: str) -> str: ...
 
 # TODO(MichalPokorny): This is probably badly and/or loosely typed.
-class Formatter(object):
-    def format(self, format_string: str, *args, **kwargs) -> str: ...
+class Formatter:
+    def format(self, format_string: str, *args: Any, **kwargs: Any) -> str: ...
     def vformat(self, format_string: str, args: Sequence[Any],
                 kwargs: Mapping[str, Any]) -> str: ...
     def parse(self, format_string: str) -> Iterable[Tuple[str, Optional[str], Optional[str], Optional[str]]]: ...

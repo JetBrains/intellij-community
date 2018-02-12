@@ -17,31 +17,31 @@ package org.intellij.lang.xpath;
 
 public class XPathCompletionTest extends TestBase {
 
-  public void testAxis() throws Throwable {
+  public void testAxis() {
         doXPathCompletion("ancestor", "ancestor-or-self", "attribute");
     }
 
-    public void testAxisInsert() throws Throwable {
+    public void testAxisInsert() {
         doXPathCompletion();
     }
 
-    public void testPartialAxis() throws Throwable {
+    public void testPartialAxis() {
         doXPathCompletion("ancestor", "ancestor-or-self");
     }
 
-    public void testFunctions() throws Throwable {
+    public void testFunctions() {
         doXPathCompletion("text()", "translate(string, string, string)", "true()");
     }
 
-    public void testFunctionInsert1() throws Throwable {
+    public void testFunctionInsert1() {
         doXPathCompletion();
     }
 
-    public void testFunctionInsert2() throws Throwable {
+    public void testFunctionInsert2() {
         doXPathCompletion();
     }
 
-    private void doXPathCompletion() throws Throwable {
+    private void doXPathCompletion() {
         final String name = getTestFileName();
         myFixture.configureByFile(name + ".xpath");
         if (myFixture.completeBasic() != null) {

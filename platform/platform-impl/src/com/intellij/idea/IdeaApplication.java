@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.Patches;
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.ide.CommandLineProcessor;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeRepaintManager;
@@ -37,12 +24,15 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.ui.Splash;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import net.miginfocom.layout.PlatformDefaults;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ForkJoinPool;
 
 public class IdeaApplication {
   public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
@@ -62,12 +52,13 @@ public class IdeaApplication {
     return ourInstance != null && ourInstance.myLoaded;
   }
 
+  @NotNull
   private final String[] myArgs;
-  private boolean myPerformProjectLoad = true;
+  private static boolean myPerformProjectLoad = true;
   private ApplicationStarter myStarter;
-  private volatile boolean myLoaded = false;
+  private volatile boolean myLoaded;
 
-  public IdeaApplication(String[] args) {
+  public IdeaApplication(@NotNull String[] args) {
     LOG.assertTrue(ourInstance == null);
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     ourInstance = this;
@@ -116,7 +107,7 @@ public class IdeaApplication {
    * @see IdeaApplication#SAFE_JAVA_ENV_PARAMETERS
    */
   @NotNull
-  private static String[] processProgramArguments(String[] args) {
+  private static String[] processProgramArguments(@NotNull String[] args) {
     ArrayList<String> arguments = new ArrayList<>();
     List<String> safeKeys = Arrays.asList(SAFE_JAVA_ENV_PARAMETERS);
     for (String arg : args) {
@@ -133,6 +124,9 @@ public class IdeaApplication {
   }
 
   private static void patchSystem(boolean headless) {
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(headless);
+    LOG.info("CPU cores: " + Runtime.getRuntime().availableProcessors()+"; ForkJoinPool.commonPool: " + ForkJoinPool.commonPool() + "; factory: " + ForkJoinPool.commonPool().getFactory());
+
     System.setProperty("sun.awt.noerasebackground", "true");
 
     IdeEventQueue.getInstance(); // replace system event queue
@@ -159,6 +153,9 @@ public class IdeaApplication {
         X11UiUtil.patchDetectedWm(wmName);
       }
     }
+
+    //IDEA-170295
+    PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE);
 
     IconLoader.activate();
 
@@ -201,7 +198,7 @@ public class IdeaApplication {
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   static void initLAF() {
     try {
       Class.forName("com.jgoodies.looks.plastic.PlasticLookAndFeel");
@@ -236,6 +233,7 @@ public class IdeaApplication {
     ShutDownTracker.getInstance().run();
   }
 
+  @NotNull
   public String[] getCommandLineArguments() {
     return myArgs;
   }

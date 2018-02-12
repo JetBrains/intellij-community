@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.codeStyle.lineIndent;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.Indent;
 import com.intellij.formatting.IndentInfo;
 import com.intellij.lang.Language;
@@ -23,8 +24,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.SemanticEditorPosition;
 import com.intellij.util.text.CharArrayUtil;
@@ -38,7 +37,7 @@ public class IndentCalculator {
   
   private @NotNull final Project myProject;
   private @NotNull final Editor myEditor;
-  private @NotNull BaseLineOffsetCalculator myBaseLineOffsetCalculator;
+  private @NotNull final BaseLineOffsetCalculator myBaseLineOffsetCalculator;
   private @NotNull final Indent.Type myIndentType;
 
   public IndentCalculator(@NotNull Project project,
@@ -71,11 +70,11 @@ public class IndentCalculator {
     Document document = myEditor.getDocument();
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if (file != null) {
-      CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(myProject);
+      CommonCodeStyleSettings.IndentOptions fileOptions = CodeStyle.getIndentOptions(file);
       CommonCodeStyleSettings.IndentOptions options =
-        language != null && !(language.is(file.getLanguage()) || language.is(Language.ANY)) ?
-        codeStyleSettings.getCommonSettings(language).getIndentOptions() :
-        codeStyleSettings.getIndentOptionsByFile(file);
+        !fileOptions.isOverrideLanguageOptions() && language != null && !(language.is(file.getLanguage()) || language.is(Language.ANY)) ?
+        CodeStyle.getLanguageSettings(file, language).getIndentOptions() :
+        fileOptions;
       return
         baseIndent + new IndentInfo(0, indentTypeToSize(myIndentType, options), 0, false).generateNewWhiteSpace(options);
     }

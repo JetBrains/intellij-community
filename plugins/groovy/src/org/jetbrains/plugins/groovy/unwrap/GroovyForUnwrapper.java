@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.unwrap;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
 
 public class GroovyForUnwrapper extends GroovyUnwrapper {
@@ -26,7 +27,7 @@ public class GroovyForUnwrapper extends GroovyUnwrapper {
   }
 
   @Override
-  public boolean isApplicableTo(PsiElement e) {
+  public boolean isApplicableTo(@NotNull PsiElement e) {
     return e instanceof GrForStatement;
   }
 

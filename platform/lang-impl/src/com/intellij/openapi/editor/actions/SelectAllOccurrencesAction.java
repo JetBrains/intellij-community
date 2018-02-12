@@ -40,7 +40,7 @@ public class SelectAllOccurrencesAction extends EditorAction {
     }
 
     @Override
-    public void doExecute(final Editor editor, @Nullable Caret c, DataContext dataContext) {
+    public void doExecute(@NotNull final Editor editor, @Nullable Caret c, DataContext dataContext) {
       Caret caret = c == null ? editor.getCaretModel().getPrimaryCaret() : c;
 
       boolean wholeWordsSearch = false;

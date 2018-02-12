@@ -1,11 +1,12 @@
 <component name="libraryTable">
-  <library name="mockito">
+  <library name="mockito" type="repository">
+    <properties maven-id="org.mockito:mockito-all:1.9.5" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/mockito-all-1.9.5.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/mockito/mockito-all/1.9.5/mockito-all-1.9.5.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/mockito-all-1.9.5.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/mockito/mockito-all/1.9.5/mockito-all-1.9.5-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

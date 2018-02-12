@@ -17,7 +17,6 @@ package com.intellij.psi.tree;
 
 import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.ElementManipulators;
@@ -26,12 +25,12 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
-import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -42,11 +41,11 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
 
   // load all parser definitions, instantiate all lexers & parsers to initialize all IElementType constants
   @SuppressWarnings("UnusedDeclaration")
-  public void testCount() throws Exception {
+  public void testCount() {
     int count = IElementType.getAllocatedTypesCount();
-    System.out.println("Preloaded: " + count +" element types");
-    LanguageExtensionPoint[] extensions = Extensions.getExtensions(new ExtensionPointName<LanguageExtensionPoint>("com.intellij.lang.parserDefinition"));
-    System.out.println("ParserDefinitions: " + extensions.length);
+    LOG.debug("Preloaded: " + count +" element types");
+    LanguageExtensionPoint[] extensions = Extensions.getExtensions(LanguageParserDefinitions.INSTANCE.getName(), null);
+    LOG.debug("ParserDefinitions: " + extensions.length);
 
     THashMap<Language, String> languageMap = new THashMap<>();
     languageMap.put(Language.ANY, "platform");
@@ -65,7 +64,7 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
         Lexer lexer = definition.createLexer(getProject());
         PsiParser parser = definition.createParser(getProject());
       }
-      catch (UnsupportedOperationException e1) {
+      catch (UnsupportedOperationException ignored) {
       }
 
       // language-based calculation: per-class-loading stuff commented
@@ -86,7 +85,7 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
       map.put(key, map.get(key) + 1);
       //if (key.equals("unknown")) System.out.println(type +"   " + language);
     }
-    System.out.println("Total: " + IElementType.getAllocatedTypesCount() +" element types");
+    LOG.debug("Total: " + IElementType.getAllocatedTypesCount() +" element types");
 
     // Show per-plugin statistics
     Object[] keys = map.keys();
@@ -96,7 +95,7 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
       int value = map.get((String)key);
       if (value == 0) continue;
       sum += value;
-      System.out.println("  " + key + ": " + value);
+      LOG.debug("  " + key + ": " + value);
     }
 
     // leave some index-space for plugin developers
@@ -120,8 +119,7 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
   }
 
   public void testManipulatorRegistered() {
-    LanguageExtensionPoint[] extensions =
-      Extensions.getExtensions(new ExtensionPointName<LanguageExtensionPoint>("com.intellij.lang.parserDefinition"));
+    LanguageExtensionPoint[] extensions = Extensions.getExtensions(LanguageParserDefinitions.INSTANCE.getName(), null);
     Set<String> classes = new HashSet<>();
     List<String> failures = new ArrayList<>();
     int total = 0;
@@ -136,20 +134,22 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
           PsiElement element = treeElement instanceof PsiElement? (PsiElement)treeElement : definition.createElement(treeElement);
           if (element instanceof PsiLanguageInjectionHost && classes.add(element.getClass().getName())) {
             boolean ok = ElementManipulators.getManipulator(element) != null;
-            System.out.println((ok ? "OK  " : "FAIL") + " " + element.getClass().getSimpleName() + " [" + definition.getClass().getSimpleName() + "]");
-            if (!ok) failures.add(element.getClass().getName());
+            if (!ok) {
+              System.err.println("FAIL" + " " + element.getClass().getSimpleName() + " [" + definition.getClass().getSimpleName() + "]");
+              failures.add(element.getClass().getName());
+            }
           }
         }
         catch (Throwable ignored) {
         }
       }
     }
-    System.out.println("count: " + classes.size() + ", total: " + total);
+    LOG.debug("count: " + classes.size() + ", total: " + total);
     assertEmpty("PsiLanguageInjectionHost requires " + ElementManipulators.EP_NAME, failures);
   }
 
   public void testInitialRegisterPerformance() {
-    PlatformTestUtil.startPerformanceTest("IElementType add", 100, () -> {
+    PlatformTestUtil.startPerformanceTest("IElementType add", 50, () -> {
       Language language = Language.ANY;
       IElementType[] old = IElementType.push(IElementType.EMPTY_ARRAY);
       try {
@@ -161,6 +161,6 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
       finally {
         IElementType.push(old);
       }
-    }).useLegacyScaling().assertTiming();
+    }).assertTiming();
   }
 }

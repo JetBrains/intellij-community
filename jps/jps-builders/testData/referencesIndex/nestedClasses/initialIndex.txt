@@ -2,27 +2,24 @@ Backward Hierarchy:
 java.lang.Object -> Boo Boo$Baz Foo Foo$Bar
 
 Backward References:
-Boo in Foo
-Boo$Baz in Foo
-Boo$Baz.<init>(0) in Foo
-Boo$Baz.m(0) in Foo
-Boo.<init>(0) in Foo
-Boo.m(0) in Foo
-Foo in Foo
-Foo$Bar in Foo
-Foo$Bar.<init>(0) in Foo
-Foo$Bar.m(0) in Foo
-Foo.<init>(0) in Foo
-Foo.m(0) in Foo
-java.lang.Object.<init>(0) in Foo
-java.util.Collections in Foo
-java.util.Collections.emptyList(0) in Foo
-java.util.Collections.emptyMap(0) in Foo
-java.util.Collections.emptySet(0) in Foo
-java.util.Collections.singleton(1) in Foo
+Boo in Foo occurrences = 1
+Boo$Baz in Foo occurrences = 1
+Boo$Baz.m(0) in Foo occurrences = 1
+Boo.m(0) in Foo occurrences = 1
+Foo in Foo occurrences = 1
+Foo$Bar in Foo occurrences = 1
+Foo$Bar.m(0) in Foo occurrences = 1
+Foo.m(0) in Foo occurrences = 1
+java.util.Collections in Foo occurrences = 5
+java.util.Collections.emptyList(0) in Foo occurrences = 1
+java.util.Collections.emptyMap(0) in Foo occurrences = 1
+java.util.Collections.emptySet(0) in Foo occurrences = 1
+java.util.Collections.singleton(1) in Foo occurrences = 1
 
 Class Definitions:
 Boo in Foo
 Boo$Baz in Foo
 Foo in Foo
 Foo$Bar in Foo
+
+Members Signatures:

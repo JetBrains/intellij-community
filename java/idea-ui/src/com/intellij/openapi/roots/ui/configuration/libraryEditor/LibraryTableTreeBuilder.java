@@ -33,11 +33,6 @@ class LibraryTableTreeBuilder extends AbstractTreeBuilder {
   }
 
   @Override
-  protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
-    return false;
-  }
-
-  @Override
   protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
     final Object element = nodeDescriptor.getElement();
     final Object rootElement = getTreeStructure().getRootElement();

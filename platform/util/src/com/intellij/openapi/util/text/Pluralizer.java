@@ -68,20 +68,27 @@ class Pluralizer {
    */
   static String restoreCase(String word, String result) {
     if (word == null || result == null || word == result) return result;
+    int len = Math.min(result.length(), word.length());
+    if (len == 0) return result;
     char[] chars = result.toCharArray();
-    boolean prevUp = false;
-    int len = Math.min(chars.length, word.length());
-    for (int i = 0; i < len; i++) {
+    int i = 0;
+    for (; i < len; i++) {
       char wc = word.charAt(i);
       if (chars[i] == wc && i != len - 1) continue;
       char uc = Character.toUpperCase(chars[i]);
       char lc = Character.toLowerCase(chars[i]);
-      if (wc == lc || (prevUp = wc == uc)) {
-        chars[i] = wc;
-      }
+      if (wc != lc && wc != uc) break;
+      chars[i] = wc;
     }
-    for (int i = len; i < chars.length; i++) {
-      chars[i] = prevUp ? Character.toUpperCase(chars[i]) : Character.toLowerCase(chars[i]);
+    if (i < chars.length) {
+      char wc = word.charAt(i - 1);
+      char uc = Character.toUpperCase(wc);
+      char lc = Character.toLowerCase(wc);
+      if (uc != lc) {
+        for (; i < chars.length; i++) {
+          chars[i] = wc == uc ? Character.toUpperCase(chars[i]) : Character.toLowerCase(chars[i]);
+        }
+      }
     }
     return new String(chars);
   }
@@ -278,7 +285,7 @@ class Pluralizer {
     JBIterable.of(new String[][]{
       {"/(.)s$", "$1"},
       {"/([^aeiou]s)es$", "$1"},
-      {"/((a)naly|(b)a|(d)iagno|(p)arenthe|(p)rogno|(s)ynop|(t)he)(?:sis|ses)$", "$1sis"},
+      {"/(analy|^ba|diagno|parenthe|progno|synop|the)(?:sis|ses)$", "$1sis"},
       {"/(^analy)(?:sis|ses)$", "$1sis"},
       {"/(wi|kni|(?:after|half|high|low|mid|non|night|[^\\w]|^)li)ves$", "$1fe"},
       {"/(ar|(?:wo|[ae])l|[eo][ao])ves$", "$1f"},
@@ -383,6 +390,7 @@ class Pluralizer {
       "species",
       "staff",
       "swine",
+      "tennis",
       "trout",
       "traffic",
       "transportation",

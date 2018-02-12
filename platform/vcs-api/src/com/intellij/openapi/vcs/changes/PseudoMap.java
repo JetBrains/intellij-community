@@ -36,6 +36,7 @@ public class PseudoMap<Key, Value> implements PairConsumer<Key, Value>, Nullable
     return myMap.get(key);
   }
 
+  @Override
   public void consume(Key key, Value value) {
     myMap.put(key, value);
   }

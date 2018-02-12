@@ -36,7 +36,7 @@ public class BasePasteHandler extends EditorWriteActionHandler {
   }
 
   @Override
-  public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+  public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     // We capture the contents to paste here, so it that it won't be affected by possible clipboard operations later (e.g. during unlocking
     // of current file for writing)
     myTransferable = getContentsToPaste(editor, dataContext);

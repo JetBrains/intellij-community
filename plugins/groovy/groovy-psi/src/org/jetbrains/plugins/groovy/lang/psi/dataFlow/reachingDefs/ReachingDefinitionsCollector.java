@@ -20,7 +20,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
@@ -256,7 +255,7 @@ public class ReachingDefinitionsCollector {
         result.add(info);
       }
     }
-    return result.toArray(new VariableInfo[result.size()]);
+    return result.toArray(new VariableInfo[0]);
   }
 
   private static LinkedHashSet<Integer> getFragmentInstructions(GrStatement first, GrStatement last, Instruction[] flow) {
@@ -380,12 +379,9 @@ public class ReachingDefinitionsCollector {
         @Override
         public boolean execute(int i, TIntHashSet defs) {
           buffer.append(i).append(" -> ");
-          defs.forEach(new TIntProcedure() {
-            @Override
-            public boolean execute(int i) {
-              buffer.append(i).append(" ");
-              return true;
-            }
+          defs.forEach(i1 -> {
+            buffer.append(i1).append(" ");
+            return true;
           });
           return true;
         }

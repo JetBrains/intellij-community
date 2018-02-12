@@ -22,10 +22,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: 1/10/13
- */
 public class JavaFxSetterAttributeDescriptor extends JavaFxPropertyAttributeDescriptor {
   private final PsiMethod myPsiMethod;
 

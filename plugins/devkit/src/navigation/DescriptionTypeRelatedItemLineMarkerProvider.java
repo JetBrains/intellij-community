@@ -39,7 +39,6 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedLineMarkerProviderBase {
@@ -51,7 +50,7 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedL
     psiFile -> GotoRelatedItem.createItems(Collections.singleton(psiFile), "DevKit");
 
   @Override
-  protected void collectNavigationMarkers(@NotNull PsiElement element, Collection<? super RelatedItemLineMarkerInfo> result) {
+  protected void collectNavigationMarkers(@NotNull PsiElement element, @NotNull Collection<? super RelatedItemLineMarkerInfo> result) {
     if (element instanceof PsiClass) {
       process((PsiClass)element, result);
     }

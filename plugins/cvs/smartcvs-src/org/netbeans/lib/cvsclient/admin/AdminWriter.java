@@ -132,7 +132,7 @@ public final class AdminWriter implements IAdminWriter {
     fileReadOnlyHandler.setFileReadOnly(cvsFileSystem.getLocalFileSystem().getFile(fileObject), true);
   }
 
-  public void setEntriesDotStatic(DirectoryObject directoryObject, boolean set, ICvsFileSystem cvsFileSystem) throws IOException {
+  public void setEntriesDotStatic(DirectoryObject directoryObject, boolean set, ICvsFileSystem cvsFileSystem) {
     final File localDirectory = cvsFileSystem.getAdminFileSystem().getFile(directoryObject);
     if (set) {
       final File cvsDirectory = getCvsDirectoryForLocalDirectory(localDirectory);

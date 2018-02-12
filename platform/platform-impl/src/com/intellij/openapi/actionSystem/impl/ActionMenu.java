@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
@@ -21,6 +7,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Disposer;
@@ -228,7 +215,11 @@ public final class ActionMenu extends JBMenu {
     UISettings settings = UISettings.getInstanceOrNull();
     if (settings != null && settings.getShowIconsInMenus()) {
       final Presentation presentation = myPresentation;
-      final Icon icon = presentation.getIcon();
+      Icon icon = presentation.getIcon();
+      if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
+        // JDK can't paint correctly our HiDPI icons at the system menu bar
+        icon = IconLoader.get1xIcon(icon);
+      }
       setIcon(icon);
       if (presentation.getDisabledIcon() != null) {
         setDisabledIcon(presentation.getDisabledIcon());
@@ -286,15 +277,13 @@ public final class ActionMenu extends JBMenu {
       for (Component menuComponent : getMenuComponents()) {
         if (menuComponent instanceof ActionMenu) {
           ((ActionMenu)menuComponent).clearItems();
-          if (SystemInfo.isMacSystemMenu) {
-            // hideNotify is not called on Macs
-            ((ActionMenu)menuComponent).uninstallSynchronizer();
-          }
+          // hideNotify is not called on Macs
+          ((ActionMenu)menuComponent).uninstallSynchronizer();
         }
         else if (menuComponent instanceof ActionMenuItem) {
           // Looks like an old-fashioned ugly workaround
           // JDK 1.7 on Mac works wrong with such functional keys
-          if (!(SystemInfo.isJavaVersionAtLeast("1.7") && SystemInfo.isMac)) {
+          if (!SystemInfo.isMac) {
             ((ActionMenuItem)menuComponent).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F24, 0));
           }
         }
@@ -373,7 +362,7 @@ public final class ActionMenu extends JBMenu {
         if (myEventToRedispatch != null) {
           IdeEventQueue.getInstance().dispatchEvent(myEventToRedispatch);
         }
-      }, 50, this);
+      }, 50, ModalityState.any(), this);
       myCheckAlarm = new SingleAlarm(() -> {
         if (myLastEventTime > 0 && System.currentTimeMillis() - myLastEventTime > 1500) {
           if (!myInBounds && myCallbackAlarm != null && !myCallbackAlarm.isDisposed()) {
@@ -381,7 +370,7 @@ public final class ActionMenu extends JBMenu {
           }
         }
         myCheckAlarm.request();
-      }, 100, this);
+      }, 100, ModalityState.any(), this);
       myComponent = component;
       PointerInfo info = MouseInfo.getPointerInfo();
       myLastMousePoint = info != null ? info.getLocation() : null;

@@ -26,7 +26,7 @@ import javax.swing.*;
  * @author nik
  */
 public class InvalidArtifactConfigurable extends ArtifactConfigurableBase {
-  private String myErrorMessage;
+  private final String myErrorMessage;
 
   public InvalidArtifactConfigurable(InvalidArtifact originalArtifact,
                                      ArtifactsStructureConfigurableContextImpl artifactsStructureContext,
@@ -56,10 +56,6 @@ public class InvalidArtifactConfigurable extends ArtifactConfigurableBase {
 
   @Override
   public void apply() throws ConfigurationException {
-  }
-
-  @Override
-  public void reset() {
   }
 
   private static class InvalidArtifactComponent {

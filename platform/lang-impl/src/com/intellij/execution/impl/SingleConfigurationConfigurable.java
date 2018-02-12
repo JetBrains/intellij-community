@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -44,9 +45,9 @@ import java.awt.event.ActionListener;
 
 public final class SingleConfigurationConfigurable<Config extends RunConfiguration>
     extends BaseRCSettingsConfigurable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.SingleConfigurationConfigurable");
+  private static final Logger LOG = Logger.getInstance(SingleConfigurationConfigurable.class);
   private final PlainDocument myNameDocument = new PlainDocument();
-  @Nullable private Executor myExecutor;
+  @Nullable private final Executor myExecutor;
 
   private ValidationResult myLastValidationResult = null;
   private boolean myValidationResultValid = false;
@@ -59,9 +60,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private String myFolderName;
   private boolean myChangingNameFromCode;
 
-
-  private SingleConfigurationConfigurable(RunnerAndConfigurationSettings settings, @Nullable Executor executor) {
+  private SingleConfigurationConfigurable(@NotNull RunnerAndConfigurationSettings settings, @Nullable Executor executor) {
     super(new ConfigurationSettingsEditorWrapper(settings), settings);
+
     myExecutor = executor;
 
     final Config configuration = getConfiguration();
@@ -93,8 +94,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     });
   }
 
-  public static <Config extends RunConfiguration> SingleConfigurationConfigurable<Config> editSettings(RunnerAndConfigurationSettings settings,
-                                                                                                       @Nullable Executor executor) {
+  @NotNull
+  public static <Config extends RunConfiguration> SingleConfigurationConfigurable<Config> editSettings(@NotNull RunnerAndConfigurationSettings settings, @Nullable Executor executor) {
     SingleConfigurationConfigurable<Config> configurable = new SingleConfigurationConfigurable<>(settings, executor);
     configurable.reset();
     return configurable;
@@ -112,20 +113,23 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   boolean isSnapshotSpecificallyModified(RunManagerImpl runManager,
                                          RunnerAndConfigurationSettings original,
                                          RunnerAndConfigurationSettings snapshot) {
-    return runManager.isConfigurationShared(original) != myStoreProjectConfiguration;
+    return original.isShared() != myStoreProjectConfiguration;
   }
 
   @Override
   public void apply() throws ConfigurationException {
     RunnerAndConfigurationSettings settings = getSettings();
-    if (settings == null) return;
+    if (settings == null) {
+      return;
+    }
+
     RunConfiguration runConfiguration = settings.getConfiguration();
-    final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
     settings.setName(getNameText());
     settings.setSingleton(mySingleton);
     settings.setFolderName(myFolderName);
+    settings.setShared(myStoreProjectConfiguration);
     super.apply();
-    runManager.addConfiguration(settings, myStoreProjectConfiguration, runManager.getBeforeRunTasks(settings.getConfiguration()), false);
+    RunManagerImpl.getInstanceImpl(runConfiguration.getProject()).addConfiguration(settings);
   }
 
   @Override
@@ -282,13 +286,19 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     return myHelpTopic;
   }
 
+  @NotNull
   public Config getConfiguration() {
+    //noinspection unchecked
     return (Config)getSettings().getConfiguration();
   }
 
   public RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
     final SettingsEditor<RunnerAndConfigurationSettings> editor = getEditor();
-    return editor == null ? null : editor.getSnapshot();
+    RunnerAndConfigurationSettings snapshot = editor == null ? null : editor.getSnapshot();
+    if (snapshot != null) {
+      snapshot.setSingleton(isSingleton());
+    }
+    return snapshot;
   }
 
   @Override
@@ -326,12 +336,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myNameLabel.setLabelFor(myNameText);
       myNameText.setDocument(myNameDocument);
 
-      getEditor().addSettingsEditorListener(new SettingsEditorListener() {
-        @Override
-        public void stateChanged(SettingsEditor settingsEditor) {
-          updateWarning();
-        }
-      });
+      getEditor().addSettingsEditorListener(settingsEditor -> updateWarning());
 
       myWarningLabel.setIcon(AllIcons.RunConfigurations.ConfigurationWarning);
 
@@ -363,25 +368,19 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       };
       myCbStoreProjectConfiguration.addActionListener(actionListener);
       myCbSingleton.addActionListener(actionListener);
-      settingAnchor();
     }
 
     private void doReset(RunnerAndConfigurationSettings settings) {
-      final RunConfiguration runConfiguration = settings.getConfiguration();
-      final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
-      myStoreProjectConfiguration = runManager.isConfigurationShared(settings);
-      myCbStoreProjectConfiguration.setEnabled(!(runConfiguration instanceof UnknownRunConfiguration));
+      boolean isUnknownRunConfiguration = settings.getConfiguration() instanceof UnknownRunConfiguration;
+      myStoreProjectConfiguration = settings.isShared();
+      myCbStoreProjectConfiguration.setEnabled(!isUnknownRunConfiguration);
       myCbStoreProjectConfiguration.setSelected(myStoreProjectConfiguration);
       myCbStoreProjectConfiguration.setVisible(!settings.isTemplate());
 
       mySingleton = settings.isSingleton();
-      myCbSingleton.setEnabled(!(runConfiguration instanceof UnknownRunConfiguration));
+      myCbSingleton.setEnabled(!isUnknownRunConfiguration);
       myCbSingleton.setSelected(mySingleton);
-      ConfigurationFactory factory = settings.getFactory();
-      myCbSingleton.setVisible(factory != null && factory.canConfigurationBeSingleton());
-    }
-
-    private void settingAnchor() {
+      myCbSingleton.setVisible(settings.getFactory().canConfigurationBeSingleton());
     }
 
     public final JComponent getWholePanel() {

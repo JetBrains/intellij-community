@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.psi.impl.source.tree.java;
 
@@ -21,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -29,8 +18,10 @@ import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.resolve.*;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -53,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase implements PsiReferenceExpression, SourceJavaCodeReference {
+public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements PsiReferenceExpression, SourceJavaCodeReference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl");
 
   private volatile String myCachedQName;
@@ -172,6 +163,12 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   }
 
   @Override
+  public String getReferenceName() {
+    PsiElement element = getReferenceNameElement();
+    return element != null ? element.getText() : null;
+  }
+
+  @Override
   public void clearCaches() {
     myCachedQName = null;
     myCachedNormalizedText = null;
@@ -273,6 +270,13 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
         result = resolveToPackage(containingFile);
       }
 
+      if (result.length == 0 && variable == null) {
+        String qualifiedName = getQualifiedName();
+        if (qualifiedName != null) {
+          result = PsiJavaCodeReferenceElementImpl.tryClassResult(qualifiedName, this, result);
+        }
+      }
+
       return result.length == 0 && variable != null ? variable : result;
     }
 
@@ -323,7 +327,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     if (qualifier instanceof PsiReferenceExpression && !(((PsiReferenceExpression)qualifier).resolve() instanceof PsiPackage)) {
       return JavaResolveResult.EMPTY_ARRAY;
     }
-    return new JavaResolveResult[]{new CandidateInfo(aPackage, PsiSubstitutor.EMPTY)};
+    return new JavaResolveResult[]{new CandidateInfo(aPackage, PsiSubstitutor.EMPTY, this, false)};
   }
 
   @NotNull
@@ -456,6 +460,18 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     return element.getManager().areElementsEquivalent(element, advancedResolve(true).getElement());
   }
 
+  @NotNull
+  @Override
+  public Object[] getVariants() {
+    // this reference's variants are rather obtained with processVariants()
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  @Override
+  public boolean isSoft() {
+    return false;
+  }
+
   @Override
   public void processVariants(@NotNull PsiScopeProcessor processor) {
     DelegatingScopeProcessor filterProcessor = new DelegatingScopeProcessor(processor) {
@@ -500,6 +516,13 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
 
     };
     PsiScopesUtil.resolveAndWalk(filterProcessor, this, null, true);
+  }
+
+  @NotNull
+  @Override
+  public JavaResolveResult advancedResolve(boolean incompleteCode) {
+    JavaResolveResult[] results = multiResolve(incompleteCode);
+    return results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
   }
 
   /* see also HighlightMethodUtil.checkStaticInterfaceMethodCallQualifier() */
@@ -572,6 +595,18 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   }
 
   @Override
+  public PsiReferenceParameterList getParameterList() {
+    return PsiTreeUtil.getChildOfType(this, PsiReferenceParameterList.class);
+  }
+
+  @NotNull
+  @Override
+  public PsiType[] getTypeParameters() {
+    PsiReferenceParameterList parameterList = getParameterList();
+    return parameterList != null ? parameterList.getTypeArguments() : PsiType.EMPTY_ARRAY;
+  }
+
+  @Override
   public int getTextOffset() {
     ASTNode refName = findChildByRole(ChildRole.REFERENCE_NAME);
     return refName == null ? super.getTextOffset() : refName.getStartOffset();
@@ -626,7 +661,8 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     if (isReferenceTo(element)) return this;
 
     final PsiManager manager = getManager();
-    final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(getProject()).getParserFacade();
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    final PsiJavaParserFacade parserFacade = facade.getParserFacade();
     if (element instanceof PsiClass) {
       final boolean preserveQualification = JavaCodeStyleSettingsFacade.getInstance(getProject()).useFQClassNames() && isFullyQualified(this);
       String qName = ((PsiClass)element).getQualifiedName();
@@ -635,6 +671,11 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       }
       else if (JavaPsiFacade.getInstance(manager.getProject()).findClass(qName, getResolveScope()) == null && !preserveQualification) {
         return this;
+      }
+      else if (facade.getResolveHelper().resolveReferencedClass(qName, this) == null &&
+               facade.getResolveHelper().resolveReferencedClass(StringUtil.getPackageName(qName), this) != null) {
+        qName = ((PsiClass)element).getName();
+        assert qName != null : element;
       }
       PsiExpression ref = parserFacade.createExpressionFromText(qName, this);
       getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
@@ -682,35 +723,45 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (getChildRole(child) == ChildRole.QUALIFIER) {
-      ASTNode dot = findChildByRole(ChildRole.DOT);
-      super.deleteChildInternal(child);
-      deleteChildInternal(dot);
+      ASTNode dot = findChildByType(JavaTokenType.DOT, child);
+      assert dot != null : this;
+      deleteChildRange(child.getPsi(), dot.getPsi());
+
+      ASTNode first = getFirstChildNode();
+      if (getChildRole(first) == ChildRole.REFERENCE_PARAMETER_LIST && first.getFirstChildNode() == null) {
+        ASTNode start = first.getTreeNext();
+        if (PsiImplUtil.isWhitespaceOrComment(start)) {
+          ASTNode next = PsiImplUtil.skipWhitespaceAndComments(start);
+          assert next != null : this;
+          CodeEditUtil.removeChildren(this, start, next.getTreePrev());
+        }
+      }
+    }
+    else if (child.getElementType() == JavaElementType.REFERENCE_PARAMETER_LIST) {
+      replaceChildInternal(child, createEmptyRefParameterList(getProject()));
     }
     else {
       super.deleteChildInternal(child);
     }
   }
 
+  public static TreeElement createEmptyRefParameterList(Project project) {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    return (TreeElement)Objects.requireNonNull(factory.createReferenceFromText("foo", null).getParameterList()).getNode();
+  }
+
   @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
+
     switch (role) {
-      default:
-        return null;
-
       case ChildRole.REFERENCE_NAME:
-        if (getChildRole(getLastChildNode()) == role) {
-          return getLastChildNode();
-        }
-
-        return findChildByType(JavaTokenType.IDENTIFIER);
+        TreeElement lastChild = getLastChildNode();
+        return getChildRole(lastChild) == role ? lastChild : findChildByType(JavaTokenType.IDENTIFIER);
 
       case ChildRole.QUALIFIER:
-        if (getChildRole(getFirstChildNode()) == ChildRole.QUALIFIER) {
-          return getFirstChildNode();
-        }
-
-        return null;
+        TreeElement firstChild = getFirstChildNode();
+        return getChildRole(firstChild) == ChildRole.QUALIFIER ? firstChild : null;
 
       case ChildRole.REFERENCE_PARAMETER_LIST:
         return findChildByType(JavaElementType.REFERENCE_PARAMETER_LIST);
@@ -718,6 +769,8 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       case ChildRole.DOT:
         return findChildByType(JavaTokenType.DOT);
     }
+
+    return null;
   }
 
   @Override
@@ -727,18 +780,21 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     if (i == JavaTokenType.DOT) {
       return ChildRole.DOT;
     }
-    else if (i == JavaElementType.REFERENCE_PARAMETER_LIST) {
+    if (i == JavaElementType.REFERENCE_PARAMETER_LIST) {
       return ChildRole.REFERENCE_PARAMETER_LIST;
     }
-    else if (i == JavaTokenType.IDENTIFIER || i == JavaTokenType.THIS_KEYWORD || i == JavaTokenType.SUPER_KEYWORD) {
+    if (i == JavaTokenType.IDENTIFIER || i == JavaTokenType.THIS_KEYWORD || i == JavaTokenType.SUPER_KEYWORD) {
       return ChildRole.REFERENCE_NAME;
     }
-    else {
-      if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
-        return ChildRole.QUALIFIER;
-      }
-      return ChildRoleBase.NONE;
+    if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
+      return ChildRole.QUALIFIER;
     }
+    return ChildRoleBase.NONE;
+  }
+
+  @Override
+  public PsiReference getReference() {
+    return getReferenceNameElement() != null ? this : null;
   }
 
   @Override
@@ -751,21 +807,19 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     }
   }
 
-  public String toString() {
-    return "PsiReferenceExpression:" + getText();
+  @Override
+  public PsiElement getElement() {
+    return this;
   }
 
   @Override
   public TextRange getRangeInElement() {
-    TreeElement nameChild = (TreeElement)findChildByRole(ChildRole.REFERENCE_NAME);
-    if (nameChild == null) {
-      final TreeElement dot = (TreeElement)findChildByRole(ChildRole.DOT);
-      if (dot == null) {
-        LOG.error(toString());
-      }
-      return new TextRange(dot.getStartOffsetInParent() + dot.getTextLength(), getTextLength());
-    }
-    return new TextRange(nameChild.getStartOffsetInParent(), getTextLength());
+    return PsiJavaCodeReferenceElementImpl.calcRangeInElement(this);
+  }
+
+  @Override
+  public PsiElement resolve() {
+    return advancedResolve(false).getElement();
   }
 
   @Override
@@ -787,11 +841,21 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     return getChildRole(getFirstChildNode()) == ChildRole.QUALIFIER;
   }
 
+  @Override
+  public String getQualifiedName() {
+    return getCanonicalText();
+  }
+
   private String getCachedNormalizedText() {
     String whiteSpaceAndComments = myCachedNormalizedText;
     if (whiteSpaceAndComments == null) {
       myCachedNormalizedText = whiteSpaceAndComments = JavaSourceUtil.getReferenceText(this);
     }
     return whiteSpaceAndComments;
+  }
+
+  @Override
+  public String toString() {
+    return "PsiReferenceExpression:" + getText();
   }
 }

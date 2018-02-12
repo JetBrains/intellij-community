@@ -24,8 +24,8 @@ class TestCase(unittest.TestCase):
                                 'sys.path.append(r\'%s\'); '
                                 'import pydevd; pydevd.settrace(host=\'127.0.0.1\', port=0, suspend=False, '
                                 'trace_only_current_thread=False, patch_multiprocessing=True); '
-                                ''
-                                'connect("127.0.0.1")') % pydev_src_dir
+                                'from pydevd import SetupHolder; SetupHolder.setup = %s; '
+                                'connect("127.0.0.1")') % (pydev_src_dir, SetupHolder.setup)
             if sys.platform == "win32":
                 debug_command = debug_command.replace('"', '\\"')
                 debug_command = '"%s"' % debug_command
@@ -47,8 +47,8 @@ class TestCase(unittest.TestCase):
             debug_command = (
                                 'import sys; sys.path.append(r\'%s\'); import pydevd; '
                                 'pydevd.settrace(host=\'127.0.0.1\', port=0, suspend=False, trace_only_current_thread=False, patch_multiprocessing=True); '
-                                ''
-                                'connect("127.0.0.1")') % pydev_src_dir
+                                'from pydevd import SetupHolder; SetupHolder.setup = %s; '
+                                'connect("127.0.0.1")') % (pydev_src_dir, SetupHolder.setup)
             if sys.platform == "win32":
                 debug_command = debug_command.replace('"', '\\"')
                 debug_command = '"%s"' % debug_command

@@ -41,11 +41,11 @@ import java.util.List;
 public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
                                Member extends PsiElement,
                                Klass extends PsiElement> extends BaseRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance("#" + PushDownProcessor.class.getName());
+  private static final Logger LOG = Logger.getInstance(PushDownProcessor.class);
 
   private NewSubClassData mySubClassData;
-  private PushDownDelegate<MemberInfo, Member> myDelegate;
-  private PushDownData<MemberInfo, Member> myPushDownData;
+  private final PushDownDelegate<MemberInfo, Member> myDelegate;
+  private final PushDownData<MemberInfo, Member> myPushDownData;
 
   public PushDownProcessor(@NotNull Klass sourceClass,
                            @NotNull List<MemberInfo> memberInfos,
@@ -177,6 +177,7 @@ public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
     }
   }
 
+  @NotNull
   @Override
   protected String getCommandName() {
     return RefactoringBundle.message("push.members.down.title");

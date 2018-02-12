@@ -103,13 +103,13 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
     }
   }
 
-  fun getTools(name: String, project: Project?) = getToolsOrNull(name, project) ?: throw AssertionError("Can't find tools for \"$name\" in the profile \"$name\"")
+  fun getTools(name: String, project: Project?) = getToolsOrNull(name, project) ?: throw AssertionError("Can't find tools for \"$name\" in the profile \"${this.name}\"")
 
   abstract fun getToolsOrNull(name: String, project: Project?): ToolsImpl?
 
   @JvmOverloads
   fun initInspectionTools(project: Project? = (profileManager as? ProjectInspectionProfileManager)?.project) {
-    if (initialized || ApplicationManager.getApplication().isUnitTestMode && !INIT_INSPECTIONS) {
+    if (initialized || !forceInitInspectionTools()) {
       return
     }
 
@@ -119,6 +119,8 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
       }
     }
   }
+
+  protected open fun forceInitInspectionTools(): Boolean = !ApplicationManager.getApplication().isUnitTestMode || INIT_INSPECTIONS
 
   protected abstract fun initialize(project: Project?)
 
@@ -134,9 +136,7 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
 }
 
 fun createSimple(name: String, project: Project, toolWrappers: List<InspectionToolWrapper<*, *>>): InspectionProfileImpl {
-  val profile = InspectionProfileImpl(name, object : InspectionToolRegistrar() {
-    override fun createTools() = toolWrappers
-  }, InspectionProfileManager.getInstance() as BaseInspectionProfileManager)
+  val profile = InspectionProfileImpl(name, { toolWrappers }, InspectionProfileManager.getInstance() as BaseInspectionProfileManager)
   for (toolWrapper in toolWrappers) {
     profile.enableTool(toolWrapper.shortName, project)
   }

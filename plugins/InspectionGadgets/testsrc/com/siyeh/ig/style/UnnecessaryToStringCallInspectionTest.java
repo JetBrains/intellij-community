@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class UnnecessaryToStringCallInspectionTest extends LightInspectionTestCase {
 
-  public void testUnnecessaryToString() throws Exception {
+  public void testUnnecessaryToString() {
     doTest();
   }
 

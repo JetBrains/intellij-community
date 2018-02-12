@@ -1,0 +1,40 @@
+foo
+.bar
+
+foo
+?.bar
+
+foo
+     *.bar
+
+foo
+  .&bar
+-----
+Groovy script
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(new line)('\n')
+    PsiElement(.)('.')
+    PsiElement(identifier)('bar')
+  PsiElement(new line)('\n\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(new line)('\n')
+    PsiElement(?.)('?.')
+    PsiElement(identifier)('bar')
+  PsiElement(new line)('\n\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(new line)('\n     ')
+    PsiElement(*.)('*.')
+    PsiElement(identifier)('bar')
+  PsiElement(new line)('\n\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(new line)('\n  ')
+    PsiElement(.&)('.&')
+    PsiElement(identifier)('bar')

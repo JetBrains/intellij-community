@@ -17,6 +17,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +55,7 @@ public class ExceptionUtil {
     for (int i=0, len = Math.min(trace.length, rootTrace.length); i < len; i++) {
       if (trace[trace.length - i - 1].equals(rootTrace[rootTrace.length - i - 1])) continue;
       int newDepth = trace.length - i;
-      th.setStackTrace(Arrays.asList(trace).subList(0, newDepth).toArray(new StackTraceElement[newDepth]));
+      th.setStackTrace(Arrays.copyOf(trace, newDepth));
       break;
     }
     return th;
@@ -116,10 +117,13 @@ public class ExceptionUtil {
 
   @NotNull
   public static String getUserStackTrace(@NotNull Throwable aThrowable, Logger logger) {
-    final String result = getThrowableText(aThrowable, "com.intellij.");
-    if (!result.contains("\n\tat")) {
-      // no stack frames found
+    String result = getThrowableText(aThrowable, "com.intellij.");
+    if (!result.contains("\n\tat") && aThrowable.getStackTrace().length > 0) {
+      // no 3rd party stack frames found, log as error
       logger.error(aThrowable);
+    }
+    else {
+      return result.trim() + " (no stack trace)";
     }
     return result;
   }
@@ -152,12 +156,11 @@ public class ExceptionUtil {
   }
 
   public static void rethrowUnchecked(@Nullable Throwable t) {
-    if (t != null) {
-      if (t instanceof Error) throw (Error)t;
-      if (t instanceof RuntimeException) throw (RuntimeException)t;
-    }
+    if (t instanceof Error) throw (Error)t;
+    if (t instanceof RuntimeException) throw (RuntimeException)t;
   }
 
+  @Contract("!null->fail")
   public static void rethrowAll(@Nullable Throwable t) throws Exception {
     if (t != null) {
       rethrowUnchecked(t);
@@ -165,18 +168,13 @@ public class ExceptionUtil {
     }
   }
 
+  @Contract("_->fail")
   public static void rethrow(@Nullable Throwable throwable) {
-    if (throwable instanceof Error) {
-      throw (Error)throwable;
-    }
-    else if (throwable instanceof RuntimeException) {
-      throw (RuntimeException)throwable;
-    }
-    else {
-      throw new RuntimeException(throwable);
-    }
+    rethrowUnchecked(throwable);
+    throw new RuntimeException(throwable);
   }
 
+  @Contract("!null->fail")
   public static void rethrowAllAsUnchecked(@Nullable Throwable t) {
     if (t != null) {
       rethrowUnchecked(t);

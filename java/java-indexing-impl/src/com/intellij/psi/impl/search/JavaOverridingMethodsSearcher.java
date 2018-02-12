@@ -15,12 +15,11 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.openapi.application.Application;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -37,6 +36,7 @@ import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 
@@ -52,7 +52,10 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
     final SearchScope searchScope = parameters.getScope();
 
     if (searchScope instanceof LocalSearchScope) {
-      return processLocalScope((LocalSearchScope)searchScope, method, project, consumer);
+      VirtualFile[] files = ((LocalSearchScope)searchScope).getVirtualFiles();
+      if (isJavaOnlyScope(files)) {
+        return processLocalScope((LocalSearchScope)searchScope, method, project, consumer);
+      }
     }
 
     Iterable<PsiMethod> cached = HighlightingCaches.getInstance(project).OVERRIDING_METHODS.get(method);
@@ -74,6 +77,10 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
       }
     }
     return true;
+  }
+
+  static boolean isJavaOnlyScope(@NotNull VirtualFile[] files) {
+    return Arrays.stream(files).allMatch(file -> file.getFileType() == JavaFileType.INSTANCE);
   }
 
   private static boolean processLocalScope(@NotNull LocalSearchScope searchScope,
@@ -100,7 +107,7 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
                 ProgressManager.checkCanceled();
                 if (!success[0]) return;
                 PsiMethod overridingMethod = candidate.isInheritor(methodContainingClass, true)
-                                             ? findOverridingMethod(project, candidate, method, methodContainingClass) : null;
+                                             ? findOverridingMethod(candidate, method, methodContainingClass) : null;
                 if (overridingMethod != null && !consumer.process(overridingMethod)) {
                   success[0] = false;
                 }
@@ -118,12 +125,11 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
 
   @NotNull
   private static Iterable<PsiMethod> compute(@NotNull PsiMethod method, @NotNull Project project) {
-    Application application = ApplicationManager.getApplication();
-    final PsiClass containingClass = application.runReadAction((Computable<PsiClass>)method::getContainingClass);
+    final PsiClass containingClass = ReadAction.compute(method::getContainingClass);
     assert containingClass != null;
     Collection<PsiMethod> result = new LinkedHashSet<>();
     Processor<PsiClass> inheritorsProcessor = inheritor -> {
-      PsiMethod found = application.runReadAction((Computable<PsiMethod>)() -> findOverridingMethod(project, inheritor, method, containingClass));
+      PsiMethod found = ReadAction.compute(() -> findOverridingMethod(inheritor, method, containingClass));
       if (found != null) {
         result.add(found);
       }
@@ -138,14 +144,13 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
   }
 
   @Nullable
-  static PsiMethod findOverridingMethod(@NotNull Project project,
-                                        @NotNull PsiClass inheritor,
+  public static PsiMethod findOverridingMethod(@NotNull PsiClass inheritor,
                                         @NotNull PsiMethod method,
                                         @NotNull PsiClass methodContainingClass) {
     String name = method.getName();
     if (inheritor.findMethodsByName(name, false).length > 0) {
       PsiMethod found = MethodSignatureUtil.findMethodBySuperSignature(inheritor, getSuperSignature(inheritor, methodContainingClass, method), false);
-      if (found != null && isAcceptable(project, found, inheritor, method, methodContainingClass)) {
+      if (found != null && isAcceptable(found, inheritor, method, methodContainingClass)) {
         return found;
       }
     }
@@ -155,7 +160,7 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
       if (superClass != null && !superClass.isInheritor(methodContainingClass, true) && superClass.findMethodsByName(name, true).length > 0) {
         MethodSignature signature = getSuperSignature(inheritor, methodContainingClass, method);
         PsiMethod derived = MethodSignatureUtil.findMethodInSuperClassBySignatureInDerived(inheritor, superClass, signature, true);
-        if (derived != null && isAcceptable(project, derived, inheritor, method, methodContainingClass)) {
+        if (derived != null && isAcceptable(derived, inheritor, method, methodContainingClass)) {
           return derived;
         }
       }
@@ -171,13 +176,12 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
   }
 
 
-  private static boolean isAcceptable(@NotNull Project project,
-                                      @NotNull PsiMethod found,
+  private static boolean isAcceptable(@NotNull PsiMethod found,
                                       @NotNull PsiClass foundContainingClass,
                                       @NotNull PsiMethod method,
                                       @NotNull PsiClass methodContainingClass) {
     return !found.hasModifierProperty(PsiModifier.STATIC) &&
            (!method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) ||
-            JavaPsiFacade.getInstance(project).arePackagesTheSame(methodContainingClass, foundContainingClass));
+            JavaPsiFacade.getInstance(found.getProject()).arePackagesTheSame(methodContainingClass, foundContainingClass));
   }
 }

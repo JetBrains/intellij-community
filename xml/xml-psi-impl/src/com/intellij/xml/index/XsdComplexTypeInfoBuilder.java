@@ -27,12 +27,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 7/4/12
- * Time: 6:37 PM
- */
 public class XsdComplexTypeInfoBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
   private final static String SIGN = "";
   public static final String HTTP_WWW_W3_ORG_2001_XMLSCHEMA = "http://www.w3.org/2001/XMLSchema";
@@ -180,8 +174,8 @@ public class XsdComplexTypeInfoBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
 
   private SchemaTypeInfo createSchemaTypeInfo(final String value, final boolean isType) {
     final int separatorIdx = value.indexOf(':');
-    final String ns = separatorIdx <= 0 ? "" : new String(value.substring(0, separatorIdx));
-    final String element = separatorIdx <= 0 ? value : new String(value.substring(separatorIdx + 1));
+    final String ns = separatorIdx <= 0 ? "" : value.substring(0, separatorIdx);
+    final String element = separatorIdx <= 0 ? value : value.substring(separatorIdx + 1);
     String nsUri = myNameSpaceHelper.getNamespaces().get(ns);
     nsUri = nsUri == null ? ns : nsUri;
     return new SchemaTypeInfo(element, isType, nsUri);
@@ -205,7 +199,7 @@ public class XsdComplexTypeInfoBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
           if (key.length() == XMLNS.length()) {
             myNamespaces.put("", value);
           } else if (key.startsWith(XMLNS_)) {
-            final String prefix = new String(key.substring(XMLNS_.length()));
+            final String prefix = key.substring(XMLNS_.length());
             myNamespaces.put(prefix, value);
           }
         }

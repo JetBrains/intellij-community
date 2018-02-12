@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.remoteServer.impl.runtime.ui.tree;
 
 import com.intellij.execution.Executor;
@@ -19,12 +34,12 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationManager;
+import com.intellij.remoteServer.configuration.deployment.SingletonDeploymentSourceType;
 import com.intellij.remoteServer.impl.configuration.SingleRemoteServerConfigurable;
 import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfiguration;
 import com.intellij.remoteServer.impl.runtime.deployment.DeploymentTaskImpl;
@@ -38,6 +53,7 @@ import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
 import com.intellij.remoteServer.runtime.deployment.DeploymentStatus;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
+import com.intellij.remoteServer.util.CloudBundle;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Function;
@@ -48,10 +64,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author michael.golubev
@@ -136,7 +150,8 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     public Collection<? extends AbstractTreeNode> getChildren() {
       List<AbstractTreeNode<?>> result = new ArrayList<>();
       result.addAll(myContribution.createServerNodes(doGetProject()));
-      result.addAll(ContainerUtil.map(myContribution.getRemoteServers(), (Function<RemoteServer<?>, AbstractTreeNode<?>>)server -> new RemoteServerNode(server)));
+      result.addAll(ContainerUtil.map(myContribution.getRemoteServers(),
+                                      (Function<RemoteServer<?>, AbstractTreeNode<?>>)server -> new RemoteServerNode(server)));
       return result;
     }
 
@@ -203,38 +218,56 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
       final RemoteServer<?> server = getServer();
       final ServerType<? extends ServerConfiguration> serverType = server.getType();
       final DeploymentConfigurationManager configurationManager = DeploymentConfigurationManager.getInstance(doGetProject());
-      final List<RunnerAndConfigurationSettings> list = new ArrayList<>(ContainerUtil.filter(
-        configurationManager.getDeploymentConfigurations(serverType),
-        settings -> {
-          DeployToServerRunConfiguration configuration =
-            (DeployToServerRunConfiguration)settings.getConfiguration();
+
+      final List<Object> runConfigsAndTypes = new LinkedList<>();
+      final List<RunnerAndConfigurationSettings> runConfigs = configurationManager.getDeploymentConfigurations(serverType).stream()
+        .filter(settings -> {
+          DeployToServerRunConfiguration configuration = (DeployToServerRunConfiguration)settings.getConfiguration();
           return StringUtil.equals(server.getName(), configuration.getServerName());
-        }
-      ));
+        })
+        .collect(Collectors.toList());
+      runConfigsAndTypes.addAll(runConfigs);
+
       if (canCreate) {
-        list.add(null);
+        runConfigsAndTypes.addAll(server.getType().getSingletonDeploymentSourceTypes());
+        if (server.getType().mayHaveProjectSpecificDeploymentSources()) {
+          runConfigsAndTypes.add(null);
+        }
       }
+
       ListPopup popup =
-        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<RunnerAndConfigurationSettings>(popupTitle, list) {
+        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<Object>(popupTitle, runConfigsAndTypes) {
           @Override
-          public Icon getIconFor(RunnerAndConfigurationSettings value) {
-            return value != null ? serverType.getIcon() : null;
+          public Icon getIconFor(Object runConfigOrSourceType) {
+            return runConfigOrSourceType != null ? serverType.getIcon() : null;
           }
 
           @NotNull
           @Override
-          public String getTextFor(RunnerAndConfigurationSettings value) {
-            return value != null ? value.getName() : "Create...";
+          public String getTextFor(Object runConfigOrSourceType) {
+            if (runConfigOrSourceType instanceof RunnerAndConfigurationSettings) {
+              return ((RunnerAndConfigurationSettings)runConfigOrSourceType).getName();
+            }
+            if (runConfigOrSourceType instanceof SingletonDeploymentSourceType) {
+              String displayName = ((SingletonDeploymentSourceType)runConfigOrSourceType).getPresentableName();
+              return CloudBundle.getText("create.new.deployment.configuration.for.singleton.type", displayName);
+            }
+            return CloudBundle.getText("create.new.deployment.configuration.generic");
           }
 
           @Override
-          public PopupStep onChosen(final RunnerAndConfigurationSettings selectedValue, boolean finalChoice) {
+          public PopupStep onChosen(Object selectedRunConfigOrSourceType, boolean finalChoice) {
             return doFinalStep(() -> {
-              if (selectedValue != null) {
-                ProgramRunnerUtil.executeConfiguration(doGetProject(), selectedValue, executor);
+              if (selectedRunConfigOrSourceType instanceof RunnerAndConfigurationSettings) {
+                ProgramRunnerUtil.executeConfiguration((RunnerAndConfigurationSettings)selectedRunConfigOrSourceType, executor);
+              }
+              else if (selectedRunConfigOrSourceType instanceof SingletonDeploymentSourceType) {
+                SingletonDeploymentSourceType sourceType = (SingletonDeploymentSourceType)selectedRunConfigOrSourceType;
+                configurationManager.createAndRunConfiguration(serverType, RemoteServerNode.this.getValue(), sourceType);
               }
               else {
-                configurationManager.createAndRunConfiguration(serverType, RemoteServerNode.this.getValue());
+                assert selectedRunConfigOrSourceType == null;
+                configurationManager.createAndRunConfiguration(serverType, RemoteServerNode.this.getValue(), null);
               }
             });
           }
@@ -285,7 +318,8 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     @Override
     public boolean isDeployActionVisible() {
       DeploymentTask<?> deploymentTask = getValue().getDeploymentTask();
-      return deploymentTask instanceof DeploymentTaskImpl<?> && ((DeploymentTaskImpl)deploymentTask).getExecutionEnvironment().getRunnerAndConfigurationSettings() != null;
+      return deploymentTask instanceof DeploymentTaskImpl<?> && deploymentTask
+                                                                  .getExecutionEnvironment().getRunnerAndConfigurationSettings() != null;
     }
 
     @Override
@@ -301,10 +335,10 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     public void doDeploy(Executor executor) {
       DeploymentTask<?> deploymentTask = getDeployment().getDeploymentTask();
       if (deploymentTask != null) {
-        ExecutionEnvironment environment = ((DeploymentTaskImpl)deploymentTask).getExecutionEnvironment();
+        ExecutionEnvironment environment = deploymentTask.getExecutionEnvironment();
         RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
         if (settings != null) {
-          ProgramRunnerUtil.executeConfiguration(doGetProject(), settings, executor);
+          ProgramRunnerUtil.executeConfiguration(settings, executor);
         }
       }
     }
@@ -340,7 +374,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     public void editConfiguration() {
       DeploymentTask<?> task = getDeployment().getDeploymentTask();
       if (task != null) {
-        RunnerAndConfigurationSettings settings = ((DeploymentTaskImpl)task).getExecutionEnvironment().getRunnerAndConfigurationSettings();
+        RunnerAndConfigurationSettings settings = task.getExecutionEnvironment().getRunnerAndConfigurationSettings();
         if (settings != null) {
           RunDialog.editConfiguration(doGetProject(), settings, "Edit Deployment Configuration");
         }
@@ -372,7 +406,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
 
     @Nullable
     protected DeploymentLogManagerImpl getLogManager() {
-      return (DeploymentLogManagerImpl)myConnection.getLogManager(getDeployment());
+      return (DeploymentLogManagerImpl)myConnection.getLogManager(myProject, getDeployment());
     }
 
     public String getId() {
@@ -412,7 +446,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
       if (connection == null) {
         return;
       }
-      DeploymentLogManagerImpl logManager = (DeploymentLogManagerImpl)connection.getLogManager(getDeployment());
+      DeploymentLogManagerImpl logManager = (DeploymentLogManagerImpl)connection.getLogManager(myProject, getDeployment());
       if (logManager != null) {
         for (LoggingHandlerBase loggingComponent : logManager.getAdditionalLoggingHandlers()) {
           children.add(new DeploymentLogNode(loggingComponent, this));

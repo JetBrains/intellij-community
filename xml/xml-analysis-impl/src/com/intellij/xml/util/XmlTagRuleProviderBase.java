@@ -221,9 +221,12 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
       PsiElement tagNameElement = getTagNameElement(tag);
       if (tagNameElement == null) return;
 
-      LocalQuickFix[] fixes = new LocalQuickFix[myAttributeNames.length];
-      for (int i = 0; i < myAttributeNames.length; i++) {
-        fixes[i] = XmlQuickFixFactory.getInstance().insertRequiredAttributeFix(tag, myAttributeNames[i]);
+      LocalQuickFix[] fixes = LocalQuickFix.EMPTY_ARRAY;
+      if (holder.isOnTheFly()) {
+        fixes = new LocalQuickFix[myAttributeNames.length];
+        for (int i = 0; i < myAttributeNames.length; i++) {
+          fixes[i] = XmlQuickFixFactory.getInstance().insertRequiredAttributeFix(tag, myAttributeNames[i]);
+        }
       }
 
       holder.registerProblem(tagNameElement, "Tag should have one of following attributes: " + StringUtil.join(myAttributeNames, ", "),

@@ -15,12 +15,6 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/25/12
- * Time: 1:49 PM
- */
 public enum SvnCommandName {
   version("--version", false),
   info("info", false),

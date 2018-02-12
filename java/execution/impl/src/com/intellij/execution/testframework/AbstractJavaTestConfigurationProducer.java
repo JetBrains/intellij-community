@@ -30,9 +30,11 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -42,10 +44,7 @@ import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.containers.ContainerUtil;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestConfigurationBase> extends JavaRunConfigurationProducerBase<T> {
   protected AbstractJavaTestConfigurationProducer(ConfigurationFactory configurationFactory) {
@@ -72,10 +71,12 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
 
   protected JavaTestFramework getCurrentFramework(PsiClass psiClass) {
     if (psiClass != null) {
-      TestFramework framework = TestFrameworks.detectFramework(psiClass);
-      if (framework instanceof JavaTestFramework && ((JavaTestFramework)framework).isMyConfigurationType(getConfigurationType())) {
-        return (JavaTestFramework)framework;
-      }
+      ConfigurationType configurationType = getConfigurationType();
+      Set<TestFramework> frameworks = TestFrameworks.detectApplicableFrameworks(psiClass);
+      return frameworks.stream().filter(framework -> framework instanceof JavaTestFramework && ((JavaTestFramework)framework).isMyConfigurationType(configurationType))
+        .map(framework -> (JavaTestFramework)framework)
+        .findFirst()
+        .orElse(null);
     }
     return null;
   }
@@ -104,9 +105,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
       ? ((CommonJavaRunConfigurationParameters)predefinedConfiguration).getVMParameters()
       : null;
     if (vmParameters != null && !Comparing.strEqual(vmParameters, configuration.getVMParameters())) return false;
-    String paramSetName = contextLocation instanceof PsiMemberParameterizedLocation
-                          ? configuration.prepareParameterizedParameter(((PsiMemberParameterizedLocation)contextLocation).getParamSetName()) : null;
-    if (paramSetName != null && !Comparing.strEqual(paramSetName, configuration.getProgramParameters())) return false;
+    if (differentParamSet(configuration, contextLocation)) return false;
 
     if (configuration.isConfiguredByElement(element)) {
       final Module configurationModule = configuration.getConfigurationModule().getModule();
@@ -114,6 +113,13 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
       if (Comparing.equal(predefinedModule, configurationModule)) return true;
     }
 
+    return false;
+  }
+
+  protected boolean differentParamSet(T configuration, Location contextLocation) {
+    String paramSetName = contextLocation instanceof PsiMemberParameterizedLocation
+                          ? configuration.prepareParameterizedParameter(((PsiMemberParameterizedLocation)contextLocation).getParamSetName()) : null;
+    if (paramSetName != null && !Comparing.strEqual(paramSetName, configuration.getProgramParameters())) return true;
     return false;
   }
 
@@ -193,6 +199,24 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
           }
           else {
             element = editorFile.findElementAt(editor.getCaretModel().getOffset());
+
+            SelectionModel selectionModel = editor.getSelectionModel();
+            if (selectionModel.hasSelection()) {
+              int selectionStart = selectionModel.getSelectionStart();
+              PsiClass psiClass = PsiTreeUtil.getParentOfType(editorFile.findElementAt(selectionStart), PsiClass.class);
+              if (psiClass != null) {
+                TextRange selectionRange = new TextRange(selectionStart, selectionModel.getSelectionEnd());
+                PsiMethod[] methodsInSelection = Arrays.stream(psiClass.getMethods())
+                  .filter(method -> {
+                    TextRange methodTextRange = method.getTextRange();
+                    return methodTextRange != null && selectionRange.contains(methodTextRange);
+                  })
+                  .toArray(PsiMethod[]::new);
+                if (methodsInSelection.length > 0) {
+                  return collectTestMembers(methodsInSelection, checkAbstract, checkIsTest, processor, classes);
+                }
+              }
+            }
           }
         }
       }
@@ -249,11 +273,14 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
       for (Location<?> location : locations) {
         final PsiElement psiElement = location.getPsiElement();
         if (psiElement instanceof PsiNamedElement) {
-          classes.add(getQName(psiElement, location));
-          elements.add(psiElement);
+          String qName = getQName(psiElement, location);
+          if (qName != null) {
+            classes.add(qName);
+            elements.add(psiElement);
+          }
         }
       }
-      return elements.toArray(new PsiElement[elements.size()]);
+      return elements.toArray(PsiElement.EMPTY_ARRAY);
     }
     return null;
   }
@@ -276,9 +303,8 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
       return ClassUtil.getJVMClassName(containingClass) + "," + getMethodPresentation((PsiMember)psiMember);
     }
     else if (psiMember instanceof PsiPackage) {
-      return ((PsiPackage)psiMember).getQualifiedName();
+      return ((PsiPackage)psiMember).getQualifiedName() + ".*";
     }
-    assert false;
     return null;
   }
 

@@ -30,7 +30,7 @@ import com.intellij.psi.codeStyle.Indent;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,6 +75,7 @@ public class MockCodeStyleManager extends CodeStyleManager {
   @Override
   public void reformatTextWithContext(@NotNull PsiFile file, 
                                       @NotNull ChangedRangesInfo ranges) throws IncorrectOperationException {
+    //in real world ranges are optimized before passing to formatter
     reformatText(file, ranges.allChangedRanges);
   }
 

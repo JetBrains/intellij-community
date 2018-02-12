@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,25 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInspection.inheritance.ImplicitSubclassProvider;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class UtilityClassUtil {
 
   private UtilityClassUtil() {}
+
+  public static boolean hasPrivateEmptyOrNoConstructor(@NotNull PsiClass aClass) {
+    final PsiMethod[] constructors = aClass.getConstructors();
+    if (constructors.length == 0) {
+      return true;
+    }
+    if (constructors.length != 1) {
+      return false;
+    }
+    final PsiMethod constructor = constructors[0];
+    return constructor.hasModifierProperty(PsiModifier.PRIVATE) && ControlFlowUtils.isEmptyCodeBlock(constructor.getBody());
+  }
 
   public static boolean isUtilityClass(@NotNull PsiClass aClass) {
     return isUtilityClass(aClass, true);
@@ -49,6 +62,13 @@ public class UtilityClassUtil {
     final PsiField[] fields = aClass.getFields();
     if (!allFieldsStatic(fields)) {
       return false;
+    }
+    if (fullCheck) {
+      for (ImplicitSubclassProvider subclassProvider : ImplicitSubclassProvider.EP_NAME.getExtensions()) {
+        if (subclassProvider.isApplicableTo(aClass) && subclassProvider.getSubclassingInfo(aClass) != null) {
+          return false;
+        }
+      }
     }
     return (!fullCheck || staticMethodCount != 0) || fields.length != 0;
   }

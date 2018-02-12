@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,18 +94,19 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
       pane.getVerticalScrollBar().addComponentListener(new ComponentAdapter() {
         @Override
         public void componentShown(ComponentEvent e) {
-          pane.setBorder(IdeBorderFactory.createEmptyBorder(SystemInfo.isMac ? 2 : 1, 0, 1, 1));
+          int top = SystemInfo.isMac ? 2 : 1;
+          pane.setBorder(JBUI.Borders.empty(top, 0, 1, 1));
         }
 
         @Override
         public void componentHidden(ComponentEvent e) {
-          pane.setBorder(IdeBorderFactory.createEmptyBorder());
+          pane.setBorder(JBUI.Borders.empty());
         }
       });
 
       myPopupBalloon =
         new BalloonImpl(pane, BORDER_COLOR, new Insets(0, 0, 0, 0), FILL_COLOR, true, false, false, true, false, true, 0, false, false,
-                        null, false, 0, 0, 0, 0, false, null, null, false, false, false, null, false, null, -1);
+                        null, false, 0, 0, 0, 0, false, null, null, false, false, true, null, false, null, -1);
       myPopupBalloon.setAnimationEnabled(false);
       myPopupBalloon.setShadowBorderProvider(
         new NotificationBalloonShadowBorderProvider(FILL_COLOR, BORDER_COLOR));

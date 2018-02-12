@@ -54,18 +54,24 @@ public class PySkeletonGenerator {
     ENV_PATH_PARAM.put(IronPythonSdkFlavor.class, "IRONPYTHONPATH"); // TODO: Make strategy and move to PythonSdkFlavor?
   }
 
-  protected static final Logger LOG = Logger.getInstance("#" + PySkeletonGenerator.class.getName());
+  protected static final Logger LOG = Logger.getInstance(PySkeletonGenerator.class);
   protected static final int MINUTE = 60 * 1000;
   protected static final String GENERATOR3 = "generator3.py";
 
   private final String mySkeletonsPath;
-  @NotNull private final Map<String, String> myEnv;
+  @NotNull protected final Map<String, String> myEnv;
+
+  private boolean myPrebuilt = false;
 
   public void finishSkeletonsGeneration() {
   }
 
   public boolean exists(String name) {
     return new File(name).exists();
+  }
+
+  public void setPrebuilt(boolean prebuilt) {
+    myPrebuilt = prebuilt;
   }
 
   public static class ListBinariesResult {
@@ -165,7 +171,11 @@ public class PySkeletonGenerator {
     }
 
     final Map<String, String> extraEnv = PythonSdkType.getVirtualEnvExtraEnv(binaryPath);
-    final Map<String, String> env = extraEnv != null ? PySdkUtil.mergeEnvVariables(myEnv, extraEnv) : myEnv;
+    final Map<String, String> env = new HashMap<>(extraEnv != null ? PySdkUtil.mergeEnvVariables(myEnv, extraEnv) : myEnv);
+
+    if (myPrebuilt) {
+      env.put("IS_PREGENERATED_SKELETONS", "1");
+    }
 
     return getProcessOutput(parent_dir, ArrayUtil.toStringArray(commandLine), env, MINUTE * 10);
   }

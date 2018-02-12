@@ -134,12 +134,8 @@ public abstract class FindManager {
   public abstract int showMalformedReplacementPrompt(@NotNull FindModel model, String title, MalformedReplacementStringException exception);
 
   public static class MalformedReplacementStringException extends Exception {
-    public MalformedReplacementStringException(String s) {
-      super(s);    //To change body of overridden methods use File | Settings | File Templates.
-    }
-
     public MalformedReplacementStringException(String s, Throwable throwable) {
-      super(s, throwable);    //To change body of overridden methods use File | Settings | File Templates.
+      super(s, throwable);
     }
   }
 

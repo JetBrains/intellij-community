@@ -54,6 +54,11 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
+  public boolean isAlwaysLeaf(Object element) {
+    return element != myRoot && !(element instanceof AntBuildFile);
+  }
+
+  @Override
   @NotNull
   public AntNodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
     if (element == myRoot) {
@@ -98,7 +103,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
       Collections.sort(metaTargets, ourTargetComparator);
       targets.addAll(metaTargets);
 
-      return targets.toArray(new AntBuildTarget[targets.size()]);
+      return targets.toArray(new AntBuildTarget[0]);
     }
 
     return ArrayUtil.EMPTY_OBJECT_ARRAY;

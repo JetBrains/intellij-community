@@ -25,7 +25,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.ui.ExternalProjectPathField;
 import com.intellij.openapi.externalSystem.service.ui.SelectExternalProjectDialog;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
@@ -56,7 +56,7 @@ public class GradleParentProjectForm implements Disposable {
   private static final String EMPTY_PARENT = "<none>";
 
   @Nullable
-  private Project myProjectOrNull;
+  private final Project myProjectOrNull;
   @Nullable
   private ProjectData myParent;
   @NotNull

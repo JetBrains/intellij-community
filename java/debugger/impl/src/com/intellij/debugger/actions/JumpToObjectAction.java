@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JVMNameUtil;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -27,12 +14,12 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JumpToObjectAction extends DebuggerAction{
@@ -99,7 +86,7 @@ public class JumpToObjectAction extends DebuggerAction{
       if (type instanceof ClassType) {
         ClassType clsType = (ClassType)type;
 
-        Method lambdaMethod = MethodBytecodeUtil.getLambdaMethod(clsType, debugProcess.getVirtualMachineProxy());
+        Method lambdaMethod = MethodBytecodeUtil.getLambdaMethod(clsType, debugProcess.getVirtualMachineProxy().getClassesByNameProvider());
         Location location = lambdaMethod != null ? ContainerUtil.getFirstItem(DebuggerUtilsEx.allLineLocations(lambdaMethod)) : null;
 
         if (location == null) {
@@ -108,21 +95,18 @@ public class JumpToObjectAction extends DebuggerAction{
 
         if (location != null) {
           SourcePosition position = debugProcess.getPositionManager().getSourcePosition(location);
-          return ApplicationManager.getApplication().runReadAction(new Computable<SourcePosition>() {
-            @Override
-            public SourcePosition compute() {
-              // adjust position for non-anonymous classes
-              if (clsType.name().indexOf('$') < 0) {
-                PsiClass classAt = JVMNameUtil.getClassAt(position);
-                if (classAt != null) {
-                  SourcePosition classPosition = SourcePosition.createFromElement(classAt);
-                  if (classPosition != null) {
-                    return classPosition;
-                  }
+          return ReadAction.compute(() -> {
+            // adjust position for non-anonymous classes
+            if (clsType.name().indexOf('$') < 0) {
+              PsiClass classAt = JVMNameUtil.getClassAt(position);
+              if (classAt != null) {
+                SourcePosition classPosition = SourcePosition.createFromElement(classAt);
+                if (classPosition != null) {
+                  return classPosition;
                 }
               }
-              return position;
             }
+            return position;
           });
         }
       }
@@ -181,7 +165,7 @@ public class JumpToObjectAction extends DebuggerAction{
     }
 
     @Override
-    public final void contextAction() throws Exception {
+    public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
       try {
         doAction(calcPosition(myDescriptor, myDebugProcess));
       }

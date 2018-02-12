@@ -39,6 +39,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Properties;
 
@@ -81,7 +82,7 @@ public class GradleUtil {
    *
    * @param gradleProjectPath  target gradle project config (*.gradle) path or config file's directory path.
    * @return                   gradle wrapper settings should be used with gradle wrapper for the gradle project located at the given path
-   *                           if any; <code>null</code> otherwise
+   *                           if any; {@code null} otherwise
    */
   @Nullable
   public static WrapperConfiguration getWrapperConfiguration(@Nullable String gradleProjectPath) {
@@ -98,7 +99,7 @@ public class GradleUtil {
       if(StringUtil.isEmpty(distributionUrl)) {
         throw new ExternalSystemException("Wrapper 'distributionUrl' property does not exist!");
       } else {
-        wrapperConfiguration.setDistribution(new URI(distributionUrl));
+        wrapperConfiguration.setDistribution(prepareDistributionUri(distributionUrl, wrapperPropertiesFile));
       }
       String distributionPath = props.getProperty(WrapperExecutor.DISTRIBUTION_PATH_PROPERTY);
       if(!StringUtil.isEmpty(distributionPath)) {
@@ -125,6 +126,11 @@ public class GradleUtil {
       }
     }
     return null;
+  }
+
+  private static URI prepareDistributionUri(String distributionUrl, File propertiesFile) throws URISyntaxException {
+    URI source = new URI(distributionUrl);
+    return source.getScheme() != null ? source : new File(propertiesFile.getParentFile(), source.getSchemeSpecificPart()).toURI();
   }
 
   /**

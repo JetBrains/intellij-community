@@ -35,8 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.ItemListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -81,14 +80,10 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
                                                        "Select the directory which will not be tracked for changes",
                                                        project,
                                                        FileChooserDescriptorFactory.createSingleFolderDescriptor());
-    ActionListener listener = new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        updateControls();
-      }
-    };
-    myIgnoreAllFilesUnderRadioButton.addActionListener(listener);
-    myIgnoreAllFilesMatchingRadioButton.addActionListener(listener);
-    myIgnoreSpecifiedFileRadioButton.addActionListener(listener);
+    ItemListener listener = e -> updateControls();
+    myIgnoreAllFilesUnderRadioButton.addItemListener(listener);
+    myIgnoreAllFilesMatchingRadioButton.addItemListener(listener);
+    myIgnoreSpecifiedFileRadioButton.addItemListener(listener);
     updateControls();
   }
 
@@ -237,7 +232,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
         }
       }
     }
-    return result.toArray(new IgnoredFileBean[result.size()]);
+    return result.toArray(new IgnoredFileBean[0]);
   }
 
   @Override @NonNls
@@ -245,7 +240,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
     return "IgnoreUnversionedDialog";
   }
 
-  public static void ignoreSelectedFiles(@NotNull Project project, @NotNull List<VirtualFile> files, @Nullable Runnable callback) {
+  public static void ignoreSelectedFiles(@NotNull Project project, @NotNull List<VirtualFile> files) {
     IgnoreUnversionedDialog dlg = new IgnoreUnversionedDialog(project);
     dlg.setFilesToIgnore(files);
 
@@ -256,9 +251,6 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
         ChangeListManager manager = ChangeListManager.getInstance(project);
 
         manager.addFilesToIgnore(ignoredFiles);
-        if (callback != null) {
-          manager.invokeAfterUpdate(callback, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, "Ignore unversioned files", null);
-        }
       }
     }
   }

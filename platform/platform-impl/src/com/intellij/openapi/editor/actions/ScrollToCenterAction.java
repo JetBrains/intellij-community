@@ -14,20 +14,13 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: May 16, 2002
- * Time: 2:28:05 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import org.jetbrains.annotations.NotNull;
 
 public class ScrollToCenterAction extends InactiveEditorAction {
   public ScrollToCenterAction() {
@@ -36,7 +29,7 @@ public class ScrollToCenterAction extends InactiveEditorAction {
 
   private static class Handler extends EditorActionHandler {
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
+    public void execute(@NotNull Editor editor, DataContext dataContext) {
       editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     }
   }

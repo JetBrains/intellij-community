@@ -55,11 +55,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.xml.namespace.QName;
 import java.util.*;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 08.01.11
-*/
 public abstract class XsltContextProviderBase extends ContextProvider {
   protected static final Set<String> IGNORED_URIS = new THashSet<>();
 

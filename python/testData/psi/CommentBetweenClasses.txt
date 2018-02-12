@@ -25,7 +25,7 @@ PyFile:CommentBetweenClasses.py
         PyStatementList
           PyPassStatement
             PsiElement(Py:PASS_KEYWORD)('pass')
-      PsiWhiteSpace('\n\n')
+  PsiWhiteSpace('\n\n')
   PsiComment(Py:END_OF_LINE_COMMENT)('# comment about T2')
   PsiWhiteSpace('\n\n')
   PyClass: T2

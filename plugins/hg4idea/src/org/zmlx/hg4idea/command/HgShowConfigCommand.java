@@ -39,7 +39,7 @@ public class HgShowConfigCommand {
     final HgCommandExecutor executor = new HgCommandExecutor(project);
     executor.setSilent(true);
     //force override debug option while initialize hg configs
-    HgCommandResult result = executor.executeInCurrentThread(repo, "showconfig", Arrays.asList("--config", "ui.debug=false"));
+    HgCommandResult result = executor.executeInCurrentThread(repo, "showconfig", Arrays.asList("--config", "ui.debug=false"), true);
 
     if (result == null) {
       return Collections.emptyMap();

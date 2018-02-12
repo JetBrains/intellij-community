@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -54,6 +40,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
   private JCheckBox myCbShowObjectId;
   private JCheckBox myCbShowStringsType;
   private JCheckBox myCbHexValue;
+  private JCheckBox myCbPopulateThrowableStack;
 
   private StateRestoringCheckBox myCbShowStaticFinalFields;
   //private final ArrayRendererConfigurable myArrayRendererConfigurable;
@@ -124,6 +111,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     myCbShowObjectId = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.object.id"));
     myCbHexValue = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.hex.value"));
     myCbShowStringsType = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.strings.type"));
+    myCbPopulateThrowableStack = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.populate.throwable.stack"));
 
     myCbEnableToString = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.enable.toString"));
     myRbAllThatOverride = new JRadioButton(DebuggerBundle.message("label.base.renderer.configurable.all.overriding"));
@@ -174,6 +162,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     panel.add(myCbShowStringsType, new GridBagConstraints(0, RELATIVE, 3, 1, 1.0, 0.0, NORTH, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
     panel.add(myCbHexValue, new GridBagConstraints(0, RELATIVE, 3, 1, 1.0, 0.0, NORTH, HORIZONTAL, JBUI.insetsTop(4), 0, 0));
     panel.add(myCbHideNullArrayElements, new GridBagConstraints(0, RELATIVE, 3, 1, 1.0, 0.0, NORTH, HORIZONTAL, JBUI.insetsTop(4), 0, 0));
+    panel.add(myCbPopulateThrowableStack, new GridBagConstraints(0, RELATIVE, 3, 1, 1.0, 0.0, NORTH, HORIZONTAL, JBUI.insetsTop(4), 0, 0));
 
     panel.add(myCbEnableAlternateViews, new GridBagConstraints(0, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insets(4, 0, 0, 10), 0, 0));
     // starting 4-th row
@@ -194,6 +183,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     generalSettings.AUTOSCROLL_TO_NEW_LOCALS  = myCbAutoscroll.isSelected();
     rendererSettings.setAlternateCollectionViewsEnabled(myCbEnableAlternateViews.isSelected());
     generalSettings.HIDE_NULL_ARRAY_ELEMENTS  = myCbHideNullArrayElements.isSelected();
+    generalSettings.POPULATE_THROWABLE_STACKTRACE  = myCbPopulateThrowableStack.isSelected();
 
     final ClassRenderer classRenderer = rendererSettings.getClassRenderer();
     classRenderer.SHOW_STATIC = myCbShowStatic.isSelected();
@@ -206,7 +196,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     classRenderer.SHOW_STRINGS_TYPE = myCbShowStringsType.isSelected();
 
     final ToStringRenderer toStringRenderer = rendererSettings.getToStringRenderer();
-    toStringRenderer.setEnabled(myCbEnableToString.isSelected());
+    toStringRenderer.setOnDemand(!myCbEnableToString.isSelected());
     toStringRenderer.setUseClassFilters(myRbFromList.isSelected());
     toStringRenderer.setClassFilters(myToStringFilterEditor.getFilters());
 
@@ -224,6 +214,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     myCbAutoscroll.setSelected(generalSettings.AUTOSCROLL_TO_NEW_LOCALS);
     myCbHideNullArrayElements.setSelected(generalSettings.HIDE_NULL_ARRAY_ELEMENTS);
     myCbEnableAlternateViews.setSelected(rendererSettings.areAlternateCollectionViewsEnabled());
+    myCbPopulateThrowableStack.setSelected(generalSettings.POPULATE_THROWABLE_STACKTRACE);
 
     ClassRenderer classRenderer = rendererSettings.getClassRenderer();
 
@@ -243,7 +234,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     myCbShowStringsType.setSelected(classRenderer.SHOW_STRINGS_TYPE);
 
     final ToStringRenderer toStringRenderer = rendererSettings.getToStringRenderer();
-    final boolean toStringEnabled = toStringRenderer.isEnabled();
+    final boolean toStringEnabled = !toStringRenderer.isOnDemand();
     final boolean useClassFilters = toStringRenderer.isUseClassFilters();
     myCbEnableToString.setSelected(toStringEnabled);
     myRbAllThatOverride.setSelected(!useClassFilters);
@@ -265,7 +256,8 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
   private boolean areGeneralSettingsModified() {
     ViewsGeneralSettings generalSettings = ViewsGeneralSettings.getInstance();
     return generalSettings.AUTOSCROLL_TO_NEW_LOCALS != myCbAutoscroll.isSelected() ||
-           generalSettings.HIDE_NULL_ARRAY_ELEMENTS != myCbHideNullArrayElements.isSelected();
+           generalSettings.HIDE_NULL_ARRAY_ELEMENTS != myCbHideNullArrayElements.isSelected() ||
+           generalSettings.POPULATE_THROWABLE_STACKTRACE != myCbPopulateThrowableStack.isSelected();
   }
 
   private boolean areDefaultRenderersModified() {
@@ -292,7 +284,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
 
     final ToStringRenderer toStringRenderer = rendererSettings.getToStringRenderer();
     final boolean isToStringRendererModified =
-      (toStringRenderer.isEnabled() != myCbEnableToString.isSelected()) ||
+      (toStringRenderer.isOnDemand() == myCbEnableToString.isSelected()) ||
       (toStringRenderer.isUseClassFilters() != myRbFromList.isSelected()) ||
       (!DebuggerUtilsEx.filterEquals(toStringRenderer.getClassFilters(), myToStringFilterEditor.getFilters()));
     if (isToStringRendererModified) {
@@ -315,7 +307,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
   @Override
   @NotNull
   public String getHelpTopic() {
-    return "reference.idesettings.debugger.dataviews";
+    return "Debugger_Data_Views_Java";
   }
 
   @Override

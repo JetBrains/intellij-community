@@ -57,7 +57,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 19, 2004
  */
 public abstract class ContentRootPanel extends JPanel {
   private static final Color EXCLUDED_COLOR = new JBColor(new Color(0x992E00), DarculaColors.RED);
@@ -121,7 +120,7 @@ public abstract class ContentRootPanel extends JPanel {
       Collection<SourceFolder> folders = folderByType.get(editor.getRootType());
       if (folders.isEmpty()) continue;
 
-      ContentFolder[] foldersArray = folders.toArray(new ContentFolder[folders.size()]);
+      ContentFolder[] foldersArray = folders.toArray(new ContentFolder[0]);
       final JComponent sourcesComponent = createFolderGroupComponent(editor.getRootsGroupTitle(), foldersArray, editor.getRootsGroupColor(),
                                                                      editor);
       add(sourcesComponent, constraints);

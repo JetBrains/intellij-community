@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public final class FormProperty2BeanProperty {
   public final FormProperty myFormProperty;
   /**
-   * This field can be <code>null</code> if nothing is bound.
+   * This field can be {@code null} if nothing is bound.
    */
   public BeanProperty myBeanProperty;
 

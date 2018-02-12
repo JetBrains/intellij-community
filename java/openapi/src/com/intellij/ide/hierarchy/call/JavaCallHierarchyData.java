@@ -25,9 +25,6 @@ import com.intellij.psi.PsiMethod;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by Max Medvedev on 10/5/13
- */
 public class JavaCallHierarchyData {
   private final PsiClass myOriginalClass;
   private final PsiMethod myMethodToFind;

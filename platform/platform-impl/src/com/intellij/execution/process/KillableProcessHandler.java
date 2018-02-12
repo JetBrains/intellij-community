@@ -49,7 +49,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
    * Starts a process with a {@link RunnerMediator mediator} when {@code withMediator} is set to {@code true} and the platform is Windows.
    */
   public KillableProcessHandler(@NotNull GeneralCommandLine commandLine, boolean withMediator) throws ExecutionException {
-    this(mediate(commandLine, withMediator));
+    this(mediate(commandLine, withMediator, false));
   }
 
   /**
@@ -69,9 +69,9 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   }
 
   @NotNull
-  protected static GeneralCommandLine mediate(@NotNull GeneralCommandLine commandLine, boolean withMediator) {
+  protected static GeneralCommandLine mediate(@NotNull GeneralCommandLine commandLine, boolean withMediator, boolean showConsole) {
     if (withMediator && SystemInfo.isWindows && MEDIATOR_KEY.get(commandLine) == null) {
-      boolean mediatorInjected = RunnerMediator.injectRunnerCommand(commandLine);
+      boolean mediatorInjected = RunnerMediator.injectRunnerCommand(commandLine, showConsole);
       MEDIATOR_KEY.set(commandLine, mediatorInjected);
     }
     return commandLine;

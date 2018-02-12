@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.xdebugger.impl.settings;
 
@@ -22,7 +10,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.settings.DebuggerConfigurableProvider;
 import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
 import org.jetbrains.annotations.NonNls;
@@ -30,7 +17,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
 
 public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   public static final String DISPLAY_NAME = XDebuggerBundle.message("debugger.configurable.display.name");
@@ -51,6 +41,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
     return "reference.idesettings.debugger";
   }
 
+  @NotNull
   @Override
   public Configurable[] getConfigurables() {
     compute();
@@ -99,7 +90,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       }
     }
     else {
-      myChildren = configurables.toArray(new Configurable[configurables.size()]);
+      myChildren = configurables.toArray(new Configurable[0]);
       myRootConfigurable = mergedGeneralConfigurable;
     }
   }
@@ -110,7 +101,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       if (!configurables.isEmpty()) {
         String id = category.name().toLowerCase(Locale.ENGLISH);
         result.add(new MergedCompositeConfigurable("debugger." + id, XDebuggerBundle.message("debugger." + id + ".display.name"),
-                                                   configurables.toArray(new Configurable[configurables.size()])));
+                                                   configurables.toArray(new Configurable[0])));
       }
     }
   }
@@ -122,7 +113,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       return null;
     }
 
-    Configurable[] mergedRootConfigurables = rootConfigurables.toArray(new Configurable[rootConfigurables.size()]);
+    Configurable[] mergedRootConfigurables = rootConfigurables.toArray(new Configurable[0]);
     // move unnamed to top
     Arrays.sort(mergedRootConfigurables, (o1, o2) -> {
       boolean c1e = StringUtil.isEmpty(o1.getDisplayName());
@@ -142,11 +133,6 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   public boolean hasOwnContent() {
     compute();
     return myRootConfigurable != null;
-  }
-
-  @Override
-  public boolean isVisible() {
-    return XBreakpointType.EXTENSION_POINT_NAME.getExtensions().length != 0;
   }
 
   @Override

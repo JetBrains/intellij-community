@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -22,6 +8,9 @@ import com.intellij.configurationStore.SchemeDataHolder;
 import com.intellij.configurationStore.SchemeExtensionProvider;
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.ui.LafManager;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -41,6 +30,7 @@ import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ComponentTreeEventDispatcher;
 import com.intellij.util.JdomKt;
@@ -105,8 +95,10 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
 
       @Override
       public void onCurrentSchemeSwitched(@Nullable EditorColorsScheme oldScheme, @Nullable EditorColorsScheme newScheme) {
-        LafManager.getInstance().updateUI();
-        schemeChangedOrSwitched(newScheme);
+        ApplicationManager.getApplication().invokeLater(() -> { // don't do heavy operations right away
+          LafManager.getInstance().updateUI();
+          schemeChangedOrSwitched(newScheme);
+        });
       }
 
       @NotNull
@@ -132,7 +124,9 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       }
 
       @Override
-      public void reloaded(@NotNull SchemeManager<EditorColorsScheme> schemeManager) {
+      public void reloaded(@NotNull SchemeManager<EditorColorsScheme> schemeManager,
+                           @NotNull Collection<? extends EditorColorsScheme> schemes) {
+        loadBundledSchemes();
         initEditableDefaultSchemesCopies();
         initEditableBundledSchemesCopies();
       }
@@ -190,7 +184,16 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   private void resolveLinksToBundledSchemes() {
     for (EditorColorsScheme scheme : mySchemeManager.getAllSchemes()) {
       if (scheme instanceof AbstractColorsScheme && !(scheme instanceof ReadOnlyColorsScheme)) {
-        ((AbstractColorsScheme)scheme).resolveParent(name -> mySchemeManager.findSchemeByName(name));
+        try {
+          ((AbstractColorsScheme)scheme).resolveParent(name -> mySchemeManager.findSchemeByName(name));
+        }
+        catch (InvalidDataException e) {
+          String message = "Color scheme '" + scheme.getName() + "'" +
+                           " points to incorrect or non-existent default (base) scheme " +
+                           e.getMessage();
+          Notifications.Bus.notify(
+            new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Incompatible color scheme", message, NotificationType.ERROR));
+        }
       }
     }
   }
@@ -261,9 +264,12 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
         }
         continue;
       }
+      URL resource = attributesEP.getLoaderForClass().getResource(attributesEP.file);
+      if (resource == null) {
+        LOG.warn("resource not found: " + attributesEP.file);
+        continue;
+      }
       try {
-        URL resource = attributesEP.getLoaderForClass().getResource(attributesEP.file);
-        assert resource != null;
         ((AbstractColorsScheme)editorColorsScheme).readAttributes(JdomKt.loadElement(URLUtil.openStream(resource)));
       }
       catch (Exception e) {
@@ -303,7 +309,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
         visibleSchemes.add(scheme);
       }
     }
-    return visibleSchemes.toArray(new EditorColorsScheme[visibleSchemes.size()]);
+    return visibleSchemes.toArray(new EditorColorsScheme[0]);
   }
 
   @Override
@@ -329,7 +335,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   @NotNull
   @Override
   public EditorColorsScheme getGlobalScheme() {
-    EditorColorsScheme scheme = mySchemeManager.getCurrentScheme();
+    EditorColorsScheme scheme = mySchemeManager.getActiveScheme();
     String editableCopyName = null;
     if (scheme instanceof DefaultColorsScheme && ((DefaultColorsScheme)scheme).hasEditableCopy()) {
       editableCopyName = ((DefaultColorsScheme)scheme).getEditableCopyName();
@@ -371,7 +377,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   }
 
   @Override
-  public void loadState(State state) {
+  public void loadState(@NotNull State state) {
     myState = state;
     setGlobalSchemeInner(myState.colorScheme == null ? getDefaultScheme() : mySchemeManager.findSchemeByName(myState.colorScheme));
   }

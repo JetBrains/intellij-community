@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,17 +19,22 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyMethodInfo;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCallExpressionTypeCalculator;
+import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
 
 /**
  * @author Sergey Evdokimov
  */
-public class GrDescriptorReturnTypeCalculator extends GrCallExpressionTypeCalculator {
+public class GrDescriptorReturnTypeCalculator implements GrTypeCalculator<GrMethodCall> {
 
+  @Nullable
   @Override
-  public PsiType calculateReturnType(@NotNull GrMethodCall callExpression, @NotNull PsiMethod method) {
+  public PsiType getType(@NotNull GrMethodCall callExpression) {
+    PsiMethod method = callExpression.resolveMethod();
+    if (method == null) return null;
+
     for (GroovyMethodInfo methodInfo : GroovyMethodInfo.getInfos(method)) {
       String returnType = methodInfo.getReturnType();
       if (returnType != null) {

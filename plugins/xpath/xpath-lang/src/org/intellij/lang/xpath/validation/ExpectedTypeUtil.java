@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 04.05.2006
- * Time: 22:32:31
- */
 package org.intellij.lang.xpath.validation;
 
 import com.intellij.openapi.util.Comparing;

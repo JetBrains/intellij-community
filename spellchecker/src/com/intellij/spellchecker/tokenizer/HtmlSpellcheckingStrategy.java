@@ -15,11 +15,14 @@
  */
 package com.intellij.spellchecker.tokenizer;
 
+import com.intellij.codeInsight.completion.HtmlCompletionContributor;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.io.URLUtil;
+import com.intellij.xml.XmlAttributeDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 public class HtmlSpellcheckingStrategy extends SpellcheckingStrategy {
@@ -31,6 +34,18 @@ public class HtmlSpellcheckingStrategy extends SpellcheckingStrategy {
       if (URLUtil.isDataUri(ElementManipulators.getValueText(element))) {
         return EMPTY_TOKENIZER;
       }
+      PsiElement parent = element.getParent();
+      if (parent instanceof XmlAttribute) {
+        if (HtmlCompletionContributor.hasHtmlAttributesCompletion(element) &&
+            HtmlCompletionContributor.addSpecificCompletions((XmlAttribute)parent).length > 0) {
+          return EMPTY_TOKENIZER;
+        }
+        XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
+        if (descriptor != null && (descriptor.isEnumerated() || descriptor.isFixed())) {
+          return EMPTY_TOKENIZER;
+        }
+      }
+
       return myXmlAttributeTokenizer;
     }
     return EMPTY_TOKENIZER;

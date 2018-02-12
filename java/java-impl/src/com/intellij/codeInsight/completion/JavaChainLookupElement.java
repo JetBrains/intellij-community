@@ -19,7 +19,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.TypedLookupItem;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.Key;
@@ -39,19 +39,23 @@ import java.util.Set;
  */
 public class JavaChainLookupElement extends LookupElementDecorator<LookupElement> implements TypedLookupItem {
   public static final Key<Boolean> CHAIN_QUALIFIER = Key.create("CHAIN_QUALIFIER");
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaChainLookupElement");
   public static final ClassConditionKey<JavaChainLookupElement> CLASS_CONDITION_KEY = ClassConditionKey.create(JavaChainLookupElement.class);
   private final LookupElement myQualifier;
+  private final String mySeparator;
 
   public JavaChainLookupElement(LookupElement qualifier, LookupElement main) {
+    this(qualifier, main, ".");
+  }
+  public JavaChainLookupElement(LookupElement qualifier, LookupElement main, String separator) {
     super(main);
     myQualifier = qualifier;
+    mySeparator = separator;
   }
 
   @NotNull
   @Override
   public String getLookupString() {
-    return maybeAddParentheses(myQualifier.getLookupString()) + "." + getDelegate().getLookupString();
+    return maybeAddParentheses(myQualifier.getLookupString()) + mySeparator + getDelegate().getLookupString();
   }
 
   public LookupElement getQualifier() {
@@ -70,7 +74,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
   @NotNull
   @Override
   public String toString() {
-    return maybeAddParentheses(myQualifier.toString()) + "." + getDelegate();
+    return maybeAddParentheses(myQualifier.toString()) + mySeparator + getDelegate();
   }
 
   private String maybeAddParentheses(String s) {
@@ -98,7 +102,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     myQualifier.renderElement(qualifierPresentation);
     String name = maybeAddParentheses(qualifierPresentation.getItemText());
     final String qualifierText = myQualifier.as(CastingLookupElementDecorator.CLASS_CONDITION_KEY) != null ? "(" + name + ")" : name;
-    presentation.setItemText(qualifierText + "." + presentation.getItemText());
+    presentation.setItemText(qualifierText + mySeparator + presentation.getItemText());
 
     if (myQualifier instanceof JavaPsiClassReferenceElement) {
       presentation.appendTailText(((JavaPsiClassReferenceElement)myQualifier).getLocationString(), false);
@@ -120,7 +124,8 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
 
     int start = CharArrayUtil.shiftForward(context.getDocument().getCharsSequence(), context.getStartOffset(), " \t\n");
     if (shouldParenthesizeQualifier(context.getFile(), start, qualifierContext.getTailOffset())) {
-      final String space = CodeStyleSettingsManager.getSettings(qualifierContext.getProject()).SPACE_WITHIN_PARENTHESES ? " " : "";
+      final String space = CodeStyleSettingsManager.getSettings(qualifierContext.getProject())
+                             .getCommonSettings(JavaLanguage.INSTANCE).SPACE_WITHIN_PARENTHESES ? " " : "";
       document.insertString(start, "(" + space);
       document.insertString(qualifierContext.getTailOffset(), space + ")");
     }
@@ -129,9 +134,9 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     if (atTail != ';') {
       return;
     }
-    document.replaceString(qualifierContext.getTailOffset(), qualifierContext.getTailOffset() + 1, ".");
+    document.replaceString(qualifierContext.getTailOffset(), qualifierContext.getTailOffset() + 1, mySeparator);
 
-    CompletionUtil.emulateInsertion(getDelegate(), qualifierContext.getTailOffset() + 1, context);
+    CompletionUtil.emulateInsertion(getDelegate(), qualifierContext.getTailOffset() + mySeparator.length(), context);
     context.commitDocument();
 
     int formatStart = context.getOffset(oldStart);

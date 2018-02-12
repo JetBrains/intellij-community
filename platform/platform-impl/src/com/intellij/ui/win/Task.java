@@ -15,9 +15,6 @@
  */
 package com.intellij.ui.win;
 
-/**
-* Created by denis on 9/10/13.
-*/
 class Task {
   final String path;
   final String args;

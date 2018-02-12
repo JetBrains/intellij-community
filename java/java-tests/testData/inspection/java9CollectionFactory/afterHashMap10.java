@@ -11,7 +11,7 @@ public class Test {
               "d", "1", "e", /* this is also 1*/ "1", "f", "1", "g", "1", // G is important!
               "h", "1", "i", "1",
 
-    /* Finally J */
-    /* why not putting comment inside the call expression? */"j", "1");
+              /* Finally J */
+              /* why not putting comment inside the call expression? */"j", "1");
   }
 }

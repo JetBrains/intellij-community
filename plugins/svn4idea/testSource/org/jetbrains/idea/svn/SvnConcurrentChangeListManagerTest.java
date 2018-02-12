@@ -42,7 +42,7 @@ public class SvnConcurrentChangeListManagerTest extends Svn17TestCase {
   }
 
   @Test
-  public void testRenameList() throws Exception {
+  public void testRenameList() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
@@ -109,7 +109,7 @@ public class SvnConcurrentChangeListManagerTest extends Svn17TestCase {
   }
 
   @Test
-  public void testEditComment() throws Exception {
+  public void testEditComment() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
@@ -142,7 +142,7 @@ public class SvnConcurrentChangeListManagerTest extends Svn17TestCase {
   }
 
   @Test
-  public void testMove() throws Exception {
+  public void testMove() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
@@ -164,7 +164,7 @@ public class SvnConcurrentChangeListManagerTest extends Svn17TestCase {
   }
 
   @Test
-  public void testSetActive() throws Exception {
+  public void testSetActive() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
@@ -186,7 +186,7 @@ public class SvnConcurrentChangeListManagerTest extends Svn17TestCase {
   }
 
   @Test
-  public void testRemove() throws Exception {
+  public void testRemove() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
     final VirtualFile fileB = createFileInCommand("b.txt", "old content");
@@ -211,7 +211,7 @@ public class SvnConcurrentChangeListManagerTest extends Svn17TestCase {
   }
 
   @Test
-  public void testDoubleMove() throws Exception {
+  public void testDoubleMove() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
@@ -236,7 +236,7 @@ public class SvnConcurrentChangeListManagerTest extends Svn17TestCase {
   }
 
   @Test
-  public void testDoubleMoveBack() throws Exception {
+  public void testDoubleMoveBack() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
@@ -260,7 +260,7 @@ public class SvnConcurrentChangeListManagerTest extends Svn17TestCase {
   }
 
   @Test
-  public void testAddPlusMove() throws Exception {
+  public void testAddPlusMove() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
@@ -299,7 +299,7 @@ public class SvnConcurrentChangeListManagerTest extends Svn17TestCase {
   }
 
   @Test
-  public void testComplex() throws Exception {
+  public void testComplex() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
     final VirtualFile fileB = createFileInCommand("b.txt", "old content");

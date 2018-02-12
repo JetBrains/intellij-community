@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
@@ -73,13 +72,12 @@ import java.util.zip.ZipInputStream;
 
 /**
 * @author Dmitry Avdeev
-*         Date: 10/19/12
 */
 public class TemplateModuleBuilder extends ModuleBuilder {
 
   private final ModuleType myType;
-  private List<WizardInputField> myAdditionalFields;
-  private ArchivedProjectTemplate myTemplate;
+  private final List<WizardInputField> myAdditionalFields;
+  private final ArchivedProjectTemplate myTemplate;
   private boolean myProjectMode;
 
   public TemplateModuleBuilder(ArchivedProjectTemplate template, ModuleType moduleType, List<WizardInputField> additionalFields) {
@@ -176,8 +174,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   }
 
   private void fixModuleName(Module module) {
-    List<RunConfiguration> configurations = RunManager.getInstance(module.getProject()).getAllConfigurationsList();
-    for (RunConfiguration configuration : configurations) {
+    for (RunConfiguration configuration : RunManager.getInstance(module.getProject()).getAllConfigurationsList()) {
       if (configuration instanceof ModuleBasedConfiguration) {
         ((ModuleBasedConfiguration)configuration).getConfigurationModule().setModule(module);
       }
@@ -210,7 +207,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
       class ExceptionConsumer implements Consumer<VelocityException> {
         private String myPath;
         private String myText;
-        private SmartList<Trinity<String, String, VelocityException>> myFailures = new SmartList<>();
+        private final SmartList<Trinity<String, String, VelocityException>> myFailures = new SmartList<>();
 
         @Override
         public void consume(VelocityException e) {
@@ -365,8 +362,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     final File location = new File(FileUtil.toSystemDependentName(path));
     LOG.assertTrue(location.exists());
 
-    final VirtualFile baseDir = ApplicationManager.getApplication().runWriteAction(
-      (Computable<VirtualFile>)() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(location));
+    final VirtualFile baseDir = WriteAction.compute(() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(location));
     if (baseDir == null) {
       LOG.error("Couldn't find path '" + path + "' in VFS");
       return null;

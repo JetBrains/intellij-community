@@ -66,7 +66,6 @@ final class Option {
 
   static Element element(Object object) throws Exception {
     String xml = object == null ? null : object.toString();
-    System.out.println(xml);
     return xml == null ? null : JdomKt.loadElement(xml);
   }
 }

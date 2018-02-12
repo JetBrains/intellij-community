@@ -1,35 +1,52 @@
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.NamedScriptableDefinition;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Apr 14, 2004
- * Time: 5:29:37 PM
- * To change this template use File | Settings | File Templates.
- */
 public abstract class Configuration implements JDOMExternalizable, Comparable<Configuration> {
   public static final Configuration[] EMPTY_ARRAY = {};
   @NonNls protected static final String NAME_ATTRIBUTE_NAME = "name";
   @NonNls private static final String CREATED_ATTRIBUTE_NAME = "created";
 
-  private String name = "";
-  private String category = null;
+  private String name;
+  private String category;
   private boolean predefined;
-  private long created = -1L;
+  private long created;
+
+  public Configuration() {
+    name = "";
+    category = "";
+    created = -1L;
+  }
+
+  public Configuration(String name, String category) {
+    this.name = name;
+    this.category = category;
+    created = -1L;
+  }
+
+  protected Configuration(Configuration configuration) {
+    name = configuration.name;
+    category = configuration.category;
+    created = configuration.created;
+    predefined = false; // copy is never predefined
+  }
+
+  public abstract Configuration copy();
 
   public String getName() {
     return name;
   }
 
-  public void setName(String value) {
+  public void setName(@NotNull String value) {
     name = value;
   }
 
@@ -37,7 +54,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     return category;
   }
 
-  public void setCategory(String category) {
+  public void setCategory(@NotNull String category) {
     this.category = category;
   }
 
@@ -52,6 +69,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     this.created = created;
   }
 
+  @Override
   public void readExternal(Element element) {
     name = element.getAttributeValue(NAME_ATTRIBUTE_NAME);
     final Attribute attribute = element.getAttribute(CREATED_ATTRIBUTE_NAME);
@@ -63,6 +81,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     }
   }
 
+  @Override
   public void writeExternal(Element element) {
     element.setAttribute(NAME_ATTRIBUTE_NAME,name);
     if (created > 0) {
@@ -79,6 +98,8 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
   }
 
   public abstract MatchOptions getMatchOptions();
+
+  public abstract NamedScriptableDefinition findVariable(String name);
 
   @Override
   public int compareTo(Configuration other) {

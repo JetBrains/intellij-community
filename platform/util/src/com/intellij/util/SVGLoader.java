@@ -32,16 +32,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author tav
  */
 public class SVGLoader {
-  private TranscoderInput input;
+  private final TranscoderInput input;
   private BufferedImage img;
-  private float width;
-  private float height;
+  private final double width;
+  private final double height;
 
   private enum SizeAttr {
     width,
@@ -49,11 +50,11 @@ public class SVGLoader {
 
     static final int FALLBACK_VALUE = 16;
 
-    public int value(@NotNull Document document) {
+    public float value(@NotNull Document document) {
       String value = document.getDocumentElement().getAttribute(name());
       if (value.endsWith("px")) {
         try {
-          return Integer.parseInt(value.substring(0, value.length() - 2));
+          return Float.parseFloat(value.substring(0, value.length() - 2));
         }
         catch (NumberFormatException ex) {
           ex.printStackTrace();
@@ -71,12 +72,12 @@ public class SVGLoader {
   }
 
   private static class ViewBox {
-    private final int x;
-    private final int y;
-    private final int width;
-    private final int height;
+    private final float x;
+    private final float y;
+    private final float width;
+    private final float height;
 
-    public ViewBox(int x, int y, int width, int height) {
+    public ViewBox(float x, float y, float width, float height) {
       this.x = x;
       this.y = y;
       this.width = width;
@@ -84,14 +85,19 @@ public class SVGLoader {
     }
 
     public static ViewBox fromString(String s) {
-      final List<String> values = StringUtil.split(s, " ");
-      if (values.size() == 4) {
-        return new ViewBox(Integer.parseInt(values.get(0)),
-                           Integer.parseInt(values.get(1)),
-                           Integer.parseInt(values.get(2)),
-                           Integer.parseInt(values.get(3)));
+      List<String> values = new ArrayList<String>(4);
+      for (String token : StringUtil.tokenize(s, ", ")) {
+        values.add(token);
       }
-      throw new IllegalArgumentException("String should be formatted like 'x y width height'");
+
+      if (values.size() == 4) {
+        return new ViewBox(Float.parseFloat(values.get(0)),
+                           Float.parseFloat(values.get(1)),
+                           Float.parseFloat(values.get(2)),
+                           Float.parseFloat(values.get(3)));
+      }
+
+      throw new IllegalArgumentException("String should be formatted like 'x y width height' or 'x, y, width, height'");
     }
   }
 
@@ -115,7 +121,7 @@ public class SVGLoader {
     return load(null, stream, scale);
   }
 
-  public static Image load(@Nullable URL url, @NotNull InputStream stream , float scale) throws IOException {
+  public static Image load(@Nullable URL url, @NotNull InputStream stream , double scale) throws IOException {
     try {
       return new SVGLoader(url, stream, scale).createImage();
     }
@@ -124,7 +130,7 @@ public class SVGLoader {
     }
   }
 
-  private SVGLoader(@Nullable URL url, InputStream stream, float scale) throws IOException {
+  private SVGLoader(@Nullable URL url, InputStream stream, double scale) throws IOException {
     Document document = null;
     String uri = null;
     try {

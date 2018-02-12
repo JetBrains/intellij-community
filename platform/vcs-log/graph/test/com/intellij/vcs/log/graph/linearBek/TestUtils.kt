@@ -51,7 +51,7 @@ fun runBek(graphBuilder: TestGraphBuilder.() -> Unit): BekBaseController.BekLine
 
   val edge = BekChecker.findReversedEdge(afterBek)
   if (edge != null) {
-    assertNull(Pair(bekMap.getUsualIndex(edge.first), bekMap.getUsualIndex(edge.second)), "Found reversed edge");
+    assertNull(Pair(bekMap.getUsualIndex(edge.first), bekMap.getUsualIndex(edge.second)), "Found reversed edge")
   }
 
   return afterBek
@@ -66,6 +66,6 @@ fun runLinearBek(graphBuilder: TestGraphBuilder.() -> Unit): LinearBekGraph {
   return afterLinearBek
 }
 
-fun assertEquals(expected: TestGraphBuilder.() -> Unit, actual: LinearGraph): Unit {
+fun assertEquals(expected: TestGraphBuilder.() -> Unit, actual: LinearGraph) {
   assertEquals(graph(expected).asTestGraphString(), actual.asTestGraphString())
 }

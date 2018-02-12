@@ -32,14 +32,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
-* User: anna
-* Date: 1/16/12
-*/
 class MethodDuplicatesMatchProvider implements MatchProvider {
   private final PsiMethod myMethod;
   private final List<Match> myDuplicates;
-  private static final Logger LOG = Logger.getInstance("#" + MethodDuplicatesMatchProvider.class.getName());
+  private static final Logger LOG = Logger.getInstance(MethodDuplicatesMatchProvider.class);
 
   MethodDuplicatesMatchProvider(PsiMethod method, List<Match> duplicates) {
     myMethod = method;

@@ -28,11 +28,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/**
- * Created by IntelliJ IDEA.
- * User: dcheryasov
- * Date: Sep 28, 2008
- */
 public class PyDecoratorListElementType extends PyStubElementType<PyDecoratorListStub, PyDecoratorList> {
 
   public PyDecoratorListElementType() {

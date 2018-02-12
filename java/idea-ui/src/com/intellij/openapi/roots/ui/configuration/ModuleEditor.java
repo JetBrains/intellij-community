@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.roots.ui.configuration;
 
@@ -30,10 +18,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ModuleConfigurableEP;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
@@ -59,8 +44,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Oct 4, 2003
- *         Time: 6:29:56 PM
  */
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public abstract class ModuleEditor implements Place.Navigator, Disposable {
@@ -70,6 +53,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   private final Project myProject;
   private JPanel myGenericSettingsPanel;
+  private ModificationOfImportedModelWarningComponent myModificationOfImportedModelWarningComponent;
   private ModifiableRootModel myModifiableRootModel; // important: in order to correctly update OrderEntries UI use corresponding proxy for the model
 
   private final ModulesProvider myModulesProvider;
@@ -220,9 +204,14 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
         }
       }
     }
+    for (ModuleConfigurationEditor editor : myEditors) {
+      if (editor instanceof ModuleElementsEditor) {
+        ((ModuleElementsEditor)editor).addListener(this::updateImportedModelWarning);
+      }
+    }
   }
 
-  private static Set<Class<?>> ourReportedDeprecatedClasses = new HashSet<>();
+  private static final Set<Class<?>> ourReportedDeprecatedClasses = new HashSet<>();
   private static void reportDeprecatedModuleEditor(Class<?> aClass) {
     if (ourReportedDeprecatedClasses.add(aClass)) {
       LOG.warn(aClass.getName() + " uses deprecated way to register itself as a module editor. " + ModuleConfigurationEditorProvider.class.getName() + " extension point should be used instead");
@@ -230,13 +219,13 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   }
 
   private static ModuleConfigurationEditorProvider[] collectProviders(@NotNull Module module) {
-    List<ModuleConfigurationEditorProvider> result = new ArrayList<>();
-    result.addAll(ServiceKt.getComponents(module, ModuleConfigurationEditorProvider.class));
+    List<ModuleConfigurationEditorProvider> result =
+      new ArrayList<>(ServiceKt.getComponents(module, ModuleConfigurationEditorProvider.class));
     for (ModuleConfigurationEditorProvider component : result) {
       reportDeprecatedModuleEditor(component.getClass());
     }
     ContainerUtil.addAll(result, Extensions.getExtensions(ModuleConfigurationEditorProvider.EP_NAME, module));
-    return result.toArray(new ModuleConfigurationEditorProvider[result.size()]);
+    return result.toArray(new ModuleConfigurationEditorProvider[0]);
   }
 
   public ModuleConfigurationState createModuleConfigurationState() {
@@ -263,6 +252,9 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
     final JComponent component = createCenterPanel();
     myGenericSettingsPanel.add(component, BorderLayout.CENTER);
+    myModificationOfImportedModelWarningComponent = new ModificationOfImportedModelWarningComponent();
+    myGenericSettingsPanel.add(myModificationOfImportedModelWarningComponent.getLabel(), BorderLayout.SOUTH);
+    updateImportedModelWarning();
     myEditorsInitialized = true;
     return myGenericSettingsPanel;
   }
@@ -286,8 +278,21 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
         for (final ModuleConfigurationEditor myEditor : myEditors) {
           myEditor.moduleStateChanged();
         }
+        updateImportedModelWarning();
       }
       myEventDispatcher.getMulticaster().moduleStateChanged(getModifiableRootModelProxy());
+    }
+  }
+
+  private void updateImportedModelWarning() {
+    if (!myEditorsInitialized) return;
+
+    ProjectModelExternalSource externalSource = ModuleRootManager.getInstance(myModule).getExternalSource();
+    if (externalSource != null && isModified()) {
+      myModificationOfImportedModelWarningComponent.showWarning("Module '" + myModule.getName() + "'", externalSource);
+    }
+    else {
+      myModificationOfImportedModelWarningComponent.hideWarning();
     }
   }
 
@@ -318,24 +323,21 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       myGenericSettingsPanel = null;
     }
     finally {
-      myModifiableRootModel = null;
-      myModifiableRootModelProxy = null;
+      resetModifiableModel();
     }
   }
 
   public ModifiableRootModel apply() throws ConfigurationException {
-    try {
-      for (ModuleConfigurationEditor editor : myEditors) {
-        editor.saveData();
-        editor.apply();
-      }
+    for (ModuleConfigurationEditor editor : myEditors) {
+      editor.saveData();
+      editor.apply();
+    }
+    return myModifiableRootModel;
+  }
 
-      return myModifiableRootModel;
-    }
-    finally {
-      myModifiableRootModel = null;
-      myModifiableRootModelProxy = null;
-    }
+  void resetModifiableModel() {
+    myModifiableRootModel = null;
+    myModifiableRootModelProxy = null;
   }
 
   public void canApply() throws ConfigurationException {
@@ -584,10 +586,5 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       }
       return null;
     }
-
-  }
-
-  @Override
-  public void setHistory(final History history) {
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,8 @@ package org.jetbrains.idea.maven.utils;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
@@ -73,24 +74,22 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
   }
 
   public void makeUserAware(final Project project) {
-    AccessToken accessToken = ReadAction.start();
-
-    try {
+    ApplicationManager.getApplication().runReadAction(() -> {
       EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
 
-      multicaster.addCaretListener(new CaretAdapter() {
-          @Override
-          public void caretPositionChanged(CaretEvent e) {
-            MavenMergingUpdateQueue.this.restartTimer();
-          }
-        }, this);
+      multicaster.addCaretListener(new CaretListener() {
+        @Override
+        public void caretPositionChanged(CaretEvent e) {
+          restartTimer();
+        }
+      }, this);
 
-      multicaster.addDocumentListener(new DocumentAdapter() {
-          @Override
-          public void documentChanged(DocumentEvent event) {
-            MavenMergingUpdateQueue.this.restartTimer();
-          }
-        }, this);
+      multicaster.addDocumentListener(new DocumentListener() {
+        @Override
+        public void documentChanged(DocumentEvent event) {
+          restartTimer();
+        }
+      }, this);
 
       project.getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
         int beforeCalled;
@@ -104,25 +103,21 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
 
         @Override
         public void rootsChanged(ModuleRootEvent event) {
-          if (beforeCalled == 0)
+          if (beforeCalled == 0) {
             return; // This may occur if listener has been added between beforeRootsChange() and rootsChanged() calls.
+          }
 
           if (--beforeCalled == 0) {
             resume();
-            MavenMergingUpdateQueue.this.restartTimer();
+            restartTimer();
           }
         }
       });
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 
   public void makeDumbAware(final Project project) {
-    AccessToken accessToken = ReadAction.start();
-
-    try {
+    ApplicationManager.getApplication().runReadAction(() -> {
       if (DumbService.isDumb(project)) {
         mySuspendCounter.incrementAndGet();
       }
@@ -142,10 +137,7 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
       if (DumbService.getInstance(project).isDumb()) {
         suspend();
       }
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 
   public void makeModalAware(Project project) {

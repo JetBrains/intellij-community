@@ -16,21 +16,24 @@
 package com.intellij.junit5;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import jetbrains.buildServer.messages.serviceMessages.MapSerializerUtil;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.engine.descriptor.ClassTestDescriptor;
-import org.junit.jupiter.engine.descriptor.MethodTestDescriptor;
 import org.junit.jupiter.engine.descriptor.TestFactoryTestDescriptor;
+import org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor;
 import org.junit.platform.engine.TestDescriptor;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.UniqueId;
+import org.junit.platform.engine.support.descriptor.EngineDescriptor;
 import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
 import org.opentest4j.AssertionFailedError;
 import org.opentest4j.MultipleFailuresError;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.stream.Stream;
 
@@ -44,8 +47,8 @@ class JUnit5EventsTest {
     myBuf = new StringBuffer();
     myExecutionListener = new JUnit5TestExecutionListener(new PrintStream(new OutputStream() {
       @Override
-      public void write(int b) throws IOException {
-        myBuf.append(new String(new byte[]{(byte)b}));
+      public void write(int b) {
+        myBuf.append(new String(new byte[]{(byte)b}, CharsetToolkit.UTF8_CHARSET));
       }
     })) {
       @Override
@@ -68,50 +71,62 @@ class JUnit5EventsTest {
   @Test
   void multipleFailures() throws Exception {
 
-    TestDescriptor testDescriptor = new MethodTestDescriptor(UniqueId.forEngine("engine"), TestClass.class,
-                                                             TestClass.class.getDeclaredMethod("test1"));
+    EngineDescriptor engineDescriptor = new EngineDescriptor(UniqueId.forEngine("engine"), "e");
+    ClassTestDescriptor c = new ClassTestDescriptor(UniqueId.forEngine("testClass"), TestClass.class);
+    engineDescriptor.addChild(c);
+    TestDescriptor testDescriptor = new TestMethodTestDescriptor(UniqueId.forEngine("testMethod"), TestClass.class,
+                                                                 TestClass.class.getDeclaredMethod("test1"));
+    c.addChild(testDescriptor);
     TestIdentifier identifier = TestIdentifier.from(testDescriptor);
+    final TestPlan testPlan = TestPlan.from(Collections.singleton(engineDescriptor));
+    myExecutionListener.setTestPlan(testPlan);
     myExecutionListener.executionStarted(identifier);
-    MultipleFailuresError multipleFailuresError = new MultipleFailuresError("2 errors");
-    multipleFailuresError.addFailure(new AssertionFailedError("message1", "expected1", "actual1"));
-    multipleFailuresError.addFailure(new AssertionFailedError("message2", "expected2", "actual2"));
+    MultipleFailuresError multipleFailuresError = new MultipleFailuresError("2 errors", Arrays.asList
+      (new AssertionFailedError("message1", "expected1", "actual1"),
+       new AssertionFailedError("message2", "expected2", "actual2")));
     myExecutionListener.executionFinished(identifier, TestExecutionResult.failed(multipleFailuresError));
 
 
+    String lineSeparator = MapSerializerUtil.escapeStr(System.getProperty("line.separator"), MapSerializerUtil.STD_ESCAPER);
     Assertions.assertEquals("##teamcity[enteredTheMatrix]\n" +
                             "\n" +
-                            "##teamcity[testStarted id='|[engine:engine|]' name='test1()' locationHint='java:test://com.intellij.junit5.JUnit5EventsTest$TestClass.test1']\n" +
+                            "##teamcity[testStarted id='|[engine:testMethod|]' name='test1()' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]' locationHint='java:test://com.intellij.junit5.JUnit5EventsTest$TestClass.test1' metainfo='']\n" +
                             "\n" +
-                            "##teamcity[testFailed name='test1()' id='|[engine:engine|]' details='' message='' expected='expected1' actual='actual1']\n" +
+                            "##teamcity[testFailed name='test1()' id='|[engine:testMethod|]' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]' message='' expected='expected1' actual='actual1' details='']\n" +
                             "\n" +
-                            "##teamcity[testFailed name='test1()' id='|[engine:engine|]' details='' message='' expected='expected2' actual='actual2']\n" +
+                            "##teamcity[testFailed name='test1()' id='|[engine:testMethod|]' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]' message='' expected='expected2' actual='actual2' details='']\n" +
                             "\n" +
-                            "##teamcity[testFailed name='test1()' id='|[engine:engine|]' details='TRACE' message='2 errors (2 failures)|n\tmessage1|n\tmessage2']\n" +
+                            "##teamcity[testFailed name='test1()' id='|[engine:testMethod|]' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]' message='2 errors (2 failures)|n\tmessage1|n\tmessage2' details='TRACE']\n" +
                             "\n" +
-                            "##teamcity[testFinished id='|[engine:engine|]' name='test1()']\n", StringUtil.convertLineSeparators(myBuf.toString()));
+                            "##teamcity[testFinished id='|[engine:testMethod|]' name='test1()' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]']\n", StringUtil.convertLineSeparators(myBuf.toString()));
   }
 
   @Test
   void containerFailure() throws Exception {
-    ClassTestDescriptor classTestDescriptor = new ClassTestDescriptor(UniqueId.forEngine("engine"), TestClass.class);
-    TestDescriptor testDescriptor = new TestFactoryTestDescriptor(UniqueId.forEngine("engine1"), TestClass.class,
+    EngineDescriptor engineDescriptor = new EngineDescriptor(UniqueId.forEngine("engine"), "e");
+    ClassTestDescriptor classTestDescriptor = new ClassTestDescriptor(UniqueId.forEngine("testClass"), TestClass.class);
+    engineDescriptor.addChild(classTestDescriptor);
+    TestDescriptor testDescriptor = new TestFactoryTestDescriptor(UniqueId.forEngine("testMethod"), TestClass.class,
                                                                   TestClass.class.getDeclaredMethod("brokenStream"));
+    classTestDescriptor.addChild(testDescriptor);
     TestIdentifier identifier = TestIdentifier.from(testDescriptor);
-    final TestPlan testPlan = TestPlan.from(Collections.singleton(classTestDescriptor));
+    final TestPlan testPlan = TestPlan.from(Collections.singleton(engineDescriptor));
     myExecutionListener.sendTree(testPlan, "");
     myExecutionListener.executionStarted(identifier);
     myExecutionListener.executionFinished(identifier, TestExecutionResult.failed(new IllegalStateException()));
 
     Assertions.assertEquals("##teamcity[enteredTheMatrix]\n" +
+                            "##teamcity[suiteTreeStarted id='|[engine:testClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:testClass|]' parentNodeId='0' locationHint='java:suite://com.intellij.junit5.JUnit5EventsTest$TestClass']\n" +
+                            "##teamcity[suiteTreeStarted id='|[engine:testMethod|]' name='brokenStream()' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]' locationHint='java:test://com.intellij.junit5.JUnit5EventsTest$TestClass.brokenStream' metainfo='']\n" +
+                            "##teamcity[suiteTreeEnded id='|[engine:testMethod|]' name='brokenStream()' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]']\n" +
+                            "##teamcity[suiteTreeEnded id='|[engine:testClass|]' name='JUnit5EventsTest$TestClass' nodeId='|[engine:testClass|]' parentNodeId='0']\n" +
                             "##teamcity[treeEnded]\n" +
-                            "##teamcity[testSuiteStarted id='|[engine:engine1|]' name='brokenStream()']\n" +
+                            "##teamcity[testSuiteStarted id='|[engine:testMethod|]' name='brokenStream()' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]'locationHint='java:test://com.intellij.junit5.JUnit5EventsTest$TestClass.brokenStream' metainfo='']\n" +
                             "\n" +
-                            "##teamcity[testStarted name='Class Configuration' locationHint='java:suite://com.intellij.junit5.JUnit5EventsTest$TestClass.brokenStream']\n" +
+                            "##teamcity[testFailed name='Class Configuration' id='|[engine:testMethod|]' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]' error='true' message='' details='TRACE']\n" +
                             "\n" +
-                            "##teamcity[testFailed name='Class Configuration' id='Class Configuration' details='TRACE' error='true' message='']\n" +
-                            "\n" +
-                            "##teamcity[testFinished name='Class Configuration']\n" +
-                            "##teamcity[testSuiteFinished  id='|[engine:engine1|]' name='brokenStream()']\n", StringUtil.convertLineSeparators(myBuf.toString()));
+                            "##teamcity[testFinished name='Class Configuration' nodeId='|[engine:testMethod|]' parentNodeId='[engine:testClass]' ]\n" +
+                            "##teamcity[testSuiteFinished  id='|[engine:testMethod|]' name='brokenStream()' nodeId='|[engine:testMethod|]' parentNodeId='|[engine:testClass|]']\n", StringUtil.convertLineSeparators(myBuf.toString()));
   }
 
   private static class TestClass {

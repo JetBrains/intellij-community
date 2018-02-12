@@ -41,15 +41,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Konstantin Bulenkov
  */
 public class NavBarUpdateQueue extends MergingUpdateQueue {
-  private AtomicBoolean myModelUpdating = new AtomicBoolean(Boolean.FALSE);
-  private Alarm myUserActivityAlarm = new Alarm(this);
+  private final AtomicBoolean myModelUpdating = new AtomicBoolean(Boolean.FALSE);
+  private final Alarm myUserActivityAlarm = new Alarm(this);
   private Runnable myRunWhenListRebuilt;
-  private Runnable myUserActivityAlarmRunnable = () -> processUserActivity();
+  private final Runnable myUserActivityAlarmRunnable = () -> processUserActivity();
 
-  private NavBarPanel myPanel;
+  private final NavBarPanel myPanel;
 
   public NavBarUpdateQueue(NavBarPanel panel) {
-    super("NavBar", Registry.intValue("navBar.updateMergeTime"), true, MergingUpdateQueue.ANY_COMPONENT, panel);
+    super("NavBar", Registry.intValue("navBar.updateMergeTime"), true, panel, panel);
     myPanel = panel;
     setTrackUiActivity(true);
     IdeEventQueue.getInstance().addActivityListener(() -> restartRebuild(), panel);
@@ -66,12 +66,8 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
         if (context != null || object != null) {
           requestModelUpdateFromContextOrObject(context, object);
         } else {
-          DataManager.getInstance().getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {
-            @Override
-            public void consume(DataContext dataContext) {
-              requestModelUpdateFromContextOrObject(dataContext, null);
-            }
-          });
+          DataManager.getInstance().getDataContextFromFocus().doWhenDone(
+            (Consumer<DataContext>)dataContext -> requestModelUpdateFromContextOrObject(dataContext, null));
         }
       }
 
@@ -84,25 +80,30 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
   }
 
   private void requestModelUpdateFromContextOrObject(DataContext dataContext, Object object) {
-    final NavBarModel model = myPanel.getModel();
-    if (dataContext != null) {
-      if (CommonDataKeys.PROJECT.getData(dataContext) != myPanel.getProject() || myPanel.isNodePopupShowing()) {
-        requestModelUpdate(null, myPanel.getContextObject(), true);
-        return;
+    try {
+      final NavBarModel model = myPanel.getModel();
+      if (dataContext != null) {
+        if (CommonDataKeys.PROJECT.getData(dataContext) != myPanel.getProject() || myPanel.isNodePopupActive()) {
+          requestModelUpdate(null, myPanel.getContextObject(), true);
+          return;
+        }
+        final Window window = SwingUtilities.getWindowAncestor(myPanel);
+        if (window != null && !window.isFocused()) {
+          model.updateModel(DataManager.getInstance().getDataContext(myPanel));
+        }
+        else {
+          model.updateModel(dataContext);
+        }
       }
-      final Window window = SwingUtilities.getWindowAncestor(myPanel);
-      if (window != null && !window.isFocused()) {
-        model.updateModel(DataManager.getInstance().getDataContext(myPanel));
-      } else {
-        model.updateModel(dataContext);
+      else {
+        model.updateModel(object);
       }
-    } else {
-      model.updateModel(object);
+
+      queueRebuildUi();
     }
-
-    queueRebuildUi();
-
-    myModelUpdating.set(false);
+    finally {
+      myModelUpdating.set(false);
+    }
   }
 
   void restartRebuild() {
@@ -141,11 +142,14 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
       }
 
       if (focus != null && focus.isShowing()) {
-        if (!myPanel.hasFocus() && !myPanel.isNodePopupShowing()) {
+        if (!myPanel.isFocused() && !myPanel.isNodePopupActive()) {
           requestModelUpdate(DataManager.getInstance().getDataContext(focus), null, false);
         }
       }
       else if (wnd.isActive()) {
+        if (myPanel.allowNavItemsFocus() && (myPanel.isFocused() || myPanel.isNodePopupActive())) {
+          return;
+        }
         requestModelUpdate(null, myPanel.getContextObject(), false);
       }
     });
@@ -220,14 +224,11 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
       protected void after() {
         final LightweightHint hint = myPanel.getHint();
         if (hint != null) {
-          myPanel.getHintContainerShowPoint().doWhenDone(new Consumer<RelativePoint>() {
-            @Override
-            public void consume(final RelativePoint relativePoint) {
-              hint.setSize(myPanel.getPreferredSize());
-              hint.setLocation(relativePoint);
-              if (after != null) {
-                after.run();
-              }
+          myPanel.getHintContainerShowPoint().doWhenDone((Consumer<RelativePoint>)relativePoint -> {
+            hint.setSize(myPanel.getPreferredSize());
+            hint.setLocation(relativePoint);
+            if (after != null) {
+              after.run();
             }
           });
         }
@@ -258,11 +259,6 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
         }
       }
     });
-  }
-
-  @Override
-  public void dispose() {
-    super.dispose();
   }
 
   public void queueTypeAheadDone(final ActionCallback done) {

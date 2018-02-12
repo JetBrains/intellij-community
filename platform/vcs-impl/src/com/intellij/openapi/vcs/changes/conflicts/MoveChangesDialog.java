@@ -18,16 +18,14 @@ package com.intellij.openapi.vcs.changes.conflicts;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
-import com.intellij.openapi.vcs.changes.ui.ChangesTreeList;
+import com.intellij.openapi.vcs.changes.ui.ChangesTree;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBCheckBox;
@@ -36,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -46,42 +43,23 @@ import java.util.Set;
  */
 public class MoveChangesDialog extends DialogWrapper {
   private static final String MOVE_CHANGES_CURRENT_ONLY = "move.changes.current.only";
-  private final ChangesTreeList<Change> myTreeList;
-  private final List<Change> myChanges;
+  private final ChangesTree myTreeList;
   private final Collection<Change> mySelected;
-  private JBCheckBox myCheckBox;
+  private final JBCheckBox myCheckBox;
 
   public MoveChangesDialog(final Project project, Collection<Change> selected, final Set<ChangeList> changeLists, VirtualFile current) {
     super(project, true);
     mySelected = selected;
     setTitle("Move Changes to Active Changelist");
-    myTreeList = new ChangesTreeList<Change>(project, selected, true, false, null, null) {
-
+    myTreeList = new ChangesTree(project, true, false) {
       @Override
-      protected DefaultTreeModel buildTreeModel(List<Change> changes, ChangeNodeDecorator changeNodeDecorator) {
-        return TreeModelBuilder.buildFromChangeLists(project, isShowFlatten(), changeLists);
-      }
-
-      @Override
-      protected List<Change> getSelectedObjects(ChangesBrowserNode<Change> node) {
-        return node.getAllChangesUnder();
-      }
-
-      @Override
-      protected Change getLeadSelectedObject(ChangesBrowserNode node) {
-        final Object o = node.getUserObject();
-        if (o instanceof Change) {
-          return (Change) o;
-        }
-        return null;
+      public void rebuildTree() {
+        DefaultTreeModel model = TreeModelBuilder.buildFromChangeLists(project, isShowFlatten(), changeLists);
+        updateTreeModel(model);
       }
     };
-
-    myChanges = new ArrayList<>();
-    for (ChangeList list : changeLists) {
-      myChanges.addAll(list.getChanges());
-    }
-    myTreeList.setChangesToDisplay(myChanges, current);
+    myTreeList.rebuildTree();
+    myTreeList.selectFile(current);
 
     myCheckBox = new JBCheckBox("Select current file only");
     myCheckBox.setMnemonic('c');
@@ -95,12 +73,10 @@ public class MoveChangesDialog extends DialogWrapper {
   }
 
   private void setSelected(boolean selected) {
-    myTreeList.excludeChanges(myChanges);
+    myTreeList.excludeChanges(myTreeList.getIncludedSet());
     if (selected) {
-      Change selection = myTreeList.getLeadSelection();
-      if (selection != null) {
-        myTreeList.includeChange(selection);
-      }
+      List<Change> selectedChanges = VcsTreeModelData.selected(myTreeList).userObjects(Change.class);
+      myTreeList.includeChanges(selectedChanges);
     }
     else {
       myTreeList.includeChanges(mySelected);
@@ -114,7 +90,7 @@ public class MoveChangesDialog extends DialogWrapper {
     panel.add(ScrollPaneFactory.createScrollPane(myTreeList), BorderLayout.CENTER);
 
     DefaultActionGroup actionGroup = new DefaultActionGroup(myTreeList.getTreeActions());
-    panel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true).getComponent(), BorderLayout.NORTH);
+    panel.add(ActionManager.getInstance().createActionToolbar("MoveChangesDialog", actionGroup, true).getComponent(), BorderLayout.NORTH);
     myTreeList.expandAll();
     myTreeList.repaint();
     return panel;
@@ -126,7 +102,7 @@ public class MoveChangesDialog extends DialogWrapper {
   }
 
   public Collection<Change> getIncludedChanges() {
-    return myTreeList.getIncludedChanges();
+    return VcsTreeModelData.included(myTreeList).userObjects(Change.class);
   }
 
   @Override

@@ -1,46 +1,37 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.mock;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.testFramework.LightVirtualFile;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Collection;
 import java.util.Map;
 
 public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
-  private final MyVirtualFile myRoot = new MyVirtualFile("", null);
-  public static final String PROTOCOL = "mock";
+  private static final String PROTOCOL = "mock";
 
-  @Override
+  private final MyVirtualFile myRoot = new MyVirtualFile("", null) {
+    @NotNull
+    @Override
+    public VirtualFileSystem getFileSystem() {
+      return MockVirtualFileSystem.this;
+    }
+  };
+
   @NotNull
+  @Override
   public MyVirtualFile findFileByPath(@NotNull String path) {
-    path = path.replace(File.separatorChar, '/');
-    path = path.replace('/', ':');
-    if (StringUtil.startsWithChar(path, ':')) path = path.substring(1);
+    String normalized = path.replace(File.separatorChar, '/').replace('/', ':');
+    if (StringUtil.startsWithChar(normalized, ':')) normalized = normalized.substring(1);
     MyVirtualFile file = myRoot;
-    for (String component : StringUtil.split(path, ":")) {
+    for (String component : StringUtil.split(normalized, ":")) {
       file = file.getOrCreate(component);
     }
     return file;
@@ -58,36 +49,33 @@ public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
     return myRoot;
   }
 
-  @Override
   @NotNull
+  @Override
   public String getProtocol() {
     return PROTOCOL;
   }
 
   @Override
-  public void refresh(boolean asynchronous) {
-  }
+  public void refresh(boolean asynchronous) { }
 
   @Override
   public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
     return findFileByPath(path);
   }
 
-  public class MyVirtualFile extends LightVirtualFile {
-    @Nullable
-    private Map<String, MyVirtualFile> myChildren;
+  private static class MyVirtualFile extends LightVirtualFile {
     private final MyVirtualFile myParent;
+    private Map<String, MyVirtualFile> myChildren;
 
-    MyVirtualFile(@NotNull String name, @Nullable MyVirtualFile parent) {
+    private MyVirtualFile(String name, MyVirtualFile parent) {
       super(name);
-
       myParent = parent;
     }
 
-    @Override
     @NotNull
+    @Override
     public VirtualFileSystem getFileSystem() {
-      return MockVirtualFileSystem.this;
+      return myParent.getFileSystem();
     }
 
     @NotNull
@@ -97,7 +85,6 @@ public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
         if (myChildren == null) {
           myChildren = new THashMap<>();
         }
-
         file = new MyVirtualFile(name, this);
         myChildren.put(name, file);
       }
@@ -112,7 +99,7 @@ public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
     @NotNull
     @Override
     public String getPath() {
-      final MockVirtualFileSystem.MyVirtualFile parent = getParent();
+      MockVirtualFileSystem.MyVirtualFile parent = getParent();
       return parent == null ? getName() : parent.getPath() + "/" + getName();
     }
 
@@ -123,17 +110,12 @@ public class MockVirtualFileSystem extends DeprecatedVirtualFileSystem {
 
     @Override
     public VirtualFile[] getChildren() {
-      if (myChildren == null || myChildren.isEmpty()) {
-        return EMPTY_ARRAY;
-      }
-
-      Collection<MyVirtualFile> children = myChildren.values();
-      return children.toArray(new MyVirtualFile[children.size()]);
+      return myChildren == null ? EMPTY_ARRAY : VfsUtilCore.toVirtualFileArray(myChildren.values());
     }
 
     @Nullable
     @Override
-    public MyVirtualFile findChild(@NotNull @NonNls String name) {
+    public MyVirtualFile findChild(@NotNull String name) {
       return myChildren == null ? null : myChildren.get(name);
     }
   }

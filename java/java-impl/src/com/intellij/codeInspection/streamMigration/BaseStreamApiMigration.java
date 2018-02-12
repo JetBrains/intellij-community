@@ -17,20 +17,21 @@ package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Tagir Valeev
  */
 abstract class BaseStreamApiMigration {
+  private boolean myShouldWarn;
   private final String myReplacement;
 
-  protected BaseStreamApiMigration(String replacement) {
+  protected BaseStreamApiMigration(boolean shouldWarn, String replacement) {
+    myShouldWarn = shouldWarn;
     myReplacement = replacement;
   }
 
@@ -38,72 +39,73 @@ abstract class BaseStreamApiMigration {
     return myReplacement;
   }
 
-  abstract PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb);
+  abstract PsiElement migrate(@NotNull Project project, @NotNull PsiElement body, @NotNull TerminalBlock tb);
 
-  static PsiElement replaceWithNumericAddition(PsiLoopStatement loopStatement,
-                                               PsiVariable var,
-                                               String streamText,
-                                               PsiType expressionType) {
-    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(loopStatement.getProject());
-    restoreComments(loopStatement, loopStatement.getBody());
-    InitializerUsageStatus status = ControlFlowUtils.getInitializerUsageStatus(var, loopStatement);
-    if (status != ControlFlowUtils.InitializerUsageStatus.UNKNOWN) {
-      PsiExpression initializer = var.getInitializer();
-      if (ExpressionUtils.isZero(initializer)) {
-        PsiType type = var.getType();
-        String replacement = (type.equals(expressionType) ? "" : "(" + type.getCanonicalText() + ") ") + streamText;
-        return replaceInitializer(loopStatement, var, initializer, replacement, status);
-      }
-    }
-    return loopStatement.replace(elementFactory.createStatementFromText(var.getName() + "+=" + streamText + ";", loopStatement));
+  public boolean isShouldWarn() {
+    return myShouldWarn;
   }
 
-  static PsiElement replaceInitializer(PsiLoopStatement loopStatement,
+  public void setShouldWarn(boolean shouldWarn) {
+    myShouldWarn = shouldWarn;
+  }
+
+  static PsiElement replaceWithOperation(PsiStatement loopStatement,
+                                         PsiVariable var,
+                                         String streamText,
+                                         PsiType expressionType,
+                                         OperationReductionMigration.ReductionOperation reductionOperation,
+                                         CommentTracker ct) {
+    InitializerUsageStatus status = ControlFlowUtils.getInitializerUsageStatus(var, loopStatement);
+    if (status != InitializerUsageStatus.UNKNOWN) {
+      PsiExpression initializer = var.getInitializer();
+      if (initializer != null && reductionOperation.getInitializerExpressionRestriction().test(initializer)) {
+        PsiType type = var.getType();
+        String replacement = (type.isAssignableFrom(expressionType) ? "" : "(" + type.getCanonicalText() + ") ") + streamText;
+        return replaceInitializer(loopStatement, var, initializer, replacement, status, ct);
+      }
+    }
+    return ct.replaceAndRestoreComments(loopStatement, var.getName() + reductionOperation.getOperation() + "=" + streamText + ";");
+  }
+
+  static PsiElement replaceInitializer(PsiStatement loopStatement,
                                        PsiVariable var,
                                        PsiExpression initializer,
                                        String replacement,
-                                       InitializerUsageStatus status) {
-    Project project = loopStatement.getProject();
-    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-    if(status == ControlFlowUtils.InitializerUsageStatus.DECLARED_JUST_BEFORE) {
-      initializer.replace(elementFactory.createExpressionFromText(replacement, loopStatement));
-      removeLoop(loopStatement);
+                                       InitializerUsageStatus status,
+                                       CommentTracker ct) {
+    if (status == ControlFlowUtils.InitializerUsageStatus.DECLARED_JUST_BEFORE) {
+      ct.replace(initializer, replacement);
+      removeLoop(ct, loopStatement);
       return var;
-    } else {
-      if(status == ControlFlowUtils.InitializerUsageStatus.AT_WANTED_PLACE_ONLY) {
-        initializer.delete();
-      }
-      return
-        loopStatement.replace(elementFactory.createStatementFromText(var.getName() + " = " + replacement + ";", loopStatement));
-    }
-  }
-
-  static void restoreComments(PsiLoopStatement loopStatement, PsiStatement body) {
-    final PsiElement parent = loopStatement.getParent();
-    for (PsiElement comment : PsiTreeUtil.findChildrenOfType(body, PsiComment.class)) {
-      parent.addBefore(comment, loopStatement);
-    }
-  }
-
-  static void removeLoop(@NotNull PsiLoopStatement statement) {
-    PsiElement parent = statement.getParent();
-    if (parent instanceof PsiLabeledStatement) {
-      parent.delete();
     }
     else {
-      statement.delete();
+      if (status == ControlFlowUtils.InitializerUsageStatus.AT_WANTED_PLACE_ONLY) {
+        ct.delete(initializer);
+      }
+      return ct.replaceAndRestoreComments(loopStatement, var.getName() + " = " + replacement + ";");
     }
   }
 
-  static boolean isReachable(PsiReturnStatement target) {
-    ControlFlow flow;
-    try {
-      flow = ControlFlowFactory.getInstance(target.getProject())
-        .getControlFlow(target.getParent(), LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+
+  @Nullable
+  static PsiElement replaceWithFindExtremum(@NotNull CommentTracker ct, @NotNull PsiStatement loopStatement,
+                                            @NotNull PsiVariable extremumHolder,
+                                            @NotNull String streamText,
+                                            @Nullable PsiVariable keyExtremum) {
+    if(keyExtremum != null) {
+      ct.delete(keyExtremum);
     }
-    catch (AnalysisCanceledException e) {
-      return true;
+    InitializerUsageStatus status = ControlFlowUtils.getInitializerUsageStatus(extremumHolder, loopStatement);
+    return replaceInitializer(loopStatement, extremumHolder, extremumHolder.getInitializer(), streamText, status, ct);
+  }
+
+  static void removeLoop(CommentTracker ct, @NotNull PsiStatement statement) {
+    PsiElement parent = statement.getParent();
+    if (parent instanceof PsiLabeledStatement) {
+      ct.deleteAndRestoreComments(parent);
     }
-    return ControlFlowUtil.isInstructionReachable(flow, flow.getStartOffset(target), 0);
+    else {
+      ct.deleteAndRestoreComments(statement);
+    }
   }
 }

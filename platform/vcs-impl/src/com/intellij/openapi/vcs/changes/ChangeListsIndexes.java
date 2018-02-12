@@ -15,62 +15,101 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.google.common.collect.Sets;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
+import com.intellij.util.ThreeState;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.util.containers.ContainerUtil.newHashSet;
-
 public class ChangeListsIndexes {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListsIndexes");
-  private final TreeMap<FilePath, Data> myMap;
+  private final Map<FilePath, Data> myMap;
+  private final TreeSet<FilePath> myAffectedPaths;
+  private final Set<Change> myChanges;
 
-  ChangeListsIndexes() {
-    myMap = new TreeMap<>(HierarchicalFilePathComparator.SYSTEM_CASE_SENSITIVE);
+  public ChangeListsIndexes() {
+    myMap = new HashMap<>();
+    myAffectedPaths = new TreeSet<>(HierarchicalFilePathComparator.SYSTEM_CASE_SENSITIVE);
+    myChanges = new HashSet<>();
   }
 
-  ChangeListsIndexes(final ChangeListsIndexes idx) {
-    myMap = new TreeMap<>(idx.myMap);
+  public ChangeListsIndexes(@NotNull ChangeListsIndexes idx) {
+    myMap = new HashMap<>(idx.myMap);
+    myAffectedPaths = new TreeSet<>(idx.myAffectedPaths);
+    myChanges = new HashSet<>(idx.myChanges);
   }
 
-  void add(final FilePath file, final FileStatus status, final VcsKey key, VcsRevisionNumber number) {
+  public void copyFrom(@NotNull ChangeListsIndexes idx) {
+    myMap.clear();
+    myAffectedPaths.clear();
+    myChanges.clear();
+
+    myMap.putAll(idx.myMap);
+    myAffectedPaths.addAll(idx.myAffectedPaths);
+    myChanges.addAll(idx.myChanges);
+  }
+
+
+  private void add(@NotNull FilePath file, @NotNull FileStatus status, @Nullable VcsKey key, @NotNull VcsRevisionNumber number) {
     myMap.put(file, new Data(status, key, number));
+    myAffectedPaths.add(file);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Set status " + status + " for " + file);
     }
   }
 
-  void remove(final FilePath file) {
+  private void remove(final FilePath file) {
     myMap.remove(file);
+    myAffectedPaths.remove(file);
   }
 
-  public FileStatus getStatus(final VirtualFile file) {
+  @Nullable
+  public FileStatus getStatus(@NotNull VirtualFile file) {
     return getStatus(VcsUtil.getFilePath(file));
   }
 
+  @Nullable
   public FileStatus getStatus(@NotNull FilePath file) {
     Data data = myMap.get(file);
     return data != null ? data.status : null;
   }
 
-  public void changeAdded(final Change change, final VcsKey key) {
-    addChangeToIdx(change, key);
+  public void changeAdded(@NotNull Change change, VcsKey key) {
+    myChanges.add(change);
+
+    ContentRevision afterRevision = change.getAfterRevision();
+    ContentRevision beforeRevision = change.getBeforeRevision();
+
+    if (beforeRevision != null && afterRevision != null) {
+      add(afterRevision.getFile(), change.getFileStatus(), key, beforeRevision.getRevisionNumber());
+
+      if (!Comparing.equal(beforeRevision.getFile(), afterRevision.getFile())) {
+        add(beforeRevision.getFile(), FileStatus.DELETED, key, beforeRevision.getRevisionNumber());
+      }
+    }
+    else if (afterRevision != null) {
+      add(afterRevision.getFile(), change.getFileStatus(), key, VcsRevisionNumber.NULL);
+    }
+    else if (beforeRevision != null) {
+      add(beforeRevision.getFile(), change.getFileStatus(), key, beforeRevision.getRevisionNumber());
+    }
   }
 
-  public void changeRemoved(final Change change) {
-    final ContentRevision afterRevision = change.getAfterRevision();
-    final ContentRevision beforeRevision = change.getBeforeRevision();
+  public void changeRemoved(@NotNull Change change) {
+    myChanges.remove(change);
+
+    ContentRevision afterRevision = change.getAfterRevision();
+    ContentRevision beforeRevision = change.getBeforeRevision();
 
     if (afterRevision != null) {
       remove(afterRevision.getFile());
@@ -78,6 +117,11 @@ public class ChangeListsIndexes {
     if (beforeRevision != null) {
       remove(beforeRevision.getFile());
     }
+  }
+
+  @NotNull
+  public Set<Change> getChanges() {
+    return myChanges;
   }
 
   @Nullable
@@ -96,23 +140,6 @@ public class ChangeListsIndexes {
     return null;
   }
 
-  private void addChangeToIdx(final Change change, final VcsKey key) {
-    final ContentRevision afterRevision = change.getAfterRevision();
-    final ContentRevision beforeRevision = change.getBeforeRevision();
-    if (afterRevision != null) {
-      add(afterRevision.getFile(), change.getFileStatus(), key, beforeRevision == null ? VcsRevisionNumber.NULL : beforeRevision.getRevisionNumber());
-    }
-    if (beforeRevision != null) {
-      if (afterRevision != null) {
-        if (!Comparing.equal(beforeRevision.getFile(), afterRevision.getFile())) {
-          add(beforeRevision.getFile(), FileStatus.DELETED, key, beforeRevision.getRevisionNumber());
-        }
-      } else {
-        add(beforeRevision.getFile(), change.getFileStatus(), key, beforeRevision.getRevisionNumber());
-      }
-    }
-  }
-
   /**
    * this method is called after each local changes refresh and collects all:
    * - paths that are new in local changes
@@ -120,66 +147,66 @@ public class ChangeListsIndexes {
    * - paths that were and are changed, but base revision has changed (ex. external update)
    * (for RemoteRevisionsCache and annotation listener)
    */
-  public void getDelta(final ChangeListsIndexes newIndexes,
+  public void getDelta(ChangeListsIndexes newIndexes,
                        Set<BaseRevision> toRemove,
                        Set<BaseRevision> toAdd,
                        Set<BeforeAfter<BaseRevision>> toModify) {
-    TreeMap<FilePath, Data> oldMap = myMap;
-    TreeMap<FilePath, Data> newMap = newIndexes.myMap;
-    Set<FilePath> oldFiles = oldMap.keySet();
-    Set<FilePath> newFiles = newMap.keySet();
+    Map<FilePath, Data> oldMap = myMap;
+    Map<FilePath, Data> newMap = newIndexes.myMap;
 
-    final Set<FilePath> toRemoveSet = newHashSet(oldFiles);
-    toRemoveSet.removeAll(newFiles);
+    for (Map.Entry<FilePath, Data> entry : oldMap.entrySet()) {
+      FilePath s = entry.getKey();
+      Data oldData = entry.getValue();
+      Data newData = newMap.get(s);
 
-    final Set<FilePath> toAddSet = newHashSet(newFiles);
-    toAddSet.removeAll(oldFiles);
-
-    final Set<FilePath> toModifySet = newHashSet(oldFiles);
-    toModifySet.removeAll(toRemoveSet);
-
-    for (FilePath s : toRemoveSet) {
-      final Data data = oldMap.get(s);
-      toRemove.add(createBaseRevision(s, data));
+      if (newData != null) {
+        if (!oldData.sameRevisions(newData)) {
+          toModify.add(new BeforeAfter<>(createBaseRevision(s, oldData), createBaseRevision(s, newData)));
+        }
+      }
+      else {
+        toRemove.add(createBaseRevision(s, oldData));
+      }
     }
-    for (FilePath s : toAddSet) {
-      final Data data = newMap.get(s);
-      toAdd.add(createBaseRevision(s, data));
-    }
-    for (FilePath s : toModifySet) {
-      final Data oldData = oldMap.get(s);
-      final Data newData = newMap.get(s);
-      assert oldData != null && newData != null;
-      if (!oldData.sameRevisions(newData)) {
-        toModify.add(new BeforeAfter<>(createBaseRevision(s, oldData), createBaseRevision(s, newData)));
+
+    for (Map.Entry<FilePath, Data> entry : newMap.entrySet()) {
+      FilePath s = entry.getKey();
+      Data newData = entry.getValue();
+
+      if (!oldMap.containsKey(s)) {
+        toAdd.add(createBaseRevision(s, newData));
       }
     }
   }
 
-  private static BaseRevision createBaseRevision(FilePath path, Data data) {
+  @NotNull
+  public ThreeState haveChangesUnder(@NotNull FilePath dir) {
+    FilePath changeCandidate = myAffectedPaths.ceiling(dir);
+    if (changeCandidate == null) return ThreeState.NO;
+    return FileUtil.isAncestorThreeState(dir.getPath(), changeCandidate.getPath(), false);
+  }
+
+  private static BaseRevision createBaseRevision(@NotNull FilePath path, @NotNull Data data) {
     return new BaseRevision(data.vcsKey, data.revision, path);
   }
 
-  public List<BaseRevision> getAffectedFilesUnderVcs() {
-    final List<BaseRevision> result = new ArrayList<>();
-    for (Map.Entry<FilePath, Data> entry : myMap.entrySet()) {
-      final Data value = entry.getValue();
-      result.add(createBaseRevision(entry.getKey(), value));
-    }
-    return result;
+  public void clear() {
+    myMap.clear();
+    myAffectedPaths.clear();
+    myChanges.clear();
   }
 
   @NotNull
-  public NavigableSet<FilePath> getAffectedPaths() {
-    return Sets.unmodifiableNavigableSet(myMap.navigableKeySet());
+  public Set<FilePath> getAffectedPaths() {
+    return Collections.unmodifiableSet(myMap.keySet());
   }
 
   private static class Data {
-    public final FileStatus status;
+    @NotNull public final FileStatus status;
     public final VcsKey vcsKey;
-    public final VcsRevisionNumber revision;
+    @NotNull public final VcsRevisionNumber revision;
 
-    public Data(FileStatus status, VcsKey vcsKey, VcsRevisionNumber revision) {
+    public Data(@NotNull FileStatus status, VcsKey vcsKey, @NotNull VcsRevisionNumber revision) {
       this.status = status;
       this.vcsKey = vcsKey;
       this.revision = revision;

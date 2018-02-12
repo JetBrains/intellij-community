@@ -866,10 +866,18 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     doTestFieldType("migrationField", myJavaFacade.getElementFactory().createTypeFromText("Test<Short>", null));
   }
 
+  public void testGenericEllipsis2() {
+    doTestFieldType("migrationField", myJavaFacade.getElementFactory().createTypeFromText("Test<Short>", null));
+  }
+
+  public void testTypeParameterMigrationInInvalidCode() {
+    doTestFieldType("migrationField", myJavaFacade.getElementFactory().createTypeFromText("Test<Short>", null));
+  }
+
   private void doTestReturnType(final String methodName, final String migrationType) {
     start(new RulesProvider() {
       @Override
-      public PsiType migrationType(PsiElement context) throws Exception {
+      public PsiType migrationType(PsiElement context) {
         return myFactory.createTypeFromText(migrationType, context);
       }
 

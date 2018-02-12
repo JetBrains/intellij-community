@@ -26,6 +26,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveModulesToGroupAction extends AnAction {
@@ -38,26 +40,27 @@ public class MoveModulesToGroupAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    Presentation presentation = getTemplatePresentation();
+    Presentation presentation = e.getPresentation();
     final DataContext dataContext = e.getDataContext();
     final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
-
-    String description = IdeBundle.message("message.move.modules.to.group", whatToMove(modules), myModuleGroup.presentableText());
-    presentation.setDescription(description);
+    e.getPresentation().setEnabledAndVisible(modules != null);
+    if (modules != null) {
+      String description = IdeBundle.message("message.move.modules.to.group", whatToMove(modules), myModuleGroup.presentableText());
+      presentation.setDescription(description);
+    }
   }
 
-  protected static String whatToMove(Module[] modules) {
+  protected static String whatToMove(@NotNull Module[] modules) {
     return modules.length == 1 ? IdeBundle.message("message.module", modules[0].getName()) : IdeBundle.message("message.modules");
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
-    doMove(modules, myModuleGroup, dataContext);
+    final Module[] modules = e.getRequiredData(LangDataKeys.MODULE_CONTEXT_ARRAY);
+    doMove(modules, myModuleGroup, e.getDataContext());
   }
 
-  public static void doMove(final Module[] modules, final ModuleGroup group, @Nullable final DataContext dataContext) {
+  public static void doMove(final @NotNull Module[] modules, final ModuleGroup group, @Nullable final DataContext dataContext) {
     Project project = modules[0].getProject();
     for (final Module module : modules) {
       ModifiableModuleModel model = dataContext != null

@@ -23,23 +23,22 @@ import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 public class GitRefGroupsTest extends GitRefManagerTest {
-  public void test_single_tracked_branch() throws IOException {
+  public void test_single_tracked_branch() {
     check(given("HEAD", "master", "origin/master"), ContainerUtil.list("HEAD"), Pair.create("Local", ContainerUtil.list("master")),
           Pair.create("Tracked", ContainerUtil.list("origin/master")),
           Pair.create("origin/...", ContainerUtil.list("origin/master")));
   }
 
-  public void test_single_local_branch() throws IOException {
+  public void test_single_local_branch() {
     check(given("HEAD", "master"), ContainerUtil.list("HEAD"), Pair.create("Local", ContainerUtil.list("master")));
   }
 
-  public void test_local_tracked_and_remote_branch() throws IOException {
+  public void test_local_tracked_and_remote_branch() {
     check(given("HEAD", "master", "origin/master", "origin/remote_branch", "local_branch"), ContainerUtil.list("HEAD"),
           Pair.create("Local", ContainerUtil.list("master", "local_branch")), Pair.create("Tracked", ContainerUtil.list("origin/master")),
           Pair.create("origin/...", ContainerUtil.list("origin/master", "origin/remote_branch")));
@@ -49,28 +48,14 @@ public class GitRefGroupsTest extends GitRefManagerTest {
                      @NotNull List<String> expectedSingleGroups,
                      Pair<String, List<String>>... expectedOtherGroups) {
 
-    List<RefGroup> actualGroups = new GitRefManager(myGitRepositoryManager).groupForBranchFilter(actual);
+    List<RefGroup> actualGroups = new GitRefManager(repositoryManager).groupForBranchFilter(actual);
 
     List<SingletonRefGroup> singleGroups = ContainerUtil.findAll(actualGroups, SingletonRefGroup.class);
-    assertEquals(expectedSingleGroups, ContainerUtil.map(singleGroups, new Function<RefGroup, String>() {
-      @Override
-      public String fun(RefGroup singletonRefGroup) {
-        return singletonRefGroup.getName();
-      }
-    }));
+    assertEquals(expectedSingleGroups, ContainerUtil.map(singleGroups,
+                                                         (Function<RefGroup, String>)singletonRefGroup -> singletonRefGroup.getName()));
 
     actualGroups.removeAll(singleGroups);
 
-    assertEquals(Arrays.asList(expectedOtherGroups), ContainerUtil.map(actualGroups, new Function<RefGroup, Pair<String, List<String>>>() {
-      @Override
-      public Pair<String, List<String>> fun(RefGroup refGroup) {
-        return Pair.create(refGroup.getName(), ContainerUtil.map(refGroup.getRefs(), new Function<VcsRef, String>() {
-          @Override
-          public String fun(VcsRef vcsRef) {
-            return vcsRef.getName();
-          }
-        }));
-      }
-    }));
+    assertEquals(Arrays.asList(expectedOtherGroups), ContainerUtil.map(actualGroups, refGroup -> Pair.create(refGroup.getName(), ContainerUtil.map(refGroup.getRefs(), vcsRef -> vcsRef.getName()))));
   }
 }

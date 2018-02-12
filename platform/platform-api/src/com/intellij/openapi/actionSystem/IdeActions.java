@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_CUT = "EditorCut";
   @NonNls String ACTION_EDITOR_COPY = "EditorCopy";
   @NonNls String ACTION_EDITOR_PASTE = "EditorPaste";
+  @NonNls String ACTION_EDITOR_PASTE_SIMPLE = "EditorPasteSimple";
   @NonNls String ACTION_EDITOR_DELETE = "EditorDelete";
   @NonNls String ACTION_EDITOR_DELETE_TO_WORD_START = "EditorDeleteToWordStart";
   @NonNls String ACTION_EDITOR_DELETE_TO_WORD_END = "EditorDeleteToWordEnd";
@@ -76,6 +77,9 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_TOGGLE_OVERWRITE_MODE= "EditorToggleInsertState";
   @NonNls String ACTION_EDITOR_TOGGLE_CASE= "EditorToggleCase";
 
+  @NonNls String ACTION_EDITOR_SHOW_PARAMETER_INFO = "ParameterInfo";
+  @NonNls String ACTION_EDITOR_NEXT_PARAMETER = "NextParameter";
+  @NonNls String ACTION_EDITOR_PREV_PARAMETER = "PrevParameter";
   @NonNls String ACTION_EDITOR_NEXT_TEMPLATE_VARIABLE = "NextTemplateVariable";
   @NonNls String ACTION_EDITOR_PREVIOUS_TEMPLATE_VARIABLE = "PreviousTemplateVariable";
 
@@ -333,4 +337,7 @@ public interface IdeActions {
   String ACTION_SWITCHER = "Switcher";
 
   @NonNls String INSPECTION_TOOL_WINDOW_TREE_POPUP = "InspectionToolWindow.TreePopup";
+
+  @NonNls String ACTION_METHOD_OVERLOAD_SWITCH_UP = "MethodOverloadSwitchUp";
+  @NonNls String ACTION_METHOD_OVERLOAD_SWITCH_DOWN = "MethodOverloadSwitchDown";
 }

@@ -44,7 +44,6 @@ import java.util.*;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: Aug 17, 2010
 */
 class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiReference{
 
@@ -165,7 +164,7 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
     if (projectToSearchFrom == null) {
       return null;
     }
-    return TargetResolver.resolve(projectToSearchFrom, contextTarget, referenceText == null? Collections.<String>emptyList() : Collections.singletonList(referenceText));
+    return TargetResolver.resolve(projectToSearchFrom, contextTarget, referenceText == null ? Collections.emptyList() : Collections.singletonList(referenceText));
   }
   
   private Set<String> getExistingNames() {
@@ -211,7 +210,7 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
   }
   
   public static class ReferenceGroup {
-    private List<AntDomTargetReference> myRefs = new ArrayList<>();
+    private final List<AntDomTargetReference> myRefs = new ArrayList<>();
     
     public void addReference(AntDomTargetReference ref) {
       myRefs.add(ref);

@@ -39,7 +39,6 @@ import java.text.MessageFormat;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/10/11
  */
 public class InspectionMappingConsistencyInspection extends DevKitInspectionBase {
 
@@ -89,13 +88,17 @@ public class InspectionMappingConsistencyInspection extends DevKitInspectionBase
 
   private static void registerProblem(DomElement element, ProblemsHolder holder, String message, String... createAttrs) {
     final Pair<TextRange, PsiElement> range = DomUtil.getProblemRange(element.getXmlTag());
-    holder.registerProblem(range.second, range.first, message, ContainerUtil.map(createAttrs,
-                                                                                 s -> new InsertRequiredAttributeFix(PsiTreeUtil.getParentOfType(range.second, XmlTag.class, false), s) {
-                                                                                   @NotNull
-                                                                                   @Override
-                                                                                   public String getText() {
-                                                                                     return MessageFormat.format("Insert ''{0}'' attribute", s);
-                                                                                   }
-                                                                                 }, new LocalQuickFix[createAttrs.length]));
+    holder.registerProblem(range.second, range.first, message,
+                           holder.isOnTheFly()
+                           ? ContainerUtil.map(createAttrs,
+                                               s -> new InsertRequiredAttributeFix(
+                                                 PsiTreeUtil.getParentOfType(range.second, XmlTag.class, false), s) {
+                                                 @NotNull
+                                                 @Override
+                                                 public String getText() {
+                                                   return MessageFormat.format("Insert ''{0}'' attribute", s);
+                                                 }
+                                               }, new LocalQuickFix[createAttrs.length]) 
+                           : LocalQuickFix.EMPTY_ARRAY);
   }
 }

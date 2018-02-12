@@ -14,26 +14,19 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 26, 2002
- * Time: 10:48:19 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.dataFlow.instructions;
 
 import com.intellij.codeInspection.dataFlow.*;
 
 
-public class GotoInstruction extends Instruction {
+public class GotoInstruction extends Instruction implements JumpInstruction {
   private ControlFlow.ControlFlowOffset myOffset;
 
   public GotoInstruction(ControlFlow.ControlFlowOffset myOffset) {
     this.myOffset = myOffset;
   }
 
+  @Override
   public int getOffset() {
     return myOffset.getInstructionOffset();
   }
@@ -48,6 +41,7 @@ public class GotoInstruction extends Instruction {
     return "GOTO: " + getOffset();
   }
 
+  @Override
   public void setOffset(final int offset) {
     myOffset = new ControlFlow.ControlFlowOffset() {
       @Override

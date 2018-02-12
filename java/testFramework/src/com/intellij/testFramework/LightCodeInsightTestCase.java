@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,15 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * A TestCase for single PsiFile being opened in Editor conversion. See configureXXX and checkResultXXX method docs.
  */
 public abstract class LightCodeInsightTestCase extends LightPlatformCodeInsightTestCase {
+  private static final Pattern JDK_SELECT_PATTERN = Pattern.compile("Java([\\d.]+)(\\.java)?$");
+
   public static JavaPsiFacadeEx getJavaFacade() {
     return JavaPsiFacadeEx.getInstanceEx(ourProject);
   }
@@ -37,11 +42,35 @@ public abstract class LightCodeInsightTestCase extends LightPlatformCodeInsightT
     setLanguageLevel(getLanguageLevel());
   }
 
+  /**
+   * Returns a language level for test. Could be overridden for specific behavior.
+   * <p>
+   * This implementation checks the test name. If it ends with JavaXYZ.java and
+   * XYZ is known Java version (e.g. Java1.4.java or Java9.java), then version XYZ is returned.
+   * Otherwise {@link #getDefaultLanguageLevel() default version} is returned.
+   *
+   * @return a project language level for test.
+   */
   protected LanguageLevel getLanguageLevel() {
+    Matcher matcher = JDK_SELECT_PATTERN.matcher(getTestName(false));
+    if(matcher.find()) {
+      LanguageLevel level = LanguageLevel.parse(matcher.group(1));
+      if (level != null) {
+        return level;
+      }
+    }
+
+    return getDefaultLanguageLevel();
+  }
+
+  /**
+   * @return default language level if it's not forced by test name
+   */
+  protected LanguageLevel getDefaultLanguageLevel() {
     return LanguageLevel.HIGHEST;
   }
 
-  protected static void setLanguageLevel(final LanguageLevel level) {
+  protected void setLanguageLevel(LanguageLevel level) {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(level);
   }
 

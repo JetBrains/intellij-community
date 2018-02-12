@@ -21,17 +21,11 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * Created with IntelliJ IDEA.
- * User: vladimir.dubovik
- * Date: 4/9/2014
- * Time: 2:30 AM
- */
 public class MavenExplicitProfiles implements Serializable {
   public static final MavenExplicitProfiles NONE = new MavenExplicitProfiles(Collections.<String>emptySet());
 
-  private Collection<String> myEnabledProfiles;
-  private Collection<String> myDisabledProfiles;
+  private final Collection<String> myEnabledProfiles;
+  private final Collection<String> myDisabledProfiles;
 
   public MavenExplicitProfiles(Collection<String> enabledProfiles, Collection<String> disabledProfiles) {
     myEnabledProfiles = enabledProfiles;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.importing;
 
-import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -72,14 +71,10 @@ import static org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderT
 import static org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest.SUPPORTED_GRADLE_VERSIONS;
 import static org.junit.Assume.assumeThat;
 
-/**
- * @author Vladislav.Soroka
- * @since 6/30/2014
- */
 @RunWith(value = Parameterized.class)
 public abstract class GradleImportingTestCase extends ExternalSystemImportingTestCase {
   public static final String BASE_GRADLE_VERSION = AbstractModelBuilderTest.BASE_GRADLE_VERSION;
-  private static final String GRADLE_JDK_NAME = "Gradle JDK";
+  protected static final String GRADLE_JDK_NAME = "Gradle JDK";
   private static final int GRADLE_DAEMON_TTL_MS = 10000;
 
   @Rule public TestName name = new TestName();
@@ -98,7 +93,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     assumeThat(gradleVersion, versionMatcherRule.getMatcher());
     new WriteAction() {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
+      protected void run(@NotNull Result result) {
         Sdk oldJdk = ProjectJdkTable.getInstance().findJdk(GRADLE_JDK_NAME);
         if (oldJdk != null) {
           ProjectJdkTable.getInstance().removeJdk(oldJdk);
@@ -121,19 +116,19 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
       //super.setUp() wasn't called
       return;
     }
-
-    try {
+    Sdk jdk = ProjectJdkTable.getInstance().findJdk(GRADLE_JDK_NAME);
+    if(jdk != null) {
       new WriteAction() {
         @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          Sdk old = ProjectJdkTable.getInstance().findJdk(GRADLE_JDK_NAME);
-          if (old != null) {
-            SdkConfigurationUtil.removeSdk(old);
-          }
+        protected void run(@NotNull Result result) {
+          ProjectJdkTable.getInstance().removeJdk(jdk);
         }
       }.execute();
+    }
+
+    try {
       Messages.setTestDialog(TestDialog.DEFAULT);
-      FileUtil.delete(BuildManager.getInstance().getBuildSystemDirectory());
+      deleteBuildSystemDirectory();
     }
     finally {
       super.tearDown();
@@ -141,7 +136,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   }
 
   @Override
-  protected void collectAllowedRoots(final List<String> roots) throws IOException {
+  protected void collectAllowedRoots(final List<String> roots) {
     roots.add(myJdkHome);
     roots.addAll(collectRootsInside(myJdkHome));
     roots.add(PathManager.getConfigPath());
@@ -193,6 +188,12 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
   @Override
   protected void importProject(@NonNls @Language("Groovy") String config) throws IOException {
+    config = injectRepo(config);
+    super.importProject(config);
+  }
+
+  @NotNull
+  protected String injectRepo(@NonNls @Language("Groovy") String config) {
     config = "allprojects {\n" +
               "  repositories {\n" +
               "    maven {\n" +
@@ -200,7 +201,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
               "    }\n" +
               "  }" +
               "}\n" + config;
-    super.importProject(config);
+    return config;
   }
 
   @Override
@@ -215,6 +216,10 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
   protected VirtualFile createSettingsFile(@NonNls @Language("Groovy") String content) throws IOException {
     return createProjectSubFile("settings.gradle", content);
+  }
+
+  protected boolean isGradle40orNewer() {
+    return GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("4.0")) >= 0;
   }
 
   private void configureWrapper() throws IOException, URISyntaxException {

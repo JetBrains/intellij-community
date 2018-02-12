@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -36,7 +36,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -49,7 +48,8 @@ import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.usages.UsageView;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.Consumer;
+import java.util.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +60,7 @@ import java.util.*;
 import java.util.List;
 
 public abstract class GotoTargetHandler implements CodeInsightActionHandler {
-  private static final Logger LOG = Logger.getInstance("#" + GotoTargetHandler.class.getName());
+  private static final Logger LOG = Logger.getInstance(GotoTargetHandler.class);
   private final PsiElementListCellRenderer myDefaultTargetElementRenderer = new DefaultPsiElementListCellRenderer();
   private final DefaultListCellRenderer myActionElementRenderer = new ActionCellRenderer();
 
@@ -78,11 +78,16 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       if (gotoData != null) {
         show(project, editor, file, gotoData);
       }
+      else {
+        chooseFromAmbiguousSources(editor, file, data -> show(project, editor, file, data));
+      }
     }
     catch (IndexNotReadyException e) {
       DumbService.getInstance(project).showDumbModeNotification("Navigation is not available here during index update");
     }
   }
+
+  protected void chooseFromAmbiguousSources(Editor editor, PsiFile file, Consumer<GotoData> successCallback) { }
 
   @NonNls
   protected abstract String getFeatureUsedKey();
@@ -90,12 +95,12 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   @Nullable
   protected abstract GotoData getSourceAndTargetElements(Editor editor, PsiFile file);
 
-  private void show(@NotNull final Project project,
+  private void show(@NotNull Project project,
                     @NotNull Editor editor,
                     @NotNull PsiFile file,
-                    @NotNull final GotoData gotoData) {
-    final PsiElement[] targets = gotoData.targets;
-    final List<AdditionalAction> additionalActions = gotoData.additionalActions;
+                    @NotNull GotoData gotoData) {
+    PsiElement[] targets = gotoData.targets;
+    List<AdditionalAction> additionalActions = gotoData.additionalActions;
 
     if (targets.length == 0 && additionalActions.isEmpty()) {
       HintManager.getInstance().showErrorHint(editor, getNotFoundMessage(project, editor, file));
@@ -112,11 +117,11 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       gotoData.renderers.put(eachTarget, createRenderer(gotoData, eachTarget));
     }
 
-    final String name = ((PsiNamedElement)gotoData.source).getName();
+    final String name = ((NavigationItem)gotoData.source).getName();
     final String title = getChooserTitle(gotoData.source, name, targets.length, finished);
 
     if (shouldSortTargets()) {
-      Arrays.sort(targets, createComparator(gotoData.renderers, gotoData));
+      Arrays.sort(targets, createComparator(gotoData));
     }
 
     List<Object> allElements = new ArrayList<>(targets.length + additionalActions.size());
@@ -135,21 +140,19 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
         if (value instanceof AdditionalAction) {
           return myActionElementRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         }
-        PsiElementListCellRenderer renderer = getRenderer(value, gotoData.renderers, gotoData);
+        PsiElementListCellRenderer renderer = getRenderer(value, gotoData);
         return renderer.getListCellRendererComponent(list, (PsiElement)value, index, isSelected, cellHasFocus);
       }
     });
 
     final IPopupChooserBuilder<Object> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(list);
-    builder.setFilteringEnabled(o -> {
+    final Ref<UsageView> usageView = new Ref<>();
+    final JBPopup popup = builder.setFilteringEnabled(o -> {
       if (o instanceof AdditionalAction) {
         return ((AdditionalAction)o).getText();
       }
-      return getRenderer(o, gotoData.renderers, gotoData).getElementText((PsiElement)o);
-    });
-
-    final Ref<UsageView> usageView = new Ref<>();
-    final JBPopup popup = builder.
+      return getRenderer(o, gotoData).getElementText((PsiElement)o);
+    }).
       setTitle(title).
       setItemsChoosenCallback(selectedElements -> {
         for (Object element : selectedElements) {
@@ -204,19 +207,13 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   }
 
   @NotNull
-  private PsiElementListCellRenderer getRenderer(Object value,
-                                                 Map<Object, PsiElementListCellRenderer> targetsWithRenderers,
-                                                 GotoData gotoData) {
-    PsiElementListCellRenderer renderer = targetsWithRenderers.get(value);
-    if (renderer == null) {
-      renderer = gotoData.getRenderer(value);
-    }
+  protected PsiElementListCellRenderer getRenderer(Object value, @NotNull GotoData gotoData) {
+    PsiElementListCellRenderer renderer = gotoData.getRenderer(value);
     return renderer != null ? renderer : myDefaultTargetElementRenderer;
   }
 
   @NotNull
-  protected Comparator<PsiElement> createComparator(final Map<Object, PsiElementListCellRenderer> targetsWithRenderers,
-                                                    final GotoData gotoData) {
+  protected Comparator<PsiElement> createComparator(@NotNull GotoData gotoData) {
     return new Comparator<PsiElement>() {
       @Override
       public int compare(PsiElement o1, PsiElement o2) {
@@ -224,18 +221,17 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       }
 
       private Comparable getComparingObject(PsiElement o1) {
-        return getRenderer(o1, targetsWithRenderers, gotoData).getComparingObject(o1);
+        return getRenderer(o1, gotoData).getComparingObject(o1);
       }
     };
   }
 
   public static PsiElementListCellRenderer createRenderer(@NotNull GotoData gotoData, @NotNull PsiElement eachTarget) {
-    PsiElementListCellRenderer renderer = null;
     for (GotoTargetRendererProvider eachProvider : Extensions.getExtensions(GotoTargetRendererProvider.EP_NAME)) {
-      renderer = eachProvider.getRenderer(eachTarget, gotoData);
-      if (renderer != null) break;
+      PsiElementListCellRenderer renderer = eachProvider.getRenderer(eachTarget, gotoData);
+      if (renderer != null) return renderer;
     }
-    return renderer;
+    return null;
   }
 
   protected boolean navigateToElement(PsiElement target) {
@@ -255,8 +251,11 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     return true;
   }
 
+
+  /**
+   * @deprecated, use getChooserTitle(PsiElement, String, int, boolean) instead
+   */
   @NotNull
-  @Deprecated // use getChooserTitle(PsiElement, String, int, boolean) instead
   protected String getChooserTitle(PsiElement sourceElement, String name, int length) {
     LOG.warn("Please override getChooserTitle(PsiElement, String, int, boolean) instead");
     return "";
@@ -324,12 +323,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       targets = ArrayUtil.append(targets, element);
       renderers.put(element, createRenderer(this, element));
       if (!hasDifferentNames && element instanceof PsiNamedElement) {
-        final String name = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-          @Override
-          public String compute() {
-            return ((PsiNamedElement)element).getName();
-          }
-        });
+        final String name = ReadAction.compute(() -> ((PsiNamedElement)element).getName());
         myNames.add(name);
         hasDifferentNames = myNames.size() > 1;
       }

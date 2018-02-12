@@ -18,9 +18,6 @@ package org.jetbrains.plugins.groovy.refactoring.introduceVariable;
 import com.intellij.psi.PsiType;
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyIntroduceVariableSettings;
 
-/**
- * Created by Max Medvedev on 12/1/13
- */
 public class MockSettings implements GroovyIntroduceVariableSettings {
   private final boolean myFinal;
   private final String myName;

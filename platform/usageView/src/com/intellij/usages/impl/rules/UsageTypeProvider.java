@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 01.11.2006
- * Time: 17:15:24
- */
 package com.intellij.usages.impl.rules;
 
 import org.jetbrains.annotations.Nullable;

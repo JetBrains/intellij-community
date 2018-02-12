@@ -17,7 +17,6 @@ package com.intellij.lang.ant.dom;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 13, 2010
  */
 public interface AntDomReference {
   boolean shouldBeSkippedByAnnotator();

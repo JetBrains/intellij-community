@@ -1,23 +1,5 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/*
- * User: anna
- * Date: 18-Jun-2007
- */
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInspection.*;
@@ -49,8 +31,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#" + UndeclaredTestInspection.class.getName());
+public class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionTool {
+  private static final Logger LOG = Logger.getInstance(UndeclaredTestInspection.class);
 
   @Nls
   @NotNull
@@ -150,7 +132,7 @@ public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
       LOG.assertTrue(psiFile instanceof XmlFile);
       final XmlFile testngXML = (XmlFile)psiFile;
       new WriteCommandAction(project, getName(), testngXML) {
-        protected void run(@NotNull final Result result) throws Throwable {
+        protected void run(@NotNull final Result result) {
           patchTestngXml(testngXML, psiClass);
         }
       }.execute();
@@ -200,8 +182,8 @@ public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
         final PsiManager psiManager = PsiManager.getInstance(project);
         final PsiDirectory directory = psiManager.findDirectory(file);
         LOG.assertTrue(directory != null);
-        new WriteCommandAction(project, getName(), null) {
-          protected void run(@NotNull final Result result) throws Throwable {
+        new WriteCommandAction(project, getName(), PsiFile.EMPTY_ARRAY) {
+          protected void run(@NotNull final Result result) {
             XmlFile testngXml = (XmlFile)PsiFileFactory.getInstance(psiManager.getProject())
               .createFileFromText("testng.xml", "<!DOCTYPE suite SYSTEM \"http://testng.org/testng-1.0.dtd\">\n<suite></suite>");
             try {

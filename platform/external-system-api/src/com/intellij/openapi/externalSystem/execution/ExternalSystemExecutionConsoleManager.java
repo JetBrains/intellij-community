@@ -28,6 +28,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
@@ -43,13 +44,23 @@ public interface ExternalSystemExecutionConsoleManager<
   @NotNull
   ProjectSystemId getExternalSystemId();
 
-  @NotNull
-  ExternalSystemExecutionConsole attachExecutionConsole(@NotNull ExternalSystemTask task,
-                                                        @NotNull Project project,
-                                                        @NotNull ExternalSystemRunConfiguration configuration,
-                                                        @NotNull Executor executor,
-                                                        @NotNull ExecutionEnvironment env,
-                                                        @NotNull ExternalSystemProcessHandler processHandler) throws ExecutionException;
+  /**
+   * @deprecated use {@link ExternalSystemExecutionConsoleManager#attachExecutionConsole(Project, ExternalSystemTask, ExecutionEnvironment, ProcessHandler)}
+   */
+  @Nullable
+  default ExternalSystemExecutionConsole attachExecutionConsole(@NotNull ExternalSystemTask task,
+                                                                @NotNull Project project,
+                                                                @NotNull ExternalSystemRunConfiguration configuration,
+                                                                @NotNull Executor executor,
+                                                                @NotNull ExecutionEnvironment env,
+                                                                @NotNull ExternalSystemProcessHandler processHandler)
+    throws ExecutionException {return null;}
+
+  @Nullable
+  default ExternalSystemExecutionConsole attachExecutionConsole(@NotNull Project project,
+                                                                @NotNull ExternalSystemTask task,
+                                                                @Nullable ExecutionEnvironment env,
+                                                                @Nullable ExternalSystemProcessHandler processHandler) {return null;}
 
   void onOutput(@NotNull ExternalSystemExecutionConsole executionConsole,
                 @NotNull ExternalSystemProcessHandler processHandler,

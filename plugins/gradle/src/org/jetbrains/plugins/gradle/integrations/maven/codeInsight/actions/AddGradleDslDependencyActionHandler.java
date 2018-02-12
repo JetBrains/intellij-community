@@ -27,7 +27,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.indices.MavenArtifactSearchDialog;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
@@ -56,7 +55,7 @@ class AddGradleDslDependencyActionHandler implements CodeInsightActionHandler {
       ids = AddGradleDslDependencyAction.TEST_THREAD_LOCAL.get();
     }
     else {
-      ids = MavenArtifactSearchDialog.searchForArtifact(project, Collections.<MavenDomDependency>emptyList());
+      ids = MavenArtifactSearchDialog.searchForArtifact(project, Collections.emptyList());
     }
 
     if (ids.isEmpty()) return;

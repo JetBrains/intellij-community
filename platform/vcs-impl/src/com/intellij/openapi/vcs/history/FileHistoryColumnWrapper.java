@@ -30,7 +30,7 @@ import java.awt.*;
 import java.util.Comparator;
 import java.util.Enumeration;
 
-abstract class FileHistoryColumnWrapper<T> extends DualViewColumnInfo<TreeNodeOnVcsRevision, Object> {
+abstract class FileHistoryColumnWrapper<T> extends DualViewColumnInfo<TreeNodeOnVcsRevision, T> {
   @NotNull private final ColumnInfo<VcsFileRevision, T> myBaseColumn;
 
   public FileHistoryColumnWrapper(@NotNull ColumnInfo<VcsFileRevision, T> additionalColumn) {
@@ -66,9 +66,9 @@ abstract class FileHistoryColumnWrapper<T> extends DualViewColumnInfo<TreeNodeOn
     return myBaseColumn.isCellEditable(o.getRevision());
   }
 
-  public void setValue(TreeNodeOnVcsRevision o, Object aValue) {
+  public void setValue(TreeNodeOnVcsRevision o, T aValue) {
     //noinspection unchecked
-    myBaseColumn.setValue(o.getRevision(), (T)aValue);
+    myBaseColumn.setValue(o.getRevision(), aValue);
   }
 
   public TableCellRenderer getRenderer(TreeNodeOnVcsRevision p0) {
@@ -132,7 +132,7 @@ abstract class FileHistoryColumnWrapper<T> extends DualViewColumnInfo<TreeNodeOn
     return true;
   }
 
-  public Object valueOf(TreeNodeOnVcsRevision o) {
+  public T valueOf(TreeNodeOnVcsRevision o) {
     return myBaseColumn.valueOf(o.getRevision());
   }
 

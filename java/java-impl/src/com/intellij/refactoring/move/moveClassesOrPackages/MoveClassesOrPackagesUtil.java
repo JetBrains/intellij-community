@@ -17,7 +17,7 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.lang.java.JavaFindUsagesProvider;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -25,7 +25,6 @@ import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,7 +41,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -74,7 +73,7 @@ public class MoveClassesOrPackagesUtil {
 
     findNonCodeUsages(searchInStringsAndComments, searchInNonJavaFiles, element, newQName, results);
     preprocessUsages(results);
-    return results.toArray(new UsageInfo[results.size()]);
+    return results.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   private static void preprocessUsages(ArrayList<UsageInfo> results) {
@@ -242,10 +241,16 @@ public class MoveClassesOrPackagesUtil {
 
       file = moveDestination.findFile(file.getName());
 
-      if (newPackage != null && file instanceof PsiClassOwner && !FileTypeUtils.isInServerPageFile(file) && !PsiUtil.isModuleFile(file)) {
+    }
+
+    if (newPackage != null && file instanceof PsiClassOwner && !FileTypeUtils.isInServerPageFile(file) &&
+        !PsiUtil.isModuleFile(file)) {
+      String qualifiedName = newPackage.getQualifiedName();
+      if (!Comparing.strEqual(qualifiedName, ((PsiClassOwner)file).getPackageName()) && 
+          (qualifiedName.isEmpty() || PsiNameHelper.getInstance(file.getProject()).isQualifiedName(qualifiedName))) {
         // Do not rely on class instance identity retention after setPackageName (Scala)
         String aClassName = aClass.getName();
-        ((PsiClassOwner)file).setPackageName(newPackage.getQualifiedName());
+        ((PsiClassOwner)file).setPackageName(qualifiedName);
         newClass = findClassByName((PsiClassOwner)file, aClassName);
         LOG.assertTrue(newClass != null, "name:" + aClassName + " file:" + file + " classes:" + Arrays.toString(((PsiClassOwner)file).getClasses()));
       }
@@ -295,22 +300,14 @@ public class MoveClassesOrPackagesUtil {
     else {
       final List<VirtualFile> contentSourceRoots = JavaProjectRootsUtil.getSuitableDestinationSourceRoots(project);
       if (contentSourceRoots.size() == 1 && (baseDirVirtualFile == null || fileIndex.isInTestSourceContent(contentSourceRoots.get(0)) == isBaseDirInTestSources)) {
-        directory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
-          @Override
-          public PsiDirectory compute() {
-            return RefactoringUtil.createPackageDirectoryInSourceRoot(packageWrapper, contentSourceRoots.get(0));
-          }
-        });
+        directory = WriteAction
+          .compute(() -> RefactoringUtil.createPackageDirectoryInSourceRoot(packageWrapper, contentSourceRoots.get(0)));
       }
       else {
         final VirtualFile sourceRootForFile = chooseSourceRoot(packageWrapper, contentSourceRoots, baseDir);
         if (sourceRootForFile == null) return null;
-        directory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
-          @Override
-          public PsiDirectory compute() {
-            return new AutocreatingSingleSourceRootMoveDestination(packageWrapper, sourceRootForFile).getTargetDirectory((PsiDirectory)null);
-          }
-        });
+        directory = WriteAction.compute(
+          () -> new AutocreatingSingleSourceRootMoveDestination(packageWrapper, sourceRootForFile).getTargetDirectory((PsiDirectory)null));
       }
     }
     return directory;
@@ -326,7 +323,7 @@ public class MoveClassesOrPackagesUtil {
     buildDirectoryList(targetPackage, contentSourceRoots, targetDirectories, relativePathsToCreate);
 
     final PsiDirectory selectedDirectory = DirectoryChooserUtil.chooseDirectory(
-      targetDirectories.toArray(new PsiDirectory[targetDirectories.size()]),
+      targetDirectories.toArray(PsiDirectory.EMPTY_ARRAY),
       initialDirectory,
       project,
       relativePathsToCreate

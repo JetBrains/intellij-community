@@ -19,8 +19,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
@@ -222,7 +222,7 @@ public class VcsRepositoryManager extends AbstractProjectComponent implements Di
       finally {
         REPO_LOCK.writeLock().unlock();
       }
-      myProject.getMessageBus().syncPublisher(VCS_REPOSITORY_MAPPING_UPDATED).mappingChanged();
+      BackgroundTaskUtil.syncPublisher(myProject, VCS_REPOSITORY_MAPPING_UPDATED).mappingChanged();
     }
     finally {
       MODIFY_LOCK.unlock();
@@ -250,23 +250,13 @@ public class VcsRepositoryManager extends AbstractProjectComponent implements Di
   @NotNull
   private Collection<VirtualFile> findInvalidRoots(@NotNull final Collection<VirtualFile> roots) {
     final VirtualFile[] validRoots = myVcsManager.getAllVersionedRoots();
-    return ContainerUtil.filter(roots, new Condition<VirtualFile>() {
-      @Override
-      public boolean value(VirtualFile file) {
-        return !ArrayUtil.contains(file, validRoots);
-      }
-    });
+    return ContainerUtil.filter(roots, file -> !ArrayUtil.contains(file, validRoots));
   }
 
   @Nullable
   private VcsRepositoryCreator getRepositoryCreator(@Nullable final AbstractVcs vcs) {
     if (vcs == null) return null;
-    return ContainerUtil.find(myRepositoryCreators, new Condition<VcsRepositoryCreator>() {
-      @Override
-      public boolean value(VcsRepositoryCreator creator) {
-        return creator.getVcsKey().equals(vcs.getKeyInstanceMethod());
-      }
-    });
+    return ContainerUtil.find(myRepositoryCreators, creator -> creator.getVcsKey().equals(vcs.getKeyInstanceMethod()));
   }
 
   @NotNull

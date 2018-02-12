@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.options;
 
@@ -23,10 +11,10 @@ import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
@@ -84,7 +72,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   }
 
   @Property(surroundWithTag = false)
-  @AbstractCollection(surroundWithTag = false)
+  @XCollection
   public ConfigurableEP[] children;
 
   /**
@@ -236,28 +224,27 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   protected ConfigurableEP(PicoContainer picoContainer, @Nullable Project project) {
     myProject = project;
     myPicoContainer = picoContainer;
-    myProducer = new AtomicNotNullLazyValue<ObjectProducer>() {
-      @NotNull
-      @Override
-      protected ObjectProducer compute() {
-        try {
-          if (providerClass != null) {
-            return new ProviderProducer(instantiate(providerClass, myPicoContainer));
-          }
-          if (instanceClass != null) {
-            return new ClassProducer(myPicoContainer, findClass(instanceClass));
-          }
-          if (implementationClass != null) {
-            return new ClassProducer(myPicoContainer, findClass(implementationClass));
-          }
-          throw new RuntimeException("configurable class name is not set");
-        }
-        catch (AssertionError | Exception | LinkageError error) {
-          LOG.error(error);
-        }
-        return new ObjectProducer();
+    myProducer = AtomicNotNullLazyValue.createValue(this::createProducer);
+  }
+
+  @NotNull
+  protected ObjectProducer createProducer() {
+    try {
+      if (providerClass != null) {
+        return new ProviderProducer(instantiate(providerClass, myPicoContainer));
       }
-    };
+      if (instanceClass != null) {
+        return new ClassProducer(myPicoContainer, findClass(instanceClass));
+      }
+      if (implementationClass != null) {
+        return new ClassProducer(myPicoContainer, findClass(implementationClass));
+      }
+      throw new RuntimeException("configurable class name is not set");
+    }
+    catch (AssertionError | Exception | LinkageError error) {
+      LOG.error(error);
+    }
+    return new ObjectProducer();
   }
 
   @Nullable
@@ -295,16 +282,16 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
     return myProducer.getValue().getType();
   }
 
-  private static class ObjectProducer {
-    Object createElement() {
+  protected static class ObjectProducer {
+    protected Object createElement() {
       return null;
     }
 
-    boolean canCreateElement() {
+    protected boolean canCreateElement() {
       return false;
     }
 
-    Class<?> getType() {
+    protected Class<?> getType() {
       return null;
     }
   }
@@ -317,12 +304,12 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
     }
 
     @Override
-    Object createElement() {
+    protected Object createElement() {
       return myProvider == null ? null : myProvider.createConfigurable();
     }
 
     @Override
-    boolean canCreateElement() {
+    protected boolean canCreateElement() {
       return myProvider != null && myProvider.canCreateConfigurable();
     }
   }
@@ -337,7 +324,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
     }
 
     @Override
-    Object createElement() {
+    protected Object createElement() {
       try {
         return instantiate(myType, myContainer, true);
       }
@@ -351,11 +338,11 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
     }
 
     @Override
-    boolean canCreateElement() {
+    protected boolean canCreateElement() {
       return myType != null;
     }
 
-    Class<?> getType() {
+    protected Class<?> getType() {
       return myType;
     }
   }

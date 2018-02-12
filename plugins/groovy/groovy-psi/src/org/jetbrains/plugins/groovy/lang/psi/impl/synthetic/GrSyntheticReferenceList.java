@@ -22,9 +22,6 @@ import com.intellij.psi.impl.light.LightElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 
-/**
- * Created by Max Medvedev on 10/1/13
- */
 public class GrSyntheticReferenceList extends LightElement implements PsiReferenceList {
   private final GrReferenceList myList;
   private final Role myRole;

@@ -197,14 +197,14 @@ public class GetVersionAction extends AnAction implements DumbAware {
 
       ApplicationManager.getApplication().invokeLater(() -> {
         try {
+          if (myFile != null && !myFile.isWritable() &&
+              ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(myFile).hasReadonlyFiles()) {
+            return;
+          }
+
           new WriteCommandAction.Simple(myProject) {
             @Override
-            protected void run() throws Throwable {
-              if (myFile != null && !myFile.isWritable() &&
-                  ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(myFile).hasReadonlyFiles()) {
-                return;
-              }
-
+            protected void run() {
               try {
                 write(myFilePath, revisionContent, myProject);
               }

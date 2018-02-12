@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.svn.statistics;
 
-import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
+import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.project.Project;
@@ -31,7 +31,7 @@ import java.util.Set;
 /**
  * @author Konstantin Kolosovsky.
  */
-public class SvnWorkingCopyFormatUsagesCollector extends AbstractApplicationUsagesCollector {
+public class SvnWorkingCopyFormatUsagesCollector extends AbstractProjectsUsagesCollector {
 
   private static final String GROUP_ID = "svn working copy format";
 

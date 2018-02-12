@@ -12,7 +12,9 @@ public class ShowParameterInfoContextFactoryImpl implements ShowParameterInfoCon
                                                                  Editor editor,
                                                                  PsiFile file,
                                                                  int lbraceOffset,
-                                                                 int offset) {
-    return new ShowParameterInfoContext(editor, project, file, offset, lbraceOffset);
+                                                                 int offset,
+                                                                 boolean requestFocus,
+                                                                 boolean singleParameterHint) {
+    return new ShowParameterInfoContext(editor, project, file, offset, lbraceOffset, requestFocus, singleParameterHint);
   }
 }

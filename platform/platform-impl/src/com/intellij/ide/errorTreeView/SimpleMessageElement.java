@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Nov 12, 2004
  */
 public class SimpleMessageElement extends ErrorTreeElement{
   private final String[] myMessage;

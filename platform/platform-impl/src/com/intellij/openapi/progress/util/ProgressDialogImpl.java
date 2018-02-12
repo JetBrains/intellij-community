@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.ide.IdeEventQueue;
@@ -23,13 +9,12 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
-import com.intellij.openapi.ui.impl.FocusTrackbackProvider;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.PopupBorder;
 import com.intellij.ui.TitlePanel;
 import com.intellij.ui.WindowMoveListener;
@@ -106,7 +91,6 @@ class ProgressDialogImpl implements ProgressDialog {
   DialogWrapper myPopup;
   private final Window myParentWindow;
   private Point myLastClicked;
-  private FocusTrackback myFocusTrackback;
 
   public ProgressDialogImpl(ProgressWindow progressWindow, Window window, boolean shouldShowBackground, Project project, String cancelText) {
     myProgressWindow = progressWindow;
@@ -129,14 +113,14 @@ class ProgressDialogImpl implements ProgressDialog {
   public void prepareShowDialog(int delay) {
     Timer timer = UIUtil.createNamedTimer("Progress window timer", delay, e -> ApplicationManager.getApplication().invokeLater(() -> {
       if (myProgressWindow.isRunning()) {
-        final DialogWrapper popup = myPopup;
-        if (popup != null) {
-          myFocusTrackback.registerFocusComponent(() -> popup.getPreferredFocusedComponent());
-        }
         myProgressWindow.showDialog();
       }
       else {
         Disposer.dispose(myProgressWindow);
+        final IdeFocusManager focusManager = IdeFocusManager.getInstance(myProgressWindow.myProject);
+        focusManager.doWhenFocusSettlesDown(() -> {
+          focusManager.requestDefaultFocus(true);
+        }, ModalityState.defaultModalityState());
       }
     }, myProgressWindow.getModalityState()));
     timer.setRepeats(false);
@@ -144,8 +128,6 @@ class ProgressDialogImpl implements ProgressDialog {
   }
 
   private void initDialog(boolean shouldShowBackground, String cancelText) {
-    myFocusTrackback = new FocusTrackback(this, myParentWindow, false);
-    myFocusTrackback.registerFocusComponent(getPanel());
     if (SystemInfo.isMac) {
       UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myText2Label);
     }
@@ -273,20 +255,11 @@ class ProgressDialogImpl implements ProgressDialog {
 
   @Override
   public void setWillBeSheduledForRestore() {
-    if (myFocusTrackback != null) {
-      myFocusTrackback.setWillBeScheduledForRestore();
-    }
+
   }
 
   @Override
   public synchronized void background() {
-    if (isShowing()) {
-      myFocusTrackback.restoreFocus();
-    }
-    else {
-      myFocusTrackback.dispose();
-    }
-
     if (myShouldShowBackground) {
       myBackgroundButton.setEnabled(false);
     }
@@ -320,14 +293,6 @@ class ProgressDialogImpl implements ProgressDialog {
 
   public void hide() {
     ApplicationManager.getApplication().invokeLater(this::hideImmediately, ModalityState.any());
-    if (myFocusTrackback != null) {
-      if (isShowing()) {
-        myFocusTrackback.restoreFocus();
-      }
-      else {
-        myFocusTrackback.consume();
-      }
-    }
   }
 
   void hideImmediately() {
@@ -355,11 +320,6 @@ class ProgressDialogImpl implements ProgressDialog {
               ? new MyDialogWrapper(myParentWindow, myProgressWindow.myShouldShowCancel)
               : new MyDialogWrapper(myProgressWindow.myProject, myProgressWindow.myShouldShowCancel);
     myPopup.setUndecorated(true);
-    if (SystemInfo.isAppleJvm) {
-      // With Apple JDK we look for MacMessage parent by the window title.
-      // Let's set just the title as the window title for simplicity.
-      myPopup.setTitle(myProgressWindow.getTitle());
-    }
     if (myPopup.getPeer() instanceof DialogWrapperPeerImpl) {
       ((DialogWrapperPeerImpl)myPopup.getPeer()).setAutoRequestFocus(false);
       if (isWriteActionProgress()) {
@@ -370,18 +330,9 @@ class ProgressDialogImpl implements ProgressDialog {
     myPopup.pack();
 
     SwingUtilities.invokeLater(() -> {
-      if (myPopup != null) {
-        if (myPopup.getPeer() instanceof FocusTrackbackProvider) {
-          final FocusTrackback focusTrackback = ((FocusTrackbackProvider)myPopup.getPeer()).getFocusTrackback();
-          if (focusTrackback != null) {
-            focusTrackback.consume();
-          }
-        }
-
-        myProgressWindow.getFocusManager().requestFocusInProject(myCancelButton, myProgressWindow.myProject).doWhenDone(myRepaintRunnable);
-      }
+      myProgressWindow.getFocusManager().requestFocusInProject(myCancelButton, myProgressWindow.myProject).doWhenDone(myRepaintRunnable);
     });
-
+    Disposer.register(myPopup.getDisposable(), () -> myProgressWindow.exitModality());
     myPopup.show();
     myRepaintRunnable.run();
   }
@@ -482,9 +433,7 @@ class ProgressDialogImpl implements ProgressDialog {
       super.init();
       setUndecorated(true);
       getRootPane().setWindowDecorationStyle(JRootPane.NONE);
-      if (!UIUtil.isUnderWin10LookAndFeel()) {
-        myPanel.setBorder(PopupBorder.Factory.create(true, true));
-      }
+      myPanel.setBorder(PopupBorder.Factory.create(true, true));
     }
 
     @Override

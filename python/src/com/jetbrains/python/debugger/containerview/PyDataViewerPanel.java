@@ -19,6 +19,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -26,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.ui.UIUtil;
@@ -54,8 +56,6 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class PyDataViewerPanel extends JPanel {
-  private final static int COLUMNS_IN_DEFAULT_VIEW = 1000;
-  private final static int ROWS_IN_DEFAULT_VIEW = 1000;
   private static final Logger LOG = Logger.getInstance(PyDataViewerPanel.class);
   private final Project myProject;
   @NotNull private final PyFrameAccessor myFrameAccessor;
@@ -64,6 +64,7 @@ public class PyDataViewerPanel extends JPanel {
   private EditorTextField myFormatTextField;
   private JPanel myMainPanel;
   private JBLabel myErrorLabel;
+  @SuppressWarnings("unused") private JBScrollPane myScrollPane;
   private boolean myColored;
   List<Listener> myListeners;
 
@@ -81,7 +82,7 @@ public class PyDataViewerPanel extends JPanel {
   }
 
   private void setupChangeListener() {
-    myFrameAccessor.addFrameListener(() -> UIUtil.invokeLaterIfNeeded(() -> updateModel()));
+    myFrameAccessor.addFrameListener(() -> ApplicationManager.getApplication().executeOnPooledThread(() -> updateModel()));
   }
 
   private void updateModel() {
@@ -91,9 +92,11 @@ public class PyDataViewerPanel extends JPanel {
     }
     model.invalidateCache();
     updateDebugValue(model);
-    if (isShowing()) {
-      model.fireTableDataChanged();
-    }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (isShowing()) {
+        model.fireTableDataChanged();
+      }
+    });
   }
 
   private void updateDebugValue(@NotNull AsyncArrayTableModel model) {
@@ -125,7 +128,8 @@ public class PyDataViewerPanel extends JPanel {
     mySliceTextField = createEditorField();
     addCompletion();
 
-    myTable = new JBTableWithRowHeaders();
+    myTable = new JBTableWithRowHeaders(PropertiesComponent.getInstance(myProject).getBoolean(PyDataView.AUTO_RESIZE, true));
+    myScrollPane = myTable.getScrollPane();
   }
 
   private void addCompletion() {
@@ -152,12 +156,13 @@ public class PyDataViewerPanel extends JPanel {
   }
 
   public void apply(String name) {
-    myErrorLabel.setVisible(false);
-    PyDebugValue debugValue = getDebugValue(name);
-    if (debugValue == null) {
-      return;
-    }
-    apply(debugValue);
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      PyDebugValue debugValue = getDebugValue(name);
+      if (debugValue == null) {
+        return;
+      }
+      ApplicationManager.getApplication().invokeLater(() -> apply(debugValue));
+    });
   }
 
   public void apply(@NotNull PyDebugValue debugValue) {
@@ -168,18 +173,24 @@ public class PyDataViewerPanel extends JPanel {
       setError(type + " is not supported");
       return;
     }
-    try {
-      ArrayChunk arrayChunk = debugValue.getFrameAccessor().getArrayItems(debugValue, 0, 0, -1, -1, getFormat());
-      updateUI(arrayChunk, debugValue, strategy);
-    }
-    catch (PyDebuggerException e) {
-      LOG.error(e);
-    }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        ArrayChunk arrayChunk = debugValue.getFrameAccessor().getArrayItems(debugValue, 0, 0, -1, -1, getFormat());
+        ApplicationManager.getApplication().invokeLater(() -> updateUI(arrayChunk, debugValue, strategy));
+      }
+      catch (PyDebuggerException e) {
+        LOG.error(e);
+      }
+    });
+  }
+
+  public void resize(boolean autoResize) {
+    myTable.setAutoResize(autoResize);
+    apply(getSliceTextField().getText());
   }
 
   private void updateUI(@NotNull ArrayChunk chunk, @NotNull PyDebugValue debugValue, @NotNull DataViewStrategy strategy) {
-    AsyncArrayTableModel model = strategy.createTableModel(Math.min(chunk.getRows(), ROWS_IN_DEFAULT_VIEW),
-                                                           Math.min(chunk.getColumns(), COLUMNS_IN_DEFAULT_VIEW), this, debugValue);
+    AsyncArrayTableModel model = strategy.createTableModel(chunk.getRows(), chunk.getColumns(), this, debugValue);
     model.addToCache(chunk);
 
     UIUtil.invokeLaterIfNeeded(() -> {
@@ -200,14 +211,15 @@ public class PyDataViewerPanel extends JPanel {
       if (myTable.getColumnCount() > 0) {
         myTable.setDefaultRenderer(myTable.getColumnClass(0), cellRenderer);
       }
+      myTable.setShowColumns(strategy.showColumnHeader());
     });
   }
 
   private PyDebugValue getDebugValue(String expression) {
     try {
       PyDebugValue value = myFrameAccessor.evaluate(expression, false, true);
-      if (value.isErrorOnEval()) {
-        setError(value.getValue());
+      if (value == null || value.isErrorOnEval()) {
+        setError(value != null ? value.getValue() : "Failed to evaluate expression " + expression);
         return null;
       }
       return value;

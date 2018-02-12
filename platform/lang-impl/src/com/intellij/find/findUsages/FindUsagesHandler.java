@@ -17,10 +17,9 @@ package com.intellij.find.findUsages;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -141,12 +140,7 @@ public abstract class FindUsagesHandler {
   public boolean processUsagesInText(@NotNull final PsiElement element,
                                      @NotNull Processor<UsageInfo> processor,
                                      @NotNull GlobalSearchScope searchScope) {
-    Collection<String> stringToSearch = ApplicationManager.getApplication().runReadAction(new NullableComputable<Collection<String>>() {
-      @Override
-      public Collection<String> compute() {
-        return getStringsToSearch(element);
-      }
-    });
+    Collection<String> stringToSearch = ReadAction.compute(() -> getStringsToSearch(element));
     if (stringToSearch == null) return true;
     return FindUsagesHelper.processUsagesInText(element, stringToSearch, searchScope, processor);
   }
@@ -160,8 +154,8 @@ public abstract class FindUsagesHandler {
     return Collections.singleton(element.getText());
   }
 
-  @SuppressWarnings("deprecation")
   protected boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
+    //noinspection deprecation
     return isSearchForTextOccurencesAvailable(psiElement, isSingleFile);
   }
 

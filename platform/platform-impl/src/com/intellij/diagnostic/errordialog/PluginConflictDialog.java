@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.ui.JBEmptyBorder;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,8 +77,8 @@ public class PluginConflictDialog extends DialogWrapper {
     getOKAction().updateText();
     myTopMessageLabel.setText(getTopMessageText(conflictingPlugins, isConflictWithPlatform));
 
-    myTopMessageLabel.setPreferredSize(new Dimension(WIDTH, (int)myTopMessageLabel.getPreferredSize().getHeight()));
-    myContentPane.setPreferredSize(new Dimension(WIDTH, (int)myContentPane.getMinimumSize().getHeight()));
+    myTopMessageLabel.setPreferredSize(JBUI.size(WIDTH, (int)myTopMessageLabel.getPreferredSize().getHeight()));
+    myContentPane.setPreferredSize(JBUI.size(WIDTH, (int)myContentPane.getMinimumSize().getHeight()));
   }
 
   private static String getTopMessageText(@NotNull List<PluginId> conflictingPlugins, boolean isConflictWithPlatform) {

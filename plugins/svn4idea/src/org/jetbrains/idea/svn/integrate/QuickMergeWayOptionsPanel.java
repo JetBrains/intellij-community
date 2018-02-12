@@ -23,12 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.ActionListener;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 3/29/13
- * Time: 7:27 PM
- */
 public class QuickMergeWayOptionsPanel {
   private JButton myMergeAllButton;
   private JButton myQuickManualSelectButton;

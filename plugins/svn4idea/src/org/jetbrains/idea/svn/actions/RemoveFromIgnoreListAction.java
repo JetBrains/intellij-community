@@ -70,7 +70,7 @@ public class RemoveFromIgnoreListAction extends BasicAction {
   }
 
   @Override
-  protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException {
+  protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) {
   }
 
   @Override

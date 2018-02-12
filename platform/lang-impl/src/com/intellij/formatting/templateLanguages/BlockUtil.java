@@ -15,10 +15,7 @@
  */
 package com.intellij.formatting.templateLanguages;
 
-import com.intellij.formatting.ASTBlock;
-import com.intellij.formatting.Block;
-import com.intellij.formatting.Indent;
-import com.intellij.formatting.Spacing;
+import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -31,8 +28,6 @@ import java.util.List;
 
 /**
  * @author Alexey Chmutov
- *         Date: Jul 3, 2009
- *         Time: 2:47:10 PM
  */
 class BlockUtil {
   private BlockUtil() {
@@ -148,8 +143,14 @@ class BlockUtil {
           }
         }
         else {
-          foreignBlocks.remove(fInd);
-          foreignBlocks.addAll(fInd, buildChildWrappers(f.getOriginal()));
+          Block original = f.getOriginal();
+          if (!original.getSubBlocks().isEmpty()) {
+            foreignBlocks.remove(fInd);
+            foreignBlocks.addAll(fInd, buildChildWrappers(original));
+          } else {
+            result.add(new ErrorLeafBlock(f.getTextRange().getStartOffset(), getEndOffset(tlBlocks, foreignBlocks)));
+            return result;
+          }
         }
       }
     }
@@ -160,6 +161,11 @@ class BlockUtil {
       result.add(foreignBlocks.get(fInd++));
     }
     return result;
+  }
+
+  private static int getEndOffset(@NotNull List<TemplateLanguageBlock> tlBlocks, @NotNull List<DataLanguageBlockWrapper> foreignBlocks) {
+    return Math.max(foreignBlocks.get(foreignBlocks.size() - 1).getTextRange().getEndOffset(),
+                    tlBlocks.get(tlBlocks.size() - 1).getTextRange().getEndOffset());
   }
 
   @NotNull

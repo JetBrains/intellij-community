@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.codeInspection.longLine.LongLineInspection;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
@@ -28,10 +27,6 @@ import java.io.File;
 public class LongLineInspectionTest extends LightPlatformCodeInsightFixtureTestCase {
 
   public void testShortLine() {
-    doTest("java");
-  }
-
-  public void testLongLine() {
     doTest("java");
   }
 

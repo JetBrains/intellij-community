@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -30,7 +16,7 @@ import java.util.Map;
 /**
  * @author peter
  */
-public class ContractInspection extends BaseJavaBatchLocalInspectionTool {
+public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Override
   @NotNull
@@ -39,8 +25,8 @@ public class ContractInspection extends BaseJavaBatchLocalInspectionTool {
 
       @Override
       public void visitMethod(PsiMethod method) {
-        for (MethodContract contract : ControlFlowAnalyzer.getMethodContracts(method)) {
-          Map<PsiElement, String> errors = ContractChecker.checkContractClause(method, contract, false);
+        for (StandardMethodContract contract : ControlFlowAnalyzer.getMethodContracts(method)) {
+          Map<PsiElement, String> errors = ContractChecker.checkContractClause(method, contract);
           for (Map.Entry<PsiElement, String> entry : errors.entrySet()) {
             PsiElement element = entry.getKey();
             holder.registerProblem(element, entry.getValue());
@@ -78,16 +64,16 @@ public class ContractInspection extends BaseJavaBatchLocalInspectionTool {
 
   @Nullable
   public static String checkContract(PsiMethod method, String text) {
-    List<MethodContract> contracts;
+    List<StandardMethodContract> contracts;
     try {
-      contracts = MethodContract.parseContract(text);
+      contracts = StandardMethodContract.parseContract(text);
     }
-    catch (MethodContract.ParseException e) {
+    catch (StandardMethodContract.ParseException e) {
       return e.getMessage();
     }
     int paramCount = method.getParameterList().getParametersCount();
     for (int i = 0; i < contracts.size(); i++) {
-      MethodContract contract = contracts.get(i);
+      StandardMethodContract contract = contracts.get(i);
       if (contract.arguments.length != paramCount) {
         return "Method takes " + paramCount + " parameters, while contract clause number " + (i + 1) + " expects " + contract.arguments.length;
       }

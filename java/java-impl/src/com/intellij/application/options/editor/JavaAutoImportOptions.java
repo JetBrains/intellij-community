@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 14-Feb-2008
- */
 package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -86,10 +82,6 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
     myCbAddMethodImports.setSelected(codeInsightSettings.ADD_MEMBER_IMPORTS_ON_THE_FLY);
 
     myExcludePackagesTable.reset();
-  }
-
-  public void disposeUIResources() {
-
   }
 
   public void apply() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,27 +19,15 @@ import java.util.List;
 import java.util.Map;
 
 public interface UpdaterUI {
-  void startProcess(String title);
-
-  void setProgress(int percentage);
-
-  void setProgressIndeterminate();
-
-  void setStatus(String status);
-
-  void showError(Throwable e);
-
-  void checkCancelled() throws OperationCancelledException;
-
   void setDescription(String oldBuildDesc, String newBuildDesc);
 
-  /**
-   * Shows a warning associated with the pretense of a file and asks the user if the validation needs be retried.
-   * This function will return true iff the user wants to retry.
-   * @param message The warning message to display.
-   * @return true if the validation needs to be retried or false if te updater should quit.
-   */
-  boolean showWarning(String message);
+  void startProcess(String title);
+  void setProgress(int percentage);
+  void setProgressIndeterminate();
+  void checkCancelled() throws OperationCancelledException;
 
+  void showError(String message);
+
+  void askUser(String message) throws OperationCancelledException;
   Map<String, ValidationResult.Option> askUser(List<ValidationResult> validationResults) throws OperationCancelledException;
 }

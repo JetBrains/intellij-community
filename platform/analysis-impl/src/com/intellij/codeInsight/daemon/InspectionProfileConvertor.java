@@ -36,10 +36,6 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * User: anna
- * Date: Dec 20, 2004
- */
 public class InspectionProfileConvertor {
   private final Map<String, HighlightDisplayLevel> myDisplayLevelMap = new HashMap<>();
   @NonNls public static final String OLD_HIGHTLIGHTING_SETTINGS_PROFILE = "EditorHighlightingSettings";

@@ -1,14 +1,15 @@
 #include <windows.h>
 #include <stdio.h>
-#include <tlhelp32.h>
 #include <iostream>
 #include <string>
 
-void PrintUsage() {
-	printf("Usage: runnerw.exe <app> <args>\n");
-	printf("where <app> is an executable file and <args> are its arguments.\n");
+void PrintUsageAndExit() {
+	printf("Usage: runnerw.exe [/C] app [args]\n");
+	printf("app [args]	Specifies executable file, arguments.\n");
+	printf("/C	Creates a child process with new visible console.\n");
 	printf("\n");
-	printf("Creates a child process with inherited input, output, and error streams.\n");
+	printf("If '/C' option is specified, creates a child with a new visible console and attaches to this console.\n");
+	printf("Otherwise, creates a child process with inherited input, output, and error streams.\n");
 	printf("The input stream is scanned for the presence of the 2-char control sequences:\n");
 	printf("  ENQ(5) and ETX(3) => a CTRL+BREAK signal is sent to the child process;\n");
 	printf("  ENQ(5) and ENQ(5) => a CTRL+C signal is sent to the child process.\n");
@@ -17,23 +18,28 @@ void PrintUsage() {
 	exit(0);
 }
 
+struct ChildParams {
+	BOOL createNewConsole;
+	LPWSTR commandLine;
+};
+
 void ErrorMessage(char *operationName) {
-	LPVOID msg;
+	LPWSTR msg;
 	DWORD lastError = GetLastError();
-	FormatMessage(
-		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+	FormatMessageW(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 		NULL,
 		lastError,
 		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		(LPSTR)&msg,
+		(LPWSTR)&msg,
 		0,
 		NULL);
 	if (msg) {
-		fprintf(stderr, "%s failed with error %d: %s\n", operationName, lastError, msg);
+		fprintf(stderr, "runnerw.exe: %s failed with error %d: %ls\n", operationName, lastError, msg);
 		LocalFree(msg);
 	}
 	else {
-		fprintf(stderr, "%s failed with error %d (no message available)\n", operationName, lastError);
+		fprintf(stderr, "runnerw.exe: %s failed with error %d (no message available)\n", operationName, lastError);
 	}
 	fflush(stderr);
 }
@@ -52,11 +58,11 @@ void CtrlC() {
 
 BOOL is_iac = FALSE;
 
-char IAC = 5;
-char BRK = 3;
-char C = 5;
+unsigned char IAC = 5;
+unsigned char BRK = 3;
+unsigned char C = 5;
 
-BOOL Scan(char buf[], int count) {
+BOOL Scan(unsigned char buf[], int count) {
 	for (int i = 0; i < count; i++) {
 		if (is_iac) {
 			if (buf[i] == BRK) {
@@ -96,42 +102,44 @@ BOOL CtrlHandler(DWORD fdwCtrlType) {
 }
 
 DWORD WINAPI scanStdinThread(void *param) {
-	HANDLE *write_stdin = (HANDLE *) param;
-	char buf[1];
+	HANDLE hChildWriteStdin = *((HANDLE *) param);
+	unsigned char buf[1];
 	memset(buf, 0, sizeof(buf));
 
 	HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
-	BOOL endOfInput = false;
+	BOOL endOfInput = FALSE;
 	while (!endOfInput) {
 		DWORD nBytesRead = 0;
 		DWORD nBytesWritten = 0;
 
-		char c;
+		unsigned char c;
 		BOOL bResult = ReadFile(hStdin, &c, 1, &nBytesRead, NULL);
+		if (!bResult) {
+			if (GetLastError() == ERROR_BROKEN_PIPE) {
+				// According to https://msdn.microsoft.com/library/windows/desktop/aa365467:
+				// "write stdin handle has been closed" => stop reading and close child stdin
+				endOfInput = TRUE;
+			}
+			else {
+				ErrorMessage("ReadFile");
+			}
+			continue;
+		}
 		if (nBytesRead > 0) {
 			buf[0] = c;
 			BOOL ctrlBroken = Scan(buf, 1);
-			WriteFile(*write_stdin, buf, 1, &nBytesWritten, NULL);
+			WriteFile(hChildWriteStdin, buf, 1, &nBytesWritten, NULL);
 		}
 		else {
-			/*
-			 When a synchronous read operation reaches the end of a file,
-			 ReadFile returns TRUE and sets *lpNumberOfBytesRead to zero.
-			 See http://msdn.microsoft.com/en-us/library/windows/desktop/aa365467(v=vs.85).aspx
+			/* According to https://msdn.microsoft.com/library/windows/desktop/aa365467:
+				When a synchronous read operation reaches the end of a file,
+				ReadFile returns TRUE and sets *lpNumberOfBytesRead to zero.
 			 */
 			endOfInput = bResult;
 		}
 	}
+	CloseHandle(hChildWriteStdin);
 	return 0;
-}
-
-bool hasEnding(std::string const &fullString, std::string const &ending) {
-	if (fullString.length() > ending.length()) {
-		return (0 == fullString.compare(fullString.length() - ending.length(),
-				ending.length(), ending));
-	} else {
-		return false;
-	}
 }
 
 BOOL attachChildConsole(PROCESS_INFORMATION const &childProcessInfo) {
@@ -151,42 +159,80 @@ BOOL attachChildConsole(PROCESS_INFORMATION const &childProcessInfo) {
 		if (AttachConsole(childProcessInfo.dwProcessId)) {
 			return TRUE;
 		}
-		// ERROR_GEN_FAILURE means "the specified process does not exist"
-		// Seems it also means that the console hasn't been fully initialized.
-		if (GetLastError() != ERROR_GEN_FAILURE) {
-			break;
-		}
 	}
 	ErrorMessage("AttachConsole");
 	return FALSE;
 }
 
+BOOL isCommandLineMatchingArgs(LPWSTR commandLine, LPWSTR *expectedArgv, int expectedArgc) {
+	int argc;
+	LPWSTR *argv = CommandLineToArgvW(commandLine, &argc);
+	if (argv == NULL) {
+		return FALSE;
+	}
+	if (argc != expectedArgc) {
+		LocalFree(argv);
+		return FALSE;
+	}
+	for (int i = 0; i < argc; i++) {
+		if (wcscmp(argv[i], expectedArgv[i]) != 0) {
+			LocalFree(argv);
+			return FALSE;
+		}
+	}
+	LocalFree(argv);
+	return TRUE;
+}
+
+LPWSTR copy(LPCWSTR str) {
+	LPWSTR copy = _wcsdup(str);
+	if (copy == NULL) {
+		ErrorMessage("Storage cannot be allocated for string copy");
+		exit(1);
+	}
+	return copy;
+}
+
+ChildParams parseChildParams() {
+	LPWSTR commandLine = GetCommandLineW();
+	int argc;
+	LPWSTR *argv = CommandLineToArgvW(commandLine, &argc);
+	if (argv == NULL) {
+		PrintUsageAndExit();
+	}
+	if (argc <= 1) {
+		LocalFree(argv);
+		PrintUsageAndExit();
+	}
+	ChildParams result = {FALSE, NULL};
+	result.createNewConsole = wcscmp(argv[1], L"/C") == 0 || wcscmp(argv[1], L"/c") == 0;
+	int childArgvStartInd = result.createNewConsole ? 2 : 1;
+	if (childArgvStartInd >= argc) {
+		LocalFree(argv);
+		PrintUsageAndExit();
+	}
+	std::wstring stdCmdLine(commandLine);
+	for (size_t i = 0; i < stdCmdLine.length(); i++) {
+		if (iswspace(stdCmdLine[i])) {
+			LPWSTR subCmdLine = &commandLine[i + 1];
+			if (isCommandLineMatchingArgs(subCmdLine, &argv[childArgvStartInd], argc - childArgvStartInd)) {
+				result.commandLine = copy(subCmdLine);
+				break;
+			}
+		}
+	}
+	LocalFree(argv);
+	if (result.commandLine == NULL) {
+		fwprintf(stderr, L"runnerw.exe: cannot determine child command line from its parent:\n%ls\n", commandLine);
+		exit(1);
+	}
+	return result;
+}
+
 int main(int argc, char * argv[]) {
-	if (argc < 2) {
-		PrintUsage();
-	}
+	ChildParams childParams = parseChildParams();
 
-	std::string app(argv[1]);
-	std::string args("");
-
-	for (int i = 1; i < argc; i++) {
-                if (i>1) {
-			args += " ";
-		}
-		if (strchr(argv[i], ' ')) {
-			args += "\"";
-			args += argv[i];
-			args += "\"";
-		} else {
-			args += argv[i];
-		}
-	}
-
-//	if (app.length() == 0) {
-//		PrintUsage();
-//	}
-
-	STARTUPINFO si;
+	STARTUPINFOW si;
 	SECURITY_ATTRIBUTES sa;
 	PROCESS_INFORMATION pi;
 
@@ -195,67 +241,67 @@ int main(int argc, char * argv[]) {
 	sa.lpSecurityDescriptor = NULL;
 
 	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
-	sa.bInheritHandle = true;
+
+	BOOL inheritHandles = !childParams.createNewConsole;
+	sa.bInheritHandle = inheritHandles;
 
 	if (!CreatePipe(&newstdin, &write_stdin, &sa, 0)) {
 		ErrorMessage("CreatePipe");
 		exit(0);
 	}
-
-	GetStartupInfo(&si);
-
-	si.dwFlags = STARTF_USESTDHANDLES;
-	si.wShowWindow = SW_HIDE;
-	si.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-	si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
-	si.hStdInput = newstdin;
-
-	if (hasEnding(app, std::string(".bat"))) {
-//              in MSDN it is said to do so, but actually that doesn't work
-//		args = "/c " + args;
-//		app = "cmd.exe";
-	} else {
-		app = "";
+	// https://msdn.microsoft.com/ru-ru/library/windows/desktop/ms682499
+	// Ensure the write handle to the pipe for STDIN is not inherited.
+	// Otherwise, CloseHandle(write_stdin) won't close child's stdin.
+	if (!SetHandleInformation(write_stdin, HANDLE_FLAG_INHERIT, 0)) {
+		ErrorMessage("SetHandleInformation");
 	}
 
+	GetStartupInfoW(&si);
 
-	char* c_app = NULL;
-
- 	if (app.size()>0) {
-		c_app = new char[app.size() + 1];
-		strcpy(c_app, app.c_str());
-	}
-
-
-	char* c_args = new char[args.size() + 1];
-	strcpy(c_args, args.c_str());
-
-	DWORD processFlag = CREATE_DEFAULT_ERROR_MODE;
+	DWORD processFlag = CREATE_DEFAULT_ERROR_MODE | CREATE_UNICODE_ENVIRONMENT;
 	BOOL hasConsoleWindow = GetConsoleWindow() != NULL;
-	if (hasConsoleWindow) {
+	if (childParams.createNewConsole) {
+		processFlag |= CREATE_NEW_CONSOLE;
+	}
+	else if (hasConsoleWindow) {
 		processFlag |= CREATE_NO_WINDOW;
+	}
+
+	if (inheritHandles) {
+		si.dwFlags = STARTF_USESTDHANDLES;
+		si.wShowWindow = SW_HIDE;
+		si.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+		si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
+		si.hStdInput = newstdin;
+	}
+
+	if (childParams.createNewConsole) {
+		si.lpTitle = childParams.commandLine;
 	}
 
 	if (!SetConsoleCtrlHandler(NULL, FALSE)) {
 		ErrorMessage("Cannot restore normal processing of CTRL+C input");
 	}
-	if (!CreateProcess(
-			c_app,
-			c_args,
+
+	if (!CreateProcessW(
+			NULL,
+			childParams.commandLine,
 			NULL,
 			NULL,
-			TRUE,
+			inheritHandles,
 			processFlag,
 			NULL,
 			NULL,
 			&si,
 			&pi)) {
+		DWORD exitCode = GetLastError();
+		if (exitCode == 0) exitCode = 1;
 		ErrorMessage("CreateProcess");
 		CloseHandle(newstdin);
 		CloseHandle(write_stdin);
-		exit(0);
+		exit(exitCode);
 	}
-	if (hasConsoleWindow) {
+	if (hasConsoleWindow || childParams.createNewConsole) {
 		attachChildConsole(pi);
 	}
 	if (!SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE)) {
@@ -264,7 +310,7 @@ int main(int argc, char * argv[]) {
 
 	CreateThread(NULL, 0, &scanStdinThread, &write_stdin, 0, NULL);
 
-	unsigned long exitCode = 0;
+	DWORD exitCode = 0;
 
 	while (true) {
 		int rc = WaitForSingleObject(pi.hProcess, INFINITE);
@@ -273,11 +319,12 @@ int main(int argc, char * argv[]) {
 		}
 	}
 
+	free(childParams.commandLine);
+
 	GetExitCodeProcess(pi.hProcess, &exitCode);
 
 	CloseHandle(pi.hThread);
 	CloseHandle(pi.hProcess);
 	CloseHandle(newstdin);
-	CloseHandle(write_stdin);
 	return exitCode;
 }

@@ -47,12 +47,12 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
     return myDispatchStack.size() > 0;
   }
 
+  @Override
   public boolean dispatch(@NotNull final AWTEvent e) {
     LOG.assertTrue(isPopupActive());
 
-    if (e.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (!isPopupActive()) return;
+    if (e.getID() == WindowEvent.WINDOW_LOST_FOCUS || e.getID() == WindowEvent.WINDOW_DEACTIVATED) {
+        if (!isPopupActive()) return false;
 
         boolean shouldCloseAllPopup = false;
 
@@ -61,15 +61,11 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
           focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
         }
 
-        if (focused == null) {
-          shouldCloseAllPopup = true;
-        }
-
         Component ultimateParentForFocusedComponent = UIUtil.findUltimateParent(focused);
         Window sourceWindow = ((WindowEvent)e).getWindow();
         Component ultimateParentForEventWindow = UIUtil.findUltimateParent(sourceWindow);
 
-        if (!shouldCloseAllPopup && ultimateParentForEventWindow == null || ultimateParentForFocusedComponent == null) {
+        if (ultimateParentForEventWindow == null || ultimateParentForFocusedComponent == null) {
           shouldCloseAllPopup = true;
         }
 
@@ -80,14 +76,10 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
             shouldCloseAllPopup = true;
           }
         }
-        if (!shouldCloseAllPopup && isPopupWindow(sourceWindow) && sourceWindow.getParent() == ((WindowEvent)e).getOppositeWindow()) {
-          shouldCloseAllPopup = true;
-        }
 
         if (shouldCloseAllPopup) {
           closeAllPopups();
         }
-      });
     }
 
     if (e instanceof KeyEvent || e instanceof MouseEvent) {
@@ -111,10 +103,18 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
   }
 
   public boolean closeAllPopups(boolean forceRestoreFocus) {
+    return closeAllPopups(forceRestoreFocus, null);
+  }
+
+  private boolean closeAllPopups(boolean forceRestoreFocus, Window window) {
     if (myDispatchStack.size() == 0) return false;
 
     boolean closed = true;
     for (IdePopupEventDispatcher each : myDispatchStack) {
+      if (window != null && !(window instanceof Frame) && window == UIUtil.getWindow(each.getComponent())) {
+        // do not close a heavyweight popup that is opened in the specified window
+        continue;
+      }
       if (forceRestoreFocus) {
         each.setRestoreFocusSilentely();
       }

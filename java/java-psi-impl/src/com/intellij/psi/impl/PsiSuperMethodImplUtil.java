@@ -28,9 +28,11 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import gnu.trove.THashMap;
@@ -46,14 +48,10 @@ public class PsiSuperMethodImplUtil {
   private static final PsiCacheKey<Map<MethodSignature, HierarchicalMethodSignature>, PsiClass> SIGNATURES_FOR_CLASS_KEY = PsiCacheKey
     .create("SIGNATURES_FOR_CLASS_KEY",
             (NotNullFunction<PsiClass, Map<MethodSignature, HierarchicalMethodSignature>>)dom -> buildMethodHierarchy(dom, null, PsiSubstitutor.EMPTY, true, new THashSet<PsiClass>(), false, dom.getResolveScope()));
-  private static final PsiCacheKey<FactoryMap<String, Map<MethodSignature, HierarchicalMethodSignature>>, PsiClass> SIGNATURES_BY_NAME_KEY = PsiCacheKey
-    .create("SIGNATURES_BY_NAME_KEY", psiClass -> new ConcurrentFactoryMap<String, Map<MethodSignature, HierarchicalMethodSignature>>() {
-      @Nullable
-      @Override
-      protected Map<MethodSignature, HierarchicalMethodSignature> create(String methodName) {
-        return buildMethodHierarchy(psiClass, methodName, PsiSubstitutor.EMPTY, true, new THashSet<>(), false, psiClass.getResolveScope());
-      }
-    });
+  private static final PsiCacheKey<Map<String, Map<MethodSignature, HierarchicalMethodSignature>>, PsiClass> SIGNATURES_BY_NAME_KEY = PsiCacheKey
+    .create("SIGNATURES_BY_NAME_KEY", psiClass -> ConcurrentFactoryMap.createMap(
+      methodName -> buildMethodHierarchy(psiClass, methodName, PsiSubstitutor.EMPTY, true, new THashSet<>(), false,
+                                         psiClass.getResolveScope())));
 
   private PsiSuperMethodImplUtil() {
   }
@@ -115,7 +113,7 @@ public class PsiSuperMethodImplUtil {
   public static PsiMethod[] findDeepestSuperMethods(@NotNull PsiMethod method) {
     if (!canHaveSuperMethod(method, true, false)) return PsiMethod.EMPTY_ARRAY;
     Collection<PsiMethod> collection = DeepestSuperMethodsSearch.search(method).findAll();
-    return collection.toArray(new PsiMethod[collection.size()]);
+    return collection.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -291,6 +289,12 @@ public class PsiSuperMethodImplUtil {
   private static boolean isReturnTypeIsMoreSpecificThan(@NotNull HierarchicalMethodSignature thisSig, @NotNull HierarchicalMethodSignature thatSig) {
     PsiType thisRet = thisSig.getSubstitutor().substitute(thisSig.getMethod().getReturnType());
     PsiType thatRet = thatSig.getSubstitutor().substitute(thatSig.getMethod().getReturnType());
+    PsiSubstitutor unifyingSubstitutor = MethodSignatureUtil.isSubsignature(thatSig, thisSig) 
+                                         ? MethodSignatureUtil.getSuperMethodSignatureSubstitutor(thisSig, thatSig) : null;
+    if (unifyingSubstitutor != null) {
+      thisRet = unifyingSubstitutor.substitute(thisRet);
+      thatRet = unifyingSubstitutor.substitute(thatRet);
+    }
     return thatRet != null && thisRet != null && !thatRet.equals(thisRet) && TypeConversionUtil.isAssignable(thatRet, thisRet, false);
   }
 

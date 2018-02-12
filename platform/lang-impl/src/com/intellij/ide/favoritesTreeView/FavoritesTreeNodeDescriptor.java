@@ -36,10 +36,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-/**
- * User: anna
- * Date: Feb 15, 2005
- */
 public class FavoritesTreeNodeDescriptor extends PresentableNodeDescriptor<AbstractTreeNode> {
   private final AbstractTreeNode myElement;
   public static final FavoritesTreeNodeDescriptor[] EMPTY_ARRAY = new FavoritesTreeNodeDescriptor[0];

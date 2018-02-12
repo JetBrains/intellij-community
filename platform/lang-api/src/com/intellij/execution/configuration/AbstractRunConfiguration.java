@@ -1,3 +1,6 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.execution.configuration;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -20,7 +23,7 @@ public abstract class AbstractRunConfiguration extends ModuleBasedConfiguration<
     super(name, configurationModule, factory);
   }
 
-  public AbstractRunConfiguration(Project project, ConfigurationFactory factory) {
+  public AbstractRunConfiguration(@NotNull Project project, @NotNull ConfigurationFactory factory) {
     super(new RunConfigurationModule(project), factory);
   }
 

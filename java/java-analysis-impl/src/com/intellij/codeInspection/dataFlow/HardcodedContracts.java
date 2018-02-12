@@ -15,64 +15,112 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint.*;
-import static com.intellij.codeInspection.dataFlow.MethodContract.createConstraintArray;
+import static com.intellij.codeInspection.dataFlow.StandardMethodContract.createConstraintArray;
+import static com.intellij.psi.CommonClassNames.*;
+import static com.siyeh.ig.callMatcher.CallMatcher.*;
 
 /**
  * @author peter
  */
 public class HardcodedContracts {
-  static class OptionalPresenceContract extends MethodContract.QualifierBasedContract {
-    private final boolean myPresent;
+  private static final List<MethodContract> ARRAY_RANGE_CONTRACTS = ContainerUtil.immutableList(
+    nonnegativeArgumentContract(1),
+    nonnegativeArgumentContract(2),
+    MethodContract.singleConditionContract(ContractValue.argument(1), RelationType.GT,
+                                           ContractValue.argument(0).specialField(SpecialField.ARRAY_LENGTH), THROW_EXCEPTION),
+    MethodContract.singleConditionContract(ContractValue.argument(2), RelationType.GT,
+                                           ContractValue.argument(0).specialField(SpecialField.ARRAY_LENGTH), THROW_EXCEPTION),
+    MethodContract.singleConditionContract(ContractValue.argument(1), RelationType.GT,
+                                           ContractValue.argument(2), THROW_EXCEPTION)
+  );
 
-    public OptionalPresenceContract(boolean mustPresent, ValueConstraint[] valueConstraints, ValueConstraint returnValue) {
-      super(valueConstraints, returnValue);
-      myPresent = mustPresent;
+  private static StandardMethodContract standardContract(MethodContract.ValueConstraint returnValue,
+                                                         MethodContract.ValueConstraint... args) {
+    return new StandardMethodContract(args, returnValue);
+  }
+
+  @FunctionalInterface
+  interface ContractProvider {
+    List<MethodContract> getContracts(PsiMethodCallExpression call, int paramCount);
+
+    static ContractProvider single(Supplier<MethodContract> supplier) {
+      return (call, paramCount) -> Collections.singletonList(supplier.get());
     }
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass() || !super.equals(o)) return false;
-      return myPresent == ((OptionalPresenceContract)o).myPresent;
-    }
-
-    @Override
-    public int hashCode() {
-      return 31 * super.hashCode() + (myPresent ? 1 : 0);
-    }
-
-    @Override
-    boolean applyContract(boolean matches, DfaValue qualifier, DfaMemoryState memoryState) {
-      boolean present = !matches ^ myPresent;
-      ThreeState state = memoryState.checkOptional(qualifier);
-      if(state == ThreeState.fromBoolean(!present)) return false;
-      if(state == ThreeState.UNSURE) {
-        memoryState.applyIsPresentCheck(present, qualifier);
-      }
-      return true;
-    }
-
-    @Override
-    public String toString() {
-      return "[" + (myPresent ? "present" : "absent") + "] " + super.toString();
+    static ContractProvider list(Supplier<List<MethodContract>> supplier) {
+      return (call, paramCount) -> supplier.get();
     }
   }
+
+  private static final CallMapper<ContractProvider> HARDCODED_CONTRACTS = new CallMapper<ContractProvider>()
+    .register(staticCall("java.lang.System", "exit").parameterCount(1),
+              ContractProvider.single(() -> standardContract(THROW_EXCEPTION)))
+    .register(anyOf(staticCall("com.google.common.base.Preconditions", "checkNotNull"),
+                    staticCall(JAVA_UTIL_OBJECTS, "requireNonNull")),
+              (call, cnt) -> cnt > 0 ? failIfNull(0, cnt) : null)
+    .register(staticCall("com.google.common.base.Preconditions", "checkArgument", "checkState"),
+              (call, cnt) -> {
+                if (cnt == 0) return null;
+                MethodContract.ValueConstraint[] constraints = createConstraintArray(cnt);
+                constraints[0] = FALSE_VALUE;
+                return Collections.singletonList(new StandardMethodContract(constraints, THROW_EXCEPTION));
+              })
+    .register(instanceCall(JAVA_LANG_STRING, "charAt", "codePointAt").parameterCount(1),
+              ContractProvider.list(() -> Arrays.asList(nonnegativeArgumentContract(0),
+                                                        specialFieldRangeContract(0, RelationType.LT, SpecialField.STRING_LENGTH))))
+    .register(anyOf(instanceCall(JAVA_LANG_STRING, "substring", "subSequence").parameterCount(2),
+                    instanceCall(JAVA_LANG_STRING, "substring").parameterCount(1)),
+              (call, cnt) -> getSubstringContracts(cnt == 2))
+    .register(instanceCall(JAVA_LANG_STRING, "isEmpty").parameterCount(0),
+              ContractProvider.list(SpecialField.STRING_LENGTH::getEmptyContracts))
+    .register(instanceCall(JAVA_UTIL_COLLECTION, "isEmpty").parameterCount(0),
+              ContractProvider.list(SpecialField.COLLECTION_SIZE::getEmptyContracts))
+    .register(instanceCall(JAVA_UTIL_MAP, "isEmpty").parameterCount(0),
+              ContractProvider.list(SpecialField.MAP_SIZE::getEmptyContracts))
+    .register(instanceCall(JAVA_LANG_STRING, "equals", "equalsIgnoreCase").parameterCount(1),
+              ContractProvider.list(SpecialField.STRING_LENGTH::getEqualsContracts))
+    .register(anyOf(instanceCall(JAVA_UTIL_SET, "equals").parameterTypes(JAVA_LANG_OBJECT),
+                    instanceCall(JAVA_UTIL_LIST, "equals").parameterTypes(JAVA_LANG_OBJECT)),
+              ContractProvider.list(SpecialField.COLLECTION_SIZE::getEqualsContracts))
+    .register(instanceCall(JAVA_UTIL_MAP, "equals").parameterTypes(JAVA_LANG_OBJECT),
+              ContractProvider.list(SpecialField.MAP_SIZE::getEqualsContracts))
+    .register(instanceCall(JAVA_UTIL_COLLECTION, "contains").parameterCount(1),
+              ContractProvider.single(() -> MethodContract.singleConditionContract(
+                ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ, ContractValue.zero(), FALSE_VALUE)))
+    .register(instanceCall(JAVA_UTIL_MAP, "containsKey", "containsValue").parameterCount(1),
+              ContractProvider.single(() -> MethodContract.singleConditionContract(
+                ContractValue.qualifier().specialField(SpecialField.MAP_SIZE), RelationType.EQ, ContractValue.zero(), FALSE_VALUE)))
+    .register(instanceCall(JAVA_UTIL_LIST, "get").parameterTypes("int"),
+              ContractProvider.list(() -> Arrays.asList(nonnegativeArgumentContract(0),
+                                                        specialFieldRangeContract(0, RelationType.LT, SpecialField.COLLECTION_SIZE))))
+    .register(instanceCall("java.util.SortedSet", "first", "last").parameterCount(0),
+              ContractProvider.single(() -> MethodContract.singleConditionContract(
+                ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ,
+                ContractValue.zero(), THROW_EXCEPTION)))
+    // All these methods take array as 1st parameter, from index as 2nd and to index as 3rd
+    // thus ARRAY_RANGE_CONTRACTS are applicable to them
+    .register(staticCall(JAVA_UTIL_ARRAYS, "binarySearch", "fill", "parallelPrefix", "parallelSort", "sort", "spliterator", "stream"),
+              (call, cnt) -> cnt >= 3 ? ARRAY_RANGE_CONTRACTS : null)
+    .register(staticCall("org.mockito.ArgumentMatchers", "argThat").parameterCount(1),
+              ContractProvider.single(() -> new StandardMethodContract(new MethodContract.ValueConstraint[] {ANY_VALUE}, ANY_VALUE)));
 
   public static List<MethodContract> getHardcodedContracts(@NotNull PsiMethod method, @Nullable PsiMethodCallExpression call) {
     PsiClass owner = method.getContainingClass();
@@ -85,40 +133,27 @@ public class HardcodedContracts {
     String className = owner.getQualifiedName();
     if (className == null) return Collections.emptyList();
 
+    ContractProvider provider = HARDCODED_CONTRACTS.mapFirst(method);
+    if (provider != null) {
+      List<MethodContract> contracts = provider.getContracts(call, paramCount);
+      if (contracts != null) {
+        return contracts;
+      }
+    }
     String methodName = method.getName();
 
-    if ("java.lang.System".equals(className)) {
-      if ("exit".equals(methodName)) {
-        return Collections.singletonList(new MethodContract(createConstraintArray(paramCount), THROW_EXCEPTION));
-      }
-    }
-    else if ("com.google.common.base.Preconditions".equals(className)) {
-      if ("checkNotNull".equals(methodName) && paramCount > 0) {
-        return failIfNull(0, paramCount);
-      }
-      if (("checkArgument".equals(methodName) || "checkState".equals(methodName)) && paramCount > 0) {
-        MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
-        constraints[0] = FALSE_VALUE;
-        return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
-      }
-    }
-    else if ("java.util.Objects".equals(className)) {
-      if ("requireNonNull".equals(methodName) && paramCount > 0) {
-        return failIfNull(0, paramCount);
-      }
-    }
-    else if ("org.apache.commons.lang.Validate".equals(className) ||
-             "org.apache.commons.lang3.Validate".equals(className) ||
-             "org.springframework.util.Assert".equals(className)) {
+    if ("org.apache.commons.lang.Validate".equals(className) ||
+        "org.apache.commons.lang3.Validate".equals(className) ||
+        "org.springframework.util.Assert".equals(className)) {
       if (("isTrue".equals(methodName) || "state".equals(methodName)) && paramCount > 0) {
         MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
         constraints[0] = FALSE_VALUE;
-        return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
+        return Collections.singletonList(new StandardMethodContract(constraints, THROW_EXCEPTION));
       }
       if ("notNull".equals(methodName) && paramCount > 0) {
         MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
         constraints[0] = NULL_VALUE;
-        return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
+        return Collections.singletonList(new StandardMethodContract(constraints, THROW_EXCEPTION));
       }
     }
     else if (isJunit(className) || isTestng(className) ||
@@ -127,26 +162,62 @@ public class HardcodedContracts {
       return handleTestFrameworks(paramCount, className, methodName, call);
     }
     else if (TypeUtils.isOptional(owner)) {
-      MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
       if (DfaOptionalSupport.isOptionalGetMethodName(methodName) || "orElseThrow".equals(methodName)) {
-        return Arrays.asList(new OptionalPresenceContract(false, constraints, THROW_EXCEPTION),
-                             new OptionalPresenceContract(true, constraints, NOT_NULL_VALUE));
+        return Arrays.asList(optionalAbsentContract(THROW_EXCEPTION), MethodContract.trivialContract(NOT_NULL_VALUE));
       }
       else if ("isPresent".equals(methodName)) {
-        return Arrays.asList(new OptionalPresenceContract(false, constraints, FALSE_VALUE),
-                             new OptionalPresenceContract(true, constraints, TRUE_VALUE));
+        return Arrays.asList(optionalAbsentContract(FALSE_VALUE), MethodContract.trivialContract(TRUE_VALUE));
       }
+    }
+    else if (MethodUtils.isEquals(method)) {
+      return Collections.singletonList(standardContract(FALSE_VALUE, NULL_VALUE));
     }
 
     return Collections.emptyList();
   }
 
+  @NotNull
+  private static List<MethodContract> getSubstringContracts(boolean endLimited) {
+    List<MethodContract> contracts = new ArrayList<>(5);
+    contracts.add(nonnegativeArgumentContract(0));
+    contracts.add(specialFieldRangeContract(0, RelationType.LE, SpecialField.STRING_LENGTH));
+    if (endLimited) {
+      contracts.add(nonnegativeArgumentContract(1));
+      contracts.add(specialFieldRangeContract(1, RelationType.LE, SpecialField.STRING_LENGTH));
+      contracts.add(MethodContract
+                      .singleConditionContract(ContractValue.argument(0), RelationType.LE.getNegated(),
+                                               ContractValue.argument(1),
+                                               THROW_EXCEPTION));
+    }
+    return contracts;
+  }
+
+  static MethodContract optionalAbsentContract(MethodContract.ValueConstraint returnValue) {
+    return MethodContract
+      .singleConditionContract(ContractValue.qualifier(), RelationType.IS, ContractValue.optionalValue(false), returnValue);
+  }
+
+  static MethodContract nonnegativeArgumentContract(int argNumber) {
+    return MethodContract
+      .singleConditionContract(ContractValue.argument(argNumber), RelationType.LT, ContractValue.zero(), THROW_EXCEPTION);
+  }
+
+  static MethodContract specialFieldRangeContract(int index, RelationType type, SpecialField specialField) {
+    return MethodContract.singleConditionContract(ContractValue.argument(index), type.getNegated(),
+                                                  ContractValue.qualifier().specialField(specialField), THROW_EXCEPTION);
+  }
+
   private static boolean isJunit(String className) {
-    return className.startsWith("junit.framework.") || className.startsWith("org.junit.");
+    return className.startsWith("junit.framework.") || className.startsWith("org.junit.")
+           || className.equals("org.testng.AssertJUnit");
+  }
+
+  private static boolean isJunit5(String className) {
+    return className.startsWith("org.junit.jupiter.");
   }
 
   private static boolean isTestng(String className) {
-    return className.startsWith("org.testng.");
+    return className.startsWith("org.testng.") && !className.equals("org.testng.AssertJUnit");
   }
 
   private static boolean isNotNullMatcher(PsiExpression expr) {
@@ -166,6 +237,10 @@ public class HardcodedContracts {
           }
         }
       }
+      if ("is".equals(calledName)) {
+        PsiExpression[] args = ((PsiMethodCallExpression)expr).getArgumentList().getExpressions();
+        if (args.length == 1) return isNotNullMatcher(args[0]);
+      }
     }
     return false;
   }
@@ -182,24 +257,24 @@ public class HardcodedContracts {
 
     boolean testng = isTestng(className);
     if ("fail".equals(methodName)) {
-      return Collections.singletonList(new MethodContract(createConstraintArray(paramCount), THROW_EXCEPTION));
+      return Collections.singletonList(new StandardMethodContract(createConstraintArray(paramCount), THROW_EXCEPTION));
     }
 
     if (paramCount == 0) return Collections.emptyList();
 
-    int checkedParam = testng ? 0 : paramCount - 1;
+    int checkedParam = testng || isJunit5(className) ? 0 : paramCount - 1;
     MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
     if ("assertTrue".equals(methodName) || "assumeTrue".equals(methodName)) {
       constraints[checkedParam] = FALSE_VALUE;
-      return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
+      return Collections.singletonList(new StandardMethodContract(constraints, THROW_EXCEPTION));
     }
     if ("assertFalse".equals(methodName) || "assumeFalse".equals(methodName)) {
       constraints[checkedParam] = TRUE_VALUE;
-      return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
+      return Collections.singletonList(new StandardMethodContract(constraints, THROW_EXCEPTION));
     }
     if ("assertNull".equals(methodName)) {
       constraints[checkedParam] = NOT_NULL_VALUE;
-      return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
+      return Collections.singletonList(new StandardMethodContract(constraints, THROW_EXCEPTION));
     }
     if ("assertNotNull".equals(methodName) || "assumeNotNull".equals(methodName)) {
       return failIfNull(checkedParam, paramCount);
@@ -239,22 +314,29 @@ public class HardcodedContracts {
   private static List<MethodContract> failIfNull(int argIndex, int argCount) {
     MethodContract.ValueConstraint[] constraints = createConstraintArray(argCount);
     constraints[argIndex] = NULL_VALUE;
-    return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
+    return Collections.singletonList(new StandardMethodContract(constraints, THROW_EXCEPTION));
   }
 
   public static boolean isHardcodedPure(PsiMethod method) {
-    String qName = PsiUtil.getMemberQualifiedName(method);
-    if ("java.lang.System.exit".equals(qName)) {
-      return false;
-    }
+    PsiClass aClass = method.getContainingClass();
+    if (aClass == null) return false;
+    String className = aClass.getQualifiedName();
+    if (className == null) return false;
+    String name = method.getName();
 
-    if ("java.util.Objects.requireNonNull".equals(qName)) {
+    if ("java.util.Objects".equals(className) && "requireNonNull".equals(name)) {
       PsiParameter[] parameters = method.getParameterList().getParameters();
       if (parameters.length == 2 && parameters[1].getType().getCanonicalText().contains("Supplier")) {
         return false;
       }
     }
 
+    if ("java.lang.System".equals(className)) {
+      return false;
+    }
+    if (JAVA_UTIL_ARRAYS.equals(className)) {
+      return name.equals("binarySearch") || name.equals("spliterator") || name.equals("stream");
+    }
     return true;
   }
 

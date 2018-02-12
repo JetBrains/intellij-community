@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public abstract class VirtualFileUrlChangeAdapter extends VirtualFileAdapter {
+public abstract class VirtualFileUrlChangeAdapter implements VirtualFileListener {
   @Override
   public void fileMoved(@NotNull VirtualFileMoveEvent event) {
     String oldUrl = event.getOldParent().getUrl() + "/" + event.getFileName();

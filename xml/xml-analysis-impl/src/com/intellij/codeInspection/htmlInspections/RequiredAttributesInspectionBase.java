@@ -85,11 +85,6 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
     myAdditionalRequiredHtmlAttributes = appendName(getAdditionalEntries(), text);
   }
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
   public static LocalQuickFix getIntentionAction(String name) {
     return new AddHtmlTagOrAttributeToCustomsIntention(SHORT_NAME_KEY, name, XmlBundle.message("add.optional.html.attribute", name));
   }
@@ -126,7 +121,7 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
         if (!hasAttribute(tag, attrName) &&
             !XmlExtension.getExtension(tag.getContainingFile()).isRequiredAttributeImplicitlyPresent(tag, attrName)) {
 
-          LocalQuickFix insertRequiredAttributeIntention = XmlQuickFixFactory.getInstance().insertRequiredAttributeFix(tag, attrName);
+          LocalQuickFix insertRequiredAttributeIntention = isOnTheFly ? XmlQuickFixFactory.getInstance().insertRequiredAttributeFix(tag, attrName) : null;
           final String localizedMessage = XmlErrorMessages.message("element.doesnt.have.required.attribute", name, attrName);
           reportOneTagProblem(
             tag,
@@ -163,24 +158,17 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
       if(isAdditionallyDeclared(getAdditionalEntries(), name)) return;
     }
 
+    LocalQuickFix[] fixes;
+    ProblemHighlightType highlightType;
     if (htmlTag) {
-      addElementsForTag(
-        tag,
-        localizedMessage,
-        isInjectedWithoutValidation(tag) ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-        holder,
-        addAttributeFix,
-        basicIntention);
+      fixes = basicIntention == null ? new LocalQuickFix[] {addAttributeFix} : new LocalQuickFix[]{addAttributeFix, basicIntention};
+      highlightType = isInjectedWithoutValidation(tag) ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
     }
     else {
-      addElementsForTag(
-        tag,
-        localizedMessage,
-        ProblemHighlightType.ERROR,
-        holder,
-        basicIntention
-      );
+      fixes = basicIntention == null ? LocalQuickFix.EMPTY_ARRAY : new LocalQuickFix[] {basicIntention};
+      highlightType = ProblemHighlightType.ERROR;
     }
+    addElementsForTag(tag, localizedMessage, highlightType, holder, fixes);
   }
 
   private static void addElementsForTag(XmlTag tag,

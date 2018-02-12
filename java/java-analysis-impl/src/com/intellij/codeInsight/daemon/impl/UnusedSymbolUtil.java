@@ -34,6 +34,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +51,7 @@ public class UnusedSymbolUtil {
                                         @Nullable ProgressIndicator progress) {
     if (isInjected(project, element)) return true;
     for (ImplicitUsageProvider provider : Extensions.getExtensions(ImplicitUsageProvider.EP_NAME)) {
-      checkCanceled(progress);
+      ProgressManager.checkCanceled();
       if (provider.isImplicitUsage(element)) {
         return true;
       }
@@ -59,9 +60,13 @@ public class UnusedSymbolUtil {
     return false;
   }
 
+  public static boolean isImplicitRead(@NotNull PsiVariable variable) {
+    return isImplicitRead(variable.getProject(), variable, null);
+  }
+
   public static boolean isImplicitRead(@NotNull Project project, @NotNull PsiVariable element, @Nullable ProgressIndicator progress) {
     for(ImplicitUsageProvider provider: Extensions.getExtensions(ImplicitUsageProvider.EP_NAME)) {
-      checkCanceled(progress);
+      ProgressManager.checkCanceled();
       if (provider.isImplicitRead(element)) {
         return true;
       }
@@ -69,11 +74,15 @@ public class UnusedSymbolUtil {
     return isInjected(project, element);
   }
 
+  public static boolean isImplicitWrite(@NotNull PsiVariable variable) {
+    return isImplicitWrite(variable.getProject(), variable, null);
+  }
+
   public static boolean isImplicitWrite(@NotNull Project project,
                                         @NotNull PsiVariable element,
                                         @Nullable ProgressIndicator progress) {
     for(ImplicitUsageProvider provider: Extensions.getExtensions(ImplicitUsageProvider.EP_NAME)) {
-      checkCanceled(progress);
+      ProgressManager.checkCanceled();
       if (provider.isImplicitWrite(element)) {
         return true;
       }
@@ -155,14 +164,6 @@ public class UnusedSymbolUtil {
     return false;
   }
 
-  private static void checkCanceled(@Nullable ProgressIndicator progress) {
-    if (progress != null) {
-      progress.checkCanceled();
-    } else {
-      ProgressManager.checkCanceled();
-    }
-  }
-
   private static boolean weAreSureThereAreNoUsages(@NotNull Project project,
                                                    @NotNull PsiFile containingFile,
                                                    @NotNull final PsiMember member,
@@ -232,7 +233,7 @@ public class UnusedSymbolUtil {
       }
 
       if (member instanceof PsiMethod) {
-        String propertyName = PropertyUtil.getPropertyName(member);
+        String propertyName = PropertyUtilBase.getPropertyName(member);
         if (propertyName != null) {
           SearchScope fileScope = containingFile.getUseScope();
           if (fileScope instanceof GlobalSearchScope &&
@@ -286,7 +287,7 @@ public class UnusedSymbolUtil {
     if (!(containingFile instanceof PsiJavaFile)) return true;  // Groovy field can be referenced from Java by getter
     if (member instanceof PsiField) return false;  //Java field cannot be referenced by anything but its name
     if (member instanceof PsiMethod) {
-      return PropertyUtil.isSimplePropertyAccessor((PsiMethod)member);  //Java accessors can be referenced by field name from Groovy
+      return PropertyUtilBase.isSimplePropertyAccessor((PsiMethod)member);  //Java accessors can be referenced by field name from Groovy
     }
     return false;
   }

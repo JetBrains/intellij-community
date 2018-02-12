@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.EdtTestUtil;
 import com.jetbrains.env.PyEnvTestCase;
-import com.jetbrains.env.Staging;
 import com.jetbrains.env.python.debug.PyDebuggerTask;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -38,10 +37,9 @@ import java.io.IOException;
  */
 
 public class PyDynamicTypesTest extends PyEnvTestCase {
-  
-  @Staging
+
   @Test
-  public void test1() throws Exception {
+  public void test1() {
     doTest(getTestName(true) + ".py");
   }
 
@@ -49,7 +47,7 @@ public class PyDynamicTypesTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/" + "dynamicTypes", scriptName) {
 
       @Override
-      public void before() throws Exception {
+      public void before() {
         PyDebuggerOptionsProvider.getInstance(myFixture.getProject()).setSaveCallSignatures(true);
       }
 

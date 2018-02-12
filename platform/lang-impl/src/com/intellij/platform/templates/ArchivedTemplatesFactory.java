@@ -94,7 +94,7 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
     catch (IOException e) {
       LOG.error(e);
     }
-    return ContainerUtil.isEmpty(templates) ? ProjectTemplate.EMPTY_ARRAY : templates.toArray(new ProjectTemplate[templates.size()]);
+    return ContainerUtil.isEmpty(templates) ? ProjectTemplate.EMPTY_ARRAY : templates.toArray(ProjectTemplate.EMPTY_ARRAY);
   }
 
   @Override

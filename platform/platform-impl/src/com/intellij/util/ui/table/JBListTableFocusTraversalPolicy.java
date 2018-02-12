@@ -39,6 +39,6 @@ class JBListTableFocusTraversalPolicy extends ComponentsListFocusTraversalPolicy
   @NotNull
   @Override
   protected List<Component> getOrderedComponents() {
-    return Arrays.<Component>asList(myEditor.getFocusableComponents());
+    return Arrays.asList(myEditor.getFocusableComponents());
   }
 }

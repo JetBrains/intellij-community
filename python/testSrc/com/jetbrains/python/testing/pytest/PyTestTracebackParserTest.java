@@ -41,7 +41,7 @@ public final class PyTestTracebackParserTest {
   private String myBase64Junk;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     // Generate junk to text regexp speed
     final int junkSize = 50000;
     final byte[] junk = new byte[junkSize];
@@ -61,7 +61,7 @@ public final class PyTestTracebackParserTest {
    * Ensures we find link in stack trace
    */
   @Test
-  public void testLineWithLink() throws Exception {
+  public void testLineWithLink() {
     final LinkInTrace linkInTrace = new PyTestTracebackParser().findLinkInTrace("foo/bar.py:42 file ");
     Assert.assertNotNull("Failed to parse line", linkInTrace);
     Assert.assertEquals("Bad file name", "foo/bar.py", linkInTrace.getFileName());
@@ -74,7 +74,7 @@ public final class PyTestTracebackParserTest {
    * lines with out of file references should not have links
    */
   @Test
-  public void testLineNoLink() throws Exception {
+  public void testLineNoLink() {
     Assert.assertNull("File with no lines should not work", new PyTestTracebackParser().findLinkInTrace("foo/bar.py file "));
     Assert.assertNull("No file name provided, but link found", new PyTestTracebackParser().findLinkInTrace(":12 file "));
   }
@@ -116,7 +116,7 @@ public final class PyTestTracebackParserTest {
      * Regexp worst cases are limited to prevent freezing on very long lines
      */
     @Test(timeout = 5000)
-    public void testLongLines ()throws Exception {
+    public void testLongLines () {
       Assert
         .assertNull("No link should be found in numbers list", new PyTestTracebackParser().findLinkInTrace(myStringJunk));
       Assert.assertNull("No link should be found in base64 list", new PyTestTracebackParser().findLinkInTrace(myBase64Junk));

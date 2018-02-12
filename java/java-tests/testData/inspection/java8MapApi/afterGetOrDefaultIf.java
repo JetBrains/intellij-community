@@ -7,7 +7,7 @@ public class Main {
   private String str;
 
   public void testGetOrDefault(Map<String, String> map, String key, Main other) {
-    /* output none */
+      /* output none */
       System.out.println(/* output map value */ map.getOrDefault("k", NONE));
   }
 }

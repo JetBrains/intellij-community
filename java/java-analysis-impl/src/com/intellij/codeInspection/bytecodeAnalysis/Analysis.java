@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.DFSTree;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.RichControlFlow;
@@ -29,9 +30,6 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
-import static com.intellij.codeInspection.bytecodeAnalysis.Direction.In;
-import static com.intellij.codeInspection.bytecodeAnalysis.Direction.InOut;
 
 class AbstractValues {
   static final class ParamValue extends BasicValue {
@@ -72,10 +70,19 @@ class AbstractValues {
     }
   }
   static final class CallResultValue extends BasicValue {
-    final Set<Key> inters;
-    CallResultValue(Type tp, Set<Key> inters) {
+    final Set<EKey> inters;
+    CallResultValue(Type tp, Set<EKey> inters) {
       super(tp);
       this.inters = inters;
+    }
+  }
+
+  static final class NthParamValue extends BasicValue {
+    final int n;
+
+    public NthParamValue(Type type, int n) {
+      super(type);
+      this.n = n;
     }
   }
 
@@ -155,8 +162,8 @@ class AbstractValues {
   static boolean equiv(BasicValue curr, BasicValue prev) {
     if (curr.getClass() == prev.getClass()) {
       if (curr instanceof CallResultValue && prev instanceof CallResultValue) {
-        Set<Key> keys1 = ((CallResultValue)prev).inters;
-        Set<Key> keys2 = ((CallResultValue)curr).inters;
+        Set<EKey> keys1 = ((CallResultValue)prev).inters;
+        Set<EKey> keys2 = ((CallResultValue)curr).inters;
         return keys1.equals(keys2);
       }
       else return true;
@@ -192,12 +199,19 @@ final class State {
   final boolean taken;
   final boolean hasCompanions;
 
-  State(int index, Conf conf, List<Conf> history, boolean taken, boolean hasCompanions) {
+  /**
+   * Whether we are unsure that this state can be reached at all (e.g.
+   * it goes via exceptional path and we don't known whether this exception may actually happen).
+   */
+  final boolean unsure;
+
+  State(int index, Conf conf, List<Conf> history, boolean taken, boolean hasCompanions, boolean unsure) {
     this.index = index;
     this.conf = conf;
     this.history = history;
     this.taken = taken;
     this.hasCompanions = hasCompanions;
+    this.unsure = unsure;
   }
 }
 
@@ -210,11 +224,11 @@ abstract class Analysis<Res> {
   final Direction direction;
   final ControlFlowGraph controlFlow;
   final MethodNode methodNode;
-  final Method method;
+  final Member method;
   final DFSTree dfsTree;
 
   final protected List<State>[] computed;
-  final Key aKey;
+  final EKey aKey;
 
   Res earlyResult;
 
@@ -223,18 +237,21 @@ abstract class Analysis<Res> {
     this.direction = direction;
     controlFlow = richControlFlow.controlFlow;
     methodNode = controlFlow.methodNode;
-    method = new Method(controlFlow.className, methodNode.name, methodNode.desc);
+    method = new Member(controlFlow.className, methodNode.name, methodNode.desc);
     dfsTree = richControlFlow.dfsTree;
-    aKey = new Key(method, direction, stable);
+    aKey = new EKey(method, direction, stable);
     computed = (List<State>[]) new List[controlFlow.transitions.length];
   }
 
   final State createStartState() {
-    return new State(0, new Conf(0, createStartFrame()), new ArrayList<>(), false, false);
+    return new State(0, new Conf(0, createStartFrame()), new ArrayList<>(), false, false, false);
   }
 
   static boolean stateEquiv(State curr, State prev) {
     if (curr.taken != prev.taken) {
+      return false;
+    }
+    if (curr.unsure != prev.unsure) {
       return false;
     }
     if (curr.conf.fastHashCode != prev.conf.fastHashCode) {
@@ -272,12 +289,11 @@ abstract class Analysis<Res> {
     }
     for (int i = 0; i < args.length; i++) {
       BasicValue value;
-      if (direction instanceof InOut && ((InOut)direction).paramIndex == i ||
-          direction instanceof In && ((In)direction).paramIndex == i) {
+      if (direction instanceof Direction.ParamIdBasedDirection && ((Direction.ParamIdBasedDirection)direction).paramIndex == i) {
         value = new AbstractValues.ParamValue(args[i]);
       }
       else {
-        value = new BasicValue(args[i]);
+        value = new AbstractValues.NthParamValue(args[i], i);
       }
       frame.setLocal(local++, value);
       if (args[i].getSize() == 2) {
@@ -288,6 +304,14 @@ abstract class Analysis<Res> {
       frame.setLocal(local++, BasicValue.UNINITIALIZED_VALUE);
     }
     return frame;
+  }
+
+  @NotNull
+  static Frame<BasicValue> createCatchFrame(Frame<BasicValue> frame) {
+    Frame<BasicValue> catchFrame = new Frame<>(frame);
+    catchFrame.clearStack();
+    catchFrame.push(ASMUtils.THROWABLE_VALUE);
+    return catchFrame;
   }
 
   static BasicValue popValue(Frame<BasicValue> frame) {

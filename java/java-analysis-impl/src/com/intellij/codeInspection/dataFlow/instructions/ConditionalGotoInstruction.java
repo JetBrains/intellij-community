@@ -14,21 +14,13 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 26, 2002
- * Time: 10:48:29 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.dataFlow.instructions;
 
 
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.psi.PsiElement;
 
-public class ConditionalGotoInstruction extends BranchingInstruction {
+public class ConditionalGotoInstruction extends BranchingInstruction implements JumpInstruction {
   private ControlFlow.ControlFlowOffset myOffset;
   private final boolean myIsNegated;
 
@@ -51,10 +43,12 @@ public class ConditionalGotoInstruction extends BranchingInstruction {
     return (isNegated() ? "!":"") + "cond?_goto " + getOffset();
   }
 
+  @Override
   public int getOffset() {
     return myOffset.getInstructionOffset();
   }
 
+  @Override
   public void setOffset(final int offset) {
     myOffset = new ControlFlow.ControlFlowOffset() {
       @Override

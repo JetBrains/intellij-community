@@ -20,7 +20,7 @@ package org.jetbrains.idea.maven.dom;
  */
 public class MavenDomSoftReferencesInParentTest extends MavenDomTestCase {
 
-  public void testDoNotHighlightSourceDirectoryInParentPom() throws Throwable {
+  public void testDoNotHighlightSourceDirectoryInParentPom() {
     importProject("<groupId>test</groupId>\n" +
                   "<artifactId>project</artifactId>\n" +
                   "<version>1</version>\n" +
@@ -36,7 +36,7 @@ public class MavenDomSoftReferencesInParentTest extends MavenDomTestCase {
     checkHighlighting();
   }
 
-  public void testHighlightSourceDirectory() throws Throwable {
+  public void testHighlightSourceDirectory() {
     importProject("<groupId>test</groupId>\n" +
                   "<artifactId>project</artifactId>\n" +
                   "<version>1</version>\n" +

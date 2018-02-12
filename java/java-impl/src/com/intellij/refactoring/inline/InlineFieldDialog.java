@@ -17,10 +17,9 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -39,12 +38,12 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
     myInvokedOnReference = myReferenceExpression != null;
 
     setTitle(REFACTORING_NAME);
-    myOccurrencesNumber = initOccurrencesNumber(myField);
+    myOccurrencesNumber = getNumberOfOccurrences(myField);
     init();
   }
 
   protected String getNameLabelText() {
-    final String occurrencesString = myOccurrencesNumber > -1 ? " - " + myOccurrencesNumber + " occurrence" + (myOccurrencesNumber == 1 ? "" : "s") : "";
+    final String occurrencesString = myOccurrencesNumber > -1 ? "has " + myOccurrencesNumber + " occurrence" + (myOccurrencesNumber == 1 ? "" : "s") : "";
 
     String fieldText = PsiFormatUtil.formatVariable(myField, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE,PsiSubstitutor.EMPTY);
     return RefactoringBundle.message("inline.field.field.name.label", fieldText, occurrencesString);
@@ -59,7 +58,7 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
   }
 
   protected String getInlineAllText() {
-    return RefactoringBundle.message("all.references.and.remove.the.field");
+    return RefactoringBundle.message(myField.isWritable() ?"all.references.and.remove.the.field" : "all.invocations.in.project");
   }
 
   @Override
@@ -68,8 +67,18 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
     return super.getKeepTheDeclarationText();
   }
 
+  @Override
+  protected boolean allowInlineAll() {
+    return true;
+  }
+
   protected boolean isInlineThis() {
     return JavaRefactoringSettings.getInstance().INLINE_FIELD_THIS;
+  }
+
+  @Override
+  protected boolean ignoreOccurrence(PsiReference reference) {
+    return PsiTreeUtil.getParentOfType(reference.getElement(), PsiImportStatementBase.class) == null;
   }
 
   @Override

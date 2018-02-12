@@ -16,7 +16,9 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListOwner;
@@ -24,21 +26,24 @@ import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.util.*;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
+  @NonNls private static final String ROOT_NODE_VALUE = "root";
+
   public static final Object IGNORED_FILES_TAG = new Tag("changes.nodetitle.ignored.files");
   public static final Object LOCKED_FOLDERS_TAG = new Tag("changes.nodetitle.locked.folders");
   public static final Object LOGICALLY_LOCKED_TAG = new Tag("changes.nodetitle.logicallt.locked.folders");
@@ -53,11 +58,12 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   protected static final int MODULE_SORT_WEIGHT = 3;
   protected static final int DIRECTORY_PATH_SORT_WEIGHT = 4;
   protected static final int FILE_PATH_SORT_WEIGHT = 5;
-  protected static final int CHANGE_SORT_WEIGHT = 6;
-  protected static final int VIRTUAL_FILE_SORT_WEIGHT = 7;
-  protected static final int UNVERSIONED_SORT_WEIGHT = 8;
-  protected static final int DEFAULT_SORT_WEIGHT = 9;
-  protected static final int IGNORED_SORT_WEIGHT = 10;
+  protected static final int GENERIC_FILE_PATH_SORT_WEIGHT = 6;
+  protected static final int CHANGE_SORT_WEIGHT = 7;
+  protected static final int VIRTUAL_FILE_SORT_WEIGHT = 8;
+  protected static final int UNVERSIONED_SORT_WEIGHT = 9;
+  protected static final int DEFAULT_SORT_WEIGHT = 10;
+  protected static final int IGNORED_SORT_WEIGHT = 11;
 
   public static final Convertor<TreePath, String> TO_TEXT_CONVERTER =
     path -> ((ChangesBrowserNode)path.getLastPathComponent()).getTextPresentation();
@@ -66,6 +72,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
 
   private int myFileCount = -1;
   private int myDirectoryCount = -1;
+  private boolean myHelper;
 
   protected ChangesBrowserNode(Object userObject) {
     super(userObject);
@@ -73,8 +80,20 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   }
 
   @NotNull
+  public static ChangesBrowserNode createRoot(@NotNull Project project) {
+    ChangesBrowserNode root = create(project, ROOT_NODE_VALUE);
+    root.markAsHelperNode();
+    return root;
+  }
+
+  @NotNull
   public static ChangesBrowserNode create(@NotNull LocallyDeletedChange change) {
     return new ChangesBrowserLocallyDeletedNode(change);
+  }
+
+  @NotNull
+  public static ChangesBrowserNode createGeneric(@NotNull FilePath filePath, @NotNull FileStatus fileStatus, @NotNull Object userObject) {
+    return new ChangesBrowserGenericNode(filePath, fileStatus, userObject);
   }
 
   @NotNull
@@ -117,6 +136,14 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     return false;
   }
 
+  public void markAsHelperNode() {
+    myHelper = true;
+  }
+
+  public boolean isMeaningfulNode() {
+    return !myHelper;
+  }
+
   public int getFileCount() {
     if (myFileCount == -1) {
       myFileCount = (isFile() ? 1 : 0) + toStream(children()).mapToInt(ChangesBrowserNode::getFileCount).sum();
@@ -137,6 +164,11 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   }
 
   @NotNull
+  public Stream<ChangesBrowserNode> getNodesUnderStream() {
+    return toStream(preorderEnumeration());
+  }
+
+  @NotNull
   public List<Change> getAllChangesUnder() {
     return getAllObjectsUnder(Change.class);
   }
@@ -150,8 +182,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   public <U> Stream<U> getObjectsUnderStream(@NotNull Class<U> clazz) {
     return toStream(preorderEnumeration())
       .map(ChangesBrowserNode::getUserObject)
-      .filter(userObject -> clazz.isAssignableFrom(userObject.getClass()))
-      .map(clazz::cast);
+      .select(clazz);
   }
 
   @NotNull
@@ -161,10 +192,9 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
 
   @NotNull
   public Stream<VirtualFile> getFilesUnderStream() {
-    return toStream(breadthFirstEnumeration())
+    return toStream(preorderEnumeration())
       .map(ChangesBrowserNode::getUserObject)
-      .filter(userObject -> userObject instanceof VirtualFile)
-      .map(VirtualFile.class::cast)
+      .select(VirtualFile.class)
       .filter(VirtualFile::isValid);
   }
 
@@ -175,20 +205,16 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
 
   @NotNull
   public Stream<FilePath> getFilePathsUnderStream() {
-    return toStream(breadthFirstEnumeration())
+    return toStream(preorderEnumeration())
       .filter(ChangesBrowserNode::isLeaf)
       .map(ChangesBrowserNode::getUserObject)
-      .filter(userObject -> userObject instanceof FilePath)
-      .map(FilePath.class::cast);
+      .select(FilePath.class);
   }
 
   @NotNull
-  private static Stream<ChangesBrowserNode> toStream(@NotNull Enumeration enumeration) {
+  private static StreamEx<ChangesBrowserNode> toStream(@NotNull Enumeration enumeration) {
     //noinspection unchecked
-    Iterator<ChangesBrowserNode> iterator = ContainerUtil.iterate((Enumeration<ChangesBrowserNode>)enumeration);
-    Spliterator<ChangesBrowserNode> spliterator = Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED | Spliterator.NONNULL);
-
-    return StreamSupport.stream(spliterator, false);
+    return StreamEx.<ChangesBrowserNode>of(enumeration);
   }
 
   public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
@@ -246,12 +272,25 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     return DEFAULT_SORT_WEIGHT;
   }
 
-  public int compareUserObjects(final Object o2) {
+  public int compareUserObjects(final T o2) {
     return 0;
   }
 
   public void setAttributes(@NotNull SimpleTextAttributes attributes) {
     myAttributes = attributes;
+  }
+
+  protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @NotNull FilePath parentPath) {
+    appendParentPath(renderer, parentPath.getPresentableUrl());
+  }
+
+  protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @NotNull VirtualFile parentPath) {
+    appendParentPath(renderer, parentPath.getPresentableUrl());
+  }
+
+  private static void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @NotNull String parentPath) {
+    renderer.append(spaceAndThinSpace() + FileUtil.getLocationRelativeToUserHome(parentPath),
+                    SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
   protected void appendUpdatingState(@NotNull ChangesBrowserNodeRenderer renderer) {

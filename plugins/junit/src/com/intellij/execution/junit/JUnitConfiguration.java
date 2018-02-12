@@ -1,22 +1,10 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.execution.junit;
 
-import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.MetaAnnotationUtil;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.actions.RunConfigurationProducer;
@@ -42,13 +30,14 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.RepeatCount;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -60,6 +49,8 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   @NonNls public static final String TEST_DIRECTORY = "directory";
   @NonNls public static final String TEST_CATEGORY = "category";
   @NonNls public static final String TEST_METHOD = "method";
+  @NonNls public static final String TEST_UNIQUE_ID = "uniqueId";
+  @NonNls public static final String TEST_TAGS = "tags";
   @NonNls public static final String BY_SOURCE_POSITION = "source location";
   @NonNls public static final String BY_SOURCE_CHANGES = "changes";
 
@@ -221,7 +212,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   }
 
   @Override
-  public void setVMParameters(String value) {
+  public void setVMParameters(@Nullable String value) {
     myData.setVMParameters(value);
   }
 
@@ -289,7 +280,8 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   @Override
   public String getRunClass() {
     final Data data = getPersistentData();
-    return data.TEST_OBJECT != TEST_CLASS && data.TEST_OBJECT != TEST_METHOD ? null : data.getMainClassName();
+    return !Comparing.strEqual(data.TEST_OBJECT, TEST_CLASS) &&
+           !Comparing.strEqual(data.TEST_OBJECT, TEST_METHOD) ? null : data.getMainClassName();
   }
 
   @Override
@@ -299,6 +291,9 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   }
 
   public void beClassConfiguration(final PsiClass testClass) {
+    if (FORK_KLASS.equals(getForkMode())) {
+      setForkMode(FORK_NONE);
+    }
     setMainClass(testClass);
     myData.TEST_OBJECT = TEST_CLASS;
     setGeneratedName();
@@ -321,6 +316,11 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     return getTestObject().isConfiguredByElement(this, testClass, testMethod, testPackage, testDir);
   }
 
+  @Override
+  public TestSearchScope getTestSearchScope() {
+    return getPersistentData().getScope();
+  }
+
   public void beFromSourcePosition(PsiLocation<PsiMethod> sourceLocation) {
     myData.setTestMethod(sourceLocation);
     myData.TEST_OBJECT = BY_SOURCE_POSITION;
@@ -339,6 +339,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   }
 
   public void beMethodConfiguration(final Location<PsiMethod> methodLocation) {
+    setForkMode(FORK_NONE);
     setModule(myData.setTestMethod(methodLocation));
     setGeneratedName();
   }
@@ -358,10 +359,9 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   }
 
   @Override
-  public void readExternal(final Element element) throws InvalidDataException {
+  public void readExternal(@NotNull final Element element) throws InvalidDataException {
     super.readExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
-    readModule(element);
     DefaultJDOMExternalizer.readExternal(this, element);
     DefaultJDOMExternalizer.readExternal(getPersistentData(), element);
     EnvironmentVariablesComponent.readExternal(element, getPersistentData().getEnvs());
@@ -404,17 +404,34 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       final String categoryName = categoryNameElement.getAttributeValue("value");
       getPersistentData().setCategoryName(categoryName);
     }
+
+    Element idsElement = element.getChild("uniqueIds");
+    if (idsElement != null) {
+      List<String> ids = new ArrayList<>();
+      idsElement.getChildren("uniqueId").forEach(uniqueIdElement -> ids.add(uniqueIdElement.getAttributeValue("value")));
+      getPersistentData().setUniqueIds(ArrayUtil.toStringArray(ids));
+    }
+
+    Element tagsElement = element.getChild("tags");
+    if (tagsElement != null) {
+      List<String> tags = new ArrayList<>();
+      tagsElement.getChildren("tag").forEach(tagElement -> tags.add(tagElement.getAttributeValue("value")));
+      getPersistentData().setTags(ArrayUtil.toStringArray(tags));
+    }
   }
 
   @Override
-  public void writeExternal(final Element element) throws WriteExternalException {
+  public void writeExternal(@NotNull final Element element) throws WriteExternalException {
     super.writeExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
-    writeModule(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
     final Data persistentData = getPersistentData();
     DefaultJDOMExternalizer.writeExternal(persistentData, element);
-    EnvironmentVariablesComponent.writeExternal(element, persistentData.getEnvs());
+
+    if (!persistentData.getEnvs().isEmpty()) {
+      EnvironmentVariablesComponent.writeExternal(element, persistentData.getEnvs());
+    }
+
     final String dirName = persistentData.getDirName();
     if (!dirName.isEmpty()) {
       final Element dirNameElement = new Element("dir");
@@ -435,6 +452,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       patternElement.setAttribute(TEST_CLASS_ATT_NAME, o);
       patternsElement.addContent(patternElement);
     }
+    element.addContent(patternsElement);
     final String forkMode = getForkMode();
     if (!forkMode.equals("none")) {
       final Element forkModeElement = new Element("fork_mode");
@@ -448,7 +466,19 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     if (!RepeatCount.ONCE.equals(repeatMode)) {
       element.setAttribute("repeat_mode", repeatMode);
     }
-    element.addContent(patternsElement);
+    String[] ids = persistentData.getUniqueIds();
+    if (ids != null && ids.length > 0) {
+      Element uniqueIds = new Element("uniqueIds");
+      Arrays.stream(ids).forEach(id -> uniqueIds.addContent(new Element("uniqueId").setAttribute("value", id)));
+      element.addContent(uniqueIds);
+    }
+
+    String[] tags = persistentData.getTags();
+    if (tags != null && tags.length > 0) {
+      Element tagsElement = new Element("tags");
+      Arrays.stream(tags).forEach(id -> tagsElement.addContent(new Element("tag").setAttribute("value", id)));
+      element.addContent(tagsElement);
+    }
   }
 
   public String getForkMode() {
@@ -520,17 +550,17 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     public String PACKAGE_NAME;
     public String MAIN_CLASS_NAME;
     public String METHOD_NAME;
+    private String[] UNIQUE_ID = ArrayUtil.EMPTY_STRING_ARRAY;
+    private String[] TAGS = ArrayUtil.EMPTY_STRING_ARRAY;
     public String TEST_OBJECT = TEST_CLASS;
     public String VM_PARAMETERS;
     public String PARAMETERS;
     public String WORKING_DIRECTORY;
-    //iws/ipr compatibility
-    public String ENV_VARIABLES;
     public boolean PASS_PARENT_ENVS = true;
     public TestSearchScope.Wrapper TEST_SEARCH_SCOPE = new TestSearchScope.Wrapper();
     private String DIR_NAME;
     private String CATEGORY_NAME;
-    private String FORK_MODE = "none";
+    private String FORK_MODE = FORK_NONE;
     private int REPEAT_COUNT = 1;
     private String REPEAT_MODE = RepeatCount.ONCE;
     private LinkedHashSet<String> myPattern = new LinkedHashSet<>();
@@ -551,6 +581,8 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
              Comparing.equal(FORK_MODE, second.FORK_MODE) &&
              Comparing.equal(DIR_NAME, second.DIR_NAME) &&
              Comparing.equal(CATEGORY_NAME, second.CATEGORY_NAME) &&
+             Comparing.equal(UNIQUE_ID, second.UNIQUE_ID) &&
+             Comparing.equal(TAGS, second.TAGS) &&
              Comparing.equal(REPEAT_MODE, second.REPEAT_MODE) &&
              REPEAT_COUNT == second.REPEAT_COUNT;
     }
@@ -567,6 +599,8 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
              Comparing.hashcode(FORK_MODE) ^
              Comparing.hashcode(DIR_NAME) ^
              Comparing.hashcode(CATEGORY_NAME) ^
+             Comparing.hashcode(UNIQUE_ID) ^
+             Comparing.hashcode(TAGS) ^
              Comparing.hashcode(REPEAT_MODE) ^
              Comparing.hashcode(REPEAT_COUNT);
     }
@@ -617,6 +651,14 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       WORKING_DIRECTORY = ExternalizablePath.urlValue(value);
     }
 
+    public void setUniqueIds(String... uniqueId) {
+      UNIQUE_ID = uniqueId;
+    }
+
+    public String[] getUniqueIds() {
+      return UNIQUE_ID;
+    }
+
     public Module setTestMethod(final Location<PsiMethod> methodLocation) {
       final PsiMethod method = methodLocation.getPsiElement();
       METHOD_NAME = getMethodPresentation(method);
@@ -624,12 +666,21 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       return setMainClass(methodLocation instanceof MethodLocation ? ((MethodLocation)methodLocation).getContainingClass() : method.getContainingClass());
     }
 
+    public String[] getTags() {
+      return TAGS;
+    }
+
+    public void setTags(String[] tags) {
+      TAGS = tags;
+    }
+
     public static String getMethodPresentation(PsiMethod method) {
-      return method.getParameterList().getParametersCount() > 0 && AnnotationUtil.isAnnotated(method, JUnitUtil.TEST5_ANNOTATIONS)
-             ? PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
-                                          PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
-                                          PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES)
-             : method.getName();
+      if (!method.getParameterList().isEmpty() && MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_ANNOTATIONS)) {
+        return method.getName() + "(" + ClassUtil.getVMParametersMethodSignature(method) + ")";
+      }
+      else {
+        return method.getName();
+      }
     }
 
     public String getGeneratedName(final JavaRunConfigurationModule configurationModule) {
@@ -656,11 +707,17 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
         String fqName = myPattern.iterator().next();
         String firstName =
           fqName.contains("*") ? fqName
-                               : StringUtil.getShortName(fqName.contains(",") ? StringUtil.getPackageName(fqName, ',') : fqName);
+                               : StringUtil.getShortName(fqName.contains("(") ? StringUtil.getPackageName(fqName, '(') : fqName);
         return firstName + (size > 1 ? " and " + (size - 1) + " more" : "");
       }
       if (TEST_CATEGORY.equals(TEST_OBJECT)) {
         return "@Category(" + (StringUtil.isEmpty(CATEGORY_NAME) ? "Invalid" : CATEGORY_NAME) + ")";
+      }
+      if (TEST_UNIQUE_ID.equals(TEST_OBJECT)) {
+        return UNIQUE_ID != null && UNIQUE_ID.length > 0 ? StringUtil.join(UNIQUE_ID, " ") : "Temp suite";
+      }
+      if (TEST_TAGS.equals(TEST_OBJECT)) {
+        return TAGS != null && TAGS.length > 0 ? "Tags (" + StringUtil.join(TAGS, " ") + ")" : "Temp suite";
       }
       final String className = JavaExecutionUtil.getPresentableClassName(getMainClassName());
       if (TEST_METHOD.equals(TEST_OBJECT)) {

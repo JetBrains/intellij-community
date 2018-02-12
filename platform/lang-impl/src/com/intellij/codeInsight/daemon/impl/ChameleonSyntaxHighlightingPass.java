@@ -111,11 +111,11 @@ class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
     for (PsiElement e : lazyInside) {
       collectHighlights(e, inside, outside, myPriorityRange);
     }
-    myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, inside, myPriorityRange, myRestrictRange, getId());
+    myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), inside, myPriorityRange, myRestrictRange, getId());
     for (PsiElement e : lazyOutside) {
       collectHighlights(e, inside, outside, myPriorityRange);
     }
-    myHighlightInfoProcessor.highlightsOutsideVisiblePartAreProduced(myHighlightingSession, outside, myPriorityRange, myRestrictRange, getId());
+    myHighlightInfoProcessor.highlightsOutsideVisiblePartAreProduced(myHighlightingSession, getEditor(), outside, myPriorityRange, myRestrictRange, getId());
     myHighlights.addAll(inside);
     myHighlights.addAll(outside);
   }
@@ -170,5 +170,11 @@ class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
 
   @Override
   protected void applyInformationWithProgress() {
+  }
+
+  @Nullable
+  @Override
+  protected String getPresentableName() {
+    return null; // do not show progress for
   }
 }

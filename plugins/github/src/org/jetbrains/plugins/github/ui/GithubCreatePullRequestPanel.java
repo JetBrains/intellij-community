@@ -38,8 +38,8 @@ public class GithubCreatePullRequestPanel {
   private JTextField myTitleTextField;
   private JTextArea myDescriptionTextArea;
   private ComboBox myBranchComboBox;
-  private SortedComboBoxModel<ForkInfo> myForkModel;
-  private SortedComboBoxModel<BranchInfo> myBranchModel;
+  private final SortedComboBoxModel<ForkInfo> myForkModel;
+  private final SortedComboBoxModel<BranchInfo> myBranchModel;
   private JPanel myPanel;
   private JButton myShowDiffButton;
   private JButton mySelectForkButton;

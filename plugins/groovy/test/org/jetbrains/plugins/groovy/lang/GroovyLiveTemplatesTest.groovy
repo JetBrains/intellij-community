@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author peter
  */
-class GroovyLiveTemplatesTest extends LightCodeInsightFixtureTestCase {
+public class GroovyLiveTemplatesTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return TestUtils.getTestDataPath() + "liveTemplates/"
@@ -66,7 +66,7 @@ void usage(int num, boolean someBoolean, List<String> args){
 '''
   }
 
-  static void expandTemplate(final Editor editor) {
+  public static void expandTemplate(final Editor editor) {
     new ListTemplatesAction().actionPerformedImpl(editor.getProject(), editor)
     ((LookupImpl)LookupManager.getActiveLookup(editor)).finishLookup(Lookup.NORMAL_SELECT_CHAR)
   }

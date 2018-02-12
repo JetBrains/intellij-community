@@ -22,14 +22,9 @@ class PPP2 extends P2 {
 
 ///////  in library
 interface Foo {
-    @NotNull
-    String getTitle();
+    @NotNull Object get(int i );
 }
-<error descr="Unhandled exception: java.awt.HeadlessException">class FooImpl extends java.awt.Frame implements Foo</error> {
-//    public String getTitle() {
-//        return super.getTitle();    //To change body of overridden methods use File | Settings | File Templates.
-//    }
-}
+class FooImpl extends java.util.ArrayList implements <warning descr="Non-annotated method 'get' from 'ArrayList' implements non-null method from 'Foo'">Foo</warning> { }
 
 
 interface I1 {
@@ -49,5 +44,5 @@ class A implements I1 {
   <error descr="Missing return statement">}</error>
 }
 
-class B extends A implements I2 {
+class B extends A implements <warning descr="Non-annotated method 'foo' from 'A' implements non-null method from 'I2'">I2</warning> {
 }

@@ -1,41 +1,27 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.status.Status;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.util.containers.ContainerUtil.map;
+import static java.util.stream.Collectors.toList;
+import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 
 /**
 * @author Konstantin Kolosovsky.
@@ -92,13 +78,13 @@ public class SvnRootsDetector {
   }
 
   private void addNestedRoots(final boolean clearState, final Runnable callback) {
-    final List<VirtualFile> basicVfRoots = ObjectsConvertor.convert(myResult.myTopRoots, real -> real.getVirtualFile());
-
+    List<VirtualFile> basicVfRoots = map(myResult.myTopRoots, RootUrlInfo::getVirtualFile);
     final ChangeListManager clManager = ChangeListManager.getInstance(myVcs.getProject());
 
     if (clearState) {
       // clear what was reported before (could be for currently-not-existing roots)
       myNestedCopiesHolder.getAndClear();
+      VcsDirtyScopeManager.getInstance(myVcs.getProject()).filesDirty(null, basicVfRoots);
     }
     clManager.invokeAfterUpdate(() -> {
       final List<RootUrlInfo> nestedRoots = new ArrayList<>();
@@ -122,14 +108,24 @@ public class SvnRootsDetector {
       }
 
       myResult.myTopRoots.addAll(nestedRoots);
+      putWcDbFilesToVfs(myResult.myTopRoots);
       myMapping.applyDetectionResult(myResult);
 
       callback.run();
-    }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, null, vcsDirtyScopeManager -> {
-      if (clearState) {
-        vcsDirtyScopeManager.filesDirty(null, basicVfRoots);
-      }
-    }, null);
+    }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, null, null);
+  }
+
+  private static void putWcDbFilesToVfs(@NotNull Collection<RootUrlInfo> infos) {
+    if (!SvnVcs.ourListenToWcDb) return;
+
+    List<File> wcDbFiles = infos.stream()
+      .filter(info -> info.getFormat().isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN))
+      .filter(info -> !NestedCopyType.switched.equals(info.getType()))
+      .map(RootUrlInfo::getIoFile)
+      .map(SvnUtil::getWcDb)
+      .collect(toList());
+
+    LocalFileSystem.getInstance().refreshIoFiles(wcDbFiles);
   }
 
   private void registerRootUrlFromNestedPoint(@NotNull NestedCopyInfo info, @NotNull List<RootUrlInfo> nestedRoots) {
@@ -138,7 +134,7 @@ public class SvnRootsDetector {
     RootUrlInfo topRoot = findAncestorTopRoot(info.getFile());
 
     if (topRoot != null) {
-      SVNURL repoRoot = info.getRootURL();
+      Url repoRoot = info.getRootURL();
       repoRoot = repoRoot == null ? myRepositoryRoots.ask(info.getUrl(), info.getFile()) : repoRoot;
       if (repoRoot != null) {
         Node node = new Node(info.getFile(), info.getUrl(), repoRoot);
@@ -185,26 +181,26 @@ public class SvnRootsDetector {
 
   private static class RepositoryRoots {
     private final SvnVcs myVcs;
-    private final Set<SVNURL> myRoots;
+    private final Set<Url> myRoots;
 
     private RepositoryRoots(final SvnVcs vcs) {
       myVcs = vcs;
       myRoots = new HashSet<>();
     }
 
-    public void register(final SVNURL url) {
+    public void register(final Url url) {
       myRoots.add(url);
     }
 
-    public SVNURL ask(final SVNURL url, VirtualFile file) {
-      for (SVNURL root : myRoots) {
-        if (root.equals(SVNURLUtil.getCommonURLAncestor(root, url))) {
+    public Url ask(final Url url, VirtualFile file) {
+      for (Url root : myRoots) {
+        if (isAncestor(root, url)) {
           return root;
         }
       }
       // TODO: Seems that RepositoryRoots class should be removed. And necessary repository root should be determined explicitly
       // TODO: using info command.
-      final SVNURL newUrl = SvnUtil.getRepositoryRoot(myVcs, virtualToIoFile(file));
+      final Url newUrl = SvnUtil.getRepositoryRoot(myVcs, virtualToIoFile(file));
       if (newUrl != null) {
         myRoots.add(newUrl);
         return newUrl;

@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.RecentStringInterner;
 import com.intellij.util.io.AbstractStringEnumerator;
@@ -114,7 +115,15 @@ public class StubSerializationHelper {
 
   private int getClassId(final ObjectStubSerializer serializer) {
     final int idValue = mySerializerToId.get(serializer);
-    assert idValue > 0: "No ID found for serializer " + LogUtil.objectAndClass(serializer);
+    if (idValue <= 0) {
+      assert false : "No ID found for serializer " +
+                     LogUtil.objectAndClass(serializer) +
+                     ", external id:" +
+                     serializer.getExternalId() +
+                     (serializer instanceof IElementType ?
+                        ", language:" + ((IElementType)serializer).getLanguage() + ", " + serializer : "")
+        ;
+    }
     return idValue;
   }
 
@@ -152,7 +161,7 @@ public class StubSerializationHelper {
         Logger.getInstance(getClass()).error("Stub root must be PsiFileStub for files with several stub roots");
       }
     }
-    final PsiFileStub[] stubsArray = stubs.toArray(new PsiFileStub[stubs.size()]);
+    final PsiFileStub[] stubsArray = stubs.toArray(PsiFileStub.EMPTY_ARRAY);
     for (PsiFileStub stub : stubsArray) {
       if (stub instanceof PsiFileStubImpl) {
         ((PsiFileStubImpl)stub).setStubRoots(stubsArray);

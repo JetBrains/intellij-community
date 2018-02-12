@@ -30,8 +30,8 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.AdditionalIndexableFileSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,31 +47,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
   private final ProjectRootManager myProjectRootManager;
   private final PsiManager myManager;
 
-  private final Map<VirtualFile, GlobalSearchScope> myDefaultResolveScopesCache = new FactoryMap<VirtualFile, GlobalSearchScope>() {
-
-    @Override
-    protected Map<VirtualFile, GlobalSearchScope> createMap() {
-      return ContainerUtil.createConcurrentWeakKeySoftValueMap();
-    }
-
-    @Override
-    protected GlobalSearchScope create(@NotNull VirtualFile key) {
-      GlobalSearchScope scope = null;
-      for(ResolveScopeProvider resolveScopeProvider: ResolveScopeProvider.EP_NAME.getExtensions()) {
-        scope = resolveScopeProvider.getResolveScope(key, myProject);
-        if (scope != null) break;
-      }
-      if (scope == null) scope = getInherentResolveScope(key);
-      for (ResolveScopeEnlarger enlarger : ResolveScopeEnlarger.EP_NAME.getExtensions()) {
-        final SearchScope extra = enlarger.getAdditionalResolveScope(key, myProject);
-        if (extra != null) {
-          scope = scope.union(extra);
-        }
-      }
-
-      return scope;
-    }
-  };
+  private final Map<VirtualFile, GlobalSearchScope> myDefaultResolveScopesCache;
   private final AdditionalIndexableFileSet myAdditionalIndexableFileSet;
 
   public ResolveScopeManagerImpl(Project project, ProjectRootManager projectRootManager, PsiManager psiManager) {
@@ -80,7 +56,25 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
     myManager = psiManager;
     myAdditionalIndexableFileSet = new AdditionalIndexableFileSet(project);
 
-    ((PsiManagerImpl) psiManager).registerRunnableToRunOnChange(myDefaultResolveScopesCache::clear);
+    myDefaultResolveScopesCache = ConcurrentFactoryMap.createMap(
+      key -> {
+        GlobalSearchScope scope = null;
+        for (ResolveScopeProvider resolveScopeProvider : ResolveScopeProvider.EP_NAME.getExtensions()) {
+          scope = resolveScopeProvider.getResolveScope(key, myProject);
+          if (scope != null) break;
+        }
+        if (scope == null) scope = getInherentResolveScope(key);
+        for (ResolveScopeEnlarger enlarger : ResolveScopeEnlarger.EP_NAME.getExtensions()) {
+          SearchScope extra = enlarger.getAdditionalResolveScope(key, myProject);
+          if (extra != null) {
+            scope = scope.union(extra);
+          }
+        }
+        return scope;
+      },
+      ContainerUtil::createConcurrentWeakKeySoftValueMap);
+
+    ((PsiManagerImpl)psiManager).registerRunnableToRunOnChange(myDefaultResolveScopesCache::clear);
   }
 
   private GlobalSearchScope getResolveScopeFromProviders(@NotNull final VirtualFile vFile) {
@@ -102,7 +96,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
       }
       return allScope;
     }
-    
+
     return LibraryScopeCache.getInstance(myProject).getLibraryScope(projectFileIndex.getOrderEntriesForFile(vFile));
   }
 
@@ -178,6 +172,9 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
       if (virtualFile instanceof VirtualFileWindow) {
         return GlobalSearchScope.fileScope(myProject, ((VirtualFileWindow)virtualFile).getDelegate());
       }
+      if ("Scratch".equals(virtualFile.getFileType().getName())) {
+        return GlobalSearchScope.fileScope(myProject, virtualFile);
+      }
       vDirectory = virtualFile.getParent();
     }
 
@@ -209,7 +206,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
   private boolean isFromAdditionalLibraries(@NotNull final VirtualFile file) {
     for (final AdditionalLibraryRootsProvider provider : Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME)) {
       for (final SyntheticLibrary library : provider.getAdditionalProjectLibraries(myProject)) {
-        if (VfsUtilCore.isUnder(file, asSet(library.getSourceRoots()))) {
+        if (VfsUtilCore.isUnder(file, asSet(library.getSourceRoots())) && !VfsUtilCore.isUnder(file, library.getExcludedRoots())) {
           return true;
         }
       }

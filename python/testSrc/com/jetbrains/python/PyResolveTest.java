@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.psi.PsiElement;
@@ -27,7 +13,6 @@ import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 
@@ -300,14 +285,13 @@ public class PyResolveTest extends PyResolveTestCase {
   }
 
   public void testSuperPy3k() {  // PY-1330
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
-    try {
-      final PyFunction pyFunction = assertResolvesTo(PyFunction.class, "foo");
-      assertEquals("A", pyFunction.getContainingClass().getName());
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON34,
+      () -> {
+        final PyFunction pyFunction = assertResolvesTo(PyFunction.class, "foo");
+        assertEquals("A", pyFunction.getContainingClass().getName());
+      }
+    );
   }
 
   public void testStackOverflow() {
@@ -414,11 +398,11 @@ public class PyResolveTest extends PyResolveTestCase {
   }
 
   public void testStarUnpacking() {  // PY-1459
-    assertResolvesTo(LanguageLevel.PYTHON30, PyTargetExpression.class, "heads");
+    assertResolvesTo(LanguageLevel.PYTHON34, PyTargetExpression.class, "heads");
   }
 
   public void testStarUnpackingInLoop() {  // PY-1525
-    assertResolvesTo(LanguageLevel.PYTHON30, PyTargetExpression.class, "bbb");
+    assertResolvesTo(LanguageLevel.PYTHON34, PyTargetExpression.class, "bbb");
   }
 
   public void testBuiltinVsClassMember() {  // PY-1654
@@ -618,48 +602,48 @@ public class PyResolveTest extends PyResolveTestCase {
   //PY-2748
   public void testFormatStringKWArgs() {
     PsiElement target = resolve();
-    assertTrue(target instanceof  PyKeywordArgument);
-    assertEquals("fst", ((PyKeywordArgument)target).getKeyword());
+    assertTrue(target instanceof  PyNumericLiteralExpression);
+    assertTrue(12 == ((PyNumericLiteralExpression)target).getLongValue());
   }
 
   //PY-2748
   public void testFormatPositionalArgs() {
     PsiElement target = resolve();
-    assertTrue(target instanceof  PyReferenceExpression);
+    assertInstanceOf(target,  PyReferenceExpression.class);
     assertEquals("string", target.getText());
   }
 
   //PY-2748
   public void testFormatArgsAndKWargs() {
     PsiElement target = resolve();
-    assertTrue(target instanceof  PyStringLiteralExpression);
+    assertInstanceOf(target, PyStringLiteralExpression.class);
   }
 
   //PY-2748
   public void testFormatArgsAndKWargs1() {
     PsiElement target = resolve();
-    assertTrue(target instanceof  PyKeywordArgument);
-    assertEquals("kwd", ((PyKeywordArgument)target).getKeyword());
+    assertTrue(target instanceof  PyStringLiteralExpression);
+    assertEquals("keyword", ((PyStringLiteralExpression)target).getStringValue());
   }
 
   //PY-2748
   public void testFormatStringWithPackedDictAsArgument() {
     PsiElement target = resolve();
     assertTrue(target instanceof  PyStringLiteralExpression);
-    assertEquals("\"fst\"", target.getText());    
+    assertEquals("\"f\"", target.getText());    
   }
 
   //PY-2748
   public void testFormatStringWithPackedListAsArgument() {
     PsiElement target = resolve();
-    assertTrue(target instanceof  PyNumericLiteralExpression);
+    assertInstanceOf(target, PyNumericLiteralExpression.class);
     assertEquals("1", target.getText());
   }
 
   //PY-2748
   public void testFormatStringWithPackedTupleAsArgument() {
     PsiElement target = resolve();
-    assertTrue(target instanceof  PyStringLiteralExpression);
+    assertInstanceOf(target, PyStringLiteralExpression.class);
     assertEquals("\"snd\"", target.getText());
   }
 
@@ -679,14 +663,15 @@ public class PyResolveTest extends PyResolveTestCase {
   //PY-2748
   public void testPercentKeyWordArgs() {
     PsiElement target = resolve();
-    assertTrue(target instanceof PyStringLiteralExpression);
-    assertEquals("kwg", ((PyStringLiteralExpression)target).getStringValue());
+    assertTrue(target instanceof PyNumericLiteralExpression);
+    assertNotNull(((PyNumericLiteralExpression)target).getLongValue());
+    assertEquals(Long.valueOf(4181), ((PyNumericLiteralExpression)target).getLongValue());
   }
 
   public void testPercentStringKeyWordArgWithParentheses() {
     PsiElement target = resolve();
     assertTrue(target instanceof PyStringLiteralExpression);
-    assertEquals("snd", ((PyStringLiteralExpression)target).getStringValue());    
+    assertEquals("s", ((PyStringLiteralExpression)target).getStringValue());    
   }
 
   //PY-2748
@@ -718,7 +703,7 @@ public class PyResolveTest extends PyResolveTestCase {
   //PY-2748
   public void testFormatStringPackedDictCall() {
     PsiElement target = resolve();
-    assertInstanceOf(target, PyStarArgument.class);
+    assertInstanceOf(target, PyKeywordArgument.class);
   }
 
   //PY-2748
@@ -768,6 +753,14 @@ public class PyResolveTest extends PyResolveTestCase {
 
   public void testImplicitUndeclaredClassAttr() {
     assertUnresolved();
+  }
+
+  public void testImplicitQualifiedClassAttr() {
+    ResolveResult[] resolveResults = multiResolve();
+    assertEquals(1, resolveResults.length);
+    PyTargetExpression target = assertInstanceOf(resolveResults[0].getElement(), PyTargetExpression.class);
+    assertEquals("CLASS_ATTR", target.getName());
+    assertInstanceOf(ScopeUtil.getScopeOwner(target), PyClass.class);
   }
 
   // PY-13734
@@ -1228,5 +1221,30 @@ public class PyResolveTest extends PyResolveTestCase {
   // PY-13734
   public void testDunderClassInDeclarationInsideFunction() {
     assertUnresolved();
+  }
+
+  // PY-22763
+  public void testComparisonOperatorReceiver() {
+    final PsiElement element = doResolve();
+    final PyFunction dunderLt = assertInstanceOf(element, PyFunction.class);
+    assertEquals("__lt__", dunderLt.getName());
+    assertEquals("str", dunderLt.getContainingClass().getName());
+  }
+
+  // PY-26006
+  public void testSOEDecoratingFunctionWithSameNameDecorator() {
+    final PyFunction function = assertInstanceOf(doResolve(), PyFunction.class);
+    assertEquals(4, function.getTextOffset());
+  }
+
+  // PY-23259
+  public void testTypingListInheritor() {
+    assertResolvesTo(PyFunction.class, "append");
+  }
+
+  // PY-23259
+  public void testImportedTypingListInheritor() {
+    myFixture.copyDirectoryToProject("resolve/" + getTestName(false), "");
+    assertResolvesTo(PyFunction.class, "append");
   }
 }

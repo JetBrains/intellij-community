@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,31 +15,30 @@
  */
 package com.siyeh.ig.threading;
 
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.SynchronizationUtil;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class NonAtomicOperationOnVolatileFieldInspection
-  extends BaseInspection {
+public class NonAtomicOperationOnVolatileFieldInspection extends BaseInspection {
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "non.atomic.operation.on.volatile.field.display.name");
+    return InspectionGadgetsBundle.message("non.atomic.operation.on.volatile.field.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "non.atomic.operation.on.volatile.field.problem.descriptor");
+    return InspectionGadgetsBundle.message("non.atomic.operation.on.volatile.field.problem.descriptor");
   }
 
   @Override
@@ -47,14 +46,12 @@ public class NonAtomicOperationOnVolatileFieldInspection
     return new NonAtomicOperationOnVolatileFieldVisitor();
   }
 
-  private static class NonAtomicOperationOnVolatileFieldVisitor
-    extends BaseInspectionVisitor {
+  private static class NonAtomicOperationOnVolatileFieldVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitAssignmentExpression(
-      @NotNull PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
-      final PsiExpression rhs = expression.getRExpression();
+      final PsiExpression rhs = ParenthesesUtils.stripParentheses(expression.getRExpression());
       if (rhs == null) {
         return;
       }
@@ -78,38 +75,36 @@ public class NonAtomicOperationOnVolatileFieldInspection
         registerError(lhs);
         return;
       }
-      if (VariableAccessUtils.variableIsUsed(volatileField, rhs)) {
-        registerError(lhs);
+      if (isOnTheFly() && !volatileField.hasModifierProperty(PsiModifier.PRIVATE)) {
+        return;
       }
+      rhs.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitReferenceExpression(PsiReferenceExpression reference) {
+          if (reference.isReferenceTo(volatileField) && ExpressionUtil.isEffectivelyUnqualified(reference)) {
+            stopWalking();
+            final PsiElement referenceNameElement = ((PsiJavaCodeReferenceElement)lhs).getReferenceNameElement();
+            if (referenceNameElement != null) {
+              registerError(referenceNameElement);
+            }
+            return;
+          }
+          super.visitReferenceExpression(reference);
+        }
+      });
     }
 
     @Override
-    public void visitPrefixExpression(PsiPrefixExpression expression) {
-      super.visitPrefixExpression(expression);
-      final IElementType tokenType = expression.getOperationTokenType();
-      if (JavaTokenType.PLUS.equals(tokenType) ||
-          JavaTokenType.MINUS.equals(tokenType) ||
-          JavaTokenType.EXCL.equals(tokenType)) {
+    public void visitUnaryExpression(PsiUnaryExpression expression) {
+      super.visitUnaryExpression(expression);
+      if (!PsiUtil.isIncrementDecrementOperation(expression)) {
         return;
       }
       final PsiExpression operand = expression.getOperand();
       if (operand == null) {
         return;
       }
-      final PsiField volatileField =
-        findNonSynchronizedVolatileField(operand);
-      if (volatileField == null) {
-        return;
-      }
-      registerError(operand);
-    }
-
-    @Override
-    public void visitPostfixExpression(PsiPostfixExpression expression) {
-      super.visitPostfixExpression(expression);
-      final PsiExpression operand = expression.getOperand();
-      final PsiField volatileField =
-        findNonSynchronizedVolatileField(operand);
+      final PsiField volatileField = findNonSynchronizedVolatileField(operand);
       if (volatileField == null) {
         return;
       }
@@ -117,13 +112,14 @@ public class NonAtomicOperationOnVolatileFieldInspection
     }
 
     @Nullable
-    private static PsiField findNonSynchronizedVolatileField(
-      PsiExpression expression) {
+    private static PsiField findNonSynchronizedVolatileField(PsiExpression expression) {
       if (!(expression instanceof PsiReferenceExpression)) {
         return null;
       }
-      final PsiReferenceExpression reference =
-        (PsiReferenceExpression)expression;
+      final PsiReferenceExpression reference = (PsiReferenceExpression)expression;
+      if (!ExpressionUtil.isEffectivelyUnqualified(reference)) {
+        return null;
+      }
       final PsiElement referent = reference.resolve();
       if (!(referent instanceof PsiField)) {
         return null;

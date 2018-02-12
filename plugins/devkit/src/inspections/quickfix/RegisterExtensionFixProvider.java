@@ -29,12 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.util.ExtensionPointCandidate;
 import org.jetbrains.idea.devkit.util.ExtensionPointLocator;
 
-import java.util.List;
+import java.util.Set;
 
-/**
- * @author Dmitry Avdeev
- *         Date: 1/19/12
- */
 public class RegisterExtensionFixProvider implements UnusedDeclarationFixProvider {
 
   @NotNull
@@ -53,7 +49,7 @@ public class RegisterExtensionFixProvider implements UnusedDeclarationFixProvide
     }
 
     ExtensionPointLocator extensionPointLocator = new ExtensionPointLocator(psiClass);
-    List<ExtensionPointCandidate> candidateList = extensionPointLocator.findSuperCandidates();
+    Set<ExtensionPointCandidate> candidateList = extensionPointLocator.findSuperCandidates();
     if (!candidateList.isEmpty()) {
       return new IntentionAction[]{new RegisterExtensionFix(psiClass, candidateList)};
     }

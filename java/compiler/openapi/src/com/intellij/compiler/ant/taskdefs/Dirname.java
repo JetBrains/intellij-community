@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 25, 2004
  */
 public class Dirname extends Tag{
   public Dirname(@NonNls String property, @NonNls String file) {

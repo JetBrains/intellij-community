@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.xdebugger.breakpoints;
@@ -30,6 +18,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -53,7 +42,7 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   }
 
   /**
-   * Return <code>true<code> if breakpoint can be put on <code>line</code> in <code>file</code>
+   * Return <code>true<code> if breakpoint can be put on {@code line} in {@code file}
    */
   public boolean canPutAt(@NotNull VirtualFile file, int line, @NotNull Project project) {
     return false;
@@ -76,10 +65,10 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   }
 
   /**
-   * Source position for line breakpoint is determined by its file and line
+   * Source position for line breakpoint by default is determined by its file and line
    */
   @Override
-  public final XSourcePosition getSourcePosition(@NotNull XBreakpoint<P> breakpoint) {
+  public XSourcePosition getSourcePosition(@NotNull XBreakpoint<P> breakpoint) {
     return null;
   }
 
@@ -134,6 +123,11 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   @NotNull
   public List<? extends XLineBreakpointVariant> computeVariants(@NotNull Project project, @NotNull XSourcePosition position) {
     return Collections.emptyList();
+  }
+
+  @NotNull
+  public Promise<List<? extends XLineBreakpointVariant>> computeVariantsAsync(@NotNull Project project, @NotNull XSourcePosition position) {
+    return Promise.resolve(computeVariants(project, position));
   }
 
   public abstract class XLineBreakpointVariant {

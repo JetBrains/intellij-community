@@ -15,7 +15,7 @@
  */
 package com.intellij.util.indexing.impl;
 
-import com.intellij.util.indexing.ID;
+import com.intellij.util.indexing.IndexId;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
@@ -28,14 +28,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
-* Created by Maxim.Mossienko on 4/7/2014.
-*/
 public class InputIndexDataExternalizer<K> implements DataExternalizer<Collection<K>> {
   private final KeyDescriptor<K> myKeyDescriptor;
-  private final ID<K, ?> myIndexId;
+  private final IndexId<K, ?> myIndexId;
 
-  public InputIndexDataExternalizer(KeyDescriptor<K> keyDescriptor, ID<K, ?> indexId) {
+  public InputIndexDataExternalizer(KeyDescriptor<K> keyDescriptor, IndexId<K, ?> indexId) {
     myKeyDescriptor = keyDescriptor;
     myIndexId = indexId;
   }

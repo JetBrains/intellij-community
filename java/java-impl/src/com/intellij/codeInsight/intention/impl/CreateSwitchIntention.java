@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -23,50 +24,43 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Batkovich
  */
-public class CreateSwitchIntention extends BaseElementAtCaretIntentionAction {
+public class CreateSwitchIntention extends BaseElementAtCaretIntentionAction implements LowPriorityAction {
   public static final String TEXT = "Create switch statement";
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
-    final PsiExpressionStatement expressionStatement = resolveExpressionStatement(element);
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
-    PsiSwitchStatement switchStatement = (PsiSwitchStatement)elementFactory
-      .createStatementFromText(String.format("switch (%s) {}", expressionStatement.getExpression().getText()), null);
-    switchStatement = (PsiSwitchStatement)expressionStatement.replace(switchStatement);
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    PsiExpressionStatement expressionStatement = PsiTreeUtil.getParentOfType(element, PsiExpressionStatement.class, false);
+    String valueToSwitch = expressionStatement.getExpression().getText();
+    PsiSwitchStatement switchStatement = (PsiSwitchStatement)new CommentTracker().replaceAndRestoreComments(expressionStatement, "switch (" + valueToSwitch + ") {}");
     CodeStyleManager.getInstance(project).reformat(switchStatement);
 
-    final PsiJavaToken lBrace = switchStatement.getBody().getLBrace();
+    PsiJavaToken lBrace = switchStatement.getBody().getLBrace();
     editor.getCaretModel().moveToOffset(lBrace.getTextOffset() + lBrace.getTextLength());
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
-    final PsiExpressionStatement expressionStatement = resolveExpressionStatement(element);
-    return expressionStatement != null && isValidTypeForSwitch(expressionStatement.getExpression().getType(), expressionStatement);
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    PsiExpressionStatement expressionStatement = PsiTreeUtil.getParentOfType(element, PsiExpressionStatement.class, false);
+    return expressionStatement != null &&
+           expressionStatement.getParent() instanceof PsiCodeBlock &&
+           PsiTreeUtil.findChildOfType(expressionStatement.getExpression(), PsiErrorElement.class) == null &&
+           isValidTypeForSwitch(expressionStatement.getExpression().getType(), expressionStatement);
   }
 
-  private static PsiExpressionStatement resolveExpressionStatement(final PsiElement element) {
-    if (element instanceof PsiExpressionStatement) {
-      return (PsiExpressionStatement)element;
-    } else {
-      final PsiStatement psiStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
-      return psiStatement instanceof PsiExpressionStatement ? (PsiExpressionStatement)psiStatement : null;
-    }
-  }
-
-  private static boolean isValidTypeForSwitch(@Nullable final PsiType type, final PsiElement context) {
+  private static boolean isValidTypeForSwitch(@Nullable PsiType type, PsiElement context) {
     if (type == null) {
       return false;
     }
 
     if (type instanceof PsiClassType) {
-      final PsiClass resolvedClass = ((PsiClassType)type).resolve();
+      PsiClass resolvedClass = ((PsiClassType)type).resolve();
       if (resolvedClass == null) {
         return false;
       }

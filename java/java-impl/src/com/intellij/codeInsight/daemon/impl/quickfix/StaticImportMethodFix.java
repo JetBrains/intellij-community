@@ -24,7 +24,6 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +31,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod> {
-  private final SmartPsiElementPointer<PsiMethodCallExpression> myMethodCall;
+  protected final SmartPsiElementPointer<PsiMethodCallExpression> myMethodCall;
 
   public StaticImportMethodFix(@NotNull PsiMethodCallExpression methodCallExpression) {
     myMethodCall = SmartPointerManager.getInstance(methodCallExpression.getProject()).createSmartPsiElementPointer(methodCallExpression);
@@ -54,16 +53,21 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod> {
 
   @NotNull
   @Override
-  protected List<PsiMethod> getMembersToImport(boolean applicableOnly) {
+  protected List<PsiMethod> getMembersToImport(boolean applicableOnly, @NotNull StaticMembersProcessor.SearchMode searchMode) {
     final Project project = myMethodCall.getProject();
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
     final PsiMethodCallExpression element = myMethodCall.getElement();
     PsiReferenceExpression reference = element == null ? null : element.getMethodExpression();
     String name = reference == null ? null : reference.getReferenceName();
     if (name == null) return Collections.emptyList();
-    final StaticMembersProcessor<PsiMethod> processor = new MyStaticMethodProcessor(element);
+    final StaticMembersProcessor<PsiMethod> processor = new MyStaticMethodProcessor(element, toAddStaticImports(), searchMode);
     cache.processMethodsWithName(name, element.getResolveScope(), processor);
     return processor.getMembersToImport(applicableOnly);
+  }
+
+  @Override
+  protected boolean toAddStaticImports() {
+    return true;
   }
 
   @NotNull
@@ -93,8 +97,8 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod> {
 
   private static class MyStaticMethodProcessor extends StaticMembersProcessor<PsiMethod> {
 
-    private MyStaticMethodProcessor(PsiMethodCallExpression place) {
-      super(place);
+    private MyStaticMethodProcessor(@NotNull PsiMethodCallExpression place, boolean showMembersFromDefaultPackage, @NotNull SearchMode mode) {
+      super(place, showMembersFromDefaultPackage, mode);
     }
 
     @Override
@@ -105,8 +109,8 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod> {
       PsiSubstitutor substitutorForMethod = candidateInfo.getSubstitutor();
       if (PsiUtil.isApplicable(method, substitutorForMethod, argumentList)) {
         final PsiType returnType = substitutorForMethod.substitute(method.getReturnType());
-        final PsiType expectedType = getExpectedType();
-        return expectedType == null || returnType == null || TypeConversionUtil.isAssignable(expectedType, returnType);
+        if (returnType == null) return true;
+        return isApplicableFor(returnType);
       }
       return false;
     }

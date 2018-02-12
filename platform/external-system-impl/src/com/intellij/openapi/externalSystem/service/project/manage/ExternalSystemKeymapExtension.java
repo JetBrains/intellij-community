@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
 
     MultiMap<ProjectSystemId, String> projectToActionsMapping = MultiMap.create();
     for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
-      projectToActionsMapping.putValues(manager.getSystemId(), ContainerUtil.<String>emptyList());
+      projectToActionsMapping.putValues(manager.getSystemId(), ContainerUtil.emptyList());
     }
 
     ActionManager actionManager = ActionManager.getInstance();
@@ -194,7 +194,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
 
   private static void createActions(Project project, Collection<DataNode<TaskData>> taskNodes) {
     ActionManager actionManager = ActionManager.getInstance();
-    final ExternalSystemShortcutsManager shortcutsManager = ExternalProjectsManager.getInstance(project).getShortcutsManager();
+    final ExternalSystemShortcutsManager shortcutsManager = ExternalProjectsManagerImpl.getInstance(project).getShortcutsManager();
     if (actionManager != null) {
       for (DataNode<TaskData> each : taskNodes) {
         final DataNode<ModuleData> moduleData = ExternalSystemApiUtil.findParent(each, ProjectKeys.MODULE);
@@ -221,8 +221,13 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
   public static void clearActions(Project project, Collection<DataNode<TaskData>> taskData) {
     ActionManager actionManager = ActionManager.getInstance();
     if (actionManager != null) {
-      for (DataNode<TaskData> each : taskData) {
-        for (String eachAction : actionManager.getActionIds(getActionPrefix(project, each.getData().getLinkedExternalProjectPath()))) {
+      Set<String> externalProjectPaths = ContainerUtil.newHashSet();
+      for (DataNode<TaskData> node : taskData) {
+        externalProjectPaths.add(node.getData().getLinkedExternalProjectPath());
+      }
+
+      for (String externalProjectPath : externalProjectPaths) {
+        for (String eachAction : actionManager.getActionIds(getActionPrefix(project, externalProjectPath))) {
           AnAction action = actionManager.getAction(eachAction);
           if (!(action instanceof ExternalSystemRunConfigurationAction)) {
             actionManager.unregisterAction(eachAction);
@@ -233,7 +238,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
   }
 
   public static String getActionPrefix(@NotNull Project project, @Nullable String path) {
-    return ExternalProjectsManager.getInstance(project).getShortcutsManager().getActionId(path, null);
+    return ExternalProjectsManagerImpl.getInstance(project).getShortcutsManager().getActionId(path, null);
   }
 
   public static void updateRunConfigurationActions(Project project, ProjectSystemId systemId) {
@@ -251,7 +256,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
     Set<RunnerAndConfigurationSettings> settings = new THashSet<>(
       RunManager.getInstance(project).getConfigurationSettingsList(configurationType));
 
-    final ExternalSystemShortcutsManager shortcutsManager = ExternalProjectsManager.getInstance(project).getShortcutsManager();
+    final ExternalSystemShortcutsManager shortcutsManager = ExternalProjectsManagerImpl.getInstance(project).getShortcutsManager();
     for (RunnerAndConfigurationSettings configurationSettings : settings) {
       ExternalSystemRunConfigurationAction runConfigurationAction =
         new ExternalSystemRunConfigurationAction(project, configurationSettings);
@@ -380,7 +385,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
     }
 
     public void actionPerformed(@NotNull AnActionEvent e) {
-      ProgramRunnerUtil.executeConfiguration(getProject(e), myConfigurationSettings, DefaultRunExecutor.getRunExecutorInstance());
+      ProgramRunnerUtil.executeConfiguration(myConfigurationSettings, DefaultRunExecutor.getRunExecutorInstance());
     }
 
     public String toString() {

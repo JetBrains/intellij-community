@@ -1,25 +1,13 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
 import com.intellij.util.ThrowableRunnable;
@@ -84,6 +72,7 @@ public abstract class DumbService {
   /**
    * Pause the current thread until dumb mode ends, and then run the read action. Index is guaranteed to be available inside that read action,
    * unless this method is already called with read access allowed.
+   * @throws ProcessCanceledException if the project is closed during dumb mode
    */
   public <T> T runReadActionInSmartMode(@NotNull final Computable<T> r) {
     final Ref<T> result = new Ref<>();
@@ -112,16 +101,22 @@ public abstract class DumbService {
   /**
    * Pause the current thread until dumb mode ends, and then run the read action. Index is guaranteed to be available inside that read action,
    * unless this method is already called with read access allowed.
+   * @throws ProcessCanceledException if the project is closed during dumb mode
    */
-  public void runReadActionInSmartMode(@NotNull final Runnable r) {
+  public void runReadActionInSmartMode(@NotNull Runnable r) {
     if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+      // we can't wait for smart mode to begin (it'd result in a deadlock),
+      // so let's just pretend it's already smart and fail with IndexNotReadyException if not
       r.run();
       return;
     }
 
     while (true) {
       waitForSmartMode();
-      boolean success = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+      boolean success = ReadAction.compute(() -> {
+        if (getProject().isDisposed()) {
+          throw new ProcessCanceledException();
+        }
         if (isDumb()) {
           return false;
         }
@@ -154,11 +149,15 @@ public abstract class DumbService {
   }
 
   /**
-   * Invoke the runnable later on EventDispatchThread AND when IDEA isn't in dumb mode
-   * @param runnable runnable
+   * Invoke the runnable later on EventDispatchThread AND when IDEA isn't in dumb mode.
+   * The runnable won't be invoked if the project is disposed during dumb mode
    */
   public abstract void smartInvokeLater(@NotNull Runnable runnable);
 
+  /**
+   * Invoke the runnable later on EventDispatchThread with the given modality state AND when IDEA isn't in dumb mode.
+   * The runnable won't be invoked if the project is disposed during dumb mode
+   */
   public abstract void smartInvokeLater(@NotNull Runnable runnable, @NotNull ModalityState modalityState);
 
   private static final NotNullLazyKey<DumbService, Project> INSTANCE_KEY = ServiceManager.createLazyKey(DumbService.class);
@@ -325,6 +324,12 @@ public abstract class DumbService {
   public static void allowStartingDumbModeInside(@NotNull DumbModePermission permission, @NotNull Runnable runnable) {
     runnable.run();
   }
+
+  /**
+   * Runs a heavy activity and suspends indexing (if any) for this time. The user still has the possibility to manually pause and resume the indexing. In that case, indexing won't be resumed automatically after the activity finishes.
+   * @param activityName the text (a noun phrase) to display as a reason for the indexing being paused 
+   */
+  public abstract void suspendIndexingAndRun(@NotNull String activityName, @NotNull Runnable activity);
 
   /**
    * @see #DUMB_MODE

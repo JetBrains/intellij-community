@@ -25,10 +25,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.Usage;
-import com.intellij.usages.UsageGroup;
-import com.intellij.usages.UsageInfo2UsageAdapter;
-import com.intellij.usages.UsageView;
+import com.intellij.usages.*;
+import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
 import org.intellij.lang.xpath.psi.XPathExpression;
@@ -61,11 +59,13 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
       myUsageGroupingRules = new UsageGroupingRule[]{ new TemplateUsageGroupingRule() };
     }
 
+  @Override
   @NotNull
     public UsageGroupingRule[] getActiveRules(Project project) {
         return myUsageGroupingRules;
     }
 
+    @Override
     @NotNull
     public AnAction[] createGroupingActions(UsageView view) {
         return AnAction.EMPTY_ARRAY;
@@ -143,9 +143,10 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
         }
     }
 
-    private static class TemplateUsageGroupingRule implements UsageGroupingRule {
+    private static class TemplateUsageGroupingRule extends SingleParentUsageGroupingRule {
         @Nullable
-        public UsageGroup groupUsage(@NotNull Usage usage) {
+        @Override
+        protected UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
             if (usage instanceof UsageInfo2UsageAdapter) {
                 final UsageInfo2UsageAdapter u = (UsageInfo2UsageAdapter)usage;
                 final UsageInfo usageInfo = u.getUsageInfo();

@@ -24,8 +24,6 @@ import java.awt.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Oct 4, 2003
- *         Time: 6:54:57 PM
  */
 public class ContentEntriesEditor extends JavaContentEntriesEditor {
   private LanguageLevelConfigurable myLanguageLevelConfigurable;
@@ -47,7 +45,7 @@ public class ContentEntriesEditor extends JavaContentEntriesEditor {
 
   @Override
   protected void addAdditionalSettingsToPanel(final JPanel mainPanel) {
-    myLanguageLevelConfigurable = new LanguageLevelConfigurable(myProject) {
+    myLanguageLevelConfigurable = new LanguageLevelConfigurable(myProject, this::fireConfigurationChanged) {
       @NotNull
       @Override
       public LanguageLevelModuleExtensionImpl getLanguageLevelExtension() {

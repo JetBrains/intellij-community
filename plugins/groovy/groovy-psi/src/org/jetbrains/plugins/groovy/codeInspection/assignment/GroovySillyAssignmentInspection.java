@@ -16,14 +16,11 @@
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.utils.EquivalenceChecker;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -31,24 +28,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 public class GroovySillyAssignmentInspection extends BaseInspection {
 
   @Override
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
-    return ASSIGNMENT_ISSUES;
-  }
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Silly assignment";
-  }
-
-  @Override
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Silly assignment #loc";
-
   }
 
   @Override
@@ -68,8 +50,7 @@ public class GroovySillyAssignmentInspection extends BaseInspection {
     public void visitAssignmentExpression(@NotNull GrAssignmentExpression assignment) {
       super.visitAssignmentExpression(assignment);
 
-      final IElementType sign = assignment.getOperationTokenType();
-      if (!sign.equals(GroovyTokenTypes.mASSIGN)) {
+      if (assignment.isOperatorAssignment()) {
         return;
       }
       final GrExpression lhs = assignment.getLValue();

@@ -30,7 +30,6 @@ import java.awt.*;
  */
 public class OwnerOptional {
 
-  @NotNull
   private static Window findOwnerByComponent(Component component) {
     if (component == null) component = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     if (component == null) {
@@ -53,14 +52,16 @@ public class OwnerOptional {
 
     if (manager.isPopupWindow(owner)) {
 
-      manager.closeAllPopups();
+      //manager.closeAllPopups();
 
-      owner = owner.getOwner();
-
-      while (owner != null
-             && !(owner instanceof Dialog)
-             && !(owner instanceof Frame)) {
+      if (!owner.isFocused()) {
         owner = owner.getOwner();
+
+        while (owner != null
+               && !(owner instanceof Dialog)
+               && !(owner instanceof Frame)) {
+          owner = owner.getOwner();
+        }
       }
     }
 

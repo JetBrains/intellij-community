@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,9 +51,13 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   private final ExtensionsAreaImpl myOwner;
   private final PluginDescriptor myDescriptor;
 
-  private Set<ExtensionComponentAdapter> myExtensionAdapters; // guarded by this
-  private final List<ExtensionPointListener<T>> myEPListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private List<ExtensionComponentAdapter> myLoadedAdapters; // guarded by this
+  @NotNull
+  private Set<ExtensionComponentAdapter> myExtensionAdapters = Collections.emptySet(); // guarded by this
+  @SuppressWarnings("unchecked")
+  @NotNull
+  private ExtensionPointListener<T>[] myEPListeners = ExtensionPointListener.EMPTY_ARRAY; // guarded by this
+  @NotNull
+  private List<ExtensionComponentAdapter> myLoadedAdapters = Collections.emptyList(); // guarded by this
 
   private Class<T> myExtensionClass;
 
@@ -113,7 +117,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     ExtensionComponentAdapter adapter = new ObjectComponentAdapter(extension, order);
 
     if (LoadingOrder.ANY == order) {
-      int index = getLoadedAdaptersSize();
+      int index = myLoadedAdapters.size();
       while (index > 0) {
         ExtensionComponentAdapter lastAdapter = myLoadedAdapters.get(index - 1);
         if (lastAdapter.getOrder() == LoadingOrder.LAST) {
@@ -131,11 +135,6 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
   }
 
-  private int getLoadedAdaptersSize() {
-    List<ExtensionComponentAdapter> loadedAdapters = myLoadedAdapters;
-    return loadedAdapters == null ? 0 : loadedAdapters.size();
-  }
-
   private void registerExtension(@NotNull T extension, @NotNull ExtensionComponentAdapter adapter, int index, boolean runNotifications) {
     if (getExtensionIndex(extension) != -1) {
       myOwner.error("Extension was already added: " + extension);
@@ -147,7 +146,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       myOwner.error("Extension " + extension.getClass() + " does not implement " + extensionClass);
       return;
     }
-    if (myLoadedAdapters == null) myLoadedAdapters = new ArrayList<>();
+    if (myLoadedAdapters == Collections.<ExtensionComponentAdapter>emptyList()) myLoadedAdapters = new ArrayList<>();
     myLoadedAdapters.add(index, adapter);
 
     if (runNotifications) {
@@ -207,7 +206,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       return cache.length > 0;
     }
     synchronized (this) {
-      return getExtensionAdaptersSize() + getLoadedAdaptersSize() > 0;
+      return myExtensionAdapters.size() + myLoadedAdapters.size() > 0;
     }
   }
 
@@ -217,7 +216,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     if (processingAdaptersNow) {
       throw new IllegalStateException("Recursive processAdapters() detected. You must have called 'getExtensions()' from within your extension constructor - don't. Either pass extension via constructor parameter or call getExtensions() later.");
     }
-    int totalSize = getExtensionAdaptersSize() + getLoadedAdaptersSize();
+    int totalSize = myExtensionAdapters.size() + myLoadedAdapters.size();
     if (totalSize == 0) {
       return null;
     }
@@ -227,18 +226,14 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       Class<T> extensionClass = getExtensionClass();
       @SuppressWarnings("unchecked") T[] result = (T[])Array.newInstance(extensionClass, totalSize);
       List<ExtensionComponentAdapter> adapters = ContainerUtil.newArrayListWithCapacity(totalSize);
-      if (myExtensionAdapters != null) {
-        adapters.addAll(myExtensionAdapters);
-      }
-      if (myLoadedAdapters != null) {
-        adapters.addAll(myLoadedAdapters);
-      }
+      adapters.addAll(myExtensionAdapters);
+      adapters.addAll(myLoadedAdapters);
       LoadingOrder.sort(adapters);
       myExtensionAdapters = new LinkedHashSet<>(adapters);
 
       Set<ExtensionComponentAdapter> loaded = ContainerUtil.newHashOrEmptySet(myLoadedAdapters);
 
-      myLoadedAdapters = null;
+      myLoadedAdapters = Collections.emptyList();
       boolean errorHappened = false;
       for (int i = 0; i < adapters.size(); i++) {
         ExtensionComponentAdapter adapter = adapters.get(i);
@@ -262,18 +257,21 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
             continue;
           }
           result[i] = extension;
-          registerExtension(extension, adapter, getLoadedAdaptersSize(), !loaded.contains(adapter));
+          registerExtension(extension, adapter, myLoadedAdapters.size(), !loaded.contains(adapter));
         }
         catch (ProcessCanceledException e) {
           throw e;
         }
         catch (Exception e) {
           errorHappened = true;
-          LOG.error(e);
+          if (!"org.jetbrains.uast.kotlin.KotlinUastLanguagePlugin".equals(adapter.getAssignableToClassName()) &&
+              !"org.jetbrains.uast.java.JavaUastLanguagePlugin".equals(adapter.getAssignableToClassName())) {
+            LOG.error(e);
+          }
         }
         myExtensionAdapters.remove(adapter);
       }
-      myExtensionAdapters = null;
+      myExtensionAdapters = Collections.emptySet();
       if (errorHappened) {
         result = ContainerUtil.findAllAsArray(result, Condition.NOT_NULL);
       }
@@ -284,13 +282,9 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
   }
 
-  private int getExtensionAdaptersSize() {
-    return myExtensionAdapters == null ? 0 : myExtensionAdapters.size();
-  }
-
   @SuppressWarnings("unused") // upsource
   public synchronized void removeUnloadableExtensions() {
-    ExtensionComponentAdapter[] adapters = myExtensionAdapters == null ? ExtensionComponentAdapter.EMPTY_ARRAY : myExtensionAdapters.toArray(new ExtensionComponentAdapter[myExtensionAdapters.size()]);
+    ExtensionComponentAdapter[] adapters = myExtensionAdapters.toArray(ExtensionComponentAdapter.EMPTY_ARRAY);
     for (ExtensionComponentAdapter adapter : adapters) {
       try {
         adapter.getComponentImplementation();
@@ -330,7 +324,6 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   private int getExtensionIndex(@NotNull T extension) {
-    if (myLoadedAdapters == null) return -1;
     for (int i = 0; i < myLoadedAdapters.size(); i++) {
       ExtensionComponentAdapter adapter = myLoadedAdapters.get(i);
       if (Comparing.equal(adapter.getExtension(), extension)) return i;
@@ -376,26 +369,36 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   public synchronized void addExtensionPointListener(@NotNull final ExtensionPointListener<T> listener,
-                                        final boolean invokeForLoadedExtensions,
-                                        @NotNull Disposable parentDisposable) {
+                                                     final boolean invokeForLoadedExtensions,
+                                                     @NotNull Disposable parentDisposable) {
     if (invokeForLoadedExtensions) {
       addExtensionPointListener(listener);
-    } else {
-      myEPListeners.add(listener);
     }
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeExtensionPointListener(listener, invokeForLoadedExtensions);
-      }
-    });
+    else {
+      addListener(listener);
+    }
+    Disposer.register(parentDisposable, () -> removeExtensionPointListener(listener, invokeForLoadedExtensions));
+  }
+
+  // true if added
+  private boolean addListener(@NotNull ExtensionPointListener<T> listener) {
+    if (ArrayUtil.indexOf(myEPListeners, listener) != -1) return false;
+    //noinspection unchecked
+    myEPListeners = ArrayUtil.append(myEPListeners, listener, n->n==0?ExtensionPointListener.EMPTY_ARRAY:new ExtensionPointListener[n]);
+    return true;
+  }
+  private boolean removeListener(@NotNull ExtensionPointListener<T> listener) {
+    if (ArrayUtil.indexOf(myEPListeners, listener) == -1) return false;
+    //noinspection unchecked
+    myEPListeners = ArrayUtil.remove(myEPListeners, listener, n->n==0?ExtensionPointListener.EMPTY_ARRAY:new ExtensionPointListener[n]);
+    return true;
   }
 
   @Override
   public synchronized void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener) {
     processAdapters();
-    if (myEPListeners.add(listener)) {
-      ExtensionComponentAdapter[] array = myLoadedAdapters == null ? ExtensionComponentAdapter.EMPTY_ARRAY : myLoadedAdapters.toArray(new ExtensionComponentAdapter[myLoadedAdapters.size()]);
+    if (addListener(listener)) {
+      ExtensionComponentAdapter[] array = myLoadedAdapters.toArray(ExtensionComponentAdapter.EMPTY_ARRAY);
       for (ExtensionComponentAdapter componentAdapter : array) {
         try {
           @SuppressWarnings("unchecked") T extension = (T)componentAdapter.getExtension();
@@ -414,8 +417,8 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   private synchronized void removeExtensionPointListener(@NotNull ExtensionPointListener<T> listener, boolean invokeForLoadedExtensions) {
-    if (myEPListeners.remove(listener) && invokeForLoadedExtensions) {
-      ExtensionComponentAdapter[] array = myLoadedAdapters == null ? ExtensionComponentAdapter.EMPTY_ARRAY : myLoadedAdapters.toArray(new ExtensionComponentAdapter[myLoadedAdapters.size()]);
+    if (removeListener(listener) && invokeForLoadedExtensions) {
+      ExtensionComponentAdapter[] array = myLoadedAdapters.toArray(ExtensionComponentAdapter.EMPTY_ARRAY);
       for (ExtensionComponentAdapter componentAdapter : array) {
         try {
           @SuppressWarnings("unchecked") T extension = (T)componentAdapter.getExtension();
@@ -430,10 +433,8 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   @Override
   public synchronized void reset() {
-    if (myExtensionAdapters != null) {
-      myOwner.removeAllComponents(myExtensionAdapters);
-      myExtensionAdapters = null;
-    }
+    myOwner.removeAllComponents(myExtensionAdapters);
+    myExtensionAdapters = Collections.emptySet();
     for (T extension : getExtensions()) {
       unregisterExtension(extension);
     }
@@ -465,7 +466,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   synchronized void registerExtensionAdapter(@NotNull ExtensionComponentAdapter adapter) {
-    if (myExtensionAdapters == null) {
+    if (myExtensionAdapters == Collections.<ExtensionComponentAdapter>emptySet()) {
       myExtensionAdapters = new LinkedHashSet<>();
     }
     myExtensionAdapters.add(adapter);
@@ -476,20 +477,18 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     myExtensionsCache = null;
   }
 
-  private boolean unregisterExtensionAdapter(@NotNull ExtensionComponentAdapter adapter) {
+  private void unregisterExtensionAdapter(@NotNull ExtensionComponentAdapter adapter) {
     try {
-      if (myExtensionAdapters != null && myExtensionAdapters.remove(adapter)) {
-        return true;
+      if (!myExtensionAdapters.isEmpty() && myExtensionAdapters.remove(adapter)) {
+        return;
       }
-      if (myLoadedAdapters != null && myLoadedAdapters.contains(adapter)) {
+      if (myLoadedAdapters.contains(adapter)) {
         Object key = adapter.getComponentKey();
         myOwner.getPicoContainer().unregisterComponent(key);
 
         @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension();
         unregisterExtension(extension, adapter.getPluginDescriptor());
-        return true;
       }
-      return false;
     }
     finally {
       clearCache();
@@ -497,10 +496,10 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   @TestOnly
-  final synchronized void notifyAreaReplaced(final ExtensionsArea area) {
+  final synchronized void notifyAreaReplaced(@NotNull ExtensionsArea oldArea) {
     for (final ExtensionPointListener<T> listener : myEPListeners) {
       if (listener instanceof ExtensionPointAndAreaListener) {
-        ((ExtensionPointAndAreaListener)listener).areaReplaced(area);
+        ((ExtensionPointAndAreaListener)listener).areaReplaced(oldArea);
       }
     }
   }

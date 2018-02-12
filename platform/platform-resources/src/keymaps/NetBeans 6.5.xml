@@ -261,7 +261,7 @@
   <action id="NextEditorTab">
     <keyboard-shortcut first-keystroke="control alt PAGE_DOWN"/>
   </action>
-  <action id="NextOccurence">
+  <action id="GotoNextElementUnderCaretUsage">
     <keyboard-shortcut first-keystroke="alt DOWN"/>
   </action>
   <action id="NextTab">
@@ -277,7 +277,7 @@
   <action id="PreviousEditorTab">
     <keyboard-shortcut first-keystroke="control alt PAGE_UP"/>
   </action>
-  <action id="PreviousOccurence">
+  <action id="GotoPrevElementUnderCaretUsage">
     <keyboard-shortcut first-keystroke="alt UP"/>
   </action>
   <action id="PreviousTab">
@@ -378,4 +378,10 @@
     <keyboard-shortcut first-keystroke="shift F4"/>
   </action>
   <action id="EditorMatchBrace"/>
+  <action id="Git.Reword.Commit">
+    <keyboard-shortcut first-keystroke="control R"/>
+  </action>
+  <action id="ShelvedChanges.Rename">
+    <keyboard-shortcut first-keystroke="control R"/>
+  </action>
 </keymap>

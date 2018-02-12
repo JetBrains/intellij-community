@@ -46,7 +46,7 @@ public class InspectionNode extends InspectionTreeNode {
 
   @Nullable
   @Override
-  public String getCustomizedTailText() {
+  public String getTailText() {
     final String shortName = getToolWrapper().getShortName();
     return myProfile.getTools(shortName, null).isEnabled() ? null : "Disabled";
   }

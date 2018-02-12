@@ -27,7 +27,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -106,7 +106,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
       textField.setEnabled(true);
     }
 
-    final PsiVariable variable = myVariables[selectedIndex];
+    final Object variable = myVariables[selectedIndex];
     if (variable instanceof PsiField) {
       final PsiField field = (PsiField)variable;
       final PsiClass hisClass = field.getContainingClass();

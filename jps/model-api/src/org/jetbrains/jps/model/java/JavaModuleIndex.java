@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,20 +17,15 @@ package org.jetbrains.jps.model.java;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
-import java.util.Set;
 
-public abstract class JavaModuleIndex {
+public interface JavaModuleIndex extends JpsElement {
   /**
    * Returns a path to a module descriptor (module-info.java file) for the given module,
    * or {@code null} when there is no descriptor.
    */
-  public abstract @Nullable File getModuleInfoFile(@NotNull JpsModule module);
-
-  /**
-   * Returns {@code true} when at least one module in the chunk has a module descriptor (module-info.java file).
-   */
-  public abstract boolean hasJavaModules(@NotNull Set<JpsModule> chunk);
+  @Nullable File getModuleInfoFile(@NotNull JpsModule module, boolean forTests);
 }

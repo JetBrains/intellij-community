@@ -131,6 +131,17 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
                                     @Nullable String externalProjectPath,
                                     @NotNull List<String> taskNames,
                                     @Nullable String executionName) {
+    return generateName(project, externalSystemId, externalProjectPath, taskNames, executionName, " [", "]");
+  }
+
+  @NotNull
+  public static String generateName(@NotNull Project project,
+                                    @NotNull ProjectSystemId externalSystemId,
+                                    @Nullable String externalProjectPath,
+                                    @NotNull List<String> taskNames,
+                                    @Nullable String executionName,
+                                    @NotNull String tasksPrefix,
+                                    @NotNull String tasksPostfix) {
 
     String rootProjectPath = null;
     if (externalProjectPath != null) {
@@ -151,13 +162,11 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
     }
     if (!StringUtil.isEmptyOrSpaces(projectName)) {
       buffer.append(projectName);
-      buffer.append(' ');
     } else {
       buffer.append(externalProjectPath);
-      buffer.append(' ');
     }
 
-    buffer.append('[');
+    buffer.append(tasksPrefix);
     if (!StringUtil.isEmpty(executionName)) {
       buffer.append(executionName);
     }
@@ -167,7 +176,7 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
       }
       buffer.setLength(buffer.length() - 1);
     }
-    buffer.append(']');
+    buffer.append(tasksPostfix);
 
     return buffer.toString();
   }

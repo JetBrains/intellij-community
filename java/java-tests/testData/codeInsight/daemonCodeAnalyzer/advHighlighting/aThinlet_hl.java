@@ -20,7 +20,6 @@
 //package thinlet; //java
 //midp package thinlet.midp;
 
-import java.applet.*; //java
 import java.awt.*; //java
 import java.awt.<error descr="Cannot resolve symbol 'datatransfer'">datatransfer</error>.*; //java
 import java.awt.<error descr="Cannot resolve symbol 'image'">image</error>.*; //java
@@ -4835,11 +4834,11 @@ class Thinlet extends Container //java
 			set(component, key, Integer.valueOf(value));
 		}
 		else if ("icon" == definition[0]) {
-			set<error descr="'set(java.lang.Object, java.lang.Object, java.lang.Object)' in 'Thinlet' cannot be applied to '(java.lang.Object, java.lang.String, Image)'">(component, key, getIcon(value))</error>;
+			set(component, key, <error descr="'set(java.lang.Object, java.lang.Object, java.lang.Object)' in 'Thinlet' cannot be applied to '(java.lang.Object, java.lang.String, Image)'">getIcon(value)</error>);
 		}
 		else if ("method" == definition[0]) {
 			try { //java
-				set<error descr="'set(java.lang.Object, java.lang.Object, java.lang.Object)' in 'Thinlet' cannot be applied to '(java.lang.Object, java.lang.String, java.lang.reflect.Method)'">(component, key, getClass().getMethod(value, null))</error>; //java
+				set(component, key, <error descr="'set(java.lang.Object, java.lang.Object, java.lang.Object)' in 'Thinlet' cannot be applied to '(java.lang.Object, java.lang.String, java.lang.reflect.Method)'">getClass().getMethod(value, null)</error>); //java
 			} catch (Exception exc) { System.err.println(value); exc.printStackTrace(); } //java
 			//midp setMethod(component, key, value);
 		}
@@ -4975,7 +4974,7 @@ class Thinlet extends Container //java
 	 */
 	public void setIcon(Object component, String key, <error descr="Cannot resolve symbol 'Image'">Image</error> icon) {
 		Object[] definition = getDefinition(component, key, "icon");
-		if (set<error descr="'set(java.lang.Object, java.lang.Object, java.lang.Object)' in 'Thinlet' cannot be applied to '(java.lang.Object, java.lang.String, Image)'">(component, (String) definition[1], icon)</error>) {
+		if (set(component, (String) definition[1], <error descr="'set(java.lang.Object, java.lang.Object, java.lang.Object)' in 'Thinlet' cannot be applied to '(java.lang.Object, java.lang.String, Image)'">icon</error>)) {
 			update(component, definition[2]);
 		}
 	}
@@ -4994,7 +4993,7 @@ class Thinlet extends Container //java
 	public void setMethod(Object component, String key, <error descr="Cannot resolve symbol 'Method'">Method</error> method) { //java
 	//midp public void setMethod(Object component, String key, String method) {
 		Object[] definition = getDefinition(component, key, "method");
-		if (set<error descr="'set(java.lang.Object, java.lang.Object, java.lang.Object)' in 'Thinlet' cannot be applied to '(java.lang.Object, java.lang.String, Method)'">(component, (String) definition[1], method)</error>) {
+		if (set(component, (String) definition[1], <error descr="'set(java.lang.Object, java.lang.Object, java.lang.Object)' in 'Thinlet' cannot be applied to '(java.lang.Object, java.lang.String, Method)'">method</error>)) {
 			update(component, definition[2]);
 		}
 	}
@@ -5118,7 +5117,7 @@ class Thinlet extends Container //java
 	 */
 	private boolean setIcon(Object component,
 			String key, String path, <error descr="Cannot resolve symbol 'Image'">Image</error> defaultvalue) {
-		return set<error descr="'set(java.lang.Object, java.lang.Object, java.lang.Object)' in 'Thinlet' cannot be applied to '(java.lang.Object, java.lang.String, Image)'">(component, key, (path != null) ? getIcon(path) : defaultvalue)</error>;
+		return set(component, key, <error descr="'set(java.lang.Object, java.lang.Object, java.lang.Object)' in 'Thinlet' cannot be applied to '(java.lang.Object, java.lang.String, Image)'">(path != null) ? getIcon(path) : defaultvalue</error>);
 	}
 
 	/**

@@ -28,7 +28,7 @@ import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -36,7 +36,6 @@ import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
- *         Date: Apr 29, 2009 2:03:38 PM
  */
 public class OldReferenceResolver {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceParameter.OldReferenceResolver");
@@ -243,14 +242,11 @@ public class OldReferenceResolver {
 
   private String getTempVar(PsiExpression expr, PsiExpression initializer) throws IncorrectOperationException {
     String id = myTempVars.get(expr);
-    if (id != null) {
-      return id;
-    }
-    else {
+    if (id == null) {
       id = RefactoringUtil.createTempVar(initializer, myContext, true);
       myTempVars.put(expr, id);
-      return id;
     }
+    return id;
   }
 
   private PsiElement replaceFieldWithGetter(PsiElement expr, PsiField psiField, boolean qualify) throws IncorrectOperationException {

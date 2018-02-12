@@ -43,12 +43,7 @@ public class PluginId implements Comparable<PluginId> {
 
   @NotNull
   public static synchronized PluginId getId(@NotNull String idString) {
-    PluginId pluginId = ourRegisteredIds.get(idString);
-    if (pluginId == null) {
-      pluginId = new PluginId(idString);
-      ourRegisteredIds.put(idString, pluginId);
-    }
-    return pluginId;
+    return ourRegisteredIds.computeIfAbsent(idString, PluginId::new);
   }
 
   @Nullable

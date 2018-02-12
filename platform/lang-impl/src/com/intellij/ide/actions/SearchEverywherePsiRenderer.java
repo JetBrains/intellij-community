@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,17 @@ import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
@@ -68,18 +71,28 @@ class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiElement>
 
   @Override
   public String getElementText(PsiElement element) {
-    final String name = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : null;
+    VirtualFile file = element instanceof PsiFile ? PsiUtilCore.getVirtualFile(element) :
+                       element instanceof VirtualFile ? (VirtualFile)element : null;
+    if (file != null) {
+      return EditorTabbedContainer.calcTabTitle(element.getProject(), file);
+    }
+    String name = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : null;
     return StringUtil.notNullize(name, "<unnamed>");
   }
 
   @Override
   protected String getContainerText(PsiElement element, String name) {
     if (element instanceof PsiFileSystemItem) {
-      PsiFileSystemItem parent = ((PsiFileSystemItem)element).getParent();
-      final PsiDirectory psiDirectory = parent instanceof PsiDirectory ? (PsiDirectory)parent : null;
-      VirtualFile virtualFile = psiDirectory == null ? null : psiDirectory.getVirtualFile();
-      if (virtualFile == null) return null;
-      String relativePath = GotoFileCellRenderer.getRelativePath(virtualFile, element.getProject());
+      VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
+      VirtualFile parent = file == null ? null : file.getParent();
+      if (parent == null) {
+        if (file != null) { // use fallback from Switcher
+          String presentableUrl = file.getPresentableUrl();
+          return FileUtil.getLocationRelativeToUserHome(presentableUrl);
+        }
+        return null;
+      }
+      String relativePath = GotoFileCellRenderer.getRelativePath(parent, element.getProject());
       if (relativePath == null) return "( " + File.separator + " )";
       int width = myList.getWidth();
       if (width == 0) width += 800;
@@ -106,14 +119,15 @@ class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiElement>
     String right = ")";
 
     if (fm.stringWidth(left + text + right) < maxWidth) return left + text + right;
-    final LinkedList<String> parts = new LinkedList<>(StringUtil.split(text, "."));
+    String separator = text.contains(File.separator) ? File.separator : ".";
+    final LinkedList<String> parts = new LinkedList<>(StringUtil.split(text, separator));
     int index;
     while (parts.size() > 1) {
       index = parts.size() / 2 - 1;
       parts.remove(index);
-      if (fm.stringWidth(StringUtil.join(parts, ".") + "...") < maxWidth) {
-        parts.add(index, index == 0 ? "..." : ".");
-        return left + StringUtil.join(parts, ".") + right;
+      if (fm.stringWidth(StringUtil.join(parts, separator) + "...") < maxWidth) {
+        parts.add(index, "...");
+        return left + StringUtil.join(parts, separator) + right;
       }
     }
     //todo

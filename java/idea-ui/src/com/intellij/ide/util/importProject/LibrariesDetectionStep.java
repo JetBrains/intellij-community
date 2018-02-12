@@ -26,7 +26,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 6, 2004
  */
 public class LibrariesDetectionStep extends AbstractStepWithProgress<List<LibraryDescriptor>> {
   private final ProjectFromSourcesBuilder myBuilder;

@@ -17,8 +17,7 @@ package org.jetbrains.jps.builders.rebuild;
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.TestFileSystemBuilder
-import com.intellij.util.io.TestFileSystemItem
+import com.intellij.util.io.DirectoryContentSpec
 import org.jetbrains.jps.builders.CompileScopeTestBuilder
 import org.jetbrains.jps.builders.JpsBuildTestCase
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -39,17 +38,13 @@ abstract class JpsRebuildTestCase: JpsBuildTestCase() {
     addJdk("1.6");
   }
 
-  fun doTest(projectPath: String, expectedOutput: TestFileSystemItem) {
+  fun doTest(projectPath: String, expectedOutput: DirectoryContentSpec) {
     doTest(projectPath, LinkedHashMap<String, String>(), expectedOutput);
   }
 
-  fun doTest(projectPath: String, pathVariables: Map<String, String>, expectedOutput: TestFileSystemItem) {
+  fun doTest(projectPath: String, pathVariables: Map<String, String>, expectedOutput: DirectoryContentSpec) {
     loadAndRebuild(projectPath, pathVariables);
     assertOutput(myOutputDirectory.absolutePath, expectedOutput);
-  }
-
-  fun assertOutput(targetFolder: String, expectedOutput: TestFileSystemItem) {
-    expectedOutput.assertDirectoryEqual(File(FileUtil.toSystemDependentName(targetFolder)));
   }
 
   fun loadAndRebuild(projectPath: String, pathVariables: Map<String, String>) {
@@ -67,33 +62,5 @@ abstract class JpsRebuildTestCase: JpsBuildTestCase() {
 
   override fun getTestDataRootPath(): String {
     return PathManagerEx.findFileUnderCommunityHome("jps/jps-builders/testData/output")!!.absolutePath;
-  }
-}
-
-fun fs(init: TestFileSystemBuilderBuilder.() -> Unit): TestFileSystemItem {
-  val builder = TestFileSystemBuilder.fs()
-  TestFileSystemBuilderBuilder(builder).init()
-  return builder.build()
-}
-
-class TestFileSystemBuilderBuilder(val current: TestFileSystemBuilder) {
-  fun file(name: String) {
-    current.file(name)
-  }
-
-  fun file(name: String, content: String) {
-    current.file(name, content)
-  }
-
-  inline fun dir(name: String, init: TestFileSystemBuilderBuilder.() -> Unit) {
-    val dir = current.dir(name)
-    TestFileSystemBuilderBuilder(dir).init()
-    dir.end()
-  }
-
-  inline fun archive(name: String, init: TestFileSystemBuilderBuilder.() -> Unit) {
-    val dir = current.archive(name)
-    TestFileSystemBuilderBuilder(dir).init()
-    dir.end()
   }
 }

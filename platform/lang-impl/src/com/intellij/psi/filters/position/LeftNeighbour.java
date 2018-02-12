@@ -21,11 +21,7 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.FilterPositionUtil;
 
 /**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 06.02.2003
- * Time: 19:03:05
- * To change this template use Options | File Templates.
+ * @deprecated please consider using {@link com.intellij.patterns.ElementPattern} or checks in code instead
  */
 public class LeftNeighbour extends PositionElementFilter{
 

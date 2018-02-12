@@ -20,13 +20,11 @@ import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.intention.impl.BaseMoveInitializerToMethodAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
-import com.intellij.testIntegration.TestIntegrationUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -37,7 +35,7 @@ import java.util.Collections;
  * @author cdr
  */
 public class MoveInitializerToSetUpMethodAction extends BaseMoveInitializerToMethodAction {
-  private static final Logger LOG = Logger.getInstance("#" + MoveInitializerToSetUpMethodAction.class.getName());
+  private static final Logger LOG = Logger.getInstance(MoveInitializerToSetUpMethodAction.class);
 
   @Override
   @NotNull
@@ -53,25 +51,23 @@ public class MoveInitializerToSetUpMethodAction extends BaseMoveInitializerToMet
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    final boolean isAvailable = super.isAvailable(project, editor, element) && TestIntegrationUtils.isTest(element);
+    final boolean isAvailable = super.isAvailable(project, editor, element);
     if (isAvailable) {
       final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
       LOG.assertTrue(field != null);
       final PsiClass aClass = field.getContainingClass();
       LOG.assertTrue(aClass != null);
+      TestFramework testFramework = TestFrameworks.detectFramework(aClass);
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-      for (TestFramework framework : Extensions.getExtensions(TestFramework.EXTENSION_NAME)) {
-        if (framework instanceof JavaTestFramework && framework.isTestClass(aClass)) {
-          try {
-            ((JavaTestFramework)framework).createSetUpPatternMethod(elementFactory);
-            return true;
-          }
-          catch (Exception e) {
-            return false;
-          }
+      if (testFramework instanceof JavaTestFramework) {
+        try {
+          ((JavaTestFramework)testFramework).createSetUpPatternMethod(elementFactory);
+          return testFramework.isTestClass(aClass) || testFramework.findSetUpMethod(aClass) instanceof PsiMethod;
+        }
+        catch (Exception e) {
+          return false;
         }
       }
-      return true;
     }
     return false;
   }
@@ -85,7 +81,14 @@ public class MoveInitializerToSetUpMethodAction extends BaseMoveInitializerToMet
   @NotNull
   @Override
   protected Collection<PsiMethod> getOrCreateMethods(@NotNull Project project, @NotNull Editor editor, PsiFile file, @NotNull PsiClass aClass) {
-    final PsiMethod setUpMethod = TestFrameworks.getInstance().findOrCreateSetUpMethod(aClass);
-    return setUpMethod == null ? Collections.<PsiMethod>emptyList() : Arrays.asList(setUpMethod);
+    TestFramework testFramework = TestFrameworks.detectFramework(aClass);
+    PsiElement setUpMethod = null;
+    if (testFramework != null) {
+      setUpMethod = testFramework.findSetUpMethod(aClass);
+      if (setUpMethod == null) {
+        setUpMethod = testFramework.findOrCreateSetUpMethod(aClass);
+      }
+    }
+    return setUpMethod instanceof PsiMethod ? Collections.singletonList((PsiMethod)setUpMethod) : Collections.emptyList();
   }
 }

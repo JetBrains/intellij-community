@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.*;
@@ -146,9 +132,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
   private DefaultMutableTreeNode buildNodes() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode(new Descriptor());
     RunManager runManager = RunManager.getInstance(myProject);
-    final ConfigurationType[] configTypes = runManager.getConfigurationFactories();
-
-    for (final ConfigurationType type : configTypes) {
+    for (final ConfigurationType type : runManager.getConfigurationFactories()) {
       final Icon icon = type.getIcon();
       DefaultMutableTreeNode typeNode = new DefaultMutableTreeNode(new ConfigurationTypeDescriptor(type, icon, isConfigurationAssigned(type)));
       root.add(typeNode);
@@ -176,7 +160,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
 
 
   private boolean isConfigurationAssigned(ConfigurationType type) {
-    final RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
+    final RunManager runManager = RunManager.getInstance(myProject);
     for (ConfigurationFactory factory : type.getConfigurationFactories()) {
       final RunnerAndConfigurationSettings settings = ((RunManagerImpl)runManager).getConfigurationTemplate(factory);
       if (isConfigurationAssigned(settings.getConfiguration())) return true;
@@ -185,8 +169,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
   }
 
   private boolean isConfigurationAssigned(RunConfiguration configuration) {
-    final java.util.List<T> tasks = RunManagerEx.getInstanceEx(myProject).getBeforeRunTasks(configuration, getTaskID());
-    for (T task : tasks) {
+    for (T task : RunManagerEx.getInstanceEx(myProject).getBeforeRunTasks(configuration, getTaskID())) {
       if (isRunning(task))
         return true;
     }
@@ -195,7 +178,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
 
   @Override
   protected void doOKAction() {
-    final RunManagerImpl runManager = (RunManagerImpl)RunManagerEx.getInstanceEx(myProject);
+    final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
     for (Enumeration nodes = myRoot.depthFirstEnumeration(); nodes.hasMoreElements(); ) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)nodes.nextElement();
       final Descriptor descriptor = (Descriptor)node.getUserObject();
@@ -225,20 +208,24 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
   protected abstract boolean isRunning(T task);
 
   private void update(RunConfiguration config, boolean enabled, RunManagerImpl runManager) {
-    List<BeforeRunTask> tasks = runManager.getBeforeRunTasks(config);
+    List<BeforeRunTask<?>> tasks = runManager.getBeforeRunTasks(config);
     BeforeRunTaskProvider<T> provider = BeforeRunTaskProvider.getProvider(myProject, getTaskID());
-    if (provider == null)
+    if (provider == null) {
       return;
+    }
+
     T task = provider.createTask(config);
     update(task);
     task.setEnabled(true);
     if (enabled) {
       if (!tasks.contains(task)) {
+        tasks = new ArrayList<>(tasks);
         tasks.add(task);
       }
     }
     else {
       if (tasks.contains(task)) {
+        tasks = new ArrayList<>(tasks);
         tasks.remove(task);
       }
     }
@@ -366,6 +353,5 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
 
       return this;
     }
-
   }
 }

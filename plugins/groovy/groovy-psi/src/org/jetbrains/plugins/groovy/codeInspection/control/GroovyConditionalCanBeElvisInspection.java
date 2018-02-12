@@ -42,12 +42,6 @@ public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return CONTROL_FLOW;
-  }
-
-  @Override
   public String buildErrorString(Object... args) {
     return "Conditional expression can be elvis #loc";
   }
@@ -138,7 +132,7 @@ public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
 
     return resolved instanceof PsiMethod &&
            "isEmpty".equals(((PsiMethod)resolved).getName()) &&
-           ((PsiMethod)resolved).getParameterList().getParametersCount() == 0;
+           ((PsiMethod)resolved).getParameterList().isEmpty();
   }
 
   /**
@@ -172,7 +166,7 @@ public class GroovyConditionalCanBeElvisInspection extends BaseInspection {
 
     return resolved instanceof PsiMethod &&
            "isEmpty".equals(((PsiMethod)resolved).getName()) &&
-           ((PsiMethod)resolved).getParameterList().getParametersCount() == 0;
+           ((PsiMethod)resolved).getParameterList().isEmpty();
   }
 
   private static boolean checkForNull(GrExpression condition, GrExpression then) {

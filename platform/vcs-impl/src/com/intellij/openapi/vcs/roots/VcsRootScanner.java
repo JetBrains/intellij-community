@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.roots;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -57,10 +58,6 @@ public class VcsRootScanner implements BulkFileListener, ModuleRootListener, Vcs
   }
 
   @Override
-  public void before(@NotNull List<? extends VFileEvent> events) {
-  }
-
-  @Override
   public void after(@NotNull List<? extends VFileEvent> events) {
     for (VFileEvent event : events) {
       String filePath = event.getPath();
@@ -89,11 +86,8 @@ public class VcsRootScanner implements BulkFileListener, ModuleRootListener, Vcs
     }
 
     myAlarm.cancelAllRequests(); // one scan is enough, no need to queue, they all do the same
-    myAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        myRootProblemNotifier.rescanAndNotifyIfNeeded();
-      }
-    }, WAIT_BEFORE_SCAN);
+    myAlarm.addRequest(() ->
+      BackgroundTaskUtil.runUnderDisposeAwareIndicator(myAlarm, () ->
+        myRootProblemNotifier.rescanAndNotifyIfNeeded()), WAIT_BEFORE_SCAN);
   }
 }

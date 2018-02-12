@@ -46,16 +46,16 @@ public interface ImageEditor extends Disposable, ImageComponentDecorator {
     JComponent getContentComponent();
 
     /**
-     * Return <code>true</code> if editor show valid image.
+     * Return {@code true} if editor show valid image.
      *
-     * @return <code>true</code> if editor show valid image.
+     * @return {@code true} if editor show valid image.
      */
     boolean isValid();
 
     /**
-     * Return <code>true</code> if editor is already disposed.
+     * Return {@code true} if editor is already disposed.
      *
-     * @return <code>true</code> if editor is already disposed.
+     * @return {@code true} if editor is already disposed.
      */
     boolean isDisposed();
 

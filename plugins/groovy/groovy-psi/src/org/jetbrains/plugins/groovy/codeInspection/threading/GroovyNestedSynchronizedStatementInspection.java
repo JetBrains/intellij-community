@@ -32,13 +32,6 @@ public class GroovyNestedSynchronizedStatementInspection extends BaseInspection 
   @Override
   @Nls
   @NotNull
-  public String getGroupDisplayName() {
-    return THREADING_ISSUES;
-  }
-
-  @Override
-  @Nls
-  @NotNull
   public String getDisplayName() {
     return "Nested 'synchronized' statement";
   }

@@ -22,9 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 
-/**
- * User: ksafonov
- */
 public class XCompareWithClipboardAction extends XFetchValueActionBase {
 
   @Override

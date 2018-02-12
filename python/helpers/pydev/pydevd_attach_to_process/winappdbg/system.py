@@ -567,7 +567,7 @@ class System (_ProcessContainer):
                 try:
 
                     # Load a specific dbghelp.dll file
-                    debug.system.load_dbghelp("C:\Some folder\dbghelp.dll")
+                    debug.system.load_dbghelp("C:\\Some folder\\dbghelp.dll")
 
                     # Start a new process for debugging
                     debug.execv( argv )

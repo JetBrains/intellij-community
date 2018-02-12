@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,12 +67,12 @@ public class SwitchStatementDensityInspection extends BaseInspection {
       if (branchCount == 0) {
         return;
       }
-      final double density = calculateDensity(body, branchCount);
+      final double density = calculateDensity(body, (branchCount < 0) ? -branchCount + 1 : branchCount);
       final int intDensity = (int)(density * 100.0);
       if (intDensity > m_limit) {
         return;
       }
-      registerStatementError(statement, intDensity);
+      registerStatementError(statement, Integer.valueOf(intDensity));
     }
 
     private double calculateDensity(@NotNull PsiCodeBlock body, int branchCount) {

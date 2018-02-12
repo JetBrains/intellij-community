@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 15.11.2006
- * Time: 17:53:24
- */
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,6 +24,8 @@ public abstract class FilePatch {
   private String myBeforeVersionId;
   private String myAfterVersionId;
   private String myBaseRevisionText;
+  // store file mode in 6 digit format a.e. 100655, -1 means file mode was not changed in the pathc 
+  private int myNewFileMode = -1;
 
   public String getBeforeName() {
     return myBeforeName;
@@ -89,4 +85,12 @@ public abstract class FilePatch {
   public abstract boolean isNewFile();
 
   public abstract boolean isDeletedFile();
+
+  public int getNewFileMode() {
+    return myNewFileMode;
+  }
+
+  public void setNewFileMode(int newFileMode) {
+    myNewFileMode = newFileMode;
+  }
 }

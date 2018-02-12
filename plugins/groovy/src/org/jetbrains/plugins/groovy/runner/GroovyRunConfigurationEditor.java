@@ -69,7 +69,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
       VirtualFile script = ScriptFileUtil.findScriptFileByPath(scriptPath.getText());
       return script != null && !fileIndex.isInTestSourceContent(script);
     };
-    myJrePathEditor.setDefaultJreSelector(new SdkFromModuleDependencies(modulesComboBox, productionOnly) {
+    myJrePathEditor.setDefaultJreSelector(new SdkFromModuleDependencies<ModulesComboBox>(modulesComboBox, ModulesComboBox::getSelectedModule, productionOnly) {
       @Override
       public void addChangeListener(@NotNull Runnable listener) {
         super.addChangeListener(listener);

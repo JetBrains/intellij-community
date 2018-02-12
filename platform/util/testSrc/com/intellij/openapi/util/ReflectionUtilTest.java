@@ -38,7 +38,7 @@ public class ReflectionUtilTest extends TestCase {
     fail();
   }
 
-  public void testResetField() throws Exception {
+  public void testResetField() {
     final Reset reset = new Reset();
 
     ReflectionUtil.resetField(reset, String.class, "STRING");

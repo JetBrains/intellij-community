@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +19,15 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
-import com.intellij.execution.dashboard.DashboardRunConfigurationStatus;
 import com.intellij.execution.dashboard.RunDashboardContributor;
+import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
+import com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
@@ -41,50 +40,69 @@ import java.util.Collections;
 /**
  * @author konstantin.aleev
  */
-class RunConfigurationNode  extends AbstractTreeNode<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>>
-  implements DashboardRunConfigurationNode {
-  public RunConfigurationNode(Project project, @NotNull Pair<RunnerAndConfigurationSettings, RunContentDescriptor> value) {
-    super(project, value);
+class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigurationSettings, Content>>
+  implements RunDashboardRunConfigurationNode {
+
+  @Nullable private final RunDashboardContributor myContributor;
+  private final UserDataHolder myUserDataHolder = new UserDataHolderBase();
+
+  RunConfigurationNode(Project project, @NotNull Pair<RunnerAndConfigurationSettings, RunContentDescriptor> value,
+                       @Nullable RunDashboardContributor contributor) {
+    super(project, Pair.create(value.first, value.second == null ? null : value.second.getAttachedContent()));
+    myContributor = contributor;
   }
 
   @Override
   @NotNull
   public RunnerAndConfigurationSettings getConfigurationSettings() {
     //noinspection ConstantConditions ???
-    return getValue().getFirst();
+    return getValue().first;
   }
 
   @Nullable
   @Override
   public RunContentDescriptor getDescriptor() {
+    Content content = getContent();
+    if (content == null) return null;
+
+    return RunContentManagerImpl.getRunContentDescriptorByContent(content);
+  }
+
+  @Nullable
+  @Override
+  public Content getContent() {
     //noinspection ConstantConditions ???
-    return getValue().getSecond();
+    return getValue().second;
   }
 
   @Override
   protected void update(PresentationData presentation) {
     RunnerAndConfigurationSettings configurationSettings = getConfigurationSettings();
-    boolean isStored = RunManager.getInstance(getProject()).getAllConfigurationsList().contains(configurationSettings.getConfiguration());
-    presentation.addText(configurationSettings.getName(),
-                         isStored ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
-    RunDashboardContributor contributor = RunDashboardContributor.getContributor(configurationSettings.getType());
+    //noinspection ConstantConditions
+    boolean isStored = RunManager.getInstance(getProject()).hasSettings(configurationSettings);
+    SimpleTextAttributes nameAttributes;
+    if (isStored) {
+      nameAttributes = getContent() != null ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
+    }
+    else {
+      nameAttributes = SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES;
+    }
+    presentation.addText(configurationSettings.getName(), nameAttributes);
     Icon icon = null;
-    if (contributor != null) {
-      DashboardRunConfigurationStatus status = contributor.getStatus(this);
-      if (DashboardRunConfigurationStatus.STARTED.equals(status)) {
-        icon = getExecutorIcon();
-      }
-      else if (DashboardRunConfigurationStatus.FAILED.equals(status)) {
-        icon = status.getIcon();
-      }
+    RunDashboardRunConfigurationStatus status = getStatus();
+    if (RunDashboardRunConfigurationStatus.STARTED.equals(status)) {
+      icon = getExecutorIcon();
+    }
+    else if (RunDashboardRunConfigurationStatus.FAILED.equals(status)) {
+      icon = status.getIcon();
     }
     if (icon == null) {
       icon = RunManagerEx.getInstanceEx(getProject()).getConfigurationIcon(configurationSettings);
     }
     presentation.setIcon(isStored ? icon : IconLoader.getDisabledIcon(icon));
 
-    if (contributor != null) {
-      contributor.updatePresentation(presentation, this);
+    if (myContributor != null) {
+      myContributor.updatePresentation(presentation, this);
     }
   }
 
@@ -92,6 +110,29 @@ class RunConfigurationNode  extends AbstractTreeNode<Pair<RunnerAndConfiguration
   @Override
   public Collection<? extends AbstractTreeNode> getChildren() {
     return Collections.emptyList();
+  }
+
+  @Nullable
+  @Override
+  public <T> T getUserData(@NotNull Key<T> key) {
+    return myUserDataHolder.getUserData(key);
+  }
+
+  @Override
+  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+    myUserDataHolder.putUserData(key, value);
+  }
+
+  @Nullable
+  @Override
+  public RunDashboardContributor getContributor() {
+    return myContributor;
+  }
+
+  @NotNull
+  @Override
+  public RunDashboardRunConfigurationStatus getStatus() {
+    return myContributor != null ? myContributor.getStatus(this) : RunDashboardRunConfigurationStatus.getStatus(this);
   }
 
   @Nullable
@@ -106,5 +147,10 @@ class RunConfigurationNode  extends AbstractTreeNode<Pair<RunnerAndConfiguration
       }
     }
     return null;
+  }
+
+  @Override
+  public String toString() {
+    return getConfigurationSettings().getName();
   }
 }

@@ -120,7 +120,7 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
         return true;
       }
       if (!myIsDirectory && token.length() > 0 && !PsiDirectoryFactory.getInstance(myProject).isValidPackageName(token)) {
-        myErrorText = "Not a valid package name, it will not be possible to create a class inside";
+        myErrorText = "Not a valid package name, it will not be possible to create a Java class inside";
         return true;
       }
       firstToken = false;

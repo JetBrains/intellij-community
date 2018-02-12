@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 15.08.13
  */
 public class XmlEnumeratedValueReferenceProvider<T extends PsiElement> extends PsiReferenceProvider {
 

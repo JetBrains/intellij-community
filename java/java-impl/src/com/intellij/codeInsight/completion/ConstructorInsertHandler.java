@@ -32,6 +32,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Contract;
@@ -242,7 +243,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
 
     final PsiElement place = context.getFile().findElementAt(context.getStartOffset());
     assert place != null;
-    boolean hasParams = constructor != null ? constructor.getParameterList().getParametersCount() > 0 : hasConstructorParameters(psiClass, place);
+    boolean hasParams = constructor != null ? !constructor.getParameterList().isEmpty() : hasConstructorParameters(psiClass, place);
 
     RangeMarker refEnd = context.getDocument().createRangeMarker(context.getTailOffset(), context.getTailOffset());
     
@@ -263,7 +264,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
     boolean hasParams = false;
     for (PsiMethod constructor : psiClass.getConstructors()) {
       if (!resolveHelper.isAccessible(constructor, place, null)) continue;
-      if (constructor.getParameterList().getParametersCount() > 0) {
+      if (!constructor.getParameterList().isEmpty()) {
         hasParams = true;
         break;
       }
@@ -303,7 +304,8 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
 
     final PsiReferenceParameterList parameterList = parent.getBaseClassReference().getParameterList();
     final PsiTypeElement[] parameters = parameterList != null ? parameterList.getTypeParameterElements() : null;
-    if (shouldStartTypeTemplate(parameters)) {
+    final PsiElement newExpr = parent.getParent();
+    if (newExpr != null && PsiTypesUtil.getExpectedTypeByParent(newExpr) == null && shouldStartTypeTemplate(parameters)) {
       startTemplate(parent, editor, createOverrideRunnable(editor, file, project), parameters);
       return null;
     }

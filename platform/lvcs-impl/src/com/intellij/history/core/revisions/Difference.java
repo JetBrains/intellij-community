@@ -20,6 +20,7 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.vcsUtil.VcsUtil;
@@ -62,11 +63,18 @@ public class Difference {
   private ContentRevision createContentRevision(final Entry e, final IdeaGateway gw) {
     if (e == null) return null;
 
-    return new ContentRevision() {
+    return new ByteBackedContentRevision() {
       @Nullable
       public String getContent() throws VcsException {
         if (e.isDirectory()) return null;
         return e.getContent().getString(e, gw);
+      }
+
+      @Nullable
+      @Override
+      public byte[] getContentAsBytes() throws VcsException {
+        if (e.isDirectory()) return null;
+        return e.getContent().getBytes();
       }
 
       @NotNull

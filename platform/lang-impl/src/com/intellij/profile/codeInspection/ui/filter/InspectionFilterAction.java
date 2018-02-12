@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
+import com.intellij.lang.MetaLanguage;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
@@ -99,7 +100,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     for (String id : languageIds) {
       if (id != null) {
         final Language language = Language.findLanguageByID(id);
-        if (language != null) {
+        if (language != null && !(language instanceof MetaLanguage)) {
           languages.add(language);
         }
       }
@@ -221,25 +222,24 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
   }
 
   private class LanguageFilterAction extends CheckboxAction implements DumbAware {
-
-    private final String myLanguageId;
+    private final Language myLanguage;
 
     public LanguageFilterAction(final @Nullable Language language) {
       super(language == null ? "Language is not specified" : language.getDisplayName());
-      myLanguageId = language == null ? null : language.getID();
+      myLanguage = language;
     }
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return myInspectionsFilter.containsLanguageId(myLanguageId);
+      return myInspectionsFilter.containsLanguage(myLanguage);
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       if (state) {
-        myInspectionsFilter.addLanguageId(myLanguageId);
+        myInspectionsFilter.addLanguage(myLanguage);
       } else {
-        myInspectionsFilter.removeLanguageId(myLanguageId);
+        myInspectionsFilter.removeLanguage(myLanguage);
       }
     }
   }

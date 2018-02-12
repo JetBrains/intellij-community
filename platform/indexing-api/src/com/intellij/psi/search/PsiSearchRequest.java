@@ -51,7 +51,7 @@ public class PsiSearchRequest {
     this.caseSensitive = caseSensitive;
     this.processor = processor;
     if (searchScope instanceof GlobalSearchScope && ((GlobalSearchScope)searchScope).getProject() == null) {
-      throw new AssertionError("Every search scope must be associated with a project");
+      throw new AssertionError("Every search scope must be associated with a project: " + searchScope);
     }
   }
 

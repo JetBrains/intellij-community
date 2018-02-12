@@ -72,7 +72,7 @@ public class CustomFoldingRegionsPopup {
     @Nullable
     @Override
     public String toString() {
-      return StringUtil.repeat("  ", myIndent) + myDescriptor.getPlaceholderText();
+      return StringUtil.repeat("   ", myIndent) + myDescriptor.getPlaceholderText();
     }
   }
 

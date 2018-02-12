@@ -56,6 +56,11 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
       this(method, scope, strict, null);
     }
 
+    @Override
+    public boolean isQueryValid() {
+      return myMethod.isValid();
+    }
+
     @NotNull
     public Project getProject() {
       return myProject;
@@ -142,6 +147,6 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
   }
 
   private static UniqueResultsQuery<PsiReference, ReferenceDescriptor> uniqueResults(@NotNull Query<PsiReference> composite) {
-    return new UniqueResultsQuery<>(composite, ContainerUtil.<ReferenceDescriptor>canonicalStrategy(), ReferenceDescriptor.MAPPER);
+    return new UniqueResultsQuery<>(composite, ContainerUtil.canonicalStrategy(), ReferenceDescriptor.MAPPER);
   }
 }

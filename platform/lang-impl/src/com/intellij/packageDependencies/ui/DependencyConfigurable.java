@@ -58,7 +58,7 @@ public class DependencyConfigurable extends BaseConfigurable {
   private JPanel myDenyPanel;
   private JPanel myAllowPanel;
   private JCheckBox mySkipImports;
-  private static final Logger LOG = Logger.getInstance("#" + DependencyConfigurable.class.getName());
+  private static final Logger LOG = Logger.getInstance(DependencyConfigurable.class);
 
   public DependencyConfigurable(Project project) {
     myProject = project;

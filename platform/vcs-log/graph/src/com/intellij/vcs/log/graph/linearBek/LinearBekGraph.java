@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.graph.linearBek;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
@@ -110,12 +109,7 @@ public class LinearBekGraph implements LinearGraph {
 
     public Collection<GraphEdge> getAddedEdges() {
       Set<GraphEdge> result = myDottedEdges.getEdges();
-      result.removeAll(ContainerUtil.filter(myHiddenEdges.getEdges(), new Condition<GraphEdge>() {
-        @Override
-        public boolean value(GraphEdge graphEdge) {
-          return graphEdge.getType() == GraphEdgeType.DOTTED;
-        }
-      }));
+      result.removeAll(ContainerUtil.filter(myHiddenEdges.getEdges(), graphEdge -> graphEdge.getType() == GraphEdgeType.DOTTED));
       result.removeAll(myLinearGraph.myDottedEdges.getEdges());
       return result;
     }
@@ -123,12 +117,7 @@ public class LinearBekGraph implements LinearGraph {
     public Collection<GraphEdge> getRemovedEdges() {
       Set<GraphEdge> result = ContainerUtil.newHashSet();
       Set<GraphEdge> hidden = myHiddenEdges.getEdges();
-      result.addAll(ContainerUtil.filter(hidden, new Condition<GraphEdge>() {
-        @Override
-        public boolean value(GraphEdge graphEdge) {
-          return graphEdge.getType() != GraphEdgeType.DOTTED;
-        }
-      }));
+      result.addAll(ContainerUtil.filter(hidden, graphEdge -> graphEdge.getType() != GraphEdgeType.DOTTED));
       result.addAll(ContainerUtil.intersection(hidden, myLinearGraph.myDottedEdges.getEdges()));
       result.removeAll(myLinearGraph.myHiddenEdges.getEdges());
       return result;

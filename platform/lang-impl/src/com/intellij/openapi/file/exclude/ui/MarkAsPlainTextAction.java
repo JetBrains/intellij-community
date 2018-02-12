@@ -25,6 +25,8 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.JBIterable;
 
+import static com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager.isApplicableFor;
+
 /**
  * @author Rustam Vishnyakov
  */
@@ -36,7 +38,7 @@ public class MarkAsPlainTextAction extends DumbAwareAction {
     if (project == null || typeManager == null) return;
     JBIterable<VirtualFile> selectedFiles =
       JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY))
-              .filter(file -> EnforcedPlainTextFileTypeManager.isApplicableFor(file) && !typeManager.isMarkedAsPlainText(file));
+              .filter(file -> isApplicableFor(file) && !typeManager.isMarkedAsPlainText(file));
     typeManager.markAsPlainText(project, VfsUtilCore.toVirtualFileArray(selectedFiles.toList()));
   }
 
@@ -44,8 +46,9 @@ public class MarkAsPlainTextAction extends DumbAwareAction {
   public void update(AnActionEvent e) {
     EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
     JBIterable<VirtualFile> selectedFiles =
-      typeManager == null ? JBIterable.empty() : JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY))
-        .filter(file -> EnforcedPlainTextFileTypeManager.isApplicableFor(file) && !typeManager.isMarkedAsPlainText(file));
+      typeManager == null ? JBIterable.empty() :
+      JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY))
+        .filter(file -> isApplicableFor(file) && !typeManager.isMarkedAsPlainText(file));
     boolean enabled = e.getProject() != null && !selectedFiles.isEmpty();
     e.getPresentation().setEnabledAndVisible(enabled);
     e.getPresentation().setIcon(EnforcedPlainTextFileTypeFactory.ENFORCED_PLAIN_TEXT_ICON);

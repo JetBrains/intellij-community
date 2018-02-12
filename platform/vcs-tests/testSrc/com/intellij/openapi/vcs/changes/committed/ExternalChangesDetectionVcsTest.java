@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,17 +19,16 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.vcs.AbstractJunitVcsTestCase;
 import com.intellij.util.Processor;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
@@ -53,57 +52,41 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
   private File myClientRoot;
 
   @Before
-  public void setUp() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
-          myTempDirTestFixture = fixtureFactory.createTempDirTestFixture();
-          myTempDirTestFixture.setUp();
+  public void setUp() {
+    EdtTestUtil.runInEdtAndWait(() -> {
+      final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
+      myTempDirTestFixture = fixtureFactory.createTempDirTestFixture();
+      myTempDirTestFixture.setUp();
 
-          myClientRoot = new File(myTempDirTestFixture.getTempDirPath(), "clientroot");
-          myClientRoot.mkdir();
+      myClientRoot = new File(myTempDirTestFixture.getTempDirPath(), "clientroot");
+      myClientRoot.mkdir();
 
-          initProject(myClientRoot, ExternalChangesDetectionVcsTest.this.getTestName());
+      initProject(myClientRoot, ExternalChangesDetectionVcsTest.this.getTestName());
 
-          myVcs = new MockAbstractVcs(myProject);
-          myVcs.setChangeProvider(new MyMockChangeProvider());
-          myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
-          myVcsManager.registerVcs(myVcs);
-          myVcsManager.setDirectoryMapping("", myVcs.getName());
+      myVcs = new MockAbstractVcs(myProject);
+      myVcs.setChangeProvider(new MyMockChangeProvider());
+      myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
+      myVcsManager.registerVcs(myVcs);
+      myVcsManager.setDirectoryMapping("", myVcs.getName());
 
-          myLFS = LocalFileSystem.getInstance();
-          myChangeListManager = ChangeListManager.getInstance(myProject);
-          myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      }
+      myLFS = LocalFileSystem.getInstance();
+      myChangeListManager = ChangeListManager.getInstance(myProject);
+      myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
     });
   }
 
   @After
-  public void tearDown() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          myVcsManager.unregisterVcs(myVcs);
-          myVcs = null;
-          myVcsManager = null;
-          myChangeListManager = null;
-          myVcsDirtyScopeManager = null;
-          tearDownProject();
-          myTempDirTestFixture.tearDown();
-          myTempDirTestFixture = null;
-          FileUtil.delete(myClientRoot);
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      }
+  public void tearDown() {
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myVcsManager.unregisterVcs(myVcs);
+      myVcs = null;
+      myVcsManager = null;
+      myChangeListManager = null;
+      myVcsDirtyScopeManager = null;
+      tearDownProject();
+      myTempDirTestFixture.tearDown();
+      myTempDirTestFixture = null;
+      FileUtil.delete(myClientRoot);
     });
   }
 
@@ -195,16 +178,13 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
     public void getChanges(@NotNull VcsDirtyScope dirtyScope,
                            @NotNull final ChangelistBuilder builder,
                            @NotNull ProgressIndicator progress,
-                           @NotNull ChangeListManagerGate addGate) throws VcsException {
+                           @NotNull ChangeListManagerGate addGate) {
       for (FilePath path : dirtyScope.getDirtyFiles()) {
         builder.processUnversionedFile(path.getVirtualFile());
       }
-      final Processor<VirtualFile> processor = new Processor<VirtualFile>() {
-        @Override
-        public boolean process(final VirtualFile vf) {
-          builder.processUnversionedFile(vf);
-          return true;
-        }
+      final Processor<VirtualFile> processor = vf -> {
+        builder.processUnversionedFile(vf);
+        return true;
       };
       for (FilePath dir : dirtyScope.getRecursivelyDirtyDirectories()) {
         VfsUtil.processFilesRecursively(dir.getVirtualFile(), processor);

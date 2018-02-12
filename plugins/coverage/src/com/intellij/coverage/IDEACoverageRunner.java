@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 20-May-2008
- */
 package com.intellij.coverage;
 
 import com.intellij.execution.configurations.SimpleJavaParameters;
@@ -32,13 +28,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 public class IDEACoverageRunner extends JavaCoverageRunner {
-  private static final Logger LOG = Logger.getInstance("#" + IDEACoverageRunner.class.getName());
+  private static final Logger LOG = Logger.getInstance(IDEACoverageRunner.class);
 
   public ProjectData loadCoverageData(@NotNull final File sessionDataFile, @Nullable final CoverageSuite coverageSuite) {
     ProjectData projectData = ProjectDataLoader.load(sessionDataFile);
@@ -73,11 +68,16 @@ public class IDEACoverageRunner extends JavaCoverageRunner {
                                      SimpleJavaParameters parameters,
                                      boolean collectLineInfo,
                                      boolean isSampling) {
-    appendCoverageArgument(sessionDataFilePath, patterns, parameters, collectLineInfo, isSampling, null);
+    appendCoverageArgument(sessionDataFilePath, patterns, null, parameters, collectLineInfo, isSampling, null);
   }
 
-  public void appendCoverageArgument(final String sessionDataFilePath, final String[] patterns, final SimpleJavaParameters javaParameters,
-                                     final boolean collectLineInfo, final boolean isSampling, @Nullable String sourceMapPath) {
+  public void appendCoverageArgument(final String sessionDataFilePath,
+                                     final String[] patterns,
+                                     final String[] excludePatterns,
+                                     final SimpleJavaParameters javaParameters,
+                                     final boolean collectLineInfo,
+                                     final boolean isSampling,
+                                     @Nullable String sourceMapPath) {
     StringBuilder argument = new StringBuilder("-javaagent:");
     final String agentPath = PathUtil.getJarPathForClass(ProjectData.class);
     final String parentPath = handleSpacesInPath(agentPath, file -> {
@@ -101,13 +101,11 @@ public class IDEACoverageRunner extends JavaCoverageRunner {
         write2file(tempFile, sourceMapPath);
       }
       if (patterns != null) {
-        for (String coveragePattern : patterns) {
-          coveragePattern = coveragePattern.replace("$", "\\$").replace(".", "\\.").replaceAll("\\*", ".*");
-          if (!coveragePattern.endsWith(".*")) { //include inner classes
-            coveragePattern += "(\\$.*)*";
-          }
-          write2file(tempFile, coveragePattern);
-        }
+        writePatterns(tempFile, patterns);
+      }
+      if (excludePatterns != null) {
+        write2file(tempFile, "-exclude");
+        writePatterns(tempFile, excludePatterns);
       }
       argument.append(tempFile.getCanonicalPath());
     }
@@ -117,6 +115,16 @@ public class IDEACoverageRunner extends JavaCoverageRunner {
     }
 
     javaParameters.getVMParametersList().add(argument.toString());
+  }
+
+  private static void writePatterns(File tempFile, String[] patterns) throws IOException {
+    for (String coveragePattern : patterns) {
+      coveragePattern = coveragePattern.replace("$", "\\$").replace(".", "\\.").replaceAll("\\*", ".*");
+      if (!coveragePattern.endsWith(".*")) { //include inner classes
+        coveragePattern += "(\\$.*)*";
+      }
+      write2file(tempFile, coveragePattern);
+    }
   }
 
 

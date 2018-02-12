@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl;
 
 import com.intellij.application.options.PathMacrosCollector;
@@ -27,14 +13,12 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.util.PathUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.util.Map;
@@ -50,19 +34,18 @@ public class BasePathMacroManager extends PathMacroManager {
     myPathMacros = (PathMacrosImpl)pathMacros;
   }
 
-  protected static void addFileHierarchyReplacements(@NotNull ExpandMacroToPathMap result, @NotNull String macroName, @Nullable String path) {
+  protected static void addFileHierarchyReplacements(@NotNull ExpandMacroToPathMap result, @NotNull String macroName, @SystemIndependent @Nullable String path) {
     if (path != null) {
-      addFileHierarchyReplacements(result, getLocalFileSystem().findFileByPath(path), '$' + macroName + '$');
+      doAddFileHierarchyReplacements(result, StringUtil.trimEnd(path, "/"), '$' + macroName + '$');
     }
   }
 
-  private static void addFileHierarchyReplacements(@NotNull ExpandMacroToPathMap result, @Nullable VirtualFile f, @NotNull String macro) {
-    if (f == null) {
-      return;
+  private static void doAddFileHierarchyReplacements(@NotNull ExpandMacroToPathMap result, @NotNull String path, @NotNull String macro) {
+    String parentPath = PathUtilRt.getParentPath(path);
+    if (!parentPath.isEmpty()) {
+      doAddFileHierarchyReplacements(result, parentPath, macro + "/..");
     }
-
-    addFileHierarchyReplacements(result, f.getParent(), macro + "/..");
-    result.put(macro, StringUtil.trimEnd(f.getPath(), "/"));
+    result.put(macro, path);
   }
 
   protected static void addFileHierarchyReplacements(ReplacePathToMacroMap result, String macroName, @Nullable String path, @Nullable String stopAt) {
@@ -84,12 +67,6 @@ public class BasePathMacroManager extends PathMacroManager {
       overwrite = false;
       path = StringUtil.getPackageName(path, '/');
     }
-  }
-
-  @NotNull
-  private static VirtualFileSystem getLocalFileSystem() {
-    // Use VFM directly because of mocks in tests.
-    return VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL);
   }
 
   @NotNull
@@ -143,7 +120,11 @@ public class BasePathMacroManager extends PathMacroManager {
 
   @Override
   public void collapsePaths(@NotNull Element element, boolean recursively) {
-    getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive, recursively, Holder.FILTER);
+    collapsePaths(element, recursively, getReplacePathMap());
+  }
+
+  public static void collapsePaths(@NotNull Element element, boolean recursively, @NotNull ReplacePathToMacroMap map) {
+    map.substitute(element, SystemInfo.isFileSystemCaseSensitive, recursively, Holder.FILTER);
   }
 
   @NotNull

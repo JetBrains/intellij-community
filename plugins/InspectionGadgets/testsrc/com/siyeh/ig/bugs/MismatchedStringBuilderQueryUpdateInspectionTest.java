@@ -5,7 +5,7 @@ import com.siyeh.ig.LightInspectionTestCase;
 
 public class MismatchedStringBuilderQueryUpdateInspectionTest extends LightInspectionTestCase {
 
-  public void testMismatchedStringBuilderQueryUpdate() throws Exception {
+  public void testMismatchedStringBuilderQueryUpdate() {
     doTest();
   }
 

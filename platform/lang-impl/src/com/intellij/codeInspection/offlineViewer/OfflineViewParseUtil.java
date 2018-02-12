@@ -14,27 +14,19 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 05-Jan-2007
- */
 package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInspection.InspectionApplication;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.reference.SmartRefElementPointerImpl;
 import com.thoughtworks.xstream.io.xml.XppReader;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class OfflineViewParseUtil {
   @NonNls private static final String PACKAGE = "package";
@@ -48,7 +40,7 @@ public class OfflineViewParseUtil {
 
   public static Map<String, Set<OfflineProblemDescriptor>> parse(final String problems) {
     final TObjectIntHashMap<String> fqName2IdxMap = new TObjectIntHashMap<>();
-    final Map<String, Set<OfflineProblemDescriptor>> package2Result = new THashMap<>();
+    final Map<String, Set<OfflineProblemDescriptor>> package2Result = new HashMap<>();
     final XppReader reader = new XppReader(new StringReader(problems));
     try {
       while(reader.hasMoreChildren()) {
@@ -104,7 +96,7 @@ public class OfflineViewParseUtil {
           }
           reader.moveUp();
         }
-        if (!added) appendDescriptor(package2Result, "", descriptor);
+        if (!added) appendDescriptor(package2Result, null, descriptor);
         reader.moveUp();
       }
     }

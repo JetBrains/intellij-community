@@ -25,61 +25,55 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
-* User: cdr
-*/
 class DirElementInfo extends SmartPointerElementInfo {
   private final VirtualFile myVirtualFile;
   private final Project myProject;
 
 
-  public DirElementInfo(@NotNull PsiDirectory directory) {
+  DirElementInfo(@NotNull PsiDirectory directory) {
     myProject = directory.getProject();
     myVirtualFile = directory.getVirtualFile();
   }
 
   @Override
-  public PsiElement restoreElement() {
+  PsiElement restoreElement() {
     return SelfElementInfo.restoreDirectoryFromVirtual(myVirtualFile, myProject);
   }
 
   @Override
-  public PsiFile restoreFile() {
+  PsiFile restoreFile() {
     return null;
   }
 
   @Override
-  public int elementHashCode() {
+  int elementHashCode() {
     return myVirtualFile.hashCode();
   }
 
   @Override
-  public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
-    if (other instanceof DirElementInfo) {
-      return Comparing.equal(myVirtualFile, ((DirElementInfo)other).myVirtualFile);
-    }
-    return Comparing.equal(restoreElement(), other.restoreElement());
+  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
+    return other instanceof DirElementInfo && Comparing.equal(myVirtualFile, ((DirElementInfo)other).myVirtualFile);
   }
 
   @Override
-  public VirtualFile getVirtualFile() {
+  VirtualFile getVirtualFile() {
     return myVirtualFile;
   }
 
   @Override
-  public Segment getRange() {
+  Segment getRange() {
     return null;
   }
 
   @NotNull
   @Override
-  public Project getProject() {
+  Project getProject() {
     return myProject;
   }
 
   @Nullable
   @Override
-  public Segment getPsiRange() {
+  Segment getPsiRange() {
     return null;
   }
 

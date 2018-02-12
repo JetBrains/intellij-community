@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 27-Aug-2008
- */
 package com.intellij.refactoring.inlineSuperClass;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,9 +40,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +48,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactoringProcessor {
-  public static final Logger LOG = Logger.getInstance("#" + InlineSuperClassRefactoringProcessor.class.getName());
+  public static final Logger LOG = Logger.getInstance(InlineSuperClassRefactoringProcessor.class);
 
   private final PsiClass myCurrentInheritor;
   private final PsiClass mySuperClass;
@@ -67,16 +61,20 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     myCurrentInheritor = currentInheritor;
     mySuperClass = superClass;
     myPolicy = policy;
-    MemberInfoStorage memberInfoStorage = new MemberInfoStorage(mySuperClass, new MemberInfo.Filter<PsiMember>() {
-      public boolean includeMember(PsiMember element) {
-        return !(element instanceof PsiClass) || PsiTreeUtil.isAncestor(mySuperClass, element, true);
-      }
-    });
-    List<MemberInfo> members = memberInfoStorage.getClassMemberInfos(mySuperClass);
+    List<MemberInfo> members = getClassMembersToPush(mySuperClass);
     for (MemberInfo member : members) {
       member.setChecked(true);
     }
-    myMemberInfos = members.toArray(new MemberInfo[members.size()]);
+    myMemberInfos = members.toArray(new MemberInfo[0]);
+  }
+
+  public static List<MemberInfo> getClassMembersToPush(PsiClass superClass) {
+    MemberInfoStorage memberInfoStorage = new MemberInfoStorage(superClass, new MemberInfo.Filter<PsiMember>() {
+      public boolean includeMember(PsiMember element) {
+        return !(element instanceof PsiClass) || PsiTreeUtil.isAncestor(superClass, element, true);
+      }
+    });
+    return memberInfoStorage.getClassMemberInfos(superClass);
   }
 
   @NotNull
@@ -95,7 +93,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     }
     else {
       Collection<PsiClass> inheritors = DirectClassInheritorsSearch.search(mySuperClass).findAll();
-      myTargetClasses = inheritors.toArray(new PsiClass[inheritors.size()]);
+      myTargetClasses = inheritors.toArray(PsiClass.EMPTY_ARRAY);
     }
 
     if (myCurrentInheritor != null) {
@@ -194,7 +192,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
 
           //insert implicit call to super
           for (PsiMethod superConstructor : superConstructors) {
-            if (superConstructor.getParameterList().getParametersCount() == 0) {
+            if (superConstructor.getParameterList().isEmpty()) {
               final PsiExpression expression = JavaPsiFacade.getElementFactory(myProject).createExpressionFromText("super()", constructor);
               usages.add(new InlineSuperCallUsageInfo((PsiMethodCallExpression)expression, constrBody));
             }
@@ -204,7 +202,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
         if (targetClass.getConstructors().length == 0) {
           //copy default constructor
           for (PsiMethod superConstructor : superConstructors) {
-            if (superConstructor.getParameterList().getParametersCount() == 0) {
+            if (superConstructor.getParameterList().isEmpty()) {
               usages.add(new CopyDefaultConstructorUsageInfo(targetClass, superConstructor));
               break;
             }
@@ -434,6 +432,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     return subst;
   }
 
+  @NotNull
   protected String getCommandName() {
     return InlineSuperClassRefactoringHandler.REFACTORING_NAME;
   }

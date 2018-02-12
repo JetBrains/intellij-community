@@ -15,13 +15,12 @@
  */
 package com.intellij.usages;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.usageView.UsageViewBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * @author max
@@ -45,11 +44,12 @@ public class UsageViewPresentation {
   private String myTabName;
   private String myToolwindowTitle;
 
-  private List<Action> myNotFoundActions;
   private boolean myDetachedMode; // no UI will be shown
   private String myDynamicCodeUsagesString;
   private boolean myMergeDupLinesAvailable = true;
   private boolean myExcludeAvailable = true;
+  private Pattern mySearchPattern;
+  private Pattern myReplacePattern;
 
   public String getTabText() {
     return myTabText;
@@ -144,15 +144,6 @@ public class UsageViewPresentation {
     myCodeUsages = codeUsages;
   }
 
-  public void addNotFoundAction(Action _action) {
-    if (myNotFoundActions == null) myNotFoundActions = new ArrayList<>();
-    myNotFoundActions.add(_action);
-  }
-
-  public List<Action> getNotFoundActions() {
-    return myNotFoundActions;
-  }
-
   @NotNull
   public String getUsagesWord() {
     return myUsagesWord;
@@ -227,6 +218,22 @@ public class UsageViewPresentation {
     myExcludeAvailable = excludeAvailable;
   }
 
+  public void setSearchPattern(Pattern searchPattern) {
+    mySearchPattern = searchPattern;
+  }
+
+  public Pattern getSearchPattern() {
+    return mySearchPattern;
+  }
+
+  public void setReplacePattern(Pattern replacePattern) {
+    myReplacePattern = replacePattern;
+  }
+
+  public Pattern getReplacePattern() {
+    return myReplacePattern;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -251,7 +258,6 @@ public class UsageViewPresentation {
     if (myNonCodeUsagesString != null ? !myNonCodeUsagesString.equals(that.myNonCodeUsagesString) : that.myNonCodeUsagesString != null) {
       return false;
     }
-    if (myNotFoundActions != null ? !myNotFoundActions.equals(that.myNotFoundActions) : that.myNotFoundActions != null) return false;
     if (myScopeText != null ? !myScopeText.equals(that.myScopeText) : that.myScopeText != null) return false;
     if (myTabName != null ? !myTabName.equals(that.myTabName) : that.myTabName != null) return false;
     if (myTabText != null ? !myTabText.equals(that.myTabText) : that.myTabText != null) return false;
@@ -264,9 +270,24 @@ public class UsageViewPresentation {
     }
     if (myUsagesString != null ? !myUsagesString.equals(that.myUsagesString) : that.myUsagesString != null) return false;
     if (myUsagesWord != null ? !myUsagesWord.equals(that.myUsagesWord) : that.myUsagesWord != null) return false;
+    if (!arePatternsEqual(mySearchPattern, that.mySearchPattern)) return false;
+    if (!arePatternsEqual(myReplacePattern, that.myReplacePattern)) return false;
 
     return true;
   }
+
+  public static boolean arePatternsEqual(Pattern p1, Pattern p2) {
+    if (p1 == null) return p2 == null;
+    if (p2 == null) return false;
+    return Comparing.equal(p1.pattern(), p2.pattern()) && p1.flags() == p2.flags();
+  }
+
+  public static int getHashCode(Pattern pattern) {
+    if (pattern == null) return 0;
+    String s = pattern.pattern();
+    return (s != null ? s.hashCode() : 0) * 31 + pattern.flags();
+  }
+
 
   @Override
   public int hashCode() {
@@ -284,9 +305,10 @@ public class UsageViewPresentation {
     result = 31 * result + (myUsageTypeFilteringAvailable ? 1 : 0);
     result = 31 * result + (myExcludeAvailable ? 1 : 0);
     result = 31 * result + (myUsagesWord != null ? myUsagesWord.hashCode() : 0);
+    result = 31 * result + getHashCode(mySearchPattern);
+    result = 31 * result + getHashCode(myReplacePattern);
     result = 31 * result + (myTabName != null ? myTabName.hashCode() : 0);
     result = 31 * result + (myToolwindowTitle != null ? myToolwindowTitle.hashCode() : 0);
-    result = 31 * result + (myNotFoundActions != null ? myNotFoundActions.hashCode() : 0);
     result = 31 * result + (myDetachedMode ? 1 : 0);
     result = 31 * result + (myDynamicCodeUsagesString != null ? myDynamicCodeUsagesString.hashCode() : 0);
     result = 31 * result + (myMergeDupLinesAvailable ? 1 : 0);

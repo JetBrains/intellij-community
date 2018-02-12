@@ -92,8 +92,8 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
 
     ModuleRootManager.getInstance(module).orderEntries().recursively().satisfying(condition).process(new RootPolicy<Set<VirtualFile>>() {
       @Override
-      public Set<VirtualFile> visitLibraryOrderEntry(final LibraryOrderEntry libraryOrderEntry,
-                                                               final Set<VirtualFile> value) {
+      public Set<VirtualFile> visitLibraryOrderEntry(@NotNull final LibraryOrderEntry libraryOrderEntry,
+                                                     final Set<VirtualFile> value) {
         final Library library = libraryOrderEntry.getLibrary();
         if (library != null && processedLibraries.add(library)) {
           ContainerUtil.addAll(value, libraryOrderEntry.getRootFiles(OrderRootType.CLASSES));
@@ -103,15 +103,15 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
       }
 
       @Override
-      public Set<VirtualFile> visitModuleSourceOrderEntry(final ModuleSourceOrderEntry moduleSourceOrderEntry,
-                                                                    final Set<VirtualFile> value) {
+      public Set<VirtualFile> visitModuleSourceOrderEntry(@NotNull final ModuleSourceOrderEntry moduleSourceOrderEntry,
+                                                          final Set<VirtualFile> value) {
         processedModules.add(moduleSourceOrderEntry.getOwnerModule());
         ContainerUtil.addAll(value, moduleSourceOrderEntry.getRootModel().getSourceRoots());
         return value;
       }
 
       @Override
-      public Set<VirtualFile> visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, Set<VirtualFile> value) {
+      public Set<VirtualFile> visitModuleOrderEntry(@NotNull ModuleOrderEntry moduleOrderEntry, Set<VirtualFile> value) {
         final Module depModule = moduleOrderEntry.getModule();
         if (depModule != null) {
           ContainerUtil.addAll(value, ModuleRootManager.getInstance(depModule).getSourceRoots());
@@ -120,7 +120,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
       }
 
       @Override
-      public Set<VirtualFile> visitJdkOrderEntry(final JdkOrderEntry jdkOrderEntry, final Set<VirtualFile> value) {
+      public Set<VirtualFile> visitJdkOrderEntry(@NotNull final JdkOrderEntry jdkOrderEntry, final Set<VirtualFile> value) {
         final Sdk jdk = jdkOrderEntry.getJdk();
         if (jdk != null && processedSdk.add(jdk)) {
           ContainerUtil.addAll(value, jdkOrderEntry.getRootFiles(OrderRootType.CLASSES));

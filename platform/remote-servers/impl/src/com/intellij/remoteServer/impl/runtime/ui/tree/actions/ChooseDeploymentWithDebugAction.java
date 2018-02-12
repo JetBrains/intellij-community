@@ -36,4 +36,9 @@ public class ChooseDeploymentWithDebugAction extends ServersTreeAction<ServersTr
   protected void doActionPerformed(@NotNull ServersToolWindowContent content, AnActionEvent e, ServersTreeStructure.RemoteServerNode node) {
     node.deployWithDebug(e);
   }
+
+  @Override
+  protected boolean isVisible4(ServersTreeStructure.RemoteServerNode node) {
+    return node.getServer().getType().createDebugConnector() != null;
+  }
 }

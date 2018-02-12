@@ -29,7 +29,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 
 import java.util.*;
 
@@ -51,17 +51,16 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
 
   @Override
   public void performOperation(final Project project, final Set<PsiJavaFile> javaFiles) {
-    CodeStyleManager.getInstance(project).performActionWithFormatterDisabled(new Runnable() {
-      @Override
-      public void run() {
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-      }
-    });
+    CodeStyleManager.getInstance(project).performActionWithFormatterDisabled(
+      (Runnable)() -> PsiDocumentManager.getInstance(project).commitAllDocuments());
 
     final List<SmartPsiElementPointer<PsiImportStatementBase>> redundants = new ArrayList<>();
     final Runnable findRedundantImports = () -> ReadAction.run(() -> {
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
       final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+      if (progressIndicator != null) {
+        progressIndicator.setIndeterminate(false);
+      }
       final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
       int i = 0;
       final int fileCount = javaFiles.size();
@@ -97,12 +96,13 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
 
 
 class OptimizeImportsTask implements SequentialTask {
-  private static final Logger LOG = Logger.getInstance("#" + OptimizeImportsTask.class.getName());
+  private static final Logger LOG = Logger.getInstance(OptimizeImportsTask.class);
 
   private final Iterator<SmartPsiElementPointer<PsiImportStatementBase>> myPointers;
   private final SequentialModalProgressTask myTask;
   private final int myTotal;
   private int myCount;
+  private final Map<PsiFile, Set<String>> myDuplicates = new HashMap<>();
 
   public OptimizeImportsTask(SequentialModalProgressTask progressTask, Collection<SmartPsiElementPointer<PsiImportStatementBase>> pointers) {
     myTask = progressTask;
@@ -134,14 +134,22 @@ class OptimizeImportsTask implements SequentialTask {
       //Do not remove non-resolving refs
       if (ref != null) {
         final PsiElement resolve = ref.resolve();
-        if (resolve != null &&
-            (!(resolve instanceof PsiPackage) || ((PsiPackage)resolve).getDirectories(ref.getResolveScope()).length != 0)) {
-          try {
-            importStatement.delete();
+        try {
+          if (resolve != null) {
+            if (!(resolve instanceof PsiPackage) || ((PsiPackage)resolve).getDirectories(ref.getResolveScope()).length != 0) {
+              importStatement.delete();
+            }
           }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
+          //preserve comments and don't need to distinguish static/normal imports and on-demand variations
+          else {
+            Collection<String> imports = myDuplicates.computeIfAbsent(pointer.getContainingFile(), file -> new HashSet<>());
+            if (!imports.add(importStatement.getText())) {
+              importStatement.delete();
+            }
           }
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
         }
       }
     }

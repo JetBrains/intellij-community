@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,12 +43,10 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 20, 2008
  */
 public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> {
   @NonNls public static final ID<TodoIndexEntry, Integer> NAME = ID.create("TodoIndex");
@@ -100,7 +98,7 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
   private final DataIndexer<TodoIndexEntry, Integer, FileContent> myIndexer = new DataIndexer<TodoIndexEntry, Integer, FileContent>() {
     @Override
     @NotNull
-    public Map<TodoIndexEntry,Integer> map(@NotNull final FileContent inputData) {
+    public Map<TodoIndexEntry, Integer> map(@NotNull final FileContent inputData) {
       final VirtualFile file = inputData.getFile();
       final DataIndexer<TodoIndexEntry, Integer, FileContent> indexer = PlatformIdTableBuilding
         .getTodoIndexer(inputData.getFileType(), file);
@@ -111,34 +109,29 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
     }
   };
 
-  private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
-    @Override
-    public boolean acceptInput(@NotNull final VirtualFile file) {
-      if (!file.isInLocalFileSystem()) {
-        return false; // do not index TODOs in library sources
-      }
+  protected final FileBasedIndex.InputFilter myInputFilter = file -> {
+    if (!TodoIndexers.needsTodoIndex(file)) return false;
 
-      final FileType fileType = file.getFileType();
+    final FileType fileType = file.getFileType();
 
-      if (fileType instanceof LanguageFileType) {
-        final Language lang = ((LanguageFileType)fileType).getLanguage();
-        final ParserDefinition parserDef = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
-        final TokenSet commentTokens = parserDef != null ? parserDef.getCommentTokens() : null;
-        return commentTokens != null;
-      }
-
-      return PlatformIdTableBuilding.isTodoIndexerRegistered(fileType) ||
-             fileType instanceof CustomSyntaxTableFileType;
+    if (fileType instanceof LanguageFileType) {
+      final Language lang = ((LanguageFileType)fileType).getLanguage();
+      final ParserDefinition parserDef = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
+      final TokenSet commentTokens = parserDef != null ? parserDef.getCommentTokens() : null;
+      return commentTokens != null;
     }
+
+    return PlatformIdTableBuilding.isTodoIndexerRegistered(fileType) ||
+           fileType instanceof CustomSyntaxTableFileType;
   };
 
   @Override
   public int getVersion() {
-    int version = 9;
+    int version = 10;
     FileType[] types = myFileTypeManager.getRegisteredFileTypes();
     Arrays.sort(types, (o1, o2) -> Comparing.compare(o1.getName(), o2.getName()));
 
-    for(FileType fileType:types) {
+    for (FileType fileType : types) {
       DataIndexer<TodoIndexEntry, Integer, FileContent> indexer = TodoIndexers.INSTANCE.forFileType(fileType);
       if (indexer == null) continue;
 

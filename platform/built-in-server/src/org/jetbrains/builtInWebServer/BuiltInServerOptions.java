@@ -29,7 +29,7 @@ import java.util.Collections;
   storages = @Storage("other.xml")
 )
 public class BuiltInServerOptions implements PersistentStateComponent<BuiltInServerOptions>, Getter<BuiltInServerOptions> {
-  private static final int DEFAULT_PORT = 63342;
+  public static final int DEFAULT_PORT = 63342;
 
   @Attribute
   public int builtInServerPort = DEFAULT_PORT;
@@ -67,7 +67,7 @@ public class BuiltInServerOptions implements PersistentStateComponent<BuiltInSer
   }
 
   @Override
-  public void loadState(BuiltInServerOptions state) {
+  public void loadState(@NotNull BuiltInServerOptions state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 

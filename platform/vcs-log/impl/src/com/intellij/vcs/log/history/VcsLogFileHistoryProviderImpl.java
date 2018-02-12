@@ -24,11 +24,13 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogFileHistoryProvider;
 import com.intellij.vcs.log.VcsLogProperties;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.impl.VcsLogContentProvider;
+import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider {
   @NotNull
@@ -64,10 +67,13 @@ public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider 
 
   @Override
   public void showFileHistory(@NotNull Project project, @NotNull FilePath path, @Nullable String revisionNumber) {
-    if (!VcsLogContentProvider.findAndSelectContent(project, FileHistoryUi.class, ui -> ui.getPath().equals(path))) {
+    Hash hash = (revisionNumber != null) ? HashImpl.build(revisionNumber) : null;
+    if (!VcsLogContentUtil.findAndSelectContent(project, FileHistoryUi.class,
+                                                ui -> ui.getPath().equals(path) && Objects.equals(ui.getRevision(), hash))) {
       VcsLogManager logManager = VcsProjectLog.getInstance(project).getLogManager();
       assert logManager != null;
-      VcsLogContentProvider.openLogTab(project, logManager, TAB_NAME, path.getName(), new FileHistoryUiFactory(path));
+      String suffix = hash != null ? " (" + hash.toShortString() + ")" : "";
+      VcsLogContentUtil.openLogTab(project, logManager, TAB_NAME, path.getName() + suffix, new FileHistoryUiFactory(path, hash));
     }
   }
 }

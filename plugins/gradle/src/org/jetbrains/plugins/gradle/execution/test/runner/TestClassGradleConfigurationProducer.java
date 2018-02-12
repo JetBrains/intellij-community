@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
@@ -23,10 +11,9 @@ import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.junit.InheritorChooser;
 import com.intellij.execution.junit.JUnitUtil;
-import com.intellij.execution.junit.PatternConfigurationProducer;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -60,7 +47,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     final Location contextLocation = context.getLocation();
     assert contextLocation != null;
 
-    if (RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).isMultipleElementsSelected(context)) {
+    if (RunConfigurationProducer.getInstance(PatternGradleConfigurationProducer.class).isMultipleElementsSelected(context)) {
       return false;
     }
     PsiClass testClass = getPsiClassForLocation(contextLocation);
@@ -83,7 +70,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     configuration.getSettings().setExternalProjectPath(projectPath);
     configuration.getSettings().setTaskNames(tasksToRun);
     configuration.getSettings()
-      .setScriptParameters(String.format("--tests %s", testClass.getQualifiedName()));
+      .setScriptParameters(String.format("--tests %s", getRuntimeQualifiedName(testClass)));
     configuration.setName(testClass.getName());
 
     JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, contextLocation);
@@ -108,7 +95,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     final Location contextLocation = context.getLocation();
     assert contextLocation != null;
 
-    if (RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).isMultipleElementsSelected(context)) {
+    if (RunConfigurationProducer.getInstance(PatternGradleConfigurationProducer.class).isMultipleElementsSelected(context)) {
       return false;
     }
 
@@ -130,17 +117,16 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
     if(i == -1) return false;
 
     String str = scriptParameters.substring(i + "--tests ".length()).trim() + ' ';
-    return str.startsWith(testClass.getQualifiedName() + ' ') && !str.contains("--tests");
+    return str.startsWith(getRuntimeQualifiedName(testClass) + ' ') && !str.contains("--tests");
   }
 
   @Override
-  public void onFirstRun(final ConfigurationFromContext fromContext, final ConfigurationContext context, @NotNull final Runnable performRunnable) {
+  public void onFirstRun(@NotNull final ConfigurationFromContext fromContext, @NotNull final ConfigurationContext context, @NotNull final Runnable performRunnable) {
     final InheritorChooser inheritorChooser = new InheritorChooser() {
       @Override
       protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {
-        if (!StringUtil.equals(
-          context.getModule().getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY),
-          GradleConstants.SYSTEM_ID.toString())) {
+        if (!StringUtil.equals(ExternalSystemModulePropertyManager.getInstance(context.getModule()).getExternalSystemId(),
+                               GradleConstants.SYSTEM_ID.toString())) {
           return;
         }
 
@@ -155,7 +141,7 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
                                  ConfigurationContext context,
                                  Runnable performRunnable) {
         if (!StringUtil.equals(
-          context.getModule().getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY),
+          ExternalSystemModulePropertyManager.getInstance(context.getModule()).getExternalSystemId(),
           GradleConstants.SYSTEM_ID.toString())) {
           return;
         }
@@ -186,11 +172,21 @@ public class TestClassGradleConfigurationProducer extends GradleTestRunConfigura
 
     StringBuilder buf = new StringBuilder();
     for (PsiClass aClass : containingClasses) {
-      buf.append(String.format("--tests %s ", aClass.getQualifiedName()));
+      buf.append(String.format("--tests %s ", getRuntimeQualifiedName(aClass)));
     }
 
     configuration.getSettings().setScriptParameters(buf.toString());
     configuration.setName(StringUtil.join(containingClasses, aClass -> aClass.getName(), "|"));
     return true;
+  }
+
+  public static String getRuntimeQualifiedName(PsiClass psiClass) {
+    PsiElement parent = psiClass.getParent();
+    if (parent instanceof PsiClass) {
+      return getRuntimeQualifiedName((PsiClass)parent) + "$" + psiClass.getName();
+    }
+    else {
+      return psiClass.getQualifiedName();
+    }
   }
 }

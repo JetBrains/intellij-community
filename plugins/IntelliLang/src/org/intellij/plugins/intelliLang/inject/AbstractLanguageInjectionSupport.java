@@ -18,9 +18,9 @@ package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -99,17 +99,14 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
     return createDefaultEditAction(project, producer);
   }
 
-  public static AnAction createDefaultEditAction(final Project project, final Factory<BaseInjection> producer) {
-    return new AnAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        final BaseInjection originalInjection = producer.create();
-        final BaseInjection newInjection = showDefaultInjectionUI(project, originalInjection.copy());
-        if (newInjection != null) {
-          originalInjection.copyFrom(newInjection);
-        }
+  public static AnAction createDefaultEditAction(Project project, Factory<BaseInjection> producer) {
+    return DumbAwareAction.create(e -> {
+      BaseInjection originalInjection = producer.create();
+      BaseInjection newInjection = showDefaultInjectionUI(project, originalInjection.copy());
+      if (newInjection != null) {
+        originalInjection.copyFrom(newInjection);
       }
-    };
+    });
   }
 
   public static AnAction createDefaultAddAction(final Project project,
@@ -117,17 +114,17 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
                                                 final AbstractLanguageInjectionSupport support) {
     final String supportTitle = StringUtil.capitalize(support.getId());
     Icon icon = FileTypeManager.getInstance().getFileTypeByExtension(support.getId()).getIcon();
-    return new AnAction("Generic "+ supportTitle, null, icon) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        final BaseInjection injection = new BaseInjection(support.getId());
-        injection.setDisplayName("New "+ supportTitle +" Injection");
-        final BaseInjection newInjection = showDefaultInjectionUI(project, injection);
-        if (newInjection != null) {
-          consumer.consume(injection);
-        }
+    AnAction action = DumbAwareAction.create(e -> {
+      BaseInjection injection = new BaseInjection(support.getId());
+      injection.setDisplayName("New " + supportTitle + " Injection");
+      final BaseInjection newInjection = showDefaultInjectionUI(project, injection);
+      if (newInjection != null) {
+        consumer.consume(injection);
       }
-    };
+    });
+    action.getTemplatePresentation().setText("Generic " + supportTitle);
+    action.getTemplatePresentation().setIcon(icon);
+    return action;
   }
 
   @Nullable

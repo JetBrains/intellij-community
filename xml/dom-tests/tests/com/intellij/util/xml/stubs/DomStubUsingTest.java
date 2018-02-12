@@ -32,7 +32,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/8/12
  */
 public class DomStubUsingTest extends DomStubTest {
 
@@ -150,7 +149,7 @@ public class DomStubUsingTest extends DomStubTest {
 
     new WriteCommandAction.Simple(null) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         domElement.undefine();
       }
     }.execute().throwException();

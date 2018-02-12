@@ -21,10 +21,7 @@ import com.intellij.openapi.util.ThreadLocalCachedValue;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.containers.LimitedPool;
 import com.intellij.util.containers.SLRUCache;
 import org.jetbrains.annotations.NonNls;
@@ -39,7 +36,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 18, 2007
  */
 public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<Key> implements PersistentMap<Key, Value> {
   // PersistentHashMap (PHM) works in following (generic) way:
@@ -132,12 +128,37 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     this(file, keyDescriptor, valueExternalizer, initialSize, 0);
   }
 
-  public PersistentHashMap(@NotNull final File file, @NotNull KeyDescriptor<Key> keyDescriptor, @NotNull DataExternalizer<Value> valueExternalizer, final int initialSize, int version) throws IOException {
-    super(checkDataFiles(file), keyDescriptor, initialSize, null, version);
+  public PersistentHashMap(@NotNull final File file,
+                           @NotNull KeyDescriptor<Key> keyDescriptor,
+                           @NotNull DataExternalizer<Value> valueExternalizer,
+                           final int initialSize,
+                           int version) throws IOException {
+    this(file, keyDescriptor, valueExternalizer, initialSize, version, null);
+  }
+
+  public PersistentHashMap(@NotNull final File file,
+                           @NotNull KeyDescriptor<Key> keyDescriptor,
+                           @NotNull DataExternalizer<Value> valueExternalizer,
+                           final int initialSize,
+                           int version,
+                           @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {
+    this(file, keyDescriptor, valueExternalizer, initialSize, version, lockContext,
+         PersistentHashMapValueStorage.CreationTimeOptions.threadLocalOptions());
+  }
+
+  private PersistentHashMap(@NotNull final File file,
+                           @NotNull KeyDescriptor<Key> keyDescriptor,
+                           @NotNull DataExternalizer<Value> valueExternalizer,
+                           final int initialSize,
+                           int version,
+                           @Nullable PagedFileStorage.StorageLockContext lockContext,
+                           PersistentHashMapValueStorage.CreationTimeOptions options) throws IOException {
+    super(checkDataFiles(file), keyDescriptor, initialSize, lockContext, modifyVersionDependingOnOptions(version, options));
 
     myStorageFile = file;
     myKeyDescriptor = keyDescriptor;
     myIsReadOnly = isReadOnly();
+    if (myIsReadOnly) options = options.setReadOnly();
 
     myAppendCache = createAppendCache(keyDescriptor);
     final PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase> recordHandler = myEnumerator.getRecordHandler();
@@ -145,8 +166,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     myIntMapping = valueExternalizer instanceof IntInlineKeyDescriptor && wantNonnegativeIntegralValues();
     myDirectlyStoreLongFileOffsetMode = keyDescriptor instanceof InlineKeyDescriptor && myEnumerator instanceof PersistentBTreeEnumerator;
 
-    myRecordBuffer = myDirectlyStoreLongFileOffsetMode ? new byte[0]:new byte[myParentValueRefOffset + 8];
-    mySmallRecordBuffer = myDirectlyStoreLongFileOffsetMode ? new byte[0]:new byte[myParentValueRefOffset + 4];
+    myRecordBuffer = myDirectlyStoreLongFileOffsetMode ? ArrayUtil.EMPTY_BYTE_ARRAY : new byte[myParentValueRefOffset + 8];
+    mySmallRecordBuffer = myDirectlyStoreLongFileOffsetMode ? ArrayUtil.EMPTY_BYTE_ARRAY:new byte[myParentValueRefOffset + 4];
 
     myEnumerator.setRecordHandler(new PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase>() {
       @Override
@@ -182,7 +203,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     if(myDoTrace) LOG.info("Opened " + file);
     try {
       myValueExternalizer = valueExternalizer;
-      myValueStorage = PersistentHashMapValueStorage.create(getDataFile(file).getPath(), myIsReadOnly);
+      myValueStorage = PersistentHashMapValueStorage.create(getDataFile(file).getPath(), options);
       myLiveAndGarbageKeysCounter = myEnumerator.getMetaData();
       long data2 = myEnumerator.getMetaData2();
       myLargeIndexWatermarkId = (int)(data2 & DEAD_KEY_NUMBER_MASK);
@@ -212,6 +233,10 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       }
       throw new PersistentEnumerator.CorruptedException(file);
     }
+  }
+
+  private static int modifyVersionDependingOnOptions(int version, PersistentHashMapValueStorage.CreationTimeOptions options) {
+    return version + options.getVersion();
   }
 
   protected boolean wantNonnegativeIntegralValues() {
@@ -258,6 +283,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
           myStreamPool.recycle(bytes);
         }
         catch (IOException e) {
+          markCorrupted();
           throw new RuntimeException(e);
         }
         finally {
@@ -316,7 +342,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       if (fileSize > 50 *  megabyte && forceNewCompact()) return true;
       if (deadKeys < 50) return false;
 
-      final int benefitSize = 100 * megabyte;
+      final long benefitSize = Math.max(100 * megabyte, fileSize / 4);
       final long avgValueSize = fileSize / (liveKeys + deadKeys);
 
       return deadKeys > liveKeys ||
@@ -339,7 +365,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   @NotNull
-  private static File getDataFile(@NotNull final File file) {
+  public static File getDataFile(@NotNull final File file) { // made public for testing
     return new File(file.getParentFile(), file.getName() + DATA_FILE_EXTENSION);
   }
 
@@ -347,7 +373,12 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   public final void put(Key key, Value value) throws IOException {
     if (myIsReadOnly) throw new IncorrectOperationException();
     synchronized (myEnumerator) {
-      doPut(key, value);
+      try {
+        doPut(key, value);
+      } catch (IOException ex) {
+        myEnumerator.markCorrupted();
+        throw ex;
+      }
     }
   }
 
@@ -423,7 +454,12 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   public final void appendData(Key key, @NotNull ValueDataAppender appender) throws IOException {
     if (myIsReadOnly) throw new IncorrectOperationException();
     synchronized (myEnumerator) {
-      doAppendData(key, appender);
+      try {
+        doAppendData(key, appender);
+      } catch (IOException ex) {
+        myEnumerator.markCorrupted();
+        throw ex;
+      }
     }
   }
 
@@ -441,6 +477,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     AppendStream appenderStream = ourFlyweightAppenderStream.getValue();
     BufferExposingByteArrayOutputStream stream = myAppendCache.get(key);
     appenderStream.setOut(stream);
+    myValueStorage.checkAppendsAllowed(stream.size());
     appender.append(appenderStream);
     appenderStream.setOut(null);
   }
@@ -452,8 +489,14 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   @Override
   public final boolean processKeys(Processor<Key> processor) throws IOException {
     synchronized (myEnumerator) {
-      myAppendCache.clear();
-      return myEnumerator.iterateData(processor);
+      try {
+        myAppendCache.clear();
+        return myEnumerator.iterateData(processor);
+      }
+      catch (IOException e) {
+        myEnumerator.markCorrupted();
+        throw e;
+      }
     }
   }
 
@@ -466,13 +509,19 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
   public final boolean processKeysWithExistingMapping(Processor<Key> processor) throws IOException {
     synchronized (myEnumerator) {
-      myAppendCache.clear();
-      return myEnumerator.processAllDataObject(processor, new PersistentEnumerator.DataFilter() {
-        @Override
-        public boolean accept(final int id) {
-          return readValueId(id) != NULL_ADDR;
-        }
-      });
+      try {
+        myAppendCache.clear();
+        return myEnumerator.processAllDataObject(processor, new PersistentEnumerator.DataFilter() {
+          @Override
+          public boolean accept(final int id) {
+            return readValueId(id) != NULL_ADDR;
+          }
+        });
+      }
+      catch (IOException e) {
+        myEnumerator.markCorrupted();
+        throw e;
+      }
     }
   }
 
@@ -482,6 +531,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       myBusyReading = true;
       try {
         return doGet(key);
+      } catch(IOException ex) {
+        myEnumerator.markCorrupted();
+        throw ex;
       } finally {
         myBusyReading = false;
       }
@@ -672,7 +724,13 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     try {
       try {
         myAppendCacheFlusher.stop();
-        myAppendCache.clear();
+        try {
+          myAppendCache.clear();
+        } catch (RuntimeException ex) {
+          Throwable cause = ex.getCause();
+          if (cause instanceof IOException) throw (IOException)cause;
+          throw ex;
+        }
       }
       finally {
         final PersistentHashMapValueStorage valueStorage = myValueStorage;
@@ -722,7 +780,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       final File[] oldFiles = getFilesInDirectoryWithNameStartingWith(oldDataFile, oldDataFileBaseName);
 
       final String newPath = getDataFile(myEnumerator.myFile).getPath() + ".new";
-      final PersistentHashMapValueStorage newStorage = PersistentHashMapValueStorage.create(newPath, myIsReadOnly);
+      PersistentHashMapValueStorage.CreationTimeOptions options = myValueStorage.getOptions();
+      final PersistentHashMapValueStorage newStorage = PersistentHashMapValueStorage.create(newPath, options);
       myValueStorage.switchToCompactionMode();
       myEnumerator.markDirty(true);
       long sizeBefore = myValueStorage.getSize();
@@ -777,7 +836,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
         }
       }
 
-      myValueStorage = PersistentHashMapValueStorage.create(oldDataFile.getPath(), myIsReadOnly);
+      myValueStorage = PersistentHashMapValueStorage.create(oldDataFile.getPath(), options);
       LOG.info("Compacted " + myEnumerator.myFile.getPath() + ":" + sizeBefore + " bytes into " + newSize + " bytes in " + (System.currentTimeMillis() - now) + "ms.");
       myEnumerator.putMetaData(myLiveAndGarbageKeysCounter);
       myEnumerator.putMetaData2( myLargeIndexWatermarkId );
@@ -915,5 +974,15 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
   public String toString() {
     return super.toString() + ":"+myStorageFile;
+  }
+
+  @TestOnly
+  public PersistentHashMapValueStorage getValueStorage() {
+    return myValueStorage;
+  }
+
+  @TestOnly
+  public boolean getReadOnly() {
+    return myIsReadOnly;
   }
 }

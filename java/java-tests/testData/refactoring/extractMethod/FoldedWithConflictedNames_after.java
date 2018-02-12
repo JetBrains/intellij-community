@@ -9,8 +9,8 @@ class Test {
       newMethod(array[i], array2, i);
   }
 
-    private void newMethod(int i, int[] array2, int i2) {
-        int sum = i2;
-        sum += array2[i2];
+    private void newMethod(int sum1, int[] array2, int i) {
+        int sum = sum1;
+        sum += array2[i];
     }
 }

@@ -594,4 +594,15 @@
   <action id="EmojiAndSymbols">
     <keyboard-shortcut first-keystroke="control meta SPACE"/>
   </action>
+
+  <action id="MethodOverloadSwitchUp">
+    <keyboard-shortcut first-keystroke="alt UP"/>
+  </action>
+  <action id="MethodOverloadSwitchDown">
+    <keyboard-shortcut first-keystroke="alt DOWN"/>
+  </action>
+
+  <action id="RunDashboard.ShowConfigurations">
+    <keyboard-shortcut first-keystroke="shift meta T"/>
+  </action>
 </keymap>

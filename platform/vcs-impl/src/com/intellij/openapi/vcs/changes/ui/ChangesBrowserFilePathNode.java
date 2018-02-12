@@ -22,11 +22,8 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 /**
  * @author yole
@@ -54,24 +51,24 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
       if (!isLeaf()) {
         appendCount(renderer);
       }
-      renderer.setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
     }
     else {
       if (renderer.isShowFlatten()) {
         renderer.append(path.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         FilePath parentPath = path.getParentPath();
-        renderer.append(spaceAndThinSpace() + FileUtil.getLocationRelativeToUserHome(parentPath.getPresentableUrl()), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        appendParentPath(renderer, parentPath);
       }
       else {
         renderer.append(getRelativePath(path), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
-      renderer.setIcon(path.getFileType().getIcon());
     }
+
+    renderer.setIcon(path.getFileType(), path.isDirectory() || !isLeaf());
   }
 
   @NotNull
   protected String getRelativePath(FilePath path) {
-    return getRelativePath(safeCastToFilePath(((ChangesBrowserNode)getParent()).getUserObject()), path);
+    return getRelativePath(safeCastToFilePath((ChangesBrowserNode)getParent()), path);
   }
 
   @Override
@@ -85,7 +82,12 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
   }
 
   @Nullable
-  public static FilePath safeCastToFilePath(Object o) {
+  public static FilePath safeCastToFilePath(ChangesBrowserNode node) {
+    if (node instanceof ChangesBrowserModuleNode) {
+      return ((ChangesBrowserModuleNode)node).getModuleRoot();
+    }
+
+    Object o = node.getUserObject();
     if (o instanceof FilePath) return (FilePath)o;
     if (o instanceof Change) {
       return ChangesUtil.getAfterPath((Change)o);
@@ -109,11 +111,7 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
     return FILE_PATH_SORT_WEIGHT;
   }
 
-  public int compareUserObjects(final Object o2) {
-    if (o2 instanceof FilePath) {
-      return getUserObject().getPath().compareToIgnoreCase(((FilePath)o2).getPath());
-    }
-
-    return 0;
+  public int compareUserObjects(final FilePath o2) {
+    return getUserObject().getPath().compareToIgnoreCase(o2.getPath());
   }
 }

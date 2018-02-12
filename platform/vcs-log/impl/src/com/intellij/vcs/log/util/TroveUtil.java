@@ -16,16 +16,16 @@
 package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.Consumer;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Arrays;
-import java.util.Set;
+import java.util.*;
 import java.util.function.IntFunction;
+import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -72,6 +72,18 @@ public class TroveUtil {
     return createJavaSet(result);
   }
 
+  public static boolean intersects(@NotNull TIntHashSet set1, @NotNull TIntHashSet set2) {
+    if (set1.size() <= set2.size()) {
+      return !set1.forEach(value -> {
+        if (set2.contains(value)) {
+          return false;
+        }
+        return true;
+      });
+    }
+    return intersects(set2, set1);
+  }
+
   @Nullable
   private static TIntHashSet intersect(@Nullable TIntHashSet set1, @Nullable TIntHashSet set2) {
     if (set1 == null) return set2;
@@ -80,23 +92,22 @@ public class TroveUtil {
     TIntHashSet result = new TIntHashSet();
 
     if (set1.size() < set2.size()) {
-      set1.forEach(value -> {
-        if (set2.contains(value)) {
-          result.add(value);
-        }
-        return true;
-      });
+      intersectTo(set1, set2, result);
     }
     else {
-      set2.forEach(value -> {
-        if (set1.contains(value)) {
-          result.add(value);
-        }
-        return true;
-      });
+      intersectTo(set2, set1, result);
     }
 
     return result;
+  }
+
+  private static void intersectTo(@NotNull TIntHashSet small, @NotNull TIntHashSet big, @NotNull TIntHashSet result) {
+    small.forEach(value -> {
+      if (big.contains(value)) {
+        result.add(value);
+      }
+      return true;
+    });
   }
 
   @NotNull
@@ -127,13 +138,29 @@ public class TroveUtil {
     return stream(set).mapToObj(function).collect(Collectors.toList());
   }
 
-  public static void processBatches(@NotNull IntStream stream, int batchSize, @NotNull Consumer<TIntHashSet> consumer) {
+  @NotNull
+  public static <T> TIntHashSet map2IntSet(@NotNull Collection<T> set, @NotNull ToIntFunction<T> function) {
+    TIntHashSet result = new TIntHashSet();
+    for (T t : set) {
+      result.add(function.applyAsInt(t));
+    }
+    return result;
+  }
+
+  public static void processBatches(@NotNull IntStream stream,
+                                    int batchSize,
+                                    @NotNull ThrowableConsumer<TIntHashSet, VcsException> consumer)
+    throws VcsException {
     Ref<TIntHashSet> batch = new Ref<>(new TIntHashSet());
+    Ref<VcsException> exception = new Ref<>();
     stream.forEach(commit -> {
       batch.get().add(commit);
       if (batch.get().size() >= batchSize) {
         try {
           consumer.consume(batch.get());
+        }
+        catch (VcsException e) {
+          exception.set(e);
         }
         finally {
           batch.set(new TIntHashSet());
@@ -144,5 +171,30 @@ public class TroveUtil {
     if (!batch.get().isEmpty()) {
       consumer.consume(batch.get());
     }
+
+    if (!exception.isNull()) throw exception.get();
+  }
+
+  @NotNull
+  public static TIntHashSet collect(@NotNull IntStream stream) {
+    TIntHashSet result = new TIntHashSet();
+    stream.forEach(result::add);
+    return result;
+  }
+
+  @NotNull
+  public static TIntHashSet singleton(@NotNull Integer elements) {
+    TIntHashSet commits = new TIntHashSet();
+    commits.add(elements);
+    return commits;
+  }
+
+  public static <T> void add(@NotNull Map<T, TIntHashSet> targetMap, @NotNull T key, int value) {
+    TIntHashSet set = targetMap.get(key);
+    if (set == null) {
+      set = new TIntHashSet();
+      targetMap.put(key, set);
+    }
+    set.add(value);
   }
 }

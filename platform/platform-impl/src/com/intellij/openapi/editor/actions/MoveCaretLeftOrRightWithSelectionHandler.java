@@ -40,7 +40,7 @@ class MoveCaretLeftOrRightWithSelectionHandler extends EditorActionHandler {
   }
 
   @Override
-  protected void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+  protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     assert caret != null;
     VisualPosition currentPosition = caret.getVisualPosition();
     if (caret.isAtBidiRunBoundary() && (myMoveRight ^ currentPosition.leansRight)) {

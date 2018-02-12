@@ -96,17 +96,15 @@ public class HgPromptCommandExecutor extends HgCommandExecutor {
       }
       final int[] index = new int[]{-1};
       try {
-        EventQueue.invokeAndWait(new Runnable() {
-          public void run() {
-            String[] choicePresentationArray = new String[choices.length];
-            for (int i = 0; i < choices.length; ++i) {
-              choicePresentationArray[i] = choices[i].toString();
-            }
-            index[0] = Messages
-              .showDialog(message, "Mercurial Prompt Message",
-                          choicePresentationArray,
-                          defaultChoice.getChosenIndex(), Messages.getQuestionIcon());
+        EventQueue.invokeAndWait(() -> {
+          String[] choicePresentationArray = new String[choices.length];
+          for (int i = 0; i < choices.length; ++i) {
+            choicePresentationArray[i] = choices[i].toString();
           }
+          index[0] = Messages
+            .showDialog(message, "Mercurial Prompt Message",
+                        choicePresentationArray,
+                        defaultChoice.getChosenIndex(), Messages.getQuestionIcon());
         });
 
         int chosen = index[0];

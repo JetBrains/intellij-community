@@ -1,5 +1,5 @@
-import sys
 import os
+import sys
 
 IS_PY3K = False
 
@@ -34,3 +34,8 @@ def deserialize(base,
     base.read(protocol)
     return base
 
+
+if IS_PY3K:
+    import pkgutil
+else:
+    from _imps import _pydev_pkgutil_old as pkgutil

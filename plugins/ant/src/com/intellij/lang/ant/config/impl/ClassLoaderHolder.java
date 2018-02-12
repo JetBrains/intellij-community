@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 26, 2007
  */
 public abstract class ClassLoaderHolder {
   protected final AbstractProperty.AbstractPropertyContainer myOptions;

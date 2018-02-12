@@ -30,10 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * User: anna
- * Date: Mar 3, 2005
- */
 public class AddToFavoritesActionGroup extends ActionGroup implements DumbAware {
 
   @Override

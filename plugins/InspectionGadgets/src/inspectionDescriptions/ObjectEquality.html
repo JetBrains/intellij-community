@@ -1,14 +1,12 @@
 <html>
 <body>
-Reports any use of <b>==</b> or <b>!=</b>
-to test for Object equality, rather than the <b>equals()</b> method.
-Note that comparison of Strings or Numbers using <b>==</b> is not reported by this
-inspection, nor is the comparison of an object to <b>null</b> using
-<b>==</b>, or the comparison of two array objects.
+Reports any use of <b>==</b> or <b>!=</b>to test for Object equality, rather than the <b>equals()</b> method.
+Comparisons to <b>null</b> are not reported.
+Comparison of arrays, Strings or Numbers using <b>==</b> are also not reported, there are separate inspections for these three problems.
 <!-- tooltip end -->
 <p>
 Use the checkboxes below to indicate whether uses of <b>==</b> between objects of
-an enumerated type, class type or types with private constructors should be reported by this inspection.
+an enumerated type, final class types without equals implementation or types with private constructors should be reported by this inspection.
 <p>
 
 </body>

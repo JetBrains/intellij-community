@@ -20,7 +20,7 @@ class Main {
     }
 
     interface Fun<T, R> {
-        R _(T t);
+        R f(T t);
     }
 }
 

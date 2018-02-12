@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 
 public class MethodReferenceCompletionProvider extends CompletionProvider<CompletionParameters> {
-  private static final Logger LOG = Logger.getInstance("#" + MethodReferenceCompletionProvider.class.getName());
+  private static final Logger LOG = Logger.getInstance(MethodReferenceCompletionProvider.class);
 
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,

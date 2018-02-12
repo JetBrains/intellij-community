@@ -18,6 +18,7 @@ package org.jetbrains.idea.devkit.icons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.intellij.images.thumbnail.ThumbnailView;
 import org.intellij.images.thumbnail.actions.ThemeFilter;
 
 public enum Theme implements ThemeFilter{
@@ -90,5 +91,9 @@ public enum Theme implements ThemeFilter{
     return true;
   }
 
+  @Override
+  public void setFilter(ThumbnailView view) {
+    view.setFilter(this);
+  }
 
 }

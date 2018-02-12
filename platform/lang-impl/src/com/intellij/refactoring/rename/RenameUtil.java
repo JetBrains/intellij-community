@@ -40,11 +40,14 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
-import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
+import com.intellij.refactoring.util.NonCodeUsageInfo;
+import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,9 +79,7 @@ public class RenameUtil {
         continue;
       }
       PsiElement referenceElement = ref.getElement();
-      result.add(new MoveRenameUsageInfo(referenceElement, ref, ref.getRangeInElement().getStartOffset(),
-                                         ref.getRangeInElement().getEndOffset(), element,
-                                         ref.resolve() == null && !(ref instanceof PsiPolyVariantReference && ((PsiPolyVariantReference)ref).multiResolve(true).length > 0)));
+      result.add(processor.createUsageInfo(element, ref, referenceElement));
     }
 
     processor.findCollisions(element, newName, allRenames, result);
@@ -107,7 +108,7 @@ public class RenameUtil {
       }
     }
 
-    return result.toArray(new UsageInfo[result.size()]);
+    return result.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   private static void addTextOccurrence(final PsiElement element, final List<UsageInfo> result, final GlobalSearchScope projectScope,
@@ -320,7 +321,7 @@ public class RenameUtil {
     for (Document document : docsToOffsetsMap.keySet()) {
       List<UsageOffset> list = docsToOffsetsMap.get(document);
       LOG.assertTrue(list != null, document);
-      UsageOffset[] offsets = list.toArray(new UsageOffset[list.size()]);
+      UsageOffset[] offsets = list.toArray(new UsageOffset[0]);
       Arrays.sort(offsets);
 
       for (int i = offsets.length - 1; i >= 0; i--) {

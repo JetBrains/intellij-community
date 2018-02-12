@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup.list;
 
 import com.intellij.icons.AllIcons;
@@ -25,8 +11,8 @@ import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListPopupStepEx;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +33,11 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       @Override
       public Icon getIconFor(E value) {
         return aPopup.getListStep().getIconFor(value);
+      }
+
+      @Override
+      public Icon getSelectedIconFor(E value) {
+        return aPopup.getListStep().getSelectedIconFor(value);
       }
 
       @Override
@@ -76,7 +67,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     createLabel();
     panel.add(myTextLabel, BorderLayout.CENTER);
     myShortcutLabel = new JLabel();
-    myShortcutLabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 3));
+    myShortcutLabel.setBorder(JBUI.Borders.empty(0, 0, 0, 3));
     Color color = UIManager.getColor("MenuItem.acceleratorForeground");
     myShortcutLabel.setForeground(color);
     panel.add(myShortcutLabel, BorderLayout.EAST);
@@ -124,6 +115,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
 
     if (myShortcutLabel != null) {
+      myShortcutLabel.setEnabled(isSelectable);
       myShortcutLabel.setText("");
       if (value instanceof ShortcutProvider) {
         ShortcutSet set = ((ShortcutProvider)value).getShortcut();

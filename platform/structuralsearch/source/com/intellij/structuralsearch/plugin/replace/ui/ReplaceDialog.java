@@ -1,3 +1,4 @@
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace.ui;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -6,7 +7,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.structuralsearch.MalformedPatternException;
-import com.intellij.structuralsearch.ReplacementVariableDefinition;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.UnsupportedPatternException;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
@@ -87,14 +87,12 @@ public class ReplaceDialog extends SearchDialog {
 
   @Override
   protected void startSearching() {
-    new ReplaceCommand(model.getConfig(), searchContext).startSearching();
+    new ReplaceCommand(myConfiguration, searchContext).startSearching();
   }
 
   @Override
-  public Configuration createConfiguration() {
-    ReplaceConfiguration configuration = new ReplaceConfiguration();
-    configuration.setName(USER_DEFINED);
-    return configuration;
+  public Configuration createConfiguration(Configuration template) {
+    return (template == null) ? new ReplaceConfiguration(USER_DEFINED, USER_DEFINED) : new ReplaceConfiguration(template);
   }
 
   @Override
@@ -106,33 +104,16 @@ public class ReplaceDialog extends SearchDialog {
 
   @Override
   public void setValuesFromConfig(Configuration configuration) {
-    //replaceCriteriaEdit.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, configuration);
+    super.setValuesFromConfig(configuration);
+    final ReplaceConfiguration config = (ReplaceConfiguration)myConfiguration;
+    final ReplaceOptions options = config.getReplaceOptions();
 
-    if (configuration instanceof ReplaceConfiguration) {
-      final ReplaceConfiguration config = (ReplaceConfiguration)configuration;
-      final ReplaceOptions options = config.getOptions();
-      super.setValuesFromConfig(config);
+    UIUtil.setContent(replaceCriteriaEdit, config.getReplaceOptions().getReplacement());
 
-      UIUtil.setContent(replaceCriteriaEdit, config.getOptions().getReplacement(), 0, replaceCriteriaEdit.getDocument().getTextLength(),
-                        searchContext.getProject());
-
-      shortenFQN.setSelected(options.isToShortenFQN());
-      formatAccordingToStyle.setSelected(options.isToReformatAccordingToStyle());
-      useStaticImport.setSelected(options.isToUseStaticImport());
-
-      ReplaceOptions newReplaceOptions = ((ReplaceConfiguration)model.getConfig()).getOptions();
-      newReplaceOptions.clearVariableDefinitions();
-      
-      for (ReplacementVariableDefinition def : options.getReplacementVariableDefinitions()) {
-        newReplaceOptions.addVariableDefinition((ReplacementVariableDefinition)def.clone());
-      }
-    }
-    else {
-      super.setValuesFromConfig(configuration);
-
-      UIUtil.setContent(replaceCriteriaEdit, configuration.getMatchOptions().getSearchPattern(), 0,
-                        replaceCriteriaEdit.getDocument().getTextLength(), searchContext.getProject());
-    }
+    shortenFQN.setSelected(options.isToShortenFQN());
+    formatAccordingToStyle.setSelected(options.isToReformatAccordingToStyle());
+    useStaticImport.setSelected(options.isToUseStaticImport());
+    replaceCriteriaEdit.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
   }
 
   @Override
@@ -140,9 +121,8 @@ public class ReplaceDialog extends SearchDialog {
     super.setValuesToConfig(config);
 
     final ReplaceConfiguration replaceConfiguration = (ReplaceConfiguration)config;
-    final ReplaceOptions options = replaceConfiguration.getOptions();
+    final ReplaceOptions options = replaceConfiguration.getReplaceOptions();
 
-    options.setMatchOptions(replaceConfiguration.getMatchOptions());
     options.setReplacement(replaceCriteriaEdit.getDocument().getText());
     options.setToShortenFQN(shortenFQN.isSelected());
     options.setToReformatAccordingToStyle(formatAccordingToStyle.isSelected());
@@ -175,25 +155,18 @@ public class ReplaceDialog extends SearchDialog {
     if (!super.isValid()) return false;
 
     try {
-      Replacer.checkSupportedReplacementPattern(searchContext.getProject(), ((ReplaceConfiguration)model.getConfig()).getOptions());
+      Replacer.checkSupportedReplacementPattern(searchContext.getProject(), ((ReplaceConfiguration)myConfiguration).getReplaceOptions());
     }
     catch (UnsupportedPatternException ex) {
-      reportMessage("unsupported.replacement.pattern.message", replaceCriteriaEdit, ex.getMessage());
+      reportMessage(SSRBundle.message("unsupported.replacement.pattern.message", ex.getMessage()), replaceCriteriaEdit);
       return false;
     }
     catch (MalformedPatternException ex) {
-      reportMessage("malformed.replacement.pattern.message", replaceCriteriaEdit, ex.getMessage());
+      reportMessage(SSRBundle.message("malformed.replacement.pattern.message", ex.getMessage()), replaceCriteriaEdit);
       return false;
     }
 
     return true;
-  }
-
-  @Override
-  public void show() {
-    replaceCriteriaEdit.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, model.getConfig());
-
-    super.show();
   }
 
   @Override
@@ -202,8 +175,8 @@ public class ReplaceDialog extends SearchDialog {
   }
 
   @Override
-  protected void addOrReplaceSelection(final String selection) {
-    super.addOrReplaceSelection(selection);
-    addOrReplaceSelectionForEditor(selection, replaceCriteriaEdit);
+  protected void setText(final String text) {
+    super.setText(text);
+    setTextForEditor(text, replaceCriteriaEdit);
   }
 }

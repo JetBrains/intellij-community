@@ -63,18 +63,24 @@ public class LocalFileSystemTest extends PlatformTestCase {
 
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable());
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      @Override public void before(@NotNull List<? extends VFileEvent> events) { checkFiles(events, true); }
-
-      @Override public void after(@NotNull List<? extends VFileEvent> events) { checkFiles(events, false); }
-
-      private void checkFiles(List<? extends VFileEvent> events, boolean before) {
+      @Override
+      public void before(@NotNull List<? extends VFileEvent> events) {
         for (VFileEvent event : events) {
           VirtualFile file = event.getFile();
           if (file != null) {
-            boolean shouldBeInvalid =
-              event instanceof VFileCreateEvent && before && !((VFileCreateEvent)event).isReCreation() ||
-              event instanceof VFileDeleteEvent && !before;
-            assertEquals(event.toString(), !shouldBeInvalid, file.isValid());
+            boolean shouldBeValid = !(event instanceof VFileCreateEvent);
+            assertEquals(event.toString(), shouldBeValid, file.isValid());
+          }
+        }
+      }
+
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        for (VFileEvent event : events) {
+          VirtualFile file = event.getFile();
+          if (file != null) {
+            boolean shouldBeValid = !(event instanceof VFileDeleteEvent);
+            assertEquals(event.toString(), shouldBeValid, file.isValid());
           }
         }
       }
@@ -90,7 +96,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
   }
 
   public void testBasics() throws IOException {
-    VirtualFile dir = myFS.refreshAndFindFileByIoFile(createTempDirectory(false));
+    VirtualFile dir = PlatformTestUtil.notNull(myFS.refreshAndFindFileByIoFile(createTempDirectory(false)));
     assertTrue(dir.isValid());
     assertEquals(0, dir.getChildren().length);
 
@@ -259,7 +265,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
     assertTrue(childFile.delete());
   }
 
-  public void testFindRoot() throws IOException {
+  public void testFindRoot() {
     VirtualFile root = myFS.findFileByPath("wrong_path");
     assertNull(root);
 
@@ -331,38 +337,41 @@ public class LocalFileSystemTest extends PlatformTestCase {
   }
 
   public void testHardLinks() throws Exception {
-    if (!SystemInfo.isWindows && !SystemInfo.isUnix) {
-      System.err.println(getName() + " skipped: " + SystemInfo.OS_NAME);
-      return;
-    }
+    GeneralSettings settings = GeneralSettings.getInstance();
+    boolean safeWrite = settings.isUseSafeWrite();
+    SafeWriteRequestor requestor = new SafeWriteRequestor() { };
+    File dir = FileUtil.createTempDirectory("hardlinks.", ".dir", false);
+    byte[] testData = "hello".getBytes(CharsetToolkit.UTF8_CHARSET);
 
-    final boolean safeWrite = GeneralSettings.getInstance().isUseSafeWrite();
-    final File dir = FileUtil.createTempDirectory("hardlinks.", ".dir", false);
-    final SafeWriteRequestor requestor = new SafeWriteRequestor() { };
     try {
-      GeneralSettings.getInstance().setUseSafeWrite(false);
+      settings.setUseSafeWrite(false);
 
-      final File targetFile = new File(dir, "targetFile");
+      File targetFile = new File(dir, "targetFile");
       assertTrue(targetFile.createNewFile());
-      final File hardLinkFile = IoTestUtil.createHardLink(targetFile.getAbsolutePath(), "hardLinkFile");
+      File hardLinkFile = IoTestUtil.createHardLink(targetFile.getAbsolutePath(), "hardLinkFile");
 
-      final VirtualFile file = myFS.refreshAndFindFileByIoFile(targetFile);
+      VirtualFile file = myFS.refreshAndFindFileByIoFile(targetFile);
       assertNotNull(file);
-      setBinaryContent(file,"hello".getBytes(CharsetToolkit.UTF8_CHARSET), 0, 0, requestor);
+      setBinaryContent(file, testData, 0, 0, requestor);
       assertTrue(file.getLength() > 0);
 
-      final VirtualFile check = myFS.refreshAndFindFileByIoFile(hardLinkFile);
+      if (SystemInfo.isWindows) {
+        byte[] bytes = FileUtil.loadFileBytes(hardLinkFile);
+        assertEquals(testData.length, bytes.length);
+      }
+
+      VirtualFile check = myFS.refreshAndFindFileByIoFile(hardLinkFile);
       assertNotNull(check);
       assertEquals(file.getLength(), check.getLength());
       assertEquals("hello", VfsUtilCore.loadText(check));
     }
     finally {
-      GeneralSettings.getInstance().setUseSafeWrite(safeWrite);
+      settings.setUseSafeWrite(safeWrite);
       FileUtil.delete(dir);
     }
   }
 
-  public void testWindowsHiddenDirectory() throws Exception {
+  public void testWindowsHiddenDirectory() {
     if (!SystemInfo.isWindows) {
       System.err.println(getName() + " skipped: " + SystemInfo.OS_NAME);
       return;
@@ -451,7 +460,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
     assertNull(vFile);
   }
 
-  public void testNoMoreFakeRoots() throws Exception {
+  public void testNoMoreFakeRoots() {
     try {
       PersistentFS.getInstance().findRoot("", myFS);
       fail("should fail by assertion in PersistentFsImpl.findRoot()");
@@ -480,7 +489,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
       fail("Copying a file into a '.' path should have failed");
     }
     catch (IOException e) {
-      System.out.println(e.getMessage());
+      e.printStackTrace();
     }
 
     topDir.refresh(false, true);
@@ -490,7 +499,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
 
   public void testCaseInsensitiveRename() throws IOException {
     File file = createTempFile("file.txt", "");
-    File home = file.getParentFile();
+    File home = PlatformTestUtil.notNull(file.getParentFile());
     assertOrderedEquals(Collections.singletonList("file.txt"), home.list());
 
     VirtualFile vFile = myFS.refreshAndFindFileByIoFile(file);
@@ -536,7 +545,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
     doTestPartialRefresh(top);
   }
 
-  public static void doTestPartialRefresh(@NotNull File top) throws IOException {
+  public static void doTestPartialRefresh(@NotNull File top) {
     File sub = IoTestUtil.createTestDir(top, "sub");
     File file1 = IoTestUtil.createTestFile(top, "file1.txt", ".");
     File file2 = IoTestUtil.createTestFile(sub, "file2.txt", ".");
@@ -579,7 +588,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
 
   public void testSymlinkTargetBlink() throws Exception {
     if (!SystemInfo.areSymLinksSupported) {
-      System.err.println("Ignored: symlinks not supported");
+      System.err.println("Ignored: symlinks not supported: "+SystemInfo.getOsNameAndVersion());
       return;
     }
 
@@ -630,7 +639,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
     }
     Files.walkFileTree(top.toPath(), new SimpleFileVisitor<Path>() {
       @Override
-      public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+      public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
         for (int k = 1; k <= 3; k++) {
           IoTestUtil.createTestFile(dir.toFile(), "file_" + k, ".");
         }
@@ -705,7 +714,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
     });
   }
 
-  public void testBrokenSymlinkMove() throws IOException, InterruptedException {
+  public void testBrokenSymlinkMove() throws IOException {
     if (!SystemInfo.areSymLinksSupported) {
       System.err.println(getName() + " skipped: " + SystemInfo.OS_NAME);
       return;

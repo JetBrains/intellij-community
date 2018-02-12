@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ public class UnusedDeclarationInspectionMerger extends InspectionElementsMergerB
   private static final String UNUSED_SYMBOL = "UNUSED_SYMBOL";
   private static final String UNUSED_DECLARATION = "UnusedDeclaration";
 
+  @NotNull
   @Override
   public String getMergedToolName() {
     return UnusedDeclarationInspectionBase.SHORT_NAME;

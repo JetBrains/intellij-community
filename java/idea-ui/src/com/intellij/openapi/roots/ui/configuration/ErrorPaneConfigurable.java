@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
   private final Object myLock = new Object();
   private final MergingUpdateQueue myContentUpdateQueue;
   private final JTextPane myContent = new JTextPane();
-  private Runnable myOnErrorsChanged;
+  private final Runnable myOnErrorsChanged;
 
   public ErrorPaneConfigurable(final Project project, StructureConfigurableContext context, Runnable onErrorsChanged) {
     super(new BorderLayout());
@@ -200,12 +200,6 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
 
   @Nullable
   @Override
-  public String getHelpTopic() {
-    return null;
-  }
-
-  @Nullable
-  @Override
   public JComponent createComponent() {
     return this;
   }
@@ -217,11 +211,6 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
 
   @Override
   public void apply() throws ConfigurationException {
-
-  }
-
-  @Override
-  public void reset() {
 
   }
 

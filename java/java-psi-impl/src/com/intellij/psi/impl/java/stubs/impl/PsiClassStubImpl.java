@@ -39,11 +39,13 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   private static final int ANON_TYPE = 0x20;
   private static final int IN_QUALIFIED_NEW = 0x40;
   private static final int DEPRECATED_ANNOTATION = 0x80;
+  private static final int ANONYMOUS_INNER = 0x100;
+  private static final int LOCAL_CLASS_INNER = 0x200;
 
   private final String myQualifiedName;
   private final String myName;
   private final String myBaseRefText;
-  private final byte myFlags;
+  private final short myFlags;
   private String mySourceFileName;
 
   public PsiClassStubImpl(final JavaClassElementType type,
@@ -51,7 +53,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
                           @Nullable final String qualifiedName,
                           @Nullable final String name,
                           @Nullable final String baseRefText,
-                          final byte flags) {
+                          final short flags) {
     super(parent, type);
     myQualifiedName = qualifiedName;
     myName = name;
@@ -103,7 +105,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
     return isEnumConstInitializer(myFlags);
   }
 
-  public static boolean isEnumConstInitializer(final byte flags) {
+  public static boolean isEnumConstInitializer(final short flags) {
     return BitUtil.isSet(flags, ENUM_CONSTANT_INITIALIZER);
   }
 
@@ -112,7 +114,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
     return isAnonymous(myFlags);
   }
 
-  public static boolean isAnonymous(final byte flags) {
+  public static boolean isAnonymous(final short flags) {
     return BitUtil.isSet(flags, ANONYMOUS);
   }
 
@@ -147,19 +149,22 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
     return BitUtil.isSet(myFlags, IN_QUALIFIED_NEW);
   }
 
-  public byte getFlags() {
+  public short getFlags() {
     return myFlags;
   }
 
-  public static byte packFlags(boolean isDeprecated,
+  public static short packFlags(boolean isDeprecated,
                                boolean isInterface,
                                boolean isEnum,
                                boolean isEnumConstantInitializer,
                                boolean isAnonymous,
                                boolean isAnnotationType,
                                boolean isInQualifiedNew,
-                               boolean hasDeprecatedAnnotation) {
-    byte flags = 0;
+                               boolean hasDeprecatedAnnotation, 
+                               boolean anonymousInner,
+                               boolean localClassInner
+                                ) {
+    short flags = 0;
     if (isDeprecated) flags |= DEPRECATED;
     if (isInterface) flags |= INTERFACE;
     if (isEnum) flags |= ENUM;
@@ -168,9 +173,18 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
     if (isAnnotationType) flags |= ANON_TYPE;
     if (isInQualifiedNew) flags |= IN_QUALIFIED_NEW;
     if (hasDeprecatedAnnotation) flags |= DEPRECATED_ANNOTATION;
+    if (anonymousInner) flags |= ANONYMOUS_INNER;
+    if (localClassInner) flags |= LOCAL_CLASS_INNER;
     return flags;
   }
 
+  public boolean isAnonymousInner() {
+    return BitUtil.isSet(myFlags, ANONYMOUS_INNER);
+  }
+  public boolean isLocalClassInner() {
+    return BitUtil.isSet(myFlags, LOCAL_CLASS_INNER);
+  }
+  
   @Override
   @SuppressWarnings("SpellCheckingInspection")
   public String toString() {
@@ -213,6 +227,14 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
 
     if (isAnonymousInQualifiedNew()) {
       builder.append(" inqualifnew");
+    }
+
+    if (isAnonymousInner()) {
+      builder.append(" jvmAnonymousInner");
+    }
+
+    if (isLocalClassInner()) {
+      builder.append(" jvmLocalClassInner");
     }
 
     builder.append("]");

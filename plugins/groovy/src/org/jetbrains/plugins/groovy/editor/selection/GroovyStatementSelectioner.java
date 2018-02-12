@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -33,14 +34,14 @@ import java.util.List;
  */
 public class GroovyStatementSelectioner extends ExtendWordSelectionHandlerBase {
   @Override
-  public boolean canSelect(PsiElement e) {
+  public boolean canSelect(@NotNull PsiElement e) {
     return e instanceof GrExpression && PsiUtil.isExpressionStatement(e) ||
            (e instanceof GrStatement && !(e instanceof GrExpression)) ||
            e.getNode().getElementType() == GroovyTokenTypes.mSEMI;
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     TextRange originalRange;
 
     PsiElement first;

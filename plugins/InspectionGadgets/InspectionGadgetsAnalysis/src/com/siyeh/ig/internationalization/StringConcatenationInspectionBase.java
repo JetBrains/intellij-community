@@ -126,7 +126,7 @@ public class StringConcatenationInspectionBase extends BaseInspection {
         result.add(fix);
       }
     }
-    return result.toArray(new InspectionGadgetsFix[result.size()]);
+    return result.toArray(new InspectionGadgetsFix[0]);
   }
 
   private static DelegatingFix createAddAnnotationFix(PsiModifierListOwner variable) {

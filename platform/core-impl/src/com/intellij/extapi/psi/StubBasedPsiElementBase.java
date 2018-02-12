@@ -22,9 +22,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -132,7 +132,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     if (mySubstrateRef instanceof SubstrateRef.StubRef) {
       ApplicationManager.getApplication().assertReadAccessAllowed();
       PsiFileImpl file = (PsiFileImpl)getContainingFile();
-      if (!file.isValid()) throw new PsiInvalidElementAccessException(this);
+      if (!file.isValid()) throw new PsiInvalidElementAccessException(file);
 
       FileElement treeElement = file.getTreeElement();
       if (treeElement != null && mySubstrateRef instanceof SubstrateRef.StubRef) {
@@ -230,7 +230,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
    * Don't invoke this method, it's public for implementation reasons.
    */
   public final void setNode(@NotNull ASTNode node) {
-    mySubstrateRef = SubstrateRef.createAstStrongRef(node);
+    setSubstrateRef(SubstrateRef.createAstStrongRef(node));
   }
 
   /**
@@ -291,6 +291,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
 
   @Override
   public boolean isValid() {
+    ProgressManager.checkCanceled();
     return mySubstrateRef.isValid();
   }
 
@@ -367,7 +368,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   @NotNull
   public IStubElementType getElementType() {
     if (!(myElementType instanceof IStubElementType)) {
-      throw new AssertionError("Not a stub type: " + myElementType + " in " + getClass());
+      throw new ClassCastException("Not a stub type: " + myElementType + " in " + getClass());
     }
     return (IStubElementType)myElementType;
   }
@@ -532,7 +533,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   @Override
   protected Object clone() {
     final StubBasedPsiElementBase copy = (StubBasedPsiElementBase)super.clone();
-    copy.mySubstrateRef = SubstrateRef.createAstStrongRef(getNode());
+    copy.setSubstrateRef(SubstrateRef.createAstStrongRef(getNode()));
     return copy;
   }
 }

@@ -22,15 +22,6 @@
       <component name="DaemonCodeAnalyzer">
         <disable_hints />
       </component>
-      <component name="DependencyValidationManager">
-        <option name="SKIP_IMPORT_STATEMENTS" value="false" />
-      </component>
-      <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false" />
-      <component name="Git.Settings">
-        <option name="CHECKOUT_INCLUDE_TAGS" value="false" />
-        <option name="UPDATE_CHANGES_POLICY" value="STASH" />
-        <option name="LINE_SEPARATORS_CONVERSION" value="ASK" />
-      </component>
       <component name="InspectionProjectProfileManager">
         <option name="PROJECT_PROFILE" />
         <option name="USE_PROJECT_PROFILE" value="true" />
@@ -103,7 +94,6 @@
           <option name="ENV_VARIABLES" />
           <option name="PASS_PARENT_ENVS" value="true" />
           <module name="" />
-          <envs />
           <method>
             <option name="BuildArtifacts" enabled="false" />
             <option name="Make" enabled="true" />

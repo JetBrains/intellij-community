@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,14 @@ import java.awt.*;
 public interface ParameterInfoUIContext {
   String setupUIComponentPresentation(String text, int highlightStartOffset, int highlightEndOffset, boolean isDisabled, boolean strikeout,
                                       boolean isDisabledBeforeHighlight, Color background);
+  void setupRawUIComponentPresentation(String htmlText);
   boolean isUIComponentEnabled();
   void setUIComponentEnabled(boolean enabled);
 
   int getCurrentParameterIndex();
   PsiElement getParameterOwner();
 
+  boolean isSingleOverload();
+  boolean isSingleParameterInfo();
   Color getDefaultParameterColor();
 }

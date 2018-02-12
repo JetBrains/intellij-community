@@ -16,14 +16,14 @@
 package com.jetbrains.env.python.console;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -36,11 +36,16 @@ import com.jetbrains.python.console.*;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
-import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -53,15 +58,21 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   protected PydevConsoleCommunication myCommunication;
 
   private boolean shouldPrintOutput = false;
-  private PythonConsoleView myConsoleView;
+  private volatile PythonConsoleView myConsoleView;
   private Semaphore myCommandSemaphore;
   private Semaphore myConsoleInitSemaphore;
-  private PydevConsoleExecuteActionHandler myExecuteHandler;
+  private PythonConsoleExecuteActionHandler myExecuteHandler;
 
-  private Ref<RunContentDescriptor> myContentDescriptorRef = Ref.create();
+  private final Ref<RunContentDescriptor> myContentDescriptorRef = Ref.create();
 
   public PyConsoleTask() {
     super(null);
+  }
+
+  @Nullable
+  @Override
+  public Set<String> getTagsToCover() {
+    return Sets.newHashSet("python3.6", "python2.7", "ipython", "ipython200", "jython", "IronPython");
   }
 
   public PythonConsoleView getConsoleView() {
@@ -84,31 +95,73 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
   @Override
   public void tearDown() throws Exception {
+    // Prevents thread leak, see its doc
+    killRpcThread();
+
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         if (myConsoleView != null) {
           disposeConsole();
-          myCommunication.waitForTerminate();
         }
-        super.tearDown();
       }
       catch (Exception e) {
         throw new RuntimeException(e);
       }
     });
+    super.tearDown();
   }
 
-  private void disposeConsole() throws InterruptedException {
+  /**
+   * Kill XML-Rpc thread
+   * Due to stupid bug in {@link LiteXmlRpcTransport#initConnection()} which has <strong>infinite</strong> loop that
+   * tries to connect to already dead process (already closed socket): See "tries" var.
+   */
+  private static void killRpcThread() throws InterruptedException {
+    final Optional<Thread> rpc = Thread.getAllStackTraces().keySet().stream()
+                                       .filter(o -> o.getClass().getName().contains("XmlRpc"))
+                                       .findFirst();
+    if (rpc.isPresent()) {
+      final Thread thread = rpc.get();
+      // There is no way to interrupt this thread with "interrupt": it has infinite loop (bug) which does not check ".isInterrupted()"
+      //noinspection CallToThreadStopSuspendOrResumeManager
+      thread.stop();
+      thread.join();
+    }
+  }
+
+  /**
+   * Disposes Python console and waits for Python console server thread to die.
+   */
+  private void disposeConsole() throws InterruptedException, ExecutionException {
+    try {
+      disposeConsoleAsync().get();
+    }
+    finally {
+      // Even if console failed in its side we need
+      if (myConsoleView != null) {
+        UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+          Disposer.dispose(myConsoleView);
+        });
+        myConsoleView = null;
+      }
+    }
+  }
+
+  @NotNull
+  private Future<Void> disposeConsoleAsync() {
+    Future<Void> shutdownFuture;
     if (myCommunication != null) {
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      shutdownFuture = UIUtil.invokeAndWaitIfNeeded(() -> {
         try {
-          myCommunication.close();
+          return myCommunication.closeAsync();
         }
-        catch (Exception e) {
-          e.printStackTrace();
+        finally {
+          myCommunication = null;
         }
-        myCommunication = null;
       });
+    }
+    else {
+      shutdownFuture = CompletableFuture.completedFuture(null);
     }
 
     disposeConsoleProcess();
@@ -120,32 +173,21 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     if (myConsoleView != null) {
       new WriteAction() {
         @Override
-        protected void run(@NotNull Result result) throws Throwable {
+        protected void run(@NotNull Result result) {
           Disposer.dispose(myConsoleView);
           myConsoleView = null;
         }
       }.execute();
     }
+
+    return shutdownFuture;
   }
 
   @Override
-  public void runTestOn(final String sdkHome) throws Exception {
-    final Project project = getProject();
-
-    final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
-
+  public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws Exception {
     setProcessCanTerminate(false);
 
-    PydevConsoleRunner consoleRunner =
-      new PydevConsoleRunnerImpl(project, sdk, PyConsoleType.PYTHON, myFixture.getTempDirPath(), Maps.newHashMap(),
-                                 PyConsoleOptions.getInstance(project).getPythonConsoleSettings(),
-                                 (s) -> {
-                                 }) {
-        protected void showContentDescriptor(RunContentDescriptor contentDescriptor) {
-          myContentDescriptorRef.set(contentDescriptor);
-          super.showContentDescriptor(contentDescriptor);
-        }
-      };
+    PydevConsoleRunner consoleRunner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(getProject(), myFixture.getModule());
 
     before();
 
@@ -165,6 +207,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     myCommandSemaphore = new Semaphore(1);
 
     myConsoleView = consoleRunner.getConsoleView();
+    Disposer.register(myFixture.getProject(), myConsoleView);
     myProcessHandler = consoleRunner.getProcessHandler();
 
     myExecuteHandler = consoleRunner.getConsoleExecuteActionHandler();
@@ -184,7 +227,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
     myProcessHandler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void processTerminated(ProcessEvent event) {
+      public void processTerminated(@NotNull ProcessEvent event) {
         if (event.getExitCode() != 0 && !myProcessCanTerminate) {
           Assert.fail("Process terminated unexpectedly\n" + output());
         }
@@ -214,7 +257,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     }
   }
 
-  private void disposeConsoleProcess() throws InterruptedException {
+  private void disposeConsoleProcess() {
     myProcessHandler.destroyProcess();
 
     waitFor(myProcessHandler);
@@ -377,10 +420,9 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
 
   public void addTextToEditor(final String text) {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-                                   getConsoleView().setInputText(text);
-                                   PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-                                 }
-    );
+    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+      getConsoleView().setInputText(text);
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    });
   }
 }

@@ -40,7 +40,7 @@ public class Javac2 extends Javac {
   private List myNestedFormPathList;
   private boolean instrumentNotNull = true;
   private String myNotNullAnnotations = "org.jetbrains.annotations.NotNull";
-  private List<Regexp> myClassFilterAnnotationRegexpList = new ArrayList<Regexp>(0);
+  private final List<Regexp> myClassFilterAnnotationRegexpList = new ArrayList<Regexp>(0);
 
   public Javac2() {
   }
@@ -77,14 +77,14 @@ public class Javac2 extends Javac {
   }
 
   /**
-   * @return semicolon-separated names of not-null annotations to be instrumented. Example: <code>"org.jetbrains.annotations.NotNull;javax.annotation.Nonnull"</code>
+   * @return semicolon-separated names of not-null annotations to be instrumented. Example: {@code "org.jetbrains.annotations.NotNull;javax.annotation.Nonnull"}
    */
   public String getNotNullAnnotations() {
     return myNotNullAnnotations;
   }
 
   /**
-   * @param notNullAnnotations semicolon-separated names of not-null annotations to be instrumented. Example: <code>"org.jetbrains.annotations.NotNull;javax.annotation.Nonnull"</code>
+   * @param notNullAnnotations semicolon-separated names of not-null annotations to be instrumented. Example: {@code "org.jetbrains.annotations.NotNull;javax.annotation.Nonnull"}
    */
   public void setNotNullAnnotations(String notNullAnnotations) {
     myNotNullAnnotations = notNullAnnotations;
@@ -564,7 +564,7 @@ public class Javac2 extends Javac {
       final String s = tokenizer.nextToken();
       urls.add(new File(s).toURI().toURL());
     }
-    final URL[] urlsArr = (URL[])urls.toArray(new URL[urls.size()]);
+    final URL[] urlsArr = (URL[])urls.toArray(new URL[0]);
     return new InstrumentationClassFinder(urlsArr);
   }
 

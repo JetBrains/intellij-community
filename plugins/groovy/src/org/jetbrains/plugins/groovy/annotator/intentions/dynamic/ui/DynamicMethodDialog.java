@@ -36,10 +36,6 @@ import java.awt.*;
 import java.util.EventObject;
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 18.02.2008
- */
 public class DynamicMethodDialog extends DynamicDialog {
 
   public DynamicMethodDialog(GrReferenceExpression referenceExpression) {
@@ -111,11 +107,6 @@ public class DynamicMethodDialog extends DynamicDialog {
     @Override
     public String valueOf(ParamInfo pair) {
       return pair.type;
-    }
-
-    @Override
-    public boolean isCellEditable(ParamInfo stringPsiTypeMyPair) {
-      return false;
     }
 
     @Override

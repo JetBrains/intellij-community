@@ -34,7 +34,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -213,32 +212,27 @@ public class JavaModuleInsight extends ModuleInsight {
 
   @Nullable
   private static String readPackageName(final CharSequence text, final Lexer lexer) {
-    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    try {
-      while (true) {
-        if (lexer.getTokenType() != JavaTokenType.IDENTIFIER && lexer.getTokenType() != JavaTokenType.ASTERISK) {
-          break;
-        }
-        buffer.append(text, lexer.getTokenStart(), lexer.getTokenEnd());
-
-        advanceLexer(lexer);
-        if (lexer.getTokenType() != JavaTokenType.DOT) {
-          break;
-        }
-        buffer.append('.');
-
-        advanceLexer(lexer);
+    final StringBuilder buffer = new StringBuilder();
+    while (true) {
+      if (lexer.getTokenType() != JavaTokenType.IDENTIFIER && lexer.getTokenType() != JavaTokenType.ASTERISK) {
+        break;
       }
+      buffer.append(text, lexer.getTokenStart(), lexer.getTokenEnd());
 
-      String packageName = buffer.toString();
-      if (packageName.length() == 0 || StringUtil.endsWithChar(packageName, '.') || StringUtil.startsWithChar(packageName, '*')) {
-        return null;
+      advanceLexer(lexer);
+      if (lexer.getTokenType() != JavaTokenType.DOT) {
+        break;
       }
-      return packageName;
+      buffer.append('.');
+
+      advanceLexer(lexer);
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
+
+    String packageName = buffer.toString();
+    if (packageName.length() == 0 || StringUtil.endsWithChar(packageName, '.') || StringUtil.startsWithChar(packageName, '*')) {
+      return null;
     }
+    return packageName;
   }
 
   private static void advanceLexer(final Lexer lexer) {

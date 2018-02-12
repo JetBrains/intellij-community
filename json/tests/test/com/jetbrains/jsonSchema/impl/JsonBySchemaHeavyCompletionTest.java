@@ -17,8 +17,20 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.json.JsonFileType;
+import com.intellij.json.psi.JsonFile;
+import com.intellij.json.psi.JsonObject;
+import com.intellij.json.psi.JsonStringLiteral;
+import com.intellij.json.psi.JsonValue;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.jsonSchema.JsonSchemaHeavyAbstractTest;
-import com.jetbrains.jsonSchema.JsonSchemaMappingsConfigurationBase;
+import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration;
+import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
 import java.util.Collections;
 
@@ -32,6 +44,10 @@ public class JsonBySchemaHeavyCompletionTest extends JsonSchemaHeavyAbstractTest
   }
 
   public void testInsertEnumValue() throws Exception {
+    baseInsertTest(getTestName(true), "testValue");
+  }
+
+  public void testInsertPropertyName() throws Exception {
     baseInsertTest("insertPropertyName", "testName");
   }
 
@@ -85,37 +101,81 @@ public class JsonBySchemaHeavyCompletionTest extends JsonSchemaHeavyAbstractTest
     baseInsertTest("insertPropertyName", "testNameWithDefaultStringValueComma");
   }
 
-  private void baseInsertTest(final String folder, final String testFile) throws Exception {
+  public void testOneOfWithNotFilledPropertyValue() throws Exception {
+    baseCompletionTest("oneOfWithEnumValue", "oneOfWithEmptyPropertyValue", "\"business\"", "\"home\"");
+  }
+
+  public void testEditingSchemaAffectsCompletion() throws Exception {
+    baseTest(getTestName(true), "testEditing", () -> {
+      complete();
+      assertStringItems("\"preserve\"", "\"react\"", "\"react-native\"");
+
+      final PsiFile schema = myFile.getParent().findFile("Schema.json");
+      final int idx = schema.getText().indexOf("react-native");
+      Assert.assertTrue(idx > 0);
+      PsiElement element = schema.findElementAt(idx);
+      element = element instanceof JsonStringLiteral ? element : PsiTreeUtil.getParentOfType(element, JsonStringLiteral.class);
+      Assert.assertTrue(element instanceof JsonStringLiteral);
+
+      final PsiFile dummy = PsiFileFactory.getInstance(myProject).createFileFromText("test.json", JsonFileType.INSTANCE,
+                                                                                    "{\"a\": \"completelyChanged\"}");
+      Assert.assertTrue(dummy instanceof JsonFile);
+      final JsonValue top = ((JsonFile)dummy).getTopLevelValue();
+      final JsonValue newLiteral = ((JsonObject)top).findProperty("a").getValue();
+
+      PsiElement finalElement = element;
+      WriteAction.run(() -> finalElement.replace(newLiteral));
+
+      complete();
+      assertStringItems("\"completelyChanged\"", "\"preserve\"", "\"react\"");
+    });
+  }
+
+  private void baseCompletionTest(@SuppressWarnings("SameParameterValue") final String folder,
+                                  @SuppressWarnings("SameParameterValue") final String testFile, @NotNull String... items) throws Exception {
+    baseTest(folder, testFile, () -> {
+      complete();
+      assertStringItems(items);
+    });
+  }
+
+  private void baseInsertTest(@SuppressWarnings("SameParameterValue") final String folder, final String testFile) throws Exception {
+    baseTest(folder, testFile, () -> {
+      final CodeCompletionHandlerBase handlerBase = new CodeCompletionHandlerBase(CompletionType.BASIC);
+      handlerBase.invokeCompletion(getProject(), getEditor());
+      if (myItems != null) {
+        selectItem(myItems[0]);
+      }
+      try {
+        checkResultByFile("/" + folder + "/" + testFile + "_after.json");
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    });
+  }
+
+  private void baseTest(@NotNull final String folder, @NotNull final String testFile, @NotNull final Runnable checker) throws Exception {
     skeleton(new Callback() {
       @Override
       public void registerSchemes() {
         final String moduleDir = getModuleDir(getProject());
 
-        final JsonSchemaMappingsConfigurationBase.SchemaInfo base =
-          new JsonSchemaMappingsConfigurationBase.SchemaInfo("base", moduleDir + "/Schema.json", false,
-                                                             Collections
-                                                               .singletonList(new JsonSchemaMappingsConfigurationBase.Item("*.json", true, false)));
+        final UserDefinedJsonSchemaConfiguration base =
+          new UserDefinedJsonSchemaConfiguration("base", moduleDir + "/Schema.json", false,
+                                                 Collections.singletonList(new UserDefinedJsonSchemaConfiguration.Item(testFile + ".json", true, false))
+          );
         addSchema(base);
       }
 
       @Override
-      public void configureFiles() throws Exception {
+      public void configureFiles() {
         configureByFiles(null, "/" + folder + "/" + testFile + ".json", "/" + folder + "/Schema.json");
       }
 
       @Override
       public void doCheck() {
-        final CodeCompletionHandlerBase handlerBase = new CodeCompletionHandlerBase(CompletionType.BASIC);
-        handlerBase.invokeCompletion(getProject(), getEditor());
-        if (myItems != null) {
-          selectItem(myItems[0]);
-        }
-        try {
-          checkResultByFile("/" + folder + "/" + testFile + "_after.json");
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+        checker.run();
       }
     });
   }

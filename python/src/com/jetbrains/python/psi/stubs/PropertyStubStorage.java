@@ -35,7 +35,6 @@ import java.io.IOException;
 /**
  * Packs property description for storage in a stub.
  * User: dcheryasov
- * Date: Jun 3, 2010 6:46:01 AM
  */
 public class PropertyStubStorage extends PropertyBunch<String> implements CustomTargetExpressionStub {
 

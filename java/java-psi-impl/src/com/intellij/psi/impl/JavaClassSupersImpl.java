@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound;
@@ -129,7 +130,12 @@ public class JavaClassSupersImpl extends JavaClassSupers {
     Map<PsiTypeParameter, PsiType> innerMap = inner.getSubstitutionMap();
     for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(onClass)) {
       if (outerMap.containsKey(parameter) || innerMap.containsKey(parameter)) {
-        answer = answer.put(parameter, outer.substitute(inner.substitute(parameter)));
+        PsiType innerType = inner.substitute(parameter);
+        PsiClass paramCandidate = PsiCapturedWildcardType.isCapture() ? PsiUtil.resolveClassInClassTypeOnly(innerType) : null;
+        PsiType targetType = paramCandidate instanceof PsiTypeParameter && paramCandidate != parameter
+                             ? outer.substituteWithBoundsPromotion((PsiTypeParameter)paramCandidate)
+                             : outer.substitute(innerType);
+        answer = answer.put(parameter, targetType);
       }
     }
     return answer;
@@ -176,17 +182,18 @@ public class JavaClassSupersImpl extends JavaClassSupers {
   @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
   @Override
   public void reportHierarchyInconsistency(@NotNull PsiClass superClass, @NotNull PsiClass derivedClass) {
-    if (!ourReportedInconsistencies.add(derivedClass.getQualifiedName() + "/" + superClass.getQualifiedName())) {
+    if (!ourReportedInconsistencies.add(derivedClass.getQualifiedName() + "/" + superClass.getQualifiedName()) &&
+        !ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
 
-    StringBuilder msg = new StringBuilder();
+    StringBuilder msg = new StringBuilder("superClassSubstitutor requested when derived doesn't extend super:\n");
     msg.append("Super: " + classInfo(superClass));
     msg.append("Derived: " + classInfo(derivedClass));
     msg.append("isInheritor: " +
                InheritanceUtil.isInheritorOrSelf(derivedClass, superClass, true) +
                " " +
-               derivedClass.isInheritor(superClass, true));
+               derivedClass.isInheritor(superClass, true) + "\n");
     msg.append("Super in derived's scope: " + PsiSearchScopeUtil.isInScope(derivedClass.getResolveScope(), superClass) + "\n");
     if (!InheritanceUtil.processSupers(derivedClass, false, s -> s != superClass)) {
       msg.append("Plain derived's supers contain Super:\n");

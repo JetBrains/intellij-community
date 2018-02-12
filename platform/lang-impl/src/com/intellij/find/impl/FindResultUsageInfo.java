@@ -30,7 +30,7 @@ import com.intellij.psi.SmartPsiFileRange;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
-class FindResultUsageInfo extends UsageInfo {
+public class FindResultUsageInfo extends UsageInfo {
   private final FindManager myFindManager;
   private final FindModel myFindModel;
   private final SmartPsiFileRange myAnchor;
@@ -40,11 +40,11 @@ class FindResultUsageInfo extends UsageInfo {
 
   private static final Key<Long> DOCUMENT_TIMESTAMP_KEY = Key.create("FindResultUsageInfo.DOCUMENT_TIMESTAMP_KEY");
 
-  FindResultUsageInfo(@NotNull FindManager finder,
-                      @NotNull PsiFile file,
-                      int offset,
-                      @NotNull FindModel findModel,
-                      @NotNull FindResult result) {
+  public FindResultUsageInfo(@NotNull FindManager finder,
+                             @NotNull PsiFile file,
+                             int offset,
+                             @NotNull FindModel findModel,
+                             @NotNull FindResult result) {
     super(file, result.getStartOffset(), result.getEndOffset());
 
     myFindManager = finder;
@@ -82,12 +82,16 @@ class FindResultUsageInfo extends UsageInfo {
     myTimestamp = document.getModificationStamp();
 
     Segment segment = getSegment();
-    if (segment == null) {
+    if (segment == null && !isFileUsage()) {
       myCachedResult = false;
       return false;
     }
 
     VirtualFile file = getPsiFile().getVirtualFile();
+    if (isFileUsage()) {
+      myCachedResult = file.isValid();
+      return myCachedResult;
+    }
 
     Segment searchOffset;
     if (myAnchor != null) {

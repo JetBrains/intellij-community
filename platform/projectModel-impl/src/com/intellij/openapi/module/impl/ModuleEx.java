@@ -16,7 +16,6 @@
 package com.intellij.openapi.module.impl;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,10 +23,11 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public interface ModuleEx extends Module {
-  /**
-   * @param path System-independent path.
-   */
-  void init(@NotNull String path, @Nullable VirtualFile file, @Nullable Runnable beforeComponentCreation);
+  default void init(@Nullable Runnable beforeComponentCreation) {
+    if (beforeComponentCreation != null) {
+      beforeComponentCreation.run();
+    }
+  }
 
   default void moduleAdded() {
   }

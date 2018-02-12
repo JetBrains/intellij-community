@@ -18,7 +18,7 @@ package com.intellij.psi;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +38,7 @@ import java.util.Set;
  * @see PsiFile#getViewProvider()
  * @see PsiManager#findViewProvider(VirtualFile)
  */
-public interface FileViewProvider extends Cloneable, UserDataHolder {
+public interface FileViewProvider extends Cloneable, UserDataHolderEx {
 
   /**
    * @return this project's PsiManager
@@ -84,7 +84,7 @@ public interface FileViewProvider extends Cloneable, UserDataHolder {
   /**
    * @return all languages this file supports, in no particular order.
    * 
-   * @see #getPsi(com.intellij.lang.Language)
+   * @see #getPsi(Language)
    */
   @NotNull
   Set<Language> getLanguages();
@@ -174,7 +174,7 @@ public interface FileViewProvider extends Cloneable, UserDataHolder {
    * 
    * @see #getBaseLanguage()
    * @see #findElementAt(int, Class) 
-   * @see #findElementAt(int, com.intellij.lang.Language) 
+   * @see #findElementAt(int, Language)
    * @see PsiFile#findElementAt(int) 
    */
   @Nullable
@@ -186,7 +186,7 @@ public interface FileViewProvider extends Cloneable, UserDataHolder {
    * 
    * @see #getBaseLanguage()
    * @see PsiFile#findReferenceAt(int)
-   * @see #findReferenceAt(int, com.intellij.lang.Language) 
+   * @see #findReferenceAt(int, Language)
    */
   @Nullable
   PsiReference findReferenceAt(int offset);

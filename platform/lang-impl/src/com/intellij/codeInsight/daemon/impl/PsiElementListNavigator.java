@@ -20,6 +20,7 @@ import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
 import com.intellij.find.FindUtil;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -66,9 +67,7 @@ public class PsiElementListNavigator {
     if (popup != null) {
       RelativePoint point = new RelativePoint(e);
       if (listUpdaterTask != null) {
-        Alarm alarm = new Alarm(popup);
-        alarm.addRequest(() -> popup.show(point), 300);
-        ProgressManager.getInstance().run(listUpdaterTask);
+        runActionAndListUpdaterTask(popup, () -> popup.show(point), listUpdaterTask);
       }
       else {
         popup.show(point);
@@ -77,8 +76,30 @@ public class PsiElementListNavigator {
   }
 
   public static void openTargets(Editor e, NavigatablePsiElement[] targets, String title, final String findUsagesTitle, ListCellRenderer listRenderer) {
-    JBPopup popup = navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, null);
-    if (popup != null) popup.showInBestPositionFor(e);
+    openTargets(e, targets, title, findUsagesTitle, listRenderer, null);
+  }
+
+  public static void openTargets(Editor e, NavigatablePsiElement[] targets, String title, final String findUsagesTitle,
+                                 ListCellRenderer listRenderer, @Nullable ListBackgroundUpdaterTask listUpdaterTask) {
+    final JBPopup popup = navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, listUpdaterTask);
+    if (popup != null) {
+      if (listUpdaterTask != null) {
+        runActionAndListUpdaterTask(popup, () -> popup.showInBestPositionFor(e), listUpdaterTask);
+      }
+      else {
+        popup.showInBestPositionFor(e);
+      }
+    }
+  }
+
+  /**
+   * @see #navigateOrCreatePopup(NavigatablePsiElement[], String, String, ListCellRenderer, ListBackgroundUpdaterTask, Consumer)
+   */
+  private static void runActionAndListUpdaterTask(@NotNull Disposable popup, @NotNull Runnable action,
+                                                  @NotNull ListBackgroundUpdaterTask listUpdaterTask) {
+    Alarm alarm = new Alarm(popup);
+    alarm.addRequest(action, 300);
+    ProgressManager.getInstance().run(listUpdaterTask);
   }
 
   @Nullable
@@ -90,8 +111,9 @@ public class PsiElementListNavigator {
     return navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, listUpdaterTask, selectedElements -> {
       for (Object element : selectedElements) {
         PsiElement selected = (PsiElement)element;
-        LOG.assertTrue(selected.isValid());
-        ((NavigatablePsiElement)selected).navigate(true);
+        if (selected.isValid()) {
+          ((NavigatablePsiElement)selected).navigate(true);
+        }
       }
     });
   }
@@ -159,7 +181,7 @@ public class PsiElementListNavigator {
     if (findUsagesTitle != null) {
       popupChooserBuilder = popupChooserBuilder.setCouldPin(popup -> {
         final List<NavigatablePsiElement> items = model.getItems();
-        usageView.set(FindUtil.showInUsageView(null, items.toArray(new PsiElement[items.size()]), findUsagesTitle, targets[0].getProject()));
+        usageView.set(FindUtil.showInUsageView(null, items.toArray(PsiElement.EMPTY_ARRAY), findUsagesTitle, targets[0].getProject()));
         popup.cancel();
         return false;
       });

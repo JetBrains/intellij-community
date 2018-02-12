@@ -66,6 +66,7 @@ public class PythonEnvUtil {
    * @param value  what to append
    * @return modified path-like string
    */
+
   @NotNull
   public static String appendToPathEnvVar(@Nullable String source, @NotNull String value) {
     if (StringUtil.isEmpty(source)) return value;

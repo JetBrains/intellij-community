@@ -16,7 +16,8 @@
 package com.intellij.codeEditor.printing;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.LineIterator;
@@ -26,7 +27,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -112,7 +112,11 @@ class TextPainter extends BasePainter {
     myDocument = editorDocument;
     myPrintSettings = PrintSettings.getInstance();
     String fontName = myPrintSettings.FONT_NAME;
-    int fontSize = myPrintSettings.FONT_SIZE;
+    /*
+      Printing Graphics is constructed with scale corresponding to the printer DPI settings (~600dpi),
+      the font size is expected to be in 96 dpi, so we should normalize it.
+     */
+    int fontSize = Math.round(myPrintSettings.FONT_SIZE / UISettings.getDefFontScale());
     myPlainFont = new Font(fontName, Font.PLAIN, fontSize);
     myBoldFont = new Font(fontName, Font.BOLD, fontSize);
     myItalicFont = new Font(fontName, Font.ITALIC, fontSize);
@@ -123,7 +127,7 @@ class TextPainter extends BasePainter {
     myShortFileName = shortFileName;
     myRangeToPrint = editorDocument.createRangeMarker(0, myDocument.getTextLength());
     myFileType = fileType;
-    myMethodSeparators = separators != null ? separators.toArray(new LineMarkerInfo[separators.size()]) : new LineMarkerInfo[0];
+    myMethodSeparators = separators != null ? separators.toArray(new LineMarkerInfo[0]) : new LineMarkerInfo[0];
     myCurrentMethodSeparator = 0;
     Date date = new Date();
     myPrintDate = new SimpleDateFormat(DATE_FORMAT).format(date);
@@ -202,13 +206,8 @@ class TextPainter extends BasePainter {
         if (!printPageInReadAction(g2d, pageFormat, "print.skip.page.progress")) {
           return NO_SUCH_PAGE;
         }
-      }      
-      return ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
-        @Override
-        public Integer compute() {
-          return isValidRange(myRangeToPrint) ? PAGE_EXISTS : NO_SUCH_PAGE;
-        }
-      });
+      }
+      return ReadAction.compute(() -> isValidRange(myRangeToPrint) ? PAGE_EXISTS : NO_SUCH_PAGE);
     }
     else {
       myPerformActualDrawing = true;
@@ -218,16 +217,13 @@ class TextPainter extends BasePainter {
   }
   
   private boolean printPageInReadAction(final Graphics2D g2d, final PageFormat pageFormat, final String progressMessageKey) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        if (!isValidRange(myRangeToPrint)) {
-          return false;
-        }
-        myProgress.setText(CodeEditorBundle.message(progressMessageKey, myShortFileName, (myPageIndex + 1), myNumberOfPages));
-        setSegment(printPage(g2d, pageFormat, myRangeToPrint));
-        return true;
+    return ReadAction.compute(() -> {
+      if (!isValidRange(myRangeToPrint)) {
+        return false;
       }
+      myProgress.setText(CodeEditorBundle.message(progressMessageKey, myShortFileName, (myPageIndex + 1), myNumberOfPages));
+      setSegment(printPage(g2d, pageFormat, myRangeToPrint));
+      return true;
     });
   }
 
@@ -235,24 +231,21 @@ class TextPainter extends BasePainter {
     myNumberOfPages = 0;
     final Ref<Boolean> firstPage = new Ref<>(Boolean.TRUE);
     final Ref<RangeMarker> tmpMarker = new Ref<>();
-    while (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        if (firstPage.get()) {
-          if (!isValidRange(myRangeToPrint)) {
-            return false;
-          }
-          tmpMarker.set(myDocument.createRangeMarker(myRangeToPrint.getStartOffset(), myRangeToPrint.getEndOffset()));
-          firstPage.set(Boolean.FALSE);
-        }
-        RangeMarker range = tmpMarker.get();
-        if (!isValidRange(range)) {
+    while (ReadAction.compute(() -> {
+      if (firstPage.get()) {
+        if (!isValidRange(myRangeToPrint)) {
           return false;
         }
-        tmpMarker.set(printPage(g2d, pageFormat, range));
-        range.dispose();
-        return true;
+        tmpMarker.set(myDocument.createRangeMarker(myRangeToPrint.getStartOffset(), myRangeToPrint.getEndOffset()));
+        firstPage.set(Boolean.FALSE);
       }
+      RangeMarker range = tmpMarker.get();
+      if (!isValidRange(range)) {
+        return false;
+      }
+      tmpMarker.set(printPage(g2d, pageFormat, range));
+      range.dispose();
+      return true;
     })) {
       if (myProgress.isCanceled()) {
         return false;

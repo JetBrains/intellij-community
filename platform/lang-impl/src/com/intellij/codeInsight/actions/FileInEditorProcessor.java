@@ -49,7 +49,7 @@ import java.awt.*;
 import static com.intellij.codeInsight.actions.TextRangeType.SELECTED_TEXT;
 import static com.intellij.codeInsight.actions.TextRangeType.VCS_CHANGED_TEXT;
 
-class FileInEditorProcessor {
+public class FileInEditorProcessor {
   private static final Logger LOG = Logger.getInstance(FileInEditorProcessor.class);
 
   private final Editor myEditor;

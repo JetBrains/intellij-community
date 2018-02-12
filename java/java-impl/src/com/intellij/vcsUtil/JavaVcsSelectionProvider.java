@@ -80,6 +80,10 @@ public class JavaVcsSelectionProvider implements VcsSelectionProvider {
     }
 
     Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    if (document == null) {
+      return null;
+    }
+
     return new VcsSelection(document, textRange, actionName);
   }
 }

@@ -21,7 +21,6 @@ import com.intellij.ide.util.MemberChooser;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -29,7 +28,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +39,8 @@ import java.awt.event.KeyEvent;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 /**
  * @author Dmitry Batkovich
@@ -221,8 +221,7 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
     private MyMergeAction() {
       super("Show methods to implement", "Show methods to implement", AllIcons.General.Show_to_implement);
       registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.ALT_MASK)), myTree);
-      final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts("OverrideMethods");
-      registerCustomShortcutSet(new CustomShortcutSet(shortcuts), myTree);
+      registerCustomShortcutSet(getActiveKeymapShortcuts("OverrideMethods"), myTree);
     }
 
     @Override

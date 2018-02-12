@@ -39,13 +39,6 @@ public class GroovyDuplicateSwitchBranchInspection extends BaseInspection {
   @Override
   @Nls
   @NotNull
-  public String getGroupDisplayName() {
-    return VALIDITY_ISSUES;
-  }
-
-  @Override
-  @Nls
-  @NotNull
   public String getDisplayName() {
     return "Duplicate switch case";
   }
@@ -103,7 +96,7 @@ public class GroovyDuplicateSwitchBranchInspection extends BaseInspection {
       }
     };
     containingStatelent.accept(visitor);
-    return labels.toArray(new GrCaseLabel[labels.size()]);
+    return labels.toArray(new GrCaseLabel[0]);
   }
 
   @Nullable

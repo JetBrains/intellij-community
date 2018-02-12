@@ -22,7 +22,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jul 18, 2007
  */
 public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
 
@@ -40,7 +39,7 @@ public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
 
   protected List<LibraryDescriptor> getEntries() {
     final List<LibraryDescriptor> libs = getInsight().getSuggestedLibraries();
-    return libs != null? libs : Collections.<LibraryDescriptor>emptyList();
+    return libs != null? libs : Collections.emptyList();
   }
 
   protected Collection getDependencies(final LibraryDescriptor entry) {

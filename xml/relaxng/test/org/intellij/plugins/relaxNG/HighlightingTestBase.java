@@ -21,7 +21,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.javaee.ExternalResourceManagerEx;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -48,12 +47,8 @@ import org.intellij.plugins.testUtil.ResourceUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 25.07.2007
- */
 public abstract class HighlightingTestBase extends UsefulTestCase implements IdeaCodeInsightTestCase {
   protected CodeInsightTestFixture myTestFixture;
 
@@ -122,7 +117,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
   public abstract String getTestDataPath();
 
   protected void init() {
-    ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("urn:test:undefined"));
+    ExternalResourceManagerEx.getInstanceEx().addIgnoredResources(Collections.singletonList("urn:test:undefined"), getTestRootDisposable());
   }
 
   @Override
@@ -137,12 +132,12 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     }
   }
 
-  protected void doHighlightingTest(String s) throws Throwable {
+  protected void doHighlightingTest(String s) {
     doCustomHighlighting(s, true, false);
 //    myTestFixture.testHighlighting(true, false, true, s);
   }
 
-  protected void doExternalToolHighlighting(String name) throws Throwable {
+  protected void doExternalToolHighlighting(String name) {
     doCustomHighlighting(name, true, true);
   }
 
@@ -188,7 +183,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     myTestFixture.testCompletionVariants(before, variants);
   }
 
-  protected void doTestCompletion(String before) throws Throwable {
+  protected void doTestCompletion(String before) {
     doTestCompletion(before, "xml");
   }
 
@@ -214,7 +209,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
                                                                                                                true);
     new WriteCommandAction.Simple(project, myTestFixture.getFile()) {
       @Override
-      protected void run() throws Throwable {
+      protected void run() {
         fixes[0].applyFix(project, problemDescriptor);
       }
     }.execute();

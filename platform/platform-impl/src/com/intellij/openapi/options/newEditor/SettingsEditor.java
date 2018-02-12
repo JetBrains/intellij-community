@@ -76,6 +76,11 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
         myFilter.update(null, false, true);
         return myTreeView.select(configurable);
       }
+
+      @Override
+      public void revalidate() {
+        myEditor.requestUpdate();
+      }
     };
     mySearch = new SettingsSearch() {
       @Override
@@ -168,7 +173,13 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
         mySearch.updateToolTipText();
         myFilter.myContext.fireErrorsChanged(map, null);
         if (!map.isEmpty()) {
-          myTreeView.select(map.keySet().iterator().next());
+          Configurable targetConfigurable = map.keySet().iterator().next();
+          ConfigurationException exception = map.get(targetConfigurable);
+          Configurable originator = exception.getOriginator();
+          if (originator != null) {
+            targetConfigurable = originator;
+          }
+          myTreeView.select(targetConfigurable);
           return false;
         }
         updateStatus(myFilter.myContext.getCurrentConfigurable());
@@ -192,7 +203,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
     myLoadingDecorator = new LoadingDecorator(myEditor, this, 10, true);
     myBanner = new Banner(myEditor.getResetAction());
     mySearchPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    myBanner.setBorder(BorderFactory.createEmptyBorder(5, 10, 0, 10));
+    myBanner.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 10));
     mySearch.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     mySearchPanel.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     mySearchPanel.addComponentListener(new ComponentAdapter() {

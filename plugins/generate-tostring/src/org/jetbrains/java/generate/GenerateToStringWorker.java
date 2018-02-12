@@ -43,7 +43,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 public class GenerateToStringWorker {
-  private static final Logger logger = Logger.getInstance("#" + GenerateToStringWorker.class.getName());
+  private static final Logger logger = Logger.getInstance(GenerateToStringWorker.class);
 
   private final Editor editor;
   private final PsiClass clazz;
@@ -165,9 +165,10 @@ public class GenerateToStringWorker {
   protected ConflictResolutionPolicy exitsMethodDialog(TemplateResource template) {
     final DuplicationPolicy dupPolicy = config.getReplaceDialogInitialOption();
     if (dupPolicy == DuplicationPolicy.ASK) {
-      PsiMethod existingMethod = PsiAdapter.findMethodByName(clazz, template.getTargetMethodName());
+      String targetMethodName = template.getTargetMethodName(clazz);
+      PsiMethod existingMethod = targetMethodName != null ? PsiAdapter.findMethodByName(clazz, targetMethodName) : null;
       if (existingMethod != null) {
-        return MethodExistsDialog.showDialog(template.getTargetMethodName());
+        return MethodExistsDialog.showDialog(targetMethodName);
       }
     }
     else if (dupPolicy == DuplicationPolicy.REPLACE) {
@@ -185,7 +186,9 @@ public class GenerateToStringWorker {
    * @param template the template to use
    */
   private void beforeCreateToStringMethod(Map<String, String> params, TemplateResource template) {
-    PsiMethod existingMethod = PsiAdapter.findMethodByName(clazz, template.getTargetMethodName()); // find the existing method
+    String targetMethodName = template.getTargetMethodName(clazz);
+    if (targetMethodName == null) return;
+    PsiMethod existingMethod = PsiAdapter.findMethodByName(clazz, targetMethodName); // find the existing method
     if (existingMethod != null && existingMethod.getDocComment() != null) {
       PsiDocComment doc = existingMethod.getDocComment();
       if (doc != null) {

@@ -26,8 +26,6 @@ import com.jetbrains.python.codeInsight.editorActions.smartEnter.SmartEnterUtil;
 /**
  * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
- * Date:   15.04.2010
- * Time:   18:39:07
  */
 public class PyCommentBreakerEnterProcessor implements EnterProcessor {
   public boolean doEnter(Editor editor, PsiElement psiElement, boolean isModified) {

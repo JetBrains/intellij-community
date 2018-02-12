@@ -76,7 +76,7 @@ public class IteratorDeclaration {
   public boolean isIteratorMethodCall(PsiElement candidate, String method) {
     if (!(candidate instanceof PsiMethodCallExpression)) return false;
     PsiMethodCallExpression call = (PsiMethodCallExpression)candidate;
-    if (call.getArgumentList().getExpressions().length != 0) return false;
+    if (!call.getArgumentList().isEmpty()) return false;
     PsiReferenceExpression expression = call.getMethodExpression();
     return method.equals(expression.getReferenceName()) && ExpressionUtils.isReferenceTo(expression.getQualifierExpression(), myIterator);
   }
@@ -103,7 +103,7 @@ public class IteratorDeclaration {
     PsiExpression initializer = variable.getInitializer();
     if (!(initializer instanceof PsiMethodCallExpression)) return null;
     PsiMethodCallExpression call = (PsiMethodCallExpression)initializer;
-    if (call.getArgumentList().getExpressions().length != 0) return null;
+    if (!call.getArgumentList().isEmpty()) return null;
     PsiReferenceExpression methodExpression = call.getMethodExpression();
     boolean listIterator = "listIterator".equals(methodExpression.getReferenceName());
     if (!"iterator".equals(methodExpression.getReferenceName()) && !listIterator) return null;
@@ -132,7 +132,7 @@ public class IteratorDeclaration {
 
   @Nullable
   private static IteratorDeclaration fromWhileLoop(PsiWhileStatement statement) {
-    PsiElement previous = PsiTreeUtil.skipSiblingsBackward(statement, PsiComment.class, PsiWhiteSpace.class);
+    PsiElement previous = PsiTreeUtil.skipWhitespacesAndCommentsBackward(statement);
     if (!(previous instanceof PsiDeclarationStatement)) return null;
     IteratorDeclaration declaration = extract((PsiStatement)previous);
     if (declaration == null || !declaration.isHasNextCall(statement.getCondition())) return null;

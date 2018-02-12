@@ -19,5 +19,5 @@ import org.jetbrains.annotations.Nullable;
 
 public interface PopupElementWithAdditionalInfo {
   @Nullable
-  String getInfoText();
+  default String getInfoText() {return null;}
 }

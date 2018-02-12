@@ -35,11 +35,11 @@ public class ElementsChooser<T> extends MultiStateElementsChooser<T, Boolean> {
   }
 
   public ElementsChooser(final boolean elementsCanBeMarked) {
-    super(elementsCanBeMarked, ElementsChooser.<T>getMarkStateDescriptor());
+    super(elementsCanBeMarked, ElementsChooser.getMarkStateDescriptor());
   }
 
   public ElementsChooser(List<T> elements, boolean marked) {
-    super(elements, marked, ElementsChooser.<T>getMarkStateDescriptor());
+    super(elements, marked, ElementsChooser.getMarkStateDescriptor());
   }
 
   public void addElementsMarkListener(ElementsMarkListener<T> listener) {

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 05-Jan-2007
- */
 package com.intellij.codeInspection.offline;
 
 import com.intellij.codeInspection.reference.RefEntity;

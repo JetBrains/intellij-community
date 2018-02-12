@@ -46,7 +46,7 @@ public class GradleResourceFilteringTest extends GradleCompilingTestCase {
     assertModules("project", "project_main", "project_test");
     compileModules("project_main");
 
-    assertCopied("build/resources/main/dir/file.txt", "3 another text\n" +
+    assertCopied("out/production/resources/dir/file.txt", "3 another text\n" +
                                                       "4\n" +
                                                       "5 another text \n");
   }
@@ -74,7 +74,7 @@ public class GradleResourceFilteringTest extends GradleCompilingTestCase {
     assertModules("project");
     compileModules("project");
 
-    assertCopied("build/resources/main/dir/file.txt", "3 another text\n" +
+    assertCopied("out/production/resources/dir/file.txt", "3 another text\n" +
                                                       "4\n" +
                                                       "5 another text \n");
   }
@@ -101,7 +101,7 @@ public class GradleResourceFilteringTest extends GradleCompilingTestCase {
     assertModules("project", "project_main", "project_test");
     compileModules("project_main");
 
-    assertCopied("build/resources/main/dir/file.txt", "1 Header\n" +
+    assertCopied("out/production/resources/dir/file.txt", "1 Header\n" +
                                                       "2\n" +
                                                       "3 <11111>another text\n" +
                                                       "4\n" +
@@ -133,7 +133,7 @@ public class GradleResourceFilteringTest extends GradleCompilingTestCase {
     assertModules("project");
     compileModules("project");
 
-    assertCopied("build/resources/main/dir/file.txt", "1 Header\n" +
+    assertCopied("out/production/resources/dir/file.txt", "1 Header\n" +
                                                       "2\n" +
                                                       "3 <11111>another text\n" +
                                                       "4\n" +
@@ -157,7 +157,7 @@ public class GradleResourceFilteringTest extends GradleCompilingTestCase {
     assertModules("project", "project_main", "project_test");
     compileModules("project_main");
 
-    assertCopied("build/resources/main/dir/file001.txt");
+    assertCopied("out/production/resources/dir/file001.txt");
   }
 
   @Test
@@ -174,7 +174,7 @@ public class GradleResourceFilteringTest extends GradleCompilingTestCase {
     assertModules("project");
     compileModules("project");
 
-    assertCopied("build/resources/main/dir/file001.txt");
+    assertCopied("out/production/resources/dir/file001.txt");
   }
 
   @Test
@@ -193,7 +193,7 @@ public class GradleResourceFilteringTest extends GradleCompilingTestCase {
     assertModules("project", "project_main", "project_test");
     compileModules("project_main");
 
-    assertCopied("build/resources/main/dir/file.txt", "some text myPropValue another text");
+    assertCopied("out/production/resources/dir/file.txt", "some text myPropValue another text");
   }
 
   @Test
@@ -212,7 +212,7 @@ public class GradleResourceFilteringTest extends GradleCompilingTestCase {
     assertModules("project");
     compileModules("project");
 
-    assertCopied("build/resources/main/dir/file.txt", "some text myPropValue another text");
+    assertCopied("out/production/resources/dir/file.txt", "some text myPropValue another text");
   }
 
   @Test
@@ -230,7 +230,7 @@ public class GradleResourceFilteringTest extends GradleCompilingTestCase {
     assertModules("project", "project_main", "project_test");
     compileModules("project_main");
 
-    assertCopied("build/resources/main/dir/file.txt", "some text \\u30c6\\u30ad\\u30b9\\u30c8");
+    assertCopied("out/production/resources/dir/file.txt", "some text \\u30c6\\u30ad\\u30b9\\u30c8");
   }
 
   @Test
@@ -257,7 +257,7 @@ public class GradleResourceFilteringTest extends GradleCompilingTestCase {
     assertModules("project", "project_main", "project_test");
     compileModules("project_main");
 
-    assertCopied("build/resources/main/dir/file001.txt", "3 another text<11111>\n" +
+    assertCopied("out/production/resources/dir/file001.txt", "3 another text<11111>\n" +
                                                          "4\n" +
                                                          "5 another text \n" +
                                                          "6 another text <2222> another text");
@@ -287,7 +287,7 @@ public class GradleResourceFilteringTest extends GradleCompilingTestCase {
     assertModules("project");
     compileModules("project");
 
-    assertCopied("build/resources/main/dir/file001.txt", "3 another text<11111>\n" +
+    assertCopied("out/production/resources/dir/file001.txt", "3 another text<11111>\n" +
                                                          "4\n" +
                                                          "5 another text \n" +
                                                          "6 another text <2222> another text");

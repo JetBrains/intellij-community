@@ -23,9 +23,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.attach.XLocalAttachDebugger;
 import com.intellij.xdebugger.attach.XLocalAttachDebuggerProvider;
 import com.intellij.xdebugger.attach.XLocalAttachGroup;
@@ -34,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 public class PyLocalAttachDebuggerProvider implements XLocalAttachDebuggerProvider {
@@ -79,7 +76,7 @@ public class PyLocalAttachDebuggerProvider implements XLocalAttachDebuggerProvid
 
     public PyLocalAttachDebugger(@NotNull Sdk sdk) {
       mySdkHome = sdk.getHomePath();
-      myName = PythonSdkType.getInstance().getVersionString(sdk) + " Debugger";
+      myName = PythonSdkType.getInstance().getVersionString(sdk) + " (" + mySdkHome + ")";
     }
 
     public PyLocalAttachDebugger(@NotNull String sdkHome) {

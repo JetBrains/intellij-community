@@ -124,7 +124,7 @@ public class MantisRepository extends BaseRepositoryImpl {
       }
       pageNumber++;
     }
-    return tasks.toArray(new Task[tasks.size()]);
+    return tasks.toArray(Task.EMPTY_ARRAY);
   }
 
   private List<Task> getIssuesFromPage(@NotNull MantisConnectPortType soap, int pageNumber, int pageSize) throws Exception {
@@ -184,7 +184,7 @@ public class MantisRepository extends BaseRepositoryImpl {
   @NotNull
   public List<MantisProject> getProjects() throws Exception {
     ensureProjectsRefreshed();
-    return myProjects == null ? Collections.<MantisProject>emptyList() : myProjects;
+    return myProjects == null ? Collections.emptyList() : myProjects;
   }
 
   private void ensureProjectsRefreshed() throws Exception {

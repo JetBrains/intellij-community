@@ -1,30 +1,15 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration.inspections;
 
 import com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -32,34 +17,38 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Map;
 
 /**
  * @author Dmitry Batkovich
  */
-public class MigrateAssertToMatcherAssertInspection extends LocalInspectionTool {
+public class MigrateAssertToMatcherAssertInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private final static Logger LOG = Logger.getInstance(MigrateAssertToMatcherAssertInspection.class);
   private final static Map<String, Pair<String, String>> ASSERT_METHODS = new HashMap<>();
 
   static {
-    ASSERT_METHODS.put("assertArrayEquals", Pair.create("$expected$, $actual$", "$actual$, org.hamcrest.CoreMatchers.is($expected$)"));
-    ASSERT_METHODS.put("assertEquals", Pair.create("$expected$, $actual$", "$actual$, org.hamcrest.CoreMatchers.is($expected$)"));
-    ASSERT_METHODS.put("assertNotEquals", Pair.create("$expected$, $actual$", "$actual$, org.hamcrest.CoreMatchers.not(org.hamcrest.CoreMatchers.is($expected$))"));
-    ASSERT_METHODS.put("assertSame", Pair.create("$expected$, $actual$", "$actual$, org.hamcrest.CoreMatchersSame.sameInstance($expected$)"));
-    ASSERT_METHODS.put("assertNotSame", Pair.create("$expected$, $actual$", "$actual$, org.hamcrest.CoreMatchers.not(org.hamcrest.CoreMatchersSame.sameInstance($expected$))"));
-    ASSERT_METHODS.put("assertNotNull", Pair.create("$obj$", "$obj$, org.hamcrest.CoreMatchers.notNullValue()"));
-    ASSERT_METHODS.put("assertNull", Pair.create("$obj$", "$obj$, org.hamcrest.CoreMatchers.nullValue()"));
-    ASSERT_METHODS.put("assertTrue", Pair.create("$cond$", "$cond$, org.hamcrest.CoreMatchers.is(true)"));
-    ASSERT_METHODS.put("assertFalse", Pair.create("$cond$", "$cond$, org.hamcrest.CoreMatchers.is(false)"));
+    ASSERT_METHODS.put("assertArrayEquals", Pair.create("$expected$, $actual$", "$actual$, {0}.is($expected$)"));
+    ASSERT_METHODS.put("assertEquals", Pair.create("$expected$, $actual$", "$actual$, {0}.is($expected$)"));
+    ASSERT_METHODS.put("assertNotEquals", Pair.create("$expected$, $actual$", "$actual$, {0}.not({0}.is($expected$))"));
+    ASSERT_METHODS.put("assertSame", Pair.create("$expected$, $actual$", "$actual$, {0}.sameInstance($expected$)"));
+    ASSERT_METHODS.put("assertNotSame", Pair.create("$expected$, $actual$", "$actual$, {0}.not({0}.sameInstance($expected$))"));
+    ASSERT_METHODS.put("assertNotNull", Pair.create("$obj$", "$obj$, {0}.notNullValue()"));
+    ASSERT_METHODS.put("assertNull", Pair.create("$obj$", "$obj$, {0}.nullValue()"));
+    ASSERT_METHODS.put("assertTrue", Pair.create("$cond$", "$cond$, {0}.is(true)"));
+    ASSERT_METHODS.put("assertFalse", Pair.create("$cond$", "$cond$, {0}.is(false)"));
   }
+
+  private static final String CORE_MATCHERS_CLASS_NAME = "org.hamcrest.CoreMatchers";
+  private static final String MATCHERS_CLASS_NAME = "org.hamcrest.Matchers";
 
   public boolean myStaticallyImportMatchers = true;
 
@@ -72,7 +61,11 @@ public class MigrateAssertToMatcherAssertInspection extends LocalInspectionTool 
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (JavaPsiFacade.getInstance(holder.getProject()).findClass("org.hamcrest.CoreMatchers", holder.getFile().getResolveScope()) == null) {
+    GlobalSearchScope resolveScope = holder.getFile().getResolveScope();
+    JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(holder.getProject());
+    PsiClass coreMatchersClass = javaPsiFacade.findClass(CORE_MATCHERS_CLASS_NAME, resolveScope);
+    PsiClass matchersClass = javaPsiFacade.findClass(MATCHERS_CLASS_NAME, resolveScope);
+    if (coreMatchersClass == null && matchersClass == null) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {
@@ -89,18 +82,26 @@ public class MigrateAssertToMatcherAssertInspection extends LocalInspectionTool 
             !"org.junit.Assert".equals(assertClass.getQualifiedName())) {
           return;
         }
+
         holder
-          .registerProblem(expression.getMethodExpression(), "Assert expression <code>#ref</code> can be replaced with 'assertThat' call #loc", new MyQuickFix());
+          .registerProblem(expression.getMethodExpression(),
+                           "Assert expression <code>#ref</code> can be replaced with 'assertThat' call #loc",
+                           new MyQuickFix(matchersClass != null ? MATCHERS_CLASS_NAME : CORE_MATCHERS_CLASS_NAME));
       }
     };
   }
 
   public class MyQuickFix implements LocalQuickFix {
+    private static final String ORDERING_COMPARISON_NAME = "org.hamcrest.number.OrderingComparison";
+    private final String myMatchersClassName;
+
+    public MyQuickFix(String name) {myMatchersClassName = name;}
+
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with 'assertThat'";
+      return "Replace with '" + StringUtil.getShortName(myMatchersClassName) + ".assertThat'";
     }
 
     @Override
@@ -132,7 +133,7 @@ public class MigrateAssertToMatcherAssertInspection extends LocalInspectionTool 
       templatePair = buildFullTemplate(templatePair, method);
       final PsiExpression replaced;
       try {
-        replaced = TypeConversionDescriptor.replaceExpression(methodCall, templatePair.getFirst(), templatePair.getSecond());
+        replaced = TypeConversionDescriptor.replaceExpression(methodCall, templatePair.getFirst(), MessageFormat.format(templatePair.getSecond(), myMatchersClassName));
       }
       catch (IncorrectOperationException e) {
         LOG.error("Replacer can't match expression:\n" +
@@ -194,9 +195,9 @@ public class MigrateAssertToMatcherAssertInspection extends LocalInspectionTool 
           }
         }
         String rightPartOfAfterTemplate =
-          isEqEqForPrimitives ? "org.hamcrest.CoreMatchers.is($right$)" : "org.hamcrest.CoreMatchers.sameInstance($right$)";
+          isEqEqForPrimitives ? "{0}.is($right$)" : "{0}.sameInstance($right$)";
         if (JavaTokenType.NE.equals(tokenType)) {
-          rightPartOfAfterTemplate = "org.hamcrest.CoreMatchers.not(" + rightPartOfAfterTemplate + ")";
+          rightPartOfAfterTemplate = "{0}.not(" + rightPartOfAfterTemplate + ")";
         }
         return  Pair.create(fromTemplate,
                            "$left$, " + rightPartOfAfterTemplate);
@@ -217,7 +218,7 @@ public class MigrateAssertToMatcherAssertInspection extends LocalInspectionTool 
       if (replaceTemplate == null) {
         return null;
       }
-      replaceTemplate = "org.hamcrest.number.OrderingComparison." + replaceTemplate;
+      replaceTemplate = ORDERING_COMPARISON_NAME + "." + replaceTemplate;
       return Pair.create(fromTemplate, "$left$, " + replaceTemplate);
     }
   }
@@ -253,11 +254,11 @@ public class MigrateAssertToMatcherAssertInspection extends LocalInspectionTool 
         if (CommonClassNames.JAVA_LANG_STRING.equals(containingClass.getQualifiedName())) {
           fromTemplate = "$str$.contains($sub$)";
           toLeftPart = "$str$, ";
-          toRightPart = "org.hamcrest.CoreMatchers.containsString($sub$)";
+          toRightPart = "{0}.containsString($sub$)";
         } else if (InheritanceUtil.isInheritor(containingClass, CommonClassNames.JAVA_UTIL_COLLECTION)) {
           fromTemplate = "$collection$.contains($element$)";
           toLeftPart = "$collection$, ";
-          toRightPart = "org.hamcrest.CoreMatchers.hasItem($element$)";
+          toRightPart = "{0}.hasItem($element$)";
         }
       }
     }
@@ -266,14 +267,14 @@ public class MigrateAssertToMatcherAssertInspection extends LocalInspectionTool 
       if (method != null && isUniqueObjectParameter(method.getParameterList())) {
         fromTemplate = "$left$.equals($right$)";
         toLeftPart = "$left$, ";
-        toRightPart = "org.hamcrest.CoreMatchers.is($right$)";
+        toRightPart = "{0}.is($right$)";
       }
     }
     if (fromTemplate == null) {
       return null;
     }
     if (negate) {
-      toRightPart = "org.hamcrest.CoreMatchers.not(" + toRightPart + ")";
+      toRightPart = "{0}.not(" + toRightPart + ")";
     }
     return Pair.create(fromTemplate, toLeftPart + toRightPart);
   }

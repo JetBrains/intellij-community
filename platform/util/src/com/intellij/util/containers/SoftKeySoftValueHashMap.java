@@ -15,20 +15,36 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.util.*;
 
+/**
+ * @deprecated use {@link ContainerUtil#createSoftKeySoftValueMap()} instead
+ */
+@Deprecated
 public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
-  private final SoftHashMap<K, ValueReference<K,V>> mySoftKeyMap = new SoftHashMap<K, ValueReference<K, V>>();
+  private static final Logger LOG = Logger.getInstance(SoftKeySoftValueHashMap.class);
+  private final RefHashMap<K, ValueReference<K,V>> mySoftKeyMap = (RefHashMap<K, ValueReference<K,V>>)ContainerUtil.<K, ValueReference<K,V>>createSoftMap();
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
 
-  private static class ValueReference<K,V> extends SoftReference<V> {
-    private final SoftHashMap.Key<K> key;
+  @Deprecated
+  public SoftKeySoftValueHashMap() {
+    LOG.warn("This class is deprecated. Please use {@link ContainerUtil#createSoftKeySoftValueMap()} instead.", new IncorrectOperationException());
+  }
 
-    private ValueReference(SoftHashMap.Key<K> key, V referent, ReferenceQueue<? super V> q) {
+  SoftKeySoftValueHashMap(boolean goodConstructor) {
+  }
+
+
+  private static class ValueReference<K,V> extends SoftReference<V> {
+    private final RefHashMap.Key<K> key;
+
+    private ValueReference(RefHashMap.Key<K> key, V referent, ReferenceQueue<? super V> q) {
       super(referent, q);
       this.key = key;
     }
@@ -38,9 +54,10 @@ public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
   boolean processQueue() {
     boolean processed = mySoftKeyMap.processQueue();
     while(true) {
+      @SuppressWarnings("unchecked")
       ValueReference<K,V> ref = (ValueReference<K, V>)myQueue.poll();
       if (ref == null) break;
-      SoftHashMap.Key<K> key = ref.key;
+      RefHashMap.Key<K> key = ref.key;
       mySoftKeyMap.removeKey(key);
       processed = true;
     }
@@ -56,7 +73,7 @@ public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
   @Override
   public V put(K key, V value) {
     processQueue();
-    SoftHashMap.Key<K> softKey = mySoftKeyMap.createKey(key);
+    RefHashMap.Key<K> softKey = mySoftKeyMap.createKey(key);
     ValueReference<K, V> reference = new ValueReference<K, V>(softKey, value, myQueue);
     ValueReference<K,V> oldRef = mySoftKeyMap.putKey(softKey, reference);
     return com.intellij.reference.SoftReference.dereference(oldRef);
@@ -92,12 +109,12 @@ public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
 
   @Override
   public boolean containsKey(Object key) {
-    return get(key) != null;
+    throw RefValueHashMap.pointlessContainsKey();
   }
 
   @Override
   public boolean containsValue(Object value) {
-    throw new RuntimeException("method not implemented");
+    throw RefValueHashMap.pointlessContainsValue();
   }
 
   @NotNull

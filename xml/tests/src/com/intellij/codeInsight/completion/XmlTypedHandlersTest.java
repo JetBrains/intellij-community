@@ -19,13 +19,12 @@ import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 30.08.13
  */
 public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testClosingTag() {
@@ -100,7 +99,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
   }
 
   public void testSingleQuotes() {
-    final CodeStyleSettings settings = getCurrentCodeStyleSettings();
+    final HtmlCodeStyleSettings settings = getHtmlSettings();
     final CodeStyleSettings.QuoteStyle quote = settings.HTML_QUOTE_STYLE;
     try {
       settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.Single;
@@ -108,12 +107,12 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
       myFixture.type('=');
       myFixture.checkResult("<foo bar='<caret>'");
     } finally {
-      CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings().HTML_QUOTE_STYLE = quote;
+      settings.HTML_QUOTE_STYLE = quote;
     }
   }
 
   public void testNoneQuotes() {
-    final CodeStyleSettings settings = getCurrentCodeStyleSettings();
+    final HtmlCodeStyleSettings settings = getHtmlSettings();
     final CodeStyleSettings.QuoteStyle quote = settings.HTML_QUOTE_STYLE;
     try {
       settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.None;
@@ -121,11 +120,11 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
       myFixture.type('=');
       myFixture.checkResult("<foo bar=<caret>>text");
     } finally {
-      CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings().HTML_QUOTE_STYLE = quote;
+      settings.HTML_QUOTE_STYLE = quote;
     }
   }
 
-  public void testFooBar() throws Exception {
+  public void testFooBar() {
     doTest("<foo>\n" +
            "  <bar<caret></bar>\n" +
            "</foo>",
@@ -135,7 +134,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
            "</foo>");
   }
 
-  public void testWeb13982() throws Exception {
+  public void testWeb13982() {
     doTest(
       "<a foo=\"1\"\n" +
       "   bar=\"2\"><caret></a>",
@@ -149,7 +148,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
     );
   }
 
-  public void testWeb392() throws Exception {
+  public void testWeb392() {
     doTest(
       "<h1>Title</h1>\n" +
       "<p>body text</p><caret>",
@@ -162,13 +161,13 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
     );
   }
 
-  public void testPi() throws Exception {
+  public void testPi() {
     doTest("<<caret>", '?', "<?<caret> ?>");
     doTest("<caret>", '?', "?");
     doTest("<<caret> ?>", '?', "<?<caret> ?>");
   }
 
-  public void testAutoindentEndTag() throws Exception {
+  public void testAutoindentEndTag() {
     doTest(
       "<div>\n" +
       "    <p>\n" +
@@ -186,7 +185,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
     );
   }
 
-  public void testSelectionBraces() throws Exception {
+  public void testSelectionBraces() {
     boolean surround = CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED;
     try {
       CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = true;
@@ -198,7 +197,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
     }
   }
 
-  public void testSelectionBracesInner() throws Exception {
+  public void testSelectionBracesInner() {
     boolean surround = CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED;
     try {
       CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = true;
@@ -210,7 +209,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
     }
   }
 
-  public void testSelectionBracesStart() throws Exception {
+  public void testSelectionBracesStart() {
     boolean surround = CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED;
     try {
       CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = true;
@@ -222,7 +221,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
     }
   }
 
-  public void testSelectionBracesEnd() throws Exception {
+  public void testSelectionBracesEnd() {
     boolean surround = CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED;
     try {
       CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = true;
@@ -234,7 +233,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
     }
   }
 
-  public void testSelectionBracesShort() throws Exception {
+  public void testSelectionBracesShort() {
     boolean surround = CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED;
     try {
       CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = true;
@@ -247,7 +246,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
     }
   }
 
-  public void testSelectionBracesShortInner() throws Exception {
+  public void testSelectionBracesShortInner() {
     boolean surround = CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED;
     try {
       CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = true;
@@ -264,5 +263,9 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
     myFixture.configureByText(XmlFileType.INSTANCE, text);
     myFixture.type(c);
     myFixture.checkResult(result);
+  }
+
+  private HtmlCodeStyleSettings getHtmlSettings() {
+    return getCurrentCodeStyleSettings().getCustomSettings(HtmlCodeStyleSettings.class);
   }
 }

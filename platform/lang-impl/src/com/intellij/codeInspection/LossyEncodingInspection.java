@@ -103,7 +103,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
       checkIfCharactersWillBeLostAfterSave(file, manager, isOnTheFly, text, charset, descriptors);
     }
 
-    return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
+    return descriptors.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   private static boolean checkFileLoadedInWrongEncoding(@NotNull PsiFile file,
@@ -113,7 +113,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
                                                         @NotNull Charset charset,
                                                         @NotNull List<ProblemDescriptor> descriptors) {
     if (FileDocumentManager.getInstance().isFileModified(virtualFile) // when file is modified, it's too late to reload it
-        || EncodingUtil.checkCanReload(virtualFile).second != null // can't reload in another encoding, no point trying
+        || !EncodingUtil.canReload(virtualFile) // can't reload in another encoding, no point trying
       ) {
       return true;
     }
@@ -138,6 +138,10 @@ public class LossyEncodingInspection extends LocalInspectionTool {
       bytesToSave = new String(loadedBytes, charset).getBytes(charset);
     }
     catch (Exception e) {
+      return true;
+    }
+    if (loadedBytes.length == 0 && bytesToSave.length == 0) {
+      // hold on, file was just created, no content was written yet
       return true;
     }
     byte[] bom = virtualFile.getBOM();

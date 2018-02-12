@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements PsiExtensibleClass, PsiQualifiedNamedElement, Queryable {
+public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements PsiExtensibleClass, Queryable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiClassImpl");
 
   private final ClassInnerStuffCache myInnersCache = new ClassInnerStuffCache(this);
@@ -108,7 +108,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
   public PsiElement getOriginalElement() {
     return CachedValuesManager.getCachedValue(this, () -> {
       final JavaPsiImplementationHelper helper = JavaPsiImplementationHelper.getInstance(getProject());
-      final PsiClass result = helper != null ? helper.getOriginalClass(PsiClassImpl.this) : PsiClassImpl.this;
+      final PsiClass result = helper != null ? helper.getOriginalClass(this) : this;
       return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
   }
@@ -584,12 +584,11 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
       return scope.getParent();
     }
 
-    if (psi instanceof PsiClass || psi instanceof PsiFunctionalExpression) {
-      return calcBasesResolveContext(psi, baseClassName, false, defaultResolveContext);
-    }
     if (psi instanceof PsiMember) {
-      PsiClass containingClass = ((PsiMember)psi).getContainingClass();
-      return containingClass != null ? calcBasesResolveContext(containingClass, baseClassName, false, defaultResolveContext) : psi;
+      return psi;
+    }
+    if (psi instanceof PsiFunctionalExpression) {
+      return calcBasesResolveContext(psi, baseClassName, false, defaultResolveContext);
     }
     LOG.error(parentStub);
     return psi;

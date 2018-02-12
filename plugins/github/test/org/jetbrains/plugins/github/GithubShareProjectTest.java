@@ -25,7 +25,7 @@ public class GithubShareProjectTest extends GithubShareProjectTestBase {
 
     createProjectFiles();
 
-    GithubShareAction.shareProjectOnGithub(myProject, myProjectRoot);
+    GithubShareAction.shareProjectOnGithub(myProject, projectRoot);
 
     checkNotification(NotificationType.INFORMATION, "Successfully shared project on GitHub", null);
     initGitChecks();
@@ -35,7 +35,7 @@ public class GithubShareProjectTest extends GithubShareProjectTestBase {
     checkLastCommitPushed();
   }
 
-  public void testGithubAlreadyExists() throws Throwable {
+  public void testGithubAlreadyExists() {
     final boolean[] dialogShown = new boolean[1];
     TestDialog oldTestDialog = Messages.setTestDialog(new TestDialog() {
       @Override
@@ -50,10 +50,10 @@ public class GithubShareProjectTest extends GithubShareProjectTestBase {
       registerDefaultUntrackedFilesDialogHandler();
 
       createProjectFiles();
-      GithubShareAction.shareProjectOnGithub(myProject, myProjectRoot);
+      GithubShareAction.shareProjectOnGithub(myProject, projectRoot);
       assertFalse(dialogShown[0]);
 
-      GithubShareAction.shareProjectOnGithub(myProject, myProjectRoot);
+      GithubShareAction.shareProjectOnGithub(myProject, projectRoot);
       assertTrue(dialogShown[0]);
     }
     finally {
@@ -67,13 +67,13 @@ public class GithubShareProjectTest extends GithubShareProjectTestBase {
 
     createProjectFiles();
 
-    cd(myProjectRoot.getPath());
+    cd(projectRoot.getPath());
     git("init");
-    setGitIdentity(myProjectRoot);
+    setGitIdentity(projectRoot);
     git("add file.txt");
     git("commit -m init");
 
-    GithubShareAction.shareProjectOnGithub(myProject, myProjectRoot);
+    GithubShareAction.shareProjectOnGithub(myProject, projectRoot);
 
     checkNotification(NotificationType.INFORMATION, "Successfully shared project on GitHub", null);
     initGitChecks();
@@ -89,9 +89,9 @@ public class GithubShareProjectTest extends GithubShareProjectTestBase {
 
     createProjectFiles();
 
-    Git.getInstance().init(myProject, myProjectRoot);
+    Git.getInstance().init(myProject, projectRoot);
 
-    GithubShareAction.shareProjectOnGithub(myProject, myProjectRoot);
+    GithubShareAction.shareProjectOnGithub(myProject, projectRoot);
 
     checkNotification(NotificationType.INFORMATION, "Successfully shared project on GitHub", null);
     initGitChecks();
@@ -105,7 +105,7 @@ public class GithubShareProjectTest extends GithubShareProjectTestBase {
     registerSelectNoneUntrackedFilesDialogHandler();
     registerDefaultShareDialogHandler();
 
-    GithubShareAction.shareProjectOnGithub(myProject, myProjectRoot);
+    GithubShareAction.shareProjectOnGithub(myProject, projectRoot);
 
     checkNotification(NotificationType.INFORMATION, "Successfully created empty repository on GitHub", null);
     initGitChecks();

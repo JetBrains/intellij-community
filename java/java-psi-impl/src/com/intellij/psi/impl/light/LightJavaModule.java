@@ -1,23 +1,12 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,8 +23,12 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -49,7 +42,7 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
   private LightJavaModule(@NotNull PsiManager manager, @NotNull VirtualFile jarRoot) {
     super(manager, JavaLanguage.INSTANCE);
     myJarRoot = jarRoot;
-    myRefElement = new LightJavaModuleReferenceElement(manager, moduleName(jarRoot.getNameWithoutExtension()));
+    myRefElement = new LightJavaModuleReferenceElement(manager, moduleName(jarRoot));
   }
 
   @NotNull
@@ -79,7 +72,7 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
     List<PsiPackageAccessibilityStatement> exports = ContainerUtil.newArrayList();
 
     VfsUtilCore.visitChildrenRecursively(myJarRoot, new VirtualFileVisitor() {
-      private JavaDirectoryService service = JavaDirectoryService.getInstance();
+      private final JavaDirectoryService service = JavaDirectoryService.getInstance();
 
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
@@ -244,8 +237,8 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
   }
 
   @NotNull
-  public static LightJavaModule getModule(@NotNull final PsiManager manager, @NotNull final VirtualFile jarRoot) {
-    final PsiDirectory directory = manager.findDirectory(jarRoot);
+  public static LightJavaModule getModule(@NotNull PsiManager manager, @NotNull VirtualFile jarRoot) {
+    PsiDirectory directory = manager.findDirectory(jarRoot);
     assert directory != null : jarRoot;
     return CachedValuesManager.getCachedValue(directory, () -> {
       LightJavaModule module = new LightJavaModule(manager, jarRoot);
@@ -253,11 +246,27 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
     });
   }
 
+  @NotNull
+  public static String moduleName(@NotNull VirtualFile jarRoot) {
+    VirtualFile manifest = jarRoot.findFileByRelativePath(JarFile.MANIFEST_NAME);
+    if (manifest != null) {
+      try (InputStream stream = manifest.getInputStream()) {
+        String claimed = new Manifest(stream).getMainAttributes().getValue("Automatic-Module-Name");
+        if (claimed != null) return claimed;
+      }
+      catch (IOException e) {
+        Logger.getInstance(LightJavaModule.class).warn(e);
+      }
+    }
+
+    return moduleName(jarRoot.getNameWithoutExtension());
+  }
+
   /**
-   * Implements a name deriving for  automatic modules as described in ModuleFinder.of(Path...) method documentation.
+   * Implements a name deriving for automatic modules as described in ModuleFinder.of(Path...) method documentation.
    *
    * @param name a .jar file name without extension
-   * @see <a href="http://download.java.net/java/jdk9/docs/api/java/lang/module/ModuleFinder.html#of-java.nio.file.Path...-">ModuleFinder.of(Path...)</a>
+   * @see <a href="http://docs.oracle.com/javase/9/docs/api/java/lang/module/ModuleFinder.html#of-java.nio.file.Path...-">ModuleFinder.of(Path...)</a>
    */
   @NotNull
   public static String moduleName(@NotNull String name) {
@@ -268,13 +277,11 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
       name = name.substring(0, m.start());
     }
 
-    // For the module name, then any trailing digits and dots are removed ...
-    name = Patterns.TAIL_VERSION.matcher(name).replaceFirst("");
-    // ... all non-alphanumeric characters ([^A-Za-z0-9]) are replaced with a dot (".") ...
+    // All non-alphanumeric characters ([^A-Za-z0-9]) are replaced with a dot (".") ...
     name = Patterns.NON_NAME.matcher(name).replaceAll(".");
     // ... all repeating dots are replaced with one dot ...
     name = Patterns.DOT_SEQUENCE.matcher(name).replaceAll(".");
-    // ... and all leading and trailing dots are removed
+    // ... and all leading and trailing dots are removed.
     name = StringUtil.trimLeading(StringUtil.trimTrailing(name, '.'), '.');
 
     return name;
@@ -282,7 +289,6 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
 
   private static class Patterns {
     private static final Pattern VERSION = Pattern.compile("-(\\d+(\\.|$))");
-    private static final Pattern TAIL_VERSION = Pattern.compile("[0-9.]+$");
     private static final Pattern NON_NAME = Pattern.compile("[^A-Za-z0-9]");
     private static final Pattern DOT_SEQUENCE = Pattern.compile("\\.{2,}");
   }

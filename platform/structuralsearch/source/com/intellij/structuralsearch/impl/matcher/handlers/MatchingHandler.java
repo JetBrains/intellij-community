@@ -1,31 +1,15 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.NodeFilter;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.impl.matcher.filters.DefaultFilter;
-import com.intellij.structuralsearch.impl.matcher.predicates.BinaryPredicate;
-import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
-import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 
 import java.util.HashSet;
@@ -34,7 +18,7 @@ import java.util.Set;
 /**
  * Root of handlers for pattern node matching. Handles simplest type of the match.
  */
-public abstract class MatchingHandler extends MatchPredicate {
+public abstract class MatchingHandler {
   protected NodeFilter filter;
   private PsiElement pinnedElement;
 
@@ -48,18 +32,6 @@ public abstract class MatchingHandler extends MatchPredicate {
    * @param context of the matching
    * @return true if matching was successful and false otherwise
    */
-  @Override
-  public boolean match(PsiElement patternNode, PsiElement matchedNode, int start, int end, MatchContext context) {
-    return match(patternNode,matchedNode,context);
-  }
-
-  /**
-   * Matches given handler node against given value.
-   * @param matchedNode for matching
-   * @param context of the matching
-   * @return true if matching was successful and false otherwise
-   */
-  @Override
   public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
     if (patternNode == null) {
       return matchedNode == null;
@@ -128,27 +100,6 @@ public abstract class MatchingHandler extends MatchPredicate {
     return !nodes2.hasNext();
   }
 
-  private static MatchPredicate findRegExpPredicate(MatchPredicate start) {
-    if (start==null) return null;
-    if (start instanceof RegExpPredicate) return start;
-
-    if(start instanceof BinaryPredicate) {
-      BinaryPredicate binary = (BinaryPredicate)start;
-      final MatchPredicate result = findRegExpPredicate(binary.getFirst());
-      if (result!=null) return result;
-
-      return findRegExpPredicate(binary.getSecond());
-    } else if (start instanceof NotPredicate) {
-      return null;
-    }
-    return null;
-  }
-
-  public static RegExpPredicate getSimpleRegExpPredicate(SubstitutionHandler handler) {
-    if (handler == null) return null;
-    return (RegExpPredicate)findRegExpPredicate(handler.getPredicate());
-  }
-
   static class ClearStateVisitor extends PsiRecursiveElementWalkingVisitor {
     private CompiledPattern pattern;
 
@@ -160,8 +111,8 @@ public abstract class MatchingHandler extends MatchPredicate {
       // We do not reset certain handlers because they are also bound to higher level nodes
       // e.g. Identifier handler in name is also bound to PsiMethod
       if (pattern.isToResetHandler(element)) {
-        MatchingHandler handler = pattern.getHandlerSimple(element);
-        if (handler instanceof SubstitutionHandler) {
+        final MatchingHandler handler = pattern.getHandlerSimple(element);
+        if (handler != null) {
           handler.reset();
         }
       }
@@ -196,7 +147,7 @@ public abstract class MatchingHandler extends MatchPredicate {
 
         final PsiElement startMatching = matchedNodes.current();
         do {
-          final PsiElement element = handler.getPinnedNode(null);
+          final PsiElement element = handler.getPinnedNode();
           final PsiElement matchedNode = element != null ? element : matchedNodes.current();
 
           if (element == null) matchedNodes.advance();
@@ -221,7 +172,7 @@ public abstract class MatchingHandler extends MatchPredicate {
           // passed of elements and does not found the match
           if (startMatching == matchedNodes.current()) {
             final boolean result = validateSatisfactionOfHandlers(patternNodes,context);
-            if (result && context.getMatchedElementsListener() != null) {
+            if (result && matchedElements != null && context.getMatchedElementsListener() != null) {
               context.getMatchedElementsListener().matchedElements(matchedElements);
             }
             return result;
@@ -234,7 +185,7 @@ public abstract class MatchingHandler extends MatchPredicate {
       }
 
       final boolean result = validateSatisfactionOfHandlers(patternNodes, context);
-      if (result && context.getMatchedElementsListener() != null) {
+      if (result && matchedElements != null && context.getMatchedElementsListener() != null) {
         context.getMatchedElementsListener().matchedElements(matchedElements);
       }
       return result;
@@ -254,8 +205,7 @@ public abstract class MatchingHandler extends MatchPredicate {
       final MatchingHandler handler = context.getPattern().getHandler( element );
 
       if (handler instanceof SubstitutionHandler) {
-        if (!((SubstitutionHandler)handler).validate(
-          context, StructuralSearchUtil.getProfileByPsiElement(element).getElementContextByPsi(element))) {
+        if (!((SubstitutionHandler)handler).validate(context, StructuralSearchUtil.getElementContextByPsi(element))) {
           return false;
         }
       } else {
@@ -282,7 +232,7 @@ public abstract class MatchingHandler extends MatchPredicate {
     //pinnedElement = null;
   }
 
-  public PsiElement getPinnedNode(PsiElement context) {
+  public PsiElement getPinnedNode() {
     return pinnedElement;
   }
 

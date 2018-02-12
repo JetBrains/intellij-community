@@ -32,7 +32,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.*;
 
 /**
@@ -40,7 +40,7 @@ import java.util.concurrent.*;
  */
 public class AsyncHighlighterUpdater extends ReadTask {
   private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AsyncEditorLoader pool", 2);
-  private static final Set<Future<?>> ourHighlighterFutures = ContainerUtil.newConcurrentSet();
+  private static final Map<Editor, Future<?>> ourHighlighterFutures = ContainerUtil.newConcurrentMap();
   private final Project myProject;
   private final Editor myEditor;
   private final VirtualFile myFile;
@@ -56,6 +56,7 @@ public class AsyncHighlighterUpdater extends ReadTask {
     if (!isEverythingValid()) return null;
 
     EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myFile);
+    highlighter.setText(myEditor.getDocument().getImmutableCharSequence());
     return new Continuation(() -> ((EditorEx)myEditor).setHighlighter(highlighter));
   }
 
@@ -72,15 +73,18 @@ public class AsyncHighlighterUpdater extends ReadTask {
     AsyncHighlighterUpdater task = new AsyncHighlighterUpdater(project, editor, file);
     if (task.isEverythingValid()) {
       CompletableFuture<?> future = ProgressIndicatorUtils.scheduleWithWriteActionPriority(ourExecutor, task);
-      ourHighlighterFutures.add(future);
-      future.whenComplete((a, b) -> ourHighlighterFutures.remove(future));
+      Future<?> prev = ourHighlighterFutures.put(editor, future);
+      if (prev != null) {
+        prev.cancel(false);
+      }
+      future.whenComplete((a, b) -> ourHighlighterFutures.remove(editor, future));
     }
   }
 
   @TestOnly
   public static void completeAsyncTasks() {
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
-    ApplicationManager.getApplication().invokeAndWait(() -> ourHighlighterFutures.forEach(AsyncHighlighterUpdater::waitForFuture));
+    ApplicationManager.getApplication().invokeAndWait(() -> ourHighlighterFutures.values().forEach(AsyncHighlighterUpdater::waitForFuture));
     UIUtil.dispatchAllInvocationEvents();
   }
 

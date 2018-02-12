@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.unwrap;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -25,12 +26,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import java.util.Set;
 
 public abstract class GroovyElseUnwrapperBase extends GroovyUnwrapper {
-  public GroovyElseUnwrapperBase(String description) {
+  public GroovyElseUnwrapperBase(@NotNull String description) {
     super(description);
   }
 
   @Override
-  public boolean isApplicableTo(PsiElement e) {
+  public boolean isApplicableTo(@NotNull PsiElement e) {
     return (isElseBlock(e) || isElseKeyword(e)) && isValidConstruct(e);
   }
 
@@ -44,7 +45,7 @@ public abstract class GroovyElseUnwrapperBase extends GroovyUnwrapper {
   }
 
   @Override
-  public void collectElementsToIgnore(PsiElement element, Set<PsiElement> result) {
+  public void collectElementsToIgnore(@NotNull PsiElement element, @NotNull Set<PsiElement> result) {
     PsiElement parent = element.getParent();
 
     while (parent instanceof GrIfStatement) {

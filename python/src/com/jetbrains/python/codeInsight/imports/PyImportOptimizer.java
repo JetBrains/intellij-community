@@ -18,14 +18,12 @@ package com.jetbrains.python.codeInsight.imports;
 import com.google.common.collect.Ordering;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.lang.ImportOptimizer;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -48,6 +46,16 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * @author yole
  */
 public class PyImportOptimizer implements ImportOptimizer {
+  private static final Logger LOG = Logger.getInstance(PyImportOptimizer.class);
+
+  private boolean mySortImports = true;
+
+  @NotNull
+  public static PyImportOptimizer onlyRemoveUnused() {
+    final PyImportOptimizer optimizer = new PyImportOptimizer();
+    optimizer.mySortImports = false;
+    return optimizer;
+  }
 
   @Override
   public boolean supports(PsiFile file) {
@@ -69,10 +77,12 @@ public class PyImportOptimizer implements ImportOptimizer {
       }
     });
     return () -> {
+      LOG.debug(String.format("----------------- OPTIMIZE IMPORTS STARTED (%s) -----------------", file.getVirtualFile()));
       visitor.optimizeImports();
-      if (file instanceof PyFile) {
+      if (mySortImports && file instanceof PyFile) {
         new ImportSorter((PyFile)file).run();
       }
+      LOG.debug("----------------- OPTIMIZE IMPORTS FINISHED -----------------");
     };
   }
 
@@ -89,11 +99,11 @@ public class PyImportOptimizer implements ImportOptimizer {
     private final PyCodeStyleSettings myPySettings;
     private final List<PyImportStatementBase> myImportBlock;
     private final Map<ImportPriority, List<PyImportStatementBase>> myGroups;
-    
+
     private final MultiMap<PyImportStatementBase, PsiComment> myOldImportToLineComments = MultiMap.create();
     private final MultiMap<PyImportStatementBase, PsiComment> myOldImportToInnerComments = MultiMap.create();
     private final MultiMap<String, PyFromImportStatement> myOldFromImportBySources = MultiMap.create();
-    
+
     private final MultiMap<PyImportStatementBase, PsiComment> myNewImportToLineComments = MultiMap.create();
     // Contains trailing and nested comments of modified (split and joined) imports
     private final MultiMap<PyImportStatementBase, PsiComment> myNewImportToInnerComments = MultiMap.create();
@@ -117,8 +127,10 @@ public class PyImportOptimizer implements ImportOptimizer {
       analyzeImports(myImportBlock);
 
       for (PyImportStatementBase importStatement : myImportBlock) {
-        final ImportPriority priority = AddImportHelper.getImportPriority(importStatement);
-        myGroups.get(priority).add(importStatement);
+        final AddImportHelper.ImportPriorityChoice choice = AddImportHelper.getImportPriorityWithReason(importStatement);
+        LOG.debug(String.format("Import group for '%s' is %s: %s",
+                                importStatement.getText(), choice.getPriority(), choice.getDescription()));
+        myGroups.get(choice.getPriority()).add(importStatement);
       }
 
       boolean hasTransformedImports = false;
@@ -185,6 +197,7 @@ public class PyImportOptimizer implements ImportOptimizer {
           final PyFromImportStatement fromImport = (PyFromImportStatement)statement;
           final String source = getNormalizedFromImportSource(fromImport);
           final List<PyImportElement> newStatementElements = new ArrayList<>();
+          boolean forceParentheses = false;
 
           // We can neither sort, nor combine star imports
           if (!fromImport.isStarImport()) {
@@ -192,6 +205,8 @@ public class PyImportOptimizer implements ImportOptimizer {
             if (sameSourceImports.isEmpty()) {
               continue;
             }
+
+            forceParentheses = sameSourceImports.size() == 1 && fromImport.getLeftParen() != null;
 
             // Join multiple "from" imports with the same source, like "from module import foo; from module import bar as b"
             if (myPySettings.OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE && sameSourceImports.size() > 1) {
@@ -213,7 +228,10 @@ public class PyImportOptimizer implements ImportOptimizer {
             if (myPySettings.OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS) {
               Collections.sort(newStatementElements, IMPORT_ELEMENT_COMPARATOR);
             }
-            final String importedNames = StringUtil.join(newStatementElements, ImportSorter::getNormalizedImportElementText, ", ");
+            String importedNames = StringUtil.join(newStatementElements, ImportSorter::getNormalizedImportElementText, ", ");
+            if (forceParentheses) {
+              importedNames = "(" + importedNames + ")";
+            }
             final PyFromImportStatement combinedImport = generator.createFromImportStatement(langLevel, source, importedNames, null);
             ContainerUtil.map2LinkedSet(newStatementElements, e -> (PyImportStatementBase)e.getParent()).forEach(affected -> {
               myNewImportToLineComments.putValues(combinedImport, myOldImportToLineComments.get(affected));
@@ -286,7 +304,7 @@ public class PyImportOptimizer implements ImportOptimizer {
       final PyImportStatementBase lastImport = ContainerUtil.getLastItem(myImportBlock);
       assert lastImport != null;
       addImportsAfter(lastImport);
-      myFile.deleteChildRange(firstElementToRemove, PyPsiUtils.getNextNonWhitespaceSibling(lastImport).getPrevSibling());
+      deleteRangeThroughDocument(firstElementToRemove, PyPsiUtils.getNextNonWhitespaceSibling(lastImport).getPrevSibling());
     }
 
     private void addImportsAfter(@NotNull PsiElement anchor) {
@@ -330,6 +348,12 @@ public class PyImportOptimizer implements ImportOptimizer {
       assert newImportBlock != null;
 
       myFile.addRangeAfter(reformattedFile.getFirstChild(), reformattedFile.getLastChild(), anchor);
+    }
+
+    private static void deleteRangeThroughDocument(@NotNull PsiElement first, @NotNull PsiElement last) {
+      PyUtil.updateDocumentUnblockedAndCommitted(first, document -> {
+        document.deleteString(first.getTextRange().getStartOffset(), last.getTextRange().getEndOffset());
+      });
     }
   }
 }

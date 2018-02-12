@@ -15,6 +15,7 @@
  */
 package com.intellij.spellchecker.dictionary;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -31,6 +32,6 @@ public interface EditableDictionary extends Dictionary {
 
   void clear();
 
-  @Nullable
+  @NotNull
   Set<String> getEditableWords();
 }

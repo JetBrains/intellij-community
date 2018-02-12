@@ -18,12 +18,15 @@ package com.intellij.psi.stubs;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +51,8 @@ class StubVersionMap {
   private static final String INDEXED_FILETYPES = "indexed_filetypes";
   private static final String RECORD_SEPARATOR = "\uFFFF";
   private static final String LINE_SEPARATOR = "\n";
-  private static final String ourEncoding = "utf-8";
+  private static final Charset ourEncoding = CharsetToolkit.UTF8_CHARSET;
+  private static final Logger LOG = Logger.getInstance(StubVersionMap.class);
   private final Map<FileType, Object> fileTypeToVersionOwner = new THashMap<>();
   private final TObjectLongHashMap<FileType> fileTypeToVersion = new TObjectLongHashMap<>();
   private final TLongObjectHashMap<FileType> versionToFileType = new TLongObjectHashMap<>();
@@ -218,7 +223,12 @@ class StubVersionMap {
 
   private static int version(Object owner) {
     if (owner instanceof IStubFileElementType) {
-      return ((IStubFileElementType)owner).getStubVersion();
+      IStubFileElementType elementType = (IStubFileElementType)owner;
+      if (elementType.getLanguage()  instanceof TemplateLanguage) {
+        LOG.assertTrue(elementType.getStubVersion() >= IStubFileElementType.getTemplateStubVersion(),
+                       elementType.getLanguage() + " stub version should call super.getStubVersion()");
+      }
+      return elementType.getStubVersion();
     } else {
       return ((BinaryFileStubBuilder)owner).getStubVersion();
     }

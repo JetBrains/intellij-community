@@ -72,15 +72,12 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
 
   @Override
   protected void configureUiHelper(TreeUIHelper helper) {
-    final Convertor<TreePath, String> convertor = new Convertor<TreePath, String>() {
-      @Override
-      public String convert(final TreePath path) {
-        final SimpleNode node = getNodeFor(path);
-        if (node instanceof PackagingElementNode) {
-          return ((PackagingElementNode<?>)node).getElementPresentation().getSearchName();
-        }
-        return "";
+    final Convertor<TreePath, String> convertor = path -> {
+      final SimpleNode node = getNodeFor(path);
+      if (node instanceof PackagingElementNode) {
+        return ((PackagingElementNode<?>)node).getElementPresentation().getSearchName();
       }
+      return "";
     };
     new TreeSpeedSearch(this, convertor, true);
   }

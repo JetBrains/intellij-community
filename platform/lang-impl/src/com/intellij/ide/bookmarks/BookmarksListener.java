@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,8 @@ import org.jetbrains.annotations.NotNull;
 public interface BookmarksListener {
   Topic<BookmarksListener> TOPIC = Topic.create("Bookmarks", BookmarksListener.class);
 
-  void bookmarkAdded(@NotNull Bookmark b);
-  void bookmarkRemoved(@NotNull Bookmark b);
-
-  void bookmarkChanged(@NotNull Bookmark b);
-
-  void bookmarksOrderChanged();
+  default void bookmarkAdded(@NotNull Bookmark b) { }
+  default void bookmarkRemoved(@NotNull Bookmark b) { }
+  default void bookmarkChanged(@NotNull Bookmark b) { }
+  default void bookmarksOrderChanged() { }
 }

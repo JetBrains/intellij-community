@@ -7,23 +7,22 @@ import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.concurrency.Semaphore;
-import com.jetbrains.jsonSchema.JsonSchemaFileType;
 import com.jetbrains.jsonSchema.JsonSchemaTestServiceImpl;
-import com.jetbrains.jsonSchema.ide.JsonSchemaAnnotator;
+import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
+import com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.junit.Assert;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -42,7 +41,7 @@ public class JsonSchemaReadTest extends CompletionTestCase {
     final JsonSchemaObject read = getSchemaObject(file);
 
     Assert.assertEquals("http://json-schema.org/draft-04/schema#", read.getId());
-    Assert.assertTrue(read.getDefinitions().containsKey("positiveInteger"));
+    Assert.assertTrue(read.getDefinitionsMap().containsKey("positiveInteger"));
     Assert.assertTrue(read.getProperties().containsKey("multipleOf"));
     Assert.assertTrue(read.getProperties().containsKey("type"));
     Assert.assertTrue(read.getProperties().containsKey("additionalProperties"));
@@ -50,41 +49,19 @@ public class JsonSchemaReadTest extends CompletionTestCase {
     Assert.assertEquals("#", read.getProperties().get("additionalItems").getAnyOf().get(1).getRef());
 
     final JsonSchemaObject required = read.getProperties().get("required");
-    Assert.assertEquals(JsonSchemaType._array, required.getType());
-    Assert.assertEquals(1, required.getMinItems().intValue());
-    Assert.assertEquals(JsonSchemaType._string, required.getItemsSchema().getType());
+    Assert.assertEquals("#/definitions/stringArray", required.getRef());
 
     final JsonSchemaObject minLength = read.getProperties().get("minLength");
-    Assert.assertNotNull(minLength.getAllOf());
-    final List<JsonSchemaObject> minLengthAllOf = minLength.getAllOf();
-    boolean haveIntegerType = false;
-    Integer defaultValue = null;
-    Integer minValue = null;
-    for (JsonSchemaObject object : minLengthAllOf) {
-      haveIntegerType |= JsonSchemaType._integer.equals(object.getType());
-      if (object.getDefault() instanceof  Number) {
-        defaultValue = ((Number)object.getDefault()).intValue();
-      }
-      if (object.getMinimum() != null) {
-        minValue = object.getMinimum().intValue();
-      }
-    }
-    Assert.assertTrue(haveIntegerType);
-    Assert.assertEquals(0, defaultValue.intValue());
-    Assert.assertEquals(0, minValue.intValue());
+    Assert.assertEquals("#/definitions/positiveIntegerDefault0", minLength.getRef());
   }
 
-  public void testMainSchemaHighlighting() throws Exception {
-    final Set<VirtualFile> files = JsonSchemaServiceEx.Impl.getEx(myProject).getSchemaFiles();
-    VirtualFile mainSchema = null;
-    for (VirtualFile file : files) {
-      if ("schema.json".equals(file.getName())) {
-        mainSchema = file;
-        break;
-      }
-    }
+  public void testMainSchemaHighlighting() {
+    final JsonSchemaService service = JsonSchemaService.Impl.get(myProject);
+    final List<JsonSchemaFileProvider> providers = new JsonSchemaProjectSelfProviderFactory().getProviders(myProject);
+    Assert.assertEquals(1, providers.size());
+    final VirtualFile mainSchema = providers.get(0).getSchemaFile();
     assertNotNull(mainSchema);
-    assertTrue(JsonSchemaFileType.INSTANCE.equals(mainSchema.getFileType()));
+    assertTrue(service.isSchemaFile(mainSchema));
 
     final Annotator annotator = new JsonSchemaAnnotator();
     LanguageAnnotators.INSTANCE.addExplicitExtension(JsonLanguage.INSTANCE, annotator);
@@ -99,22 +76,24 @@ public class JsonSchemaReadTest extends CompletionTestCase {
     configureByExistingFile(mainSchema);
     final List<HighlightInfo> infos = doHighlighting();
     for (HighlightInfo info : infos) {
-      if (!HighlightSeverity.INFORMATION.equals(info.getSeverity())) assertFalse(info.getDescription(), true);
+      if (!HighlightSeverity.INFORMATION.equals(info.getSeverity())) {
+        assertFalse(String.format("%s in: %s", info.getDescription(),
+                                  myEditor.getDocument().getText(new TextRange(info.getStartOffset(), info.getEndOffset()))), true);
+      }
     }
   }
 
-  private JsonSchemaObject getSchemaObject(File file) throws IOException {
+  private JsonSchemaObject getSchemaObject(File file) throws Exception {
     Assert.assertTrue(file.exists());
     final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     Assert.assertNotNull(virtualFile);
-    final JsonSchemaReader reader = JsonSchemaReader.create(myProject, virtualFile);
-    return reader.read();
+    return JsonSchemaReader.readFromFile(myProject, virtualFile);
   }
 
   public void testReadSchemaWithCustomTags() throws Exception {
     final File file = new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/withNotesCustomTag.json");
     final JsonSchemaObject read = getSchemaObject(file);
-    Assert.assertTrue(read.getDefinitions().get("common").getProperties().containsKey("id"));
+    Assert.assertTrue(read.getDefinitionsMap().get("common").getProperties().containsKey("id"));
   }
 
   public void testArrayItemsSchema() throws Exception {
@@ -125,11 +104,17 @@ public class JsonSchemaReadTest extends CompletionTestCase {
     final JsonSchemaObject object = properties.get("color-hex-case");
     final List<JsonSchemaObject> oneOf = object.getOneOf();
     Assert.assertEquals(2, oneOf.size());
+
     final JsonSchemaObject second = oneOf.get(1);
     final List<JsonSchemaObject> list = second.getItemsSchemaList();
     Assert.assertEquals(2, list.size());
+
     final JsonSchemaObject firstItem = list.get(0);
-    final List<Object> anEnum = firstItem.getEnum();
+    Assert.assertEquals("#/definitions/lowerUpper", firstItem.getRef());
+    final JsonSchemaObject definition = read.findRelativeDefinition(firstItem.getRef());
+    Assert.assertNotNull(definition);
+
+    final List<Object> anEnum = definition.getEnum();
     Assert.assertEquals(2, anEnum.size());
     Assert.assertTrue(anEnum.contains("\"lower\""));
     Assert.assertTrue(anEnum.contains("\"upper\""));
@@ -143,22 +128,22 @@ public class JsonSchemaReadTest extends CompletionTestCase {
     doTestSchemaReadNotHung(new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/WithWrongItems.json"));
   }
 
-  private void doTestSchemaReadNotHung(final File file) throws IOException {
+  private void doTestSchemaReadNotHung(final File file) throws Exception {
     // because of threading
     if (Runtime.getRuntime().availableProcessors() < 2) return;
 
     Assert.assertTrue(file.exists());
 
     final AtomicBoolean done = new AtomicBoolean();
-    final AtomicReference<IOException> error = new AtomicReference<>();
+    final AtomicReference<Exception> error = new AtomicReference<>();
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final Thread thread = new Thread(() -> {
       try {
-        ApplicationManager.getApplication().runReadAction((ThrowableComputable<JsonSchemaObject, IOException>)() -> getSchemaObject(file));
+        ReadAction.run(() -> getSchemaObject(file));
         done.set(true);
       }
-      catch (IOException e) {
+      catch (Exception e) {
         error.set(e);
       }
       finally {

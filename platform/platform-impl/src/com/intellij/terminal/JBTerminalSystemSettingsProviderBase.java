@@ -26,11 +26,8 @@ import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
 import com.jediterm.terminal.TerminalColor;
 import com.jediterm.terminal.TextStyle;
@@ -45,6 +42,8 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+
 /**
  * @author traff
  */
@@ -55,15 +54,12 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
     myColorScheme = createBoundColorSchemeDelegate(null);
 
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
-    connection.subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
-      @Override
-      public void uiSettingsChanged(UISettings uiSettings) {
-        int size = consoleFontSize(JBTerminalSystemSettingsProviderBase.this.myColorScheme);
+    connection.subscribe(UISettingsListener.TOPIC, uiSettings -> {
+      int size = consoleFontSize(JBTerminalSystemSettingsProviderBase.this.myColorScheme);
 
-        if (myColorScheme.getConsoleFontSize() != size) {
-          myColorScheme.setConsoleFontSize(size);
-          fireFontChanged();
-        }
+      if (myColorScheme.getConsoleFontSize() != size) {
+        myColorScheme.setConsoleFontSize(size);
+        fireFontChanged();
       }
     });
     connection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
@@ -75,7 +71,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
     });
   }
 
-  private Set<TerminalSettingsListener> myListeners = new HashSet<>();
+  private final Set<TerminalSettingsListener> myListeners = new HashSet<>();
 
   @Override
   public KeyStroke[] getCopyKeyStrokes() {
@@ -109,7 +105,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
 
   private KeyStroke[] getKeyStrokesByActionId(String actionId) {
     java.util.List<KeyStroke> keyStrokes = new ArrayList<>();
-    Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
+    Shortcut[] shortcuts = getActiveKeymapShortcuts(actionId).getShortcuts();
     for (Shortcut sc : shortcuts) {
       if (sc instanceof KeyboardShortcut) {
         KeyStroke ks = ((KeyboardShortcut)sc).getFirstKeyStroke();
@@ -117,7 +113,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
       }
     }
 
-    return keyStrokes.toArray(new KeyStroke[keyStrokes.size()]);
+    return keyStrokes.toArray(new KeyStroke[0]);
   }
 
   @Override

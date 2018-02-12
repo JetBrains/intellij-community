@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author max
+ * Implementers are encouraged to also implement {@link ByteBackedContentRevision}
  */
 public interface ContentRevision {
   /**

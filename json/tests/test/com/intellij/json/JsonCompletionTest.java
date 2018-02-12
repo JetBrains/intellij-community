@@ -21,31 +21,31 @@ public class JsonCompletionTest extends JsonTestCase {
     myFixture.checkResultByFile("completion/" + getTestName(false) + "_after.json" );
   }
 
-  public void testInsideArrayElement1() throws Exception {
+  public void testInsideArrayElement1() {
     doTest(ALL_KEYWORDS);
   }
 
-  public void testInsideArrayElement2() throws Exception {
+  public void testInsideArrayElement2() {
     doTest(ALL_KEYWORDS);
   }
 
-  public void testInsidePropertyKey1() throws Exception {
+  public void testInsidePropertyKey1() {
     doTest(NOTHING);
   }
 
-  public void testInsidePropertyKey2() throws Exception {
+  public void testInsidePropertyKey2() {
     doTest(NOTHING);
   }
 
-  public void testInsideStringLiteral1() throws Exception {
+  public void testInsideStringLiteral1() {
     doTest(NOTHING);
   }
 
-  public void testInsideStringLiteral2() throws Exception {
+  public void testInsideStringLiteral2() {
     doTest(NOTHING);
   }
 
-  public void testInsidePropertyValue() throws Exception {
+  public void testInsidePropertyValue() {
     doTest(ALL_KEYWORDS);
   }
 

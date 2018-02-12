@@ -15,6 +15,7 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
@@ -30,18 +31,20 @@ import java.io.IOException;
 // It is possible to directly associate nonnegative int or long with Data instances when Data is integral value and represent it's own hash code
 // e.g. Data are integers and hash code for them are values themselves
 public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Data> {
-  public static final int PAGE_SIZE;
-  private static final int DEFAULT_PAGE_SIZE = 32768;
+  static final int BTREE_PAGE_SIZE;
+  private static final int DEFAULT_BTREE_PAGE_SIZE = 32768;
 
   static {
-    PAGE_SIZE = SystemProperties.getIntProperty("idea.btree.page.size", DEFAULT_PAGE_SIZE);
+    BTREE_PAGE_SIZE = SystemProperties.getIntProperty("idea.btree.page.size", DEFAULT_BTREE_PAGE_SIZE);
   }
 
   private static final int RECORD_SIZE = 4;
   private static final int VALUE_PAGE_SIZE = 1024 * 1024;
   static {
-    assert VALUE_PAGE_SIZE % PAGE_SIZE == 0:"Page size should be divisor of " + VALUE_PAGE_SIZE;
+    assert VALUE_PAGE_SIZE % BTREE_PAGE_SIZE == 0:"Page size should be divisor of " + VALUE_PAGE_SIZE;
   }
+
+  private static final int INTERNAL_PAGE_SIZE = ResizeableMappedFile.DEFAULT_ALLOCATION_ROUND_FACTOR;
 
   private int myLogicalFileLength;
   private int myDataPageStart;
@@ -59,7 +62,9 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private final boolean myInlineKeysNoMapping;
   private boolean myExternalKeysNoMapping;
 
-  static final int VERSION = 7 + IntToIntBtree.version() + PAGE_SIZE;
+  private static final int MAX_DATA_SEGMENT_LENGTH = 128;
+  
+  static final int VERSION = 8 + IntToIntBtree.version() + BTREE_PAGE_SIZE + INTERNAL_PAGE_SIZE + MAX_DATA_SEGMENT_LENGTH;
   private static final int KEY_SHIFT = 1;
 
   public PersistentBTreeEnumerator(@NotNull File file, @NotNull KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
@@ -137,7 +142,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   private void initBtree(boolean initial) throws IOException {
-    myBTree = new IntToIntBtree(PAGE_SIZE, indexFile(myFile), myStorage.getPagedFileStorage().getStorageLockContext(), initial);
+    myBTree = new IntToIntBtree(BTREE_PAGE_SIZE, indexFile(myFile), myStorage.getPagedFileStorage().getStorageLockContext(), initial);
   }
 
   private void storeVars(boolean toDisk) {
@@ -167,7 +172,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   private int store(int offset, int value, boolean toDisk) {
-    assert offset + 4 < PAGE_SIZE;
+    assert offset + 4 < MAX_DATA_SEGMENT_LENGTH;
 
     if (toDisk) {
       if (myFirstPageStart == -1 || myStorage.getInt(offset) != value) myStorage.putInt(offset, value);
@@ -179,7 +184,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   @Override
   protected void setupEmptyFile() throws IOException {
-    myLogicalFileLength = PAGE_SIZE;
+    myLogicalFileLength = MAX_DATA_SEGMENT_LENGTH;
     myFirstPageStart = myDataPageStart = -1;
     myDuplicatedValuesPageStart = -1;
 
@@ -202,7 +207,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   private int allocPage() {
     int pageStart = myLogicalFileLength;
-    myLogicalFileLength += PAGE_SIZE;
+    myLogicalFileLength += INTERNAL_PAGE_SIZE - (pageStart % INTERNAL_PAGE_SIZE);
     return pageStart;
   }
 
@@ -236,6 +241,10 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
             if (!p.process(value)) return false;
           }
           else {
+            if (myInlineKeysNoMapping) {
+              if (!p.process(value)) return false;
+              return true;
+            }
             int rec = -value;
             while (rec != 0) {
               int id = myStorage.getInt(rec);
@@ -335,11 +344,23 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     assert myInlineKeysNoMapping;
     try {
       lockStorage();
-      markDirty(true);
+
       int intKey = ((InlineKeyDescriptor<Data>)myDataDescriptor).toInt(key);
+
+      markDirty(true);
+
       if (value < Integer.MAX_VALUE) {
         myBTree.put(intKey, (int) value);
       } else {
+        // reuse long record if it was allocated
+        boolean hasMapping = myBTree.get(intKey, myResultBuf);
+        if (hasMapping) {
+          if (myResultBuf[0] < 0) {
+            myStorage.putLong(-myResultBuf[0], value);
+            return;
+          }
+        }
+
         int pos = nextLongValueRecord();
         myStorage.putLong(pos, value);
         myBTree.put(intKey, -pos);
@@ -356,9 +377,11 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   private int nextLongValueRecord() {
     assert myInlineKeysNoMapping;
-    if (myDuplicatedValuesPageStart == -1 || myDuplicatedValuesPageOffset == myBTree.pageSize) {
+    if (myDuplicatedValuesPageStart == -1 || myDuplicatedValuesPageOffset == INTERNAL_PAGE_SIZE) {
       myDuplicatedValuesPageStart = allocPage();
-      myDuplicatedValuesPageOffset = 0;
+      int existingOffset = myDuplicatedValuesPageStart % INTERNAL_PAGE_SIZE;
+      myDuplicatedValuesPageOffset = existingOffset;
+      myDuplicatedValuesPageStart -= existingOffset;
     }
 
     int duplicatedValueOff = myDuplicatedValuesPageOffset;
@@ -495,9 +518,11 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   private int nextDuplicatedValueRecord() {
     assert !myInlineKeysNoMapping;
-    if (myDuplicatedValuesPageStart == -1 || myDuplicatedValuesPageOffset == myBTree.pageSize) {
+    if (myDuplicatedValuesPageStart == -1 || myDuplicatedValuesPageOffset == INTERNAL_PAGE_SIZE) {
       myDuplicatedValuesPageStart = allocPage();
-      myDuplicatedValuesPageOffset = 0;
+      int existingOffset = myDuplicatedValuesPageStart % INTERNAL_PAGE_SIZE;
+      myDuplicatedValuesPageOffset = existingOffset;
+      myDuplicatedValuesPageStart -= existingOffset;
     }
 
     int duplicatedValueOff = myDuplicatedValuesPageOffset;
@@ -519,17 +544,20 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     int recordWriteOffset(@NotNull PersistentBTreeEnumerator enumerator, @NotNull byte[] buf) {
       if (enumerator.myFirstPageStart == -1) {
         enumerator.myFirstPageStart = enumerator.myDataPageStart = enumerator.allocPage();
+        int existingOffset = enumerator.myDataPageStart % INTERNAL_PAGE_SIZE;
+        enumerator.myDataPageOffset = existingOffset;
+        enumerator.myDataPageStart -= existingOffset;
       }
-      if (enumerator.myDataPageOffset + buf.length + 4 > enumerator.myBTree.pageSize) {
-        assert enumerator.myDataPageOffset + 4 <= enumerator.myBTree.pageSize;
-        int prevDataPageStart = enumerator.myDataPageStart + enumerator.myBTree.pageSize - 4;
+      if (enumerator.myDataPageOffset + buf.length + 4 > INTERNAL_PAGE_SIZE) {
+        assert enumerator.myDataPageOffset + 4 <= INTERNAL_PAGE_SIZE;
+        int prevDataPageStart = enumerator.myDataPageStart + INTERNAL_PAGE_SIZE - 4;
         enumerator.myDataPageStart = enumerator.allocPage();
         enumerator.myStorage.putInt(prevDataPageStart, enumerator.myDataPageStart);
         enumerator.myDataPageOffset = 0;
       }
 
       int recordWriteOffset = enumerator.myDataPageOffset;
-      assert recordWriteOffset + buf.length + 4 <= enumerator.myBTree.pageSize;
+      assert recordWriteOffset + buf.length + 4 <= INTERNAL_PAGE_SIZE;
       enumerator.myDataPageOffset += buf.length;
       return recordWriteOffset + enumerator.myDataPageStart;
     }
@@ -538,7 +566,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     @Override
     byte[] getRecordBuffer(@NotNull PersistentBTreeEnumerator enumerator) {
       if (myBuffer == null) {
-        myBuffer = new byte[enumerator.myInlineKeysNoMapping ? 0:RECORD_SIZE];
+        myBuffer = enumerator.myInlineKeysNoMapping ? ArrayUtil.EMPTY_BYTE_ARRAY : new byte[RECORD_SIZE];
       }
       return myBuffer;
     }

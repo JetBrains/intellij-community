@@ -54,7 +54,7 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,10 +65,9 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 15, 2003
  */
 public class ModulesConfigurator implements ModulesProvider, ModuleEditor.ChangeListener {
-  private static final Logger LOG = Logger.getInstance("#" + ModulesConfigurator.class.getName());
+  private static final Logger LOG = Logger.getInstance(ModulesConfigurator.class);
 
   private final Project myProject;
 
@@ -312,6 +311,9 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       }
 
       try {
+        for (ModuleEditor editor : myModuleEditors.values()) {
+          editor.resetModifiableModel();
+        }
         ModifiableModelCommitter.multiCommit(models, myModuleModel);
         myModuleModelCommitted = true;
         myFacetsConfigurator.commitFacets();
@@ -367,9 +369,9 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
 
   @Nullable
-  public List<Module> addModule(Component parent, boolean anImport) {
+  public List<Module> addModule(Component parent, boolean anImport, String defaultModuleName) {
     if (myProject.isDefault()) return null;
-    final ProjectBuilder builder = runModuleWizard(parent, anImport);
+    final ProjectBuilder builder = runModuleWizard(parent, anImport, defaultModuleName);
     if (builder != null ) {
       final List<Module> modules = new ArrayList<>();
       final List<Module> committedModules;
@@ -423,7 +425,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   @Nullable
-  ProjectBuilder runModuleWizard(Component dialogParent, boolean anImport) {
+  private ProjectBuilder runModuleWizard(Component dialogParent, boolean anImport, String defaultModuleName) {
     AbstractProjectWizard wizard;
     if (anImport) {
       wizard = ImportModuleAction.selectFileAndCreateWizard(myProject, dialogParent);
@@ -435,26 +437,12 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       }
     }
     else {
-      wizard = new NewProjectWizard(myProject, dialogParent, this);
+      wizard = new NewProjectWizard(myProject, dialogParent, this, defaultModuleName);
     }
-    if (wizard.showAndGet()) {
-      final ProjectBuilder builder = wizard.getProjectBuilder();
-      if (builder instanceof ModuleBuilder) {
-        final ModuleBuilder moduleBuilder = (ModuleBuilder)builder;
-        if (moduleBuilder.getName() == null) {
-          moduleBuilder.setName(wizard.getProjectName());
-        }
-        if (moduleBuilder.getModuleFilePath() == null) {
-          moduleBuilder.setModuleFilePath(wizard.getModuleFilePath());
-        }
-      }
-      if (!builder.validate(myProject, myProject)) {
-        return null;
-      }
-      return wizard.getProjectBuilder();
+    if (!wizard.showAndGet()) {
+      return null;
     }
-
-    return null;
+    return wizard.getBuilder(myProject);
   }
 
 
@@ -484,7 +472,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         ContainerUtil.addIfNotNull(modifiableRootModels, modifiableRootModel);
       }
 
-      ModuleDeleteProvider.removeModule(moduleToRemove, null, modifiableRootModels, myModuleModel);
+      ModuleDeleteProvider.removeModule(moduleToRemove, modifiableRootModels, myModuleModel);
       Disposer.dispose(editor);
     }
     processModuleCountChanged();

@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 12/19/11
  */
 public class XmlNoVariantsDelegator extends CompletionContributor {
 

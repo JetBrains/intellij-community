@@ -23,30 +23,26 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubTree;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStrongWhitespaceHolderElementType;
-import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TreeUtil {
   private static final Key<String> UNCLOSED_ELEMENT_PROPERTY = Key.create("UNCLOSED_ELEMENT_PROPERTY");
-
-  private TreeUtil() {
-  }
 
   public static void ensureParsed(ASTNode node) {
     if (node != null) {
@@ -129,6 +125,15 @@ public class TreeUtil {
   }
 
   @Nullable
+  public static ASTNode findParent(@NotNull ASTNode element, @NotNull TokenSet types, @Nullable TokenSet stopAt) {
+    for (ASTNode parent = element.getTreeParent(); parent != null; parent = parent.getTreeParent()) {
+      if (types.contains(parent.getElementType())) return parent;
+      if (stopAt != null && stopAt.contains(parent.getElementType())) return null;
+    }
+    return null;
+  }
+
+  @Nullable
   public static LeafElement findFirstLeaf(ASTNode element) {
     return (LeafElement)findFirstLeaf(element, true);
   }
@@ -144,30 +149,6 @@ public class TreeUtil {
       }
       return null;
     }
-  }
-
-  private static boolean isLeafOrCollapsedChameleon(ASTNode node) {
-    return node instanceof LeafElement || isCollapsedChameleon(node);
-  }
-
-  @Nullable
-  public static TreeElement findFirstLeafOrChameleon(final TreeElement element) {
-    if (element == null) return null;
-
-    final Ref<TreeElement> result = Ref.create(null);
-    element.acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
-      @Override
-      protected void visitNode(final TreeElement element) {
-        if (isLeafOrCollapsedChameleon(element)) {
-          result.set(element);
-          stopWalking();
-          return;
-        }
-        super.visitNode(element);
-      }
-    });
-
-    return result.get();
   }
 
   @Nullable
@@ -437,6 +418,22 @@ public class TreeUtil {
     return element;
   }
 
+  public static boolean containsOuterLanguageElements(@NotNull ASTNode node) {
+    AtomicBoolean result = new AtomicBoolean(false);
+    ((TreeElement)node).acceptTree(new RecursiveTreeElementWalkingVisitor() {
+      @Override
+      protected void visitNode(TreeElement element) {
+        if (element instanceof OuterLanguageElement) {
+          result.set(true);
+          stopWalking();
+          return;
+        }
+        super.visitNode(element);
+      }
+    });
+    return result.get();
+  }
+
   public static final class CommonParentState {
     TreeElement startLeafBranchStart;
     public ASTNode nextLeafBranchStart;
@@ -450,37 +447,37 @@ public class TreeUtil {
     }
   }
 
-  public static void bindStubsToTree(@NotNull PsiFileImpl file, @NotNull StubTree stubTree, @NotNull FileElement tree) throws StubBindingException {
-    final ListIterator<StubElement<?>> stubs = stubTree.getPlainList().listIterator();
-    stubs.next();  // skip file root stub
+  public static void bindStubsToTree(@NotNull StubTree stubTree, @NotNull FileElement tree) throws StubBindingException {
+    List<Pair<StubBase, TreeElement>> bindings = calcStubAstBindings(stubTree, tree);
 
-    final IStubFileElementType type = file.getElementTypeForStubBuilder();
-    assert type != null;
-    final StubBuilder builder = type.getBuilder();
-    tree.acceptTree(new RecursiveTreeElementWalkingVisitor() {
-      @Override
-      protected void visitNode(TreeElement node) {
-        CompositeElement parent = node.getTreeParent();
-        if (parent != null && builder.skipChildProcessingWhenBuildingStubs(parent, node)) {
-          return;
-        }
+    for (int i = 0; i < bindings.size(); i++) {
+      Pair<StubBase, TreeElement> pair = bindings.get(i);
+      StubBasedPsiElementBase psi = (StubBasedPsiElementBase)pair.second.getPsi();
+      //noinspection unchecked
+      pair.first.setPsi(psi);
+      psi.setStubIndex(i + 1);
+    }
+  }
 
-        IElementType type = node.getElementType();
-        if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(node)) {
-          final StubElement stub = stubs.hasNext() ? stubs.next() : null;
-          if (stub == null || stub.getStubType() != type) {
-            throw new StubBindingException("stub:" + stub + ", AST:" + type);
-          }
+  @NotNull
+  public static List<Pair<StubBase, TreeElement>> calcStubAstBindings(@NotNull StubTree stubTree, @NotNull FileElement tree) throws StubBindingException {
+    PsiFile file = (PsiFile)tree.getPsi();
+    List<CompositeElement> nodes = tree.getStubbedSpine().getNodes();
+    List<StubElement<?>> stubs = stubTree.getPlainList();
+    if (stubs.size() != nodes.size()) {
+      throw new StubBindingException("Stub list in " + file.getName() + " length differs from PSI");
+    }
 
-          StubBasedPsiElementBase psi = (StubBasedPsiElementBase)node.getPsi();
-          //noinspection unchecked
-          ((StubBase)stub).setPsi(psi);
-          psi.setStubIndex(stubs.previousIndex());
-        }
-
-        super.visitNode(node);
+    List<Pair<StubBase, TreeElement>> bindings = new ArrayList<>();
+    for (int i = 1; i < stubs.size(); i++) { // start from 1 to skip file root stub
+      StubBase<?> stub = (StubBase<?>)stubs.get(i);
+      CompositeElement node = nodes.get(i);
+      if (stub.getStubType() != node.getElementType()) {
+        throw new StubBindingException("stub:" + stub + ", AST:" + node.getElementType());
       }
-    });
+      bindings.add(Pair.create(stub, node));
+    }
+    return bindings;
   }
 
   @Nullable

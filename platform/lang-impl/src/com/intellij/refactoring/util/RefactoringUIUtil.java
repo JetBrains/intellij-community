@@ -20,7 +20,6 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -70,21 +69,16 @@ public class RefactoringUIUtil {
     return StringUtil.join(ContainerUtil.map2LinkedSet(Arrays.asList(elements), presentationFun), ", ");
   }
 
-  public static final EditorSettingsProvider SELECT_ALL_ON_FOCUS = new EditorSettingsProvider() {
+  public static final EditorSettingsProvider SELECT_ALL_ON_FOCUS = editor -> editor.addFocusListener(new FocusChangeListener() {
     @Override
-    public void customizeSettings(EditorEx editor) {
-      editor.addFocusListener(new FocusChangeListener() {
-        @Override
-        public void focusGained(Editor editor) {
-          if (LookupManager.getActiveLookup(editor) == null) {
-            editor.getSelectionModel().setSelection(0, editor.getDocument().getTextLength());
-          }
-        }
-
-        @Override
-        public void focusLost(Editor editor) {
-        }
-      });
+    public void focusGained(Editor editor) {
+      if (LookupManager.getActiveLookup(editor) == null) {
+        editor.getSelectionModel().setSelection(0, editor.getDocument().getTextLength());
+      }
     }
-  };
+
+    @Override
+    public void focusLost(Editor editor) {
+    }
+  });
 }

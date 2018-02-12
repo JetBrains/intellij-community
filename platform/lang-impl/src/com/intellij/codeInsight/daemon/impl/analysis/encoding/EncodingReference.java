@@ -94,7 +94,7 @@ public class EncodingReference implements PsiReference, EmptyResolveMessageProvi
     for (Charset charset : charsets) {
       suggestions.add(LookupElementBuilder.create(charset.name()).withCaseSensitivity(false));
     }
-    return suggestions.toArray(new LookupElement[suggestions.size()]);
+    return suggestions.toArray(LookupElement.EMPTY_ARRAY);
   }
 
   @Override

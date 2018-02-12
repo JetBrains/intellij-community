@@ -34,10 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 29.05.2007
- */
 public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstructorInvocation {
   public GrConstructorInvocationImpl(@NotNull ASTNode node) {
     super(node);

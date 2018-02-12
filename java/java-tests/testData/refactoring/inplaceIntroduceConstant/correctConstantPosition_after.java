@@ -1,6 +1,6 @@
 public class Res {
 
-    public static final Res.R<String, Object> R = new R<String, Object>() {
+    public static final Res.R<String, Object> R = new R<>() {
         final String param = "";
 
         @Override
@@ -17,5 +17,5 @@ public class Res {
 
     private void validateStructuresCookie(Res cookie) {
         cookie.bar(<caret>R);
-      }
+    }
 }

@@ -1,24 +1,25 @@
 # Stubs for unittest
 
+from mypy_extensions import NoReturn
 from typing import (
-    Any, Callable, Dict, Iterable, Iterator, List, Optional, Pattern, Sequence,
-    Set, TextIO, Tuple, Type, TypeVar, Union,
-    overload,
+    Any, Callable, ContextManager, Dict, FrozenSet, Generic, Iterable, Iterator,
+    List, Optional, overload, Pattern, Sequence, Set, TextIO, Tuple, Type,
+    TypeVar, Union
 )
 import logging
 import sys
 from types import ModuleType, TracebackType
-from contextlib import ContextManager
 
 
 _T = TypeVar('_T')
-_FT = TypeVar('_FT', Callable[[Any], Any])
+_FT = TypeVar('_FT', bound=Callable[..., Any])
+_E = TypeVar('_E', bound=Exception)
 
 
+def expectedFailure(func: _FT) -> _FT: ...
 def skip(reason: str) -> Callable[[_FT], _FT]: ...
 def skipIf(condition: object, reason: str) -> Callable[[_FT], _FT]: ...
 def skipUnless(condition: object, reason: str) -> Callable[[_FT], _FT]: ...
-def expectedFailure(func: _FT) -> _FT: ...
 
 class SkipTest(Exception):
     def __init__(self, reason: str) -> None: ...
@@ -70,25 +71,25 @@ class TestCase:
     @overload
     def assertRaises(self,  # type: ignore
                      exception: Union[Type[BaseException], Tuple[Type[BaseException], ...]],
-                     callable: Callable[..., Any] = ...,
+                     callable: Callable[..., Any],
                      *args: Any, **kwargs: Any) -> None: ...
     @overload
     def assertRaises(self,
-                     exception: Union[Type[BaseException], Tuple[Type[BaseException], ...]],
-                     msg: Any = ...) -> _AssertRaisesContext: ...
+                     exception: Union[Type[_E], Tuple[Type[_E], ...]],
+                     msg: Any = ...) -> _AssertRaisesContext[_E]: ...
     @overload
     def assertRaisesRegex(self,  # type: ignore
                           exception: Union[Type[BaseException], Tuple[Type[BaseException], ...]],
-                          callable: Callable[..., Any] = ...,
+                          callable: Callable[..., Any],
                           *args: Any, **kwargs: Any) -> None: ...
     @overload
     def assertRaisesRegex(self,
-                          exception: Union[Type[BaseException], Tuple[Type[BaseException], ...]],
-                          msg: Any = ...) -> _AssertRaisesContext: ...
+                          exception: Union[Type[_E], Tuple[Type[_E], ...]],
+                          msg: Any = ...) -> _AssertRaisesContext[_E]: ...
     @overload
     def assertWarns(self,  # type: ignore
                     exception: Union[Type[Warning], Tuple[Type[Warning], ...]],
-                    callable: Callable[..., Any] = ...,
+                    callable: Callable[..., Any],
                     *args: Any, **kwargs: Any) -> None: ...
     @overload
     def assertWarns(self,
@@ -97,7 +98,7 @@ class TestCase:
     @overload
     def assertWarnsRegex(self,  # type: ignore
                          exception: Union[Type[Warning], Tuple[Type[Warning], ...]],
-                         callable: Callable[..., Any] = ...,
+                         callable: Callable[..., Any],
                          *args: Any, **kwargs: Any) -> None: ...
     @overload
     def assertWarnsRegex(self,
@@ -117,7 +118,7 @@ class TestCase:
                     msg: Any = ...) -> None: ...
     def assertNotRegex(self, text: str, regex: Union[str, Pattern[str]],
                        msg: Any = ...) -> None: ...
-    def assertCountEqual(self, first: Sequence[Any], second: Sequence[Any],
+    def assertCountEqual(self, first: Iterable[Any], second: Iterable[Any],
                          msg: Any = ...) -> None: ...
     def addTypeEqualityFunc(self, typeobj: Type[Any],
                             function: Callable[..., None]) -> None: ...
@@ -130,11 +131,11 @@ class TestCase:
                         msg: Any = ...) -> None: ...
     def assertTupleEqual(self, first: Tuple[Any, ...], second: Tuple[Any, ...],
                          msg: Any = ...) -> None: ...
-    def assertSetEqual(self, first: Set[Any], second: Set[Any],
-                       msg: Any = ...) -> None: ...
+    def assertSetEqual(self, first: Union[Set[Any], FrozenSet[Any]],
+                       second: Union[Set[Any], FrozenSet[Any]], msg: Any = ...) -> None: ...
     def assertDictEqual(self, first: Dict[Any, Any], second: Dict[Any, Any],
                         msg: Any = ...) -> None: ...
-    def fail(self, msg: Any = ...) -> None: ...
+    def fail(self, msg: Any = ...) -> NoReturn: ...
     def countTestCases(self) -> int: ...
     def defaultTestResult(self) -> TestResult: ...
     def id(self) -> str: ...
@@ -159,8 +160,8 @@ class TestCase:
                          *args: Any, **kwargs: Any) -> None: ...
     @overload
     def failUnlessRaises(self,
-                         exception: Union[Type[BaseException], Tuple[Type[BaseException], ...]],
-                         msg: Any = ...) -> _AssertRaisesContext: ...
+                         exception: Union[Type[_E], Tuple[Type[_E], ...]],
+                         msg: Any = ...) -> _AssertRaisesContext[_E]: ...
     def failUnlessAlmostEqual(self, first: float, second: float,
                               places: int = ..., msg: Any = ...) -> None: ...
     def assertAlmostEquals(self, first: float, second: float, places: int = ...,
@@ -179,8 +180,8 @@ class TestCase:
                            *args: Any, **kwargs: Any) -> None: ...
     @overload
     def assertRaisesRegexp(self,
-                           exception: Union[Type[BaseException], Tuple[Type[BaseException], ...]],
-                           msg: Any = ...) -> _AssertRaisesContext: ...
+                           exception: Union[Type[_E], Tuple[Type[_E], ...]],
+                           msg: Any = ...) -> _AssertRaisesContext[_E]: ...
 
 class FunctionTestCase(TestCase):
     def __init__(self, testFunc: Callable[[], None],
@@ -188,9 +189,9 @@ class FunctionTestCase(TestCase):
                  tearDown: Optional[Callable[[], None]] = ...,
                  description: Optional[str] = ...) -> None: ...
 
-class _AssertRaisesContext:
-    exception = ...  # type: Exception
-    def __enter__(self) -> _AssertRaisesContext: ...
+class _AssertRaisesContext(Generic[_E]):
+    exception = ...  # type: _E
+    def __enter__(self) -> _AssertRaisesContext[_E]: ...
     def __exit__(self, exc_type: Optional[type], exc_val: Optional[Exception],
                  exc_tb: Optional[TracebackType]) -> bool: ...
 

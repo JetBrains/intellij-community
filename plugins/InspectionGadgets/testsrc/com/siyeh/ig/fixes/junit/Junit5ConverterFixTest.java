@@ -26,6 +26,9 @@ public class Junit5ConverterFixTest extends IGQuickFixesTestCase {
   public void testSimple() {
     doTest();
   }
+  public void testFullConversion() {
+    doTest();
+  }
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
@@ -33,7 +36,7 @@ public class Junit5ConverterFixTest extends IGQuickFixesTestCase {
     builder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
   }
 
-  public void testExpectedOnTestAnnotation() throws Exception {
+  public void testExpectedOnTestAnnotation() {
     assertQuickfixNotAvailable();
   }
 

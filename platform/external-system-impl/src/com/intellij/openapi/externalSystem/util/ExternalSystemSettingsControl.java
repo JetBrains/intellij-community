@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.externalSystem.util;
 
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.options.ConfigurationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -47,7 +49,14 @@ public interface ExternalSystemSettingsControl<S> {
   void reset();
 
   /**
-   * @return    <code>true</code> if settings exposed by the current control have been modified; <code>false</code> otherwise
+   * Asks current control to reset its state to the initial one.
+   */
+  default void reset(@Nullable WizardContext wizardContext) {
+    reset();
+  }
+
+  /**
+   * @return    {@code true} if settings exposed by the current control have been modified; {@code false} otherwise
    */
   boolean isModified();
 

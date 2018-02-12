@@ -10,7 +10,13 @@ import org.jetbrains.annotations.NotNull;
 public interface ShowParameterInfoContextFactory {
 
   @NotNull
-  CreateParameterInfoContext createShowParameterInfoContext(Project project, Editor editor, PsiFile file, int lbraceOffset, int offset);
+  CreateParameterInfoContext createShowParameterInfoContext(Project project,
+                                                            Editor editor,
+                                                            PsiFile file,
+                                                            int lbraceOffset,
+                                                            int offset,
+                                                            boolean requestFocus,
+                                                            boolean singleParameterHint);
 
 
   class SERVICE {

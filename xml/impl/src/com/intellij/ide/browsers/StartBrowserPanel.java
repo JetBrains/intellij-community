@@ -19,7 +19,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.browsers.impl.WebBrowserServiceImpl;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
@@ -66,16 +65,13 @@ public class StartBrowserPanel {
 
         Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myRoot));
         if (project == null) {
-          DataManager.getInstance().getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {
-            @Override
-            public void consume(DataContext context) {
-              Project project = CommonDataKeys.PROJECT.getData(context);
-              if (project == null) {
-                // IDEA-118202
-                project = ProjectManager.getInstance().getDefaultProject();
-              }
-              setupUrlField(myUrlField, project);
+          DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)context -> {
+            Project project1 = CommonDataKeys.PROJECT.getData(context);
+            if (project1 == null) {
+              // IDEA-118202
+              project1 = ProjectManager.getInstance().getDefaultProject();
             }
+            setupUrlField(myUrlField, project1);
           });
         }
         else {
@@ -132,14 +128,7 @@ public class StartBrowserPanel {
 
   @Nullable
   private static Url virtualFileToUrl(@NotNull VirtualFile file, @NotNull Project project) {
-    PsiFile psiFile;
-    AccessToken token = ReadAction.start();
-    try {
-      psiFile = PsiManager.getInstance(project).findFile(file);
-    }
-    finally {
-      token.finish();
-    }
+    PsiFile psiFile = ReadAction.compute(() -> PsiManager.getInstance(project).findFile(file));
     return WebBrowserServiceImpl.getDebuggableUrl(psiFile);
   }
 

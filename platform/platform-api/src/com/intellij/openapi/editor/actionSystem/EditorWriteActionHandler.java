@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -36,7 +37,7 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
   }
 
   @Override
-  public void doExecute(final Editor editor, @Nullable final Caret caret, final DataContext dataContext) {
+  public void doExecute(@NotNull final Editor editor, @Nullable final Caret caret, final DataContext dataContext) {
     if (editor.isViewer()) return;
     if (!ApplicationManager.getApplication().isWriteAccessAllowed() && !EditorModificationUtil.requestWriting(editor)) return;
 

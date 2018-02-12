@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 Bas Leijdekkers
+ * Copyright 2010-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -72,23 +72,24 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(element, PsiAnnotation.class);
       if (annotation == null) {
         return;
       }
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final String annotationText = buildAnnotationText(annotation);
+      CommentTracker tracker = new CommentTracker();
+      final String annotationText = buildAnnotationText(annotation, tracker);
       final PsiAnnotation newAnnotation = factory.createAnnotationFromText(annotationText, element);
-      annotation.replace(newAnnotation);
+      tracker.replaceAndRestoreComments(annotation, newAnnotation);
     }
 
-    private static String buildAnnotationText(PsiAnnotation annotation) {
+    private static String buildAnnotationText(PsiAnnotation annotation, CommentTracker tracker) {
       final StringBuilder out = new StringBuilder("@");
       final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
       assert nameReferenceElement != null;
-      out.append(nameReferenceElement.getText());
+      out.append(tracker.text(nameReferenceElement));
       final PsiAnnotationParameterList parameterList = annotation.getParameterList();
       final PsiNameValuePair[] attributes = parameterList.getAttributes();
       if (attributes.length == 0) {
@@ -101,7 +102,7 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
         if (name != null && !PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(name)) {
           out.append(name).append('=');
         }
-        buildAttributeValueText(attribute.getValue(), out);
+        buildAttributeValueText(attribute.getValue(), out, tracker);
       }
       else {
         for (int i = 0; i < attributes.length; i++) {
@@ -110,25 +111,29 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
             out.append(',');
           }
           out.append(attribute.getName()).append('=');
-          buildAttributeValueText(attribute.getValue(), out);
+          buildAttributeValueText(attribute.getValue(), out, tracker);
         }
       }
       out.append(')');
       return out.toString();
     }
 
-    private static StringBuilder buildAttributeValueText(PsiAnnotationMemberValue value, StringBuilder out) {
+    private static void buildAttributeValueText(PsiAnnotationMemberValue value,
+                                                StringBuilder out,
+                                                CommentTracker tracker) {
       if (value instanceof PsiArrayInitializerMemberValue) {
         final PsiArrayInitializerMemberValue arrayValue = (PsiArrayInitializerMemberValue)value;
         final PsiAnnotationMemberValue[] initializers = arrayValue.getInitializers();
         if (initializers.length == 1) {
-          return out.append(initializers[0].getText());
+          out.append(tracker.text(initializers[0]));
+          return;
         }
       }
       else if (value instanceof PsiAnnotation) {
-        return out.append(buildAnnotationText((PsiAnnotation)value));
+        out.append(buildAnnotationText((PsiAnnotation)value, tracker));
+        return;
       }
-      return out.append(value.getText());
+      out.append(tracker.text(value));
     }
   }
 

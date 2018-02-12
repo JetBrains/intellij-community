@@ -1,26 +1,12 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -28,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.TextViewer;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -56,7 +43,8 @@ public class ViewTextAction extends XFetchValueActionBase {
 
       @Override
       public void handleInCollector(Project project, String value, XDebuggerTree tree) {
-        String text = StringUtil.unquoteString(value);
+        // do not unquote here! Value here must be correct already
+        String text = value; //StringUtil.unquoteString(value);
         if (dialog == null) {
           dialog = new MyDialog(project, text, node);
           dialog.setTitle(ActionsBundle.message(node != null ? "action.Debugger.ViewEditText.text" : "action.Debugger.ViewText.text"));
@@ -111,7 +99,7 @@ public class ViewTextAction extends XFetchValueActionBase {
       setCrossClosesWindow(true);
 
       myTextViewer = new TextViewer(initialValue, project, myStringNode == null);
-      myTextViewer.addDocumentListener(new DocumentAdapter() {
+      myTextViewer.addDocumentListener(new DocumentListener() {
         @Override
         public void documentChanged(DocumentEvent e) {
           if (e.getNewLength() + e.getOldLength() > 0) {
@@ -130,7 +118,8 @@ public class ViewTextAction extends XFetchValueActionBase {
     protected void doOKAction() {
       if (myStringNode != null) {
         DebuggerUIUtil.setTreeNodeValue(myStringNode,
-                                        StringUtil.wrapWithDoubleQuote(DebuggerUtils.translateStringValue(myTextViewer.getText())),
+                                        XExpressionImpl.fromText(
+                                          StringUtil.wrapWithDoubleQuote(DebuggerUtils.translateStringValue(myTextViewer.getText()))),
                                         errorMessage -> Messages.showErrorDialog(myStringNode.getTree(), errorMessage));
       }
       super.doOKAction();

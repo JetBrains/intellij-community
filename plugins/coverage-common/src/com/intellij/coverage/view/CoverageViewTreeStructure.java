@@ -6,15 +6,12 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 1/2/12
- */
 public class CoverageViewTreeStructure extends AbstractTreeStructure {
   private final Project myProject;
   final CoverageSuitesBundle myData;
@@ -44,13 +41,13 @@ public class CoverageViewTreeStructure extends AbstractTreeStructure {
                               CoverageViewManager.StateBean stateBean) {
     if (element instanceof CoverageListRootNode && stateBean.myFlattenPackages) {
       final Collection<? extends AbstractTreeNode> children = ((CoverageListRootNode)element).getChildren();
-      return children.toArray(new Object[children.size()]);
+      return children.toArray(ArrayUtil.EMPTY_OBJECT_ARRAY);
     }
     if (element instanceof CoverageListNode) {
       List<AbstractTreeNode> children = bundle.getCoverageEngine().createCoverageViewExtension(((CoverageListNode)element).getProject(),
                                                                                                bundle, stateBean)
         .getChildrenNodes((CoverageListNode)element);
-      return children.toArray(new CoverageListNode[children.size()]);
+      return children.toArray(new CoverageListNode[0]);
     }
     return null;
   }

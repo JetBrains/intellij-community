@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,8 @@ public class ForcedSoftWrapsNotificationProvider extends EditorNotifications.Pro
     final Editor editor = ((TextEditor)fileEditor).getEditor();
     final Project project = editor.getProject();
     if (project == null 
-        || !Boolean.TRUE.equals(editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS)) 
+        || !Boolean.TRUE.equals(editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS))
+        || !Boolean.TRUE.equals(editor.getUserData(EditorImpl.SOFT_WRAPS_EXIST))
         || PropertiesComponent.getInstance().isTrueValue(DISABLED_NOTIFICATION_KEY)) return null;
     
     final EditorNotificationPanel panel = new EditorNotificationPanel();

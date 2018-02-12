@@ -18,22 +18,20 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
 /**
  * @author Denis Zhdanov
  * @since 4/18/11 3:39 PM
  */
 public class CutLineBackwardActionTest extends LightPlatformCodeInsightTestCase {
 
-  public void testZeroPosition() throws IOException {
+  public void testZeroPosition() {
     String text = 
       "<caret>class Test {\n" +
       "}";
     doTest(text, text);
   }
   
-  public void testNonZeroPositionOfFirstLine() throws IOException {
+  public void testNonZeroPositionOfFirstLine() {
     doTest(
       "class <caret>Test {\n" +
       "}",
@@ -42,7 +40,7 @@ public class CutLineBackwardActionTest extends LightPlatformCodeInsightTestCase 
     );
   }
   
-  public void testZeroPositionNonFirstLine() throws IOException {
+  public void testZeroPositionNonFirstLine() {
     doTest(
       "class Test {\n" +
       "<caret>    // This is comment string\n" +
@@ -52,7 +50,7 @@ public class CutLineBackwardActionTest extends LightPlatformCodeInsightTestCase 
     );
   }
 
-  public void testNonZeroPositionNonFirstLine() throws IOException {
+  public void testNonZeroPositionNonFirstLine() {
     doTest(
       "class Test {\n" +
       "    // This is the comment string\n" +
@@ -64,7 +62,7 @@ public class CutLineBackwardActionTest extends LightPlatformCodeInsightTestCase 
     );
   }
   
-  private void doTest(@NotNull String before, @NotNull String after) throws IOException {
+  private void doTest(@NotNull String before, @NotNull String after) {
     configureFromFileText(getTestName(false) + ".txt", before);
     cutLineBackward();
     checkResultByText(after);

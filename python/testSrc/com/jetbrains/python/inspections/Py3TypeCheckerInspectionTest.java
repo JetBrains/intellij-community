@@ -1,28 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author vlan
  */
-public class Py3TypeCheckerInspectionTest extends PyTestCase {
+public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public static final String TEST_DIRECTORY = "inspections/PyTypeCheckerInspection/";
 
   @Override
@@ -30,23 +17,30 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
     return ourPy3Descriptor;
   }
 
-  private void doTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
-      myFixture.copyDirectoryToProject("typing", "");
-      myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
-      myFixture.enableInspections(PyTypeCheckerInspection.class);
-      myFixture.checkHighlighting(true, false, true);
-    });
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyTypeCheckerInspection.class;
   }
 
-  private void doMultiFileTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
-      myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
-      myFixture.copyDirectoryToProject("typing", "");
-      myFixture.configureFromTempProjectFile("a.py");
-      myFixture.enableInspections(PyTypeCheckerInspection.class);
-      myFixture.checkHighlighting(true, false, true);
-    });
+  @Override
+  protected boolean isLowerCaseTestFile() {
+    return false;
+  }
+
+  @Override
+  protected String getTestCaseDirectory() {
+    return TEST_DIRECTORY;
+  }
+
+  @Override
+  protected void doTest() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> super.doTest());
+  }
+
+  @Override
+  protected void doMultiFileTest() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> super.doMultiFileTest());
   }
 
   // PY-9289
@@ -90,7 +84,6 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   
   // PY-18762
   public void testHomogeneousTuples() {
-    myFixture.copyDirectoryToProject("typing/typing.py", TEST_DIRECTORY);
     doTest();
   }
 
@@ -190,7 +183,7 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   }
 
   // PY-20073
-  public void testMapArgumentsInOppositeOrder() {
+  public void testMapArgumentsInOppositeOrderPy3() {
     doTest();
   }
 
@@ -227,5 +220,80 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   // PY-23053
   public void testUnboundTypeVarsMatchClassObjectTypes() {
     doTest();
+  }
+
+  // PY-22513
+  public void testGenericKwargs() {
+    doTest();
+  }
+
+  public void testTypingNamedTupleAsParameter() {
+    doTest();
+  }
+
+  // PY-17962
+  public void testTypingCallableCall() {
+    doTest();
+  }
+
+  // PY-23057
+  public void testEllipsisInFunctionWithSpecifiedReturnType() {
+    doTest();
+  }
+
+  // PY-23239, PY-23253
+  public void testInitializingTypingNamedTuple() {
+    doTest();
+  }
+
+  // PY-21302
+  public void testInitializingNewType() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-21302
+  public void testNewTypeAsParameter() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-21302
+  public void testNewTypeInheritance() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-24287
+  public void testPromotingBytearrayToBytes() {
+    doTest();
+  }
+
+  // PY-25045
+  public void testUnionOfIntAndFloatShouldBeConsideredAsDividable() {
+    doTest();
+  }
+
+  // PY-23289
+  // PY-23391
+  // PY-24194
+  // PY-24789
+  public void testTypingSupports() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-25994
+  public void testUnresolvedReceiverGeneric() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  public void testMatchingOpenFunctionCallTypesPy3() {
+    doMultiFileTest();
+  }
+
+  public void testChainedComparisonsGenericMatching() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-27398
+  public void testInitializingDataclass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, () -> super.doMultiFileTest());
   }
 }

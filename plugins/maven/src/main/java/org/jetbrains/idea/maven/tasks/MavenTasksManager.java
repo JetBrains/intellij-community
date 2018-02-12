@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.tasks;
 
 import com.google.common.collect.Sets;
@@ -21,6 +7,7 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,13 +24,14 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenSimpleProjectComponent;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @State(name = "MavenCompilerTasksManager")
-public class MavenTasksManager extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenTasksManagerState> {
+public class MavenTasksManager extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenTasksManagerState>,
+                                                                              ProjectComponent {
   private final AtomicBoolean isInitialized = new AtomicBoolean();
 
   private MavenTasksManagerState myState = new MavenTasksManagerState();
@@ -76,6 +64,7 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
     myRunner = runner;
   }
 
+  @Override
   public synchronized MavenTasksManagerState getState() {
     MavenTasksManagerState result = new MavenTasksManagerState();
     result.afterCompileTasks = new THashSet<>(myState.afterCompileTasks);
@@ -85,7 +74,8 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
     return result;
   }
 
-  public void loadState(MavenTasksManagerState state) {
+  @Override
+  public void loadState(@NotNull MavenTasksManagerState state) {
     synchronized (this) {
       myState = state;
     }
@@ -135,7 +125,8 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
         MavenExplicitProfiles explicitProfiles = myProjectsManager.getExplicitProfiles();
         parametersList.add(new MavenRunnerParameters(true,
                                                      file.getParent().getPath(),
-                                                     Arrays.asList(each.getGoal()),
+                                                     file.getName(),
+                                                     Collections.singletonList(each.getGoal()),
                                                      explicitProfiles.getEnabledProfiles(),
                                                      explicitProfiles.getDisabledProfiles()));
       }
@@ -171,8 +162,7 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
         }
       }
     }
-    RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
-    for (MavenBeforeRunTask each : runManager.getBeforeRunTasks(MavenBeforeRunTasksProvider.ID)) {
+    for (MavenBeforeRunTask each : RunManagerEx.getInstanceEx(myProject).getBeforeRunTasks(MavenBeforeRunTasksProvider.ID)) {
       if (each.isFor(project, goal)) {
         result.add(TasksBundle.message("maven.tasks.goal.before.run"));
         break;

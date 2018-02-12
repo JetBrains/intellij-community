@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,9 +38,10 @@ public class AnsiEscapeDecoder {
   private static final char BACKSPACE = '\b';
 
   private final ColoredOutputTypeRegistry myColoredOutputTypeRegistry = ColoredOutputTypeRegistry.getInstance();
-  private Key myCurrentTextAttributes;
   private String myUnhandledStdout;
   private String myUnhandledStderr;
+  private ProcessOutputType myCurrentStdoutOutputType;
+  private ProcessOutputType myCurrentStderrOutputType;
 
   /**
    * Parses ansi-color codes from text and sends text fragments with color attributes to textAcceptor
@@ -61,6 +63,9 @@ public class AnsiEscapeDecoder {
         if (escSeqBeginInd < -1) {
           unhandledSuffixLength = decodeUnhandledSuffixLength(escSeqBeginInd);
         }
+        if (pos < text.length() - unhandledSuffixLength) {
+          chunks = processTextChunk(chunks, text.substring(pos, text.length() - unhandledSuffixLength), outputType, textAcceptor);
+        }
         break;
       }
       if (pos < escSeqBeginInd) {
@@ -78,14 +83,17 @@ public class AnsiEscapeDecoder {
         // this is a simple fix for RUBY-8996:
         // we replace several consecutive escape sequences with one which contains all these sequences
         String colorAttribute = StringUtil.replace(escSeq, M_CSI, ";");
-        myCurrentTextAttributes = myColoredOutputTypeRegistry.getOutputKey(colorAttribute);
+        ProcessOutputType resultType = myColoredOutputTypeRegistry.getOutputType(colorAttribute, outputType);
+        if (resultType.isStdout()) {
+          myCurrentStdoutOutputType = resultType;
+        }
+        else if (resultType.isStderr()) {
+          myCurrentStderrOutputType = resultType;
+        }
       }
       pos = escSeqEndInd + 1;
     }
     updateUnhandledSuffix(text, outputType, unhandledSuffixLength);
-    if (unhandledSuffixLength == 0 && pos < text.length()) {
-      chunks = processTextChunk(chunks, text.substring(pos), outputType, textAcceptor);
-    }
     if (chunks != null && textAcceptor instanceof ColoredChunksAcceptor) {
       ((ColoredChunksAcceptor)textAcceptor).coloredChunksAvailable(chunks);
     }
@@ -93,10 +101,10 @@ public class AnsiEscapeDecoder {
 
   private void updateUnhandledSuffix(@NotNull String text, @NotNull Key outputType, int unhandledSuffixLength) {
     String unhandledSuffix = unhandledSuffixLength > 0 ? text.substring(text.length() - unhandledSuffixLength) : null;
-    if (outputType == ProcessOutputTypes.STDOUT) {
+    if (ProcessOutputType.isStdout(outputType)) {
       myUnhandledStdout = unhandledSuffix;
     }
-    else if (outputType == ProcessOutputTypes.STDERR) {
+    else if (ProcessOutputType.isStderr(outputType)) {
       myUnhandledStderr = unhandledSuffix;
     }
   }
@@ -104,11 +112,11 @@ public class AnsiEscapeDecoder {
   @NotNull
   private String prependUnhandledText(@NotNull String text, @NotNull Key outputType) {
     String prevUnhandledText = null;
-    if (outputType == ProcessOutputTypes.STDOUT) {
+    if (ProcessOutputType.isStdout(outputType)) {
       prevUnhandledText = myUnhandledStdout;
       myUnhandledStdout = null;
     }
-    else if (outputType == ProcessOutputTypes.STDERR) {
+    else if (ProcessOutputType.isStderr(outputType)) {
       prevUnhandledText = myUnhandledStderr;
       myUnhandledStderr = null;
     }
@@ -174,7 +182,15 @@ public class AnsiEscapeDecoder {
 
   /**
    * Returns end index of all consecutive escape sequences started at {@code firstEscSeqBeginInd}, or
-   * negative number if not found: -1 - (length of string suffix to keep in case of an incomplete last escape sequence).
+   * a negative number if not found. Since an escape sequence could be split among several subsequent output chunks
+   * (e.g. because of automatic flushing of standard stream when its buffer is full), it should be parsed
+   * when all the needed output chunks are available. To achieve that, the return value encodes
+   * the length of the passed string suffix to keep in case of an incomplete last escape sequence:
+   *  {@code -1 - (length of string suffix to keep in case of an incomplete last escape sequence)}.  </p>
+   * If the return value is -1, no string suffix should be kept => a malformed escape sequence has been encountered.
+   * If the return value is less than -1, no actual handing of the incomplete escape sequence should be performed,
+   * the string suffix length should be decoded with {@code #decodeUnhandledSuffixLength(the return value)} and the suffix
+   * should be preserved until the next output chunks is available.
    */
   private static int findConsecutiveEscSequencesEndIndex(@NotNull String text, int firstEscSeqBeginInd) {
     int escSeqBeginInd = firstEscSeqBeginInd;
@@ -255,10 +271,13 @@ public class AnsiEscapeDecoder {
 
   @NotNull
   protected Key getCurrentOutputAttributes(@NotNull Key outputType) {
-    if (outputType == ProcessOutputTypes.STDERR || outputType == ProcessOutputTypes.SYSTEM) {
-      return outputType;
+    if (ProcessOutputType.isStdout(outputType)) {
+      return ObjectUtils.notNull(myCurrentStdoutOutputType, outputType);
     }
-    return myCurrentTextAttributes != null ? myCurrentTextAttributes : outputType;
+    if (ProcessOutputType.isStderr(outputType)) {
+      return ObjectUtils.notNull(myCurrentStderrOutputType, outputType);
+    }
+    return outputType;
   }
 
   public interface ColoredChunksAcceptor extends ColoredTextAcceptor {

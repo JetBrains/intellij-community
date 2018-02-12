@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.usages;
 
@@ -33,13 +21,13 @@ import java.util.Set;
  */
 public interface UsageView extends Disposable {
   /**
-   * Returns {@link com.intellij.usages.UsageTarget} to look usages for
+   * Returns {@link UsageTarget} to look usages for
    */
   DataKey<UsageTarget[]> USAGE_TARGETS_KEY = DataKey.create("usageTarget");
   @Deprecated String USAGE_TARGETS = USAGE_TARGETS_KEY.getName();
 
   /**
-   * Returns {@link com.intellij.usages.Usage} which are selected in usage view
+   * Returns {@link Usage} which are selected in usage view
    */
   DataKey<Usage[]> USAGES_KEY = DataKey.create("usages");
   @Deprecated String USAGES = USAGES_KEY.getName();
@@ -57,6 +45,11 @@ public interface UsageView extends Disposable {
   void associateProgress(@NotNull ProgressIndicator indicator);
 
   void appendUsage(@NotNull Usage usage);
+
+  void waitForUpdateRequestsCompletion();
+
+  void appendUsagesInBulk(@NotNull Collection<Usage> usages);
+
   void removeUsage(@NotNull Usage usage);
   void includeUsages(@NotNull Usage[] usages);
   void excludeUsages(@NotNull Usage[] usages);
@@ -66,19 +59,24 @@ public interface UsageView extends Disposable {
   boolean isSearchInProgress();
 
   /**
-   * @deprecated please specify mnemonic by prefixing the mnenonic character with an ampersand (&& for Mac-specific ampersands)
+   * @deprecated please specify mnemonic by prefixing the mnemonic character with an ampersand (&& for Mac-specific ampersands)
    */
   void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull String text, char mnemonic);
   void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull String text);
+  void addButtonToLowerPane(@NotNull Action action);
+
+  void setSearchInProgress(boolean searchInProgress);
+
+  void setReRunActivity(@NotNull Runnable runnable);
 
   void setAdditionalComponent(@Nullable JComponent component);
 
-  void addPerformOperationAction(@NotNull Runnable processRunnable, String commandName, String cannotMakeString, @NotNull String shortDescription);
+  void addPerformOperationAction(@NotNull Runnable processRunnable, @NotNull String commandName, String cannotMakeString, @NotNull String shortDescription);
 
   /**
    * @param checkReadOnlyStatus if false, check is performed inside processRunnable
    */
-  void addPerformOperationAction(@NotNull Runnable processRunnable, String commandName, String cannotMakeString, @NotNull String shortDescription, boolean checkReadOnlyStatus);
+  void addPerformOperationAction(@NotNull Runnable processRunnable, @NotNull String commandName, String cannotMakeString, @NotNull String shortDescription, boolean checkReadOnlyStatus);
 
   @NotNull
   UsageViewPresentation getPresentation();
@@ -86,12 +84,23 @@ public interface UsageView extends Disposable {
   @NotNull
   Set<Usage> getExcludedUsages();
 
-  @Nullable
+  @NotNull
   Set<Usage> getSelectedUsages();
-  @NotNull Set<Usage> getUsages();
-  @NotNull List<Usage> getSortedUsages();
 
-  @NotNull JComponent getComponent();
+  @NotNull
+  Set<Usage> getUsages();
+
+  @NotNull
+  List<Usage> getSortedUsages();
+
+  @NotNull
+  JComponent getComponent();
+
+  @NotNull
+  default JComponent getPreferredFocusableComponent() {
+    return getComponent();
+  }
+
 
   int getUsagesCount();
 

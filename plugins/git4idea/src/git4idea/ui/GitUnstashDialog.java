@@ -16,11 +16,8 @@
 package git4idea.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.dvcs.DvcsUtil;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,30 +27,21 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.Consumer;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
-import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
-import git4idea.config.GitVersionSpecialty;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitStashUtils;
 import git4idea.util.GitUIUtil;
-import git4idea.util.GitUntrackedFilesHelper;
-import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
 import git4idea.validators.GitBranchNameValidator;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,9 +56,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.MERGE;
 
 /**
  * The unstash dialog
@@ -92,14 +77,12 @@ public class GitUnstashDialog extends DialogWrapper {
   private final HashSet<String> myBranches = new HashSet<>();
 
   private final Project myProject;
-  private GitVcs myVcs;
   private static final Logger LOG = Logger.getInstance(GitUnstashDialog.class);
 
   public GitUnstashDialog(final Project project, final List<VirtualFile> roots, final VirtualFile defaultRoot) {
     super(project, true);
     setModal(false);
     myProject = project;
-    myVcs = GitVcs.getInstance(project);
     setTitle(GitBundle.getString("unstash.title"));
     setOKButtonText(GitBundle.getString("unstash.button.apply"));
     setCancelButtonText(CommonBundle.getCloseButtonText());
@@ -134,9 +117,22 @@ public class GitUnstashDialog extends DialogWrapper {
                                                      GitBundle.message("git.unstash.clear.confirmation.title"), Messages.getWarningIcon())) {
           GitLineHandler h = new GitLineHandler(myProject, getGitRoot(), GitCommand.STASH);
           h.addParameters("clear");
-          GitHandlerUtil.doSynchronously(h, GitBundle.getString("unstash.clearing.stashes"), h.printableCommandLine());
-          refreshStashList();
-          updateDialogState();
+          new Task.Modal(project, GitBundle.getString("unstash.clearing.stashes"), false) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              GitCommandResult result = Git.getInstance().runCommand(h);
+              if (!result.success()) ApplicationManager.getApplication()
+                .invokeLater(() -> GitUIUtil.showOperationError(project,
+                                                                  GitBundle.getString("unstash.clearing.stashes"),
+                                                                  result.getErrorOutputAsJoinedString()));
+            }
+
+            @Override
+            public void onFinished() {
+              refreshStashList();
+              updateDialogState();
+            }
+          }.queue();
         }
       }
     });
@@ -150,18 +146,12 @@ public class GitUnstashDialog extends DialogWrapper {
           ProgressManager.getInstance().run(new Task.Modal(myProject, "Removing stash " + stash.getStash(), true) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
-              final GitSimpleHandler h = dropHandler(stash.getStash());
+              final GitLineHandler h = dropHandler(stash.getStash());
               try {
-                h.run();
-                h.unsilence();
+                Git.getInstance().runCommand(h).getOutputOrThrow();
               }
               catch (final VcsException ex) {
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
-                  @Override
-                  public void run() {
-                    GitUIUtil.showOperationError(myProject, ex, h.printableCommandLine());
-                  }
-                }, current);
+                ApplicationManager.getApplication().invokeLater(() -> GitUIUtil.showOperationError(myProject, ex, h.printableCommandLine()), current);
               }
             }
           });
@@ -170,10 +160,9 @@ public class GitUnstashDialog extends DialogWrapper {
         }
       }
 
-      private GitSimpleHandler dropHandler(String stash) {
-        GitSimpleHandler h = new GitSimpleHandler(myProject, getGitRoot(), GitCommand.STASH);
-        h.addParameters("drop");
-        addStashParameter(h, stash);
+      private GitLineHandler dropHandler(String stash) {
+        GitLineHandler h = new GitLineHandler(myProject, getGitRoot(), GitCommand.STASH);
+        h.addParameters("drop", stash);
         return h;
       }
     });
@@ -183,12 +172,11 @@ public class GitUnstashDialog extends DialogWrapper {
         String resolvedStash;
         String selectedStash = getSelectedStash().getStash();
         try {
-          GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.REV_LIST);
+          GitLineHandler h = new GitLineHandler(project, root, GitCommand.REV_LIST);
           h.setSilent(true);
-          h.addParameters("--timestamp", "--max-count=1");
-          addStashParameter(h, selectedStash);
+          h.addParameters("--timestamp", "--max-count=1", selectedStash);
           h.endOptions();
-          final String output = h.run();
+          final String output = Git.getInstance().runCommand(h).getOutputOrThrow();
           resolvedStash = GitRevisionNumber.parseRevlistOutputAsRevisionNumber(h, output).asString();
         }
         catch (VcsException ex) {
@@ -200,18 +188,6 @@ public class GitUnstashDialog extends DialogWrapper {
     });
     init();
     updateDialogState();
-  }
-
-  /**
-   * Adds {@code stash@{x}} parameter to the handler, quotes it if needed.
-   */
-  private void addStashParameter(@NotNull GitHandler handler, @NotNull String stash) {
-    if (GitVersionSpecialty.NEEDS_QUOTES_IN_STASH_NAME.existsIn(myVcs.getVersion())) {
-      handler.addParameters(GeneralCommandLine.inescapableQuote(stash));
-    }
-    else {
-      handler.addParameters(stash);
-    }
   }
 
   /**
@@ -278,12 +254,7 @@ public class GitUnstashDialog extends DialogWrapper {
     final DefaultListModel listModel = (DefaultListModel)myStashList.getModel();
     listModel.clear();
     VirtualFile root = getGitRoot();
-    GitStashUtils.loadStashStack(myProject, root, new Consumer<StashInfo>() {
-      @Override
-      public void consume(StashInfo stashInfo) {
-        listModel.addElement(stashInfo);
-      }
-    });
+    GitStashUtils.loadStashStack(myProject, root, stashInfo -> listModel.addElement(stashInfo));
     myBranches.clear();
     GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
     if (repository != null) {
@@ -312,7 +283,7 @@ public class GitUnstashDialog extends DialogWrapper {
       h.addParameters("branch", branch);
     }
     String selectedStash = getSelectedStash().getStash();
-    addStashParameter(h, selectedStash);
+    h.addParameters(selectedStash);
     return h;
   }
 
@@ -342,54 +313,15 @@ public class GitUnstashDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     VirtualFile root = getGitRoot();
-    final GitLineHandler h = handler();
-    final AtomicBoolean conflict = new AtomicBoolean();
+    GitLineHandler h = handler();
 
-    h.addLineListener(new GitLineHandlerAdapter() {
-      public void onLineAvailable(String line, Key outputType) {
-        if (line.contains("Merge conflict")) {
-          conflict.set(true);
-        }
-      }
-    });
-    GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector = new GitUntrackedFilesOverwrittenByOperationDetector(root);
-    GitLocalChangesWouldBeOverwrittenDetector localChangesDetector = new GitLocalChangesWouldBeOverwrittenDetector(root, MERGE);
-    h.addLineListener(untrackedFilesDetector);
-    h.addLineListener(localChangesDetector);
+    boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      GitStashUtils.unstash(myProject, root, h, new UnstashConflictResolver(myProject, root, getSelectedStash()));
+    }, GitBundle.getString("unstash.unstashing"), true, myProject);
 
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
-    try {
-      final Ref<GitCommandResult> result = Ref.create();
-      final ProgressManager progressManager = ProgressManager.getInstance();
-      boolean completed = progressManager.runProcessWithProgressSynchronously(new Runnable() {
-        @Override
-        public void run() {
-          h.addLineListener(new GitHandlerUtil.GitLineHandlerListenerProgress(progressManager.getProgressIndicator(), h, "stash", false));
-          Git git = Git.getInstance();
-          result.set(git.runCommand(new Computable.PredefinedValueComputable<>(h)));
-        }
-      }, GitBundle.getString("unstash.unstashing"), true, myProject);
-
-      if (!completed) return;
-
-      VfsUtil.markDirtyAndRefresh(false, true, false, root);
-      GitCommandResult res = result.get();
-      if (conflict.get()) {
-        boolean conflictsResolved = new UnstashConflictResolver(myProject, root, getSelectedStash()).merge();
-        LOG.info("loadRoot " + root + ", conflictsResolved: " + conflictsResolved);
-      } else if (untrackedFilesDetector.wasMessageDetected()) {
-        GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(myProject, root, untrackedFilesDetector.getRelativeFilePaths(),
-                                                                  "unstash", null);
-      } else if (localChangesDetector.wasMessageDetected()) {
-        LocalChangesWouldBeOverwrittenHelper.showErrorDialog(myProject, root, "unstash", localChangesDetector.getRelativeFilePaths());
-      } else if (!res.success()) {
-        GitUIUtil.showOperationErrors(myProject, h.errors(), h.printableCommandLine());
-      }
+    if (completed) {
+      super.doOKAction();
     }
-    finally {
-      token.finish();
-    }
-    super.doOKAction();
   }
 
   public static void showUnstashDialog(Project project, List<VirtualFile> gitRoots, VirtualFile defaultRoot) {

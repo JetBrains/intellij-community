@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 class Test {
 
     {
-        AtomicInteger i = new AtomicInteger(0);
+        AtomicInteger i = new AtomicInteger();
         Integer j = 0;
 
         assert j == i.get();

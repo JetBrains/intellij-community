@@ -23,12 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/13/12
- * Time: 6:58 PM
- */
 public interface DiscloseMultiRequest {
   Map<String, DiffRequest> discloseRequest(DiffRequest request);
   DiffViewer viewerForRequest(Window window, @NotNull Disposable parentDisposable, final String name, DiffRequest current);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.codeInsight.template.Template;
@@ -30,23 +16,21 @@ import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
+import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * @author maxim
- * Date: 24.02.2004
- * Time: 15:34:57
  */
 public final class ReplacementBuilder {
   private final String replacement;
-  private final List<ParameterInfo> parameterizations = new ArrayList<>();
+  private final List<ParameterInfo> parameterizations = new SmartList<>();
   private final Map<String, ScriptSupport> replacementVarsMap;
   private final ReplaceOptions options;
   private final Project myProject;
@@ -105,7 +89,7 @@ public final class ReplacementBuilder {
       parameterizations.add(info);
     }
 
-    final StructuralSearchProfile profile = parameterizations != null ? StructuralSearchUtil.getProfileByFileType(fileType) : null;
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
     if (profile != null) {
       try {
         final PsiElement[] elements = MatcherImplUtil.createTreeFromText(
@@ -140,50 +124,30 @@ public final class ReplacementBuilder {
     }
   }
 
-  private static void fill(MatchResult r,Map<String,MatchResult> m) {
-    if (r.getName()!=null) {
-      m.putIfAbsent(r.getName(), r);
-    }
-
-    if (!r.isScopeMatch() || !r.isMultipleMatch()) {
-      for (final MatchResult matchResult : r.getAllSons()) {
-        fill(matchResult, m);
-      }
-    } else if (r.hasSons()) {
-      final List<MatchResult> allSons = r.getAllSons();
-      if (allSons.size() > 0) {
-        fill(allSons.get(0),m);
-      }
-    }
-  }
-
-  String process(MatchResult match, ReplacementInfoImpl replacementInfo, FileType type) {
-    if (parameterizations==null) {
+  String process(MatchResult match, ReplacementInfo replacementInfo, FileType type) {
+    if (parameterizations.isEmpty()) {
       return replacement;
     }
 
     final StringBuilder result = new StringBuilder(replacement);
-    final HashMap<String, MatchResult> matchMap = new HashMap<>();
-    fill(match, matchMap);
 
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(type);
     assert profile != null;
 
     int offset = 0;
     for (final ParameterInfo info : parameterizations) {
-      MatchResult r = matchMap.get(info.getName());
+      final MatchResult r = replacementInfo.getNamedMatchResult(info.getName());
       if (info.isReplacementVariable()) {
         offset = Replacer.insertSubstitution(result, offset, info, generateReplacement(info, match));
       }
       else if (r != null) {
-        offset = profile.handleSubstitution(info, r, result, offset, matchMap);
+        offset = profile.handleSubstitution(info, r, result, offset, replacementInfo);
       }
       else {
         offset = profile.handleNoSubstitution(info, offset, result);
       }
     }
 
-    replacementInfo.variableMap = matchMap;
     return result.toString();
   }
 
@@ -207,9 +171,5 @@ public final class ReplacementBuilder {
     }
 
     return null;
-  }
-
-  public void addParametrization(@NotNull ParameterInfo e) {
-    parameterizations.add(e);
   }
 }

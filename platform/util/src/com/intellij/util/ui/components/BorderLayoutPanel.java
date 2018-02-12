@@ -17,6 +17,7 @@ package com.intellij.util.ui.components;
 
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -32,27 +33,32 @@ public class BorderLayoutPanel extends JBPanel<BorderLayoutPanel> {
     super(new BorderLayout(JBUI.scale(hgap), JBUI.scale(vgap)));
   }
 
-  public BorderLayoutPanel addToCenter(Component comp) {
+  @NotNull
+  public BorderLayoutPanel addToCenter(@NotNull Component comp) {
     add(comp, BorderLayout.CENTER);
     return this;
   }
 
-  public BorderLayoutPanel addToRight(Component comp) {
+  @NotNull
+  public BorderLayoutPanel addToRight(@NotNull Component comp) {
     add(comp, BorderLayout.EAST);
     return this;
   }
 
-  public BorderLayoutPanel addToLeft(Component comp) {
+  @NotNull
+  public BorderLayoutPanel addToLeft(@NotNull Component comp) {
     add(comp, BorderLayout.WEST);
     return this;
   }
 
-  public BorderLayoutPanel addToTop(Component comp) {
+  @NotNull
+  public BorderLayoutPanel addToTop(@NotNull Component comp) {
     add(comp, BorderLayout.NORTH);
     return this;
   }
 
-  public BorderLayoutPanel addToBottom(Component comp) {
+  @NotNull
+  public BorderLayoutPanel addToBottom(@NotNull Component comp) {
     add(comp, BorderLayout.SOUTH);
     return this;
   }

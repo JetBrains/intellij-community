@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,8 @@ package com.intellij.psi.impl.source;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -43,11 +41,12 @@ import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements PsiMethod, Queryable {
   private SoftReference<PsiType> myCachedType;
@@ -226,7 +225,14 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   @Override
   @NotNull
   public PsiReferenceList getThrowsList() {
-    return getRequiredStubOrPsiChild(JavaStubElementTypes.THROWS_LIST);
+    PsiReferenceList child = getStubOrPsiChild(JavaStubElementTypes.THROWS_LIST);
+    if (child != null) return child;
+
+    PsiMethodStub stub = getStub();
+    Stream<String> children =
+      stub != null ? stub.getChildrenStubs().stream().map(s -> s.getClass().getSimpleName() + " : " + s.getStubType())
+                   : Stream.of(getChildren()).map(e -> e.getClass().getSimpleName() + " : " + e.getNode().getElementType());
+    throw new AssertionError("Missing throws list, file=" + getContainingFile() + " children:\n" + children.collect(Collectors.joining("\n")));
   }
 
   @Override
@@ -304,7 +310,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   public MethodSignature getSignature(@NotNull PsiSubstitutor substitutor) {
     if (substitutor == PsiSubstitutor.EMPTY) {
       return CachedValuesManager.getCachedValue(this, () -> {
-        MethodSignature signature = MethodSignatureBackedByPsiMethod.create(PsiMethodImpl.this, PsiSubstitutor.EMPTY);
+        MethodSignature signature = MethodSignatureBackedByPsiMethod.create(this, PsiSubstitutor.EMPTY);
         return CachedValueProvider.Result.create(signature, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       });
     }
@@ -346,8 +352,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
   @Override
   @NotNull
   public SearchScope getUseScope() {
-    return ApplicationManager.getApplication().runReadAction(
-      (Computable<SearchScope>)() -> PsiImplUtil.getMemberUseScope(PsiMethodImpl.this));
+    return ReadAction.compute(() -> PsiImplUtil.getMemberUseScope(this));
   }
 
   @Override

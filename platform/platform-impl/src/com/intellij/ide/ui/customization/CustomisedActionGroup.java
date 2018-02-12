@@ -19,9 +19,6 @@ import com.intellij.openapi.actionSystem.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
-* User: anna
-*/
 public class CustomisedActionGroup extends ActionGroup {
   private boolean myForceUpdate;
   private final ActionGroup myGroup;

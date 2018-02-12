@@ -16,40 +16,52 @@
 package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 
-/**
- * @author Konstantin Bulenkov
- */
-public class DirDiffWindow {
-  private final DirDiffDialog myDialog;
-  private final DirDiffFrame myFrame;
+public interface DirDiffWindow {
+  @NotNull
+  Disposable getDisposable();
 
-  public DirDiffWindow(DirDiffDialog dialog) {
-    myDialog = dialog;
-    myFrame = null;
-  }
+  void setTitle(@NotNull String title);
 
-  public DirDiffWindow(DirDiffFrame frame) {
-    myFrame = frame;
-    myDialog = null;
-  }
 
-  public Window getWindow() {
-    return myDialog == null ? myFrame.getFrame() : myDialog.getWindow();
-  }
+  class Dialog implements DirDiffWindow {
+    @NotNull private final DirDiffDialog myDialog;
 
-  public Disposable getDisposable() {
-    return myDialog == null ? myFrame : myDialog.getDisposable();
-  }
+    public Dialog(@NotNull DirDiffDialog dialog) {
+      myDialog = dialog;
+    }
 
-  public void setTitle(String title) {
-    if (myDialog == null) {
-      ((JFrame)myFrame.getFrame()).setTitle(title);
-    } else {
+    @NotNull
+    @Override
+    public Disposable getDisposable() {
+      return myDialog.getDisposable();
+    }
+
+    @Override
+    public void setTitle(@NotNull String title) {
       myDialog.setTitle(title);
+    }
+  }
+
+  class Frame implements DirDiffWindow {
+    @NotNull private final DirDiffFrame myFrame;
+
+    public Frame(@NotNull DirDiffFrame frame) {
+      myFrame = frame;
+    }
+
+    @NotNull
+    @Override
+    public Disposable getDisposable() {
+      return myFrame;
+    }
+
+    @Override
+    public void setTitle(@NotNull String title) {
+      ((JFrame)myFrame.getFrame()).setTitle(title);
     }
   }
 }

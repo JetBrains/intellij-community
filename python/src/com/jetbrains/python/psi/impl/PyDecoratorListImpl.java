@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyDecorator;
@@ -59,5 +60,15 @@ public class PyDecoratorListImpl extends PyBaseElementImpl<PyDecoratorListStub> 
       }
     }
     return null;
+  }
+
+  @Override
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    final PsiElement childPsi = child.getPsi();
+    if (childPsi instanceof PyDecorator && getDecorators().length == 1) {
+      delete();
+      return;
+    }
+    super.deleteChildInternal(child);
   }
 }

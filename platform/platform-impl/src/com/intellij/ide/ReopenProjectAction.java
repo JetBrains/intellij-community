@@ -24,6 +24,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.BitUtil;
+import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.awt.event.InputEvent;
 import java.io.File;
@@ -36,14 +38,14 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
   private final String myProjectName;
   private boolean myIsRemoved = false;
 
-  public ReopenProjectAction(final String projectPath, final String projectName, final String displayName) {
+  public ReopenProjectAction(final @SystemIndependent String projectPath, final String projectName, final String displayName) {
     myProjectPath = projectPath;
     myProjectName = projectName;
 
     final Presentation presentation = getTemplatePresentation();
     String text = projectPath.equals(displayName) ? FileUtil.getLocationRelativeToUserHome(projectPath) : displayName;
     presentation.setText(text, false);
-    presentation.setDescription(projectPath);
+    presentation.setDescription(PathUtil.toSystemDependentName(projectPath));
   }
 
 
@@ -59,7 +61,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
 
     Project project = e.getProject();
     if (!new File(myProjectPath).exists()) {
-      if (Messages.showDialog(project, "The path " + FileUtil.toSystemDependentName(myProjectPath) + " does not exist.\n" +
+      if (Messages.showDialog(project, "The path " + PathUtil.toSystemDependentName(myProjectPath) + " does not exist.\n" +
                                        "If it is on a removable or network drive, please make sure that the drive is connected.",
                                        "Reopen Project", new String[]{"OK", "&Remove From List"}, 0, Messages.getErrorIcon()) == 1) {
         myIsRemoved = true;
@@ -75,6 +77,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
     e.getPresentation().setText(getProjectName(), false);
   }
 
+  @SystemIndependent
   public String getProjectPath() {
     return myProjectPath;
   }

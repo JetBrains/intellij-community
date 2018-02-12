@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.FixedHashMap;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -433,7 +434,7 @@ public abstract class DesignerEditorPanel extends JPanel
     }
     if (message.myAdditionalFixes != null && message.myAdditionalFixes.size() > 0) {
       JPanel fixesPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-      fixesPanel.setBorder(IdeBorderFactory.createEmptyBorder(3, 0, 10, 0));
+      fixesPanel.setBorder(JBUI.Borders.empty(3, 0, 10, 0));
       fixesPanel.setOpaque(false);
       fixesPanel.add(Box.createHorizontalStrut(icon.getIconWidth()));
 

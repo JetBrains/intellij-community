@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -34,7 +21,6 @@ import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileTypes.FileType;
@@ -44,6 +30,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.AbstractDelegatingToRootTraversalPolicy;
 import com.intellij.psi.PsiDocumentManager;
@@ -52,25 +39,22 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author max
  */
-public class EditorTextField extends NonOpaquePanel implements DocumentListener, TextComponent, DataProvider,
-                                                       DocumentBasedComponent, FocusListener {
+public class EditorTextField extends NonOpaquePanel implements DocumentListener, TextComponent, DataProvider, TextAccessor,
+                                                       DocumentBasedComponent, FocusListener, MouseListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.EditorTextField");
   public static final Key<Boolean> SUPPLEMENTARY_KEY = Key.create("Supplementary");
 
@@ -82,6 +66,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   private boolean myWholeTextSelected;
   private final List<DocumentListener> myDocumentListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<FocusListener> myFocusListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<MouseListener> myMouseListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myIsListenerInstalled;
   private boolean myIsViewer;
   private boolean myIsSupplementary;
@@ -155,6 +140,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     setDocument(myDocument); // reinit editor.
   }
 
+  @NotNull
   @Override
   public String getText() {
     return myDocument.getText();
@@ -174,7 +160,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     return this;
   }
 
-  public void addDocumentListener(DocumentListener listener) {
+  public void addDocumentListener(@NotNull DocumentListener listener) {
     myDocumentListeners.add(listener);
     installDocumentListener();
   }
@@ -248,9 +234,10 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     }
   }
 
+  @Override
   public void setText(@Nullable final String text) {
     ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(getProject(), () -> {
-      myDocument.replaceString(0, myDocument.getTextLength(), text == null ? "" : text);
+      myDocument.replaceString(0, myDocument.getTextLength(), StringUtil.notNullize(text));
       if (myEditor != null) {
         final CaretModel caretModel = myEditor.getCaretModel();
         if (caretModel.getOffset() >= myDocument.getTextLength()) {
@@ -396,6 +383,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     remove(editor.getComponent());
 
     editor.getContentComponent().removeFocusListener(this);
+    editor.getContentComponent().removeMouseListener(this);
 
     if (!editor.isDisposed()) {
       EditorFactory.getInstance().releaseEditor(editor);
@@ -512,7 +500,8 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     editor.putUserData(SUPPLEMENTARY_KEY, myIsSupplementary);
     editor.getContentComponent().setFocusCycleRoot(false);
     editor.getContentComponent().addFocusListener(this);
-    
+    editor.getContentComponent().addMouseListener(this);
+
     editor.setPlaceholder(myHintText);
 
     initOneLineMode(editor);
@@ -545,21 +534,14 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
   protected void setupBorder(@NotNull EditorEx editor) {
     if (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
-      editor.setBorder(UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ? new DarculaEditorTextFieldBorder() : new MacUIUtil.EditorTextFieldBorder(this));
-      editor.addFocusListener(new FocusChangeListener() {
-        @Override
-        public void focusGained(Editor editor) {
-          repaint();
-        }
+      if (UIUtil.isUnderDefaultMacTheme()) {
+        editor.setBorder(new DarculaUIUtil.MacEditorTextFieldBorder(this, editor));
+      } else if (UIUtil.isUnderWin10LookAndFeel()) {
+        editor.setBorder(new DarculaUIUtil.WinEditorTextFieldBorder(this, editor));
+      } else {
+        editor.setBorder(new DarculaEditorTextFieldBorder(this, editor));
+      }
 
-        @Override
-        public void focusLost(Editor editor) {
-          repaint();
-        }
-      });
-    }
-    else if (UIUtil.isUnderAlloyLookAndFeel() || UIUtil.isUnderJGoodiesLookAndFeel()) {
-      editor.setBorder(BorderFactory.createCompoundBorder(UIUtil.getTextFieldBorder(), BorderFactory.createEmptyBorder(1, 1, 1, 1)));
     }
     else {
       editor.setBorder(BorderFactory.createCompoundBorder(UIUtil.getTextFieldBorder(), BorderFactory.createEmptyBorder(2, 2, 2, 2)));
@@ -645,10 +627,9 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       toReleaseEditor = true;
     }
 
-
-    Dimension size = new Dimension(100, 20);
+    Dimension size = JBUI.size(100, 10);
     if (myEditor != null) {
-      final Dimension preferredSize = new Dimension(myEditor.getComponent().getPreferredSize());
+      Dimension preferredSize = myEditor.getComponent().getPreferredSize();
 
       if (myPreferredWidth != -1) {
         preferredSize.width = myPreferredWidth;
@@ -676,9 +657,13 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       return super.getMinimumSize();
     }
 
-    Dimension size = new Dimension(1, 20);
+    Dimension size = JBUI.size(1, 10);
     if (myEditor != null) {
       size.height = myEditor.getLineHeight();
+
+      if (UIUtil.isUnderDefaultMacTheme() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+        size.height = Math.max(size.height, JBUI.scale(16));
+      }
 
       JBInsets.addTo(size, getInsets());
       JBInsets.addTo(size, myEditor.getInsets());
@@ -724,11 +709,6 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       });
       myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
-    else {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        requestFocus();
-      });
-    }
   }
 
   @Override
@@ -754,6 +734,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     return myEditor;
   }
 
+  @NotNull
   public JComponent getFocusTarget() {
     return myEditor == null ? this : myEditor.getContentComponent();
   }
@@ -779,6 +760,53 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   public void focusLost(FocusEvent e) {
     for (FocusListener listener : myFocusListeners) {
       listener.focusLost(e);
+    }
+  }
+
+  @SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")
+  @Override
+  public void addMouseListener(MouseListener l) {
+    myMouseListeners.add(l);
+  }
+
+  @SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")
+  @Override
+  public void removeMouseListener(MouseListener l) {
+    myMouseListeners.remove(l);
+  }
+
+  @Override
+  public void mouseClicked(MouseEvent e) {
+    for (MouseListener listener : myMouseListeners) {
+      listener.mouseClicked(e);
+    }
+  }
+
+  @Override
+  public void mousePressed(MouseEvent e) {
+    for (MouseListener listener : myMouseListeners) {
+      listener.mousePressed(e);
+    }
+  }
+
+  @Override
+  public void mouseReleased(MouseEvent e) {
+    for (MouseListener listener : myMouseListeners) {
+      listener.mouseReleased(e);
+    }
+  }
+
+  @Override
+  public void mouseEntered(MouseEvent e) {
+    for (MouseListener listener : myMouseListeners) {
+      listener.mouseEntered(e);
+    }
+  }
+
+  @Override
+  public void mouseExited(MouseEvent e) {
+    for (MouseListener listener : myMouseListeners) {
+      listener.mouseExited(e);
     }
   }
 

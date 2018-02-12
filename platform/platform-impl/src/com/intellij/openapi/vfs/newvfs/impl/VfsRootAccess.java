@@ -1,33 +1,18 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -73,7 +58,7 @@ public class VfsRootAccess {
         return;
       }
 
-      Set<String> allowed = ApplicationManager.getApplication().runReadAction((Computable<Set<String>>)VfsRootAccess::allowedRoots);
+      Set<String> allowed = ReadAction.compute(VfsRootAccess::allowedRoots);
       boolean isUnder = allowed == null || allowed.isEmpty();
 
       if (!isUnder) {
@@ -128,10 +113,6 @@ public class VfsRootAccess {
 
     String javaHome = SystemProperties.getJavaHome();
     allowed.add(FileUtil.toSystemIndependentName(javaHome));
-    if (SystemInfo.isMac && SystemInfo.isAppleJvm) {
-      // Apple SDK has jars in the folder _next_ to the java.home
-      allowed.add(FileUtil.toSystemIndependentName(new File(new File(javaHome).getParent(), "Classes").getPath()));
-    }
     allowed.add(FileUtil.toSystemIndependentName(new File(FileUtil.getTempDirectory()).getParent()));
     allowed.add(FileUtil.toSystemIndependentName(System.getProperty("java.io.tmpdir")));
     allowed.add(FileUtil.toSystemIndependentName(SystemProperties.getUserHome()));

@@ -16,15 +16,17 @@
 package com.jetbrains.python.newProject;
 
 import com.intellij.openapi.projectRoots.Sdk;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public interface PyFrameworkProjectGenerator {
 
+  @NotNull
   String getFrameworkTitle();
 
-  boolean isFrameworkInstalled(Sdk sdk);
+  boolean isFrameworkInstalled(@NotNull Sdk sdk);
 
   boolean supportsPython3();
 }

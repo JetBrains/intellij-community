@@ -23,28 +23,27 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
-import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 public class PositionPanel extends EditorBasedWidget
   implements StatusBarWidget.Multiframe, StatusBarWidget.TextPresentation,
-             CaretListener, SelectionListener, DocumentListener, DocumentBulkUpdateListener,
-             FocusChangeListener {
+             CaretListener, SelectionListener, DocumentListener, DocumentBulkUpdateListener, PropertyChangeListener {
 
   public static final String SPACE = "     ";
   public static final String SEPARATOR = ":";
@@ -69,6 +68,7 @@ public class PositionPanel extends EditorBasedWidget
     updatePosition(getEditor());
   }
 
+  @Override
   @NotNull
   public String ID() {
     return ID;
@@ -79,15 +79,18 @@ public class PositionPanel extends EditorBasedWidget
     return new PositionPanel(getProject());
   }
 
+  @Override
   public WidgetPresentation getPresentation(@NotNull final PlatformType type) {
     return this;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return myText == null ? "" : myText;
   }
 
+  @Override
   @NotNull
   public String getMaxPossibleText() {
     return MAX_POSSIBLE_TEXT;
@@ -98,14 +101,16 @@ public class PositionPanel extends EditorBasedWidget
     return Component.CENTER_ALIGNMENT;
   }
 
+  @Override
   public String getTooltipText() {
     return UIBundle.message("go.to.line.command.double.click");
   }
 
+  @Override
   public Consumer<MouseEvent> getClickConsumer() {
     return mouseEvent -> {
       Project project = getProject();
-      Editor editor = getEditor();
+      Editor editor = getFocusedEditor();
       if (project == null || editor == null) return;
 
       CommandProcessor processor = CommandProcessor.getInstance();
@@ -122,6 +127,7 @@ public class PositionPanel extends EditorBasedWidget
     };
   }
 
+  @Override
   public void install(@NotNull StatusBar statusBar) {
     super.install(statusBar);
     EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
@@ -130,11 +136,10 @@ public class PositionPanel extends EditorBasedWidget
     multicaster.addDocumentListener(this, this);
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
     connection.subscribe(DocumentBulkUpdateListener.TOPIC, this);
-    ObjectUtils.consumeIfCast(
-      multicaster,
-      EditorEventMulticasterEx.class,
-      multicasterEx -> multicasterEx.addFocusChangeListner(this, this)
-    );
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(SWING_FOCUS_OWNER_PROPERTY, this);
+    Disposer.register(this, 
+                      () -> KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(SWING_FOCUS_OWNER_PROPERTY, 
+                                                                                                               this));
   }
 
   @Override
@@ -143,6 +148,7 @@ public class PositionPanel extends EditorBasedWidget
     if (isFocusedEditor(editor)) updatePosition(editor);
   }
 
+  @Override
   public void caretPositionChanged(final CaretEvent e) {
     Editor editor = e.getEditor();
     // When multiple carets exist in editor, we don't show information about caret positions
@@ -160,9 +166,6 @@ public class PositionPanel extends EditorBasedWidget
   }
 
   @Override
-  public void beforeDocumentChange(DocumentEvent event) {}
-
-  @Override
   public void documentChanged(DocumentEvent event) {
     Document document = event.getDocument();
     if (document instanceof DocumentEx && ((DocumentEx)document).isInBulkUpdate()) return;
@@ -177,16 +180,6 @@ public class PositionPanel extends EditorBasedWidget
     onDocumentUpdate(doc);
   }
 
-  @Override
-  public void focusGained(Editor editor) {
-    updatePosition(editor);
-  }
-
-  @Override
-  public void focusLost(Editor editor) {
-    updatePosition(getEditor());
-  }
-
   private void onDocumentUpdate(Document document) {
     Editor[] editors = EditorFactory.getInstance().getEditors(document);
     for (Editor editor : editors) {
@@ -197,8 +190,8 @@ public class PositionPanel extends EditorBasedWidget
     }
   }
 
-  private static boolean isFocusedEditor(Editor editor) {
-    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+  private boolean isFocusedEditor(Editor editor) {
+    Component focusOwner = getFocusedComponent();
     return focusOwner == editor.getContentComponent();
   }
 
@@ -269,6 +262,11 @@ public class PositionPanel extends EditorBasedWidget
     else {
       return "";
     }
+  }
+
+  @Override
+  public void propertyChange(PropertyChangeEvent e) {
+    updatePosition(getFocusedEditor());
   }
 
   private class CodePointCountTask implements Runnable {

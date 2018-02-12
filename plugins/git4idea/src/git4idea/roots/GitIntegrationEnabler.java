@@ -47,10 +47,8 @@ public class GitIntegrationEnabler extends VcsIntegrationEnabler {
       return true;
     }
     else {
-      if (myVcs.getExecutableValidator().checkExecutableAndNotifyIfNeeded()) {
-        vcsNotifier.notifyError("Couldn't git init " + projectDir.getPresentableUrl(), result.getErrorOutputAsHtmlString());
-        LOG.info(result.getErrorOutputAsHtmlString());
-      }
+      vcsNotifier.notifyError("Couldn't git init " + projectDir.getPresentableUrl(), result.getErrorOutputAsHtmlString());
+      LOG.info(result.getErrorOutputAsHtmlString());
       return false;
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,62 +58,105 @@ public class BoolUtils {
       return null;
     }
     final PsiExpression operand = prefixExpression.getOperand();
-    return ParenthesesUtils.stripParentheses(operand);
+    PsiExpression stripped = ParenthesesUtils.stripParentheses(operand);
+    return stripped == null ? operand : stripped;
   }
 
   @NotNull
   public static String getNegatedExpressionText(@Nullable PsiExpression condition) {
-    return getNegatedExpressionText(condition, ParenthesesUtils.NUM_PRECEDENCES);
+    return getNegatedExpressionText(condition, new CommentTracker());
   }
 
   @NotNull
-  public static String getNegatedExpressionText(@Nullable PsiExpression expression, int precedence) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+  public static String getNegatedExpressionText(@Nullable PsiExpression condition, CommentTracker tracker) {
+    return getNegatedExpressionText(condition, ParenthesesUtils.NUM_PRECEDENCES, tracker);
+  }
+
+  @NotNull
+  public static String getNegatedExpressionText(@Nullable PsiExpression expression,
+                                                int precedence,
+                                                CommentTracker tracker) {
     if (expression == null) {
       return "";
+    }
+    if (expression instanceof PsiParenthesizedExpression) {
+      final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+      PsiExpression operand = parenthesizedExpression.getExpression();
+      if (operand != null) {
+        return '(' + getNegatedExpressionText(operand, tracker) + ')';
+      }
     }
     if (expression instanceof PsiConditionalExpression) {
       final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expression;
       final boolean needParenthesis = ParenthesesUtils.getPrecedence(conditionalExpression) >= precedence;
-      final String text = conditionalExpression.getCondition().getText() + '?' + getNegatedExpressionText(conditionalExpression.getThenExpression()) +
-                                                                           ':' + getNegatedExpressionText(conditionalExpression.getElseExpression());
+      final String text = tracker.text(conditionalExpression.getCondition()) +
+                          '?' + getNegatedExpressionText(conditionalExpression.getThenExpression(), tracker) +
+                          ':' + getNegatedExpressionText(conditionalExpression.getElseExpression(), tracker);
       return needParenthesis ? "(" + text + ")" : text;
     }
-    else if (isNegation(expression)) {
+    if (isNegation(expression)) {
       final PsiExpression negated = getNegated(expression);
-      if (negated == null) {
-        return "";
+      if (negated != null) {
+        return ParenthesesUtils.getText(tracker.markUnchanged(negated), precedence);
       }
-      return ParenthesesUtils.getText(negated, precedence);
     }
-    else if (ComparisonUtils.isComparison(expression)) {
+    if (expression instanceof PsiPolyadicExpression) {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
-      final String negatedComparison = ComparisonUtils.getNegatedComparison(polyadicExpression.getOperationTokenType());
-      final StringBuilder result = new StringBuilder();
+      final IElementType tokenType = polyadicExpression.getOperationTokenType();
       final PsiExpression[] operands = polyadicExpression.getOperands();
-      final boolean isEven = (operands.length & 1) != 1;
-      for (int i = 0, length = operands.length; i < length; i++) {
-        final PsiExpression operand = operands[i];
-        if (TypeUtils.hasFloatingPointType(operand)) {
-          // preserve semantics for NaNs
-          return "!(" + polyadicExpression.getText() + ')';
-        }
-        if (i > 0) {
-          if (isEven && (i & 1) != 1) {
-            final PsiJavaToken token = polyadicExpression.getTokenBeforeOperand(operand);
-            if (token != null) {
-              result.append(token.getText());
+      if (ComparisonUtils.isComparison(polyadicExpression)) {
+        final String negatedComparison = ComparisonUtils.getNegatedComparison(tokenType);
+        final StringBuilder result = new StringBuilder();
+        final boolean isEven = (operands.length & 1) != 1;
+        for (int i = 0, length = operands.length; i < length; i++) {
+          final PsiExpression operand = operands[i];
+          if (TypeUtils.hasFloatingPointType(operand)) {
+            // preserve semantics for NaNs
+            return "!(" + polyadicExpression.getText() + ')';
+          }
+          if (i > 0) {
+            if (isEven && (i & 1) != 1) {
+              final PsiJavaToken token = polyadicExpression.getTokenBeforeOperand(operand);
+              if (token != null) {
+                result.append(token.getText());
+              }
+            }
+            else {
+              result.append(negatedComparison);
             }
           }
-          else {
-            result.append(negatedComparison);
-          }
+          result.append(tracker.text(operand));
         }
-        result.append(operand.getText());
+        return result.toString();
       }
-      return result.toString();
+      if(tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR)) {
+        final String targetToken;
+        final int newPrecedence;
+        if (tokenType.equals(JavaTokenType.ANDAND)) {
+          targetToken = "||";
+          newPrecedence = ParenthesesUtils.OR_PRECEDENCE;
+        }
+        else {
+          targetToken = "&&";
+          newPrecedence = ParenthesesUtils.AND_PRECEDENCE;
+        }
+        final Function<PsiElement, String> replacer = child -> {
+          if (child instanceof PsiExpression) {
+            return getNegatedExpressionText((PsiExpression)child, newPrecedence, tracker);
+          }
+          return child instanceof PsiJavaToken ? targetToken : tracker.text(child);
+        };
+        final String join = StringUtil.join(polyadicExpression.getChildren(), replacer, "");
+        return (newPrecedence > precedence) ? '(' + join + ')' : join;
+      }
     }
-    else return '!' + ParenthesesUtils.getText(expression, ParenthesesUtils.PREFIX_PRECEDENCE);
+    if (expression instanceof PsiLiteralExpression) {
+      Object value = ((PsiLiteralExpression)expression).getValue();
+      if (value instanceof Boolean) {
+        return String.valueOf(!((Boolean)value));
+      }
+    }
+    return '!' + ParenthesesUtils.getText(tracker.markUnchanged(expression), ParenthesesUtils.PREFIX_PRECEDENCE);
   }
 
   @Nullable

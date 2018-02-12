@@ -1,27 +1,7 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Aug 19, 2002
- * Time: 8:21:52 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.PathManager;
@@ -31,7 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.Parameterized;
-import com.intellij.testFramework.TestRunnerUtil;
+import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import junit.framework.TestCase;
@@ -56,7 +36,7 @@ public class PathManagerEx {
   /**
    * All IDEA project files may be logically divided by the following criteria:
    * <ul>
-   *   <li>files that are contained at <code>'community'</code> directory;</li>
+   *   <li>files that are contained at {@code 'community'} directory;</li>
    *   <li>all other files;</li>
    * </ul>
    * <p/>
@@ -82,35 +62,35 @@ public class PathManagerEx {
    */
   public enum TestDataLookupStrategy {
     /**
-     * Stands for algorithm that retrieves <code>'test data'</code> stored at the <code>'ultimate'</code> project level assuming
-     * that it's used from the test running in context of <code>'ultimate'</code> project as well.
+     * Stands for algorithm that retrieves {@code 'test data'} stored at the {@code 'ultimate'} project level assuming
+     * that it's used from the test running in context of {@code 'ultimate'} project as well.
      * <p/>
-     * Is assumed to be default strategy for all <code>'ultimate'</code> tests.
+     * Is assumed to be default strategy for all {@code 'ultimate'} tests.
      */
     ULTIMATE,
 
     /**
-     * Stands for algorithm that retrieves <code>'test data'</code> stored at the <code>'community'</code> project level assuming
-     * that it's used from the test running in context of <code>'community'</code> project as well.
+     * Stands for algorithm that retrieves {@code 'test data'} stored at the {@code 'community'} project level assuming
+     * that it's used from the test running in context of {@code 'community'} project as well.
      * <p/>
-     * Is assumed to be default strategy for all <code>'community'</code> tests.
+     * Is assumed to be default strategy for all {@code 'community'} tests.
      */
     COMMUNITY,
 
     /**
-     * Stands for algorithm that retrieves <code>'test data'</code> stored at the <code>'community'</code> project level assuming
-     * that it's used from the test running in context of <code>'ultimate'</code> project.
+     * Stands for algorithm that retrieves {@code 'test data'} stored at the {@code 'community'} project level assuming
+     * that it's used from the test running in context of {@code 'ultimate'} project.
      */
     COMMUNITY_FROM_ULTIMATE
   }
 
   /**
-   * It's assumed that test data location for both <code>community</code> and <code>ultimate</code> tests follows the same template:
+   * It's assumed that test data location for both {@code community} and {@code ultimate} tests follows the same template:
    * <code>'<IDEA_HOME>/<RELATIVE_PATH>'</code>.
    * <p/>
-   * <code>'IDEA_HOME'</code> here stands for path to IDEA installation; <code>'RELATIVE_PATH'</code> defines a path to
-   * test data relative to IDEA installation path. That relative path may be different for <code>community</code>
-   * and <code>ultimate</code> tests.
+   * {@code 'IDEA_HOME'} here stands for path to IDEA installation; {@code 'RELATIVE_PATH'} defines a path to
+   * test data relative to IDEA installation path. That relative path may be different for {@code community}
+   * and {@code ultimate} tests.
    * <p/>
    * This collection contains mappings from test group type to relative paths to use, i.e. it's possible to define more than one
    * relative path for the single test group. It's assumed that path definition algorithm iterates them and checks if
@@ -157,8 +137,8 @@ public class PathManagerEx {
    * <b>Note:</b> this method receives explicit class argument in order to solve the following limitation - we analyze calling
    * stack trace in order to guess test data lookup strategy ({@link #guessTestDataLookupStrategyOnClassLocation()}). However,
    * there is a possible case that super-class method is called on sub-class object. Stack trace shows super-class then.
-   * There is a possible situation that actual test is <code>'ultimate'</code> but its abstract super-class is
-   * <code>'community'</code>, hence, test data lookup is performed incorrectly. So, this method should be called from abstract
+   * There is a possible situation that actual test is {@code 'ultimate'} but its abstract super-class is
+   * {@code 'community'}, hence, test data lookup is performed incorrectly. So, this method should be called from abstract
    * base test class if its concrete sub-classes doesn't explicitly occur at stack trace.
    *
    *
@@ -339,7 +319,7 @@ public class PathManagerEx {
 
   @SuppressWarnings("TestOnlyProblems")
   private static boolean isJUnitClass(Class<?> clazz) {
-    return TestCase.class.isAssignableFrom(clazz) || TestRunnerUtil.isJUnit4TestClass(clazz) || Parameterized.class.isAssignableFrom(clazz);
+    return TestCase.class.isAssignableFrom(clazz) || TestFrameworkUtil.isJUnit4TestClass(clazz) || Parameterized.class.isAssignableFrom(clazz);
   }
 
   @Nullable
@@ -427,7 +407,7 @@ public class PathManagerEx {
    * Tries to check test data lookup strategy by target test data directories availability.
    * <p/>
    * Such an approach has a drawback that it doesn't work correctly at number of scenarios, e.g. when
-   * <code>'community'</code> test is executed under <code>'ultimate'</code> project.
+   * {@code 'community'} test is executed under {@code 'ultimate'} project.
    *
    * @return    test data lookup strategy based on target test data directories availability
    */

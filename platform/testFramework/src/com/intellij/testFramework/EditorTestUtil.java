@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,9 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.impl.CurrentEditorProvider;
+import com.intellij.openapi.command.impl.UndoManagerImpl;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
@@ -35,7 +38,11 @@ import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -227,12 +234,7 @@ public class EditorTestUtil {
     model.reinitSettings();
 
     SoftWrapApplianceManager applianceManager = model.getApplianceManager();
-    applianceManager.setWidthProvider(new SoftWrapApplianceManager.VisibleAreaWidthProvider() {
-      @Override
-      public int getVisibleAreaWidth() {
-        return visibleWidth;
-      }
-    });
+    applianceManager.setWidthProvider(() -> visibleWidth);
     model.setEditorTextRepresentationHelper(new DefaultEditorTextRepresentationHelper(editor) {
       @Override
       public int charWidth(int c, int fontType) {
@@ -256,7 +258,7 @@ public class EditorTestUtil {
   }
 
   /**
-   * Equivalent to <code>extractCaretAndSelectionMarkers(document, true)</code>.
+   * Equivalent to {@code extractCaretAndSelectionMarkers(document, true)}.
    *
    * @see #extractCaretAndSelectionMarkers(Document, boolean)
    */
@@ -269,7 +271,7 @@ public class EditorTestUtil {
    * Removes &lt;caret&gt;, &lt;selection&gt; and &lt;/selection&gt; tags from document and returns a list of caret positions and selection
    * ranges for each caret. Both caret positions and selection ranges can be null in the returned data.
    *
-   * @param processBlockSelection if <code>true</code>, &lt;block&gt; and &lt;/block&gt; tags describing a block selection state will also be extracted.
+   * @param processBlockSelection if {@code true}, &lt;block&gt; and &lt;/block&gt; tags describing a block selection state will also be extracted.
    */
   @NotNull
   public static CaretAndSelectionState extractCaretAndSelectionMarkers(@NotNull Document document, final boolean processBlockSelection) {
@@ -368,7 +370,7 @@ public class EditorTestUtil {
     if (blockSelectionStartMarker != null) {
       blockSelection = new TextRange(blockSelectionStartMarker.getStartOffset(), blockSelectionEndMarker.getStartOffset());
     }
-    return new CaretAndSelectionState(Arrays.asList(carets.toArray(new CaretInfo[carets.size()])), blockSelection);
+    return new CaretAndSelectionState(Arrays.asList(carets.toArray(new CaretInfo[0])), blockSelection);
   }
 
   /**
@@ -376,28 +378,13 @@ public class EditorTestUtil {
    */
   public static void setCaretsAndSelection(Editor editor, CaretAndSelectionState caretsState) {
     CaretModel caretModel = editor.getCaretModel();
-    if (caretModel.supportsMultipleCarets()) {
-      List<CaretState> states = new ArrayList<>(caretsState.carets.size());
-      for (CaretInfo caret : caretsState.carets) {
-        states.add(new CaretState(caret.position == null ? null : editor.offsetToLogicalPosition(caret.getCaretOffset(editor.getDocument())),
-                                  caret.selection == null ? null : editor.offsetToLogicalPosition(caret.selection.getStartOffset()),
-                                  caret.selection == null ? null : editor.offsetToLogicalPosition(caret.selection.getEndOffset())));
-      }
-      caretModel.setCaretsAndSelections(states);
+    List<CaretState> states = new ArrayList<>(caretsState.carets.size());
+    for (CaretInfo caret : caretsState.carets) {
+      states.add(new CaretState(caret.position == null ? null : editor.offsetToLogicalPosition(caret.getCaretOffset(editor.getDocument())),
+                                caret.selection == null ? null : editor.offsetToLogicalPosition(caret.selection.getStartOffset()),
+                                caret.selection == null ? null : editor.offsetToLogicalPosition(caret.selection.getEndOffset())));
     }
-    else {
-      assertEquals("Multiple carets are not supported by the model", 1, caretsState.carets.size());
-      CaretInfo caret = caretsState.carets.get(0);
-      if (caret.position != null) {
-        caretModel.moveToOffset(caret.getCaretOffset(editor.getDocument()));
-      }
-      if (caret.selection != null) {
-        editor.getSelectionModel().setSelection(caret.selection.getStartOffset(), caret.selection.getEndOffset());
-      }
-      else {
-        editor.getSelectionModel().removeSelection();
-      }
-    }
+    caretModel.setCaretsAndSelections(states);
     if (caretsState.blockSelection != null) {
       editor.getSelectionModel().setBlockSelection(editor.offsetToLogicalPosition(caretsState.blockSelection.getStartOffset()),
                                                    editor.offsetToLogicalPosition(caretsState.blockSelection.getEndOffset()));
@@ -466,12 +453,16 @@ public class EditorTestUtil {
 
 
   public static Inlay addInlay(@NotNull Editor editor, int offset) {
-    return editor.getInlayModel().addInlineElement(offset, new EditorCustomElementRenderer() {
+    return addInlay(editor, offset, false);
+  }
+
+  public static Inlay addInlay(@NotNull Editor editor, int offset, boolean relatesToPrecedingText) {
+    return editor.getInlayModel().addInlineElement(offset, relatesToPrecedingText, new EditorCustomElementRenderer() {
       @Override
       public int calcWidthInPixels(@NotNull Editor editor) { return 1; }
 
       @Override
-      public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {}
+      public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {}
     });
   }
 
@@ -481,6 +472,21 @@ public class EditorTestUtil {
     while (!AsyncEditorLoader.isEditorLoaded(editor)) {
       LockSupport.parkNanos(100_000_000);
       UIUtil.dispatchAllInvocationEvents();
+    }
+  }
+
+  public static void testUndoInEditor(@NotNull Editor editor, @NotNull Runnable runnable) {
+    FileEditor fileEditor = TextEditorProvider.getInstance().getTextEditor(editor);
+    Project project = editor.getProject();
+    assertNotNull(project);
+    UndoManagerImpl undoManager = (UndoManagerImpl)UndoManager.getInstance(project);
+    CurrentEditorProvider savedProvider = undoManager.getEditorProvider();
+    undoManager.setEditorProvider(() -> fileEditor); // making undo work in test
+    try {
+      runnable.run();
+    }
+    finally {
+      undoManager.setEditorProvider(savedProvider);
     }
   }
 

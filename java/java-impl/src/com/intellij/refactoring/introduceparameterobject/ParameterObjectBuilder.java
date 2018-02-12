@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocComment;
 import org.jetbrains.annotations.NonNls;
@@ -134,7 +135,9 @@ class ParameterObjectBuilder {
           final ParameterSpec field = iterator.next();
           final PsiParameter parameter = field.getParameter();
             outputAnnotationString(parameter, out);
-            out.append(CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS ? " final " : "");
+          out.append(
+            CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS ?
+            " final " : "");
             final String parameterName = parameter.getName();
           final PsiType type = field.getType();
           final PsiType fieldType = parameter.isVarArgs() && type instanceof PsiArrayType ?

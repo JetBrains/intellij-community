@@ -68,16 +68,11 @@ public class ArrangementRuleAliasesListEditor extends NamedItemsListEditor<StdAr
       return new StdArrangementRuleAliasToken(original.getName(), original.getDefinitionRules());
     }
   };
-  private static final Equality<StdArrangementRuleAliasToken> COMPARER = new Equality<StdArrangementRuleAliasToken>() {
-    @Override
-    public boolean equals(StdArrangementRuleAliasToken o1, StdArrangementRuleAliasToken o2) {
-      return Comparing.equal(o1.getId(), o2.getId());
-    }
-  };
+  private static final Equality<StdArrangementRuleAliasToken> COMPARER = (o1, o2) -> Comparing.equal(o1.getId(), o2.getId());
 
-  @NotNull private Set<String> myUsedTokenIds;
-  @NotNull private ArrangementStandardSettingsManager mySettingsManager;
-  @NotNull private ArrangementColorsProvider myColorsProvider;
+  @NotNull private final Set<String> myUsedTokenIds;
+  @NotNull private final ArrangementStandardSettingsManager mySettingsManager;
+  @NotNull private final ArrangementColorsProvider myColorsProvider;
 
   protected ArrangementRuleAliasesListEditor(@NotNull ArrangementStandardSettingsManager settingsManager,
                                              @NotNull ArrangementColorsProvider colorsProvider,

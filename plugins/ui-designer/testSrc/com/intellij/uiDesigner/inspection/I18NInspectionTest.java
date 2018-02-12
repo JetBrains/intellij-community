@@ -28,7 +28,7 @@ public class I18NInspectionTest extends InspectionTestCase {
     return PluginPathManager.getPluginHomePath("ui-designer") + "/testData/inspection";
   }
 
-  public void testFormTabbedPaneTitle() throws Exception {
+  public void testFormTabbedPaneTitle() {
     LocalInspectionToolWrapper wrapper = new LocalInspectionToolWrapper(new I18nFormInspection());
     InspectionsKt.enableInspectionTool(getProject(), wrapper, getTestRootDisposable());
     doTest("i18n/" + getTestName(true), new LocalInspectionToolWrapper(new I18nInspection()), "java 1.4", false, false,

@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 20-Dec-2007
- */
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +32,7 @@ import java.util.Collections;
 import java.util.Set;
 
 public abstract class RefJavaElementImpl extends RefElementImpl implements RefJavaElement {
-  private Set<RefClass> myOutTypeReferences;
+  private Set<RefClass> myOutTypeReferences; // guarded by this
   private static final int ACCESS_MODIFIER_MASK = 0x03;
   private static final int ACCESS_PRIVATE = 0x00;
   private static final int ACCESS_PROTECTED = 0x01;
@@ -59,10 +56,6 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     }
   }
 
-  protected RefJavaElementImpl(PsiFile file, RefManager manager) {
-    super(file, manager);
-  }
-
   protected RefJavaElementImpl(PsiModifierListOwner elem, RefManager manager) {
     super(getName(elem), elem, manager);
 
@@ -78,14 +71,11 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
 
   @Override
   @NotNull
-  public Collection<RefClass> getOutTypeReferences() {
-    if (myOutTypeReferences == null){
-      return Collections.emptySet();
-    }
-    return myOutTypeReferences;
+  public synchronized Collection<RefClass> getOutTypeReferences() {
+    return ObjectUtils.notNull(myOutTypeReferences, Collections.emptySet());
   }
 
-  public void addOutTypeRefernce(RefClass refClass){
+  synchronized void addOutTypeReference(RefClass refClass){
     if (myOutTypeReferences == null){
       myOutTypeReferences = new THashSet<>();
     }
@@ -93,11 +83,15 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   }
 
   @NotNull
-  public static String getName(PsiElement element) {
+  private static String getName(PsiElement element) {
    if (element instanceof PsiAnonymousClass) {
      PsiAnonymousClass psiAnonymousClass = (PsiAnonymousClass)element;
      PsiClass psiBaseClass = psiAnonymousClass.getBaseClassType().resolve();
-     return InspectionsBundle.message("inspection.reference.anonymous.name", psiBaseClass == null ? "" : psiBaseClass.getQualifiedName());
+     if (psiBaseClass == null) {
+       return "anonymous class";
+     } else {
+       return InspectionsBundle.message("inspection.reference.anonymous.name", psiBaseClass.getName());
+     }
    }
 
    if (element instanceof PsiSyntheticClass) {
@@ -128,7 +122,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     return checkFlag(IS_STATIC_MASK);
   }
 
-  public void setIsStatic(boolean isStatic) {
+  void setIsStatic(boolean isStatic) {
     setFlag(isStatic, IS_STATIC_MASK);
   }
 
@@ -137,11 +131,11 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     return checkFlag(IS_USES_DEPRECATION_MASK);
   }
 
-  public void setUsesDeprecatedApi(boolean usesDeprecatedApi) {
+  void setUsesDeprecatedApi(boolean usesDeprecatedApi) {
     setFlag(usesDeprecatedApi, IS_USES_DEPRECATION_MASK);
   }
 
-  public void setIsFinal(boolean isFinal) {
+  void setIsFinal(boolean isFinal) {
     setFlag(isFinal, IS_FINAL_MASK);
   }
 
@@ -154,7 +148,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     return checkFlag(IS_SYNTHETIC_JSP_ELEMENT_MASK);
   }
 
-  public void setSyntheticJSP(boolean b) {
+  private void setSyntheticJSP(boolean b) {
     setFlag(b, IS_SYNTHETIC_JSP_ELEMENT_MASK);
   }
 
@@ -215,7 +209,9 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
 
     callStack.push(this);
     for (RefElement refCaller : getInReferences()) {
-      if (!((RefElementImpl)refCaller).isSuspicious() || !((RefJavaElementImpl)refCaller).isCalledOnlyFrom(refElement, callStack)) {
+      if (!((RefElementImpl)refCaller).isSuspicious() ||
+          !(refCaller instanceof RefJavaElementImpl) ||
+          !((RefJavaElementImpl)refCaller).isCalledOnlyFrom(refElement, callStack)) {
         callStack.pop();
         return false;
       }
@@ -225,7 +221,12 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     return true;
   }
 
-  public void addReference(RefElement refWhat, PsiElement psiWhat, PsiElement psiFrom, boolean forWriting, boolean forReading, PsiReferenceExpression expression) {
+  void addReference(RefElement refWhat,
+                    PsiElement psiWhat,
+                    PsiElement psiFrom,
+                    boolean forWriting,
+                    boolean forReading,
+                    PsiReferenceExpression expression) {
     if (refWhat != null) {
       if (refWhat instanceof RefParameter) {
         if (forWriting) {
@@ -252,17 +253,17 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
           }
         }
       }
-      getRefManager().fireNodeMarkedReferenced(psiWhat, psiFrom, false);
+      getRefManager().fireNodeMarkedReferenced(psiWhat, psiFrom);
     }
   }
 
   protected void markReferenced(final RefElementImpl refFrom, PsiElement psiFrom, PsiElement psiWhat, final boolean forWriting, boolean forReading, PsiReferenceExpression expressionFrom) {
     addInReference(refFrom);
     setUsedQualifiedOutsidePackageFlag(refFrom, expressionFrom);
-    getRefManager().fireNodeMarkedReferenced(this, refFrom, false, forReading, forWriting);
+    getRefManager().fireNodeMarkedReferenced(this, refFrom, false, forReading, forWriting, expressionFrom);
   }
 
-  protected void setUsedQualifiedOutsidePackageFlag(RefElementImpl refFrom, PsiReferenceExpression expressionFrom) {
+  void setUsedQualifiedOutsidePackageFlag(RefElementImpl refFrom, PsiReferenceExpression expressionFrom) {
     if (!checkFlag(IS_USED_QUALIFIED_OUTSIDE_PACKAGE_MASK) && expressionFrom != null &&
         expressionFrom.isQualified() && RefJavaUtil.getPackage(refFrom) != RefJavaUtil.getPackage(this)) {
       setFlag(true, IS_USED_QUALIFIED_OUTSIDE_PACKAGE_MASK);
@@ -273,7 +274,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     return checkFlag(IS_USED_QUALIFIED_OUTSIDE_PACKAGE_MASK);
   }
   
-  protected RefJavaManager getRefJavaManager() {
+  RefJavaManager getRefJavaManager() {
     return getRefManager().getExtension(RefJavaManager.MANAGER);
   }
 

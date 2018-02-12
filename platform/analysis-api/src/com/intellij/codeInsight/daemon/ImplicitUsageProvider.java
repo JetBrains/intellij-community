@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Allows to disable highlighting of certain elements as unused when such elements are not referenced
@@ -33,7 +34,25 @@ import com.intellij.psi.PsiElement;
 public interface ImplicitUsageProvider {
   ExtensionPointName<ImplicitUsageProvider> EP_NAME = new ExtensionPointName<>("com.intellij.implicitUsageProvider");
 
+  /**
+   * @return true if element should not be reported as unused
+   */
   boolean isImplicitUsage(PsiElement element);
+
+  /**
+   * @return true if element should not be reported as "assigned but not used"
+   */
   boolean isImplicitRead(PsiElement element);
+
+  /**
+   * @return true if element should not be reported as "referenced but never assigned"
+   */
   boolean isImplicitWrite(PsiElement element);
+
+  /**
+   * @return true if the given element is implicitly initialized to a non-null value
+   */
+  default boolean isImplicitlyNotNullInitialized(@NotNull PsiElement element) {
+    return false;
+  }
 }

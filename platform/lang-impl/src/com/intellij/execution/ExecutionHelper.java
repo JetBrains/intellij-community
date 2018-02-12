@@ -44,11 +44,11 @@ import com.intellij.pom.NonNavigatable;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManagerUtil;
 import com.intellij.ui.content.MessageView;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +91,7 @@ public class ExecutionHelper {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
       if (errors.isEmpty() && warnings.isEmpty()) {
-        removeContents(null, myProject, tabDisplayName);
+        ContentManagerUtil.cleanupContents(null, myProject, tabDisplayName);
         return;
       }
 
@@ -217,27 +217,8 @@ public class ExecutionHelper {
       messageView.getContentManager().addContent(content);
       Disposer.register(content, errorTreeView);
       messageView.getContentManager().setSelectedContent(content);
-      removeContents(content, myProject, tabDisplayName);
+      ContentManagerUtil.cleanupContents(content, myProject, tabDisplayName);
     }, "Open message view", null);
-  }
-
-  private static void removeContents(@Nullable final Content notToRemove,
-                                     @NotNull final Project myProject,
-                                     @NotNull final String tabDisplayName) {
-    MessageView messageView = ServiceManager.getService(myProject, MessageView.class);
-    Content[] contents = messageView.getContentManager().getContents();
-    for (Content content : contents) {
-      LOG.assertTrue(content != null);
-      if (content.isPinned()) continue;
-      if (tabDisplayName.equals(content.getDisplayName()) && content != notToRemove) {
-        ErrorTreeView listErrorView = (ErrorTreeView)content.getComponent();
-        if (listErrorView != null) {
-          if (messageView.getContentManager().removeContent(content, true)) {
-            content.release();
-          }
-        }
-      }
-    }
   }
 
   public static Collection<RunContentDescriptor> findRunningConsoleByTitle(final Project project,

@@ -18,6 +18,7 @@ package com.jetbrains.python.debugger;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.jetbrains.python.debugger.pydev.ExceptionBreakpointCommandFactory;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author traff
@@ -31,4 +32,10 @@ public abstract class ExceptionBreakpointProperties<T> extends XBreakpointProper
   }
 
   public abstract String getExceptionBreakpointId();
+
+  public void setCondition(@Nullable String condition) {
+  }
+
+  public void setLogExpression(@Nullable String condition) {
+  }
 }

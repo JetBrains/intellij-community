@@ -38,7 +38,7 @@ import java.io.IOException;
  * @author max
  */
 public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileStub> {
-  public static final int STUB_VERSION = 40;
+  public static final int STUB_VERSION = 41;
 
   public JavaFileElementType() {
     super("java.FILE", JavaLanguage.INSTANCE);
@@ -77,7 +77,7 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
   }
 
   @Override
-  public ASTNode parseContents(final ASTNode chameleon) {
+  public ASTNode parseContents(@NotNull final ASTNode chameleon) {
     final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
     doParse(builder);
     return builder.getTreeBuilt().getFirstChildNode();
@@ -113,6 +113,5 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
   }
 
   @Override
-  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public void indexStub(@NotNull PsiJavaFileStub stub, @NotNull IndexSink sink) { }
 }

@@ -40,24 +40,21 @@ public class IElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.tree.IElementType");
 
   public static final IElementType[] EMPTY_ARRAY = new IElementType[0];
+  public static final ArrayFactory<IElementType> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new IElementType[count];
 
   /**
    * Default enumeration predicate which matches all token types.
    *
    * @see #enumerate(Predicate)
    */
-  public static final Predicate TRUE = new Predicate() {
-    @Override
-    public boolean matches(@NotNull IElementType type) {
-      return true;
-    }
-  };
+  public static final Predicate TRUE = type -> true;
 
   public static final short FIRST_TOKEN_INDEX = 1;
   private static final short MAX_INDEXED_TYPES = 15000;
 
   private static short size; // guarded by lock
   private static volatile IElementType[] ourRegistry = EMPTY_ARRAY; // writes are guarded by lock
+  @SuppressWarnings("RedundantStringConstructorCall")
   private static final Object lock = new String("registry lock");
 
   static {
@@ -91,7 +88,6 @@ public class IElementType {
     this(debugName, language, true);
   }
 
-  private static final ArrayFactory<IElementType> FACTORY = count -> new IElementType[count];
 
   /**
    * Allows to construct element types for some temporary purposes without registering them.
@@ -107,7 +103,7 @@ public class IElementType {
         myIndex = size++;
         LOG.assertTrue(myIndex < MAX_INDEXED_TYPES, "Too many element types registered. Out of (short) range.");
         IElementType[] newRegistry =
-          myIndex >= ourRegistry.length ? ArrayUtil.realloc(ourRegistry, ourRegistry.length * 3 / 2 + 1, FACTORY) : ourRegistry;
+          myIndex >= ourRegistry.length ? ArrayUtil.realloc(ourRegistry, ourRegistry.length * 3 / 2 + 1, ARRAY_FACTORY) : ourRegistry;
         newRegistry[myIndex] = this;
         ourRegistry = newRegistry;
       }
@@ -189,6 +185,7 @@ public class IElementType {
    *
    * @see IElementType#enumerate(Predicate)
    */
+  @FunctionalInterface
   public interface Predicate {
     boolean matches(@NotNull IElementType type);
   }
@@ -214,6 +211,6 @@ public class IElementType {
         matches.add(value);
       }
     }
-    return matches.toArray(new IElementType[matches.size()]);
+    return matches.toArray(new IElementType[0]);
   }
 }

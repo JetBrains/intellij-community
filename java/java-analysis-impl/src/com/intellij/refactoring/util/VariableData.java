@@ -44,4 +44,16 @@ public class VariableData extends AbstractVariableData {
       this.type = type;
     }
   }
+
+  @NotNull
+  public VariableData substitute(@Nullable PsiVariable var) {
+    if (var == null) {
+      return this;
+    }
+    VariableData data = new VariableData(var, type);
+    data.name = name;
+    data.originalName = originalName;
+    data.passAsParameter = passAsParameter;
+    return data;
+  }
 }

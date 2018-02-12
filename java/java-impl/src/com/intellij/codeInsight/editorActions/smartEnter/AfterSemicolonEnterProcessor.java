@@ -19,13 +19,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.util.text.CharArrayUtil;
 
-/**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Sep 8, 2003
- * Time: 2:35:36 PM
- * To change this template use Options | File Templates.
- */
 public class AfterSemicolonEnterProcessor implements EnterProcessor {
   @Override
   public boolean doEnter(Editor editor, PsiElement psiElement, boolean isModified) {

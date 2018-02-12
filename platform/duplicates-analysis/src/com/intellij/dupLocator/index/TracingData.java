@@ -17,9 +17,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
-* Created by Maxim.Mossienko on 3/19/2014.
-*/
 public class TracingData {
   private static final String tracingDataLocation = "E:\\ultimate\\system\\occurrences";
   private final PersistentHashMap<Integer, Integer> keys;

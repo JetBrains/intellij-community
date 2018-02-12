@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.graph.collapsing;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.utils.IntIntMultiMap;
@@ -63,12 +62,8 @@ public class EdgeStorage {
   }
 
   public List<Pair<Integer, GraphEdgeType>> getEdges(int nodeId) {
-    return ContainerUtil.map(myEdges.get(nodeId), new Function<Integer, Pair<Integer, GraphEdgeType>>() {
-      @Override
-      public Pair<Integer, GraphEdgeType> fun(Integer compressEdge) {
-        return Pair.create(convertToInteger(retrievedNodeId(compressEdge)), retrievedType(compressEdge));
-      }
-    });
+    return ContainerUtil.map(myEdges.get(nodeId),
+                             compressEdge -> Pair.create(convertToInteger(retrievedNodeId(compressEdge)), retrievedType(compressEdge)));
   }
 
   public int[] getKnownIds() {

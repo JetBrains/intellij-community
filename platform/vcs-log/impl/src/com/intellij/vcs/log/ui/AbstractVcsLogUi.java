@@ -18,9 +18,12 @@ package com.intellij.vcs.log.ui;
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -47,6 +50,7 @@ import java.util.Collection;
 import java.util.concurrent.Future;
 
 public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
+  private static final Logger LOG = Logger.getInstance(AbstractVcsLogUi.class);
   public static final ExtensionPointName<VcsLogHighlighterFactory> LOG_HIGHLIGHTER_FACTORY_EP =
     ExtensionPointName.create("com.intellij.logHighlighterFactory");
 
@@ -71,7 +75,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
     myColorManager = manager;
 
     Disposer.register(this, myRefresher);
-    Disposer.register(logData, this);
 
     myLog = new VcsLogImpl(logData, this);
     myVisiblePack = VisiblePack.EMPTY;
@@ -172,9 +175,9 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
     jumpTo(commitHash, GraphTableModel::getRowOfCommitByPartOfHash, future);
   }
 
-  private <T> void jumpTo(@NotNull final T commitId,
-                          @NotNull final PairFunction<GraphTableModel, T, Integer> rowGetter,
-                          @NotNull final SettableFuture<Boolean> future) {
+  protected <T> void jumpTo(@NotNull final T commitId,
+                            @NotNull final PairFunction<GraphTableModel, T, Integer> rowGetter,
+                            @NotNull final SettableFuture<Boolean> future) {
     if (future.isCancelled()) return;
 
     GraphTableModel model = getTable().getModel();
@@ -191,24 +194,23 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
       invokeOnChange(() -> jumpTo(commitId, rowGetter, future));
     }
     else {
-
-      if (getFilters().isEmpty()) {
-        VcsBalloonProblemNotifier.showOverChangesView(myProject, "Commit " + commitId.toString() + " not found.", MessageType.WARNING);
-      }
-      else {
-        String message = "Commit " + commitId.toString() + " does not exist or does not match active filters";
-        VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.WARNING,
-                                                      new NamedRunnable("Reset filters and search again") {
-                                                        @Override
-                                                        public void run() {
-                                                          getFilterUi().setFilter(null);
-                                                          invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create()));
-                                                        }
-                                                      });
-      }
-
+      handleCommitNotFound(commitId, rowGetter);
       future.set(false);
     }
+  }
+
+  protected <T> void handleCommitNotFound(@NotNull T commitId, @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
+    VcsBalloonProblemNotifier.showOverChangesView(myProject, "Commit " + commitId.toString() + " not found.", MessageType.WARNING);
+  }
+
+  protected void showWarningWithLink(@NotNull String mainText, @NotNull String linkText, @NotNull Runnable onClick) {
+    VcsBalloonProblemNotifier.showOverChangesView(myProject, mainText, MessageType.WARNING,
+                                                  new NamedRunnable(linkText) {
+                                                    @Override
+                                                    public void run() {
+                                                      onClick.run();
+                                                    }
+                                                  });
   }
 
   @Override
@@ -232,18 +234,25 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
     }
   }
 
-  public void invokeOnChange(@NotNull final Runnable runnable) {
+  public void invokeOnChange(@NotNull Runnable runnable) {
+    invokeOnChange(runnable, Conditions.alwaysTrue());
+  }
+
+  protected void invokeOnChange(@NotNull Runnable runnable, @NotNull Condition<VcsLogDataPack> condition) {
     addLogListener(new VcsLogListener() {
       @Override
       public void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
-        runnable.run();
-        removeLogListener(this);
+        if (condition.value(dataPack)) {
+          runnable.run();
+          removeLogListener(this);
+        }
       }
     });
   }
 
   @Override
   public void dispose() {
+    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     myRefresher.removeVisiblePackChangeListener(myVisiblePackChangeListener);
     getTable().removeAllHighlighters();
     myVisiblePack = VisiblePack.EMPTY;

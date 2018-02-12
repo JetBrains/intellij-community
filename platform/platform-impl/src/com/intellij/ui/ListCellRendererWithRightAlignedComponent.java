@@ -25,13 +25,14 @@ import java.awt.*;
  */
 //todo[nik,anyone] feel free to rename this class
 public abstract class ListCellRendererWithRightAlignedComponent<T> implements ListCellRenderer {
-  private ListCellRenderer myLeftRenderer;
-  private ListCellRenderer myRightRenderer;
-  private JComponent myPanel;
+  private final ListCellRenderer myLeftRenderer;
+  private final ListCellRenderer myRightRenderer;
+  private final JComponent myPanel;
   private String myLeftText;
   private String myRightText;
   private Icon myIcon;
   private Icon myRightIcon;
+  private Color myLeftForeground;
   private Color myRightForeground;
 
   public ListCellRendererWithRightAlignedComponent() {
@@ -41,6 +42,7 @@ public abstract class ListCellRendererWithRightAlignedComponent<T> implements Li
       public void customize(JList list, T value, int index, boolean selected, boolean hasFocus) {
         setText(myLeftText);
         setIcon(myIcon);
+        setForeground(myLeftForeground);
       }
     };
     myRightRenderer = new ListCellRendererWrapper<T>() {
@@ -87,6 +89,10 @@ public abstract class ListCellRendererWithRightAlignedComponent<T> implements Li
 
   protected final void setRightText(String text) {
     myRightText = text;
+  }
+
+  protected final void setLeftForeground(Color color) {
+    myLeftForeground = color;
   }
 
   protected final void setRightForeground(Color color) {

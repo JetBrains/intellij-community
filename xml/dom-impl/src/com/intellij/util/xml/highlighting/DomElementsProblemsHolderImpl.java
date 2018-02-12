@@ -19,7 +19,6 @@ package com.intellij.util.xml.highlighting;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
@@ -45,7 +44,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
   private final Function<DomElement, List<DomElementProblemDescriptor>> myDomProblemsGetter =
     s -> {
       final Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> map = myCachedErrors.get(s);
-      return map != null ? ContainerUtil.concat(map.values()) : Collections.<DomElementProblemDescriptor>emptyList();
+      return map != null ? ContainerUtil.concat(map.values()) : Collections.emptyList();
     };
 
   private final DomFileElement myElement;
@@ -174,6 +173,6 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
       return Collections.emptyList();
     }
     final List<DomElementProblemDescriptor> list = getProblemsMap(myElement).get(inspection.getClass());
-    return list != null ? new ArrayList<>(list) : Collections.<DomElementProblemDescriptor>emptyList();
+    return list != null ? new ArrayList<>(list) : Collections.emptyList();
   }
 }

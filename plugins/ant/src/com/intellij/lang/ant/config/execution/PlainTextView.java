@@ -218,18 +218,22 @@ public final class PlainTextView implements AntOutputView {
   }
 
   private static class LightProcessHandler extends ProcessHandler {
+    @Override
     protected void destroyProcessImpl() {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     protected void detachProcessImpl() {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean detachIsDefault() {
       return false;
     }
 
+    @Override
     @Nullable
     public OutputStream getProcessInput() {
       return null;

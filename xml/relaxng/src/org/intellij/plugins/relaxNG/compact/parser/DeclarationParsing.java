@@ -22,11 +22,6 @@ import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 
 import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 09.08.2007
- */
 public abstract class DeclarationParsing extends AbstractParsing {
 
   public DeclarationParsing(PsiBuilder builder) {

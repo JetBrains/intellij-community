@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.XmlContextType;
+import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.xml.XMLLanguage;
@@ -24,15 +11,10 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
+import com.intellij.psi.xml.*;
 import com.intellij.structuralsearch.impl.matcher.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
 import com.intellij.structuralsearch.impl.matcher.compiler.XmlCompilingVisitor;
-import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
-import com.intellij.structuralsearch.impl.matcher.filters.XmlLexicalNodesFilter;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
@@ -52,31 +34,41 @@ import static com.intellij.structuralsearch.PredefinedConfigurationUtil.createSe
  */
 public class XmlStructuralSearchProfile extends StructuralSearchProfile {
 
-  private XmlLexicalNodesFilter myLexicalNodesFilter;
-
+  @Override
   public void compile(PsiElement[] elements, @NotNull GlobalCompilingVisitor globalVisitor) {
-    elements[0].getParent().accept(new XmlCompilingVisitor(globalVisitor));
+    new XmlCompilingVisitor(globalVisitor).compile(elements);
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor createMatchingVisitor(@NotNull GlobalMatchingVisitor globalVisitor) {
     return new XmlMatchingVisitor(globalVisitor);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor getLexicalNodesFilter(@NotNull LexicalNodesFilter filter) {
-    if (myLexicalNodesFilter == null) {
-      myLexicalNodesFilter = new XmlLexicalNodesFilter(filter);
-    }
-    return myLexicalNodesFilter;
+  public boolean isIdentifier(PsiElement element) {
+    return element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_NAME;
   }
 
+  @NotNull
+  @Override
+  public NodeFilter getLexicalNodesFilter() {
+    return element -> {
+      if (element instanceof XmlText) {
+        final PsiElement child = element.getFirstChild();
+        return child == element.getLastChild() && child instanceof PsiWhiteSpace;
+      }
+      return element instanceof PsiWhiteSpace || element instanceof PsiErrorElement;
+    };
+  }
+
+  @Override
   @NotNull
   public CompiledPattern createCompiledPattern() {
     return new XmlCompiledPattern();
   }
 
+  @Override
   public boolean isMyLanguage(@NotNull Language language) {
     return language instanceof XMLLanguage;
   }
@@ -103,6 +95,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
     return document.getRootTag().getValue().getChildren();
   }
 
+  @NotNull
   @Override
   public Class<? extends TemplateContextType> getTemplateContextTypeClass() {
     return XmlContextType.class;
@@ -152,7 +145,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
         PsiElement replacement = ReplacerUtil.copySpacesAndCommentsBefore(elementToReplace, statements, replacementToMake, elementParent);
 
         // preserve comments
-        Replacer.handleComments(elementToReplace, replacement, myContext);
+        Replacer.handleComments(elementToReplace, replacement, info);
         elementToReplace.replace(replacement);
       }
       else {
@@ -174,7 +167,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
     else if (statements.length == 1) {
       PsiElement replacement = statements[0];
 
-      Replacer.handleComments(elementToReplace, replacement, context);
+      Replacer.handleComments(elementToReplace, replacement, info);
 
       try {
         elementParent.addBefore(replacement, elementToReplace);
@@ -227,8 +220,8 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
         createSearchTemplateInfo("xml attribute value", "<'_tag '_attribute=\"'value\"/>", HTML_XML, StdFileTypes.XML),
         createSearchTemplateInfo("html attribute value", "<'_tag '_attribute='value />", HTML_XML, StdFileTypes.HTML),
         createSearchTemplateInfo("xml/html tag value", "<table>'_content*</table>", HTML_XML, StdFileTypes.HTML),
-        createSearchTemplateInfo("<li> not contained in <ul> or <ol>", "[!within( \"<'_tag:[regex( ul|ol )] />\" )]<li />",
-                                 HTML_XML, StdFileTypes.HTML)
+        createSearchTemplateInfo("<ul> or <ol>", "<'_tag:[regex( ul|ol )] />", HTML_XML, StdFileTypes.HTML),
+        createSearchTemplateInfo("<li> not contained in <ul> or <ol>", "[!within( \"<ul> or <ol>\" )]<li />", HTML_XML, StdFileTypes.HTML)
       };
     }
   }

@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Alexey
- * Date: 09.04.2005
- * Time: 22:37:50
- */
 package com.intellij.lang.properties.psi;
 
 import com.intellij.lang.properties.IProperty;
@@ -28,6 +22,10 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
 
 /**
+ * An interface representing a property inside .properties based properties files
+ *
+ * @see PropertiesFile
+ * @see IProperty
  * @see PropertiesElementFactory
  */
 public interface Property extends PsiNamedElement, StubBasedPsiElement<PropertyStub>, NavigatablePsiElement, IProperty {

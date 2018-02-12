@@ -17,20 +17,24 @@ package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.editor.EditorColorSchemeTestCase;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Properties;
 
 import static com.intellij.openapi.editor.colors.FontPreferencesTest.*;
-import static com.intellij.openapi.editor.markup.TextAttributes.USE_INHERITED_MARKER;
+import static com.intellij.openapi.editor.colors.impl.AbstractColorsScheme.INHERITED_ATTRS_MARKER;
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 import static java.util.Collections.singletonList;
 
@@ -44,13 +48,50 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     super.tearDown();
   }
 
+  public void testAppLevelEditorFontDefaults() {
+    ModifiableFontPreferences appFontPrefs = (ModifiableFontPreferences)AppEditorFontOptions.getInstance().getFontPreferences();
+    FontPreferences stored = new FontPreferencesImpl();
+    appFontPrefs.copyTo(stored);
+    try {
+      String appFontName = appFontPrefs.getFontFamily();
+      int appFontSize = appFontPrefs.getSize(appFontName);
+      assertEquals(FontPreferences.DEFAULT_FONT_NAME, appFontName);
+      assertEditorFontsEqual(appFontName, appFontSize);
+      appFontPrefs.setFontSize(FontPreferences.DEFAULT_FONT_NAME, 8);
+      assertEditorFontsEqual(appFontName, 8);
+    }
+    finally {
+      stored.copyTo(appFontPrefs);
+    }
+  }
+
+  /**
+   * TODO<rv> FIX PROPERLY
+   * This is a hack: since font name is taken from default scheme (why?) where it is explicitly defined as "Dejavu Sans", font names
+   * do not match because default font name on linux in headless environment falls back to FALLBACK_FONT_FAMILY
+   */
+  private static String substLinuxFontName(@NotNull String fontName) {
+    return SystemInfo.isLinux && GraphicsEnvironment.isHeadless() && FontPreferences.LINUX_DEFAULT_FONT_FAMILY.equals(fontName)?
+           FontPreferences.FALLBACK_FONT_FAMILY :
+           fontName;
+  }
+
+  private void assertEditorFontsEqual(@NotNull String fontName, int fontSize) {
+    assertEquals(fontName, substLinuxFontName(myScheme.getEditorFontName()));
+    assertEquals(fontSize, myScheme.getEditorFontSize());
+    assertEquals(fontName, substLinuxFontName(myScheme.getConsoleFontName()));
+    assertEquals(fontSize, myScheme.getConsoleFontSize());
+  }
+
   public void testDefaults() {
+    myScheme.setFontPreferences(new FontPreferencesImpl());
     checkState(myScheme.getFontPreferences(),
                Collections.emptyList(),
                Collections.emptyList(),
                FontPreferences.DEFAULT_FONT_NAME,
                FontPreferences.DEFAULT_FONT_NAME, null);
-    assertEquals(FontPreferences.DEFAULT_FONT_NAME, myScheme.getEditorFontName());
+    String expectedName = FontPreferences.DEFAULT_FONT_NAME;
+    assertEquals(expectedName, myScheme.getEditorFontName());
     assertEquals(FontPreferences.DEFAULT_FONT_SIZE, myScheme.getEditorFontSize());
     checkState(myScheme.getConsoleFontPreferences(),
                Collections.emptyList(),
@@ -61,9 +102,10 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertEquals(FontPreferences.DEFAULT_FONT_SIZE, myScheme.getConsoleFontSize());
   }
 
-  public void testSetFontPreferences() throws Exception {
+  public void testSetFontPreferences() {
     String fontName1 = getExistingNonDefaultFontName();
     String fontName2 = getAnotherExistingNonDefaultFontName();
+    myScheme.setEditorFontName(fontName1);
     FontPreferences fontPreferences = myScheme.getFontPreferences();
     assertInstanceOf(fontPreferences, ModifiableFontPreferences.class);
     ((ModifiableFontPreferences)fontPreferences).register(fontName1, 25);
@@ -103,29 +145,30 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
 
   }
 
-  public void testSetName() throws Exception {
+  public void testSetName() {
     String fontName1 = getExistingNonDefaultFontName();
     String fontName2 = getAnotherExistingNonDefaultFontName();
     myScheme.setEditorFontName(fontName1);
     myScheme.setConsoleFontName(fontName2);
+    int scaledSize = UISettings.restoreFontSize(FontPreferences.DEFAULT_FONT_SIZE, 1.0f);
 
     checkState(myScheme.getFontPreferences(),
                singletonList(fontName1),
                singletonList(fontName1),
                fontName1,
-               fontName1, FontPreferences.DEFAULT_FONT_SIZE);
+               fontName1, scaledSize);
     assertEquals(fontName1, myScheme.getEditorFontName());
-    assertEquals(FontPreferences.DEFAULT_FONT_SIZE, myScheme.getEditorFontSize());
+    assertEquals(scaledSize, myScheme.getEditorFontSize());
     checkState(myScheme.getConsoleFontPreferences(),
                singletonList(fontName2),
                singletonList(fontName2),
                fontName2,
-               fontName2, FontPreferences.DEFAULT_FONT_SIZE);
+               fontName2, scaledSize);
     assertEquals(fontName2, myScheme.getConsoleFontName());
-    assertEquals(FontPreferences.DEFAULT_FONT_SIZE, myScheme.getConsoleFontSize());
+    assertEquals(scaledSize, myScheme.getConsoleFontSize());
   }
 
-  public void testSetSize() throws Exception {
+  public void testSetSize() {
     myScheme.setEditorFontSize(25);
     myScheme.setConsoleFontSize(21);
 
@@ -145,7 +188,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertEquals(21, myScheme.getConsoleFontSize());
   }
 
-  public void testSetNameAndSize() throws Exception {
+  public void testSetNameAndSize() {
     String fontName1 = getExistingNonDefaultFontName();
     String fontName2 = getAnotherExistingNonDefaultFontName();
     myScheme.setEditorFontName(fontName1);
@@ -169,7 +212,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertEquals(21, myScheme.getConsoleFontSize());
   }
 
-  public void testSetSizeAndName() throws Exception {
+  public void testSetSizeAndName() {
     String fontName1 = getExistingNonDefaultFontName();
     String fontName2 = getAnotherExistingNonDefaultFontName();
     myScheme.setEditorFontSize(25);
@@ -223,8 +266,8 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   }
 
 
-  public void testSaveInheritance() throws Exception {
-    Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(DefaultLanguageHighlighterColors.STATIC_METHOD, USE_INHERITED_MARKER);
+  public void testSaveInheritance() {
+    Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(DefaultLanguageHighlighterColors.STATIC_METHOD, INHERITED_ATTRS_MARKER);
     TextAttributes fallbackAttrs = result.first.getAttributes(DefaultLanguageHighlighterColors.STATIC_METHOD.getFallbackAttributeKey());
     assertSame(result.second, fallbackAttrs);
   }
@@ -237,12 +280,12 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertThat(result.second).isEqualTo(fallbackAttrs);
   }
 
-  public void testSaveInheritanceForEmptyAttrs() throws Exception {
-    Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(DefaultLanguageHighlighterColors.INSTANCE_FIELD, USE_INHERITED_MARKER);
+  public void testSaveInheritanceForEmptyAttrs() {
+    Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(DefaultLanguageHighlighterColors.INSTANCE_FIELD, INHERITED_ATTRS_MARKER);
     TextAttributes fallbackAttrs = result.first.getAttributes(DefaultLanguageHighlighterColors.INSTANCE_FIELD.getFallbackAttributeKey());
     TextAttributes directlyDefined =
       ((AbstractColorsScheme)result.first).getDirectlyDefinedAttributes(DefaultLanguageHighlighterColors.INSTANCE_FIELD);
-    assertTrue(directlyDefined != null && directlyDefined == USE_INHERITED_MARKER);
+    assertTrue(directlyDefined != null && directlyDefined == INHERITED_ATTRS_MARKER);
     assertSame(fallbackAttrs, result.second);
   }
 
@@ -301,7 +344,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     }
   }
 
-  public void testIdea152156() throws Exception {
+  public void testIdea152156() {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
     EditorColorsScheme parentScheme = (EditorColorsScheme)defaultScheme.clone();
     parentScheme.setName("DefaultTest");
@@ -310,7 +353,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     TextAttributes defaultAttributes = new TextAttributes(null, null, Color.BLACK, EffectType.LINE_UNDERSCORE, Font.PLAIN);
     TextAttributesKey testKey = TextAttributesKey.createTextAttributesKey("TEST_KEY", DefaultLanguageHighlighterColors.PARAMETER);
     parentScheme.setAttributes(testKey, defaultAttributes);
-    editorColorsScheme.setAttributes(testKey, USE_INHERITED_MARKER);
+    editorColorsScheme.setAttributes(testKey, INHERITED_ATTRS_MARKER);
     try {
       Element root = new Element("scheme");
       ((AbstractColorsScheme)editorColorsScheme).writeExternal(root);
@@ -321,7 +364,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
         }
       }
       TextAttributes targetAttributes = ((AbstractColorsScheme)targetScheme).getDirectlyDefinedAttributes(testKey);
-      assertTrue(targetAttributes != null && targetAttributes == USE_INHERITED_MARKER);
+      assertTrue(targetAttributes != null && targetAttributes == INHERITED_ATTRS_MARKER);
     }
     finally {
       TextAttributesKey.removeTextAttributesKey(testKey.getExternalName());
@@ -379,5 +422,189 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertXmlOutputEquals(
       BEGIN + END,
       serializeWithFixedMeta(editorColorsScheme));
+  }
+
+  public void testSettingsEqual() {
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+    AbstractColorsScheme editorColorsScheme = (AbstractColorsScheme)defaultScheme.clone();
+    editorColorsScheme.setName("Test");
+    editorColorsScheme.setColor(EditorColors.TEARLINE_COLOR, new Color(255, 0, 0));
+    assertFalse(editorColorsScheme.settingsEqual(defaultScheme));
+  }
+
+  public void testReadFontPreferences() throws Exception {
+    String name1 = getExistingNonDefaultFontName();
+    String name2 = getAnotherExistingNonDefaultFontName();
+    EditorColorsScheme scheme = loadScheme(
+      "<scheme name=\"fira\" version=\"142\" parent_scheme=\"Default\">\n" +
+      "  <option name=\"LINE_SPACING\" value=\"0.93\" />\n" +
+      "  <font>\n" +
+      "    <option name=\"EDITOR_FONT_NAME\" value=\"" + name1 + "\" />\n" +
+      "    <option name=\"EDITOR_FONT_SIZE\" value=\"12\" />\n" +
+      "  </font>\n" +
+      "  <font>\n" +
+      "    <option name=\"EDITOR_FONT_NAME\" value=\"" + name2 + "\" />\n" +
+      "    <option name=\"EDITOR_FONT_SIZE\" value=\"12\" />\n" +
+      "  </font>\n" +
+      "  <option name=\"EDITOR_LIGATURES\" value=\"true\" />\n" +
+      "  <option name=\"CONSOLE_FONT_NAME\" value=\""+ name2 + "\" />" +
+      "</scheme>\n"
+    );
+    assertEquals(name1, scheme.getEditorFontName());
+    assertEquals(name2, scheme.getConsoleFontName());
+    assertEquals(0.93f, scheme.getLineSpacing());
+    assertTrue(scheme.getFontPreferences().useLigatures());
+    assertFalse(scheme.getConsoleFontPreferences().useLigatures());
+  }
+
+  public void testReadFontPreferencesIdea176762() throws Exception {
+    String fontName = getExistingNonDefaultFontName();
+    EditorColorsScheme scheme = loadScheme(
+      "<scheme name=\"_@user_Default\" version=\"142\" parent_scheme=\"Default\">\n" +
+      "  <option name=\"FONT_SCALE\" value=\"1.5\" />\n" +
+      "  <option name=\"EDITOR_FONT_SIZE\" value=\"18\" />\n" +
+      "  <option name=\"EDITOR_LIGATURES\" value=\"true\" />\n" +
+      "  <option name=\"EDITOR_FONT_NAME\" value=\"" + fontName + "\" />\n" +
+      "</scheme>"
+    );
+    assertEquals(fontName, scheme.getEditorFontName());
+    assertTrue("Expected font ligatures on", scheme.getFontPreferences().useLigatures());
+  }
+
+  public void testOptimizeAttributes() throws Exception {
+    TextAttributesKey staticFieldKey = TextAttributesKey.createTextAttributesKey("STATIC_FIELD_ATTRIBUTES");
+    AbstractColorsScheme editorColorsScheme = (AbstractColorsScheme)loadScheme(
+      "<scheme name=\"IdeaLight\" version=\"142\" parent_scheme=\"Default\">\n" +
+      "  <colors>\n" +
+      "    <option name=\"CARET_ROW_COLOR\" value=\"f5f5f5\" />\n" +
+      "    <option name=\"CONSOLE_BACKGROUND_KEY\" value=\"fdfdfd\" />\n" +
+      "  </colors>\n" +
+      "  <attributes>\n" +
+      "    <option name=\"DEFAULT_ATTRIBUTE\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"4c4fa1\" />\n" +
+      "        <option name=\"FONT_TYPE\" value=\"1\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_CLASS_NAME\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"906f5d\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_CONSTANT\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"776186\" />\n" +
+      "        <option name=\"FONT_TYPE\" value=\"3\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_FUNCTION_DECLARATION\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"707070\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_GLOBAL_VARIABLE\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"6e6cc2\" />\n" +
+      "        <option name=\"FONT_TYPE\" value=\"1\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_IDENTIFIER\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"707070\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_INSTANCE_FIELD\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"776186\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_INTERFACE_NAME\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"906f5d\" />\n" +
+      "        <option name=\"FONT_TYPE\" value=\"2\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_KEYWORD\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"707070\" />\n" +
+      "        <option name=\"FONT_TYPE\" value=\"1\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_LOCAL_VARIABLE\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"6f8374\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_METADATA\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"989800\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_NUMBER\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"8281e8\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_OPERATION_SIGN\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"9587a4\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_PARAMETER\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"a05f72\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_PARENTHS\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"7e7e7e\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_PREDEFINED_SYMBOL\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"ab8381\" />\n" +
+      "        <option name=\"FONT_TYPE\" value=\"2\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_SEMICOLON\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"9587a4\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_STATIC_FIELD\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"776186\" />\n" +
+      "        <option name=\"FONT_TYPE\" value=\"2\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_STATIC_METHOD\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"707070\" />\n" +
+      "        <option name=\"FONT_TYPE\" value=\"2\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"DEFAULT_STRING\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"58806b\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "    <option name=\"INSTANCE_FIELD_ATTRIBUTES\" baseAttributes=\"DEFAULT_INSTANCE_FIELD\" />\n" +
+      "    <option name=\"STATIC_FIELD_ATTRIBUTES\" baseAttributes=\"DEFAULT_STATIC_FIELD\" />\n" +
+      "    <option name=\"STATIC_FINAL_FIELD_ATTRIBUTES\" baseAttributes=\"STATIC_FIELD_ATTRIBUTES\" />\n" +
+      "    <option name=\"TEXT\">\n" +
+      "      <value>\n" +
+      "        <option name=\"FOREGROUND\" value=\"141414\" />\n" +
+      "        <option name=\"BACKGROUND\" value=\"fbfbfb\" />\n" +
+      "      </value>\n" +
+      "    </option>\n" +
+      "  </attributes>\n" +
+      "</scheme>"
+    );
+    editorColorsScheme.optimizeAttributeMap();
+    //
+    // The following attributes have specific colors in Default color scheme. It is important to keep the inheritance markers, otherwise
+    // the explicitly defined colors from the base (default) scheme will be used which is not what we want here.
+    //
+    assertSame(INHERITED_ATTRS_MARKER, editorColorsScheme.getDirectlyDefinedAttributes(staticFieldKey));
   }
 }

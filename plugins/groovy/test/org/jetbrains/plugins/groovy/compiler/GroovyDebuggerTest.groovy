@@ -26,11 +26,14 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
+import com.intellij.testFramework.ThreadTracker
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyFileType
+
+import java.util.concurrent.TimeUnit
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
 
@@ -49,6 +52,12 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase implements DebuggerMetho
     super.setUp()
     addGroovyLibrary(myModule)
     enableDebugLogging()
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    ThreadTracker.awaitJDIThreadsTermination(100, TimeUnit.SECONDS);
+    super.tearDown()
   }
 
   @Override
@@ -77,13 +86,6 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase implements DebuggerMetho
       TestLoggerFactory.dumpLogToStdout(getTestStartedLogMessage())
       throw e
     }
-  }
-
-  @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    super.tuneFixture(moduleBuilder)
-    def javaHome = FileUtil.toSystemIndependentName(SystemProperties.getJavaHome())
-    moduleBuilder.addJdk(StringUtil.trimEnd(StringUtil.trimEnd(javaHome, '/'), '/jre'))
   }
 
   void runDebugger(PsiFile script, Closure cl) {

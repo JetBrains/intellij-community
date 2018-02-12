@@ -167,6 +167,7 @@ public class MockFileTypeManager extends FileTypeManagerEx {
     if ("XHTML".equals(fileTypeName)) return loadFileTypeSafe("com.intellij.ide.highlighter.XHtmlFileType", fileTypeName);
     if ("JavaScript".equals(fileTypeName)) return loadFileTypeSafe("com.intellij.lang.javascript.JavaScriptFileType", fileTypeName);
     if ("Properties".equals(fileTypeName)) return loadFileTypeSafe("com.intellij.lang.properties.PropertiesFileType", fileTypeName);
+    if ("GUI_DESIGNER_FORM".equals(fileTypeName)) return loadFileTypeSafe("com.intellij.uiDesigner.GuiFormFileType", fileTypeName);
     return new MockLanguageFileType(PlainTextLanguage.INSTANCE, fileTypeName.toLowerCase());
   }
 

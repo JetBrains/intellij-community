@@ -62,8 +62,7 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    PsiElement myPsiElement = startElement;
-    return myPsiElement.isValid() && myPsiElement.getManager().isInProject(myPsiElement);
+    return startElement.getManager().isInProject(startElement);
   }
 
   @Override
@@ -114,6 +113,6 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
     final Collection<CandidateInfo> overrideImplement = OverrideImplementExploreUtil.getMapToOverrideImplement(aClass, true, implemented).values();
     return OverrideImplementUtil
-      .showOverrideImplementChooser(editor, startElement, true, overrideImplement, ContainerUtil.<CandidateInfo>newArrayList());
+      .showOverrideImplementChooser(editor, startElement, true, overrideImplement, ContainerUtil.newArrayList());
   }
 }

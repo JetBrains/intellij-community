@@ -208,7 +208,7 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
   @Override
   @NotNull
   public JavaParameterInfo[] getNewParameters() {
-    return parameters.toArray(new GrParameterInfo[parameters.size()]);
+    return parameters.toArray(new GrParameterInfo[0]);
   }
 
   @Override
@@ -330,7 +330,7 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
 
   @Override
   public boolean[] toRemoveParm() {
-    return new boolean[0];  //To change body of implemented methods use File | Settings | File Templates.
+    return new boolean[0];
   }
 
   @Override

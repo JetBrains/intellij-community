@@ -43,15 +43,12 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.NotNullList;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -110,8 +107,11 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements DumbA
 
              queryProviders(elements.inside, root, providersList, (element, info) -> {
                lineMarkers.add(info);
-               ApplicationManager.getApplication()
-                 .invokeLater(() -> LineMarkersUtil.addLineMarkerToEditorIncrementally(myProject, getDocument(), info), myProject.getDisposed());
+               ApplicationManager.getApplication().invokeLater(() -> {
+                 if (isValid()) {
+                   LineMarkersUtil.addLineMarkerToEditorIncrementally(myProject, getDocument(), info);
+                 }
+               }, myProject.getDisposed());
              });
              queryProviders(elements.outside, root, providersList, (element, info) -> lineMarkers.add(info));
              return true;
@@ -200,7 +200,7 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements DumbA
       queryLineMarkersForInjected(element, containingFile, visitedInjectedFiles, consumer);
     }
 
-    List<LineMarkerInfo> slowLineMarkers = new ArrayList<>();
+    List<LineMarkerInfo> slowLineMarkers = new NotNullList<>();
     //noinspection ForLoopReplaceableByForEach
     for (int j = 0; j < providers.size(); j++) {
       ProgressManager.checkCanceled();
@@ -235,7 +235,7 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements DumbA
     if (containingFile.getViewProvider() instanceof InjectedFileViewProvider) return;
     final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(containingFile.getProject());
 
-    InjectedLanguageUtil.enumerate(element, containingFile, false, (injectedPsi, places) -> {
+    InjectedLanguageManager.getInstance(containingFile.getProject()).enumerateEx(element, containingFile, false, (injectedPsi, places) -> {
       if (!visitedInjectedFiles.add(injectedPsi)) return; // there may be several concatenated literals making the one injected file
       final Project project = injectedPsi.getProject();
       Document document = PsiDocumentManager.getInstance(project).getCachedDocument(injectedPsi);

@@ -1,4 +1,4 @@
-// "Simplify boolean expression" "true"
+// "Unwrap 'if' statement" "true"
 class X {
     void f(Object pVal, Object n) {
         if (!pVal.equals(n))

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.ComparisonUtils;
-import com.siyeh.ig.psiutils.ExpectedTypeUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,6 +102,7 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
       if (strippedQualifier == null) {
         return;
       }
+      CommentTracker commentTracker = new CommentTracker();
       if (strippedQualifier instanceof PsiReferenceExpression) {
         final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)strippedQualifier;
         final PsiElement element = referenceExpression.resolve();
@@ -118,18 +116,18 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
           if (CommonClassNames.JAVA_LANG_BOOLEAN.equals(classname)) {
             @NonNls final String name = field.getName();
             if ("TRUE".equals(name)) {
-              PsiReplacementUtil.replaceExpression(methodCall, "true");
+              PsiReplacementUtil.replaceExpression(methodCall, "true", commentTracker);
               return;
             }
             else if ("FALSE".equals(name)) {
-              PsiReplacementUtil.replaceExpression(methodCall, "false");
+              PsiReplacementUtil.replaceExpression(methodCall, "false", commentTracker);
               return;
             }
           }
         }
       }
-      final String strippedQualifierText = strippedQualifier.getText();
-      PsiReplacementUtil.replaceExpression(methodCall, strippedQualifierText);
+      final String strippedQualifierText = commentTracker.text(strippedQualifier);
+      PsiReplacementUtil.replaceExpression(methodCall, strippedQualifierText, commentTracker);
     }
   }
 
@@ -209,6 +207,9 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
       else if (MethodCallUtils.isNecessaryForSurroundingMethodCall(expression, unboxedExpression)) {
         return true;
       }
+
+      if (!LambdaUtil.isSafeLambdaReturnValueReplacement(expression, unboxedExpression)) return true;
+
       if (onlyReportSuperfluouslyUnboxed) {
         final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false, true);
         if (!(expectedType instanceof PsiClassType)) {

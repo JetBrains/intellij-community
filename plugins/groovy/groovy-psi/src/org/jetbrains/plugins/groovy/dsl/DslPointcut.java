@@ -102,7 +102,7 @@ public abstract class DslPointcut<T,V> {
     return new DslPointcut<T, V>() {
       @Override
       List<V> matches(T src, ProcessingContext context) {
-        return base.matches(src, context) == null ? Collections.<V>emptyList() : null;
+        return base.matches(src, context) == null ? Collections.emptyList() : null;
       }
 
       @Override

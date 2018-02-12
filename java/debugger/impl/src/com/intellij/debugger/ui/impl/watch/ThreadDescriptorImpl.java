@@ -129,7 +129,7 @@ public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDe
       //    try {
       //      Thread.sleep(100000);
       //    } catch (InterruptedException e) {
-      //      e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      //      e.printStackTrace();
       //    }
       //  }
       return false;

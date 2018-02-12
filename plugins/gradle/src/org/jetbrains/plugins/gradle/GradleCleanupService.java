@@ -19,21 +19,21 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
+import org.jetbrains.plugins.gradle.internal.daemon.GradleDaemonServices;
 
 /**
  * @author Vladislav.Soroka
  * @since 2/8/2017
  */
-public class GradleCleanupService extends ApplicationComponent.Adapter implements Disposable {
+public class GradleCleanupService implements Disposable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance(GradleCleanupService.class);
 
   @Override
   public void dispose() {
     if(ApplicationManager.getApplication().isUnitTestMode()) return;
-
+    // do not use DefaultGradleConnector.close() it sends org.gradle.launcher.daemon.protocol.StopWhenIdle message and waits
     try {
-      DefaultGradleConnector.close();
+      GradleDaemonServices.stopDaemons();
     }
     catch (Exception e) {
       LOG.warn("Failed to stop Gradle daemons during IDE shutdown", e);

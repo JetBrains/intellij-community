@@ -1,0 +1,3 @@
+<?import javafx.scene.layout.VBox?>
+<VBox id="AnchorPane" xmlns:fx="http://javafx.com/fxml" fx:controller="BuiltInFxmlFieldsAndMethod">
+</VBox>

@@ -19,7 +19,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.ex.EditorEx;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Scrolls to the top of the target editor without changing its caret position.
@@ -35,10 +35,7 @@ public class ScrollToBottomAction extends InactiveEditorAction {
 
   private static class MyHandler extends EditorActionHandler {
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
-      if (editor == null) {
-        return;
-      }
+    public void execute(@NotNull Editor editor, DataContext dataContext) {
       editor.getScrollingModel().scrollTo(editor.offsetToLogicalPosition(editor.getDocument().getTextLength()), ScrollType.CENTER);
     }
   }

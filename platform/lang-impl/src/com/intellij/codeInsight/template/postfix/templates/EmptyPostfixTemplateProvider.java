@@ -25,7 +25,7 @@ import java.util.Set;
 
 public class EmptyPostfixTemplateProvider implements PostfixTemplateProvider {
 
-  private HashSet<PostfixTemplate> myTemplates = ContainerUtil.newHashSet();
+  private final HashSet<PostfixTemplate> myTemplates = ContainerUtil.newHashSet();
 
   @NotNull
   @Override

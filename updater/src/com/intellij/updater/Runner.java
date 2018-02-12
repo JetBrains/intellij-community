@@ -35,6 +35,7 @@ public class Runner {
   private static final String PATCH_FILE_NAME = "patch-file.zip";
 
   private static Logger logger = null;
+  private static String logPath = null;
   private static boolean ourCaseSensitiveFs;
 
   public static Logger logger() {
@@ -45,7 +46,7 @@ public class Runner {
     return ourCaseSensitiveFs;
   }
 
-  public static void main(String[] args) throws Exception {
+  public static void main(String[] args) {
     String jarFile = getArgument(args, "jar");
     if (jarFile == null) {
       jarFile = resolveJarFile();
@@ -61,10 +62,9 @@ public class Runner {
       checkCaseSensitivity(newFolder);
       initLogger();
 
-      // See usage for an explanation of these flags
-      boolean binary = Arrays.asList(args).contains("--zip_as_binary");
-      boolean strict = Arrays.asList(args).contains("--strict");
-      boolean normalized = Arrays.asList(args).contains("--normalized");
+      boolean binary = hasArgument(args, "zip_as_binary");
+      boolean strict = hasArgument(args, "strict");
+      boolean normalized = hasArgument(args, "normalized");
 
       String root = getArgument(args, "root");
       if (root == null) {
@@ -97,7 +97,8 @@ public class Runner {
         .setDeleteFiles(deleteFiles)
         .setWarnings(warnings);
 
-      create(spec);
+      boolean success = create(spec);
+      System.exit(success ? 0 : 1);
     }
     else if (args.length >= 2 && ("install".equals(args[0]) || "apply".equals(args[0]))) {
       String destFolder = args[1];
@@ -106,16 +107,38 @@ public class Runner {
       initLogger();
       logger().info("destFolder: " + destFolder + ", case-sensitive: " + ourCaseSensitiveFs);
 
+      UpdaterUI ui;
       if ("install".equals(args[0])) {
-        install(jarFile, destFolder);
+        ui = new SwingUpdaterUI();
+      }
+      else if (hasArgument(args, "toolbox-ui")) {
+        ui = new ToolboxUpdaterUI();
       }
       else {
-        apply(jarFile, destFolder, Arrays.asList(args).contains("--toolbox-ui"));
+        ui = new ConsoleUpdaterUI();
       }
+
+      boolean backup = !hasArgument(args, "no-backup");
+      boolean success = install(jarFile, destFolder, ui, backup);
+      System.exit(success ? 0 : 1);
     }
     else {
       printUsage();
     }
+  }
+
+  public static String getArgument(String[] args, String name) {
+    String flag = "--" + name + "=";
+    for (String param : args) {
+      if (param.startsWith(flag)) {
+        return param.substring(flag.length());
+      }
+    }
+    return null;
+  }
+
+  private static boolean hasArgument(String[] args, String name) {
+    return Arrays.asList(args).contains("--" + name);
   }
 
   public static void checkCaseSensitivity(String path) {
@@ -136,38 +159,21 @@ public class Runner {
     return map;
   }
 
-  // checks that log directory 1)exists 2)has write perm. and 3)has 1MB+ free space
-  private static boolean isValidDir(String folder, long space) {
-    File fileDir = new File(folder);
-    return fileDir.isDirectory() && fileDir.canWrite() && fileDir.getUsableSpace() >= space;
-  }
-
-  public static String getDir(long requiredFreeSpace) {
-    String dir = System.getProperty("idea.updater.log");
-    if (dir == null || !isValidDir(dir, requiredFreeSpace)) {
-      dir = System.getProperty("java.io.tmpdir");
-      if (!isValidDir(dir, requiredFreeSpace)) {
-        dir = System.getProperty("user.home");
-      }
-    }
-    return dir;
-  }
-
-  public static void initLogger() {
+  private static void initLogger() {
     if (logger == null) {
-      long requiredFreeSpace = 1000000;
-      String logFolder = getDir(requiredFreeSpace);
-      FileAppender update = new FileAppender();
+      String logDirectory = Utils.findDirectory(1_000_000L);
+      logPath = new File(logDirectory, "idea_updater.log").getAbsolutePath();
 
-      update.setFile(new File(logFolder, "idea_updater.log").getAbsolutePath());
-      update.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
+      FileAppender update = new FileAppender();
+      update.setFile(logPath);
+      update.setLayout(new PatternLayout("%d{dd/MM HH:mm:ss} %-5p %C{1}.%M - %m%n"));
       update.setThreshold(Level.ALL);
       update.setAppend(true);
       update.activateOptions();
 
       FileAppender updateError = new FileAppender();
-      updateError.setFile(new File(logFolder, "idea_updater_error.log").getAbsolutePath());
-      updateError.setLayout(new PatternLayout("%d{dd MMM yyyy HH:mm:ss} %-5p %C{1}.%M - %m%n"));
+      updateError.setFile(new File(logDirectory, "idea_updater_error.log").getAbsolutePath());
+      updateError.setLayout(new PatternLayout("%d{dd/MM HH:mm:ss} %-5p %C{1}.%M - %m%n"));
       updateError.setThreshold(Level.ERROR);
       updateError.setAppend(false);
       updateError.activateOptions();
@@ -176,23 +182,8 @@ public class Runner {
       logger.addAppender(updateError);
       logger.addAppender(update);
       logger.setLevel(Level.ALL);
-
       logger.info("--- Updater started ---");
     }
-  }
-
-  public static void printStackTrace(Throwable e){
-    logger().error(e.getMessage(), e);
-  }
-
-  public static String getArgument(String[] args, String name) {
-    String flag = "--" + name + "=";
-    for (String param : args) {
-      if (param.startsWith(flag)) {
-        return param.substring(flag.length());
-      }
-    }
-    return null;
   }
 
   public static List<String> extractArguments(String[] args, String paramName) {
@@ -243,8 +234,10 @@ public class Runner {
       "                  guarantees that the patched version will match exactly the original one.\n");
   }
 
-  private static void create(PatchSpec spec) throws IOException, OperationCancelledException {
-    UpdaterUI ui = new ConsoleUpdaterUI();
+  private static boolean create(PatchSpec spec) {
+    ConsoleUpdaterUI ui = new ConsoleUpdaterUI();
+    boolean success = false;
+
     try {
       File tempPatchFile = Utils.getTempFile("patch");
       PatchFileCreator.create(spec, tempPatchFile, ui);
@@ -262,10 +255,31 @@ public class Runner {
         out.zipFile(PATCH_FILE_NAME, tempPatchFile);
         out.finish();
       }
+
+      success = true;
+    }
+    catch (Throwable t) {
+      logger().error("create failed", t);
+      ui.showError(printStackTrace(t));
     }
     finally {
-      cleanup(ui);
+      try {
+        cleanup(ui);
+      }
+      catch (Throwable t) {
+        success = false;
+        logger().error("cleanup failed", t);
+        ui.showError(printStackTrace(t));
+      }
     }
+
+    return success;
+  }
+
+  private static String printStackTrace(Throwable t) {
+    StringWriter writer = new StringWriter();
+    t.printStackTrace(new PrintWriter(writer));
+    return writer.toString();
   }
 
   private static void cleanup(UpdaterUI ui) throws IOException {
@@ -275,24 +289,13 @@ public class Runner {
     Utils.cleanup();
   }
 
-  private static void install(String jarFile, String destFolder) throws Exception {
-    new SwingUpdaterUI(ui -> {
-      logger().info("Installing patch to the " + destFolder);
-      return doInstall(jarFile, ui, destFolder);
-    });
-  }
-
-  private static void apply(String jarFile, String destFolder, boolean toolboxUi) throws Exception {
-    logger().info("Applying patch to the " + destFolder);
-    UpdaterUI ui = toolboxUi ? new ToolboxUpdaterUI() : new ConsoleUpdaterUI();
-    boolean success = doInstall(jarFile, ui, destFolder);
-    if (!success) {
-      System.exit(1);
-    }
-  }
-
-  private static boolean doInstall(String jarFile, UpdaterUI ui, String destFolder) throws OperationCancelledException {
+  private static boolean install(String jarFile, String destPath, UpdaterUI ui, boolean backup) {
     try {
+      PatchFileCreator.PreparationResult preparationResult;
+      Map<String, ValidationResult.Option> resolutions;
+      File backupDir;
+      PatchFileCreator.ApplicationResult applicationResult;
+
       try {
         File patchFile = Utils.getTempFile("patch");
 
@@ -307,42 +310,88 @@ public class Runner {
 
         ui.checkCancelled();
 
-        File destDir = new File(destFolder);
-        PatchFileCreator.PreparationResult result = PatchFileCreator.prepareAndValidate(patchFile, destDir, ui);
-        List<ValidationResult> problems = result.validationResults;
-        Map<String, ValidationResult.Option> resolutions = problems.isEmpty() ? Collections.emptyMap() : ui.askUser(problems);
-        return PatchFileCreator.apply(result, resolutions, ui);
+        File destDir = new File(destPath);
+        preparationResult = PatchFileCreator.prepareAndValidate(patchFile, destDir, ui);
+
+        List<ValidationResult> problems = preparationResult.validationResults;
+        resolutions = problems.isEmpty() ? Collections.emptyMap() : ui.askUser(problems);
+
+        backupDir = null;
+        if (backup) {
+          backupDir = Utils.getTempFile("backup");
+          if (!backupDir.mkdir()) throw new IOException("Cannot create backup directory: " + backupDir);
+        }
+
+        applicationResult = PatchFileCreator.apply(preparationResult, resolutions, backupDir, ui);
       }
-      catch (OperationCancelledException ignored) { }
-      catch (Throwable e) {
-        printStackTrace(e);
-        ui.showError(e);
+      catch (OperationCancelledException e) {
+        logger().warn("cancelled", e);
+        return false;
       }
+      catch (IOException | RuntimeException | Error t) {
+        logger().error("prepare failed", t);
+        String message = "An unexpected error occurred when preparing the patch\n" + t.getMessage() + "\n\n" +
+                         "No files were changed; retry applying the patch.\n\n" +
+                         "More details in the log: " + logPath;
+        ui.showError(message);
+        return false;
+      }
+
+      if (!applicationResult.applied) {
+        List<PatchAction> appliedActions = applicationResult.appliedActions;
+        Throwable error = applicationResult.error;
+
+        if (error != null) {
+          String message = "An unexpected error occurred when applying the patch:\n" + error.getMessage() + "\n\n";
+          if (appliedActions.isEmpty()) {
+            message += "No files were changed; retry applying the patch.\n\n";
+          }
+          else if (backupDir == null) {
+            message += "IDE files may be corrupted, no backup was requested, please reinstall.\n\n";
+          }
+          else {
+            message += "IDE files may be corrupted, the patch will attempt to revert the changes.\n\n";
+          }
+          message += "More details in the log: " + logPath;
+          ui.showError(message);
+        }
+
+        if (!appliedActions.isEmpty() && backupDir != null) {
+          try {
+            PatchFileCreator.revert(preparationResult, appliedActions, backupDir, ui);
+          }
+          catch (Throwable t) {
+            logger().error("revert failed", t);
+            String message = "An unexpected error occurred when reverting the patch:\n" + t.getMessage() + "\n\n" +
+                             "IDE files may be corrupted, please reinstall.\n\n" +
+                             "More details in the log: " + logPath;
+            ui.showError(message);
+          }
+        }
+      }
+
+      return applicationResult.applied;
     }
     finally {
       try {
-        System.gc();
         cleanup(ui);
       }
-      catch (Throwable e) {
-        printStackTrace(e);
-        ui.showError(e);
+      catch (Throwable t) {
+        logger().warn("cleanup failed", t);
       }
     }
-
-    return false;
   }
 
-  private static String resolveJarFile() throws IOException {
+  private static String resolveJarFile() {
     URL url = Runner.class.getResource("");
-    if (url == null) throw new IOException("Cannot resolve JAR file path");
-    if (!"jar".equals(url.getProtocol())) throw new IOException("Patch file is not a JAR file");
+    if (url == null) throw new IllegalArgumentException("Cannot resolve JAR file path");
+    if (!"jar".equals(url.getProtocol())) throw new IllegalArgumentException("Patch file is not a JAR file");
 
     String path = url.getPath();
 
     int start = path.indexOf("file:/");
     int end = path.indexOf("!/");
-    if (start == -1 || end == -1) throw new IOException("Unknown protocol: " + url);
+    if (start == -1 || end == -1) throw new IllegalArgumentException("Unknown protocol: " + url);
 
     String jarFileUrl = path.substring(start, end);
 
@@ -350,8 +399,7 @@ public class Runner {
       return new File(new URI(jarFileUrl)).getAbsolutePath();
     }
     catch (URISyntaxException e) {
-      printStackTrace(e);
-      throw new IOException(e.getMessage());
+      throw new IllegalArgumentException(e);
     }
   }
 

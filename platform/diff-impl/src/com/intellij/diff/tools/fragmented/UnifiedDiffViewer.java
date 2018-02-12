@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,8 +46,8 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
@@ -189,9 +189,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @Override
   @CalledInAwt
   public List<AnAction> createToolbarActions() {
-    List<AnAction> group = new ArrayList<>();
-
-    group.addAll(myTextDiffProvider.getToolbarActions());
+    List<AnAction> group = new ArrayList<>(myTextDiffProvider.getToolbarActions());
     group.add(new MyToggleExpandByDefaultAction());
     group.add(new MyReadOnlyLockAction());
     group.add(myEditorSettingsAction);
@@ -206,9 +204,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   @Override
   @CalledInAwt
   public List<AnAction> createPopupActions() {
-    List<AnAction> group = new ArrayList<>();
-
-    group.addAll(myTextDiffProvider.getPopupActions());
+    List<AnAction> group = new ArrayList<>(myTextDiffProvider.getPopupActions());
     group.add(new MyToggleExpandByDefaultAction());
 
     group.add(Separator.getInstance());
@@ -382,9 +378,12 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         myPanel.addNotification(DiffNotifications.createEqualContents(equalCharsets, equalSeparators));
       }
 
-      TIntFunction separatorLines = myFoldingModel.getLineNumberConvertor();
-      myEditor.getGutterComponentEx().setLineNumberConvertor(mergeConverters(data.getLineConvertor1(), separatorLines),
-                                                             mergeConverters(data.getLineConvertor2(), separatorLines));
+      TIntFunction foldingLineConvertor = myFoldingModel.getLineNumberConvertor();
+      TIntFunction contentConvertor1 = DiffUtil.getContentLineConvertor(getContent1());
+      TIntFunction contentConvertor2 = DiffUtil.getContentLineConvertor(getContent2());
+      myEditor.getGutterComponentEx().setLineNumberConvertor(
+        mergeLineConverters(contentConvertor1, data.getLineConvertor1(), foldingLineConvertor),
+        mergeLineConverters(contentConvertor2, data.getLineConvertor2(), foldingLineConvertor));
 
       ApplicationManager.getApplication().runWriteAction(() -> {
         myDuringOnesideDocumentModification = true;
@@ -446,9 +445,10 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     return block;
   }
 
-  @Contract("!null, _ -> !null")
-  private static TIntFunction mergeConverters(@NotNull final TIntFunction convertor, @NotNull final TIntFunction separatorLines) {
-    return value -> convertor.execute(separatorLines.execute(value));
+  private static TIntFunction mergeLineConverters(@Nullable TIntFunction contentConvertor,
+                                                  @NotNull TIntFunction unifiedConvertor,
+                                                  @NotNull TIntFunction foldingConvertor) {
+    return DiffUtil.mergeLineConverters(DiffUtil.mergeLineConverters(contentConvertor, unifiedConvertor), foldingConvertor);
   }
 
   /*
@@ -538,7 +538,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   // Typing
   //
 
-  private class MyOnesideDocumentListener extends DocumentAdapter {
+  private class MyOnesideDocumentListener implements DocumentListener {
     @Override
     public void beforeDocumentChange(DocumentEvent e) {
       if (myDuringOnesideDocumentModification) return;
@@ -956,11 +956,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     @Override
     protected int getEndLine(@NotNull UnifiedDiffChange change) {
       return change.getLine2();
-    }
-
-    @Override
-    protected void scrollToChange(@NotNull UnifiedDiffChange change) {
-      DiffUtil.scrollEditor(myEditor, change.getLine1(), true);
     }
   }
 

@@ -19,12 +19,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * @author nik
@@ -36,13 +34,13 @@ public class ParametersListUtil {
       return parse(text, true);
     }
   };
-  public static final Function<List<String>,String> DEFAULT_LINE_JOINER = new Function<List<String>, String>() {
+  public static final Function<List<String>, String> DEFAULT_LINE_JOINER = new Function<List<String>, String>() {
     @Override
     public String fun(List<String> strings) {
       return StringUtil.join(strings, " ");
     }
   };
-  public static final  Function<String, List<String>> COLON_LINE_PARSER = new Function<String, List<String>>() {
+  public static final Function<String, List<String>> COLON_LINE_PARSER = new Function<String, List<String>>() {
     @Override
     public List<String> fun(String text) {
       final ArrayList<String> result = ContainerUtilRt.newArrayList();
@@ -53,7 +51,7 @@ public class ParametersListUtil {
       return result;
     }
   };
-  public static final  Function<List<String>, String> COLON_LINE_JOINER = new Function<List<String>, String>() {
+  public static final Function<List<String>, String> COLON_LINE_JOINER = new Function<List<String>, String>() {
     @Override
     public String fun(List<String> strings) {
       return StringUtil.join(strings, ";");
@@ -110,6 +108,7 @@ public class ParametersListUtil {
    * <li>parameters are split by whitespaces, whitespaces itself are dropped</li>
    * <li>parameters inside double quotes ({@code "a b"}) are kept as single one;</li>
    * <li>double quotes are dropped, escaped double quotes ({@code &#92;"}) are un-escaped.</li>
+   * <li>For single quotes support see {@link #parse(String, boolean, boolean)}</li>
    * </ul>
    * </p>
    * <p/>
@@ -131,20 +130,31 @@ public class ParametersListUtil {
 
   @NotNull
   public static List<String> parse(@NotNull String parameterString, boolean keepQuotes) {
+    return parse(parameterString, keepQuotes, false);
+  }
+
+  @NotNull
+  public static List<String> parse(@NotNull String parameterString, boolean keepQuotes, boolean supportSingleQuotes) {
     parameterString = parameterString.trim();
 
     final ArrayList<String> params = ContainerUtilRt.newArrayList();
     final StringBuilder token = new StringBuilder(128);
     boolean inQuotes = false;
     boolean escapedQuote = false;
+    final TIntHashSet possibleQuoteChars = new TIntHashSet();
+    possibleQuoteChars.add('"');
+    if (supportSingleQuotes) {
+      possibleQuoteChars.add('\'');
+    }
+    char currentQuote = 0;
     boolean nonEmpty = false;
 
     for (int i = 0; i < parameterString.length(); i++) {
       final char ch = parameterString.charAt(i);
-
-      if (ch == '\"') {
+      if ((inQuotes ? currentQuote == ch : possibleQuoteChars.contains(ch))) {
         if (!escapedQuote) {
           inQuotes = !inQuotes;
+          currentQuote = ch;
           nonEmpty = true;
           if (!keepQuotes) {
             continue;
@@ -162,8 +172,9 @@ public class ParametersListUtil {
           continue;
         }
       }
-      else if (ch == '\\') {
-        if (i < parameterString.length() - 1 && parameterString.charAt(i + 1) == '"') {
+      else if (ch == '\\' && i < parameterString.length() - 1) {
+        final char nextchar = parameterString.charAt(i + 1);
+        if (inQuotes ? currentQuote == nextchar : possibleQuoteChars.contains(nextchar)) {
           escapedQuote = true;
           if (!keepQuotes) {
             continue;

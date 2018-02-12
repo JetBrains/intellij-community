@@ -34,25 +34,17 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   private final HashMap<String, Node> myNodeByIdMap = new HashMap<>();
   private final Set<Node> myRunningTestNodes = ContainerUtil.newHashSet();
   private final Set<Node> myRunningSuiteNodes = ContainerUtil.newHashSet();
-  private final SMTestProxy.SMRootTestProxy myTestsRootProxy;
   private final Node myTestsRootNode;
 
   private boolean myIsTestingFinished = false;
-  private SMTestLocator myLocator = null;
   private TestProxyPrinterProvider myTestProxyPrinterProvider = null;
 
   public GeneralIdBasedToSMTRunnerEventsConvertor(Project project,
                                                   @NotNull SMTestProxy.SMRootTestProxy testsRootProxy,
                                                   @NotNull String testFrameworkName) {
-    super(project, testFrameworkName);
-    myTestsRootProxy = testsRootProxy;
+    super(project, testFrameworkName, testsRootProxy);
     myTestsRootNode = new Node(TreeNodeEvent.ROOT_NODE_ID, null, testsRootProxy);
     myNodeByIdMap.put(myTestsRootNode.getId(), myTestsRootNode);
-  }
-
-  @Override
-  public void setLocator(@NotNull SMTestLocator locator) {
-    myLocator = locator;
   }
 
   public void onStartTesting() {
@@ -95,7 +87,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
 
       fireOnTestingFinished(myTestsRootProxy);
     });
-    stopEventProcessing();
+    super.onFinishTesting();
   }
 
   @Override
@@ -123,18 +115,27 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       return;
     }
 
+    node = createNode(startedNodeEvent, suite);
+    if (node == null) return;
+    if (startedNodeEvent.isRunning()) {
+      setNodeAndAncestorsRunning(node);
+    }
+  }
+
+  private Node createNode(@NotNull BaseStartedNodeEvent startedNodeEvent, boolean suite) {
     Node parentNode = findValidParentNode(startedNodeEvent);
     if (parentNode == null) {
-      return;
+      return null;
     }
 
     String nodeId = validateAndGetNodeId(startedNodeEvent);
     if (nodeId == null) {
-      return;
+      return null;
     }
 
     String nodeName = startedNodeEvent.getName();
-    SMTestProxy childProxy = new SMTestProxy(nodeName, suite, startedNodeEvent.getLocationUrl(), true);
+    SMTestProxy childProxy = new SMTestProxy(nodeName, suite, startedNodeEvent.getLocationUrl(), startedNodeEvent.getMetainfo(), true);
+    childProxy.putUserData(SMTestProxy.NODE_ID, startedNodeEvent.getId());
     childProxy.setTreeBuildBeforeStart();
     TestProxyPrinterProvider printerProvider = myTestProxyPrinterProvider;
     String nodeType = startedNodeEvent.getNodeType();
@@ -144,15 +145,26 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         childProxy.setPreferredPrinter(printer);
       }
     }
-    node = new Node(nodeId, parentNode, childProxy);
+
+    Node node = new Node(nodeId, parentNode, childProxy);
     myNodeByIdMap.put(startedNodeEvent.getId(), node);
     if (myLocator != null) {
       childProxy.setLocator(myLocator);
     }
     parentNode.getProxy().addChild(childProxy);
-    if (startedNodeEvent.isRunning()) {
-      setNodeAndAncestorsRunning(node);
-    }
+    return node;
+  }
+
+  @Override
+  protected SMTestProxy createSuite(String suiteName, String locationHint, String metaInfo, String id, String parentNodeId) {
+    Node node = createNode(new TestSuiteStartedEvent(suiteName, id, parentNodeId, locationHint, metaInfo, null, null, false), true);
+    return node.getProxy();
+  }
+
+  @Override
+  protected SMTestProxy createProxy(String testName, String locationHint, String metaInfo, String id, String parentNodeId) {
+    Node node = createNode(new TestStartedEvent(testName, id, parentNodeId, locationHint, metaInfo, null, null, false), false);
+    return node.getProxy();
   }
 
   @Nullable
@@ -224,13 +236,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     addToInvokeLater(() -> {
       Node activeNode = findActiveNode();
       SMTestProxy activeProxy = activeNode.getProxy();
-      if (ProcessOutputTypes.STDERR.equals(outputType)) {
-        activeProxy.addStdErr(text);
-      } else if (ProcessOutputTypes.SYSTEM.equals(outputType)) {
-        activeProxy.addSystemOutput(text);
-      } else {
-        activeProxy.addStdOutput(text, outputType);
-      }
+      activeProxy.addOutput(text, outputType);
     });
   }
 
@@ -401,18 +407,6 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       return myRunningSuiteNodes.iterator().next();
     }
     return myTestsRootNode;
-  }
-
-  @Override
-  public void onRootPresentationAdded(final String rootName, final String comment, final String rootLocation) {
-    addToInvokeLater(() -> {
-      myTestsRootProxy.setPresentation(rootName);
-      myTestsRootProxy.setComment(comment);
-      myTestsRootProxy.setRootLocationUrl(rootLocation);
-      if (myLocator != null) {
-        myTestsRootProxy.setLocator(myLocator);
-      }
-    });
   }
 
   private enum State {

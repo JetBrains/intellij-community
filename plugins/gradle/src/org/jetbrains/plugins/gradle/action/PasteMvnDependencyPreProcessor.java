@@ -77,12 +77,14 @@ public class PasteMvnDependencyPreProcessor implements CopyPastePreProcessor {
     String artifactId = getArtifactId(document);
     String version = getVersion(document);
     String scope = getScope(document);
+    String classifier = getClassifier(document);
 
     if (groupId.isEmpty() || artifactId.isEmpty() || version.isEmpty()) {
       return null;
     }
+    String gradleClassifier = classifier.isEmpty() ? "" : ":" + classifier;
 
-    return scope + "'" + groupId + ":" + artifactId + ":" + version + "'";
+    return scope + "'" + groupId + ":" + artifactId + ":" + version + gradleClassifier + "'";
   }
 
   private static String getScope(@NotNull Document document) {
@@ -90,6 +92,9 @@ public class PasteMvnDependencyPreProcessor implements CopyPastePreProcessor {
     switch (scope) {
       case "test":
         scope = "testCompile ";
+        break;
+      case "provided":
+        scope = "compileOnly ";
         break;
       case "compile":
       case "runtime":
@@ -111,6 +116,10 @@ public class PasteMvnDependencyPreProcessor implements CopyPastePreProcessor {
 
   private static String getGroupId(@NotNull Document document) {
     return firstOrEmpty(document.getElementsByTagName("groupId"));
+  }
+
+  private static String getClassifier(@NotNull Document document) {
+    return firstOrEmpty(document.getElementsByTagName("classifier"));
   }
 
   private static String firstOrEmpty(@NotNull NodeList list) {

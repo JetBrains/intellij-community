@@ -211,7 +211,7 @@ public class SvnChangesCorrectlyRefreshedTest extends Svn17TestCase {
   }
   
   @Test
-  public void testAddDirEditFileAndAfterRevert() throws Throwable {
+  public void testAddDirEditFileAndAfterRevert() {
     final SubTree subTree = new SubTree(myWorkingCopyDir);
 
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 
 package org.jetbrains.idea.svn;
@@ -20,8 +6,8 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
+import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,31 +26,29 @@ import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.util.Functions;
 import com.intellij.util.ThrowableConsumer;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.ActionWithTempFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.ErrorCode;
 import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
-import org.tmatesoft.svn.core.wc.SVNMoveClient;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.util.containers.ContainerUtil.map;
 
-public class SvnFileSystemListener extends CommandAdapter implements LocalFileOperationsHandler, Disposable {
+public class SvnFileSystemListener implements LocalFileOperationsHandler, Disposable, CommandListener {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnFileSystemListener");
   private final LocalFileSystem myLfs;
 
@@ -119,7 +103,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     CommandProcessor.getInstance().removeCommandListener(this);
   }
 
-  private void addToMoveExceptions(@NotNull final Project project, @NotNull final Exception e) {
+  private void addToMoveExceptions(@NotNull Project project, @NotNull VcsException e) {
     List<VcsException> exceptionList = myMoveExceptions.get(project);
     if (exceptionList == null) {
       exceptionList = new ArrayList<>();
@@ -128,19 +112,9 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     exceptionList.add(handleMoveException(e));
   }
 
-  private static VcsException handleMoveException(@NotNull Exception e) {
-    VcsException vcsException;
-    if (e instanceof SVNException && SVNErrorCode.ENTRY_EXISTS.equals(((SVNException)e).getErrorMessage().getErrorCode()) ||
-        e instanceof SvnBindException && ((SvnBindException)e).contains(SVNErrorCode.ENTRY_EXISTS)) {
-      vcsException = createMoveTargetExistsError(e);
-    }
-    else if (e instanceof VcsException) {
-      vcsException = (VcsException)e;
-    }
-    else {
-      vcsException = new VcsException(e);
-    }
-    return vcsException;
+  @NotNull
+  private static VcsException handleMoveException(@NotNull VcsException e) {
+    return e instanceof SvnBindException && ((SvnBindException)e).contains(ErrorCode.ENTRY_EXISTS) ? createMoveTargetExistsError(e) : e;
   }
 
   private static VcsException createMoveTargetExistsError(@NotNull Exception e) {
@@ -149,7 +123,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
   }
 
   @Nullable
-  public File copy(final VirtualFile file, final VirtualFile toDir, final String copyName) throws IOException {
+  public File copy(final VirtualFile file, final VirtualFile toDir, final String copyName) {
     startOperation(file);
 
     SvnVcs vcs = getVCS(toDir);
@@ -233,7 +207,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     }
   }
 
-  public boolean move(VirtualFile file, VirtualFile toDir) throws IOException {
+  public boolean move(VirtualFile file, VirtualFile toDir) {
     startOperation(file);
 
     File srcFile = getIOFile(file);
@@ -263,7 +237,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     }
   }
 
-  public boolean rename(VirtualFile file, String newName) throws IOException {
+  public boolean rename(VirtualFile file, String newName) {
     startOperation(file);
 
     File srcFile = getIOFile(file);
@@ -294,7 +268,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
           return false;
         }
       } else {
-        if (for16move(vcs, src, dst, isUndo)) return false;
+        if (for16move(dst, isUndo)) return false;
       }
 
       if (! isUndo && list != null) {
@@ -322,12 +296,13 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     }
     if (undo) {
       myUndoingMove = true;
-      createRevertAction(vcs, dst, true).execute();
+      boolean isCaseOnlyMove = FileUtil.filesEqual(src, dst);
+      createRevertAction(vcs, isCaseOnlyMove ? src : dst, true).execute();
       copyUnversionedMembersOfDirectory(src, dst);
       if (isUnversioned(srcStatus)) {
         FileUtil.delete(src);
       } else {
-        createRevertAction(vcs, src, true).execute();
+        createRevertAction(vcs, isCaseOnlyMove ? dst : src, true).execute();
       }
       restoreFromUndoStorage(dst);
     } else {
@@ -387,32 +362,14 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
            srcStatus.is(StatusType.STATUS_UNVERSIONED, StatusType.STATUS_OBSTRUCTED, StatusType.STATUS_MISSING, StatusType.STATUS_EXTERNAL);
   }
 
-  private boolean for16move(SvnVcs vcs, final File src, final File dst, final boolean undo) throws VcsException {
-    final SVNMoveClient mover = vcs.getSvnKitManager().createMoveClient();
+  private boolean for16move(final File dst, final boolean undo) {
     if (undo) {
       myUndoingMove = true;
       restoreFromUndoStorage(dst);
     }
-    else if (doUsualMove(vcs, src)) return true;
 
-    new RepeatSvnActionThroughBusy() {
-      @Override
-      protected void executeImpl() throws VcsException {
-        try {
-          if (undo) {
-            mover.undoMove(src, dst);
-          }
-          else {
-            mover.doMove(src, dst);
-          }
-        }
-        catch (SVNException e) {
-          throw new SvnBindException(e);
-        }
-      }
-    }.execute();
-
-    return false;
+    // TODO: Implement svn 1.6 support for command line.
+    return true;
   }
 
   private void restoreFromUndoStorage(final File dst) {
@@ -441,13 +398,13 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
   }
 
 
-  public boolean createFile(VirtualFile dir, String name) throws IOException {
+  public boolean createFile(VirtualFile dir, String name) {
     startOperation(dir);
 
     return createItem(dir, name, false, false);
   }
 
-  public boolean createDirectory(VirtualFile dir, String name) throws IOException {
+  public boolean createDirectory(VirtualFile dir, String name) {
     startOperation(dir);
 
     return createItem(dir, name, true, false);
@@ -467,7 +424,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
    * <p/>
    * deleted: do nothing, return true (strange)
    */
-  public boolean delete(VirtualFile file) throws IOException {
+  public boolean delete(VirtualFile file) {
     startOperation(file);
 
     final SvnVcs vcs = getVCS(file);
@@ -620,7 +577,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
         return false;
       }
       catch (VcsException e) {
-        SVNFileUtil.deleteAll(targetFile, true);
+        FileUtil.delete(targetFile);
         return false;
       }
     }
@@ -897,7 +854,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
         if (!filesToProcess.isEmpty()) {
           runInBackground(project, "Deleting files from Subversion", createDeleteRunnable(project, vcs, filesToProcess, exceptions));
         }
-        final List<FilePath> deletedFilesFiles = ObjectsConvertor.convert(deletedFiles, o -> o.getFirst());
+        List<FilePath> deletedFilesFiles = map(deletedFiles, Functions.pairFirst());
         for (FilePath file : deletedFilesFiles) {
           final FilePath parent = file.getParentPath();
           if (parent != null) {
@@ -946,10 +903,9 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
                                                    SvnVcs vcs,
                                                    VcsShowConfirmationOption.Value value,
                                                    AbstractVcsHelper vcsHelper) {
-    final Convertor<Pair<FilePath, WorkingCopyFormat>, FilePath> convertor = o -> o.getFirst();
     Collection<FilePath> filesToProcess;
     if (value == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
-      filesToProcess = ObjectsConvertor.convert(deletedFiles, convertor);
+      filesToProcess = map(deletedFiles, Functions.pairFirst());
     } else {
 
       final String singleFilePrompt;
@@ -961,9 +917,9 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       else {
         singleFilePrompt = SvnBundle.getString("confirmation.text.delete.file");
       }
-      final Collection<FilePath> files = vcsHelper
-        .selectFilePathsToProcess(ObjectsConvertor.convert(deletedFiles, convertor), SvnBundle.message("confirmation.title.delete.multiple.files"), null,
-                                  SvnBundle.message("confirmation.title.delete.file"), singleFilePrompt, vcs.getDeleteConfirmation());
+      Collection<FilePath> files = vcsHelper
+        .selectFilePathsToProcess(map(deletedFiles, Functions.pairFirst()), SvnBundle.message("confirmation.title.delete.multiple.files"),
+                                  null, SvnBundle.message("confirmation.title.delete.file"), singleFilePrompt, vcs.getDeleteConfirmation());
       filesToProcess = files == null ? null : new ArrayList<>(files);
     }
     return filesToProcess;

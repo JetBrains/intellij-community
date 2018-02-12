@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,10 +54,6 @@ public class MakeProjectStepBeforeRun extends BeforeRunTaskProvider<MakeProjectS
   }
 
   @Override
-  public String getDescription(MakeProjectBeforeRunTask task) {
-    return getName();
-  }
-  @Override
   public Icon getIcon() {
     return AllIcons.Actions.Compile;
   }
@@ -67,21 +63,8 @@ public class MakeProjectStepBeforeRun extends BeforeRunTaskProvider<MakeProjectS
     return AllIcons.Actions.Compile;
   }
 
-  public boolean configureTask(RunConfiguration runConfiguration, MakeProjectBeforeRunTask task) {
-    return false;
-  }
-
-  @Override
-  public boolean canExecuteTask(RunConfiguration configuration, MakeProjectBeforeRunTask task) {
-    return true;
-  }
-
-  public boolean executeTask(DataContext context, final RunConfiguration configuration, final ExecutionEnvironment env, MakeProjectBeforeRunTask task) {
+  public boolean executeTask(DataContext context, @NotNull final RunConfiguration configuration, @NotNull final ExecutionEnvironment env, @NotNull MakeProjectBeforeRunTask task) {
     return CompileStepBeforeRun.doMake(myProject, configuration, env, false, true);
-  }
-
-  public boolean isConfigurable() {
-    return false;
   }
 
   @Nullable
@@ -95,7 +78,7 @@ public class MakeProjectStepBeforeRun extends BeforeRunTaskProvider<MakeProjectS
   }
 
 
-  public MakeProjectBeforeRunTask createTask(RunConfiguration runConfiguration) {
+  public MakeProjectBeforeRunTask createTask(@NotNull RunConfiguration runConfiguration) {
     return !(runConfiguration instanceof RemoteConfiguration) && runConfiguration instanceof RunProfileWithCompileBeforeLaunchOption
            ? new MakeProjectBeforeRunTask()
            : null;

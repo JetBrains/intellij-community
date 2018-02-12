@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class EntryPoint implements JDOMExternalizable , Cloneable {
-  private static final Logger LOG = Logger.getInstance("#" + EntryPoint.class.getName());
+  private static final Logger LOG = Logger.getInstance(EntryPoint.class);
 
   @NotNull
   public abstract String getDisplayName();

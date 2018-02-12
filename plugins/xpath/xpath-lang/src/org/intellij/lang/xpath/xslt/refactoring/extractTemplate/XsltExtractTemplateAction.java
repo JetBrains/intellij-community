@@ -48,11 +48,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 10.06.2007
- */
 @SuppressWarnings({ "ComponentNotRegistered" })
 public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
     public String getRefactoringName() {

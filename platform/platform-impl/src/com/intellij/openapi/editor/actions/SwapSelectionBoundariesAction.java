@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Provides functionality similar to the emacs
@@ -41,7 +42,7 @@ public class SwapSelectionBoundariesAction extends EditorAction {
     }
 
     @Override
-    public void doExecute(Editor editor, Caret caret, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext) {
       assert caret != null;
       
       if (!caret.hasSelection()) {

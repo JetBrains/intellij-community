@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
@@ -33,12 +19,23 @@ import java.util.List;
 @ApiStatus.Experimental
 public interface InlayModel {
   /**
-   * Introduces an inline visual element at a given offset, its width and appearance is defined by the provided renderer. With respect to
-   * document changes, created element behaves in a similar way to a zero-range {@link RangeMarker}. This method returns <code>null</code>
-   * if requested element cannot be created, e.g. if corresponding functionality is not supported by current editor instance.
+   * Same as {@link #addInlineElement(int, boolean, EditorCustomElementRenderer)}, making created element associated with following text.
    */
   @Nullable
-  Inlay addInlineElement(int offset, @NotNull EditorCustomElementRenderer renderer);
+  default Inlay addInlineElement(int offset, @NotNull EditorCustomElementRenderer renderer) {
+    return addInlineElement(offset, false, renderer);
+  }
+
+  /**
+   * Introduces an inline visual element at a given offset, its width and appearance is defined by the provided renderer. With respect to
+   * document changes, created element behaves in a similar way to a zero-range {@link RangeMarker}. This method returns {@code null}
+   * if requested element cannot be created, e.g. if corresponding functionality is not supported by current editor instance.
+   * 
+   * @param relatesToPrecedingText whether element is associated with preceding or following text 
+   *                               (see {@link Inlay#isRelatedToPrecedingText()})
+   */
+  @Nullable
+  Inlay addInlineElement(int offset, boolean relatesToPrecedingText,@NotNull EditorCustomElementRenderer renderer);
 
   /**
    * Returns a list of inline elements for a given offset range (both limits are inclusive). Returned list is sorted by offset.
@@ -59,7 +56,7 @@ public interface InlayModel {
 
   /**
    * Return a custom visual element at given coordinates in editor's coordinate space,
-   * or <code>null</code> if there's no element at given point.
+   * or {@code null} if there's no element at given point.
    */
   @Nullable
   Inlay getElementAt(@NotNull Point point);

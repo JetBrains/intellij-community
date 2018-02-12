@@ -1,23 +1,5 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/*
- * User: anna
- * Date: 19-Dec-2007
- */
 package com.intellij.codeInspection.ex;
 
 import com.intellij.CommonBundle;
@@ -31,18 +13,20 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -56,10 +40,13 @@ import com.intellij.util.Processor;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext {
-  private static final Logger LOG = Logger.getInstance("#" + GlobalJavaInspectionContextImpl.class.getName());
+  private static final Logger LOG = Logger.getInstance(GlobalJavaInspectionContextImpl.class);
 
   private Map<SmartPsiElementPointer, List<DerivedMethodsProcessor>> myDerivedMethodsRequests;
   private Map<SmartPsiElementPointer, List<DerivedClassesProcessor>> myDerivedClassesRequests;
@@ -118,6 +105,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
                                    CommonBundle.message("title.error"), Messages.getErrorIcon());
         final Sdk projectJdk = ProjectSettingsService.getInstance(project).chooseAndSetSdk();
         if (projectJdk == null) return false;
+        DumbService.getInstance(project).completeJustSubmittedTasks();
       }
     }
     else {
@@ -195,9 +183,16 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     final AnalysisScope scope = refManager.getScope();
 
     final SearchScope searchScope = new GlobalSearchScope(refManager.getProject()) {
+      private final boolean processedReferences = Registry.is("batch.inspections.process.external.elements");
+
       @Override
       public boolean contains(@NotNull VirtualFile file) {
-        return scope != null && !scope.contains(file) || file.getFileType() != StdFileTypes.JAVA;
+        if (scope != null && !scope.contains(file)) {
+          return true;
+        }
+        //e.g. xml files were not included in the graph, so usages there should be processed as external
+        boolean inGraph = processedReferences ? refManager.isInGraph(file) : file.getFileType() == StdFileTypes.JAVA;
+        return !inGraph;
       }
 
       @Override
@@ -303,24 +298,14 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
   }
 
   private String getClassPresentableName(final PsiClass psiClass) {
-    return ApplicationManager.getApplication().runReadAction(
-      new Computable<String>() {
-        @Override
-        public String compute() {
-          final String qualifiedName = psiClass.getQualifiedName();
-          return qualifiedName != null ? qualifiedName : psiClass.getName();
-        }
-      }
-    );
+    return ReadAction.compute(() -> {
+      final String qualifiedName = psiClass.getQualifiedName();
+      return qualifiedName != null ? qualifiedName : psiClass.getName();
+    });
   }
 
   private static PsiElement dereferenceInReadAction(final SmartPsiElementPointer sortedID) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
-      @Override
-      public PsiElement compute() {
-        return sortedID.getElement();
-      }
-    });
+    return ReadAction.compute(() -> sortedID.getElement());
   }
 
   private static <Member extends PsiMember, P extends Processor<Member>> PsiElementProcessorAdapter<Member> createMembersProcessor(final List<P> processors,
@@ -389,7 +374,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
         }
 
         synchronized (processors) {
-          UsagesProcessor[] processorsArrayed = processors.toArray(new UsagesProcessor[processors.size()]);
+          UsagesProcessor[] processorsArrayed = processors.toArray(new UsagesProcessor[0]);
           for (UsagesProcessor processor : processorsArrayed) {
             if (!processor.process(reference)) {
               processors.remove(processor);
@@ -426,7 +411,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
 
     do {
       processSearchRequests(context);
-      InspectionToolWrapper[] requestors = needRepeatSearchRequest.toArray(new InspectionToolWrapper[needRepeatSearchRequest.size()]);
+      InspectionToolWrapper[] requestors = needRepeatSearchRequest.toArray(InspectionToolWrapper.EMPTY_ARRAY);
       InspectionManager inspectionManager = InspectionManager.getInstance(context.getProject());
       for (InspectionToolWrapper toolWrapper : requestors) {
         boolean result = false;

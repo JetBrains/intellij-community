@@ -88,7 +88,7 @@ public class GetCommittedChangelistAction extends AbstractCommonUpdateAction {
     @Override
     public FilePath[] getRoots(final VcsContext context, final ActionInfo actionInfo) {
       final Collection<FilePath> filePaths = getFilePaths(context);
-      return filePaths.toArray(new FilePath[filePaths.size()]);
+      return filePaths.toArray(new FilePath[0]);
     }
 
     @Override

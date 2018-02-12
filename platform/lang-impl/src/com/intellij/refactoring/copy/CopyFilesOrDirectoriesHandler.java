@@ -17,6 +17,7 @@ package com.intellij.refactoring.copy;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.CopyPasteDelegator;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.PlatformPackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -50,13 +51,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
-  private static Logger LOG = Logger.getInstance("com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler");
+  private static final Logger LOG = Logger.getInstance("com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler");
 
   @Override
   public boolean canCopy(PsiElement[] elements, boolean fromUpdate) {
     Set<String> names = new HashSet<>();
     for (PsiElement element : elements) {
-      if (!(element instanceof PsiFileSystemItem)) return false;
+      if (!(element instanceof PsiDirectory || element instanceof PsiFile)) return false;
       if (!element.isValid()) return false;
       if (element instanceof PsiCompiledFile) return false;
 
@@ -89,7 +90,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
 
   @Nullable
   private static PsiDirectory tryNotNullizeDirectory(@NotNull Project project, @Nullable PsiDirectory defaultTargetDirectory) {
-    if (defaultTargetDirectory == null) {
+    if (defaultTargetDirectory == null || ScratchFileService.isInScratchRoot(defaultTargetDirectory.getVirtualFile())) {
       VirtualFile root = ArrayUtil.getFirstElement(ProjectRootManager.getInstance(project).getContentRoots());
       if (root == null) root = project.getBaseDir();
       if (root == null) root = VfsUtil.getUserHomeDir();
@@ -110,7 +111,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
     PsiDirectory targetDirectory;
     String newName;
     boolean openInEditor;
-
+    VirtualFile[] files = Arrays.stream(elements).map(el -> ((PsiFileSystemItem)el).getVirtualFile()).toArray(VirtualFile[]::new);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       targetDirectory = defaultTargetDirectory;
       newName = null;
@@ -128,11 +129,13 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
       }
     }
 
+
     if (targetDirectory != null) {
+      PsiManager manager = PsiManager.getInstance(project);
       try {
-        for (PsiElement element : elements) {
-          PsiFileSystemItem psiElement = (PsiFileSystemItem)element;
-          if (psiElement.isDirectory()) {
+        for (VirtualFile file : files) {
+          if (file.isDirectory()) {
+            PsiFileSystemItem psiElement = manager.findDirectory(file);
             MoveFilesOrDirectoriesUtil.checkIfMoveIntoSelf(psiElement, targetDirectory);
           }
         }
@@ -142,9 +145,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
         return;
       }
 
-      SmartPointerManager manager = SmartPointerManager.getInstance(project);
-      CommandProcessor.getInstance().executeCommand(project, () -> copyImpl(Arrays.stream(elements).map(el -> manager.createSmartPsiElementPointer(el)).toArray(SmartPsiElementPointer[]::new),
-                                                                            newName, targetDirectory, false, openInEditor),
+      CommandProcessor.getInstance().executeCommand(project, () -> copyImpl(files, newName, targetDirectory, false, openInEditor),
                                                     RefactoringBundle.message("copy.handler.copy.files.directories"), null);
 
     }
@@ -167,13 +168,11 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
     if (targetDirectory == null) return;
 
     PsiElement[] elements = {element};
+    VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
     CopyFilesOrDirectoriesDialog dialog = new CopyFilesOrDirectoriesDialog(elements, null, element.getProject(), true);
     if (dialog.showAndGet()) {
       String newName = dialog.getNewName();
-      SmartPointerManager manager = SmartPointerManager.getInstance(element.getProject());
-      copyImpl(Arrays.stream(elements)
-                 .map(el -> manager.createSmartPsiElementPointer(el))
-                 .toArray(SmartPsiElementPointer[]::new), newName, targetDirectory, true, true);
+      copyImpl(new VirtualFile[] {file}, newName, targetDirectory, true, true);
     }
   }
 
@@ -211,36 +210,40 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
   }
 
   /**
-   * @param elements
+   * @param files
    * @param newName can be not null only if elements.length == 1
    * @param targetDirectory
    * @param openInEditor
    */
-  private static void copyImpl(@NotNull final SmartPsiElementPointer[] elements,
+  private static void copyImpl(@NotNull final VirtualFile[] files,
                                @Nullable final String newName,
                                @NotNull final PsiDirectory targetDirectory,
                                final boolean doClone,
                                final boolean openInEditor) {
-    if (doClone && elements.length != 1) {
-      throw new IllegalArgumentException("invalid number of elements to clone:" + elements.length);
+    if (doClone && files.length != 1) {
+      throw new IllegalArgumentException("invalid number of elements to clone:" + files.length);
     }
 
-    if (newName != null && elements.length != 1) {
-      throw new IllegalArgumentException("no new name should be set; number of elements is: " + elements.length);
+    if (newName != null && files.length != 1) {
+      throw new IllegalArgumentException("no new name should be set; number of elements is: " + files.length);
     }
 
     final Project project = targetDirectory.getProject();
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, Collections.singleton(targetDirectory), false)) {
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, Collections.singleton(targetDirectory), true)) {
       return;
     }
 
     String title = RefactoringBundle.message(doClone ? "copy,handler.clone.files.directories" : "copy.handler.copy.files.directories");
     try {
       PsiFile firstFile = null;
-      final int[] choice = elements.length > 1 || elements[0] instanceof PsiDirectory ? new int[]{-1} : null;
-      for (SmartPsiElementPointer element : elements) {
-        PsiElement psiElement = element.getElement();
-        if (psiElement == null) continue;
+      final int[] choice = files.length > 1 || files[0].isDirectory() ? new int[]{-1} : null;
+      PsiManager manager = PsiManager.getInstance(project);
+      for (VirtualFile file : files) {
+        PsiElement psiElement = file.isDirectory() ? manager.findDirectory(file) : manager.findFile(file);
+        if (psiElement == null) {
+          LOG.info("invalid file: " + file.getExtension());
+          continue;
+        }
         PsiFile f = copyToDirectory((PsiFileSystemItem)psiElement, newName, targetDirectory, choice, title);
         if (firstFile == null) {
           firstFile = f;
@@ -319,12 +322,15 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
                                                   (ThrowableComputable<VirtualFile, IOException>)() -> subdirectory.getVirtualFile());
 
       PsiFile firstFile = null;
-      SmartPointerManager manager = SmartPointerManager.getInstance(directory.getProject());
-      SmartPsiElementPointer[] children = Arrays.stream(directory.getChildren())
-        .map(element -> manager.createSmartPsiElementPointer(element))
-        .toArray(SmartPsiElementPointer[]::new);
-      for (SmartPsiElementPointer child : children) {
-        PsiFileSystemItem item = (PsiFileSystemItem)child.getElement();
+      Project project = directory.getProject();
+      PsiManager manager = PsiManager.getInstance(project);
+      VirtualFile[] children = directory.getVirtualFile().getChildren();
+      for (VirtualFile file : children) {
+        PsiFileSystemItem item = file.isDirectory() ? manager.findDirectory(file) : manager.findFile(file);
+        if (item == null) {
+          LOG.info("Invalidated item: " + file.getExtension());
+          continue;
+        }
         PsiFile f = copyToDirectory(item, item.getName(), subdirectory, choice, title);
         if (firstFile == null) {
           firstFile = f;

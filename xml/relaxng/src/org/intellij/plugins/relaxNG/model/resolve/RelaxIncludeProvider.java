@@ -18,11 +18,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 09.06.2010
-*/
 public class RelaxIncludeProvider extends FileIncludeProvider {
   @NotNull
   @Override
@@ -71,7 +66,7 @@ public class RelaxIncludeProvider extends FileIncludeProvider {
     } else {
       return FileIncludeInfo.EMPTY;
     }
-    return infos.toArray(new FileIncludeInfo[infos.size()]);
+    return infos.toArray(FileIncludeInfo.EMPTY);
   }
 
   private static class RngBuilderAdapter extends NanoXmlUtil.IXMLBuilderAdapter {

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 01-Jul-2009
- */
 package org.testng;
 
 import com.beust.jcommander.JCommander;
@@ -122,7 +118,7 @@ public class RemoteTestNGStarter {
     }
     final IDEARemoteTestNG testNG = new IDEARemoteTestNG(param);
     CommandLineArgs cla = new CommandLineArgs();
-    new JCommander(Collections.singletonList(cla), (String[])resultArgs.toArray(new String[resultArgs.size()]));
+    new JCommander(Collections.singletonList(cla), (String[])resultArgs.toArray(new String[0]));
     testNG.configure(cla);
     testNG.run();
   }

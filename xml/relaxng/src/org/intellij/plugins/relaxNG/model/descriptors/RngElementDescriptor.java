@@ -28,7 +28,7 @@ import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
@@ -160,7 +160,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     }
 
     final Collection<RngXmlAttributeDescriptor> result = name2descriptor.values();
-    return result.toArray(new RngXmlAttributeDescriptor[result.size()]);
+    return result.toArray(new RngXmlAttributeDescriptor[0]);
   }
 
   @Override

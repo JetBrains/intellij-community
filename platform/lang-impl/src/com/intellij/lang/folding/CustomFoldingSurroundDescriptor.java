@@ -57,7 +57,7 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
     for (CustomFoldingProvider provider : CustomFoldingProvider.getAllProviders()) {
       surrounderList.add(new CustomFoldingRegionSurrounder(provider));
     }
-    SURROUNDERS = surrounderList.toArray(new CustomFoldingRegionSurrounder[surrounderList.size()]);
+    SURROUNDERS = surrounderList.toArray(new CustomFoldingRegionSurrounder[0]);
   }
 
   @NotNull
@@ -306,7 +306,7 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
       }
 
       String startString = linePrefix + startText + lineSuffix + "\n" + startIndent;
-      String endString = "\n" + linePrefix + myProvider.getEndString() + lineSuffix;
+      String endString = "\n" + startIndent + linePrefix + myProvider.getEndString() + lineSuffix;
       document.insertString(endOffset, endString);
       delta += endString.length();
       document.insertString(startOffset, startString);

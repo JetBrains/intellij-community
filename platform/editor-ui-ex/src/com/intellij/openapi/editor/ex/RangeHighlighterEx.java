@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jun 10, 2002
- * Time: 5:54:59 PM
- * To change template for new interface use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -41,5 +33,5 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
 
   void setTextAttributes(@NotNull TextAttributes textAttributes);
 
-  Comparator<RangeHighlighterEx> BY_AFFECTED_START_OFFSET = (r1, r2) -> r1.getAffectedAreaStartOffset() - r2.getAffectedAreaStartOffset();
+  Comparator<RangeHighlighterEx> BY_AFFECTED_START_OFFSET = Comparator.comparingInt(RangeHighlighterEx::getAffectedAreaStartOffset);
 }

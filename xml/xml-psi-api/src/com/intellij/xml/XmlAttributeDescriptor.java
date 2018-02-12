@@ -19,7 +19,6 @@ package com.intellij.xml;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayFactory;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -27,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface XmlAttributeDescriptor extends PsiMetaData {
   XmlAttributeDescriptor[] EMPTY = new XmlAttributeDescriptor[0];
-  ArrayFactory<XmlAttributeDescriptor> ARRAY_FACTORY = count -> new XmlAttributeDescriptor[count];
+  ArrayFactory<XmlAttributeDescriptor> ARRAY_FACTORY = count -> count == 0 ? EMPTY : new XmlAttributeDescriptor[count];
 
   boolean isRequired();
   boolean isFixed();

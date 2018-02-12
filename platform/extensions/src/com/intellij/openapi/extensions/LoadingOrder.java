@@ -43,12 +43,14 @@ import java.util.*;
  * @author Alexander Kireyev
  */
 public class LoadingOrder {
-  @NonNls private static final String FIRST_STR = "FIRST";
-  @NonNls private static final String LAST_STR = "LAST";
-  @NonNls private static final String BEFORE_STR = "BEFORE ";
-  @NonNls private static final String BEFORE_STR_OLD = "BEFORE:";
-  @NonNls private static final String AFTER_STR = "AFTER ";
-  @NonNls private static final String AFTER_STR_OLD = "AFTER:";
+  @NonNls public static final String FIRST_STR = "first";
+  @NonNls public static final String LAST_STR = "last";
+  @NonNls public static final String BEFORE_STR = "before ";
+  @NonNls public static final String BEFORE_STR_OLD = "before:";
+  @NonNls public static final String AFTER_STR = "after ";
+  @NonNls public static final String AFTER_STR_OLD = "after:";
+
+  @NonNls public static final String ORDER_RULE_SEPARATOR = ",";
 
   public static final LoadingOrder ANY = new LoadingOrder();
   public static final LoadingOrder FIRST = new LoadingOrder(FIRST_STR);
@@ -70,7 +72,7 @@ public class LoadingOrder {
     myName = text;
     boolean last = false;
     boolean first = false;
-    for (final String string : StringUtil.split(text, ",")) {
+    for (final String string : StringUtil.split(text, ORDER_RULE_SEPARATOR)) {
       String trimmed = string.trim();
       if (trimmed.equalsIgnoreCase(FIRST_STR)) first = true;
       else if (trimmed.equalsIgnoreCase(LAST_STR)) last = true;

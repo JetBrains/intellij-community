@@ -48,7 +48,7 @@ import java.util.Map;
 public class ProjectSetTest extends LightPlatformTestCase {
 
   private static String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath() + "/platform/platform-tests/testData/projectSet/";
+    return PlatformTestUtil.getPlatformTestDataPath() + "projectSet/";
   }
 
   public void testProjectSetReader() throws IOException {

@@ -24,4 +24,7 @@ public interface CommandLineOption extends CommandLinePart {
   @Nullable
   Option findRealOption();
 
+  @Nullable
+  CommandLineArgument findArgument();
+
 }

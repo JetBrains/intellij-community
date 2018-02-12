@@ -5,8 +5,8 @@
 
 import sys
 from typing import (
-    Any, Callable, Dict, Generic, Iterator, Mapping, Optional, Tuple, TypeVar,
-    Union, overload
+    Any, Awaitable, Callable, Dict, Generic, Iterator, Mapping, Optional, Tuple, TypeVar,
+    Union, overload, Type
 )
 
 # ModuleType is exported from this module, but for circular import
@@ -14,6 +14,8 @@ from typing import (
 from _importlib_modulespec import ModuleType as ModuleType  # Exported
 
 _T = TypeVar('_T')
+_T_co = TypeVar('_T_co', covariant=True)
+_T_contra = TypeVar('_T_contra', contravariant=True)
 _KT = TypeVar('_KT')
 _VT = TypeVar('_VT')
 
@@ -27,6 +29,7 @@ class FunctionType:
     __dict__ = ...  # type: Dict[str, Any]
     __globals__ = ...  # type: Dict[str, Any]
     __name__ = ...  # type: str
+    __qualname__ = ...  # type: str
     __annotations__ = ...  # type: Dict[str, Any]
     __kwdefaults__ = ...  # type: Dict[str, Any]
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
@@ -92,6 +95,21 @@ class GeneratorType:
     @overload
     def throw(self, typ: type, val: BaseException = ..., tb: 'TracebackType' = ...) -> Any: ...
 
+if sys.version_info >= (3, 6):
+    class AsyncGeneratorType(Generic[_T_co, _T_contra]):
+        ag_await: Optional[Awaitable[Any]]
+        ag_frame: FrameType
+        ag_running: bool
+        ag_code: CodeType
+        def __aiter__(self) -> Awaitable[AsyncGeneratorType[_T_co, _T_contra]]: ...
+        def __anext__(self) -> Awaitable[_T_co]: ...
+        def asend(self, val: _T_contra) -> Awaitable[_T_co]: ...
+        @overload
+        def athrow(self, val: BaseException) -> Awaitable[_T_co]: ...
+        @overload
+        def athrow(self, typ: Type[BaseException], val: BaseException, tb: TracebackType = ...) -> Awaitable[_T_co]: ...
+        def aclose(self) -> Awaitable[_T_co]: ...
+
 class CoroutineType:
     cr_await = ...  # type: Optional[Any]
     cr_code = ...  # type: CodeType
@@ -104,12 +122,32 @@ class CoroutineType:
     @overload
     def throw(self, typ: type, val: BaseException = ..., tb: 'TracebackType' = ...) -> Any: ...
 
+class _StaticFunctionType:
+    """Fictional type to correct the type of MethodType.__func__.
+
+    FunctionType is a descriptor, so mypy follows the descriptor protocol and
+    converts MethodType.__func__ back to MethodType (the return type of
+    FunctionType.__get__). But this is actually a special case; MethodType is
+    implemented in C and its attribute access doesn't go through
+    __getattribute__.
+
+    By wrapping FunctionType in _StaticFunctionType, we get the right result;
+    similar to wrapping a function in staticmethod() at runtime to prevent it
+    being bound as a method.
+    """
+    def __get__(self, obj: Optional[object], type: Optional[type]) -> 'FunctionType': ...
+
 class MethodType:
-    __func__ = ...  # type: FunctionType
+    __func__ = ...  # type: _StaticFunctionType
     __self__ = ...  # type: object
+    __name__ = ...  # type: str
+    __qualname__ = ...  # type: str
+    def __init__(self, func: Callable, obj: object) -> None: ...
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
 class BuiltinFunctionType:
     __self__ = ...  # type: Union[object, ModuleType]
+    __name__ = ...  # type: str
+    __qualname__ = ...  # type: str
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
 BuiltinMethodType = BuiltinFunctionType
 
@@ -129,7 +167,7 @@ class FrameType:
     f_locals = ...  # type: Dict[str, Any]
     f_trace = ...  # type: Callable[[], None]
 
-    def clear(self) -> None: pass
+    def clear(self) -> None: ...
 
 class GetSetDescriptorType:
     __name__ = ...  # type: str

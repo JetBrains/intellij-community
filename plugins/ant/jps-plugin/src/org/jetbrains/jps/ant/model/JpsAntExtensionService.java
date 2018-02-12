@@ -107,7 +107,7 @@ public class JpsAntExtensionService {
     }
 
     String antLib = new File(antHome, "lib").getAbsolutePath();
-    return new JpsAntInstallationImpl(antHome, "Bundled Ant", Collections.<String>emptyList(), Collections.singletonList(antLib));
+    return new JpsAntInstallationImpl(antHome, "Bundled Ant", Collections.emptyList(), Collections.singletonList(antLib));
   }
 
   @Nullable

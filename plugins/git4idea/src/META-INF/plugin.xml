@@ -46,7 +46,6 @@
       <reference ref="Annotate"/>
       <reference ref="Show.Current.Revision"/>
       <reference ref="Compare.SameVersion"/>
-      <reference ref="Compare.LastVersion"/>
       <reference ref="Compare.Selected"/>
       <action id="Git.CompareWithBranch" class="git4idea.actions.GitCompareWithBranchAction" text="Compare with Branch..." />
       <reference ref="Vcs.ShowTabbedFileHistory"/>
@@ -71,9 +70,9 @@
       <reference ref="Vcs.Push"/>
       <separator/>
       <action id="Git.Rebase" class="git4idea.actions.GitRebase" text="Rebase..."/>
-      <action id="Git.Rebase.Abort" class="git4idea.actions.GitRebaseAbort" text="Abort Rebasing"/>
-      <action id="Git.Rebase.Continue" class="git4idea.actions.GitRebaseContinue" text="Continue Rebasing"/>
-      <action id="Git.Rebase.Skip" class="git4idea.actions.GitRebaseSkip" text="Skip Commit in Rebasing"/>
+      <action id="Git.Rebase.Abort" class="git4idea.actions.GitRebaseAbort" text="Abort Rebase"/>
+      <action id="Git.Rebase.Continue" class="git4idea.actions.GitRebaseContinue" text="Continue Rebase"/>
+      <action id="Git.Rebase.Skip" class="git4idea.actions.GitRebaseSkip" text="Skip Commit"/>
     </group>
 
     <group id="Git.Menu" class="git4idea.actions.GitMenu" popup="true" text="_Git">
@@ -108,9 +107,20 @@
             description="Create new branch starting from the selected commit"/>
     <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag" text="New Tag..."
             description="Create new tag pointing to this commit"/>
-    <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" text="Reset Current Branch to Here..." />
+    <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" text="Reset Current Branch to Here..." icon="AllIcons.Actions.Reset"/>
+    <action id="Git.Revert.In.Log" class="git4idea.revert.GitRevertAction" text="Revert"
+            description="Produce a new commit, which reverts the changes made in the original commit"/>
     <action id="Git.Uncommit" class="git4idea.reset.GitUncommitAction" text="Undo Commit..."
             description="Undo last commit and put its changes into selected changelist"/>
+    <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction" text="Reword..."
+            description="Change commit message" />
+    <action id="Git.Interactive.Rebase" class="git4idea.rebase.GitInteractiveRebaseAction" text="Interactively Rebase from Here..."
+            description="Show the dialog for interactive rebase which allows to squash, fixup, reorder, remove and reword commits" />
+    <action id="Git.Commit.And.Push.Executor" class="git4idea.actions.GitCommitAndPushExecutorAction" text="Commit and &amp;Push...">
+      <add-to-group group-id="Vcs.CommitExecutor.Actions"/>
+      <keyboard-shortcut first-keystroke="control alt K" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="meta alt K" keymap="Xcode" remove="true"/>
+    </action>
 
     <group id="Git.Log.ContextMenu">
       <separator/>
@@ -121,7 +131,11 @@
       <reference id="Git.BranchOperationGroup"/>
       <separator/>
       <reference id="Git.Reset.In.Log" />
+      <reference id="Git.Revert.In.Log" />
       <reference id="Git.Uncommit" />
+      <separator />
+      <reference id="Git.Reword.Commit" />
+      <reference id="Git.Interactive.Rebase" />
       <add-to-group group-id="Vcs.Log.ContextMenu" />
     </group>
 
@@ -144,6 +158,7 @@
     <vcsRepositoryCreator implementation="git4idea.repo.GitRepositoryCreator"/>
     <vcsPopupProvider implementation="git4idea.actions.GitQuickListContentProvider"/>
     <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitCheckinHandlerFactory"/>
+    <checkinHandlerFactory implementation="git4idea.checkin.GitSkipHooksCommitHandlerFactory" order="last"/>
     <checkinHandlerFactory implementation="git4idea.checkin.UnresolvedMergeCheckFactory"/>
     <logProvider implementation="git4idea.log.GitLogProvider"/>
     <vcsChangesViewRefresher implementation="git4idea.changes.GitChangesViewRefresher" />
@@ -151,6 +166,7 @@
     <cherryPicker implementation="git4idea.cherrypick.GitCherryPicker"/>
     <vcsAnnotationGutterActionProvider implementation="git4idea.actions.GitShowCommitInLogAnnotationGutterActionProvider" />
     <statistics.usagesCollector implementation="git4idea.GitStatisticsCollector" />
+    <vcsRepositoryInitializer implementation="git4idea.repo.GitRepositoryInitializer"/>
 
     <projectService serviceImplementation="git4idea.repo.GitRepositoryManager"/>
     <projectService serviceImplementation="git4idea.ui.branch.GitBranchManager"/>
@@ -180,11 +196,14 @@
     <projectService
         serviceInterface="git4idea.config.GitExecutableValidator"
         serviceImplementation="git4idea.config.GitExecutableValidator"/>
+    <projectService serviceImplementation="git4idea.util.GitVcsConsoleWriter"/>
     <projectService serviceInterface="git4idea.branch.GitBrancher"
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
     <projectService serviceImplementation="git4idea.GitUserRegistry" />
 
     <projectService serviceImplementation="git4idea.branch.DeepComparatorHolder"/>
+    <projectService serviceInterface="git4idea.config.GitExecutableProblemsNotifier"
+                    serviceImplementation="git4idea.config.GitExecutableProblemsNotifier"/>
 
     <applicationService serviceInterface="git4idea.config.GitVcsApplicationSettings"
                         serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
@@ -200,6 +219,7 @@
                         serviceImplementation="git4idea.remote.GitRememberedInputs"/>
     <applicationService serviceInterface="git4idea.commands.Git"
                         serviceImplementation="git4idea.commands.GitImpl"/>
+    <applicationService serviceImplementation="git4idea.config.GitExecutableManager"/>
     <applicationService serviceInterface="git4idea.GitPlatformFacade"
                         serviceImplementation="git4idea.GitPlatformFacadeImpl" />
     <applicationService serviceInterface="git4idea.DialogManager"

@@ -32,8 +32,6 @@ import java.util.Map;
 
 /**
  * @author Maxim.Mossienko
- *         Date: Oct 14, 2008
- *         Time: 11:38:46 PM
  */
 public class HtmlLineMarkerProvider implements LineMarkerProvider {
   private final Map<Language, LineMarkerProvider> embeddedLanguagesLineMarkerProviders = new THashMap<>();
@@ -57,7 +55,8 @@ public class HtmlLineMarkerProvider implements LineMarkerProvider {
 
     if (!embeddedLanguagesLineMarkerProviders.containsKey(language)) {
       embeddedLanguagesLineMarkerProviders.put(language, markerProvider = LineMarkerProviders.INSTANCE.forLanguage(language));
-    } else {
+    }
+    else {
       markerProvider = embeddedLanguagesLineMarkerProviders.get(language);
     }
     return markerProvider;
@@ -81,12 +80,7 @@ public class HtmlLineMarkerProvider implements LineMarkerProvider {
 
         if (lineMarkerProvider != null) {
           if (embeddedLineMarkersWorkItems == null) embeddedLineMarkersWorkItems = new THashMap<>();
-          List<PsiElement> elementList = embeddedLineMarkersWorkItems.get(lineMarkerProvider);
-
-          if (elementList == null) {
-            elementList = new ArrayList<>(5);
-            embeddedLineMarkersWorkItems.put(lineMarkerProvider, elementList);
-          }
+          List<PsiElement> elementList = embeddedLineMarkersWorkItems.computeIfAbsent(lineMarkerProvider, k -> new ArrayList<>(5));
 
           elementList.add(element);
         }

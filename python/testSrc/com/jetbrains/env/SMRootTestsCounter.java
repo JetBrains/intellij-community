@@ -36,7 +36,7 @@ final class SMRootTestsCounter {
   };
 
   @NotNull
-  private SMTestProxy.SMRootTestProxy myTestProxy;
+  private final SMTestProxy.SMRootTestProxy myTestProxy;
 
   /**
    * @param testProxy proxy to wrap
@@ -62,6 +62,10 @@ final class SMRootTestsCounter {
    */
   int getPassedTestsCount() {
     return myTestProxy.collectChildren(NOT_SUIT.and(Filter.PASSED)).size();
+  }
+
+  int getIgnoredTestsCount() {
+    return myTestProxy.collectChildren(NOT_SUIT.and(Filter.IGNORED)).size();
   }
 
 

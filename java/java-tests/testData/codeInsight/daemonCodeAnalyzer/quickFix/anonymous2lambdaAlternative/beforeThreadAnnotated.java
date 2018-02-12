@@ -1,4 +1,4 @@
-// "Replace with constructor accepting lambda" "false"
+// "Replace with new Thread(() -> {…})" "false"
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 

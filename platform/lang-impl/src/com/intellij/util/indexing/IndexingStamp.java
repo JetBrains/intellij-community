@@ -24,12 +24,11 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TObjectLongHashMap;
 import gnu.trove.TObjectLongProcedure;
-import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +45,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 25, 2007
  *
  * A file has three indexed states (per particular index): indexed (with particular index_stamp), outdated and (trivial) unindexed
  * if index version is advanced or we rebuild it then index_stamp is advanced, we rebuild everything
@@ -59,7 +57,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class IndexingStamp {
   private static final long INDEX_DATA_OUTDATED_STAMP = -2L;
 
-  private static final int VERSION = 15;
+  private static final int VERSION = 15 + (SharedIndicesData.ourFileSharedIndicesEnabled ? 15 : 0) + (SharedIndicesData.DO_CHECKS ? 15 : 0);
   private static final ConcurrentMap<ID<?, ?>, IndexVersion> ourIndexIdToCreationStamp = ContainerUtil.newConcurrentMap();
   static final int INVALID_FILE_ID = 0;
 
@@ -118,7 +116,7 @@ public class IndexingStamp {
       @Override
       public DataOutputStream execute(boolean lastAttempt) throws FileNotFoundException {
         try {
-          return new DataOutputStream(new FileOutputStream(file));
+          return new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
         }
         catch (FileNotFoundException ex) {
           if (lastAttempt) throw ex;
@@ -149,11 +147,11 @@ public class IndexingStamp {
     return getIndexVersion(indexId, currentIndexVersion) == null;
   }
 
-  private static final int ANY_VERSION = 1;
+  private static final int ANY_CURRENT_INDEX_VERSION = Integer.MIN_VALUE;
   private static final long NO_VERSION = 0;
   
   public static long getIndexCreationStamp(@NotNull ID<?, ?> indexName) {
-    IndexVersion version = getIndexVersion(indexName, ANY_VERSION);
+    IndexVersion version = getIndexVersion(indexName, ANY_CURRENT_INDEX_VERSION);
     return version != null ? version.myModificationCount : NO_VERSION;
   }
 
@@ -170,7 +168,7 @@ public class IndexingStamp {
         final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(versionFile)));
         try {
 
-          if ((DataInputOutputUtil.readINT(in) == currentIndexVersion || currentIndexVersion == ANY_VERSION) &&
+          if ((DataInputOutputUtil.readINT(in) == currentIndexVersion || currentIndexVersion == ANY_CURRENT_INDEX_VERSION) &&
               DataInputOutputUtil.readINT(in) == VERSION &&
               DataInputOutputUtil.readTIME(in) == FSRecords.getCreationTimestamp()) {
             version = new IndexVersion(in);
@@ -341,7 +339,7 @@ public class IndexingStamp {
     }
   }
 
-  private static final ConcurrentIntObjectMap<Timestamps> myTimestampsCache = ContainerUtil.createConcurrentIntObjectMap();
+  private static final IntObjectMap<IndexingStamp.Timestamps> myTimestampsCache = ContainerUtil.createConcurrentIntObjectMap();
   private static final BlockingQueue<Integer> ourFinishedFiles = new ArrayBlockingQueue<>(100);
 
   public static long getIndexStamp(int fileId, ID<?, ?> indexName) {
@@ -396,12 +394,9 @@ public class IndexingStamp {
         Timestamps stamp = createOrGetTimeStamp(fileId);
         if (stamp != null && stamp.myIndexStamps != null && !stamp.myIndexStamps.isEmpty()) {
           final SmartList<ID<?, ?>> retained = new SmartList<>();
-          stamp.myIndexStamps.forEach(new TObjectProcedure<ID<?, ?>>() {
-            @Override
-            public boolean execute(ID<?, ?> object) {
-              retained.add(object);
-              return true;
-            }
+          stamp.myIndexStamps.forEach(object -> {
+            retained.add(object);
+            return true;
           });
           return retained;
         }
@@ -435,9 +430,9 @@ public class IndexingStamp {
             if (timestamp == null) continue;
 
             if (timestamp.isDirty() /*&& file.isValid()*/) {
-              final DataOutputStream sink = FSRecords.writeAttribute(file, Timestamps.PERSISTENCE);
-              timestamp.writeToStream(sink);
-              sink.close();
+              try (DataOutputStream sink = FSRecords.writeAttribute(file, Timestamps.PERSISTENCE)) {
+                timestamp.writeToStream(sink);
+              }
             }
           } catch (IOException e) {
             throw new RuntimeException(e);

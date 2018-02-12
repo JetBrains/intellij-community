@@ -21,15 +21,20 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 
+/**
+ * @deprecated use {@link ContainerUtil#createWeakValueMap()} instead
+ */
+@Deprecated
 public final class WeakValueHashMap<K,V> extends RefValueHashMap<K,V> {
   private static class MyWeakReference<K, T> extends WeakReference<T> implements MyReference<K, T> {
     private final K key;
 
-    private MyWeakReference(K key, T referent, ReferenceQueue<? super T> q) {
+    private MyWeakReference(@NotNull K key, T referent, ReferenceQueue<? super T> q) {
       super(referent, q);
       this.key = key;
     }
 
+    @NotNull
     @Override
     public K getKey() {
       return key;

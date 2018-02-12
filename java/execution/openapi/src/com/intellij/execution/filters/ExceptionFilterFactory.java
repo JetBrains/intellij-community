@@ -19,12 +19,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/5/11
- * Time: 7:46 PM
- */
 public interface ExceptionFilterFactory {
   ExtensionPointName<ExceptionFilterFactory> EP_NAME = ExtensionPointName.create("com.intellij.exceptionFilter");
 

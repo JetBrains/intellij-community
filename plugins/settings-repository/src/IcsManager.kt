@@ -1,32 +1,17 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.SchemeManagerFactoryBase
-import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.configurationStore.StreamProvider
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.stateStore
-import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
@@ -74,7 +59,7 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
 
   private val commitAlarm = SingleAlarm(Runnable {
     runBackgroundableTask(icsMessage("task.commit.title")) { indicator ->
-      LOG.catchAndLog {
+      LOG.runAndLogException {
         repositoryManager.commit(indicator, fixStateIfCannotCommit = false)
       }
     }
@@ -146,18 +131,17 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
     }
   }
 
-  fun newStreamProvider() {
-    val application = ApplicationManager.getApplication()
-    (application.stateStore.stateStorageManager as StateStorageManagerImpl).streamProvider = ApplicationLevelProvider()
+  fun setApplicationLevelStreamProvider() {
+    val storageManager = ApplicationManager.getApplication().stateStore.storageManager
+    // just to be sure
+    storageManager.removeStreamProvider(ApplicationLevelProvider::class.java)
+    storageManager.addStreamProvider(ApplicationLevelProvider(), first = true)
   }
 
   fun beforeApplicationLoaded(application: Application) {
     repositoryActive = repositoryManager.isRepositoryExists()
 
-    val storage = application.stateStore.stateStorageManager as StateStorageManagerImpl
-    if (storage.streamProvider == null || !storage.streamProvider!!.enabled) {
-      storage.streamProvider = ApplicationLevelProvider()
-    }
+    application.stateStore.storageManager.addStreamProvider(ApplicationLevelProvider())
 
     val messageBusConnection = application.messageBus.connect()
     messageBusConnection.subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
@@ -180,7 +164,7 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
     })
   }
 
-  open inner class IcsStreamProvider(protected val projectId: String?) : StreamProvider {
+  open inner class IcsStreamProvider(private val projectId: String?) : StreamProvider {
     override val enabled: Boolean
       get() = this@IcsManager.active
 
@@ -245,8 +229,8 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
     icsManager = IcsManager(pluginSystemDir)
 
     if (!pluginSystemDir.exists()) {
-      LOG.catchAndLog {
-        val oldPluginDir = Paths.get(PathManager.getSystemPath(), "settingsRepository")
+      LOG.runAndLogException {
+        val oldPluginDir = appSystemDir.resolve("settingsRepository")
         if (oldPluginDir.exists()) {
           oldPluginDir.move(pluginSystemDir)
         }

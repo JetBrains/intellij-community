@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.EditorKit;
 import javax.swing.text.html.HTMLEditorKit;
@@ -38,17 +39,15 @@ import java.util.Collections;
 public class JBLabel extends JLabel implements AnchorableComponent {
   private UIUtil.ComponentStyle myComponentStyle = UIUtil.ComponentStyle.REGULAR;
   private UIUtil.FontColor myFontColor = UIUtil.FontColor.NORMAL;
-  private JComponent myAnchor = null;
-  private JEditorPane myEditorPane = null;
-  private JLabel myIconLabel = null;
-  private boolean myMultiline = false;
+  private JComponent myAnchor;
+  private JEditorPane myEditorPane;
+  private JLabel myIconLabel;
+  private boolean myMultiline;
 
   public JBLabel() {
-    super();
   }
 
   public JBLabel(@NotNull UIUtil.ComponentStyle componentStyle) {
-    super();
     setComponentStyle(componentStyle);
   }
 
@@ -136,6 +135,7 @@ public class JBLabel extends JLabel implements AnchorableComponent {
     if (myEditorPane != null) return getLayout().preferredLayoutSize(this);
     return super.getPreferredSize();
   }
+
   @Override
   public Dimension getMinimumSize() {
     if (myAnchor != null && myAnchor != this) return myAnchor.getMinimumSize();
@@ -158,6 +158,7 @@ public class JBLabel extends JLabel implements AnchorableComponent {
       myEditorPane.setText(getText());
       updateStyle(myEditorPane);
       checkMultiline();
+      updateTextAlignment();
     }
   }
 
@@ -167,6 +168,7 @@ public class JBLabel extends JLabel implements AnchorableComponent {
     if (myIconLabel != null) {
       myIconLabel.setIcon(icon);
       updateLayout();
+      updateTextAlignment();
     }
   }
 
@@ -179,6 +181,7 @@ public class JBLabel extends JLabel implements AnchorableComponent {
     super.setFont(font);
     if (myEditorPane != null) {
       updateStyle(myEditorPane);
+      updateTextAlignment();
     }
   }
 
@@ -187,6 +190,22 @@ public class JBLabel extends JLabel implements AnchorableComponent {
     super.setIconTextGap(iconTextGap);
     if (myEditorPane != null) {
       updateLayout();
+    }
+  }
+
+  @Override
+  public void setBounds(int x, int y, int width, int height) {
+    super.setBounds(x, y, width, height);
+    if (myEditorPane != null) {
+      updateTextAlignment();
+    }
+  }
+
+  @Override
+  public void setVerticalTextPosition(int textPosition) {
+    super.setVerticalTextPosition(textPosition);
+    if (myEditorPane != null) {
+      updateTextAlignment();
     }
   }
 
@@ -211,6 +230,7 @@ public class JBLabel extends JLabel implements AnchorableComponent {
   /**
    * In 'copyable' mode JBLabel has the same appearance but user can select text with mouse and copy it to clipboard with standard shortcut.
    * By default JBLabel is NOT copyable
+   *
    * @return 'this' (the same instance)
    */
   public JBLabel setCopyable(boolean copyable) {
@@ -262,7 +282,6 @@ public class JBLabel extends JLabel implements AnchorableComponent {
         myEditorPane.setEditable(false);
         myEditorPane.setBackground(UIUtil.TRANSPARENT_COLOR);
         myEditorPane.setOpaque(false);
-        myEditorPane.setBorder(null);
         UIUtil.putClientProperty(myEditorPane, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, Collections.singleton(ellipsisLabel));
 
         myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());
@@ -272,7 +291,9 @@ public class JBLabel extends JLabel implements AnchorableComponent {
         checkMultiline();
         myEditorPane.setCaretPosition(0);
         updateLayout();
-      } else {
+        updateTextAlignment();
+      }
+      else {
         removeAll();
         myEditorPane = null;
         myIconLabel = null;
@@ -281,7 +302,9 @@ public class JBLabel extends JLabel implements AnchorableComponent {
     return this;
   }
 
-  private void updateStyle(@NotNull  JEditorPane pane) {
+  private void updateStyle(@NotNull JEditorPane pane) {
+    myEditorPane.setFont(getFont());
+    myEditorPane.setForeground(getForeground());
     EditorKit kit = pane.getEditorKit();
     if (kit instanceof HTMLEditorKit) {
       StyleSheet css = ((HTMLEditorKit)kit).getStyleSheet();
@@ -291,5 +314,27 @@ public class JBLabel extends JLabel implements AnchorableComponent {
                   "font-size:" + getFont().getSize() + "pt;" +
                   "white-space:nowrap;}");
     }
+  }
+
+  private void updateTextAlignment() {
+    if (myEditorPane == null) return;
+
+    myEditorPane.setBorder(null); // clear border
+
+    int position = getVerticalTextPosition();
+    if (position == TOP) {
+      return;
+    }
+
+    int preferredHeight = myEditorPane.getPreferredSize().height;
+    int availableHeight = getHeight();
+    if (availableHeight <= preferredHeight) {
+      return;
+    }
+
+    // since the 'top' value is in real already-scaled pixels, should use swing's EmptyBorder
+    //noinspection UseDPIAwareBorders
+    myEditorPane.setBorder(new EmptyBorder(position == CENTER ? (availableHeight - preferredHeight + 1) / 2 :
+                                           availableHeight - preferredHeight, 0, 0, 0));
   }
 }

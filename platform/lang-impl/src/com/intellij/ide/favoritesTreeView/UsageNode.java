@@ -18,12 +18,6 @@ package com.intellij.ide.favoritesTreeView;
 import com.intellij.pom.Navigatable;
 import com.intellij.usages.Usage;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 6/1/12
- * Time: 1:51 PM
- */
 public class UsageNode implements Navigatable {
   private Usage myUsage;
   private NoteNode myComment;

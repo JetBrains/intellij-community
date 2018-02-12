@@ -16,12 +16,13 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mikhail Golubev
  */
-public interface PyTypeCommentOwner {
+public interface PyTypeCommentOwner extends PsiElement {
   /**
    * Returns a special comment that follows element definition and starts with conventional "type:" prefix. 
    * It is supposed to contain type annotation in PEP 484 compatible format. For further details see sections

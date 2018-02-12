@@ -17,9 +17,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
@@ -76,7 +76,7 @@ public class HgWorkingCopyRevisionsCommand {
    */
   @NotNull
   public Couple<HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable VirtualFile file, @Nullable HgRevisionNumber revision) {
-    return parents(repo, ObjectsConvertor.VIRTUAL_FILEPATH.convert(file), revision);
+    return parents(repo, VcsUtil.getFilePath(file), revision);
   }
 
   /**
@@ -144,11 +144,11 @@ public class HgWorkingCopyRevisionsCommand {
     }
 
     final List<String> lines = result.getOutputLines();
-    if (lines != null && !lines.isEmpty()) {
+    if (!lines.isEmpty()) {
       List<String> parts = StringUtil.split(lines.get(0), " ");
-      String changesets = parts.get(0);
-      String revisions = parts.get(1);
       if (parts.size() >= 2) {
+        String changesets = parts.get(0);
+        String revisions = parts.get(1);
         if (changesets.indexOf('+') != changesets.lastIndexOf('+')) {
           // in the case of unresolved merge we have 2 revisions at once, both current, so with "+"
           // 9f2e6c02913c+b311eb4eb004+ 186+183+

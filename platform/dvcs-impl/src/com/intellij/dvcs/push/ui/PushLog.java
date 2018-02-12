@@ -23,8 +23,8 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.EditSourceForDialogAction;
+import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
@@ -35,11 +35,13 @@ import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,14 +59,13 @@ import java.util.List;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_COLLAPSE_ALL;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_EXPAND_ALL;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
-import static java.util.stream.Collectors.toCollection;
 
 public class PushLog extends JPanel implements DataProvider {
 
   private static final String CONTEXT_MENU = "Vcs.Push.ContextMenu";
   private static final String START_EDITING = "startEditing";
   private static final String SPLITTER_PROPORTION = "Vcs.Push.Splitter.Proportion";
-  private final ChangesBrowser myChangesBrowser;
+  private final SimpleChangesBrowser myChangesBrowser;
   private final CheckboxTree myTree;
   private final MyTreeCellRenderer myTreeCellRenderer;
   private final JScrollPane myScrollPane;
@@ -104,7 +105,7 @@ public class PushLog extends JPanel implements DataProvider {
           return "";
         }
         Object node = path.getLastPathComponent();
-        if (node == null || (!(node instanceof DefaultMutableTreeNode))) {
+        if ((!(node instanceof DefaultMutableTreeNode))) {
           return "";
         }
         if (node instanceof TooltipNode) {
@@ -140,6 +141,17 @@ public class PushLog extends JPanel implements DataProvider {
         }
         restoreSelection(lastSelectedPathComponent);
       }
+
+      @Override
+      protected void installSpeedSearch() {
+        new TreeSpeedSearch(this, path -> {
+          Object pathComponent = path.getLastPathComponent();
+          if (pathComponent instanceof RepositoryNode) {
+            return ((RepositoryNode)pathComponent).getRepositoryName();
+          }
+          return pathComponent.toString();
+        });
+      }
     };
     myTree.setUI(new MyTreeUi());
     myTree.setBorder(new EmptyBorder(2, 0, 0, 0));  //additional vertical indent
@@ -152,7 +164,7 @@ public class PushLog extends JPanel implements DataProvider {
       @Override
       public void editingStopped(ChangeEvent e) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
-        if (node != null && node instanceof EditableTreeNode) {
+        if (node instanceof EditableTreeNode) {
           JComponent editedComponent = (JComponent)node.getUserObject();
           InputVerifier verifier = editedComponent.getInputVerifier();
           if (verifier != null && !verifier.verify(editedComponent)) {
@@ -178,7 +190,7 @@ public class PushLog extends JPanel implements DataProvider {
       @Override
       public void editingCanceled(ChangeEvent e) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
-        if (node != null && node instanceof EditableTreeNode) {
+        if (node instanceof EditableTreeNode) {
           ((EditableTreeNode)node).fireOnCancel();
         }
         resetEditSync();
@@ -204,7 +216,7 @@ public class PushLog extends JPanel implements DataProvider {
       @Override
       public void focusLost(FocusEvent e) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
-        if (node != null && node instanceof RepositoryNode && myTree.isEditing()) {
+        if (node instanceof RepositoryNode && myTree.isEditing()) {
           //need to force repaint foreground  for non-focused editing node
           myTree.getCellEditor().getTreeCellEditorComponent(myTree, node, true, false, false, myTree.getRowForPath(
             TreeUtil.getPathFromRoot(node)));
@@ -225,14 +237,12 @@ public class PushLog extends JPanel implements DataProvider {
     ToolTipManager.sharedInstance().registerComponent(myTree);
     PopupHandler.installPopupHandler(myTree, VcsLogActionPlaces.POPUP_ACTION_GROUP, CONTEXT_MENU);
 
-    myChangesBrowser =
-      new ChangesBrowser(project, null, Collections.<Change>emptyList(), null, false, false, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES,
-                         null);
+    myChangesBrowser = new SimpleChangesBrowser(project, false, false);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), myTree);
     final EditSourceForDialogAction editSourceAction = new EditSourceForDialogAction(myChangesBrowser);
     editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myChangesBrowser);
     myChangesBrowser.addToolbarAction(editSourceAction);
-    myChangesBrowser.setMinimumSize(new Dimension(200, myChangesBrowser.getPreferredSize().height));
+    myChangesBrowser.setMinimumSize(new Dimension(JBUI.scale(200), myChangesBrowser.getPreferredSize().height));
     setDefaultEmptyText();
 
     JBSplitter splitter = new JBSplitter(SPLITTER_PROPORTION, 0.7f);
@@ -264,9 +274,17 @@ public class PushLog extends JPanel implements DataProvider {
 
     setLayout(new BorderLayout());
     add(splitter);
-    myTree.setMinimumSize(new Dimension(400, myTree.getPreferredSize().height));
+    myTree.setMinimumSize(new Dimension(JBUI.scale(400), myTree.getPreferredSize().height));
     myTree.setRowHeight(0);
     myScrollPane.setMinimumSize(new Dimension(myTree.getMinimumSize().width, myScrollPane.getPreferredSize().height));
+  }
+
+  public void highlightNodeOrFirst(@Nullable RepositoryNode repositoryNode, boolean shouldScrollTo) {
+    TreePath selectionPath = repositoryNode != null ? TreeUtil.getPathFromRoot(repositoryNode) : TreeUtil.getFirstNodePath(myTree);
+    myTree.setSelectionPath(selectionPath);
+    if (shouldScrollTo) {
+      myTree.scrollPathToVisible(selectionPath);
+    }
   }
 
   private class MyShowCommitInfoAction extends DumbAwareAction {
@@ -328,15 +346,15 @@ public class PushLog extends JPanel implements DataProvider {
 
   @NotNull
   private static List<CommitNode> collectSelectedCommitNodes(@NotNull List<DefaultMutableTreeNode> selectedNodes) {
-    List<CommitNode> nodes = ContainerUtil.newArrayList();
-    for (DefaultMutableTreeNode node : selectedNodes) {
-      if (node instanceof RepositoryNode) {
-        nodes.addAll(getChildNodesByType(node, CommitNode.class, true));
-      }
-      else if (node instanceof CommitNode && !nodes.contains(node)) {
-        nodes.add((CommitNode)node);
-      }
-    }
+    //addAll Commit nodes from selected Repository nodes;
+    List<CommitNode> nodes = StreamEx.of(selectedNodes)
+      .select(RepositoryNode.class)
+      .toFlatList(node -> getChildNodesByType(node, CommitNode.class, true));
+    // add all others selected Commit nodes;
+    nodes.addAll(StreamEx.of(selectedNodes)
+                   .select(CommitNode.class)
+                   .filter(node -> !nodes.contains(node))
+                   .toList());
     return nodes;
   }
 
@@ -466,9 +484,11 @@ public class PushLog extends JPanel implements DataProvider {
   }
 
   private void toggleRepositoriesFromCommits() {
-    LinkedHashSet<CheckedTreeNode> checkedNodes =
-      getSelectedTreeNodes().stream().map(n -> n instanceof CommitNode ? n.getParent() : n).filter(CheckedTreeNode.class::isInstance)
-        .map(CheckedTreeNode.class::cast).collect(toCollection(LinkedHashSet::new));
+    LinkedHashSet<CheckedTreeNode> checkedNodes = StreamEx.of(getSelectedTreeNodes())
+      .map(n -> n instanceof CommitNode ? n.getParent() : n)
+      .select(CheckedTreeNode.class)
+      .filter(CheckedTreeNode::isEnabled)
+      .toCollection(LinkedHashSet::new);
     if (checkedNodes.isEmpty()) return;
     // use new state from first lead node;
     boolean newState = !checkedNodes.iterator().next().isChecked();
@@ -528,25 +548,28 @@ public class PushLog extends JPanel implements DataProvider {
     //todo should be optimized in case of start loading just edited node
     final DefaultTreeModel model = ((DefaultTreeModel)myTree.getModel());
     model.nodeStructureChanged(parentNode);
-    expandSelected(parentNode);
+    autoExpandChecked(parentNode);
     myShouldRepaint = false;
   }
 
-  private void expandSelected(@NotNull DefaultMutableTreeNode node) {
+  private void autoExpandChecked(@NotNull DefaultMutableTreeNode node) {
     if (node.getChildCount() <= 0) return;
     if (node instanceof RepositoryNode) {
-      TreePath path = TreeUtil.getPathFromRoot(node);
-      myTree.expandPath(path);
+      expandIfChecked((RepositoryNode)node);
       return;
     }
     for (DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)node.getFirstChild();
          childNode != null;
          childNode = (DefaultMutableTreeNode)node.getChildAfter(childNode)) {
       if (!(childNode instanceof RepositoryNode)) return;
-      TreePath path = TreeUtil.getPathFromRoot(childNode);
-      if (((RepositoryNode)childNode).isChecked()) {
-        myTree.expandPath(path);
-      }
+      expandIfChecked((RepositoryNode)childNode);
+    }
+  }
+
+  private void expandIfChecked(@NotNull RepositoryNode node) {
+    if (node.isChecked()) {
+      TreePath path = TreeUtil.getPathFromRoot(node);
+      myTree.expandPath(path);
     }
   }
 

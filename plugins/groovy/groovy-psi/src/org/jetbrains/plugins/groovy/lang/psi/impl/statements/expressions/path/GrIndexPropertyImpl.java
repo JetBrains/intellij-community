@@ -1,223 +1,61 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.NullableFunction;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.AtomicNullableLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyPolyVariantReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBuiltinTypeClassExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrImmediateTupleType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil;
 
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.getClassReferenceFromExpression;
+import static org.jetbrains.plugins.groovy.lang.resolve.ReferencesKt.referenceArray;
 
 /**
  * @author ilyas
  */
 public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProperty {
 
-  private static final Function<GrIndexPropertyImpl, PsiType> TYPE_CALCULATOR =
-    (NullableFunction<GrIndexPropertyImpl, PsiType>)index -> index.inferType(null);
-  private static final ResolveCache.PolyVariantResolver<MyReference> RESOLVER = new ResolveCache.PolyVariantResolver<MyReference>() {
-    @NotNull
-    @Override
-    public GroovyResolveResult[] resolve(@NotNull MyReference reference, boolean incompleteCode) {
-      final GrIndexPropertyImpl index = reference.getElement();
-      return index.resolveImpl(incompleteCode, null, null);
-    }
-  };
+  private final NullableLazyValue<GrIndexPropertyReference> myRValueReference = AtomicNullableLazyValue.createValue(
+    () -> GroovyLValueUtil.isRValue(this) ? new GrIndexPropertyReference(this, true) : null
+  );
 
-  private final MyReference myReference = new MyReference();
+  private final NullableLazyValue<GrIndexPropertyReference> myLValueReference = AtomicNullableLazyValue.createValue(
+    () -> GroovyLValueUtil.isLValue(this) ? new GrIndexPropertyReference(this, false) : null
+  );
 
-  // return not null in case of String[], int[], double[][]
+  private final NotNullLazyValue<GroovyPolyVariantReference[]> myReferences = AtomicNotNullLazyValue.createValue(
+    () -> referenceArray(getRValueReference(), getLValueReference())
+  );
+
   @Nullable
-  private PsiType inferArrayType() {
-    PsiType arrayTypeBase = getClassReferenceFromExpression(this);
-    if (arrayTypeBase == null) return null;
-    return TypesUtil.createJavaLangClassType(arrayTypeBase, this.getProject(), this.getResolveScope());
-  }
-
-  private PsiType inferType(@Nullable Boolean isSetter) {
-    PsiType arrayType = inferArrayType();
-    if (arrayType != null) {
-      return arrayType;
-    }
-
-    GrExpression selected = getInvokedExpression();
-    PsiType thisType = selected.getType();
-
-    if (thisType == null) {
-      thisType = TypesUtil.getJavaLangObject(this);
-    }
-
-    GrArgumentList argList = getArgumentList();
-
-    PsiType[] argTypes = PsiUtil.getArgumentTypes(argList);
-    if (argTypes == null) return null;
-
-    final PsiManager manager = getManager();
-    final GlobalSearchScope resolveScope = getResolveScope();
-
-    if (PsiImplUtil.isSimpleArrayAccess(thisType, argTypes, this, isSetter != null ? isSetter.booleanValue() : PsiUtil.isLValue(this))) {
-      return TypesUtil.boxPrimitiveType(((PsiArrayType)thisType).getComponentType(), manager, resolveScope);
-    }
-
-    final GroovyResolveResult[] candidates;
-    if (isSetter != null) {
-      candidates = isSetter.booleanValue() ? multiResolveSetter(false) : multiResolveGetter(false);
-    }
-    else {
-      candidates = multiResolve(false);
-    }
-
-
-    //don't use short PsiUtil.getArgumentTypes(...) because it use incorrect 'isSetter' value
-    PsiType[] args = PsiUtil
-      .getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, true, null);
-    final GroovyResolveResult candidate = PsiImplUtil.extractUniqueResult(candidates);
-    final PsiElement element = candidate.getElement();
-    if (element instanceof PsiNamedElement) {
-      final String name = ((PsiNamedElement)element).getName();
-      if ("putAt".equals(name) && args != null) {
-        args = ArrayUtil.append(args, TypeInferenceHelper.getInitializerTypeFor(this), PsiType.class);
-      }
-    }
-    PsiType overloadedOperatorType = ResolveUtil.extractReturnTypeFromCandidate(candidate, this, args);
-
-    PsiType componentType = extractMapValueType(thisType, args, manager, resolveScope);
-
-    if (overloadedOperatorType != null &&
-        (componentType == null || !TypesUtil.isAssignableByMethodCallConversion(overloadedOperatorType, componentType, selected))) {
-      return TypesUtil.boxPrimitiveType(overloadedOperatorType, manager, resolveScope);
-    }
-    return componentType;
+  @Override
+  public GroovyPolyVariantReference getLValueReference() {
+    return myLValueReference.getValue();
   }
 
   @Nullable
-  private static PsiType extractMapValueType(PsiType thisType, PsiType[] argTypes, PsiManager manager, GlobalSearchScope resolveScope) {
-    if (argTypes.length != 1 || !InheritanceUtil.isInheritor(thisType, CommonClassNames.JAVA_UTIL_MAP)) return null;
-    final PsiType substituted = com.intellij.psi.util.PsiUtil.substituteTypeParameter(thisType, CommonClassNames.JAVA_UTIL_MAP, 1, true);
-    return TypesUtil.boxPrimitiveType(substituted, manager, resolveScope);
+  @Override
+  public GroovyPolyVariantReference getRValueReference() {
+    return myRValueReference.getValue();
   }
 
-
-  private GroovyResolveResult[] resolveImpl(boolean incompleteCode, @Nullable GrExpression upToArgument, @Nullable Boolean isSetter) {
-    if (isSetter == null) isSetter = PsiUtil.isLValue(this);
-
-    GrExpression invoked = getInvokedExpression();
-    PsiType thisType = invoked.getType();
-
-    if (thisType == null) {
-      thisType = TypesUtil.getJavaLangObject(this);
-    }
-
-    GrArgumentList argList = getArgumentList();
-
-    //don't use short PsiUtil.getArgumentTypes(...) because it use incorrect 'isSetter' value
-    PsiType[] argTypes = PsiUtil.getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, true, upToArgument);
-    if (argTypes == null) return GroovyResolveResult.EMPTY_ARRAY;
-
-    final GlobalSearchScope resolveScope = getResolveScope();
-
-    if (argTypes.length == 0) {
-      PsiType arrType = null;
-      if (invoked instanceof GrBuiltinTypeClassExpression) {
-        arrType = ((GrBuiltinTypeClassExpression)invoked).getPrimitiveType();
-      }
-
-      if (invoked instanceof GrReferenceExpression) {
-        final PsiElement resolved = ((GrReferenceExpression)invoked).resolve();
-        if (resolved instanceof PsiClass) {
-          String qname = ((PsiClass)resolved).getQualifiedName();
-          if (qname != null) {
-            arrType = TypesUtil.createTypeByFQClassName(qname, this);
-          }
-        }
-      }
-
-      if (arrType != null) {
-        return GroovyResolveResult.EMPTY_ARRAY;
-      }
-    }
-
-    GroovyResolveResult[] candidates;
-    final String name = isSetter ? "putAt" : "getAt";
-    if (isSetter && !incompleteCode) {
-      argTypes = ArrayUtil.append(argTypes, TypeInferenceHelper.getInitializerTypeFor(this), PsiType.class);
-    }
-
-    if (PsiImplUtil.isSimpleArrayAccess(thisType, argTypes, this, isSetter)) {
-      return GroovyResolveResult.EMPTY_ARRAY;
-    }
-
-    candidates = ResolveUtil.getMethodCandidates(thisType, name, invoked, true, incompleteCode, argTypes);
-
-    //hack for remove DefaultGroovyMethods.getAt(Object, ...)
-    if (candidates.length == 2) {
-      for (int i = 0; i < candidates.length; i++) {
-        GroovyResolveResult candidate = candidates[i];
-        final PsiElement element = candidate.getElement();
-        if (element instanceof GrGdkMethod) {
-          final PsiMethod staticMethod = ((GrGdkMethod)element).getStaticMethod();
-          final PsiParameter param = staticMethod.getParameterList().getParameters()[0];
-          if (param.getType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-            return new GroovyResolveResult[]{candidates[1 - i]};
-          }
-        }
-      }
-    }
-
-    if (candidates.length != 1) {
-      final GrTupleType tupleType = new GrImmediateTupleType(argTypes, JavaPsiFacade.getInstance(getProject()), resolveScope);
-      final GroovyResolveResult[] tupleCandidates = ResolveUtil.getMethodCandidates(thisType, name, invoked, tupleType);
-      if (incompleteCode) {
-        candidates = ArrayUtil.mergeArrays(candidates, tupleCandidates, count -> new GroovyResolveResult[count]);
-      }
-      else {
-        candidates = tupleCandidates;
-      }
-    }
-
-    return candidates;
+  @NotNull
+  @Override
+  public GroovyPolyVariantReference[] getReferences() {
+    return myReferences.getValue();
   }
 
   public GrIndexPropertyImpl(@NotNull ASTNode node) {
@@ -247,156 +85,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
 
   @Nullable
   @Override
-  public PsiType getGetterType() {
-    return inferType(false);
-  }
-
-  @Nullable
-  @Override
-  public PsiType getSetterType() {
-    return inferType(true);
-  }
-
-  @NotNull
-  @Override
-  public GroovyResolveResult[] multiResolveGetter(boolean incomplete) {
-    return resolveImpl(incomplete, null, false);
-  }
-
-  @NotNull
-  @Override
-  public GroovyResolveResult[] multiResolveSetter(boolean incomplete) {
-    return resolveImpl(incomplete, null, true);
-  }
-
-  @NotNull
-  @Override
-  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    return TypeInferenceHelper.getCurrentContext().multiResolve(myReference, incompleteCode, RESOLVER);
-  }
-
-  @Override
-  public PsiType getType() {
-    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, TYPE_CALCULATOR);
-  }
-
-  @Override
   public PsiType getNominalType() {
-    if (getParent() instanceof GrThrowStatement) return super.getNominalType();
-
-    GroovyResolveResult[] candidates = multiResolve(true);
-    if (candidates.length == 1) {
-      return extractLastParameterType(candidates[0]);
-    }
-    return null;
-  }
-
-  @Nullable
-  private PsiType extractLastParameterType(GroovyResolveResult candidate) {
-    PsiElement element = candidate.getElement();
-    if (element instanceof PsiMethod) {
-      PsiParameter[] parameters = ((PsiMethod)element).getParameterList().getParameters();
-      if (parameters.length > 1) {
-        PsiParameter last = parameters[parameters.length - 1];
-        return TypesUtil.substituteAndNormalizeType(last.getType(), candidate.getSubstitutor(), candidate.getSpreadState(), this);
-      }
-    }
-    return null;
-  }
-
-  @NotNull
-  @Override
-  public GrNamedArgument[] getNamedArguments() {
-    GrArgumentList list = getArgumentList();
-    return list.getNamedArguments();
-  }
-
-  @NotNull
-  @Override
-  public GrExpression[] getExpressionArguments() {
-    GrArgumentList list = getArgumentList();
-    return list.getExpressionArguments();
-  }
-
-  @Override
-  public GrNamedArgument addNamedArgument(GrNamedArgument namedArgument) throws IncorrectOperationException {
-    GrArgumentList list = getArgumentList();
-    return list.addNamedArgument(namedArgument);
-  }
-
-  @NotNull
-  @Override
-  public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
-    if (upToArgument == null) {
-      return multiResolve(true);
-    }
-    return resolveImpl(true, upToArgument, null);
-  }
-
-  @NotNull
-  @Override
-  public GrClosableBlock[] getClosureArguments() {
-    return GrClosableBlock.EMPTY_ARRAY;
-  }
-
-  @Override
-  public PsiReference getReference() {
-    return myReference;
-  }
-
-  private class MyReference implements PsiPolyVariantReference {
-    @Override
-    public GrIndexPropertyImpl getElement() {
-      return GrIndexPropertyImpl.this;
-    }
-
-    @Override
-    public TextRange getRangeInElement() {
-      final int offset = getArgumentList().getStartOffsetInParent();
-      return new TextRange(offset, offset + 1);
-    }
-
-    @Override
-    public PsiElement resolve() {
-      return resolveMethod();
-    }
-
-    @NotNull
-    @Override
-    public String getCanonicalText() {
-      return "Array-style access";
-    }
-
-    @Override
-    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-      return GrIndexPropertyImpl.this;
-    }
-
-    @Override
-    public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-      return GrIndexPropertyImpl.this;
-    }
-
-    @Override
-    public boolean isReferenceTo(PsiElement element) {
-      return getManager().areElementsEquivalent(resolve(), element);
-    }
-
-    @NotNull
-    @Override
-    public Object[] getVariants() {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
-
-    @Override
-    public boolean isSoft() {
-      return false;
-    }
-
-    @NotNull
-    @Override
-    public ResolveResult[] multiResolve(boolean incompleteCode) {
-      return GrIndexPropertyImpl.this.multiResolve(incompleteCode);
-    }
+    return GroovyIndexPropertyUtil.getSimpleArrayAccessType(this);
   }
 }

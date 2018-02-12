@@ -19,12 +19,12 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -32,15 +32,16 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.containers.HashSet;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
- * refactored from {@link com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection}
+ * refactored from {@link FieldCanBeLocalInspection}
  *
  * @author Danila Ponomarenko
  */
@@ -132,7 +133,14 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
       variable,
       references,
       delete,
-      declaration -> anchorBlock.addBefore(declaration, anchor)
+      declaration -> {
+        PsiElement parent = anchorBlock.getParent();
+        if (parent instanceof PsiSwitchStatement) {
+          PsiElement switchContainer = parent.getParent();
+          return switchContainer.addBefore(declaration, parent);
+        }
+        return anchorBlock.addBefore(declaration, anchor);
+      }
     );
   }
 
@@ -144,20 +152,21 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
                                     final boolean delete, @NotNull final NotNullFunction<PsiDeclarationStatement, PsiElement> action) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
 
-    return ApplicationManager.getApplication().runWriteAction(
-      new Computable<PsiElement>() {
-        @Override
-        public PsiElement compute() {
-          final PsiElement newDeclaration = moveDeclaration(elementFactory, localName, variable, initializer, action, references);
-          if (delete) {
-            beforeDelete(project, variable, newDeclaration);
-            variable.normalizeDeclaration();
-            variable.delete();
-          }
-          return newDeclaration;
-        }
+    return WriteAction.compute(() -> {
+      final PsiElement newDeclaration = moveDeclaration(elementFactory, localName, variable, initializer, action, references);
+      if (delete) {
+        deleteSourceVariable(project, variable, newDeclaration);
       }
-    );
+      return newDeclaration;
+    });
+  }
+
+  protected void deleteSourceVariable(@NotNull Project project, @NotNull V variable, PsiElement newDeclaration) {
+    CommentTracker tracker = new CommentTracker();
+    beforeDelete(project, variable, newDeclaration);
+    variable.normalizeDeclaration();
+    tracker.delete(variable);
+    tracker.insertCommentsBefore(newDeclaration);
   }
 
   protected PsiElement moveDeclaration(PsiElementFactory elementFactory,

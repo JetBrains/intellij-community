@@ -19,42 +19,35 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
-/**
- * User: anna
- * Date: Sep 3, 2010
- */
 @Test
 public class TestNGDataProviderTest extends LightCodeInsightFixtureTestCase {
   @BeforeMethod
   @Override
-  protected void setUp() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          TestNGDataProviderTest.super.setUp();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+  protected void setUp() {
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        TestNGDataProviderTest.super.setUp();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }
 
   @AfterMethod
   @Override
-  protected void tearDown() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          TestNGDataProviderTest.super.tearDown();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+  protected void tearDown() {
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        TestNGDataProviderTest.super.tearDown();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }
@@ -72,18 +65,15 @@ public class TestNGDataProviderTest extends LightCodeInsightFixtureTestCase {
   public void testNothing(){}
 
   @Test(dataProvider = "data")
-  public void test(final String path, final String... results) throws Throwable {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          myFixture.addClass("package org.testng.annotations; public @interface DataProvider {}");
-          myFixture.addClass("package org.testng.annotations; public @interface Test {}");
-          myFixture.testCompletionVariants(path + "provider.java", results);
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+  public void checkDataProviders(final String path, final String... results) {
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        myFixture.addClass("package org.testng.annotations; public @interface DataProvider {}");
+        myFixture.addClass("package org.testng.annotations; public @interface Test {}");
+        myFixture.testCompletionVariants(path + "provider.java", results);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }

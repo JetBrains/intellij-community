@@ -27,26 +27,19 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author irengrig
- *         Date: 4/27/11
- *         Time: 10:38 AM
  */
 @SomeQueue
 public class ZipAndQueue {
   private final ZipperUpdater myZipperUpdater;
   private final BackgroundTaskQueue myQueue;
-  private Runnable myInZipper;
+  private final Runnable myInZipper;
   private Task.Backgroundable myInvokedOnQueue;
 
   public ZipAndQueue(@NotNull Project project, final int interval, final String title, final Runnable runnable) {
     final int correctedInterval = interval <= 0 ? 300 : interval;
     myZipperUpdater = new ZipperUpdater(correctedInterval, project);
     myQueue = new BackgroundTaskQueue(project, title);
-    myInZipper = new Runnable() {
-      @Override
-      public void run() {
-        myQueue.run(myInvokedOnQueue);
-      }
-    };
+    myInZipper = () -> myQueue.run(myInvokedOnQueue);
     myInvokedOnQueue = new Task.Backgroundable(project, title, false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {

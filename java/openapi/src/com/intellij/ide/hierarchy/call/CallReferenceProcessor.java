@@ -19,9 +19,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by Max Medvedev on 10/5/13
- */
 public interface CallReferenceProcessor {
   ExtensionPointName<CallReferenceProcessor> EP_NAME = ExtensionPointName.create("com.intellij.hierarchy.referenceProcessor");
 

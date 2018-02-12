@@ -53,7 +53,7 @@ import java.util.Arrays;
  * Without console properties no navigation, no rerun failed is possible.
  */
 public abstract class AbstractImportTestsAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#" + AbstractImportTestsAction.class.getName());
+  private static final Logger LOG = Logger.getInstance(AbstractImportTestsAction.class);
   public static final String TEST_HISTORY_SIZE = "test_history_size";
   private SMTRunnerConsoleProperties myProperties;
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
@@ -42,7 +28,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     return myState;
   }
 
-  public void loadState(State state) {
+  public void loadState(@NotNull State state) {
     myState = state;
   }
 
@@ -52,6 +38,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     @NotNull public AuthType AUTH_TYPE = AuthType.ANONYMOUS;
     public boolean ANONYMOUS_GIST = false;
     public boolean OPEN_IN_BROWSER_GIST = true;
+    // "Secret" in UI, "Public" in API. "Private" here to preserve user settings after refactoring
     public boolean PRIVATE_GIST = true;
     public boolean SAVE_PASSWORD = true;
     public int CONNECTION_TIMEOUT = 5000;
@@ -144,8 +131,8 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     myState.ANONYMOUS_GIST = anonymousGist;
   }
 
-  public void setPrivateGist(final boolean privateGist) {
-    myState.PRIVATE_GIST = privateGist;
+  public void setPrivateGist(final boolean secretGist) {
+    myState.PRIVATE_GIST = secretGist;
   }
 
   public void setSavePassword(final boolean savePassword) {

@@ -29,9 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignatureVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-/**
- * Created by Max Medvedev on 14/03/14
- */
 class GrMethodSignatureImpl implements GrClosureSignature {
 
   private final PsiMethod myMethod;

@@ -36,7 +36,7 @@ class ChangeCompareModeAction extends DumbAwareAction {
   private final DirDiffSettings.CompareMode myMode;
 
   ChangeCompareModeAction(DirDiffTableModel model, DirDiffSettings.CompareMode mode) {
-    super(mode.getPresentableName(model.getSettings()));
+    super(mode.getPresentableName());
     getTemplatePresentation().setIcon(OFF);
     myModel = model;
     myMode = mode;

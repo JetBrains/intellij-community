@@ -22,7 +22,6 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -31,12 +30,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -48,7 +47,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -197,11 +195,11 @@ public class DvcsUtil {
 
   @NotNull
   public static AccessToken workingTreeChangeStarted(@NotNull Project project) {
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeStarted(project);
+    BackgroundTaskUtil.syncPublisher(BatchFileChangeListener.TOPIC).batchChangeStarted(project);
     return new AccessToken() {
       @Override
       public void finish() {
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeCompleted(project);
+        BackgroundTaskUtil.syncPublisher(BatchFileChangeListener.TOPIC).batchChangeCompleted(project);
       }
     };
   }
@@ -297,8 +295,9 @@ public class DvcsUtil {
     }
   }
 
+  @CalledInAwt
   public static void addMappingIfSubRoot(@NotNull Project project, @NotNull String newRepositoryPath, @NotNull String vcsName) {
-    if (project.getBasePath() != null && FileUtil.isAncestor(project.getBasePath(), newRepositoryPath, true)) {
+    if (!project.isDisposed() && project.getBasePath() != null && FileUtil.isAncestor(project.getBasePath(), newRepositoryPath, true)) {
       ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
       manager.setDirectoryMappings(VcsUtil.addMapping(manager.getDirectoryMappings(), newRepositoryPath, vcsName));
     }
@@ -372,21 +371,6 @@ public class DvcsUtil {
     rootCandidate = vcsRoots[0];
     LOG.debug("Returning the best candidate: " + rootCandidate);
     return rootCandidate;
-  }
-
-  public static class Updater implements Consumer<Object> {
-    private final Repository myRepository;
-
-    public Updater(Repository repository) {
-      myRepository = repository;
-    }
-
-    @Override
-    public void consume(Object dummy) {
-      if (!Disposer.isDisposed(myRepository)) {
-        myRepository.update();
-      }
-    }
   }
 
   public static <T extends Repository> List<T> sortRepositories(@NotNull Collection<T> repositories) {

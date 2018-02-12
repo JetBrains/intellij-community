@@ -29,19 +29,23 @@ import static org.easymock.EasyMock.expect;
 
 /**
  * Checks how test classes are created
+ *
  * @author Ilya.Kazakevich
  */
 public final class PyTestCreatorTest extends PyTestCase {
-  public void testCreateTest() throws Exception {
+  public void testCreateTest() {
 
     myFixture.configureByFile("/create_tests/create_tst.py");
-    final IMocksControl mockControl = createNiceControl();
 
+    final VirtualFile[] roots = ModuleRootManager.getInstance(myFixture.getModule()).getSourceRoots();
+    assert roots.length > 0 : "Empty roots for module " + myFixture.getModule();
+    final VirtualFile root = roots[0];
+
+    final IMocksControl mockControl = createNiceControl();
     final CreateTestDialog dialog = mockControl.createMock(CreateTestDialog.class);
     expect(dialog.getFileName()).andReturn("tests.py").anyTimes();
     expect(dialog.getClassName()).andReturn("Spam").anyTimes();
     // Target dir is first module source
-    final VirtualFile root = ModuleRootManager.getInstance(myFixture.getModule()).getSourceRoots()[0];
     expect(dialog.getTargetDir()).andReturn(root.getCanonicalPath()).anyTimes();
     expect(dialog.getMethods()).andReturn(Arrays.asList("eggs", "eggs_and_ham")).anyTimes();
     mockControl.replay();

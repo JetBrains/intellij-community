@@ -27,11 +27,6 @@ import org.intellij.plugins.relaxNG.compact.psi.util.RenameUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 16.08.2007
- */
 public class RncDeclImpl extends RncElementImpl implements RncDecl {
   public RncDeclImpl(ASTNode node) {
     super(node);

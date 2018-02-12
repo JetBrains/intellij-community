@@ -12,11 +12,11 @@ class Test {
   public static Integer length(String s) {
     return s.length();
   }
-  
+
   public static void bar(Bar bar) {}
-  
+
   interface Bar {
-    Integer _(String s);
+    Integer m(String s);
   }
 
   void f() throws IOException {

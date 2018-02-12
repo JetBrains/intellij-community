@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.components.*;
@@ -29,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
   }
 )
 public class PyDebuggerOptionsProvider implements PersistentStateComponent<PyDebuggerOptionsProvider.State> {
-  private State myState = new State();
+  private final State myState = new State();
 
   @NotNull
   private final Project myProject;
@@ -48,11 +34,12 @@ public class PyDebuggerOptionsProvider implements PersistentStateComponent<PyDeb
   }
 
   @Override
-  public void loadState(State state) {
+  public void loadState(@NotNull State state) {
     myState.myAttachToSubprocess = state.myAttachToSubprocess;
     myState.mySaveCallSignatures = state.mySaveCallSignatures;
     myState.mySupportGeventDebugging = state.mySupportGeventDebugging;
     myState.mySupportQtDebugging = state.mySupportQtDebugging;
+    myState.myPyQtBackend = state.myPyQtBackend;
   }
 
   public static class State {
@@ -60,6 +47,7 @@ public class PyDebuggerOptionsProvider implements PersistentStateComponent<PyDeb
     public boolean mySaveCallSignatures = false;
     public boolean mySupportGeventDebugging = false;
     public boolean mySupportQtDebugging = true;
+    public String myPyQtBackend = "Auto";
   }
 
 
@@ -93,6 +81,14 @@ public class PyDebuggerOptionsProvider implements PersistentStateComponent<PyDeb
 
   public void setSupportQtDebugging(boolean supportQtDebugging) {
     myState.mySupportQtDebugging = supportQtDebugging;
+  }
+
+  public String getPyQtBackend() {
+    return myState.myPyQtBackend;
+  }
+
+  public void setPyQtBackend(String backend) {
+    myState.myPyQtBackend = backend;
   }
 }
 

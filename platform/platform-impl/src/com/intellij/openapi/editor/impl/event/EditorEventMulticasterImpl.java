@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -135,18 +134,8 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   }
 
   @Override
-  public void addErrorStripeListener(@NotNull ErrorStripeListener listener) {
-    myErrorStripeMulticaster.addListener(listener);
-  }
-
-  @Override
   public void addErrorStripeListener(@NotNull ErrorStripeListener listener, @NotNull Disposable parentDisposable) {
     myErrorStripeMulticaster.addListener(listener, parentDisposable);
-  }
-
-  @Override
-  public void removeErrorStripeListener(@NotNull ErrorStripeListener listener) {
-    myErrorStripeMulticaster.removeListener(listener);
   }
 
   @Override
@@ -160,38 +149,18 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   }
 
   @Override
-  public void addEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
-    myEditReadOnlyMulticaster.addListener(listener);
+  public void addEditReadOnlyListener(@NotNull EditReadOnlyListener listener, @NotNull Disposable parentDisposable) {
+    myEditReadOnlyMulticaster.addListener(listener, parentDisposable);
   }
 
   @Override
-  public void removeEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
-    myEditReadOnlyMulticaster.removeListener(listener);
-  }
-
-  @Override
-  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
-    myPropertyChangeMulticaster.addListener(listener);
-  }
-
-  @Override
-  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
-    myPropertyChangeMulticaster.removeListener(listener);
-  }
-
-  @Override
-  public void addFocusChangeListner(@NotNull FocusChangeListener listener) {
-    myFocusChangeListenerMulticaster.addListener(listener);
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable parentDisposable) {
+    myPropertyChangeMulticaster.addListener(listener, parentDisposable);
   }
 
   @Override
   public void addFocusChangeListner(@NotNull FocusChangeListener listener, @NotNull Disposable parentDisposable) {
     myFocusChangeListenerMulticaster.addListener(listener,parentDisposable);
-  }
-
-  @Override
-  public void removeFocusChangeListner(@NotNull FocusChangeListener listener) {
-    myFocusChangeListenerMulticaster.removeListener(listener);
   }
 
   @TestOnly

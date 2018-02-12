@@ -26,13 +26,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
+import java.util.HashMap;
+import java.util.HashSet;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -46,10 +46,6 @@ import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxStaticSetterAttribute
 
 import java.util.*;
 
-/**
- * User: anna
- * Date: 2/22/13
- */
 public class JavaFxImportsOptimizer implements ImportOptimizer {
   @Override
   public boolean supports(PsiFile file) {
@@ -69,7 +65,7 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
     final Set<String> demandedForNested = new HashSet<>();
     collectNamesToImport(names, demandedForNested, (XmlFile)file);
     Collections.sort(names, (o1, o2) -> StringUtil.compare(o1.first, o2.first, true));
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+    final JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class);
     final List<Pair<String, Boolean>> sortedNames = ImportHelper.sortItemsAccordingToSettings(names, settings);
     final Map<String, Boolean> onDemand = new HashMap<>();
     ImportHelper.collectOnDemandImports(sortedNames, settings, onDemand);

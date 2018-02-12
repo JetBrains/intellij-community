@@ -164,7 +164,9 @@ public interface TokenSets {
 
   TokenSet STRING_LITERAL_SET = TokenSet.create(mSTRING_LITERAL, mGSTRING_LITERAL, mREGEX_LITERAL, mDOLLAR_SLASH_REGEX_LITERAL);
 
-  TokenSet BRACES = TokenSet.create(mLBRACK, mRBRACK, mLPAREN, mRPAREN, mLCURLY, mRCURLY);
+  TokenSet LEFT_BRACES = TokenSet.create(mLBRACK, mLPAREN, mLCURLY);
+  TokenSet RIGHT_BRACES = TokenSet.create(mRBRACK, mRPAREN, mRCURLY);
+  TokenSet BRACES = TokenSet.orSet(LEFT_BRACES, RIGHT_BRACES);
 
   TokenSet UNARY_OP_SET = TokenSet.create(mBNOT, mLNOT, mMINUS, mDEC, mPLUS, mINC);
 

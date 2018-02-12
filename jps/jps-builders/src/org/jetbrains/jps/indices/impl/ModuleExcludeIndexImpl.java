@@ -15,13 +15,17 @@
  */
 package org.jetbrains.jps.indices.impl;
 
+import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
+import org.jetbrains.jps.model.JpsExcludePattern;
 import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaModuleExtension;
 import org.jetbrains.jps.model.java.JpsJavaProjectExtension;
@@ -34,17 +38,18 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 1/11/12
  */
 public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
   private final Set<File> myExcludedRoots = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
   private final Set<File> myTopLevelContentRoots = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
   private final Map<JpsModule, ArrayList<File>> myModuleToExcludesMap = new THashMap<>();
   private final Map<JpsModule, List<File>> myModuleToContentMap = new THashMap<>();
+  private final Map<File, FileTypeAssocTable<Boolean>> myExcludeFromContentRootTables = new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
 
   public ModuleExcludeIndexImpl(JpsModel model) {
     final Collection<JpsModule> allModules = model.getProject().getModules();
     Map<File, JpsModule> contentToModule = new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
+    MultiMap<String, String> excludePatterns = MultiMap.createLinked();
     for (final JpsModule module : allModules) {
       final ArrayList<File> moduleExcludes = new ArrayList<>();
       for (String url : module.getExcludeRootsList().getUrls()) {
@@ -61,6 +66,9 @@ public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
           moduleExcludes.add(JpsPathUtil.urlToFile(testOutputUrl));
         }
       }
+      for (JpsExcludePattern pattern : module.getExcludePatterns()) {
+        excludePatterns.putValue(pattern.getBaseDirUrl(), pattern.getPattern());
+      }
       List<String> contentUrls = module.getContentRootsList().getUrls();
       final List<File> moduleContent = new ArrayList<>(contentUrls.size());
       for (String contentUrl : contentUrls) {
@@ -76,6 +84,15 @@ public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
       myModuleToExcludesMap.put(module, moduleExcludes);
       myModuleToContentMap.put(module, moduleContent);
       myExcludedRoots.addAll(moduleExcludes);
+    }
+
+    FileNameMatcherFactory factory = FileNameMatcherFactory.getInstance();
+    for (Map.Entry<String, Collection<String>> entry : excludePatterns.entrySet()) {
+      FileTypeAssocTable<Boolean> table = new FileTypeAssocTable<>();
+      for (String pattern : entry.getValue()) {
+        table.addAssociation(factory.createMatcher(pattern), Boolean.TRUE);
+      }
+      myExcludeFromContentRootTables.put(JpsPathUtil.urlToFile(entry.getKey()), table);
     }
 
     JpsJavaProjectExtension projectExtension = JpsJavaExtensionService.getInstance().getProjectExtension(model.getProject());
@@ -168,7 +185,7 @@ public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
 
   private enum FileLocation { IN_CONTENT, EXCLUDED, NOT_IN_PROJECT }
 
-  private static FileLocation determineFileLocation(File file, Collection<File> roots, Collection<File> excluded) {
+  private FileLocation determineFileLocation(File file, Collection<File> roots, Collection<File> excluded) {
     if (roots.isEmpty() && excluded.isEmpty()) {
       return FileLocation.NOT_IN_PROJECT; // optimization
     }
@@ -177,12 +194,28 @@ public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
       if (excluded.contains(current)) {
         return FileLocation.EXCLUDED;
       }
+      FileTypeAssocTable<Boolean> table = myExcludeFromContentRootTables.get(current);
+      if (table != null && isExcludedByPattern(file, current, table)) {
+        return FileLocation.EXCLUDED;
+      }
       if (roots.contains(current)) {
         return FileLocation.IN_CONTENT;
       }
       current = FileUtilRt.getParentFile(current);
     }
     return FileLocation.NOT_IN_PROJECT;
+  }
+
+  private static boolean isExcludedByPattern(File file, File root, FileTypeAssocTable<Boolean> table) {
+    File current = file;
+    //noinspection FileEqualsUsage it's ok to compare files by 'equals' here be because these files are produced by the same 'getParentFile' calls
+    while (current != null && !current.equals(root)) {
+      if (table.findAssociatedFileType(current.getName()) != null) {
+        return true;
+      }
+      current = FileUtilRt.getParentFile(current);
+    }
+    return false;
   }
 
   @Override

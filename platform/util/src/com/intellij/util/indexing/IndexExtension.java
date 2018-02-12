@@ -22,12 +22,11 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 26, 2007
  * V class MUST have equals / hashcode properly defined!!!
  */
 public abstract class IndexExtension<K, V, I> {
   @NotNull
-  public abstract ID<K, V> getName();
+  public abstract IndexId<K, V> getName();
 
   @NotNull
   public abstract DataIndexer<K, V, I> getIndexer();

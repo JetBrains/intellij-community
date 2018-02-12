@@ -19,7 +19,6 @@ import com.intellij.psi.stubs.SerializationManager;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/2/12
  */
 public class DomElementTypeHolder {
 

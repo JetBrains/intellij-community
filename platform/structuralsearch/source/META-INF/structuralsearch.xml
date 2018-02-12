@@ -1,9 +1,11 @@
 <idea-plugin>
+  <module value="com.intellij.modules.structuralsearch"/>
+
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.structuralsearch.profile"
                     interface="com.intellij.structuralsearch.StructuralSearchProfile"/>
     <extensionPoint qualifiedName="com.intellij.structuralsearch.matchPredicateProvider"
-                    interface="com.intellij.structuralsearch.impl.matcher.MatchPredicateProvider"/>
+                    interface="com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicateProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -14,6 +16,8 @@
     <projectService serviceImplementation="com.intellij.structuralsearch.plugin.StructuralSearchPlugin"/>
     <projectService serviceImplementation="com.intellij.structuralsearch.plugin.ui.ExistingTemplatesComponent"/>
     <projectService serviceImplementation="com.intellij.structuralsearch.plugin.ui.ConfigurationManager"/>
+
+    <typedHandler implementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchTypedHandler"/>
   </extensions>
 
   <actions>

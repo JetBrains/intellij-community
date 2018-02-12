@@ -16,7 +16,6 @@
 
 package org.intellij.plugins.relaxNG.model.descriptors;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -35,7 +34,7 @@ public class CompositeDescriptor extends RngElementDescriptor {
 
   CompositeDescriptor(RngNsDescriptor nsDescriptor, DElementPattern pattern, List<DElementPattern> patterns) {
     super(nsDescriptor, pattern);
-    myPatterns = patterns.toArray(new DElementPattern[patterns.size()]);
+    myPatterns = ContainerUtil.reverse(patterns).toArray(new DElementPattern[patterns.size()]);
   }
 
   @Override
@@ -66,7 +65,7 @@ public class CompositeDescriptor extends RngElementDescriptor {
       final List<DElementPattern> list = ChildElementFinder.find(2, pattern);
       descriptors.addAll(Arrays.asList(myNsDescriptor.convertElementDescriptors(list)));
     }
-    return descriptors.toArray(new XmlElementDescriptor[descriptors.size()]);
+    return descriptors.toArray(XmlElementDescriptor.EMPTY_ARRAY);
   }
 
   @Override
@@ -84,7 +83,7 @@ public class CompositeDescriptor extends RngElementDescriptor {
       patterns = myPatterns;
     } else {
       final List<DElementPattern> p = ContainerUtil.findAll(myPatterns, pattern -> pattern.getName().contains(qName));
-      patterns = p.toArray(new DPattern[p.size()]);
+      patterns = p.toArray(new DPattern[0]);
     }
 
     return computeAttributeDescriptors(AttributeFinder.find(patterns));

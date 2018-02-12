@@ -90,7 +90,7 @@ public class PyEditingTest extends PyTestCase {
   }
 
   // PY-18972
-  public void testFString() throws Exception {
+  public void testFString() {
     assertEquals("f''", doTestTyping("f", 1, '\''));
     assertEquals("rf''", doTestTyping("rf", 2, '\''));
     assertEquals("fr''", doTestTyping("fr", 2, '\''));
@@ -128,7 +128,7 @@ public class PyEditingTest extends PyTestCase {
     myFixture.checkResultByFile("/editing/" + fileName + ".after.py", true);
   }
 
-  public void testUncommentWithSpace() throws Exception {   // PY-980
+  public void testUncommentWithSpace() {   // PY-980
     myFixture.configureByFile("/editing/uncommentWithSpace.before.py");
     myFixture.getEditor().getCaretModel().moveToLogicalPosition(new LogicalPosition(0, 1));
     PlatformTestUtil.invokeNamedAction(IdeActions.ACTION_COMMENT_LINE);
@@ -429,7 +429,7 @@ public class PyEditingTest extends PyTestCase {
 
   // PY-15469
   public void testEnterBeforeArrowInFunction() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTestEnter("def func() <caret>-> int:\n" +
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTestEnter("def func() <caret>-> int:\n" +
                                                                "    pass",
                 "def func() \\\n" +
                 "        -> int:\n" +
@@ -438,7 +438,7 @@ public class PyEditingTest extends PyTestCase {
 
   // PY-15469
   public void testEnterAfterArrowInFunction() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTestEnter("def func() -><caret> int:\n" +
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTestEnter("def func() -><caret> int:\n" +
                                                                "    pass",
                 "def func() ->\\\n" +
                 "        int:\n" +
@@ -447,7 +447,7 @@ public class PyEditingTest extends PyTestCase {
 
   // PY-15469
   public void testEnterDoesNotInsertSlashInsideArrow() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTestEnter("def func() -<caret>> int:\n" +
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTestEnter("def func() -<caret>> int:\n" +
                                                                "    pass",
                 "def func() -\n" +
                 "> int:\n" +
@@ -547,6 +547,28 @@ public class PyEditingTest extends PyTestCase {
     doTypingTest('(');
   }
 
+  // PY-21269
+  public void testFirstParamMultipleMethods() {
+    doTypingTest('(');
+  }
+
+  // PY-15240
+  public void testFirstParamSpacesInsideParentheses() {
+    getCommonCodeStyleSettings().SPACE_WITHIN_METHOD_PARENTHESES = true;
+    doTypingTest('(');
+  }
+
+  // PY-15240
+  public void testFirstParamSpacesInsideEmptyParentheses() {
+    getCommonCodeStyleSettings().SPACE_WITHIN_EMPTY_METHOD_PARENTHESES = true;
+    doTypingTest('(');
+  }
+
+  // PY-21289
+  public void testPairedParenthesesMultipleCalls() {
+    doTypingTest('(');
+  }
+
   public void testEnterBeforeString() {  // PY-3673
     doTestEnter("<caret>''", "\n''");
   }
@@ -568,5 +590,10 @@ public class PyEditingTest extends PyTestCase {
                 "def hello_world():\n" +
                 "    return bar, 'so' \\\n" +
                 "                'me'");
+  }
+
+  // PY-27178
+  public void testIncompleteFunctionTypeComment() {
+    doTypingTest('.');
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,34 @@
  */
 package org.jetbrains.idea.devkit.inspections.internal;
 
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.QueryExecutor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
+import org.jetbrains.uast.*;
+import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
 import javax.swing.*;
 import java.awt.image.BufferedImage;
+import java.util.List;
 import java.util.Map;
 
-public class UndesirableClassUsageInspection extends DevKitInspectionBase {
+public class UndesirableClassUsageInspection extends DevKitUastInspectionBase {
 
   private static final Map<String, String> CLASSES = ContainerUtil.<String, String>immutableMapBuilder()
     .put(JList.class.getName(), JBList.class.getName())
@@ -47,26 +55,40 @@ public class UndesirableClassUsageInspection extends DevKitInspectionBase {
     .put(BufferedImage.class.getName(), "UIUtil.createImage()")
     .build();
 
+  @Nullable
   @Override
-  @NotNull
-  public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    return new JavaElementVisitor() {
+  public ProblemDescriptor[] checkMethod(@NotNull UMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    return checkBody(method, manager, isOnTheFly);
+  }
+
+  @Nullable
+  @Override
+  public ProblemDescriptor[] checkField(@NotNull UField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    return checkBody(field, manager, isOnTheFly);
+  }
+
+  @Nullable
+  private static ProblemDescriptor[] checkBody(@NotNull UElement uElement, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    List<ProblemDescriptor> descriptors = new SmartList<>();
+    uElement.accept(new AbstractUastVisitor() {
       @Override
-      public void visitNewExpression(PsiNewExpression expression) {
-        PsiJavaCodeReferenceElement ref = expression.getClassReference();
-        if (ref == null) return;
-
-        PsiElement res = ref.resolve();
-        if (res == null) return;
-
-        String name = ((PsiClass)res).getQualifiedName();
-        if (name == null) return;
-
-        String replacement = CLASSES.get(name);
-        if (replacement == null) return;
-
-        holder.registerProblem(expression, "Please use '" + replacement + "' instead", ProblemHighlightType.LIKE_DEPRECATED);
+      public boolean visitCallExpression(@NotNull UCallExpression expression) {
+        if (expression.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
+          final PsiClass psiClass = PsiTypesUtil.getPsiClass(expression.getReturnType());
+          if (psiClass != null) {
+            final String name = psiClass.getQualifiedName();
+            String replacement = CLASSES.get(name);
+            if (replacement != null) {
+              descriptors.add(manager.createProblemDescriptor(ObjectUtils.assertNotNull(expression.getPsi()),
+                                                              "Please use '" + replacement + "' instead", true,
+                                                              ProblemHighlightType.LIKE_DEPRECATED, isOnTheFly));
+            }
+          }
+        }
+        return true;
       }
-    };
+    });
+
+    return descriptors.isEmpty() ? null : descriptors.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 }

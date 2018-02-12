@@ -25,10 +25,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
+
 /**
  * @author konstantin.aleev
  */
-public class StatusDashboardGroupingRule implements DashboardGroupingRule {
+public class StatusDashboardGroupingRule implements RunDashboardGroupingRule {
   @NonNls private static final String NAME = "StatusDashboardGroupingRule";
 
   @Override
@@ -62,16 +64,18 @@ public class StatusDashboardGroupingRule implements DashboardGroupingRule {
 
   @Nullable
   @Override
-  public DashboardGroup getGroup(AbstractTreeNode<?> node) {
-    if (node instanceof DashboardRunConfigurationNode) {
-      DashboardRunConfigurationNode runConfigurationNode = (DashboardRunConfigurationNode)node;
-      RunDashboardContributor contributor = RunDashboardContributor.getContributor(
-        runConfigurationNode.getConfigurationSettings().getType());
-      if (contributor != null) {
-        DashboardRunConfigurationStatus status = contributor.getStatus(runConfigurationNode);
-        return new DashboardGroupImpl<>(status, status.getName(), status.getIcon());
-      }
+  public RunDashboardGroup getGroup(AbstractTreeNode<?> node) {
+    if (node instanceof RunDashboardRunConfigurationNode) {
+      RunDashboardRunConfigurationNode runConfigurationNode = (RunDashboardRunConfigurationNode)node;
+      RunDashboardRunConfigurationStatus status = runConfigurationNode.getStatus();
+      return new RunDashboardGroupImpl<>(status, status.getName(), status.getIcon());
     }
     return null;
+  }
+
+  @Override
+  public Comparator<RunDashboardGroup> getGroupComparator() {
+    //noinspection unchecked
+    return Comparator.comparing(group -> ((RunDashboardGroupImpl<RunDashboardRunConfigurationStatus>)group).getValue().getPriority());
   }
 }

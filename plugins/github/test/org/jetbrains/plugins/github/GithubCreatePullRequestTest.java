@@ -21,21 +21,21 @@ import com.intellij.notification.NotificationType;
  * @author Aleksey Pivovarov
  */
 public class GithubCreatePullRequestTest extends GithubCreatePullRequestTestBase {
-  public void testSimple() throws Exception {
+  public void testSimple() {
     registerDefaultCreatePullRequestDialogHandler("master", myLogin1);
 
-    GithubCreatePullRequestAction.createPullRequest(myProject, myProjectRoot);
+    GithubCreatePullRequestAction.createPullRequest(myProject, projectRoot);
 
     checkNotification(NotificationType.INFORMATION, "Successfully created pull request", null);
     checkRemoteConfigured();
     checkLastCommitPushed();
   }
 
-  public void testParent() throws Exception {
+  public void testParent() {
     registerDefaultCreatePullRequestDialogHandler("file2", myLogin2);
     addRemote(myLogin2);
 
-    GithubCreatePullRequestAction.createPullRequest(myProject, myProjectRoot);
+    GithubCreatePullRequestAction.createPullRequest(myProject, projectRoot);
 
     checkNotification(NotificationType.INFORMATION, "Successfully created pull request", null);
     checkRemoteConfigured();

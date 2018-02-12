@@ -15,6 +15,10 @@
  */
 package com.siyeh.ig.fixes.style;
 
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.style.LambdaCanBeReplacedWithAnonymousInspection;
@@ -87,7 +91,7 @@ public class LambdaCanBeReplacedWithAnonymousFixTest extends IGQuickFixesTestCas
     doTest();
   }
 
-  public void testQualifyThisAndSuperInside() throws Exception {
+  public void testQualifyThisAndSuperInside() {
     doTest();
   }
 
@@ -99,16 +103,34 @@ public class LambdaCanBeReplacedWithAnonymousFixTest extends IGQuickFixesTestCas
     assertQuickfixNotAvailable();
   }
 
-  public void testIncorrectReturnStatementWhenLambdaIsVoidCompatibleButExpressionHasReturnValue() throws Exception {
+  public void testIncorrectReturnStatementWhenLambdaIsVoidCompatibleButExpressionHasReturnValue() {
     doTest();
   }
 
-  public void testForbidReplacementWhenParamsOrReturnWouldBeNotDenotableTypes1() throws Exception {
+  public void testForbidReplacementWhenParamsOrReturnWouldBeNotDenotableTypes1() {
     assertQuickfixNotAvailable();
   }
 
-  public void testRemoveRedundantCast() throws Exception {
+  public void testRemoveRedundantCast() {
     doTest();
+  }
+  
+  public void testMalformedPackageName() {
+    doTest();
+  }
+
+  @Override
+  protected void doTest() {
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
+    boolean oldSetting = javaSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE;
+    try {
+      javaSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+      super.doTest();
+    }
+    finally {
+      javaSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = oldSetting;
+    }
   }
 
   @Override

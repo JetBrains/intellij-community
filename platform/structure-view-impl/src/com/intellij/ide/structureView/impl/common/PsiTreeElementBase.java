@@ -19,7 +19,9 @@ import com.intellij.ide.structureView.StructureViewExtension;
 import com.intellij.ide.structureView.StructureViewFactoryEx;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.customRegions.CustomRegionStructureUtil;
+import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.ide.util.treeView.NodeDescriptorProvidingKey;
+import com.intellij.ide.util.treeView.TreeAnchorizer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.pom.Navigatable;
@@ -35,10 +37,11 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class PsiTreeElementBase <T extends PsiElement> implements StructureViewTreeElement, ItemPresentation, NodeDescriptorProvidingKey {
-  private final T myValue;
+
+  private final Object myValue;
 
   protected PsiTreeElementBase(T psiElement) {
-    myValue = psiElement;
+    myValue = psiElement == null ? null : TreeAnchorizer.getService().createAnchor(psiElement);
   }
 
   @NotNull
@@ -50,18 +53,13 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
   @Override
   @NotNull
   public Object getKey() {
-    try {
-      return myValue.toString();
-    }
-    catch (Exception e) {
-      // illegal psi element access
-      return myValue.getClass();
-    }
+    return String.valueOf(getElement());
   }
 
   @Nullable
   public final T getElement() {
-    return myValue.isValid() ? myValue : null;
+    //noinspection unchecked
+    return myValue == null ? null : (T)TreeAnchorizer.getService().retrieveElement(myValue);
   }
 
   @Override
@@ -99,11 +97,15 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
   @NotNull
   @Override
   public final StructureViewTreeElement[] getChildren() {
+    return AbstractTreeUi.calculateYieldingToWriteAction(this::doGetChildren);
+  }
+
+  @NotNull
+  private StructureViewTreeElement[] doGetChildren() {
     final T element = getElement();
     if (element == null) return EMPTY_ARRAY;
-    List<StructureViewTreeElement> result = new ArrayList<>();
     Collection<StructureViewTreeElement> baseChildren = getChildrenBase();
-    result.addAll(CustomRegionStructureUtil.groupByCustomRegions(element, baseChildren));
+    List<StructureViewTreeElement> result = new ArrayList<>(CustomRegionStructureUtil.groupByCustomRegions(element, baseChildren));
     StructureViewFactoryEx structureViewFactory = StructureViewFactoryEx.getInstanceEx(element.getProject());
     Class<? extends PsiElement> aClass = element.getClass();
     for (StructureViewExtension extension : structureViewFactory.getAllExtensions(aClass)) {
@@ -112,7 +114,7 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
         ContainerUtil.addAll(result, children);
       }
     }
-    return result.toArray(new StructureViewTreeElement[result.size()]);
+    return result.toArray(StructureViewTreeElement.EMPTY_ARRAY);
   }
 
   @Override
@@ -152,6 +154,6 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
   }
 
   public boolean isValid() {
-    return myValue != null && myValue.isValid();
+    return getElement() != null;
   }
 }

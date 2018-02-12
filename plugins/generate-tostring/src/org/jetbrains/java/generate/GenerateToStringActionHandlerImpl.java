@@ -120,14 +120,12 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
                 final GenerateToStringWorker worker = new GenerateToStringWorker(clazz, editor, chooser.isInsertOverrideAnnotation());
                 // decide what to do if the method already exists
                 ConflictResolutionPolicy resolutionPolicy = worker.exitsMethodDialog(template);
-                WriteAction.run(() -> {
-                    try {
-                        worker.execute(selectedMembers, template, resolutionPolicy);
-                    }
-                    catch (Exception e) {
-                        GenerationUtil.handleException(project, e);
-                    }
-                });
+                try {
+                    WriteAction.run(() -> worker.execute(selectedMembers, template, resolutionPolicy));
+                }
+                catch (Exception e) {
+                    GenerationUtil.handleException(project, e);
+                }
             }
             else {
                 HintManager.getInstance().showErrorHint(editor, "toString() template '" + template.getFileName() + "' is invalid");
@@ -198,7 +196,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
             super(new GridBagLayout());
 
             final Collection<TemplateResource> templates = ToStringTemplatesManager.getInstance().getAllTemplates();
-            final TemplateResource[] all = templates.toArray(new TemplateResource[templates.size()]);
+            final TemplateResource[] all = templates.toArray(new TemplateResource[0]);
 
             final JButton settingsButton = new JButton("Settings");
             settingsButton.setMnemonic(KeyEvent.VK_S);
@@ -221,6 +219,8 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
                 public void actionPerformed(ActionEvent e) {
                   final TemplatesPanel ui = new TemplatesPanel(clazz.getProject());
                   Configurable composite = new TabbedConfigurable() {
+                        @Override
+                        @NotNull
                         protected List<Configurable> createConfigurables() {
                             List<Configurable> res = new ArrayList<>();
                             res.add(new GenerateToStringConfigurable(clazz.getProject()));
@@ -232,6 +232,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
                             return "toString() Generation Settings";
                         }
 
+                        @Override
                         public String getHelpTopic() {
                             return "editing.altInsert.tostring.settings";
                         }

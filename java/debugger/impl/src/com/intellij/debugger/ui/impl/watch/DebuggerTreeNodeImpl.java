@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
  */
 package com.intellij.debugger.ui.impl.watch;
 
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -35,9 +36,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.SimpleColoredText;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -138,7 +140,7 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
 
       context.getDebugProcess().getManagerThread().invoke(new DebuggerContextCommandImpl(context) {
         @Override
-        public void threadAction() {
+        public void threadAction(@NotNull SuspendContextImpl suspendContext) {
           runnable.run();
         }
 
@@ -246,12 +248,14 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
     myProperties.put(key, data);
   }
 
+  @NotNull
   public static DebuggerTreeNodeImpl createNodeNoUpdate(DebuggerTree tree, NodeDescriptor descriptor) {
     DebuggerTreeNodeImpl node = new DebuggerTreeNodeImpl(tree, descriptor);
     node.updateCaches();
     return node;
   }
 
+  @NotNull
   protected static DebuggerTreeNodeImpl createNode(DebuggerTree tree, NodeDescriptorImpl descriptor, EvaluationContextImpl evaluationContext) {
     final DebuggerTreeNodeImpl node = new DebuggerTreeNodeImpl(tree, descriptor);
     descriptor.updateRepresentationNoNotify(evaluationContext, new DescriptorLabelListener() {

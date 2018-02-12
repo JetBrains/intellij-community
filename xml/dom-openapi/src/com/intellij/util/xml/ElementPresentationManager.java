@@ -20,7 +20,6 @@ import com.intellij.ide.TypePresentationService;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -37,15 +36,13 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author peter
  */
 public abstract class ElementPresentationManager {
-  private static final ConcurrentFactoryMap<Class,Method> ourNameValueMethods = new ConcurrentFactoryMap<Class, Method>() {
-    @Override
-    @Nullable
-    protected Method create(final Class key) {
+  private static final ConcurrentMap<Class,Method> ourNameValueMethods = ConcurrentFactoryMap.createMap(key-> {
       for (final Method method : ReflectionUtil.getClassPublicMethods(key)) {
       if (JavaMethod.getMethod(key, method).getAnnotation(NameValue.class) != null) {
         return method;
@@ -53,7 +50,7 @@ public abstract class ElementPresentationManager {
     }
     return null;
     }
-  };
+  );
 
   private final static Function<Object, String> DEFAULT_NAMER = element -> getElementName(element);
 

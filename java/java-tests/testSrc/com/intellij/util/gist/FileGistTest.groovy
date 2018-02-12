@@ -110,12 +110,13 @@ class FileGistTest extends LightCodeInsightFixtureTestCase {
 
   void "test different data for different projects"() {
     int invocations = 0
-    VirtualFileGist<String> gist = GistManager.instance.newVirtualFileGist(getTestName(true), 0, EnumeratorStringDescriptor.INSTANCE, { p, f -> "$p.name ${++invocations}" as String })
+    VirtualFileGist<String> gist = GistManager.instance.newVirtualFileGist(getTestName(true), 0, EnumeratorStringDescriptor.INSTANCE, { p, f -> "${p?.name} ${++invocations}" as String })
     def file = addFooBarFile()
 
     assert "$project.name 1" == gist.getFileData(project, file)
     assert "$ProjectManager.instance.defaultProject.name 2" == gist.getFileData(ProjectManager.instance.defaultProject, file)
     assert "$project.name 1" == gist.getFileData(project, file)
+    assert "null 3" == gist.getFileData(null, file)
   }
 
   void "test cannot register twice"() {

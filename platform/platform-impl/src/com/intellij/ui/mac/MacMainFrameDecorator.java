@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac;
 
 import com.apple.eawt.*;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ActionCallback;
@@ -46,9 +32,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
 
-/**
- * User: spLeaner
- */
 public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettingsListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.MacMainFrameDecorator");
 
@@ -61,7 +44,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
 
   private static class FullscreenQueue <T extends Runnable> {
     private boolean waitingForAppKit = false;
-    private LinkedList<Runnable> queueModel = new LinkedList<>();
+    private final LinkedList<Runnable> queueModel = new LinkedList<>();
 
     synchronized void runOrEnqueue (final T runnable) {
       if (waitingForAppKit) {
@@ -101,7 +84,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
 
   private void enterFullscreen() {
     myInFullScreen = true;
-    myFrame.storeFullScreenStateIfNeeded(true);
+    myFrame.storeFullScreenStateIfNeeded();
     myFullscreenQueue.runFromQueue();
   }
 
@@ -116,7 +99,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
 
   private void exitFullscreen() {
     myInFullScreen = false;
-    myFrame.storeFullScreenStateIfNeeded(false);
+    myFrame.storeFullScreenStateIfNeeded();
 
     JRootPane rootPane = myFrame.getRootPane();
     if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, null);
@@ -137,24 +120,24 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
       HAS_FULLSCREEN_UTILITIES = false;
     }
   }
-  public static final boolean FULL_SCREEN_AVAILABLE = SystemInfo.isJavaVersionAtLeast("1.6.0_29") && HAS_FULLSCREEN_UTILITIES;
+  public static final boolean FULL_SCREEN_AVAILABLE = HAS_FULLSCREEN_UTILITIES;
 
   private static boolean SHOWN = false;
 
-  private static Callback SET_VISIBLE_CALLBACK = new Callback() {
+  private static final Callback SET_VISIBLE_CALLBACK = new Callback() {
     public void callback(ID caller, ID selector, ID value) {
       SHOWN = value.intValue() == 1;
       SwingUtilities.invokeLater(CURRENT_SETTER);
     }
   };
 
-  private static Callback IS_VISIBLE = new Callback() {
+  private static final Callback IS_VISIBLE = new Callback() {
     public boolean callback(ID caller) {
       return SHOWN;
     }
   };
 
-  private static AtomicInteger UNIQUE_COUNTER = new AtomicInteger(0);
+  private static final AtomicInteger UNIQUE_COUNTER = new AtomicInteger(0);
 
   public static final Runnable TOOLBAR_SETTER = () -> {
     final UISettings settings = UISettings.getInstance();
@@ -287,8 +270,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
       // install uri handler
       final ID mainBundle = invoke("NSBundle", "mainBundle");
       final ID urlTypes = invoke(mainBundle, "objectForInfoDictionaryKey:", Foundation.nsString("CFBundleURLTypes"));
-      final ApplicationInfoEx info = ApplicationInfoImpl.getShadowInstance();
-      final BuildNumber build = info != null ? info.getBuild() : null;
+      final BuildNumber build = ApplicationInfoImpl.getShadowInstance().getBuild();
       if (urlTypes.equals(ID.NIL) && build != null && !build.isSnapshot()) {
         LOG.warn("no url bundle present. \n" +
                  "To use platform protocol handler to open external links specify required protocols in the mac app layout section of the build file\n" +
@@ -299,7 +281,8 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
       Application.getApplication().setOpenURIHandler(new OpenURIHandler() {
         @Override
         public void openURI(AppEvent.OpenURIEvent event) {
-          ourProtocolHandler.openLink(event.getURI());
+          TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () ->
+            ourProtocolHandler.openLink(event.getURI()));
         }
       });
     }

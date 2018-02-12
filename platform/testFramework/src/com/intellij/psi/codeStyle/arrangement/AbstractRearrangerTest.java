@@ -39,7 +39,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -121,7 +124,7 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
 
   @NotNull
   protected static StdArrangementMatchRule rule(@NotNull List<ArrangementAtomMatchCondition> conditions) {
-    return rule(conditions.toArray(new ArrangementAtomMatchCondition[conditions.size()]));
+    return rule(conditions.toArray(new ArrangementAtomMatchCondition[0]));
   }
 
   @NotNull
@@ -159,7 +162,7 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
       fail("Duplicate ranges set: explicit: " + ranges + ", " + "derived: " + info.ranges + ", text:\n" + text);
     }
     if (isEmpty(info.ranges)) {
-      info.ranges = !isEmpty(ranges) ? ranges : Arrays.asList(TextRange.from(0, text.length()));
+      info.ranges = !isEmpty(ranges) ? ranges : Collections.singletonList(TextRange.from(0, text.length()));
     }
 
     myFixture.configureByText(fileType, info.text);
@@ -202,12 +205,7 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
 
   protected List<ArrangementSectionRule> getSectionRules(List<?> rules) {
     List<ArrangementSectionRule> sectionRules = Collections.emptyList();
-    if (rules != null) sectionRules = ContainerUtil.map(rules, new Function<Object, ArrangementSectionRule>() {
-      @Override
-      public ArrangementSectionRule fun(Object o) {
-        return o instanceof ArrangementSectionRule ? (ArrangementSectionRule)o : ArrangementSectionRule.create((StdArrangementMatchRule)o);
-      }
-    });
+    if (rules != null) sectionRules = ContainerUtil.map(rules, (Function<Object, ArrangementSectionRule>)o -> o instanceof ArrangementSectionRule ? (ArrangementSectionRule)o : ArrangementSectionRule.create((StdArrangementMatchRule)o));
     return sectionRules;
   }
 

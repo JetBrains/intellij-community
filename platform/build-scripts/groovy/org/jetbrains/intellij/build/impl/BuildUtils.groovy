@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,17 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.AntClassLoader
 import org.apache.tools.ant.BuildException
 import org.apache.tools.ant.Main
 import org.apache.tools.ant.Project
+import org.apache.tools.ant.types.Path
+import org.apache.tools.ant.util.SplitClassLoader
 import org.codehaus.groovy.tools.RootLoader
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.jps.model.library.JpsOrderRootType
 
 /**
  * @author nik
@@ -81,5 +86,53 @@ class BuildUtils {
     catch (Throwable ignored) {
       return System.out
     }
+  }
+
+  static void defineFtpTask(BuildContext context) {
+    List<File> commonsNetJars = context.project.libraryCollection.findLibrary("commons-net").getFiles(JpsOrderRootType.COMPILED) +
+      [new File(context.paths.communityHome, "lib/ant/lib/ant-commons-net.jar")]
+    defineFtpTask(context.ant, commonsNetJars)
+  }
+
+    /**
+   * Defines ftp task using libraries from IntelliJ IDEA project sources.
+   */
+  @CompileDynamic
+  static void defineFtpTask(AntBuilder ant, List<File> commonsNetJars) {
+    def ftpTaskLoaderRef = "FTP_TASK_CLASS_LOADER"
+    if (ant.project.hasReference(ftpTaskLoaderRef)) return
+
+    /*
+      We need this to ensure that FTP task class isn't loaded by the main Ant classloader, otherwise Ant will try to load FTPClient class
+      by the main Ant classloader as well and fail because 'commons-net-*.jar' isn't included to Ant classpath.
+      Probably we could call FTPClient directly to avoid this hack.
+     */
+    Path ftpPath = new Path(ant.project)
+    commonsNetJars.each {
+      ftpPath.createPathElement().setLocation(it)
+    }
+    ant.project.addReference(ftpTaskLoaderRef, new SplitClassLoader(ant.project.getClass().getClassLoader(), ftpPath, ant.project,
+                                                                    ["FTP", "FTPTaskConfig"] as String[]))
+    ant.taskdef(name: "ftp", classname: "org.apache.tools.ant.taskdefs.optional.net.FTP", loaderRef: ftpTaskLoaderRef)
+  }
+
+  /**
+   * Defines sshexec task using libraries from IntelliJ IDEA project sources.
+   */
+  @CompileDynamic
+  static void defineSshTask(BuildContext context) {
+    List<File> jschJars = context.project.libraryCollection.findLibrary("JSch").getFiles(JpsOrderRootType.COMPILED) +
+                                [new File(context.paths.communityHome, "lib/ant/lib/ant-jsch.jar")]
+    def ant = context.ant
+    def sshTaskLoaderRef = "SSH_TASK_CLASS_LOADER"
+    if (ant.project.hasReference(sshTaskLoaderRef)) return
+    
+    Path pathSsh = new Path(ant.project)
+    jschJars.each {
+      pathSsh.createPathElement().setLocation(it)
+    }
+    ant.project.addReference(sshTaskLoaderRef, new SplitClassLoader(ant.project.getClass().getClassLoader(), pathSsh, ant.project,
+                                                                    ["SSHExec", "SSHBase", "LogListener", "SSHUserInfo"] as String[]))
+    ant.taskdef(name: "sshexec", classname: "org.apache.tools.ant.taskdefs.optional.ssh.SSHExec", loaderRef: sshTaskLoaderRef)
   }
 }

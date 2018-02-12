@@ -16,6 +16,7 @@
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.MouseShortcut;
@@ -136,7 +137,7 @@ final class ShortcutFilteringPanel extends JPanel {
     }
   }
 
-  void showPopup(Component component) {
+  void showPopup(Component component, Component emitter) {
     if (myPopup == null || myPopup.getContent() == null) {
       myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(this, myKeyboardPanel.myFirstStroke)
         .setRequestFocus(true)
@@ -159,6 +160,8 @@ final class ShortcutFilteringPanel extends JPanel {
         }
       }, myPopup);
     }
+
+    HelpTooltip.setMasterPopup(emitter, myPopup);
     myPopup.showUnderneathOf(component);
   }
 

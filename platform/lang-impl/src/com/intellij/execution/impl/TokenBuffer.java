@@ -38,13 +38,12 @@ class TokenBuffer {
   // Instead, the last line of the document should be removed
   static final TokenInfo CR_TOKEN = new TokenInfo(ConsoleViewContentType.SYSTEM_OUTPUT, "\r", null);
   private final int maxCapacity;  // if size becomes > maxCapacity we should trim tokens from the beginning
-  private final Queue<TokenInfo> tokens; // each call to print() is stored here
+  private final Queue<TokenInfo> tokens = new Queue<>(10); // each call to print() is stored here
   private int size; // total lengths of all tokens
   private int startIndex; // index of text start in the first TokeInfo. This TokenInfo can become sliced after total size overflows maxCapacity
 
   TokenBuffer(int maxCapacity) {
     this.maxCapacity = maxCapacity;
-    tokens = new Queue<>(10);
   }
 
   void print(@NotNull String text, @NotNull ConsoleViewContentType contentType, @Nullable HyperlinkInfo info) {
@@ -65,13 +64,8 @@ class TokenBuffer {
         TokenInfo tokenInfo = new TokenInfo(contentType, text.substring(start, crIndex), info);
         tokens.addLast(tokenInfo);
         size += tokenInfo.length();
-        removeLastLine();
       }
-      else if (size == 0) {
-        // \r at the very beginning. return CR_TOKEN to signal this
-        tokens.addLast(CR_TOKEN);
-        size ++;
-      }
+      removeLastLine();
       // text[start..crIndex) should be removed
       start = crIndex + 1;
     }
@@ -110,9 +104,15 @@ class TokenBuffer {
         TokenInfo newToken = new TokenInfo(last.contentType, text.substring(0, lfIndex + 1), last.getHyperlinkInfo());
         tokens.addLast(newToken);
         size -= text.length() - newToken.length();
-        break;
+        return;
       }
+      // remove the token entirely, move to the previous
       size -= text.length();
+    }
+    if (tokens.isEmpty()) {
+      // \r at the very beginning. return CR_TOKEN to signal this
+      tokens.addLast(CR_TOKEN);
+      size ++;
     }
   }
 

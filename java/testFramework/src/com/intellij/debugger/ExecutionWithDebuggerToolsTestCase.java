@@ -47,7 +47,7 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jdi.Method;
-import com.sun.jdi.ThreadReference;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
 import javax.swing.*;
@@ -138,11 +138,12 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
   @Override
   protected void tearDown() throws Exception {
-    ThreadTracker.awaitThreadTerminationWithParentParentGroup("JDI main", 100, TimeUnit.SECONDS);
+    ThreadTracker.awaitJDIThreadsTermination(100, TimeUnit.SECONDS);
     try {
       myDebugProcess = null;
       myPauseScriptListener = null;
       myRatherLaterRequests.clear();
+      myScriptRunnables.clear();
       super.tearDown();
     }
     finally {
@@ -221,7 +222,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
             if (pausedContext != null) {
               debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(pausedContext) {
                 @Override
-                public void contextAction() throws Exception {
+                public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
                   paused(pausedContext);
                 }
               });
@@ -283,7 +284,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   protected void invokeRatherLater(SuspendContextImpl context, final Runnable runnable) {
     invokeRatherLater(new SuspendContextCommandImpl(context) {
       @Override
-      public void contextAction() throws Exception {
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
         DebuggerInvocationUtil.invokeLater(myProject, runnable);
       }
     });
@@ -304,7 +305,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
       request.myDebugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(
           ((SuspendContextCommandImpl)request.myDebuggerCommand).getSuspendContext()) {
           @Override
-          public void contextAction() throws Exception {
+          public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
             pumpDebuggerThread(request);
           }
 
@@ -335,12 +336,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     }
     else {
       if (!SwingUtilities.isEventDispatchThread()) {
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            pumpSwingThread();
-          }
-        });
+        UIUtil.invokeAndWaitIfNeeded((Runnable)() -> pumpSwingThread());
       }
       else {
         SwingUtilities.invokeLater(() -> pumpSwingThread());
@@ -498,14 +494,6 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
     public DelayedEventsProcessListener(DebugProcessAdapterImpl target) {
       myTarget = target;
-    }
-
-    @Override
-    public void threadStarted(DebugProcess proc, ThreadReference thread) {
-    }
-
-    @Override
-    public void threadStopped(DebugProcess proc, ThreadReference thread) {
     }
 
     @Override

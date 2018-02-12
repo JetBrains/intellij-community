@@ -34,19 +34,19 @@ import static com.intellij.openapi.ui.Messages.OK_BUTTON;
  */
 @Deprecated
 public class ChooseDialog extends MessageDialog {
-  private ComboBox myComboBox;
+  private ComboBox<String> myComboBox;
   private InputValidator myValidator;
 
   public ChooseDialog(Project project,
                       String message,
                       @Nls(capitalization = Nls.Capitalization.Title) String title,
                       @Nullable Icon icon,
-                      String[] values,
+                      @NotNull String[] values,
                       String initialValue,
                       @NotNull String[] options,
                       int defaultOption) {
     super(project, message, title, options, defaultOption, icon, true);
-    myComboBox.setModel(new DefaultComboBoxModel(values));
+    myComboBox.setModel(new DefaultComboBoxModel<>(values));
     myComboBox.setSelectedItem(initialValue);
   }
 
@@ -66,7 +66,7 @@ public class ChooseDialog extends MessageDialog {
                       String[] values,
                       String initialValue) {
     super(parent, message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
-    myComboBox.setModel(new DefaultComboBoxModel(values));
+    myComboBox.setModel(new DefaultComboBoxModel<>(values));
     myComboBox.setSelectedItem(initialValue);
   }
 
@@ -76,7 +76,7 @@ public class ChooseDialog extends MessageDialog {
                       String[] values,
                       String initialValue) {
     super(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
-    myComboBox.setModel(new DefaultComboBoxModel(values));
+    myComboBox.setModel(new DefaultComboBoxModel<>(values));
     myComboBox.setSelectedItem(initialValue);
   }
 
@@ -128,7 +128,7 @@ public class ChooseDialog extends MessageDialog {
     JPanel panel = createIconPanel();
     JPanel messagePanel = createMessagePanel();
 
-    myComboBox = new ComboBox(220);
+    myComboBox = new ComboBox<>(220);
     messagePanel.add(myComboBox, BorderLayout.SOUTH);
     panel.add(messagePanel, BorderLayout.CENTER);
     return panel;

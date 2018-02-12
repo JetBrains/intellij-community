@@ -30,8 +30,8 @@
   </project-components>
 
   <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.openapi.wm.impl.LibraryDependentToolWindowManager"/>
     <projectService serviceInterface="com.intellij.openapi.wm.impl.CommandProcessor"
                     serviceImplementation="com.intellij.openapi.wm.impl.CommandProcessor"/>
-
   </extensions>
 </idea-plugin>

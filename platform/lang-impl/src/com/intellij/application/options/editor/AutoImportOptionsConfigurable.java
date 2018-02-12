@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.Configurable.VariableProjectAppLevel;
 import com.intellij.openapi.options.ConfigurableEP;
-import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -46,14 +45,11 @@ public class AutoImportOptionsConfigurable
     myProject = project;
   }
 
+  @NotNull
   @Override
   protected List<AutoImportOptionsProvider> createConfigurables() {
-    return ContainerUtil.mapNotNull(AutoImportOptionsProviderEP.EP_NAME.getExtensions(myProject), new NullableFunction<ConfigurableEP<AutoImportOptionsProvider>, AutoImportOptionsProvider>() {
-      @Override
-      public AutoImportOptionsProvider fun(ConfigurableEP<AutoImportOptionsProvider> ep) {
-        return ep.createConfigurable();
-      }
-    });
+    return ContainerUtil.mapNotNull(AutoImportOptionsProviderEP.EP_NAME.getExtensions(myProject),
+                                    (NullableFunction<ConfigurableEP<AutoImportOptionsProvider>, AutoImportOptionsProvider>)ep -> ep.createConfigurable());
   }
 
   @Override

@@ -1,9 +1,9 @@
 # Stubs for getpass
 
-from typing import TextIO
+from typing import Optional, TextIO
 
 
-def getpass(prompt: str = ..., stream: TextIO = None) -> str: ...
+def getpass(prompt: str = ..., stream: Optional[TextIO] = ...) -> str: ...
 
 
 def getuser() -> str: ...

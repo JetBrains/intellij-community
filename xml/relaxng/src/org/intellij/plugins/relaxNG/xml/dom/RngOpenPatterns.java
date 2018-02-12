@@ -23,11 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 16.08.2007
- */
 @SuppressWarnings("UnusedDeclaration")
 public interface RngOpenPatterns extends RngDomElement, Pattern<XmlElement> {
   /**

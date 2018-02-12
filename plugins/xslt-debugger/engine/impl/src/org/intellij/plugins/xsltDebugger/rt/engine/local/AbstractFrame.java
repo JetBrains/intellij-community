@@ -18,11 +18,6 @@ package org.intellij.plugins.xsltDebugger.rt.engine.local;
 
 import org.intellij.plugins.xsltDebugger.rt.engine.Debugger.Frame;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 02.06.2007
- */
 public abstract class AbstractFrame<F extends Frame> implements Frame<F> {
   private final F myPrev;
   private F myNext;

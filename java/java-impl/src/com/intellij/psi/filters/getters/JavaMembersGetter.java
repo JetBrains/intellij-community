@@ -62,6 +62,10 @@ public class JavaMembersGetter extends MembersGetter {
 
     final PsiClass psiClass = PsiUtil.resolveClassInType(myExpectedType);
     processMembers(results, psiClass, PsiTreeUtil.getParentOfType(myPlace, PsiAnnotation.class) == null, searchInheritors);
+
+    if (psiClass != null && myExpectedType instanceof PsiClassType) {
+      new BuilderCompletion((PsiClassType)myExpectedType, psiClass, myPlace).suggestBuilderVariants().forEach(results::consume);
+    }
   }
 
   private void addConstantsFromReferencedClassesInSwitch(final Consumer<LookupElement> results) {
@@ -146,15 +150,13 @@ public class JavaMembersGetter extends MembersGetter {
   @Override
   @Nullable
   protected LookupElement createMethodElement(PsiMethod method) {
-    PsiSubstitutor substitutor = SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(method, myExpectedType);
-    PsiType type = substitutor.substitute(method.getReturnType());
+    JavaMethodCallElement item = new JavaMethodCallElement(method, false, false);
+    item.setInferenceSubstitutorFromExpectedType(myPlace, myExpectedType);
+    PsiType type = item.getType();
     if (type == null || !myExpectedType.isAssignableFrom(type)) {
       return null;
     }
 
-
-    JavaMethodCallElement item = new JavaMethodCallElement(method, false, false);
-    item.setInferenceSubstitutor(substitutor, myPlace);
     return item;
   }
 }

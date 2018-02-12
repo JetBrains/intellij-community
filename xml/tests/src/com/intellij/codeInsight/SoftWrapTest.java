@@ -21,11 +21,10 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 
 /**
  * @author Dmitry Avdeev
- *         Date: 25.11.13
  */
 public class SoftWrapTest extends LightPlatformCodeInsightFixtureTestCase {
 
-  public void testSoftWrapInInjection() throws Exception {
+  public void testSoftWrapInInjection() {
 
     myFixture.configureByFile("softWrap.html");
     EditorTestUtil.configureSoftWraps(((EditorWindow)myFixture.getEditor()).getDelegate(), 83);

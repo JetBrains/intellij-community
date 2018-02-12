@@ -59,17 +59,17 @@ public class HintUtil {
 
   @NotNull
   public static Color getInformationColor() {
-    return notNull(getGlobalOrDefaultColor(INFORMATION_COLOR_KEY));
+    return notNull(getGlobalOrDefaultColor(INFORMATION_COLOR_KEY), INFORMATION_COLOR_KEY.getDefaultColor());
   }
 
   @NotNull
   public static Color getQuestionColor() {
-    return notNull(getGlobalOrDefaultColor(QUESTION_COLOR_KEY));
+    return notNull(getGlobalOrDefaultColor(QUESTION_COLOR_KEY), QUESTION_COLOR_KEY.getDefaultColor());
   }
 
   @NotNull
   public static Color getErrorColor() {
-    return notNull(getGlobalOrDefaultColor(ERROR_COLOR_KEY));
+    return notNull(getGlobalOrDefaultColor(ERROR_COLOR_KEY), ERROR_COLOR_KEY.getDefaultColor());
   }
 
   public static JComponent createInformationLabel(@NotNull String text) {

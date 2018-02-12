@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 19-Aug-2008
- */
 package com.theoryinpractice.testng.intention;
 
 import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler;

@@ -80,7 +80,7 @@ public class PyDeprecationTest extends PyTestCase {
 
   public void testAbsAbstractProperty() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON33,
+      LanguageLevel.PYTHON34,
       () -> {
         myFixture.enableInspections(PyDeprecationInspection.class);
         myFixture.configureByFile("deprecation/abcAbstractProperty.py");

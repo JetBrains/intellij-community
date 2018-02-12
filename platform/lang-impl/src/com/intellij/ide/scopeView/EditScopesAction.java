@@ -26,10 +26,6 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 
-/**
- * User: anna
- * Date: 27-Jan-2006
- */
 public class EditScopesAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.scopeView.EditScopesAction");
 

@@ -22,22 +22,43 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.IdentityCharTable;
+import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.CharTable;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.concurrency.AtomicFieldUpdater;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
+ * PsiBuilder-based read-only ASTNode implementation.
+ * <p>
+ * <h1>Memory consumption comparison with ordinary PSI API</h1>
+ * <pre>
+ * PSI memory consumption stays the same, so let's compare AST memory consumption only.
+ * Both read-write and read-only PSI require a single PsiBuilder instance to parse a file.
+ * The latter then keeps it while the first copies all the needed data and discards it.
+ *
+ * Here're the numbers for a sample 700K SQL schema:
+ *
+ *     PsiBuilderImpl (one instance): shallow  ~ 0, retained 2M (700K text & 1.5M member arrays)
+ *   PsiBuilderImpl.ProductionMarker: shallow 4.6M, retained same, 101K instances
+ *   TraverserBasedASTNode (r/o AST): shallow 4.4M, retained  11M, 115K instances   (1)
+ *             TreeElement (r/w AST): shallow 6.3M, retained 8.1M, 133K instances   (2)
+ *
+ * (1) allocates 4.6M (markers) & 2M (builder) during parsing and 4.4M (nodes) afterwards, hence 11M.
+ * (2) allocates same 6.6M for parsing, then copies it to a new 8.1M data structure, GC'ing the original.
+ * </pre>
+ *
  * @author gregsh
+ *
+ * @see com.intellij.lang.impl.PsiBuilderImpl
+ * @see com.intellij.ide.util.treeView.smartTree.TreeElement
  */
 public class TraverserBasedASTNode<N> extends ReadOnlyASTNode {
 
@@ -55,8 +76,16 @@ public class TraverserBasedASTNode<N> extends ReadOnlyASTNode {
   protected final N myNode;
   protected final SyntaxTraverser<N> myTraverser;
 
-  private final AtomicReference<PsiElement> myPsi = new AtomicReference<>();
-  private final AtomicReference<List<ASTNode>> myKids = new AtomicReference<>();
+  /** @noinspection unused */
+  private volatile PsiElement myPsi;
+  /** @noinspection unused */
+  private volatile ASTNode[] myKids;
+
+  private static final AtomicFieldUpdater<TraverserBasedASTNode, PsiElement> ourPsiUpdater =
+    AtomicFieldUpdater.forFieldOfType(TraverserBasedASTNode.class, PsiElement.class);
+  private static final AtomicFieldUpdater<TraverserBasedASTNode, ASTNode[]> ourKidsUpdater =
+    AtomicFieldUpdater.forFieldOfType(TraverserBasedASTNode.class, ASTNode[].class);
+
 
   public TraverserBasedASTNode(@NotNull N node, int index,
                                @Nullable TraverserBasedASTNode<?> parent,
@@ -84,26 +113,27 @@ public class TraverserBasedASTNode<N> extends ReadOnlyASTNode {
   }
 
   @Override
-  public List<ASTNode> getChildList() {
-    List<ASTNode> kids = myKids.get();
+  protected ASTNode[] getChildArray() {
+    ASTNode[] kids = myKids;
     if (kids != null) return kids;
-    myKids.compareAndSet(null, childrenImpl());
-    return myKids.get();
+    return ourKidsUpdater.compareAndSet(this, null, kids = childrenImpl()) ? kids : myKids;
   }
 
-  private List<ASTNode> childrenImpl() {
+  private ASTNode[] childrenImpl() {
     List<ASTNode> children = myTraverser.children(myNode).transform(CHILD_TRANSFORM(myTraverser, 0)).toList();
-    if (!children.isEmpty() || getTreeParent() == null) return ContainerUtil.immutableList(children);
+    if (!children.isEmpty() || getTreeParent() == null) {
+      return children.isEmpty() ? EMPTY_ARRAY : children.toArray(ASTNode.EMPTY_ARRAY);
+    }
 
     // expand (parse) non-file lazy-parseable nodes
     IElementType type = myTraverser.api.typeOf(myNode);
-    if (!(type instanceof ILazyParseableElementType)) return ContainerUtil.immutableList(children);
+    if (!(type instanceof ILazyParseableElementType)) return EMPTY_ARRAY;
     PsiBuilder builder = ((ILazyParseableElementType)type).parseLight(this);
     SyntaxTraverser<LighterASTNode> s = SyntaxTraverser.lightTraverser(builder);
     // avoid ShiftedNode double-shifting
     int shift = myTraverser.api.rangeOf(myNode).getStartOffset();
     List<ASTNode> childrenLazy = s.api.children(s.getRoot()).transform(CHILD_TRANSFORM(s, shift)).toList();
-    return ContainerUtil.immutableList(childrenLazy);
+    return childrenLazy.toArray(ASTNode.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -114,10 +144,9 @@ public class TraverserBasedASTNode<N> extends ReadOnlyASTNode {
 
   @Override
   public PsiElement getPsi() {
-    PsiElement psi = myPsi.get();
+    PsiElement psi = myPsi;
     if (psi != null) return psi;
-    myPsi.compareAndSet(null, getPsiImpl());
-    return myPsi.get();
+    return ourPsiUpdater.compareAndSet(this, null, psi = getPsiImpl()) ? psi : myPsi;
   }
 
   public PsiElement getPsiImpl() {
@@ -163,14 +192,11 @@ public class TraverserBasedASTNode<N> extends ReadOnlyASTNode {
 
   @NotNull
   public static PsiElement[] getChildrenAsPsiArray(@NotNull ASTNode node) {
-    List<ASTNode> list = ((ReadOnlyASTNode)node).getChildList();
+    ASTNode[] kids = ((ReadOnlyASTNode)node).getChildArray();
+    if (kids.length == 0) return PsiElement.EMPTY_ARRAY;
+    PsiElement[] result = new PsiElement[kids.length];
     int idx = 0;
-    for (ASTNode o : list) {
-      if (o.getPsi() != null) idx++;
-    }
-    PsiElement[] result = new PsiElement[idx];
-    idx = 0;
-    for (ASTNode o : list) {
+    for (ASTNode o : kids) {
       PsiElement psi = o.getPsi();
       if (psi != null) {
         result[idx++] = psi;
@@ -181,8 +207,8 @@ public class TraverserBasedASTNode<N> extends ReadOnlyASTNode {
 
   @Nullable
   public static PsiElement getFirstPsiChild(@NotNull ASTNode node) {
-    List<ASTNode> list = ((ReadOnlyASTNode)node).getChildList();
-    for (ASTNode o : list) {
+    ASTNode[] kids = ((ReadOnlyASTNode)node).getChildArray();
+    for (ASTNode o : kids) {
       PsiElement psi = o.getPsi();
       if (psi != null) return psi;
     }
@@ -191,9 +217,9 @@ public class TraverserBasedASTNode<N> extends ReadOnlyASTNode {
 
   @Nullable
   public static PsiElement getLastPsiChild(@NotNull ASTNode node) {
-    List<ASTNode> list = ((ReadOnlyASTNode)node).getChildList();
-    for (int i = list.size() - 1; i >= 0; i--) {
-      ASTNode o = list.get(i);
+    ASTNode[] kids = ((ReadOnlyASTNode)node).getChildArray();
+    for (int i = kids.length - 1; i >= 0; i--) {
+      ASTNode o = kids[i];
       PsiElement psi = o.getPsi();
       if (psi != null) return psi;
     }
@@ -202,6 +228,7 @@ public class TraverserBasedASTNode<N> extends ReadOnlyASTNode {
 
   private static class FileNode<N> extends TraverserBasedASTNode<N> implements FileASTNode {
     private final PsiFile myPsiFile;
+    private final CharTableImpl myCharTable = new CharTableImpl();
 
     FileNode(@NotNull SyntaxTraverser<N> traverser, @NotNull N node, @NotNull PsiFile psiFile) {
       super(node, -1, null, traverser);
@@ -217,7 +244,7 @@ public class TraverserBasedASTNode<N> extends ReadOnlyASTNode {
     @NotNull
     @Override
     public CharTable getCharTable() {
-      return IdentityCharTable.INSTANCE;
+      return myCharTable;
     }
 
     @Override

@@ -36,7 +36,6 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.Key;
@@ -138,7 +137,7 @@ public class XsltCommandLineState extends CommandLineState {
       vmParameters.defineProperty("xslt.smart-error-handling", String.valueOf(myXsltRunConfiguration.mySmartErrorHandling));
 
       final PluginId pluginId = PluginManagerCore.getPluginByClassName(getClass().getName());
-      assert pluginId != null || System.getProperty("xslt.plugin.path") != null : "PluginId not found - development builds need to specify -Dxslt.plugin.path=../out/classes/production/xslt-rt";
+      assert pluginId != null || System.getProperty("xslt.plugin.path") != null : "PluginId not found - development builds need to specify -Dxslt.plugin.path=../out/classes/production/intellij.xslt.debugger.rt";
 
       final File pluginPath;
       if (pluginId != null) {
@@ -147,7 +146,7 @@ public class XsltCommandLineState extends CommandLineState {
         pluginPath = descriptor.getPath();
       }
       else {
-        // -Dxslt.plugin.path=C:\work\java\intellij/ultimate\out\classes\production\xslt-rt
+        // -Dxslt.plugin.path=C:\work\java\intellij/ultimate\out\classes\production\intellij.xslt.debugger.rt
         pluginPath = new File(System.getProperty("xslt.plugin.path"));
       }
 
@@ -186,7 +185,7 @@ public class XsltCommandLineState extends CommandLineState {
         extension.patchParameters(parameters, myXsltRunConfiguration, myExtensionData);
       }
 
-      parameters.setUseDynamicClasspath(JdkUtil.useDynamicClasspath(myXsltRunConfiguration.getProject()));
+      parameters.setUseDynamicClasspath(myXsltRunConfiguration.getProject());
 
       return parameters;
     }
@@ -210,7 +209,7 @@ public class XsltCommandLineState extends CommandLineState {
   private class MyProcessAdapter extends ProcessAdapter {
 
         @Override
-        public void processTerminated(final ProcessEvent event) {
+        public void processTerminated(@NotNull final ProcessEvent event) {
 
             if (myXsltRunConfiguration.isSaveToFile()) {
                 Runnable runnable = () -> {

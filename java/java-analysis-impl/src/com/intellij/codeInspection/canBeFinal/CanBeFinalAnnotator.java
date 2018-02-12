@@ -19,15 +19,12 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * User: anna
- * Date: 27-Dec-2005
- */
 class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
   private final RefManager myManager;
   public static long CAN_BE_FINAL_MASK;
@@ -103,16 +100,21 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
                                RefElement refFrom,
                                boolean referencedFromClassInitializer,
                                boolean forReading,
-                               boolean forWriting) {
+                               boolean forWriting,
+                               PsiElement referenceElement) {
     if (!(refWhat instanceof RefField)) return;
     if (!(refFrom instanceof RefMethod) ||
         !((RefMethod)refFrom).isConstructor() ||
         ((PsiField)refWhat.getElement()).hasInitializer() ||
         ((RefMethod)refFrom).getOwnerClass() != ((RefField)refWhat).getOwnerClass() ||
         ((RefField)refWhat).isStatic()) {
-      if (!referencedFromClassInitializer  && forWriting) {
+      if (forWriting &&
+          !(referencedFromClassInitializer && PsiTreeUtil.getParentOfType(referenceElement, PsiLambdaExpression.class, true) == null)) {
         ((RefFieldImpl)refWhat).setFlag(false, CAN_BE_FINAL_MASK);
       }
+    }
+    else if (forWriting && PsiTreeUtil.getParentOfType(referenceElement, PsiLambdaExpression.class, true) != null) {
+      ((RefFieldImpl)refWhat).setFlag(false, CAN_BE_FINAL_MASK);
     }
   }
 
@@ -126,7 +128,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
           ((RefClassImpl)refElement).setFlag(false, CAN_BE_FINAL_MASK);
         }
 
-        PsiMethod[] psiMethods = psiClass.getMethods();
+
         PsiField[] psiFields = psiClass.getFields();
 
         Set<PsiVariable> allFields = new HashSet<>();
@@ -168,36 +170,34 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
           }
         }
 
-        for (PsiMethod psiMethod : psiMethods) {
-          if (psiMethod.isConstructor()) {
-            PsiCodeBlock body = psiMethod.getBody();
-            if (body != null) {
-              ControlFlow flow;
-              try {
-                flow = ControlFlowFactory.getInstance(body.getProject())
-                  .getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
-              }
-              catch (AnalysisCanceledException e) {
-                flow = ControlFlow.EMPTY;
-              }
+        for (PsiMethod constructor : psiClass.getConstructors()) {
+          PsiCodeBlock body = constructor.getBody();
+          if (body != null) {
+            ControlFlow flow;
+            try {
+              flow = ControlFlowFactory.getInstance(body.getProject())
+                .getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
+            }
+            catch (AnalysisCanceledException e) {
+              flow = ControlFlow.EMPTY;
+            }
 
-              Collection<PsiVariable> writtenVariables = ControlFlowUtil.getWrittenVariables(flow, 0, flow.getSize(), false);
-              for (PsiVariable psiVariable : writtenVariables) {
-                if (instanceInitializerInitializedFields.contains(psiVariable)) {
-                  allFields.remove(psiVariable);
-                  instanceInitializerInitializedFields.remove(psiVariable);
-                }
+            Collection<PsiVariable> writtenVariables = ControlFlowUtil.getWrittenVariables(flow, 0, flow.getSize(), false);
+            for (PsiVariable psiVariable : writtenVariables) {
+              if (instanceInitializerInitializedFields.contains(psiVariable)) {
+                allFields.remove(psiVariable);
+                instanceInitializerInitializedFields.remove(psiVariable);
               }
-              List<PsiMethod> redirectedConstructors = JavaHighlightUtil.getChainedConstructors(psiMethod);
-              if (redirectedConstructors == null || redirectedConstructors.isEmpty()) {
-                List<PsiVariable> ssaVariables = ControlFlowUtil.getSSAVariables(flow);
-                ArrayList<PsiVariable> good = new ArrayList<>(ssaVariables);
-                good.addAll(instanceInitializerInitializedFields);
-                allFields.retainAll(good);
-              }
-              else {
-                allFields.removeAll(writtenVariables);
-              }
+            }
+            List<PsiMethod> redirectedConstructors = JavaHighlightUtil.getChainedConstructors(constructor);
+            if (redirectedConstructors == null || redirectedConstructors.isEmpty()) {
+              List<PsiVariable> ssaVariables = ControlFlowUtil.getSSAVariables(flow);
+              ArrayList<PsiVariable> good = new ArrayList<>(ssaVariables);
+              good.addAll(instanceInitializerInitializedFields);
+              allFields.retainAll(good);
+            }
+            else {
+              allFields.removeAll(writtenVariables);
             }
           }
         }

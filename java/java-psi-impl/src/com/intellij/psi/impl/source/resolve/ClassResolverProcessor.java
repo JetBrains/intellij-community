@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,7 +8,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.ClassCandidateInfo;
-import com.intellij.psi.scope.*;
+import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.JavaScopeProcessorEvent;
+import com.intellij.psi.scope.NameHint;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Iterator;
 import java.util.List;
 
-public class ClassResolverProcessor extends BaseScopeProcessor implements NameHint, ElementClassHint {
+public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, ElementClassHint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.ClassResolverProcessor");
   private static final String[] DEFAULT_PACKAGES = {CommonClassNames.DEFAULT_PACKAGE};
 
@@ -83,7 +72,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
       myHasInaccessibleCandidate = false;
     }
 
-    myResult = myCandidates.toArray(new JavaResolveResult[myCandidates.size()]);
+    myResult = myCandidates.toArray(JavaResolveResult.EMPTY_ARRAY);
     return myResult;
   }
 
@@ -187,12 +176,12 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   private boolean isAccessible(PsiClass otherClass) {
     if (otherClass.hasModifierProperty(PsiModifier.PRIVATE)) {
       final PsiClass containingClass = otherClass.getContainingClass();
-      PsiClass containingPlaceClass = PsiTreeUtil.getParentOfType(myPlace, PsiClass.class, false);
+      PsiClass containingPlaceClass = PsiTreeUtil.getContextOfType(myPlace, PsiClass.class, false);
       while (containingPlaceClass != null) {
         if (containingClass == containingPlaceClass) {
           return true;
         }
-        containingPlaceClass = PsiTreeUtil.getParentOfType(containingPlaceClass, PsiClass.class);
+        containingPlaceClass = PsiTreeUtil.getContextOfType(containingPlaceClass, PsiClass.class);
       }
       return false;
     }
@@ -200,7 +189,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   }
 
   private boolean isAmbiguousInherited(PsiClass containingClass1) {
-    PsiClass psiClass = PsiTreeUtil.getParentOfType(myPlace, PsiClass.class);
+    PsiClass psiClass = PsiTreeUtil.getContextOfType(myPlace, PsiClass.class);
     while (psiClass != null) {
       if (psiClass.isInheritor(containingClass1, false)) {
         return true;
@@ -245,7 +234,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     myResult = null;
     if (!accessible) return true;
     if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
-      final PsiClass containingPlaceClass = PsiTreeUtil.getParentOfType(myPlace, PsiClass.class, false);
+      final PsiClass containingPlaceClass = PsiTreeUtil.getContextOfType(myPlace, PsiClass.class, false);
       if (containingPlaceClass != null && !PsiTreeUtil.isAncestor(containingPlaceClass, aClass, false)){
         return true;
       }
@@ -263,6 +252,6 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
       @SuppressWarnings("unchecked") T t = (T)this;
       return t;
     }
-    return super.getHint(hintKey);
+    return null;
   }
 }

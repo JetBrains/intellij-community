@@ -13,15 +13,15 @@ public class ABug {
 
         Inner inner = new Inner(bottles).invoke();
         if (inner.is()) return null;
+        List<String> errors = inner.getErrors();
+        int money = inner.getMoney();
+        int nCount = inner.getnCount();
+        int rCount = inner.getrCount();
+        int wCount = inner.getwCount();
+        char[] tripel = inner.getTripel();
         boolean no33pr = inner.isNo33pr();
         int first = inner.getFirst();
         int last = inner.getLast();
-        char[] tripel = inner.getTripel();
-        int rCount = inner.getrCount();
-        int wCount = inner.getwCount();
-        int nCount = inner.getnCount();
-        int money = inner.getMoney();
-        List<String> errors = inner.getErrors();
 
         boolean unhappy = no33pr && first || no33pr && last;
 

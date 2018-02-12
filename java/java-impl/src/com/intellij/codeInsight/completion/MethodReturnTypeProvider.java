@@ -55,12 +55,12 @@ class MethodReturnTypeProvider extends CompletionProvider<CompletionParameters> 
     assert method != null;
 
     final PsiTypeVisitor<PsiType> eachProcessor = new PsiTypeVisitor<PsiType>() {
-      private Set<PsiType> myProcessed = ContainerUtil.newHashSet();
+      private final Set<PsiType> myProcessed = ContainerUtil.newHashSet();
       
       @Nullable
       @Override
       public PsiType visitType(PsiType type) {
-        if (myProcessed.add(type)) {
+        if (!(type instanceof PsiPrimitiveType) && myProcessed.add(type)) {
           int priority = type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ? 1 : 1000 - myProcessed.size();
           consumer.consume(PrioritizedLookupElement.withPriority(PsiTypeLookupItem.createLookupItem(type, position), priority));
         }

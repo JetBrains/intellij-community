@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.ide.PowerSaveMode;
@@ -24,6 +10,8 @@ import com.intellij.openapi.util.registry.RegistryValue;
 
 import javax.swing.JDialog;
 import javax.swing.JScrollBar;
+import javax.swing.JTable;
+import javax.swing.JViewport;
 import javax.swing.RootPaneContainer;
 import java.awt.Component;
 import java.awt.Container;
@@ -50,7 +38,7 @@ final class ScrollSettings {
     Application application = getApplication();
     if (application == null || application.isUnitTestMode()) return false;
     if (PowerSaveMode.isEnabled()) return false;
-    if (RemoteDesktopService.isRemoteSession()) return false;
+    if (RemoteDesktopService.isAnimationDisabled()) return false;
 
     UISettings settings = UISettings.getInstanceOrNull();
     return settings != null && settings.getSmoothScrolling();
@@ -72,8 +60,13 @@ final class ScrollSettings {
     return BACKGROUND_FROM_VIEW.asBoolean();
   }
 
-  static boolean isHeaderOverCorner() {
-    return HEADER_OVER_CORNER.asBoolean();
+  static boolean isHeaderOverCorner(JViewport viewport) {
+    Component view = viewport == null ? null : viewport.getView();
+    return !isNotSupportedYet(view) && HEADER_OVER_CORNER.asBoolean();
+  }
+
+  static boolean isNotSupportedYet(Component view) {
+    return view instanceof JTable;
   }
 
   static boolean isGapNeededForAnyComponent() {

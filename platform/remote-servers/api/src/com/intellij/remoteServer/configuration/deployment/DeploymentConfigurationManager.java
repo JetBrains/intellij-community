@@ -37,5 +37,14 @@ public abstract class DeploymentConfigurationManager {
   @NotNull
   public abstract List<RunnerAndConfigurationSettings> getDeploymentConfigurations(@NotNull ServerType<?> serverType);
 
-  public abstract void createAndRunConfiguration(@NotNull ServerType<?> serverType, @Nullable RemoteServer<?> remoteServer);
+  /**
+   * Will be removed after 173, use more granular methods added @since 173
+   */
+  @Deprecated
+  public abstract void createAndRunConfiguration(@NotNull ServerType<?> serverType,
+                                                 @Nullable RemoteServer<?> remoteServer);
+
+  public abstract void createAndRunConfiguration(@NotNull ServerType<?> serverType,
+                                                 @Nullable RemoteServer<?> remoteServer,
+                                                 @Nullable DeploymentSourceType sourceType);
 }

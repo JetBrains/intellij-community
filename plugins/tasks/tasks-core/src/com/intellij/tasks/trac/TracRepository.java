@@ -24,7 +24,7 @@ import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import icons.TasksIcons;
+import icons.TasksCoreIcons;
 import org.apache.xmlrpc.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,7 +87,7 @@ public class TracRepository extends BaseRepositoryImpl {
       Task task = getTask((Integer)result.get(i), client, transport);
       ContainerUtil.addIfNotNull(tasks, task);
     }
-    return tasks.toArray(new Task[tasks.size()]);
+    return tasks.toArray(Task.EMPTY_ARRAY);
   }
 
   private Vector<Object> runQuery(@Nullable String query, Transport transport, XmlRpcClient client, String search)
@@ -154,7 +154,7 @@ public class TracRepository extends BaseRepositoryImpl {
       @NotNull
       @Override
       public Icon getIcon() {
-        return TasksIcons.Trac;
+        return TasksCoreIcons.Trac;
       }
 
       @NotNull

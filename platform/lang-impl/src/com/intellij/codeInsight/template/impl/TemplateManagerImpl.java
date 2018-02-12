@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValueProvider;
@@ -42,12 +43,13 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 public class TemplateManagerImpl extends TemplateManager implements Disposable {
   private static final TemplateContextType[] ourContextTypes = Extensions.getExtensions(TemplateContextType.EP_NAME);
@@ -267,7 +269,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     }
 
     PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
-    if (file == null) return null;
+    if (file == null || file instanceof PsiCompiledElement) return null;
 
     Map<TemplateImpl, String> template2argument = findMatchingTemplates(file, editor, shortcutChar, TemplateSettings.getInstance());
 
@@ -309,7 +311,8 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   public static boolean isApplicable(@NotNull CustomLiveTemplate customLiveTemplate,
                                      @NotNull Editor editor,
                                      @NotNull PsiFile file, boolean wrapping) {
-    return customLiveTemplate.isApplicable(file, CustomTemplateCallback.getOffset(editor), wrapping);
+    CustomTemplateCallback callback = new CustomTemplateCallback(editor, file);
+    return customLiveTemplate.isApplicable(callback, callback.getOffset(), wrapping);
   }
 
   private static int getArgumentOffset(int caretOffset, String argument, CharSequence text) {
@@ -623,9 +626,9 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     ProperTextRange editRange = ProperTextRange.create(startOffset, endOffset);
     assertRangeWithinDocument(editRange, file.getViewProvider().getDocument());
 
-    ConcurrentFactoryMap<Pair<ProperTextRange, String>, OffsetsInFile> map = CachedValuesManager.getCachedValue(file, () ->
+    ConcurrentMap<Pair<ProperTextRange, String>, OffsetsInFile> map = CachedValuesManager.getCachedValue(file, () ->
       CachedValueProvider.Result.create(
-        ConcurrentFactoryMap.createConcurrentMap(
+        ConcurrentFactoryMap.createMap(
           key -> copyWithDummyIdentifier(new OffsetsInFile(file), key.first.getStartOffset(), key.first.getEndOffset(), key.second)),
         file, file.getViewProvider().getDocument()));
     return map.get(Pair.create(editRange, replacement));
@@ -643,9 +646,14 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
     Document document = offsetMap.getFile().getViewProvider().getDocument();
     assert document != null;
-    if (replacement.isEmpty() && startOffset == endOffset &&
-        PsiDocumentManager.getInstance(offsetMap.getFile().getProject()).isCommitted(document)) {
-      return offsetMap;
+    if (replacement.isEmpty() && startOffset == endOffset) {
+      PsiDocumentManager pdm = PsiDocumentManager.getInstance(offsetMap.getFile().getProject());
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        pdm.commitDocument(document);
+      }
+      if (pdm.isCommitted(document)) {
+        return offsetMap;
+      }
     }
 
     OffsetsInFile hostOffsets = offsetMap.toTopLevelFile();

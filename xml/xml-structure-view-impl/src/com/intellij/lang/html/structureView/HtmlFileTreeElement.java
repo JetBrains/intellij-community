@@ -72,7 +72,7 @@ class HtmlFileTreeElement extends PsiTreeElementBase<XmlFile> {
         return new HtmlTagTreeElement(rootTag).getChildrenBase();
       }
 
-      return Collections.<StructureViewTreeElement>singletonList(new HtmlTagTreeElement(rootTag));
+      return Collections.singletonList(new HtmlTagTreeElement(rootTag));
     }
     else {
       final Collection<StructureViewTreeElement> result = new ArrayList<>(rootTags.size());

@@ -202,7 +202,8 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
 
   @Override
   public boolean isEmpty() {
-    return entrySet().isEmpty();
+    // make easier and alloc-free call to myMap first
+    return myMap.isEmpty() || entrySet().isEmpty();
   }
 
   @Override
@@ -216,8 +217,14 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   }
 
   @Override
+  public boolean containsValue(Object value) {
+    throw RefValueHashMap.pointlessContainsValue();
+  }
+
+  @Override
   public V get(Object key) {
     if (key == null) return null;
+    //noinspection unchecked
     myHardKeyInstance.set((K)key);
     V result = myMap.get(myHardKeyInstance);
     myHardKeyInstance.clear();
@@ -235,6 +242,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     processQueue();
 
     // optimization:
+    //noinspection unchecked
     myHardKeyInstance.set((K)key);
     V result = myMap.remove(myHardKeyInstance);
     myHardKeyInstance.clear();
@@ -281,6 +289,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
 
     public boolean equals(Object o) {
       if (!(o instanceof Entry)) return false;
+      //noinspection unchecked
       Entry<K,V> e = (Entry)o;
       return keyEqual(key, e.getKey(), myStrategy) && valEqual(getValue(), e.getValue());
     }
@@ -351,6 +360,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     public boolean remove(Object o) {
       processQueue();
       if (!(o instanceof Entry)) return false;
+      //noinspection unchecked
       Entry<K, V> e = (Entry<K, V>)o;
       V ev = e.getValue();
 
@@ -383,7 +393,8 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   @NotNull
   @Override
   public Set<Entry<K, V>> entrySet() {
-    if (entrySet == null) entrySet = new EntrySet();
-    return entrySet;
+    Set<Entry<K, V>> es = entrySet;
+    if (es == null) entrySet = es = new EntrySet();
+    return es;
   }
 }

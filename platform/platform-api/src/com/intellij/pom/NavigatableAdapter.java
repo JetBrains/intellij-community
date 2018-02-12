@@ -20,8 +20,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 /**
- * Very often both methods <code>canNavigate</code> and <code>canNavigateToSource</code>
- * return <code>true</code>. This adapter class lets focus on navigation
+ * Very often both methods {@code canNavigate} and {@code canNavigateToSource}
+ * return {@code true}. This adapter class lets focus on navigation
  * routine only.
  *
  * @author Konstantin Bulenkov

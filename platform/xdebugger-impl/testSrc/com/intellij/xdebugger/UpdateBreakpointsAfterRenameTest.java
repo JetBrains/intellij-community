@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
  */
 package com.intellij.xdebugger;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,7 +28,7 @@ import java.io.File;
  * @author nik
  */
 public class UpdateBreakpointsAfterRenameTest extends XBreakpointsTestCase {
-  public void testRenameFile() throws Exception {
+  public void testRenameFile() {
     final VirtualFile file = createFile("file.txt");
     XLineBreakpoint<?> b = putBreakpoint(file);
     rename(file, "file2.txt");
@@ -37,7 +36,7 @@ public class UpdateBreakpointsAfterRenameTest extends XBreakpointsTestCase {
     assertSame(b, getBreakpointManager().findBreakpointAtLine(XDebuggerTestCase.MY_LINE_BREAKPOINT_TYPE, file, 0));
   }
 
-  public void testMoveFile() throws Exception {
+  public void testMoveFile() {
     final VirtualFile file = createFile("dir/a.txt");
     final VirtualFile targetDir = createFile("dir2/b.txt").getParent();
     final XLineBreakpoint<?> b = putBreakpoint(file);
@@ -45,7 +44,7 @@ public class UpdateBreakpointsAfterRenameTest extends XBreakpointsTestCase {
     assertTrue(b.getFileUrl().endsWith("dir2/a.txt"));
   }
 
-  public void testRenameParentDir() throws Exception {
+  public void testRenameParentDir() {
     final VirtualFile file = createFile("dir/x.txt");
     final XLineBreakpoint<?> b = putBreakpoint(file);
     rename(file.getParent(), "dir2");
@@ -53,12 +52,8 @@ public class UpdateBreakpointsAfterRenameTest extends XBreakpointsTestCase {
   }
 
   private XLineBreakpoint<?> putBreakpoint(final VirtualFile file) {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<XLineBreakpoint<?>>() {
-      @Override
-      public XLineBreakpoint<?> compute() {
-        return getBreakpointManager().addLineBreakpoint(XDebuggerTestCase.MY_LINE_BREAKPOINT_TYPE, file.getUrl(), 0, null, false);
-      }
-    });
+    return WriteAction.compute(() -> getBreakpointManager()
+      .addLineBreakpoint(XDebuggerTestCase.MY_LINE_BREAKPOINT_TYPE, file.getUrl(), 0, null, false));
   }
 
   private VirtualFile createFile(String path) {

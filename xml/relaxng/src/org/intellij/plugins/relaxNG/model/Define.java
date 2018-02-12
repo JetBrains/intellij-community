@@ -19,11 +19,6 @@ package org.intellij.plugins.relaxNG.model;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 05.09.2007
- */
 public interface Define<P extends Pattern, E extends PsiElement> extends Pattern<E> {
   String getName();
 

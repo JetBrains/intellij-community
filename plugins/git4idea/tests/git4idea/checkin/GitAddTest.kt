@@ -19,7 +19,6 @@ import com.intellij.openapi.vcs.VcsConfiguration.StandardConfirmation.ADD
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.assertStatus
-import git4idea.test.git
 
 class GitAddTest : GitSingleRepoTest() {
 
@@ -31,13 +30,13 @@ class GitAddTest : GitSingleRepoTest() {
   fun `test add one file`() {
     val file = prepareUnversionedFile("unv.txt")
     addUnversionedFile(file)
-    myRepo.assertStatus(file, 'A')
+    repo.assertStatus(file, 'A')
   }
 
   fun `test add directory`() {
     val file = prepareUnversionedFile("dir/unv.txt")
-    addUnversionedFile(myProjectRoot.findChild("dir")!!)
-    myRepo.assertStatus(file, 'A')
+    addUnversionedFile(projectRoot.findChild("dir")!!)
+    repo.assertStatus(file, 'A')
   }
 
   private fun addUnversionedFile(file: VirtualFile) {

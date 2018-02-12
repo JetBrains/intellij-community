@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeed
-import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vcs.merge.MergeProvider2
@@ -57,7 +57,7 @@ abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManage
 
         // we ignore empty files as well - delete if corrupted
         if (attributes.size() == 0L) {
-          LOG.catchAndLog {
+          LOG.runAndLogException {
             LOG.warn("File $path is empty (length 0), will be removed")
             delete(file, path)
           }
@@ -91,7 +91,7 @@ abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManage
       }
     }
 
-    LOG.catchAndLog {
+    LOG.runAndLogException {
       if (fileToDelete!!.sizeOrNull() == 0L) {
         LOG.warn("File $path is empty (length 0), will be removed")
         delete(fileToDelete!!, path)
@@ -177,13 +177,13 @@ fun resolveConflicts(files: List<VirtualFile>, mergeProvider: MergeProvider2): L
 }
 
 class RepositoryVirtualFile(private val path: String) : LightVirtualFile(PathUtilRt.getFileName(path), StdFileTypes.XML, "", CharsetToolkit.UTF8_CHARSET, 1L) {
-  var content: ByteArray? = null
+  var byteContent: ByteArray? = null
     private set
 
   override fun getPath() = path
 
   override fun setBinaryContent(content: ByteArray, newModificationStamp: Long, newTimeStamp: Long, requestor: Any?) {
-    this.content = content
+    this.byteContent = content
   }
 
   override fun getOutputStream(requestor: Any?, newModificationStamp: Long, newTimeStamp: Long) = throw IllegalStateException("You must use setBinaryContent")

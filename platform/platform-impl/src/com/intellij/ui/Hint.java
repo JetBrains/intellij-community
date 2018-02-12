@@ -26,7 +26,7 @@ import javax.swing.*;
 public interface Hint {
   /**
    * @param parentComponent    defines coordinate system where hint will be shown.
-   *                           Cannot be <code>null</code>.
+   *                           Cannot be {@code null}.
    * @param x                  x coordinate of hint in parent coordinate system
    * @param y                  y coordinate of hint in parent coordinate system
    * @param focusBackComponent component which should get focus when the hint will

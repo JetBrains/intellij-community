@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -37,7 +38,7 @@ import java.util.List;
  */
 public abstract class BraceMatcherBasedSelectioner extends ExtendWordSelectionHandlerBase {
   @Override
-  public List<TextRange> select(final PsiElement e, final CharSequence editorText, final int cursorOffset, final Editor editor) {
+  public List<TextRange> select(@NotNull final PsiElement e, @NotNull final CharSequence editorText, final int cursorOffset, @NotNull final Editor editor) {
     final VirtualFile file = e.getContainingFile().getVirtualFile();
     final FileType fileType = file == null? null : file.getFileType();
     if (fileType == null) return super.select(e, editorText, cursorOffset, editor);

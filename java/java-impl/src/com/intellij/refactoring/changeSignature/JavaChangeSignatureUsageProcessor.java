@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,19 +24,20 @@ import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameUtil;
@@ -49,8 +50,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.IntentionPowerPackBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -265,7 +266,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
                                   JavaChangeInfo changeInfo,
                                   boolean toChangeArguments,
                                   boolean toCatchExceptions,
-                                  PsiMethod callee, PsiSubstitutor subsitutor, final UsageInfo[] usages) throws IncorrectOperationException {
+                                  PsiMethod callee, PsiSubstitutor substitutor, final UsageInfo[] usages) throws IncorrectOperationException {
     if (changeInfo.isNameChanged()) {
       if (ref instanceof PsiJavaCodeReferenceElement) {
         PsiElement last = ((PsiJavaCodeReferenceElement)ref).getReferenceNameElement();
@@ -287,7 +288,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         }
       }
 
-      fixActualArgumentsList(list, changeInfo, toInsertDefaultValue, subsitutor);
+      fixActualArgumentsList(list, changeInfo, toInsertDefaultValue, substitutor);
     }
 
     if (toCatchExceptions) {
@@ -350,9 +351,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(ref.getProject());
         PsiTryStatement tryStatement = (PsiTryStatement)elementFactory.createStatementFromText("try {} catch (Exception e) {}", null);
         PsiStatement anchor;
-        PsiElement lambdaBody = context instanceof PsiLambdaExpression ? ((PsiLambdaExpression)context).getBody() : null;
-        if (lambdaBody instanceof PsiExpression) {
-          PsiCodeBlock codeBlock = (PsiCodeBlock)((PsiLambdaExpression)RefactoringUtil.expandExpressionLambdaToCodeBlock(lambdaBody)).getBody();
+        if (context instanceof PsiLambdaExpression) {
+          PsiCodeBlock codeBlock = RefactoringUtil.expandExpressionLambdaToCodeBlock((PsiLambdaExpression)context);
           LOG.assertTrue(codeBlock != null);
           anchor = codeBlock.getStatements()[0];
         }
@@ -383,7 +383,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     for (PsiClassType exceptionType : exceptions) {
       if (!ExceptionUtil.isUncheckedException(exceptionType)) result.add(exceptionType);
     }
-    return result.toArray(new PsiClassType[result.size()]);
+    return result.toArray(PsiClassType.EMPTY_ARRAY);
   }
 
   private static void adjustPossibleEmptyTryStatement(PsiTryStatement tryStatement) throws IncorrectOperationException {
@@ -417,7 +417,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     for (PsiClassType exception : exceptions) {
       if (!ExceptionUtil.isHandled(exception, place)) result.add(exception);
     }
-    return result.toArray(new PsiClassType[result.size()]);
+    return result.toArray(PsiClassType.EMPTY_ARRAY);
   }
 
   private static boolean isCatchParameterRedundant(PsiClassType catchParamType, Collection<PsiClassType> thrownTypes) {
@@ -886,7 +886,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       for (JavaParameterInfo info : primaryNewParms) {
         if (info.getOldIndex() < 0) newParameters.add(createNewParameter(changeInfo, info, psiSubstitutor, substitutor));
       }
-      PsiParameter[] arrayed = newParameters.toArray(new PsiParameter[newParameters.size()]);
+      PsiParameter[] arrayed = newParameters.toArray(PsiParameter.EMPTY_ARRAY);
       boolean[] toRemoveParm = new boolean[arrayed.length];
       Arrays.fill(toRemoveParm, false);
       resolveParameterVsFieldsConflicts(arrayed, caller.getParameterList(), toRemoveParm, caller.getBody());
@@ -905,7 +905,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           newThrowns.add(ref);
         }
       }
-      PsiJavaCodeReferenceElement[] arrayed = newThrowns.toArray(new PsiJavaCodeReferenceElement[newThrowns.size()]);
+      PsiJavaCodeReferenceElement[] arrayed = newThrowns.toArray(PsiJavaCodeReferenceElement.EMPTY_ARRAY);
       boolean[] toRemoveParm = new boolean[arrayed.length];
       Arrays.fill(toRemoveParm, false);
       ChangeSignatureUtil.synchronizeList(throwsList, Arrays.asList(arrayed), ThrowsList.INSTANCE, toRemoveParm);
@@ -943,8 +943,9 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     RefactoringUtil.fixJavadocsForParams(method, newParameters, pair -> {
       final PsiParameter parameter = pair.first;
       final String oldParamName = pair.second;
-      final int idx = ArrayUtil.find(oldParameterNames, oldParamName);
-      return idx >= 0 && idx == method.getParameterList().getParameterIndex(parameter) && changeInfo.getNewParameters()[idx].getOldIndex() == idx;
+      final int oldIdx = ArrayUtil.find(oldParameterNames, oldParamName);
+      int newIndex = method.getParameterList().getParameterIndex(parameter);
+      return oldIdx >= 0 && newIndex >= 0 && changeInfo.getNewParameters()[newIndex].getOldIndex() == oldIdx;
     }, paramName -> ArrayUtil.find(oldParameterNames, paramName) >= 0);
   }
 
@@ -958,7 +959,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       type = psiSubstitutor.substitute(type);
     }
     PsiParameter parameter = factory.createParameter(newParm.getName(), type, list);
-    if (CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_PARAMETERS) {
+    if (CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS) {
       PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, true);
     }
     return parameter;
@@ -1002,7 +1003,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
   }
 
-  private static class ConflictSearcher {
+  public static class ConflictSearcher {
     private final JavaChangeInfo myChangeInfo;
 
     private ConflictSearcher(@NotNull JavaChangeInfo changeInfo) {
@@ -1104,7 +1105,10 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       throws IncorrectOperationException {
       PsiMethod method = myChangeInfo.getMethod();
       PsiModifierList modifierList = (PsiModifierList)method.getModifierList().copy();
-      VisibilityUtil.setVisibility(modifierList, myChangeInfo.getNewVisibility());
+      String visibility = myChangeInfo.getNewVisibility();
+      VisibilityUtil.setVisibility(modifierList, visibility);
+
+      searchForHierarchyConflicts(method, conflictDescriptions, visibility);
 
       for (Iterator<UsageInfo> iterator = usages.iterator(); iterator.hasNext();) {
         UsageInfo usageInfo = iterator.next();
@@ -1122,7 +1126,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
               String message =
                 RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
                                           RefactoringUIUtil.getDescription(method, true),
-                                          VisibilityUtil.toPresentableText(myChangeInfo.getNewVisibility()),
+                                          VisibilityUtil.toPresentableText(visibility),
                                           RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true));
               conflictDescriptions.putValue(method, message);
               if (!needToChangeCalls()) {
@@ -1132,6 +1136,68 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           }
         }
       }
+    }
+
+    public static void searchForHierarchyConflicts(PsiMethod method, MultiMap<PsiElement, String> conflicts, final String modifier) {
+      SuperMethodsSearch.search(method, ReadAction.compute(() -> method.getContainingClass()), true, false).forEach(
+        methodSignature -> {
+          final PsiMethod superMethod = methodSignature.getMethod();
+          if (!hasCompatibleVisibility(superMethod, true, modifier)) {
+            conflicts.putValue(superMethod, IntentionPowerPackBundle.message(
+              "0.will.have.incompatible.access.privileges.with.super.1",
+              RefactoringUIUtil.getDescription(method, false),
+              RefactoringUIUtil.getDescription(superMethod, true)));
+          }
+          return true;
+        });
+      OverridingMethodsSearch.search(method).forEach(overridingMethod -> {
+        if (!isVisibleFromOverridingMethod(method, overridingMethod, modifier)) {
+          conflicts.putValue(overridingMethod, IntentionPowerPackBundle.message(
+            "0.will.no.longer.be.visible.from.overriding.1",
+            RefactoringUIUtil.getDescription(method, false),
+            RefactoringUIUtil.getDescription(overridingMethod, true)));
+        }
+        else if (!hasCompatibleVisibility(overridingMethod, false, modifier)) {
+          conflicts.putValue(overridingMethod, IntentionPowerPackBundle.message(
+            "0.will.have.incompatible.access.privileges.with.overriding.1",
+            RefactoringUIUtil.getDescription(method, false),
+            RefactoringUIUtil.getDescription(overridingMethod, true)));
+        }
+        return false;
+      });
+    }
+
+    private static boolean hasCompatibleVisibility(PsiMethod method, boolean isSuper, final String modifier) {
+      if (modifier.equals(PsiModifier.PRIVATE)) {
+        return false;
+      }
+      else if (modifier.equals(PsiModifier.PACKAGE_LOCAL)) {
+        if (isSuper) {
+          return !(method.hasModifierProperty(PsiModifier.PUBLIC) || method.hasModifierProperty(PsiModifier.PROTECTED));
+        }
+        return true;
+      }
+      else if (modifier.equals(PsiModifier.PROTECTED)) {
+        if (isSuper) {
+          return !method.hasModifierProperty(PsiModifier.PUBLIC);
+        }
+        else {
+          return method.hasModifierProperty(PsiModifier.PROTECTED) || method.hasModifierProperty(PsiModifier.PUBLIC);
+        }
+      }
+      else if (modifier.equals(PsiModifier.PUBLIC)) {
+        if (!isSuper) {
+          return method.hasModifierProperty(PsiModifier.PUBLIC);
+        }
+        return true;
+      }
+      throw new AssertionError();
+    }
+
+    private static boolean isVisibleFromOverridingMethod(PsiMethod method, PsiMethod overridingMethod, final String modifier) {
+      final PsiModifierList modifierListCopy = (PsiModifierList)method.getModifierList().copy();
+      modifierListCopy.setModifierProperty(modifier, true);
+      return JavaResolveUtil.isAccessible(method, method.getContainingClass(), modifierListCopy, overridingMethod, null, null);
     }
 
 
@@ -1161,7 +1227,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
               JavaPsiFacade.getElementFactory(method.getProject()).createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, method);
           }
           PsiParameter param = factory.createParameter(info.getName(), parameterType, method);
-          if (CodeStyleSettingsManager.getSettings(manager.getProject()).GENERATE_FINAL_PARAMETERS) {
+          if (CodeStyleSettingsManager.getSettings(manager.getProject())
+            .getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS) {
             PsiUtil.setModifierProperty(param, PsiModifier.FINAL, true);
           }
           prototype.getParameterList().add(param);

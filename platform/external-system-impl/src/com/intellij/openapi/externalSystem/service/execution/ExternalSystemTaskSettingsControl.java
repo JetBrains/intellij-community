@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.externalSystem.service.execution;
 
+import com.intellij.execution.configuration.EnvironmentVariablesComponent;
+import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -31,6 +33,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,6 +63,7 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
   @SuppressWarnings("FieldCanBeLocal") // Used via reflection at showUi() and disposeResources()
   private JBLabel myArgumentsLabel;
   private RawCommandLineEditor myArgumentsEditor;
+  private EnvironmentVariablesComponent myEnvVariablesComponent;
 
   @Nullable private ExternalSystemTaskExecutionSettings myOriginalSettings;
 
@@ -114,6 +118,11 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
     myArgumentsEditor.setDialogCaption(ExternalSystemBundle.message("run.configuration.settings.label.arguments"));
     canvas.add(myArgumentsLabel, ExternalSystemUiUtil.getLabelConstraints(0));
     canvas.add(myArgumentsEditor, ExternalSystemUiUtil.getFillLineConstraints(0));
+    myEnvVariablesComponent = new EnvironmentVariablesComponent();
+    JBLabel myEnvVariablesComponentLabel = myEnvVariablesComponent.getLabel();
+    myEnvVariablesComponentLabel.remove(myEnvVariablesComponentLabel);
+    canvas.add(myEnvVariablesComponentLabel, ExternalSystemUiUtil.getLabelConstraints(0));
+    canvas.add(myEnvVariablesComponent, ExternalSystemUiUtil.getFillLineConstraints(0));
   }
 
   @Override
@@ -122,6 +131,7 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
     myTasksTextField.setText("");
     myVmOptionsEditor.setText("");
     myArgumentsEditor.setText("");
+    myEnvVariablesComponent.setEnvData(EnvironmentVariablesData.DEFAULT);
     showUi(true);
 
     if (myOriginalSettings == null) {
@@ -136,6 +146,8 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
     myTasksTextField.setText(StringUtil.join(myOriginalSettings.getTaskNames(), " "));
     myVmOptionsEditor.setText(myOriginalSettings.getVmOptions());
     myArgumentsEditor.setText(myOriginalSettings.getScriptParameters());
+    myEnvVariablesComponent.setEnvData(
+      EnvironmentVariablesData.create(myOriginalSettings.getEnv(), myOriginalSettings.isPassParentEnvs()));
   }
 
   @Override
@@ -151,7 +163,10 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
            || !Comparing.equal(normalizePath(myVmOptionsEditor.getText()),
                                normalizePath(myOriginalSettings.getVmOptions()))
            || !Comparing.equal(normalizePath(myArgumentsEditor.getText()),
-                               normalizePath(myOriginalSettings.getScriptParameters()));
+                               normalizePath(myOriginalSettings.getScriptParameters()))
+           || myEnvVariablesComponent.isPassParentEnvs() != myOriginalSettings.isPassParentEnvs()
+           || !myEnvVariablesComponent.getEnvs().equals(myOriginalSettings.getEnv());
+
   }
 
   @Override
@@ -161,6 +176,8 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
     settings.setTaskNames(StringUtil.split(myTasksTextField.getText(), " "));
     settings.setVmOptions(myVmOptionsEditor.getText());
     settings.setScriptParameters(myArgumentsEditor.getText());
+    settings.setPassParentEnvs(myEnvVariablesComponent.isPassParentEnvs());
+    settings.setEnv(ContainerUtil.newHashMap(myEnvVariablesComponent.getEnvs()));
   }
 
   @Override

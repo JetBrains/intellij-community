@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 05.12.2006
- * Time: 19:39:22
- */
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.Disposable;
@@ -52,6 +46,8 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -59,7 +55,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import static com.intellij.util.WaitForProgressToShow.*;
+import static com.intellij.openapi.util.text.StringUtil.isEmpty;
+import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
 
 public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.CommittedChangesPanel");
@@ -75,7 +72,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   private final List<Runnable> myShouldBeCalledOnDispose;
   private volatile boolean myDisposed;
   private volatile boolean myInLoad;
-  private Consumer<String> myIfNotCachedReloader;
+  private final Consumer<String> myIfNotCachedReloader;
   private boolean myChangesLoaded;
 
   public CommittedChangesPanel(Project project, final CommittedChangesProvider provider, final ChangeBrowserSettings settings,
@@ -98,15 +95,17 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("CommittedChangesToolbar");
 
     ActionToolbar toolBar = myBrowser.createGroupFilterToolbar(project, group, extraActions,
-                                                               auxiliary != null ? auxiliary.getToolbarActions() : Collections.<AnAction>emptyList());
+                                                               auxiliary != null ? auxiliary.getToolbarActions() : Collections.emptyList());
     toolbarPanel.add(toolBar.getComponent());
     toolbarPanel.add(Box.createHorizontalGlue());
     myRegexCheckbox = new JCheckBox(VcsBundle.message("committed.changes.regex.title"));
     myRegexCheckbox.setSelected(false);
-    myRegexCheckbox.getModel().addChangeListener(new ChangeListener() {
+    myRegexCheckbox.getModel().addItemListener(new ItemListener() {
       @Override
-      public void stateChanged(ChangeEvent e) {
-        myFilterComponent.filter();
+      public void itemStateChanged(ItemEvent e) {
+        if (!isEmpty(myFilterComponent.getFilter())) {
+          myFilterComponent.filter();
+        }
       }
     });
     toolbarPanel.add(myFilterComponent);
@@ -119,17 +118,12 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
       myShouldBeCalledOnDispose.add(auxiliary.getCalledOnViewDispose());
       myBrowser.setTableContextMenu(group, auxiliary.getPopupActions());
     } else {
-      myBrowser.setTableContextMenu(group, Collections.<AnAction>emptyList());
+      myBrowser.setTableContextMenu(group, Collections.emptyList());
     }
 
     EmptyAction.registerWithShortcutSet("CommittedChanges.Refresh", CommonShortcuts.getRerun(), this);
     myBrowser.addFilter(myFilterComponent);
-    myIfNotCachedReloader = myLocation == null ? null : new Consumer<String>() {
-      @Override
-      public void consume(String s) {
-        refreshChanges(false);
-      }
-    };
+    myIfNotCachedReloader = myLocation == null ? null : s -> refreshChanges(false);
   }
 
   public RepositoryLocation getRepositoryLocation() {
@@ -166,9 +160,11 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
           final AsynchConsumer<List<CommittedChangeList>> appender = new AsynchConsumer<List<CommittedChangeList>>() {
+            @Override
             public void finished() {
             }
 
+            @Override
             public void consume(final List<CommittedChangeList> list) {
               runOrInvokeLaterAboveProgress(() -> myBrowser.append(list), ModalityState.stateForComponent(myBrowser), myProject);
             }
@@ -176,9 +172,11 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
           final BufferedListConsumer<CommittedChangeList> bufferedListConsumer = new BufferedListConsumer<>(30, appender, -1);
 
           myProvider.loadCommittedChanges(mySettings, myLocation, myMaxCount, new AsynchConsumer<CommittedChangeList>() {
+            @Override
             public void finished() {
               bufferedListConsumer.flush();
             }
+            @Override
             public void consume(CommittedChangeList committedChangeList) {
               if (myDisposed) {
                 indicator.cancel();
@@ -190,11 +188,8 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
         }
         catch (final VcsException e) {
           LOG.info(e);
-          runOrInvokeLaterAboveProgress(new Runnable() {
-            public void run() {
-              Messages.showErrorDialog(myProject, "Error refreshing view: " + StringUtil.join(e.getMessages(), "\n"), "Committed Changes");
-            }
-          }, null, myProject);
+          runOrInvokeLaterAboveProgress(
+            () -> Messages.showErrorDialog(myProject, "Error refreshing view: " + StringUtil.join(e.getMessages(), "\n"), "Committed Changes"), null, myProject);
         } finally {
           myInLoad = false;
           myBrowser.setLoading(false);
@@ -205,42 +200,23 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
 
   public void clearCaches() {
     final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
-    cache.clearCaches(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            updateFilteredModel(Collections.<CommittedChangeList>emptyList(), true);
-          }
-        }, ModalityState.NON_MODAL, myProject.getDisposed());
-      }
-    });
+    cache.clearCaches(
+      () -> ApplicationManager.getApplication().invokeLater(() -> updateFilteredModel(Collections.emptyList(), true), ModalityState.NON_MODAL, myProject.getDisposed()));
   }
 
   private void refreshChangesFromCache(final boolean cacheOnly) {
     final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
-    cache.hasCachesForAnyRoot(new Consumer<Boolean>() {
-      public void consume(final Boolean notEmpty) {
-        if (! notEmpty) {
-          if (cacheOnly) {
-            myBrowser.getEmptyText().setText(VcsBundle.message("committed.changes.not.loaded.message"));
-            return;
-          }
-          if (!CacheSettingsDialog.showSettingsDialog(myProject)) return;
+    cache.hasCachesForAnyRoot(notEmpty -> {
+      if (! notEmpty) {
+        if (cacheOnly) {
+          myBrowser.getEmptyText().setText(VcsBundle.message("committed.changes.not.loaded.message"));
+          return;
         }
-        cache.getProjectChangesAsync(mySettings, myMaxCount, cacheOnly,
-                                     new Consumer<List<CommittedChangeList>>() {
-                                       public void consume(final List<CommittedChangeList> committedChangeLists) {
-                                         updateFilteredModel(committedChangeLists, false);
-                                         }
-                                       },
-                                     new Consumer<List<VcsException>>() {
-                                       public void consume(final List<VcsException> vcsExceptions) {
-                                         AbstractVcsHelper.getInstance(myProject).showErrors(vcsExceptions, "Error refreshing VCS history");
-                                       }
-                                     });
+        if (!CacheSettingsDialog.showSettingsDialog(myProject)) return;
       }
+      cache.getProjectChangesAsync(mySettings, myMaxCount, cacheOnly,
+                                   committedChangeLists -> updateFilteredModel(committedChangeLists, false),
+                                   vcsExceptions -> AbstractVcsHelper.getInstance(myProject).showErrors(vcsExceptions, "Error refreshing VCS history"));
     });
   }
 

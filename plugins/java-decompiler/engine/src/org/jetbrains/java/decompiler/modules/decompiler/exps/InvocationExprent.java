@@ -1,27 +1,15 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
+import org.jetbrains.java.decompiler.modules.decompiler.ClasspathHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
@@ -37,8 +25,10 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.util.TextUtil;
 
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -59,6 +49,7 @@ public class InvocationExprent extends Exprent {
   private String name;
   private String classname;
   private boolean isStatic;
+  private boolean canIgnoreBoxing = true;
   private int functype = TYP_GENERAL;
   private Exprent instance;
   private MethodDescriptor descriptor;
@@ -82,7 +73,6 @@ public class InvocationExprent extends Exprent {
     name = cn.elementname;
     classname = cn.classname;
     this.bootstrapArguments = bootstrapArguments;
-
     switch (opcode) {
       case CodeConstants.opc_invokestatic:
         invocationTyp = INVOKE_STATIC;
@@ -153,6 +143,7 @@ public class InvocationExprent extends Exprent {
     name = expr.getName();
     classname = expr.getClassname();
     isStatic = expr.isStatic();
+    canIgnoreBoxing = expr.canIgnoreBoxing;
     functype = expr.getFunctype();
     instance = expr.getInstance();
     if (instance != null) {
@@ -215,10 +206,21 @@ public class InvocationExprent extends Exprent {
 
     tracer.addMapping(bytecode);
 
+    if (instance instanceof InvocationExprent) {
+      ((InvocationExprent) instance).markUsingBoxingResult();
+    }
+
     if (isStatic) {
+      if (isBoxingCall() && canIgnoreBoxing) {
+        // process general "boxing" calls, e.g. 'Object[] data = { true }' or 'Byte b = 123'
+        // here 'byte' and 'short' values do not need an explicit narrowing type cast
+        ExprProcessor.getCastedExprent(lstParameters.get(0), descriptor.params[0], buf, indent, false, false, false, tracer);
+        return buf;
+      }
+
       ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
       if (node == null || !classname.equals(node.classStruct.qualifiedName)) {
-        buf.append(DecompilerContext.getImportCollector().getShortName(ExprProcessor.buildJavaClassName(classname)));
+        buf.append(DecompilerContext.getImportCollector().getShortNameInClassContext(ExprProcessor.buildJavaClassName(classname)));
       }
     }
     else {
@@ -258,6 +260,12 @@ public class InvocationExprent extends Exprent {
         else if (instance != null) {
           TextBuffer res = instance.toJava(indent, tracer);
 
+          if (isUnboxingCall()) {
+            // we don't print the unboxing call - no need to bother with the instance wrapping / casting
+            buf.append(res);
+            return buf;
+          }
+
           VarType rightType = instance.getExprType();
           VarType leftType = new VarType(CodeConstants.TYPE_OBJECT, 0, classname);
 
@@ -294,10 +302,11 @@ public class InvocationExprent extends Exprent {
           buf.append("<invokedynamic>");
         }
         buf.append("(");
-
         break;
+
       case TYP_CLINIT:
         throw new RuntimeException("Explicit invocation of " + CodeConstants.CLINIT_NAME);
+
       case TYP_INIT:
         if (super_qualifier != null) {
           buf.append("super(");
@@ -305,57 +314,161 @@ public class InvocationExprent extends Exprent {
         else if (isInstanceThis) {
           buf.append("this(");
         }
+        else if (instance != null) {
+          buf.append(instance.toJava(indent, tracer)).append(".<init>(");
+        }
         else {
-          if (instance != null) {
-            buf.append(instance.toJava(indent, tracer)).append(".<init>(");
-          }
-          else {
-            throw new RuntimeException("Unrecognized invocation of " + CodeConstants.INIT_NAME);
-          }
+          throw new RuntimeException("Unrecognized invocation of " + CodeConstants.INIT_NAME);
         }
     }
 
-    List<VarVersionPair> sigFields = null;
+    List<VarVersionPair> mask = null;
     boolean isEnum = false;
     if (functype == TYP_INIT) {
       ClassNode newNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
-
-      if (newNode != null) {  // own class
-        if (newNode.getWrapper() != null) {
-          sigFields = newNode.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, stringDescriptor).signatureFields;
-        }
-        else {
-          if (newNode.type == ClassNode.CLASS_MEMBER && (newNode.access & CodeConstants.ACC_STATIC) == 0) { // non-static member class
-            sigFields = new ArrayList<>(Collections.nCopies(lstParameters.size(), (VarVersionPair)null));
-            sigFields.set(0, new VarVersionPair(-1, 0));
-          }
-        }
+      if (newNode != null) {
+        mask = ExprUtil.getSyntheticParametersMask(newNode, stringDescriptor, lstParameters.size());
         isEnum = newNode.classStruct.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
       }
     }
 
     BitSet setAmbiguousParameters = getAmbiguousParameters();
 
+    // omit 'new Type[] {}' for the last parameter of a vararg method call
+    if (lstParameters.size() == descriptor.params.length && isVarArgCall()) {
+      Exprent lastParam = lstParameters.get(lstParameters.size() - 1);
+      if (lastParam.type == EXPRENT_NEW && lastParam.getExprType().arrayDim >= 1) {
+        ((NewExprent) lastParam).setVarArgParam(true);
+      }
+    }
+
     boolean firstParameter = true;
     int start = isEnum ? 2 : 0;
     for (int i = start; i < lstParameters.size(); i++) {
-      if (sigFields == null || sigFields.get(i) == null) {
-        if (!firstParameter) {
-          buf.append(", ");
-        }
-
+      if (mask == null || mask.get(i) == null) {
         TextBuffer buff = new TextBuffer();
         boolean ambiguous = setAmbiguousParameters.get(i);
-        ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, ambiguous, tracer);
-        buf.append(buff);
+
+        Exprent param = unboxIfNeeded(lstParameters.get(i));
+        // 'byte' and 'short' literals need an explicit narrowing type cast when used as a parameter
+        ExprProcessor.getCastedExprent(param, descriptor.params[i], buff, indent, true, ambiguous, true, tracer);
+
+        // the last "new Object[0]" in the vararg call is not printed
+        if (buff.length() > 0) {
+          if (!firstParameter) {
+            buf.append(", ");
+          }
+          buf.append(buff);
+        }
 
         firstParameter = false;
       }
     }
 
-    buf.append(")");
+    buf.append(')');
 
     return buf;
+  }
+
+  public static Exprent unboxIfNeeded(Exprent param) {
+    // "unbox" invocation parameters, e.g. 'byteSet.add((byte)123)' or 'new ShortContainer((short)813)'
+    if (param.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent)param).isBoxingCall()) {
+      param = ((InvocationExprent)param).lstParameters.get(0);
+    }
+    return param;
+  }
+
+  private boolean isVarArgCall() {
+    StructClass cl = DecompilerContext.getStructContext().getClass(classname);
+    if (cl != null) {
+      StructMethod mt = cl.getMethod(InterpreterUtil.makeUniqueKey(name, stringDescriptor));
+      if (mt != null) {
+        return mt.hasModifier(CodeConstants.ACC_VARARGS);
+      }
+    }
+    else {
+      // TODO: tap into IDEA indices to access libraries methods details
+
+      // try to check the class on the classpath
+      Method mtd = ClasspathHelper.findMethod(classname, name, descriptor);
+      return mtd != null && mtd.isVarArgs();
+    }
+    return false;
+  }
+
+  private boolean isBoxingCall() {
+    if (isStatic && "valueOf".equals(name) && lstParameters.size() == 1) {
+      int paramType = lstParameters.get(0).getExprType().type;
+
+      // special handling for ambiguous types
+      if (lstParameters.get(0).type == Exprent.EXPRENT_CONST) {
+        // 'Integer.valueOf(1)' has '1' type detected as TYPE_BYTECHAR
+        // 'Integer.valueOf(40_000)' has '40_000' type detected as TYPE_CHAR
+        // so we check the type family instead
+        if (lstParameters.get(0).getExprType().typeFamily == CodeConstants.TYPE_FAMILY_INTEGER) {
+          if (classname.equals("java/lang/Integer")) {
+            return true;
+          }
+        }
+
+        if (paramType == CodeConstants.TYPE_BYTECHAR || paramType == CodeConstants.TYPE_SHORTCHAR) {
+          if (classname.equals("java/lang/Character")) {
+            return true;
+          }
+        }
+      }
+
+      return classname.equals(getClassNameForPrimitiveType(paramType));
+    }
+
+    return false;
+  }
+
+  public void markUsingBoxingResult() {
+    canIgnoreBoxing = false;
+  }
+
+  // TODO: move to CodeConstants ???
+  private static String getClassNameForPrimitiveType(int type) {
+    switch (type) {
+      case CodeConstants.TYPE_BOOLEAN:
+        return "java/lang/Boolean";
+      case CodeConstants.TYPE_BYTE:
+      case CodeConstants.TYPE_BYTECHAR:
+        return "java/lang/Byte";
+      case CodeConstants.TYPE_CHAR:
+        return "java/lang/Character";
+      case CodeConstants.TYPE_SHORT:
+      case CodeConstants.TYPE_SHORTCHAR:
+        return "java/lang/Short";
+      case CodeConstants.TYPE_INT:
+        return "java/lang/Integer";
+      case CodeConstants.TYPE_LONG:
+        return "java/lang/Long";
+      case CodeConstants.TYPE_FLOAT:
+        return "java/lang/Float";
+      case CodeConstants.TYPE_DOUBLE:
+        return "java/lang/Double";
+    }
+    return null;
+  }
+
+  private static final Map<String, String> UNBOXING_METHODS;
+
+  static {
+    UNBOXING_METHODS = new HashMap<>();
+    UNBOXING_METHODS.put("booleanValue", "java/lang/Boolean");
+    UNBOXING_METHODS.put("byteValue", "java/lang/Byte");
+    UNBOXING_METHODS.put("shortValue", "java/lang/Short");
+    UNBOXING_METHODS.put("intValue", "java/lang/Integer");
+    UNBOXING_METHODS.put("longValue", "java/lang/Long");
+    UNBOXING_METHODS.put("floatValue", "java/lang/Float");
+    UNBOXING_METHODS.put("doubleValue", "java/lang/Double");
+    UNBOXING_METHODS.put("charValue", "java/lang/Character");
+  }
+
+  private boolean isUnboxingCall() {
+    return !isStatic && lstParameters.size() == 0 && classname.equals(UNBOXING_METHODS.get(name));
   }
 
   private BitSet getAmbiguousParameters() {
@@ -426,7 +539,7 @@ public class InvocationExprent extends Exprent {
   @Override
   public boolean equals(Object o) {
     if (o == this) return true;
-    if (o == null || !(o instanceof InvocationExprent)) return false;
+    if (!(o instanceof InvocationExprent)) return false;
 
     InvocationExprent it = (InvocationExprent)o;
     return InterpreterUtil.equalObjects(name, it.getName()) &&

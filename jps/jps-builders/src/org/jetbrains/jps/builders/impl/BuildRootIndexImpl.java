@@ -46,9 +46,9 @@ public class BuildRootIndexImpl implements BuildRootIndex {
   private static final Key<Map<File, BuildRootDescriptor>> ROOT_DESCRIPTOR_MAP = Key.create("_root_to_descriptor_map");
   private static final Key<Map<BuildTarget<?>, List<? extends BuildRootDescriptor>>> TEMP_TARGET_ROOTS_MAP = Key.create("_module_to_root_map");
   private final IgnoredFileIndex myIgnoredFileIndex;
-  private HashMap<BuildTarget<?>, List<? extends BuildRootDescriptor>> myRootsByTarget;
-  private THashMap<File,List<BuildRootDescriptor>> myRootToDescriptors;
-  private ConcurrentMap<BuildRootDescriptor, FileFilter> myFileFilters;
+  private final HashMap<BuildTarget<?>, List<? extends BuildRootDescriptor>> myRootsByTarget;
+  private final THashMap<File,List<BuildRootDescriptor>> myRootToDescriptors;
+  private final ConcurrentMap<BuildRootDescriptor, FileFilter> myFileFilters;
   
   public BuildRootIndexImpl(BuildTargetRegistry targetRegistry, JpsModel model, ModuleExcludeIndex index,
                             BuildDataPaths dataPaths, final IgnoredFileIndex ignoredFileIndex) {
@@ -144,7 +144,7 @@ public class BuildRootIndexImpl implements BuildRootIndex {
         }
       }
     }
-    return roots != null? Collections.unmodifiableList(roots) : Collections.<R>emptyList();
+    return roots != null? Collections.unmodifiableList(roots) : Collections.emptyList();
   }
 
   @NotNull
@@ -153,7 +153,7 @@ public class BuildRootIndexImpl implements BuildRootIndex {
     final Map<BuildTarget<?>, List<? extends BuildRootDescriptor>> contextMap = TEMP_TARGET_ROOTS_MAP.get(context);
     //noinspection unchecked
     final List<R> rootList = contextMap != null? (List<R>)contextMap.get(target) : null;
-    return rootList != null ? rootList : Collections.<R>emptyList();
+    return rootList != null ? rootList : Collections.emptyList();
   }
 
   @Override
@@ -224,7 +224,7 @@ public class BuildRootIndexImpl implements BuildRootIndex {
       current = FileUtilRt.getParentFile(current);
       depth++;
     }
-    return result != null ? result : Collections.<R>emptyList();
+    return result != null ? result : Collections.emptyList();
   }
 
   @NotNull
@@ -269,7 +269,7 @@ public class BuildRootIndexImpl implements BuildRootIndex {
   public Collection<? extends BuildRootDescriptor> clearTempRoots(@NotNull CompileContext context) {
     try {
       final Map<File, BuildRootDescriptor> map = ROOT_DESCRIPTOR_MAP.get(context);
-      return map != null? map.values() : Collections.<BuildRootDescriptor>emptyList();
+      return map != null? map.values() : Collections.emptyList();
     }
     finally {
       TEMP_TARGET_ROOTS_MAP.set(context, null);

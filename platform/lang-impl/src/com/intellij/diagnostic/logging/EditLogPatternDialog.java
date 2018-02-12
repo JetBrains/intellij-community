@@ -27,10 +27,6 @@ import com.intellij.ui.UIBundle;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 
-/**
- * User: anna
- * Date: 05-Feb-2006
- */
 public class EditLogPatternDialog extends DialogWrapper {
 
   private JPanel myWholePanel;

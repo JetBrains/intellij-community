@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 22, 2001
- * Time: 4:58:38 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.codeInspection.HTMLJavaHTMLComposer;

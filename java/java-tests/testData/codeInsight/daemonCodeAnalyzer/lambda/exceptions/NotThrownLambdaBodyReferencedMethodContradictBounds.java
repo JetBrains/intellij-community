@@ -1,6 +1,6 @@
 class Test {
     interface F<T extends ClassNotFoundException> {
-        void _() throws T;
+        void m() throws T;
     }
     <K extends ClassNotFoundException> void foo(F<K> f) throws K { }
 

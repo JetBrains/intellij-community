@@ -1,0 +1,11 @@
+<html>
+<body>
+Reports calls to <b>equals()</b> which can be replaced by <b>==</b> or <b>!=</b> expressions without a change in semantics.
+These calls can be replaced when they are used to compare <b>final</b> classes which don't have their own <b>equals()</b> implementation,
+but use the default <b>Object.equals()</b>.
+This may result in better performance.
+There is a separate inspection for <b>equals()</b> calls on Enums.
+<!-- tooltip end -->
+<p><small>New in 2017.3</small>
+</body>
+</html>

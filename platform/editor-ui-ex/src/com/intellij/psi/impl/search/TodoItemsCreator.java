@@ -27,8 +27,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author irengrig
  * moved from PsiSearchHelperImpl
- *         Date: 2/21/11
- *         Time: 10:47 AM
  */
 public class TodoItemsCreator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.TodoItemsCreator");

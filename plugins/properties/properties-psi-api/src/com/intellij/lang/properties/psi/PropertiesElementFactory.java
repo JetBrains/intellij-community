@@ -16,7 +16,6 @@
 
 package com.intellij.lang.properties.psi;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettings;

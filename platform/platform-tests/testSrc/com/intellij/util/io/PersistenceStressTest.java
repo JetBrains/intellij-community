@@ -121,7 +121,7 @@ public class PersistenceStressTest extends LightPlatformCodeInsightFixtureTestCa
     FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     while (ContainerUtil.find(futures, STILL_RUNNING) != null) {
       Thread.sleep(100);
-      CacheUpdateRunner.processFiles(new EmptyProgressIndicator(), true, files, getProject(),
+      CacheUpdateRunner.processFiles(new EmptyProgressIndicator(), files, getProject(),
                                      content -> index.indexFileContent(getProject(), content));
     }
     for (Future<Boolean> future : futures) {
@@ -132,18 +132,10 @@ public class PersistenceStressTest extends LightPlatformCodeInsightFixtureTestCa
 
   @NotNull
   private Future<Boolean> submit(final PersistentHashMap<String, Record> map) {
-    return myThreadPool.submit(() -> {
-      try {
-        return doTask(map);
-      }
-      catch (IOException e) {
-        e.printStackTrace();
-        return false;
-      }
-    });
+    return myThreadPool.submit(() -> doTask(map));
   }
 
-  private boolean doTask(PersistentHashMap<String, Record> map) throws IOException {
+  private boolean doTask(PersistentHashMap<String, Record> map) {
     Random random = new Random();
     try {
       for (int i = 0; i < 100000; i++) {

@@ -26,6 +26,9 @@
   <action id="CollapseAll">
     <keyboard-shortcut first-keystroke="control SUBTRACT"/>
   </action>
+  <action id="CollapseExpandableComponent">
+    <keyboard-shortcut first-keystroke="control SUBTRACT"/>
+  </action>
   <action id="CollapseRegion">
     <keyboard-shortcut first-keystroke="control SUBTRACT"/>
   </action>

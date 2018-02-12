@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,10 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
-import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -37,20 +35,21 @@ import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
- * Type of a particular function that is represented as a {@link com.jetbrains.python.psi.PyCallable} in the PSI tree.
+ * Type of a particular function that is represented as a {@link PyCallable} in the PSI tree.
  *
  * @author vlan
  */
 public class PyFunctionTypeImpl implements PyFunctionType {
   @NotNull private final PyCallable myCallable;
+  @NotNull private final List<PyCallableParameter> myParameters;
 
   public PyFunctionTypeImpl(@NotNull PyCallable callable) {
-    myCallable = callable;
+    this(callable, ContainerUtil.map(callable.getParameterList().getParameters(), PyCallableParameterImpl::psi));
   }
 
-  @Override
-  public boolean isCallable() {
-    return true;
+  public PyFunctionTypeImpl(@NotNull PyCallable callable, @NotNull List<PyCallableParameter> parameters) {
+    myCallable = callable;
+    myParameters = parameters;
   }
 
   @Nullable
@@ -68,11 +67,7 @@ public class PyFunctionTypeImpl implements PyFunctionType {
   @Nullable
   @Override
   public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
-    final List<PyCallableParameter> result = new ArrayList<>();
-    for (PyParameter parameter : myCallable.getParameterList().getParameters()) {
-      result.add(new PyCallableParameterImpl(parameter));
-    }
-    return result;
+    return myParameters;
   }
 
   @Override
@@ -124,7 +119,7 @@ public class PyFunctionTypeImpl implements PyFunctionType {
     final boolean isNonStaticMethod = function != null && function.getContainingClass() != null && function.getModifier() != STATICMETHOD;
     if (isNonStaticMethod) {
       // In Python 2 unbound methods have __method fake type
-      if (LanguageLevel.forElement(location).isOlderThan(LanguageLevel.PYTHON30)) {
+      if (LanguageLevel.forElement(location).isPython2()) {
         return true;
       }
       final PyExpression qualifier;
@@ -177,15 +172,19 @@ public class PyFunctionTypeImpl implements PyFunctionType {
     return myCallable;
   }
 
-  @Nullable
-  public static String getParameterName(@NotNull PyNamedParameter namedParameter) {
-    String name = namedParameter.getName();
-    if (namedParameter.isPositionalContainer()) {
-      name = "*" + name;
+  @Override
+  @NotNull
+  public PyFunctionType dropSelf(@NotNull TypeEvalContext context) {
+    final List<PyCallableParameter> parameters = getParameters(context);
+
+    if (!ContainerUtil.isEmpty(parameters) && parameters.get(0).isSelf()) {
+      return new PyFunctionTypeImpl(myCallable, ContainerUtil.subList(parameters, 1));
     }
-    else if (namedParameter.isKeywordContainer()) {
-      name = "**" + name;
-    }
-    return name;
+    return this;
+  }
+
+  @Override
+  public void accept(@NotNull PyTypeVisitor visitor) {
+    visitor.visitFunctionType(this);
   }
 }

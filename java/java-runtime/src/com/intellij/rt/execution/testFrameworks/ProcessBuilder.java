@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Clone of GeneralCommandLine.
@@ -28,7 +29,7 @@ public class ProcessBuilder {
 
   private static boolean isWindows() {
     try {
-      return System.getProperty("os.name").toLowerCase().startsWith("windows");
+      return System.getProperty("os.name").toLowerCase(Locale.US).startsWith("windows");
     }
     catch (SecurityException e) {
       return false;
@@ -55,6 +56,16 @@ public class ProcessBuilder {
   }
 
   // please keep an implementation in sync with [util] CommandLineUtil.toCommandLine()
+  //
+  // Comparing to the latter, this is a simplified version with the following limitations on Windows (neither of these
+  // seems to be used in our cases though):
+  //
+  //   - does not fully handle \" escaping (must escape quoted ["C:\Program Files\"] -> [\"C:\Program Files\\\"])
+  //   - does not support `cmd.exe /c call command args-with-special-chars-[&<>()@^|]
+  //   - does not handle special chars [&<>()@^|] interleaved with quotes ["] properly (the quote flag)
+  //   - mangles the output of `cmd.exe /c echo ...`
+  //
+  // If either of these becomes an issue, please refer to [util] CommandLineUtil.addToWindowsCommandLine() for a possible implementation.
   public Process createProcess() throws IOException {
     if (myParameters.size() < 1) {
       throw new IllegalArgumentException("Executable name not specified");

@@ -1,0 +1,16 @@
+<html>
+<body>
+Reports <b>Collection.addAll()</b> and <b>Map.putAll()</b> calls after instantiation of a collection using a constructor call without arguments.
+Such constructs can be replaced with a single call to a parametrized constructor which simplifies code. Also for some collections the replacement
+might be more performant.
+For example:
+<pre><code>
+  Set&lt;String&gt; set = new HashSet&lt;&gt;();
+  set.addAll(Arrays.asList("alpha", "beta", "gamma"));
+</code></pre>
+can be replaced with:
+<pre><code>
+  Set&lt;String&gt; set = new HashSet&lt;&gt;(Arrays.asList("alpha", "beta", "gamma"));
+</code></pre>
+</body>
+</html>

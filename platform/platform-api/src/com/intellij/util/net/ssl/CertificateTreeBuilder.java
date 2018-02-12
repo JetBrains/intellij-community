@@ -20,7 +20,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
@@ -77,12 +76,7 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
   }
 
   public List<X509Certificate> getCertificates() {
-    return ContainerUtil.map(myCertificates.values(), new Function<CertificateWrapper, X509Certificate>() {
-      @Override
-      public X509Certificate fun(CertificateWrapper wrapper) {
-        return wrapper.getCertificate();
-      }
-    });
+    return ContainerUtil.map(myCertificates.values(), (Function<CertificateWrapper, X509Certificate>)wrapper -> wrapper.getCertificate());
   }
 
   public boolean isEmpty() {

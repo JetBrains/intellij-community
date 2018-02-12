@@ -42,7 +42,7 @@ public class PlatformDataKeys extends CommonDataKeys {
   /**
    * Returns Boolean.TRUE if action is executed in modal context and
    * Boolean.FALSE if action is executed not in modal context. If context
-   * is unknown then the value of this data constant is <code>null</code>.
+   * is unknown then the value of this data constant is {@code null}.
    */
   public static final DataKey<Boolean> IS_MODAL_CONTEXT = DataKey.create("isModalContext");
   public static final DataKey<DiffViewer> DIFF_VIEWER = DataKey.create("diffViewer");

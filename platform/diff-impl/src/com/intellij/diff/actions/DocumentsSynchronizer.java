@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package com.intellij.diff.actions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +34,7 @@ abstract class DocumentsSynchronizer {
 
   private boolean myDuringModification = false;
 
-  private final DocumentAdapter myListener1 = new DocumentAdapter() {
+  private final DocumentListener myListener1 = new DocumentListener() {
     @Override
     public void documentChanged(DocumentEvent e) {
       if (myDuringModification) return;
@@ -42,7 +42,7 @@ abstract class DocumentsSynchronizer {
     }
   };
 
-  private final DocumentAdapter myListener2 = new DocumentAdapter() {
+  private final DocumentListener myListener2 = new DocumentListener() {
     @Override
     public void documentChanged(DocumentEvent e) {
       if (myDuringModification) return;

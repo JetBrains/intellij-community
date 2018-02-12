@@ -16,7 +16,6 @@
 package hg4idea.test.merge;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -26,8 +25,6 @@ import hg4idea.test.HgPlatformTest;
 import hg4idea.test.HgTestUtil;
 import org.testng.Assert;
 import org.zmlx.hg4idea.HgVcs;
-
-import java.io.IOException;
 
 import static com.intellij.openapi.vcs.Executor.*;
 import static hg4idea.test.HgExecutor.*;
@@ -45,7 +42,7 @@ public class HgMergeProviderTest extends HgPlatformTest {
     assertNotNull(myMergeProvider);
   }
 
-  public void testMerge2BranchesIfFileCreatedSeparatelyInBoth() throws VcsException {
+  public void testMerge2BranchesIfFileCreatedSeparatelyInBoth() {
     cd(myRepository);
     hg("branch branchA");
     hg("commit -m 'create branchA' ");
@@ -62,7 +59,7 @@ public class HgMergeProviderTest extends HgPlatformTest {
     verifyMergeData(myRepository.findChild(aFile), "", "default", "a");
   }
 
-  public void testMerge2Branches() throws VcsException {
+  public void testMerge2Branches() {
     cd(myRepository);
     String aFile = "A.txt";
     touch(aFile, "base");
@@ -166,7 +163,7 @@ public class HgMergeProviderTest extends HgPlatformTest {
    *
    * @return References to the files in parent and child repositories respectively.
    */
-  private Pair<VirtualFile, VirtualFile> prepareFileInBothRepositories() throws IOException {
+  private Pair<VirtualFile, VirtualFile> prepareFileInBothRepositories() {
     cd(myRepository);
     String aFile = "A.txt";
     touch(aFile, "basic");
@@ -184,8 +181,7 @@ public class HgMergeProviderTest extends HgPlatformTest {
     return Pair.create(parentFile, childFile);
   }
 
-  private void verifyMergeData(final VirtualFile file, String expectedBase, String expectedLocal, String expectedServer)
-    throws VcsException {
+  private void verifyMergeData(final VirtualFile file, String expectedBase, String expectedLocal, String expectedServer) {
     EdtTestUtil.runInEdtAndWait(() -> {
       MergeData mergeData = myMergeProvider.loadRevisions(file);
       assertEquals(expectedBase, mergeData.ORIGINAL);

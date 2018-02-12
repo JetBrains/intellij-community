@@ -65,9 +65,6 @@ public class EmptyEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   @Override
-  public void beforeDocumentChange(DocumentEvent event) {}
-
-  @Override
   public int getPriority() {
     return 2;
   }

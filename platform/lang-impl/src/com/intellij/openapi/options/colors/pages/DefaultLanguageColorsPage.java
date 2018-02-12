@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
@@ -29,12 +16,12 @@ import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -89,6 +76,11 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
     TAG_HIGHLIGHTING_MAP.put("tag", DefaultLanguageHighlighterColors.MARKUP_TAG);
     TAG_HIGHLIGHTING_MAP.put("attribute", DefaultLanguageHighlighterColors.MARKUP_ATTRIBUTE);
     TAG_HIGHLIGHTING_MAP.put("entity", DefaultLanguageHighlighterColors.MARKUP_ENTITY);
+  }
+
+  private static final Map<String, ColorKey> ADDITIONAL_COLOR_KEY_MAPPING = new HashMap<>();
+  static {
+    ADDITIONAL_COLOR_KEY_MAPPING.put("parameter_hint_current", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_SELECTION_BORDER);
   }
 
   private final static AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
@@ -173,12 +165,19 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       OptionsBundle.message("options.language.defaults.markup.entity"), DefaultLanguageHighlighterColors.MARKUP_ENTITY),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.template.language"), DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR),
-    
+
+    new AttributesDescriptor(
+      OptionsBundle.message("options.java.attribute.descriptor.inline.parameter.hint"), 
+      DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.java.attribute.descriptor.inline.parameter.hint.highlighted"), 
+      DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED)
   };
 
-  private static final AttributesDescriptor INLINE_PARAMETER_HINT_DESCRIPTOR = new AttributesDescriptor(
-    OptionsBundle.message("options.java.attribute.descriptor.inline.parameter.hint"),
-    DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
+  private static final ColorDescriptor[] COLOR_DESCRIPTORS = {
+    new ColorDescriptor(OptionsBundle.message("options.java.attribute.descriptor.inline.parameter.hint.border"),
+                        DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_SELECTION_BORDER, ColorDescriptor.Kind.FOREGROUND)
+  };
 
   @Nullable
   @Override
@@ -224,8 +223,9 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       "Function <func_decl>declaration</func_decl> (<param>parameter1</param> <param>parameter2</param> <param>parameter3</param> <param>parameter4</param>)\n" +
       "    Local <local_var>variable1</local_var> <local_var>variable2</local_var> <local_var>variable3</local_var> <local_var>variable4</local_var>\n" +
       "Function <func_call>call</func_call>(" +
-      "<parameter_hint p>0, <parameter_hint param> 1, <parameter_hint parameterName> 2" +
+      "<parameter_hint p:>0, <parameter_hint param:>1, <parameter_hint parameterName:>2" +
       ")\n" +
+      "Current function <func_call>call</func_call>(<parameter_hint_highlighted param:>0, <parameter_hint_current currentParam:>1)\n" +
       "Interface <interface>Name</interface>\n" +
       "<metadata>@Metadata</metadata>\n" +
       "Class <class_name>Name</class_name>\n" +
@@ -245,16 +245,22 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
     return TAG_HIGHLIGHTING_MAP;
   }
 
+  @Nullable
+  @Override
+  public Map<String, ColorKey> getAdditionalHighlightingTagToColorKeyMap() {
+    return ADDITIONAL_COLOR_KEY_MAPPING;
+  }
+
   @NotNull
   @Override
   public AttributesDescriptor[] getAttributeDescriptors() {
-    return ArrayUtil.append(ATTRIBUTES_DESCRIPTORS, INLINE_PARAMETER_HINT_DESCRIPTOR);
+    return ATTRIBUTES_DESCRIPTORS;
   }
 
   @NotNull
   @Override
   public ColorDescriptor[] getColorDescriptors() {
-    return ColorDescriptor.EMPTY_ARRAY;
+    return COLOR_DESCRIPTORS;
   }
 
   @NotNull

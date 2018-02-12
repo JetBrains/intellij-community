@@ -20,14 +20,16 @@ import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.project.impl.ProjectImpl
+import com.intellij.openapi.project.isExternalStorageEnabled
 import org.jdom.Element
 
 // extended in upsource
 open class ProjectStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor,
                                       private val project: ProjectImpl,
-                                      useVirtualFileTracker: Boolean = true) : StateStorageManagerImpl("project", macroSubstitutor, if (useVirtualFileTracker) project else null) {
+                                      useVirtualFileTracker: Boolean = true) : StateStorageManagerImpl(ROOT_TAG_NAME, macroSubstitutor, if (useVirtualFileTracker) project else null) {
   companion object {
-    internal val VERSION_OPTION = "version"
+    internal const val VERSION_OPTION = "version"
+    const val ROOT_TAG_NAME = "project"
   }
 
   override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), PROJECT_CONFIG_DIR)
@@ -52,4 +54,7 @@ open class ProjectStateStorageManager(macroSubstitutor: TrackingPathMacroSubstit
     }
     return PROJECT_FILE
   }
+
+  override val isExternalSystemStorageEnabled: Boolean
+    get() = project.isExternalStorageEnabled
 }

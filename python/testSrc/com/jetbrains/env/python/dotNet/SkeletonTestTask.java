@@ -2,6 +2,7 @@ package com.jetbrains.env.python.dotNet;
 
 import com.google.common.collect.Sets;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,13 +18,14 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
+import com.jetbrains.env.PyTestTask;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.GenerateBinaryStubsFix;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdkTools.SdkCreationType;
+import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,7 +68,7 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
   /**
    * @param expectedSkeletonFile          if you want test to compare generated result with some file, provide its name.
    *                                      Pass null if you do not want to compare result with anything
-   *                                      (you may do it yourself by overwriting {@link #runTestOn(String)}) but <strong>call super</strong>
+   *                                      (you may do it yourself by overwriting {@link PyTestTask#runTestOn(String, Sdk)}) but <strong>call super</strong>
    * @param moduleNameToBeGenerated       name of module you think we should generate in dotted notation (like "System.Web" or "com.myModule").
    *                                      System will wait for skeleton file for this module to be generated
    * @param sourceFileToRunGenerationOn   Source file where we should run "generate stubs" on. Be sure to place "caret" on appropriate place!
@@ -86,7 +88,7 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
 
 
   @Override
-  public void runTestOn(@NotNull final String sdkHome) throws IOException, InvalidSdkException {
+  public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws IOException, InvalidSdkException {
     final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_ONLY);
     final File skeletonsPath = new File(PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath()));
     File skeletonFileOrDirectory = new File(skeletonsPath, myModuleNameToBeGenerated); // File with module skeleton
@@ -114,20 +116,22 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class); // This inspection should suggest us to generate stubs
 
 
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
-        final String intentionName = PyBundle.message("sdk.gen.stubs.for.binary.modules", myUseQuickFixWithThisModuleOnly);
-        final IntentionAction intention = myFixture.findSingleIntention(intentionName);
-        Assert.assertNotNull("No intention found to generate skeletons!", intention);
-        Assert.assertThat("Intention should be quick fix to run", intention, Matchers.instanceOf(QuickFixWrapper.class));
-        final LocalQuickFix quickFix = ((QuickFixWrapper)intention).getFix();
-        Assert.assertThat("Quick fix should be 'generate binary skeletons' fix to run", quickFix,
-                          Matchers.instanceOf(GenerateBinaryStubsFix.class));
-        final Task fixTask = ((GenerateBinaryStubsFix)quickFix).getFixTask(myFixture.getFile());
-        fixTask.run(new AbstractProgressIndicatorBase());
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+      final String intentionName = PyBundle.message("sdk.gen.stubs.for.binary.modules", myUseQuickFixWithThisModuleOnly);
+      IntentionAction intention = myFixture.findSingleIntention(intentionName);
+
+      if (intention instanceof IntentionActionDelegate) {
+        intention = ((IntentionActionDelegate)intention).getDelegate();
       }
+
+      Assert.assertNotNull("No intention found to generate skeletons!", intention);
+      Assert.assertThat("Intention should be quick fix to run", intention, Matchers.instanceOf(QuickFixWrapper.class));
+      final LocalQuickFix quickFix = ((QuickFixWrapper)intention).getFix();
+      Assert.assertThat("Quick fix should be 'generate binary skeletons' fix to run", quickFix,
+                        Matchers.instanceOf(GenerateBinaryStubsFix.class));
+      final Task fixTask = ((GenerateBinaryStubsFix)quickFix).getFixTask(myFixture.getFile());
+      fixTask.run(new AbstractProgressIndicatorBase());
     });
 
     FileUtil.copy(skeletonFile, new File(myFixture.getTempDirPath(), skeletonFile.getName()));

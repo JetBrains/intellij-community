@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInspection.deadCode;
 
@@ -22,6 +10,7 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.RefFilter;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -35,13 +24,12 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.HyperlinkAdapter;
@@ -67,18 +55,18 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
-import javax.swing.tree.TreePath;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.net.URL;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class UnusedDeclarationPresentation extends DefaultInspectionToolPresentation {
-
-  private final Set<RefEntity> myIgnoreElements = ContainerUtil.newConcurrentSet(ContainerUtil.identityStrategy());
-  private final Map<RefEntity, UnusedDeclarationHint> myFixedElements = ContainerUtil.newConcurrentMap(ContainerUtil.identityStrategy());
+  private final Map<RefEntity, UnusedDeclarationHint> myFixedElements =
+    ConcurrentCollectionFactory.createMap(ContainerUtil.identityStrategy());
+  private final Set<RefEntity> myExcludedElements = ConcurrentCollectionFactory.createConcurrentSet(ContainerUtil.identityStrategy());
 
   private WeakUnreferencedFilter myFilter;
   private DeadHTMLComposer myComposer;
@@ -124,6 +112,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       if (!((RefElementImpl)refElement).hasSuspiciousCallers() || ((RefJavaElementImpl)refElement).isSuspiciousRecursive()) return 1;
 
       for (RefElement element : refElement.getInReferences()) {
+        if (refElement instanceof RefFile) return 1;
         if (((UnusedDeclarationInspectionBase)myTool).isEntryPoint(element)) return 1;
       }
 
@@ -147,12 +136,28 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
+  public boolean isExcluded(@NotNull RefEntity entity) {
+    return myExcludedElements.contains(entity);
+  }
+
+
+  @Override
+  public void amnesty(@NotNull RefEntity element) {
+    myExcludedElements.remove(element);
+  }
+
+  @Override
+  public void exclude(@NotNull RefEntity element) {
+    myExcludedElements.add(element);
+  }
+
+  @Override
   public void exportResults(@NotNull final Element parentNode,
                             @NotNull RefEntity refEntity,
                             @NotNull Predicate<CommonProblemDescriptor> excludedDescriptions) {
     if (!(refEntity instanceof RefJavaElement)) return;
     final RefFilter filter = getFilter();
-    if (!getIgnoredRefElements().contains(refEntity) && filter.accepts((RefJavaElement)refEntity)) {
+    if (!myFixedElements.containsKey(refEntity) && filter.accepts((RefJavaElement)refEntity)) {
       refEntity = getRefManager().getRefinedElement(refEntity);
       if (!refEntity.isValid()) return;
       RefJavaElement refElement = (RefJavaElement)refEntity;
@@ -191,31 +196,12 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     super.exportResults(parentNode, refEntity, excludedDescriptions);
   }
 
+  @NotNull
   @Override
-  public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, @Nullable InspectionTree tree) {
-    boolean showFixes = false;
-    for (RefEntity element : refElements) {
-      if (!getIgnoredRefElements().contains(element) && element.isValid()) {
-        showFixes = true;
-        break;
-      }
-    }
-
-    if (showFixes) {
-      final TreePath[] paths = tree != null ? tree.getSelectionPaths() : null;
-      if (paths != null) {
-        long count = Arrays.stream(paths).map(TreePath::getLastPathComponent)
-          .filter(component -> component instanceof ProblemDescriptionNode).count();
-        if (count > 0) {
-          final QuickFixAction[] fixes = super.getQuickFixes(refElements, tree);
-          if (fixes != null) {
-            return count == paths.length ? fixes : ArrayUtil.mergeArrays(fixes, myQuickFixActions);
-          }
-        }
-      }
-      return myQuickFixActions;
-    }
-    return QuickFixAction.EMPTY;
+  public QuickFixAction[] getQuickFixes(@NotNull RefEntity... refElements) {
+    return Arrays.stream(refElements).anyMatch(element -> element instanceof RefJavaElement && getFilter().accepts((RefJavaElement)element) && !myFixedElements.containsKey(element) && element.isValid())
+           ? myQuickFixActions
+           : QuickFixAction.EMPTY;
   }
 
   final QuickFixAction[] myQuickFixActions;
@@ -235,20 +221,33 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     @Override
     protected boolean applyFix(@NotNull final RefEntity[] refElements) {
       if (!super.applyFix(refElements)) return false;
-      final PsiElement[] psiElements = Arrays
-        .stream(refElements)
-        .filter((obj) -> obj instanceof RefJavaElement && getFilter().accepts((RefJavaElement)obj))
-        .map(e -> ((RefElement) e).getElement())
-        .filter(e -> e != null)
-        .toArray(PsiElement[]::new);
-      if (psiElements.length == 0) return false;
+
+      //filter only elements applicable to be deleted (exclude entry points)
+      RefElement[] filteredRefElements = Arrays.stream(refElements)
+        .filter(entry -> entry instanceof RefJavaElement && getFilter().accepts((RefJavaElement)entry))
+        .toArray(RefElement[]::new);
+
       ApplicationManager.getApplication().invokeLater(() -> {
         final Project project = getContext().getProject();
         if (isDisposed() || project.isDisposed()) return;
-        SafeDeleteHandler.invoke(project, psiElements, false,
+        Set<RefEntity> classes = Arrays.stream(filteredRefElements)
+          .filter(refElement -> refElement instanceof RefClass)
+          .collect(Collectors.toSet());
+
+        //filter out elements inside classes to be deleted
+        PsiElement[] elements = Arrays.stream(filteredRefElements).filter(e -> {
+          RefEntity owner = e.getOwner();
+          if (owner != null && classes.contains(owner)) {
+            return false;
+          }
+          return true;
+        }).map(e -> e.getElement())
+          .filter(e -> e != null)
+          .toArray(PsiElement[]::new);
+        SafeDeleteHandler.invoke(project, elements, false,
                                  () -> {
-                                   removeElements(refElements, project, myToolWrapper);
-                                   for (RefEntity ref : refElements) {
+                                   removeElements(filteredRefElements, project, myToolWrapper);
+                                   for (RefEntity ref : filteredRefElements) {
                                      myFixedElements.put(ref, UnusedDeclarationHint.DELETE);
                                    }
                                  });
@@ -428,12 +427,12 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     return new RefElementNode(entity, this) {
       @Nullable
       @Override
-      public String getCustomizedTailText() {
+      public String getTailText() {
         final UnusedDeclarationHint hint = myFixedElements.get(getElement());
         if (hint != null) {
           return hint.getDescription();
         }
-        return super.getCustomizedTailText();
+        return super.getTailText();
       }
 
       @Override
@@ -443,8 +442,12 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     };
   }
 
+  public boolean isProblemResolved(@Nullable RefEntity entity) {
+    return myFixedElements.containsKey(entity);
+  }
+
   @Override
-  public void updateContent() {
+  public synchronized void updateContent() {
     getTool().checkForReachableRefs(getContext());
     myContents.clear();
     final UnusedSymbolLocalInspectionBase localInspectionTool = getTool().getSharedLocalInspectionTool();
@@ -453,7 +456,10 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
         if (!(refEntity instanceof RefJavaElement)) return;//dead code doesn't work with refModule | refPackage
         RefJavaElement refElement = (RefJavaElement)refEntity;
         if (!compareVisibilities(refElement, localInspectionTool)) return;
-        if (!(getContext().getUIOptions().FILTER_RESOLVED_ITEMS && getIgnoredRefElements().contains(refElement)) && refElement.isValid() && getFilter().accepts(refElement)) {
+        if (!(getContext().getUIOptions().FILTER_RESOLVED_ITEMS &&
+              (myFixedElements.containsKey(refElement) ||
+              isExcluded(refEntity) ||
+              isSuppressed(refElement))) && refElement.isValid() && getFilter().accepts(refElement)) {
           if (skipEntryPoints(refElement)) return;
           registerContentEntry(refEntity, RefJavaUtil.getInstance().getPackageName(refEntity));
         }
@@ -483,7 +489,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
           //todo store in the graph
           tool.isIgnoreAccessors()) {
         final PsiModifierListOwner listOwner = ((RefMethod)element).getElement();
-        if (listOwner instanceof PsiMethod && PropertyUtil.isSimplePropertyAccessor((PsiMethod)listOwner)) {
+        if (listOwner instanceof PsiMethod && PropertyUtilBase.isSimplePropertyAccessor((PsiMethod)listOwner)) {
           return null;
         }
       }
@@ -519,17 +525,6 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  public boolean hasReportedProblems() {
-    return !myContents.isEmpty() || super.hasReportedProblems();
-  }
-
-  @Override
-  public void ignoreCurrentElement(RefEntity refEntity) {
-    if (refEntity == null) return;
-    myIgnoreElements.add(refEntity);
-  }
-
-  @Override
   public void ignoreElement(@NotNull RefEntity refEntity) {
     if (refEntity instanceof RefElement) {
       final CommonProblemDescriptor[] descriptors = getProblemElements().get(refEntity);
@@ -537,7 +532,15 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
         final PsiElement psiElement = ReadAction.compute(() -> ((RefElement)refEntity).getElement());
         List<CommonProblemDescriptor> foreignDescriptors = new ArrayList<>();
         for (CommonProblemDescriptor descriptor : descriptors) {
-          if (descriptor instanceof ProblemDescriptor && ReadAction.compute(() -> ((ProblemDescriptor)descriptor).getPsiElement()) == psiElement) continue;
+          if (descriptor instanceof ProblemDescriptor) {
+            PsiElement problemElement = ReadAction.compute(() -> {
+              PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
+              if (element instanceof PsiIdentifier) element = element.getParent();
+              return element;
+            });
+            if (problemElement == psiElement ||
+                problemElement instanceof PsiParameter && ((PsiParameter)problemElement).getDeclarationScope() == psiElement) continue;
+          }
           foreignDescriptors.add(descriptor);
         }
         if (foreignDescriptors.size() == descriptors.length) return;
@@ -547,43 +550,9 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  public void amnesty(RefEntity refEntity) {
-    myIgnoreElements.remove(refEntity);
-  }
-
-  @Override
   public void cleanup() {
     super.cleanup();
-    myIgnoreElements.clear();
-  }
-
-
-  @Override
-  public void finalCleanup() {
-    super.finalCleanup();
-  }
-
-  @Override
-  public boolean isGraphNeeded() {
-    return true;
-  }
-
-  @Override
-  public boolean isElementIgnored(final RefEntity element) {
-    return myIgnoreElements.contains(element);
-  }
-
-
-  @NotNull
-  @Override
-  public FileStatus getElementStatus(final RefEntity element) {
-    return FileStatus.NOT_CHANGED;
-  }
-
-  @Override
-  @NotNull
-  public Set<RefEntity> getIgnoredRefElements() {
-    return myIgnoreElements;
+    myFixedElements.clear();
   }
 
   @Override
@@ -639,8 +608,9 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
   }
 
+  @NotNull
   @Override
-  public JComponent getCustomPreviewPanel(RefEntity entity) {
+  public JComponent getCustomPreviewPanel(@NotNull RefEntity entity) {
     final Project project = entity.getRefManager().getProject();
     JEditorPane htmlView = new JEditorPane() {
       @Override
@@ -701,7 +671,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  public int getProblemsCount(InspectionTree tree) {
+  public int getProblemsCount(@NotNull InspectionTree tree) {
     return 0;
   }
 }

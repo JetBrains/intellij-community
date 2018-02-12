@@ -42,7 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class RenameProjectHandler implements RenameHandler, TitledHandler {
-  private static final Logger LOG = Logger.getInstance("#" + RenameProjectHandler.class.getName());
+  private static final Logger LOG = Logger.getInstance(RenameProjectHandler.class);
 
   @Override
   public boolean isAvailableOnDataContext(DataContext dataContext) {

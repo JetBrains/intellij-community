@@ -27,11 +27,6 @@ import org.intellij.plugins.relaxNG.xml.dom.RngDomElement;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 31.08.2007
- */
 public abstract class RngDomElementBase implements RngDomElement, Pattern<XmlElement> {
   @Override
   public XmlElement getPsiElement() {

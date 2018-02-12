@@ -1,133 +1,74 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.java.impl;
 
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.jps.model.ex.JpsElementBase;
 import org.jetbrains.jps.model.java.JavaModuleIndex;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.util.JpsPathUtil;
 
-import java.io.*;
-import java.util.Collections;
+import java.io.File;
 import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
 
-public class JavaModuleIndexImpl extends JavaModuleIndex {
-  private static final String INDEX_PATH = "jigsaw/module-info.map";
-  private static final String NULL_PATH = "-";
+public class JavaModuleIndexImpl extends JpsElementBase<JavaModuleIndexImpl> implements JavaModuleIndex {
+  private static final String SOURCE_SUFFIX = ":S";
+  private static final String TEST_SUFFIX = ":T";
   private static final String MODULE_INFO_FILE = "module-info.java";
 
   private final Map<String, File> myMapping;
   private final JpsCompilerExcludes myExcludes;
 
-  private JavaModuleIndexImpl(JpsCompilerExcludes excludes) {
+  public JavaModuleIndexImpl(@NotNull JpsCompilerExcludes excludes) {
     myMapping = ContainerUtil.newHashMap();
     myExcludes = excludes;
   }
 
-  private JavaModuleIndexImpl(Map<String, File> mapping) {
-    myMapping = Collections.unmodifiableMap(mapping);
-    myExcludes = null;
+  @NotNull
+  public JavaModuleIndexImpl createCopy() {
+    JavaModuleIndexImpl copy = new JavaModuleIndexImpl(myExcludes);
+    copy.myMapping.putAll(myMapping);
+    return copy;
   }
 
+  public void applyChanges(@NotNull JavaModuleIndexImpl modified) {
+    // not supported
+  }
+
+  @Nullable
   @Override
-  public @Nullable File getModuleInfoFile(@NotNull JpsModule module) {
-    String key = module.getName();
-    if (myExcludes == null || myMapping.containsKey(key)) {
+  public File getModuleInfoFile(@NotNull JpsModule module, boolean forTests) {
+    String key = module.getName() + (forTests ? TEST_SUFFIX : SOURCE_SUFFIX);
+
+    if (myMapping.containsKey(key)) {
       return myMapping.get(key);
     }
 
-    File file = findModuleInfoFile(module);
+    File file = findModuleInfoFile(module, forTests ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE);
     myMapping.put(key, file);
     return file;
   }
 
-  @Override
-  public boolean hasJavaModules(@NotNull Set<JpsModule> chunk) {
-    for (JpsModule module : chunk) {
-      if (getModuleInfoFile(module) != null) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private File findModuleInfoFile(JpsModule module) {
+  private File findModuleInfoFile(JpsModule module, JavaSourceRootType rootType) {
     for (JpsModuleSourceRoot root : module.getSourceRoots()) {
-      File file = new File(JpsPathUtil.urlToOsPath(root.getUrl()), MODULE_INFO_FILE);
-      if (file.isFile() && !myExcludes.isExcluded(file)) {
-        return file;
+      if (rootType.equals(root.getRootType())) {
+        File file = new File(JpsPathUtil.urlToOsPath(root.getUrl()), MODULE_INFO_FILE);
+        if (file.isFile() && !myExcludes.isExcluded(file)) {
+          return file;
+        }
       }
     }
 
     return null;
   }
 
-  public static void store(@NotNull File storageRoot, @NotNull Map<String, String> mapping) throws IOException {
-    Properties p = new Properties();
-    for (String key : mapping.keySet()) {
-      String path = mapping.get(key);
-      p.setProperty(key, path != null ? FileUtil.toSystemDependentName(path) : NULL_PATH);
-    }
-
-    File index = new File(storageRoot, INDEX_PATH);
-    FileUtil.createParentDirs(index);
-
-    Writer writer = new OutputStreamWriter(new FileOutputStream(index), CharsetToolkit.UTF8_CHARSET);
-    try {
-      p.store(writer, null);
-    }
-    finally {
-      writer.close();
-    }
-  }
-
-  public static JavaModuleIndex load(@NotNull File storageRoot, @NotNull JpsCompilerExcludes excludes) {
-    File index = new File(storageRoot, INDEX_PATH);
-    if (!index.exists()) {
-      return new JavaModuleIndexImpl(excludes);
-    }
-
-    Properties p = new Properties();
-    try {
-      Reader reader = new InputStreamReader(new FileInputStream(index), CharsetToolkit.UTF8_CHARSET);
-      try {
-        p.load(reader);
-      }
-      finally {
-        reader.close();
-      }
-    }
-    catch (IOException e) {
-      throw new RuntimeException("Failed to read module index file: " + index, e);
-    }
-
-    Map<String, File> mapping = ContainerUtil.newHashMap();
-    for (String key : p.stringPropertyNames()) {
-      String path = p.getProperty(key);
-      mapping.put(key, NULL_PATH.equals(path) ? null : new File(path));
-    }
-    return new JavaModuleIndexImpl(mapping);
+  @TestOnly
+  public void dropCache() {
+    myMapping.clear();
   }
 }

@@ -1,3 +1,6 @@
+// void method()
+// String method(String)
+// String method(String, String[])
 import java.lang.invoke.*;
 
 class Main {

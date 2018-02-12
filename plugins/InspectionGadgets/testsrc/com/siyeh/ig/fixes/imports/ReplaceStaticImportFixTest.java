@@ -29,5 +29,6 @@ public class ReplaceStaticImportFixTest extends IGQuickFixesTestCase {
   }
 
   public void testEnumConstant() { doTest(); }
+  public void testNonStaticUnqualifiedAccess() { doTest(); }
 }
 

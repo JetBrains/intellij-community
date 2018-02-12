@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataCache;
 import com.intellij.psi.*;
+import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.IdReferenceProvider;
 import com.intellij.psi.impl.source.xml.PossiblePrefixReference;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
@@ -213,7 +214,7 @@ public class XmlRefCountHolder {
       myHolder.addUsedPrefix(tag.getNamespacePrefix());
       myHolder.addUsedNamespace(tag.getNamespace());
       String text = tag.getValue().getTrimmedText();
-      detectPrefix(text);
+      detectPrefix(text, tag);
       super.visitXmlTag(tag);
     }
 
@@ -257,10 +258,6 @@ public class XmlRefCountHolder {
               }
             }
           }
-          Matcher matcher = PREFIX_PATTERN.matcher(value.getText());
-          while (matcher.find()) {
-            myHolder.addUsedPrefix(matcher.group());
-          }
         }
 
         if (attributeDescriptor.hasIdRefType() && PsiTreeUtil.getChildOfType(value, OuterLanguageElement.class) == null) {
@@ -269,15 +266,16 @@ public class XmlRefCountHolder {
       }
 
       String s = value.getValue();
-      detectPrefix(s);
+      detectPrefix(s, tag);
       super.visitXmlAttributeValue(value);
     }
 
-    private void detectPrefix(String s) {
-      if (s != null) {
-        int pos = s.indexOf(':');
-        if (pos > 0) {
-          myHolder.addUsedPrefix(s.substring(0, pos));
+    private void detectPrefix(String s, XmlTag tag) {
+      if (s != null && !(tag instanceof HtmlTag) && s.length() < 1000) {
+        Matcher matcher = PREFIX_PATTERN.matcher(s);
+        while (matcher.find()) {
+          String group = matcher.group();
+          myHolder.addUsedPrefix(group.substring(0, group.length() - 1));
         }
       }
     }

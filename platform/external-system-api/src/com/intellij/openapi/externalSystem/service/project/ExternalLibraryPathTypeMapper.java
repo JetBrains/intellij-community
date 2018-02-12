@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Strategy for mapping {@link LibraryPathType external library path types} to {@link OrderRootType ide library path types}.
  * <p/>
- * Is introduced because <code>'JavadocOrderRootType.getInstance()'</code> assumes that project IoC is setup thus
+ * Is introduced because {@code 'JavadocOrderRootType.getInstance()'} assumes that project IoC is setup thus
  * make it ineligible for unit testing.
  * <p/>
  * Implementations of this interface are expected to be thread-safe.

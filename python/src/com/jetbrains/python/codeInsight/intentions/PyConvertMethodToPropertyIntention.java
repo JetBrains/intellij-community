@@ -35,9 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: ktisha
- */
 public class PyConvertMethodToPropertyIntention extends PyBaseIntentionAction {
   @NotNull
   public String getFamilyName() {
@@ -53,7 +50,6 @@ public class PyConvertMethodToPropertyIntention extends PyBaseIntentionAction {
     if (!(file instanceof PyFile)) {
       return false;
     }
-    if (!LanguageLevel.forElement(file).isAtLeast(LanguageLevel.PYTHON26)) return false;
     final PsiElement element = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
     final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
     if (function == null) return false;

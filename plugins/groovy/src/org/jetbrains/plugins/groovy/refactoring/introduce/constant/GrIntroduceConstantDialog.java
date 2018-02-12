@@ -18,8 +18,8 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 import com.intellij.ide.util.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -190,7 +190,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
       myTargetClassEditor.prependItem(myDefaultTargetClass.getQualifiedName());
     }
 
-    myTargetClassEditor.getChildComponent().addDocumentListener(new DocumentAdapter() {
+    myTargetClassEditor.getChildComponent().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         targetClassChanged();
@@ -212,12 +212,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-    myNameField.addDataChangedListener(new NameSuggestionsField.DataChanged() {
-      @Override
-      public void dataChanged() {
-        updateOkStatus();
-      }
-    });
+    myNameField.addDataChangedListener(() -> updateOkStatus());
   }
 
   @Override

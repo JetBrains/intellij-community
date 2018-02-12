@@ -87,7 +87,7 @@ public abstract class DiffContentFactory {
   public abstract DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable FileType fileType);
 
   @NotNull
-  public abstract DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable VirtualFile file);
+  public abstract DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable VirtualFile highlightFile);
 
   @NotNull
   public abstract DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable DocumentContent referent);
@@ -122,6 +122,12 @@ public abstract class DiffContentFactory {
   @NotNull
   public abstract DocumentContent createClipboardContent(@Nullable Project project, @Nullable DocumentContent referent);
 
+
+  @NotNull
+  public abstract DiffContent createFromBytes(@Nullable Project project,
+                                              @NotNull byte[] content,
+                                              @NotNull FileType fileType,
+                                              @NotNull String fileName) throws IOException;
 
   @NotNull
   public abstract DiffContent createFromBytes(@Nullable Project project,

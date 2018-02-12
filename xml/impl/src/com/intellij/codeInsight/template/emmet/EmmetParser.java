@@ -24,10 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * User: zolotov
- * Date: 1/25/13
- */
 public abstract class EmmetParser {
   private final List<ZenCodingToken> myTokens;
   protected final CustomTemplateCallback myCallback;
@@ -77,11 +73,11 @@ public abstract class EmmetParser {
 
   @Nullable
   protected ZenCodingNode parseAddOrMore() {
-    ZenCodingNode mul = parseMul();
+    ZenCodingNode mul = parseMul(parseExpression());
 
     ZenCodingToken operationToken = getToken();
     if (operationToken == ZenCodingTokens.OPENING_R_BRACKET) {
-      mul = new MoreOperationNode(notNullNode(mul), notNullNode(parseExpression()));
+      mul = parseMul(new MoreOperationNode(notNullNode(mul), notNullNode(parseExpression())));
       operationToken = getToken();
     }
     if (!(operationToken instanceof OperationToken)) {
@@ -135,25 +131,18 @@ public abstract class EmmetParser {
   }
 
   @Nullable
-  private ZenCodingNode parseMul() {
-    ZenCodingNode exp = parseExpression();
-    if (exp == null) {
-      return null;
-    }
+  private ZenCodingNode parseMul(@Nullable ZenCodingNode expression) {
     ZenCodingToken operationToken = getToken();
-    if (!(operationToken instanceof OperationToken)) {
-      return exp;
-    }
-    if (((OperationToken)operationToken).getSign() != '*') {
-      return exp;
-    }
-    advance();
-    ZenCodingToken numberToken = getToken();
-    if (numberToken instanceof NumberToken) {
+    if (expression != null && operationToken instanceof OperationToken && ((OperationToken)operationToken).getSign() == '*') {
       advance();
-      return new MulOperationNode(exp, ((NumberToken)numberToken).getNumber());
+      ZenCodingToken numberToken = getToken();
+      if (numberToken instanceof NumberToken) {
+        advance();
+        return new MulOperationNode(expression, ((NumberToken)numberToken).getNumber());
+      }
+      return new UnaryMulOperationNode(expression);
     }
-    return new UnaryMulOperationNode(exp);
+    return expression;
   }
 
   @Nullable
@@ -213,7 +202,7 @@ public abstract class EmmetParser {
 
   protected boolean setTemplate(final TemplateToken token, TemplateImpl template) {
     if (template == null) {
-      template = myGenerator.createTemplateByKey(token.getKey());
+      template = myGenerator.createTemplateByKey(token.getKey(), token.isForceSingleTag());
     }
     if (template == null) {
       return false;

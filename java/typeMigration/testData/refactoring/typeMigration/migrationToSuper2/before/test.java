@@ -1,11 +1,11 @@
 public class Test {
     B<Long> b;
 
-    class Base {
+    class Base<T> {
 
     }
 
-    class A<T> extends Base {
+    class A<T> extends Base<T> {
         T value;
     }
 

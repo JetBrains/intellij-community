@@ -5,5 +5,5 @@ def b
 0(1) element: null
 1(2) WRITE a
 2(3) WRITE b
-3(4) element: Assignment expression MAYBE_RETURN
+3(4) element: Tuple assignment MAYBE_RETURN
 4() element: null

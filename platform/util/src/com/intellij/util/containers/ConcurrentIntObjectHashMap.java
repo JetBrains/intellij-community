@@ -27,7 +27,7 @@ import java.util.concurrent.locks.LockSupport;
  * Adapted from java.util.concurrent.ConcurrentHashMap to int keys
  * @author Doug Lea
  * @param <V> the type of mapped values
- * @deprecated Use {@link ContainerUtil#createConcurrentIntObjectMap()} instead
+ * Use {@link ContainerUtil#createConcurrentIntObjectMap()} to create this
  */
 // added hashing strategy argument
 // added cacheOrGet convenience method
@@ -130,7 +130,7 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    * are special, and contain null keys and values (but are never
    * exported).  Otherwise, keys and vals are never null.
    */
-  static class Node<V> implements IntEntry<V> {
+  static class Node<V> implements Entry<V> {
     final int hash;
     final int key;
     volatile V val;
@@ -168,9 +168,9 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
     public final boolean equals(Object o) {
       Object v;
       Object u;
-      IntEntry<?> e;
-      return ((o instanceof IntEntry) &&
-              (e = (IntEntry<?>)o).getKey() == key &&
+      Entry<?> e;
+      return ((o instanceof Entry) &&
+              (e = (Entry<?>)o).getKey() == key &&
               (v = e.getValue()) != null &&
               (v == (u = val) || v.equals(u)));
     }
@@ -300,9 +300,35 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
   private transient volatile int cellsBusy;
 
   /**
+   * A padded cell for distributing counts.  Adapted from LongAdder
+   * and Striped64.  See their internal docs for explanation.
+   */
+  static final class CounterCell {
+    volatile long p0;
+    volatile long p1;
+    volatile long p2;
+    volatile long p3;
+    volatile long p4;
+    volatile long p5;
+    volatile long p6;
+    volatile long value;
+    volatile long q0;
+    volatile long q1;
+    volatile long q2;
+    volatile long q3;
+    volatile long q4;
+    volatile long q5;
+    volatile long q6;
+
+    CounterCell(long x) {
+      value = x;
+    }
+  }
+
+  /**
    * Table of counter cells. When non-null, size is a power of 2.
    */
-  private transient volatile ConcurrentHashMap.CounterCell[] counterCells;
+  private transient volatile CounterCell[] counterCells;
 
   // views
   private transient ValuesView<V> values;
@@ -314,7 +340,7 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
   /**
    * Creates a new, empty map with the default initial table size (16).
    */
-  public ConcurrentIntObjectHashMap() {
+  ConcurrentIntObjectHashMap() {
   }
 
   /**
@@ -374,7 +400,7 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    *                                  negative or the load factor or concurrencyLevel are
    *                                  nonpositive
    */
-  public ConcurrentIntObjectHashMap(int initialCapacity,
+  ConcurrentIntObjectHashMap(int initialCapacity,
                                      float loadFactor, int concurrencyLevel) {
     if (!(loadFactor > 0.0f) || initialCapacity < 0 || concurrencyLevel <= 0) {
       throw new IllegalArgumentException();
@@ -744,7 +770,7 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    *
    * @return the set view
    */
-  public Set<IntEntry<V>> entrySet() {
+  public Set<Entry<V>> entrySet() {
     EntrySetView<V> es;
     return (es = entrySet) != null ? es : (entrySet = new EntrySetView<V>(this));
   }
@@ -820,7 +846,7 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
       if (!(o instanceof ConcurrentIntObjectMap)) {
         return false;
       }
-      ConcurrentIntObjectMap<?> m = (ConcurrentIntObjectMap)o;
+      IntObjectMap<?> m = (IntObjectMap)o;
       Node<V>[] t;
       int f = (t = table) == null ? 0 : t.length;
       Traverser<V> it = new Traverser<V>(t, f, 0, f);
@@ -831,7 +857,7 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
           return false;
         }
       }
-      for (IntEntry e : m.entries()) {
+      for (Entry e : m.entries()) {
         int mk = e.getKey();
         Object mv;
         Object v;
@@ -932,7 +958,7 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
     Object[] entries = new EntrySetView<V>(this).toArray();
     int[] result = new int[entries.length];
     for (int i = 0; i < entries.length; i++) {
-      IntEntry<V> entry = (IntEntry<V>)entries[i];
+      Entry<V> entry = (Entry<V>)entries[i];
       result[i] = entry.getKey();
     }
     return result;
@@ -1066,11 +1092,11 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    * @param check if <0, don't check resize, if <= 1 only check if uncontended
    */
   private void addCount(long x, int check) {
-    ConcurrentHashMap.CounterCell[] as;
+    CounterCell[] as;
     long b, s;
     if ((as = counterCells) != null ||
         !U.compareAndSwapLong(this, BASECOUNT, b = baseCount, s = b + x)) {
-      ConcurrentHashMap.CounterCell a;
+      CounterCell a;
       long v;
       int m;
       boolean uncontended = true;
@@ -1343,8 +1369,8 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
     /* ---------------- Counter support -------------- */
 
   final long sumCount() {
-    ConcurrentHashMap.CounterCell[] as = counterCells;
-    ConcurrentHashMap.CounterCell a;
+    CounterCell[] as = counterCells;
+    CounterCell a;
     long sum = baseCount;
     if (as != null) {
       for (int i = 0; i < as.length; ++i) {
@@ -1366,19 +1392,19 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
     }
     boolean collide = false;                // True if last slot nonempty
     for (; ; ) {
-      ConcurrentHashMap.CounterCell[] as;
-      ConcurrentHashMap.CounterCell a;
+      CounterCell[] as;
+      CounterCell a;
       int n;
       long v;
       if ((as = counterCells) != null && (n = as.length) > 0) {
         if ((a = as[(n - 1) & h]) == null) {
           if (cellsBusy == 0) {            // Try to attach new Cell
-            ConcurrentHashMap.CounterCell r = new ConcurrentHashMap.CounterCell(x); // Optimistic create
+            CounterCell r = new CounterCell(x); // Optimistic create
             if (cellsBusy == 0 &&
                 U.compareAndSwapInt(this, CELLSBUSY, 0, 1)) {
               boolean created = false;
               try {               // Recheck under lock
-                ConcurrentHashMap.CounterCell[] rs;
+                CounterCell[] rs;
                 int m, j;
                 if ((rs = counterCells) != null &&
                     (m = rs.length) > 0 &&
@@ -1415,7 +1441,7 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
                  U.compareAndSwapInt(this, CELLSBUSY, 0, 1)) {
           try {
             if (counterCells == as) {// Expand table unless stale
-              ConcurrentHashMap.CounterCell[] rs = new ConcurrentHashMap.CounterCell[n << 1];
+              CounterCell[] rs = new CounterCell[n << 1];
               for (int i = 0; i < n; ++i) {
                 rs[i] = as[i];
               }
@@ -1435,8 +1461,8 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
         boolean init = false;
         try {                           // Initialize table
           if (counterCells == as) {
-            ConcurrentHashMap.CounterCell[] rs = new ConcurrentHashMap.CounterCell[2];
-            rs[h & 1] = new ConcurrentHashMap.CounterCell(x);
+            CounterCell[] rs = new CounterCell[2];
+            rs[h & 1] = new CounterCell(x);
             counterCells = rs;
             init = true;
           }
@@ -2370,14 +2396,14 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
   }
 
   static final class EntryIterator<V> extends BaseIterator<V>
-    implements Iterator<IntEntry<V>> {
+    implements Iterator<Entry<V>> {
     EntryIterator(Node<V>[] tab, int index, int size, int limit,
                   ConcurrentIntObjectHashMap<V> map) {
       super(tab, index, size, limit, map);
     }
 
     @Override
-    public final IntEntry<V> next() {
+    public final Entry<V> next() {
       Node<V> p;
       if ((p = next) == null) {
         throw new NoSuchElementException();
@@ -2386,7 +2412,7 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
       final V v = p.val;
       lastReturned = p;
       advance();
-      return new IntEntry<V>() {
+      return new Entry<V>() {
         @Override
         public int getKey() {
           return k;
@@ -2647,7 +2673,7 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
   @NotNull
   @Override
-  public Iterable<IntEntry<V>> entries() {
+  public Iterable<Entry<V>> entries() {
     return new EntrySetView<V>(this);
   }
 
@@ -2656,8 +2682,8 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    * entries.  This class cannot be directly instantiated. See
    * {@link #entrySet()}.
    */
-  static final class EntrySetView<V> extends CollectionView<V, IntEntry<V>>
-    implements Set<IntEntry<V>> {
+  static final class EntrySetView<V> extends CollectionView<V, Entry<V>>
+    implements Set<Entry<V>> {
 
     EntrySetView(ConcurrentIntObjectHashMap<V> map) {
       super(map);
@@ -2667,9 +2693,9 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
     public boolean contains(Object o) {
       Object v;
       Object r;
-      IntEntry<?> e;
-      return ((o instanceof IntEntry) &&
-              (r = map.get((e = (IntEntry)o).getKey())) != null &&
+      Entry<?> e;
+      return ((o instanceof IntObjectMap.Entry) &&
+              (r = map.get((e = (Entry)o).getKey())) != null &&
               (v = e.getValue()) != null &&
               (v == r || v.equals(r)));
     }
@@ -2677,9 +2703,9 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
     @Override
     public boolean remove(Object o) {
       Object v;
-      IntEntry<?> e;
+      Entry<?> e;
       return ((o instanceof Map.Entry) &&
-              (e = (IntEntry<?>)o) != null &&
+              (e = (Entry<?>)o) != null &&
               (v = e.getValue()) != null &&
               map.remove(e.getKey(), v));
     }
@@ -2689,7 +2715,7 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
      */
     @NotNull
     @Override
-    public Iterator<IntEntry<V>> iterator() {
+    public Iterator<Entry<V>> iterator() {
       ConcurrentIntObjectHashMap<V> m = map;
       Node<V>[] t;
       int f = (t = m.table) == null ? 0 : t.length;
@@ -2697,14 +2723,14 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
     }
 
     @Override
-    public boolean add(IntEntry<V> e) {
+    public boolean add(Entry<V> e) {
       return map.putVal(e.getKey(), e.getValue(), false) == null;
     }
 
     @Override
-    public boolean addAll(Collection<? extends IntEntry<V>> c) {
+    public boolean addAll(Collection<? extends Entry<V>> c) {
       boolean added = false;
-      for (IntEntry<V> e : c) {
+      for (Entry<V> e : c) {
         if (add(e)) {
           added = true;
         }
@@ -2759,7 +2785,7 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
         (k.getDeclaredField("baseCount"));
       CELLSBUSY = U.objectFieldOffset
         (k.getDeclaredField("cellsBusy"));
-      Class<?> ck = ConcurrentHashMap.CounterCell.class;
+      Class<?> ck = CounterCell.class;
       CELLVALUE = U.objectFieldOffset
         (ck.getDeclaredField("value"));
       Class<?> ak = Node[].class;

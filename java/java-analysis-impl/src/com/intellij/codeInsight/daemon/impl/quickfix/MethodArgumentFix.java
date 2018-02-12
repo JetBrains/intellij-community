@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,7 +32,7 @@ public abstract class MethodArgumentFix implements IntentionAction {
 
   protected final PsiExpressionList myArgList;
   protected final int myIndex;
-  private final ArgumentFixerActionFactory myArgumentFixerActionFactory;
+  protected final ArgumentFixerActionFactory myArgumentFixerActionFactory;
   protected final PsiType myToType;
 
   protected MethodArgumentFix(@NotNull PsiExpressionList list, int i, @NotNull PsiType toType, @NotNull ArgumentFixerActionFactory fixerActionFactory) {
@@ -43,12 +44,11 @@ public abstract class MethodArgumentFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return
-      myToType != null &&
-      myToType.isValid() &&
-      myArgList.getExpressions().length > myIndex &&
-      myArgList.getExpressions()[myIndex] != null &&
-      myArgList.getExpressions()[myIndex].isValid();
+    if (myToType != null && myToType.isValid() && myArgList.isValid() && PsiTypesUtil.allTypeParametersResolved(myArgList, myToType)) {
+      PsiExpression[] args = myArgList.getExpressions();
+      return args.length > myIndex && args[myIndex] != null && args[myIndex].isValid();
+    }
+    return false;
   }
 
   @Override

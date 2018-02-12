@@ -1,0 +1,22 @@
+<component name="libraryTable">
+  <library name="imageio-tiff" type="repository">
+    <properties maven-id="com.twelvemonkeys.imageio:imageio-tiff:3.2.1" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/twelvemonkeys/imageio/imageio-tiff/3.2.1/imageio-tiff-3.2.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/twelvemonkeys/imageio/imageio-core/3.2.1/imageio-core-3.2.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/twelvemonkeys/imageio/imageio-metadata/3.2.1/imageio-metadata-3.2.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/twelvemonkeys/common/common-lang/3.2.1/common-lang-3.2.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/twelvemonkeys/common/common-io/3.2.1/common-io-3.2.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/twelvemonkeys/common/common-image/3.2.1/common-image-3.2.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/twelvemonkeys/imageio/imageio-tiff/3.2.1/imageio-tiff-3.2.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/twelvemonkeys/imageio/imageio-core/3.2.1/imageio-core-3.2.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/twelvemonkeys/imageio/imageio-metadata/3.2.1/imageio-metadata-3.2.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/twelvemonkeys/common/common-lang/3.2.1/common-lang-3.2.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/twelvemonkeys/common/common-io/3.2.1/common-io-3.2.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/twelvemonkeys/common/common-image/3.2.1/common-image-3.2.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

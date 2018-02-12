@@ -3,16 +3,17 @@ class T {
     String f(String a) {
         String s = a;
         if (s == null) {
-            return ""; // return comment
             // end of line
+            return ""; // return comment
         }
         else if (s.startsWith("@")) {
+            /* inline 1 */
+            /* inline 2 */
             return s.substring(1); // return comment
-    /* inline 1 *//* inline 2 */
         }
         else if (s.startsWith("#")) {
+            /* inline */
             return "#"; // return comment
-    /* inline */
         }
         return s; // return comment
     }

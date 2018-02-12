@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.ide.DataManager;
@@ -26,7 +12,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vcs.ObjectsConvertor;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,7 +25,7 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.EqualityPolicy;
+import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,16 +34,16 @@ import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.actions.CleanupWorker;
 import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.branchConfig.BranchConfigurationDialog;
 import org.jetbrains.idea.svn.branchConfig.SelectBranchPopup;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.integrate.MergeContext;
 import org.jetbrains.idea.svn.integrate.QuickMerge;
 import org.jetbrains.idea.svn.integrate.QuickMergeInteractionImpl;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -73,7 +59,11 @@ import java.util.*;
 import java.util.List;
 
 import static com.intellij.notification.NotificationDisplayType.STICKY_BALLOON;
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
+import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.Collections.singletonList;
+import static org.jetbrains.idea.svn.SvnUtil.append;
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class CopiesPanel {
 
@@ -82,14 +72,14 @@ public class CopiesPanel {
   private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Svn Roots Detection Errors", STICKY_BALLOON, true);
 
   private final Project myProject;
-  private MessageBusConnection myConnection;
-  private SvnVcs myVcs;
-  private JPanel myPanel;
-  private JComponent myHolder;
+  private final MessageBusConnection myConnection;
+  private final SvnVcs myVcs;
+  private final JPanel myPanel;
+  private final JComponent myHolder;
   private LinkLabel myRefreshLabel;
   // updated only on AWT
   private List<OverrideEqualsWrapper<WCInfo>> myCurrentInfoList;
-  private int myTextHeight;
+  private final int myTextHeight;
 
   private final static String CHANGE_FORMAT = "CHANGE_FORMAT";
   private final static String CLEANUP = "CLEANUP";
@@ -110,9 +100,8 @@ public class CopiesPanel {
       final List<WorkingCopyFormat> supportedFormats = getSupportedFormats();
       Runnable runnable = () -> {
         if (myCurrentInfoList != null) {
-          final List<OverrideEqualsWrapper<WCInfo>> newList =
-            ObjectsConvertor
-              .convert(infoList, o -> new OverrideEqualsWrapper<>(InfoEqualityPolicy.getInstance(), o), ObjectsConvertor.NOT_NULL);
+          List<OverrideEqualsWrapper<WCInfo>> newList =
+            map(infoList, info -> new OverrideEqualsWrapper<>(InfoEqualityPolicy.getInstance(), info));
 
           if (Comparing.haveEqualElements(newList, myCurrentInfoList)) {
             myRefreshLabel.setEnabled(true);
@@ -206,7 +195,7 @@ public class CopiesPanel {
                                     Messages.getWarningIcon());
               if (result == Messages.OK) {
                 // update of view will be triggered by roots changed event
-                SvnCheckoutProvider.checkout(myVcs.getProject(), new File(wcInfo.getPath()), wcInfo.getRootUrl(), SVNRevision.HEAD,
+                SvnCheckoutProvider.checkout(myVcs.getProject(), new File(wcInfo.getPath()), wcInfo.getUrl(), Revision.HEAD,
                                              Depth.INFINITY, false, null, wcInfo.getFormat());
               }
             } else if (CHANGE_FORMAT.equals(e.getDescription())) {
@@ -306,11 +295,9 @@ public class CopiesPanel {
   private List<WorkingCopyFormat> getSupportedFormats() {
     List<WorkingCopyFormat> result = ContainerUtil.newArrayList();
     ClientFactory factory = myVcs.getFactory();
-    ClientFactory otherFactory = myVcs.getOtherFactory(factory);
 
     try {
       result.addAll(factory.createUpgradeClient().getSupportedFormats());
-      result.addAll(SvnFormatWorker.getOtherFactoryFormats(otherFactory));
     }
     catch (VcsException e) {
       LOG.info(e);
@@ -334,18 +321,23 @@ public class CopiesPanel {
 
   private void mergeFrom(@NotNull final WCInfo wcInfo, @NotNull final VirtualFile root, @Nullable final Component mergeLabel) {
     SelectBranchPopup.showForBranchRoot(myProject, root, (project, configuration, branchUrl, revision) -> {
-      String workingCopyUrlInSelectedBranch = getCorrespondingUrlInOtherBranch(configuration, wcInfo.getUrl(), branchUrl);
-      MergeContext mergeContext = new MergeContext(myVcs, workingCopyUrlInSelectedBranch, wcInfo, SVNPathUtil.tail(branchUrl), root);
+      try {
+        Url workingCopyUrlInSelectedBranch = getCorrespondingUrlInOtherBranch(configuration, wcInfo.getUrl(), branchUrl);
+        MergeContext mergeContext = new MergeContext(myVcs, workingCopyUrlInSelectedBranch, wcInfo, Url.tail(branchUrl), root);
 
-      new QuickMerge(mergeContext, new QuickMergeInteractionImpl(mergeContext)).execute();
+        new QuickMerge(mergeContext, new QuickMergeInteractionImpl(mergeContext)).execute();
+      }
+      catch (SvnBindException e) {
+        AbstractVcsHelper.getInstance(myProject).showError(e, "Merge from " + Url.tail(branchUrl));
+      }
     }, "Select branch", mergeLabel);
   }
 
   @NotNull
-  private static String getCorrespondingUrlInOtherBranch(@NotNull SvnBranchConfigurationNew configuration,
-                                                         @NotNull SVNURL url,
-                                                         @NotNull String otherBranchUrl) {
-    return SVNPathUtil.append(otherBranchUrl, configuration.getRelativeUrl(url.toDecodedString()));
+  private static Url getCorrespondingUrlInOtherBranch(@NotNull SvnBranchConfigurationNew configuration,
+                                                      @NotNull Url url,
+                                                      @NotNull String otherBranchUrl) throws SvnBindException {
+    return append(createUrl(otherBranchUrl), notNullize(configuration.getRelativeUrl(url.toDecodedString())));
   }
 
   @SuppressWarnings("MethodMayBeStatic")

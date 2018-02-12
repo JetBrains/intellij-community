@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,15 @@
  */
 package com.jetbrains.python;
 
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
+import com.jetbrains.python.inspections.PyInspection;
 import com.jetbrains.python.inspections.PyMethodOverridingInspection;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author vlan
  */
-public class PyMethodOverridingInspectionTest extends PyTestCase {
-  private static final String TEST_DIRECTORY = "inspections/PyMethodOverridingInspection/";
-
+public class PyMethodOverridingInspectionTest extends PyInspectionTestCase {
   public void testArgsKwargsOverrideArg() {
     doTest();
   }
@@ -84,9 +84,19 @@ public class PyMethodOverridingInspectionTest extends PyTestCase {
     doTest();
   }
 
-  private void doTest() {
-    myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
-    myFixture.enableInspections(PyMethodOverridingInspection.class);
-    myFixture.checkHighlighting(true, false, false);
+  // PY-23513
+  public void testOverriddingAbstractStaticMethodWithExpandedArguments() {
+    doTest();
+  }
+
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyMethodOverridingInspection.class;
+  }
+
+  @Override
+  protected boolean isLowerCaseTestFile() {
+    return false;
   }
 }

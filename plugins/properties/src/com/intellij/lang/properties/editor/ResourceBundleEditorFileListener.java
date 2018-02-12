@@ -1,22 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.editor;
 
+import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -28,9 +16,10 @@ import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -39,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -46,7 +36,8 @@ import java.util.stream.Collectors;
 /**
  * @author Dmitry Batkovich
  */
-class ResourceBundleEditorFileListener extends VirtualFileAdapter {
+class ResourceBundleEditorFileListener implements VirtualFileListener {
+  private static final Logger LOG = Logger.getInstance(ResourceBundleEditorFileListener.class);
   private static final Update FORCE_UPDATE = new Update("FORCE_UPDATE") {
     @Override
     public void run() {
@@ -113,16 +104,18 @@ class ResourceBundleEditorFileListener extends VirtualFileAdapter {
                 }
               };
               for (EventWithType e : myEvents) {
-                if (e.getType() == EventType.FILE_DELETED || (e.getType() == EventType.PROPERTY_CHANGED &&
-                                                              ((VirtualFilePropertyEvent)e.getEvent()).getPropertyName().equals(VirtualFile.PROP_NAME))) {
-                  if (myEditor.getTranslationEditors().containsKey(e.getEvent().getFile())) {
+                if (e.getType() == EventType.FILE_DELETED || (e.getType() == EventType.PROPERTY_CHANGED && e.getPropertyName().equals(VirtualFile.PROP_NAME))) {
+                  if (myEditor.getTranslationEditors().containsKey(e.getFile())) {
                     int validFilesCount = 0;
-                    for (PropertiesFile file : myEditor.getResourceBundle().getPropertiesFiles()) {
-                      if (file.getContainingFile().isValid()) {
-                        validFilesCount ++;
-                      }
-                      if (validFilesCount == 2) {
-                        break;
+                    ResourceBundle bundle = myEditor.getResourceBundle();
+                    if (bundle.isValid()) {
+                      for (PropertiesFile file : bundle.getPropertiesFiles()) {
+                        if (file.getContainingFile().isValid()) {
+                          validFilesCount ++;
+                        }
+                        if (validFilesCount == 2) {
+                          break;
+                        }
                       }
                     }
                     if (validFilesCount > 1) {
@@ -138,22 +131,25 @@ class ResourceBundleEditorFileListener extends VirtualFileAdapter {
                     }
                     break;
                   }
-                }
-                else if (e.getType() == EventType.FILE_CREATED) {
-                  if (resourceBundleAsSet.getValue().contains(e.getEvent().getFile())) {
+                  else if (resourceBundleAsSet.getValue().contains(e.getFile())) {
+                    //new file in bundle
                     toDo = myEditor::recreateEditorsPanel;
                     break;
                   }
                 }
-                else if (e.getType() == EventType.PROPERTY_CHANGED &&
-                    ((VirtualFilePropertyEvent)e.getEvent()).getPropertyName().equals(VirtualFile.PROP_WRITABLE)) {
-                  if (myEditor.getTranslationEditors().containsKey(e.getEvent().getFile())) {
+                else if (e.getType() == EventType.FILE_CREATED) {
+                  if (resourceBundleAsSet.getValue().contains(e.getFile())) {
+                    toDo = myEditor::recreateEditorsPanel;
+                    break;
+                  }
+                }
+                else if (e.getType() == EventType.PROPERTY_CHANGED && e.getPropertyName().equals(VirtualFile.PROP_WRITABLE)) {
+                  if (myEditor.getTranslationEditors().containsKey(e.getFile())) {
                     if (toDo == null) {
                       toDo = new SetViewerPropertyRunnable();
                     }
                     if (toDo instanceof SetViewerPropertyRunnable) {
-                      ((SetViewerPropertyRunnable)toDo)
-                        .addFile(e.getEvent().getFile(), !(Boolean)((VirtualFilePropertyEvent)e.getEvent()).getNewValue());
+                      ((SetViewerPropertyRunnable)toDo).addFile(e.getFile(), !(boolean)e.getPropertyNewValue());
                     } else {
                       toDo = myEditor::recreateEditorsPanel;
                       break;
@@ -161,7 +157,7 @@ class ResourceBundleEditorFileListener extends VirtualFileAdapter {
                   }
                 }
                 else {
-                  if (myEditor.getTranslationEditors().containsKey(e.getEvent().getFile())) {
+                  if (myEditor.getTranslationEditors().containsKey(e.getFile())) {
                     if ((toDo instanceof SetViewerPropertyRunnable)) {
                       toDo = myEditor::recreateEditorsPanel;
                       break;
@@ -241,20 +237,45 @@ class ResourceBundleEditorFileListener extends VirtualFileAdapter {
   }
 
   private static class EventWithType {
+    @NotNull
     private final EventType myType;
-    private final VirtualFileEvent myEvent;
+    @NotNull
+    private final VirtualFile myFile;
+    private final String myPropertyName;
+    private final Object myPropertyNewValue;
 
-    private EventWithType(EventType type, VirtualFileEvent event) {
+    private EventWithType(@NotNull EventType type, @NotNull VirtualFileEvent event) {
       myType = type;
-      myEvent = event;
+      myFile = event.getFile();
+      if (type == EventType.PROPERTY_CHANGED) {
+        myPropertyName = ((VirtualFilePropertyEvent)event).getPropertyName();
+        myPropertyNewValue = ((VirtualFilePropertyEvent)event).getNewValue();
+      } else {
+        myPropertyName = null;
+        myPropertyNewValue = null;
+      }
     }
 
+    @NotNull
     public EventType getType() {
       return myType;
     }
 
-    public VirtualFileEvent getEvent() {
-      return myEvent;
+    @NotNull
+    public VirtualFile getFile() {
+      return myFile;
+    }
+
+    @NotNull
+    public String getPropertyName() {
+      LOG.assertTrue(myType == EventType.PROPERTY_CHANGED, "Unexpected event type: " + myType);
+      return ObjectUtils.notNull(myPropertyName);
+    }
+
+    @NotNull
+    public Object getPropertyNewValue() {
+      LOG.assertTrue(myType == EventType.PROPERTY_CHANGED, "Unexpected event type: " + myType);
+      return ObjectUtils.notNull(myPropertyNewValue);
     }
 
     @Override
@@ -265,7 +286,9 @@ class ResourceBundleEditorFileListener extends VirtualFileAdapter {
       EventWithType type = (EventWithType)o;
 
       if (myType != type.myType) return false;
-      if (!myEvent.equals(type.myEvent)) return false;
+      if (!myFile.equals(type.myFile)) return false;
+      if (!Objects.equals(myPropertyName, type.myPropertyName)) return false;
+      if (!Objects.equals(myPropertyNewValue, type.myPropertyNewValue)) return false;
 
       return true;
     }
@@ -273,7 +296,9 @@ class ResourceBundleEditorFileListener extends VirtualFileAdapter {
     @Override
     public int hashCode() {
       int result = myType.hashCode();
-      result = 31 * result + myEvent.hashCode();
+      result = 31 * result + myFile.hashCode();
+      result = 31 * result + (myPropertyName != null ? myPropertyName.hashCode() : 0);
+      result = 31 * result + (myPropertyNewValue != null ? myPropertyNewValue.hashCode() : 0);
       return result;
     }
   }

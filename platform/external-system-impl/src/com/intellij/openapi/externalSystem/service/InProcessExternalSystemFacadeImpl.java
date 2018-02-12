@@ -36,9 +36,7 @@ public class InProcessExternalSystemFacadeImpl<S extends ExternalSystemExecution
   }
 
   @Override
-  protected <I extends RemoteExternalSystemService<S>, C extends I> I createService(@NotNull Class<I> interfaceClass, @NotNull C impl)
-    throws ClassNotFoundException, IllegalAccessException, InstantiationException, RemoteException
-  {
+  protected <I extends RemoteExternalSystemService<S>, C extends I> I createService(@NotNull Class<I> interfaceClass, @NotNull C impl) {
     return impl;
   }
 }

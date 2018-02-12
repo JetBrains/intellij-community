@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 19-Dec-2007
- */
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.lang.HTMLComposerExtension;

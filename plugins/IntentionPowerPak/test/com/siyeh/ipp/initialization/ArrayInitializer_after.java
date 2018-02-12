@@ -1,7 +1,7 @@
 class X {
-    String s;
+    String[] s;
 
     {
-        s = {};
+        s = new String[]{};
     }
 }

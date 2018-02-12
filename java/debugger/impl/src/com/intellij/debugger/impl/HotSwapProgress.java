@@ -17,11 +17,6 @@ package com.intellij.debugger.impl;
 
 import com.intellij.openapi.project.Project;
 
-/**
- * User: lex
- * Date: Nov 18, 2003
- * Time: 2:20:18 PM
- */
 public abstract class HotSwapProgress {
   private final Project myProject;
   private Runnable myCancelWorker;

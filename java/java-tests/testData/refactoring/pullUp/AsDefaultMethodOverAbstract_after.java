@@ -1,12 +1,10 @@
 class Test {
   interface Printer {
-    void foo();
+      default void foo() {
+      }
 
   }
 
   abstract class AbstractPrinter implements Printer {
-    @Override
-    public void f<caret>oo() {
-    }
   }
 }

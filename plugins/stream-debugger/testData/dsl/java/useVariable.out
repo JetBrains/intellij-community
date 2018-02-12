@@ -1,0 +1,2 @@
+int a = 100;
+final int b = a;

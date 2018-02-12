@@ -15,9 +15,6 @@
  */
 package com.intellij.vcs.log.graph.collapsing;
 
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Comparator;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -26,12 +23,9 @@ class TreeSetNodeIterator {
   private final SortedSet<Integer> myWalkNodes;
 
   TreeSetNodeIterator(int startNode, final boolean isUp) {
-    myWalkNodes = new TreeSet<>(new Comparator<Integer>() {
-      @Override
-      public int compare(@NotNull Integer o1, @NotNull Integer o2) {
-        if (isUp) return o2 - o1;
-        return o1 - o2;
-      }
+    myWalkNodes = new TreeSet<>((o1, o2) -> {
+      if (isUp) return o2 - o1;
+      return o1 - o2;
     });
     myWalkNodes.add(startNode);
   }

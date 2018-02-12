@@ -3,6 +3,8 @@ package org.jetbrains.plugins.ipnb.format;
 import com.google.common.collect.Lists;
 import com.google.gson.*;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.internal.LinkedTreeMap;
+import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonWriter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -18,6 +20,7 @@ import com.intellij.util.text.VersionComparatorUtil;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.apache.commons.lang.math.NumberUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditablePanel;
@@ -28,10 +31,7 @@ import org.jetbrains.plugins.ipnb.format.cells.output.*;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class IpnbParser {
   private static final Logger LOG = Logger.getInstance(IpnbParser.class);
@@ -43,8 +43,10 @@ public class IpnbParser {
   @NotNull
   private static Gson initGson() {
     final GsonBuilder builder =
-      new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().registerTypeAdapter(IpnbCellRaw.class, new RawCellAdapter())
-        .registerTypeAdapter(IpnbFileRaw.class, new FileAdapter()).registerTypeAdapter(CellOutputRaw.class, new OutputsAdapter())
+      new GsonBuilder().setPrettyPrinting().disableHtmlEscaping()
+        .registerTypeAdapter(IpnbCellRaw.class, new RawCellAdapter())
+        .registerTypeAdapter(IpnbFileRaw.class, new FileAdapter())
+        .registerTypeAdapter(CellOutputRaw.class, new OutputsAdapter())
         .registerTypeAdapter(OutputDataRaw.class, new OutputDataAdapter())
         .registerTypeAdapter(CellOutputRaw.class, new CellOutputDeserializer())
         .registerTypeAdapter(OutputDataRaw.class, new OutputDataDeserializer())
@@ -60,10 +62,10 @@ public class IpnbParser {
     IpnbFileRaw rawFile = gson.fromJson(fileText.toString(), IpnbFileRaw.class);
     if (rawFile == null) {
       int nbformat = isIpythonNewFormat(virtualFile) ? 4 : 3;
-      return new IpnbFile(new HashMap<>(), nbformat, Lists.newArrayList(), path);
+      return new IpnbFile(new HashMap<>(), nbformat, 0, Lists.newArrayList(), path);
     }
     List<IpnbCell> cells = new ArrayList<>();
-    final IpnbWorksheet[] worksheets = rawFile.worksheets;
+    final List<IpnbWorksheet> worksheets = rawFile.worksheets;
     if (worksheets == null) {
       for (IpnbCellRaw rawCell : rawFile.cells) {
         cells.add(rawCell.createCell(validateSource(rawCell)));
@@ -78,12 +80,12 @@ public class IpnbParser {
       }
     }
     showValidationMessage();
-    return new IpnbFile(rawFile.metadata, rawFile.nbformat, cells, path);
+    return new IpnbFile(rawFile.metadata, rawFile.nbformat, rawFile.nbformat_minor, cells, path);
   }
 
   private static boolean validateSource(IpnbCellRaw cell) {
-    if (cell.source == null) {
-      final String error = VALIDATION_ERROR_TEXT + "\n" + "\"source\" is required property:\n" + cell;
+    if (cell.source == null && cell.input == null) {
+      final String error = VALIDATION_ERROR_TEXT + "\n" + "\"source\" or \"input\" is required property:\n" + cell;
       myErrors.add(error);
       LOG.warn(error);
       return false;
@@ -139,6 +141,7 @@ public class IpnbParser {
     }
 
     final IpnbFileRaw fileRaw = new IpnbFileRaw();
+    fileRaw.nbformat_minor = ipnbFile.getNbFormatMinor();
     fileRaw.metadata = ipnbFile.getMetadata();
     if (ipnbFile.getNbformat() == 4) {
       for (IpnbCell cell : ipnbFile.getCells()) {
@@ -151,13 +154,13 @@ public class IpnbParser {
       for (IpnbCell cell : ipnbFile.getCells()) {
         worksheet.cells.add(IpnbCellRaw.fromCell(cell, ipnbFile.getNbformat()));
       }
-      fileRaw.worksheets = new IpnbWorksheet[]{worksheet};
+      fileRaw.worksheets = Collections.singletonList(worksheet);
     }
     final StringWriter stringWriter = new StringWriter();
     final JsonWriter writer = new JsonWriter(stringWriter);
     writer.setIndent(" ");
     gson.toJson(fileRaw, fileRaw.getClass(), writer);
-    return stringWriter.toString();
+    return stringWriter.toString() +"\n";
   }
 
   private static void writeToFile(@NotNull final String path, @NotNull final String json) {
@@ -188,7 +191,7 @@ public class IpnbParser {
 
   @SuppressWarnings("unused")
   public static class IpnbFileRaw {
-    IpnbWorksheet[] worksheets;
+    List<IpnbWorksheet> worksheets;
     List<IpnbCellRaw> cells = new ArrayList<>();
     Map<String, Object> metadata = new HashMap<>();
     int nbformat = 4;
@@ -297,9 +300,9 @@ public class IpnbParser {
     List<String> latex;
     List<String> svg;
     Integer prompt_number;
+    String output_type;
     List<String> traceback;
     Map<String, Object> metadata;
-    String output_type;
     List<String> text;
 
     public static CellOutputRaw fromOutput(@NotNull final IpnbOutputCell outputCell, int nbformat) {
@@ -517,7 +520,7 @@ public class IpnbParser {
     }
   }
 
-  static class FileAdapter implements JsonSerializer<IpnbFileRaw> {
+  static class FileAdapter implements JsonSerializer<IpnbFileRaw>, JsonDeserializer<IpnbFileRaw> {
     @Override
     public JsonElement serialize(IpnbFileRaw fileRaw, Type typeOfSrc, JsonSerializationContext context) {
       final JsonObject jsonObject = new JsonObject();
@@ -526,7 +529,7 @@ public class IpnbParser {
         jsonObject.add("worksheets", worksheets);
       }
       if (fileRaw.cells != null) {
-        final JsonElement cells = gson.toJsonTree(fileRaw.cells);
+        final JsonElement cells = gson.toJsonTree(fileRaw.cells, new TypeToken<List<IpnbCellRaw>>(){}.getType());
         jsonObject.add("cells", cells);
       }
       final JsonElement metadata = gson.toJsonTree(fileRaw.metadata);
@@ -537,7 +540,72 @@ public class IpnbParser {
 
       return jsonObject;
     }
+
+    @Override
+    public IpnbFileRaw deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+      JsonObject object = json.getAsJsonObject();
+      IpnbFileRaw fileRaw = new IpnbFileRaw();
+
+      JsonElement worksheets = object.get("worksheets");
+      if (worksheets != null) {
+        fileRaw.worksheets = gson.fromJson(worksheets, new TypeToken<List<IpnbWorksheet>>(){}.getType());
+      }
+
+      JsonElement cellsElement = object.get("cells");
+      if (cellsElement != null) {
+        fileRaw.cells = gson.fromJson(cellsElement, new TypeToken<List<IpnbCellRaw>>(){}.getType());
+      }
+
+      JsonElement metadataElement = object.get("metadata");
+      if (metadataElement != null) {
+        LinkedTreeMap<String, Object> metadataMap = gson.fromJson(metadataElement, new TypeToken<Map<String, Object>>(){}.getType());
+
+        JsonElement kernelInfo = metadataElement.getAsJsonObject().get("kernel_info");
+        if (kernelInfo != null) {
+          metadataMap.put("kernel_info", gson.fromJson(kernelInfo, new TypeToken<Map<String, String>>() {}.getType()));
+        }
+
+        JsonElement languageInfo = metadataElement.getAsJsonObject().get("language_info");
+        if (languageInfo != null) {
+          LinkedTreeMap<String, Object> languageInfoMap = gson.fromJson(languageInfo, new TypeToken<Map<String, Object>>() {}.getType());
+          JsonElement codemirrorMode = languageInfo.getAsJsonObject().get("codemirror_mode");
+          if (codemirrorMode != null) {
+            LinkedTreeMap<String, Object> codemirrorModeMap = gson.fromJson(codemirrorMode, new TypeToken<Map<String, String>>() {}.getType());
+            if (codemirrorModeMap.containsKey("version")) {
+
+              String version = (String)codemirrorModeMap.get("version");
+              if (NumberUtils.isNumber(version)) {
+                try {
+                  codemirrorModeMap.put("version", Integer.parseInt(version));
+                }
+                catch (NumberFormatException e) {
+                  // added this to obtain backward compatibility as previously we parsed "version" as double.
+                  codemirrorModeMap.put("version", (int) Double.parseDouble(version));
+                }
+              }
+            }
+            languageInfoMap.put("codemirror_mode", codemirrorModeMap);
+          }
+          metadataMap.put("language_info", languageInfoMap);
+        }
+
+        fileRaw.metadata = metadataMap;
+      }
+
+      JsonElement nbformat = object.get("nbformat");
+      if (nbformat != null) {
+        fileRaw.nbformat = nbformat.getAsInt();
+      }
+
+      JsonElement nbformatMinor = object.get("nbformat_minor");
+      if (nbformatMinor != null) {
+        fileRaw.nbformat_minor = nbformatMinor.getAsInt();
+      }
+
+      return fileRaw;
+    }
   }
+
 
   static class CellRawDeserializer implements JsonDeserializer<IpnbCellRaw> {
 
@@ -579,7 +647,12 @@ public class IpnbParser {
       }
       final JsonElement number = object.get("prompt_number");
       if (number != null) {
-        cellRaw.prompt_number = number.getAsInt();
+        if ("*".equals(number.getAsString())) {
+          cellRaw.prompt_number = null;
+        }
+        else {
+          cellRaw.prompt_number = number.getAsInt();
+        }
       }
       return cellRaw;
     }
@@ -593,7 +666,15 @@ public class IpnbParser {
       final JsonObject object = json.getAsJsonObject();
       final OutputDataRaw dataRaw = new OutputDataRaw();
       final JsonElement png = object.get("image/png");
-      if (png != null) {
+      if (png instanceof JsonArray) {
+        final JsonArray array = png.getAsJsonArray();
+        StringBuilder pngString = new StringBuilder();
+        for (int i = 0; i != array.size(); ++i) {
+          pngString.append(array.get(i).getAsString());
+        }
+        dataRaw.png = pngString.toString();
+      }
+      else if (png instanceof JsonPrimitive) {
         dataRaw.png = png.getAsString();
       }
       dataRaw.html = getStringOrArray("text/html", object);

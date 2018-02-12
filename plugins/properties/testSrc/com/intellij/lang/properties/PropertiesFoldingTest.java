@@ -32,7 +32,7 @@ public class PropertiesFoldingTest extends LightPlatformCodeInsightFixtureTestCa
     myFixture.testFolding(getTestDataPath() + getTestName(true) + ".test.properties");
   }
 
-  public void testCustomFolding() throws Exception {
+  public void testCustomFolding() {
     doTest();
   }
 

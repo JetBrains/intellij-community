@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 @SuppressWarnings("UnnecessaryQualifierForThis")
 public class UnnecessaryQualifierForThisInspectionLightTest extends LightInspectionTestCase {
 
-  public void testFinalWithoutInnerClass() throws Exception {
+  public void testFinalWithoutInnerClass() {
     doTest("class Base {\n" +
            "    void foo() {\n" +
            "    }\n" +

@@ -1,8 +1,10 @@
 <html>
 <body>
-<p>Reports a <b>null</b> check followed by an <b>instanceof</b> check.
-Since the <b>instanceof</b> operator always returns <b>false</b> for <b>null</b>,
-there is no need to have an additional <b>null</b> check. </p>
+<p>Reports a <b>null</b> check followed by an <b>instanceof</b> check or a method call which will surely return <b>false</b> when
+  <b>null</b> is passed (e.g. <b>Class.isInstance</b>).
+  Since the <b>instanceof</b> operator always returns <b>false</b> for <b>null</b>,
+  there is no need to have an additional <b>null</b> check.
+</p>
 <p>Here is an example of a violation: </p>
 <pre><code>    if (x != null && x instanceof String) { ... }</code></pre>
 <p>The quickfix changes this code to:</p>

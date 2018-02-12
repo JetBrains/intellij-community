@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -51,7 +52,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -95,7 +96,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   private MergingUpdateQueue myUiUpdater;
   private boolean myTreeIsUpdating;
 
-  public static DataKey<PathField> PATH_FIELD = DataKey.create("PathField");
+  public static final DataKey<PathField> PATH_FIELD = DataKey.create("PathField");
 
   public FileChooserDialogImpl(@NotNull final FileChooserDescriptor descriptor, @Nullable Project project) {
     super(project, true);
@@ -252,7 +253,10 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     JBPopupFactory.getInstance()
       .createPopupChooserBuilder(files)
       .setItemChoosenCallback(
-        () -> myPathTextField.getField().setText(files.getSelectedValue().toString())).createPopup().showUnderneathOf(myPathTextField.getField());
+        () -> {
+          Object value = files.getSelectedValue();
+          if (value != null) myPathTextField.getField().setText(value.toString());
+        }).createPopup().showUnderneathOf(myPathTextField.getField());
   }
 
 
@@ -293,7 +297,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     createTree();
 
     final DefaultActionGroup group = createActionGroup();
-    ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar("FileChooserDialog", group, true);
     toolBar.setTargetComponent(panel);
 
     final JPanel toolbarPanel = new JPanel(new BorderLayout());
@@ -347,7 +351,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     panel.add(dndLabel, BorderLayout.SOUTH);
 
     ApplicationManager.getApplication().getMessageBus().connect(getDisposable())
-      .subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener.Adapter() {
+      .subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
         @Override
         public void applicationActivated(IdeFrame ideFrame) {
           ((SaveAndSyncHandlerImpl)SaveAndSyncHandler.getInstance()).maybeRefresh(ModalityState.current());
@@ -430,7 +434,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     myFileSystemTree.addOkAction(this::doOKAction);
     JTree tree = myFileSystemTree.getTree();
-    tree.setCellRenderer(new NodeRenderer());
+    if (!Registry.is("file.chooser.async.tree.model")) tree.setCellRenderer(new NodeRenderer());
     tree.getSelectionModel().addTreeSelectionListener(new FileTreeSelectionListener());
     tree.addTreeExpansionListener(new FileTreeExpansionListener());
     setOKActionEnabled(false);
@@ -502,7 +506,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   private final class FileTreeExpansionListener implements TreeExpansionListener {
     public void treeExpanded(TreeExpansionEvent event) {
       final Object[] path = event.getPath().getPath();
-      if (path.length == 2) {
+      if (path.length == 2 && path[1] instanceof DefaultMutableTreeNode) {
         // top node has been expanded => watch disk recursively
         final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path[1];
         Object userObject = node.getUserObject();
@@ -529,18 +533,10 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
       boolean enabled = true;
       for (TreePath treePath : paths) {
-        if (!e.isAddedPath(treePath)) {
-          continue;
+        if (e.isAddedPath(treePath)) {
+          VirtualFile file = FileSystemTreeImpl.getVirtualFile(treePath);
+          if (file == null || !myChooserDescriptor.isFileSelectable(file)) enabled = false;
         }
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
-        Object userObject = node.getUserObject();
-        if (!(userObject instanceof FileNodeDescriptor)) {
-          enabled = false;
-          break;
-        }
-        FileElement descriptor = ((FileNodeDescriptor)userObject).getElement();
-        VirtualFile file = descriptor.getFile();
-        enabled = file != null && myChooserDescriptor.isFileSelectable(file);
       }
       setOKActionEnabled(enabled);
     }
@@ -622,9 +618,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     else {
       setErrorText(null);
     }
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myPathTextField.getField(), true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myPathTextField.getField(), true));
 
     myNorthPanel.revalidate();
     myNorthPanel.repaint();

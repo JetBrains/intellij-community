@@ -22,12 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: alexander.chernikov
- * Date: Mar 23, 2010
- * Time: 7:01:01 PM
- */
 public class UiScriptFileType implements FileType {
   private static UiScriptFileType myInstance;
 

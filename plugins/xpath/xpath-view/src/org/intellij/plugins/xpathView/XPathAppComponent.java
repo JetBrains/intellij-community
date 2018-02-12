@@ -21,7 +21,7 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.template.impl.DefaultLiveTemplatesProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponentAdapter;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -56,7 +56,7 @@ import java.util.List;
     @Storage(value = "other.xml", deprecated = true)
   }
 )
-public class XPathAppComponent implements ApplicationComponentAdapter, PersistentStateComponent<Config>, DefaultLiveTemplatesProvider {
+public class XPathAppComponent implements PersistentStateComponent<Config>, DefaultLiveTemplatesProvider, ApplicationComponent {
   private static final String ACTION_FIND_NEXT = "FindNext";
   private static final String ACTION_FIND_PREVIOUS = "FindPrevious";
 
@@ -96,7 +96,7 @@ public class XPathAppComponent implements ApplicationComponentAdapter, Persisten
   }
 
   @Override
-  public void loadState(Config state) {
+  public void loadState(@NotNull Config state) {
     configuration = state;
   }
 

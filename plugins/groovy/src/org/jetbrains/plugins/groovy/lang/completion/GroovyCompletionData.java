@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -243,8 +243,16 @@ public class GroovyCompletionData {
       if (elem instanceof GrReferenceExpression && PsiUtil.skipWhitespacesAndComments(elem.getPrevSibling(), false) instanceof GrTypeDefinition) {
         elem = PsiUtil.skipWhitespacesAndComments(elem.getPrevSibling(), false);
       }
-      else if (elem.getParent() != null) {
-        elem = PsiUtil.skipWhitespacesAndComments(elem.getParent().getPrevSibling(), false);
+      else {
+        PsiElement parent = elem.getParent();
+        if (parent != null) {
+          if (parent instanceof PsiFile) {
+            elem = null;
+          }
+          else {
+            elem = PsiUtil.skipWhitespacesAndComments(parent.getPrevSibling(), false);
+          }
+        }
       }
     }
 
@@ -274,7 +282,7 @@ public class GroovyCompletionData {
 
   private static LookupElement keyword(final String keyword, @NotNull TailType tail) {
     LookupElementBuilder element = LookupElementBuilder.create(keyword).bold();
-    return tail != TailType.NONE ? new JavaKeywordCompletion.OverrideableSpace(element, tail) : element;
+    return tail != TailType.NONE ? new JavaKeywordCompletion.OverridableSpace(element, tail) : element;
   }
 
   private static void registerControlCompletion(PsiElement context, CompletionResultSet result) {

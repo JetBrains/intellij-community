@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class PackageDotHtmlMayBePackageInfoInspectionTest extends LightInspectionTestCase {
 
-  public void testSimple() throws Exception {
+  public void testSimple() {
     myFixture.configureByFile("package.html");
     myFixture.testHighlighting(true, false, false);
   }

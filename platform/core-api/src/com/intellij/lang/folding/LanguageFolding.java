@@ -19,12 +19,14 @@ package com.intellij.lang.folding;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.lang.MetaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -44,17 +46,15 @@ public class LanguageFolding extends LanguageExtension<FoldingBuilder> {
     FoldingBuilder cached = l.getUserData(getLanguageCache());
     if (cached != null) return cached;
 
-    List<FoldingBuilder> extensions = forKey(l);
+    List<FoldingBuilder> extensions = new ArrayList<>(forKey(l));
+
+    MetaLanguage.getAllMatchingMetaLanguages(l).forEach(metaLanguage -> extensions.addAll(allForLanguage(metaLanguage)));
+
     FoldingBuilder result;
     if (extensions.isEmpty()) {
 
       Language base = l.getBaseLanguage();
-      if (base != null) {
-        result = forLanguage(base);
-      }
-      else {
-        result = getDefaultImplementation();
-      }
+      result = base == null ? getDefaultImplementation() : forLanguage(base);
     }
     else {
       return extensions.size() == 1 ? extensions.get(0) : new CompositeFoldingBuilder(extensions);

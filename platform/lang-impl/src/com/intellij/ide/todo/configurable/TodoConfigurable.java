@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     myPatternsModel = new PatternsTableModel(myPatterns);
   }
 
-  private boolean arePatternsModified() {
+  protected boolean arePatternsModified() {
     TodoConfiguration todoConfiguration = TodoConfiguration.getInstance();
     TodoPattern[] initialPatterns = getTodoPatternsToDisplay(todoConfiguration);
     if (initialPatterns.length != myPatterns.size()) {
@@ -108,11 +108,11 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
   public void apply() throws ConfigurationException {
     stopEditing();
     if (arePatternsModified()) {
-      TodoPattern[] patterns = myPatterns.toArray(new TodoPattern[myPatterns.size()]);
+      TodoPattern[] patterns = myPatterns.toArray(new TodoPattern[0]);
       TodoConfiguration.getInstance().setTodoPatterns(patterns);
     }
     if (areFiltersModified()) {
-      TodoFilter[] filters = myFilters.toArray(new TodoFilter[myFilters.size()]);
+      TodoFilter[] filters = myFilters.toArray(new TodoFilter[0]);
       TodoConfiguration.getInstance().setTodoFilters(filters);
     }
   }
@@ -178,7 +178,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
                           public void run(AnActionButton button) {
                             stopEditing();
                             TodoPattern pattern = new TodoPattern(TodoAttributesUtil.createDefault());
-                            PatternDialog dialog = new PatternDialog(myPanel, pattern);
+                            PatternDialog dialog = new PatternDialog(myPanel, pattern, -1, myPatterns);
                             if (!dialog.showAndGet()) {
                               return;
                             }
@@ -291,7 +291,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     }
     TodoPattern sourcePattern = myPatterns.get(selectedIndex);
     TodoPattern pattern = sourcePattern.clone();
-    PatternDialog dialog = new PatternDialog(myPanel, pattern);
+    PatternDialog dialog = new PatternDialog(myPanel, pattern, selectedIndex, myPatterns);
     dialog.setTitle(IdeBundle.message("title.edit.todo.pattern"));
     if (!dialog.showAndGet()) {
       return;

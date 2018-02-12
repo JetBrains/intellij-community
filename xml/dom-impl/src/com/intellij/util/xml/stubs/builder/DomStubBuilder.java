@@ -40,7 +40,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/2/12
  */
 public class DomStubBuilder implements BinaryFileStubBuilder {
   private static final Logger LOG = Logger.getInstance(DomStubBuilder.class);

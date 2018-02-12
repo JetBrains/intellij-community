@@ -14,32 +14,37 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 21.11.2006
- * Time: 18:38:44
- */
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
-import com.intellij.vcsUtil.VcsRunnable;
-import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.intellij.openapi.vcs.VcsBundle.message;
 
 public class DefaultPatchBaseVersionProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.patch.DefaultPatchBaseVersionProvider");
@@ -67,9 +72,9 @@ public class DefaultPatchBaseVersionProvider {
     myRevisionPattern = null;
   }
 
+  @CalledInAny
   public void getBaseVersionContent(final FilePath filePath,
-                                    final Processor<CharSequence> processor,
-                                    final List<String> warnings) throws VcsException {
+                                    final Processor<String> processor) throws VcsException {
     if (myVcs == null) {
       return;
     }
@@ -82,32 +87,28 @@ public class DefaultPatchBaseVersionProvider {
       if (matcher.find()) {
         revision = myVcs.parseRevisionNumber(matcher.group(1), filePath);
         final VcsRevisionNumber finalRevision = revision;
-        final Boolean[] loadedExactRevision = new Boolean[1];
+        try {
+          if (finalRevision != null) {
+            final boolean loadedExactRevision =
+              computeInBackgroundTask(myProject, message("progress.text2.loading.revision", finalRevision.asString()), true, () -> {
+                if (historyProvider instanceof VcsBaseRevisionAdviser) {
+                  VcsBaseRevisionAdviser revisionAdviser = (VcsBaseRevisionAdviser)historyProvider;
+                  return revisionAdviser.getBaseVersionContent(filePath, processor, finalRevision.asString());
+                }
+                else {
+                  DiffProvider diffProvider = myVcs.getDiffProvider();
+                  if (diffProvider == null || filePath.getVirtualFile() == null) return false;
 
-        if (historyProvider instanceof VcsBaseRevisionAdviser) {
-          final boolean success = VcsUtil.runVcsProcessWithProgress(new VcsRunnable() {
-            public void run() throws VcsException {
-              loadedExactRevision[0] = ((VcsBaseRevisionAdviser)historyProvider).getBaseVersionContent(filePath, processor, finalRevision.asString(), warnings);
-            }
-          }, VcsBundle.message("progress.text2.loading.revision", revision.asString()), true, myProject);
-          // was cancelled
-          if (! success) return;
-        } else {
-          // use diff provider
-          final DiffProvider diffProvider = myVcs.getDiffProvider();
-          if (diffProvider != null && filePath.getVirtualFile() != null) {
-            final ContentRevision fileContent = diffProvider.createFileContent(finalRevision, filePath.getVirtualFile());
-
-            final boolean success = VcsUtil.runVcsProcessWithProgress(new VcsRunnable() {
-              public void run() throws VcsException {
-                loadedExactRevision[0] = ! processor.process(fileContent.getContent());
-              }
-            }, VcsBundle.message("progress.text2.loading.revision", revision.asString()), true, myProject);
-            // was cancelled
-            if (! success) return;
+                  ContentRevision fileContent = diffProvider.createFileContent(finalRevision, filePath.getVirtualFile());
+                  return fileContent != null && !processor.process(fileContent.getContent());
+                }
+              });
+            if (loadedExactRevision) return;
           }
         }
-        if (Boolean.TRUE.equals(loadedExactRevision[0])) return;
+        catch (ProcessCanceledException pce) {
+          return;
+        }
       }
     }
 
@@ -127,39 +128,42 @@ public class DefaultPatchBaseVersionProvider {
         return;
       }
     }
-    try {
-      final Ref<VcsHistorySession> ref = new Ref<>();
-      boolean result = VcsUtil.runVcsProcessWithProgress(new VcsRunnable() {
-        public void run() throws VcsException {
-          ref.set(historyProvider.createSessionFor(filePath));
-        }
-      }, VcsBundle.message("loading.file.history.progress"), true, myProject);
-      //if not found or cancelled
-      if (ref.isNull() || !result) return;
-      final VcsHistorySession session = ref.get();
-      final List<VcsFileRevision> list = session.getRevisionList();
-      if (list == null) return;
-      for (VcsFileRevision fileRevision : list) {
-        boolean found;
-        if (revision != null) {
-          found = fileRevision.getRevisionNumber().compareTo(revision) <= 0;
-        }
-        else {
-          final Date date = fileRevision instanceof VcsFileRevisionDvcsSpecific ?
-                            ((VcsFileRevisionDvcsSpecific) fileRevision).getDateForRevisionsOrdering() : fileRevision.getRevisionDate();
-          found = (date != null) && (date.before(versionDate) || date.equals(versionDate));
-        }
 
-        if (found) {
+    final VcsHistorySession historySession;
+    try {
+      historySession = computeInBackgroundTask(myProject, message("loading.file.history.progress"), true,
+                                               () -> historyProvider.createSessionFor(filePath));
+    }
+    catch (ProcessCanceledException e) {
+      return;
+    }
+    //if not found or cancelled
+    if (historySession == null) return;
+    final List<VcsFileRevision> list = historySession.getRevisionList();
+    if (list == null) return;
+    for (VcsFileRevision fileRevision : list) {
+      boolean found;
+      if (revision != null) {
+        found = fileRevision.getRevisionNumber().compareTo(revision) <= 0;
+      }
+      else {
+        final Date date = fileRevision instanceof VcsFileRevisionEx ?
+                          ((VcsFileRevisionEx)fileRevision).getAuthorDate() : fileRevision.getRevisionDate();
+        found = (date != null) && (date.before(versionDate) || date.equals(versionDate));
+      }
+
+      if (found) {
+        try {
           fileRevision.loadContent();
-          processor.process(LoadTextUtil.getTextByBinaryPresentation(fileRevision.getContent(), myFile, false, false));
+          CharSequence content = LoadTextUtil.getTextByBinaryPresentation(fileRevision.getContent(), myFile, false, false);
+          processor.process(content.toString());
           // TODO: try to download more than one version
           break;
         }
+        catch (IOException e) {
+          LOG.error(e);
+        }
       }
-    }
-    catch (IOException e) {
-      LOG.error(e);
     }
   }
 
@@ -199,5 +203,17 @@ public class DefaultPatchBaseVersionProvider {
       }
     }
     return null;
+  }
+
+  public static <T, E extends Exception> T computeInBackgroundTask(@Nullable Project project,
+                                                                   @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
+                                                                   boolean canBeCancelled,
+                                                                   @NotNull ThrowableComputable<T, E> computable) throws E {
+    return ProgressManager.getInstance().run(new Task.WithResult<T, E>(project, title, canBeCancelled) {
+      @Override
+      protected T compute(@NotNull ProgressIndicator indicator) throws E {
+        return computable.compute();
+      }
+    });
   }
 }

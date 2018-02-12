@@ -166,10 +166,5 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
     public PsiElement getParent() {
       return myParent;
     }
-
-    @Override
-    public void accept(@NotNull PsiElementVisitor visitor) {
-      visitor.visitElement(this);
-    }
   }
 }

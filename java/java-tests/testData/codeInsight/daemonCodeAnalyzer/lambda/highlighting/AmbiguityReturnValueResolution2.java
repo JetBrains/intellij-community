@@ -1,10 +1,10 @@
 public class Test<A, B extends Number>  {
     interface IO<T> {
-        T _(Object o);
+        T m(Object o);
     }
 
     interface IN<T extends Number> {
-        T _(Object o);
+        T m(Object o);
     }
 
 

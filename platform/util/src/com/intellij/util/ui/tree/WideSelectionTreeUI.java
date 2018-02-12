@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.util.ui.tree;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
@@ -51,10 +50,10 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   private static final Border LIST_FOCUSED_SELECTION_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListFocusedSelectionBackgroundPainter");
   
   @NotNull private final Condition<Integer> myWideSelectionCondition;
-  private boolean myWideSelection;
+  private final boolean myWideSelection;
   private boolean myOldRepaintAllRowValue;
   private boolean myForceDontPaintLines = false;
-  private boolean mySkinny = false;
+  private final boolean mySkinny = false;
 
   @SuppressWarnings("unchecked")
   public WideSelectionTreeUI() {
@@ -267,7 +266,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
   @Override
   protected boolean isToggleSelectionEvent(MouseEvent e) {
-    return SwingUtilities.isLeftMouseButton(e) && (SystemInfo.isMac ? e.isMetaDown() : e.isControlDown()) && !e.isPopupTrigger();
+    return UIUtil.isToggleListSelectionEvent(e);
   }
 
   @Override
@@ -282,17 +281,6 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     if (shouldPaintLines()) {
       super.paintVerticalLine(g, c, x, top, bottom);
     }
-  }
-
-  @Override
-  protected Color getHashColor() {
-    //if (invertLineColor && !ComparatorUtil.equalsNullable(UIUtil.getTreeSelectionForeground(), UIUtil.getTreeForeground())) {
-    //  final Color c = UIUtil.getTreeSelectionForeground();
-    //  if (c != null) {
-    //    return c.darker();
-    //  }
-    //}
-    return super.getHashColor();
   }
 
   public boolean isWideSelection() {
@@ -452,5 +440,9 @@ public class WideSelectionTreeUI extends BasicTreeUI {
       selection = Boolean.TRUE.equals(property);
     }
     return UIUtil.getTreeSelectionBackground(selection);
+  }
+
+  public void invalidateNodeSizes() {
+    treeState.invalidateSizes();
   }
 }

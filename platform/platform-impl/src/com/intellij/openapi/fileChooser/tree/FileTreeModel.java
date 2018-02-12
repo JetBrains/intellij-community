@@ -15,43 +15,45 @@
  */
 package com.intellij.openapi.fileChooser.tree;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VFileProperty;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
+import com.intellij.ui.tree.Identifiable;
 import com.intellij.ui.tree.MapBasedTree;
 import com.intellij.ui.tree.MapBasedTree.Entry;
 import com.intellij.ui.tree.MapBasedTree.UpdateResult;
+import com.intellij.ui.tree.Searchable;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
-import javax.swing.Icon;
+import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.io.File;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.lang.reflect.Method;
+import java.util.*;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.util.Disposer.register;
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.openapi.util.text.StringUtil.naturalCompare;
 import static com.intellij.openapi.vfs.VirtualFileManager.VFS_CHANGES;
+import static com.intellij.util.ReflectionUtil.getDeclaredMethod;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 
 /**
  * @author Sergey.Malenkov
  */
-public final class FileTreeModel extends AbstractTreeModel implements Disposable, InvokerSupplier {
+public final class FileTreeModel extends AbstractTreeModel implements Identifiable, Searchable, InvokerSupplier {
   private final Invoker invoker = new Invoker.BackgroundThread(this);
   private final State state;
   private volatile List<Root> roots;
@@ -71,10 +73,133 @@ public final class FileTreeModel extends AbstractTreeModel implements Disposable
     });
   }
 
-  @Override
-  public void dispose() {
+  public void invalidate() {
+    invoker.invokeLaterIfNeeded(() -> {
+      if (roots != null) {
+        for (Root root : roots) {
+          root.tree.invalidate();
+        }
+      }
+      treeStructureChanged(state.path, null, null);
+    });
   }
 
+  @Override
+  public Object getUniqueID(@NotNull TreePath path) {
+    Object object = path.getLastPathComponent();
+    TreePath parent = path.getParentPath();
+    return parent != null && object instanceof Node
+           ? getUniqueID(parent, (Node)object, new ArrayDeque<>())
+           : parent != null || object != state ? null : state.toString();
+  }
+
+  private Object getUniqueID(TreePath path, Node node, ArrayDeque<String> deque) {
+    deque.addFirst(node.getName());
+    Object object = path.getLastPathComponent();
+    TreePath parent = path.getParentPath();
+    return parent != null && object instanceof Node
+           ? getUniqueID(parent, (Node)object, deque)
+           : parent != null || object != state ? null : deque.toArray();
+  }
+
+  @NotNull
+  @Override
+  public Promise<TreePath> getTreePath(Object object) {
+    if (object == null) return Promises.rejectedPromise();
+    if (object instanceof String && object.equals(state.toString())) return Promises.resolvedPromise(state.path);
+    AsyncPromise<TreePath> promise = new AsyncPromise<>();
+    invoker.invokeLaterIfNeeded(() -> {
+      if (object instanceof Object[]) {
+        resolveID(promise, (Object[])object);
+      }
+      else if (object instanceof VirtualFile) {
+        resolveFile(promise, (VirtualFile)object);
+      }
+      else if (object instanceof String) {
+        VirtualFile file = findFile((String)object);
+        if (file != null) {
+          resolveFile(promise, file);
+        }
+        else {
+          promise.setError("file not found");
+        }
+      }
+      else {
+        promise.setError("unsupported object");
+      }
+    });
+    return promise;
+  }
+
+  private void resolveID(AsyncPromise<TreePath> promise, Object[] array) {
+    if (array.length > 0) {
+      if (roots == null) roots = state.getRoots();
+      for (Root root : roots) {
+        Entry<Node> child = root.tree.getRootEntry();
+        if (child != null && Objects.equals(child.getNode().getName(), array[0])) {
+          resolveID(promise, array, 1, root, child);
+          return;
+        }
+      }
+      promise.setError("root entry not found");
+    }
+    else {
+      promise.setResult(state.path);
+    }
+  }
+
+  private void resolveID(AsyncPromise<TreePath> promise, Object[] array, int index, Root root, Entry<Node> entry) {
+    if (index < array.length) {
+      if (entry.isLoadingRequired()) {
+        root.updateChildren(state, entry);
+      }
+      for (int i = 0; i < entry.getChildCount(); i++) {
+        Entry<Node> child = entry.getChildEntry(i);
+        if (child != null && Objects.equals(child.getNode().getName(), array[index])) {
+          resolveID(promise, array, index + 1, root, child);
+          return;
+        }
+      }
+      promise.setError("entry not found");
+    }
+    else {
+      promise.setResult(entry);
+    }
+  }
+
+  private void resolveFile(AsyncPromise<TreePath> promise, VirtualFile file) {
+    if (roots == null) roots = state.getRoots();
+    for (Root root : roots) {
+      if (resolveFile(promise, file, root, root.tree.getRootEntry())) {
+        return;
+      }
+    }
+    promise.setError("root entry not found");
+  }
+
+  private boolean resolveFile(AsyncPromise<TreePath> promise, VirtualFile file, Root root, Entry<Node> entry) {
+    if (entry != null) {
+      if (entry.getNode().getFile().equals(file)) {
+        promise.setResult(entry);
+        return true;
+      }
+      if (VfsUtilCore.isAncestor(entry.getNode().getFile(), file, true)) {
+        if (entry.isLoadingRequired()) {
+          root.updateChildren(state, entry);
+        }
+        for (int i = 0; i < entry.getChildCount(); i++) {
+          if (resolveFile(promise, file, root, entry.getChildEntry(i))) {
+            return true;
+          }
+        }
+        promise.setError("entry not found");
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @NotNull
   @Override
   public Invoker getInvoker() {
     return invoker;
@@ -238,10 +363,10 @@ public final class FileTreeModel extends AbstractTreeModel implements Disposable
     private final FileRefresher refresher;
     private final boolean sortDirectories;
     private final boolean sortArchives;
-    private List<VirtualFile> roots;
+    private final List<VirtualFile> roots;
 
     private State(FileChooserDescriptor descriptor, FileRefresher refresher, boolean sortDirectories, boolean sortArchives) {
-      this.path = new TreePath(descriptor);
+      this.path = new TreePath(this);
       this.descriptor = descriptor;
       this.refresher = refresher;
       this.sortDirectories = sortDirectories;
@@ -287,9 +412,8 @@ public final class FileTreeModel extends AbstractTreeModel implements Disposable
 
     private List<Root> getRoots() {
       List<VirtualFile> files = roots;
-      if (roots == null) files = getSystemRoots();
-      if (refresher != null && refresher.isRecursive()) refresher.setFiles(files);
-      if (files.isEmpty()) return emptyList();
+      if (files == null) files = getSystemRoots();
+      if (files == null || files.isEmpty()) return emptyList();
       return files.stream().map(file -> new Root(this, file)).collect(toList());
     }
 
@@ -320,6 +444,7 @@ public final class FileTreeModel extends AbstractTreeModel implements Disposable
 
     private Node(State state, VirtualFile file) {
       super(file);
+      if (state.refresher != null && !state.refresher.isRecursive()) state.refresher.register(file);
       updateContent(state);
     }
 
@@ -355,8 +480,23 @@ public final class FileTreeModel extends AbstractTreeModel implements Disposable
 
     private Root(State state, VirtualFile file) {
       super(state, file);
+      if (state.refresher != null && state.refresher.isRecursive()) state.refresher.register(file);
       tree = new MapBasedTree<>(false, node -> node.getFile(), state.path);
+      tree.onInsert(node -> markDirtyInternal(node.getFile()));
       tree.updateRoot(Pair.create(this, state.isLeaf(file)));
+    }
+
+    private static void markDirtyInternal(VirtualFile file) {
+      if (file instanceof VirtualFileSystemEntry) {
+        Method method = getDeclaredMethod(VirtualFileSystemEntry.class, "markDirtyInternal");
+        if (method != null) {
+          try {
+            method.invoke(file);
+          }
+          catch (Exception ignore) {
+          }
+        }
+      }
     }
 
     private UpdateResult<Node> updateChildren(State state, Entry<Node> parent) {

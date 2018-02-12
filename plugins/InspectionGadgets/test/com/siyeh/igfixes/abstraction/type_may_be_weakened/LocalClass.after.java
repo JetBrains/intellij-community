@@ -5,7 +5,7 @@ class LocalClass {
       void foo() {}
     }
     class B<T> extends A<T> {}
-    A<String> bb = new B();
+    A<String> bb = new B<>();
     bb.foo();
   }
 }

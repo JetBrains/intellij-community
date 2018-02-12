@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.codeInspection.ui;
@@ -22,8 +10,8 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.reference.RefDirectory;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.util.containers.FactoryMap;
+import com.intellij.lang.annotation.HighlightSeverity;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,9 +28,13 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
   private final Icon myIcon;
   public RefElementNode(@Nullable RefEntity userObject, @NotNull InspectionToolPresentation presentation) {
     super(userObject, presentation);
-    init(presentation.getContext().getProject());
     final RefEntity refEntity = getElement();
     myIcon = refEntity == null ? null : refEntity.getIcon(false);
+  }
+
+  @Override
+  public final boolean isAlreadySuppressedFromView() {
+    return getElement() != null && getPresentation().isSuppressed(getElement());
   }
 
   public boolean hasDescriptorsUnder() {
@@ -76,18 +68,32 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
-  public void excludeElement(ExcludedInspectionTreeNodesManager excludedManager) {
-    super.excludeElement(excludedManager);
+  public boolean isExcluded() {
+    RefEntity element = getElement();
+    if (isLeaf() && element != null) {
+      return getPresentation().isExcluded(element);
+    }
+    return super.isExcluded();
   }
 
   @Override
-  public void amnestyElement(ExcludedInspectionTreeNodesManager excludedManager) {
-    super.amnestyElement(excludedManager);
+  public void excludeElement() {
+    RefEntity element = getElement();
+    if (isLeaf() && element != null) {
+      getPresentation().exclude(element);
+      return;
+    }
+    super.excludeElement();
   }
 
   @Override
-  public FileStatus getNodeStatus() {
-    return myPresentation.getElementStatus(getElement());
+  public void amnestyElement() {
+    RefEntity element = getElement();
+    if (isLeaf() && element != null) {
+      getPresentation().amnesty(element);
+      return;
+    }
+    super.amnestyElement();
   }
 
   @Override
@@ -121,14 +127,13 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
-  public int getProblemCount(boolean allowSuppressed) {
-    return isLeaf() ? myPresentation.getIgnoredRefElements().contains(getElement()) && !(allowSuppressed && isAlreadySuppressedFromView() && isValid()) ? 0 : 1 : super.getProblemCount(allowSuppressed);
-  }
-
-  @Override
-  public void visitProblemSeverities(FactoryMap<HighlightDisplayLevel, Integer> counter) {
-    if (isLeaf() && !myPresentation.isElementIgnored(getElement())) {
-      counter.put(HighlightDisplayLevel.WARNING, counter.get(HighlightDisplayLevel.WARNING) + 1);
+  protected void visitProblemSeverities(@NotNull TObjectIntHashMap<HighlightDisplayLevel> counter) {
+    if (!isExcluded() && isLeaf() && !getPresentation().isProblemResolved(getElement()) && !getPresentation().isSuppressed(getElement())) {
+      HighlightSeverity severity = InspectionToolPresentation.getSeverity(getElement(), null, getPresentation());
+      HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
+      if (!counter.adjustValue(level, 1)) {
+        counter.put(level, 1);
+      }
       return;
     }
     super.visitProblemSeverities(counter);
@@ -136,16 +141,16 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
 
   @Override
   public boolean isQuickFixAppliedFromView() {
-    return false;
+    return isLeaf() && getPresentation().isProblemResolved(getElement());
   }
 
   @Nullable
   @Override
-  public String getCustomizedTailText() {
-    if (myPresentation.isDummy()) {
+  public String getTailText() {
+    if (getPresentation().isDummy()) {
       return "";
     }
-    final String customizedText = super.getCustomizedTailText();
+    final String customizedText = super.getTailText();
     if (customizedText != null) {
       return customizedText;
     }

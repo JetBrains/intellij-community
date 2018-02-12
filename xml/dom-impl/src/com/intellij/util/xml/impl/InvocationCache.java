@@ -34,47 +34,17 @@ import java.util.Map;
  */
 public class InvocationCache {
   private static final Map<JavaMethodSignature, Invocation> ourCoreInvocations = new HashMap<>();
-  private final Map<Method, Invocation> myInvocations = new ConcurrentFactoryMap<Method, Invocation>() {
-    @Override
-    protected Invocation create(Method key) {
-      return ourCoreInvocations.get(new JavaMethodSignature(key));
-    }
-  };
-  private final Map<Method, JavaMethod> myJavaMethods = new ConcurrentFactoryMap<Method, JavaMethod>() {
-    @Override
-    protected JavaMethod create(Method key) {
-      return JavaMethod.getMethod(myType, key);
-    }
-  };
-  private final Map<JavaMethod, Boolean> myGetters = new ConcurrentFactoryMap<JavaMethod, Boolean>() {
-    @Override
-    protected Boolean create(JavaMethod key) {
-      return DomImplUtil.isTagValueGetter(key);
-    }
-  };
-  private final Map<JavaMethod, Boolean> mySetters = new ConcurrentFactoryMap<JavaMethod, Boolean>() {
-    @Override
-    protected Boolean create(JavaMethod key) {
-      return DomImplUtil.isTagValueSetter(key);
-    }
-  };
-  private final Map<JavaMethod, Map<Class, Object>> myMethodAnnotations = new ConcurrentFactoryMap<JavaMethod, Map<Class, Object>>() {
-    @Override
-    protected Map<Class, Object> create(final JavaMethod method) {
-      return new ConcurrentFactoryMap<Class, Object>() {
-        @Override
-        protected Object create(Class annoClass) {
-          return method.getAnnotation(annoClass);
-        }
-      };
-    }
-  };
-  private final Map<Class, Object> myClassAnnotations = new ConcurrentFactoryMap<Class, Object>() {
-    @Override
-    protected Object create(Class annoClass) {
-      return myType.getAnnotation(annoClass);
-    }
-  };
+  private final Map<Method, Invocation> myInvocations =
+    ConcurrentFactoryMap.createMap(key -> ourCoreInvocations.get(new JavaMethodSignature(key)));
+  private final Map<Method, JavaMethod> myJavaMethods;
+  private final Map<JavaMethod, Boolean> myGetters = ConcurrentFactoryMap.createMap(key -> DomImplUtil.isTagValueGetter(key));
+  private final Map<JavaMethod, Boolean> mySetters = ConcurrentFactoryMap.createMap(key -> DomImplUtil.isTagValueSetter(key));
+  private final Map<JavaMethod, Map<Class, Object>> myMethodAnnotations =
+    ConcurrentFactoryMap.createMap(method -> ConcurrentFactoryMap.createMap(annoClass->
+        method.getAnnotation(annoClass)
+    )
+    );
+  private final Map<Class, Object> myClassAnnotations;
   private final Class myType;
 
   static {
@@ -214,6 +184,8 @@ public class InvocationCache {
 
   public InvocationCache(Class type) {
     myType = type;
+    myJavaMethods = ConcurrentFactoryMap.createMap(key -> JavaMethod.getMethod(myType, key));
+    myClassAnnotations = ConcurrentFactoryMap.createMap(annoClass -> myType.getAnnotation(annoClass));
   }
 
   @Nullable

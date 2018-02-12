@@ -13,19 +13,24 @@ aria.global =
 	(	aria.prop.atomic?
 	&	aria.state.busy?
 	&	aria.prop.controls?
+	&	aria.state.current?
 	&	aria.prop.describedby?
+	&	aria.prop.details?
 	&	aria.state.disabled?
 	&	aria.state.dropeffect?
+	&	aria.prop.errormessage?
 	&	aria.prop.flowto?
 	&	aria.state.grabbed?
 	&	aria.prop.haspopup?
 	&	aria.state.hidden?
 	&	aria.state.invalid?
+	&	aria.prop.keyshortcuts?
 	&	aria.prop.label?
 	&	aria.prop.labelledby?
 	&	aria.prop.live?
 	&	aria.prop.owns?
 	&	aria.prop.relevant?
+	&	aria.prop.roledescription?
 	)
 
 common.attrs.other &= aria.global?
@@ -37,6 +42,12 @@ common.attrs.aria.implicit.button |=
 	&	aria.state.pressed?
 	)
 
+common.attrs.aria.implicit.cell |=
+	(	aria.prop.colspan?
+	&	aria.prop.rowspan?
+	&	aria.prop.rowindex?
+	)
+
 common.attrs.aria.implicit.checkbox |=
 	(	aria.state.checked? )
 
@@ -45,12 +56,16 @@ common.attrs.aria.implicit.combobox |=
 	&	aria.prop.autocomplete?
 	&	aria.prop.required?
 	&	aria.prop.activedescendant?
+	&	aria.prop.readonly?
 	)
 
 common.attrs.aria.implicit.dialog |=
 	(	aria.state.expanded? )
 
 common.attrs.aria.implicit.document |=
+	(	aria.state.expanded? )
+
+common.attrs.aria.implicit.figure |=
 	(	aria.state.expanded? )
 
 common.attrs.aria.implicit.form |=
@@ -107,6 +122,27 @@ common.attrs.aria.implicit.radio |=
 	&	aria.state.selected?
 	)
 
+common.attrs.aria.implicit.row |=
+	(	aria.prop.level? # not inherited
+	&	aria.state.selected? # not inherited
+	&	aria.prop.activedescendant?
+	&	aria.state.expanded?
+	)
+
+common.attrs.aria.implicit.rowgroup |=
+	(	aria.prop.activedescendant?
+	&	aria.state.expanded?
+	)
+
+common.attrs.aria.implicit.searchbox |=
+	(	aria.prop.activedescendant?
+	&	aria.prop.autocomplete?
+	&	aria.prop.multiline?
+	&	aria.prop.placeholder?
+	&	aria.prop.readonly?
+	&	aria.prop.required?
+	)
+
 common.attrs.aria.implicit.slider |=
 	(	aria.prop.valuemax?
 	&	aria.prop.valuemin?
@@ -121,6 +157,11 @@ common.attrs.aria.implicit.spinbutton |=
 	&	aria.prop.valuenow?
 	&	aria.prop.valuetext?
 	&	aria.prop.required?
+	)
+
+common.attrs.aria.implicit.table |=
+	(	aria.prop.colcount?
+	&	aria.prop.rowcount?
 	)
 
 common.attrs.aria.implicit.textbox |=
@@ -195,6 +236,18 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 	aria.state.busy =
 		attribute aria-busy 
 			{	string "true"
+			|	string "false" #default
+			}
+
+## current
+	aria.state.current =
+		attribute aria-current
+			{	string "page"
+			|	string "step"
+			|	string "location"
+			|	string "date"
+			|	string "time"
+			|	string "true"
 			|	string "false" #default
 			}
 
@@ -322,6 +375,24 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 			|	string "none" #default
 			}
 
+## colcount
+	aria.prop.colcount =
+		attribute aria-colcount {
+			common.data.integer.positive
+		}
+
+## colindex
+	aria.prop.colindex =
+		attribute aria-colindex {
+			common.data.integer.positive
+		}
+
+## colspan
+	aria.prop.colspan =
+		attribute aria-colspan {
+			common.data.integer.positive
+		}
+
 ## controls
 	aria.prop.controls =
 		attribute aria-controls {
@@ -332,6 +403,18 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 	aria.prop.describedby =
 		attribute aria-describedby {
 			common.data.idrefs #REVISIT add Schematron check
+		}
+
+## details
+	aria.prop.details =
+		attribute aria-details {
+			common.data.idref
+		}
+
+## errormessage
+	aria.prop.errormessage =
+		attribute aria-errormessage {
+			common.data.idref
 		}
 
 ## flowto
@@ -346,6 +429,12 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 			{	string "true" #REVISIT check owns or descendant
 			|	string "false" #default
 			}	
+
+## keyshortcuts
+	aria.prop.keyshortcuts =
+		attribute aria-keyshortcuts {
+			string
+		}
 
 ## label
 	aria.prop.label =
@@ -373,6 +462,13 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 			|	string "assertive"
 			}	
 
+## modal
+	aria.prop.modal =
+		attribute aria-modal
+			{	string "true"
+			|	string "false" #default
+			}
+
 ## multiline
 	aria.prop.multiline =
 		attribute aria-multiline
@@ -392,12 +488,19 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 		attribute aria-orientation
 			{	string "vertical"
 			|	string "horizontal" #default
+			|	string "undefined"
 			}
 
 ## owns
 	aria.prop.owns =
 		attribute aria-owns {
 			common.data.idrefs #REVISIT add Schematron check
+		}
+
+## placeholder
+	aria.prop.placeholder =
+		attribute aria-placeholder {
+			string
 		}
 
 ## posinset
@@ -457,6 +560,30 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 			|	string "false" #default
 			}	
 
+## roledescription
+	aria.prop.roledescription =
+		attribute aria-roledescription {
+			string
+		}
+
+## rowcount
+	aria.prop.rowcount =
+		attribute aria-rowcount {
+			common.data.integer.positive
+		}
+
+## rowindex
+	aria.prop.rowindex =
+		attribute aria-rowindex {
+			common.data.integer.positive
+		}
+
+## rowspan
+	aria.prop.rowspan =
+		attribute aria-rowspan {
+			common.data.integer.positive
+		}
+
 ## setsize
 	aria.prop.setsize =
 		attribute aria-setsize {
@@ -514,6 +641,7 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 	aria.alertdialog =
 		(	aria.role.alertdialog
 		&	aria.state.expanded?
+		&	aria.prop.modal?
 		)
 		aria.role.alertdialog = 
 			attribute role { string "alertdialog" }
@@ -566,6 +694,18 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 	common.attrs.aria |= aria.button
 	common.attrs.aria.role.button |= aria.button
 
+## cell
+	aria.cell =
+		(	aria.role.cell
+		&	aria.prop.colspan?
+		&	aria.prop.rowspan?
+		&	aria.prop.rowindex?
+		)
+		aria.role.cell =
+			attribute role { string "cell" }
+	common.attrs.aria |= aria.cell
+	common.attrs.aria.role.cell |= aria.cell
+
 ## checkbox
 	aria.checkbox =
 		(	aria.role.checkbox
@@ -585,6 +725,9 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 		&	aria.state.selected? # not inherited
 		&	aria.state.expanded?
 		&	aria.prop.required?
+		&	aria.prop.colspan?
+		&	aria.prop.rowspan?
+		&	aria.prop.rowindex?
 		)
 		aria.role.columnheader = 
 			attribute role { string "columnheader" }
@@ -593,11 +736,14 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 
 ## combobox
 	aria.combobox =
+		#	aria.prop.controls TODO: required! add check to Assertions
 		(	aria.role.combobox
 		&	aria.prop.activedescendant?
 		&	aria.state.expanded #required!
 		&	aria.prop.autocomplete?
 		&	aria.prop.required?
+		&	aria.prop.readonly?
+		&	aria.prop.orientation?
 		)
 		aria.role.combobox = 
 			attribute role { string "combobox" }
@@ -641,6 +787,7 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 	aria.dialog =
 		(	aria.role.dialog
 		&	aria.state.expanded?
+		&	aria.prop.modal?
 		)
 		aria.role.dialog = 
 			attribute role { string "dialog" }
@@ -670,6 +817,28 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 	common.attrs.aria |= aria.document
 	common.attrs.aria.landmark.document |= aria.document
 
+## feed
+	aria.feed =
+		(	aria.role.feed
+		&	aria.state.expanded?
+		)
+		aria.role.feed =
+			attribute role { string "feed" }
+
+	common.attrs.aria |= aria.feed
+	common.attrs.aria.role.feed |= aria.feed
+
+## figure
+	aria.figure =
+		(	aria.role.figure
+		&	aria.state.expanded?
+		)
+		aria.role.figure =
+			attribute role { string "figure" }
+
+	common.attrs.aria |= aria.figure
+	common.attrs.aria.role.figure |= aria.figure
+
 ## form
 	aria.form =
 		(	aria.role.form
@@ -689,6 +858,8 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 		&	aria.prop.readonly? # not inherited
 		&	aria.prop.activedescendant?
 		&	aria.state.expanded?
+		&	aria.prop.colcount?
+		&	aria.prop.rowcount?
 		)
 		aria.role.grid = 
 			attribute role { string "grid" }
@@ -703,6 +874,9 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 		&	aria.state.selected? # not inherited
 		&	aria.state.expanded?
 		&	aria.prop.required?
+		&	aria.prop.colspan?
+		&	aria.prop.rowspan?
+		&	aria.prop.rowindex?
 		)
 		aria.role.gridcell = 
 			attribute role { string "gridcell" }
@@ -720,6 +894,30 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 	
 	common.attrs.aria |= aria.group
 	common.attrs.aria.role.group |= aria.group
+
+## graphics-document
+	aria.graphics-document =
+		(	aria.role.graphics-document )
+		aria.role.graphics-document =
+			attribute role { string "graphics-document" }
+	common.attrs.aria |= aria.graphics-document
+	common.attrs.aria.role.graphics-document |= aria.graphics-document
+
+## graphics-object
+	aria.graphics-object =
+		(	aria.role.graphics-object )
+		aria.role.graphics-object =
+			attribute role { string "graphics-object" }
+	common.attrs.aria |= aria.graphics-object
+	common.attrs.aria.role.graphics-object |= aria.graphics-object
+
+## graphics-symbol
+	aria.graphics-symbol =
+		(	aria.role.graphics-symbol )
+		aria.role.graphics-symbol =
+			attribute role { string "graphics-symbol" }
+	common.attrs.aria |= aria.graphics-symbol
+	common.attrs.aria.role.graphics-symbol |= aria.graphics-symbol
 
 ## heading
 	aria.heading =
@@ -773,6 +971,7 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 		&	aria.prop.required?
 		&	aria.prop.activedescendant?
 		&	aria.state.expanded?
+		&	aria.prop.orientation?
 		)
 		aria.role.listbox = 
 			attribute role { string "listbox" }
@@ -842,6 +1041,7 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 		(	aria.role.menu
 		&	aria.prop.activedescendant?
 		&	aria.state.expanded?
+		&	aria.prop.orientation?
 		)
 		aria.role.menu = 
 			attribute role { string "menu" }
@@ -854,6 +1054,7 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 		(	aria.role.menubar
 		&	aria.prop.activedescendant?
 		&	aria.state.expanded?
+		&	aria.prop.orientation?
 		)
 		aria.role.menubar = 
 			attribute role { string "menubar" }
@@ -907,6 +1108,14 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 	common.attrs.aria |= aria.navigation
 	common.attrs.aria.landmark.navigation |= aria.navigation
 
+## none
+	aria.none =
+		(	aria.role.none )
+		aria.role.none =
+			attribute role { string "none" }
+	common.attrs.aria |= aria.none
+	common.attrs.aria.role.none |= aria.none
+
 ## note
 	aria.note =
 		(	aria.role.note
@@ -932,12 +1141,9 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 	common.attrs.aria |= aria.option
 	common.attrs.aria.role.option |= aria.option
 
-
 ## presentation
 	aria.presentation =
-		(	aria.role.presentation
-		&	aria.state.expanded?
-		)
+		(	aria.role.presentation )
 		aria.role.presentation = 
 			attribute role { string "presentation" }
 	
@@ -978,11 +1184,13 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 		&	aria.prop.activedescendant?
 		&	aria.state.expanded?
 		&	aria.prop.required?
+		&	aria.prop.orientation?
 		)
 		aria.role.radiogroup = 
 			attribute role { string "radiogroup" }
 	
 	common.attrs.aria |= aria.radiogroup
+	common.attrs.aria.role.radiogroup |= aria.radiogroup
 
 ## region
 	aria.region =
@@ -1002,6 +1210,8 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 		&	aria.state.selected? # not inherited
 		&	aria.prop.activedescendant?
 		&	aria.state.expanded?
+		&	aria.prop.colindex?
+		&	aria.prop.rowindex?
 		)
 		aria.role.row = 
 			attribute role { string "row" }
@@ -1018,6 +1228,7 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 			attribute role { string "rowgroup" }
 
 	common.attrs.aria |= aria.rowgroup
+	common.attrs.aria.role.rowgroup |= aria.rowgroup
 
 # rowheader
 	aria.rowheader =
@@ -1027,11 +1238,29 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 		&	aria.state.selected? # not inherited
 		&	aria.state.expanded?
 		&	aria.prop.required?
+		&	aria.prop.colspan?
+		&	aria.prop.rowspan?
+		&	aria.prop.rowindex?
 		)
 		aria.role.rowheader = 
 			attribute role { string "rowheader" }
 	
 	common.attrs.aria |= aria.rowheader
+
+## searchbox
+	aria.searchbox =
+		(	aria.role.searchbox
+		&	aria.prop.activedescendant?
+		&	aria.prop.autocomplete?
+		&	aria.prop.multiline?
+		&	aria.prop.placeholder?
+		&	aria.prop.readonly?
+		&	aria.prop.required?
+		)
+		aria.role.searchbox =
+			attribute role { string "searchbox" }
+	common.attrs.aria |= aria.searchbox
+	common.attrs.aria.role.searchbox |= aria.searchbox
 
 ## scrollbar
 	aria.scrollbar =
@@ -1051,6 +1280,7 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 	aria.search =
 		(	aria.role.search
 		&	aria.state.expanded?
+		&	aria.prop.orientation?
 		)
 		aria.role.search = 
 			attribute role { string "search" }
@@ -1134,6 +1364,17 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 	common.attrs.aria |= aria.tab
 	common.attrs.aria.role.tab |= aria.tab
 
+## table
+	aria.table =
+		(	aria.role.table
+		&	aria.prop.colcount?
+		&	aria.prop.rowcount?
+		)
+		aria.role.table =
+			attribute role { string "table" }
+	common.attrs.aria |= aria.table
+	common.attrs.aria.role.table |= aria.table
+
 ## tablist
 	aria.tablist =
 		(	aria.role.tablist
@@ -1141,6 +1382,7 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 		&	aria.state.expanded?
 		&	aria.prop.level?
 		&	aria.prop.multiselectable?
+		&	aria.prop.orientation?
 		)
 		aria.role.tablist = 
 			attribute role { string "tablist" }
@@ -1158,12 +1400,21 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 	common.attrs.aria |= aria.tabpanel
 	common.attrs.aria.role.tabpanel |= aria.tabpanel
 
+## term
+	aria.term =
+		(	aria.role.term )
+		aria.role.term =
+			attribute role { string "term" }
+	common.attrs.aria |= aria.term
+	common.attrs.aria.role.term |= aria.term
+
 ## textbox
 	aria.textbox =
 		(	aria.role.textbox
 		&	aria.prop.activedescendant?
 		&	aria.prop.autocomplete? # not inherited
 		&	aria.prop.multiline? # not inherited
+		&	aria.prop.placeholder?
 		&	aria.prop.readonly? # not inherited
 		&	aria.prop.required?
 		)
@@ -1188,6 +1439,7 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 		(	aria.role.toolbar
 		&	aria.prop.activedescendant?
 		&	aria.state.expanded?
+		&	aria.prop.orientation?
 		)
 		aria.role.toolbar = 
 			attribute role { string "toolbar" }
@@ -1212,6 +1464,7 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 		&	aria.prop.activedescendant?
 		&	aria.state.expanded?
 		&	aria.prop.required?
+		&	aria.prop.orientation?
 		)
 		aria.role.tree = 
 			attribute role { string "tree" }
@@ -1228,6 +1481,9 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 		&	aria.prop.multiselectable?
 		&	aria.prop.readonly?
 		&	aria.prop.required?
+		&	aria.prop.orientation?
+		&	aria.prop.colcount?
+		&	aria.prop.rowcount?
 		)
 		aria.role.treegrid = 
 			attribute role { string "treegrid" }
@@ -1249,3 +1505,201 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 	
 	common.attrs.aria |= aria.treeitem
 	common.attrs.aria.role.treeitem |= aria.treeitem
+
+# #####################################################################
+## https://w3c.github.io/aria/aria/dpub.html
+
+	aria.doc-abstract = aria.role.doc-abstract
+	aria.role.doc-abstract = attribute role { string "doc-abstract" }
+	common.attrs.aria |= aria.doc-abstract
+	common.attrs.aria.role.doc-abstract |= aria.doc-abstract
+
+	aria.doc-acknowledgments = aria.role.doc-acknowledgments
+	aria.role.doc-acknowledgments = attribute role { string "doc-acknowledgments" }
+	common.attrs.aria |= aria.doc-acknowledgments
+	common.attrs.aria.role.doc-acknowledgments |= aria.doc-acknowledgments
+
+	aria.doc-afterword = aria.role.doc-afterword
+	aria.role.doc-afterword = attribute role { string "doc-afterword" }
+	common.attrs.aria |= aria.doc-afterword
+	common.attrs.aria.role.doc-afterword |= aria.doc-afterword
+
+	aria.doc-appendix = aria.role.doc-appendix
+	aria.role.doc-appendix = attribute role { string "doc-appendix" }
+	common.attrs.aria |= aria.doc-appendix
+	common.attrs.aria.role.doc-appendix |= aria.doc-appendix
+
+	aria.doc-backlink = aria.role.doc-backlink
+	aria.role.doc-backlink = attribute role { string "doc-backlink" }
+	common.attrs.aria |= aria.doc-backlink
+	common.attrs.aria.role.doc-backlink |= aria.doc-backlink
+
+	aria.doc-biblioentry = aria.role.doc-biblioentry
+	aria.role.doc-biblioentry = attribute role { string "doc-biblioentry" }
+	common.attrs.aria |= aria.doc-biblioentry
+	common.attrs.aria.role.doc-biblioentry |= aria.doc-biblioentry
+
+	aria.doc-bibliography = aria.role.doc-bibliography
+	aria.role.doc-bibliography = attribute role { string "doc-bibliography" }
+	common.attrs.aria |= aria.doc-bibliography
+	common.attrs.aria.role.doc-bibliography |= aria.doc-bibliography
+
+	aria.doc-biblioref = aria.role.doc-biblioref
+	aria.role.doc-biblioref = attribute role { string "doc-biblioref" }
+	common.attrs.aria |= aria.doc-biblioref
+	common.attrs.aria.role.doc-biblioref |= aria.doc-biblioref
+
+	aria.doc-chapter = aria.role.doc-chapter
+	aria.role.doc-chapter = attribute role { string "doc-chapter" }
+	common.attrs.aria |= aria.doc-chapter
+	common.attrs.aria.role.doc-chapter |= aria.doc-chapter
+
+	aria.doc-colophon = aria.role.doc-colophon
+	aria.role.doc-colophon = attribute role { string "doc-colophon" }
+	common.attrs.aria |= aria.doc-colophon
+	common.attrs.aria.role.doc-colophon |= aria.doc-colophon
+
+	aria.doc-conclusion = aria.role.doc-conclusion
+	aria.role.doc-conclusion = attribute role { string "doc-conclusion" }
+	common.attrs.aria |= aria.doc-conclusion
+	common.attrs.aria.role.doc-conclusion |= aria.doc-conclusion
+
+	aria.doc-cover = aria.role.doc-cover
+	aria.role.doc-cover = attribute role { string "doc-cover" }
+	common.attrs.aria |= aria.doc-cover
+	common.attrs.aria.role.doc-cover |= aria.doc-cover
+
+	aria.doc-credit = aria.role.doc-credit
+	aria.role.doc-credit = attribute role { string "doc-credit" }
+	common.attrs.aria |= aria.doc-credit
+	common.attrs.aria.role.doc-credit |= aria.doc-credit
+
+	aria.doc-credits = aria.role.doc-credits
+	aria.role.doc-credits = attribute role { string "doc-credits" }
+	common.attrs.aria |= aria.doc-credits
+	common.attrs.aria.role.doc-credits |= aria.doc-credits
+
+	aria.doc-dedication = aria.role.doc-dedication
+	aria.role.doc-dedication = attribute role { string "doc-dedication" }
+	common.attrs.aria |= aria.doc-dedication
+	common.attrs.aria.role.doc-dedication |= aria.doc-dedication
+
+	aria.doc-endnote = aria.role.doc-endnote
+	aria.role.doc-endnote = attribute role { string "doc-endnote" }
+	common.attrs.aria |= aria.doc-endnote
+	common.attrs.aria.role.doc-endnote |= aria.doc-endnote
+
+	aria.doc-endnotes = aria.role.doc-endnotes
+	aria.role.doc-endnotes = attribute role { string "doc-endnotes" }
+	common.attrs.aria |= aria.doc-endnotes
+	common.attrs.aria.role.doc-endnotes |= aria.doc-endnotes
+
+	aria.doc-epigraph = aria.role.doc-epigraph
+	aria.role.doc-epigraph = attribute role { string "doc-epigraph" }
+	common.attrs.aria |= aria.doc-epigraph
+	common.attrs.aria.role.doc-epigraph |= aria.doc-epigraph
+
+	aria.doc-epilogue = aria.role.doc-epilogue
+	aria.role.doc-epilogue = attribute role { string "doc-epilogue" }
+	common.attrs.aria |= aria.doc-epilogue
+	common.attrs.aria.role.doc-epilogue |= aria.doc-epilogue
+
+	aria.doc-errata = aria.role.doc-errata
+	aria.role.doc-errata = attribute role { string "doc-errata" }
+	common.attrs.aria |= aria.doc-errata
+	common.attrs.aria.role.doc-errata |= aria.doc-errata
+
+	aria.doc-example = aria.role.doc-example
+	aria.role.doc-example = attribute role { string "doc-example" }
+	common.attrs.aria |= aria.doc-example
+	common.attrs.aria.role.doc-example |= aria.doc-example
+
+	aria.doc-footnote = aria.role.doc-footnote
+	aria.role.doc-footnote = attribute role { string "doc-footnote" }
+	common.attrs.aria |= aria.doc-footnote
+	common.attrs.aria.role.doc-footnote |= aria.doc-footnote
+
+	aria.doc-foreword = aria.role.doc-foreword
+	aria.role.doc-foreword = attribute role { string "doc-foreword" }
+	common.attrs.aria |= aria.doc-foreword
+	common.attrs.aria.role.doc-foreword |= aria.doc-foreword
+
+	aria.doc-glossary = aria.role.doc-glossary
+	aria.role.doc-glossary = attribute role { string "doc-glossary" }
+	common.attrs.aria |= aria.doc-glossary
+	common.attrs.aria.role.doc-glossary |= aria.doc-glossary
+
+	aria.doc-glossref = aria.role.doc-glossref
+	aria.role.doc-glossref = attribute role { string "doc-glossref" }
+	common.attrs.aria |= aria.doc-glossref
+	common.attrs.aria.role.doc-glossref |= aria.doc-glossref
+
+	aria.doc-index = aria.role.doc-index
+	aria.role.doc-index = attribute role { string "doc-index" }
+	common.attrs.aria |= aria.doc-index
+	common.attrs.aria.role.doc-index |= aria.doc-index
+
+	aria.doc-introduction = aria.role.doc-introduction
+	aria.role.doc-introduction = attribute role { string "doc-introduction" }
+	common.attrs.aria |= aria.doc-introduction
+	common.attrs.aria.role.doc-introduction |= aria.doc-introduction
+
+	aria.doc-noteref = aria.role.doc-noteref
+	aria.role.doc-noteref = attribute role { string "doc-noteref" }
+	common.attrs.aria |= aria.doc-noteref
+	common.attrs.aria.role.doc-noteref |= aria.doc-noteref
+
+	aria.doc-notice = aria.role.doc-notice
+	aria.role.doc-notice = attribute role { string "doc-notice" }
+	common.attrs.aria |= aria.doc-notice
+	common.attrs.aria.role.doc-notice |= aria.doc-notice
+
+	aria.doc-pagebreak = aria.role.doc-pagebreak
+	aria.role.doc-pagebreak = attribute role { string "doc-pagebreak" }
+	common.attrs.aria |= aria.doc-pagebreak
+	common.attrs.aria.role.doc-pagebreak |= aria.doc-pagebreak
+
+	aria.doc-pagelist = aria.role.doc-pagelist
+	aria.role.doc-pagelist = attribute role { string "doc-pagelist" }
+	common.attrs.aria |= aria.doc-pagelist
+	common.attrs.aria.role.doc-pagelist |= aria.doc-pagelist
+
+	aria.doc-part = aria.role.doc-part
+	aria.role.doc-part = attribute role { string "doc-part" }
+	common.attrs.aria |= aria.doc-part
+	common.attrs.aria.role.doc-part |= aria.doc-part
+
+	aria.doc-preface = aria.role.doc-preface
+	aria.role.doc-preface = attribute role { string "doc-preface" }
+	common.attrs.aria |= aria.doc-preface
+	common.attrs.aria.role.doc-preface |= aria.doc-preface
+
+	aria.doc-prologue = aria.role.doc-prologue
+	aria.role.doc-prologue = attribute role { string "doc-prologue" }
+	common.attrs.aria |= aria.doc-prologue
+	common.attrs.aria.role.doc-prologue |= aria.doc-prologue
+
+	aria.doc-pullquote = aria.role.doc-pullquote
+	aria.role.doc-pullquote = attribute role { string "doc-pullquote" }
+	common.attrs.aria |= aria.doc-pullquote
+	common.attrs.aria.role.doc-pullquote |= aria.doc-pullquote
+
+	aria.doc-qna = aria.role.doc-qna
+	aria.role.doc-qna = attribute role { string "doc-qna" }
+	common.attrs.aria |= aria.doc-qna
+	common.attrs.aria.role.doc-qna |= aria.doc-qna
+
+	aria.doc-subtitle = aria.role.doc-subtitle
+	aria.role.doc-subtitle = attribute role { string "doc-subtitle" }
+	common.attrs.aria |= aria.doc-subtitle
+	common.attrs.aria.role.doc-subtitle |= aria.doc-subtitle
+
+	aria.doc-tip = aria.role.doc-tip
+	aria.role.doc-tip = attribute role { string "doc-tip" }
+	common.attrs.aria |= aria.doc-tip
+	common.attrs.aria.role.doc-tip |= aria.doc-tip
+
+	aria.doc-toc = aria.role.doc-toc
+	aria.role.doc-toc = attribute role { string "doc-toc" }
+	common.attrs.aria |= aria.doc-toc
+	common.attrs.aria.role.doc-toc |= aria.doc-toc

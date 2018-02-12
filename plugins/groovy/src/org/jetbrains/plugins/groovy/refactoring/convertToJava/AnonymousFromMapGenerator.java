@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public class AnonymousFromMapGenerator {
     for (GrNamedArgument arg : operand.getNamedArguments()) {
       final String name = arg.getLabelName();
       final GrExpression expression = arg.getExpression();
-      if (name == null || expression == null || !(expression instanceof GrClosableBlock)) continue;
+      if (name == null || !(expression instanceof GrClosableBlock)) continue;
 
       final GrClosableBlock closure = (GrClosableBlock)expression;
       final GrParameter[] allParameters = closure.getAllParameters();
@@ -72,18 +72,22 @@ public class AnonymousFromMapGenerator {
       for (int i = 0; i < allParameters.length; i++) {
         args[i] = factory.createExpressionFromText(allParameters[i].getName());
       }
-
+      boolean singleParam = allParameters.length == 1;
       for (int param = allParameters.length; param >= 0; param--) {
-
-
-        if (param < allParameters.length && !actual.get(param).isOptional()) continue;
+        if (param < allParameters.length && !(actual.get(param).isOptional() || singleParam)) continue;
 
         if (param < allParameters.length) {
           final GrParameter opt = actual.remove(param);
-          args[param] = opt.getInitializerGroovy();
+          GrExpression initializer = opt.getInitializerGroovy();
+          if (initializer == null) {
+            args[param] = factory.createExpressionFromText("null");
+          }
+          else {
+            args[param] = initializer;
+          }
         }
 
-        final GrParameter[] parameters = actual.toArray(new GrParameter[actual.size()]);
+        final GrParameter[] parameters = actual.toArray(GrParameter.EMPTY_ARRAY);
 
         final GrClosureSignature signature = GrClosureSignatureUtil.createSignature(parameters, clReturnType);
         final GrMethod pattern = factory.createMethodFromSignature(name, signature);

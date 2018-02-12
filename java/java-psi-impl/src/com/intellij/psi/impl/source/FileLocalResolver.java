@@ -17,12 +17,10 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -111,7 +109,7 @@ public class FileLocalResolver {
     }
     if (type == LAMBDA_EXPRESSION || type == METHOD) {
       LighterASTNode paramList = LightTreeUtil.firstChildOfType(myTree, scope, PARAMETER_LIST);
-      return paramList == null ? ContainerUtil.<LighterASTNode>emptyList() : LightTreeUtil.getChildrenOfType(myTree, paramList, PARAMETER);
+      return paramList == null ? ContainerUtil.emptyList() : LightTreeUtil.getChildrenOfType(myTree, paramList, PARAMETER);
     }
     return Collections.emptyList();
   }

@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author cdr
- * Date: Nov 20, 2002
  */
 public class ReuseVariableDeclarationFix implements IntentionAction {
   private final PsiLocalVariable myVariable;
@@ -56,7 +55,7 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
     if (!myVariable.isValid()) {
       return false;
     }
-    final PsiVariable previousVariable = findPreviousVariable();
+    final PsiVariable previousVariable = findPreviousVariable(myVariable);
     return previousVariable != null &&
            Comparing.equal(previousVariable.getType(), myVariable.getType()) &&
            myVariable.getManager().isInProject(myVariable);
@@ -70,7 +69,7 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    final PsiVariable refVariable = findPreviousVariable();
+    final PsiVariable refVariable = findPreviousVariable(myVariable);
     if (refVariable == null) return;
 
     final PsiExpression initializer = myVariable.getInitializer();
@@ -86,20 +85,20 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
   }
 
   @Nullable
-  private PsiVariable findPreviousVariable() {
-    PsiElement scope = myVariable.getParent();
+  static PsiVariable findPreviousVariable(PsiLocalVariable variable) {
+    PsiElement scope = variable.getParent();
     while (scope != null) {
       if (scope instanceof PsiFile || scope instanceof PsiMethod || scope instanceof PsiClassInitializer) break;
       scope = scope.getParent();
     }
     if (scope == null) return null;
 
-    PsiIdentifier nameIdentifier = myVariable.getNameIdentifier();
+    PsiIdentifier nameIdentifier = variable.getNameIdentifier();
     if (nameIdentifier == null) {
       return null;
     }
 
-    final VariablesNotProcessor processor = new VariablesNotProcessor(myVariable, false);
+    final VariablesNotProcessor processor = new VariablesNotProcessor(variable, false);
     PsiScopesUtil.treeWalkUp(processor, nameIdentifier, scope);
     return processor.size() > 0 ? processor.getResult(0) : null;
   }

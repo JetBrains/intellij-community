@@ -30,13 +30,14 @@ import com.intellij.openapi.module.UnknownModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.messages.MessageHandler;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author yole
@@ -44,16 +45,13 @@ import java.util.List;
 @State(name = ModuleManagerImpl.COMPONENT_NAME, storages = @Storage("modules.xml"))
 public class ModuleManagerComponent extends ModuleManagerImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.module.impl.ModuleManagerComponent");
+  private final MessageBusConnection myMessageBusConnection;
 
   public ModuleManagerComponent(@NotNull Project project) {
     super(project);
 
-    myMessageBusConnection.setDefaultHandler(new MessageHandler() {
-      @Override
-      public void handle(Method event, Object... params) {
-        cleanCachedStuff();
-      }
-    });
+    myMessageBusConnection = project.getMessageBus().connect(this);
+    myMessageBusConnection.setDefaultHandler((event, params) -> cleanCachedStuff());
     myMessageBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS);
 
     // default project doesn't have modules
@@ -76,6 +74,13 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
     });
 
     myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new ModuleFileListener(this));
+  }
+
+  @Override
+  protected void unloadNewlyAddedModulesIfPossible(@NotNull Set<ModulePath> modulesToLoad, @NotNull List<UnloadedModuleDescriptionImpl> modulesToUnload) {
+    UnloadedModulesListChange change = AutomaticModuleUnloader.getInstance(myProject).processNewModules(modulesToLoad, modulesToUnload);
+    modulesToLoad.removeAll(change.getToUnload());
+    modulesToUnload.addAll(change.getToUnloadDescriptions());
   }
 
   @Override
@@ -109,13 +114,23 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
   @NotNull
   @Override
   protected ModuleEx createModule(@NotNull String filePath) {
-    return new ModuleImpl(filePath, myProject);
+    return new ModuleImpl(ModulePathKt.getModuleNameByFilePath(filePath), myProject);
   }
 
   @NotNull
   @Override
-  protected ModuleEx createAndLoadModule(@NotNull String filePath, @NotNull VirtualFile file) {
-    return new ModuleImpl(filePath, myProject);
+  protected ModuleEx createAndLoadModule(@NotNull String filePath) {
+    return createModule(filePath);
+  }
+
+  @Override
+  protected void setUnloadedModuleNames(@NotNull List<String> unloadedModuleNames) {
+    super.setUnloadedModuleNames(unloadedModuleNames);
+    if (!unloadedModuleNames.isEmpty()) {
+      List<String> loadedModules = new ArrayList<>(myModuleModel.myModules.keySet());
+      loadedModules.removeAll(new HashSet<>(unloadedModuleNames));
+      AutomaticModuleUnloader.getInstance(myProject).setLoadedModules(loadedModules);
+    }
   }
 
   @Override

@@ -55,7 +55,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author yole
  */
-public class PerformanceWatcher extends ApplicationComponent.Adapter implements Disposable {
+public class PerformanceWatcher implements Disposable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.diagnostic.PerformanceWatcher");
   private static final int TOLERABLE_LATENCY = 100;
   private static final String THREAD_DUMPS_PREFIX = "threadDumps-";
@@ -74,6 +74,7 @@ public class PerformanceWatcher extends ApplicationComponent.Adapter implements 
   private final AtomicInteger myEdtRequestsQueued = new AtomicInteger(0);
 
   private static final long ourIdeStart = System.currentTimeMillis();
+  private long myLastEdtAlive = System.currentTimeMillis();
 
   public static PerformanceWatcher getInstance() {
     return ApplicationManager.getApplication().getComponent(PerformanceWatcher.class);
@@ -197,6 +198,17 @@ public class PerformanceWatcher extends ApplicationComponent.Adapter implements 
     SwingUtilities.invokeLater(new SwingThreadRunnable(millis));
   }
 
+  @NotNull
+  public static String printStacktrace(@NotNull String headerMsg, @NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {
+    @SuppressWarnings("NonConstantStringShouldBeStringBuffer")
+    String trace = headerMsg + ": "+thread + "; " + thread.getState() + " (" + thread.isAlive() + ")\n--- its stacktrace:\n";
+    for (final StackTraceElement stackTraceElement : stackTrace) {
+      trace += " at "+stackTraceElement +"\n";
+    }
+    trace += "---\n";
+    return trace;
+  }
+
   private static int getSamplingInterval() {
     return Registry.intValue("performance.watcher.sampling.interval.ms");
   }
@@ -205,7 +217,7 @@ public class PerformanceWatcher extends ApplicationComponent.Adapter implements 
     if (currentMillis - myLastDumpTime >= Registry.intValue("performance.watcher.unresponsive.interval.ms")) {
       myLastDumpTime = currentMillis;
       if (myFreezeStart == 0) {
-        myFreezeStart = currentMillis;
+        myFreezeStart = myLastEdtAlive;
         myPublisher.uiFreezeStarted();
       }
       dumpThreads(getFreezeFolderName(myFreezeStart) + "/", false);
@@ -253,7 +265,7 @@ public class PerformanceWatcher extends ApplicationComponent.Adapter implements 
     if (!shouldWatch()) return null;
 
     if (!pathPrefix.contains("/")) {
-      pathPrefix = THREAD_DUMPS_PREFIX + "-" + pathPrefix + "-" + formatTime(ourIdeStart) + "-" + buildName() + "/";
+      pathPrefix = THREAD_DUMPS_PREFIX + pathPrefix + "-" + formatTime(ourIdeStart) + "-" + buildName() + "/";
     }
     else if (!pathPrefix.startsWith(THREAD_DUMPS_PREFIX)) {
       pathPrefix = THREAD_DUMPS_PREFIX + pathPrefix;
@@ -330,6 +342,7 @@ public class PerformanceWatcher extends ApplicationComponent.Adapter implements 
     @Override
     public void run() {
       myEdtRequestsQueued.decrementAndGet();
+      myLastEdtAlive = System.currentTimeMillis();
       mySwingApdex = mySwingApdex.withEvent(TOLERABLE_LATENCY, System.currentTimeMillis() - myCreationMillis);
     }
   }

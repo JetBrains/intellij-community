@@ -28,6 +28,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
@@ -39,10 +40,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
-import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.ExpectedHighlightingData;
-import com.intellij.testFramework.HighlightTestInfo;
-import com.intellij.testFramework.TestDataFile;
+import com.intellij.testFramework.*;
+import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Consumer;
 import org.intellij.lang.annotations.MagicConstant;
@@ -388,12 +387,12 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   void testCompletion(@TestDataFile @NotNull String fileBefore,
                       @NotNull @TestDataFile String fileAfter,
-                      @NotNull String... additionalFiles);
+                      @TestDataFile @NotNull String... additionalFiles);
 
   void testCompletionTyping(@NotNull @TestDataFile String fileBefore,
                             @NotNull String toType,
                             @NotNull @TestDataFile String fileAfter,
-                            @NotNull String... additionalFiles);
+                            @TestDataFile @NotNull String... additionalFiles);
 
   /**
    * Runs basic completion in caret position in fileBefore.
@@ -414,7 +413,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   void testRename(@NotNull @TestDataFile String fileBefore,
                   @NotNull @TestDataFile String fileAfter,
                   @NotNull String newName,
-                  @NotNull String... additionalFiles);
+                  @TestDataFile @NotNull String... additionalFiles);
 
   void testRename(@NotNull @TestDataFile String fileAfter, @NotNull String newName);
 
@@ -427,7 +426,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @NotNull
   RangeHighlighter[] testHighlightUsages(@NotNull @TestDataFile String... files);
 
-  void moveFile(@NotNull @TestDataFile String filePath, @NotNull String to, @NotNull String... additionalFiles);
+  void moveFile(@NotNull @TestDataFile String filePath, @NotNull String to, @TestDataFile @NotNull String... additionalFiles);
 
   /**
    * Returns gutter renderer at the caret position.
@@ -592,5 +591,22 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @NotNull
   List<Object> getGotoClassResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting);
 
+  /**
+   * Get breadcrumbs to be generated for the current cursor position in the loaded file
+   * @return a list of the breadcrumbs in the order from the topmost element crumb to the deepest
+   */
+  @NotNull
+  List<Crumb> getBreadcrumbsAtCaret();
+
   void saveText(@NotNull VirtualFile file, @NotNull String text);
+
+  /**
+   * @return Disposable for the corresponding project fixture.
+   * It's disposed earlier than {@link UsefulTestCase#getTestRootDisposable()} and can be useful
+   * e.g. for avoiding library virtual pointers leaks: {@code PsiTestUtil.addLibrary(myFixture.getProjectDisposable(), ...)}
+   */
+  @NotNull
+  default Disposable getProjectDisposable() {
+    return getProject();
+  }
 }

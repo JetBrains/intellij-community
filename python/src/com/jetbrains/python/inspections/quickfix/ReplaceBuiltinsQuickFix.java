@@ -23,12 +23,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: 19.02.2010
- * Time: 18:50:24
- */
 public class ReplaceBuiltinsQuickFix implements LocalQuickFix {
   @NotNull
   @Override
@@ -50,10 +44,10 @@ public class ReplaceBuiltinsQuickFix implements LocalQuickFix {
         PyReferenceExpression importReference = importElement.getImportReferenceExpression();
         if (importReference != null) {
           if ("__builtin__".equals(importReference.getName())) {
-            importReference.replace(elementGenerator.createFromText(LanguageLevel.getDefault(), PyReferenceExpression.class, "builtins"));
+            importReference.replace(elementGenerator.createExpressionFromText(LanguageLevel.getDefault(), "builtins"));
           }
           if ("builtins".equals(importReference.getName())) {
-            importReference.replace(elementGenerator.createFromText(LanguageLevel.getDefault(), PyReferenceExpression.class, "__builtin__"));
+            importReference.replace(elementGenerator.createExpressionFromText(LanguageLevel.getDefault(), "__builtin__"));
           }
         }
       }

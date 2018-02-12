@@ -22,6 +22,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,6 +31,8 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class ToggleBookmarkWithMnemonicAction extends ToggleBookmarkAction {
+  private boolean myPopupShown;
+
   public ToggleBookmarkWithMnemonicAction() {
     getTemplatePresentation().setText(IdeBundle.message("action.bookmark.toggle.mnemonic"));
   }
@@ -36,6 +40,7 @@ public class ToggleBookmarkWithMnemonicAction extends ToggleBookmarkAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
+    e.getPresentation().setEnabled(!myPopupShown);
     e.getPresentation().setText(IdeBundle.message("action.bookmark.toggle.mnemonic"));
   }
 
@@ -80,8 +85,15 @@ public class ToggleBookmarkWithMnemonicAction extends ToggleBookmarkAction {
         setAdText(bookmarks.hasBookmarksWithMnemonics() ? (UIUtil.isUnderDarcula() ? "Brown" : "Yellow") + " cells are in use" : null).
         setResizable(false).
         createPopup();
+      popup[0].addListener(new JBPopupListener.Adapter() {
+        @Override
+        public void onClosed(LightweightWindowEvent event) {
+          myPopupShown = false;
+        }
+      });
 
       popup[0].showInBestPositionFor(e.getDataContext());
+      myPopupShown = true;
     }
   }
 }

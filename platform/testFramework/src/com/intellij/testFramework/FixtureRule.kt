@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework
 
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.idea.IdeaTestApplication
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.ComponentManager
@@ -31,12 +16,9 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.project.stateStore
 import com.intellij.util.SmartList
 import com.intellij.util.containers.forEachGuaranteed
@@ -69,7 +51,7 @@ open class ApplicationRule : ExternalResource() {
 /**
  * Project created on request, so, could be used as a bare (only application).
  */
-class ProjectRule : ApplicationRule() {
+class ProjectRule(val projectDescriptor: LightProjectDescriptor = LightProjectDescriptor()) : ApplicationRule() {
   companion object {
     private var sharedProject: ProjectEx? = null
     private val projectOpened = AtomicBoolean()
@@ -84,16 +66,17 @@ class ProjectRule : ApplicationRule() {
       Throwable(projectPath, null).printStackTrace(PrintStream(buffer))
 
       val project = PlatformTestCase.createProject(projectPath, "Light project: $buffer") as ProjectEx
-      Disposer.register(ApplicationManager.getApplication(), Disposable {
+      PlatformTestUtil.registerProjectCleanup {
         try {
           disposeProject()
         }
         finally {
           Files.deleteIfExists(projectFile)
         }
-      })
+      }
 
-      (VirtualFilePointerManager.getInstance() as VirtualFilePointerManagerImpl).storePointers()
+      // TODO uncomment and figure out where to put this statement
+//      (VirtualFilePointerManager.getInstance() as VirtualFilePointerManagerImpl).storePointers()
       return project
     }
 
@@ -101,13 +84,15 @@ class ProjectRule : ApplicationRule() {
       val project = sharedProject ?: return
       sharedProject = null
       sharedModule = null
-      Disposer.dispose(project)
+      (ProjectManager.getInstance() as ProjectManagerImpl).forceCloseProject(project, true)
+      // TODO uncomment and figure out where to put this statement
+//      (VirtualFilePointerManager.getInstance() as VirtualFilePointerManagerImpl).assertPointersAreDisposed()
     }
   }
 
   override public fun after() {
     if (projectOpened.compareAndSet(true, false)) {
-      sharedProject?.let { runInEdtAndWait { (ProjectManager.getInstance() as ProjectManagerImpl).closeProject(it, false, false, false) } }
+      sharedProject?.let { runInEdtAndWait { (ProjectManager.getInstance() as ProjectManagerImpl).forceCloseProject(it, false) } }
     }
   }
 
@@ -138,7 +123,7 @@ class ProjectRule : ApplicationRule() {
       var result = sharedModule
       if (result == null) {
         runInEdtAndWait {
-          LightProjectDescriptor().setUpProject(project, object : LightProjectDescriptor.SetupHandler {
+          projectDescriptor.setUpProject(project, object : LightProjectDescriptor.SetupHandler {
             override fun moduleCreated(module: Module) {
               result = module
               sharedModule = module
@@ -190,7 +175,7 @@ class InitInspectionRule : TestRule {
   override fun apply(base: Statement, description: Description) = statement { runInInitMode { base.evaluate() } }
 }
 
-private inline fun statement(crossinline runnable: () -> Unit) = object : Statement() {
+inline fun statement(crossinline runnable: () -> Unit) = object : Statement() {
   override fun evaluate() {
     runnable()
   }
@@ -243,7 +228,7 @@ fun Project.use(task: (Project) -> Unit) {
     task(this)
   }
   finally {
-    runInEdtAndWait { projectManager.closeProject(this, false, true, false) }
+    runInEdtAndWait { projectManager.forceCloseProject(this, true) }
   }
 }
 
@@ -252,7 +237,7 @@ class DisposeNonLightProjectsRule : ExternalResource() {
     val projectManager = if (ApplicationManager.getApplication().isDisposed) null else ProjectManager.getInstance() as ProjectManagerImpl
     projectManager?.openProjects?.forEachGuaranteed {
       if (!ProjectManagerImpl.isLight(it)) {
-        runInEdtAndWait { projectManager.closeProject(it, false, true, false) }
+        runInEdtAndWait { projectManager.forceCloseProject(it, true) }
       }
     }
   }
@@ -290,30 +275,34 @@ class WrapRule(private val before: () -> () -> Unit) : TestRule {
 }
 
 fun createProjectAndUseInLoadComponentStateMode(tempDirManager: TemporaryDirectory, directoryBased: Boolean = false, task: (Project) -> Unit) {
-  createOrLoadProject(tempDirManager, task, directoryBased = directoryBased)
+  createOrLoadProject(tempDirManager, task = task, directoryBased = directoryBased, loadComponentState = true)
 }
 
-fun loadAndUseProject(tempDirManager: TemporaryDirectory, projectCreator: ((VirtualFile) -> String), task: (Project) -> Unit) {
-  createOrLoadProject(tempDirManager, task, projectCreator, false)
+fun loadAndUseProjectInLoadComponentStateMode(tempDirManager: TemporaryDirectory, projectCreator: ((VirtualFile) -> String)? = null, task: (Project) -> Unit) {
+  createOrLoadProject(tempDirManager, projectCreator, task = task, directoryBased = false, loadComponentState = true)
 }
 
-private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Project) -> Unit, projectCreator: ((VirtualFile) -> String)? = null, directoryBased: Boolean) {
+fun createOrLoadProject(tempDirManager: TemporaryDirectory, projectCreator: ((VirtualFile) -> String)? = null, directoryBased: Boolean = true, loadComponentState: Boolean = false, task: (Project) -> Unit) {
   runInEdtAndWait {
-    val filePath: String
-    if (projectCreator == null) {
-      filePath = tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}").systemIndependentPath
+    val filePath = if (projectCreator == null) {
+      tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}", refreshVfs = true).systemIndependentPath
     }
     else {
-      filePath = runUndoTransparentWriteAction { projectCreator(tempDirManager.newVirtualDirectory()) }
+      runUndoTransparentWriteAction { projectCreator(tempDirManager.newVirtualDirectory()) }
     }
 
     val project = if (projectCreator == null) createHeavyProject(filePath, true) else ProjectManagerEx.getInstanceEx().loadProject(filePath)!!
-    project.runInLoadComponentStateMode {
+    if (loadComponentState) {
+      project.runInLoadComponentStateMode {
+        project.use(task)
+      }
+    }
+    else {
       project.use(task)
     }
   }
 }
 
 fun ComponentManager.saveStore() {
-  stateStore.save(SmartList())
+  stateStore.save(SmartList(), true)
 }

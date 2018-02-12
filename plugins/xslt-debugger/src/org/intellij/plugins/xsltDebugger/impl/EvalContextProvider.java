@@ -30,11 +30,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 06.06.2007
- */
 public class EvalContextProvider extends ContextProvider {
   private final List<Debugger.Variable> myVariables;
 

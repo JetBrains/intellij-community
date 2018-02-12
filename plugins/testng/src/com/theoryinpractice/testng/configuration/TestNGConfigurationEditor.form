@@ -140,7 +140,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <grid id="fab89" layout-manager="GridLayoutManager" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="fab89" layout-manager="GridLayoutManager" row-count="6" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
               <tabbedpane title="JDK Settings"/>
@@ -153,16 +153,19 @@
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <componentClass value="com.intellij.application.options.ModulesComboBox"/>
+                  <componentClass value="com.intellij.application.options.ModuleDescriptionsComboBox"/>
                   <labelLocation value="West"/>
                   <text resource-bundle="messages/ExecutionBundle" key="application.configuration.use.classpath.and.jdk.of.module.label"/>
                 </properties>
               </component>
-              <component id="baac2" class="com.intellij.execution.ui.JrePathEditor" binding="alternateJDK">
+              <component id="86d21" class="com.intellij.openapi.ui.LabeledComponent" binding="myShortenCommandLineCombo" custom-create="true" default-binding="true">
                 <constraints>
-                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
-                <properties/>
+                <properties>
+                  <labelLocation value="West"/>
+                  <text resource-bundle="messages/ExecutionBundle" key="application.configuration.shorten.command.line.label"/>
+                </properties>
               </component>
               <grid id="f5de" binding="commonParametersPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
                 <constraints>
@@ -174,7 +177,7 @@
               </grid>
               <vspacer id="15fd">
                 <constraints>
-                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                  <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
               </vspacer>
               <vspacer id="348fc">
@@ -184,6 +187,12 @@
                   </grid>
                 </constraints>
               </vspacer>
+              <component id="baac2" class="com.intellij.execution.ui.JrePathEditor" binding="alternateJDK">
+                <constraints>
+                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+              </component>
             </children>
           </grid>
           <grid id="bccab" layout-manager="BorderLayout" hgap="0" vgap="0">

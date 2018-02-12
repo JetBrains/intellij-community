@@ -28,7 +28,6 @@ import java.io.IOException;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/3/12
  */
 public class ElementStubSerializer implements ObjectStubSerializer<ElementStub, ElementStub> {
 

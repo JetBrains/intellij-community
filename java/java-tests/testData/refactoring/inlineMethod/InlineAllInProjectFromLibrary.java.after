@@ -2,6 +2,6 @@ import mycompany.File;
 
 class Test {
   void foo() throws Exception {
-      File tempFile = mycompany.File.createTempFile("", "", null);
+      File tempFile = File.createTempFile("", "", null);
   }
 }

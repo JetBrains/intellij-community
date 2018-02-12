@@ -26,11 +26,6 @@ import org.intellij.plugins.relaxNG.compact.psi.RncElementVisitor;
 import org.intellij.plugins.relaxNG.compact.psi.RncInclude;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 10.08.2007
- */
 public class RncIncludeImpl extends RncFileReferenceImpl implements RncInclude {
   public RncIncludeImpl(ASTNode node) {
     super(node);

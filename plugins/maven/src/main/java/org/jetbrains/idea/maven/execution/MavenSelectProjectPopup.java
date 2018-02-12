@@ -25,7 +25,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.Convertor;
 import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -118,17 +117,14 @@ public class MavenSelectProjectPopup {
           }
         });
 
-        new TreeSpeedSearch(projectTree, new Convertor<TreePath, String>() {
-          @Override
-          public String convert(TreePath o) {
-            Object lastPathComponent = o.getLastPathComponent();
-            if (!(lastPathComponent instanceof DefaultMutableTreeNode)) return null;
+        new TreeSpeedSearch(projectTree, o -> {
+          Object lastPathComponent = o.getLastPathComponent();
+          if (!(lastPathComponent instanceof DefaultMutableTreeNode)) return null;
 
-            Object userObject = ((DefaultMutableTreeNode)lastPathComponent).getUserObject();
+          Object userObject = ((DefaultMutableTreeNode)lastPathComponent).getUserObject();
 
-            //noinspection SuspiciousMethodCalls
-            return projectsNameMap.get(userObject);
-          }
+          //noinspection SuspiciousMethodCalls
+          return projectsNameMap.get(userObject);
         });
 
         final Ref<JBPopup> popupRef = new Ref<>();
@@ -171,7 +167,7 @@ public class MavenSelectProjectPopup {
       }
 
       private DefaultMutableTreeNode buildTree(List<MavenProject> projectList) {
-        MavenProject[] projects = projectList.toArray(new MavenProject[projectList.size()]);
+        MavenProject[] projects = projectList.toArray(new MavenProject[0]);
         Arrays.sort(projects, new MavenProjectNamer.MavenProjectComparator());
 
         Map<MavenProject, DefaultMutableTreeNode> projectsToNode = new HashMap<>();

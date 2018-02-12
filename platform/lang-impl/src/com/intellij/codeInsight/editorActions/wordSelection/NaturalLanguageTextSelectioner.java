@@ -21,10 +21,12 @@ import com.intellij.codeInsight.editorActions.SelectWordUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPlainText;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -38,7 +40,7 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
   private static final Set<Character> SENTENCE_END = ContainerUtil.newTroveSet('.', '!', '?');
 
   @Override
-  public boolean canSelect(PsiElement e) {
+  public boolean canSelect(@NotNull PsiElement e) {
     return (e instanceof PsiPlainText || e instanceof PsiComment) &&
            !(e.getContainingFile().getFileType() instanceof CustomSyntaxTableFileType);
   }
@@ -59,6 +61,7 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
     if (prev < 0 || next < 0) {
       return null;
     }
+    if (StringUtil.contains(text, prev + 1, start, endChar) || StringUtil.contains(text, end, next, startChar)) return null;
     if (prev + 1 < start || next > end) {
       return new TextRange(prev + 1, next);
     }
@@ -116,7 +119,7 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     ArrayList<TextRange> result = new ArrayList<>();
 
     addWordRange(editorText, cursorOffset, result);

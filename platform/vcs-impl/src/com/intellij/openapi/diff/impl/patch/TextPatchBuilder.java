@@ -15,13 +15,15 @@
  */
 package com.intellij.openapi.diff.impl.patch;
 
-import com.intellij.diff.comparison.ComparisonManagerImpl;
+import com.intellij.diff.comparison.ByLine;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.DiffTooBigException;
+import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,16 +34,14 @@ import org.jetbrains.annotations.Nullable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+
+import static java.util.Collections.singletonList;
 
 public class TextPatchBuilder {
   private static final int CONTEXT_LINES = 3;
   @NonNls private static final String REVISION_NAME_TEMPLATE = "(revision {0})";
   @NonNls private static final String DATE_NAME_TEMPLATE = "(date {0})";
-
-  // we can't use ComparisonManager.getInstance() because of Upsource
-  private static final ComparisonManagerImpl ourComparisonManager = new ComparisonManagerImpl();
 
   @NotNull private final String myBasePath;
   private final boolean myIsReversePath;
@@ -122,39 +122,41 @@ public class TextPatchBuilder {
       return patch;
     }
 
+    List<PatchHunk> hunks = buildPatchHunks(beforeContent, afterContent);
+    for (PatchHunk hunk : hunks) {
+      patch.addHunk(hunk);
+    }
+    return patch;
+  }
+
+  @NotNull
+  public static List<PatchHunk> buildPatchHunks(@NotNull String beforeContent, @NotNull String afterContent) {
     if (beforeContent.isEmpty()) {
-      patch.addHunk(createWholeFileHunk(afterContent, true, true));
-      return patch;
+      return singletonList(createWholeFileHunk(afterContent, true, true));
     }
     if (afterContent.isEmpty()) {
-      patch.addHunk(createWholeFileHunk(beforeContent, false, true));
-      return patch;
+      return singletonList(createWholeFileHunk(beforeContent, false, true));
     }
 
+    List<PatchHunk> hunks = new ArrayList<>();
 
     List<String> beforeLines = tokenize(beforeContent);
     List<String> afterLines = tokenize(afterContent);
     boolean beforeNoNewlineAtEOF = !beforeContent.endsWith("\n");
     boolean afterNoNewlineAtEOF = !afterContent.endsWith("\n");
 
-    List<Range> fragments;
-    try {
-      fragments = compareLines(beforeLines, afterLines, beforeNoNewlineAtEOF, afterNoNewlineAtEOF);
-    }
-    catch (DiffTooBigException e) {
-      throw new VcsException("File '" + myBasePath + "' is too big and there are too many changes to build diff", e);
-    }
+    List<Range> fragments = compareLines(beforeLines, afterLines, beforeNoNewlineAtEOF, afterNoNewlineAtEOF);
 
     int hunkStart = 0;
     while (hunkStart < fragments.size()) {
       List<Range> hunkFragments = getAdjacentFragments(fragments, hunkStart);
 
-      patch.addHunk(createHunk(hunkFragments, beforeLines, afterLines, beforeNoNewlineAtEOF, afterNoNewlineAtEOF));
+      hunks.add(createHunk(hunkFragments, beforeLines, afterLines, beforeNoNewlineAtEOF, afterNoNewlineAtEOF));
 
       hunkStart += hunkFragments.size();
     }
 
-    return patch;
+    return hunks;
   }
 
   @NotNull
@@ -252,7 +254,7 @@ public class TextPatchBuilder {
 
   @NotNull
   private static List<Range> appendRange(@NotNull List<Range> ranges, @NotNull Range change) {
-    if (ranges.isEmpty()) return Collections.singletonList(change);
+    if (ranges.isEmpty()) return singletonList(change);
 
     Range lastRange = ranges.get(ranges.size() - 1);
     if (lastRange.end1 == change.start1 && lastRange.end2 == change.start2) {
@@ -264,8 +266,15 @@ public class TextPatchBuilder {
     }
   }
 
+  @NotNull
   private static List<Range> doCompareLines(@NotNull List<String> beforeLines, @NotNull List<String> afterLines) {
-    return ourComparisonManager.compareLines(beforeLines, afterLines, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
+    try {
+      FairDiffIterable iterable = ByLine.compare(beforeLines, afterLines, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
+      return ContainerUtil.newArrayList(iterable.iterateChanges());
+    }
+    catch (DiffTooBigException e) {
+      return singletonList(new Range(0, beforeLines.size(), 0, afterLines.size()));
+    }
   }
 
   @NotNull
@@ -310,7 +319,7 @@ public class TextPatchBuilder {
   }
 
   @NotNull
-  private static PatchHunk createWholeFileHunk(@NotNull String content, boolean isInsertion, boolean isWithEmptyFile) throws VcsException {
+  private static PatchHunk createWholeFileHunk(@NotNull String content, boolean isInsertion, boolean isWithEmptyFile) {
     PatchLine.Type type = isInsertion ? PatchLine.Type.ADD : PatchLine.Type.REMOVE;
 
     List<String> lines = tokenize(content);
@@ -362,7 +371,7 @@ public class TextPatchBuilder {
   @NotNull
   private static String getRevisionName(@NotNull AirContentRevision revision) {
     String revisionName = revision.getRevisionNumber();
-    if (revisionName != null) {
+    if (!StringUtil.isEmptyOrSpaces(revisionName)) {
       return MessageFormat.format(REVISION_NAME_TEMPLATE, revisionName);
     }
     return MessageFormat.format(DATE_NAME_TEMPLATE, Long.toString(revision.getPath().lastModified()));

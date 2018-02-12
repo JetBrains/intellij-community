@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.*;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,7 +34,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.properties.PropertyValue;
-import org.tmatesoft.svn.core.SVNCancelException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -43,12 +43,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/25/12
- * Time: 12:58 PM
- */
 public class CommandExecutor {
   static final Logger LOG = Logger.getInstance(CommandExecutor.class.getName());
   private final AtomicReference<Integer> myExitCodeReference;
@@ -143,7 +137,7 @@ public class CommandExecutor {
         startHandlingStreams();
       }
       catch (ExecutionException e) {
-        // TODO: currently startFailed() is not used for some real logic in svn4idea plugin
+        // TODO: currently startFailed() is not used for some real logic in intellij.vcs.svn plugin
         listeners().startFailed(e);
         throw new SvnBindException(e);
       }
@@ -383,8 +377,7 @@ public class CommandExecutor {
       try {
         myCommand.getCanceller().checkCancelled();
       }
-      catch (SVNCancelException e) {
-        // indicates command should be cancelled
+      catch (ProcessCanceledException e) {
         myWasCancelled = true;
       }
     }
@@ -509,12 +502,12 @@ public class CommandExecutor {
   private class ProcessTracker extends ProcessAdapter {
 
     @Override
-    public void processTerminated(ProcessEvent event) {
+    public void processTerminated(@NotNull ProcessEvent event) {
       setExitCodeReference(event.getExitCode());
     }
 
     @Override
-    public void onTextAvailable(ProcessEvent event, Key outputType) {
+    public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
       if (ProcessOutputTypes.STDERR == outputType) {
         myWasError.set(true);
       }

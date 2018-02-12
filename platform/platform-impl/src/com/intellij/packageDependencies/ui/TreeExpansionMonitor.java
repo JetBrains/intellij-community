@@ -31,11 +31,7 @@ import java.util.*;
 public abstract class TreeExpansionMonitor<T> {
 
   public static TreeExpansionMonitor<DefaultMutableTreeNode> install(final JTree tree) {
-    return install(tree, new Equality<DefaultMutableTreeNode>() {
-      public boolean equals(final DefaultMutableTreeNode o1, final DefaultMutableTreeNode o2) {
-        return Comparing.equal(o1.getUserObject(), o2.getUserObject());
-      }
-    });
+    return install(tree, (o1, o2) -> Comparing.equal(o1.getUserObject(), o2.getUserObject()));
   }
 
   public static TreeExpansionMonitor<DefaultMutableTreeNode> install(final JTree tree, final Equality<DefaultMutableTreeNode> equality) {
@@ -89,7 +85,7 @@ public abstract class TreeExpansionMonitor<T> {
         if (myFrozen) return;
         TreePath path = event.getPath();
         if (path != null) {
-          TreePath[] allPaths = myExpandedPaths.toArray(new TreePath[myExpandedPaths.size()]);
+          TreePath[] allPaths = myExpandedPaths.toArray(new TreePath[0]);
           for (TreePath treePath : allPaths) {
             if (treePath.equals(path) || path.isDescendant(treePath)) {
               myExpandedPaths.remove(treePath);

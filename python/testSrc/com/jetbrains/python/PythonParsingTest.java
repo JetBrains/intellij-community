@@ -41,6 +41,7 @@ public class PythonParsingTest extends ParsingTestCase {
     super.setUp();
     registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
+    PythonDialectsTokenSetProvider.reset();
   }
 
   @Override
@@ -110,14 +111,6 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
-  public void testWithStatement2() {
-    doTest();
-  }
-
-  public void testImportStmt() {
-    doTest();
-  }
-
   public void testDecoratedFunction() {
     doTest();
   }
@@ -147,11 +140,11 @@ public class PythonParsingTest extends ParsingTestCase {
   }
 
   public void testKeywordOnlyArgument() {   // PEP 3102
-    doTest(LanguageLevel.PYTHON30);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   public void testPy3KKeywords() {
-    doTest(LanguageLevel.PYTHON30);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   public void testExecPy2() {
@@ -159,11 +152,11 @@ public class PythonParsingTest extends ParsingTestCase {
   }
 
   public void testExecPy3() {
-    doTest(LanguageLevel.PYTHON30);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   public void testSuperclassKeywordArguments() {
-    doTest(LanguageLevel.PYTHON30);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   public void testDictLiteral() {
@@ -171,19 +164,19 @@ public class PythonParsingTest extends ParsingTestCase {
   }
 
   public void testSetLiteral() {
-    doTest(LanguageLevel.PYTHON30);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   public void testSetComprehension() {
-    doTest(LanguageLevel.PYTHON30);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   public void testDictComprehension() {
-    doTest(LanguageLevel.PYTHON30);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   public void testRaiseFrom() {
-    doTest(LanguageLevel.PYTHON30);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   public void testEllipsis() {
@@ -203,11 +196,11 @@ public class PythonParsingTest extends ParsingTestCase {
   }
 
   public void testAnnotations() {
-    doTest(LanguageLevel.PYTHON30);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   public void testNonlocal() {
-    doTest(LanguageLevel.PYTHON30);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   public void testFloorDiv() {
@@ -215,7 +208,7 @@ public class PythonParsingTest extends ParsingTestCase {
   }
 
   public void testWithStatement31() {
-    doTest(LanguageLevel.PYTHON31);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   public void testLongString() {
@@ -227,7 +220,7 @@ public class PythonParsingTest extends ParsingTestCase {
   }
 
   public void testStarExpression() {   // PEP-3132
-    doTest(LanguageLevel.PYTHON30);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   public void testDictMissingComma() {  // PY-1025
@@ -334,23 +327,28 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  // PY-24389
+  public void testCommaAfterStarArgAllowedInPython36() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   public void testRangeAsLHS() {  // PY-6468
     doTest();
   }
 
   // PY-6702
   public void testYieldFrom() {
-    doTest(LanguageLevel.PYTHON33);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   // PY-6733
   public void testYieldFromNoExpr() {
-    doTest(LanguageLevel.PYTHON33);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   // PY-6734
   public void testRaiseFromNoExpr() {
-    doTest(LanguageLevel.PYTHON30);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   // PY-6781
@@ -369,7 +367,7 @@ public class PythonParsingTest extends ParsingTestCase {
   }
 
   public void doTest() {
-    doTest(LanguageLevel.PYTHON25);
+    doTest(LanguageLevel.PYTHON26);
   }
 
   public void testCompoundStatementAfterSemicolon() {  // PY-7660
@@ -392,7 +390,7 @@ public class PythonParsingTest extends ParsingTestCase {
 
   // PY-8752
   public void testEllipsisPython3() {
-    doTest(LanguageLevel.PYTHON33);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   // PY-8948
@@ -442,7 +440,7 @@ public class PythonParsingTest extends ParsingTestCase {
   }
 
   public void testNotClosedBraceSet() {
-    doTest(LanguageLevel.PYTHON33);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   public void testEmptyBlockInFunctionBeforeFunction() {
@@ -537,6 +535,16 @@ public class PythonParsingTest extends ParsingTestCase {
   // PY-20682
   public void testAwaitOnTheSameLineAsFor() {
     doTest(LanguageLevel.PYTHON35);
+  }
+
+  // PY-17017
+  public void testTrailingBlockCommentsAtEndOfFile() {
+    doTest();
+  }
+
+  // PY-17017
+  public void testTrailingBlockCommentsFollowedByStatement() {
+    doTest();
   }
 
   public void doTest(LanguageLevel languageLevel) {

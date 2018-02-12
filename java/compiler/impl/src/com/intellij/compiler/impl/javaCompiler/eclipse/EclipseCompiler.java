@@ -51,12 +51,12 @@ public class EclipseCompiler implements BackendCompiler {
 
   @NotNull
   public Configurable createConfigurable() {
-    return new EclipseCompilerConfigurable(EclipseCompilerConfiguration.getOptions(myProject, EclipseCompilerConfiguration.class));
+    return new EclipseCompilerConfigurable(myProject, EclipseCompilerConfiguration.getOptions(myProject, EclipseCompilerConfiguration.class));
   }
 
   @NotNull
   @Override
   public Set<FileType> getCompilableFileTypes() {
-    return Collections.<FileType>singleton(StdFileTypes.JAVA);
+    return Collections.singleton(StdFileTypes.JAVA);
   }
 }

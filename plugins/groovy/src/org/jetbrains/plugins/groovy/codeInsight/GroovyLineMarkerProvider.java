@@ -36,7 +36,6 @@ import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.FunctionUtil;
-import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
@@ -59,6 +58,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 

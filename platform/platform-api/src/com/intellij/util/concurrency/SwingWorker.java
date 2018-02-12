@@ -77,14 +77,14 @@ public abstract class SwingWorker {
   }
 
   /**
-   * Compute the value to be returned by the <code>get</code> method.
+   * Compute the value to be returned by the {@code get} method.
    */
 
   public abstract Object construct();
 
   /**
    * Called on the event dispatching thread (not on the worker thread)
-   * after the <code>construct</code> method has returned.
+   * after the {@code construct} method has returned.
    */
 
   public void finished() {
@@ -92,7 +92,7 @@ public abstract class SwingWorker {
 
   /**
    * Called in the worker thread in case a RuntimeException or Error occurred
-   * if the <code>construct</code> method has thrown an uncaught Throwable.
+   * if the {@code construct} method has thrown an uncaught Throwable.
    */
   public void onThrowable() {
   }
@@ -111,11 +111,11 @@ public abstract class SwingWorker {
   }
 
   /**
-   * Return the value created by the <code>construct</code> method.
+   * Return the value created by the {@code construct} method.
    * Returns null if either the constructing thread or the current
    * thread was interrupted before a value was produced.
    *
-   * @return the value created by the <code>construct</code> method
+   * @return the value created by the {@code construct} method
    */
 
   public Object get() {
@@ -136,7 +136,7 @@ public abstract class SwingWorker {
   }
 
   /**
-   * Start a thread that will call the <code>construct</code> method
+   * Start a thread that will call the {@code construct} method
    * and then exit.
    */
 

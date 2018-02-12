@@ -39,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Constructor;
 
 public interface JavaElementType {
-  @SuppressWarnings("deprecation")
   class JavaCompositeElementType extends IJavaElementType implements ICompositeElementType {
     private final Constructor<? extends ASTNode> myConstructor;
 
@@ -164,7 +163,7 @@ public interface JavaElementType {
     }
 
     @Override
-    public ASTNode parseContents(final ASTNode chameleon) {
+    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
       final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
       JavaParser.INSTANCE.getStatementParser().parseCodeBlockDeep(builder, true);
       return builder.getTreeBuilt().getFirstChildNode();
@@ -180,24 +179,7 @@ public interface JavaElementType {
     @Override
     public int getErrorsCount(final CharSequence seq, Language fileLanguage, final Project project) {
       Lexer lexer = JavaParserDefinition.createLexer(LanguageLevel.HIGHEST);
-
-      lexer.start(seq);
-      if (lexer.getTokenType() != JavaTokenType.LBRACE) return IErrorCounterReparseableElementType.FATAL_ERROR;
-      lexer.advance();
-      int balance = 1;
-      while (true) {
-        IElementType type = lexer.getTokenType();
-        if (type == null) break;
-        if (balance == 0) return IErrorCounterReparseableElementType.FATAL_ERROR;
-        if (type == JavaTokenType.LBRACE) {
-          balance++;
-        }
-        else if (type == JavaTokenType.RBRACE) {
-          balance--;
-        }
-        lexer.advance();
-      }
-      return balance;
+      return PsiBuilderUtil.hasProperBraceBalance(seq, lexer, JavaTokenType.LBRACE, JavaTokenType.RBRACE) ? NO_ERRORS : FATAL_ERROR;
     }
   }
   ILazyParseableElementType CODE_BLOCK = new ICodeBlockElementType();
@@ -212,7 +194,7 @@ public interface JavaElementType {
 
     @Nullable
     @Override
-    public ASTNode parseContents(final ASTNode chameleon) {
+    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
       return JavaParserUtil.parseFragment(chameleon, myParser);
     }
   };
@@ -227,7 +209,7 @@ public interface JavaElementType {
 
     @Nullable
     @Override
-    public ASTNode parseContents(final ASTNode chameleon) {
+    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
       return JavaParserUtil.parseFragment(chameleon, myParser);
     }
   };
@@ -242,7 +224,7 @@ public interface JavaElementType {
 
     @Nullable
     @Override
-    public ASTNode parseContents(final ASTNode chameleon) {
+    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
       return JavaParserUtil.parseFragment(chameleon, myParser);
     }
   };
@@ -261,16 +243,14 @@ public interface JavaElementType {
     private final JavaParserUtil.ParserWrapper myParser = new JavaParserUtil.ParserWrapper() {
       @Override
       public void parse(final PsiBuilder builder) {
-        JavaParser.INSTANCE.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT |
-                                                                    ReferenceParser.ELLIPSIS |
-                                                                    ReferenceParser.WILDCARD |
-                                                                    myFlags);
+        int flags = ReferenceParser.EAT_LAST_DOT | ReferenceParser.ELLIPSIS | ReferenceParser.WILDCARD | myFlags;
+        JavaParser.INSTANCE.getReferenceParser().parseType(builder, flags);
       }
     };
 
     @Nullable
     @Override
-    public ASTNode parseContents(final ASTNode chameleon) {
+    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
       return JavaParserUtil.parseFragment(chameleon, myParser);
     }
   }
@@ -288,7 +268,7 @@ public interface JavaElementType {
 
     @Nullable
     @Override
-    public ASTNode parseContents(final ASTNode chameleon) {
+    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
       assert chameleon instanceof JavaDummyElement : chameleon;
       final JavaDummyElement dummyElement = (JavaDummyElement)chameleon;
       return JavaParserUtil.parseFragment(chameleon, dummyElement.getParser(), dummyElement.consumeAll(), dummyElement.getLanguageLevel());

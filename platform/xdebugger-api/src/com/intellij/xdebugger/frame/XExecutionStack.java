@@ -73,15 +73,15 @@ public abstract class XExecutionStack {
 
   /**
    * Return top stack frame synchronously
-   * @return top stack frame or <code>null</code> if it isn't available
+   * @return top stack frame or {@code null} if it isn't available
    */
   @Nullable
   public abstract XStackFrame getTopFrame();
 
   /**
-   * Start computing stack frames top-down starting from <code>firstFrameIndex</code>. This method is called from the Event Dispatch Thread
+   * Start computing stack frames top-down starting from {@code firstFrameIndex}. This method is called from the Event Dispatch Thread
    * so it should return quickly
-   * @param firstFrameIndex frame index to start from (<code>1</code> corresponds to the frame just under the top frame)
+   * @param firstFrameIndex frame index to start from ({@code 1} corresponds to the frame just under the top frame)
    * @param container callback
    */
   public abstract void computeStackFrames(int firstFrameIndex, XStackFrameContainer container);
@@ -90,7 +90,7 @@ public abstract class XExecutionStack {
     /**
      * Add stack frames to the list
      * @param stackFrames stack frames to add
-     * @param last <code>true</code> if all frames are added
+     * @param last {@code true} if all frames are added
      */
     void addStackFrames(@NotNull List<? extends XStackFrame> stackFrames, boolean last);
   }

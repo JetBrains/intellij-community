@@ -22,16 +22,15 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 
-/**
- * User: anna
- * Date: Feb 22, 2005
- */
 public class ProjectViewModuleGroupNode extends ModuleGroupNode {
   public ProjectViewModuleGroupNode(final Project project, final Object value, final ViewSettings viewSettings) {
     super(project, (ModuleGroup)value, viewSettings);
@@ -42,8 +41,7 @@ public class ProjectViewModuleGroupNode extends ModuleGroupNode {
   }
 
   @Override
-  protected AbstractTreeNode createModuleNode(Module module)
-    throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+  protected AbstractTreeNode createModuleNode(Module module) {
     final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
     if (roots.length == 1) {
       final PsiDirectory psi = PsiManager.getInstance(myProject).findDirectory(roots[0]);
@@ -61,4 +59,9 @@ public class ProjectViewModuleGroupNode extends ModuleGroupNode {
   }
 
 
+  @NotNull
+  @Override
+  protected List<Module> getModulesByFile(@NotNull VirtualFile file) {
+    return ContainerUtil.createMaybeSingletonList(ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(file, false));
+  }
 }

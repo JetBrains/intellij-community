@@ -36,7 +36,6 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   @Nullable
   public abstract VirtualFile findFileByPathIfCached(@NotNull String path);
 
-  @Nullable
   protected String normalize(@NotNull String path) {
     return path;
   }

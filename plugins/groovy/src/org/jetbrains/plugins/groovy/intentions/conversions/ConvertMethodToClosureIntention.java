@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -45,6 +44,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Collection;
+import java.util.HashSet;
+
+import static com.intellij.openapi.util.text.StringUtil.isJavaIdentifier;
 
 
 /**
@@ -135,7 +137,7 @@ public class ConvertMethodToClosureIntention extends Intention {
 
   private static class MyPredicate implements PsiElementPredicate {
     @Override
-    public boolean satisfiedBy(PsiElement element) {
+    public boolean satisfiedBy(@NotNull PsiElement element) {
       if (element.getLanguage() != GroovyLanguage.INSTANCE) return false;
 
       GrMethod method;
@@ -151,8 +153,10 @@ public class ConvertMethodToClosureIntention extends Intention {
         if (((GrMethod)parent).getNameIdentifierGroovy() != element) return false;
         method = (GrMethod)parent;
       }
-      return method.getBlock() != null && method.getParent() instanceof GrTypeDefinitionBody;
-//      return element instanceof GrMethod && ((GrMethod)element).getBlock() != null && element.getParent() instanceof GrTypeDefinitionBody;
+      return !method.isConstructor() &&
+             isJavaIdentifier(method.getName()) &&
+             method.hasBlock() &&
+             method.getParent() instanceof GrTypeDefinitionBody;
     }
   }
 }

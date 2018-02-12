@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.CommonProcessors;
@@ -46,13 +45,21 @@ public class SliceTestUtil {
   }
 
   public static Map<String, RangeMarker> extractSliceOffsetsFromDocument(final Document document) {
+    return extractSliceOffsetsFromDocuments(Collections.singletonList(document));
+  }
+
+  public static Map<String, RangeMarker> extractSliceOffsetsFromDocuments(final List<Document> documents) {
     Map<String, RangeMarker> sliceUsageName2Offset = new THashMap<>();
 
-    extract(document, sliceUsageName2Offset, "");
-    int index = document.getText().indexOf("<flown");
-    if(index!=-1) {
-      fail(document.getText().substring(index, Math.min(document.getText().length(), index+50)));
+    extract(documents, sliceUsageName2Offset, "");
+
+    for (Document document : documents) {
+      int index = document.getText().indexOf("<flown");
+      if(index!=-1) {
+        fail(document.getText().substring(index, Math.min(document.getText().length(), index+50)));
+      }
     }
+
     assertTrue(!sliceUsageName2Offset.isEmpty());
     return sliceUsageName2Offset;
   }
@@ -74,19 +81,28 @@ public class SliceTestUtil {
     }
   }
 
-  private static void extract(final Document document, final Map<String, RangeMarker> sliceUsageName2Offset, final String name) {
+  private static void extract(final List<Document> documents, final Map<String, RangeMarker> sliceUsageName2Offset, final String name) {
     WriteCommandAction.runWriteCommandAction(null, () -> {
       for (int i = 1; i < 9; i++) {
         String newName = name + i;
         String s = "<flown" + newName + ">";
-        if (!document.getText().contains(s)) break;
-        int off = document.getText().indexOf(s);
 
-        document.deleteString(off, off + s.length());
-        RangeMarker prev = sliceUsageName2Offset.put(newName, document.createRangeMarker(off, off));
-        assertNull(prev);
+        boolean continueExtraction = false;
+        for (Document document : documents) {
+          if (!document.getText().contains(s)) continue;
 
-        extract(document, sliceUsageName2Offset, newName);
+          int off = document.getText().indexOf(s);
+
+          document.deleteString(off, off + s.length());
+          RangeMarker prev = sliceUsageName2Offset.put(newName, document.createRangeMarker(off, off));
+          assertNull(prev);
+
+          continueExtraction = true;
+        }
+
+        if (continueExtraction) {
+          extract(documents, sliceUsageName2Offset, newName);
+        }
       }
     });
   }
@@ -103,7 +119,7 @@ public class SliceTestUtil {
 
     int size = offsets.length;
     assertEquals(message(startOffset, usage), size, children.size());
-    Collections.sort(children, (o1, o2) -> o1.compareTo(o2));
+    children.sort(Comparator.naturalOrder());
 
     for (int i = 0; i < children.size(); i++) {
       SliceUsage child = children.get(i);
@@ -116,7 +132,6 @@ public class SliceTestUtil {
 
   private static String message(int startOffset, SliceUsage usage) {
     PsiFile file = usage.getElement().getContainingFile();
-    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
     Editor editor = FileEditorManager.getInstance(file.getProject()).getSelectedTextEditor();
     LogicalPosition position = editor.offsetToLogicalPosition(startOffset);
     return position + ": '" + StringUtil.first(file.getText().substring(startOffset), 100, true) + "'";

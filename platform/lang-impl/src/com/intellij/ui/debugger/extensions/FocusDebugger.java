@@ -87,7 +87,7 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new ClearAction());
 
-    result.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(), BorderLayout.NORTH);
+    result.add(ActionManager.getInstance().createActionToolbar("FocusDbg", group, true).getComponent(), BorderLayout.NORTH);
 
     return result;
   }

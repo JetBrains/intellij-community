@@ -165,18 +165,23 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	shared-form.attrs.pattern?
 		&	shared-form.attrs.placeholder?
 		&	shared-form.attrs.required?
+		&	aria.prop.required?
 		&	shared-form.attrs.minlength?
 		)
 
 ## Checkbox <input type='checkbox'>, Extensions
 
 	input.checkbox.attrs &=
-		(	shared-input.attrs	)
+		(	shared-input.attrs
+		&	aria.prop.required?
+		)
 
 ## Radiobutton: <input type='radio'>, Extensions
 
 	input.radio.attrs &=
-		(	shared-input.attrs	)
+		(	shared-input.attrs
+		&	aria.prop.required?
+		)
 
 ## Scripting Hook Button: <input type='button'>, Extensions
 
@@ -227,40 +232,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 				common.data.integer.non-negative
 			}
 
-## Global Date and Time: <input type='datetime'>
-
-	input.datetime.elem = 
-		element input { input.datetime.attrs }
-	input.datetime.attrs = 
-		(	common.attrs
-		&	common-form.attrs
-		&	shared-input.attrs
-		&	input.datetime.attrs.type
-		&	input.datetime.attrs.min?
-		&	input.datetime.attrs.max?
-		&	input.attrs.step.float?
-		&	input.datetime.attrs.value?
-		&	common.attrs.aria?
-		)	
-		input.datetime.attrs.type = 
-			attribute type {
-				w:string "datetime"
-			}
-		input.datetime.attrs.min =
-			attribute min {
-				common.data.datetime
-			}
-		input.datetime.attrs.max =
-			attribute max {
-				common.data.datetime
-			}	
-		input.datetime.attrs.value =
-			attribute value {
-				w:string "" | common.data.datetime
-			}
-		
-	input.elem |= input.datetime.elem
-
 ## Date and Time with No Time Zone Information: <input type='datetime-local'>
 
 	input.datetime-local.elem = 
@@ -274,7 +245,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	input.datetime-local.attrs.max?
 		&	input.attrs.step.float?
 		&	input.datetime-local.attrs.value?
-		&	common.attrs.aria?
+		&	(	common.attrs.aria?
+			|	aria.prop.required?
+			)
 		)	
 		input.datetime-local.attrs.type = 
 			attribute type {
@@ -308,7 +281,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	input.date.attrs.max?
 		&	input.attrs.step.integer?
 		&	input.date.attrs.value?
-		&	common.attrs.aria?
+		&	(	common.attrs.aria?
+			|	aria.prop.required?
+			)
 		)	
 		input.date.attrs.type = 
 			attribute type {
@@ -342,7 +317,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	input.month.attrs.max?
 		&	input.attrs.step.integer?
 		&	input.month.attrs.value?
-		&	common.attrs.aria?
+		&	(	common.attrs.aria?
+			|	aria.prop.required?
+			)
 		)	
 		input.month.attrs.type = 
 			attribute type {
@@ -376,7 +353,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	input.time.attrs.max?
 		&	input.attrs.step.float?
 		&	input.time.attrs.value?
-		&	common.attrs.aria?
+		&	(	common.attrs.aria?
+			|	aria.prop.required?
+			)
 		)	
 		input.time.attrs.type = 
 			attribute type {
@@ -410,7 +389,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	input.week.attrs.max?
 		&	input.attrs.step.integer?
 		&	input.week.attrs.value?
-		&	common.attrs.aria?
+		&	(	common.attrs.aria?
+			|	aria.prop.required?
+			)
 		)	
 		input.week.attrs.type = 
 			attribute type {
@@ -576,10 +557,8 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	input.search.attrs.type
 		&	input.search.attrs.value?
 		&	shared-form.attrs.dirname?
-		&	(	common.attrs.aria.implicit.textbox
-			|	common.attrs.aria.implicit.combobox
-			|	common.attrs.aria.role.textbox
-			|	common.attrs.aria.role.combobox
+		&	(	common.attrs.aria.implicit.searchbox
+			|	common.attrs.aria.role.searchbox
 			)?
 		)	
 		input.search.attrs.type = 
@@ -676,7 +655,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	shared-form.attrs.minlength?
 		&	shared-form.attrs.autofocus? 
 		&	shared-form.attrs.required? 
-		&	shared-form.attrs.placeholder?
+		&	textarea.attrs.placeholder?
 		&	shared-form.attrs.dirname?
 		&	textarea.attrs.rows?
 		&	(	(	textarea.attrs.wrap.hard 
@@ -696,6 +675,10 @@ datatypes w = "http://whattf.org/datatype-draft"
 		textarea.attrs.wrap.soft =
 			attribute wrap {
 				w:string "soft"
+			}
+		textarea.attrs.placeholder =
+			attribute placeholder {
+				string
 			}
 
 ## List of Prefill Data: <datalist>
@@ -763,33 +746,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 
 	fieldset.attrs &=
 		( common-form.attrs )
-
-## Key-pair generator/input control: <keygen>
-
-	keygen.elem =
-		element keygen { keygen.inner & keygen.attrs }
-	keygen.attrs =
-		(	common.attrs
-		&	keygen.attrs.challenge?
-		&	keygen.attrs.keytype?
-		&	shared-form.attrs.autofocus? 
-		&	common-form.attrs?
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
-		)
-		keygen.attrs.challenge =
-			attribute challenge {
-				string
-			}
-		keygen.attrs.keytype = 
-			attribute keytype {
-				w:string "rsa"
-			}
-	keygen.inner =
-		( empty )
-
-	common.elem.phrasing |= keygen.elem
 
 ## Selection Menu: <select>, Extensions
 

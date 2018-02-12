@@ -24,7 +24,6 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,13 +38,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.sun.jdi.AbsentInformationException;
-import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.event.LocatableEvent;
-import com.sun.jdi.event.MethodEntryEvent;
-import com.sun.jdi.event.MethodExitEvent;
 import com.sun.jdi.request.MethodEntryRequest;
 import com.sun.jdi.request.MethodExitRequest;
 import one.util.streamex.StreamEx;
@@ -134,7 +129,13 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
       return;
     }
     if (isEmulated()) {
-      createOrWaitPrepare(debugProcess, getClassPattern());
+      debugProcess.getRequestsManager().callbackOnPrepareClasses(this, getClassPattern());
+
+      Pattern pattern = PatternUtil.fromMask(getClassPattern());
+      debugProcess.getVirtualMachineProxy().allClasses().stream()
+        .filter(c -> pattern.matcher(c.name()).matches())
+        .filter(ReferenceType::isPrepared)
+        .forEach(aList -> processClassPrepare(debugProcess, aList));
     }
     else {
       try {
@@ -177,42 +178,8 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     }
   }
 
-  public String getEventMessage(LocatableEvent event) {
-    final Location location = event.location();
-    final String locationQName = DebuggerUtilsEx.getLocationMethodQName(location);
-    String locationFileName;
-    try {
-      locationFileName = location.sourceName();
-    }
-    catch (AbsentInformationException e) {
-      locationFileName = "";
-    }
-    final int locationLine = location.lineNumber();
-    
-    if (event instanceof MethodEntryEvent) {
-      MethodEntryEvent entryEvent = (MethodEntryEvent)event;
-      final Method method = entryEvent.method();
-      return DebuggerBundle.message(
-        "status.method.entry.breakpoint.reached", 
-        method.declaringType().name() + "." + method.name() + "()",
-        locationQName,
-        locationFileName,
-        locationLine
-      );
-    }
-    
-    if (event instanceof MethodExitEvent) {
-      MethodExitEvent exitEvent = (MethodExitEvent)event;
-      final Method method = exitEvent.method();
-      return DebuggerBundle.message(
-        "status.method.exit.breakpoint.reached", 
-        method.declaringType().name() + "." + method.name() + "()",
-        locationQName,
-        locationFileName,
-        locationLine
-      );
-    }
-    return "";
+  public String getEventMessage(@NotNull LocatableEvent event) {
+    return MethodBreakpoint.getEventMessage(event, "");
   }
 
   public boolean isValid() {

@@ -23,18 +23,20 @@ public class VcsLogActionPlaces {
   public static final String TEXT_FILTER_SETTINGS_ACTION_GROUP = "Vcs.Log.TextFilterSettings";
   public static final String FILE_HISTORY_TOOLBAR_ACTION_GROUP = "Vcs.FileHistory.Toolbar";
   public static final String HISTORY_POPUP_ACTION_GROUP = "Vcs.FileHistory.ContextMenu";
+  public static final String CHANGES_BROWSER_ACTION_GROUP = "Vcs.Log.ChangesBrowser";
 
   // action places
   public static final String VCS_LOG_TABLE_PLACE = "Vcs.Log.ContextMenu";
   public static final String VCS_LOG_TOOLBAR_PLACE = "Vcs.Log.Toolbar";
   public static final String VCS_HISTORY_PLACE = "Vcs.FileHistory.ContextMenu";
   public static final String VCS_HISTORY_TOOLBAR_PLACE = "Vcs.FileHistory.Toolbar";
+  public static final String VCS_LOG_GEAR_POPUP_PLACE = "Vcs.Log.Gear.Popup";
 
   // action ids
   public static final String VCS_LOG_INTELLI_SORT_ACTION = "Vcs.Log.IntelliSortChooser";
   public static final String VCS_LOG_QUICK_SETTINGS_ACTION = "Vcs.Log.QuickSettings";
   public static final String VCS_LOG_TEXT_FILTER_SETTINGS_ACTION = "Vcs.Log.QuickTextFilterSettings";
   public static final String VCS_LOG_FOCUS_TEXT_FILTER = "Vcs.Log.FocusTextFilter";
-  public static final String VCS_LOG_SHOW_DETAILS_ACTION = "Vcs.Log.ShowDetailsAction";
-  public static final String VCS_LOG_SHOW_DIFF_ACTION = "Vcs.Log.ShowDiff";
+  public static final String VCS_LOG_SHOW_DIFF_ACTION = "Diff.ShowDiff";
+  public static final String CHECKIN_PROJECT_ACTION = "CheckinProject";
 }

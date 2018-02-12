@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -45,8 +46,8 @@ import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplateEP;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.platform.templates.*;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SingleSelectionModel;
 import com.intellij.ui.components.JBLabel;
@@ -55,7 +56,9 @@ import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.*;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,19 +76,13 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 04.09.13
  */
 @SuppressWarnings("unchecked")
 public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectTypeStep.class);
 
   public static final Convertor<FrameworkSupportInModuleProvider,String> PROVIDER_STRING_CONVERTOR =
-    new Convertor<FrameworkSupportInModuleProvider, String>() {
-      @Override
-      public String convert(FrameworkSupportInModuleProvider o) {
-        return o.getId();
-      }
-    };
+    o -> o.getId();
   public static final Function<FrameworkSupportNode, String> NODE_STRING_FUNCTION = FrameworkSupportNodeBase::getId;
   private static final String TEMPLATES_CARD = "templates card";
   private static final String FRAMEWORKS_CARD = "frameworks card";
@@ -96,13 +93,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   private final AddSupportForFrameworksPanel myFrameworksPanel;
   private final ModuleBuilder.ModuleConfigurationUpdater myConfigurationUpdater;
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private final FactoryMap<ProjectTemplate, ModuleBuilder> myBuilders = new FactoryMap<ProjectTemplate, ModuleBuilder>() {
-    @Nullable
-    @Override
-    protected ModuleBuilder create(ProjectTemplate key) {
-      return (ModuleBuilder)key.createModuleBuilder();
-    }
-  };
+  private final Map<ProjectTemplate, ModuleBuilder> myBuilders = FactoryMap.create(key -> (ModuleBuilder)key.createModuleBuilder());
   private final Map<String, ModuleWizardStep> myCustomSteps = new THashMap<>();
   private final MultiMap<TemplatesGroup,ProjectTemplate> myTemplatesMap;
   private JPanel myPanel;
@@ -123,6 +114,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
 
     myTemplatesMap = new ConcurrentMultiMap<>();
     final List<TemplatesGroup> groups = fillTemplatesMap(context);
+    LOG.debug("groups=" + groups);
 
     myProjectTypeList.setModel(new CollectionListModel<>(groups));
     myProjectTypeList.setSelectionModel(new SingleSelectionModel());
@@ -164,7 +156,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       @Override
       protected JComponent createItemComponent() {
         JComponent component = super.createItemComponent();
-        myTextLabel.setBorder(IdeBorderFactory.createEmptyBorder(3));
+        myTextLabel.setBorder(JBUI.Borders.empty(3));
         return component;
       }
     });
@@ -196,7 +188,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     Disposer.register(this, myFrameworksPanel);
     myFrameworksPanelPlaceholder.add(myFrameworksPanel.getMainPanel());
     myFrameworksLabel.setLabelFor(myFrameworksPanel.getFrameworksTree());
-    myFrameworksLabel.setBorder(IdeBorderFactory.createEmptyBorder(3));
+    myFrameworksLabel.setBorder(JBUI.Borders.empty(3));
 
     myConfigurationUpdater = new ModuleBuilder.ModuleConfigurationUpdater() {
       @Override
@@ -232,6 +224,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     }
 
     final String groupId = PropertiesComponent.getInstance().getValue(PROJECT_WIZARD_GROUP);
+    LOG.debug("saved groupId=" + groupId);
     if (groupId != null) {
       TemplatesGroup group = ContainerUtil.find(groups, group1 -> groupId.equals(group1.getId()));
       if (group != null) {
@@ -374,6 +367,9 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     if (group == null || group == myLastSelectedGroup) return;
     myLastSelectedGroup = group;
     PropertiesComponent.getInstance().setValue(PROJECT_WIZARD_GROUP, group.getId() );
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("projectTypeChanged: " + group.getId() + " " + DebugUtil.currentStackTrace());
+    }
     ModuleBuilder groupModuleBuilder = group.getModuleBuilder();
 
     mySettingsStep = null;
@@ -560,6 +556,11 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
 
   @Override
   public void dispose() {
+    myLastSelectedGroup = null;
+    mySettingsStep = null;
+    myTemplatesMap.clear();
+    myBuilders.clear();
+    myCustomSteps.clear();
   }
 
   @Override
@@ -595,6 +596,15 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   }
 
   void loadRemoteTemplates(final ChooseTemplateStep chooseTemplateStep) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      UiNotifyConnector.doWhenFirstShown(myPanel, () -> startLoadingRemoteTemplates(chooseTemplateStep));
+    }
+    else {
+      startLoadingRemoteTemplates(chooseTemplateStep);
+    }
+  }
+
+  private void startLoadingRemoteTemplates(ChooseTemplateStep chooseTemplateStep) {
     myTemplatesList.setPaintBusy(true);
     chooseTemplateStep.getTemplateList().setPaintBusy(true);
     ProgressManager.getInstance().run(new Task.Backgroundable(myContext.getProject(), "Loading Templates") {
@@ -639,6 +649,8 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     }
 
     ModuleBuilder builder = getSelectedBuilder();
+    LOG.debug("builder=" + builder + "; template=" + template + "; group=" + getSelectedGroup() + "; groupIndex=" + myProjectTypeList.getMinSelectionIndex());
+
     myContext.setProjectBuilder(builder);
     if (builder != null) {
       myWizard.getSequence().setType(builder.getBuilderId());

@@ -96,17 +96,17 @@ public class PyInjectionResolveTest extends PyResolveTestCase {
 
   // PY-20863
   public void testQuotedTypeReferenceInsideClass() {
-    assertResolvesTo(LanguageLevel.PYTHON30, PyClass.class, "MyClass");
+    assertResolvesTo(LanguageLevel.PYTHON34, PyClass.class, "MyClass");
   }
   
   // PY-20863
   public void testQuotedTypeReferenceInsideFunction() {
-    assertResolvesTo(LanguageLevel.PYTHON30, PyClass.class, "MyClass");
+    assertResolvesTo(LanguageLevel.PYTHON34, PyClass.class, "MyClass");
   }
   
   // PY-20863
   public void testQuotedTypeReferenceTopLevel() {
-    assertResolvesTo(LanguageLevel.PYTHON30, PyClass.class, "MyClass");
+    assertResolvesTo(LanguageLevel.PYTHON34, PyClass.class, "MyClass");
   }
 
   // PY-20377
@@ -117,5 +117,10 @@ public class PyInjectionResolveTest extends PyResolveTestCase {
   // PY-20377
   public void testFunctionTypeCommentReturnTypeReference() {
     assertResolvesTo(PyClass.class, "MyClass");
+  }
+
+  // PY-22094
+  public void testFStringInsideAssertStatement() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> assertResolvesTo(PyParameter.class, "name"));
   }
 }

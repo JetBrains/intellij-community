@@ -21,7 +21,7 @@ import com.intellij.openapi.fileTypes.FileTypeExtension;
 /**
  * @author yole
  */
-public class IdIndexers extends FileTypeExtension<FileTypeIdIndexer> {
+public class IdIndexers extends FileTypeExtension<IdIndexer> {
   public static IdIndexers INSTANCE = new IdIndexers();
 
   private IdIndexers() {

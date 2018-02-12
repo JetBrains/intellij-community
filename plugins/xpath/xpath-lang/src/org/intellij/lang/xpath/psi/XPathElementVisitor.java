@@ -18,11 +18,6 @@ package org.intellij.lang.xpath.psi;
 import com.intellij.psi.PsiElementVisitor;
 import org.intellij.lang.xpath.XPathFile;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 08.04.11
-*/
 public class XPathElementVisitor extends PsiElementVisitor {
   public void visitXPathString(XPathString o) {
     visitXPathExpression(o);

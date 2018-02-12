@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.mvc;
 
@@ -52,7 +38,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -105,8 +90,8 @@ public abstract class MvcFramework {
 
   @NotNull
   public Map<String, Runnable> createConfigureActions(final @NotNull Module module) {
-    return Collections.<String, Runnable>singletonMap("Configure " + getFrameworkName() + " SDK",
-                                                      () -> configureAsLibraryDependency(module));
+    return Collections.singletonMap("Configure " + getFrameworkName() + " SDK",
+                                    () -> configureAsLibraryDependency(module));
   }
 
   protected void configureAsLibraryDependency(@NotNull Module module) {
@@ -243,23 +228,23 @@ public abstract class MvcFramework {
     final List<File> toExclude = new ArrayList<>();
 
     VirtualFile sdkRoot = getSdkRoot(module);
-    if (sdkRoot != null) toExclude.add(VfsUtil.virtualToIoFile(sdkRoot));
+    if (sdkRoot != null) toExclude.add(VfsUtilCore.virtualToIoFile(sdkRoot));
 
     ContainerUtil.addIfNotNull(toExclude, getCommonPluginsDir(module));
     final VirtualFile appRoot = findAppRoot(module);
     if (appRoot != null) {
       VirtualFile pluginDir = appRoot.findChild(MvcModuleStructureUtil.PLUGINS_DIRECTORY);
-      if (pluginDir != null) toExclude.add(VfsUtil.virtualToIoFile(pluginDir));
+      if (pluginDir != null) toExclude.add(VfsUtilCore.virtualToIoFile(pluginDir));
 
 
       VirtualFile libDir = appRoot.findChild("lib");
-      if (libDir != null) toExclude.add(VfsUtil.virtualToIoFile(libDir));
+      if (libDir != null) toExclude.add(VfsUtilCore.virtualToIoFile(libDir));
     }
 
     final Library library = MvcModuleStructureUtil.findUserLibrary(module, getUserLibraryName());
     if (library != null) {
       for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
-        toExclude.add(VfsUtil.virtualToIoFile(PathUtil.getLocalFile(file)));
+        toExclude.add(VfsUtilCore.virtualToIoFile(VfsUtil.getLocalFile(file)));
       }
     }
     return toExclude;
@@ -276,7 +261,7 @@ public abstract class MvcFramework {
     eachRoot:
     for (VirtualFile file : rootFiles) {
       for (final File excluded : toExclude) {
-        if (VfsUtil.isAncestor(excluded, VfsUtil.virtualToIoFile(file), false)) {
+        if (VfsUtilCore.isAncestor(excluded, VfsUtilCore.virtualToIoFile(file), false)) {
           continue eachRoot;
         }
       }
@@ -348,7 +333,7 @@ public abstract class MvcFramework {
                                                                                                                                  factory);
     final MvcRunConfiguration configuration = (MvcRunConfiguration)runSettings.getConfiguration();
     configuration.setModule(module);
-    runManager.addConfiguration(runSettings, false);
+    runManager.addConfiguration(runSettings);
     runManager.setSelectedConfiguration(runSettings);
 
     RunManagerEx.disableTasks(module.getProject(), configuration, CompileStepBeforeRun.ID, CompileStepBeforeRunNoErrorCheck.ID);

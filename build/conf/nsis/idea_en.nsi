@@ -1,8 +1,8 @@
 ; Installation Options page
 LangString installation_options ${LANG_ENGLISH} "Installation Options"
 LangString installation_options_prompt ${LANG_ENGLISH} "Configure your ${MUI_PRODUCT} installation"
-LangString create_desktop_shortcut ${LANG_ENGLISH} "Create Desktop shortcut"
-LangString create_quick_launch_shortcut ${LANG_ENGLISH} "Create Quick Launch shortcut"
+LangString create_desktop_shortcut ${LANG_ENGLISH} "Create Desktop Shortcut"
+LangString create_quick_launch_shortcut ${LANG_ENGLISH} "Create Quick Launch Shortcut"
 LangString install_for_current_user_only ${LANG_ENGLISH} "Install for current user only"
 
 ; Uninstall options page
@@ -18,5 +18,6 @@ LangString current_version_already_installed ${LANG_ENGLISH} "Current version of
 LangString uninstall_previous_installations_title ${LANG_ENGLISH} "Uninstall old versions"
 LangString uninstall_previous_installations ${LANG_ENGLISH} ""
 LangString uninstall_previous_installations_prompt ${LANG_ENGLISH} "Select the ${MUI_PRODUCT} version$2 that you want to uninstall."
+LangString uninstaller_relocated ${LANG_ENGLISH} "Uninstall hasn't detected folder of ${MUI_PRODUCT} installation. Probably uninstall.exe was moved from the installation folder."
 LangString empty_or_upgrade_folder ${LANG_ENGLISH} "Please select an empty folder."
 LangString application_running ${LANG_ENGLISH} "$INSTDIR is running. Close the application and retry the installation."

@@ -27,6 +27,9 @@ class Main {
     l.findStaticSetter(Test.class, "ourInt", <warning descr="The type of field 'ourInt' is 'int'">void.class</warning>);
     l.findStaticSetter(Test.class, "ourInts", <warning descr="The type of field 'ourInts' is 'int[]'">int.class</warning>);
     l.findStaticSetter(Test.class, "ourString", <warning descr="The type of field 'ourString' is 'java.lang.String'">List.class</warning>);
+
+    l.<warning descr="Field 'myString' is not static">findStaticSetter</warning>(Test.class, "myString", String.class);
+    l.<warning descr="Field 'ourString' is static">findSetter</warning>(Test.class, "ourString", String.class);
   }
 }
 

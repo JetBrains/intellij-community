@@ -1,0 +1,5 @@
+    }
+    String text1 = notEmptyContent(buffer1);
+    String text2 = notEmptyContent(buffer2);
+    return isEqual ? DiffFragment.unchanged(text1, text2) : new DiffFragment(text1, text2);
+  }

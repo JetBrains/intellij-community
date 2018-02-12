@@ -36,7 +36,7 @@ public interface TreeStructureProvider {
    * @param children the list of child nodes according to the default project structure.
    *                 Elements of the collection are of type {@link ProjectViewNode}.
    * @param settings the current project view settings.
-   * @return the modified collection of child nodes, or <code>children</code> if no modifications
+   * @return the modified collection of child nodes, or {@code children} if no modifications
    *         are required.
    */
   @NotNull

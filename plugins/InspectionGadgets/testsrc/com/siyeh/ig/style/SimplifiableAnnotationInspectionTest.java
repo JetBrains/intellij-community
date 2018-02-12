@@ -5,7 +5,7 @@ import com.siyeh.ig.LightInspectionTestCase;
 
 public class SimplifiableAnnotationInspectionTest extends LightInspectionTestCase {
 
-  public void testSimplifiableAnnotation() throws Exception {
+  public void testSimplifiableAnnotation() {
     doTest();
   }
 

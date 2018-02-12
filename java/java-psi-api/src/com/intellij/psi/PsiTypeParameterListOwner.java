@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.lang.jvm.JvmTypeParametersOwner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author dsl
  */
-public interface PsiTypeParameterListOwner extends PsiMember {
+public interface PsiTypeParameterListOwner extends PsiMember, JvmTypeParametersOwner {
   /**
    * Checks if the element has any type parameters.
    *
@@ -46,5 +47,6 @@ public interface PsiTypeParameterListOwner extends PsiMember {
    * @return the array of type parameters, or an empty array if the element has no type parameters.
    */
   @NotNull
+  @Override
   PsiTypeParameter[] getTypeParameters();
 }

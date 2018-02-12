@@ -21,19 +21,17 @@ import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-
 public class DeleteToLineStartAndEndActionsTest extends AbstractEditorTest {
-  public void testEmpty() throws IOException {
+  public void testEmpty() {
     doTestDeleteToStart("<caret>", "<caret>");
     doTestDeleteToEnd("<caret>", "<caret>");
   }
-  public void testEmptyLine() throws IOException {
+  public void testEmptyLine() {
     doTestDeleteToStart("\n<caret>\n\n", "\n<caret>\n\n");
     doTestDeleteToEnd("\n<caret>\n\n", "\n<caret>\n");
   }
 
-  public void testEndOfNonEmptyLine() throws IOException {
+  public void testEndOfNonEmptyLine() {
     doTestDeleteToStart("\n a a a <caret>\n\n", "\n<caret>\n\n");
     doTestDeleteToEnd("\n a a a <caret>\n\n", "\n a a a <caret>\n");
 
@@ -41,7 +39,7 @@ public class DeleteToLineStartAndEndActionsTest extends AbstractEditorTest {
     doTestDeleteToEnd(" a a a <caret>", " a a a <caret>");
   }
 
-  public void testBeginningOfNonEmptyLine() throws IOException {
+  public void testBeginningOfNonEmptyLine() {
     doTestDeleteToStart("\n<caret> a a a \n\n", "\n<caret> a a a \n\n");
     doTestDeleteToEnd("\n<caret> a a a \n\n", "\n<caret>\n\n");
 
@@ -49,7 +47,7 @@ public class DeleteToLineStartAndEndActionsTest extends AbstractEditorTest {
     doTestDeleteToEnd("<caret> a a a ", "<caret>");
   }
 
-  public void testMiddleOfNonEmptyLine() throws IOException {
+  public void testMiddleOfNonEmptyLine() {
     doTestDeleteToStart("\n a a <caret> b b \n\n", "\n<caret> b b \n\n");
     doTestDeleteToEnd("\n a a <caret> b b \n\n", "\n a a <caret>\n\n");
 
@@ -57,7 +55,7 @@ public class DeleteToLineStartAndEndActionsTest extends AbstractEditorTest {
     doTestDeleteToEnd(" a a <caret> b b ", " a a <caret>");
   }
 
-  public void testMoveCaretFromVirtualSpaceToRealOffset() throws IOException {
+  public void testMoveCaretFromVirtualSpaceToRealOffset() {
     boolean virtualSpacesBefore = EditorSettingsExternalizable.getInstance().isVirtualSpace();
     EditorSettingsExternalizable.getInstance().setVirtualSpace(true);
 
@@ -78,32 +76,32 @@ public class DeleteToLineStartAndEndActionsTest extends AbstractEditorTest {
     }
   }
 
-  public void testDeleteSelectionFirst() throws IOException {
+  public void testDeleteSelectionFirst() {
     doTestDeleteToStart("aaa <selection>bbb \n ccc</selection><caret> ddd", "aaa <caret> ddd");
     doTestDeleteToEnd("aaa <selection>bbb \n ccc</selection><caret> ddd", "aaa <caret> ddd");
   }
 
-  private void doTestDeleteToStart(@NotNull String before, @NotNull String after) throws IOException {
+  private void doTestDeleteToStart(@NotNull String before, @NotNull String after) {
     doTestDelete(true, before, null, after, null);
   }
 
   private void doTestDeleteToStart(@NotNull String before, @Nullable VisualPosition positionBefore,
-                                   @NotNull String after, @Nullable VisualPosition positionAfter) throws IOException {
+                                   @NotNull String after, @Nullable VisualPosition positionAfter) {
     doTestDelete(true, before, positionBefore, after, positionAfter);
   }
 
-  private void doTestDeleteToEnd(@NotNull String before, @NotNull String after) throws IOException {
+  private void doTestDeleteToEnd(@NotNull String before, @NotNull String after) {
     doTestDelete(false, before, null, after, null);
   }
 
   private void doTestDeleteToEnd(@NotNull String before, @Nullable VisualPosition positionBefore,
-                                 @NotNull String after, @Nullable VisualPosition positionAfter) throws IOException {
+                                 @NotNull String after, @Nullable VisualPosition positionAfter) {
     doTestDelete(false, before, positionBefore, after, positionAfter);
   }
 
   private void doTestDelete(boolean toStart,
                             @NotNull String before, @Nullable VisualPosition positionBefore,
-                            @NotNull String after, @Nullable VisualPosition positionAfter) throws IOException {
+                            @NotNull String after, @Nullable VisualPosition positionAfter) {
     configureFromFileText(getTestName(false) + ".txt", before);
     if (positionBefore != null) mouse().clickAt(positionBefore.line, positionBefore.column);
 

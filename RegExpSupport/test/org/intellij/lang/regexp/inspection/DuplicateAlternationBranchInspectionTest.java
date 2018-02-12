@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings({"RegExpDuplicateAlternationBranch", "RegExpEmptyAlternationBranch"})
 public class DuplicateAlternationBranchInspectionTest extends RegExpInspectionTestCase {
 
   public void testSimple() {
@@ -37,6 +38,10 @@ public class DuplicateAlternationBranchInspectionTest extends RegExpInspectionTe
 
   public void testEmptyBranches() {
     highlightTest("|||");
+  }
+
+  public void testNoWarn() {
+    highlightTest("([aeiou][^aeiou])*|([^aeiou][aeiou])*");
   }
 
   @NotNull

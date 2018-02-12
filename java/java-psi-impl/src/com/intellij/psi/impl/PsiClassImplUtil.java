@@ -47,7 +47,7 @@ import com.intellij.ui.RowIcon;
 import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author ik
@@ -71,19 +72,19 @@ public class PsiClassImplUtil {
   @NotNull
   public static PsiField[] getAllFields(@NotNull PsiClass aClass) {
     List<PsiField> map = getAllByMap(aClass, MemberType.FIELD);
-    return map.toArray(new PsiField[map.size()]);
+    return map.toArray(PsiField.EMPTY_ARRAY);
   }
 
   @NotNull
   public static PsiMethod[] getAllMethods(@NotNull PsiClass aClass) {
     List<PsiMethod> methods = getAllByMap(aClass, MemberType.METHOD);
-    return methods.toArray(new PsiMethod[methods.size()]);
+    return methods.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
   @NotNull
   public static PsiClass[] getAllInnerClasses(@NotNull PsiClass aClass) {
     List<PsiClass> classes = getAllByMap(aClass, MemberType.CLASS);
-    return classes.toArray(new PsiClass[classes.size()]);
+    return classes.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -96,7 +97,7 @@ public class PsiClassImplUtil {
   public static PsiMethod[] findMethodsByName(@NotNull PsiClass aClass, String name, boolean checkBases) {
     List<PsiMember> methods = findByMap(aClass, name, checkBases, MemberType.METHOD);
     //noinspection SuspiciousToArrayCall
-    return methods.toArray(new PsiMethod[methods.size()]);
+    return methods.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -110,7 +111,7 @@ public class PsiClassImplUtil {
   @NotNull
   public static PsiMethod[] findMethodsBySignature(@NotNull PsiClass aClass, @NotNull PsiMethod patternMethod, final boolean checkBases) {
     List<PsiMethod> methods = findMethodsBySignature(aClass, patternMethod, checkBases, false);
-    return methods.toArray(new PsiMethod[methods.size()]);
+    return methods.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -347,18 +348,20 @@ public class PsiClassImplUtil {
     return factory.createMethodFromText(text, null).getSignature(PsiSubstitutor.EMPTY);
   }
 
-  private static class MembersMap extends ConcurrentFactoryMap<MemberType, Map<String, PsiMember[]>> {
-    private final PsiClass myPsiClass;
-    private final GlobalSearchScope myResolveScope;
+  private static class MembersMap {
+    final ConcurrentMap<MemberType, Map<String, PsiMember[]>> myMap;
 
     MembersMap(PsiClass psiClass, GlobalSearchScope scope) {
-      myPsiClass = psiClass;
-      myResolveScope = scope;
+      myMap = createMembersMap(psiClass, scope);
     }
 
-    @Nullable
-    @Override
-    protected Map<String, PsiMember[]> create(final MemberType key) {
+    private Map<String, PsiMember[]> get(MemberType type) {
+      return myMap.get(type);
+    }
+  }
+
+  private static ConcurrentMap<MemberType, Map<String, PsiMember[]>> createMembersMap(PsiClass psiClass, GlobalSearchScope scope) {
+    return ConcurrentFactoryMap.createMap(key -> {
       final Map<String, List<PsiMember>> map = ContainerUtil.newTroveMap();
 
       final List<PsiMember> allMembers = ContainerUtil.newArrayList();
@@ -381,6 +384,7 @@ public class PsiClassImplUtil {
           if (key == MemberType.CLASS && element instanceof PsiClass ||
               key == MemberType.METHOD && element instanceof PsiMethod ||
               key == MemberType.FIELD && element instanceof PsiField) {
+            PsiUtilCore.ensureValid(element);
             allMembers.add((PsiMember)element);
             String currentName = ((PsiMember)element).getName();
             List<PsiMember> listByName = map.get(currentName);
@@ -399,14 +403,14 @@ public class PsiClassImplUtil {
         }
       };
 
-      processDeclarationsInClassNotCached(myPsiClass, processor, ResolveState.initial(), null, null, myPsiClass, false,
-                                          PsiUtil.getLanguageLevel(myPsiClass), myResolveScope);
+      processDeclarationsInClassNotCached(psiClass, processor, ResolveState.initial(), null, null, psiClass, false,
+                                          PsiUtil.getLanguageLevel(psiClass), scope);
       Map<String, PsiMember[]> result = ContainerUtil.newTroveMap();
       for (String name : map.keySet()) {
         result.put(name, map.get(name).toArray(PsiMember.EMPTY_ARRAY));
       }
       return result;
-    }
+    });
   }
 
   private static class ByNameCachedValueProvider implements ParameterizedCachedValueProvider<Map<GlobalSearchScope, MembersMap>, PsiClass> {
@@ -414,13 +418,7 @@ public class PsiClassImplUtil {
 
     @Override
     public CachedValueProvider.Result<Map<GlobalSearchScope, MembersMap>> compute(@NotNull final PsiClass myClass) {
-      final Map<GlobalSearchScope, MembersMap> map = new ConcurrentFactoryMap<GlobalSearchScope, MembersMap>() {
-        @Nullable
-        @Override
-        protected MembersMap create(GlobalSearchScope resolveScope) {
-          return new MembersMap(myClass, resolveScope);
-        }
-      };
+      Map<GlobalSearchScope, MembersMap> map = ConcurrentFactoryMap.createMap(scope -> new MembersMap(myClass, scope));
       return CachedValueProvider.Result.create(map, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
     }
   }
@@ -511,6 +509,7 @@ public class PsiClassImplUtil {
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.FIELD)) {
       final PsiField fieldByName = aClass.findFieldByName(name, false);
       if (fieldByName != null) {
+        PsiUtilCore.ensureValid(fieldByName);
         processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
         if (!processor.execute(fieldByName, state)) return false;
       }
@@ -522,8 +521,11 @@ public class PsiClassImplUtil {
           boolean resolved = false;
           for (final PsiMember candidateField : list) {
             PsiClass containingClass = candidateField.getContainingClass();
+            PsiUtilCore.ensureValid(candidateField);
             if (containingClass == null) {
-              LOG.error("No class for field " + candidateField.getName() + " of " + candidateField.getClass());
+              PsiElement parent = candidateField.getParent();
+              LOG.error("No class for field " + candidateField.getName() + " of " + candidateField.getClass() + 
+                        ", parent " + parent + " of " + (parent == null ? null : parent.getClass()));
               continue;
             }
 
@@ -548,6 +550,7 @@ public class PsiClassImplUtil {
       if (!(last instanceof PsiReferenceList)) {
         final PsiClass classByName = aClass.findInnerClassByName(name, false);
         if (classByName != null) {
+          PsiUtilCore.ensureValid(classByName);
           processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
           if (!processor.execute(classByName, state)) return false;
         }
@@ -558,6 +561,7 @@ public class PsiClassImplUtil {
           if (list != null) {
             boolean resolved = false;
             for (final PsiMember inner : list) {
+              PsiUtilCore.ensureValid(inner);
               PsiClass containingClass = inner.getContainingClass();
               if (containingClass != null) {
                 processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, containingClass);
@@ -578,6 +582,7 @@ public class PsiClassImplUtil {
           final PsiMethod[] constructors = aClass.getConstructors();
           methodResolverProcessor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
           for (PsiMethod constructor : constructors) {
+            PsiUtilCore.ensureValid(constructor);
             if (!methodResolverProcessor.execute(constructor, state)) return false;
           }
           return true;
@@ -590,6 +595,7 @@ public class PsiClassImplUtil {
         for (final PsiMember candidate : list) {
           ProgressIndicatorProvider.checkCanceled();
           PsiMethod candidateMethod = (PsiMethod)candidate;
+          PsiUtilCore.ensureValid(candidateMethod);
           if (processor instanceof MethodResolverProcessor) {
             if (candidateMethod.isConstructor() != ((MethodResolverProcessor)processor).isConstructor()) continue;
           }
@@ -730,6 +736,7 @@ public class PsiClassImplUtil {
   }
 
   public static List<PsiClassType.ClassResolveResult> getScopeCorrectedSuperTypes(final PsiClass aClass, GlobalSearchScope resolveScope) {
+    PsiUtilCore.ensureValid(aClass);
     return ScopedClassHierarchy.getHierarchy(aClass, resolveScope).getImmediateSupersWithCapturing();
   }
 
@@ -908,7 +915,7 @@ public class PsiClassImplUtil {
         result.add(psiClass);
       }
     }
-    return result.toArray(new PsiClass[result.size()]);
+    return result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -1012,7 +1019,7 @@ public class PsiClassImplUtil {
           result.add((PsiClassType)conjunct);
         }
       }
-      return result.toArray(new PsiClassType[result.size()]);
+      return result.toArray(PsiClassType.EMPTY_ARRAY);
     }
     if (upperBound instanceof PsiClassType) {
       return new PsiClassType[] {(PsiClassType)upperBound};

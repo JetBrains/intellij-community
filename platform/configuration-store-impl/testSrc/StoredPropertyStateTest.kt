@@ -4,24 +4,55 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.loadElement
 import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.CollectionBean
 import org.junit.Test
 
-internal class AState : BaseState() {
+internal class AState(languageLevel: String? = null, nestedComplex: NestedState? = null) : BaseState() {
   @get:Attribute("customName")
-  var languageLevel by storedProperty<String?>()
+  var languageLevel by property(languageLevel)
 
-  var property2 by storedProperty(0)
+  var bar by string()
 
-  var floatProperty by storedProperty(0.3)
+  var property2 by property(0)
 
-  var nestedComplex by storedProperty<NestedState?>()
+  var floatProperty by property(0.3f)
+
+  var nestedComplex by property(nestedComplex)
 }
 
 internal class NestedState : BaseState() {
-  var childProperty by storedProperty<String?>()
+  var childProperty by property<String?>()
 }
 
 class StoredPropertyStateTest {
+  private class Foo : BaseState() {
+    var bar by property<AState>()
+  }
+
+  private class Foo2 : BaseState() {
+    var bar: AState? by property(AState())
+  }
+
+  @Test
+  fun `default null equals to bean with default property values`() {
+    val f1 = Foo()
+    val f2 = Foo()
+    f2.bar = AState()
+
+    assertThat(f1.serialize()).isNull()
+    assertThat(f2.serialize()).isNull()
+  }
+
+  @Test
+  fun `bean with default property values equals to default null`() {
+    val f1 = Foo2()
+    val f2 = Foo2()
+    f2.bar = null
+
+    assertThat(f1.serialize()).isNull()
+    assertThat(f2.serialize()).isNull()
+  }
+
   @Test
   fun test() {
     val state = AState()
@@ -36,6 +67,10 @@ class StoredPropertyStateTest {
     assertThat(state.modificationCount).isEqualTo(1)
 
     assertThat(state).isNotEqualTo(AState())
+
+    val newEqualState = AState()
+    newEqualState.languageLevel = String("foo".toCharArray())
+    assertThat(state).isEqualTo(newEqualState)
 
     assertThat(state.serialize()).isEqualTo("""<AState customName="foo" />""")
     assertThat(loadElement("""<AState customName="foo" />""").deserialize(AState::class.java).languageLevel).isEqualTo("foo")
@@ -57,5 +92,35 @@ class StoredPropertyStateTest {
 
     state.languageLevel = null
     assertThat(state.modificationCount).isEqualTo(4)
+
+    state.copyFrom(AState("foo", nestedState))
+    @Suppress("USELESS_CAST")
+    assertThat(state.languageLevel as String?).isEqualTo("foo")
+    assertThat(state.modificationCount).isEqualTo(5)
+  }
+
+  @Test
+  fun listModificationCount() {
+    class UpdateOptions : BaseState() {
+      @get:CollectionBean
+      val pluginHosts by list<String>()
+    }
+
+    val state = UpdateOptions()
+    val oldModificationCount = state.modificationCount
+
+    val list = state.pluginHosts
+    list.clear()
+    list.addAll(listOf("foo"))
+    assertThat(state.modificationCount).isNotEqualTo(oldModificationCount)
+    assertThat(state.isEqualToDefault()).isFalse()
+
+    val element = state.serialize()
+    assertThat(element).isEqualTo("""
+    <UpdateOptions>
+      <pluginHosts>
+        <item value="foo" />
+      </pluginHosts>
+    </UpdateOptions>""")
   }
 }

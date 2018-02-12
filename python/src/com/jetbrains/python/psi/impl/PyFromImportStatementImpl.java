@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,7 +25,6 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -64,10 +64,6 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   }
 
   public boolean isStarImport() {
-    final PyFromImportStatementStub stub = getStub();
-    if (stub != null) {
-      return stub.isStarImport();
-    }
     return getStarImportElement() != null;
   }
 
@@ -108,7 +104,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
         }
       }
     }
-    return result.toArray(new PyImportElement[result.size()]);
+    return result.toArray(new PyImportElement[0]);
   }
 
   @Nullable
@@ -229,7 +225,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
 
   @Nullable
   public PsiFileSystemItem resolveImportSource() {
-    return as(ContainerUtil.getFirstItem(resolveImportSourceCandidates()), PsiFileSystemItem.class);
+    return FluentIterable.from(resolveImportSourceCandidates()).filter(PsiFileSystemItem.class).first().orNull();
   }
 
   @NotNull
@@ -240,7 +236,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
       final int level = getRelativeLevel();
       if (level > 0) {
         final PsiDirectory upper = ResolveImportUtil.stepBackFrom(getContainingFile().getOriginalFile(), level);
-        return upper == null ? Collections.<PsiElement>emptyList() : Collections.<PsiElement>singletonList(upper);
+        return upper == null ? Collections.emptyList() : Collections.singletonList(upper);
       }
     }
     return ResolveImportUtil.resolveFromImportStatementSource(this, qName);
@@ -267,7 +263,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   @Override
   public Iterable<PyElement> iterateNames() {
     final PyElement resolved = as(resolveImplicitSubModule(), PyElement.class);
-    return resolved != null ? ImmutableList.<PyElement>of(resolved) : Collections.<PyElement>emptyList();
+    return resolved != null ? ImmutableList.of(resolved) : Collections.emptyList();
   }
 
   @NotNull

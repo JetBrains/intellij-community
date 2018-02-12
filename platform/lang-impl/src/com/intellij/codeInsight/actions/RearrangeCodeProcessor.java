@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 
 public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
@@ -62,11 +61,20 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
     super(file.getProject(), file, PROGRESS_TEXT, COMMAND_NAME, false);
   }
 
+  @SuppressWarnings("unused") // Required for compatibility with external plugins.
   public RearrangeCodeProcessor(@NotNull Project project,
                                 @NotNull PsiFile[] files,
                                 @NotNull String commandName,
                                 @Nullable Runnable postRunnable) {
-    super(project, files, PROGRESS_TEXT, commandName, postRunnable, false);
+    this(project, files, commandName, postRunnable, false);
+  }
+
+  public RearrangeCodeProcessor(@NotNull Project project,
+                                @NotNull PsiFile[] files,
+                                @NotNull String commandName,
+                                @Nullable Runnable postRunnable,
+                                boolean processChangedTextOnly) {
+    super(project, files, PROGRESS_TEXT, commandName, postRunnable, processChangedTextOnly);
   }
 
   @NotNull

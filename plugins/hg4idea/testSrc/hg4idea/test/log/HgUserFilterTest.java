@@ -17,7 +17,6 @@ package hg4idea.test.log;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogUserFilterTest;
@@ -91,12 +90,8 @@ public class HgUserFilterTest extends HgPlatformTest {
 
   public static HgLogProvider findLogProvider(@NotNull Project project) {
     List<VcsLogProvider> providers =
-      ContainerUtil.filter(Extensions.getExtensions(VcsLogProvider.LOG_PROVIDER_EP, project), new Condition<VcsLogProvider>() {
-        @Override
-        public boolean value(VcsLogProvider provider) {
-          return provider.getSupportedVcs().equals(HgVcs.getKey());
-        }
-      });
+      ContainerUtil.filter(Extensions.getExtensions(VcsLogProvider.LOG_PROVIDER_EP, project),
+                           provider -> provider.getSupportedVcs().equals(HgVcs.getKey()));
     TestCase.assertEquals("Incorrect number of HgLogProviders", 1, providers.size());
     return (HgLogProvider)providers.get(0);
   }

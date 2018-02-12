@@ -28,11 +28,6 @@ import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 
-/**
- * User: lex
- * Date: Sep 26, 2003
- * Time: 7:35:09 PM
- */
 public class ResumeThreadAction extends DebuggerAction{
   public void actionPerformed(final AnActionEvent e) {
     DebuggerTreeNodeImpl[] selectedNode = getSelectedNodes(e.getDataContext());

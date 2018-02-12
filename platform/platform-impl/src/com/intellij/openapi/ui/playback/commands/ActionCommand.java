@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Ref;
@@ -30,6 +29,8 @@ import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class ActionCommand extends TypeCommand {
   public static final String PREFIX = CMD_PREFIX + "action";
@@ -50,7 +51,7 @@ public class ActionCommand extends TypeCommand {
 
 
     if (!context.isUseDirectActionCall()) {
-      final Shortcut[] sc = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionName);
+      final Shortcut[] sc = getActiveKeymapShortcuts(actionName).getShortcuts();
       KeyStroke stroke = null;
       for (Shortcut each : sc) {
         if (each instanceof KeyboardShortcut) {
@@ -116,7 +117,7 @@ public class ActionCommand extends TypeCommand {
   }
 
   public static InputEvent getInputEvent(String actionName) {
-    final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionName);
+    final Shortcut[] shortcuts = getActiveKeymapShortcuts(actionName).getShortcuts();
     KeyStroke keyStroke = null;
     for (Shortcut each : shortcuts) {
       if (each instanceof KeyboardShortcut) {

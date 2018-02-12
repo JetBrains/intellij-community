@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
@@ -35,6 +23,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGd
 public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
   private static final Key<CachedValue<GrGdkMethodImpl>> CACHED_STATIC = Key.create("Cached static gdk method");
   private static final Key<CachedValue<GrGdkMethodImpl>> CACHED_NON_STATIC = Key.create("Cached instance gdk method");
+
+  private final PsiType myReceiverType;
   private final PsiMethod myMethod;
 
   private GrGdkMethodImpl(PsiMethod method, boolean isStatic, @Nullable String originInfo) {
@@ -47,6 +37,8 @@ public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
     }
 
     final PsiParameter[] originalParameters = method.getParameterList().getParameters();
+    myReceiverType = originalParameters[0].getType();
+
     for (int i = 1; i < originalParameters.length; i++) {
       addParameter(originalParameters[i]);
     }
@@ -58,6 +50,12 @@ public class GrGdkMethodImpl extends LightMethodBuilder implements GrGdkMethod {
     if (originInfo != null) {
       setOriginInfo(originInfo);
     }
+  }
+
+  @NotNull
+  @Override
+  public PsiType getReceiverType() {
+    return myReceiverType;
   }
 
   @Override

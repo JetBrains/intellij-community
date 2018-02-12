@@ -35,7 +35,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.NewInstanceFactory;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.config.*;
-import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -117,6 +116,8 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   public static final IntProperty MAX_STACK_SIZE = new IntProperty("maximumStackSize", 2);
   public static final BooleanProperty VERBOSE = new BooleanProperty("verbose", true);
   public static final BooleanProperty TREE_VIEW = new BooleanProperty("treeView", true);
+  public static final BooleanProperty TREE_VIEW_ANSI_COLOR = new BooleanProperty("treeViewAnsiColor", false);
+  public static final BooleanProperty TREE_VIEW_COLLAPSE_TARGETS = new BooleanProperty("treeViewCollapseTarget", true);
   public static final BooleanProperty CLOSE_ON_NO_ERRORS = new BooleanProperty("viewClosedWhenNoErrors", false);
   public static final StringProperty CUSTOM_JDK_NAME = new StringProperty("customJdkName", "");
   public static final ListProperty<TargetFilter> TARGET_FILTERS = ListProperty.create("targetFilters");
@@ -162,6 +163,8 @@ public class AntBuildFileImpl implements AntBuildFileBase {
     myWorkspaceOptions.registerProperty(RUN_IN_BACKGROUND);
     myWorkspaceOptions.registerProperty(CLOSE_ON_NO_ERRORS);
     myWorkspaceOptions.registerProperty(TREE_VIEW);
+    myWorkspaceOptions.registerProperty(TREE_VIEW_ANSI_COLOR);
+    myWorkspaceOptions.registerProperty(TREE_VIEW_COLLAPSE_TARGETS);
     myWorkspaceOptions.registerProperty(VERBOSE);
     myWorkspaceOptions.registerProperty(TARGET_FILTERS, "filter", NewInstanceFactory.fromClass(TargetFilter.class));
 
@@ -218,6 +221,16 @@ public class AntBuildFileImpl implements AntBuildFileBase {
 
   public boolean isRunInBackground() {
     return RUN_IN_BACKGROUND.value(myAllOptions);
+  }
+
+  @Override
+  public boolean isColoredOutputMessages() {
+    return TREE_VIEW_ANSI_COLOR.value(myWorkspaceOptions);
+  }
+
+  @Override
+  public boolean isCollapseFinishedTargets() {
+    return TREE_VIEW_COLLAPSE_TARGETS.value(myWorkspaceOptions);
   }
 
   @Nullable
@@ -316,6 +329,10 @@ public class AntBuildFileImpl implements AntBuildFileBase {
     DaemonCodeAnalyzer.getInstance(getProject()).restart();
   }
 
+  public void setTreeViewAnsiColor(final boolean value) {
+    TREE_VIEW_ANSI_COLOR.primSet(myAllOptions, value);
+  }
+
   public void setTreeView(final boolean value) {
     TREE_VIEW.primSet(myAllOptions, value);
   }
@@ -391,8 +408,8 @@ public class AntBuildFileImpl implements AntBuildFileBase {
             BuildFileProperty property = properties.next();
             try {
               String value = property.getPropertyValue();
-              value = macroManager.expandSilentMarcos(value, true, context);
-              value = macroManager.expandSilentMarcos(value, false, context);
+              value = macroManager.expandSilentMacros(value, true, context);
+              value = macroManager.expandSilentMacros(value, false, context);
               result.put(property.getPropertyName(), value);
             }
             catch (Macro.ExecutionCancelledException e) {

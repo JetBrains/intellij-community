@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,6 +11,7 @@ import com.intellij.util.containers.StringInterner;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceReader;
+import com.intellij.util.text.StringFactory;
 import org.jdom.*;
 import org.jdom.filter.Filter;
 import org.jdom.input.SAXBuilder;
@@ -50,10 +37,10 @@ import java.util.List;
 /**
  * @author mike
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
+@SuppressWarnings("HardCodedStringLiteral")
 public class JDOMUtil {
   private static final ThreadLocal<SoftReference<SAXBuilder>> ourSaxBuilder = new ThreadLocal<SoftReference<SAXBuilder>>();
-  public static final Condition<Attribute> NOT_EMPTY_VALUE_CONDITION = new Condition<Attribute>() {
+  private static final Condition<Attribute> NOT_EMPTY_VALUE_CONDITION = new Condition<Attribute>() {
     @Override
     public boolean value(Attribute attribute) {
       return !StringUtil.isEmpty(attribute.getValue());
@@ -64,12 +51,7 @@ public class JDOMUtil {
 
   @NotNull
   public static List<Element> getChildren(@Nullable Element parent) {
-    if (parent == null) {
-      return Collections.emptyList();
-    }
-    else {
-      return parent.getChildren();
-    }
+    return parent == null ? Collections.<Element>emptyList() : parent.getChildren();
   }
 
   @NotNull
@@ -96,14 +78,14 @@ public class JDOMUtil {
   /**
    *
    * @param ignoreEmptyAttrValues defines if elements like <element foo="bar" skip_it=""/> and <element foo="bar"/> are 'equal'
-   * @return <code>true</code> if two elements are deep-equals by their content and attributes
+   * @return {@code true} if two elements are deep-equals by their content and attributes
    */
   public static boolean areElementsEqual(@Nullable Element e1, @Nullable Element e2, boolean ignoreEmptyAttrValues) {
     if (e1 == null && e2 == null) return true;
     if (e1 == null || e2 == null) return false;
 
     return Comparing.equal(e1.getName(), e2.getName())
-           && attListsEqual(e1.getAttributes(), e2.getAttributes(), ignoreEmptyAttrValues)
+           && isAttributesEqual(e1.getAttributes(), e2.getAttributes(), ignoreEmptyAttrValues)
            && contentListsEqual(e1.getContent(CONTENT_FILTER), e2.getContent(CONTENT_FILTER), ignoreEmptyAttrValues);
   }
 
@@ -146,10 +128,14 @@ public class JDOMUtil {
   @Deprecated
   public static Element[] getElements(@NotNull Element m) {
     List<Element> list = m.getChildren();
-    return list.toArray(new Element[list.size()]);
+    return list.toArray(new Element[0]);
   }
 
-  public static void internElement(@NotNull Element element, @NotNull StringInterner interner) {
+  /**
+   * Replace all strings in JDOM {@code element} with their interned variants with the help of {@code interner} to reduce memory.
+   * It's better to use {@link #internElement(Element)} though because the latter will intern the Element instances too.
+   */
+  public static void internStringsInElement(@NotNull Element element, @NotNull StringInterner interner) {
     element.setName(interner.intern(element.getName()));
 
     for (Attribute attr : element.getAttributes()) {
@@ -159,7 +145,7 @@ public class JDOMUtil {
 
     for (Content o : element.getContent()) {
       if (o instanceof Element) {
-        internElement((Element)o, interner);
+        internStringsInElement((Element)o, interner);
       }
       else if (o instanceof Text) {
         ((Text)o).setText(interner.intern(o.getValue()));
@@ -223,7 +209,7 @@ public class JDOMUtil {
     return c1 instanceof Element && c2 instanceof Element && areElementsEqual((Element)c1, (Element)c2, ignoreEmptyAttrValues);
   }
 
-  private static boolean attListsEqual(@NotNull List<Attribute> l1, @NotNull List<Attribute> l2, boolean ignoreEmptyAttrValues) {
+  private static boolean isAttributesEqual(@NotNull List<Attribute> l1, @NotNull List<Attribute> l2, boolean ignoreEmptyAttrValues) {
     if (ignoreEmptyAttrValues) {
       l1 = ContainerUtil.filter(l1, NOT_EMPTY_VALUE_CONDITION);
       l2 = ContainerUtil.filter(l2, NOT_EMPTY_VALUE_CONDITION);
@@ -310,6 +296,9 @@ public class JDOMUtil {
     return reader == null ? null : loadDocument(reader).detachRootElement();
   }
 
+  /**
+   * Consider to use `loadElement` (JdomKt.loadElement from java) due to more efficient whitespace handling (cannot be changed here due to backward compatibility).
+   */
   @Contract("null -> null; !null -> !null")
   public static Element load(InputStream stream) throws JDOMException, IOException {
     return stream == null ? null : loadDocument(stream).detachRootElement();
@@ -383,6 +372,18 @@ public class JDOMUtil {
     }
   }
 
+  /**
+   * @deprecated Use {@link #writeDocument(Document, String)} or {@link #writeElement(Element)}}
+   */
+  @NotNull
+  @Deprecated
+  public static byte[] printDocument(@NotNull Document document, String lineSeparator) throws IOException {
+    CharArrayWriter writer = new CharArrayWriter();
+    writeDocument(document, writer, lineSeparator);
+
+    return StringFactory.createShared(writer.toCharArray()).getBytes(CharsetToolkit.UTF8_CHARSET);
+  }
+
   @NotNull
   public static String writeDocument(@NotNull Document document, String lineSeparator) {
     try {
@@ -417,7 +418,10 @@ public class JDOMUtil {
   }
 
   public static void writeElement(@NotNull Element element, Writer writer, String lineSeparator) throws IOException {
-    XMLOutputter xmlOutputter = createOutputter(lineSeparator);
+    writeElement(element, writer, createOutputter(lineSeparator));
+  }
+
+  public static void writeElement(@NotNull Element element, @NotNull Writer writer, @NotNull XMLOutputter xmlOutputter) throws IOException {
     try {
       xmlOutputter.output(element, writer);
     }
@@ -467,7 +471,12 @@ public class JDOMUtil {
 
   @NotNull
   public static XMLOutputter createOutputter(String lineSeparator) {
-    XMLOutputter xmlOutputter = new MyXMLOutputter();
+    return createOutputter(lineSeparator, null);
+  }
+
+  @NotNull
+  public static XMLOutputter createOutputter(String lineSeparator, @Nullable ElementOutputFilter elementOutputFilter) {
+    XMLOutputter xmlOutputter = new MyXMLOutputter(elementOutputFilter);
     Format format = Format.getCompactFormat().
       setIndent("  ").
       setTextMode(Format.TextMode.TRIM).
@@ -539,6 +548,16 @@ public class JDOMUtil {
   }
 
   public static class MyXMLOutputter extends XMLOutputter {
+    private final ElementOutputFilter myElementOutputFilter;
+
+    public MyXMLOutputter(@Nullable ElementOutputFilter filter) {
+      myElementOutputFilter = filter;
+    }
+
+    public MyXMLOutputter() {
+      this(null);
+    }
+
     @Override
     @NotNull
     public String escapeAttributeEntities(@NotNull String str) {
@@ -550,6 +569,17 @@ public class JDOMUtil {
     public String escapeElementEntities(@NotNull String str) {
       return escapeText(str, false, false);
     }
+
+    @Override
+    protected void printElement(Writer out, Element element, int level, NamespaceStack namespaces) throws IOException {
+      if (myElementOutputFilter == null || myElementOutputFilter.accept(element, level)) {
+        super.printElement(out, element, level, namespaces);
+      }
+    }
+  }
+
+  public interface ElementOutputFilter {
+    boolean accept(@NotNull Element element, int level);
   }
 
   private static void printDiagnostics(@NotNull Element element, String prefix) {
@@ -567,7 +597,7 @@ public class JDOMUtil {
 
   @NotNull
   private static ElementInfo getElementInfo(@NotNull Element element) {
-    ElementInfo info = new ElementInfo();
+    boolean hasNullAttributes = false;
     StringBuilder buf = new StringBuilder(element.getName());
     List attributes = element.getAttributes();
     if (attributes != null) {
@@ -583,21 +613,18 @@ public class JDOMUtil {
           buf.append("=");
           buf.append(attr.getValue());
           if (attr.getValue() == null) {
-            info.hasNullAttributes = true;
+            hasNullAttributes = true;
           }
         }
         buf.append("]");
       }
     }
-    info.name = buf.toString();
-    return info;
+    return new ElementInfo(buf, hasNullAttributes);
   }
 
   public static void updateFileSet(@NotNull File[] oldFiles, @NotNull String[] newFilePaths, @NotNull Document[] newFileDocuments, String lineSeparator)
     throws IOException {
     getLogger().assertTrue(newFilePaths.length == newFileDocuments.length);
-
-    ArrayList<String> writtenFilesPaths = new ArrayList<String>();
 
     // check if files are writable
     for (String newFilePath : newFilePaths) {
@@ -612,6 +639,7 @@ public class JDOMUtil {
       }
     }
 
+    List<String> writtenFilesPaths = new ArrayList<String>();
     for (int i = 0; i < newFilePaths.length; i++) {
       String newFilePath = newFilePaths[i];
 
@@ -637,8 +665,13 @@ public class JDOMUtil {
   }
 
   private static class ElementInfo {
-    @NotNull public String name = "";
-    public boolean hasNullAttributes = false;
+    @NotNull final CharSequence name;
+    final boolean hasNullAttributes;
+
+    private ElementInfo(@NotNull CharSequence name, boolean attributes) {
+      this.name = name;
+      hasNullAttributes = attributes;
+    }
   }
 
   public static String getValue(Object node) {
@@ -656,10 +689,107 @@ public class JDOMUtil {
   }
 
   public static boolean isEmpty(@Nullable Element element) {
-    return element == null || (element.getAttributes().isEmpty() && element.getContent().isEmpty());
+    return element == null || element.getAttributes().isEmpty() && element.getContent().isEmpty();
   }
 
   public static boolean isEmpty(@Nullable Element element, int attributeCount) {
-    return element == null || (element.getAttributes().size() == attributeCount && element.getContent().isEmpty());
+    return element == null || element.getAttributes().size() == attributeCount && element.getContent().isEmpty();
+  }
+
+  @Nullable
+  public static Element merge(@Nullable Element to, @Nullable Element from) {
+    if (from == null) {
+      return to;
+    }
+    if (to == null) {
+      return from;
+    }
+
+    for (Iterator<Element> iterator = from.getChildren().iterator(); iterator.hasNext(); ) {
+      Element configuration = iterator.next();
+      iterator.remove();
+      to.addContent(configuration);
+    }
+    for (Iterator<Attribute> iterator = from.getAttributes().iterator(); iterator.hasNext(); ) {
+      Attribute attribute = iterator.next();
+      iterator.remove();
+      to.setAttribute(attribute);
+    }
+    return to;
+  }
+
+  @NotNull
+  public static Element deepMerge(@NotNull Element to, @NotNull Element from) {
+    for (Iterator<Element> iterator = from.getChildren().iterator(); iterator.hasNext(); ) {
+      Element child = iterator.next();
+      iterator.remove();
+
+      Element existingChild = to.getChild(child.getName());
+      if (existingChild != null && isEmpty(existingChild)) {
+        // replace empty tag
+        to.removeChild(child.getName());
+        existingChild = null;
+      }
+
+      // if no children (e.g. `<module fileurl="value" />`), it means that element should be added as list item
+      if (existingChild == null || existingChild.getChildren().isEmpty() || !isAttributesEqual(existingChild.getAttributes(), child.getAttributes(), false)) {
+        to.addContent(child);
+      }
+      else {
+        deepMerge(existingChild, child);
+      }
+    }
+    for (Iterator<Attribute> iterator = from.getAttributes().iterator(); iterator.hasNext(); ) {
+      Attribute attribute = iterator.next();
+      iterator.remove();
+      to.setAttribute(attribute);
+    }
+    return to;
+  }
+
+  private static final JDOMInterner ourJDOMInterner = new JDOMInterner();
+  /**
+   * Interns {@code element} to reduce instance count of many identical Elements created after loading JDOM document to memory.
+   * For example, after interning <pre>{@code
+   * <app>
+   *   <component load="true" isDefault="true" name="comp1"/>
+   *   <component load="true" isDefault="true" name="comp2"/>
+   * </app>}</pre>
+   *
+   * there will be created just one XmlText("\n  ") instead of three for whitespaces between tags,
+   * one Attribute("load=true") instead of two equivalent for each component tag etc.
+   *
+   * <p><h3>Intended usage:</h3>
+   * - When you need to keep some part of JDOM tree in memory, use this method before save the element to some collection,
+   *   E.g.: <pre>{@code
+   *   public void readExternal(final Element element) {
+   *     myStoredElement = JDOMUtil.internElement(element);
+   *   }
+   *   }</pre>
+   * - When you need to save interned element back to JDOM and/or modify/add it, use {@link ImmutableElement#clone()}
+   *   to obtain mutable modifiable Element.
+   *   E.g.: <pre>{@code
+   *   void writeExternal(Element element) {
+   *     for (Attribute a : myStoredElement.getAttributes()) {
+   *       element.setAttribute(a.getName(), a.getValue()); // String getters work as before
+   *     }
+   *     for (Element child : myStoredElement.getChildren()) {
+   *       element.addContent(child.clone()); // need to call clone() before modifying/adding
+   *     }
+   *   }
+   *   }</pre>
+   *
+   * @return interned Element, i.e Element which<br/>
+   * - is the same for equivalent parameters. E.g. two calls of internElement() with {@code <xxx/>} and the other {@code <xxx/>}
+   * will return the same element {@code <xxx/>}<br/>
+   * - getParent() method is not implemented (and will throw exception; interning would not make sense otherwise)<br/>
+   * - is immutable (all modifications methods like setName(), setParent() etc will throw)<br/>
+   * - has {@code clone()} method which will return modifiable org.jdom.Element copy.<br/>
+   *
+   *
+   */
+  @NotNull
+  public static Element internElement(@NotNull Element element) {
+    return ourJDOMInterner.internElement(element);
   }
 }

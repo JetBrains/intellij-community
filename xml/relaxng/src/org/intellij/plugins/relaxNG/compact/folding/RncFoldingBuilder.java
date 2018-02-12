@@ -35,11 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 10.08.2007
- */
 public class RncFoldingBuilder implements FoldingBuilder {
   @Override
   @NotNull
@@ -49,7 +44,7 @@ public class RncFoldingBuilder implements FoldingBuilder {
     process(node, document, regions);
 
     return regions.size() > 0
-            ? regions.toArray(new FoldingDescriptor[regions.size()])
+            ? regions.toArray(FoldingDescriptor.EMPTY)
             : FoldingDescriptor.EMPTY;
   }
 

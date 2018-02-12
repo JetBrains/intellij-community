@@ -36,9 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
-* User: cdr
-*/
 class InjectedSelfElementInfo extends SmartPointerElementInfo {
   private final SmartPsiFileRange myInjectedFileRangeInHostFile;
   @Nullable private final AffixOffsets myAffixOffsets;
@@ -82,25 +79,25 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  public VirtualFile getVirtualFile() {
+  VirtualFile getVirtualFile() {
     PsiElement element = restoreElement();
     if (element == null) return null;
     return element.getContainingFile().getVirtualFile();
   }
 
   @Override
-  public Segment getRange() {
+  Segment getRange() {
     return getInjectedRange(false);
   }
 
   @Nullable
   @Override
-  public Segment getPsiRange() {
+  Segment getPsiRange() {
     return getInjectedRange(true);
   }
 
   @Override
-  public PsiElement restoreElement() {
+  PsiElement restoreElement() {
     PsiFile hostFile = myHostContext.getContainingFile();
     if (hostFile == null || !hostFile.isValid()) return null;
 
@@ -122,16 +119,13 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
                                     @NotNull final TextRange rangeInHostFile) {
     final PsiDocumentManagerBase docManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(getProject());
     final PsiFile[] result = {null};
-    final PsiLanguageInjectionHost.InjectedPsiVisitor visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-      @Override
-      public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-        Document document = docManager.getDocument(injectedPsi);
-        if (document instanceof DocumentWindow) {
-          DocumentWindow window = (DocumentWindow)docManager.getLastCommittedDocument(document);
-          TextRange hostRange = window.injectedToHost(new TextRange(0, injectedPsi.getTextLength()));
-          if (hostRange.contains(rangeInHostFile)) {
-           result[0] = injectedPsi;
-          }
+    final PsiLanguageInjectionHost.InjectedPsiVisitor visitor = (injectedPsi, places) -> {
+      Document document = docManager.getDocument(injectedPsi);
+      if (document instanceof DocumentWindow) {
+        DocumentWindow window = (DocumentWindow)docManager.getLastCommittedDocument(document);
+        TextRange hostRange = window.injectedToHost(new TextRange(0, injectedPsi.getTextLength()));
+        if (hostRange.contains(rangeInHostFile)) {
+         result[0] = injectedPsi;
         }
       }
     };
@@ -139,10 +133,10 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
     Document document = documentManager.getDocument(hostFile);
     if (document != null && documentManager.isUncommited(document)) {
-      for (DocumentWindow documentWindow : InjectedLanguageManager.getInstance(getProject()).getCachedInjectedDocuments(hostFile)) {
+      for (DocumentWindow documentWindow : InjectedLanguageManager.getInstance(getProject()).getCachedInjectedDocumentsInRange(hostFile, rangeInHostFile)) {
         PsiFile injected = documentManager.getPsiFile(documentWindow);
         if (injected != null) {
-          visitor.visit(injected, Collections.<PsiLanguageInjectionHost.Shred>emptyList());
+          visitor.visit(injected, Collections.emptyList());
         }
       }
     }
@@ -151,7 +145,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
       if (injected != null) {
         for (Pair<PsiElement, TextRange> pair : injected) {
           PsiFile injectedFile = pair.first.getContainingFile();
-          visitor.visit(injectedFile, ContainerUtil.<PsiLanguageInjectionHost.Shred>emptyList());
+          visitor.visit(injectedFile, ContainerUtil.emptyList());
         }
       }
     }
@@ -160,16 +154,16 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
+  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
     if (getClass() != other.getClass()) return false;
-    if (!(((InjectedSelfElementInfo)other).myHostContext).equals(myHostContext)) return false;
+    if (!((InjectedSelfElementInfo)other).myHostContext.equals(myHostContext)) return false;
     SmartPointerElementInfo myElementInfo = ((SmartPsiElementPointerImpl)myInjectedFileRangeInHostFile).getElementInfo();
     SmartPointerElementInfo oElementInfo = ((SmartPsiElementPointerImpl)((InjectedSelfElementInfo)other).myInjectedFileRangeInHostFile).getElementInfo();
     return myElementInfo.pointsToTheSameElementAs(oElementInfo);
   }
 
   @Override
-  public PsiFile restoreFile() {
+  PsiFile restoreFile() {
     PsiFile hostFile = myHostContext.getContainingFile();
     if (hostFile == null || !hostFile.isValid()) return null;
 
@@ -214,24 +208,24 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  public void cleanup() {
+  void cleanup() {
     SmartPointerManager.getInstance(getProject()).removePointer(myInjectedFileRangeInHostFile);
   }
 
   @Nullable
   @Override
-  public Document getDocumentToSynchronize() {
+  Document getDocumentToSynchronize() {
     return ((SmartPsiElementPointerImpl)myHostContext).getElementInfo().getDocumentToSynchronize();
   }
 
   @Override
-  public int elementHashCode() {
+  int elementHashCode() {
     return ((SmartPsiElementPointerImpl)myHostContext).getElementInfo().elementHashCode();
   }
 
   @NotNull
   @Override
-  public Project getProject() {
+  Project getProject() {
     return myHostContext.getProject();
   }
 

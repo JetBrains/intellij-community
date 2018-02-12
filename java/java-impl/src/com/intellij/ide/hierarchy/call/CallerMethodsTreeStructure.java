@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy.call;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
@@ -23,11 +9,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -81,7 +66,8 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
 
     final Map<PsiMember, NodeDescriptor> methodToDescriptorMap = new HashMap<>();
     for (final PsiMethod methodToFind : methodsToFind) {
-      final JavaCallHierarchyData data = new JavaCallHierarchyData(originalClass, methodToFind, originalType, method, methodsToFind, descriptor, methodToDescriptorMap, myProject);
+      final JavaCallHierarchyData
+        data = new JavaCallHierarchyData(originalClass, methodToFind, originalType, method, methodsToFind, descriptor, methodToDescriptorMap, myProject);
 
       MethodReferencesSearch.search(methodToFind, searchScope, true).forEach(reference -> {
         for (CallReferenceProcessor processor : CallReferenceProcessor.EP_NAME.getExtensions()) {
@@ -91,7 +77,7 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
       });
     }
 
-    return methodToDescriptorMap.values().toArray(new Object[methodToDescriptorMap.size()]);
+    return ArrayUtil.toObjectArray(methodToDescriptorMap.values());
   }
 
   private static boolean isLocalOrAnonymousClass(PsiMember enclosingElement) {

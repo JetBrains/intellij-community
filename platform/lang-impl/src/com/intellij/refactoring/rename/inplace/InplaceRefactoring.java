@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -78,6 +64,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Query;
+import com.intellij.util.containers.NotNullList;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NonNls;
@@ -91,10 +78,6 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 1/11/12
- */
 public abstract class InplaceRefactoring {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenamer");
   @NonNls protected static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
@@ -147,7 +130,7 @@ public abstract class InplaceRefactoring {
           myElementToRename != null && myElementToRename.getTextRange() != null) {
         myRenameOffset = myEditor.getDocument().createRangeMarker(myElementToRename.getTextRange());
         myRenameOffset.setGreedyToRight(true);
-        myRenameOffset.setGreedyToLeft(true); // todo not sure if we need this
+        myRenameOffset.setGreedyToLeft(true);
       }
     }
   }
@@ -211,7 +194,7 @@ public abstract class InplaceRefactoring {
     myEditor.putUserData(INPLACE_RENAMER, this);
     ourRenamersStack.push(this);
 
-    final List<Pair<PsiElement, TextRange>> stringUsages = new ArrayList<>();
+    final List<Pair<PsiElement, TextRange>> stringUsages = new NotNullList<>();
     collectAdditionalElementsToRename(stringUsages);
     return buildTemplateAndStart(refs, stringUsages, scope, containingFile);
   }
@@ -246,7 +229,7 @@ public abstract class InplaceRefactoring {
     return null;
   }
 
-  protected abstract void collectAdditionalElementsToRename(final List<Pair<PsiElement, TextRange>> stringUsages);
+  protected abstract void collectAdditionalElementsToRename(@NotNull List<Pair<PsiElement, TextRange>> stringUsages);
 
   protected abstract boolean shouldSelectAll();
 
@@ -875,7 +858,7 @@ public abstract class InplaceRefactoring {
     public void beforeTemplateFinished(final TemplateState templateState, Template template) {
       try {
         final TextResult value = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
-        myInsertedName = value != null ? value.toString() : null;
+        myInsertedName = value != null ? value.toString().trim() : null;
 
         TextRange range = templateState.getCurrentVariableRange();
         final int currentOffset = myEditor.getCaretModel().getOffset();

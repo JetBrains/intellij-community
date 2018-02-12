@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public abstract class MoreAction  extends AnAction implements CustomComponentAct
   private final JPanel myPanel;
   private boolean myEnabled;
   private boolean myVisible;
-  private JButton myLoadMoreBtn;
+  private final JButton myLoadMoreBtn;
 
   protected MoreAction() {
     this(LOAD_MORE);
@@ -45,7 +45,7 @@ public abstract class MoreAction  extends AnAction implements CustomComponentAct
     myPanel.setLayout(layout);
     myLoadMoreBtn = new JButton(name);
     myLoadMoreBtn.setMargin(JBUI.insets(2));
-    myLoadMoreBtn.addActionListener(e -> MoreAction.this.actionPerformed(null));
+    myLoadMoreBtn.addActionListener(e -> this.actionPerformed(null));
     myPanel.add(myLoadMoreBtn);
     myLabel = new JLabel("Loading...");
     myLabel.setForeground(UIUtil.getInactiveTextColor());

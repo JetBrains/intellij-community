@@ -25,16 +25,17 @@ import java.util.concurrent.ConcurrentMap;
  */
 
 public class Native2AsciiCharset extends Charset {
+  @SuppressWarnings("SSBasedInspection")
   private static final String[] ALIASES = new String[0];
   private final Charset myBaseCharset;
-  @SuppressWarnings({"HardCodedStringLiteral"}) private static final String NAME_PREFIX = "NATIVE_TO_ASCII_";
-  @SuppressWarnings({"HardCodedStringLiteral"}) private static final String DEFAULT_ENCODING_NAME = "ISO-8859-1";
+  private static final String NAME_PREFIX = "NATIVE_TO_ASCII_";
+  private static final String DEFAULT_ENCODING_NAME = "ISO-8859-1";
 
   private Native2AsciiCharset(String canonicalName) {
     super(canonicalName, ALIASES);
-    String baseCharsetName = canonicalName.substring(NAME_PREFIX.length());
     Charset baseCharset = null;
     try {
+      String baseCharsetName = canonicalName.substring(NAME_PREFIX.length());
       baseCharset = Charset.forName(baseCharsetName);
     }
     catch (IllegalCharsetNameException | UnsupportedCharsetException e) {
@@ -63,7 +64,7 @@ public class Native2AsciiCharset extends Charset {
     return new Native2AsciiCharsetEncoder(this);
   }
 
-  public Charset getBaseCharset() {
+  Charset getBaseCharset() {
     return myBaseCharset;
   }
   public static String makeNative2AsciiEncodingName(String baseCharsetName) {

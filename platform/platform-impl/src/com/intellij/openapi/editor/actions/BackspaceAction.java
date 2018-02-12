@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: May 13, 2002
- * Time: 8:26:04 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.injected.editor.EditorWindow;
@@ -58,11 +50,6 @@ public class BackspaceAction extends TextComponentEditorAction {
   }
 
   private static void doBackSpaceAtCaret(@NotNull Editor editor) {
-    if(editor.getSelectionModel().hasSelection()) {
-      EditorModificationUtil.deleteSelectedText(editor);
-      return;
-    }
-
     VisualPosition caretPosition = editor.getCaretModel().getVisualPosition();
     if (caretPosition.column > 0 &&
         editor.getInlayModel().hasInlineElementAt(new VisualPosition(caretPosition.line, caretPosition.column - 1))) {

@@ -36,6 +36,17 @@ class b  {
   }
 }
 
+class aOuter<E> {
+
+    class Inner {
+        void f(aOuter<E>.Inner t) { t.hashCode();}
+    }
+
+    void f(aOuter.Inner raw) {
+        <warning descr="Unchecked call to 'f(Inner)' as a member of raw type 'aOuter.Inner'">raw.f</warning>(raw);
+    }
+}
+
 class List<T> {
    <V> V[] toArray (V[] vs) { return vs; }
    void add(T t) {

@@ -102,6 +102,8 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                 PyBundle.message("formatter.around.top.level.classes.and.function"), BLANK_LINES);
       consumer.showCustomOption(PyCodeStyleSettings.class, "BLANK_LINES_AFTER_LOCAL_IMPORTS",
                                 PyBundle.message("formatter.after.local.imports"), BLANK_LINES);
+      consumer.showCustomOption(PyCodeStyleSettings.class, "BLANK_LINES_BEFORE_FIRST_METHOD",
+                                PyBundle.message("formatter.before.first.method"), BLANK_LINES);
     }
     else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
       consumer.showStandardOptions("RIGHT_MARGIN",
@@ -162,6 +164,9 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     indentOptions.INDENT_SIZE = 4;
     defaultSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     defaultSettings.KEEP_BLANK_LINES_IN_DECLARATIONS = 1;
+    // Don't set it to 2 -- this setting is used implicitly in a lot of methods related to spacing,
+    // e.g. in SpacingBuilder#blankLines(), and can lead to unexpected side-effects in formatter's
+    // behavior
     defaultSettings.KEEP_BLANK_LINES_IN_CODE = 1;
     return defaultSettings;
   }
@@ -172,59 +177,61 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
   }
 
   @SuppressWarnings("FieldCanBeLocal")
-  private static String SPACING_SETTINGS_PREVIEW = "def settings_preview(argument, key=value):\n" +
-                                                   "    dict = {1:'a', 2:'b', 3:'c'}\n" +
-                                                   "    x = dict[1]\n" +
-                                                   "    expr = (1+2)*3 << 4**5 & 16\n" +
-                                                   "    if expr == 0 or abs(expr) < 0: print('weird'); return\n" +
-                                                   "    settings_preview(key=1)\n" +
-                                                   "\n" +
-                                                   "foo =\\\n" +
-                                                   "    bar\n" +
-                                                   "\n" +
-                                                   "def no_params():\n" +
-                                                   "    return globals()";
+  private static final String SPACING_SETTINGS_PREVIEW = "def settings_preview(argument, key=value):\n" +
+                                                         "    dict = {1:'a', 2:'b', 3:'c'}\n" +
+                                                         "    x = dict[1]\n" +
+                                                         "    expr = (1+2)*3 << 4**5 & 16\n" +
+                                                         "    if expr == 0 or abs(expr) < 0: print('weird'); return\n" +
+                                                         "    settings_preview(key=1)\n" +
+                                                         "\n" +
+                                                         "foo =\\\n" +
+                                                         "    bar\n" +
+                                                         "\n" +
+                                                         "def no_params():\n" +
+                                                         "    return globals()";
 
   @SuppressWarnings("FieldCanBeLocal")
-  private static String BLANK_LINES_SETTINGS_PREVIEW = "import os\n" +
-                                                       "class C(object):\n" +
-                                                       "    x = 1\n" +
-                                                       "    def foo(self):\n" +
-                                                       "        pass";
+  private static final String BLANK_LINES_SETTINGS_PREVIEW = "import os\n" +
+                                                             "class C(object):\n" +
+                                                             "    import sys\n" +
+                                                             "    x = 1\n" +
+                                                             "    def foo(self):\n" +
+                                                             "        import platform\n" +
+                                                             "        print(platform.processor())";
   @SuppressWarnings("FieldCanBeLocal")
-  private static String WRAP_SETTINGS_PREVIEW = "from module import foo, bar, baz, quux\n" +
-                                                "\n" +
-                                                "long_expression = component_one + component_two + component_three + component_four + component_five + component_six\n" +
-                                                "\n" +
-                                                "def xyzzy(long_parameter_1,\n" +
-                                                "long_parameter_2):\n" +
-                                                "    pass\n" +
-                                                "\n" +
-                                                "xyzzy('long_string_constant1',\n" +
-                                                "    'long_string_constant2')\n" +
-                                                "\n" +
-                                                "xyzzy(\n" +
-                                                "    'with',\n" +
-                                                "    'hanging',\n" +
-                                                "      'indent'\n" +
-                                                ")\n" +
-                                                "attrs = [e.attr for e in\n" +
-                                                "    items]\n" +
-                                                "\n" +
-                                                "ingredients = [\n" +
-                                                "    'green',\n" +
-                                                "    'eggs',\n" +
-                                                "]\n" +
-                                                "\n" +
-                                                "if True: pass\n" +
-                                                "\n" +
-                                                "try: pass\n" +
-                                                "finally: pass\n";
+  private static final String WRAP_SETTINGS_PREVIEW = "from module import foo, bar, baz, quux\n" +
+                                                      "\n" +
+                                                      "long_expression = component_one + component_two + component_three + component_four + component_five + component_six\n" +
+                                                      "\n" +
+                                                      "def xyzzy(long_parameter_1,\n" +
+                                                      "long_parameter_2):\n" +
+                                                      "    pass\n" +
+                                                      "\n" +
+                                                      "xyzzy('long_string_constant1',\n" +
+                                                      "    'long_string_constant2')\n" +
+                                                      "\n" +
+                                                      "xyzzy(\n" +
+                                                      "    'with',\n" +
+                                                      "    'hanging',\n" +
+                                                      "      'indent'\n" +
+                                                      ")\n" +
+                                                      "attrs = [e.attr for e in\n" +
+                                                      "    items]\n" +
+                                                      "\n" +
+                                                      "ingredients = [\n" +
+                                                      "    'green',\n" +
+                                                      "    'eggs',\n" +
+                                                      "]\n" +
+                                                      "\n" +
+                                                      "if True: pass\n" +
+                                                      "\n" +
+                                                      "try: pass\n" +
+                                                      "finally: pass\n";
   @SuppressWarnings("FieldCanBeLocal")
-  private static String INDENT_SETTINGS_PREVIEW = "def foo():\n" +
-                                                  "    print 'bar'\n\n" +
-                                                  "def long_function_name(\n" +
-                                                  "        var_one, var_two, var_three,\n" +
-                                                  "        var_four):\n" +
-                                                  "    print(var_one)";
+  private static final String INDENT_SETTINGS_PREVIEW = "def foo():\n" +
+                                                        "    print 'bar'\n\n" +
+                                                        "def long_function_name(\n" +
+                                                        "        var_one, var_two, var_three,\n" +
+                                                        "        var_four):\n" +
+                                                        "    print(var_one)";
 }

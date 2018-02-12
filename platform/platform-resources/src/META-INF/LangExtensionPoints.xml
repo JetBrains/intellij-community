@@ -258,6 +258,7 @@
     <extensionPoint name="definitionsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="definitionsScopedSearch" interface="com.intellij.util.QueryExecutor"/>
 
+    <extensionPoint name="searchScopesProvider" interface="com.intellij.psi.search.SearchScopeProvider" area="IDEA_PROJECT"/>
     <extensionPoint name="searchScopeEnlarger" interface="com.intellij.psi.search.SearchScopeEnlarger"/>
     <extensionPoint name="useScopeEnlarger" interface="com.intellij.psi.search.UseScopeEnlarger"/>
     <extensionPoint name="resolveScopeEnlarger" interface="com.intellij.psi.ResolveScopeEnlarger"/>
@@ -276,6 +277,7 @@
                     interface="com.intellij.navigation.ChooseByNameContributor"/>
     <extensionPoint name="anonymousElementProvider"
                     interface="com.intellij.navigation.AnonymousElementProvider"/>
+    <extensionPoint name="searchEverywhereContributor" interface="com.intellij.ide.actions.SearchEverywhereContributor"/>
 
     <extensionPoint name="gotoRelatedProvider" interface="com.intellij.navigation.GotoRelatedProvider"/>
 
@@ -462,7 +464,7 @@
     <extensionPoint name="runDashboardContributor"
                     interface="com.intellij.execution.dashboard.RunDashboardContributor"/>
     <extensionPoint name="runDashboardGroupingRule"
-                    interface="com.intellij.execution.dashboard.DashboardGroupingRule"/>
+                    interface="com.intellij.execution.dashboard.RunDashboardGroupingRule"/>
 
     <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider"
                     area="IDEA_PROJECT"/>
@@ -567,6 +569,7 @@
     </extensionPoint>
 
     <extensionPoint name="renameInputValidator" interface="com.intellij.refactoring.rename.RenameInputValidator"/>
+    <extensionPoint name="renameFileActionProvider" interface="com.intellij.refactoring.actions.RenameFileActionProvider"/>
 
     <extensionPoint name="findUsagesHandlerFactory" interface="com.intellij.find.findUsages.FindUsagesHandlerFactory" area="IDEA_PROJECT"/>
     <extensionPoint name="customUsageSearcher" interface="com.intellij.find.findUsages.CustomUsageSearcher"/>
@@ -605,6 +608,8 @@
     <extensionPoint name="fileIndentOptionsProvider" interface="com.intellij.psi.codeStyle.FileIndentOptionsProvider"/>
     <extensionPoint name="referenceImporter" interface="com.intellij.codeInsight.daemon.ReferenceImporter"/>
     <extensionPoint name="elementLookupRenderer" interface="com.intellij.codeInsight.lookup.impl.ElementLookupRenderer"/>
+
+    <extensionPoint name="modelScopeItemPresenter" interface="com.intellij.analysis.dialog.ModelScopeItemPresenter" />
 
     <extensionPoint name="qualifiedNameProvider" interface="com.intellij.ide.actions.QualifiedNameProvider"/>
 
@@ -779,7 +784,7 @@
     <extensionPoint name="fileLookupInfoProvider" interface="com.intellij.psi.file.FileLookupInfoProvider"/>
 
     <extensionPoint name="idIndexer" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.psi.impl.cache.impl.id.FileTypeIdIndexer"/>
+      <with attribute="implementationClass" implements="com.intellij.psi.impl.cache.impl.id.IdIndexer"/>
     </extensionPoint>
 
     <extensionPoint name="todoIndexer" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
@@ -825,8 +830,10 @@
     </extensionPoint>
 
     <extensionPoint name="typeName" beanClass="com.intellij.ide.TypeNameEP"/>
-
     <extensionPoint name="typeIcon" beanClass="com.intellij.ide.TypeIconEP"/>
+    <extensionPoint name="presentationProvider" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.ide.presentation.PresentationProvider"/>
+    </extensionPoint>
 
     <extensionPoint name="analyzeStacktraceFilter" interface="com.intellij.execution.filters.Filter" area="IDEA_PROJECT"/>
 
@@ -867,6 +874,8 @@
 
     <extensionPoint name="moduleRendererFactory" interface="com.intellij.ide.util.ModuleRendererFactory"/>
 
+    <extensionPoint name="module.workingDirectoryProvider" interface="com.intellij.openapi.module.WorkingDirectoryProvider"/>
+
     <extensionPoint name="projectStructure.sourceRootEditHandler"
                     interface="com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler"/>
 
@@ -879,6 +888,7 @@
 
     <extensionPoint name="goto.nonProjectScopeDisabler" beanClass="com.intellij.ide.actions.NonProjectScopeDisablerEP"/>
     <extensionPoint name="searchEverywhereClassifier" interface="com.intellij.ide.actions.SearchEverywhereClassifier"/>
+    <extensionPoint name="gotoFileCustomizer" interface="com.intellij.ide.util.gotoByName.GotoFileCustomizer"/>
     <extensionPoint qualifiedName="com.intellij.equivalenceDescriptorProvider"
                     interface="com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider"/>
 
@@ -886,6 +896,9 @@
     <extensionPoint name="inspectionElementsMerger" interface="com.intellij.codeInspection.ex.InspectionElementsMerger"/>
 
     <extensionPoint name="scratch.rootType" interface="com.intellij.ide.scratch.RootType"/>
+    <extensionPoint name="scratch.creationHelper" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.ide.scratch.ScratchFileCreationHelper"/>
+    </extensionPoint>
 
     <extensionPoint name="packageDependencies.visitor" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.packageDependencies.DependencyVisitorFactory"/>
@@ -902,6 +915,16 @@
 
     <extensionPoint name="sdkEditorAdditionalOptionsProvider" interface="com.intellij.openapi.SdkEditorAdditionalOptionsProvider"/>
     <extensionPoint name="metaLanguage" interface="com.intellij.lang.MetaLanguage"/>
+
+    <extensionPoint name="longLineInspectionPolicy" interface="com.intellij.codeInspection.longLine.LongLineInspectionPolicy"/>
+
+    <extensionPoint name="breadcrumbsInfoProvider" interface="com.intellij.ui.breadcrumbs.BreadcrumbsProvider"/>
+    <extensionPoint name="consoleHistoryModelProvider" interface="com.intellij.execution.console.ConsoleHistoryModelProvider"/>
+
+    <extensionPoint name="filetype.prebuiltStubsProvider"
+                    beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.psi.stubs.PrebuiltStubsProvider"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>
 

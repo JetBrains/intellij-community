@@ -16,6 +16,7 @@
 package com.jetbrains.python.packaging;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -35,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -70,7 +72,7 @@ public class PyPackageUtil {
   private static final String INSTALL_REQUIRES = "install_requires";
 
   @NotNull
-  private static final String[] SETUP_PY_REQUIRES_KWARGS_NAMES = new String[] {
+  private static final String[] SETUP_PY_REQUIRES_KWARGS_NAMES = new String[]{
     REQUIRES, INSTALL_REQUIRES, "setup_requires", "tests_require"
   };
 
@@ -154,17 +156,37 @@ public class PyPackageUtil {
   private static List<PyRequirement> getSetupPyRequiresFromArguments(@NotNull Module module,
                                                                      @NotNull PyCallExpression setupCall,
                                                                      @NotNull String... argumentNames) {
-    return PyRequirement.fromText(
-      Stream
-        .of(argumentNames)
-        .map(setupCall::getKeywordArgument)
-        .map(requires -> resolveRequiresValue(module, requires))
-        .filter(requires -> requires != null)
-        .flatMap(requires -> Stream.of(requires.getElements()))
-        .filter(PyStringLiteralExpression.class::isInstance)
-        .map(requirement -> ((PyStringLiteralExpression)requirement).getStringValue())
-        .collect(Collectors.joining("\n"))
+    return fix(
+      PyRequirement.fromText(
+        Stream
+          .of(argumentNames)
+          .map(setupCall::getKeywordArgument)
+          .map(requires -> resolveRequiresValue(module, requires))
+          .filter(requires -> requires != null)
+          .flatMap(requires -> Stream.of(requires.getElements()))
+          .filter(PyStringLiteralExpression.class::isInstance)
+          .map(requirement -> ((PyStringLiteralExpression)requirement).getStringValue())
+          .collect(Collectors.joining("\n"))
+      )
     );
+  }
+
+  /**
+   * @deprecated This method will be removed in 2018.2.
+   */
+  @NotNull
+  @Deprecated
+  public static PyRequirement fix(@NotNull PyRequirement requirement) {
+    return requirement.withVersionComparator(PyPackageVersionComparator.getSTR_COMPARATOR());
+  }
+
+  /**
+   * @deprecated This method will be removed in 2018.2.
+   */
+  @NotNull
+  @Deprecated
+  public static List<PyRequirement> fix(@NotNull List<PyRequirement> requirements) {
+    return ContainerUtil.map(requirements, PyPackageUtil::fix);
   }
 
   @NotNull
@@ -279,24 +301,37 @@ public class PyPackageUtil {
     }.withSshContribution(true).withVagrantContribution(true).withWebDeploymentContribution(true).check(sdk);
   }
 
-  @Nullable
+  /**
+   * Refresh the list of installed packages inside the specified SDK if it hasn't been updated yet
+   * displaying modal progress bar in the process, return cached packages otherwise.
+   * <p>
+   * Note that <strong>you shall never call this method from a write action</strong>, since such modal
+   * tasks are executed directly on EDT and network operations on the dispatch thread are prohibited
+   * (see the implementation of ApplicationImpl#runProcessWithProgressSynchronously() for details).
+   */
+  @NotNull
   public static List<PyPackage> refreshAndGetPackagesModally(@NotNull Sdk sdk) {
+
+    final Application app = ApplicationManager.getApplication();
+    assert !(app.isWriteAccessAllowed()) :
+      "This method can't be called on WriteAction because " +
+      "refreshAndGetPackages would be called on AWT thread in this case (see runProcessWithProgressSynchronously) " +
+      "and may lead to freeze";
+
+
     final Ref<List<PyPackage>> packagesRef = Ref.create();
     @SuppressWarnings("ThrowableInstanceNeverThrown") final Throwable callStacktrace = new Throwable();
     LOG.debug("Showing modal progress for collecting installed packages", new Throwable());
     PyUtil.runWithProgress(null, PyBundle.message("sdk.scanning.installed.packages"), true, false, indicator -> {
       indicator.setIndeterminate(true);
       try {
-        packagesRef.set(PyPackageManager.getInstance(sdk).refreshAndGetPackages(false));
+        final PyPackageManager manager = PyPackageManager.getInstance(sdk);
+        packagesRef.set(manager.refreshAndGetPackages(false));
       }
       catch (ExecutionException e) {
-        if (LOG.isDebugEnabled()) {
-          e.initCause(callStacktrace);
-          LOG.debug(e);
-        }
-        else {
-          LOG.warn(e.getMessage());
-        }
+        packagesRef.set(Collections.emptyList());
+        e.initCause(callStacktrace);
+        LOG.warn(e);
       }
     });
     return packagesRef.get();
@@ -305,7 +340,7 @@ public class PyPackageUtil {
   /**
    * Run unconditional update of the list of packages installed in SDK. Normally only one such of updates should run at time.
    * This behavior in enforced by the parameter isUpdating.
-   * 
+   *
    * @param manager    package manager for SDK
    * @param isUpdating flag indicating whether another refresh is already running
    * @return whether packages were refreshed successfully, e.g. this update wasn't cancelled because of another refresh in progress
@@ -328,7 +363,7 @@ public class PyPackageUtil {
     }
     return true;
   }
-  
+
 
   @Nullable
   public static PyPackage findPackage(@NotNull List<PyPackage> packages, @NotNull String name) {
@@ -349,7 +384,7 @@ public class PyPackageUtil {
   public static List<PyRequirement> getRequirementsFromTxt(@NotNull Module module) {
     final VirtualFile requirementsTxt = findRequirementsTxt(module);
     if (requirementsTxt != null) {
-      return PyRequirement.fromFile(requirementsTxt);
+      return fix(PyRequirement.fromFile(requirementsTxt));
     }
     return null;
   }

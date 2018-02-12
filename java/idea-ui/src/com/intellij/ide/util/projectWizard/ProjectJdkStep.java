@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 16-Aug-2006
- * Time: 18:01:13
- */
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
@@ -39,7 +33,6 @@ import java.awt.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 21, 2004
  */
 public class ProjectJdkStep extends ModuleWizardStep {
   private final WizardContext myContext;

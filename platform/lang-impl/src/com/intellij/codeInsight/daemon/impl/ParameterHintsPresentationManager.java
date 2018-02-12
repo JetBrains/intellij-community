@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.Disposable;
@@ -24,32 +10,24 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
 import java.awt.*;
-import java.awt.font.FontRenderContext;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
 public class ParameterHintsPresentationManager implements Disposable {
-  private static final Key<Boolean> PINNED = Key.create("parameter.hint.pinned");
-  private static final Key<MyFontMetrics> HINT_FONT_METRICS = Key.create("ParameterHintFontMetrics");
   private static final Key<AnimationStep> ANIMATION_STEP = Key.create("ParameterHintAnimationStep");
 
   private static final int ANIMATION_STEP_MS = 25;
   private static final int ANIMATION_CHARS_PER_STEP = 3;
-  private static final float BACKGROUND_ALPHA = 0.55f;
 
   private final Alarm myAlarm = new Alarm(this);
 
@@ -64,40 +42,68 @@ public class ParameterHintsPresentationManager implements Disposable {
     return inlay.getRenderer() instanceof MyRenderer;
   }
 
-  public boolean isPinned(@NotNull Inlay inlay) {
-    return Boolean.TRUE.equals(inlay.getUserData(PINNED));
-  }
-
-  public void unpin(@NotNull Inlay inlay) {
-    inlay.putUserData(PINNED, null);
-  }
-
   public String getHintText(@NotNull Inlay inlay) {
     EditorCustomElementRenderer renderer = inlay.getRenderer();
     return renderer instanceof MyRenderer ? ((MyRenderer)renderer).getText() : null;
   }
 
-  public Inlay addHint(@NotNull Editor editor, int offset, @NotNull String hintText, boolean useAnimation, boolean pinned) {
+  public Inlay addHint(@NotNull Editor editor, int offset, boolean relatesToPrecedingText, @NotNull String hintText, boolean useAnimation) {
     MyRenderer renderer = new MyRenderer(editor, hintText, useAnimation);
-    Inlay inlay = editor.getInlayModel().addInlineElement(offset, renderer);
+    Inlay inlay = editor.getInlayModel().addInlineElement(offset, relatesToPrecedingText, renderer);
     if (inlay != null) {
-      if (pinned) inlay.putUserData(PINNED, Boolean.TRUE);
       if (useAnimation) scheduleRendererUpdate(editor, inlay);
     }
     return inlay;
   }
 
-  public void deleteHint(@NotNull Editor editor, @NotNull Inlay hint) {
-    updateRenderer(editor, hint, null);
+  public void deleteHint(@NotNull Editor editor, @NotNull Inlay hint, boolean useAnimation) {
+    if (useAnimation) {
+      updateRenderer(editor, hint, null);
+    }
+    else {
+      Disposer.dispose(hint);  
+    }
   }
 
   public void replaceHint(@NotNull Editor editor, @NotNull Inlay hint, @NotNull String newText) {
     updateRenderer(editor, hint, newText);
   }
 
+  public void setHighlighted(@NotNull Inlay hint, boolean highlighted) {
+    if (!isParameterHint(hint)) throw new IllegalArgumentException("Not a parameter hint");
+    MyRenderer renderer = (MyRenderer)hint.getRenderer();
+    boolean oldValue = renderer.highlighted;
+    if (highlighted != oldValue) {
+      renderer.highlighted = highlighted;
+      hint.repaint();
+    }
+  }
+
+  public boolean isHighlighted(@NotNull Inlay hint) {
+    if (!isParameterHint(hint)) throw new IllegalArgumentException("Not a parameter hint");
+    MyRenderer renderer = (MyRenderer)hint.getRenderer();
+    return renderer.highlighted;
+  }
+
+  public void setCurrent(@NotNull Inlay hint, boolean current) {
+    if (!isParameterHint(hint)) throw new IllegalArgumentException("Not a parameter hint");
+    MyRenderer renderer = (MyRenderer)hint.getRenderer();
+    boolean oldValue = renderer.current;
+    if (current != oldValue) {
+      renderer.current = current;
+      hint.repaint();
+    }
+  }
+
+  public boolean isCurrent(@NotNull Inlay hint) {
+    if (!isParameterHint(hint)) throw new IllegalArgumentException("Not a parameter hint");
+    MyRenderer renderer = (MyRenderer)hint.getRenderer();
+    return renderer.current;
+  }
+
   private void updateRenderer(@NotNull Editor editor, @NotNull Inlay hint, @Nullable String newText) {
     MyRenderer renderer = (MyRenderer)hint.getRenderer();
-    renderer.update(editor, newText);
+    renderer.update(editor, newText, true);
     hint.updateSize();
     scheduleRendererUpdate(editor, hint);
   }
@@ -127,62 +133,30 @@ public class ParameterHintsPresentationManager implements Disposable {
     return editor.getUserData(ANIMATION_STEP) != null;
   }
 
-  private static Font getFont(@NotNull Editor editor) {
-    return getFontMetrics(editor).getFont();
-  }
-
-  private static MyFontMetrics getFontMetrics(@NotNull Editor editor) {
-    String familyName = UIManager.getFont("Label.font").getFamily();
-    int size = Math.max(1, editor.getColorsScheme().getEditorFontSize() - 1);
-    MyFontMetrics metrics = editor.getUserData(HINT_FONT_METRICS);
-    if (metrics != null) {
-      Font font = metrics.getFont();
-      if (!familyName.equals(font.getFamily()) || size != font.getSize()) metrics = null;
-      else {
-        FontRenderContext currentContext = FontInfo.getFontRenderContext(editor.getContentComponent());
-        if (currentContext.equals(metrics.metrics.getFontRenderContext())) metrics = null;
-      }
-    }
-    if (metrics == null) {
-      Font font = new Font(familyName, Font.PLAIN, size);
-      metrics = new MyFontMetrics(editor, font);
-      editor.putUserData(HINT_FONT_METRICS, metrics);
-    }
-    return metrics;
-  }
-
-  private static class MyFontMetrics {
-    private final FontMetrics metrics;
-    private final int lineHeight;
-
-    private MyFontMetrics(Editor editor, Font font) {
-      metrics = editor.getContentComponent().getFontMetrics(font);
-      // We assume this will be a better approximation to a real line height for a given font
-      lineHeight = (int)Math.ceil(font.createGlyphVector(metrics.getFontRenderContext(), "Ap").getVisualBounds().getHeight());
-    }
-
-    private Font getFont() {
-      return metrics.getFont();
-    }
-  }
-
-  private static class MyRenderer implements EditorCustomElementRenderer {
-    private String myText; // text with colon as a suffix
+  private static class MyRenderer extends HintRenderer {
     private int startWidth;
     private int steps;
     private int step;
+    private boolean highlighted;
+    private boolean current;
 
     private MyRenderer(Editor editor, String text, boolean animated) {
-      updateState(editor, text);
-      if (!animated) step = steps + 1;
+      super(text);
+      updateState(editor, text, animated);
     }
 
-    private String getText() {
-      return myText;
+    public void update(Editor editor, String newText, boolean animated) {
+      updateState(editor, newText, animated);
     }
 
-    public void update(Editor editor, String newText) {
-      updateState(editor, newText);
+    @Nullable
+    @Override
+    protected TextAttributes getTextAttributes(@NotNull Editor editor) {
+      if (step > steps || startWidth != 0) {
+        return editor.getColorsScheme().getAttributes(highlighted ? DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED
+                                                                  : DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
+      }
+      return null;
     }
 
     @Nullable
@@ -191,13 +165,13 @@ public class ParameterHintsPresentationManager implements Disposable {
       return "ParameterNameHints";
     }
 
-    private void updateState(Editor editor, String text) {
-      FontMetrics metrics = getFontMetrics(editor).metrics;
-      startWidth = doCalcWidth(myText, metrics);
-      myText = text;
-      int endWidth = doCalcWidth(myText, metrics);
-      step = 1;
+    private void updateState(Editor editor, String text, boolean animated) {
+      FontMetrics metrics = getFontMetrics(editor).getMetrics();
+      startWidth = doCalcWidth(getText(), metrics);
+      setText(text);
+      int endWidth = doCalcWidth(getText(), metrics);
       steps = Math.max(1, Math.abs(endWidth - startWidth) / metrics.charWidth('a') / ANIMATION_CHARS_PER_STEP);
+      step = animated ? 1 : steps + 1;
     }
     
     public boolean nextStep() {
@@ -206,41 +180,25 @@ public class ParameterHintsPresentationManager implements Disposable {
 
     @Override
     public int calcWidthInPixels(@NotNull Editor editor) {
-      FontMetrics metrics = getFontMetrics(editor).metrics;
-      int endWidth = doCalcWidth(myText, metrics);
+      int endWidth = super.calcWidthInPixels(editor);
       return step <= steps ? Math.max(1, startWidth + (endWidth - startWidth) / steps * step) : endWidth;
     }
 
-    private static int doCalcWidth(@Nullable String text, @NotNull FontMetrics fontMetrics) {
-      return text == null ? 0 : fontMetrics.stringWidth(text) + 14;
-    }
-
     @Override
-    public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
-      if (myText != null && (step > steps || startWidth != 0)) {
-        TextAttributes attributes = editor.getColorsScheme().getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
-        if (attributes != null) {
-          MyFontMetrics fontMetrics = getFontMetrics(editor);
-          Color backgroundColor = attributes.getBackgroundColor();
-          if (backgroundColor != null) {
-            GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-            GraphicsUtil.paintWithAlpha(g, BACKGROUND_ALPHA);
-            g.setColor(backgroundColor);
-            int gap = r.height < (fontMetrics.lineHeight + 2) ? 1 : 2;
-            g.fillRoundRect(r.x + 2, r.y + gap, r.width - 4, r.height - gap * 2, 8, 8);
-            config.restore();
-          }
-          Color foregroundColor = attributes.getForegroundColor();
-          if (foregroundColor != null) {
-            g.setColor(foregroundColor);
-            g.setFont(getFont(editor));
-            Shape savedClip = g.getClip();
-            g.clipRect(r.x + 3, r.y + 2, r.width - 6, r.height - 4);
-            int editorAscent = editor instanceof EditorImpl ? ((EditorImpl)editor).getAscent() : 0;
-            FontMetrics metrics = fontMetrics.metrics;
-            g.drawString(myText, r.x + 7, r.y + Math.max(editorAscent, (r.height + metrics.getAscent() - metrics.getDescent()) / 2) - 1);
-            g.setClip(savedClip);
-          }
+    protected void paintExtraEffect(@NotNull Editor editor,
+                                    @NotNull Graphics g,
+                                    @NotNull Rectangle r,
+                                    @NotNull TextAttributes textAttributes,
+                                    int gap) {
+      if (current) {
+        Color borderClr = editor.getColorsScheme().getColor(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_SELECTION_BORDER);
+        if (borderClr != null) {
+          g.setColor(borderClr);
+          Graphics2D g2d = (Graphics2D)g;
+          Object savedHint = g2d.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+          g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+          g.drawRoundRect(r.x + 2, r.y + gap, r.width - 4, r.height - gap * 2, 8, 8);
+          g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, savedHint);
         }
       }
     }

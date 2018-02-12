@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
  * as decorator. In {@code @foo(...)} form, these very methods are related to the call that returns the decorator
  * to be applied. In either case, they are related to an invocation of {@code foo}.
  * User: dcheryasov
- * Date: Sep 26, 2008
  */
 public interface PyDecorator extends PyCallExpression, StubBasedPsiElement<PyDecoratorStub> {
   /**
@@ -38,7 +37,7 @@ public interface PyDecorator extends PyCallExpression, StubBasedPsiElement<PyDec
   PyFunction getTarget();
 
   /**
-   * True if the annotating function is a builtin, useful togeter with getName(). Implementation uses stub info.
+   * True if the annotating function is a builtin, useful together with getName(). Implementation uses stub info.
    * @see com.jetbrains.python.psi.PyElement#getName()
    */
   boolean isBuiltin();

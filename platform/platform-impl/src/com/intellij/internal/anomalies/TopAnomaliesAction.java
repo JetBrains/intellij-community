@@ -32,9 +32,6 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
 
-/**
- * User: Vassiliy.Kudryashov
- */
 public class TopAnomaliesAction extends ActionGroup {
   private static final Comparator<Pair<?, Integer>> COMPARATOR = (o1, o2) -> {
     int i = o2.getSecond() - o1.getSecond();
@@ -173,7 +170,7 @@ public class TopAnomaliesAction extends ActionGroup {
     }
   };
 
-  private static ResettableAction[] CHILDREN = {TOP_PARENTS, TOP_UI_PROPERTIES, RESET_THEM_ALL};
+  private static final ResettableAction[] CHILDREN = {TOP_PARENTS, TOP_UI_PROPERTIES, RESET_THEM_ALL};
 
   @Override
   public void update(AnActionEvent e) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -28,10 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ChangeToCStyleCommentIntention extends Intention {
-
-  private static final Class<PsiWhiteSpace>[] WHITESPACE_CLASS =
-    new Class[]{PsiWhiteSpace.class};
-
   @Override
   @NotNull
   protected PsiElementPredicate getElementPredicate() {
@@ -39,32 +34,25 @@ public class ChangeToCStyleCommentIntention extends Intention {
   }
 
   @Override
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element) {
     PsiComment firstComment = (PsiComment)element;
     while (true) {
-      final PsiElement prevComment =
-        PsiTreeUtil.skipSiblingsBackward(firstComment,
-                                         WHITESPACE_CLASS);
+      final PsiElement prevComment = PsiTreeUtil.skipWhitespacesBackward(firstComment);
       if (!isEndOfLineComment(prevComment)) {
         break;
       }
-      assert prevComment != null;
       firstComment = (PsiComment)prevComment;
     }
-    final JavaPsiFacade psiFacade =
-      JavaPsiFacade.getInstance(element.getProject());
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(element.getProject());
     final PsiElementFactory factory = psiFacade.getElementFactory();
     final List<PsiComment> multiLineComments = new ArrayList<>();
     PsiElement nextComment = firstComment;
     String whiteSpace = null;
     while (true) {
-      nextComment = PsiTreeUtil.skipSiblingsForward(nextComment,
-                                                    WHITESPACE_CLASS);
+      nextComment = PsiTreeUtil.skipWhitespacesForward(nextComment);
       if (!isEndOfLineComment(nextComment)) {
         break;
       }
-      assert nextComment != null;
       if (whiteSpace == null) {
         final PsiElement prevSibling = nextComment.getPrevSibling();
         assert prevSibling != null;

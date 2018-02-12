@@ -21,6 +21,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.impl.FocusRequestInfo;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
@@ -97,6 +98,7 @@ public class FocusTracesDialog extends DialogWrapper {
     myRequestsTable.changeSelection(0, 0, false, true);
 
     consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
+    Disposer.register(getDisposable(), consoleView);
 
     init();
   }

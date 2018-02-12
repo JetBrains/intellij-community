@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ui.debugger.extensions;
 
@@ -80,7 +66,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
   private final JTextField myCurrentScript = new JTextField();
 
-  private VirtualFileAdapter myVfsListener;
+  private VirtualFileListener myVfsListener;
 
   private boolean myChanged;
 
@@ -103,7 +89,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     controlGroup.add(new StopAction());
 
     JPanel north = new JPanel(new BorderLayout());
-    north.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, controlGroup, true).getComponent(), BorderLayout.WEST);
+    north.add(ActionManager.getInstance().createActionToolbar("PlaybackDbg", controlGroup, true).getComponent(), BorderLayout.WEST);
 
     final JPanel right = new JPanel(new BorderLayout());
     right.add(myCurrentScript, BorderLayout.CENTER);
@@ -121,7 +107,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     newScriptAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("control N")), myComponent);
     fsGroup.add(newScriptAction);
 
-    final ActionToolbar tb = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, fsGroup, true);
+    final ActionToolbar tb = ActionManager.getInstance().createActionToolbar("PlaybackDbgExtra", fsGroup, true);
     tb.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     right.add(tb.getComponent(), BorderLayout.EAST);
     north.add(right, BorderLayout.CENTER);
@@ -156,7 +142,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
     myComponent.add(script2Log, BorderLayout.CENTER);
 
-    myVfsListener = new VirtualFileAdapter() {
+    myVfsListener = new VirtualFileListener() {
       @Override
       public void contentsChanged(@NotNull VirtualFileEvent event) {
         final VirtualFile file = pathToFile();
@@ -341,13 +327,9 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     final Component c = ((WindowManagerEx)WindowManager.getInstance()).getFocusedComponent(frame);
 
     if (c != null) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(c, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(c, true));
     } else {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(frame, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(frame, true));
     }
 
     //noinspection SSBasedInspection
@@ -355,7 +337,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
 
   }
 
-  private IdeFrameImpl getFrame() {
+  private static IdeFrameImpl getFrame() {
     final Frame[] all = Frame.getFrames();
     for (Frame each : all) {
       if (each instanceof IdeFrame) {
@@ -481,7 +463,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
     }
 
     @Override
-    public void loadState(PlaybackDebuggerState state) {
+    public void loadState(@NotNull PlaybackDebuggerState state) {
       XmlSerializerUtil.copyBean(state, this);
     }
   }

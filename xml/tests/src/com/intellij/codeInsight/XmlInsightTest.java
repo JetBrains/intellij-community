@@ -26,7 +26,7 @@ import com.intellij.xml.XmlNSDescriptor;
  * @author Mike
  */
 public class XmlInsightTest extends LightPlatformTestCase {
-  public void testDocumentDescriptor1() throws Exception {
+  public void testDocumentDescriptor1() {
     XmlFile file = createFile("<root><a></a><b></b><a></a></root>");
     XmlNSDescriptor descriptor = createDescriptor(file);
 
@@ -47,7 +47,7 @@ public class XmlInsightTest extends LightPlatformTestCase {
     assertEquals("a", element.getName());
   }
 
-  public void testElementDescriptor1() throws Exception {
+  public void testElementDescriptor1() {
     XmlFile file = createFile("<root><a></a><b></b><a></a></root>");
     XmlNSDescriptor descriptor = createDescriptor(file);
 
@@ -61,7 +61,7 @@ public class XmlInsightTest extends LightPlatformTestCase {
     assertEquals("b", elements[1].getName());
   }
 
-  public void testElementDescriptor2() throws Exception {
+  public void testElementDescriptor2() {
     XmlFile file = createFile("<root><a><b/></a><a><c/></a></root>");
     XmlNSDescriptor descriptor = createDescriptor(file);
 
@@ -76,7 +76,7 @@ public class XmlInsightTest extends LightPlatformTestCase {
     assertEquals("c", elements[1].getName());
   }
 
-  public void testElementDescriptor3() throws Exception {
+  public void testElementDescriptor3() {
     XmlFile file = createFile("<root><a><b/><c></c></a><a><c/></a></root>");
     XmlNSDescriptor descriptor = createDescriptor(file);
 
@@ -94,7 +94,7 @@ public class XmlInsightTest extends LightPlatformTestCase {
     //assertTrue(elements[1].getContentType() == XmlElementDescriptor.CONTENT_TYPE_CHILDREN);
   }
 
-  public void testElementDescriptor4() throws Exception {
+  public void testElementDescriptor4() {
     XmlFile file = createFile("<root><a attr2=''></a><a attr1=''></a></root>");
     XmlNSDescriptor descriptor = createDescriptor(file);
 
@@ -109,7 +109,7 @@ public class XmlInsightTest extends LightPlatformTestCase {
     assertEquals("attr2", attributes[1].getName());
   }
 
-  public void testAttributeDescriptor1() throws Exception {
+  public void testAttributeDescriptor1() {
     XmlFile file = createFile("<root><a attr1=''></a><a attr2='' attr1=''></a></root>");
     XmlNSDescriptor descriptor = createDescriptor(file);
 
@@ -126,7 +126,7 @@ public class XmlInsightTest extends LightPlatformTestCase {
     assertTrue(!attributes[1].isRequired());
   }
 
-  public void testAttributeDescriptor2() throws Exception {
+  public void testAttributeDescriptor2() {
     XmlFile file = createFile("<root><a c='' a=''></a></root>");
     XmlNSDescriptor descriptor = createDescriptor(file);
 

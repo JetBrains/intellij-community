@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.appengine.inspections;
 
 import com.intellij.appengine.facet.AppEngineFacet;
@@ -40,7 +26,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class AppEngineForbiddenCodeInspection extends BaseJavaLocalInspectionTool {
+public class AppEngineForbiddenCodeInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Override
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
@@ -137,7 +123,7 @@ public class AppEngineForbiddenCodeInspection extends BaseJavaLocalInspectionToo
         super.visitReferenceElement(reference);
       }
     });
-    return problems.toArray(new ProblemDescriptor[problems.size()]);
+    return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   private static boolean isNativeMethodAllowed(PsiMethod method) {

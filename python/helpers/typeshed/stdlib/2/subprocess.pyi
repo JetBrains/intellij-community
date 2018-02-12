@@ -2,65 +2,73 @@
 
 # Based on http://docs.python.org/2/library/subprocess.html and Python 3 stub
 
-from typing import Sequence, Any, AnyStr, Mapping, Callable, Tuple, IO, Union, Optional
+from typing import Sequence, Any, Mapping, Callable, Tuple, IO, Union, Optional, List, Text
 
-_FILE = Union[int, IO[Any]]
+_FILE = Union[None, int, IO[Any]]
+_TXT = Union[bytes, Text]
+_CMD = Union[_TXT, Sequence[_TXT]]
+_ENV = Union[Mapping[bytes, _TXT], Mapping[Text, _TXT]]
 
 # Same args as Popen.__init__
-def call(args: Union[str, Sequence[str]],
+def call(args: _CMD,
          bufsize: int = ...,
-         executable: str = ...,
+         executable: _TXT = ...,
          stdin: _FILE = ...,
          stdout: _FILE = ...,
          stderr: _FILE = ...,
          preexec_fn: Callable[[], Any] = ...,
          close_fds: bool = ...,
          shell: bool = ...,
-         cwd: str = ...,
-         env: Mapping[str, str] = ...,
+         cwd: _TXT = ...,
+         env: _ENV = ...,
          universal_newlines: bool = ...,
          startupinfo: Any = ...,
          creationflags: int = ...) -> int: ...
 
-def check_call(args: Union[str, Sequence[str]],
+def check_call(args: _CMD,
                bufsize: int = ...,
-               executable: str = ...,
+               executable: _TXT = ...,
                stdin: _FILE = ...,
                stdout: _FILE = ...,
                stderr: _FILE = ...,
                preexec_fn: Callable[[], Any] = ...,
                close_fds: bool = ...,
                shell: bool = ...,
-               cwd: str = ...,
-               env: Mapping[str, str] = ...,
+               cwd: _TXT = ...,
+               env: _ENV = ...,
                universal_newlines: bool = ...,
                startupinfo: Any = ...,
                creationflags: int = ...) -> int: ...
 
 # Same args as Popen.__init__ except for stdout
-def check_output(args: Union[str, Sequence[str]],
+def check_output(args: _CMD,
                  bufsize: int = ...,
-                 executable: str = ...,
+                 executable: _TXT = ...,
                  stdin: _FILE = ...,
                  stderr: _FILE = ...,
                  preexec_fn: Callable[[], Any] = ...,
                  close_fds: bool = ...,
                  shell: bool = ...,
-                 cwd: str = ...,
-                 env: Mapping[str, str] = ...,
+                 cwd: _TXT = ...,
+                 env: _ENV = ...,
                  universal_newlines: bool = ...,
                  startupinfo: Any = ...,
-                 creationflags: int = ...) -> str: ...
+                 creationflags: int = ...) -> bytes: ...
 
 PIPE = ...  # type: int
 STDOUT = ...  # type: int
 
 class CalledProcessError(Exception):
     returncode = 0
-    cmd = ...  # type: str
-    output = ...  # type: str  # May be None
+    # morally: _CMD
+    cmd = ...  # type: Any
+    # morally: Optional[bytes]
+    output = ...  # type: Any
 
-    def __init__(self, returncode: int, cmd: str, output: Optional[str] = ...) -> None: ...
+    def __init__(self,
+                 returncode: int,
+                 cmd: _CMD,
+                 output: Optional[bytes] = ...) -> None: ...
 
 class Popen:
     stdin = ...  # type: Optional[IO[Any]]
@@ -70,32 +78,30 @@ class Popen:
     returncode = 0
 
     def __init__(self,
-                 args: Union[str, Sequence[str]],
+                 args: _CMD,
                  bufsize: int = ...,
-                 executable: Optional[str] = ...,
+                 executable: Optional[_TXT] = ...,
                  stdin: Optional[_FILE] = ...,
                  stdout: Optional[_FILE] = ...,
                  stderr: Optional[_FILE] = ...,
                  preexec_fn: Optional[Callable[[], Any]] = ...,
                  close_fds: bool = ...,
                  shell: bool = ...,
-                 cwd: Optional[str] = ...,
-                 env: Optional[Mapping[str, str]] = ...,
+                 cwd: Optional[_TXT] = ...,
+                 env: Optional[_ENV] = ...,
                  universal_newlines: bool = ...,
                  startupinfo: Optional[Any] = ...,
                  creationflags: int = ...) -> None: ...
 
     def poll(self) -> int: ...
     def wait(self) -> int: ...
-    def communicate(self, input: Optional[AnyStr] = ...) -> Tuple[Optional[bytes], Optional[bytes]]: ...
+    # morally: -> Tuple[Optional[bytes], Optional[bytes]]
+    def communicate(self, input: Optional[_TXT] = ...) -> Tuple[Any, Any]: ...
     def send_signal(self, signal: int) -> None: ...
     def terminate(self) -> None: ...
     def kill(self) -> None: ...
     def __enter__(self) -> 'Popen': ...
     def __exit__(self, type, value, traceback) -> bool: ...
-
-def getstatusoutput(cmd: str) -> Tuple[int, str]: ...
-def getoutput(cmd: str) -> str: ...
 
 # Windows-only: STARTUPINFO etc.
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,9 +41,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import java.util.List;
 
 
-/**
- * Created by Max Medvedev on 10/28/13
- */
 public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSettings> extends AbstractInplaceIntroducer<GrVariable, PsiElement> {
 
   private SmartTypePointer myTypePointer;
@@ -83,7 +80,7 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
       ? (GrNewExpression)refVariableElementParent
       : refVariableElementParent instanceof GrParenthesizedExpression ? ((GrParenthesizedExpression)refVariableElementParent).getOperand() 
                                                                       : PsiTreeUtil.getParentOfType(refVariableElement, GrReferenceExpression.class);
-    if (expression instanceof GrReferenceExpression && !(expression.getParent() instanceof GrMethodCall)) {
+    if (expression instanceof GrReferenceExpression) {
       final String referenceName = ((GrReferenceExpression)expression).getReferenceName();
       if (((GrReferenceExpression)expression).resolve() == variable ||
           Comparing.strEqual(variable.getName(), referenceName) ||
@@ -159,12 +156,6 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
     PsiElement at = myFile.findElementAt(offset);
     GrVariable var = PsiTreeUtil.getParentOfType(at, GrVariable.class);
     return var;
-  }
-
-  @Override
-  protected void moveOffsetAfter(boolean success) {
-    super.moveOffsetAfter(success);
-
   }
 
   @Override

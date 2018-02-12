@@ -35,11 +35,6 @@ import org.intellij.plugins.relaxNG.validation.ValidateAction;
 
 import java.io.File;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 16.11.2007
-*/
 public class ConvertSchemaAction extends AnAction {
 
   @Override

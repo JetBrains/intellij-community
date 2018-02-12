@@ -15,6 +15,8 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.progress.ProgressIndicator;
+
 /**
  * Defines general contract for processing that may be executed by parts, i.e. it remembers the state after every iteration
  * and allows to resume the processing any time.
@@ -40,6 +42,10 @@ public interface SequentialTask {
    * @return    {@code true} if the processing is done; {@code false} otherwise
    */
   boolean iteration();
+
+  default boolean iteration(ProgressIndicator indicator) {
+    return iteration();
+  }
 
   /**
    * Asks current task to stop the processing (if any).

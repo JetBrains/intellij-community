@@ -26,7 +26,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
-*         Date: Nov 21, 2006
 */
 class PsiMethodListPopupStep implements ListPopupStep<SmartStepTarget> {
   private final List<SmartStepTarget> myTargets;
@@ -107,11 +106,21 @@ class PsiMethodListPopupStep implements ListPopupStep<SmartStepTarget> {
   }
 
   public boolean isSpeedSearchEnabled() {
-    return false;
+    return true;
   }
 
   public SpeedSearchFilter<SmartStepTarget> getSpeedSearchFilter() {
-    return null;
+    return new SpeedSearchFilter<SmartStepTarget>() {
+      @Override
+      public boolean canBeHidden(SmartStepTarget value) {
+        return true;
+      }
+
+      @Override
+      public String getIndexedString(SmartStepTarget value) {
+        return getTextFor(value);
+      }
+    };
   }
 
   public boolean isAutoSelectionEnabled() {

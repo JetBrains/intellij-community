@@ -134,7 +134,7 @@ public final class Utils {
    * Validates that specified class represents {@link javax.swing.JComponent} with
    * empty constructor.
    *
-   * @return descriptive human readable error message or <code>null</code> if
+   * @return descriptive human readable error message or {@code null} if
    *         no errors were detected.
    */
     public static String validateJComponentClass(final ClassLoader loader, final String className, final boolean validateConstructor) {

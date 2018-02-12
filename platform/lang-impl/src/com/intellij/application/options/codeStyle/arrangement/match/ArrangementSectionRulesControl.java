@@ -48,7 +48,7 @@ import static com.intellij.application.options.codeStyle.arrangement.match.Arran
  */
 public class ArrangementSectionRulesControl extends ArrangementMatchingRulesControl {
   @NotNull public static final DataKey<ArrangementSectionRulesControl> KEY = DataKey.create("Arrangement.Rule.Match.Control");
-  @NotNull private static final Logger LOG = Logger.getInstance("#" + ArrangementSectionRulesControl.class.getName());
+  @NotNull private static final Logger LOG = Logger.getInstance(ArrangementSectionRulesControl.class);
   @NotNull private final ArrangementColorsProvider myColorsProvider;
   @NotNull private final ArrangementStandardSettingsManager mySettingsManager;
 

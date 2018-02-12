@@ -15,8 +15,16 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.instructions.*;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInspection.dataFlow.instructions.CheckReturnValueInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
+import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
+import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,18 +39,18 @@ import java.util.Set;
 */
 class ContractChecker extends DataFlowRunner {
   private final PsiMethod myMethod;
-  private final MethodContract myContract;
+  private final StandardMethodContract myContract;
   private final Set<PsiElement> myViolations = ContainerUtil.newHashSet();
   private final Set<PsiElement> myNonViolations = ContainerUtil.newHashSet();
   private final Set<PsiElement> myFailures = ContainerUtil.newHashSet();
 
-  private ContractChecker(PsiMethod method, MethodContract contract) {
+  private ContractChecker(PsiMethod method, StandardMethodContract contract) {
     super(false, true);
     myMethod = method;
     myContract = contract;
   }
 
-  static Map<PsiElement, String> checkContractClause(PsiMethod method, MethodContract contract, boolean ignoreAssertions) {
+  static Map<PsiElement, String> checkContractClause(PsiMethod method, StandardMethodContract contract) {
 
     PsiCodeBlock body = method.getBody();
     if (body == null) return Collections.emptyMap();
@@ -58,11 +66,11 @@ class ContractChecker extends DataFlowRunner {
       if (comparisonValue != null) {
         boolean negated = constraint.shouldUseNonEqComparison();
         DfaVariableValue dfaParam = factory.getVarFactory().createVariableValue(parameters[i], false);
-        initialState.applyCondition(factory.getRelationFactory().createRelation(dfaParam, comparisonValue, JavaTokenType.EQEQ, negated));
+        initialState.applyCondition(factory.createCondition(dfaParam, RelationType.equivalence(!negated), comparisonValue));
       }
     }
 
-    checker.analyzeMethod(body, new StandardInstructionVisitor(), ignoreAssertions, Collections.singletonList(initialState));
+    checker.analyzeMethod(body, new StandardInstructionVisitor(), false, Collections.singletonList(initialState));
     return checker.getErrors();
   }
 
@@ -71,7 +79,7 @@ class ContractChecker extends DataFlowRunner {
   protected DfaInstructionState[] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
     DfaMemoryState memState = instructionState.getMemoryState();
     if (memState.isEphemeral()) {
-      return DfaInstructionState.EMPTY_ARRAY;
+      return super.acceptInstruction(visitor, instructionState);
     }
     Instruction instruction = instructionState.getInstruction();
     if (instruction instanceof CheckReturnValueInstruction) {
@@ -93,19 +101,33 @@ class ContractChecker extends DataFlowRunner {
     }
 
     if (instruction instanceof MethodCallInstruction &&
-        ((MethodCallInstruction)instruction).getMethodType() == MethodCallInstruction.MethodType.REGULAR_METHOD_CALL &&
-        myContract.returnValue == MethodContract.ValueConstraint.THROW_EXCEPTION) {
-      ContainerUtil.addIfNotNull(myFailures, ((MethodCallInstruction)instruction).getCallExpression());
-      return DfaInstructionState.EMPTY_ARRAY;
-    }
-
-    if (instruction instanceof ConditionalGotoInstruction && memState.peek() == DfaUnknownValue.getInstance()) {
-      return DfaInstructionState.EMPTY_ARRAY;
+        ((MethodCallInstruction)instruction).getMethodType() == MethodCallInstruction.MethodType.REGULAR_METHOD_CALL) {
+      if (myContract.returnValue == MethodContract.ValueConstraint.THROW_EXCEPTION) {
+        ContainerUtil.addIfNotNull(myFailures, ((MethodCallInstruction)instruction).getCallExpression());
+        return DfaInstructionState.EMPTY_ARRAY;
+      }
+      if (weCannotInferAnythingAboutMethodReturnValue((MethodCallInstruction)instruction)) {
+        return markEverythingEphemeral(visitor, instructionState);
+      }
     }
 
     return super.acceptInstruction(visitor, instructionState);
   }
 
+  private static boolean weCannotInferAnythingAboutMethodReturnValue(MethodCallInstruction instruction) {
+    PsiMethod target = instruction.getTargetMethod();
+    return instruction.getContracts().isEmpty() && target != null && !target.isConstructor() && !NullableNotNullManager.isNotNull(target);
+  }
+
+  @NotNull
+  private DfaInstructionState[] markEverythingEphemeral(@NotNull InstructionVisitor visitor,
+                                                        @NotNull DfaInstructionState instructionState) {
+    DfaInstructionState[] result = super.acceptInstruction(visitor, instructionState);
+    for (DfaInstructionState state : result) {
+      state.getMemoryState().markEphemeral();
+    }
+    return result;
+  }
 
   private Map<PsiElement, String> getErrors() {
     HashMap<PsiElement, String> errors = ContainerUtil.newHashMap();

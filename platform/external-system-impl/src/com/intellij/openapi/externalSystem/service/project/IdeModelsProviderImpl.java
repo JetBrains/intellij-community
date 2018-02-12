@@ -16,10 +16,11 @@
 package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.openapi.externalSystem.model.project.*;
+import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleGrouperKt;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -34,8 +35,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 import static com.intellij.openapi.util.io.FileUtil.pathsEqual;
@@ -48,6 +52,11 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
 
   @NotNull
   protected final Project myProject;
+
+  @NotNull
+  private final Map<ModuleData, Module> myIdeModulesCache = ContainerUtil.createWeakMap();
+
+  private final Map<Module, Map<String, List<ModuleOrderEntry>>> myIdeModuleToModuleDepsCache = ContainerUtil.createWeakMap();
 
   public IdeModelsProviderImpl(@NotNull Project project) {
     myProject = project;
@@ -62,8 +71,10 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   @NotNull
   @Override
   public Module[] getModules(@NotNull final ProjectData projectData) {
-    final List<Module> modules = ContainerUtil.filter(getModules(), module -> isExternalSystemAwareModule(projectData.getOwner(), module) &&
-                                                                          StringUtil.equals(projectData.getLinkedExternalProjectPath(), getExternalRootProjectPath(module)));
+    final List<Module> modules = ContainerUtil.filter(
+      getModules(),
+      module -> isExternalSystemAwareModule(projectData.getOwner(), module) &&
+                StringUtil.equals(projectData.getLinkedExternalProjectPath(), getExternalRootProjectPath(module)));
     return ContainerUtil.toArray(modules, new Module[modules.size()]);
   }
 
@@ -76,11 +87,17 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   @Nullable
   @Override
   public Module findIdeModule(@NotNull ModuleData module) {
-    for (String candidate : suggestModuleNameCandidates(module)) {
-      Module ideModule = findIdeModule(candidate);
-      if (ideModule != null && isApplicableIdeModule(module, ideModule)) {
-        return ideModule;
+    Module cachedIdeModule = myIdeModulesCache.get(module);
+    if (cachedIdeModule == null) {
+      for (String candidate : suggestModuleNameCandidates(module)) {
+        Module ideModule = findIdeModule(candidate);
+        if (ideModule != null && isApplicableIdeModule(module, ideModule)) {
+          myIdeModulesCache.put(module, ideModule);
+          return ideModule;
+        }
       }
+    } else {
+      return cachedIdeModule;
     }
     return null;
   }
@@ -94,11 +111,20 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     if (modulePath.getParentFile() != null) {
       prefix = modulePath.getParentFile().getName();
     }
-    char delimiter = ModuleGrouperKt.isQualifiedModuleNamesEnabled() ? '.' : '-';
-    return new String[]{
-      module.getInternalName(),
-      prefix + delimiter + module.getInternalName(),
-      prefix + delimiter + module.getInternalName() + "~1"};
+    ExternalProjectSettings settings = getSettings(myProject, module.getOwner()).getLinkedProjectSettings(module.getLinkedExternalProjectPath());
+    char delimiter = settings != null && settings.isUseQualifiedModuleNames() ? '.' : '-';
+
+    if (prefix == null || StringUtil.startsWith(module.getInternalName(), prefix)) {
+      return new String[]{
+        module.getInternalName(),
+        module.getInternalName() + "~1"};
+    }
+    else {
+      return new String[]{
+        module.getInternalName(),
+        prefix + delimiter + module.getInternalName(),
+        prefix + delimiter + module.getInternalName() + "~1"};
+    }
   }
 
   private static boolean isApplicableIdeModule(@NotNull ModuleData moduleData, @NotNull Module ideModule) {
@@ -119,6 +145,20 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
 
   @Nullable
   @Override
+  public UnloadedModuleDescription getUnloadedModuleDescription(@NotNull ModuleData moduleData) {
+    for (String moduleName : suggestModuleNameCandidates(moduleData)) {
+      UnloadedModuleDescription unloadedModuleDescription = ModuleManager.getInstance(myProject).getUnloadedModuleDescription(moduleName);
+
+      // TODO external system module options should be honored to handle duplicated module names issues
+      if (unloadedModuleDescription != null) {
+        return unloadedModuleDescription;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  @Override
   public Library findIdeLibrary(@NotNull LibraryData libraryData) {
     final LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
     for (Library ideLibrary : libraryTable.getLibraries()) {
@@ -130,14 +170,24 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   @Nullable
   @Override
   public ModuleOrderEntry findIdeModuleDependency(@NotNull ModuleDependencyData dependency, @NotNull Module module) {
-    for (OrderEntry entry : getOrderEntries(module)) {
-      if (entry instanceof ModuleOrderEntry) {
-        ModuleOrderEntry candidate = (ModuleOrderEntry)entry;
-        if (dependency.getInternalName().equals(candidate.getModuleName()) && dependency.getScope().equals(candidate.getScope())) {
-          return candidate;
-        }
+    Map<String, List<ModuleOrderEntry>> namesToEntries = myIdeModuleToModuleDepsCache.computeIfAbsent(module, (m) -> Arrays.stream(getOrderEntries(m))
+      .filter(ModuleOrderEntry.class::isInstance)
+      .map(ModuleOrderEntry.class::cast)
+      .collect(Collectors.groupingBy(ModuleOrderEntry::getModuleName))
+    );
+
+    List<ModuleOrderEntry> candidates = namesToEntries.get(dependency.getInternalName());
+
+    if (candidates == null) {
+      return null;
+    }
+
+    for (ModuleOrderEntry candidate : candidates) {
+      if (candidate.getScope().equals(dependency.getScope())) {
+        return candidate;
       }
     }
+
     return null;
   }
 

@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.graph.utils;
 
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.EdgeFilter;
 import com.intellij.vcs.log.graph.api.LinearGraph;
@@ -72,38 +71,22 @@ public class LinearGraphUtils {
 
   @NotNull
   public static List<Integer> getUpNodes(@NotNull LinearGraph graph, final int nodeIndex) {
-    return ContainerUtil.mapNotNull(graph.getAdjacentEdges(nodeIndex, EdgeFilter.NORMAL_UP), new Function<GraphEdge, Integer>() {
-      @Nullable
-      @Override
-      public Integer fun(GraphEdge graphEdge) {
-        return graphEdge.getUpNodeIndex();
-      }
-    });
+    return ContainerUtil.mapNotNull(graph.getAdjacentEdges(nodeIndex, EdgeFilter.NORMAL_UP), graphEdge -> graphEdge.getUpNodeIndex());
   }
 
   @NotNull
   public static List<Integer> getDownNodes(@NotNull LinearGraph graph, final int nodeIndex) {
-    return ContainerUtil.mapNotNull(graph.getAdjacentEdges(nodeIndex, EdgeFilter.NORMAL_DOWN), new Function<GraphEdge, Integer>() {
-      @Nullable
-      @Override
-      public Integer fun(GraphEdge graphEdge) {
-        return graphEdge.getDownNodeIndex();
-      }
-    });
+    return ContainerUtil.mapNotNull(graph.getAdjacentEdges(nodeIndex, EdgeFilter.NORMAL_DOWN), graphEdge -> graphEdge.getDownNodeIndex());
   }
 
   @NotNull
   public static List<Integer> getDownNodesIncludeNotLoad(@NotNull final LinearGraph graph, final int nodeIndex) {
-    return ContainerUtil.mapNotNull(graph.getAdjacentEdges(nodeIndex, EdgeFilter.ALL), new Function<GraphEdge, Integer>() {
-      @Nullable
-      @Override
-      public Integer fun(GraphEdge graphEdge) {
-        if (isEdgeDown(graphEdge, nodeIndex)) {
-          if (graphEdge.getType() == GraphEdgeType.NOT_LOAD_COMMIT) return graphEdge.getTargetId();
-          return graphEdge.getDownNodeIndex();
-        }
-        return null;
+    return ContainerUtil.mapNotNull(graph.getAdjacentEdges(nodeIndex, EdgeFilter.ALL), graphEdge -> {
+      if (isEdgeDown(graphEdge, nodeIndex)) {
+        if (graphEdge.getType() == GraphEdgeType.NOT_LOAD_COMMIT) return graphEdge.getTargetId();
+        return graphEdge.getDownNodeIndex();
       }
+      return null;
     });
   }
 
@@ -118,14 +101,11 @@ public class LinearGraphUtils {
       @NotNull
       @Override
       public List<Integer> getNodes(final int nodeIndex, @NotNull final NodeFilter filter) {
-        return ContainerUtil.mapNotNull(graph.getAdjacentEdges(nodeIndex, filter.edgeFilter), new Function<GraphEdge, Integer>() {
-          @Override
-          public Integer fun(GraphEdge edge) {
-            if (isEdgeUp(edge, nodeIndex)) return edge.getUpNodeIndex();
-            if (isEdgeDown(edge, nodeIndex)) return edge.getDownNodeIndex();
+        return ContainerUtil.mapNotNull(graph.getAdjacentEdges(nodeIndex, filter.edgeFilter), edge -> {
+          if (isEdgeUp(edge, nodeIndex)) return edge.getUpNodeIndex();
+          if (isEdgeDown(edge, nodeIndex)) return edge.getDownNodeIndex();
 
-            return null;
-          }
+          return null;
         });
       }
     };
@@ -164,22 +144,12 @@ public class LinearGraphUtils {
 
   @NotNull
   public static Set<Integer> convertNodeIndexesToIds(@NotNull final LinearGraph graph, @NotNull Collection<Integer> nodeIndexes) {
-    return ContainerUtil.map2Set(nodeIndexes, new Function<Integer, Integer>() {
-      @Override
-      public Integer fun(Integer nodeIndex) {
-        return graph.getNodeId(nodeIndex);
-      }
-    });
+    return ContainerUtil.map2Set(nodeIndexes, nodeIndex -> graph.getNodeId(nodeIndex));
   }
 
   @NotNull
   public static Set<Integer> convertIdsToNodeIndexes(@NotNull final LinearGraph graph, @NotNull Collection<Integer> ids) {
-    List<Integer> result = ContainerUtil.mapNotNull(ids, new Function<Integer, Integer>() {
-      @Override
-      public Integer fun(Integer id) {
-        return graph.getNodeIndex(id);
-      }
-    });
+    List<Integer> result = ContainerUtil.mapNotNull(ids, id -> graph.getNodeIndex(id));
     return ContainerUtil.newHashSet(result);
   }
 }

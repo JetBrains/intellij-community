@@ -88,7 +88,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
                                    @NotNull NullableFunction<Object, Object> parametersHolder,
                                    Set<String> feedback) {
     final Collection<FilePath> filesList = ChangesUtil.getPaths(changes);
-    FilePath[] files = filesList.toArray(new FilePath[filesList.size()]);
+    FilePath[] files = filesList.toArray(new FilePath[0]);
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     executor.setShowErrors(false);
 
@@ -121,7 +121,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
-    return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant(), null);
+    return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {

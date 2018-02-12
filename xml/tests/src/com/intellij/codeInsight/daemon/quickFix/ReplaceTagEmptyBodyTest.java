@@ -24,7 +24,7 @@ import java.io.File;
 
 public class ReplaceTagEmptyBodyTest extends LightQuickFixParameterizedTestCase {
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

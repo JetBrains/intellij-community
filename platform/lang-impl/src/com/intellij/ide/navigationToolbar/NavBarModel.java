@@ -21,7 +21,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -29,11 +29,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
@@ -52,6 +50,7 @@ public class NavBarModel {
   private int mySelectedIndex;
   private final Project myProject;
   private final NavBarModelListener myNotificator;
+  private final NavBarModelBuilder myBuilder;
   private boolean myChanged = true;
   private boolean updated = false;
   private boolean isFixedComponent = false;
@@ -59,6 +58,7 @@ public class NavBarModel {
   public NavBarModel(final Project project) {
     myProject = project;
     myNotificator = project.getMessageBus().syncPublisher(NavBarModelListener.NAV_BAR);
+    myBuilder = NavBarModelBuilder.getInstance();
   }
 
   public int getSelectedIndex() {
@@ -165,9 +165,7 @@ public class NavBarModel {
       }
     }
 
-    final List<Object> updatedModel = new ArrayList<>();
-
-    ApplicationManager.getApplication().runReadAction(() -> traverseToRoot(psiElement, roots, updatedModel));
+    List<Object> updatedModel = ReadAction.compute(() -> isValid(psiElement) ? myBuilder.createModel(psiElement, roots) : Collections.emptyList());
 
     setModel(ContainerUtil.reverse(updatedModel));
   }
@@ -210,45 +208,6 @@ public class NavBarModel {
     }
   }
 
-  private static void traverseToRoot(@NotNull PsiElement psiElement, Set<VirtualFile> roots, List<Object> model) {
-    if (!isValid(psiElement)) return;
-
-    NavBarModelExtension[] extensions = Extensions.getExtensions(NavBarModelExtension.EP_NAME);
-
-    for (PsiElement e = normalize(getOriginalElement(psiElement)), next = null;
-         e != null; e = normalize(getOriginalElement(next)), next = null) {
-      // check if we're running circles due to getParent()->normalize/adjust()
-      if (model.contains(e)) break;
-
-      model.add(e);
-
-      // check if a root is reached
-      VirtualFile vFile = PsiUtilCore.getVirtualFile(e);
-      if (roots.contains(vFile)) break;
-
-      for (NavBarModelExtension ext : extensions) {
-        PsiElement parent = ext.getParent(e);
-        if (parent != null && parent != e) {
-          //noinspection AssignmentToForLoopParameter
-          next = parent;
-          break;
-        }
-      }
-    }
-  }
-
-  @Nullable
-  private static PsiElement getOriginalElement(@Nullable PsiElement e) {
-    if (e == null || !e.isValid()) return null;
-
-    PsiFile containingFile = e.getContainingFile();
-    if (containingFile != null && containingFile.getVirtualFile() == null) return null;
-
-    PsiElement orig = e.getOriginalElement();
-    return !(e instanceof PsiCompiledElement) && orig instanceof PsiCompiledElement ? e : orig;
-  }
-
-
   protected boolean hasChildren(Object object) {
     return !processChildren(object, new CommonProcessors.FindFirstProcessor<>());
   }
@@ -268,13 +227,13 @@ public class NavBarModel {
       return !((Module)object).isDisposed();
     }
     if (object instanceof PsiElement) {
-      return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> ((PsiElement)object).isValid()).booleanValue();
+      return ReadAction.compute(() -> ((PsiElement)object).isValid()).booleanValue();
     }
     return object != null;
   }
 
   @Nullable
-  private static PsiElement normalize(@Nullable PsiElement child) {
+  public static PsiElement normalize(@Nullable PsiElement child) {
     if (child == null) return null;
 
     NavBarModelExtension[] extensions = Extensions.getExtensions(NavBarModelExtension.EP_NAME);

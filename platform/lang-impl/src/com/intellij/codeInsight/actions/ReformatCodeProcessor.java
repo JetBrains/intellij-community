@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
@@ -106,6 +107,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   protected FutureTask<Boolean> prepareTask(@NotNull final PsiFile file, final boolean processChangedTextOnly)
     throws IncorrectOperationException
   {
+    assertFileIsValid(file);
     return new FutureTask<>(() -> {
       FormattingProgressTask.FORMATTING_CANCELLED_FLAG.set(false);
       try {
@@ -121,6 +123,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
         if (processChangedTextOnly) {
           ChangedRangesInfo info = FormatChangedTextUtil.getInstance().getChangedRangesInfo(file);
           if (info != null) {
+            assertFileIsValid(file);
             CodeStyleManager.getInstance(myProject).reformatTextWithContext(file, info);
           }
         }
@@ -129,7 +132,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
           CodeStyleManager.getInstance(myProject).reformatText(file, ranges);
         }
 
-        caretPositionKeeper.restoreOriginalLocation();
+        caretPositionKeeper.restoreOriginalLocation(true);
 
         if (before != null) {
           prepareUserNotificationMessage(document, before);
@@ -149,6 +152,15 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
         myRanges.clear();
       }
     });
+  }
+
+  private static void assertFileIsValid(@NotNull PsiFile file) {
+    if (!file.isValid()) {
+      LOG.error(
+        "Invalid Psi file, name: " + file.getName() +
+        " , class: " + file.getClass().getSimpleName() +
+        " , " + PsiInvalidElementAccessException.findOutInvalidationReason(file));
+    }
   }
 
   private void prepareUserNotificationMessage(@NotNull Document document, @NotNull CharSequence before) {

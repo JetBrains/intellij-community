@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,13 @@
 package com.intellij.psi.controlFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.containers.IntStack;
 import gnu.trove.THashMap;
@@ -151,7 +149,7 @@ public class ControlFlowUtil {
     return result;
   }
 
-  private static boolean needVariableValueAt(final PsiVariable variable, final ControlFlow flow, final int offset) {
+  public static boolean needVariableValueAt(final PsiVariable variable, final ControlFlow flow, final int offset) {
     InstructionClientVisitor<Boolean> visitor = new InstructionClientVisitor<Boolean>() {
       final boolean[] neededBelow = new boolean[flow.getSize() + 1];
 
@@ -354,7 +352,7 @@ public class ControlFlowUtil {
         }
       }
     }
-    PsiVariable[] outputVariables = array.toArray(new PsiVariable[array.size()]);
+    PsiVariable[] outputVariables = array.toArray(new PsiVariable[0]);
     if (LOG.isDebugEnabled()) {
       LOG.debug("output variables:");
       for (PsiVariable variable : outputVariables) {
@@ -1047,8 +1045,17 @@ public class ControlFlowUtil {
         boolean isNormal = nextOffset <= endOffset && !isReturn && (nextOffset == endOffset || canCompleteNormally[nextOffset]);
         if (isNormal && nextOffset == endOffset) {
           PsiElement element = flow.getElement(offset);
-          if (element instanceof PsiBreakStatement || element instanceof PsiContinueStatement) {
-            isNormal = false;
+          if (element instanceof PsiBreakStatement) {
+            PsiStatement exitedStatement = ((PsiBreakStatement)element).findExitedStatement();
+            if (exitedStatement == null || flow.getStartOffset(exitedStatement) < startOffset) {
+              isNormal = false;
+            }
+          }
+          else if (element instanceof PsiContinueStatement) {
+            PsiStatement continuedStatement = ((PsiContinueStatement)element).findContinuedStatement();
+            if (continuedStatement == null || flow.getStartOffset(continuedStatement) < startOffset) {
+              isNormal = false;
+            }
           }
         }
         canCompleteNormally[offset] |= isNormal;
@@ -1059,35 +1066,9 @@ public class ControlFlowUtil {
         if (nextOffset > flow.getSize()) nextOffset = flow.getSize();
         if (offset > endOffset) return;
         int throwToOffset = instruction.offset;
-        boolean isNormal = false;
+        boolean isNormal;
         if (throwToOffset == nextOffset) {
-
-          if (nextOffset == endOffset) {
-            int lastOffset = endOffset - 1;
-            Instruction lastInstruction = flow.getInstructions().get(lastOffset);
-            while (lastInstruction instanceof GoToInstruction &&
-                ((GoToInstruction)lastInstruction).role == BranchingInstruction.Role.END &&
-                !((GoToInstruction)lastInstruction).isReturn) {
-              if (((GoToInstruction)lastInstruction).offset == startOffset) {
-                lastOffset = -1;
-                break;
-              } 
-              else {
-                lastOffset--;
-                if (lastOffset < 0) {
-                  break;
-                }
-                lastInstruction = flow.getInstructions().get(lastOffset);
-              }
-            }
-
-            if (lastOffset >= 0) {
-              isNormal = !(lastInstruction instanceof GoToInstruction && ((GoToInstruction)lastInstruction).isReturn) &&
-                         !(lastInstruction instanceof ThrowToInstruction);
-            }
-          }
-
-          isNormal |= throwToOffset <= endOffset && !isLeaf(nextOffset) && canCompleteNormally[nextOffset];
+          isNormal = throwToOffset <= endOffset && !isLeaf(nextOffset) && canCompleteNormally[nextOffset];
         }
         else {
           isNormal = canCompleteNormally[nextOffset];
@@ -1152,6 +1133,10 @@ public class ControlFlowUtil {
       for (int i = 0; i < processedInstructions.length; i++) {
         if (!processedInstructions[i]) {
           PsiElement element = myFlow.getElement(i);
+
+          final PsiElement unreachableParent = getUnreachableExpressionParent(element);
+          if (unreachableParent != null) return unreachableParent;
+
           if (element == null || !PsiUtil.isStatement(element)) continue;
           if (element.getParent() instanceof PsiExpression) continue;
 
@@ -1170,8 +1155,56 @@ public class ControlFlowUtil {
           final int startOffset = myFlow.getStartOffset(element);
           // this offset actually is a part of reachable statement
           if (0 <= startOffset && startOffset < processedInstructions.length && processedInstructions[startOffset]) continue;
-          return element;
+          final PsiElement enclosingStatement = getEnclosingUnreachableStatement(element);
+          return enclosingStatement != null ? enclosingStatement : element;
         }
+      }
+      return null;
+    }
+
+    @Nullable
+    private static PsiElement getUnreachableExpressionParent(@Nullable PsiElement element) {
+      if (element instanceof PsiExpression) {
+        final PsiElement expression = PsiTreeUtil.findFirstParent(element, e -> !(e.getParent() instanceof PsiParenthesizedExpression));
+        if (expression != null) {
+          final PsiElement parent = expression.getParent();
+          if (parent instanceof PsiExpressionStatement) {
+            return getUnreachableStatementParent(parent);
+          }
+          if (parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getCondition() == expression ||
+              parent instanceof PsiSwitchStatement && ((PsiSwitchStatement)parent).getExpression() == expression ||
+              parent instanceof PsiWhileStatement && ((PsiWhileStatement)parent).getCondition() == expression ||
+              parent instanceof PsiForeachStatement && ((PsiForeachStatement)parent).getIteratedValue() == expression) {
+            return parent;
+          }
+        }
+      }
+      return null;
+    }
+
+    @Nullable
+    private static PsiElement getEnclosingUnreachableStatement(@NotNull PsiElement statement) {
+      final PsiElement parent = statement.getParent();
+      if (parent instanceof PsiDoWhileStatement && ((PsiDoWhileStatement)parent).getBody() == statement) {
+        return parent;
+      }
+      if (parent instanceof PsiCodeBlock && PsiTreeUtil.getNextSiblingOfType(parent.getFirstChild(), PsiStatement.class) == statement) {
+        final PsiBlockStatement blockStatement = ObjectUtils.tryCast(parent.getParent(), PsiBlockStatement.class);
+        if (blockStatement != null) {
+          final PsiElement blockParent = blockStatement.getParent();
+          if (blockParent instanceof PsiDoWhileStatement && ((PsiDoWhileStatement)blockParent).getBody() == blockStatement) {
+            return blockParent;
+          }
+        }
+      }
+      return getUnreachableStatementParent(statement);
+    }
+
+    @Nullable
+    private static PsiElement getUnreachableStatementParent(@NotNull PsiElement statement) {
+      final PsiElement parent = statement.getParent();
+      if (parent instanceof PsiForStatement && ((PsiForStatement)parent).getInitialization() == statement) {
+        return parent;
       }
       return null;
     }
@@ -1194,7 +1227,7 @@ public class ControlFlowUtil {
 
   private static PsiReferenceExpression findReferenceTo(PsiElement element, PsiVariable variable) {
     if (element instanceof PsiReferenceExpression
-        && isUnqualified((PsiReferenceExpression)element)
+        && ExpressionUtil.isEffectivelyUnqualified((PsiReferenceExpression)element)
         && ((PsiReferenceExpression)element).resolve() == variable) {
       return (PsiReferenceExpression)element;
     }
@@ -1204,14 +1237,6 @@ public class ControlFlowUtil {
       if (reference != null) return reference;
     }
     return null;
-  }
-
-  private static boolean isUnqualified(PsiReferenceExpression element) {
-    if (element.isQualified()) {
-      final PsiExpression qualifierExpression = element.getQualifierExpression();
-      return qualifierExpression instanceof PsiThisExpression && ((PsiThisExpression)qualifierExpression).getQualifier() == null;
-    }
-    return true;
   }
 
 
@@ -1689,7 +1714,7 @@ public class ControlFlowUtil {
     }
 
     public CopyOnWriteList() {
-      this(Collections.<VariableInfo>emptyList());
+      this(Collections.emptyList());
     }
 
     public CopyOnWriteList(VariableInfo... infos) {
@@ -1697,15 +1722,13 @@ public class ControlFlowUtil {
     }
 
     public CopyOnWriteList(Collection<VariableInfo> infos) {
-      list = new LinkedList<>(infos);
+      list = new SmartList<>(infos);
     }
 
     public CopyOnWriteList addAll(CopyOnWriteList addList) {
       CopyOnWriteList newList = new CopyOnWriteList();
       List<VariableInfo> list = getList();
-      for (final VariableInfo variableInfo : list) {
-        newList.list.add(variableInfo);
-      }
+      newList.list.addAll(list);
       List<VariableInfo> toAdd = addList.getList();
       for (final VariableInfo variableInfo : toAdd) {
         if (!newList.list.contains(variableInfo)) {
@@ -1756,9 +1779,16 @@ public class ControlFlowUtil {
   }
 
   public static List<PsiReferenceExpression> getReadBeforeWrite(ControlFlow flow) {
-    final InstructionClientVisitor<List<PsiReferenceExpression>> visitor = new ReadBeforeWriteClientVisitor(flow, false);
+    return getReadBeforeWrite(flow, 0);
+  }
+
+  public static List<PsiReferenceExpression> getReadBeforeWrite(ControlFlow flow, int startOffset) {
+    if (startOffset < 0 || startOffset >= flow.getSize()) {
+      return Collections.emptyList();
+    }
+    final ReadBeforeWriteClientVisitor visitor = new ReadBeforeWriteClientVisitor(flow, false);
     depthFirstSearch(flow, visitor);
-    return visitor.getResult();
+    return visitor.getResult(startOffset);
   }
 
   private static class ReadBeforeWriteClientVisitor extends InstructionClientVisitor<List<PsiReferenceExpression>> {
@@ -1821,7 +1851,11 @@ public class ControlFlowUtil {
 
     @Override
     public List<PsiReferenceExpression> getResult() {
-      final CopyOnWriteList topReadVariables = readVariables[0];
+      return getResult(0);
+    }
+
+    public List<PsiReferenceExpression> getResult(int startOffset) {
+      final CopyOnWriteList topReadVariables = readVariables[startOffset];
       if (topReadVariables == null) return Collections.emptyList();
 
       final List<PsiReferenceExpression> result = new ArrayList<>();
@@ -1932,11 +1966,8 @@ public class ControlFlowUtil {
       if (element instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)element).getLExpression() instanceof PsiReferenceExpression) {
         return ((PsiAssignmentExpression)element).getLExpression();
       }
-      else if (element instanceof PsiPostfixExpression) {
-        return ((PsiPostfixExpression)element).getOperand();
-      }
-      else if (element instanceof PsiPrefixExpression) {
-        return ((PsiPrefixExpression)element).getOperand();
+      else if (element instanceof PsiUnaryExpression) {
+        return ((PsiUnaryExpression)element).getOperand();
       }
       else if (element instanceof PsiDeclarationStatement) {
         //should not happen

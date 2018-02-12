@@ -15,12 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 9/19/11
- * Time: 7:04 PM
- */
 public interface CommitSessionContextAware {
   void setContext(final CommitContext context);
 }

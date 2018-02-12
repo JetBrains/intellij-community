@@ -25,8 +25,7 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
@@ -34,7 +33,6 @@ import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -158,25 +156,18 @@ public class GroovyPositionManager implements PositionManager {
 
   @Nullable
   private static String findEnclosingName(@NotNull final SourcePosition position) {
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-
-    try {
+    return ReadAction.compute(()->{
       PsiClass typeDefinition = findEnclosingTypeDefinition(position);
       if (typeDefinition != null) {
         return getClassNameForJvm(typeDefinition);
       }
       return getScriptQualifiedName(position);
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 
   @Nullable
   private static String getOuterClassName(final SourcePosition position) {
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-
-    try {
+    return ReadAction.compute(()->{
       GroovyPsiElement sourceImage = findReferenceTypeSourceImage(position);
       if (sourceImage instanceof GrTypeDefinition) {
         return getClassNameForJvm((GrTypeDefinition)sourceImage);
@@ -185,10 +176,7 @@ public class GroovyPositionManager implements PositionManager {
         return getScriptQualifiedName(position);
       }
       return null;
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 
   @Nullable
@@ -269,10 +257,11 @@ public class GroovyPositionManager implements PositionManager {
       if (classes.isEmpty()) {
         classes = cache.getClassesByFQName(qName, addModuleContent(searchScope), false);
       }
-      if (classes.isEmpty()) return null;
-      classes.sort(PsiClassUtil.createScopeComparator(searchScope));
-      PsiClass clazz = classes.get(0);
-      if (clazz != null) return clazz.getContainingFile();
+      if (!classes.isEmpty()) {
+        classes.sort(PsiClassUtil.createScopeComparator(searchScope));
+        PsiClass clazz = classes.get(0);
+        if (clazz != null) return clazz.getContainingFile();
+      }
     }
     catch (ProcessCanceledException | IndexNotReadyException e) {
       return null;
@@ -323,35 +312,32 @@ public class GroovyPositionManager implements PositionManager {
     }
 
     checkGroovyFile(position);
-    List<ReferenceType> result = ApplicationManager.getApplication().runReadAction(new Computable<List<ReferenceType>>() {
-      @Override
-      public List<ReferenceType> compute() {
-        GroovyPsiElement sourceImage = findReferenceTypeSourceImage(position);
+    List<ReferenceType> result = ReadAction.compute(() -> {
+      GroovyPsiElement sourceImage = findReferenceTypeSourceImage(position);
 
-        if (sourceImage instanceof GrTypeDefinition && !((GrTypeDefinition)sourceImage).isAnonymous()) {
-          String qName = getClassNameForJvm((GrTypeDefinition)sourceImage);
-          if (qName != null) return myDebugProcess.getVirtualMachineProxy().classesByName(qName);
-        }
-        else if (sourceImage == null) {
-          final String scriptName = getScriptQualifiedName(position);
-          if (scriptName != null) return myDebugProcess.getVirtualMachineProxy().classesByName(scriptName);
-        }
-        else {
-          String enclosingName = findEnclosingName(position);
-          if (enclosingName == null) return null;
-
-          final List<ReferenceType> outers = myDebugProcess.getVirtualMachineProxy().classesByName(enclosingName);
-          final List<ReferenceType> result = new ArrayList<>(outers.size());
-          for (ReferenceType outer : outers) {
-            final ReferenceType nested = findNested(outer, sourceImage, position);
-            if (nested != null) {
-              result.add(nested);
-            }
-          }
-          return result;
-        }
-        return null;
+      if (sourceImage instanceof GrTypeDefinition && !((GrTypeDefinition)sourceImage).isAnonymous()) {
+        String qName = getClassNameForJvm((GrTypeDefinition)sourceImage);
+        if (qName != null) return myDebugProcess.getVirtualMachineProxy().classesByName(qName);
       }
+      else if (sourceImage == null) {
+        final String scriptName = getScriptQualifiedName(position);
+        if (scriptName != null) return myDebugProcess.getVirtualMachineProxy().classesByName(scriptName);
+      }
+      else {
+        String enclosingName = findEnclosingName(position);
+        if (enclosingName == null) return null;
+
+        final List<ReferenceType> outers = myDebugProcess.getVirtualMachineProxy().classesByName(enclosingName);
+        final List<ReferenceType> result1 = new ArrayList<>(outers.size());
+        for (ReferenceType outer : outers) {
+          final ReferenceType nested = findNested(outer, sourceImage, position);
+          if (nested != null) {
+            result1.add(nested);
+          }
+        }
+        return result1;
+      }
+      return null;
     });
 
     if (LOG.isDebugEnabled()) {

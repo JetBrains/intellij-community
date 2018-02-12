@@ -45,7 +45,7 @@ public class CleanupAction extends BasicAction {
   }
 
   @Override
-  protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException {
+  protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) {
     new CleanupWorker(vcs, singletonList(file)).execute();
   }
 

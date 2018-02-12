@@ -1,5 +1,5 @@
 // "Fix all 'Simplify stream API call chains' problems in file" "true"
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -57,5 +57,37 @@ public class Main {
 
   public boolean noneMatchDittoLambda(List<String> list) {
     return list.stream().map(String::isEmpty).noneMatch(b -> b);
+  }
+
+  public boolean anyMatchBooleanEquals(List<String> list) {
+    return list.stream().map(String::isEmpty).anyMatch(Boolean.TRUE::equals);
+  }
+
+  public boolean anyMatchBooleanEqualsFalse(List<String> list) {
+    return list.stream().map(String::isEmpty).anyMatch(Boolean.FALSE::equals);
+  }
+
+  public boolean anyMatchBooleanEqualsLambda(List<String> list) {
+    return list.stream().map(String::isEmpty).anyMatch(b -> Boolean.TRUE.equals(b));
+  }
+
+  public boolean allMatchBooleanEqualsLambda(List<String> list) {
+    return list.stream().map(String::isEmpty).allMatch(b -> Boolean.FALSE.equals((b)));
+  }
+
+  public boolean noneMatchBooleanEqualsLambda(List<String> list) {
+    return list.stream().map(String::isEmpty).noneMatch(b -> Boolean.FALSE.equals((!b)));
+  }
+
+  interface Source {
+    Optional<Boolean> containsDescendantOf(String name);
+  }
+
+  public static boolean testNullityInference(Stream<Source> sources, String name) {
+    return sources.map((s) -> s.containsDescendantOf(name).orElse(true)).allMatch(Boolean.FALSE::equals);
+  }
+
+  public static boolean testNullityInference2(Stream<Source> sources, String name) {
+    return sources.map((s) -> s.containsDescendantOf(name).orElse(null)).allMatch(Boolean.FALSE::equals);
   }
 }

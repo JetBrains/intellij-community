@@ -21,6 +21,8 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -55,13 +57,16 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
   }
 
   @Override
-  public boolean isValidTarget(final PsiElement psiElement, PsiElement[] sources) {
-    return isValidTarget(psiElement);
+  public boolean isValidTarget(final PsiElement targetElement, PsiElement[] sources) {
+    return isValidTarget(targetElement);
   }
 
   public static boolean isValidTarget(PsiElement psiElement) {
+    if (psiElement == null) return true;
     if (!(psiElement instanceof PsiDirectory || psiElement instanceof PsiDirectoryContainer)) return false;
-    return psiElement.getManager().isInProject(psiElement) || ScratchFileService.isInScratchRoot(PsiUtilCore.getVirtualFile(psiElement));
+    if (psiElement.getManager().isInProject(psiElement)) return true;
+    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
+    return ScratchFileService.isInScratchRoot(virtualFile) || virtualFile != null && ProjectRootManager.getInstance(psiElement.getProject()).getFileIndex().isExcluded(virtualFile);
   }
 
   public void doMove(final PsiElement[] elements, final PsiElement targetContainer) {

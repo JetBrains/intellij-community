@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public class PyRemoteLibrariesNode extends PsiDirectoryNode {
       VirtualFile remoteLibrary = PySdkUtil.findAnyRemoteLibrary(sdk);
 
       if (remoteLibrary != null && remoteLibrary.getFileType() instanceof ArchiveFileType) {
-        remoteLibrary = JarFileSystem.getInstance().getLocalVirtualFileFor(remoteLibrary);
+        remoteLibrary = JarFileSystem.getInstance().getLocalByEntry(remoteLibrary);
       }
 
       if (remoteLibrary != null) {
@@ -80,24 +80,21 @@ public class PyRemoteLibrariesNode extends PsiDirectoryNode {
   @Override
   public Collection<AbstractTreeNode> getChildrenImpl() {
 
-    return FluentIterable.from(Lists.newArrayList(getValue().getChildren())).transform(new Function<PsiElement, AbstractTreeNode>() {
-      @Override
-      public AbstractTreeNode apply(PsiElement input) {
-        if (input instanceof PsiFileSystemItem) {
-          String path = ((PsiFileSystemItem)input).getVirtualFile().getPath();
+    return FluentIterable.from(Lists.newArrayList(getValue().getChildren())).transform((Function<PsiElement, AbstractTreeNode>)input -> {
+      if (input instanceof PsiFileSystemItem) {
+        String path = ((PsiFileSystemItem)input).getVirtualFile().getPath();
 
 
-          PsiDirectory dir = input instanceof PsiDirectory ? (PsiDirectory)input : getDirectoryForJar((PsiFile)input);
+        PsiDirectory dir = input instanceof PsiDirectory ? (PsiDirectory)input : getDirectoryForJar((PsiFile)input);
 
 
-          if (myRemoteSdkData.getPathMappings().canReplaceLocal(path)) {
-            return new PyRemoteRootNode(myRemoteSdkData.getPathMappings().convertToRemote(path),
-                                        getProject(), dir, getSettings());
-          }
+        if (myRemoteSdkData.getPathMappings().canReplaceLocal(path)) {
+          return new PyRemoteRootNode(myRemoteSdkData.getPathMappings().convertToRemote(path),
+                                      getProject(), dir, getSettings());
         }
-
-        return null;
       }
+
+      return null;
     }).filter(Predicates.notNull()).toList();
   }
 
@@ -123,7 +120,7 @@ public class PyRemoteLibrariesNode extends PsiDirectoryNode {
 
   public static class PyRemoteRootNode extends PsiDirectoryNode {
 
-    private String myRemotePath;
+    private final String myRemotePath;
 
     public PyRemoteRootNode(String remotePath, Project project, PsiDirectory value, ViewSettings viewSettings) {
       super(project, value, viewSettings);

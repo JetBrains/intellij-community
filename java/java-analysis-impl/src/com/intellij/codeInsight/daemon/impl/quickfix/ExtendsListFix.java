@@ -85,8 +85,7 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
                              @NotNull PsiElement endElement) {
     final PsiClass myClass = (PsiClass)startElement;
     return
-      myClass.isValid()
-      && myClass.getManager().isInProject(myClass)
+      myClass.getManager().isInProject(myClass)
       && myClassToExtendFrom != null
       && myClassToExtendFrom.isValid()
       && !myClassToExtendFrom.hasModifierProperty(PsiModifier.FINAL)

@@ -26,7 +26,6 @@ import java.util.Iterator;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/11/12
  */
 public class SourceToOutputMappingImpl implements SourceToOutputMapping {
   private final OneToManyPathsMapping myMapping;

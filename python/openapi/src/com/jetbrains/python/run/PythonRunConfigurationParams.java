@@ -34,5 +34,12 @@ public interface PythonRunConfigurationParams {
 
   boolean emulateTerminal();
   void setEmulateTerminal(boolean emulateTerminal);
+
+  default boolean isModuleMode() {
+    return false;
+  }
+
+  default void setModuleMode(boolean moduleMode) {
+  }
 }
 

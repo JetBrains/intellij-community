@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
@@ -31,7 +32,7 @@ public class ScrollRightAction extends InactiveEditorAction {
 
   private static class Handler extends EditorActionHandler {
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
+    public void execute(@NotNull Editor editor, DataContext dataContext) {
       EditorActionUtil.scrollRelatively(editor, 0, 1, false);
     }
   }

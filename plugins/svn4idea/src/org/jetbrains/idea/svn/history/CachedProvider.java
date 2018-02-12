@@ -86,7 +86,7 @@ public abstract class CachedProvider implements BunchProvider {
 
   @Nullable
   public Fragment getEarliestBunchInInterval(final long earliestRevision, final long oldestRevision, final int desirableSize,
-                                             final boolean includeYoungest, final boolean includeOldest) throws VcsException {
+                                             final boolean includeYoungest, final boolean includeOldest) {
     if ((earliestRevision > getEarliestRevision()) || (earliestRevision == -1)) {
       if (myAlreadyReaded == null) {
         return null;

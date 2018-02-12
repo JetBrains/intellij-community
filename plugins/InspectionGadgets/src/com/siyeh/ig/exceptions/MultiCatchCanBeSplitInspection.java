@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -56,7 +55,7 @@ public class MultiCatchCanBeSplitInspection extends BaseInspection {
     return new SplitMultiCatchFix();
   }
 
-  private static void doFixImpl(@NotNull PsiElement element) throws IncorrectOperationException {
+  private static void doFixImpl(@NotNull PsiElement element) {
     final PsiElement parent = element.getParent();
     if (!(parent instanceof PsiCatchSection)) {
       return;
@@ -95,7 +94,7 @@ public class MultiCatchCanBeSplitInspection extends BaseInspection {
     final PsiElement parent = element.getParent();
     if (parent instanceof PsiCatchSection) {
       final PsiType type = ((PsiCatchSection)parent).getCatchType();
-      return  type instanceof PsiDisjunctionType;
+      return type instanceof PsiDisjunctionType;
     }
     return false;
   }

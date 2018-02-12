@@ -18,7 +18,7 @@ package com.intellij.lang.properties.editor;
 import com.intellij.openapi.editor.impl.AbstractRtlTest;
 
 public class PropertiesRtlTest extends AbstractRtlTest {
-  public void testComment() throws Exception {
+  public void testComment() {
     checkBidiRunBoundaries("# |R", ".properties");
   }
 }

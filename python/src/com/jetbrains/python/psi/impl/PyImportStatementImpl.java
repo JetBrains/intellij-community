@@ -22,7 +22,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
@@ -103,7 +102,7 @@ public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementSt
   @Override
   public Iterable<PyElement> iterateNames() {
     final PyElement resolved = as(resolveImplicitSubModule(), PyElement.class);
-    return resolved != null ? ImmutableList.<PyElement>of(resolved) : Collections.<PyElement>emptyList();
+    return resolved != null ? ImmutableList.of(resolved) : Collections.emptyList();
   }
 
   @NotNull

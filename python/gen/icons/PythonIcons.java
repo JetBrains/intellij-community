@@ -21,13 +21,18 @@ import javax.swing.*;
 
 /**
  * NOTE THIS FILE IS AUTO-GENERATED
- * DO NOT EDIT IT BY HAND, run build/scripts/icons.gant instead
+ * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public class PythonIcons {
   private static Icon load(String path) {
     return IconLoader.getIcon(path, PythonIcons.class);
   }
 
+  
+  public static class Cython {
+    public static final Icon CythonFile = load("/icons/com/jetbrains/cython/cythonFile.png"); // 16x16
+
+  }
   
   public static class Pyqt {
     public static final Icon TsFile = load("/icons/com/jetbrains/pyqt/tsFile.png"); // 16x16
@@ -36,11 +41,13 @@ public class PythonIcons {
   }
   
   public static class Python {
+    public static final Icon Anaconda = load("/icons/com/jetbrains/python/anaconda.png"); // 16x16
     
     public static class Buildout {
       public static final Icon Buildout = load("/icons/com/jetbrains/python/buildout/buildout.png"); // 16x16
 
     }
+    public static final Icon Condaenv = load("/icons/com/jetbrains/python/condaenv.png"); // 16x16
     public static final Icon DataView = load("/icons/com/jetbrains/python/DataView.png"); // 13x13
     
     public static class Debug {

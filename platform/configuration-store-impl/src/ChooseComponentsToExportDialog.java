@@ -237,18 +237,6 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
   private static class ComponentElementProperties implements ElementsChooser.ElementProperties {
     private final Set<ExportableItem> items = new THashSet<>();
 
-    @Override
-    @Nullable
-    public Icon getIcon() {
-      return null;
-    }
-
-    @Override
-    @Nullable
-    public Color getColor() {
-      return null;
-    }
-
     public String toString() {
       Set<String> names = new LinkedHashSet<>();
       for (ExportableItem component : items) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging.ui;
 
 import com.google.common.collect.Lists;
@@ -24,12 +10,13 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.PackageManagementServiceEx;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.packaging.PyPIPackageUtil.PackageDetails;
-import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -48,13 +35,24 @@ import java.util.regex.Pattern;
  */
 public class PyPackageManagementService extends PackageManagementServiceEx {
   @NotNull private static final Pattern PATTERN_ERROR_LINE = Pattern.compile(".*error:.*", Pattern.CASE_INSENSITIVE);
-  @NonNls private static final String TEXT_PREFIX = "<html><head>" +
-                                                    "    <style type=\"text/css\">" +
-                                                    "        p {" +
-                                                    "            font-family: Arial,serif; font-size: 12pt; margin: 2px 2px" +
-                                                    "        }" +
-                                                    "    </style>" +
-                                                    "</head><body style=\"font-family: Arial,serif; font-size: 12pt; margin: 5px 5px;\">";
+  @NonNls private static final String TEXT_PREFIX = buildHtmlStylePrefix();
+
+  @NotNull
+  private static String buildHtmlStylePrefix() {
+    // Shamelessly copied from Plugin Manager dialog
+    final int fontSize = JBUI.scale(12);
+    final int m1 = JBUI.scale(2);
+    final int m2 = JBUI.scale(5);
+    return String.format("<html><head>" +
+                         "    <style type=\"text/css\">" +
+                         "        p {" +
+                         "            font-family: Arial,serif; font-size: %dpt; margin: %dpx %dpx" +
+                         "        }" +
+                         "    </style>" +
+                         "</head><body style=\"font-family: Arial,serif; font-size: %dpt; margin: %dpx %dpx;\">",
+                         fontSize, m1, m1, fontSize, m2, m2);
+  }
+  
   @NonNls private static final String TEXT_SUFFIX = "</body></html>";
 
   private final Project myProject;
@@ -96,34 +94,37 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   @NotNull
   @Override
   public List<RepoPackage> getAllPackages() throws IOException {
-    final Map<String, String> packageToVersionMap = PyPIPackageUtil.INSTANCE.loadAndGetPackages();
-    final List<RepoPackage> packages = versionMapToPackageList(packageToVersionMap);
-    packages.addAll(PyPIPackageUtil.INSTANCE.getAdditionalPackages());
-    return packages;
-  }
-
-  @NotNull
-  protected static List<RepoPackage> versionMapToPackageList(@NotNull Map<String, String> packageToVersionMap) {
-    final boolean customRepoConfigured = !PyPackageService.getInstance().additionalRepositories.isEmpty();
-    final String url = customRepoConfigured ? PyPIPackageUtil.PYPI_LIST_URL : "";
-    final List<RepoPackage> packages = new ArrayList<>();
-    for (Map.Entry<String, String> entry : packageToVersionMap.entrySet()) {
-      packages.add(new RepoPackage(entry.getKey(), url, entry.getValue()));
-    }
-    return packages;
+    PyPIPackageUtil.INSTANCE.loadAndGetPackages();
+    PyPIPackageUtil.INSTANCE.loadAndGetAdditionalPackages(false);
+    return getAllPackagesCached();
   }
 
   @NotNull
   @Override
   public List<RepoPackage> reloadAllPackages() throws IOException {
-    PyPIPackageUtil.INSTANCE.clearPackagesCache();
-    return getAllPackages();
+    PyPIPackageUtil.INSTANCE.updatePyPICache();
+    PyPIPackageUtil.INSTANCE.loadAndGetAdditionalPackages(true);
+    return getAllPackagesCached();
   }
 
   @NotNull
   @Override
   public List<RepoPackage> getAllPackagesCached() {
-    return versionMapToPackageList(PyPIPackageUtil.getPyPIPackages());
+    // Make a copy, since ManagePackagesDialog attempts to change the passed in collection directly
+    final List<RepoPackage> result = new ArrayList<>();
+    if (!PyPackageService.getInstance().PYPI_REMOVED) {
+      result.addAll(getCachedPyPIPackages());
+    }
+    result.addAll(PyPIPackageUtil.INSTANCE.getAdditionalPackages());
+    return result;
+  }
+
+  @NotNull
+  private static List<RepoPackage> getCachedPyPIPackages() {
+    // Don't show URL next to the package name in "Available Packages" if only PyPI is in use
+    final boolean customRepoConfigured = !PyPackageService.getInstance().additionalRepositories.isEmpty();
+    final String url = customRepoConfigured ? PyPIPackageUtil.PYPI_LIST_URL : "";
+    return ContainerUtil.map(PyPIPackageCache.getInstance().getPackageNames(), name -> new RepoPackage(name, url, null));
   }
 
   @Override
@@ -162,7 +163,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     catch (ExecutionException e) {
       throw new IOException(e);
     }
-    Collections.sort(packages, (pkg1, pkg2) -> pkg1.getName().compareTo(pkg2.getName()));
+    Collections.sort(packages, Comparator.comparing(InstalledPackage::getName));
     return new ArrayList<>(packages);
   }
 
@@ -363,7 +364,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   public void updatePackage(@NotNull InstalledPackage installedPackage,
                             @Nullable String version,
                             @NotNull Listener listener) {
-    installPackage(new RepoPackage(installedPackage.getName(), null), null, true, null, listener, false);
+    installPackage(new RepoPackage(installedPackage.getName(), null), version, true, null, listener, false);
   }
 
   /**
@@ -390,11 +391,6 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
 
   @Override
   public int compareVersions(@NotNull String version1, @NotNull String version2) {
-    if (PyRequirement.calculateVersionSpec(version2, PyRequirementRelation.EQ).matches(version1)) {
-      // Here we're catching the case described in PY-20939.
-      // The order of 'version1' and 'version2' is important: version2 is an available version which version1 tries to match
-      return 0;
-    }
-    return super.compareVersions(version1, version2);
+    return PyPackageVersionComparator.getSTR_COMPARATOR().compare(version1, version2);
   }
 }

@@ -16,21 +16,31 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectChanges;
+import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask;
+import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 public class MiscImportingTest extends MavenImportingTestCase {
   private int beforeRootsChangedCount;
@@ -52,7 +62,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     });
   }
 
-  public void testRestarting() throws Exception {
+  public void testRestarting() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -102,7 +112,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertModules("project");
   }
 
-  public void testImportingAllAvailableFilesIfNotInitialized() throws Exception {
+  public void testImportingAllAvailableFilesIfNotInitialized() {
     createModule("m1");
     createModule("m2");
     createProjectSubDirs("m1/src/main/java",
@@ -130,7 +140,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertSources("m2", "src/main/java");
   }
 
-  public void testImportingFiresRootChangesOnlyOnce() throws Exception {
+  public void testImportingFiresRootChangesOnlyOnce() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -138,7 +148,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertRootsChanged(1);
   }
 
-  public void testResolvingFiresRootChangesOnlyOnce() throws Exception {
+  public void testResolvingFiresRootChangesOnlyOnce() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -146,7 +156,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertRootsChanged(1);
   }
 
-  public void testImportingWithLibrariesAndFacetsFiresRootChangesOnlyOnce() throws Exception {
+  public void testImportingWithLibrariesAndFacetsFiresRootChangesOnlyOnce() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -168,7 +178,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertRootsChanged(1);
   }
 
-  public void testFacetsDoNotFireRootsChanges() throws Exception {
+  public void testFacetsDoNotFireRootsChanges() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -177,7 +187,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertRootsChanged(1);
   }
 
-  public void testDoNotRecreateModulesBeforeResolution() throws Exception {
+  public void testDoNotRecreateModulesBeforeResolution() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -248,7 +258,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertTrue(jarFile.exists());
   }
 
-  public void testClearUnresolvedPluginsAfterPluginResolution() throws Exception {
+  public void testClearUnresolvedPluginsAfterPluginResolution() {
     try {
       File repo = new File(myDir, "repo");
       setRepositoryPath(repo.getPath());
@@ -342,7 +352,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
     assertEquals("throw!", mavenProject.getProblems().get(0).getDescription());
   }
 
-  public void testCheckingIfModuleIsNotDisposedBeforeCommitOnImport() throws Exception {
+  public void testCheckingIfModuleIsNotDisposedBeforeCommitOnImport() {
     if (ignore()) return;
 
     importProject("<groupId>test</groupId>" +
@@ -380,8 +390,85 @@ public class MiscImportingTest extends MavenImportingTestCase {
     });
   }
 
+  public void testUserPropertiesCanBeCustomizedByMavenImportersForMaven3() {
+    NameSettingMavenImporter extension = new NameSettingMavenImporter("name-from-properties");
+    ExtensionPoint<MavenImporter> extensionPoint = Extensions.getRootArea().getExtensionPoint(MavenImporter.EXTENSION_POINT_NAME);
+    extensionPoint.registerExtension(extension);
+
+    try {
+      importProjectWithMaven3("<groupId>test</groupId>" +
+                              "<artifactId>project</artifactId>" +
+                              "<version>1</version>" +
+                              "<name>${myName}</name>");
+    }
+    finally {
+      extensionPoint.unregisterExtension(extension);
+    }
+
+    MavenProject project = myProjectsManager.findProject(new MavenId("test", "project", "1"));
+    assertNotNull(project);
+    assertEquals("name-from-properties", project.getName());
+  }
+
+  public void testUserPropertiesCanBeCustomizedByMavenImportersForMaven2() {
+    NameSettingMavenImporter extension = new NameSettingMavenImporter("name-from-properties");
+    ExtensionPoint<MavenImporter> extensionPoint = Extensions.getRootArea().getExtensionPoint(MavenImporter.EXTENSION_POINT_NAME);
+    extensionPoint.registerExtension(extension);
+
+    try {
+      importProject("<groupId>test</groupId>" +
+                    "<artifactId>project</artifactId>" +
+                    "<version>1</version>" +
+                    "<name>${myName}</name>");
+    }
+    finally {
+      extensionPoint.unregisterExtension(extension);
+    }
+
+    MavenProject project = myProjectsManager.findProject(new MavenId("test", "project", "1"));
+    assertNotNull(project);
+    assertEquals("name-from-properties", project.getName());
+  }
+
   private void assertRootsChanged(int count) {
     assertEquals(count, rootsChangedCount);
     assertEquals(rootsChangedCount, beforeRootsChangedCount);
+  }
+
+  private static class NameSettingMavenImporter extends MavenImporter {
+    private final String myName;
+
+    public NameSettingMavenImporter(String name) {
+      super("gid", "id");
+      myName = name;
+    }
+
+    @Override
+    public void customizeUserProperties(Project project, MavenProject mavenProject, Properties properties) {
+      properties.setProperty("myName", myName);
+    }
+
+    @Override
+    public boolean isApplicable(MavenProject mavenProject) {
+      return true;
+    }
+
+    @Override
+    public void preProcess(Module module,
+                           MavenProject mavenProject,
+                           MavenProjectChanges changes,
+                           IdeModifiableModelsProvider modifiableModelsProvider) {
+    }
+
+    @Override
+    public void process(IdeModifiableModelsProvider modifiableModelsProvider,
+                        Module module,
+                        MavenRootModelAdapter rootModel,
+                        MavenProjectsTree mavenModel,
+                        MavenProject mavenProject,
+                        MavenProjectChanges changes,
+                        Map<MavenProject, String> mavenProjectToModuleName,
+                        List<MavenProjectsProcessorTask> postTasks) {
+    }
   }
 }

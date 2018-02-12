@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 
 /**
  * @author nik
@@ -27,18 +28,18 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     baseFileName = "idea"
     platformPrefix = "Idea"
     productCode = "IC"
-    applicationInfoModule = "community-resources"
+    applicationInfoModule = "intellij.idea.community.resources"
     additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaCE.properties".toString()]
     toolsJarRequired = true
     buildCrossPlatformDistribution = true
 
-    productLayout.platformApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES + JAVA_API_MODULES
-    productLayout.platformImplementationModules = CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES + JAVA_IMPLEMENTATION_MODULES +
-                                                  ["duplicates-analysis", "structuralsearch", "structuralsearch-java", "typeMigration", "platform-main"] -
-                                                  ["jps-model-impl", "jps-model-serialization"]
-    productLayout.additionalPlatformJars.put("resources.jar", "community-resources")
+    productLayout.productApiModules = JAVA_API_MODULES
+    productLayout.productImplementationModules =  JAVA_IMPLEMENTATION_MODULES +
+                                                 ["intellij.platform.duplicates.analysis", "intellij.platform.structuralSearch", "intellij.java.structuralSearch", "intellij.java.typeMigration", "intellij.platform.main"]
+    productLayout.additionalPlatformJars.put("resources.jar", "intellij.idea.community.resources")
     productLayout.bundledPluginModules = BUNDLED_PLUGIN_MODULES
-    productLayout.mainModules = ["community-main"]
+    productLayout.mainModules = ["intellij.idea.community.main"]
+    productLayout.compatiblePluginsToIgnore = PythonCommunityPluginModules.PYCHARM_ONLY_PLUGIN_MODULES
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
       CommunityRepositoryModules.androidPlugin([:]),
       CommunityRepositoryModules.groovyPlugin([])
@@ -89,6 +90,10 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     return new LinuxDistributionCustomizer() {
       {
         iconPngPath = "$projectHome/platform/icons/src/icon_CE_128.png"
+        snapName = "intellij-idea-community"
+        snapDescription =
+          "The most intelligent Java IDE. Every aspect of IntelliJ IDEA is specifically designed to maximize developer productivity. " +
+          "Together, powerful static code analysis and ergonomic design make development not only productive but also an enjoyable experience."
       }
 
       @Override
@@ -100,18 +105,18 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
   MacDistributionCustomizer createMacCustomizer(String projectHome) {
     return new MacDistributionCustomizer() {
       {
-        helpId = "IJ"
+        icnsPath = "$projectHome/build/conf/ideaCE/mac/images/idea.icns"
         urlSchemes = ["idea"]
         associateIpr = true
         enableYourkitAgentInEAP = false
         bundleIdentifier = "com.jetbrains.intellij.ce"
-        dmgImagePath = "$projectHome/build/conf/mac/communitydmg.png"
-        icnsPathForEAP = "$projectHome/build/conf/mac/communityEAP.icns"
+        dmgImagePath = "$projectHome/build/conf/ideaCE/mac/images/dmg_background.tiff"
+        icnsPathForEAP = "$projectHome/build/conf/ideaCE/mac/images/communityEAP.icns"
       }
 
       @Override
       String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
-        applicationInfo.isEAP ? "IntelliJ IDEA ${applicationInfo.majorVersion}.${applicationInfo.minorVersion} CE EAP.app"
+        applicationInfo.isEAP ? "IntelliJ IDEA ${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart} CE EAP.app"
                               : "IntelliJ IDEA CE.app"
       }
     }

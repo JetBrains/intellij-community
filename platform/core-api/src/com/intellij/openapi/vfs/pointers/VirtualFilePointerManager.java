@@ -42,4 +42,10 @@ public abstract class VirtualFilePointerManager extends SimpleModificationTracke
 
   @NotNull
   public abstract VirtualFilePointerContainer createContainer(@NotNull Disposable parent, @Nullable VirtualFilePointerListener listener);
+
+  @NotNull
+  public abstract VirtualFilePointer createDirectoryPointer(@NotNull String url,
+                                                            boolean recursively,
+                                                            @NotNull Disposable parent,
+                                                            @NotNull VirtualFilePointerListener listener);
 }

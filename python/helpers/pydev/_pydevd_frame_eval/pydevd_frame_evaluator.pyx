@@ -1,10 +1,9 @@
 import dis
 from _pydev_imps._pydev_saved_modules import threading
 from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
-from _pydevd_bundle.pydevd_comm import get_global_debugger, CMD_THREAD_SUSPEND
-from _pydevd_bundle.pydevd_constants import STATE_RUN, STATE_SUSPEND
+from _pydevd_bundle.pydevd_comm import get_global_debugger
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
-from _pydevd_frame_eval.pydevd_frame_tracing import pydev_trace_code_wrapper, update_globals_dict
+from _pydevd_frame_eval.pydevd_frame_tracing import pydev_trace_code_wrapper, update_globals_dict, dummy_tracing_holder
 from _pydevd_frame_eval.pydevd_modify_bytecode import insert_code
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
 
@@ -30,8 +29,13 @@ def is_use_code_extra():
     return UseCodeExtraHolder.use_code_extra
 
 
-def set_use_code_extra(new_value):
+# enable using `co_extra` field in order to cache frames without breakpoints
+def enable_cache_frames_without_breaks(new_value):
     UseCodeExtraHolder.use_code_extra = new_value
+
+
+cpdef dummy_trace_dispatch(frame, str event, arg):
+    return None
 
 
 cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame_obj, int exc):
@@ -41,6 +45,10 @@ cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame_obj, int exc):
     cdef void* extra = NULL
     cdef int* extra_value = NULL
     cdef int thread_index = -1
+
+    if is_use_code_extra is None or AVOID_RECURSION is None:
+        # Sometimes during process shutdown these global variables become None
+        return _PyEval_EvalFrameDefault(frame_obj, exc)
 
     if is_use_code_extra():
         extra = PyMem_Malloc(sizeof(int))
@@ -57,9 +65,10 @@ cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame_obj, int exc):
 
     for file in AVOID_RECURSION:
         # we can't call any other function without this check, because we can get stack overflow
-        if filepath.endswith(file):
-            skip_file = True
-            break
+        for path_separator in ('/', '\\'):
+            if filepath.endswith(path_separator + file):
+                skip_file = True
+                break
 
     if not skip_file:
         try:
@@ -92,12 +101,8 @@ cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame_obj, int exc):
             additional_info.is_tracing = False
             return _PyEval_EvalFrameDefault(frame_obj, exc)
 
-        main_debugger = get_global_debugger()
-        if (additional_info.pydev_state == STATE_SUSPEND and t.stop_reason == CMD_THREAD_SUSPEND) or \
-            (additional_info.pydev_state == STATE_RUN and main_debugger.disable_tracing_after_exit_frames):
-            main_debugger.process_internal_commands()
-
         was_break = False
+        main_debugger = get_global_debugger()
         breakpoints = main_debugger.breakpoints.get(abs_path_real_path_and_base[1])
         code_object = frame.f_code
         if breakpoints:
@@ -108,15 +113,20 @@ cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame_obj, int exc):
                     if code_object not in breakpoint.code_objects:
                         # This check is needed for generator functions, because after each yield the new frame is created
                         # but the former code object is used
-                        breakpoints_to_update.append(breakpoint)
-                        new_code = insert_code(frame.f_code, pydev_trace_code_wrapper.__code__, line)
-                        Py_INCREF(new_code)
-                        frame_obj.f_code = <PyCodeObject *> new_code
-                        was_break = True
+                        success, new_code = insert_code(frame.f_code, pydev_trace_code_wrapper.__code__, line)
+                        if success:
+                            breakpoints_to_update.append(breakpoint)
+                            Py_INCREF(new_code)
+                            frame_obj.f_code = <PyCodeObject *> new_code
+                            was_break = True
+                        else:
+                            main_debugger.set_trace_for_frame_and_parents(frame)
+                            was_break = False
+                            break
             if was_break:
                 update_globals_dict(frame.f_globals)
                 for bp in breakpoints_to_update:
-                    bp.code_objects.append(frame.f_code)
+                    bp.code_objects.add(frame.f_code)
         else:
             if main_debugger.has_plugin_line_breaks:
                 can_not_skip = main_debugger.plugin.can_not_skip(main_debugger, None, frame)
@@ -141,6 +151,8 @@ cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame_obj, int exc):
 def frame_eval_func():
     cdef PyThreadState *state = PyThreadState_Get()
     state.interp.eval_frame = get_bytecode_while_frame_eval
+    global dummy_tracing_holder
+    dummy_tracing_holder.set_trace_func(dummy_trace_dispatch)
 
 def stop_frame_eval():
     cdef PyThreadState *state = PyThreadState_Get()

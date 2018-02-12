@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.util.io.socketConnection.ConnectionStatus
 import com.intellij.xdebugger.DefaultDebugProcessHandler
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
-import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
@@ -33,6 +32,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.debugger.connection.RemoteVmConnection
 import org.jetbrains.debugger.connection.VmConnection
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -40,8 +40,19 @@ import java.util.concurrent.atomic.AtomicBoolean
 interface MultiVmDebugProcess {
   val mainVm: Vm?
   val activeOrMainVm: Vm?
-  val childConnections: List<VmConnection<*>>
-    get() = emptyList()
+  val collectVMs: List<Vm>
+    get() {
+      val mainVm = mainVm ?: return emptyList()
+      val result = mutableListOf<Vm>()
+      fun addRecursively(vm: Vm) {
+        if (vm.attachStateManager.isAttached) {
+          result.add(vm)
+          vm.childVMs.forEach { addRecursively(it) }
+        }
+      }
+      addRecursively(mainVm)
+      return result
+    }
 }
 
 abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
@@ -85,8 +96,6 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   override final val activeOrMainVm: Vm?
     get() = (session.suspendContext?.activeExecutionStack as? ExecutionStackView)?.suspendContext?.vm ?: mainVm
 
-  override final val childConnections = ContainerUtil.createConcurrentList<C>()
-
   init {
     connection.stateChanged {
       when (it.status) {
@@ -99,13 +108,13 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
           }
           getSession().stop()
         }
+
         ConnectionStatus.CONNECTION_FAILED -> {
           getSession().reportError(it.message)
           getSession().stop()
         }
-        else -> {
-          getSession().rebuildViews()
-        }
+
+        else -> getSession().rebuildViews()
       }
     }
   }
@@ -127,7 +136,7 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   }
 
   val XSuspendContext?.vm: Vm
-    get() = (this as? SuspendContextView)?.activeExecutionStack?.suspendContext?.vm ?: mainVm!!
+    get() = (this as? SuspendContextView)?.activeVm ?: mainVm!!
 
   override final fun startForceStepInto(context: XSuspendContext?) {
     isForceStep = true
@@ -220,78 +229,57 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   // todo make final (go plugin compatibility)
   override fun checkCanInitBreakpoints(): Boolean {
     if (connection.state.status == ConnectionStatus.CONNECTED) {
-      // breakpointsInitiated could be set in another thread and at this point work (init breakpoints) could be not yet performed
-      return initBreakpoints(false)
+      return true
     }
 
     if (connectedListenerAdded.compareAndSet(false, true)) {
       connection.stateChanged {
         if (it.status == ConnectionStatus.CONNECTED) {
-          initBreakpoints(true)
+          initBreakpoints()
         }
       }
     }
     return false
   }
 
-  protected fun initBreakpoints(setBreakpoints: Boolean): Boolean {
+  protected fun initBreakpoints() {
     if (breakpointsInitiated.compareAndSet(false, true)) {
-      doInitBreakpoints(setBreakpoints)
-      return true
-    }
-    else {
-      return false
+      doInitBreakpoints()
     }
   }
 
-  protected open fun doInitBreakpoints(setBreakpoints: Boolean) {
-    if (setBreakpoints) {
-      beforeInitBreakpoints(mainVm!!)
-      runReadAction { session.initBreakpoints() }
-    }
+  protected open fun doInitBreakpoints() {
+    beforeInitBreakpoints(mainVm!!)
+    runReadAction { session.initBreakpoints() }
   }
 
   protected open fun beforeInitBreakpoints(vm: Vm) {
   }
 
-  protected fun addChildVm(vm: Vm) {
-    beforeInitBreakpoints(vm)
-
-    processBreakpoints { handler, breakpoint ->
-      handler.manager.setBreakpoint(vm, breakpoint)
-    }
-  }
-
-  open protected fun initChildConnection(childConnection: C) {
-    childConnections.add(childConnection)
+  protected fun addChildVm(vm: Vm, childConnection: RemoteVmConnection) {
+    mainVm?.childVMs?.add(vm)
     childConnection.stateChanged {
       if (it.status == ConnectionStatus.CONNECTION_FAILED || it.status == ConnectionStatus.DISCONNECTED || it.status == ConnectionStatus.DETACHED) {
-        childConnections.remove(childConnection)
+        mainVm?.childVMs?.remove(vm)
       }
     }
-  }
 
-  protected inline fun processBreakpoints(processor: (handler: LineBreakpointHandler, breakpoint: XLineBreakpoint<*>) -> Unit) {
-    val breakpointManager = XDebuggerManager.getInstance(session.project).breakpointManager
-    for (breakpointHandler in breakpointHandlers) {
-      if (breakpointHandler is LineBreakpointHandler) {
-        val breakpoints = runReadAction { breakpointManager.getBreakpoints(breakpointHandler.breakpointTypeClass) }
-        for (breakpoint in breakpoints) {
-          processor(breakpointHandler, breakpoint)
-        }
-      }
-    }
+    mainVm?.debugListener?.childVmAdded(vm)
   }
 }
 
 @Suppress("UNCHECKED_CAST")
-class LineBreakpointHandler(breakpointTypeClass: Class<out XBreakpointType<out XLineBreakpoint<*>, *>>, internal val manager: LineBreakpointManager)
+class LineBreakpointHandler(breakpointTypeClass: Class<out XBreakpointType<out XLineBreakpoint<*>, *>>, val manager: LineBreakpointManager)
     : XBreakpointHandler<XLineBreakpoint<*>>(breakpointTypeClass as Class<out XBreakpointType<XLineBreakpoint<*>, *>>) {
   override fun registerBreakpoint(breakpoint: XLineBreakpoint<*>) {
-    manager.setBreakpoint(manager.debugProcess.mainVm!!, breakpoint)
+    manager.debugProcess.collectVMs.forEach {
+      manager.setBreakpoint(it, breakpoint)
+    }
   }
 
   override fun unregisterBreakpoint(breakpoint: XLineBreakpoint<*>, temporary: Boolean) {
-    manager.removeBreakpoint(manager.debugProcess.mainVm!!, breakpoint, temporary)
+    manager.debugProcess.collectVMs.forEach {
+      manager.removeBreakpoint(it, breakpoint, temporary)
+    }
   }
 }

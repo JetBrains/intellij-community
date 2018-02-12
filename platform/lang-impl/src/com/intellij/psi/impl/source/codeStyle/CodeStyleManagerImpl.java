@@ -16,6 +16,7 @@
 
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.*;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.*;
@@ -24,6 +25,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -41,7 +43,6 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
@@ -447,7 +448,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       return false;
     }
     */
-    if (getSettings().KEEP_FIRST_COLUMN_COMMENT && isCommentToken(element)) {
+    if (getSettings().getCommonSettings(file.getLanguage()).KEEP_FIRST_COLUMN_COMMENT && isCommentToken(element)) {
       if (IndentHelper.getInstance().getIndent(myProject, file.getFileType(), element, true) == 0) {
         return false;
       }
@@ -558,7 +559,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
     if (!(astNode instanceof FileElement)) {
       return new Pair<>(null, null);
     }
-    PsiElement elementAt = InjectedLanguageUtil.findInjectedElementNoCommit(file, offset);
+    PsiElement elementAt = InjectedLanguageManager.getInstance(file.getProject()).findInjectedElementAt(file, offset);
     final CharTable charTable = ((FileElement)astNode).getCharTable();
     if (elementAt == null) {
       elementAt = findElementInTreeWithFormatterEnabled(file, offset);
@@ -792,12 +793,16 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       if (myCaretModel.getVisualPosition().column == myVisualColumnToRestore) {
         return;
       }
+      Project project = myEditor.getProject();
+      if (project == null || PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(myDocument)) {
+        return;
+      }
       insertWhiteSpaceIndentIfNeeded(newCaretLineStartOffset);
     }
 
     private void restoreVisualPosition() {
       if (myVisualColumnToRestore < 0) {
-        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        EditorUtil.runWithAnimationDisabled(myEditor, () -> myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE));
         return;
       }
       VisualPosition position = myCaretModel.getVisualPosition();
@@ -883,10 +888,44 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
   @Override
   public int getSpacing(@NotNull PsiFile file, int offset) {
+    FormattingModel model = createFormattingModel(file);
+    return model == null ? -1 : FormatterEx.getInstance().getSpacingForBlockAtOffset(model, offset);
+  }
+
+  @Override
+  public int getMinLineFeeds(@NotNull PsiFile file, int offset) {
+    FormattingModel model = createFormattingModel(file);
+    return model == null ? -1 : FormatterEx.getInstance().getMinLineFeedsBeforeBlockAtOffset(model, offset);
+  }
+
+  @Nullable
+  private static FormattingModel createFormattingModel(@NotNull PsiFile file) {
     FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
-    if (builder == null) return -1;
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject());
-    FormattingModel model = builder.createModel(file, settings);
-    return FormatterEx.getInstance().getSpacingForBlockAtOffset(model, offset);
+    if (builder == null) return null;
+    CodeStyleSettings settings = CodeStyle.getSettings(file);
+    return builder.createModel(file, settings);
+  }
+
+  @Override
+  public void runWithDocCommentFormattingDisabled(@NotNull PsiFile file, @NotNull Runnable runnable) {
+    DocCommentSettings docSettings = getDocCommentSettings(file);
+    boolean currDocFormattingEnabled = docSettings.isDocFormattingEnabled();
+    docSettings.setDocFormattingEnabled(false);
+    try {
+      runnable.run();
+    }
+    finally {
+      docSettings.setDocFormattingEnabled(currDocFormattingEnabled);
+    }
+  }
+
+  @NotNull
+  public DocCommentSettings getDocCommentSettings(@NotNull PsiFile file) {
+    Language language = file.getLanguage();
+    LanguageCodeStyleSettingsProvider settingsProvider = LanguageCodeStyleSettingsProvider.forLanguage(language);
+    if (settingsProvider != null) {
+      return settingsProvider.getDocCommentSettings(file);
+    }
+    return DocCommentSettings.DEFAULTS;
   }
 }

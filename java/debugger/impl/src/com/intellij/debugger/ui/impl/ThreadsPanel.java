@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,18 @@ package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.actions.DebuggerActions;
+import com.intellij.debugger.actions.GotoFrameSourceAction;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
-import com.intellij.debugger.impl.*;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerContextListener;
+import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
-import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
-import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -57,13 +56,7 @@ public class ThreadsPanel extends DebuggerTreePanel{
       @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER && getThreadsTree().getSelectionCount() == 1) {
-          DebuggerTreeNodeImpl node = (DebuggerTreeNodeImpl)getThreadsTree().getLastSelectedPathComponent();
-          if (node != null) {
-            NodeDescriptorImpl descriptor = node.getDescriptor();
-            if (descriptor instanceof StackFrameDescriptorImpl) {
-              selectFrame(node);
-            }
-          }
+          GotoFrameSourceAction.doAction(DataManager.getInstance().getDataContext(getThreadsTree()));
         }
       }
     });
@@ -171,12 +164,6 @@ public class ThreadsPanel extends DebuggerTreePanel{
     }
     return super.getData(dataId);
   }
-
-  private void selectFrame(DebuggerTreeNodeImpl node) {
-    StackFrameProxyImpl frame = ((StackFrameDescriptorImpl)node.getDescriptor()).getFrameProxy();
-    DebuggerContextUtil.setStackFrame(getContextManager(), frame);
-  }
-
   public ThreadsDebuggerTree getThreadsTree() {
     return (ThreadsDebuggerTree) getTree();
   }

@@ -16,8 +16,8 @@
 package com.jetbrains.env.ut;
 
 import com.jetbrains.env.ProcessWithConsoleRunner;
-import com.jetbrains.python.testing.universalTests.PyUniversalPyTestConfiguration;
-import com.jetbrains.python.testing.universalTests.PyUniversalPyTestFactory;
+import com.jetbrains.python.testing.PyTestConfiguration;
+import com.jetbrains.python.testing.PyTestFactory;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -26,9 +26,9 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Ilya.Kazakevich
  */
-public class PyTestTestProcessRunner extends PyScriptTestProcessRunner<PyUniversalPyTestConfiguration> {
+public class PyTestTestProcessRunner extends PyScriptTestProcessRunner<PyTestConfiguration> {
   public PyTestTestProcessRunner(@NotNull final String scriptName, final int timesToRerunFailedTests) {
-    super(PyUniversalPyTestFactory.INSTANCE,
-          PyUniversalPyTestConfiguration.class, scriptName, timesToRerunFailedTests);
+    super(PyTestFactory.INSTANCE,
+          PyTestConfiguration.class, scriptName, timesToRerunFailedTests);
   }
 }

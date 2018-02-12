@@ -37,8 +37,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author irengrig
- *         Date: 3/17/11
- *         Time: 7:51 PM
  */
 public class VcsAnnotationCachedProxy implements AnnotationProvider {
   private final VcsHistoryCache myCache;
@@ -130,15 +128,12 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
   private void loadHistoryInBackgroundToCache(final VcsRevisionNumber revisionNumber,
                                               final FilePath filePath,
                                               final VcsAnnotation vcsAnnotation) {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          getHistory(revisionNumber, filePath, myVcs.getVcsHistoryProvider(), vcsAnnotation.getFirstRevision());
-        }
-        catch (VcsException e) {
-          LOG.info(e);
-        }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        getHistory(revisionNumber, filePath, myVcs.getVcsHistoryProvider(), vcsAnnotation.getFirstRevision());
+      }
+      catch (VcsException e) {
+        LOG.info(e);
       }
     });
   }

@@ -15,9 +15,9 @@ class Main {
     l.findConstructor(Test.class, <warning descr="Cannot resolve constructor 'int Test()'">MethodType.methodType(int.class)</warning>);
     l.findConstructor(Test.class, <warning descr="Cannot resolve constructor 'Test Test()'">MethodType.methodType(Test.class)</warning>);
     l.findConstructor(Test.class, <warning descr="Cannot resolve constructor 'Test Test(int)'">MethodType.methodType(Test.class, int.class)</warning>);
-    l.findConstructor(Test.class, <warning descr="Cannot resolve constructor 'Test(java.lang.String)'">MethodType.methodType(void.class, String.class)</warning>);
-    l.findConstructor(Test.class, <warning descr="Cannot resolve constructor 'Test(int, java.lang.String[][])'">MethodType.methodType(void.class, int.class, String[][].class)</warning>);
-    l.findConstructor(Test.class, <warning descr="Cannot resolve constructor 'Test(java.lang.String[])'">MethodType.methodType(void.class, String[].class)</warning>);
+    l.findConstructor(Test.class, <warning descr="Cannot resolve constructor 'Test(String)'">MethodType.methodType(void.class, String.class)</warning>);
+    l.findConstructor(Test.class, <warning descr="Cannot resolve constructor 'Test(int, String[][])'">MethodType.methodType(void.class, int.class, String[][].class)</warning>);
+    l.findConstructor(Test.class, <warning descr="Cannot resolve constructor 'Test(String[])'">MethodType.methodType(void.class, String[].class)</warning>);
 
     l.findConstructor(WithDefault.class, MethodType.methodType(void.class));
     l.findConstructor(Class.forName("WithDefault"), MethodType.methodType(void.class));

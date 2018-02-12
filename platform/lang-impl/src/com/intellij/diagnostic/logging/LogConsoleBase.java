@@ -27,6 +27,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -42,6 +43,8 @@ import com.intellij.ui.FilterComponent;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -164,21 +167,26 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
     myFilter.reset();
     myFilter.setSelectedItem(customFilter != null ? customFilter : "");
-    new AnAction() {
-      {
-        registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK)),
-                                  LogConsoleBase.this);
-      }
+    // Don't override Shift-TAB if screen reader is active. It is unclear why overriding
+    // Shift-TAB was necessary in the first place.
+    // See https://github.com/JetBrains/intellij-community/commit/a36a3a00db97e4d5b5c112bb4136a41d9435f667
+    if (!ScreenReader.isActive()) {
+      new AnAction() {
+        {
+          registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK)),
+                                    LogConsoleBase.this);
+        }
 
-      @Override
-      public void actionPerformed(final AnActionEvent e) {
-        myFilter.requestFocusInWindow();
-      }
-    };
+        @Override
+        public void actionPerformed(final AnActionEvent e) {
+          myFilter.requestFocusInWindow();
+        }
+      };
+    }
 
     if (myBuildInActions) {
       final JComponent tbComp =
-        ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, getOrCreateActions(), true).getComponent();
+        ActionManager.getInstance().createActionToolbar("LogConsole", getOrCreateActions(), true).getComponent();
       myTopComponent.add(tbComp, BorderLayout.CENTER);
       myTopComponent.add(getSearchComponent(), BorderLayout.EAST);
     }
@@ -303,8 +311,9 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
       else {
         try {
           final BufferedReader reader = readerThread.myReader;
-          while (reader != null && reader.ready()) {
-            addMessage(reader.readLine());
+          while (reader.ready()) {
+            //ensure have read lock before requiring for sync, otherwise dispose() under write action would lead to deadlock
+            ReadAction.run(() -> addMessage(reader.readLine()));
           }
         }
         catch (IOException ignore) {}
@@ -314,6 +323,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   protected synchronized void addMessage(final String text) {
+    if (myDisposed) return;
     if (text == null) return;
     if (myContentPreprocessor != null) {
       final List<LogFragment> fragments = myContentPreprocessor.parseLogLine(text + "\n");
@@ -351,7 +361,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     if (process != null) {
       final ProcessAdapter stopListener = new ProcessAdapter() {
         @Override
-        public void processTerminated(final ProcessEvent event) {
+        public void processTerminated(@NotNull final ProcessEvent event) {
           process.removeProcessListener(this);
           stopRunning(true);
         }
@@ -537,7 +547,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
   @Override
   public JComponent getSearchComponent() {
-    myLogFilterCombo.setModel(new DefaultComboBoxModel(myFilters.toArray(new LogFilter[myFilters.size()])));
+    myLogFilterCombo.setModel(new DefaultComboBoxModel(myFilters.toArray(new LogFilter[0])));
     resetLogFilter();
     myLogFilterCombo.addActionListener(new ActionListener() {
       @Override
@@ -552,6 +562,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
         ProgressManager.getInstance().run(task);
       }
     });
+    AccessibleContextUtil.setName(myLogFilterCombo, "Message severity filter");
     myTextFilterWrapper.removeAll();
     myTextFilterWrapper.add(getTextFilterComponent());
     return mySearchComponent;

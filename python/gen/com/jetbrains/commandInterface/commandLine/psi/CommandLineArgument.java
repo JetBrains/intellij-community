@@ -21,6 +21,24 @@ public interface CommandLineArgument extends CommandLinePart {
   PsiElement getLiteralStartsFromSymbol();
 
   @Nullable
+  PsiElement getSingleQSpacedLiteralStartsFromDigit();
+
+  @Nullable
+  PsiElement getSingleQSpacedLiteralStartsFromLetter();
+
+  @Nullable
+  PsiElement getSingleQSpacedLiteralStartsFromSymbol();
+
+  @Nullable
+  PsiElement getSpacedLiteralStartsFromDigit();
+
+  @Nullable
+  PsiElement getSpacedLiteralStartsFromLetter();
+
+  @Nullable
+  PsiElement getSpacedLiteralStartsFromSymbol();
+
+  @Nullable
   Option findOptionForOptionArgument();
 
   @Nullable
@@ -28,5 +46,8 @@ public interface CommandLineArgument extends CommandLinePart {
 
   @Nullable
   Help findBestHelp();
+
+  @NotNull
+  String getValueNoQuotes();
 
 }

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 16-Jan-2008
- */
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.icons.AllIcons;
@@ -41,7 +37,7 @@ import java.util.Set;
 
 public class PackagePatternProvider extends PatternDialectProvider {
   @NonNls public static final String PACKAGES = "package";
-  private static final Logger LOG = Logger.getInstance("#" + PackagePatternProvider.class.getName());
+  private static final Logger LOG = Logger.getInstance(PackagePatternProvider.class);
 
   @Nullable
   private static GeneralGroupNode getGroupParent(PackageDependenciesNode node) {
@@ -68,8 +64,7 @@ public class PackagePatternProvider extends PatternDialectProvider {
     final String scope = scope1;
     if (node instanceof ModuleGroupNode){
       if (!recursively) return null;
-      @NonNls final String modulePattern = "group:" + ((ModuleGroupNode)node).getModuleGroup().toString();
-      return new PatternPackageSet("*..*", scope, modulePattern);
+      return new PatternPackageSet("*..*", scope, ProjectPatternProvider.getGroupModulePattern((ModuleGroupNode)node));
     } else if (node instanceof ModuleNode) {
       if (!recursively) return null;
       final String modulePattern = ((ModuleNode)node).getModuleName();

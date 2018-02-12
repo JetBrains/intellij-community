@@ -22,7 +22,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.*;
+import com.intellij.openapi.command.CommandEvent;
+import com.intellij.openapi.command.CommandListener;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -43,9 +46,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.ExternalChangeAction;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +59,9 @@ import java.util.List;
 
 public class UndoManagerImpl extends UndoManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.UndoManagerImpl");
+
+  @TestOnly
+  public static boolean ourNeverAskUser = false;
 
   private static final int COMMANDS_TO_KEEP_LIVE_QUEUES = 100;
   private static final int COMMAND_TO_RUN_COMPACT = 20;
@@ -122,7 +127,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
 
   private void runStartupActivity() {
     myEditorProvider = new FocusBasedCurrentEditorProvider();
-    CommandListener commandListener = new CommandAdapter() {
+    myCommandProcessor.addCommandListener(new CommandListener() {
       private boolean myStarted;
 
       @Override
@@ -154,8 +159,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
           onCommandFinished(myProject, "", null);
         }
       }
-    };
-    myCommandProcessor.addCommandListener(commandListener, this);
+    }, this);
 
     Disposer.register(this, new DocumentUndoProvider(myProject));
 
@@ -364,9 +368,6 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
     final RuntimeException[] exception = new RuntimeException[1];
     Runnable executeUndoOrRedoAction = () -> {
       try {
-        if (myProject != null) {
-          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        }
         CopyPasteManager.getInstance().stopKillRings();
         myMerger.undoOrRedo(editor, isUndo);
       }
@@ -549,7 +550,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
 
     if (refs.size() <= FREE_QUEUES_LIMIT) return;
 
-    DocumentReference[] backSorted = refs.toArray(new DocumentReference[refs.size()]);
+    DocumentReference[] backSorted = refs.toArray(DocumentReference.EMPTY_ARRAY);
     Arrays.sort(backSorted, Comparator.comparingInt(this::getLastCommandTimestamp));
 
     for (int i = 0; i < backSorted.length - FREE_QUEUES_LIMIT; i++) {

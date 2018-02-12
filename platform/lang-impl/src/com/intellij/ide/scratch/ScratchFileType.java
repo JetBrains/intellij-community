@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.scratch;
 
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
@@ -39,7 +38,7 @@ public class ScratchFileType extends LanguageFileType implements FileTypeIdentif
 
   @Override
   public boolean isMyFileType(@NotNull VirtualFile file) {
-    return ScratchFileService.getInstance().getRootType(file) != null;
+    return ScratchFileService.isInScratchRoot(file);
   }
 
   @NotNull

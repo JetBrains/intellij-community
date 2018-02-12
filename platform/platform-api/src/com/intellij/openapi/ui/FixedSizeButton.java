@@ -55,10 +55,10 @@ public class FixedSizeButton extends JButton {
   }
 
   /**
-   * Creates the <code>FixedSizeButton</code> with specified size.
+   * Creates the {@code FixedSizeButton} with specified size.
    *
    * @throws IllegalArgumentException
-   *          if <code>size</code> isn't
+   *          if {@code size} isn't
    *          positive integer number.
    */
   public FixedSizeButton(int size) {
@@ -69,8 +69,8 @@ public class FixedSizeButton extends JButton {
   }
 
   /**
-   * Creates the <code>FixedSizeButton</code> which size is equals to
-   * <code>component.getPreferredSize().height</code>. It is very convenient
+   * Creates the {@code FixedSizeButton} which size is equals to
+   * {@code component.getPreferredSize().height}. It is very convenient
    * way to create "browse" like button near the text fields.
    */
   public FixedSizeButton(@NotNull JComponent component) {
@@ -86,20 +86,18 @@ public class FixedSizeButton extends JButton {
   }
 
   public Dimension getPreferredSize() {
-    if (myComponent != null) {
-      int size = myComponent.getPreferredSize().height;
-      if (myComponent instanceof JComboBox && (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
-        // JComboBox's preferred height is 2px greater than JTextField's one, because
-        // javax.swing.DefaultListCellRenderer#getNoFocusBorder returns (1,1,1,1) border.
-        // Decrement to have equal sizes for pretty look when stacked vertically
-        size -= 2;
-      }
-      return new Dimension(size, size);
-    }
     if (mySize != -1) {
       return new Dimension(mySize, mySize);
     }
-    return super.getPreferredSize();
+
+    Dimension d = super.getPreferredSize();
+    int base = new JTextField().getPreferredSize().height;
+    if (base %2 == 1) base++;
+    d.width = Math.max(d.height, base);
+    int width = mySize == -1 ? d.width : mySize;
+    int height = myComponent != null ? myComponent.getPreferredSize().height : mySize != -1 ? mySize : base;
+
+    return new Dimension(width, height);
   }
 
   public void setAttachedComponent(JComponent component) {
@@ -112,20 +110,5 @@ public class FixedSizeButton extends JButton {
 
   public void setSize(int size) {
     mySize = size;
-  }
-
-  @Override
-  public void setBounds(int x, int y, int width, int height) {
-    int size = Math.min(width, height);
-    super.setBounds(x, y, size, size);
-  }
-
-  @Override
-  public void setBounds(Rectangle r) {
-    if (r.width != r.height) {
-      int size = Math.min(r.width, r.height);
-      r = new Rectangle(r.x, r.y, size, size);
-    }
-    super.setBounds(r);
   }
 }

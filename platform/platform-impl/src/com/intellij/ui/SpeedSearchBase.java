@@ -35,6 +35,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -335,7 +336,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       if (!UIUtil.isReallyTypedEvent(e)) return;
 
       char c = e.getKeyChar();
-      if (Character.isLetterOrDigit(c) || c == '_' || c == '*' || c == '/' || c == ':' || c == '.' || c == '#' || c == '$') {
+      if (Character.isLetterOrDigit(c) || (!Character.isWhitespace(c) && SpeedSearch.PUNCTUATION_MARKS.indexOf(c) != -1)) {
         manageSearchPopup(new SearchPopup(String.valueOf(c)));
         e.consume();
       }
@@ -550,15 +551,17 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       project = null;
     }
     if (mySearchPopup != null) {
-      myPopupLayeredPane.remove(mySearchPopup);
-      myPopupLayeredPane.validate();
-      myPopupLayeredPane.repaint();
-      myPopupLayeredPane = null;
+      if (myPopupLayeredPane != null) {
+        myPopupLayeredPane.remove(mySearchPopup);
+        myPopupLayeredPane.validate();
+        myPopupLayeredPane.repaint();
+        myPopupLayeredPane = null;
+      }
 
       if (myListenerDisposable != null) {
         Disposer.dispose(myListenerDisposable);
+        myListenerDisposable = null;
       }
-      myListenerDisposable = null;
     }
     else if (searchPopup != null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("ui.tree.speedsearch");
@@ -572,6 +575,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
 
     fireStateChanged();
+
+    //select here!
+
+
 
     if (mySearchPopup == null || !myComponent.isDisplayable()) return;
 
@@ -593,6 +600,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
     myPopupLayeredPane.add(mySearchPopup, JLayeredPane.POPUP_LAYER);
     moveSearchPopup();
+
+    mySearchPopup.refreshSelection();
   }
 
   private void moveSearchPopup() {

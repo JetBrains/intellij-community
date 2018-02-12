@@ -38,7 +38,7 @@ public interface PsiReferenceProcessor{
 
     @NotNull
     public PsiReference[] toArray(){
-      return myCollection.toArray(new PsiReference[myCollection.size()]);
+      return myCollection.toArray(PsiReference.EMPTY_ARRAY);
     }
 
     @NotNull

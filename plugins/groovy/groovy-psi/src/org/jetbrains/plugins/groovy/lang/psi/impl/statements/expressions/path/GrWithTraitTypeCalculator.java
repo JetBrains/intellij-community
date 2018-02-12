@@ -32,9 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.List;
 
-/**
- * Created by Max Medvedev on 21/05/14
- */
 public class GrWithTraitTypeCalculator extends GrCallExpressionTypeCalculator {
   @Nullable
   @Override

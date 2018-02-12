@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -33,13 +34,18 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Functions;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
+
+import static com.intellij.util.containers.ContainerUtil.map;
+import static com.intellij.util.containers.ContainerUtil.mapNotNull;
+import static java.util.function.Function.identity;
 
 public class NewMappings {
 
@@ -172,15 +178,24 @@ public class NewMappings {
           list.add(vcs);
         }
       }
-      myActiveVcses = list.toArray(new AbstractVcs[list.size()]);
+      myActiveVcses = list.toArray(new AbstractVcs[0]);
     }
   }
 
   public void mappingsChanged() {
-    if (myProject.isDisposed()) return;
-    myProject.getMessageBus().syncPublisher(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
+    BackgroundTaskUtil.syncPublisher(myProject, ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
     myFileStatusManager.fileStatusesChanged();
     myFileWatchRequestsManager.ping();
+
+    dumpMappingsToLog();
+  }
+
+  private void dumpMappingsToLog() {
+    for (VcsDirectoryMapping mapping : mySortedMappings) {
+      String path = mapping.isDefaultMapping() ? VcsDirectoryMapping.PROJECT_CONSTANT : mapping.getDirectory();
+      String vcs = mapping.getVcs();
+      LOG.info(String.format("VCS Root: [%s] - [%s]", vcs, path));
+    }
   }
 
   public void setDirectoryMappings(final List<VcsDirectoryMapping> items) {
@@ -364,25 +379,17 @@ public class NewMappings {
       final String vcsName = iterator.next();
       final Collection<VcsDirectoryMapping> mappings = myVcsToPaths.get(vcsName);
 
-      final List<Pair<VirtualFile, VcsDirectoryMapping>> objects = ObjectsConvertor.convert(mappings,
-        new Convertor<VcsDirectoryMapping, Pair<VirtualFile, VcsDirectoryMapping>>() {
-        public Pair<VirtualFile, VcsDirectoryMapping> convert(final VcsDirectoryMapping dm) {
-          VirtualFile vf = lfs.findFileByPath(dm.getDirectory());
-          if (vf == null) {
-            vf = lfs.refreshAndFindFileByPath(dm.getDirectory());
-          }
-          return vf == null ? null : Pair.create(vf, dm);
+      List<Pair<VirtualFile, VcsDirectoryMapping>> objects = mapNotNull(mappings, dm -> {
+        VirtualFile vf = lfs.findFileByPath(dm.getDirectory());
+        if (vf == null) {
+          vf = lfs.refreshAndFindFileByPath(dm.getDirectory());
         }
-      }, ObjectsConvertor.NOT_NULL);
+        return vf == null ? null : Pair.create(vf, dm);
+      });
 
       final List<Pair<VirtualFile, VcsDirectoryMapping>> filteredFiles;
       // todo static
-      final Convertor<Pair<VirtualFile, VcsDirectoryMapping>, VirtualFile> fileConvertor =
-        new Convertor<Pair<VirtualFile, VcsDirectoryMapping>, VirtualFile>() {
-          public VirtualFile convert(Pair<VirtualFile, VcsDirectoryMapping> o) {
-            return o.getFirst();
-          }
-        };
+      Function<Pair<VirtualFile, VcsDirectoryMapping>, VirtualFile> fileConvertor = pair -> pair.getFirst();
       if (StringUtil.isEmptyOrSpaces(vcsName)) {
         filteredFiles = AbstractVcs.filterUniqueRootsDefault(objects, fileConvertor);
       }
@@ -395,13 +402,7 @@ public class NewMappings {
         filteredFiles = vcs.filterUniqueRoots(objects, fileConvertor);
       }
 
-      final List<VcsDirectoryMapping> filteredMappings =
-        ObjectsConvertor.convert(filteredFiles, new Convertor<Pair<VirtualFile, VcsDirectoryMapping>, VcsDirectoryMapping>() {
-          public VcsDirectoryMapping convert(final Pair<VirtualFile, VcsDirectoryMapping> o) {
-            return o.getSecond();
-          }
-        });
-
+      List<VcsDirectoryMapping> filteredMappings = map(filteredFiles, Functions.pairSecond());
       // to calculate what had been removed
       mappings.removeAll(filteredMappings);
 
@@ -527,21 +528,21 @@ public class NewMappings {
     mappingsChanged();
   }
 
+  @NotNull
   public List<VirtualFile> getDefaultRoots() {
     synchronized (myLock) {
       final String defaultVcs = haveDefaultMapping();
       if (defaultVcs == null) return Collections.emptyList();
-      final List<VirtualFile> list = new ArrayList<>();
-      list.addAll(myDefaultVcsRootPolicy.getDefaultVcsRoots(this, defaultVcs));
+      final List<VirtualFile> list = new ArrayList<>(myDefaultVcsRootPolicy.getDefaultVcsRoots(this, defaultVcs));
       if (StringUtil.isEmptyOrSpaces(defaultVcs)) {
-        return AbstractVcs.filterUniqueRootsDefault(list, Convertor.SELF);
+        return AbstractVcs.filterUniqueRootsDefault(list, identity());
       }
       else {
         final AbstractVcs<?> vcs = AllVcses.getInstance(myProject).getByName(defaultVcs);
         if (vcs == null) {
-          return AbstractVcs.filterUniqueRootsDefault(list, Convertor.SELF);
+          return AbstractVcs.filterUniqueRootsDefault(list, identity());
         }
-        return vcs.filterUniqueRoots(list, Convertor.SELF);
+        return vcs.filterUniqueRoots(list, identity());
       }
     }
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,6 +23,9 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.model.JpsDummyElement;
+import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.java.JavaModuleIndex;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
@@ -63,6 +52,7 @@ public class JavaBuilderUtil {
   private static final Key<Set<File>> SUCCESSFULLY_COMPILED_FILES_KEY = Key.create("_successfully_compiled_files_");
   private static final Key<List<FileFilter>> SKIP_MARKING_DIRTY_FILTERS_KEY = Key.create("_skip_marking_dirty_filters_");
   private static final Key<Pair<Mappings, Callbacks.Backend>> MAPPINGS_DELTA_KEY = Key.create("_mappings_delta_");
+  private static final String MODULE_INFO_FILE = "module-info.java";
 
   public static void registerFileToCompile(CompileContext context, File file) {
     registerFilesToCompile(context, Collections.singleton(file));
@@ -79,7 +69,7 @@ public class JavaBuilderUtil {
   public static void registerSuccessfullyCompiled(CompileContext context, File file) {
     registerSuccessfullyCompiled(context, Collections.singleton(file));
   }
-  
+
   public static void registerSuccessfullyCompiled(CompileContext context, Collection<File> files) {
     getFilesContainer(context, SUCCESSFULLY_COMPILED_FILES_KEY).addAll(files);
   }
@@ -111,13 +101,13 @@ public class JavaBuilderUtil {
     CompileContext context, DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder, ModuleChunk chunk) throws IOException {
 
     Mappings delta = null;
-    
+
     final Pair<Mappings, Callbacks.Backend> pair = MAPPINGS_DELTA_KEY.get(context);
     if (pair != null) {
       MAPPINGS_DELTA_KEY.set(context, null);
       delta = pair.getFirst();
     }
-    
+
     if (delta == null) {
       return false;
     }
@@ -214,6 +204,7 @@ public class JavaBuilderUtil {
             LOG.debug("End Of Differentiate Results.");
           }
 
+          final boolean compilingIncrementally = isCompileJavaIncrementally(context);
           if (incremental) {
             final Set<File> newlyAffectedFiles = new HashSet<>(allAffectedFiles);
             newlyAffectedFiles.removeAll(affectedBeforeDif);
@@ -241,10 +232,47 @@ public class JavaBuilderUtil {
                 }
               }
 
+              Set<ModuleBuildTarget> targetsToMark = null;
+              final JavaModuleIndex moduleIndex = getJavaModuleIndex(context);
               for (File file : newlyAffectedFiles) {
-                FSOperations.markDirtyIfNotDeleted(context, markDirtyRound, file);
+                if (MODULE_INFO_FILE.equals(file.getName())) {
+                  final JavaSourceRootDescriptor rootDescr = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
+                  if (rootDescr != null) {
+                    final ModuleBuildTarget target = rootDescr.getTarget();
+                    final File targetModuleInfo = moduleIndex.getModuleInfoFile(target.getModule(), target.isTests());
+                    if (FileUtil.filesEqual(targetModuleInfo, file)) {
+                      if (targetsToMark == null) {
+                        targetsToMark = new THashSet<>(); // lazy init
+                      }
+                      targetsToMark.add(target);
+                    }
+                  }
+                }
+                else {
+                  FSOperations.markDirtyIfNotDeleted(context, markDirtyRound, file);
+                }
               }
-              additionalPassRequired = isCompileJavaIncrementally(context) && chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles);
+              if (targetsToMark != null) {
+                boolean currentChunkAfected = false;
+                for (ModuleBuildTarget target : targetsToMark) {
+                  if (chunk.getTargets().contains(target)) {
+                    currentChunkAfected = true;
+                  }
+                  else {
+                    FSOperations.markDirty(context, markDirtyRound, target, null);
+                  }
+                }
+                if (currentChunkAfected) {
+                  if (compilingIncrementally) {
+                    // turn on non-incremental mode for targets from the current chunk, if at least one of them was affected.
+                    for (ModuleBuildTarget target : chunk.getTargets()) {
+                      context.markNonIncremental(target);
+                    }
+                  }
+                  FSOperations.markDirty(context, markDirtyRound, chunk, null);
+                }
+              }
+              additionalPassRequired = compilingIncrementally && moduleBasedFilter.containsFilesFromCurrentTargetChunk(newlyAffectedFiles);
             }
           }
           else {
@@ -254,7 +282,7 @@ public class JavaBuilderUtil {
             context.processMessage(new ProgressMessage(messageText));
 
             final boolean alreadyMarkedDirty = FSOperations.isMarkedDirty(context, chunk);
-            additionalPassRequired = isCompileJavaIncrementally(context) && !alreadyMarkedDirty;
+            additionalPassRequired = compilingIncrementally && !alreadyMarkedDirty;
 
             if (alreadyMarkedDirty) {
               // need this to make sure changes data stored in Delta is complete
@@ -303,6 +331,16 @@ public class JavaBuilderUtil {
     }
   }
 
+  @Nullable
+  public static File findModuleInfoFile(CompileContext context, ModuleBuildTarget target) {
+    return getJavaModuleIndex(context).getModuleInfoFile(target.getModule(), target.isTests());
+  }
+
+  private static JavaModuleIndex getJavaModuleIndex(CompileContext context) {
+    JpsProject project = context.getProjectDescriptor().getProject();
+    return JpsJavaExtensionService.getInstance().getJavaModuleIndex(project);
+  }
+
   private static FileFilter createOrFilter(final List<FileFilter> filters) {
     if (filters == null || filters.isEmpty()) return null;
     return pathname -> {
@@ -316,13 +354,11 @@ public class JavaBuilderUtil {
   }
 
   private static void removeFilesAcceptedByFilter(@NotNull Set<File> files, @Nullable FileFilter filter) {
-    if (filter == null) return;
-
-    Iterator<File> iterator = files.iterator();
-    while (iterator.hasNext()) {
-      File next = iterator.next();
-      if (filter.accept(next)) {
-        iterator.remove();
+    if (filter != null) {
+      for (final Iterator<File> it = files.iterator(); it.hasNext();) {
+        if (filter.accept(it.next())) {
+          it.remove();
+        }
       }
     }
   }
@@ -338,36 +374,19 @@ public class JavaBuilderUtil {
     return scope.isBuildIncrementally(JavaModuleBuildTargetType.PRODUCTION) || scope.isBuildIncrementally(JavaModuleBuildTargetType.TEST);
   }
 
-  private static List<Pair<File, JpsModule>> checkAffectedFilesInCorrectModules(CompileContext context,
-                                                                             Collection<File> affected,
-                                                                             ModulesBasedFileFilter moduleBasedFilter) {
+  private static List<Pair<File, JpsModule>> checkAffectedFilesInCorrectModules(CompileContext context, Collection<File> affected, ModulesBasedFileFilter moduleBasedFilter) {
     if (affected.isEmpty()) {
       return Collections.emptyList();
     }
     final List<Pair<File, JpsModule>> result = new ArrayList<>();
+    final BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
     for (File file : affected) {
       if (!moduleBasedFilter.accept(file)) {
-        final JavaSourceRootDescriptor moduleAndRoot = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context,
-                                                                                                                                 file);
+        final JavaSourceRootDescriptor moduleAndRoot = rootIndex.findJavaRootDescriptor(context, file);
         result.add(Pair.create(file, moduleAndRoot != null ? moduleAndRoot.target.getModule() : null));
       }
     }
     return result;
-  }
-
-  private static boolean chunkContainsAffectedFiles(CompileContext context, ModuleChunk chunk, final Set<File> affected)
-    throws IOException {
-    final Set<JpsModule> chunkModules = chunk.getModules();
-    if (!chunkModules.isEmpty()) {
-      for (File file : affected) {
-        final JavaSourceRootDescriptor moduleAndRoot = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context,
-                                                                                                                                 file);
-        if (moduleAndRoot != null && chunkModules.contains(moduleAndRoot.target.getModule())) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   @NotNull
@@ -471,6 +490,15 @@ public class JavaBuilderUtil {
     public boolean belongsToCurrentTargetChunk(File file) {
       final JavaSourceRootDescriptor rd = myBuildRootIndex.findJavaRootDescriptor(myContext, file);
       return rd != null && myChunkTargets.contains(rd.target);
+    }
+
+    public boolean containsFilesFromCurrentTargetChunk(Collection<File> files) {
+      for (File file : files) {
+        if (belongsToCurrentTargetChunk(file)) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 

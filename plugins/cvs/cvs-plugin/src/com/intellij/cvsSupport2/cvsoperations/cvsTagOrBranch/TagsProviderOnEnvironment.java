@@ -27,7 +27,7 @@ public abstract class TagsProviderOnEnvironment implements TagsProvider {
 
   @Override
   @Nullable
-  public CvsCommandOperation getOperation() throws VcsException {
+  public CvsCommandOperation getOperation() {
     final CvsEnvironment env = getCvsEnvironment();
     if (env == null) return null;
     return new GetAllBranchesOperation(env, getModule());

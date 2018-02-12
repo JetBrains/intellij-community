@@ -19,7 +19,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.ui.FilePathChangesTreeList;
+import com.intellij.openapi.vcs.changes.ui.ChangesTree;
+import com.intellij.openapi.vcs.changes.ui.ChangesTreeImpl;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
@@ -66,13 +67,12 @@ class UndoApplyPatchDialog extends DialogWrapper {
     }
     panel.add(labelsPanel, BorderLayout.NORTH);
     if (numFiles > 0) {
-      FilePathChangesTreeList browser = new FilePathChangesTreeList(myProject, myFailedFilePaths, false, false, null, null) {
+      ChangesTree browser = new ChangesTreeImpl.FilePaths(myProject, false, false, myFailedFilePaths) {
         @Override
         public Dimension getPreferredSize() {
           return new Dimension(infoLabel.getPreferredSize().width, 50);
         }
       };
-      browser.setChangesToDisplay(myFailedFilePaths);
       panel.add(ScrollPaneFactory.createScrollPane(browser), BorderLayout.CENTER);
     }
     return panel;

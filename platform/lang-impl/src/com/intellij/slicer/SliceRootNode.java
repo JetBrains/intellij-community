@@ -15,8 +15,6 @@
  */
 package com.intellij.slicer;
 
-import com.intellij.ide.projectView.PresentationData;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,20 +58,6 @@ public class SliceRootNode extends SliceNode {
       switchToAllLeavesTogether(myRootUsage);
     }
     return myCachedChildren;
-  }
-
-  @NotNull
-  @Override
-  public Collection<SliceNode> getChildrenUnderProgress(@NotNull ProgressIndicator progress) {
-    return getChildren();
-  }
-
-  @Override
-  protected void update(PresentationData presentation) {
-    if (presentation != null) {
-      presentation.setChanged(presentation.isChanged() || changed);
-      changed = false;
-    }
   }
 
 

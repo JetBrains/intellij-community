@@ -31,10 +31,6 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-/**
- * User: anna
- * Date: 3/15/13
- */
 public class JavaFxEditCertificatesDialog extends DialogWrapper {
 
   Panel myPanel;

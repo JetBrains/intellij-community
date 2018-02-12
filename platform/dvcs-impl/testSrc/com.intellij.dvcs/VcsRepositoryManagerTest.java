@@ -31,7 +31,6 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
@@ -52,7 +51,7 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    cd(myProjectRoot);
+    cd(projectRoot);
 
     myVcs = new MockAbstractVcs(myProject);
     myProjectLevelVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
@@ -92,21 +91,13 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
     final VirtualFile repositoryFile = createExternalRepository();
     assertNotNull(myGlobalRepositoryManager.getRepositoryForRoot(repositoryFile));
 
-    FutureTask<Repository> readExistingRepo = new FutureTask<>(new Callable<Repository>() {
-      @Override
-      public Repository call() throws Exception {
-        return myGlobalRepositoryManager.getRepositoryForRoot(repositoryFile);
-      }
-    });
+    FutureTask<Repository> readExistingRepo = new FutureTask<>(() -> myGlobalRepositoryManager.getRepositoryForRoot(repositoryFile));
 
-    FutureTask<Boolean> modifyRepositoryMapping = new FutureTask<>(new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        myProjectLevelVcsManager
-          .setDirectoryMappings(
-            VcsUtil.addMapping(myProjectLevelVcsManager.getDirectoryMappings(), myProjectRoot.getPath(), myVcs.getName()));
-        return !myGlobalRepositoryManager.getRepositories().isEmpty();
-      }
+    FutureTask<Boolean> modifyRepositoryMapping = new FutureTask<>(() -> {
+      myProjectLevelVcsManager
+        .setDirectoryMappings(
+          VcsUtil.addMapping(myProjectLevelVcsManager.getDirectoryMappings(), projectRoot.getPath(), myVcs.getName()));
+      return !myGlobalRepositoryManager.getRepositories().isEmpty();
     });
     Thread modify = new Thread(modifyRepositoryMapping,"vcs modify");
     modify.start();
@@ -125,11 +116,11 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
 
   @NotNull
   private VirtualFile createExternalRepository() {
-    cd(myProjectRoot);
+    cd(projectRoot);
     String externalName = "external";
     mkdir(externalName);
-    myProjectRoot.refresh(false, true);
-    final VirtualFile repositoryFile = ObjectUtils.assertNotNull(myProjectRoot.findChild(externalName));
+    projectRoot.refresh(false, true);
+    final VirtualFile repositoryFile = ObjectUtils.assertNotNull(projectRoot.findChild(externalName));
     MockRepositoryImpl externalRepo = new MockRepositoryImpl(myProject, repositoryFile, myProject);
     myGlobalRepositoryManager.addExternalRepository(repositoryFile, externalRepo);
     return repositoryFile;

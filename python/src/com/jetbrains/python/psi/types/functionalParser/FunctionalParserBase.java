@@ -60,13 +60,13 @@ public abstract class FunctionalParserBase<R, T> implements FunctionalParser<R, 
 
   @NotNull
   public static <R, T> FunctionalParser<R, T> maybe(@NotNull final FunctionalParser<R, T> parser) {
-    return parser.or(FunctionalParserBase.<R, T>pure(null));
+    return parser.or(FunctionalParserBase.pure(null));
   }
 
   @NotNull
   @Override
   public FunctionalParser<R, T> endOfInput() {
-    return this.thenSkip(FunctionalParserBase.<T>finished());
+    return this.thenSkip(FunctionalParserBase.finished());
   }
 
   @NotNull
@@ -187,7 +187,7 @@ public abstract class FunctionalParserBase<R, T> implements FunctionalParser<R, 
   private static class CachedParser<R, T> extends FunctionalParserBase<R, T> {
     @NotNull private final FunctionalParser<R, T> myParser;
     @Nullable private Object myKey;
-    @NotNull private Map<Integer, SoftReference<Pair<R, State>>> myCache;
+    @NotNull private final Map<Integer, SoftReference<Pair<R, State>>> myCache;
 
     public CachedParser(@NotNull FunctionalParser<R, T> parser) {
       myParser = parser;

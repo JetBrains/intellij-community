@@ -77,7 +77,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
   @Override
   protected void selectTargets(final List<PsiMember> targets, final Consumer<List<PsiMember>> selectionConsumer) {
     if (targets.isEmpty()) {
-      selectionConsumer.consume(Collections.<PsiMember>emptyList());
+      selectionConsumer.consume(Collections.emptyList());
       return;
     }
     if (targets.size() == 1) {

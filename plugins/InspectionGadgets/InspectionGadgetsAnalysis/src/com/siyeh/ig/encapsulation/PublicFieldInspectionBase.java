@@ -30,7 +30,7 @@ public class PublicFieldInspectionBase extends BaseInspection {
   public boolean ignoreEnums = false;
 
   @SuppressWarnings({"PublicField"})
-  public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();
+  public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet("org.junit.runners.Parameterized.Parameter");
 
   @Override
   @NotNull
@@ -62,7 +62,7 @@ public class PublicFieldInspectionBase extends BaseInspection {
       if (!field.hasModifierProperty(PsiModifier.PUBLIC)) {
         return;
       }
-      if (AnnotationUtil.isAnnotated(field, ignorableAnnotations)) {
+      if (AnnotationUtil.isAnnotated(field, ignorableAnnotations, 0)) {
         return;
       }
       if (field.hasModifierProperty(PsiModifier.FINAL)) {

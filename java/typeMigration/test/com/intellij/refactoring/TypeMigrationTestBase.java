@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.intellij.refactoring;
 
 import com.intellij.openapi.command.WriteCommandAction;
@@ -41,7 +29,6 @@ import java.util.Arrays;
 
 /**
  * @author anna
- * Date: 30-Apr-2008
  */
 public abstract class TypeMigrationTestBase extends MultiFileTestCase {
   @Override
@@ -59,7 +46,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
                                                     final PsiType toType) {
     final RulesProvider provider = new RulesProvider() {
       @Override
-      public PsiType migrationType(PsiElement context) throws Exception {
+      public PsiType migrationType(PsiElement context) {
         return toType;
       }
 
@@ -90,7 +77,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
   protected void doTestFieldsType(@NotNull String className, @NotNull final PsiType migrationType, final String... fieldNames) {
     final RulesProvider provider = new RulesProvider() {
       @Override
-      public PsiType migrationType(PsiElement context) throws Exception {
+      public PsiType migrationType(PsiElement context) {
         return migrationType;
       }
 
@@ -116,7 +103,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
                                   final PsiType migrationType) {
     final RulesProvider provider = new RulesProvider() {
       @Override
-      public PsiType migrationType(PsiElement context) throws Exception {
+      public PsiType migrationType(PsiElement context) {
         return migrationType;
       }
 
@@ -136,7 +123,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
   protected void doTestFirstParamType(@NonNls final String methodName, String className, final PsiType migrationType) {
     final RulesProvider provider = new RulesProvider() {
       @Override
-      public PsiType migrationType(PsiElement context) throws Exception {
+      public PsiType migrationType(PsiElement context) {
         return migrationType;
       }
 
@@ -169,7 +156,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
 
     final PsiElement[] migrationElements = provider.victims(aClass);
     final PsiType migrationType = provider.migrationType(migrationElements[0]);
-    final TypeMigrationRules rules = new TypeMigrationRules();
+    final TypeMigrationRules rules = new TypeMigrationRules(getProject());
     rules.setBoundScope(new LocalSearchScope(aClass.getContainingFile()));
     final TestTypeMigrationProcessor pr = new TestTypeMigrationProcessor(getProject(), migrationElements, migrationType, rules);
 
@@ -215,7 +202,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
   }
 
   interface RulesProvider {
-    PsiType migrationType(PsiElement context) throws Exception;
+    PsiType migrationType(PsiElement context);
 
     default PsiElement victim(PsiClass aClass) {
       fail("You need to override one of victim(PsiClass) or victims(PsiClass) methods");
@@ -229,7 +216,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
 
   private static class TestTypeMigrationProcessor extends TypeMigrationProcessor {
     public TestTypeMigrationProcessor(final Project project, final PsiElement[] roots, final PsiType migrationType, final TypeMigrationRules rules) {
-      super(project, roots, Functions.<PsiElement, PsiType>constant(migrationType), rules);
+      super(project, roots, Functions.constant(migrationType), rules, true);
     }
   }
 }

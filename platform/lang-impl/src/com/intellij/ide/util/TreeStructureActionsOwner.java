@@ -19,8 +19,8 @@ import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.newStructureView.TreeActionsOwner;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.ide.util.treeView.smartTree.TreeAction;
-import com.intellij.util.containers.HashSet;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -48,7 +48,7 @@ class TreeStructureActionsOwner implements TreeActionsOwner {
     for(TreeAction action: myActions) {
       if (action.getName().equals(name)) return true;
     }
-    return Sorter.ALPHA_SORTER_ID.equals(name);
+    return false;
   }
 
   public void setActionIncluded(final TreeAction filter, final boolean selected) {

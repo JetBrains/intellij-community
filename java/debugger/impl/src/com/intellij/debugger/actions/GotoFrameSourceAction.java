@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,25 @@
  */
 package com.intellij.debugger.actions;
 
-import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.JavaExecutionStack;
+import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.SuspendManagerUtil;
+import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 /**
  * @author lex
@@ -32,16 +44,26 @@ public abstract class GotoFrameSourceAction extends DebuggerAction{
     doAction(dataContext);
   }
 
-  protected static void doAction(DataContext dataContext) {
+  public static void doAction(DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if(project == null) return;
     StackFrameDescriptorImpl stackFrameDescriptor = getStackFrameDescriptor(dataContext);
-    if(stackFrameDescriptor != null) {
-      //DebuggerContextUtil.setStackFrame(getContextManager(dataContext), stackFrameDescriptor.getFrameProxy());
-      SourcePosition sourcePosition = stackFrameDescriptor.getSourcePosition();
-      if (sourcePosition != null) {
-        sourcePosition.navigate(true);
-      }
+    XDebugSession session = XDebugSession.DATA_KEY.getData(dataContext);
+    if (stackFrameDescriptor != null && session != null) {
+      StackFrameProxyImpl frameProxy = stackFrameDescriptor.getFrameProxy();
+      DebugProcessImpl process = (DebugProcessImpl)stackFrameDescriptor.getDebugProcess();
+      process.getManagerThread().schedule(new SuspendContextCommandImpl((SuspendContextImpl)session.getSuspendContext()) {
+        @Override
+        public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+          ThreadReferenceProxyImpl threadProxy = frameProxy.threadProxy();
+          SuspendContextImpl threadSuspendContext = SuspendManagerUtil.findContextByThread(process.getSuspendManager(), threadProxy);
+          JavaExecutionStack executionStack =
+            new JavaExecutionStack(threadProxy, process, Objects.equals(threadSuspendContext.getThread(), threadProxy));
+          executionStack.initTopFrame();
+          XStackFrame frame = executionStack.createStackFrame(frameProxy);
+          DebuggerUIUtil.invokeLater(() -> session.setCurrentStackFrame(executionStack, frame));
+        }
+      });
     }
   }
 

@@ -149,13 +149,13 @@ class NullableMethodAnalysis {
       Calls calls = ((Calls)result);
       int mergedMappedLabels = calls.mergedLabels;
       if (mergedMappedLabels != 0) {
-        Set<Product> sum = new HashSet<>();
-        Key[] createdKeys = interpreter.keys;
+        Set<Component> sum = new HashSet<>();
+        EKey[] createdKeys = interpreter.keys;
         for (int origin = 0; origin < originsMapping.length; origin++) {
           int mappedOrigin = originsMapping[origin];
-          Key createdKey = createdKeys[origin];
+          EKey createdKey = createdKeys[origin];
           if (createdKey != null && (mergedMappedLabels & (1 << mappedOrigin)) != 0) {
-            sum.add(new Product(Value.Null, Collections.singleton(createdKey)));
+            sum.add(new Component(Value.Null, Collections.singleton(createdKey)));
           }
         }
         if (!sum.isEmpty()) {
@@ -211,7 +211,7 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
   final InsnList insns;
   final boolean[] origins;
   private final int[] originsMapping;
-  final Key[] keys;
+  final EKey[] keys;
 
   Constraint constraint;
   int delta;
@@ -224,7 +224,7 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
     this.insns = insns;
     this.origins = origins;
     this.originsMapping = originsMapping;
-    keys = new Key[originsMapping.length];
+    keys = new EKey[originsMapping.length];
   }
 
   @Override
@@ -304,8 +304,7 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
   }
 
   @Override
-  public BasicValue ternaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2, BasicValue value3)
-    throws AnalyzerException {
+  public BasicValue ternaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2, BasicValue value3) {
     if (value1 instanceof Calls) {
       delta = ((Calls)value1).mergedLabels;
     }
@@ -341,10 +340,10 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
         if (origins[insnIndex]) {
           boolean stable = opCode == INVOKESTATIC || opCode == INVOKESPECIAL;
           MethodInsnNode mNode = ((MethodInsnNode)insn);
-          Method method = new Method(mNode.owner, mNode.name, mNode.desc);
+          Member method = new Member(mNode.owner, mNode.name, mNode.desc);
           int label = 1 << originsMapping[insnIndex];
           if (keys[insnIndex] == null) {
-            keys[insnIndex] = new Key(method, Direction.NullableOut, stable);
+            keys[insnIndex] = new EKey(method, Direction.NullableOut, stable);
           }
           return new Calls(label);
         }

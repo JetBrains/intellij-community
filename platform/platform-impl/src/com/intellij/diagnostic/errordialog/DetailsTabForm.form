@@ -13,7 +13,7 @@
       <nested-form id="f040b" form-file="com/intellij/diagnostic/errordialog/LabeledTextComponent.form" binding="myCommentsArea">
         <constraints>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
-            <preferred-size width="-1" height="150"/>
+            <preferred-size width="-1" height="100"/>
           </grid>
         </constraints>
       </nested-form>

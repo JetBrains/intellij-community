@@ -9,3 +9,6 @@ a, *b, c = seq
 <error descr="assignment to keyword">False</error> = 1
 <error descr="assignment to keyword">None</error> = 0
 <error descr="assignment to keyword">__debug__</error> = -1
+
+() = []
+[] = []

@@ -34,12 +34,6 @@ import org.jetbrains.idea.svn.api.CmdVersionClient;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/31/12
- * Time: 3:02 PM
- */
 public class SvnExecutableChecker extends ExecutableValidator {
 
   private static final Logger LOG = Logger.getInstance(SvnExecutableChecker.class);

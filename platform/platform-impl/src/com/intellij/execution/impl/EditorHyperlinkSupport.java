@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.execution.impl;
 
@@ -26,6 +14,8 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseEventArea;
+import com.intellij.openapi.editor.event.EditorMouseMotionAdapter;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -48,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -83,14 +72,16 @@ public class EditorHyperlinkSupport {
       }
     });
 
-    editor.getContentComponent().addMouseMotionListener(new MouseMotionAdapter() {
+    editor.addEditorMouseMotionListener(new EditorMouseMotionAdapter() {
       @Override
-      public void mouseMoved(final MouseEvent e) {
-        final HyperlinkInfo info = getHyperlinkInfoByPoint(e.getPoint());
+      public void mouseMoved(EditorMouseEvent e) {
+        if (e.getArea() != EditorMouseEventArea.EDITING_AREA) return;
+        final HyperlinkInfo info = getHyperlinkInfoByPoint(e.getMouseEvent().getPoint());
+        Cursor handCursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
         if (info != null) {
-          myEditor.getContentComponent().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+          myEditor.getContentComponent().setCursor(handCursor);
         }
-        else {
+        else if (myEditor.getContentComponent().getCursor() == handCursor) {
             final Cursor cursor = editor instanceof EditorEx ?
                                   UIUtil.getTextCursor(((EditorEx)editor).getBackgroundColor()) :
                                   Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR);
@@ -375,7 +366,8 @@ public class EditorHyperlinkSupport {
     return getLineSequence(document, lineNumber, includeEol).toString();
   }
 
-  static CharSequence getLineSequence(@NotNull Document document, int lineNumber, boolean includeEol) {
+  @NotNull
+  private static CharSequence getLineSequence(@NotNull Document document, int lineNumber, boolean includeEol) {
     int endOffset = document.getLineEndOffset(lineNumber);
     if (includeEol && endOffset < document.getTextLength()) {
       endOffset++;
@@ -393,7 +385,7 @@ public class EditorHyperlinkSupport {
     }
 
     @NotNull
-    public HyperlinkInfo getHyperlinkInfo() {
+    HyperlinkInfo getHyperlinkInfo() {
       return myHyperlinkInfo;
     }
 

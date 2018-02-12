@@ -4,7 +4,7 @@ import com.siyeh.ig.IGInspectionTestCase;
 
 public class PackageVisibleInnerClassInspectionTest extends IGInspectionTestCase {
 
-  public void test() throws Exception {
+  public void test() {
     final PackageVisibleInnerClassInspection tool = new PackageVisibleInnerClassInspection();
     tool.ignoreEnums = true;
     tool.ignoreInterfaces = true;

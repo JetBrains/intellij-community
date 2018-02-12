@@ -1,6 +1,8 @@
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Maxim.Mossienko
@@ -12,12 +14,7 @@ abstract class OptimizingSearchHelperBase implements OptimizingSearchHelper {
   private final THashSet<String> scannedLiterals;
   protected int scanRequest;
 
-
-  protected final CompileContext context;
-
-  OptimizingSearchHelperBase(CompileContext _context) {
-    context = _context;
-
+  OptimizingSearchHelperBase() {
     scanRequest = 0;
     scanned = new THashSet<>();
     scannedText = new THashSet<>();
@@ -25,61 +22,54 @@ abstract class OptimizingSearchHelperBase implements OptimizingSearchHelper {
     scannedLiterals = new THashSet<>();
   }
 
+  @Override
   public void clear() {
     scanned.clear();
+    scannedText.clear();
     scannedComments.clear();
     scannedLiterals.clear();
   }
 
-  public boolean addWordToSearchInCode(final String refname) {
-    if (!scanned.contains(refname)) {
-      doAddSearchWordInCode(refname);
-      scanned.add( refname );
-      return true;
+  @Override
+  public void addWordToSearchInCode(String word) {
+    if (word != null && doOptimizing() && scanned.add(word)) {
+      doAddSearchWordInCode(word);
     }
-
-    return false;
   }
 
-  public boolean addWordToSearchInText(final String refname) {
-    if (!scannedText.contains(refname)) {
-      doAddSearchWordInText(refname);
-      scannedText.add(refname);
-      return true;
+  @Override
+  public void addWordToSearchInText(String word) {
+    if (word != null && doOptimizing() && scannedText.add(word)) {
+      doAddSearchWordInText(word);
     }
-    return false;
   }
 
-  protected abstract void doAddSearchWordInCode(final String refname);
-  protected abstract void doAddSearchWordInText(final String refname);
+  @Override
+  public void addWordToSearchInComments(String word) {
+    if (word != null && doOptimizing() && scannedComments.add(word)) {
+      doAddSearchWordInComments(word);
+    }
+  }
 
-  protected abstract void doAddSearchWordInComments(final String refname);
-  protected abstract void doAddSearchWordInLiterals(final String refname);
+  @Override
+  public void addWordToSearchInLiterals(String word) {
+    if (word != null && doOptimizing() && scannedLiterals.add(word)) {
+      doAddSearchWordInLiterals(word);
+    }
+  }
 
+  protected abstract void doAddSearchWordInCode(@NotNull String word);
+  protected abstract void doAddSearchWordInText(@NotNull String word);
+  protected abstract void doAddSearchWordInComments(@NotNull String word);
+  protected abstract void doAddSearchWordInLiterals(@NotNull String word);
+
+  @Override
   public void endTransaction() {
     scanRequest++;
   }
 
-  public boolean addWordToSearchInComments(final String refname) {
-    if (!scannedComments.contains(refname)) {
-      doAddSearchWordInComments(refname);
-
-      scannedComments.add( refname );
-      return true;
-    }
-    return false;
-  }
-
-  public boolean addWordToSearchInLiterals(final String refname) {
-    if (!scannedLiterals.contains(refname)) {
-      doAddSearchWordInLiterals(refname);
-      scannedLiterals.add( refname );
-      return true;
-    }
-    return false;
-  }
-
+  @Override
   public boolean isScannedSomething() {
-    return scanned.size() > 0 || scannedComments.size() > 0 || scannedLiterals.size() > 0;
+    return !scanned.isEmpty() || !scannedText.isEmpty() || !scannedComments.isEmpty() || !scannedLiterals.isEmpty();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,7 +116,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
 
     Map<PsiVariable,VariableInfo> variableInfoMap = new LinkedHashMap<>();
     collectUsedVariables(variableInfoMap, myAnonClass);
-    final VariableInfo[] infos = variableInfoMap.values().toArray(new VariableInfo[variableInfoMap.values().size()]);
+    final VariableInfo[] infos = variableInfoMap.values().toArray(new VariableInfo[0]);
     myVariableInfos = infos;
     Arrays.sort(myVariableInfos, (o1, o2) -> {
       final PsiType type1 = o1.variable.getType();
@@ -171,13 +171,12 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     myTargetClass.add(aClass);
 
     PsiNewExpression newExpr = (PsiNewExpression) myAnonClass.getParent();
-    @NonNls StringBuffer buf = new StringBuffer();
+    @NonNls StringBuilder buf = new StringBuilder();
     buf.append("new ");
     buf.append(aClass.getName());
     if (!myTypeParametersToCreate.isEmpty()) {
       buf.append("<");
       int idx = 0;
-      //noinspection ForLoopThatDoesntUseLoopVariable
       for (Iterator<PsiTypeParameter> it = myTypeParametersToCreate.iterator(); it.hasNext();  idx++) {
         if (idx > 0) buf.append(", ");
         String typeParamName = it.next().getName();
@@ -378,7 +377,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
       PsiUtil.setModifierProperty(aClass, PsiModifier.STATIC, true);
     }
     PsiElement lastChild = aClass.getLastChild();
-    if (lastChild instanceof PsiJavaToken && ((PsiJavaToken)lastChild).getTokenType() == JavaTokenType.SEMICOLON) {
+    if (PsiUtil.isJavaToken(lastChild, JavaTokenType.SEMICOLON)) {
       lastChild.delete();
     }
 
@@ -401,7 +400,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
       }
     }
 
-    Collections.sort(toAdd, (e1, e2) -> e1.getTextRange().getStartOffset() - e2.getTextRange().getStartOffset());
+    toAdd.sort(Comparator.comparingInt(e -> e.getTextRange().getStartOffset()));
 
     for (PsiElement element : toAdd) {
       if (element instanceof PsiClassInitializer) {

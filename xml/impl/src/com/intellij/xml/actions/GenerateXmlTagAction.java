@@ -257,7 +257,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     switch (group.getGroupType()) {
       case LEAF:
         XmlElementDescriptor descriptor = group.getLeafDescriptor();
-        return descriptor == null ? Collections.<XmlElementDescriptor>emptyList() : Collections.singletonList(descriptor);
+        return descriptor == null ? Collections.emptyList() : Collections.singletonList(descriptor);
       case CHOICE:
         LinkedHashSet<XmlElementDescriptor> set = null;
         for (XmlElementsGroup subGroup : group.getSubGroups()) {

@@ -26,7 +26,7 @@ import java.io.OutputStream;
  */
 public abstract class SchemeExporter<T extends Scheme> {
   /**
-   * Writes a scheme to a given <code>outputStream</code>.
+   * Writes a scheme to a given {@code outputStream}.
    *
    * @param scheme       The scheme to export.
    * @param outputStream The output stream to write to.

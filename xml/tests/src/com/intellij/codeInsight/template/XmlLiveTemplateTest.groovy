@@ -15,13 +15,12 @@
  */
 package com.intellij.codeInsight.template
 
-import com.intellij.codeInsight.template.impl.ConstantNode
-import com.intellij.codeInsight.template.impl.EmptyNode
-import com.intellij.codeInsight.template.impl.TemplateImpl
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl
-import com.intellij.codeInsight.template.impl.TemplateSettings
-import com.intellij.codeInsight.template.impl.TemplateState
+import com.intellij.application.options.emmet.EmmetOptions
+import com.intellij.codeInsight.template.impl.*
 import com.intellij.ide.highlighter.XmlFileType
+import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 /**
  * @author peter
@@ -76,10 +75,34 @@ class XmlLiveTemplateTest extends LightCodeInsightFixtureTestCase {
     assertFalse(isApplicable("<foo bar=\"<caret>\"></foo>", template))
   }
 
+  void testQuotedTemplateParametersWithEnforceQuotesOnReformat() throws Exception {
+    HtmlCodeStyleSettings settings = getHtmlSettings()
+    CodeStyleSettings.QuoteStyle originalQuoteStyle = settings.HTML_QUOTE_STYLE
+    boolean emmetEnabled = EmmetOptions.instance.emmetEnabled
+    boolean originalEnforceQuotes = settings.HTML_ENFORCE_QUOTES
+    settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.Single
+    settings.HTML_ENFORCE_QUOTES = true
+    EmmetOptions.instance.setEmmetEnabled false
+    try {
+      myFixture.configureByText "a.html", "<div><caret></div>"
+      myFixture.type("input:color\t")
+      myFixture.type("inputName")
+      myFixture.checkResult("<div><input type='color' name='inputName' id=''></div>")
+    }
+    finally {
+      EmmetOptions.instance.setEmmetEnabled emmetEnabled
+      settings.HTML_QUOTE_STYLE = originalQuoteStyle
+      settings.HTML_ENFORCE_QUOTES = originalEnforceQuotes
+    }
+  }
+  private HtmlCodeStyleSettings getHtmlSettings(){
+    return CodeStyleSettingsManager.getInstance(getProject())
+      .getCurrentSettings()
+      .getCustomSettings(HtmlCodeStyleSettings.class)
+  }
+
   private boolean isApplicable(String text, TemplateImpl inst) throws IOException {
     myFixture.configureByText(XmlFileType.INSTANCE, text)
     return TemplateManagerImpl.isApplicable(myFixture.getFile(), myFixture.getEditor().getCaretModel().getOffset(), inst)
   }
-
-
 }

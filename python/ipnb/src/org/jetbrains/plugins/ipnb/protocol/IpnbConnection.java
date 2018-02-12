@@ -36,11 +36,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-/**
- * @author vlan
- *         <p>
- *         To be removed
- */
 public class IpnbConnection {
   private static final Logger LOG = Logger.getInstance(IpnbConnection.class);
   
@@ -82,7 +77,7 @@ public class IpnbConnection {
   private IpnbOutputCell myOutput;
   private int myExecCount;
   private String myXsrf;
-  private HashMap<String, String> myHeaders = new HashMap<>();
+  private final HashMap<String, String> myHeaders = new HashMap<>();
   private final CookieManager myCookieManager;
 
 
@@ -94,16 +89,8 @@ public class IpnbConnection {
     myProject = project;
     myCookieManager = new CookieManager();
     CookieHandler.setDefault(myCookieManager);
-    if (!IpnbSettings.getInstance(project).isRemote()) {
-      if (!"http".equals(myURI.getScheme())) {
-        throw new UnsupportedOperationException("Only http urls are supported for local notebooks");
-      }
-    }
-    else if (!"https".equals(myURI.getScheme())) {
-      throw new UnsupportedOperationException("Only https urls are supported for remote notebooks");
-    }
-    
-    if (IpnbSettings.getInstance(project).isRemote()) {
+
+    if (isRemote()) {
       String loginUrl = getLoginUrl();
       initXSRF(myURI.toString() + loginUrl);
       myIsHubServer = isHubServer(loginUrl);
@@ -120,6 +107,10 @@ public class IpnbConnection {
     }
     
     initializeClients();
+  }
+
+  private boolean isRemote() {
+    return "https".equals(myURI.getScheme());
   }
 
   private String authorizeAndGetKernel(@NotNull Project project, @NotNull String pathToFile, @NotNull String loginUrl) throws IOException {
@@ -258,14 +249,11 @@ public class IpnbConnection {
   private String getExistingKernelForSession(@NotNull String pathToFile, @NotNull String kernelName) throws IOException {
     final byte[] postData = createNewFormatKernelPostParameters(pathToFile, kernelName);
     String wrapper = getKernelId(postData);
-    if (wrapper != null) {
-      return wrapper;
-    }
-    else {
+    if (wrapper == null) {
       final byte[] oldParamsToPost = createOldFormatKernelPostParameters(pathToFile, kernelName);
       wrapper = getKernelId(oldParamsToPost);
-      return wrapper;
     }
+    return wrapper;
   }
 
   @Nullable

@@ -66,7 +66,8 @@ from _pydev_imps._pydev_saved_modules import thread
 from _pydev_imps._pydev_saved_modules import threading
 from _pydev_imps._pydev_saved_modules import socket
 from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR, timeout
-from _pydevd_bundle.pydevd_constants import DebugInfoHolder, dict_contains, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, STATE_RUN
+from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, \
+    IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC
 
 try:
     from urllib import quote_plus, unquote, unquote_plus
@@ -80,7 +81,7 @@ from _pydevd_bundle import pydevd_vm_type
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER, norm_file_to_client
 import sys
 import traceback
-from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_attrs, cmp_to_key, to_string
+from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_attrs_key, to_string
 from _pydev_bundle import pydev_log
 from _pydev_bundle import _pydev_completer
 
@@ -88,6 +89,13 @@ from _pydevd_bundle.pydevd_tracing import get_exception_traceback_str
 from _pydevd_bundle import pydevd_console
 from _pydev_bundle.pydev_monkey import disable_trace_thread_modules, enable_trace_thread_modules
 
+try:
+    import cStringIO as StringIO #may not always be available @UnusedImport
+except:
+    try:
+        import StringIO #@Reimport
+    except:
+        import io as StringIO
 
 
 CMD_RUN = 101
@@ -146,6 +154,8 @@ CMD_INPUT_REQUESTED = 147
 CMD_GET_DESCRIPTION = 148
 
 CMD_PROCESS_CREATED = 149
+CMD_SHOW_CYTHON_WARNING = 150
+CMD_LOAD_FULL_VALUE = 151
 
 CMD_VERSION = 501
 CMD_RETURN = 502
@@ -204,6 +214,8 @@ ID_TO_MEANING = {
     '148': 'CMD_GET_DESCRIPTION',
 
     '149': 'CMD_PROCESS_CREATED',
+    '150': 'CMD_SHOW_CYTHON_WARNING',
+    '151': 'CMD_LOAD_FULL_VALUE',
 
     '501': 'CMD_VERSION',
     '502': 'CMD_RETURN',
@@ -590,6 +602,12 @@ class NetCommandFactory:
         cmdText = '<process/>'
         return NetCommand(CMD_PROCESS_CREATED, 0, cmdText)
 
+    def make_show_cython_warning_message(self):
+        try:
+            return NetCommand(CMD_SHOW_CYTHON_WARNING, 0, '')
+        except:
+            return self.make_error_message(0, get_exception_traceback_str())
+
     def make_custom_frame_created_message(self, frameId, frameDescription):
         frameDescription = pydevd_xml.make_valid_xml_value(frameDescription)
         cmdText = '<xml><thread name="%s" id="%s"/></xml>' % (frameDescription, frameId)
@@ -648,7 +666,7 @@ class NetCommandFactory:
         except:
             return self.make_error_message(0, get_exception_traceback_str())
 
-    def make_thread_suspend_str(self, thread_id, frame, stop_reason, message):
+    def make_thread_suspend_str(self, thread_id, frame, stop_reason, message, suspend_type="trace"):
         """ <xml>
             <thread id="id" stop_reason="reason">
                     <frame id="id" name="functionName " file="file" line="line">
@@ -663,7 +681,7 @@ class NetCommandFactory:
         if message:
             message = make_valid_xml_value(message)
 
-        append('<thread id="%s" stop_reason="%s" message="%s">' % (thread_id, stop_reason, message))
+        append('<thread id="%s" stop_reason="%s" message="%s" suspend_type="%s">' % (thread_id, stop_reason, message, suspend_type))
 
         curr_frame = frame
         try:
@@ -710,9 +728,9 @@ class NetCommandFactory:
         append("</thread></xml>")
         return ''.join(cmd_text_list)
 
-    def make_thread_suspend_message(self, thread_id, frame, stop_reason, message):
+    def make_thread_suspend_message(self, thread_id, frame, stop_reason, message, suspend_type):
         try:
-            return NetCommand(CMD_THREAD_SUSPEND, 0, self.make_thread_suspend_str(thread_id, frame, stop_reason, message))
+            return NetCommand(CMD_THREAD_SUSPEND, 0, self.make_thread_suspend_str(thread_id, frame, stop_reason, message, suspend_type))
         except:
             return self.make_error_message(0, get_exception_traceback_str())
 
@@ -828,6 +846,18 @@ class NetCommandFactory:
         except:
             return self.make_error_message(0, get_exception_traceback_str())
 
+    def make_set_next_stmnt_status_message(self, seq, is_success, exception_msg):
+        try:
+            message = str(is_success) + '\t' + exception_msg
+            return NetCommand(CMD_SET_NEXT_STATEMENT, int(seq), message)
+        except:
+            return self.make_error_message(0, get_exception_traceback_str())
+
+    def make_load_full_value_message(self, seq, payload):
+        try:
+            return NetCommand(CMD_LOAD_FULL_VALUE, seq, payload)
+        except Exception:
+            return self.make_error_message(seq, get_exception_traceback_str())
 
     def make_exit_message(self):
         try:
@@ -889,13 +919,13 @@ class ReloadCodeCommand(InternalThreadCommand):
             self.lock.release()
 
         module_name = self.module_name
-        if not dict_contains(sys.modules, module_name):
+        if module_name not in sys.modules:
             if '.' in module_name:
                 new_module_name = module_name.split('.')[-1]
-                if dict_contains(sys.modules, new_module_name):
+                if new_module_name in sys.modules:
                     module_name = new_module_name
 
-        if not dict_contains(sys.modules, module_name):
+        if module_name not in sys.modules:
             sys.stderr.write('pydev debugger: Unable to find module to reload: "' + module_name + '".\n')
             # Too much info...
             # sys.stderr.write('pydev debugger: This usually means you are trying to reload the __main__ module (which cannot be reloaded).\n')
@@ -956,10 +986,11 @@ class InternalStepThread(InternalThreadCommand):
 # InternalSetNextStatementThread
 #=======================================================================================================================
 class InternalSetNextStatementThread(InternalThreadCommand):
-    def __init__(self, thread_id, cmd_id, line, func_name):
+    def __init__(self, thread_id, cmd_id, line, func_name, seq=0):
         self.thread_id = thread_id
         self.cmd_id = cmd_id
         self.line = line
+        self.seq = seq
 
         if IS_PY2:
             if isinstance(func_name, unicode):
@@ -975,18 +1006,7 @@ class InternalSetNextStatementThread(InternalThreadCommand):
             t.additional_info.pydev_next_line = int(self.line)
             t.additional_info.pydev_func_name = self.func_name
             t.additional_info.pydev_state = STATE_RUN
-
-
-#=======================================================================================================================
-# InternalSetTracingThread
-#=======================================================================================================================
-class InternalSetTracingThread(InternalThreadCommand):
-    """Revert using tracing function inside thread, sometimes needed while frame evaluation debugging"""
-    def __init__(self, thread_id):
-        self.thread_id = thread_id
-
-    def do_it(self, dbg):
-        dbg.SetTrace(dbg.trace_dispatch)
+            t.additional_info.pydev_message = str(self.seq)
 
 
 #=======================================================================================================================
@@ -1004,28 +1024,28 @@ class InternalGetVariable(InternalThreadCommand):
     def do_it(self, dbg):
         """ Converts request into python variable """
         try:
-            xml = "<xml>"
-            valDict = pydevd_vars.resolve_compound_variable(self.thread_id, self.frame_id, self.scope, self.attributes)
-            if valDict is None:
-                valDict = {}
+            xml = StringIO.StringIO()
+            xml.write("<xml>")
+            _typeName, val_dict = pydevd_vars.resolve_compound_variable(self.thread_id, self.frame_id, self.scope, self.attributes)
+            if val_dict is None:
+                val_dict = {}
 
-            keys = valDict.keys()
-            if hasattr(keys, 'sort'):
-                keys.sort(compare_object_attrs) #Python 3.0 does not have it
-            else:
-                if IS_PY3K:
-                    keys = sorted(keys, key=cmp_to_key(compare_object_attrs)) #Jython 2.1 does not have it (and all must be compared as strings).
-                else:
-                    keys = sorted(keys, cmp=compare_object_attrs) #Jython 2.1 does not have it (and all must be compared as strings).
+            keys = dict_keys(val_dict)
+            if _typeName != "OrderedDict" and not IS_PY36_OR_GREATER:
+                keys.sort(key=compare_object_attrs_key)
 
             for k in keys:
-                xml += pydevd_xml.var_to_xml(valDict[k], to_string(k))
+                val = val_dict[k]
+                evaluate_full_value = pydevd_xml.should_evaluate_full_value(val)
+                xml.write(pydevd_xml.var_to_xml(val, k, evaluate_full_value=evaluate_full_value))
 
-            xml += "</xml>"
-            cmd = dbg.cmd_factory.make_get_variable_message(self.sequence, xml)
+            xml.write("</xml>")
+            cmd = dbg.cmd_factory.make_get_variable_message(self.sequence, xml.getvalue())
+            xml.close()
             dbg.writer.add_command(cmd)
         except Exception:
-            cmd = dbg.cmd_factory.make_error_message(self.sequence, "Error resolving variables " + get_exception_traceback_str())
+            cmd = dbg.cmd_factory.make_error_message(
+                self.sequence, "Error resolving variables %s" % (get_exception_traceback_str(),))
             dbg.writer.add_command(cmd)
 
 
@@ -1437,6 +1457,68 @@ class InternalConsoleExec(InternalThreadCommand):
 
 
 #=======================================================================================================================
+# InternalLoadFullValue
+#=======================================================================================================================
+class InternalLoadFullValue(InternalThreadCommand):
+    """ changes the value of a variable """
+    def __init__(self, seq, thread_id, frame_id, vars):
+        self.sequence = seq
+        self.thread_id = thread_id
+        self.frame_id = frame_id
+        self.vars = vars
+
+    def do_it(self, dbg):
+        """ Converts request into python variable """
+        try:
+            var_objects = []
+            for variable in self.vars:
+                variable = variable.strip()
+                if len(variable) > 0:
+                    if '\t' in variable:  # there are attributes beyond scope
+                        scope, attrs = variable.split('\t', 1)
+                        name = attrs[0]
+                    else:
+                        scope, attrs = (variable, None)
+                        name = scope
+
+                    var_obj = pydevd_vars.getVariable(self.thread_id, self.frame_id, scope, attrs)
+                    var_objects.append((var_obj, name))
+
+            t = GetValueAsyncThread(dbg, self.thread_id, self.frame_id, self.sequence, var_objects)
+            t.start()
+        except:
+            exc = get_exception_traceback_str()
+            sys.stderr.write('%s\n' % (exc,))
+            cmd = dbg.cmd_factory.make_error_message(self.sequence, "Error evaluating variable %s " % exc)
+            dbg.writer.add_command(cmd)
+
+
+class GetValueAsyncThread(PyDBDaemonThread):
+    def __init__(self, py_db, thread_id, frame_id, seq, var_objects):
+        PyDBDaemonThread.__init__(self)
+        self.py_db = py_db
+        self.thread_id = thread_id
+        self.frame_id = frame_id
+        self.seq = seq
+        self.var_objs = var_objects
+        self.cancel_event = threading.Event()
+
+    def _on_run(self):
+        start = time.time()
+        xml = StringIO.StringIO()
+        xml.write("<xml>")
+        for (var_obj, name) in self.var_objs:
+            current_time = time.time()
+            if current_time - start > ASYNC_EVAL_TIMEOUT_SEC or self.cancel_event.is_set():
+                break
+            xml.write(pydevd_xml.var_to_xml(var_obj, name, evaluate_full_value=True))
+        xml.write("</xml>")
+        cmd = self.py_db.cmd_factory.make_load_full_value_message(self.seq, xml.getvalue())
+        xml.close()
+        self.py_db.writer.add_command(cmd)
+
+
+#=======================================================================================================================
 # pydevd_find_thread_by_id
 #=======================================================================================================================
 def pydevd_find_thread_by_id(thread_id):
@@ -1455,58 +1537,3 @@ def pydevd_find_thread_by_id(thread_id):
         traceback.print_exc()
 
     return None
-
-
-def pydevd_check_frame_for_new_breakpoint(main_debugger, breakpoint, filepath):
-    """ If frame evaluation is enabled and breakpoint was added while running debug session there are two cases:
-        * the frame isn't under execution yet, we'll handle all its breakpoints in frame evaluation function
-        * the frame is already under execution, we need to enable old tracing function and disable it after exiting the frame
-    """
-    if not main_debugger.ready_to_run:
-        # do it it only debug session is started
-        return
-
-    threads = threading.enumerate()
-    try:
-        for t in threads:
-            if getattr(t, 'is_pydev_daemon_thread', False):
-                continue
-            additional_info = None
-            try:
-                additional_info = t.additional_info
-            except AttributeError:
-                pass  # that's ok, no info currently set
-            if additional_info is None:
-                continue
-
-            frame_executed = None
-            func_name = breakpoint.func_name
-            for frame in additional_info.iter_frames(t):
-                current_frame = frame
-                while current_frame is not None:
-                    try:
-                        # Make fast path faster!
-                        abs_path_real_path_and_base = NORM_PATHS_AND_BASE_CONTAINER[current_frame.f_code.co_filename]
-                    except:
-                        abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(current_frame)
-
-                    if abs_path_real_path_and_base[1] == filepath:
-                        # compare functions' names
-                        current_func = current_frame.f_code.co_name
-                        if func_name == current_func or (func_name == "None" and current_func == "<module>"):
-                            frame_executed = current_frame
-                            break
-                    current_frame = current_frame.f_back
-            if frame_executed is not None:
-                # SetTrace should be executed within the thread
-                thread_id = get_thread_id(t)
-                int_cmd = InternalSetTracingThread(thread_id)
-                main_debugger.post_internal_command(int_cmd, thread_id)
-
-                main_debugger.set_trace_for_frame_and_parents(frame_executed, overwrite_prev_trace=True)
-                if thread_id not in main_debugger.disable_tracing_after_exit_frames:
-                    main_debugger.disable_tracing_after_exit_frames[thread_id] = set()
-                # tracing function inside frame shouldn't be removed until the program exits this frame
-                main_debugger.disable_tracing_after_exit_frames[thread_id].add(frame_executed)
-    except:
-        traceback.print_exc()

@@ -23,7 +23,6 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +30,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
-  private final SmartPsiElementPointer<PsiJavaCodeReferenceElement> myRef;
+  protected final SmartPsiElementPointer<PsiJavaCodeReferenceElement> myRef;
 
   public StaticImportConstantFix(@NotNull PsiJavaCodeReferenceElement referenceElement) {
     myRef = SmartPointerManager.getInstance(referenceElement.getProject()).createSmartPsiElementPointer(referenceElement);
@@ -40,7 +39,7 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
   @NotNull
   @Override
   protected String getBaseText() {
-    return "Import static constant";
+    return QuickFixBundle.message("static.import.constant.text");
   }
 
   @NotNull
@@ -53,21 +52,22 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
 
   @NotNull
   @Override
-  protected List<PsiField> getMembersToImport(boolean applicableOnly) {
+  protected List<PsiField> getMembersToImport(boolean applicableOnly, @NotNull StaticMembersProcessor.SearchMode searchMode) {
     final Project project = myRef.getProject();
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
     final PsiJavaCodeReferenceElement element = myRef.getElement();
     String name = element != null ? element.getReferenceName() : null;
     if (name == null) return Collections.emptyList();
     if (element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element) ||
-        element.getParent() instanceof PsiTypeElement) {
+        element.getParent() instanceof PsiTypeElement ||
+        element.getParent() instanceof PsiAnnotation) {
       return Collections.emptyList();
     }
-    final StaticMembersProcessor<PsiField> processor = new StaticMembersProcessor<PsiField>(element) {
+    final StaticMembersProcessor<PsiField> processor = new StaticMembersProcessor<PsiField>(element, toAddStaticImports(), searchMode) {
       @Override
       protected boolean isApplicable(PsiField field, PsiElement place) {
-        final PsiType expectedType = getExpectedType();
-        return expectedType == null || TypeConversionUtil.isAssignable(expectedType, field.getType());
+        PsiType fieldType = field.getType();
+        return isApplicableFor(fieldType);
       }
     };
     cache.processFieldsWithName(name, processor, element.getResolveScope(), null);
@@ -103,5 +103,10 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
   protected PsiElement resolveRef() {
     final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)getElement();
     return referenceElement != null ? referenceElement.advancedResolve(true).getElement() : null;
+  }
+
+  @Override
+  protected boolean toAddStaticImports() {
+    return true;
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +48,7 @@ class InputDialogWithCheckbox extends InputDialog {
     }
 
     myField = createTextFieldComponent();
-    messagePanel.add(myField, BorderLayout.CENTER);
+    messagePanel.add(createScrollableTextComponent(), BorderLayout.CENTER);
 
     myCheckBox = new JCheckBox();
     messagePanel.add(myCheckBox, BorderLayout.SOUTH);

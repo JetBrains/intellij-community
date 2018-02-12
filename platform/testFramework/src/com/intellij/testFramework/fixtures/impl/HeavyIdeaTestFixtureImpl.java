@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.testFramework.fixtures.impl;
@@ -37,17 +25,23 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.psi.*;
+import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
+import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,9 +51,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.nio.file.Files;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Creates new project for each test.
@@ -74,9 +68,12 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   private EditorListenerTracker myEditorListenerTracker;
   private ThreadTracker myThreadTracker;
   private final String myName;
+  private final boolean myIsDirectoryBasedProject;
+  private SdkLeakTracker myOldSdks;
 
-  HeavyIdeaTestFixtureImpl(@NotNull String name) {
+  HeavyIdeaTestFixtureImpl(@NotNull String name, boolean isDirectoryBasedProject) {
     myName = name;
+    myIsDirectoryBasedProject = isDirectoryBasedProject;
   }
 
   void addModuleFixtureBuilder(ModuleFixtureBuilder builder) {
@@ -94,6 +91,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
     myEditorListenerTracker = new EditorListenerTracker();
     myThreadTracker = new ThreadTracker();
     InjectedLanguageManagerImpl.pushInjectors(getProject());
+    myOldSdks = new SdkLeakTracker();
   }
 
   @Override
@@ -109,12 +107,26 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       .append(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(getProject()))
       .append(() -> myProject = null);
 
+    ((JarFileSystemImpl)JarFileSystem.getInstance()).cleanupForNextTest();
+    
     for (File fileToDelete : myFilesToDelete) {
       runAll = runAll.append(() -> {
-        if (!FileUtil.delete(fileToDelete)) {
-          throw new IOException("Can't delete " + fileToDelete);
-        }
-      });
+        List<Throwable> errors = Files.walk(fileToDelete.toPath())
+          .sorted(Comparator.reverseOrder())
+          .map(x -> {
+            try {
+              Files.delete(x);
+              return null;
+            }
+            catch (IOException e) {
+              return e;
+            }
+          })
+          .filter(Objects::nonNull)
+          .collect(Collectors.toList());
+
+        CompoundRuntimeException.throwIfNotEmpty(errors);
+     });
     }
 
     runAll
@@ -122,6 +134,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       .append(() -> myEditorListenerTracker.checkListenersLeak())
       .append(() -> myThreadTracker.checkLeak())
       .append(LightPlatformTestCase::checkEditorsReleased)
+      .append(() -> myOldSdks.checkForJdkTableLeaks())
       .append(() -> PlatformTestCase.cleanupApplicationCaches(null))  // project is disposed by now, no point in passing it
       .run();
   }
@@ -132,7 +145,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       .synchronizeTempDirVfs(ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory)));
     myFilesToDelete.add(tempDirectory);
 
-    String projectPath = FileUtil.toSystemIndependentName(tempDirectory.getPath()) + "/" + myName + ProjectFileType.DOT_DEFAULT_EXTENSION;
+    String projectPath = generateProjectPath(tempDirectory);
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     new Throwable(projectPath).printStackTrace(new PrintStream(buffer));
     myProject = PlatformTestCase.createProject(projectPath, buffer.toString());
@@ -147,6 +160,12 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       LightPlatformTestCase.clearUncommittedDocuments(myProject);
       ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
     });
+  }
+
+  @NotNull
+  protected String generateProjectPath(@NotNull File tempDirectory) {
+    String suffix = myIsDirectoryBasedProject ? "" : ProjectFileType.DOT_DEFAULT_EXTENSION;
+    return FileUtil.toSystemIndependentName(tempDirectory.getPath()) + "/" + myName + suffix;
   }
 
   private void initApplication() {
@@ -185,13 +204,9 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
         }
         if (LangDataKeys.IDE_VIEW.is(dataId)) {
           VirtualFile[] contentRoots = ProjectRootManager.getInstance(myProject).getContentRoots();
-          final PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(contentRoots[0]);
           if (contentRoots.length > 0) {
+            final PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(contentRoots[0]);
             return new IdeView() {
-              @Override
-              public void selectElement(PsiElement element) {
-
-              }
 
               @NotNull
               @Override

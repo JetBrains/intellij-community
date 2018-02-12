@@ -22,6 +22,8 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.inspections.PyDictCreationInspection;
@@ -31,16 +33,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: 26.02.2010
- * Time: 13:29:02
- */
 public class DictCreationQuickFix implements LocalQuickFix {
-  private final PyAssignmentStatement myStatement;
+  private final SmartPsiElementPointer<PyAssignmentStatement> myStatementPointer;
   public DictCreationQuickFix(@NotNull final PyAssignmentStatement statement) {
-    myStatement = statement;
+    myStatementPointer = SmartPointerManager.createPointer(statement);
   }
 
   @Override
@@ -53,6 +49,8 @@ public class DictCreationQuickFix implements LocalQuickFix {
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     final Map<String, String> statementsMap = Maps.newLinkedHashMap();
+    final PyAssignmentStatement myStatement = myStatementPointer.getElement();
+    if (myStatement == null) return;
     final PyExpression assignedValue = myStatement.getAssignedValue();
     if (assignedValue instanceof PyDictLiteralExpression) {
       for (PyKeyValueExpression expression: ((PyDictLiteralExpression)assignedValue).getElements()) {

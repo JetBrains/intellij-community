@@ -16,15 +16,15 @@
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.diagnostic.ControlFlowException;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ProcessCanceledException extends RuntimeException implements ControlFlowException {
   public ProcessCanceledException() { }
 
-  public ProcessCanceledException(@NotNull Throwable cause) {
+  public ProcessCanceledException(@Nullable Throwable cause) {
     super(cause);
     if (cause instanceof ProcessCanceledException) {
-      throw new IllegalArgumentException("Must not self-wrap ProcessCanceledException: " + cause);
+      throw new IllegalArgumentException("Must not self-wrap ProcessCanceledException: ", cause);
     }
   }
 }

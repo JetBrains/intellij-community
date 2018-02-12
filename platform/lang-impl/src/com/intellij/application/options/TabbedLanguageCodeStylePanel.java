@@ -15,7 +15,10 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.application.options.codeStyle.*;
+import com.intellij.application.options.codeStyle.CodeStyleBlankLinesPanel;
+import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
+import com.intellij.application.options.codeStyle.CodeStyleSpacesPanel;
+import com.intellij.application.options.codeStyle.WrappingAndBracesPanel;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -46,15 +49,18 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Rustam Vishnyakov
  */
 
 public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPanel {
-  private static final Logger LOG = Logger.getInstance("#" + TabbedLanguageCodeStylePanel.class.getName());
+  @SuppressWarnings("unused")
+  private static final Logger LOG = Logger.getInstance(TabbedLanguageCodeStylePanel.class);
 
   private CodeStyleAbstractPanel myActiveTab;
   private List<CodeStyleAbstractPanel> myTabs;
@@ -76,10 +82,10 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
    * then addTab() methods or selectively add needed tabs with your own implementation.
    * @param settings  Code style settings to be used with initialized panels.
    * @see LanguageCodeStyleSettingsProvider
-   * @see #addIndentOptionsTab(com.intellij.psi.codeStyle.CodeStyleSettings)
-   * @see #addSpacesTab(com.intellij.psi.codeStyle.CodeStyleSettings)
-   * @see #addBlankLinesTab(com.intellij.psi.codeStyle.CodeStyleSettings)
-   * @see #addWrappingAndBracesTab(com.intellij.psi.codeStyle.CodeStyleSettings)
+   * @see #addIndentOptionsTab(CodeStyleSettings)
+   * @see #addSpacesTab(CodeStyleSettings)
+   * @see #addBlankLinesTab(CodeStyleSettings)
+   * @see #addWrappingAndBracesTab(CodeStyleSettings)
    */
   protected void initTabs(CodeStyleSettings settings) {
     LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
@@ -236,11 +242,6 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   }
 
   @Override
-  protected void somethingChanged() {
-    super.somethingChanged();
-  }
-
-  @Override
   public void apply(CodeStyleSettings settings) throws ConfigurationException {
     ensureTabs();
     for (CodeStyleAbstractPanel tab : myTabs) {
@@ -355,33 +356,24 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
         result.add(codeStyle);
       }
     }
-    final LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
-
-    if (provider != null) {
-      result.addAll(Arrays.asList(provider.getPredefinedCodeStyles()));
-    }
-    return result.toArray(new PredefinedCodeStyle[result.size()]);
+    return result.toArray(PredefinedCodeStyle.EMPTY_ARRAY);
   }
 
 
   private void applyLanguageSettings(Language lang) {
     final Project currProject = ProjectUtil.guessCurrentProject(getPanel());
-    CodeStyleSettings rootSettings = CodeStyleSettingsManager.getSettings(currProject);
-    CommonCodeStyleSettings sourceSettings = rootSettings.getCommonSettings(lang);
-    CommonCodeStyleSettings targetSettings = getSettings().getCommonSettings(getDefaultLanguage());
-    if (sourceSettings == null || targetSettings == null) return;
-    if (!(targetSettings instanceof CodeStyleSettings)) {
-      CommonCodeStyleSettingsManager.copy(sourceSettings, targetSettings);
-    }
-    else {
-      Language targetLang = getDefaultLanguage();
-      LOG.error((targetLang != null ? targetLang.getDisplayName() : "Unknown") +
-                " language plug-in either uses an outdated API or does not initialize" +
-                " its own code style settings in LanguageCodeStyleSettingsProvider.getDefaultSettings()." +
-                " The operation can not be applied in this case.");
-    }
-    reset(getSettings());
+    CodeStyleSettings rootSettings = CodeStyle.getSettings(currProject);
+    CodeStyleSettings targetSettings = getSettings();
+
+    applyLanguageSettings(lang, rootSettings, targetSettings);
+    reset(targetSettings);
     onSomethingChanged();
+  }
+
+  protected void applyLanguageSettings(Language lang, CodeStyleSettings rootSettings, CodeStyleSettings targetSettings) {
+    CommonCodeStyleSettings sourceCommonSettings = rootSettings.getCommonSettings(lang);
+    CommonCodeStyleSettings targetCommonSettings = targetSettings.getCommonSettings(getDefaultLanguage());
+    CommonCodeStyleSettingsManager.copy(sourceCommonSettings, targetCommonSettings);
   }
 
   private void applyPredefinedStyle(String styleName) {
@@ -491,7 +483,12 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
     @Override
     public void apply(CodeStyleSettings settings) throws ConfigurationException {
-      myConfigurable.apply();
+      if (myConfigurable instanceof CodeStyleConfigurable) {
+        ((CodeStyleConfigurable)myConfigurable).apply(settings);
+      }
+      else {
+        myConfigurable.apply();
+      }
     }
 
     @Override
@@ -510,22 +507,13 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
     @Override
     protected void resetImpl(CodeStyleSettings settings) {
-      if (myConfigurable instanceof CodeStyleAbstractConfigurable) {
-        // when a predefined style is chosen and the configurable is wrapped in a tab,
-        // we apply it to CLONED code style settings and then pass them to this method to reset,
-        // usual reset() won't work in such case
-        ((CodeStyleAbstractConfigurable)myConfigurable).reset(settings);
+      if (myConfigurable instanceof CodeStyleConfigurable) {
+        ((CodeStyleConfigurable)myConfigurable).reset(settings);
       }
       else {
-        // todo: support   for other configurables
         myConfigurable.reset();
       }
     }
-  }
-
-  @Override
-  public boolean isCopyFromMenuAvailable() {
-    return true;
   }
 
   @Override

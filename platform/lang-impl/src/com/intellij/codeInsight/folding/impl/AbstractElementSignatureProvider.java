@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.openapi.util.Comparing;
@@ -20,10 +6,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 /**
@@ -31,13 +23,14 @@ import java.util.StringTokenizer;
  * @since 11/7/11 12:00 PM
  */
 public abstract class AbstractElementSignatureProvider implements ElementSignatureProvider {
+  private static final int CHILDREN_COUNT_LIMIT = 100;
 
   static final String ELEMENTS_SEPARATOR = ";";
   static final String ELEMENT_TOKENS_SEPARATOR = "#";
 
   private static final String ESCAPE_CHAR = "\\";
-  private static final String[] ESCAPE_FROM = {ESCAPE_CHAR, ELEMENT_TOKENS_SEPARATOR, ELEMENTS_SEPARATOR};
-  private static final String[] ESCAPE_TO = {ESCAPE_CHAR + ESCAPE_CHAR, ESCAPE_CHAR + "s", ESCAPE_CHAR + "h"};
+  private static final List<String> ESCAPE_FROM = Arrays.asList(ESCAPE_CHAR, ELEMENT_TOKENS_SEPARATOR, ELEMENTS_SEPARATOR);
+  private static final List<String> ESCAPE_TO = Arrays.asList(ESCAPE_CHAR + ESCAPE_CHAR, ESCAPE_CHAR + "s", ESCAPE_CHAR + "h");
 
   @Override
   @Nullable
@@ -81,8 +74,20 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
                                                          @NotNull StringTokenizer tokenizer,
                                                          @Nullable StringBuilder processingInfoStorage);
 
+  /**
+   * @return -1, if {@code parent} has too many children and calculating child index would be too slow
+   */
   protected static <T extends PsiNamedElement> int getChildIndex(T element, PsiElement parent, String name, Class<T> hisClass) {
+    PsiFile file = parent.getContainingFile();
+    Set<PsiElement> cache = file == null ? null :
+      CachedValuesManager.getCachedValue(file, () -> new CachedValueProvider.Result<>(ContainerUtil.createWeakSet(), file));
+    if (cache != null && cache.contains(parent)) return -1; 
     PsiElement[] children = parent.getChildren();
+    if (children.length > CHILDREN_COUNT_LIMIT) {
+      if (cache != null) cache.add(parent);
+      return -1;
+    }
+
     int index = 0;
 
     for (PsiElement child : children) {

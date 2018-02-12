@@ -1,9 +1,11 @@
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchResultSink;
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
@@ -19,7 +21,6 @@ public class MatchContext {
   private MatchOptions options;
   private GlobalMatchingVisitor matcher;
   private boolean shouldRecursivelyMatch = true;
-  private boolean myWithAlternativePatternRoots = true;
 
   private List<PsiElement> myMatchedNodes;
 
@@ -31,17 +32,9 @@ public class MatchContext {
     myMatchedNodes = matchedNodes;
   }
 
-  public boolean isWithAlternativePatternRoots() {
-    return myWithAlternativePatternRoots;
-  }
-
-  public void setWithAlternativePatternRoots(boolean withAlternativePatternRoots) {
-    myWithAlternativePatternRoots = withAlternativePatternRoots;
-  }
-
+  @FunctionalInterface
   public interface MatchedElementsListener {
-    void matchedElements(Collection<PsiElement> matchedElements);
-    void commitUnmatched();
+    void matchedElements(@NotNull Collection<PsiElement> matchedElements);
   }
 
   private MatchedElementsListener myMatchedElementsListener;
@@ -107,7 +100,7 @@ public class MatchContext {
     this.sink = sink;
   }
 
-  void clear() {
+  public void clear() {
     result = null;
     pattern = null;
   }

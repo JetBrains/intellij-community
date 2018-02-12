@@ -148,9 +148,13 @@ public class InputDialog extends MessageDialog {
     }
 
     myField = createTextFieldComponent();
-    messagePanel.add(myField, BorderLayout.SOUTH);
+    messagePanel.add(createScrollableTextComponent(), BorderLayout.SOUTH);
 
     return messagePanel;
+  }
+
+  protected JComponent createScrollableTextComponent() {
+    return myField;
   }
 
   protected JComponent createTextComponent() {

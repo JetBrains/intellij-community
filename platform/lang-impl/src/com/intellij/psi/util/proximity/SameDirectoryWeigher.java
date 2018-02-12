@@ -15,13 +15,12 @@
  */
 package com.intellij.psi.util.proximity;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.NullableLazyKey;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.ProximityLocation;
-import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,15 +28,10 @@ import org.jetbrains.annotations.NotNull;
  */
 public class SameDirectoryWeigher extends ProximityWeigher {
   private static final NullableLazyKey<PsiDirectory, ProximityLocation>
-    PLACE_DIRECTORY = NullableLazyKey.create("placeDirectory", new NullableFunction<ProximityLocation, PsiDirectory>() {
-    @Override
-    public PsiDirectory fun(ProximityLocation location) {
-      return getParentDirectory(location.getPosition());
-    }
-  });
+    PLACE_DIRECTORY = NullableLazyKey.create("placeDirectory", location -> getParentDirectory(location.getPosition()));
 
   private static PsiDirectory getParentDirectory(PsiElement element) {
-    PsiFile file = InjectedLanguageUtil.getTopLevelFile(element);
+    PsiFile file = InjectedLanguageManager.getInstance(element.getProject()).getTopLevelFile(element);
     if (file != null) {
       element = file.getOriginalFile();
     }

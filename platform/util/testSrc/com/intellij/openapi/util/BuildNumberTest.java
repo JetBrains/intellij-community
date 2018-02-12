@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.util;
 
+import com.google.common.primitives.Ints;
 import org.junit.Test;
+
+import java.util.Arrays;
 
 import static org.junit.Assert.*;
 
@@ -33,7 +36,7 @@ public class BuildNumberTest {
   }
 
   @Test
-  public void branchBasedBuild() throws Exception {
+  public void branchBasedBuild() {
     assertParsed(BuildNumber.fromString("145"), 145, 0, "145.0");
     assertParsed(BuildNumber.fromString("145.1"), 145, 1, "145.1");
     assertParsed(BuildNumber.fromString("145.1.2"), 145, 1, "145.1.2");
@@ -54,7 +57,7 @@ public class BuildNumberTest {
   }
 
   @Test
-  public void comparingVersion() throws Exception {
+  public void comparingVersion() {
     assertTrue(BuildNumber.fromString("145.1").compareTo(BuildNumber.fromString("145.*")) < 0);
     assertTrue(BuildNumber.fromString("145.1.1").compareTo(BuildNumber.fromString("145.*")) < 0);
     assertTrue(BuildNumber.fromString("145.1.1.1.1").compareTo(BuildNumber.fromString("145.*")) < 0);
@@ -80,7 +83,7 @@ public class BuildNumberTest {
   }
 
   @Test
-  public void devSnapshotVersion() throws Exception {
+  public void devSnapshotVersion() {
     BuildNumber b = BuildNumber.fromString("__BUILD_NUMBER__");
     assertTrue(b.asString(), b.getBaselineVersion() >= 145 && b.getBaselineVersion() <= 3000);
     assertTrue(b.isSnapshot());
@@ -129,12 +132,26 @@ public class BuildNumberTest {
   }
 
   @Test
-  public void currentVersion() throws Exception {
+  public void currentVersion() {
     BuildNumber current = BuildNumber.currentVersion();
     assertTrue(current.isSnapshot());
 
     assertTrue(current.compareTo(BuildNumber.fromString("7512")) > 0);
     assertTrue(current.compareTo(BuildNumber.fromString("145")) > 0);
     assertTrue(current.compareTo(BuildNumber.fromString("145.12")) > 0);
+  }
+
+  @Test
+  public void withProductCode() {
+    BuildNumber IU_173_SNAPSHOT = BuildNumber.fromString("IU-173.SNAPSHOT");
+    assertTrue(IU_173_SNAPSHOT.isSnapshot());
+    assertEquals("IU", IU_173_SNAPSHOT.getProductCode());
+    assertEquals(Ints.asList(IU_173_SNAPSHOT.getComponents()), Arrays.asList(173, BuildNumber.SNAPSHOT_VALUE));
+
+    assertEquals(IU_173_SNAPSHOT, BuildNumber.fromStringWithProductCode("173.SNAPSHOT", "IU"));
+
+    assertEquals(IU_173_SNAPSHOT, BuildNumber.fromStringWithProductCode("IU-173.SNAPSHOT", "IU"));
+
+    assertEquals(IU_173_SNAPSHOT, BuildNumber.fromStringWithProductCode("IU-173.SNAPSHOT", "IC"));
   }
 }

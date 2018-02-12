@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,10 +124,14 @@ public class ParenthesesUtils {
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mNOT_EQUAL, EQUALITY_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.mCOMPARE_TO, EQUALITY_PRECEDENCE);
     BINARY_PRECEDENCES.put(GroovyTokenTypes.kAS, SAFE_CAST_PRECEDENCE);
+
+    BINARY_PRECEDENCES.put(GroovyTokenTypes.mREGEX_FIND, EQUALITY_PRECEDENCE);
+    BINARY_PRECEDENCES.put(GroovyTokenTypes.mREGEX_MATCH, EQUALITY_PRECEDENCE);
   }
 
   public static int precedenceForBinaryOperator(@NotNull IElementType sign) {
-    return BINARY_PRECEDENCES.get(sign);
+    Integer result = BINARY_PRECEDENCES.get(sign);
+    return result != null ? result : 0;
   }
 
 

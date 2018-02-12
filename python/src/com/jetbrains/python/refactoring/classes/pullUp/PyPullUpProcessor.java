@@ -37,6 +37,7 @@ class PyPullUpProcessor extends PyMembersRefactoringBaseProcessor {
   }
 
 
+  @NotNull
   @Override
   protected String getCommandName() {
     return PyPullUpHandler.REFACTORING_NAME;

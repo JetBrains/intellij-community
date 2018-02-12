@@ -15,17 +15,21 @@
  */
 package org.jetbrains.plugins.gradle.service.project;
 
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
+import org.picocontainer.PicoContainer;
 
-import static com.intellij.openapi.externalSystem.util.ExternalSystemConstants.*;
-import static org.easymock.EasyMock.*;
 import static org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY;
 import static org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Vladislav.Soroka
@@ -34,24 +38,20 @@ import static org.junit.Assert.assertNull;
 public class GradleProjectResolverUtilTest {
 
   @Test
-  public void testGetGradlePath() throws Exception {
+  public void testGetGradlePath() {
     assertNull(GradleProjectResolverUtil.getGradlePath(null));
 
     final Module rootModule = createModuleMock("rootModule");
     assertEquals(":", GradleProjectResolverUtil.getGradlePath(rootModule));
-    verify(rootModule);
 
     final Module subModule = createModuleMock(":foo:subModule");
     assertEquals(":foo:subModule", GradleProjectResolverUtil.getGradlePath(subModule));
-    verify(subModule);
 
     final Module sourceSetModule = createModuleMock("rootModule:main", GRADLE_SOURCE_SET_MODULE_TYPE_KEY);
     assertEquals(":", GradleProjectResolverUtil.getGradlePath(sourceSetModule));
-    verify(sourceSetModule);
 
     final Module sourceSetSubModule = createModuleMock(":foo:subModule:main", GRADLE_SOURCE_SET_MODULE_TYPE_KEY);
     assertEquals(":foo:subModule", GradleProjectResolverUtil.getGradlePath(sourceSetSubModule));
-    verify(sourceSetSubModule);
   }
 
   @NotNull
@@ -61,12 +61,19 @@ public class GradleProjectResolverUtilTest {
 
   @NotNull
   private static Module createModuleMock(@Nullable String projectId, @Nullable String moduleType) {
-    final Module mockModule = createMock(Module.class);
-    expect(mockModule.isDisposed()).andReturn(false).anyTimes();
-    expect(mockModule.getOptionValue(EXTERNAL_SYSTEM_ID_KEY)).andReturn(SYSTEM_ID.getId()).anyTimes();
-    expect(mockModule.getOptionValue(EXTERNAL_SYSTEM_MODULE_TYPE_KEY)).andReturn(moduleType).anyTimes();
-    expect(mockModule.getOptionValue(LINKED_PROJECT_ID_KEY)).andReturn(projectId).anyTimes();
-    replay(mockModule);
-    return mockModule;
+    Module module = mock(Module.class);
+    Project project = mock(Project.class);
+    PicoContainer container = mock(PicoContainer.class);
+
+    when(module.getPicoContainer()).thenReturn(container);
+    when(module.getProject()).thenReturn(project);
+    when(project.getPicoContainer()).thenReturn(container);
+    ExternalSystemModulePropertyManager modulePropertyManager = new ExternalSystemModulePropertyManager(module);
+    when(container.getComponentInstance(ExternalSystemModulePropertyManager.class.getName())).thenReturn(modulePropertyManager);
+
+    when(module.getOptionValue(ExternalProjectSystemRegistry.EXTERNAL_SYSTEM_ID_KEY)).thenReturn(SYSTEM_ID.getId());
+    when(module.getOptionValue("external.system.module.type")).thenReturn(moduleType);
+    when(module.getOptionValue("external.linked.project.id")).thenReturn(projectId);
+    return module;
   }
 }

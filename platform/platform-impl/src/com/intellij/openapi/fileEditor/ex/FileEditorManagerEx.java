@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -208,4 +209,8 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   @NotNull
   public abstract ActionCallback notifyPublisher(@NotNull Runnable runnable);
 
+  @Override
+  public void runWhenLoaded(@NotNull Editor editor, @NotNull Runnable runnable) {
+    AsyncEditorLoader.performWhenLoaded(editor, runnable);
+  }
 }

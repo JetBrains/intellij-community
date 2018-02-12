@@ -1,30 +1,17 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.coverage.view;
 
 import com.intellij.CommonBundle;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuitesBundle;
-import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.CloseTabToolbarAction;
-import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
@@ -55,18 +42,14 @@ import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.awt.event.*;
 
-/**
- * User: anna
- * Date: 1/2/12
- */
 public class CoverageView extends BorderLayoutPanel implements DataProvider, Disposable {
   @NonNls private static final String ACTION_DRILL_DOWN = "DrillDown";
   @NonNls private static final String ACTION_GO_UP = "GoUp";
-  @NonNls private static final String HELP_ID = "reference.toolWindows.Coverage";
+  @NonNls public static final String HELP_ID = "reference.toolWindows.Coverage";
 
-  private CoverageTableModel myModel;
-  private JBTable myTable;
-  private CoverageViewBuilder myBuilder;
+  private final CoverageTableModel myModel;
+  private final JBTable myTable;
+  private final CoverageViewBuilder myBuilder;
   private final Project myProject;
   private final CoverageViewManager.StateBean myStateBean;
  
@@ -88,7 +71,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
       emptyText.appendText("Edit", SimpleTextAttributes.LINK_ATTRIBUTES, new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
           final String configurationName = configuration.getName();
-          final RunnerAndConfigurationSettings configurationSettings = RunManagerEx.getInstanceEx(project).findConfigurationByName(configurationName);
+          final RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(project).findConfigurationByName(configurationName);
           if (configurationSettings != null) {
             RunDialog.editConfiguration(project, configurationSettings, "Edit Run Configuration");
           } else {
@@ -144,7 +127,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     });
 
     final JComponent component =
-      ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, createToolbarActions(structure), false).getComponent();
+      ActionManager.getInstance().createActionToolbar("CoverageView", createToolbarActions(structure), false).getComponent();
     addToLeft(component);
   }
 
@@ -178,7 +161,6 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
         CoverageDataManager.getInstance(myProject).chooseSuitesBundle(null);
       }
     });
-    actionGroup.add(new ContextHelpAction(HELP_ID));
     return actionGroup;
   }
 

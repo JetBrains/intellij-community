@@ -50,6 +50,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testarithmetic$mul3() throws Throwable { doTest() }
 
+  void testarithmetic$mul4() throws Throwable { doTest() }
+
   void testarithmetic$post1() throws Throwable { doTest() }
 
   void testarithmetic$sh1() throws Throwable { doTest() }
@@ -122,6 +124,32 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testgstring$str8() throws Throwable { doTest() }
 
+  void testgstring$str9() throws Throwable { doTest() }
+
+  void teststring$singleQuoted() { doTest() }
+
+  void teststring$tripleSingleQuoted$ok() { doTest() }
+
+  void teststring$tripleSingleQuoted$err0() { doTest() }
+
+  void teststring$tripleSingleQuoted$err1() { doTest() }
+
+  void teststring$tripleSingleQuoted$err2() { doTest() }
+
+  void teststring$tripleSingleQuoted$err3() { doTest() }
+
+  void teststring$tripleSingleQuoted$err4() { doTest() }
+
+  void teststring$tripleSingleQuoted$err5() { doTest() }
+
+  void teststring$tripleSingleQuoted$unfinished0() { doTest() }
+
+  void teststring$tripleSingleQuoted$unfinished1() { doTest() }
+
+  void teststring$tripleSingleQuoted$unfinished2() { doTest() }
+
+  void teststring$tripleSingleQuoted$unfinished3() { doTest() }
+
   void testgstring$str_error1() throws Throwable { doTest() }
 
   void testgstring$str_error2() throws Throwable { doTest() }
@@ -143,6 +171,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testgstring$triple$triple2() throws Throwable { doTest() }
 
   void testgstring$triple$triple3() throws Throwable { doTest() }
+
+  void testgstring$triple$triple4() throws Throwable { doTest() }
 
   void testgstring$triple$quote_and_slash() throws Throwable { doTest() }
 
@@ -225,6 +255,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testpath$path13() throws Throwable { doTest() }
 
   void testpath$path14() throws Throwable { doTest() }
+
+  void testpath$path15() throws Throwable { doTest() }
 
   void testpath$path2() throws Throwable { doTest() }
 
@@ -379,6 +411,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testregex$dollarSlashyTriple() throws Throwable { doTest() }
 
   void testregex$dollarSlashyUltimate() { doTest() }
+
+  void testregex$afterNewLine() { doTest() }
 
   void testrelational$eq1() throws Throwable { doTest() }
 

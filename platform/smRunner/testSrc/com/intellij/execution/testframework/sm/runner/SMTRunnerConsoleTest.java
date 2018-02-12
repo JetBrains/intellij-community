@@ -28,7 +28,6 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
 import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +38,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   private MyConsoleView myConsole;
   private GeneralToSMTRunnerEventsConvertor myEventsProcessor;
   private MockPrinter myMockResettablePrinter;
-  private SMTestProxy myRootSuite;
+  private SMTestProxy.SMRootTestProxy myRootSuite;
   private SMTestRunnerResultsForm myResultsViewer;
 
   private class MyConsoleView extends SMTRunnerConsoleView {
@@ -539,7 +538,80 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     assertAllOutputs(myMockResettablePrinter, "preved", "","Empty test suite.\n");
   }
 
-  public void testEnsureOrderedClearFlush() throws Exception {
+  public void testPrintingOnlyOwnContentForRoot() {
+    myRootSuite.setShouldPrintOwnContentOnly(true);
+
+    myConsole.getPrinter().updateOnTestSelected(myResultsViewer.getTestsRootNode());
+
+    myEventsProcessor.onStartTesting();
+    myEventsProcessor.onUncapturedOutput("root output 1\n", ProcessOutputTypes.STDOUT);
+    myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent("suite", null));
+    SMTestProxy suite = myEventsProcessor.getCurrentSuite();
+    myEventsProcessor.onUncapturedOutput("suite output\n", ProcessOutputTypes.STDOUT);
+    myEventsProcessor.onTestStarted(new TestStartedEvent("my test", null));
+    myEventsProcessor.onUncapturedOutput("test output\n", ProcessOutputTypes.STDOUT);
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("my test", null));
+    myEventsProcessor.onSuiteFinished(new TestSuiteFinishedEvent("suite"));
+    myEventsProcessor.onUncapturedOutput("root output 2\n", ProcessOutputTypes.STDOUT);
+    myEventsProcessor.onFinishTesting();
+
+    assertAllOutputs(myMockResettablePrinter, "root output 1\n" +
+                                              "root output 2\n", "", "");
+
+    myMockResettablePrinter.resetIfNecessary();
+    myConsole.getPrinter().updateOnTestSelected(suite);
+    assertAllOutputs(myMockResettablePrinter, "suite output\n" +
+                                              "test output\n", "", "");
+
+    myMockResettablePrinter.resetIfNecessary();
+    myConsole.getPrinter().updateOnTestSelected(myResultsViewer.getTestsRootNode());
+    assertAllOutputs(myMockResettablePrinter, "root output 1\n" +
+                                              "root output 2\n", "", "");
+
+    myRootSuite.setShouldPrintOwnContentOnly(false);
+
+    myMockResettablePrinter.resetIfNecessary();
+    myConsole.getPrinter().updateOnTestSelected(suite);
+    assertAllOutputs(myMockResettablePrinter, "suite output\n" +
+                                              "test output\n", "", "");
+
+    myMockResettablePrinter.resetIfNecessary();
+    myConsole.getPrinter().updateOnTestSelected(myResultsViewer.getTestsRootNode());
+    assertAllOutputs(myMockResettablePrinter, "root output 1\n" +
+                                              "suite output\n" +
+                                              "test output\n" +
+                                              "root output 2\n", "", "");
+  }
+
+  public void testPrintingManyOutputForRootWithoutChildren() {
+    myRootSuite.setShouldPrintOwnContentOnly(true);
+
+    myConsole.getPrinter().updateOnTestSelected(myResultsViewer.getTestsRootNode());
+
+    myEventsProcessor.onStartTesting();
+    StringBuilder expectedOutput = new StringBuilder();
+    for (int i = 0; i < 10000; i++) {
+      String text = "root output " + i + "\n";
+      myEventsProcessor.onUncapturedOutput(text, ProcessOutputTypes.STDOUT);
+      expectedOutput.append(text);
+    }
+    myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent("suite", null));
+    SMTestProxy suite = myEventsProcessor.getCurrentSuite();
+    myEventsProcessor.onUncapturedOutput("suite output\n", ProcessOutputTypes.STDOUT);
+    myEventsProcessor.onFinishTesting();
+
+    assertAllOutputs(myMockResettablePrinter, expectedOutput.toString(), "", "");
+
+    myMockResettablePrinter.resetIfNecessary();
+    myConsole.getPrinter().updateOnTestSelected(suite);
+    assertAllOutputs(myMockResettablePrinter, "suite output\n", "", "");
+
+    myMockResettablePrinter.resetIfNecessary();
+    myConsole.getPrinter().updateOnTestSelected(myResultsViewer.getTestsRootNode());
+    assertAllOutputs(myMockResettablePrinter, expectedOutput.toString(), "", "");
+  }
+
+  public void testEnsureOrderedClearFlush() {
     StringBuffer buf = new StringBuffer();
     String expected = "";
     for(int i = 0; i < 100; i++) {

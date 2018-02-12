@@ -47,10 +47,6 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 3/14/13
- */
 public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
 
   @NonNls public static final String ARTIFACT_VENDOR_SIGN_PROPERTY = "artifact.sign.vendor";
@@ -145,6 +141,8 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
       new JavaFxArtifactProperties.JavaFxPackager(artifact, properties, context.getProject()) {
         @Override
         protected void registerJavaFxPackagerError(String message) {}
+        @Override
+        protected void registerJavaFxPackagerInfo(String message) {}
       };
     final String tempDirDeployPath = tempDirPath + "/deploy";
     final List<JavaFxAntGenerator.SimpleTag> tags =

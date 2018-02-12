@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.intellij.build.impl
 
@@ -22,11 +10,8 @@ import org.apache.tools.ant.DefaultLogger
 import org.apache.tools.ant.Project
 import org.jetbrains.intellij.build.BuildMessageLogger
 import org.jetbrains.intellij.build.BuildMessages
+import org.jetbrains.intellij.build.CompilationErrorsLogMessage
 import org.jetbrains.intellij.build.LogMessage
-import org.jetbrains.jps.gant.BuildInfoPrinter
-import org.jetbrains.jps.gant.DefaultBuildInfoPrinter
-import org.jetbrains.jps.gant.JpsGantProjectBuilder
-import org.jetbrains.jps.gant.TeamCityBuildInfoPrinter
 
 import java.util.function.BiFunction
 /**
@@ -42,14 +27,12 @@ class BuildMessagesImpl implements BuildMessages {
   private final List<LogMessage> delayedMessages = []
   private final UniqueNameGenerator taskNameGenerator = new UniqueNameGenerator()
 
-  static BuildMessagesImpl create(JpsGantProjectBuilder builder, Project antProject) {
+  static BuildMessagesImpl create(Project antProject) {
     String key = "IntelliJBuildMessages"
     def registered = antProject.getReference(key)
     if (registered != null) return registered as BuildMessagesImpl
 
     boolean underTeamCity = System.getProperty("teamcity.buildType.id") != null
-    BuildInfoPrinter buildInfoPrinter = underTeamCity ? new TeamCityBuildInfoPrinter() : new DefaultBuildInfoPrinter()
-    builder.buildInfoPrinter = buildInfoPrinter
     disableAntLogging(antProject)
     BiFunction<String, AntTaskLogger, BuildMessageLogger> loggerFactory = underTeamCity ? TeamCityBuildMessageLogger.FACTORY : ConsoleBuildMessageLogger.FACTORY
     def antTaskLogger = new AntTaskLogger(antProject)
@@ -100,6 +83,16 @@ class BuildMessagesImpl implements BuildMessages {
   }
 
   @Override
+  void compilationError(String compilerName, String message) {
+    compilationErrors(compilerName, [message])
+  }
+
+  @Override
+  void compilationErrors(String compilerName, List<String> messages) {
+    processMessage(new CompilationErrorsLogMessage(compilerName, messages))
+  }
+
+  @Override
   void progress(String message) {
     if (parentInstance != null) {
       //progress messages should be shown immediately, there are no problems with that since they aren't organized into groups
@@ -108,6 +101,11 @@ class BuildMessagesImpl implements BuildMessages {
     else {
       logger.processMessage(new LogMessage(LogMessage.Kind.PROGRESS, message))
     }
+  }
+
+  @Override
+  void buildStatus(String message) {
+    processMessage(new LogMessage(LogMessage.Kind.BUILD_STATUS, message))
   }
 
   @Override
@@ -122,8 +120,13 @@ class BuildMessagesImpl implements BuildMessages {
   }
 
   @Override
-  void artifactBuild(String relativeArtifactPath) {
+  void artifactBuilt(String relativeArtifactPath) {
     processMessage(new LogMessage(LogMessage.Kind.ARTIFACT_BUILT, relativeArtifactPath))
+  }
+
+  @Override
+  void reportStatisticValue(String key, String value) {
+    processMessage(new LogMessage(LogMessage.Kind.STATISTICS, "$key=$value"))
   }
 
   void processMessage(LogMessage message) {

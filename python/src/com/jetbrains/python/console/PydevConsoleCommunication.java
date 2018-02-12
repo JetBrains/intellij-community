@@ -15,23 +15,24 @@
  */
 package com.jetbrains.python.console;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
-import com.intellij.util.WaitFor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.intellij.xdebugger.frame.XValueNode;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.*;
 import com.jetbrains.python.debugger.*;
@@ -44,9 +45,10 @@ import org.apache.xmlrpc.XmlRpcHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
 /**
  * Communication with Xml-rpc with the client.
@@ -55,7 +57,6 @@ import java.util.*;
  */
 public class PydevConsoleCommunication extends AbstractConsoleCommunication implements XmlRpcHandler,
                                                                                        PyFrameAccessor {
-
   private static final String EXEC_LINE = "execLine";
   private static final String EXEC_MULTILINE = "execMultipleLines";
   private static final String GET_COMPLETIONS = "getCompletions";
@@ -68,6 +69,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   private static final String CLOSE = "close";
   private static final String EVALUATE = "evaluate";
   private static final String GET_ARRAY = "getArray";
+  private static final String LOAD_FULL_VALUE = "loadFullValue";
   private static final String PYDEVD_EXTRA_ENVS = "PYDEVD_EXTRA_ENVS";
 
   /**
@@ -78,7 +80,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   /**
    * This is the server responsible for giving input to a raw_input() requested.
    */
-  private MyWebServer myWebServer;
+  @Nullable private MyWebServer myWebServer;
 
   private static final Logger LOG = Logger.getInstance(PydevConsoleCommunication.class.getName());
 
@@ -93,7 +95,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   /**
    * Helper to keep on busy loop.
    */
-  private volatile Object lock2 = new Object();
+  private final Object lock2 = new Object();
   /**
    * Keeps a flag indicating that we were able to communicate successfully with the shell at least once
    * (if we haven't we may retry more than once the first time, as jython can take a while to initialize
@@ -105,8 +107,8 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   private PythonDebugConsoleCommunication myDebugCommunication;
   private boolean myNeedsMore = false;
 
-  private PythonConsoleView myConsoleView;
-  private List<PyFrameListener> myFrameListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private @Nullable PythonConsoleView myConsoleView;
+  private final List<PyFrameListener> myFrameListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   /**
    * Initializes the xml-rpc communication.
@@ -116,6 +118,10 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    * @throws MalformedURLException
    */
   public PydevConsoleCommunication(Project project, int port, Process process, int clientPort) throws Exception {
+    this(project, null, port, process, clientPort);
+  }
+
+  public PydevConsoleCommunication(Project project, String host, int port, Process process, int clientPort) throws Exception {
     super(project);
 
     //start the server that'll handle input requests
@@ -123,8 +129,16 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
     myWebServer.addHandler("$default", this);
     this.myWebServer.start();
+    this.myClient = new PydevXmlRpcClient(process, host, port);
 
-    this.myClient = new PydevXmlRpcClient(process, port);
+    PyDebugValueExecutionService executionService = PyDebugValueExecutionService.getInstance(myProject);
+    executionService.sessionStarted(this);
+    addFrameListener(new PyFrameListener() {
+      @Override
+      public void frameChanged() {
+        executionService.cancelSubmittedTasks(PydevConsoleCommunication.this);
+      }
+    });
   }
 
   public boolean handshake() throws XmlRpcException {
@@ -139,9 +153,9 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   }
 
   /**
-   * Stops the communication with the client (passes message for it to quit).
+   * Sends {@link #CLOSE} message to the Python console script.
    */
-  public synchronized void close() {
+  private void sendCloseMessageToScript() {
     if (this.myClient != null) {
       new Task.Backgroundable(myProject, "Close Console Communication", true) {
         @Override
@@ -156,11 +170,39 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
         }
       }.queue();
     }
+  }
+
+  /**
+   * Stops the communication with the client (passes message for it to quit).
+   */
+  public synchronized void close() {
+    sendCloseMessageToScript();
+    PyDebugValueExecutionService.getInstance(myProject).sessionStopped(this);
 
     if (myWebServer != null) {
       myWebServer.shutdown();
       myWebServer = null;
     }
+  }
+
+  /**
+   * Stops the communication with the client (passes message for it to quit).
+   *
+   * @return {@link Future} that allows to wait for Python console server
+   * thread {@link WebServer#listener} to die
+   */
+  @NotNull
+  public synchronized Future<Void> closeAsync() {
+    sendCloseMessageToScript();
+    PyDebugValueExecutionService.getInstance(myProject).sessionStopped(this);
+
+    if (myWebServer != null) {
+      Future<Void> shutdownFuture = myWebServer.shutdownAsync();
+      myWebServer = null;
+      return shutdownFuture;
+    }
+
+    return completedFuture();
   }
 
   /**
@@ -171,7 +213,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   /**
    * Helper to keep on busy loop.
    */
-  private volatile Object lock = new Object();
+  private final Object lock = new Object();
 
 
   /**
@@ -191,7 +233,9 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       return execNotifyAboutMagic(params);
     }
     else if ("ShowConsole".equals(method)) {
-      myConsoleView.setConsoleEnabled(true);
+      if (myConsoleView != null) {
+        myConsoleView.setConsoleEnabled(true);
+      }
       return "";
     }
     else {
@@ -220,14 +264,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     final VirtualFile file = StringUtil.isEmpty(path) ? null : LocalFileSystem.getInstance().findFileByPath(path);
     if (file != null) {
       ApplicationManager.getApplication().invokeLater(() -> {
-        AccessToken at = ApplicationManager.getApplication().acquireReadActionLock();
-
-        try {
-          FileEditorManager.getInstance(myProject).openFile(file, true);
-        }
-        finally {
-          at.finish();
-        }
+        FileEditorManager.getInstance(myProject).openFile(file, true);
       });
 
       return Boolean.TRUE;
@@ -337,7 +374,14 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     if (waitingForInput) {
       return "Unable to get description: waiting for input.";
     }
-    return myClient.execute(GET_DESCRIPTION, new Object[]{text}, 5000).toString();
+
+    ThrowableComputable<String, Exception> doGetDesc = () -> myClient.execute(GET_DESCRIPTION, new Object[]{text}, 5000).toString();
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      return ProgressManager.getInstance().runProcessWithProgressSynchronously(doGetDesc, "Getting Description", true, myProject);
+    }
+    else {
+      return doGetDesc.compute();
+    }
   }
 
   /**
@@ -351,7 +395,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       return; //TODO: handle text input and other cases
     }
     nextResponse = null;
-    if (waitingForInput) {
+    if (waitingForInput && myConsoleView != null && myConsoleView.isInitialized()) {
       inputReceived = command.getText();
       waitingForInput = false;
       //the thread that we started in the last exec is still alive if we were waiting for an input.
@@ -416,6 +460,9 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
             nextResponse = new InterpreterResponse(more, needInput);
           }
+          catch (ProcessCanceledException e) {
+            //ignore
+          }
           catch (Exception e) {
             nextResponse = new InterpreterResponse(false, needInput);
           }
@@ -427,6 +474,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
         progressIndicator.setText("Waiting for REPL response with " + (int)(TIMEOUT / 10e8) + "s timeout");
+        progressIndicator.setIndeterminate(false);
         final long startTime = System.nanoTime();
         while (nextResponse == null) {
           if (progressIndicator.isCanceled()) {
@@ -516,11 +564,63 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     return new XValueChildrenList();
   }
 
+  @Override
+  public void loadAsyncVariablesValues(@NotNull List<PyAsyncValue<String>> pyAsyncValues) {
+    PyDebugValueExecutionService.getInstance(myProject).submitTask(this, () -> {
+      if (myClient != null) {
+        try {
+          List<String> evaluationExpressions = new ArrayList<>();
+          for (PyAsyncValue<String> asyncValue : pyAsyncValues) {
+            evaluationExpressions.add(asyncValue.getDebugValue().getEvaluationExpression());
+          }
+          Object ret = myClient.execute(LOAD_FULL_VALUE, new Object[]{evaluationExpressions.toArray()});
+
+          if (ret instanceof String) {
+            List<PyDebugValue> debugValues = ProtocolParser.parseValues((String)ret, this);
+            for (int i = 0; i < pyAsyncValues.size(); ++i) {
+              pyAsyncValues.get(i).getCallback().ok(debugValues.get(i).getValue());
+            }
+          }
+          else {
+            checkError(ret);
+          }
+        }
+        catch (PyDebuggerException e) {
+          if (myWebServer != null && !e.getMessage().startsWith("Console already exited")) {
+            LOG.error(e);
+          }
+        }
+        catch (XmlRpcException e) {
+          for (PyAsyncValue<String> asyncValue : pyAsyncValues) {
+            PyDebugValue value = asyncValue.getDebugValue();
+            XValueNode node = value.getLastNode();
+            if (node != null && !node.isObsolete()) {
+              if (e.getMessage().startsWith("Timeout") || e.getMessage().startsWith("Console already exited")) {
+                value.updateNodeValueAfterLoading(node, " ", "Timeout Exceeded");
+              }
+              else {
+                LOG.error(e);
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
   private XValueChildrenList parseVars(String ret, PyDebugValue parent) throws PyDebuggerException {
     final List<PyDebugValue> values = ProtocolParser.parseValues(ret, this);
     XValueChildrenList list = new XValueChildrenList(values.size());
     for (PyDebugValue v : values) {
-      list.add(v.getName(), parent != null ? v.setParent(parent) : v);
+      PyDebugValue value;
+      if (parent != null) {
+        value = new PyDebugValue(v);
+        value.setParent(parent);
+      }
+      else {
+        value = v;
+      }
+      list.add(v.getName(), value);
     }
     return list;
   }
@@ -632,6 +732,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     throw new PyDebuggerException("pydevconsole failed to execute connectToDebugger", exception);
   }
 
+
   @Override
   public void notifyCommandExecuted(boolean more) {
     super.notifyCommandExecuted(more);
@@ -654,57 +755,52 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     return myDebugCommunication;
   }
 
-
-  public boolean waitForTerminate() {
-    if (myWebServer != null) {
-      return myWebServer.waitForTerminate();
-    }
-
-    return true;
-  }
-
   private static final class MyWebServer extends WebServer {
     public MyWebServer(int port) {
       super(port);
     }
 
-    @Override
-    public synchronized void shutdown() {
-      try {
-        if (serverSocket != null) {
-          serverSocket.close();
-        }
+    /**
+     * Shutdowns the server and returns {@link Future} that allows to wait for
+     * the server thread (i.e. {@link #listener}) to die after it gracefully
+     * finished its work.
+     *
+     * @return {@link Future} that allows to wait for the server thread (i.e.
+     * {@link #listener}) to die
+     */
+    @NotNull
+    public synchronized Future<Void> shutdownAsync() {
+      //noinspection NonPrivateFieldAccessedInSynchronizedContext
+      Thread thread = listener;
+      shutdown();
+      if (thread != null) {
+        return ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          thread.join();
+          return null;
+        });
       }
-      catch (IOException e) {
-        //pass
+      else {
+        return completedFuture();
       }
-      super.shutdown();
-    }
-
-    public boolean waitForTerminate() {
-      if (listener != null) {
-        return new WaitFor(10000) {
-          @Override
-          protected boolean condition() {
-            return !listener.isAlive();
-          }
-        }.isConditionRealized();
-      }
-      return true;
     }
   }
 
-  public void setConsoleView(PythonConsoleView consoleView) {
+  public void setConsoleView(@Nullable PythonConsoleView consoleView) {
     myConsoleView = consoleView;
   }
 
   @Override
-  public void showNumericContainer(PyDebugValue value) {
+  public void showNumericContainer(@NotNull PyDebugValue value) {
     PyViewNumericContainerAction.showNumericViewer(myProject, value);
   }
 
   @Override
   public void addFrameListener(@NotNull PyFrameListener listener) {
     myFrameListeners.add(listener);
+  }
+
+  @NotNull
+  private static Future<Void> completedFuture() {
+    return CompletableFuture.completedFuture(null);
   }
 }

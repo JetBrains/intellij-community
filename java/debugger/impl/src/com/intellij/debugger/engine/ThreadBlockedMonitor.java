@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.debugger.engine;
 
@@ -26,8 +14,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.sun.jdi.IncompatibleThreadStateException;
+import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ThreadReference;
 import org.jetbrains.annotations.NotNull;
@@ -89,7 +78,7 @@ public class ThreadBlockedMonitor {
   private static void onThreadBlocked(@NotNull final ThreadReference blockedThread,
                                       @NotNull final ThreadReference blockingThread,
                                       final DebugProcessImpl process) {
-    XDebugSessionImpl.NOTIFICATION_GROUP.createNotification(
+    XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification(
       DebuggerBundle.message("status.thread.blocked.by", blockedThread.name(), blockingThread.name()),
       DebuggerBundle.message("status.thread.blocked.by.resume", blockingThread.name()),
       NotificationType.INFORMATION, (notification, event) -> {
@@ -123,15 +112,19 @@ public class ThreadBlockedMonitor {
         vmProxy.getVirtualMachine().suspend();
         try {
           for (ThreadReferenceProxy thread : myWatchedThreads) {
-            ObjectReference waitedMonitor =
-              vmProxy.canGetCurrentContendedMonitor() ? thread.getThreadReference().currentContendedMonitor() : null;
-            if (waitedMonitor != null && vmProxy.canGetMonitorInfo()) {
-              ThreadReference blockingThread = waitedMonitor.owningThread();
-              if (blockingThread != null
-                  && blockingThread.suspendCount() > 1
-                  && getCurrentThread() != blockingThread) {
-                onThreadBlocked(thread.getThreadReference(), blockingThread, myProcess);
+            try {
+              ObjectReference waitedMonitor =
+                vmProxy.canGetCurrentContendedMonitor() ? thread.getThreadReference().currentContendedMonitor() : null;
+              if (waitedMonitor != null && vmProxy.canGetMonitorInfo()) {
+                ThreadReference blockingThread = waitedMonitor.owningThread();
+                if (blockingThread != null
+                    && blockingThread.suspendCount() > 1
+                    && getCurrentThread() != blockingThread) {
+                  onThreadBlocked(thread.getThreadReference(), blockingThread, myProcess);
+                }
               }
+            }
+            catch (ObjectCollectedException ignored) {
             }
           }
         }

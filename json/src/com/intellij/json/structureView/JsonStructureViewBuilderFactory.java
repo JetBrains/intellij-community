@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 public class JsonStructureViewBuilderFactory implements PsiStructureViewFactory {
   @Nullable
   @Override
-  public StructureViewBuilder getStructureViewBuilder(final PsiFile psiFile) {
+  public StructureViewBuilder getStructureViewBuilder(@NotNull final PsiFile psiFile) {
     if (!(psiFile instanceof JsonFile)) {
       return null;
     }

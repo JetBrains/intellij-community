@@ -16,6 +16,7 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.util.QueryParameters;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * 
  * @author peter
  */
-public interface DumbAwareSearchParameters {
+public interface DumbAwareSearchParameters extends QueryParameters {
   @NotNull
   Project getProject();
 }

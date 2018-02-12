@@ -38,8 +38,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ui.configuration.CommonContentEntriesEditor;
+import com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEditorFactory;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -56,10 +57,8 @@ import com.intellij.packaging.impl.compiler.ArtifactsCompiler;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Chunk;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.DateFormatUtil;
@@ -68,10 +67,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.jps.api.CmdlineProtoUtil;
-import org.jetbrains.jps.api.CmdlineRemoteProto;
-import org.jetbrains.jps.api.GlobalOptions;
-import org.jetbrains.jps.api.TaskFuture;
+import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
@@ -109,8 +105,12 @@ public class CompileDriver {
   }
 
   public void make(CompileScope scope, CompileStatusNotification callback) {
+    make(scope, false, callback);
+  }
+
+  public void make(CompileScope scope, boolean withModalProgress, CompileStatusNotification callback) {
     if (validateCompilerConfiguration(scope)) {
-      startup(scope, false, false, callback, null);
+      startup(scope, false, false, withModalProgress, callback, null);
     }
     else {
       callback.finished(true, 0, 0, DummyCompileContext.getInstance());
@@ -124,7 +124,7 @@ public class CompileDriver {
 
     final CompilerTaskBase
       task = CompilerTaskFactory.SERVICE.getInstance(myProject)
-      .createCompilerTask("Classes up-to-date check", true, false, false, isCompilationStartedAutomatically(scope));
+      .createCompilerTask("Classes up-to-date check", true, false, false, isCompilationStartedAutomatically(scope), false);
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, task, scope, true, false);
 
     final Ref<ExitStatus> result = new Ref<>();
@@ -199,7 +199,7 @@ public class CompileDriver {
       scopes.addAll(explicitScopes);
     }
     else if (!compileContext.isRebuild() && !CompileScopeUtil.allProjectModulesAffected(compileContext)) {
-      CompileScopeUtil.addScopesForModules(Arrays.asList(scope.getAffectedModules()), scopes, forceBuild);
+      CompileScopeUtil.addScopesForModules(Arrays.asList(scope.getAffectedModules()), scope.getAffectedUnloadedModules(), scopes, forceBuild);
     }
     else {
       scopes.addAll(CmdlineProtoUtil.createAllModulesScopes(forceBuild));
@@ -216,7 +216,7 @@ public class CompileDriver {
     for (BuildTargetScopeProvider provider : BuildTargetScopeProvider.EP_NAME.getExtensions()) {
       List<TargetTypeBuildScope> providerScopes = ReadAction.compute(
         () -> myProject.isDisposed() ? Collections.emptyList()
-                                     : provider.getBuildTargetScopes(scope, myCompilerFilter, myProject, forceBuild));
+                                     : provider.getBuildTargetScopes(scope, myProject, forceBuild));
       scopes = CompileScopeUtil.mergeScopes(scopes, providerScopes);
     }
     return scopes;
@@ -232,7 +232,7 @@ public class CompileDriver {
     // need to pass scope's user data to server
     final Map<String, String> builderParams;
     if (onlyCheckUpToDate) {
-      builderParams = Collections.emptyMap();
+      builderParams = new HashMap<>();
     }
     else {
       final Map<Key, Object> exported = scope.exportUserData();
@@ -245,8 +245,11 @@ public class CompileDriver {
         }
       }
       else {
-        builderParams = Collections.emptyMap();
+        builderParams = new HashMap<>();
       }
+    }
+    if (!scope.getAffectedUnloadedModules().isEmpty()) {
+      builderParams.put(BuildParametersKeys.LOAD_UNLOADED_MODULES, Boolean.TRUE.toString());
     }
 
     final MessageBus messageBus = myProject.getMessageBus();
@@ -376,23 +379,33 @@ public class CompileDriver {
     });
   }
 
+  private void startup(final CompileScope scope, final boolean isRebuild, final boolean forceCompile,
+                       final CompileStatusNotification callback, final CompilerMessage message) {
+    startup(scope, isRebuild, forceCompile, false, callback, message);
+  }
+
   private void startup(final CompileScope scope,
                        final boolean isRebuild,
                        final boolean forceCompile,
-                       final CompileStatusNotification callback,
+                       boolean withModalProgress, final CompileStatusNotification callback,
                        final CompilerMessage message) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final String contentName = CompilerBundle.message(forceCompile ? "compiler.content.name.compile" : "compiler.content.name.make");
     final boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     final CompilerTaskBase compileTask = CompilerTaskFactory.SERVICE.getInstance(myProject)
-        .createCompilerTask(contentName, isUnitTestMode, true, true, isCompilationStartedAutomatically(scope));
+        .createCompilerTask(contentName,
+                            isUnitTestMode,
+                            !withModalProgress,
+                            true,
+                            isCompilationStartedAutomatically(scope),
+                            withModalProgress);
 
     StatusBar.Info.set("", myProject, "Compiler");
     // ensure the project model seen by build process is up-to-date
     myProject.save();
     if (!isUnitTestMode) {
-      ApplicationManager.getApplication().saveSettings();
+      ApplicationManager.getApplication().saveSettings(true);
     }
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -568,7 +581,12 @@ public class CompileDriver {
 
   public void executeCompileTask(final CompileTask task, final CompileScope scope, final String contentName, final Runnable onTaskFinished) {
     final CompilerTaskBase progressManagerTask =
-      CompilerTaskFactory.SERVICE.getInstance(myProject).createCompilerTask(contentName, false, false, true, isCompilationStartedAutomatically(scope));
+      CompilerTaskFactory.SERVICE.getInstance(myProject).createCompilerTask(contentName,
+                                                                            false,
+                                                                            false,
+                                                                            true,
+                                                                            isCompilationStartedAutomatically(scope),
+                                                                            false);
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, progressManagerTask, scope, false, false);
 
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -626,6 +644,8 @@ public class CompileDriver {
       final List<String> modulesWithoutOutputPathSpecified = new ArrayList<>();
       final List<String> modulesWithoutJdkAssigned = new ArrayList<>();
       final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+      boolean projectSdkNotSpecified = false;
+      boolean projectOutputNotSpecified = false;
       for (final Module module : scopeModules) {
         if (!compilerManager.isValidationEnabled(module)) {
           continue;
@@ -639,11 +659,14 @@ public class CompileDriver {
         }
         final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
         if (jdk == null) {
+          projectSdkNotSpecified |= ModuleRootManager.getInstance(module).isSdkInherited();
           modulesWithoutJdkAssigned.add(module.getName());
         }
         final String outputPath = getModuleOutputPath(module, false);
         final String testsOutputPath = getModuleOutputPath(module, true);
         if (outputPath == null && testsOutputPath == null) {
+          CompilerModuleExtension compilerExtension = CompilerModuleExtension.getInstance(module);
+          projectOutputNotSpecified |= compilerExtension != null && compilerExtension.isCompilerOutputPathInherited();
           modulesWithoutOutputPathSpecified.add(module.getName());
         }
         else {
@@ -660,12 +683,12 @@ public class CompileDriver {
         }
       }
       if (!modulesWithoutJdkAssigned.isEmpty()) {
-        showNotSpecifiedError("error.jdk.not.specified", modulesWithoutJdkAssigned, ProjectBundle.message("modules.classpath.title"));
+        showNotSpecifiedError("error.jdk.not.specified", projectSdkNotSpecified, modulesWithoutJdkAssigned, ProjectBundle.message("modules.classpath.title"));
         return false;
       }
 
       if (!modulesWithoutOutputPathSpecified.isEmpty()) {
-        showNotSpecifiedError("error.output.not.specified", modulesWithoutOutputPathSpecified, CommonContentEntriesEditor.NAME);
+        showNotSpecifiedError("error.output.not.specified", projectOutputNotSpecified, modulesWithoutOutputPathSpecified, DefaultModuleConfigurationEditorFactory.getInstance().getOutputEditorDisplayName());
         return false;
       }
 
@@ -731,50 +754,33 @@ public class CompileDriver {
   }
 
   private static String getModulesString(Collection<Module> modulesInChunk) {
-    final StringBuilder moduleNames = StringBuilderSpinAllocator.alloc();
-    try {
-      for (Module module : modulesInChunk) {
-        if (moduleNames.length() > 0) {
-          moduleNames.append("\n");
-        }
-        moduleNames.append("\"").append(module.getName()).append("\"");
-      }
-      return moduleNames.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(moduleNames);
-    }
+    return StringUtil.join(modulesInChunk, module->"\""+module.getName()+"\"", "\n");
   }
 
   private static boolean hasSources(Module module, final JavaSourceRootType rootType) {
     return !ModuleRootManager.getInstance(module).getSourceRoots(rootType).isEmpty();
   }
 
-  private void showNotSpecifiedError(@NonNls final String resourceId, List<String> modules, String editorNameToSelect) {
+  private void showNotSpecifiedError(@NonNls final String resourceId, boolean notSpecifiedValueInheritedFromProject, List<String> modules,
+                                     String editorNameToSelect) {
     String nameToSelect = null;
-    final StringBuilder names = StringBuilderSpinAllocator.alloc();
-    final String message;
-    try {
-      final int maxModulesToShow = 10;
-      for (String name : modules.size() > maxModulesToShow ? modules.subList(0, maxModulesToShow) : modules) {
-        if (nameToSelect == null) {
-          nameToSelect = name;
-        }
-        if (names.length() > 0) {
-          names.append(",\n");
-        }
-        names.append("\"");
-        names.append(name);
-        names.append("\"");
+    final StringBuilder names = new StringBuilder();
+    final int maxModulesToShow = 10;
+    for (String name : modules.size() > maxModulesToShow ? modules.subList(0, maxModulesToShow) : modules) {
+      if (nameToSelect == null && !notSpecifiedValueInheritedFromProject) {
+        nameToSelect = name;
       }
-      if (modules.size() > maxModulesToShow) {
-        names.append(",\n...");
+      if (names.length() > 0) {
+        names.append(",\n");
       }
-      message = CompilerBundle.message(resourceId, modules.size(), names.toString());
+      names.append("\"");
+      names.append(name);
+      names.append("\"");
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(names);
+    if (modules.size() > maxModulesToShow) {
+      names.append(",\n...");
     }
+    final String message = CompilerBundle.message(resourceId, modules.size(), names.toString());
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.error(message);
@@ -784,8 +790,14 @@ public class CompileDriver {
     showConfigurationDialog(nameToSelect, editorNameToSelect);
   }
 
-  private void showConfigurationDialog(String moduleNameToSelect, String tabNameToSelect) {
-    ProjectSettingsService.getInstance(myProject).showModuleConfigurationDialog(moduleNameToSelect, tabNameToSelect);
+  private void showConfigurationDialog(@Nullable String moduleNameToSelect, @Nullable String tabNameToSelect) {
+    ProjectSettingsService service = ProjectSettingsService.getInstance(myProject);
+    if (moduleNameToSelect != null) {
+      service.showModuleConfigurationDialog(moduleNameToSelect, tabNameToSelect);
+    }
+    else {
+      service.openProjectSettings();
+    }
   }
 
   private static class MessagesActivationListener extends NotificationListener.Adapter {

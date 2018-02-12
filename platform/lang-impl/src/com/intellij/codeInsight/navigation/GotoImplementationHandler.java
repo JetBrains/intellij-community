@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package com.intellij.codeInsight.navigation;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ContainerProvider;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.Editor;
@@ -29,12 +29,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.util.containers.HashMap;
+import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.Map;
+import java.util.Comparator;
+import java.util.function.Function;
 
 public class GotoImplementationHandler extends GotoTargetHandler {
   @Override
@@ -48,6 +50,10 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     int offset = editor.getCaretModel().getOffset();
     PsiElement source = TargetElementUtil.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);
     if (source == null) return null;
+    return createDataForSource(editor, offset, source);
+  }
+
+  private GotoData createDataForSource(@NotNull Editor editor, int offset, PsiElement source) {
     final PsiReference reference = TargetElementUtil.findReference(editor, offset);
     final TargetElementUtil instance = TargetElementUtil.getInstance();
     PsiElement[] targets = new ImplementationSearcher.FirstImplementationsSearcher() {
@@ -65,8 +71,8 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     GotoData gotoData = new GotoData(source, targets, Collections.emptyList());
     gotoData.listUpdaterTask = new ImplementationsUpdaterTask(gotoData, editor, offset, reference) {
       @Override
-      public void onFinished() {
-        super.onFinished();
+      public void onSuccess() {
+        super.onSuccess();
         PsiElement oneElement = getTheOnlyOneElement();
         if (oneElement != null && navigateToElement(oneElement)) {
           myPopup.cancel();
@@ -76,6 +82,19 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     return gotoData;
   }
 
+  @Override
+  protected void chooseFromAmbiguousSources(Editor editor, PsiFile file, Consumer<GotoData> successCallback) {
+    int offset = editor.getCaretModel().getOffset();
+    PsiElementProcessor<PsiElement> navigateProcessor = element -> {
+      GotoData data = createDataForSource(editor, offset, element);
+      if (data != null) {
+        successCallback.consume(data);
+      }
+      return true;
+    };
+    GotoDeclarationAction
+      .chooseAmbiguousTarget(editor, offset, navigateProcessor, CodeInsightBundle.message("declaration.navigation.title"), null);
+  }
 
   private static PsiElement getContainer(PsiElement refElement) {
     for (ContainerProvider provider : ContainerProvider.EP_NAME.getExtensions()) {
@@ -118,11 +137,16 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     private final Editor myEditor;
     private final int myOffset;
     private final GotoData myGotoData;
-    private final Map<Object, PsiElementListCellRenderer> renderers = new HashMap<>();
     private final PsiReference myReference;
 
     ImplementationsUpdaterTask(@NotNull GotoData gotoData, @NotNull Editor editor, int offset, final PsiReference reference) {
-      super(gotoData.source.getProject(), ImplementationSearcher.SEARCHING_FOR_IMPLEMENTATIONS);
+      super(gotoData.source.getProject(), ImplementationSearcher.SEARCHING_FOR_IMPLEMENTATIONS,
+            createComparatorWrapper(Comparator.comparing(new Function<PsiElement, Comparable>() {
+                @Override
+                public Comparable apply(PsiElement e1) {
+                  return getRenderer(e1, gotoData).getComparingObject(e1);
+                }
+              })));
       myEditor = editor;
       myOffset = offset;
       myGotoData = gotoData;
@@ -133,7 +157,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     public void run(@NotNull final ProgressIndicator indicator) {
       super.run(indicator);
       for (PsiElement element : myGotoData.targets) {
-        if (!updateComponent(element, createComparator(renderers, myGotoData))) {
+        if (!updateComponent(element)) {
           return;
         }
       }
@@ -143,7 +167,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
           indicator.checkCanceled();
           if (!TargetElementUtil.getInstance().acceptImplementationForReference(myReference, element)) return;
           if (myGotoData.addTarget(element)) {
-            if (!updateComponent(element, createComparator(renderers, myGotoData))) {
+            if (!updateComponent(element)) {
               indicator.cancel();
             }
           }

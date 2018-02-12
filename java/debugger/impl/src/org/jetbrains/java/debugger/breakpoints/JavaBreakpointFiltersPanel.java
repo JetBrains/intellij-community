@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.java.debugger.breakpoints;
 
@@ -25,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.MultiLineTooltipUI;
+import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
@@ -58,6 +47,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   private JCheckBox myCatchCheckBox;
   private ClassFiltersField myCatchClassFilters;
   private JPanel myCatchFiltersPanel;
+  private JPanel myPassCountFieldPanel;
 
   private final FieldPanel myInstanceFiltersField;
 
@@ -100,6 +90,11 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
     ToolTipManager.sharedInstance().registerComponent(myInstanceFiltersField.getTextField());
 
     insert(myInstanceFiltersFieldPanel, myInstanceFiltersField);
+
+    myCatchClassFilters.setBorder(JBUI.Borders.emptyLeft(myCatchCheckBox.getInsets().left));
+    myInstanceFiltersField.setBorder(JBUI.Borders.emptyLeft(myInstanceFiltersCheckBox.getInsets().left));
+    myClassFiltersField.setBorder(JBUI.Borders.emptyLeft(myClassFiltersCheckBox.getInsets().left));
+    myPassCountFieldPanel.setBorder(JBUI.Borders.emptyLeft(myPassCountCheckbox.getInsets().left));
 
     DebuggerUIUtil.focusEditorOnCheck(myPassCountCheckbox, myPassCountField);
     DebuggerUIUtil.focusEditorOnCheck(myInstanceFiltersCheckBox, myInstanceFiltersField.getTextField());
@@ -208,12 +203,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   }
 
   private void updateInstanceFilterEditor(boolean updateText) {
-    List<String> filters = new ArrayList<>();
-    for (InstanceFilter instanceFilter : myInstanceFilters) {
-      if (instanceFilter.isEnabled()) {
-        filters.add(Long.toString(instanceFilter.getId()));
-      }
-    }
+    List<String> filters = StreamEx.of(myInstanceFilters).filter(InstanceFilter::isEnabled).map(f -> Long.toString(f.getId())).toList();
     if (updateText) {
       myInstanceFiltersField.setText(StringUtil.join(filters, " "));
     }
@@ -223,8 +213,8 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   }
 
   private void createUIComponents() {
-    myClassFiltersField = new ClassFiltersField(myProject);
-    myCatchClassFilters = new ClassFiltersField(myProject);
+    myClassFiltersField = new ClassFiltersField(myProject, this);
+    myCatchClassFilters = new ClassFiltersField(myProject, this);
   }
 
   private class MyTextField extends JTextField {
@@ -271,21 +261,21 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   }
 
   private static String concatWithEx(List<String> s, String concator, int N, String NthConcator) {
-    String result = "";
+    StringBuilder result = new StringBuilder();
     int i = 1;
     for (Iterator iterator = s.iterator(); iterator.hasNext(); i++) {
       String str = (String) iterator.next();
-      result += str;
+      result.append(str);
       if(iterator.hasNext()){
         if(i % N == 0){
-          result += NthConcator;
+          result.append(NthConcator);
         }
         else {
-          result += concator;
+          result.append(concator);
         }
       }
     }
-    return result;
+    return result.toString();
   }
 
   protected ClassFilter createClassConditionFilter() {

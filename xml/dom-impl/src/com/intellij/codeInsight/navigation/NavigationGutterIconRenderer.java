@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,11 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -119,7 +119,7 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
       if (myEmptyText != null) {
         if (event != null) {
           final JComponent label = HintUtil.createErrorLabel(myEmptyText);
-          label.setBorder(IdeBorderFactory.createEmptyBorder(2, 7, 2, 7));
+          label.setBorder(JBUI.Borders.empty(2, 7, 2, 7));
           JBPopupFactory.getInstance().createBalloonBuilder(label)
             .setFadeoutTime(3000)
             .setFillColor(HintUtil.getErrorColor())

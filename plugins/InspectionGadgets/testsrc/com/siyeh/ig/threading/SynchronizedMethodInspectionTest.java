@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class SynchronizedMethodInspectionTest extends LightInspectionTestCase {
 
-  public void testSynchronizedMethod() throws Exception {
+  public void testSynchronizedMethod() {
     doTest();
   }
 

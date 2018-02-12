@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
-import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiSwitchStatement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -26,15 +25,11 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class SwitchStatementWithTooManyBranchesInspection
-  extends BaseInspection {
+public class SwitchStatementWithTooManyBranchesInspection extends BaseInspection {
 
   private static final int DEFAULT_BRANCH_LIMIT = 10;
-  /**
-   * this is public for the DefaultJDOMExternalizer thingy
-   *
-   * @noinspection PublicField
-   */
+
+  @SuppressWarnings("PublicField")
   public int m_limit = DEFAULT_BRANCH_LIMIT;
 
   @Override
@@ -66,21 +61,16 @@ public class SwitchStatementWithTooManyBranchesInspection
     return new SwitchStatementWithTooManyBranchesVisitor();
   }
 
-  private class SwitchStatementWithTooManyBranchesVisitor
-    extends BaseInspectionVisitor {
+  private class SwitchStatementWithTooManyBranchesVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitSwitchStatement(
-      @NotNull PsiSwitchStatement statement) {
-      final PsiCodeBlock body = statement.getBody();
-      if (body == null) {
-        return;
-      }
+    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
       final int branchCount = SwitchUtils.calculateBranchCount(statement);
-      if (branchCount <= m_limit) {
+      final int branchCountIncludingDefault = (branchCount < 0) ? -branchCount + 1 : branchCount;
+      if (branchCountIncludingDefault <= m_limit) {
         return;
       }
-      registerStatementError(statement, Integer.valueOf(branchCount));
+      registerStatementError(statement, Integer.valueOf(branchCountIncludingDefault));
     }
   }
 }

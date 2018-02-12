@@ -25,6 +25,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyIfPartIfImpl;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -43,8 +44,9 @@ public abstract class PyUnwrapper extends AbstractUnwrapper<PyUnwrapper.Context>
     return new Context();
   }
 
+  @NotNull
   @Override
-  public List<PsiElement> unwrap(Editor editor, PsiElement element) throws IncorrectOperationException {
+  public List<PsiElement> unwrap(@NotNull Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     List<PsiElement> res = super.unwrap(editor, element);
     for (PsiElement e : res) {
       CodeEditUtil.markToReformat(e.getNode(), true);

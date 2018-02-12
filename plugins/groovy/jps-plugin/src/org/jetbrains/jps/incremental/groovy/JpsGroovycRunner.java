@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.jps.incremental.groovy;
 
@@ -20,11 +8,12 @@ import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -36,15 +25,13 @@ import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
-import org.jetbrains.jps.incremental.Builder;
-import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.ModuleLevelBuilder.ExitCode;
-import org.jetbrains.jps.incremental.ProjectBuildException;
-import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.service.JpsServiceManager;
@@ -72,12 +59,13 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
                    ModuleChunk chunk,
                    DirtyFilesHolder<R, T> dirtyFilesHolder,
                    Builder builder, GroovyOutputConsumer outputConsumer) throws ProjectBuildException {
+    List<CompilerMessage> messages;
     long start = 0;
     try {
       JpsGroovySettings settings = JpsGroovySettings.getSettings(context.getProjectDescriptor().getProject());
 
       Ref<Boolean> hasStubExcludes = Ref.create(false);
-      final List<File> toCompile = collectChangedFiles(context, dirtyFilesHolder, myForStubs, false, hasStubExcludes);
+      final List<File> toCompile = collectChangedFiles(context, dirtyFilesHolder, myForStubs, hasStubExcludes);
       if (toCompile.isEmpty()) {
         return ExitCode.NOTHING_DONE;
       }
@@ -104,7 +92,8 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
         return ExitCode.CHUNK_REBUILD_REQUIRED;
       }
 
-      for (CompilerMessage message : parser.getCompilerMessages()) {
+      messages = parser.getCompilerMessages();
+      for (CompilerMessage message : messages) {
         context.processMessage(message);
       }
 
@@ -114,7 +103,6 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
       else {
         updateDependencies(context, toCompile, compiled, outputConsumer, builder);
       }
-      return ExitCode.OK;
     }
     catch (Exception e) {
       throw new ProjectBuildException(e);
@@ -124,6 +112,12 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
         LOG.debug(builder.getPresentableName() + " took " + (System.currentTimeMillis() - start) + " on " + chunk.getName());
       }
     }
+
+    if (ContainerUtil.exists(messages, message -> message.getKind() == BuildMessage.Kind.ERROR)) {
+      throw new StopBuildException();
+    }
+
+    return ExitCode.OK;
   }
 
   protected void stubsGenerated(CompileContext context, Map<T, String> generationOutputs, MultiMap<T, GroovycOutputParser.OutputItem> compiled) {
@@ -141,6 +135,10 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
                                                        JpsGroovySettings settings,
                                                        Map<T, String> finalOutputs,
                                                        String compilerOutput, List<File> toCompile, boolean hasStubExcludes) throws Exception {
+    if (myForStubs) {
+      clearContinuation(context, chunk);
+    }
+
     GroovycContinuation continuation = takeContinuation(context, chunk);
     if (continuation != null) {
       if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
@@ -152,9 +150,9 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
     final Set<String> toCompilePaths = getPathsToCompile(toCompile);
 
     JpsSdk<JpsDummyElement> jdk = GroovyBuilder.getJdk(chunk);
-    String version = jdk == null ? SystemInfo.JAVA_RUNTIME_VERSION : jdk.getVersionString();
-    boolean inProcess = "true".equals(System.getProperty("groovyc.in.process", "true"));
-    boolean mayDependOnUtilJar = version != null && StringUtil.compareVersionNumbers(version, "1.6") >= 0;
+    int version = jdk != null ? JpsJavaSdkType.getJavaVersion(jdk) : JavaVersion.current().feature;
+    boolean inProcess = shouldRunGroovycInProcess(version);
+    boolean mayDependOnUtilJar = version >= 6;
     boolean optimizeClassLoading = !inProcess && mayDependOnUtilJar && ourOptimizeThreshold != 0 && toCompilePaths.size() >= ourOptimizeThreshold;
 
     Map<String, String> class2Src = buildClassToSourceMap(chunk, context, toCompilePaths, finalOutputs);
@@ -185,6 +183,11 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
     continuation = groovyc.runGroovyc(classpath, myForStubs, settings, tempFile, parser);
     setContinuation(context, chunk, continuation);
     return parser;
+  }
+
+  private static boolean shouldRunGroovycInProcess(int jdkVersion) {
+    String explicitProperty = System.getProperty("groovyc.in.process");
+    return explicitProperty != null ? "true".equals(explicitProperty) : jdkVersion == JavaVersion.current().feature;
   }
 
   static void clearContinuation(CompileContext context, ModuleChunk chunk) {
@@ -294,7 +297,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
 
       //todo honor package prefixes
       File correctRoot = new File(srcTargetOutput);
-      File correctOutput = new File(correctRoot, FileUtil.getRelativePath(new File(compilerOutput), output));
+      File correctOutput = new File(correctRoot, ObjectUtils.assertNotNull(FileUtil.getRelativePath(new File(compilerOutput), output)));
 
       FileUtil.rename(output, correctOutput);
       return correctOutput.getPath();
@@ -308,7 +311,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
 
   List<File> collectChangedFiles(CompileContext context,
                                  DirtyFilesHolder<R, T> dirtyFilesHolder,
-                                 final boolean forStubs, final boolean forEclipse, final Ref<Boolean> hasExcludes)
+                                 boolean forStubs, Ref<Boolean> hasExcludes)
     throws IOException {
 
     final JpsJavaCompilerConfiguration configuration =
@@ -385,10 +388,9 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
   }
 
   protected Collection<String> generateClasspath(CompileContext context, ModuleChunk chunk) {
-    final Set<String> cp = new LinkedHashSet<>();
     //groovy_rt.jar
     // IMPORTANT! must be the first in classpath
-    cp.addAll(GroovyBuilder.getGroovyRtRoots());
+    final Set<String> cp = new LinkedHashSet<>(GroovyBuilder.getGroovyRtRoots());
 
     for (File file : ProjectPaths.getCompilationClasspathFiles(chunk, chunk.containsTests(), false, false)) {
       cp.add(FileUtil.toCanonicalPath(file.getPath()));

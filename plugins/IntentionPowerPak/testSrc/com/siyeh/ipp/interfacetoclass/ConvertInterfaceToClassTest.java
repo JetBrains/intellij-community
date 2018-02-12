@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.interfacetoclass;
 
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class ConvertInterfaceToClassTest extends IPPTestCase {
   public void testBasic() { doTest(); }
@@ -25,17 +13,31 @@ public class ConvertInterfaceToClassTest extends IPPTestCase {
   public void testInnerInterface() { doTest(); }
   public void testStaticMethods() { doTest(); }
   public void testInterfaceExtendsClass() { doTest(); }
+
   public void testFunctionalExpressions() {
     try {
       doTest();
       fail("Conflict not detected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("() -> {...} in Test will not compile after converting class <b><code>FunctionalExpressions</code></b> to a class", e.getMessage());
+      assertEquals("() -> {...} in Test will not compile after converting interface <b><code>FunctionalExpressions</code></b> to a class",
+                   e.getMessage());
     }
   }
 
-  public void testFunctionalInterface() throws Exception {
+  public void testExtendsConflict() {
+    try {
+      doTest();
+      fail("Conflict not detected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      assertEquals("class <b><code>AaaImpl</code></b> implementing interface <b><code>Aaa</code></b> already extends class " +
+                   "<b><code>Bbb</code></b> and will not compile after converting interface <b><code>Aaa</code></b> to a class",
+                   e.getMessage());
+    }
+  }
+
+  public void testFunctionalInterface() {
     assertIntentionNotAvailable();
   }
 
@@ -47,5 +49,11 @@ public class ConvertInterfaceToClassTest extends IPPTestCase {
   @Override
   protected String getIntentionName() {
     return IntentionPowerPackBundle.message("convert.interface.to.class.intention.name");
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 }

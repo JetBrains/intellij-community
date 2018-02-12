@@ -1,0 +1,19 @@
+PsiJavaFileStub []
+  PsiClassStub[enum name=EParams fqn=EParams]
+    PsiModifierListStub[mask=17]
+    PsiTypeParameterListStub
+    PsiRefListStub[EXTENDS_LIST:]
+    PsiRefListStub[IMPLEMENTS_LIST:]
+    PsiFieldStub[enumconst C:EParams]
+      PsiModifierListStub[mask=25]
+    PsiMethodStub[cons EParams:void]
+      PsiModifierListStub[mask=2]
+      PsiTypeParameterListStub
+      PsiParameterListStub
+        PsiParameterStub[first:int]
+          PsiModifierListStub[mask=0]
+        PsiParameterStub[second:java.lang.String]
+          PsiModifierListStub[mask=0]
+        PsiParameterStub[last:java.lang.Boolean]
+          PsiModifierListStub[mask=0]
+      PsiRefListStub[THROWS_LIST:]

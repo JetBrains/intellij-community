@@ -17,8 +17,12 @@
 package com.intellij.codeInspection.ex;
 
 /**
- * User: anna
- * Date: 22-Feb-2006
+ * If for some performance reasons (e.g. one heavy analysis can be reused among different inspections),
+ * highlighting is done in a separate pass/visitor, 
+ * inspections, which store highlighting settings, are supposed to be marked as {@link UnfairLocalInspectionTool}. 
+ * Such inspections would provide no Fix All intention, 
+ * they won't run in batch until they implement {@link PairedUnfairLocalInspectionTool},
+ * would be ignored by {@link com.intellij.codeInspection.actions.CleanupIntention}.
  */
 public interface UnfairLocalInspectionTool  {
 }

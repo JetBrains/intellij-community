@@ -10,6 +10,7 @@ public class ReplaceConcatenationWithStringBufferIntentionTest extends IPPTestCa
 
   public void testNonStringConcatenationStart() { doTest(); }
   public void testConcatenationInsideAppend() { doTest(); }
+  public void testConstantRequiredInsideAnnotationMethod() { assertIntentionNotAvailable(); }
 
   @Override
   protected String getIntentionName() {

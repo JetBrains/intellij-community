@@ -7,11 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import org.intellij.lang.xpath.psi.XPathVariable;
 import org.intellij.lang.xpath.psi.XPathVariableReference;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 08.01.2008
-*/
 public abstract class SimpleVariableContext implements VariableContext<String> {
 
     public XPathVariable resolve(XPathVariableReference reference) {

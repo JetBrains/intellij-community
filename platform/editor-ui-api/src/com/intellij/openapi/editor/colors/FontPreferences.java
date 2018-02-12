@@ -22,37 +22,52 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Collections;
 import java.util.List;
 
-public interface FontPreferences {
-  @NonNls @NotNull String DEFAULT_FONT_NAME = getDefaultFontName();
-  int DEFAULT_FONT_SIZE = FontSize.SMALL.getSize();
+public class FontPreferences {
+  public final static @NonNls @NotNull String DEFAULT_FONT_NAME = getDefaultFontName();
+  public final static int DEFAULT_FONT_SIZE = FontSize.SMALL.getSize();
 
-  float DEFAULT_LINE_SPACING = 1.0f;
-  String MAC_OS_DEFAULT_FONT_FAMILY   = "Menlo";
-  String LINUX_DEFAULT_FONT_FAMILY    = "DejaVu Sans Mono";
-  String WINDOWS_DEFAULT_FONT_FAMILY  = "Monospaced";
-
-  @NotNull
-  List<String> getEffectiveFontFamilies();
+  public final static float DEFAULT_LINE_SPACING = 1.0f;
+  public final static String FALLBACK_FONT_FAMILY         = "Monospaced";
+  public final static String MAC_OS_DEFAULT_FONT_FAMILY   = "Menlo";
+  public final static String LINUX_DEFAULT_FONT_FAMILY    = "DejaVu Sans Mono";
+  public final static String WINDOWS_DEFAULT_FONT_FAMILY  = FALLBACK_FONT_FAMILY;
 
   @NotNull
-  List<String> getRealFontFamilies();
+  public List<String> getEffectiveFontFamilies() {
+    return Collections.emptyList();
+  }
 
   @NotNull
-  String getFontFamily();
+  public List<String> getRealFontFamilies() {
+    return Collections.emptyList();
+  }
 
-  int getSize(@NotNull String fontFamily);
+  @NotNull
+  public String getFontFamily() {
+    return FALLBACK_FONT_FAMILY;
+  }
 
-  void copyTo(@NotNull FontPreferences preferences);
+  public int getSize(@NotNull String fontFamily) {
+    return DEFAULT_FONT_SIZE;
+  }
 
-  boolean useLigatures();
+  public void copyTo(@NotNull FontPreferences preferences) {
+  }
 
-  boolean hasSize(@NotNull String fontName);
+  public boolean useLigatures() {
+    return false;
+  }
 
-  float getLineSpacing();
+  public boolean hasSize(@NotNull String fontName) {
+    return false;
+  }
 
-  void setLineSpacing(float lineSpacing);
+  public float getLineSpacing() {
+    return DEFAULT_LINE_SPACING;
+  }
 
   /**
    * There is a possible case that particular font family is not available at particular environment (e.g. Monaco under *nix).
@@ -65,10 +80,10 @@ public interface FontPreferences {
    * @param fontSize        target font size
    * @param fallbackScheme  colors scheme to use for fallback fonts retrieval (if necessary);
    * @return                fallback font family to use if font family with the given name is not registered at current environment;
-   *                        <code>null</code> if font family with the given name is registered at the current environment
+   *                        {@code null} if font family with the given name is registered at the current environment
    */
   @Nullable
-  static String getFallbackName(@NotNull String fontName, int fontSize, @Nullable EditorColorsScheme fallbackScheme) {
+  public static String getFallbackName(@NotNull String fontName, int fontSize, @Nullable EditorColorsScheme fallbackScheme) {
     Font plainFont = new Font(fontName, Font.PLAIN, fontSize);
     if (plainFont.getFamily().equals("Dialog") && !("Dialog".equals(fontName) || fontName.startsWith("Dialog."))) {
       return fallbackScheme == null ? DEFAULT_FONT_NAME : fallbackScheme.getEditorFontName();
@@ -76,7 +91,8 @@ public interface FontPreferences {
     return null;
   }
 
-  static String getDefaultFontName() {
+  public static String getDefaultFontName() {
+    if (SystemInfo.isWindows) return WINDOWS_DEFAULT_FONT_FAMILY;
     if (SystemInfo.isMacOSSnowLeopard) return MAC_OS_DEFAULT_FONT_FAMILY;
     if (SystemInfo.isXWindow && !GraphicsEnvironment.isHeadless()) {
       for (Font font : GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts()) {
@@ -85,6 +101,6 @@ public interface FontPreferences {
         }
       }
     }
-    return WINDOWS_DEFAULT_FONT_FAMILY;
+    return FALLBACK_FONT_FAMILY;
   }
 }

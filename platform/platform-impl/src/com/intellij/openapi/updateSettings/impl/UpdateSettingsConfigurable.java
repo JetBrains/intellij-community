@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.options.BaseConfigurable;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
@@ -38,7 +38,6 @@ import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -46,7 +45,7 @@ import java.util.List;
 /**
  * @author pti
  */
-public class UpdateSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+public class UpdateSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable {
   private final UpdateSettings mySettings;
   private final boolean myCheckNowEnabled;
   private UpdatesSettingsPanel myPanel;
@@ -153,18 +152,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
       mySettings = UpdateSettings.getInstance();
 
       ApplicationInfo appInfo = ApplicationInfo.getInstance();
-      String majorVersion = appInfo.getMajorVersion();
-      String versionNumber = "";
-      if (majorVersion != null && majorVersion.trim().length() > 0) {
-        String minorVersion = appInfo.getMinorVersion();
-        if (minorVersion != null && minorVersion.trim().length() > 0) {
-          versionNumber = majorVersion + "." + minorVersion;
-        }
-        else {
-          versionNumber = majorVersion + ".0";
-        }
-      }
-      myVersionNumber.setText(appInfo.getVersionName() + " " + versionNumber);
+      myVersionNumber.setText(ApplicationNamesInfo.getInstance().getFullProductName() + ' ' + appInfo.getFullVersion());
       myBuildNumber.setText(appInfo.getBuild().asString());
 
       LabelTextReplacingUtil.replaceText(myPanel);
@@ -212,7 +200,13 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
     private void updateLastCheckedLabel() {
       long time = mySettings.getLastTimeChecked();
-      myLastCheckedDate.setText(time == 0 ? IdeBundle.message("updates.last.check.never") : DateFormatUtil.formatPrettyDateTime(time));
+      if (time <= 0) {
+        myLastCheckedDate.setText(IdeBundle.message("updates.last.check.never"));
+      }
+      else {
+        myLastCheckedDate.setText(DateFormatUtil.formatPrettyDateTime(time));
+        myLastCheckedDate.setToolTipText(DateFormatUtil.formatDate(time) + ' ' + DateFormatUtil.formatTimeWithSeconds(time));
+      }
     }
 
     public ChannelStatus getSelectedChannelType() {

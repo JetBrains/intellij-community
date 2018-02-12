@@ -1,21 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
@@ -24,6 +12,9 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtilCore;
+import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector;
 import com.intellij.openapi.util.ModificationTracker;
@@ -34,8 +25,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
-import com.intellij.util.xmlb.XmlSerializer;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -51,7 +40,8 @@ import java.util.*;
  * @author nik
  */
 @State(name = ArtifactManagerImpl.COMPONENT_NAME, storages = @Storage(value = "artifacts", stateSplitter = ArtifactManagerStateSplitter.class))
-public class ArtifactManagerImpl extends ArtifactManager implements ProjectComponent, PersistentStateComponent<ArtifactManagerState> {
+public class ArtifactManagerImpl extends ArtifactManager implements ProjectComponent, PersistentStateComponent<ArtifactManagerState>,
+                                                                    Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.packaging.impl.artifacts.ArtifactManagerImpl");
   @NonNls public static final String COMPONENT_NAME = "ArtifactManager";
   @NonNls public static final String PACKAGING_ELEMENT_NAME = "element";
@@ -120,6 +110,12 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
         artifactState.setOutputPath(artifact.getOutputPath());
         artifactState.setRootElement(serializePackagingElement(artifact.getRootElement()));
         artifactState.setArtifactType(artifact.getArtifactType().getId());
+        ProjectModelExternalSource externalSource = artifact.getExternalSource();
+        if (externalSource != null && ProjectUtilCore.isExternalStorageEnabled(myProject)) {
+          //we can add this attribute only if the artifact configuration will be stored separately, otherwise we will get modified files in .idea/artifacts.
+          artifactState.setExternalSystemId(externalSource.getId());
+        }
+
         for (ArtifactPropertiesProvider provider : artifact.getPropertiesProviders()) {
           final ArtifactPropertiesState propertiesState = serializeProperties(provider, artifact.getProperties(provider));
           if (propertiesState != null) {
@@ -135,11 +131,14 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
 
   @Nullable
   private static <S> ArtifactPropertiesState serializeProperties(ArtifactPropertiesProvider provider, ArtifactProperties<S> properties) {
+    final Element options = XmlSerializer.serialize(properties.getState());
+    if (options == null) {
+      return null;
+    }
+
+    options.setName("options");
     final ArtifactPropertiesState state = new ArtifactPropertiesState();
     state.setId(provider.getId());
-    final Element options = new Element("options");
-    XmlSerializer.serializeInto(properties.getState(), options, new SkipDefaultValuesSerializationFilters());
-    if (options.getContent().isEmpty() && options.getAttributes().isEmpty()) return null;
     state.setOptions(options);
     return state;
   }
@@ -149,7 +148,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
     element.setAttribute(TYPE_ID_ATTRIBUTE, packagingElement.getType().getId());
     final Object bean = packagingElement.getState();
     if (bean != null) {
-      XmlSerializer.serializeInto(bean, element, new SkipDefaultValuesSerializationFilters());
+      XmlSerializer.serializeObjectInto(bean, element);
     }
     if (packagingElement instanceof CompositePackagingElement) {
       for (PackagingElement<?> child : ((CompositePackagingElement<?>)packagingElement).getChildren()) {
@@ -169,7 +168,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
     PackagingElement<T> packagingElement = (PackagingElement<T>)type.createEmpty(myProject);
     T state = packagingElement.getState();
     if (state != null) {
-      XmlSerializer.deserializeInto(state, element);
+      XmlSerializer.deserializeInto(element, state);
       packagingElement.loadState(state);
     }
     final List children = element.getChildren(PACKAGING_ELEMENT_NAME);
@@ -181,19 +180,15 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   }
 
   @Override
-  public void loadState(ArtifactManagerState managerState) {
+  public void loadState(@NotNull ArtifactManagerState managerState) {
     List<ArtifactState> artifactStates = managerState.getArtifacts();
     final List<ArtifactImpl> artifacts = new ArrayList<>(artifactStates.size());
     if (!artifactStates.isEmpty()) {
-      AccessToken token = ReadAction.start();
-      try {
+      ApplicationManager.getApplication().runReadAction(() -> {
         for (ArtifactState state : artifactStates) {
           artifacts.add(loadArtifact(state));
         }
-      }
-      finally {
-        token.finish();
-      }
+      });
     }
 
     if (myLoaded) {
@@ -208,8 +203,9 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
 
   private ArtifactImpl loadArtifact(ArtifactState state) {
     ArtifactType type = ArtifactType.findById(state.getArtifactType());
+    ProjectModelExternalSource externalSource = findExternalSource(state.getExternalSystemId());
     if (type == null) {
-      return createInvalidArtifact(state, "Unknown artifact type: " + state.getArtifactType());
+      return createInvalidArtifact(state, externalSource, "Unknown artifact type: " + state.getArtifactType());
     }
 
     final Element element = state.getRootElement();
@@ -220,14 +216,15 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
         rootElement = (CompositePackagingElement<?>)deserializeElement(element);
       }
       catch (UnknownPackagingElementTypeException e) {
-        return createInvalidArtifact(state, "Unknown element: " + e.getTypeId());
+        return createInvalidArtifact(state, externalSource, "Unknown element: " + e.getTypeId());
       }
     }
     else {
       rootElement = type.createRootElement(artifactName);
     }
 
-    final ArtifactImpl artifact = new ArtifactImpl(artifactName, type, state.isBuildOnMake(), rootElement, state.getOutputPath());
+    final ArtifactImpl artifact = new ArtifactImpl(artifactName, type, state.isBuildOnMake(), rootElement, state.getOutputPath(),
+                                                   externalSource);
     final List<ArtifactPropertiesState> propertiesList = state.getPropertiesList();
     for (ArtifactPropertiesState propertiesState : propertiesList) {
       final ArtifactPropertiesProvider provider = ArtifactPropertiesProvider.findById(propertiesState.getId());
@@ -235,17 +232,22 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
         deserializeProperties(artifact.getProperties(provider), propertiesState);
       }
       else {
-        return createInvalidArtifact(state, "Unknown artifact properties: " + propertiesState.getId());
+        return createInvalidArtifact(state, externalSource, "Unknown artifact properties: " + propertiesState.getId());
       }
     }
     return artifact;
   }
 
-  private InvalidArtifact createInvalidArtifact(ArtifactState state, String errorMessage) {
-    final InvalidArtifact artifact = new InvalidArtifact(state, errorMessage);
+  private InvalidArtifact createInvalidArtifact(ArtifactState state, ProjectModelExternalSource externalSource, String errorMessage) {
+    final InvalidArtifact artifact = new InvalidArtifact(state, errorMessage, externalSource);
     ProjectLoadingErrorsNotifier.getInstance(myProject).registerError(new ArtifactLoadingErrorDescription(myProject, artifact));
     UnknownFeaturesCollector.getInstance(myProject).registerUnknownFeature("com.intellij.packaging.artifacts.ArtifactType", state.getArtifactType(), "Artifact");
     return artifact;
+  }
+
+  @Nullable
+  private static ProjectModelExternalSource findExternalSource(@Nullable String externalSourceId) {
+    return externalSourceId != null ? ExternalProjectSystemRegistry.getInstance().getSourceById(externalSourceId) : null;
   }
 
   private static <S> void deserializeProperties(ArtifactProperties<S> artifactProperties, ArtifactPropertiesState propertiesState) {
@@ -255,13 +257,13 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
     }
     final S state = artifactProperties.getState();
     if (state != null) {
-      XmlSerializer.deserializeInto(state, options);
+      XmlSerializer.deserializeInto(options, state);
       artifactProperties.loadState(state);
     }
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     LocalFileSystem.getInstance().removeWatchedRoots(myWatchedOutputs.values());
   }
 
@@ -300,14 +302,6 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
     for (LocalFileSystem.WatchRequest request : newRequests) {
       myWatchedOutputs.put(request.getRootPath(), request);
     }
-  }
-
-  @Override
-  public void projectOpened() {
-  }
-
-  @Override
-  public void projectClosed() {
   }
 
   @Override

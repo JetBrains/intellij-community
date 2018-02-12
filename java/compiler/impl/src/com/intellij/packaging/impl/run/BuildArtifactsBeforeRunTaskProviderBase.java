@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,13 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Ref;
 import com.intellij.packaging.artifacts.*;
+import com.intellij.task.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -61,7 +61,7 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
           for (T task : tasks) {
             final String artifactName = artifact.getName();
             final List<ArtifactPointer> pointersList = task.getArtifactPointers();
-            final ArtifactPointer[] pointers = pointersList.toArray(new ArtifactPointer[pointersList.size()]);
+            final ArtifactPointer[] pointers = pointersList.toArray(new ArtifactPointer[0]);
             for (ArtifactPointer pointer : pointers) {
               if (pointer.getArtifactName().equals(artifactName) &&
                   ArtifactManager.getInstance(myProject).findArtifact(artifactName) == null) {
@@ -79,7 +79,7 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
     return true;
   }
 
-  public boolean configureTask(RunConfiguration runConfiguration, T task) {
+  public boolean configureTask(@NotNull RunConfiguration runConfiguration, @NotNull T task) {
     final Artifact[] artifacts = ArtifactManager.getInstance(myProject).getArtifacts();
     Set<ArtifactPointer> pointers = new THashSet<>();
     for (Artifact artifact : artifacts) {
@@ -104,13 +104,13 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
     return false;
   }
 
-  public T createTask(RunConfiguration runConfiguration) {
+  public T createTask(@NotNull RunConfiguration runConfiguration) {
     if (myProject.isDefault()) return null;
     return doCreateTask(myProject);
   }
 
   @Override
-  public boolean canExecuteTask(RunConfiguration configuration, T task) {
+  public boolean canExecuteTask(@NotNull RunConfiguration configuration, @NotNull T task) {
     for (ArtifactPointer pointer : (List<ArtifactPointer>)task.getArtifactPointers()) {
       if (pointer.getArtifact() != null) {
         return true;
@@ -120,25 +120,24 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
   }
 
   public boolean executeTask(DataContext context,
-                             RunConfiguration configuration,
-                             final ExecutionEnvironment env,
-                             final T task) {
+                             @NotNull RunConfiguration configuration,
+                             @NotNull final ExecutionEnvironment env,
+                             @NotNull final T task) {
     final Ref<Boolean> result = Ref.create(false);
     final Semaphore finished = new Semaphore();
 
     final List<Artifact> artifacts = new ArrayList<>();
-    new ReadAction() {
-      protected void run(@NotNull final Result result) {
-        List<ArtifactPointer> pointers = task.getArtifactPointers();
-        for (ArtifactPointer pointer : pointers) {
-          ContainerUtil.addIfNotNull(pointer.getArtifact(), artifacts);
-        }
+    ReadAction.run(() -> {
+      List<ArtifactPointer> pointers = task.getArtifactPointers();
+      for (ArtifactPointer pointer : pointers) {
+        ContainerUtil.addIfNotNull(artifacts, pointer.getArtifact());
       }
-    }.execute();
+    });
 
-    final CompileStatusNotification callback = new CompileStatusNotification() {
-      public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
-        result.set(!aborted && errors == 0);
+    final ProjectTaskNotification callback = new ProjectTaskNotification() {
+      @Override
+      public void finished(@NotNull ProjectTaskResult executionResult) {
+        result.set(!executionResult.isAborted() && executionResult.getErrors() == 0);
         finished.up();
       }
     };
@@ -147,11 +146,10 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
       if (myProject.isDisposed()) {
         return;
       }
-      final CompilerManager manager = CompilerManager.getInstance(myProject);
-      final CompileScope scope = createCompileScope(myProject, artifacts);
-      ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.set(scope, ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env));
+      ProjectTask artifactsBuildProjectTask = createProjectTask(myProject, artifacts);
       finished.down();
-      manager.make(scope, CompilerFilter.ALL, callback);
+      Object sessionId = ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env);
+      ProjectTaskManager.getInstance(myProject).run(new ProjectTaskContext(sessionId), artifactsBuildProjectTask, callback);
     }, ModalityState.NON_MODAL);
 
     finished.waitFor();
@@ -190,5 +188,5 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
 
   protected abstract T doCreateTask(Project project);
 
-  protected abstract CompileScope createCompileScope(Project project, List<Artifact> artifacts);
+  protected abstract ProjectTask createProjectTask(Project project, List<Artifact> artifacts);
 }

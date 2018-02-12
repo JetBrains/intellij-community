@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
@@ -25,7 +26,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,18 +34,18 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
  */
 @SuppressWarnings("unchecked")
-public class TaskRepositoriesConfigurable extends BaseConfigurable implements Configurable.NoScroll {
+public class TaskRepositoriesConfigurable extends BaseConfigurable implements Configurable.NoScroll, SearchableConfigurable {
 
+  public static final String ID = "tasks.servers";
   private static final String EMPTY_PANEL = "empty.panel";
+
   private JPanel myPanel;
   private JPanel myServersPanel;
   private final JBList myRepositoriesList;
@@ -61,15 +61,12 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
   private final Project myProject;
 
   private final Consumer<TaskRepository> myChangeListener;
+  private int count;
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
-  private final FactoryMap<TaskRepository, String> myRepoNames = new ConcurrentFactoryMap<TaskRepository, String>() {
+  private final Map<TaskRepository, String> myRepoNames = ConcurrentFactoryMap.createMap(repository->
+      Integer.toString(count++)
 
-    private int count;
-    @Override
-    protected String create(TaskRepository repository) {
-      return Integer.toString(count++);
-    }
-  };
+  );
   private final TaskManagerImpl myManager;
 
   public TaskRepositoriesConfigurable(final Project project) {
@@ -81,6 +78,8 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
     myRepositoriesList.getEmptyText().setText("No servers");
 
     myServersLabel.setLabelFor(myRepositoriesList);
+
+    myServersPanel.setMinimumSize(new Dimension(-1, 100));
 
     TaskRepositoryType[] groups = TaskRepositoryType.getRepositoryTypes();
 
@@ -200,6 +199,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
     return "Servers";
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.settings.project.tasks.servers";
   }
@@ -258,6 +258,20 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
     for (TaskRepositoryEditor editor : myEditors) {
       Disposer.dispose(editor);
     }
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return ID;
+  }
+
+  @Nullable
+  @Override
+  public Runnable enableSearch(String option) {
+    TaskRepository matched =
+      myRepositories.stream().filter(repository -> repository.getRepositoryType().getName().contains(option)).findFirst().orElse(null);
+    return matched == null ? null : () -> myRepositoriesList.setSelectedValue(matched, true);
   }
 
   private abstract class AddServerAction extends IconWithTextAction implements DumbAware {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.CutProvider;
@@ -26,6 +12,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -46,10 +35,14 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.TypingTarget;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.Grayer;
 import com.intellij.ui.components.Magnificator;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -64,9 +57,9 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.UndoableEditListener;
 import javax.swing.plaf.TextUI;
 import javax.swing.text.*;
-import javax.swing.text.Segment;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.AffineTransform;
 import java.awt.im.InputMethodRequests;
 import java.util.ArrayList;
 import java.util.List;
@@ -84,6 +77,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     // in the interest of backward compatibility, we only do so when a
     // screen reader is active.
     setFocusCycleRoot(!ScreenReader.isActive());
+    if (ScreenReader.isActive()) {
+      setFocusable(true);
+    }
     setOpaque(true);
 
     putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, new Magnificator() {
@@ -129,7 +125,14 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
   @Override
   public Object getData(String dataId) {
-    if (myEditor.isDisposed() || myEditor.isRendererMode()) return null;
+    if (myEditor.isDisposed()) return null;
+
+    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+      // enable copying from editor in renderer mode
+      return myEditor.getCopyProvider();
+    }
+    
+    if (myEditor.isRendererMode()) return null;
 
     if (CommonDataKeys.EDITOR.is(dataId)) {
       return myEditor;
@@ -142,9 +145,6 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     }
     if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
       return myEditor.getCutProvider();
-    }
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      return myEditor.getCopyProvider();
     }
     if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
       return myEditor.getPasteProvider();
@@ -229,7 +229,10 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       else {
         UISettings.setupAntialiasing(gg);
       }
+      gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, myEditor.myFractionalMetricsHintValue);
+      AffineTransform origTx = PaintUtil.alignToInt(gg, true, false);
       myEditor.paint(gg);
+      if (origTx != null) gg.setTransform(origTx);
     }
     finally {
       myApplication.editorPaintFinish();
@@ -512,12 +515,8 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
     @Override
     public String getText(final int offset, final int length) throws BadLocationException {
-      return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        @Override
-        public String compute() {
-          return myEditor.getDocument().getText(new TextRange(offset, offset + length));
-        }
-      });
+      return ReadAction
+        .compute(() -> myEditor.getDocument().getText(new TextRange(offset, offset + length)));
     }
 
     @Override
@@ -692,35 +691,36 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
   /** Inserts, removes or replaces the given text at the given offset */
   private void editDocumentSafely(final int offset, final int length, @Nullable final String text) {
-    final Project project = myEditor.getProject();
-    final Document document = myEditor.getDocument();
-    if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
-      return;
-    }
-    CommandProcessor.getInstance().executeCommand(project,
-                                                  () -> ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(document, project) {
-                                                    @Override
-                                                    public void run() {
-                                                      document.startGuardedBlockChecking();
-                                                      try {
-                                                        if (text == null) {
-                                                          // remove
-                                                          document.deleteString(offset, offset + length);
-                                                        } else if (length == 0) {
-                                                          // insert
-                                                          document.insertString(offset, text);
-                                                        } else {
-                                                          document.replaceString(offset, offset + length, text);
-                                                        }
-                                                      }
-                                                      catch (ReadOnlyFragmentModificationException e) {
-                                                        EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(document).handle(e);
-                                                      }
-                                                      finally {
-                                                        document.stopGuardedBlockChecking();
-                                                      }
-                                                    }
-                                                  }), "", document, UndoConfirmationPolicy.DEFAULT, document);
+    TransactionGuard.submitTransaction(myEditor.getDisposable(), () -> {
+      Project project = myEditor.getProject();
+      Document document = myEditor.getDocument();
+      if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
+        return;
+      }
+
+      CommandProcessor.getInstance().executeCommand(project, () -> WriteAction.run(() -> {
+        document.startGuardedBlockChecking();
+        try {
+          if (text == null) {
+            // remove
+            document.deleteString(offset, offset + length);
+          }
+          else if (length == 0) {
+            // insert
+            document.insertString(offset, text);
+          }
+          else {
+            document.replaceString(offset, offset + length, text);
+          }
+        }
+        catch (ReadOnlyFragmentModificationException e) {
+          EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(document).handle(e);
+        }
+        finally {
+          document.stopGuardedBlockChecking();
+        }
+      }), "", document, UndoConfirmationPolicy.DEFAULT, document);
+    });
   }
 
   /** {@linkplain DefaultCaret} does a lot of work we don't want (listening
@@ -815,11 +815,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     @Nullable
     @Override
     public Rectangle modelToView(JTextComponent tc, int offset) throws BadLocationException {
-      LogicalPosition pos = myEditor.offsetToLogicalPosition(offset);
-      Point point = myEditor.logicalPositionToXY(pos);
-      FontMetrics fontMetrics = myEditor.getFontMetrics(Font.PLAIN);
-      char c = myEditor.getDocument().getCharsSequence().subSequence(offset, offset + 1).charAt(0);
-      return new Rectangle(point.x, point.y, fontMetrics.charWidth(c), fontMetrics.getHeight());
+      return modelToView(tc, offset, Position.Bias.Forward);
     }
 
     @Override
@@ -830,8 +826,15 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
     @Nullable
     @Override
-    public Rectangle modelToView(JTextComponent tc, int pos, Position.Bias ignored) throws BadLocationException {
-      return modelToView(tc, pos);
+    public Rectangle modelToView(JTextComponent tc, int offset, Position.Bias bias) throws BadLocationException {
+      LogicalPosition pos = myEditor.offsetToLogicalPosition(offset).leanForward(bias == Position.Bias.Forward);
+      LogicalPosition posNext = myEditor.offsetToLogicalPosition(bias == Position.Bias.Forward ? offset + 1 : offset - 1)
+        .leanForward(bias != Position.Bias.Forward);
+      Point point = myEditor.logicalPositionToXY(pos);
+      Point pointNext = myEditor.logicalPositionToXY(posNext);
+      return point.y == pointNext.y 
+             ? new Rectangle(Math.min(point.x, pointNext.x), point.y, Math.abs(point.x - pointNext.x), myEditor.getLineHeight()) 
+             : new Rectangle(point.x, point.y, 0, myEditor.getLineHeight());
     }
 
     @Override
@@ -941,19 +944,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       }
     }
 
-    @Override
-    public void caretAdded(CaretEvent e) {
-    }
-
-    @Override
-    public void caretRemoved(CaretEvent e) {
-    }
-
     // ---- Implements DocumentListener ----
-
-    @Override
-    public void beforeDocumentChange(DocumentEvent event) {
-    }
 
     @Override
     public void documentChanged(final DocumentEvent event) {
@@ -1002,11 +993,13 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
     @Override
     public AccessibleText getAccessibleText() {
+      if (Disposer.isDisposed(myEditor.getDisposable())) return null;
       return this;
     }
 
     @Override
     public AccessibleEditableText getAccessibleEditableText() {
+      if (Disposer.isDisposed(myEditor.getDisposable())) return null;
       return this;
     }
 

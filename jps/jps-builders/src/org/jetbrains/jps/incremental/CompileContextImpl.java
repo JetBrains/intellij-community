@@ -19,6 +19,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.EventDispatcher;
 import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -35,7 +36,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/17/11
  */
 public class CompileContextImpl extends UserDataHolderBase implements CompileContext {
   private static final String CANCELED_MESSAGE = "The build has been canceled";
@@ -60,6 +60,11 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myCancelStatus = cancelStatus;
     myScope = scope;
     myDelegateMessageHandler = delegateMessageHandler;
+  }
+
+  @TestOnly
+  public static CompileContext createContextForTests(CompileScope scope, ProjectDescriptor descriptor) {
+    return new CompileContextImpl(scope, descriptor, DEAF, Collections.emptyMap(), CanceledStatus.NULL);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.ui.awt.RelativePoint;
@@ -42,6 +43,7 @@ import java.util.EventListener;
 import java.util.EventObject;
 
 public class LightweightHint extends UserDataHolderBase implements Hint {
+  public static final Key<Boolean> SHOWN_AT_DEBUG = Key.create("shown.at.debug");
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.LightweightHint");
 
   private final JComponent myComponent;
@@ -112,8 +114,8 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   }
 
   /**
-   * Shows the hint in the layered pane. Coordinates <code>x</code> and <code>y</code>
-   * are in <code>parentComponent</code> coordinate system. Note that the component
+   * Shows the hint in the layered pane. Coordinates {@code x} and {@code y}
+   * are in {@code parentComponent} coordinate system. Note that the component
    * appears on 250 layer.
    */
   @Override
@@ -317,6 +319,9 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
   @Override
   public boolean isVisible() {
+    Boolean shownAtDebug = getUserData(SHOWN_AT_DEBUG);
+    if (shownAtDebug != null) return shownAtDebug;
+    
     if (myIsRealPopup) {
       return myPopup != null && myPopup.isVisible();
     }

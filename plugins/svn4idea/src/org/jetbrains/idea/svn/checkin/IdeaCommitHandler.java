@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,10 @@
  */
 package org.jetbrains.idea.svn.checkin;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,17 +29,10 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.api.EventAction;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
-import org.tmatesoft.svn.core.SVNCancelException;
 
 import java.io.File;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/26/13
- * Time: 11:13 AM
- */
 public class IdeaCommitHandler implements CommitEventHandler, ProgressTracker {
 
   private static final Logger LOG = Logger.getInstance(IdeaCommitHandler.class);
@@ -80,6 +72,7 @@ public class IdeaCommitHandler implements CommitEventHandler, ProgressTracker {
     myProgress.setText2(SvnBundle.message("status.text.comitted.revision", revNum));
   }
 
+  @Override
   public void consume(ProgressEvent event) {
     final String path = event.getPath();
     if (path != null) {
@@ -92,14 +85,9 @@ public class IdeaCommitHandler implements CommitEventHandler, ProgressTracker {
     }
   }
 
-  public void checkCancelled() throws SVNCancelException {
+  public void checkCancelled() throws ProcessCanceledException {
     if (myCheckCancel && myProgress != null) {
-      try {
-        myProgress.checkCanceled();
-      }
-      catch (ProcessCanceledException ex) {
-        throw new SVNCancelException();
-      }
+      myProgress.checkCanceled();
     }
   }
 
@@ -121,8 +109,8 @@ public class IdeaCommitHandler implements CommitEventHandler, ProgressTracker {
 
   private void trackDeletedFile(@NotNull ProgressEvent event) {
     @NonNls final String filePath = "file://" + event.getFile().getAbsolutePath().replace(File.separatorChar, '/');
-    VirtualFile virtualFile = ApplicationManager.getApplication()
-      .runReadAction((Computable<VirtualFile>)() -> VirtualFileManager.getInstance().findFileByUrl(filePath));
+    VirtualFile virtualFile =
+      ReadAction.compute(() -> VirtualFileManager.getInstance().findFileByUrl(filePath));
 
     if (virtualFile != null) {
       myDeletedFiles.add(virtualFile);

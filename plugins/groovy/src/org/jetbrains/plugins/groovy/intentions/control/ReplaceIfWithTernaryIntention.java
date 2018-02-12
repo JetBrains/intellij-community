@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ public class ReplaceIfWithTernaryIntention extends Intention {
   protected PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
-      public boolean satisfiedBy(PsiElement e) {
+      public boolean satisfiedBy(@NotNull PsiElement e) {
         if (!e.getNode().getElementType().equals(GroovyTokenTypes.kIF)) return false;
         if (!(e.getParent() instanceof GrIfStatement)) return false;
 

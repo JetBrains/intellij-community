@@ -41,7 +41,7 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
   private final Iterable<ArtifactRootCopyingHandlerProvider> myCopyingHandlerProviders;
   private int myRootIndex;
   private final IgnoredFileIndex myIgnoredFileIndex;
-  private ArtifactBuildTarget myBuildTarget;
+  private final ArtifactBuildTarget myBuildTarget;
   private final JpsModel myModel;
   private final BuildDataPaths myBuildDataPaths;
 
@@ -97,6 +97,23 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
   public FileCopyingHandler createCopyingHandler(@NotNull File file, @NotNull JpsPackagingElement contextElement) {
     for (ArtifactRootCopyingHandlerProvider provider : myCopyingHandlerProviders) {
       FileCopyingHandler handler = provider.createCustomHandler(myBuildTarget.getArtifact(), file, contextElement, myModel, myBuildDataPaths);
+      if (handler != null) {
+        return handler;
+      }
+    }
+    return FileCopyingHandler.DEFAULT;
+  }
+
+  @NotNull
+  @Override
+  public FileCopyingHandler createCopyingHandler(@NotNull File file,
+                                                 @NotNull JpsPackagingElement contextElement,
+                                                 @NotNull ArtifactCompilerInstructionCreator instructionCreator) {
+    File targetDirectory = instructionCreator.getTargetDirectory();
+    if (targetDirectory == null) return FileCopyingHandler.DEFAULT;
+
+    for (ArtifactRootCopyingHandlerProvider provider : myCopyingHandlerProviders) {
+      FileCopyingHandler handler = provider.createCustomHandler(myBuildTarget.getArtifact(), file, targetDirectory, contextElement, myModel, myBuildDataPaths);
       if (handler != null) {
         return handler;
       }

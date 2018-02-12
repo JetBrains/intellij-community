@@ -25,15 +25,24 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 
+import static java.lang.Math.round;
+
 /**
 * @author Konstantin Bulenkov
 * @author tav
 */
 public class JBHiDPIScaledImage extends BufferedImage {
   private final @Nullable Image myImage;
-  private final int myUserWidth;
-  private final int myUserHeight;
-  private final float myScale;
+  private final double myUserWidth;
+  private final double myUserHeight;
+  private final double myScale;
+
+  /**
+   * @see #JBHiDPIScaledImage(double, double, int)
+   */
+  public JBHiDPIScaledImage(int width, int height, int type) {
+    this((double)width, (double)height, type);
+  }
 
   /**
    * Creates a scaled HiDPI-aware BufferedImage, targeting the system default scale.
@@ -42,8 +51,15 @@ public class JBHiDPIScaledImage extends BufferedImage {
    * @param height the height in user coordinate space
    * @param type the type
    */
-  public JBHiDPIScaledImage(int width, int height, int type) {
+  public JBHiDPIScaledImage(double width, double height, int type) {
     this((GraphicsConfiguration)null, width, height, type);
+  }
+
+  /**
+   * @see #JBHiDPIScaledImage(Graphics2D, double, double, int)
+   */
+  public JBHiDPIScaledImage(@Nullable Graphics2D g, int width, int height, int type) {
+    this(g, (double)width, (double)height, type);
   }
 
   /**
@@ -54,12 +70,19 @@ public class JBHiDPIScaledImage extends BufferedImage {
    * @param height the height in user coordinate space
    * @param type the type
    */
-  public JBHiDPIScaledImage(@Nullable Graphics2D g, int width, int height, int type) {
+  public JBHiDPIScaledImage(@Nullable Graphics2D g, double width, double height, int type) {
     super((int)(width * JBUI.sysScale(g)), (int)(height * JBUI.sysScale(g)), type);
     myImage = null;
     myUserWidth = width;
     myUserHeight = height;
     myScale = JBUI.sysScale(g);
+  }
+
+  /**
+   * @see #JBHiDPIScaledImage(GraphicsConfiguration, double, double, int)
+   */
+  public JBHiDPIScaledImage(@Nullable GraphicsConfiguration gc, int width, int height, int type) {
+    this(gc, (double)width, (double)height, type);
   }
 
   /**
@@ -70,12 +93,19 @@ public class JBHiDPIScaledImage extends BufferedImage {
    * @param height the height in user coordinate space
    * @param type the type
    */
-  public JBHiDPIScaledImage(@Nullable GraphicsConfiguration gc, int width, int height, int type) {
+  public JBHiDPIScaledImage(@Nullable GraphicsConfiguration gc, double width, double height, int type) {
     super((int)(width * JBUI.sysScale(gc)), (int)(height * JBUI.sysScale(gc)), type);
     myImage = null;
     myUserWidth = width;
     myUserHeight = height;
     myScale = JBUI.sysScale(gc);
+  }
+
+  /**
+   * @see #JBHiDPIScaledImage(Image, double, double, int)
+   */
+  public JBHiDPIScaledImage(@NotNull Image image, int width, int height, int type) {
+    this(image, (double)width, (double)height, type);
   }
 
   /**
@@ -87,7 +117,7 @@ public class JBHiDPIScaledImage extends BufferedImage {
    * @param height the height in user coordinate space
    * @param type the type
    */
-  public JBHiDPIScaledImage(@NotNull Image image, int width, int height, int type) {
+  public JBHiDPIScaledImage(@NotNull Image image, double width, double height, int type) {
     super(1, 1, type); // a dummy wrapper
     myImage = image;
     myUserWidth = width;
@@ -95,7 +125,7 @@ public class JBHiDPIScaledImage extends BufferedImage {
     myScale = myUserWidth > 0 ? myImage.getWidth(null) / myUserWidth : 1f;
   }
 
-  public float getScale() {
+  public double getScale() {
     return myScale;
   }
 
@@ -105,7 +135,7 @@ public class JBHiDPIScaledImage extends BufferedImage {
    * @param scaleFactor the scale factor
    * @return scaled instance
    */
-  public JBHiDPIScaledImage scale(float scaleFactor) {
+  public JBHiDPIScaledImage scale(double scaleFactor) {
     Image img = myImage == null ? this: myImage;
 
     int w = (int)(scaleFactor * getRealWidth(null));
@@ -114,15 +144,16 @@ public class JBHiDPIScaledImage extends BufferedImage {
 
     Image scaled = Scalr.resize(ImageUtil.toBufferedImage(img), Scalr.Method.QUALITY, w, h);
 
-    int newUserWidth = (int)(w / this.myScale);
-    int newUserHeight = (int)(h / this.myScale);
+    double newUserWidth = w / this.myScale;
+    double newUserHeight = h / this.myScale;
 
     if (myImage != null) {
       return new JBHiDPIScaledImage(scaled, newUserWidth, newUserHeight, getType());
     }
     JBHiDPIScaledImage newImg = new JBHiDPIScaledImage(newUserWidth, newUserHeight, getType());
     Graphics2D g = newImg.createGraphics();
-    g.drawImage(scaled, 0, 0, newUserWidth, newUserHeight, 0, 0, scaled.getWidth(null), scaled.getHeight(null), null);
+    g.drawImage(scaled, 0, 0, (int)round(newUserWidth), (int)round(newUserHeight),
+                0, 0, scaled.getWidth(null), scaled.getHeight(null), null);
     g.dispose();
     return newImg;
   }
@@ -182,7 +213,7 @@ public class JBHiDPIScaledImage extends BufferedImage {
    * @return the width
    */
   public int getUserWidth(ImageObserver observer) {
-    return myImage != null ? myUserWidth : (int)(super.getWidth(observer) / myScale);
+    return myImage != null ? (int)round(myUserWidth) : (int)round(super.getWidth(observer) / myScale);
   }
 
   /**
@@ -192,7 +223,7 @@ public class JBHiDPIScaledImage extends BufferedImage {
    * @return the height
    */
   public int getUserHeight(ImageObserver observer) {
-    return myImage != null ? myUserHeight : (int)(super.getHeight(observer) / myScale);
+    return myImage != null ? (int)round(myUserHeight) : (int)round(super.getHeight(observer) / myScale);
   }
 
   /**
@@ -219,6 +250,7 @@ public class JBHiDPIScaledImage extends BufferedImage {
   public Graphics2D createGraphics() {
     Graphics2D g = super.createGraphics();
     if (myImage == null) {
+      g.scale(myScale, myScale);
       return new HiDPIScaledGraphics(g);
     }
     return g;

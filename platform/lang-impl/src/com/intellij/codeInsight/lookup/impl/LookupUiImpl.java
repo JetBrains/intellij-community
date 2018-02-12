@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -25,6 +11,7 @@ import com.intellij.codeInsight.lookup.LookupElementAction;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.*;
@@ -283,10 +270,10 @@ class LookupUiImpl implements LookupUi {
     }
 
     SwingUtilities.convertPointToScreen(location, editor.getContentComponent());
-    final Rectangle screenRectangle = ScreenUtil.getScreenRectangle(location);
+    final Rectangle screenRectangle = ScreenUtil.getScreenRectangle(editor.getContentComponent());
 
     if (!isPositionedAboveCaret()) {
-      int shiftLow = screenRectangle.height - (location.y + dim.height);
+      int shiftLow = screenRectangle.y + screenRectangle.height - (location.y + dim.height);
       myPositionedAbove = shiftLow < 0 && shiftLow < location.y - dim.height && location.y >= dim.height;
     }
     if (isPositionedAboveCaret()) {
@@ -370,10 +357,7 @@ class LookupUiImpl implements LookupUi {
 
           Dimension adSize = myAdvertiser.getAdComponent().getPreferredSize();
 
-          int panelHeight = myList.getPreferredScrollableViewportSize().height + adSize.height;
-          if (myList.getModel().getSize() > myList.getVisibleRowCount() && myList.getVisibleRowCount() >= 5) {
-            panelHeight -= myList.getFixedCellHeight() / 2;
-          }
+          int panelHeight = myScrollPane.getPreferredSize().height + adSize.height;
           int width = Math.max(listWidth, adSize.width);
           width = Math.min(width, Registry.intValue("ide.completion.max.width"));
           int height = Math.min(panelHeight, myMaximumHeight);
@@ -386,7 +370,7 @@ class LookupUiImpl implements LookupUi {
           mainPanel.setSize(size);
           mainPanel.validate();
 
-          if (!myLookup.myResizePending) {
+          if (IdeEventQueue.getInstance().getTrueCurrentEvent().getID() == MouseEvent.MOUSE_DRAGGED) {
             Dimension preferredSize = preferredLayoutSize(null);
             if (preferredSize.width != size.width) {
               UISettings.getInstance().setMaxLookupWidth(Math.max(500, size.width));

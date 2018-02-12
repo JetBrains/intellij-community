@@ -17,18 +17,20 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- */
 public class UnknownFeature {
   private final String myFeatureType;
   private final String myFeatureDisplayName;
   private final String myImplementationName;
+  private final String myImplementationDisplayName;
 
-  public UnknownFeature(@NotNull String featureType, String featureDisplayName, @NotNull String implementationName) {
+  public UnknownFeature(@NotNull String featureType,
+                        String featureDisplayName,
+                        @NotNull String implementationName,
+                        String implementationDisplayName) {
     myFeatureType = featureType;
     myFeatureDisplayName = featureDisplayName;
     myImplementationName = implementationName;
+    myImplementationDisplayName = implementationDisplayName;
   }
 
   public String getFeatureType() {
@@ -41,6 +43,10 @@ public class UnknownFeature {
 
   public String getFeatureDisplayName() {
     return myFeatureDisplayName;
+  }
+
+  public String getImplementationDisplayName() {
+    return myImplementationDisplayName;
   }
 
   @Override

@@ -16,6 +16,7 @@
 
 package com.intellij.psi.formatter;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.FormattingDocumentModel;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -28,7 +29,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
@@ -39,27 +39,21 @@ import org.jetbrains.annotations.Nullable;
 public class FormattingDocumentModelImpl implements FormattingDocumentModel {
 
   private final WhiteSpaceFormattingStrategy myWhiteSpaceStrategy;
-  //private final CharBuffer myBuffer = CharBuffer.allocate(1);
   @NotNull private final Document myDocument;
-  private final PsiFile myFile;
+  @NotNull private final PsiFile myFile;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.FormattingDocumentModelImpl");
   private final CodeStyleSettings mySettings;
 
-  public FormattingDocumentModelImpl(@NotNull final Document document, PsiFile file) {
+  public FormattingDocumentModelImpl(@NotNull final Document document, @NotNull PsiFile file) {
     myDocument = document;
     myFile = file;
-    if (file != null) {
-      Language language = file.getLanguage();
-      myWhiteSpaceStrategy = WhiteSpaceFormattingStrategyFactory.getStrategy(language);
-    }
-    else {
-      myWhiteSpaceStrategy = WhiteSpaceFormattingStrategyFactory.getStrategy();
-    }
-    mySettings = CodeStyleSettingsManager.getSettings(file != null ? file.getProject() : null);
+    Language language = file.getLanguage();
+    myWhiteSpaceStrategy = WhiteSpaceFormattingStrategyFactory.getStrategy(language);
+    mySettings = CodeStyle.getSettings(file);
   }
 
-  public static FormattingDocumentModelImpl createOn(PsiFile file) {
+  public static FormattingDocumentModelImpl createOn(@NotNull PsiFile file) {
     Document document = getDocumentToBeUsedFor(file);
     if (document != null) {
       checkDocument(file, document);
@@ -70,7 +64,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
     }
   }
 
-  private static void checkDocument(PsiFile file, Document document) {
+  private static void checkDocument(@NotNull PsiFile file, @NotNull Document document) {
     if (file.getTextLength() != document.getTextLength()) {
       LOG.error(DebugUtil.diagnosePsiDocumentInconsistency(file, document));
     }
@@ -79,13 +73,25 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
   @Nullable
   public static Document getDocumentToBeUsedFor(final PsiFile file) {
     final Project project = file.getProject();
+    if (!file.isPhysical()) {
+      return getDocumentForNonPhysicalFile(file);
+    }
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-    if (document == null) return null;
-    if (PsiDocumentManager.getInstance(project).isUncommited(document)) return null;
-    PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project)).getSynchronizer();
-    if (synchronizer.isDocumentAffectedByTransactions(document)) return null;
-
+    if (document != null) {
+      if (PsiDocumentManager.getInstance(project).isUncommited(document)) return null;
+      PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project)).getSynchronizer();
+      if (synchronizer.isDocumentAffectedByTransactions(document)) return null;
+    }
     return document;
+  }
+
+  @NotNull
+  private static Document getDocumentForNonPhysicalFile(PsiFile file) {
+    Document document = file.getViewProvider().getDocument();
+    if (document != null && document.getTextLength() == file.getTextLength()) {
+      return document;
+    }
+    return new DocumentImpl(file.getText(), true);
   }
 
   @Override
@@ -125,6 +131,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
     return myDocument;
   }
 
+  @NotNull
   public PsiFile getFile() {
     return myFile;
   }
@@ -135,7 +142,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
     if (strategy.check(myDocument.getCharsSequence(), startOffset, endOffset) >= endOffset) {
       return true;
     }
-    PsiElement injectedElement = myFile != null ? InjectedLanguageUtil.findElementAtNoCommit(myFile, startOffset) : null;
+    PsiElement injectedElement = InjectedLanguageUtil.findElementAtNoCommit(myFile, startOffset);
     if (injectedElement != null) {
       Language injectedLanguage = injectedElement.getLanguage();
       if (!injectedLanguage.equals(myFile.getLanguage())) {

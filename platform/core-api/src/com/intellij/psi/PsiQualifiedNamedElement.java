@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,40 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi;
 
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * <tt>PsiQualifiedNamedElement</tt> interface marks psi elements that can have
- * fully qualified name and defines parent-child like relationship between such
- * elements.
- *
- * Implementations of <tt>PsiClass</tt>, <tt>PsiPackage</tt> and <tt>PsiAnnotation</tt>
- * for Java all implement <tt>PsiQualifiedNamedElement</tt> interface
- *
+ * A variation of a named PSI element.
  *
  * @author Konstantin Bulenkov
  * @since 9.0
  */
 public interface PsiQualifiedNamedElement extends PsiNamedElement {
   /**
-   * Returns the fully qualified name of the element.
-   *
-   * @return the qualified name of the element, or null
+   * Returns the fully qualified name of the element, or {@code null}.
    */
-  @Nullable
-  @NonNls
-  String getQualifiedName();
+  @Nullable String getQualifiedName();
 
   /**
-   * Returns the name of the element.
-   *
-   * @return the element name
+   * Returns the name of the element, or {@code null}.
    */
-  @Nullable
-  @NonNls
-  String getName();
+  @Nullable String getName();
 }

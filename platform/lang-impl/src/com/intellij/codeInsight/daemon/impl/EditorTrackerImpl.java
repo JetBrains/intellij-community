@@ -221,7 +221,7 @@ public class EditorTrackerImpl extends AbstractProjectComponent implements Edito
     return filtered;
   }
 
-  void setActiveEditors(@NotNull List<Editor> editors) {
+  public void setActiveEditors(@NotNull List<Editor> editors) {
     myActiveEditors = editors;
 
     if (LOG.isDebugEnabled()) {

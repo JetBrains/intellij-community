@@ -25,12 +25,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-/**
-* Created by IntelliJ IDEA.
-* User: maximmossienko
-* Date: 7/12/11
-* Time: 1:34 PM
-*/
 public class IntToIntBtree {
   public static int version() {
     return 4 + (IOUtil.ourByteBuffersUseNativeByteOrder ? 0xFF : 0);
@@ -44,7 +38,7 @@ public class IntToIntBtree {
   private final short maxInteriorNodes;
   private final short maxLeafNodes;
   private final short maxLeafNodesInHash;
-  final BtreeIndexNodeView root;
+  final BtreeRootNode root;
   private int height;
   private int maxStepsSearchedInHash;
   private int totalHashStepsSearched;
@@ -66,6 +60,7 @@ public class IntToIntBtree {
   private static final boolean hasCachedMappings = false;
   private TIntIntHashMap myCachedMappings;
   private final int myCachedMappingsSize;
+  private static final int UNDEFINED_ADDRESS = -1;
 
   public IntToIntBtree(int pageSize, @NotNull File file, @NotNull PagedFileStorage.StorageLockContext storageLockContext, boolean initial) throws IOException {
     this.pageSize = pageSize;
@@ -75,12 +70,11 @@ public class IntToIntBtree {
     }
 
     storage = new ResizeableMappedFile(file, pageSize, storageLockContext, 1024 * 1024, true, IOUtil.ourByteBuffersUseNativeByteOrder);
-    root = new BtreeIndexNodeView(this);
+    storage.setRoundFactor(pageSize);
+    root = new BtreeRootNode(this);
 
     if (initial) {
-      nextPage(); // allocate root
-      root.setAddress(0);
-      root.setIndexLeaf(true);
+      root.setAddress(UNDEFINED_ADDRESS);
     }
 
     int i = (this.pageSize - BtreePage.RESERVED_META_PAGE_LEN) / BtreeIndexNodeView.INTERIOR_SIZE - 1;
@@ -117,6 +111,12 @@ public class IntToIntBtree {
     }
   }
 
+  protected void doAllocateRoot() {
+    nextPage(); // allocate root
+    root.setAddress(0);
+    root.getNodeView().setIndexLeaf(true);
+  }
+
   // return total number of bytes needed for storing information
   public int persistVars(@NotNull BtreeDataStorage storage, boolean toDisk) {
     int i = storage.persistInt(0, height | (hasZeroKey ? HAS_ZERO_KEY_MASK :0), toDisk);
@@ -137,6 +137,31 @@ public class IntToIntBtree {
 
   public interface BtreeDataStorage {
     int persistInt(int offset, int value, boolean toDisk);
+  }
+
+  static class BtreeRootNode {
+    int address;
+    final BtreeIndexNodeView nodeView;
+    boolean initialized;
+
+    BtreeRootNode(IntToIntBtree btree) {
+      nodeView = new BtreeIndexNodeView(btree);
+    }
+
+    void setAddress(int _address) {
+      address = _address;
+      initialized = false;
+    }
+
+    protected void syncWithStore() {
+      nodeView.setAddress(address);
+      initialized = true;
+    }
+
+    public BtreeIndexNodeView getNodeView() {
+      if (!initialized) syncWithStore();
+      return nodeView;
+    }
   }
 
   private static boolean isPrime(int val) {
@@ -176,6 +201,7 @@ public class IntToIntBtree {
       }
     }
 
+    if (root.address == UNDEFINED_ADDRESS) return false;
     if (myAccessNodeView == null) myAccessNodeView = new BtreeIndexNodeView(this);
     myAccessNodeView.initTraversal(root.address);
     int index = myAccessNodeView.locate(key, false);
@@ -218,6 +244,7 @@ public class IntToIntBtree {
   }
 
   private void doPut(int key, int value) {
+    if (root.address == UNDEFINED_ADDRESS) doAllocateRoot();
     if (myAccessNodeView == null) myAccessNodeView = new BtreeIndexNodeView(this);
     myAccessNodeView.initTraversal(root.address);
     int index = myAccessNodeView.locate(key, true);
@@ -232,7 +259,7 @@ public class IntToIntBtree {
   }
 
   void dumpStatistics() {
-    int leafPages = height == 3 ? pagesCount - (1 + root.getChildrenCount() + 1):height == 2 ? pagesCount - 1:1;
+    int leafPages = height == 3 ? pagesCount - (1 + root.getNodeView().getChildrenCount() + 1):height == 2 ? pagesCount - 1:1;
     long leafNodesCapacity = hashedPagesCount * maxLeafNodesInHash + (leafPages - hashedPagesCount)* maxLeafNodes;
     long leafNodesCapacity2 = leafPages * maxLeafNodes;
     int usedPercent = (int)((count * 100L) / leafNodesCapacity);
@@ -297,10 +324,14 @@ public class IntToIntBtree {
     }
 
     void setAddress(int _address) {
-      if (doSanityCheck) myAssert(_address % btree.pageSize == 0);
-      address = _address;
+      setAddressInternal(_address);
 
       syncWithStore();
+    }
+
+    private final void setAddressInternal(int _address) {
+      if (doSanityCheck) myAssert(_address % btree.pageSize == 0);
+      address = _address;
     }
 
     protected void syncWithStore() {
@@ -737,7 +768,7 @@ public class IntToIntBtree {
         }
       } else {
         if (doSanityCheck) {
-          btree.root.dump("Splitting root:"+medianKey);
+          btree.root.getNodeView().dump("Splitting root:"+medianKey);
         }
 
         int newRootAddress = btree.nextPage();
@@ -750,13 +781,14 @@ public class IntToIntBtree {
         btree.root.setAddress(newRootAddress);
         parentAddress = newRootAddress;
 
-        btree.root.setChildrenCount((short)1); // btree.root becomes dirty
-        btree.root.setKeyAt(0, medianKey);
-        btree.root.setAddressAt(0, -address);
-        btree.root.setAddressAt(1, -newIndexNode.address);
+        BtreeIndexNodeView rootNodeView = btree.root.getNodeView();
+        rootNodeView.setChildrenCount((short)1); // btree.root becomes dirty
+        rootNodeView.setKeyAt(0, medianKey);
+        rootNodeView.setAddressAt(0, -address);
+        rootNodeView.setAddressAt(1, -newIndexNode.address);
 
         if (doSanityCheck) {
-          btree.root.dump("New root");
+          rootNodeView.dump("New root");
           dump("First child");
           newIndexNode.dump("Second child");
         }
@@ -947,7 +979,7 @@ public class IntToIntBtree {
       }
     }
 
-    private void dump(String s) {
+    protected void dump(String s) {
       if (doDump) {
         immediateDump(s);
       }
@@ -1127,12 +1159,15 @@ public class IntToIntBtree {
 
   public boolean processMappings(@NotNull KeyValueProcessor processor) throws IOException {
     doFlush();
-    root.syncWithStore();
-
+    
     if (hasZeroKey) {
-      if(!processor.process(0, zeroKeyValue)) return false;
+      if (!processor.process(0, zeroKeyValue)) return false;
     }
-    return processLeafPages(root, processor);
+
+    if(root.address == UNDEFINED_ADDRESS) return true;
+    root.syncWithStore();
+    
+    return processLeafPages(root.getNodeView(), processor);
   }
 
   private boolean processLeafPages(@NotNull BtreeIndexNodeView node, @NotNull KeyValueProcessor processor) throws IOException {
@@ -1156,15 +1191,5 @@ public class IntToIntBtree {
       }
     }
     return true;
-  }
-
-  public void withStorageLock(@NotNull Runnable runnable) {
-    storage.getPagedFileStorage().lock();
-    try {
-      runnable.run();
-    }
-    finally {
-      storage.getPagedFileStorage().unlock();
-    }
   }
 }

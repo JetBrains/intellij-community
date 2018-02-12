@@ -24,7 +24,7 @@ public class ArtifactBuildTargetType extends ArtifactBasedBuildTargetType<Artifa
   public static final ArtifactBuildTargetType INSTANCE = new ArtifactBuildTargetType();
 
   public ArtifactBuildTargetType() {
-    super("artifact");
+    super("artifact", true);
   }
 
   @Override

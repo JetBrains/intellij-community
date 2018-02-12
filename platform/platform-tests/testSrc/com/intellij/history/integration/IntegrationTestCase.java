@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.history.integration;
 
 import com.intellij.history.core.LocalHistoryFacade;
@@ -23,6 +9,7 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -32,15 +19,16 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 
 public abstract class IntegrationTestCase extends PlatformTestCase {
@@ -74,21 +62,33 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
     });
   }
 
+  @NotNull
   @Override
-  protected File getIprFile() throws IOException {
-    return new File(createTempDirectory(), "test.ipr");
+  protected Path getProjectDirOrFile() {
+    try {
+      return createTempDirectory().toPath().resolve("test.ipr");
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected void setUpInWriteAction() throws Exception {
-    myRoot = LocalFileSystem.getInstance().findFileByIoFile(createTempDirectory());
+    VirtualFile tmpTestDir =
+      ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(FileUtil.getTempDirectory())));
+    myRoot = tmpTestDir.createChildDirectory(null, "idea_test_integration");
     PsiTestUtil.addContentRoot(myModule, myRoot);
   }
 
   @Override
   protected void tearDown() throws Exception {
-    Clock.reset();
-    Paths.useSystemCaseSensitivity();
-    super.tearDown();
+    try {
+      Clock.reset();
+      Paths.useSystemCaseSensitivity();
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   protected VirtualFile createFile(String name) throws IOException {
@@ -103,17 +103,17 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
   }
 
   @NotNull
-  protected VirtualFile createDirectory(String name) throws IOException {
+  protected VirtualFile createDirectory(String name) {
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(createDirectoryExternally(name));
     assertNotNull(name, file);
     return file;
   }
 
-  protected void setContent(VirtualFile f, String content) throws IOException {
+  protected void setContent(VirtualFile f, String content) {
     setContent(f, content, f.getTimeStamp() + TIMESTAMP_INCREMENT);
   }
 
-  protected void setContent(VirtualFile f, String content, long timestamp) throws IOException {
+  protected void setContent(VirtualFile f, String content, long timestamp) {
     setBinaryContent(f, content.getBytes(CharsetToolkit.UTF8_CHARSET), -1, timestamp,this);
   }
 
@@ -129,7 +129,7 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
     return FileUtil.toSystemIndependentName(f.getPath());
   }
 
-  protected String createDirectoryExternally(String name) throws IOException {
+  protected String createDirectoryExternally(String name) {
     File f = new File(myRoot.getPath(), name);
     assertTrue(f.getPath(), f.mkdirs() || f.isDirectory());
     return FileUtil.toSystemIndependentName(f.getPath());
@@ -156,11 +156,8 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
   }
 
   protected List<Revision> getRevisionsFor(final VirtualFile f, final String pattern) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<List<Revision>>() {
-            public List<Revision> compute() {
-              return LocalHistoryTestCase.collectRevisions(getVcs(), getRootEntry(), f.getPath(), myProject.getLocationHash(), pattern);
-            }
-          });
+    return ReadAction
+      .compute(() -> LocalHistoryTestCase.collectRevisions(getVcs(), getRootEntry(), f.getPath(), myProject.getLocationHash(), pattern));
   }
 
   protected RootEntry getRootEntry() {
@@ -187,7 +184,7 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
     });
   }
 
-  protected static void addFileListenerDuring(VirtualFileListener l, Runnable r) throws Exception {
+  protected static void addFileListenerDuring(VirtualFileListener l, Runnable r) {
     VirtualFileManager.getInstance().addVirtualFileListener(l);
     try {
       r.run();

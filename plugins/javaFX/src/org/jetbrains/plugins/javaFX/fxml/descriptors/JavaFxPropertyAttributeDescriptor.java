@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,10 +22,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-/**
- * User: anna
- * Date: 1/10/13
- */
 public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescriptor {
   private final String myName;
   private final PsiClass myPsiClass;

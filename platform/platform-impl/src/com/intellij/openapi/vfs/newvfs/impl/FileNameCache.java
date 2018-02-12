@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.newvfs.impl;
 
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.IntSLRUCache;
 import com.intellij.util.containers.IntObjectLinkedMap;
@@ -22,6 +23,7 @@ import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.text.ByteArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -80,7 +82,7 @@ public class FileNameCache {
   private static final AtomicInteger ourMisses = new AtomicInteger();
 
   @NotNull
-  public static CharSequence getVFileName(int nameId) {
+  public static CharSequence getVFileName(int nameId, @NotNull ThrowableComputable<String,IOException> computeName) throws IOException {
     assert nameId > 0;
 
     if (ourTrackStats) {
@@ -111,9 +113,18 @@ public class FileNameCache {
       entry = cache.getCachedEntry(nameId);
     }
     if (entry == null) {
-      entry = cacheData(FSRecords.getNameByNameId(nameId), nameId, stripe);
+      entry = cacheData(computeName.compute(), nameId, stripe);
     }
     ourArrayCache[l1] = entry;
     return entry.value;
+  }
+  @NotNull
+  public static CharSequence getVFileName(int nameId) {
+    try {
+      return getVFileName(nameId, () -> FSRecords.getNameByNameId(nameId));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e); // actually will be caught in getNameByNameId
+    }
   }
 }

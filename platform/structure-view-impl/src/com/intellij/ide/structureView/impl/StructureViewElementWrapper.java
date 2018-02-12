@@ -61,7 +61,7 @@ public class StructureViewElementWrapper<V extends PsiElement> implements Struct
 
       result.add(wrapper);
     }
-    return result.toArray(new StructureViewTreeElement[result.size()]);
+    return result.toArray(StructureViewTreeElement.EMPTY_ARRAY);
   }
 
   @NotNull

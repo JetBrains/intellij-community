@@ -54,7 +54,7 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
 
   @NotNull
   @Override
-  public List<PyType> getElementTypes(@NotNull TypeEvalContext context) {
+  public List<PyType> getElementTypes() {
     return myElementTypes;
   }
 
@@ -110,5 +110,12 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
   public PyType getIteratedItemType() {
     // TODO: Select the parameter type that matches T in Iterable[T]
     return ContainerUtil.getFirstItem(myElementTypes);
+  }
+
+  @Override
+  public void accept(@NotNull PyTypeVisitor visitor) {
+    if (visitor instanceof PyTypeVisitorExt) {
+      ((PyTypeVisitorExt)visitor).visitCollectionType(this);
+    }
   }
 }

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 12-Jul-2007
- */
 package org.jetbrains.idea.eclipse.importWizard;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
@@ -39,6 +35,7 @@ public class EclipseProjectImportProvider extends ProjectImportProvider {
   public ModuleWizardStep[] createSteps(WizardContext context) {
     final ProjectWizardStepFactory stepFactory = ProjectWizardStepFactory.getInstance();
     return new ModuleWizardStep[]{new EclipseWorkspaceRootStep(context), new SelectEclipseImportedProjectsStep(context),
+      new EclipseCodeStyleImportStep(context),
       stepFactory.createProjectJdkStep(context)/*, stepFactory.createNameAndLocationStep(context)*/};
   }
 

@@ -35,10 +35,7 @@
           </component>
           <component id="f41b2" class="javax.swing.JSpinner" binding="myLevelsSpinner">
             <constraints>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="1" indent="0" use-parent-layout="false">
-                <preferred-size width="75" height="-1"/>
-                <maximum-size width="75" height="-1"/>
-              </grid>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
           </component>
@@ -53,10 +50,7 @@
           </component>
           <component id="dd25f" class="javax.swing.JSpinner" binding="myOpacitySpinner">
             <constraints>
-              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="1" indent="0" use-parent-layout="false">
-                <preferred-size width="75" height="-1"/>
-                <maximum-size width="75" height="-1"/>
-              </grid>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
           </component>

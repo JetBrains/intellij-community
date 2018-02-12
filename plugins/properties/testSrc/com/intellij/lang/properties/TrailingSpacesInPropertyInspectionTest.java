@@ -18,7 +18,7 @@ package com.intellij.lang.properties;
 import com.intellij.codeInspection.TrailingSpacesInPropertyInspection;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.fixtures.*;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 public class TrailingSpacesInPropertyInspectionTest extends LightCodeInsightFixtureTestCase {
   @Override
@@ -26,7 +26,7 @@ public class TrailingSpacesInPropertyInspectionTest extends LightCodeInsightFixt
     return PluginPathManager.getPluginHomePath("properties") + "/testData";
   }
 
-  public void testSimple() throws Exception{
+  public void testSimple() {
     final TrailingSpacesInPropertyInspection inspection = new TrailingSpacesInPropertyInspection();
     myFixture.enableInspections(inspection);
     myFixture.configureByFile("/propertiesFile/highlighting/trailingSpaces.properties");
@@ -34,7 +34,7 @@ public class TrailingSpacesInPropertyInspectionTest extends LightCodeInsightFixt
     myFixture.disableInspections(inspection);
   }
 
-  public void testOnlyNonVisible() throws Exception {
+  public void testOnlyNonVisible() {
     final TrailingSpacesInPropertyInspection inspection = new TrailingSpacesInPropertyInspection();
     inspection.myIgnoreVisibleSpaces = true;
     myFixture.enableInspections(inspection);

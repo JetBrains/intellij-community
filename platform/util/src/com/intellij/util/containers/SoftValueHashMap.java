@@ -21,6 +21,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 
+/**
+ * @deprecated use {@link ContainerUtil#createSoftValueMap()} instead
+ */
+@Deprecated
 public final class SoftValueHashMap<K,V> extends RefValueHashMap<K,V>{
   private static class MySoftReference<K, T> extends SoftReference<T> implements MyReference<K, T> {
     private final K key;
@@ -30,6 +34,7 @@ public final class SoftValueHashMap<K,V> extends RefValueHashMap<K,V>{
       this.key = key;
     }
 
+    @NotNull
     @Override
     public K getKey() {
       return key;

@@ -14,6 +14,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.List;
 
 public class WindowWrapperBuilder {
   @NotNull private final Mode myMode;
@@ -170,7 +171,7 @@ public class WindowWrapperBuilder {
     }
 
     @Override
-    public void setImage(@Nullable Image image) {
+    public void setImages(@Nullable List<Image> images) {
     }
 
     @Override
@@ -179,7 +180,7 @@ public class WindowWrapperBuilder {
     }
 
     private static class MyDialogWrapper extends DialogWrapper {
-      @NotNull private JComponent myComponent;
+      @NotNull private final JComponent myComponent;
       @Nullable private String myDimensionServiceKey;
       @Nullable private Computable<JComponent> myPreferredFocusedComponent;
 
@@ -305,8 +306,8 @@ public class WindowWrapperBuilder {
     }
 
     @Override
-    public void setImage(@Nullable Image image) {
-      myFrame.setImage(image);
+    public void setImages(@Nullable List<Image> images) {
+      myFrame.setImages(images);
     }
 
     @Override

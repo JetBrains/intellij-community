@@ -7,6 +7,6 @@ class Foo<T> {
 
 class Constructors {
         public static void main(String[] args) {
-                Foo<Number> foo2 = new Foo<>(1);
+                Foo<Number> foo2 = new Foo<Number>(1);
         }
 }

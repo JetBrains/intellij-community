@@ -1,33 +1,21 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.*;
-import com.intellij.openapi.progress.util.PotemkinProgress;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.SmoothProgressAdapter;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SystemNotifications;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
@@ -38,9 +26,38 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Set;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.LockSupport;
 
 public class ProgressManagerImpl extends CoreProgressManager implements Disposable {
-  private final Set<PotemkinProgress> myEdtProgresses = ContainerUtil.newConcurrentSet();
+  private final Set<CheckCanceledHook> myHooks = ContainerUtil.newConcurrentSet();
+
+  public ProgressManagerImpl() {
+    HeavyProcessLatch.INSTANCE.addUIActivityListener(new HeavyProcessLatch.HeavyProcessListener() {
+      private final CheckCanceledHook sleepHook = indicator -> sleepIfNeededToGivePriorityToAnotherThread();
+      private final AtomicBoolean scheduled = new AtomicBoolean();
+      private final Runnable addHookLater = () -> {
+        scheduled.set(false);
+        if (HeavyProcessLatch.INSTANCE.hasPrioritizedThread()) {
+          addCheckCanceledHook(sleepHook);
+        }
+      };
+
+      @Override
+      public void processStarted() {
+        if (scheduled.compareAndSet(false, true)) {
+          AppExecutorUtil.getAppScheduledExecutorService().schedule(addHookLater, 5, TimeUnit.MILLISECONDS);
+        }
+      }
+
+      @Override
+      public void processFinished() {
+        removeCheckCanceledHook(sleepHook);
+      }
+
+    }, this);
+  }
 
   @Override
   public void setCancelButtonText(String cancelButtonText) {
@@ -59,20 +76,23 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
     if (progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.incrementAndGet();
 
-    boolean edtProgress = progress instanceof PotemkinProgress && ApplicationManager.getApplication().isDispatchThread();
-    if (edtProgress) myEdtProgresses.add((PotemkinProgress)progress);
+    CheckCanceledHook hook = progress instanceof PingProgress && ApplicationManager.getApplication().isDispatchThread() 
+                             ? p -> { ((PingProgress)progress).interact(); return true; } 
+                             : null;
+    if (hook != null) addCheckCanceledHook(hook);
 
     try {
       super.executeProcessUnderProgress(process, progress);
     }
     finally {
       if (progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.decrementAndGet();
-      if (edtProgress) myEdtProgresses.remove(progress);
+      if (hook != null) removeCheckCanceledHook(hook);
     }
   }
 
   @TestOnly
-  public static void runWithAlwaysCheckingCanceled(@NotNull Runnable runnable) {
+  public static void __testWhileAlwaysCheckingCanceled(@NotNull Runnable runnable) {
+    @SuppressWarnings("InstantiatingAThreadWithDefaultRunMethod")
     Thread fake = new Thread("fake");
     try {
       threadsUnderCanceledIndicator.add(fake);
@@ -120,96 +140,57 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   }
 
   @Override
-  @NotNull
-  public Future<?> runProcessWithProgressAsynchronously(@NotNull final Task.Backgroundable task,
-                                                        @NotNull final ProgressIndicator progressIndicator,
-                                                        @Nullable final Runnable continuation,
-                                                        @NotNull final ModalityState modalityState) {
-    if (progressIndicator instanceof Disposable) {
-      Disposer.register(ApplicationManager.getApplication(), (Disposable)progressIndicator);
-    }
-
-    final Runnable process = new TaskRunnable(task, progressIndicator, continuation);
-
-    TaskContainer action = new TaskContainer(task) {
-      @Override
-      public void run() {
-        boolean processCanceled = false;
-        Throwable exception = null;
-
-        final long start = System.currentTimeMillis();
-        try {
-          ProgressManager.getInstance().runProcess(process, progressIndicator);
-        }
-        catch (ProcessCanceledException e) {
-          processCanceled = true;
-        }
-        catch (Throwable e) {
-          exception = e;
-        }
-        final long end = System.currentTimeMillis();
-
-        final boolean finalCanceled = processCanceled || progressIndicator.isCanceled();
-        final Throwable finalException = exception;
-
-        if (!finalCanceled) {
-          final Task.NotificationInfo notificationInfo = task.notifyFinished();
-          final long time = end - start;
-          if (notificationInfo != null && time > 5000) { // snow notification if process took more than 5 secs
-            final Component window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-            if (window == null || notificationInfo.isShowWhenFocused()) {
-              systemNotify(notificationInfo);
-            }
-          }
-        }
-
-        ApplicationManager.getApplication().invokeLater(() -> finishTask(task, finalCanceled, finalException), modalityState);
+  void notifyTaskFinished(@NotNull Task.Backgroundable task, long elapsed) {
+    final Task.NotificationInfo notificationInfo = task.notifyFinished();
+    if (notificationInfo != null && elapsed > 5000) { // snow notification if process took more than 5 secs
+      final Component window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+      if (window == null || notificationInfo.isShowWhenFocused()) {
+        systemNotify(notificationInfo);
       }
-    };
-
-    return ApplicationManager.getApplication().executeOnPooledThread(action);
+    }
   }
 
   @Override
-  public boolean runInReadActionWithWriteActionPriority(@NotNull Runnable action) {
-    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
-      throw new AssertionError("runInReadActionWithWriteActionPriority shouldn't be invoked from read action");
+  public boolean runInReadActionWithWriteActionPriority(@NotNull Runnable action, @Nullable ProgressIndicator indicator) {
+    return ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(action, indicator);
+  }
+
+  /**
+   * An absolutely guru method, very dangerous, don't use unless you're desperate,
+   * because hooks will be executed on every checkCanceled and can dramatically slow down everything in the IDE.
+   */
+  void addCheckCanceledHook(@NotNull CheckCanceledHook hook) {
+    if (myHooks.add(hook)) {
+      updateShouldCheckCanceled();
     }
-    boolean success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(action);
-    if (!success) {
-      ProgressIndicatorUtils.yieldToPendingWriteActions();
+  }
+
+  void removeCheckCanceledHook(@NotNull CheckCanceledHook hook) {
+    if (myHooks.remove(hook)) {
+      updateShouldCheckCanceled();
     }
-    return success;
   }
 
   @Nullable
   @Override
   protected CheckCanceledHook createCheckCanceledHook() {
-    boolean shouldSleep = HeavyProcessLatch.INSTANCE.hasPrioritizedThread() && Registry.is("ide.prioritize.ui.thread", false);
-    boolean hasEdtProgresses = !myEdtProgresses.isEmpty();
-    if (shouldSleep && hasEdtProgresses) {
-      //noinspection NonShortCircuitBooleanExpression
-      return () -> pingProgresses() | sleepIfNeeded();
-    }
-    if (shouldSleep) return ProgressManagerImpl::sleepIfNeeded;
-    if (hasEdtProgresses) return this::pingProgresses;
-    return null;
+    if (myHooks.isEmpty()) return null;
+
+    CheckCanceledHook[] activeHooks = myHooks.toArray(new CheckCanceledHook[0]);
+    return activeHooks.length == 1 ? activeHooks[0] : indicator -> {
+      boolean result = false;
+      for (CheckCanceledHook hook : activeHooks) {
+        if (hook.runHook(indicator)) {
+          result = true; // but still continue to other hooks
+        }
+      }
+      return result;
+    };
   }
 
-  private boolean pingProgresses() {
-    if (!ApplicationManager.getApplication().isDispatchThread()) return false;
-
-    boolean hasProgresses = false;
-    for (PotemkinProgress progress : myEdtProgresses) {
-      hasProgresses = true;
-      progress.interact();
-    }
-    return hasProgresses;
-  }
-
-  private static boolean sleepIfNeeded() {
+  private static boolean sleepIfNeededToGivePriorityToAnotherThread() {
     if (HeavyProcessLatch.INSTANCE.isInsideLowPriorityThread()) {
-      TimeoutUtil.sleep(1);
+      LockSupport.parkNanos(1_000_000);
       return true;
     }
     return false;

@@ -25,16 +25,19 @@ import java.util.Collections;
 import java.util.List;
 
 public interface DocumentEx extends Document {
-  void setStripTrailingSpacesEnabled(boolean isEnabled);
+  default void setStripTrailingSpacesEnabled(boolean isEnabled) {
+  }
 
   @NotNull
   LineIterator createLineIterator();
 
   void setModificationStamp(long modificationStamp);
 
-  void addEditReadOnlyListener(@NotNull EditReadOnlyListener listener);
+  default void addEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
+  }
 
-  void removeEditReadOnlyListener(@NotNull EditReadOnlyListener listener);
+  default void removeEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
+  }
 
   void replaceText(@NotNull CharSequence chars, long newModificationStamp);
 
@@ -51,10 +54,14 @@ public interface DocumentEx extends Document {
    */
   void moveText(int srcStart, int srcEnd, int dstOffset);
 
-  void suppressGuardedExceptions();
-  void unSuppressGuardedExceptions();
+  default void suppressGuardedExceptions() {
+  }
+  default void unSuppressGuardedExceptions() {
+  }
 
-  boolean isInEventsHandling();
+  default boolean isInEventsHandling() {
+    return false;
+  }
 
   default void clearLineModificationFlags() {
   }
@@ -68,7 +75,9 @@ public interface DocumentEx extends Document {
                            boolean greedyToRight,
                            int layer);
 
-  boolean isInBulkUpdate();
+  default boolean isInBulkUpdate() {
+    return false;
+  }
 
   /**
    * Enters or exits 'bulk' mode for processing of document changes. Bulk mode should be used when a large number of document changes
@@ -79,7 +88,8 @@ public interface DocumentEx extends Document {
    * or updating folding or soft wrap data, editor position recalculation functions (offset to logical position, logical to visual position, 
    * etc), querying or updating caret position or selection state. 
    */
-  void setInBulkUpdate(boolean value);
+  default void setInBulkUpdate(boolean value) {
+  }
 
   @NotNull
   default List<RangeMarker> getGuardedBlocks() {
@@ -101,7 +111,9 @@ public interface DocumentEx extends Document {
   /**
    * @return modification stamp. Guaranteed to be strictly increasing on each change unlike the {@link #getModificationStamp()} which can change arbitrarily.
    */
-  int getModificationSequence();
+  default int getModificationSequence() {
+    return 0;
+  }
 }
 
 

@@ -1,28 +1,27 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.util;
 
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -56,7 +55,9 @@ public class EnvironmentUtil {
   private static final Future<Map<String, String>> ourEnvGetter;
 
   static {
-    if (SystemInfo.isMac && "unlocked".equals(System.getProperty("__idea.mac.env.lock")) && Registry.is("idea.fix.mac.env")) {
+    if (SystemInfo.isMac &&
+        "unlocked".equals(System.getProperty("__idea.mac.env.lock")) &&
+        SystemProperties.getBooleanProperty("idea.fix.mac.env", true)) {
       ourEnvGetter = AppExecutorUtil.getAppExecutorService().submit(new Callable<Map<String, String>>() {
         @Override
         public Map<String, String> call() throws Exception {
@@ -153,6 +154,7 @@ public class EnvironmentUtil {
   }
 
   private static final String DISABLE_OMZ_AUTO_UPDATE = "DISABLE_AUTO_UPDATE";
+  private static final String INTELLIJ_ENVIRONMENT_READER = "INTELLIJ_ENVIRONMENT_READER";
 
   private static Map<String, String> getShellEnv() throws Exception {
     return new ShellEnvReader().readShellEnv();
@@ -160,17 +162,12 @@ public class EnvironmentUtil {
 
 
   public static class ShellEnvReader {
-
     public Map<String, String> readShellEnv() throws Exception {
-      String os = SystemInfo.isLinux ? "linux" : "mac";
-      File reader = FileUtil.findFirstThatExist(
-        PathManager.getBinPath() + "/printenv.py",
-        PathManager.getHomePath() + "/ultimate/community/bin/" + os + "/printenv.py",
-        PathManager.getHomePath() + "/community/bin/" + os + "/printenv.py",
-        PathManager.getHomePath() + "/bin/" + os + "/printenv.py");
-      if (reader == null) {
-        throw new Exception("bin:" + PathManager.getBinPath());
-      }
+      return readShellEnv(null);
+    }
+    
+    protected Map<String, String> readShellEnv(@Nullable Map<String, String> additionalEnvironment) throws Exception {
+      File reader = PathManager.findBinFileWithException("printenv.py");
 
       File envFile = FileUtil.createTempFile("intellij-shell-env.", ".tmp", false);
       try {
@@ -187,7 +184,34 @@ public class EnvironmentUtil {
 
         LOG.info("loading shell env: " + StringUtil.join(command, " "));
 
-        return runProcessAndReadEnvs(command, envFile, "\0");
+        return runProcessAndReadOutputAndEnvs(command, null, additionalEnvironment, envFile).second;
+      }
+      finally {
+        FileUtil.delete(envFile);
+      }
+    }
+    
+    @NotNull
+    public Map<String, String> readBatEnv(@NotNull File batchFile, List<String> args) throws Exception {
+      return readBatOutputAndEnv(batchFile, args).second;
+    }
+
+    @NotNull
+    protected Pair<String, Map<String, String>> readBatOutputAndEnv(@NotNull File batchFile, List<String> args) throws Exception {
+      File envFile = FileUtil.createTempFile("intellij-cmd-env.", ".tmp", false);
+      try {
+        List<String> cl = new ArrayList<String>();
+        cl.add(CommandLineUtil.getWinShellName());
+        cl.add("/c");
+        cl.add("call");
+        cl.add(batchFile.getPath());
+        cl.addAll(args);
+        cl.add("&&");
+        cl.addAll(getReadEnvCommand());
+        cl.add(envFile.getPath());
+        cl.addAll(Arrays.asList("||", "exit", "/B", "%ERRORLEVEL%"));
+
+        return runProcessAndReadOutputAndEnvs(cl, batchFile.getParentFile(), null, envFile);
       }
       finally {
         FileUtil.delete(envFile);
@@ -195,19 +219,25 @@ public class EnvironmentUtil {
     }
 
     @NotNull
-    protected static Map<String, String> runProcessAndReadEnvs(@NotNull List<String> command, @NotNull File envFile, String lineSeparator)
-      throws Exception {
-      return runProcessAndReadEnvs(command, null, envFile, lineSeparator);
+    private static List<String> getReadEnvCommand() {
+      return Arrays.asList(FileUtil.toSystemDependentName(System.getProperty("java.home") + "/bin/java"),
+                           "-cp", PathManager.getJarPathForClass(ReadEnv.class),
+                           ReadEnv.class.getCanonicalName());
     }
-    
-    @NotNull                                                                                  
-    protected static Map<String, String> runProcessAndReadEnvs(@NotNull List<String> command,
-                                                               @Nullable File workingDir, 
-                                                               @NotNull File envFile, 
-                                                               String lineSeparator) throws Exception {
+
+    @NotNull
+    protected static Pair<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
+                                                                                      @Nullable File workingDir,
+                                                                                      @Nullable Map<String, String> scriptEnvironment,
+                                                                                      @NotNull File envFile) throws Exception {
       ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);
+      if (scriptEnvironment != null) {
+        // we might need default environment for the process to launch correctly
+        builder.environment().putAll(scriptEnvironment);
+      }
       if (workingDir != null) builder.directory(workingDir);
       builder.environment().put(DISABLE_OMZ_AUTO_UPDATE, "true");
+      builder.environment().put(INTELLIJ_ENVIRONMENT_READER, "true");
       Process process = builder.start();
       StreamGobbler gobbler = new StreamGobbler(process.getInputStream());
       int rv = waitAndTerminateAfter(process, SHELL_ENV_READING_TIMEOUT);
@@ -217,7 +247,7 @@ public class EnvironmentUtil {
       if (rv != 0 || lines.isEmpty()) {
         throw new Exception("rv:" + rv + " text:" + lines.length() + " out:" + StringUtil.trimEnd(gobbler.getText(), '\n'));
       }
-      return parseEnv(lines, lineSeparator);
+      return Pair.create(gobbler.getText(), parseEnv(lines));
     }
 
     @NotNull
@@ -237,18 +267,18 @@ public class EnvironmentUtil {
     }
 
     @Nullable
-    protected String getShell() throws Exception {
+    protected String getShell() {
       return System.getenv("SHELL");
     }
   }
 
   @NotNull
-  private static Map<String, String> parseEnv(String text, String lineSeparator) throws Exception {
-    Set<String> toIgnore = new HashSet<String>(Arrays.asList("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE));
+  private static Map<String, String> parseEnv(String text) throws Exception {
+    Set<String> toIgnore = new HashSet<String>(Arrays.asList("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE, INTELLIJ_ENVIRONMENT_READER));
     Map<String, String> env = System.getenv();
     Map<String, String> newEnv = new HashMap<String, String>();
 
-    String[] lines = text.split(lineSeparator);
+    String[] lines = text.split("\0");
     for (String line : lines) {
       int pos = line.indexOf('=');
       if (pos <= 0) {
@@ -304,15 +334,39 @@ public class EnvironmentUtil {
 
   private static Map<String, String> setCharsetVar(@NotNull Map<String, String> env) {
     if (!isCharsetVarDefined(env)) {
-      Locale locale = Locale.getDefault();
-      Charset charset = CharsetToolkit.getDefaultSystemCharset();
-      String language = locale.getLanguage();
-      String country = locale.getCountry();
-      String value = (language.isEmpty() || country.isEmpty() ? "en_US" : language + '_' + country) + '.' + charset.name();
-      env.put(LC_CTYPE, value);
+      String value = setLocaleEnv(env, CharsetToolkit.getDefaultSystemCharset());
       LOG.info("LC_CTYPE=" + value);
     }
     return env;
+  }
+
+  private static boolean checkIfLocaleAvailable(String candidateLanguageTerritory) {
+      Locale[] available = Locale.getAvailableLocales();
+      for (Locale l : available) {
+        if (StringUtil.equals(l.toString(), candidateLanguageTerritory)) {
+          return true;
+        }
+      }
+      return false;
+  }
+
+  @NotNull
+  public static String setLocaleEnv(@NotNull Map<String, String> env, @NotNull Charset charset) {
+    Locale locale = Locale.getDefault();
+    String language = locale.getLanguage();
+    String country = locale.getCountry();
+
+    String languageTerritory = "en_US";
+    if (!language.isEmpty() && !country.isEmpty()) {
+      String languageTerritoryFromLocale = language + '_' + country;
+      if (checkIfLocaleAvailable(languageTerritoryFromLocale)) {
+        languageTerritory = languageTerritoryFromLocale ;
+      }
+    }
+
+    String result = languageTerritory + '.' + charset.name();
+    env.put(LC_CTYPE, result);
+    return result;
   }
 
   private static boolean isCharsetVarDefined(@NotNull Map<String, String> env) {
@@ -320,12 +374,15 @@ public class EnvironmentUtil {
   }
 
   public static void inlineParentOccurrences(@NotNull Map<String, String> envs) {
-    Map<String, String> parentParams = new HashMap<String, String>(System.getenv());
+    inlineParentOccurrences(envs, getEnvironmentMap());
+  }
+
+  public static void inlineParentOccurrences(@NotNull Map<String, String> envs, @NotNull Map<String, String> parentEnv) {
     for (Map.Entry<String, String> entry : envs.entrySet()) {
       String key = entry.getKey();
       String value = entry.getValue();
       if (value != null) {
-        String parentVal = parentParams.get(key);
+        String parentVal = parentEnv.get(key);
         if (parentVal != null && containsEnvKeySubstitution(key, value)) {
           envs.put(key, value.replace("$" + key + "$", parentVal));
         }
@@ -350,7 +407,7 @@ public class EnvironmentUtil {
   @TestOnly
   static Map<String, String> testParser(@NotNull String lines) {
     try {
-      return parseEnv(lines, "\0");
+      return parseEnv(lines);
     }
     catch (Exception e) {
       throw new RuntimeException(e);

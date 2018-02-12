@@ -26,9 +26,6 @@ import com.intellij.util.xml.DomElementsNavigationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: Sergey.Vasiliev
- */
 public abstract class GenerateDomElementProvider<T extends DomElement> {
   private final String myDescription;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.dom.MavenDomWithIndicesTestCase;
 import org.jetbrains.idea.maven.importing.MavenProjectModelModifier;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -40,7 +39,7 @@ import java.util.regex.Pattern;
  * @author nik
  */
 public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
-  public void testAddExternalLibraryDependency() throws IOException {
+  public void testAddExternalLibraryDependency() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -54,7 +53,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertModuleLibDep("project", "Maven: junit:junit:" + version);
   }
 
-  public void testAddExternalLibraryDependencyWithEqualMinAndMaxVersions() throws IOException {
+  public void testAddExternalLibraryDependencyWithEqualMinAndMaxVersions() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -68,7 +67,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertModuleLibDep("project", "Maven: commons-io:commons-io:2.4");
   }
 
-  public void testAddManagedLibraryDependency() throws IOException {
+  public void testAddManagedLibraryDependency() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -91,7 +90,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertModuleLibDep("project", "Maven: commons-io:commons-io:2.4");
   }
 
-  public void testAddManagedLibraryDependencyWithDifferentScope() throws IOException {
+  public void testAddManagedLibraryDependencyWithDifferentScope() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -114,7 +113,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertModuleLibDepScope("project", "Maven: commons-io:commons-io:2.4", DependencyScope.COMPILE);
   }
 
-  public void testAddLibraryDependencyReleaseVersion() throws IOException {
+  public void testAddLibraryDependencyReleaseVersion() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -136,7 +135,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertNotNull(dep);
   }
 
-  public void testAddModuleDependency() throws IOException {
+  public void testAddModuleDependency() {
     createTwoModulesPom("m1", "m2");
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
@@ -146,14 +145,14 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
                           "<version>1</version>");
     importProject();
 
-    Promise<Void> result = getExtension().addModuleDependency(getModule("m1"), getModule("m2"), DependencyScope.COMPILE);
+    Promise<Void> result = getExtension().addModuleDependency(getModule("m1"), getModule("m2"), DependencyScope.COMPILE, false);
     assertNotNull(result);
     assertHasDependency(m1, "test", "m2");
     waitUntilImported(result);
     assertModuleModuleDeps("m1", "m2");
   }
 
-  public void testAddLibraryDependency() throws IOException {
+  public void testAddLibraryDependency() {
     createTwoModulesPom("m1", "m2");
     VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
                                            "<artifactId>m1</artifactId>" +
@@ -175,14 +174,14 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertModuleLibDep("m2", libName);
     Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraryByName(libName);
     assertNotNull(library);
-    Promise<Void> result = getExtension().addLibraryDependency(getModule("m1"), library, DependencyScope.COMPILE);
+    Promise<Void> result = getExtension().addLibraryDependency(getModule("m1"), library, DependencyScope.COMPILE, false);
     assertNotNull(result);
     assertHasDependency(m1, "junit", "junit");
     waitUntilImported(result);
     assertModuleLibDep("m1", libName);
   }
 
-  public void testChangeLanguageLevel() throws IOException {
+  public void testChangeLanguageLevel() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -196,14 +195,14 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertEquals("maven-compiler-plugin", tag.getSubTagText("artifactId"));
     XmlTag configuration = tag.findFirstSubTag("configuration");
     assertNotNull(configuration);
-    assertEquals("1.8", configuration.getSubTagText("source"));
-    assertEquals("1.8", configuration.getSubTagText("target"));
+    assertEquals("8", configuration.getSubTagText("source"));
+    assertEquals("8", configuration.getSubTagText("target"));
 
     waitUntilImported(result);
     assertEquals(LanguageLevel.JDK_1_8, EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module));
   }
 
-  private void createTwoModulesPom(final String m1, final String m2) throws IOException {
+  private void createTwoModulesPom(final String m1, final String m2) {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -218,7 +217,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     String pomText = PsiManager.getInstance(myProject).findFile(pom).getText();
     Pattern
       pattern = Pattern.compile("(?s).*<dependency>\\s*<groupId>" + groupId + "</groupId>\\s*<artifactId>" +
-                                artifactId + "</artifactId>\\s*<version>(.*)</version>\\s*</dependency>.*");
+                                artifactId + "</artifactId>\\s*<version>(.*)</version>\\s*<scope>(.*)</scope>\\s*</dependency>.*");
     Matcher matcher = pattern.matcher(pomText);
     assertTrue(matcher.matches());
     return matcher.group(1);

@@ -50,12 +50,11 @@ import java.util.concurrent.Future;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 11/30/12
  */
 public class RmiStubsGenerator extends ClassProcessingBuilder {
   private static final String REMOTE_INTERFACE_NAME = Remote.class.getName().replace('.', '/');
   private static final File[] EMPTY_FILE_ARRAY = new File[0];
-  private static Key<Boolean> IS_ENABLED = Key.create("_rmic_compiler_enabled_");
+  private static final Key<Boolean> IS_ENABLED = Key.create("_rmic_compiler_enabled_");
 
   public RmiStubsGenerator() {
     super(BuilderCategory.CLASS_INSTRUMENTER);
@@ -151,7 +150,7 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
         final RmicOutputParser stdErrParser = new RmicOutputParser(context, getPresentableName());
         handler.addProcessListener(new ProcessAdapter() {
           @Override
-          public void onTextAvailable(ProcessEvent event, Key outputType) {
+          public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
             if (outputType == ProcessOutputTypes.STDOUT) {
               stdOutParser.append(event.getText());
             }
@@ -161,7 +160,7 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
           }
 
           @Override
-          public void processTerminated(ProcessEvent event) {
+          public void processTerminated(@NotNull ProcessEvent event) {
             super.processTerminated(event);
           }
         });

@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.refactoring;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -9,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
@@ -176,11 +178,11 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
   @NotNull
   private static Map<PsiElement, String> getElementsToRename(@NotNull JavaFxPropertyReference reference, @NotNull String newPropertyName) {
     final Map<PsiElement, String> rename = new THashMap<>();
-    putIfKeyNotNull(rename, reference.getGetter(), PropertyUtil.suggestGetterName(newPropertyName, reference.getType()));
+    putIfKeyNotNull(rename, reference.getGetter(), PropertyUtilBase.suggestGetterName(newPropertyName, reference.getType()));
     putIfKeyNotNull(rename, reference.getField(), newPropertyName);
-    putIfKeyNotNull(rename, reference.getSetter(), PropertyUtil.suggestSetterName(newPropertyName));
+    putIfKeyNotNull(rename, reference.getSetter(), PropertyUtilBase.suggestSetterName(newPropertyName));
     putIfKeyNotNull(rename, reference.getObservableGetter(), newPropertyName + JavaFxCommonNames.PROPERTY_METHOD_SUFFIX);
-    putIfKeyNotNull(rename, reference.getStaticSetter(), PropertyUtil.suggestSetterName(newPropertyName));
+    putIfKeyNotNull(rename, reference.getStaticSetter(), PropertyUtilBase.suggestSetterName(newPropertyName));
     //TODO add "name" parameter of the observable property constructor (like new SimpleObjectProperty(this, "name", null);
     return rename;
   }

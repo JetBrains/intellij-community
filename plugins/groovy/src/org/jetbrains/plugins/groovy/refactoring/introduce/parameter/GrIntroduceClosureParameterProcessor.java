@@ -43,7 +43,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -216,7 +215,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
       }
     }
 
-    final UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
+    final UsageInfo[] usageInfos = result.toArray(UsageInfo.EMPTY_ARRAY);
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
@@ -326,18 +325,15 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     final FieldConflictsResolver fieldConflictsResolver = new FieldConflictsResolver(name, block);
 
     final GrParameter[] parameters = block.getParameters();
-    settings.parametersToRemove().forEachDescending(new TIntProcedure() {
-      @Override
-      public boolean execute(final int paramNum) {
-        try {
-          PsiParameter param = parameters[paramNum];
-          param.delete();
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-        return true;
+    settings.parametersToRemove().forEachDescending(paramNum -> {
+      try {
+        PsiParameter param = parameters[paramNum];
+        param.delete();
       }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+      return true;
     });
 
     final PsiType type = settings.getSelectedType();
@@ -588,18 +584,16 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     final GrClosureSignature signature = GrClosureSignatureUtil.createSignature((PsiMethod)resolved, resolveResult.getSubstitutor());
     final GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos = GrClosureSignatureUtil.mapParametersToArguments(signature, methodCall);
     LOG.assertTrue(argInfos != null);
-    settings.parametersToRemove().forEach(new TIntProcedure() {
-      @Override
-      public boolean execute(int value) {
-        final List<PsiElement> args = argInfos[value].args;
-        for (PsiElement arg : args) {
-          arg.delete();
-        }
-        return true;
+    settings.parametersToRemove().forEach(value -> {
+      final List<PsiElement> args = argInfos[value].args;
+      for (PsiElement arg : args) {
+        arg.delete();
       }
+      return true;
     });
   }
 
+  @NotNull
   @Override
   protected String getCommandName() {
     return RefactoringBundle.message("introduce.parameter.command", DescriptiveNameUtil.getDescriptiveName(mySettings.getToReplaceIn()));

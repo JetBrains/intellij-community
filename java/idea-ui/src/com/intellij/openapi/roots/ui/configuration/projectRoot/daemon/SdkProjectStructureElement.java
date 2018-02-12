@@ -1,6 +1,7 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 
 import java.util.Collections;
@@ -14,7 +15,12 @@ public class SdkProjectStructureElement extends ProjectStructureElement {
 
   public SdkProjectStructureElement(StructureConfigurableContext context, Sdk sdk) {
     super(context);
-    mySdk = sdk;
+    mySdk = getModifiableSdk(sdk);
+  }
+
+  private Sdk getModifiableSdk(Sdk sdk) {
+    Sdk modifiableSdk = ProjectStructureConfigurable.getInstance(myContext.getProject()).getProjectJdksModel().getProjectSdks().get(sdk);
+    return modifiableSdk != null? modifiableSdk : sdk;
   }
 
   public Sdk getSdk() {

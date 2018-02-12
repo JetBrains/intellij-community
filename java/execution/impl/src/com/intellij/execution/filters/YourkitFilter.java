@@ -124,6 +124,7 @@ public class YourkitFilter implements Filter{
       return "(" + psiPackage.getQualifiedName() + ")";
     }
 
+    @Override
     protected int getIconFlags() {
       return 0;
     }

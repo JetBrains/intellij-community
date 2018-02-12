@@ -1,31 +1,12 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 24, 2001
- * Time: 2:46:32 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedParameterFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.reference.*;
@@ -39,13 +20,12 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
-import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
   @Override
@@ -84,11 +64,11 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
         if (psiIdentifier != null) {
           result.add(manager.createProblemDescriptor(psiIdentifier,
                                                      InspectionsBundle.message(refMethod.isAbstract() ? "inspection.unused.parameter.composer" : "inspection.unused.parameter.composer1"),
-                                                     new AcceptSuggested(globalContext.getRefManager(), processor, refParameter.toString()),
+                                                     new AcceptSuggested(globalContext.getRefManager(), processor, refParameter.getName()),
                                                      ProblemHighlightType.LIKE_UNUSED_SYMBOL, false));
         }
       }
-      return result.toArray(new CommonProblemDescriptor[result.size()]);
+      return result.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
     }
     return null;
   }
@@ -108,11 +88,11 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
         if (refEntity instanceof RefMethod) {
           RefMethod refMethod = (RefMethod)refEntity;
           final PsiModifierListOwner element = refMethod.getElement();
-          if (element instanceof PsiMethod) { //implicit constructors are invisible
-            PsiMethod psiMethod = (PsiMethod)element;
-            if (!refMethod.isStatic() && !refMethod.isConstructor() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
-              final ArrayList<RefParameter> unusedParameters = getUnusedParameters(refMethod);
-              if (unusedParameters.isEmpty()) return;
+          if (!refMethod.isStatic() && !refMethod.isConstructor() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
+            final ArrayList<RefParameter> unusedParameters = getUnusedParameters(refMethod);
+            if (unusedParameters.isEmpty()) return;
+            if (element instanceof PsiMethod) {
+              PsiMethod psiMethod = (PsiMethod)element;
               PsiMethod[] derived = OverridingMethodsSearch.search(psiMethod).toArray(PsiMethod.EMPTY_ARRAY);
               for (final RefParameter refParameter : unusedParameters) {
                 if (refMethod.isAbstract() && derived.length == 0) {
@@ -125,7 +105,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
                   for (int i = 0; i < derived.length && !found[0]; i++) {
                     if (scope == null || !scope.contains(derived[i])) {
                       final PsiParameter[] parameters = derived[i].getParameterList().getParameters();
-                      if (parameters.length >= idx) continue;
+                      if (parameters.length < idx) continue;
                       PsiParameter psiParameter = parameters[idx];
                       ReferencesSearch.search(psiParameter, helper.getUseScope(psiParameter), false)
                         .forEach(new PsiReferenceProcessorAdapter(
@@ -133,7 +113,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
                             @Override
                             public boolean execute(PsiReference element) {
                               refParameter.parameterReferenced(false);
-                              processor.ignoreElement(refParameter);
+                              processor.ignoreElement(refMethod);
                               found[0] = true;
                               return false;
                             }
@@ -200,7 +180,9 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     private final String myHint;
     private final ProblemDescriptionsProcessor myProcessor;
 
-    public AcceptSuggested(final RefManager manager, final ProblemDescriptionsProcessor processor, final String hint) {
+    public AcceptSuggested(@Nullable RefManager manager,
+                           @Nullable ProblemDescriptionsProcessor processor,
+                           final String hint) {
       myManager = manager;
       myProcessor = processor;
       myHint = hint;
@@ -227,9 +209,9 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
         final PsiModificationTracker tracker = psiMethod.getManager().getModificationTracker();
         final long startModificationCount = tracker.getModificationCount();
 
-        removeUnusedParameterViaChangeSignature(psiMethod, psiParameter);
+        RemoveUnusedParameterFix.removeReferences(psiParameter);
         if (refMethod != null && startModificationCount != tracker.getModificationCount()) {
-          myProcessor.ignoreElement(refMethod);
+          Objects.requireNonNull(myProcessor).ignoreElement(refMethod);
         }
       }
     }
@@ -237,25 +219,6 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     @Override
     public boolean startInWriteAction() {
       return false;
-    }
-
-    private static void removeUnusedParameterViaChangeSignature(final PsiMethod psiMethod,
-                                                                final PsiParameter parameterToDelete) {
-      ArrayList<ParameterInfoImpl> newParameters = new ArrayList<>();
-      PsiParameter[] oldParameters = psiMethod.getParameterList().getParameters();
-      for (int i = 0; i < oldParameters.length; i++) {
-        PsiParameter oldParameter = oldParameters[i];
-        if (!oldParameter.equals(parameterToDelete)) {
-          newParameters.add(new ParameterInfoImpl(i, oldParameter.getName(), oldParameter.getType()));
-        }
-      }
-
-      ParameterInfoImpl[] parameterInfos = newParameters.toArray(new ParameterInfoImpl[newParameters.size()]);
-
-      ChangeSignatureProcessor csp = new ChangeSignatureProcessor(psiMethod.getProject(), psiMethod, false, null, psiMethod.getName(),
-                                                                  psiMethod.getReturnType(), parameterInfos);
-
-      csp.run();
     }
   }
 }

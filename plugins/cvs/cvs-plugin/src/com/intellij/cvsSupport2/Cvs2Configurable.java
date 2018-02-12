@@ -19,7 +19,6 @@ import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.config.ui.CvsConfigurationPanel;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 
@@ -37,6 +36,7 @@ class Cvs2Configurable implements Configurable {
     return "CVS2";
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.projectsettings.vcs.cvs.options";
   }
@@ -59,7 +59,7 @@ class Cvs2Configurable implements Configurable {
     return !myComponent.equalsTo(getCvsConfiguration(), getAppLevelConfiguration());
   }
 
-  public void apply() throws ConfigurationException {
+  public void apply() {
     myComponent.saveTo(getCvsConfiguration(), getAppLevelConfiguration());
   }
 

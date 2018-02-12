@@ -25,13 +25,6 @@ import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 09.12.2003
- * Time: 14:10:35
- * To change this template use Options | File Templates.
- */
 public class PlainFileManipulator extends AbstractElementManipulator<PsiPlainTextFile> {
   @Override
   public PsiPlainTextFile handleContentChange(@NotNull PsiPlainTextFile file, @NotNull TextRange range, String newContent)

@@ -25,10 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 22.05.2007
- */
 public abstract class GroovyExpressionSurrounder implements Surrounder {
   protected boolean isApplicable(@NotNull PsiElement element) {
     return element instanceof GrExpression;

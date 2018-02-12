@@ -18,9 +18,9 @@ package com.intellij.openapi.externalSystem.util;
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.Key;
@@ -37,8 +37,10 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Conditions;
@@ -74,13 +76,11 @@ import java.util.regex.Pattern;
  * @since 4/1/13 1:31 PM
  */
 public class ExternalSystemApiUtil {
-
-  private static final Logger LOG                           = Logger.getInstance("#" + ExternalSystemApiUtil.class.getName());
   private static final String LAST_USED_PROJECT_PATH_PREFIX = "LAST_EXTERNAL_PROJECT_PATH_";
 
   @NotNull public static final String PATH_SEPARATOR = "/";
 
-  @NotNull private static final Pattern ARTIFACT_PATTERN = Pattern.compile("(?:.*/)?(.+?)(?:-([\\d+](?:\\.[\\d]+)*))?(?:\\.[^\\.]+?)?");
+  @NotNull private static final Pattern ARTIFACT_PATTERN = Pattern.compile("(?:.*/)?(.+?)(?:-([\\d+](?:\\.[\\d]+)*))?(?:\\.[^.]+?)?");
 
   @NotNull public static final Comparator<Object> ORDER_AWARE_COMPARATOR = new Comparator<Object>() {
 
@@ -88,7 +88,7 @@ public class ExternalSystemApiUtil {
     public int compare(@NotNull Object o1, @NotNull Object o2) {
       int order1 = getOrder(o1);
       int order2 = getOrder(o2);
-      return (order1 < order2) ? -1 : ((order1 == order2) ? 0 : 1);
+      return Integer.compare(order1, order2);
     }
 
     private int getOrder(@NotNull Object o) {
@@ -117,7 +117,7 @@ public class ExternalSystemApiUtil {
     new TransferToEDTQueue<>("External System queue", runnable -> {
       runnable.run();
       return true;
-    }, Conditions.alwaysFalse(), 300);
+    }, Conditions.alwaysFalse());
 
   private ExternalSystemApiUtil() {
   }
@@ -171,9 +171,12 @@ public class ExternalSystemApiUtil {
   }
 
   public static boolean isExternalSystemLibrary(@NotNull Library library, @NotNull ProjectSystemId externalSystemId) {
-    return library.getName() != null && StringUtil.startsWith(library.getName(), externalSystemId.getReadableName() + ": ");
+    return library.getName() != null && StringUtil.startsWithIgnoreCase(library.getName(), externalSystemId.getId() + ": ");
   }
 
+  /**
+   * @deprecated to be removed in 2018.2
+   */
   @Nullable
   public static ArtifactInfo parseArtifactInfo(@NotNull String fileName) {
     Matcher matcher = ARTIFACT_PATTERN.matcher(fileName);
@@ -271,7 +274,7 @@ public class ExternalSystemApiUtil {
       }
       result.add((DataNode<T>)child);
     }
-    return result == null ? Collections.<DataNode<T>>emptyList() : result;
+    return result == null ? Collections.emptyList() : result;
   }
 
   @SuppressWarnings("unchecked")
@@ -388,7 +391,7 @@ public class ExternalSystemApiUtil {
   private static DataNode<?> findInQueue(@NotNull Queue<DataNode<?>> queue,
                                          @NotNull BooleanFunction<DataNode<?>> predicate) {
     while (!queue.isEmpty()) {
-      DataNode node = (DataNode)queue.remove();
+      DataNode node = queue.remove();
       if (predicate.fun(node)) {
         return node;
       }
@@ -398,6 +401,9 @@ public class ExternalSystemApiUtil {
     return null;
   }
 
+  /**
+   * @deprecated to be removed in 2018.2
+   */
   public static void commitChangedModels(boolean synchronous, Project project, List<Library.ModifiableModel> models) {
     final List<Library.ModifiableModel> changedModels = ContainerUtil.findAll(models, model -> model.isChanged());
     if (!changedModels.isEmpty()) {
@@ -412,6 +418,9 @@ public class ExternalSystemApiUtil {
     }
   }
 
+  /**
+   * @deprecated to be removed in 2018.2
+   */
   public static void disposeModels(@NotNull Collection<ModifiableRootModel> models) {
     for (ModifiableRootModel model : models) {
       if (!model.isDisposed()) {
@@ -420,6 +429,9 @@ public class ExternalSystemApiUtil {
     }
   }
 
+  /**
+   * @deprecated to be removed in 2018.2
+   */
   public static void commitModels(boolean synchronous, Project project, List<ModifiableRootModel> models) {
     final List<ModifiableRootModel> changedModels = ContainerUtilRt.newArrayList();
     for (ModifiableRootModel modifiableRootModel : models) {
@@ -454,7 +466,7 @@ public class ExternalSystemApiUtil {
 
   public static void executeProjectChangeAction(boolean synchronous, @NotNull final DisposeAwareProjectChange task) {
     TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
-    executeOnEdt(synchronous, () -> ApplicationManager.getApplication().runWriteAction(() -> task.run()));
+    executeOnEdt(synchronous, () -> ApplicationManager.getApplication().runWriteAction(task));
   }
 
   public static void executeOnEdt(boolean synchronous, @NotNull Runnable task) {
@@ -543,8 +555,8 @@ public class ExternalSystemApiUtil {
    *
    * @param ideProject       target ide project
    * @param projectData      target external project
-   * @return                 <code>true</code> if given ide project has 1-1 mapping to the given external project;
-   *                         <code>false</code> otherwise
+   * @return                 {@code true} if given ide project has 1-1 mapping to the given external project;
+   *                         {@code false} otherwise
    */
   public static boolean isOneToOneMapping(@NotNull Project ideProject, @NotNull ProjectData projectData) {
     String linkedExternalProjectPath = null;
@@ -581,6 +593,9 @@ public class ExternalSystemApiUtil {
     return true;
   }
 
+  /**
+   * @deprecated to be removed in 2018.2
+   */
   public static void storeLastUsedExternalProjectPath(@Nullable String path, @NotNull ProjectSystemId externalSystemId) {
     if (path != null) {
       PropertiesComponent.getInstance().setValue(LAST_USED_PROJECT_PATH_PREFIX + externalSystemId.getReadableName(), path);
@@ -622,7 +637,7 @@ public class ExternalSystemApiUtil {
    * @param externalSystemId     target external system
    * @param project              target ide project
    * @return                     root external project's path if given path is considered to point to a known sub-project's config;
-   *                             <code>null</code> if it's not possible to find a root project's config path on the basis of the
+   *                             {@code null} if it's not possible to find a root project's config path on the basis of the
    *                             given path
    */
   @Nullable
@@ -728,8 +743,8 @@ public class ExternalSystemApiUtil {
    *
    * @param externalSystemId     target external system
    *
-   * @return   <code>true</code> if the ide is configured to work with external system api from the ide process;
-   *           <code>false</code> otherwise
+   * @return   {@code true} if the ide is configured to work with external system api from the ide process;
+   *           {@code false} otherwise
    */
   public static boolean isInProcessMode(ProjectSystemId externalSystemId) {
     return Registry.is(externalSystemId.getId() + ExternalSystemConstants.USE_IN_PROCESS_COMMUNICATION_REGISTRY_KEY_SUFFIX, false);
@@ -742,11 +757,13 @@ public class ExternalSystemApiUtil {
    * <p/>
    * It's also possible that particular implementation of {@link ParametersEnhancer} is compiled using dependency to classes
    * which are provided by the {@link ParametersEnhancer#enhanceLocalProcessing(List) expanded classpath}. E.g. a class
-   * <code>'A'</code> might use method of class <code>'B'</code> and 'A' is located at the current (system/plugin) classpath but
-   * <code>'B'</code> is not. We need to reload <code>'A'</code> using its expanded classpath then, i.e. create new class loaded
-   * with that expanded classpath and load <code>'A'</code> by it.
+   * {@code 'A'} might use method of class {@code 'B'} and 'A' is located at the current (system/plugin) classpath but
+   * {@code 'B'} is not. We need to reload {@code 'A'} using its expanded classpath then, i.e. create new class loaded
+   * with that expanded classpath and load {@code 'A'} by it.
    * <p/>
    * This method allows to do that.
+   *
+   * @deprecated to be removed in 2018.2
    *
    * @param clazz  custom classpath-aware class which instance should be created (is assumed to have a no-args constructor)
    * @param <T>    target type
@@ -772,7 +789,7 @@ public class ExternalSystemApiUtil {
     Method method = baseLoader.getClass().getMethod("getUrls");
     if (method != null) {
       //noinspection unchecked
-      urls.addAll((Collection<? extends URL>)method.invoke(baseLoader));
+      urls.addAll((Collection<URL>)method.invoke(baseLoader));
     }
     UrlClassLoader loader = new UrlClassLoader(UrlClassLoader.build().urls(urls).parent(baseLoader.getParent())) {
       @Override
@@ -794,50 +811,54 @@ public class ExternalSystemApiUtil {
     return (T)loader.loadClass(clazz.getName()).newInstance();
   }
 
+  public static ProjectModelExternalSource toExternalSource(@NotNull ProjectSystemId systemId) {
+    return ExternalProjectSystemRegistry.getInstance().getSourceById(systemId.getId());
+  }
+
   @Contract(value = "_, null -> false", pure=true)
   public static boolean isExternalSystemAwareModule(@NotNull ProjectSystemId systemId, @Nullable Module module) {
-    return module != null && !module.isDisposed() && systemId.getId().equals(module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY));
+    return module != null && !module.isDisposed() && systemId.getId().equals(ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId());
   }
 
   @Contract(value = "_, null -> false", pure=true)
   public static boolean isExternalSystemAwareModule(@NotNull String systemId, @Nullable Module module) {
-    return module != null && !module.isDisposed() && systemId.equals(module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY));
+    return module != null && !module.isDisposed() && systemId.equals(ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId());
   }
 
   @Nullable
   @Contract(pure=true)
   public static String getExternalProjectPath(@Nullable Module module) {
-    return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY) : null;
+    return module != null && !module.isDisposed() ? ExternalSystemModulePropertyManager.getInstance(module).getLinkedProjectPath() : null;
   }
 
   @Nullable
   @Contract(pure=true)
   public static String getExternalRootProjectPath(@Nullable Module module) {
-    return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY) : null;
+    return module != null && !module.isDisposed() ? ExternalSystemModulePropertyManager.getInstance(module).getRootProjectPath() : null;
   }
 
   @Nullable
   @Contract(pure=true)
   public static String getExternalProjectId(@Nullable Module module) {
-    return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_ID_KEY) : null;
+    return module != null && !module.isDisposed() ? ExternalSystemModulePropertyManager.getInstance(module).getLinkedProjectId() : null;
   }
 
   @Nullable
   @Contract(pure=true)
   public static String getExternalProjectGroup(@Nullable Module module) {
-    return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_GROUP_KEY) : null;
+    return module != null && !module.isDisposed() ? ExternalSystemModulePropertyManager.getInstance(module).getExternalModuleGroup() : null;
   }
 
   @Nullable
   @Contract(pure=true)
   public static String getExternalProjectVersion(@Nullable Module module) {
-    return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION_KEY) : null;
+    return module != null && !module.isDisposed() ? ExternalSystemModulePropertyManager.getInstance(module).getExternalModuleVersion() : null;
   }
 
   @Nullable
   @Contract(pure=true)
   public static String getExternalModuleType(@Nullable Module module) {
-    return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_TYPE_KEY) : null;
+    return module != null && !module.isDisposed() ? ExternalSystemModulePropertyManager.getInstance(module).getExternalModuleType() : null;
   }
 
   public static void subscribe(@NotNull Project project,

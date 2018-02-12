@@ -20,10 +20,9 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
 import java.awt.datatransfer.DataFlavor;
-import java.io.IOException;
 
 public class CopyActionTest extends LightPlatformCodeInsightTestCase {
-  public void testCopyWithoutSelection() throws Exception {
+  public void testCopyWithoutSelection() {
     prepare("first line\n" +
             "second<caret> line\n" +
             "third line");
@@ -35,7 +34,7 @@ public class CopyActionTest extends LightPlatformCodeInsightTestCase {
     );
   }
 
-  public void testCopyWithoutSelectionWithSoftWraps() throws Exception {
+  public void testCopyWithoutSelectionWithSoftWraps() {
     prepare("first line\n" +
             "second line<caret>\n" + // this line will be wrapped and caret is positioned after the wrap
             "third line");
@@ -48,7 +47,7 @@ public class CopyActionTest extends LightPlatformCodeInsightTestCase {
     );
   }
 
-  private void prepare(String documentContents) throws IOException {
+  private void prepare(String documentContents) {
     configureFromFileText(getTestName(false) + ".txt", documentContents);
   }
 

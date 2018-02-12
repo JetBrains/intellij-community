@@ -19,11 +19,6 @@ package org.intellij.plugins.relaxNG.compact.psi.impl;
 import com.intellij.openapi.util.Key;
 import org.intellij.plugins.relaxNG.compact.psi.RncFile;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 13.08.2007
- */
 public interface FollowFileHint {
   Key<FollowFileHint> KEY = Key.create("FollowFileHint");
 

@@ -36,7 +36,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.PairFunction;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -869,7 +868,7 @@ public abstract class PropertyTable extends JBTable {
    * @see javax.swing.plaf.basic.BasicTableUI
    */
   private class MySelectNextPreviousRowAction extends AbstractAction {
-    private boolean selectNext;
+    private final boolean selectNext;
 
     private MySelectNextPreviousRowAction(boolean selectNext) {
       this.selectNext = selectNext;
@@ -1136,7 +1135,7 @@ public abstract class PropertyTable extends JBTable {
           ComboBox.registerTableCellEditor((JComboBox)component, this);
         }
         else if (component instanceof JCheckBox) {
-          component.putClientProperty("JComponent.sizeVariant", UIUtil.isUnderAquaLookAndFeel() ? "small" : null);
+          if (UIUtil.isUnderAquaLookAndFeel()) UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, component);
         }
 
         return component;
@@ -1307,7 +1306,7 @@ public abstract class PropertyTable extends JBTable {
           component.setFont(table.getFont());
 
           if (component instanceof JCheckBox) {
-            component.putClientProperty("JComponent.sizeVariant", UIUtil.isUnderAquaLookAndFeel() ? "small" : null);
+            if (UIUtil.isUnderAquaLookAndFeel()) UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, component);
           }
 
           return component;

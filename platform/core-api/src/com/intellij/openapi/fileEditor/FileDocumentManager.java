@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.SavingRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -122,6 +123,13 @@ public abstract class FileDocumentManager implements SavingRequestor {
    * @return true if the file has unsaved changes, false otherwise.
    */
   public abstract boolean isFileModified(@NotNull VirtualFile file);
+
+  /**
+   * Check if only beginning of the file was loaded for Document.
+   *
+   * @see FileUtilRt#isTooLarge
+   */
+  public abstract boolean isPartialPreviewOfALargeFile(@NotNull Document document);
 
   /**
    * Discards unsaved changes for the specified document and reloads it from disk.

@@ -14,13 +14,8 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 21-Dec-2007
- */
 package com.intellij.codeInspection.reference;
 
-import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -30,9 +25,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
-import java.util.Collections;
 
 public class RefJavaUtilImpl extends RefJavaUtil{
 
@@ -56,6 +48,20 @@ public class RefJavaUtilImpl extends RefJavaUtil{
 
           if (target instanceof PsiModifierListOwner && isDeprecated(target)) {
             refFrom.setUsesDeprecatedApi(true);
+          }
+        }
+
+        @Override
+        public void visitLiteralExpression(PsiLiteralExpression expression) {
+          for (PsiReference reference : expression.getReferences()) {
+            PsiElement resolve = reference.resolve();
+            if (resolve instanceof PsiMember) {
+              final RefElement refResolved = refFrom.getRefManager().getReference(resolve);
+              refFrom.addReference(refResolved, resolve, psiFrom, false, true, null);
+              if (refResolved instanceof RefMethod) {
+                updateRefMethod(resolve, refResolved, expression, psiFrom, refFrom);
+              }
+            }
           }
         }
 
@@ -130,29 +136,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
             final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(aClass);
             if (interfaceMethod != null) {
               refFrom.addReference(refFrom.getRefManager().getReference(interfaceMethod), interfaceMethod, psiFrom, false, true, null);
-
-              PsiElement body = null;
-              PsiElement topElement = null;
-              if (expression instanceof PsiLambdaExpression) {
-                body = ((PsiLambdaExpression)expression).getBody();
-                topElement = expression;
-              }
-              else {
-                final PsiElement resolve = ((PsiMethodReferenceExpression)expression).resolve();
-                if (resolve instanceof PsiMethod) {
-                  body = ((PsiMethod)resolve).getBody();
-                  topElement = resolve;
-                }
-              }
-
-              final Collection<PsiClassType> exceptionTypes = body != null ? ExceptionUtil.collectUnhandledExceptions(body, topElement, false) 
-                                                                           : Collections.<PsiClassType>emptyList();
-              RefElement refResolved = refFrom.getRefManager().getReference(interfaceMethod);
-              if (refResolved instanceof RefMethodImpl) {
-                for (final PsiClassType exceptionType : exceptionTypes) {
-                  ((RefMethodImpl)refResolved).updateThrowsList(exceptionType);
-                }
-              }
+              refFrom.getRefManager().fireNodeMarkedReferenced(interfaceMethod, expression);
             }
           }
         }
@@ -258,6 +242,14 @@ public class RefJavaUtilImpl extends RefJavaUtil{
       }
       return;
     }
+    if (refExpression instanceof PsiLiteralExpression){ //references in literal expressions
+      PsiType returnType = psiMethod.getReturnType();
+      if (!psiMethod.isConstructor() && !PsiType.VOID.equals(returnType)) {
+        refMethod.setReturnValueUsed(true);
+        addTypeReference(psiFrom, returnType, refFrom.getRefManager());
+      }
+      return;
+    }
     PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(
       refExpression,
       PsiMethodCallExpression.class
@@ -273,7 +265,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
       }
 
       PsiExpressionList argumentList = call.getArgumentList();
-      if (argumentList.getExpressions().length > 0) {
+      if (!argumentList.isEmpty()) {
         refMethod.updateParameterValues(argumentList.getExpressions());
       }
 
@@ -301,7 +293,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
   public RefClass getTopLevelClass(@NotNull RefElement refElement) {
     RefEntity refParent = refElement.getOwner();
 
-    while (refParent != null && refParent instanceof RefElement && !(refParent instanceof RefFile)) {
+    while (refParent instanceof RefElement && !(refParent instanceof RefFile)) {
       refElement = (RefElementImpl)refParent;
       refParent = refParent.getOwner();
     }
@@ -323,7 +315,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
   @Override
   @Nullable
   public String getPackageName(RefEntity refEntity) {
-    if (refEntity instanceof RefProject) {
+    if (refEntity instanceof RefProject || refEntity instanceof RefJavaModule) {
       return null;
     }
     RefPackage refPackage = getPackage(refEntity);
@@ -458,13 +450,13 @@ public class RefJavaUtilImpl extends RefJavaUtil{
      if (a == PsiModifier.PRIVATE) {
        return 0;
      }
-     else if (a == PsiModifier.PACKAGE_LOCAL) {
+     if (a == PsiModifier.PACKAGE_LOCAL) {
        return 1;
      }
-     else if (a == PsiModifier.PROTECTED) {
+     if (a == PsiModifier.PROTECTED) {
        return 2;
      }
-     else if (a == PsiModifier.PUBLIC) return 3;
+     if (a == PsiModifier.PUBLIC) return 3;
 
      return -1;
    }
@@ -507,7 +499,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
             }
           }
           else {
-            ((RefManagerImpl)refManager).fireNodeMarkedReferenced(psiClass, psiElement, false);
+            ((RefManagerImpl)refManager).fireNodeMarkedReferenced(psiClass, psiElement);
           }
         }
       }

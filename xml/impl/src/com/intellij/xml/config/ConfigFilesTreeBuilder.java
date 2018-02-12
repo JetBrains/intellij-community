@@ -27,14 +27,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
 import java.util.*;
 
 public class ConfigFilesTreeBuilder {
@@ -47,7 +45,7 @@ public class ConfigFilesTreeBuilder {
   }
 
   public Set<PsiFile> buildTree(DefaultMutableTreeNode root, ConfigFileSearcher... searchers) {
-    final Set<PsiFile> psiFiles = new com.intellij.util.containers.HashSet<>();
+    final Set<PsiFile> psiFiles = new HashSet<>();
 
     final MultiMap<Module, PsiFile> files = new MultiMap<>();
     final MultiMap<VirtualFile, PsiFile> jars = new MultiMap<>();
@@ -205,22 +203,19 @@ public class ConfigFilesTreeBuilder {
   }
 
   public static void installSearch(JTree tree) {
-    new TreeSpeedSearch(tree, new Convertor<TreePath, String>() {
-      @Override
-      public String convert(final TreePath treePath) {
-        final Object object = ((DefaultMutableTreeNode)treePath.getLastPathComponent()).getUserObject();
-        if (object instanceof Module) {
-          return ((Module)object).getName();
-        }
-        else if (object instanceof PsiFile) {
-          return ((PsiFile)object).getName();
-        }
-        else if (object instanceof VirtualFile) {
-          return ((VirtualFile)object).getName();
-        }
-        else {
-          return "";
-        }
+    new TreeSpeedSearch(tree, treePath -> {
+      final Object object = ((DefaultMutableTreeNode)treePath.getLastPathComponent()).getUserObject();
+      if (object instanceof Module) {
+        return ((Module)object).getName();
+      }
+      else if (object instanceof PsiFile) {
+        return ((PsiFile)object).getName();
+      }
+      else if (object instanceof VirtualFile) {
+        return ((VirtualFile)object).getName();
+      }
+      else {
+        return "";
       }
     });
   }

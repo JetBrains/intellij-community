@@ -1,26 +1,9 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/*
- * User: anna
- * Date: 10-Jan-2007
- */
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInspection.ActionClassHolder;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.reference.RefDirectory;
@@ -35,19 +18,25 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.Function;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.text.MessageFormat;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 public abstract class InspectionRVContentProvider {
-  private static final Logger LOG = Logger.getInstance("#" + InspectionRVContentProvider.class.getName());
+  private static final Logger LOG = Logger.getInstance(InspectionRVContentProvider.class);
   private final Project myProject;
 
   public InspectionRVContentProvider(@NotNull Project project) {
@@ -114,7 +103,9 @@ public abstract class InspectionRVContentProvider {
     final TreePath[] treePaths = tree.getSelectionPaths();
     if (treePaths == null) return false;
     for (TreePath selectionPath : treePaths) {
-      if (!TreeUtil.traverseDepth((TreeNode)selectionPath.getLastPathComponent(), node -> {
+      if (!TreeUtil.treeNodeTraverser((TreeNode)selectionPath.getLastPathComponent())
+        .traverse(TreeTraversal.PRE_ORDER_DFS)
+        .processEach(node -> {
         if (!((InspectionTreeNode) node).isValid()) return true;
         if (node instanceof ProblemDescriptionNode) {
           ProblemDescriptionNode problemDescriptionNode = (ProblemDescriptionNode)node;
@@ -132,8 +123,72 @@ public abstract class InspectionRVContentProvider {
     return false;
   }
 
-  @Nullable
-  public abstract QuickFixAction[] getQuickFixes(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionTree tree);
+  @NotNull
+  public abstract QuickFixAction[] getCommonQuickFixes(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionTree tree);
+
+  @NotNull
+  public QuickFixAction[] getPartialQuickFixes(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionTree tree) {
+    GlobalInspectionContextImpl context = tree.getContext();
+    InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
+    CommonProblemDescriptor[] descriptors = tree.getSelectedDescriptors();
+    Map<String, FixAndOccurrences> result = new THashMap<>();
+    for (CommonProblemDescriptor d : descriptors) {
+      QuickFix[] fixes = d.getFixes();
+      if (fixes == null || fixes.length == 0) continue;
+      for (QuickFix fix : fixes) {
+        String familyName = fix.getFamilyName();
+        FixAndOccurrences fixAndOccurrences = result.get(familyName);
+        if (fixAndOccurrences == null) {
+          LocalQuickFixWrapper localQuickFixWrapper = new LocalQuickFixWrapper(fix, presentation.getToolWrapper());
+          try {
+            localQuickFixWrapper.setText(StringUtil.escapeMnemonics(fix.getFamilyName()));
+          }
+          catch (AbstractMethodError e) {
+            //for plugin compatibility
+            localQuickFixWrapper.setText("Name is not available");
+          }
+          fixAndOccurrences = new FixAndOccurrences(localQuickFixWrapper);
+          result.put(familyName, fixAndOccurrences);
+        } else {
+          final LocalQuickFixWrapper quickFixAction = fixAndOccurrences.fix;
+          checkFixClass(presentation, fix, quickFixAction);
+        }
+        fixAndOccurrences.occurrences++;
+      }
+    }
+
+    return result
+      .values()
+      .stream()
+      .filter(fixAndOccurrence -> fixAndOccurrence.occurrences != descriptors.length)
+      .sorted(Comparator.comparingInt((FixAndOccurrences fixAndOccurrence) -> fixAndOccurrence.occurrences).reversed())
+      .map(fixAndOccurrence -> {
+        LocalQuickFixWrapper fix = fixAndOccurrence.fix;
+        int occurrences = fixAndOccurrence.occurrences;
+        fix.setText(fix.getText() + " (" + occurrences + " problem" + (occurrences == 1 ? "" : "s") + ")");
+        return fix;
+      })
+      .toArray(QuickFixAction[]::new);
+  }
+
+  protected static void checkFixClass(InspectionToolPresentation presentation, QuickFix fix, LocalQuickFixWrapper quickFixAction) {
+    Class class1 = getFixClass(fix);
+    Class class2 = getFixClass(quickFixAction.getFix());
+    if (!class1.equals(class2)) {
+      String message = MessageFormat.format(
+        "QuickFix-es with the same family name ({0}) should be the same class instances but actually are {1} and {2} instances. " +
+        "Please assign reported exception for the inspection \"{3}\" (\"{4}\") developer",
+        fix.getFamilyName(), class1.getName(), class2.getName(), presentation.getToolWrapper().getTool().getClass(),
+        presentation.getToolWrapper().getShortName());
+      AssertionError error = new AssertionError(message);
+      // Hand-craft a stack-trace to make it easier to find the responsible person
+      StackTraceElement[] trace = error.getStackTrace();
+      StackTraceElement crafted = new StackTraceElement(class1.getName(), "getFamilyName", null, -1);
+      trace = ArrayUtil.prepend(crafted, trace);
+      error.setStackTrace(trace);
+      LOG.error(message, error);
+    }
+  }
 
 
   public InspectionNode appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
@@ -144,8 +199,20 @@ public abstract class InspectionRVContentProvider {
     InspectionToolWrapper wrapper = toolNode.getToolWrapper();
     InspectionToolPresentation presentation = context.getPresentation(wrapper);
     Map<String, Set<RefEntity>> content = presentation.getContent();
-    Map<RefEntity, CommonProblemDescriptor[]> problems = presentation.getProblemElements();
-    return appendToolNodeContent(context, toolNode, parentNode, showStructure, groupBySeverity, content, problems);
+    return appendToolNodeContent(context, toolNode, parentNode, showStructure, groupBySeverity, content, entity -> {
+      if (context.getUIOptions().FILTER_RESOLVED_ITEMS) {
+        return presentation.isExcluded(entity) ? null : presentation.getProblemElements().get(entity);
+      } else {
+        CommonProblemDescriptor[] problems = ObjectUtils.notNull(presentation.getProblemElements().get(entity), CommonProblemDescriptor.EMPTY_ARRAY);
+        CommonProblemDescriptor[] suppressedProblems = presentation.getSuppressedProblems(entity);
+        CommonProblemDescriptor[] resolvedProblems = presentation.getResolvedProblems(entity);
+        CommonProblemDescriptor[] result = new CommonProblemDescriptor[problems.length + suppressedProblems.length + resolvedProblems.length];
+        System.arraycopy(problems, 0, result, 0, problems.length);
+        System.arraycopy(suppressedProblems, 0, result, problems.length, suppressedProblems.length);
+        System.arraycopy(resolvedProblems, 0, result, problems.length + suppressedProblems.length, resolvedProblems.length);
+        return result;
+      }
+    });
   }
 
   public abstract InspectionNode appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
@@ -154,7 +221,7 @@ public abstract class InspectionRVContentProvider {
                                                            final boolean showStructure,
                                                            boolean groupBySeverity,
                                                            @NotNull Map<String, Set<RefEntity>> contents,
-                                                           @NotNull Map<RefEntity, CommonProblemDescriptor[]> problems);
+                                                           @NotNull Function<RefEntity, CommonProblemDescriptor[]> problems);
 
   protected abstract void appendDescriptor(@NotNull GlobalInspectionContextImpl context,
                                            @NotNull InspectionToolWrapper toolWrapper,
@@ -179,7 +246,7 @@ public abstract class InspectionRVContentProvider {
     for (String packageName : packageContents.keySet()) {
       final Set<T> elements = packageContents.get(packageName);
       for (T userObject : elements) {
-        final RefEntityContainer container = computeContainer.fun(userObject);
+        final RefEntityContainer container = computeContainer.apply(userObject);
         supportStructure &= container.supportStructure();
         final String moduleName = showStructure ? container.getModule() : null;
         Map<String, InspectionPackageNode> packageNodes = module2PackageMap.get(moduleName);
@@ -217,10 +284,10 @@ public abstract class InspectionRVContentProvider {
           }
           else {
             for (InspectionPackageNode packageNode : packageNodes.values()) {
-              createdNodesConsumer.apply(packageNode);
               for (RefEntityContainer<?> container : packageDescriptors.get(packageNode)) {
                 appendDescriptor(context, toolWrapper, container, packageNode, canPackageRepeat);
               }
+              createdNodesConsumer.apply(packageNode);
             }
             continue;
           }
@@ -294,7 +361,7 @@ public abstract class InspectionRVContentProvider {
                 if (nodes.isEmpty()) continue;
                 parentNode.removeAllChildren();
                 for (ProblemDescriptionNode node : nodes) {
-                  parentNode.add(node);
+                  parentNode.insertByOrder(node, false);
                 }
               }
             }
@@ -319,21 +386,23 @@ public abstract class InspectionRVContentProvider {
       final RefElementNode currentNode = firstLevel.get() ? nodeToBeAdded : container.createNode(presentation);
       final RefEntityContainer finalContainer = container;
       final RefElementNode finalPrevNode = prevNode;
-      TreeUtil.traverseDepth(parentNode, node -> {
+      TreeUtil.treeNodeTraverser(parentNode).traverse(TreeTraversal.PRE_ORDER_DFS).processEach(node -> {
         if (node instanceof RefElementNode) {
           final RefElementNode refElementNode = (RefElementNode)node;
           final RefEntity userObject = finalContainer.getRefEntity();
           final RefEntity object = refElementNode.getElement();
-          if (userObject != null && object != null && (userObject.getClass().equals(object.getClass())) && finalContainer.areEqual(object, userObject)) {
+          if (userObject != null &&
+              object != null &&
+              (userObject.getClass().equals(object.getClass())) &&
+              finalContainer.areEqual(object, userObject)) {
             if (firstLevel.get()) {
               result.set(refElementNode);
-              return false;
             }
             else {
               refElementNode.insertByOrder(finalPrevNode, false);
               result.set(nodeToBeAdded);
-              return false;
             }
+            return false;
           }
         }
         return true;
@@ -401,5 +470,60 @@ public abstract class InspectionRVContentProvider {
     for (InspectionTreeNode node : children) {
       merge(node, current, true);
     }
+  }
+
+  @NotNull
+  protected static QuickFixAction[] getCommonFixes(@NotNull InspectionToolPresentation presentation,
+                                                   @NotNull CommonProblemDescriptor[] descriptors) {
+    Map<String, LocalQuickFixWrapper> result = null;
+    for (CommonProblemDescriptor d : descriptors) {
+      QuickFix[] fixes = d.getFixes();
+      if (fixes == null || fixes.length == 0) continue;
+      if (result == null) {
+        result = new HashMap<>();
+        for (QuickFix fix : fixes) {
+          if (fix == null) continue;
+          result.put(fix.getFamilyName(), new LocalQuickFixWrapper(fix, presentation.getToolWrapper()));
+        }
+      }
+      else {
+        for (String familyName : new ArrayList<>(result.keySet())) {
+          boolean isFound = false;
+          for (QuickFix fix : fixes) {
+            if (fix == null) continue;
+            if (familyName.equals(fix.getFamilyName())) {
+              isFound = true;
+              final LocalQuickFixWrapper quickFixAction = result.get(fix.getFamilyName());
+              checkFixClass(presentation, fix, quickFixAction);
+              try {
+                quickFixAction.setText(StringUtil.escapeMnemonics(fix.getFamilyName()));
+              }
+              catch (AbstractMethodError e) {
+                //for plugin compatibility
+                quickFixAction.setText("Name is not available");
+              }
+              break;
+            }
+          }
+          if (!isFound) {
+            result.remove(familyName);
+            if (result.isEmpty()) {
+              return QuickFixAction.EMPTY;
+            }
+          }
+        }
+      }
+    }
+    return result == null || result.isEmpty() ? QuickFixAction.EMPTY : result.values().toArray(QuickFixAction.EMPTY);
+  }
+
+  private static Class getFixClass(QuickFix fix) {
+    return fix instanceof ActionClassHolder ? ((ActionClassHolder)fix).getActionClass() : fix.getClass();
+  }
+
+  private static class FixAndOccurrences {
+    final LocalQuickFixWrapper fix;
+    int occurrences;
+    FixAndOccurrences(LocalQuickFixWrapper fix) {this.fix = fix;}
   }
 }

@@ -1,28 +1,19 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
@@ -37,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.util.function.Function;
 
 /**
  * @author nik
@@ -44,21 +36,23 @@ import java.awt.event.ActionListener;
 public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   private final JComponent myComponent;
   private final ComboBox<XExpression> myComboBox;
+  private final CollectionComboBoxModel<XExpression> myModel = new CollectionComboBoxModel<>();
   private XDebuggerComboBoxEditor myEditor;
   private XExpression myExpression;
+  private Function<Document, Document> myDocumentProcessor = Function.identity();
 
   public XDebuggerExpressionComboBox(@NotNull Project project, @NotNull XDebuggerEditorsProvider debuggerEditorsProvider, @Nullable @NonNls String historyId,
-                                     @Nullable XSourcePosition sourcePosition, boolean showEditor) {
+                                     @Nullable XSourcePosition sourcePosition, boolean showEditor, boolean languageInside) {
     super(project, debuggerEditorsProvider, EvaluationMode.EXPRESSION, historyId, sourcePosition);
-    myComboBox = new ComboBox<>(100);
+    myComboBox = new ComboBox<>(myModel, 100);
     myComboBox.setEditable(true);
     myExpression = XExpressionImpl.EMPTY_EXPRESSION;
     Dimension minimumSize = new Dimension(myComboBox.getMinimumSize());
     minimumSize.width = 100;
     myComboBox.setMinimumSize(minimumSize);
-    initEditor();
+    initEditor(showEditor, languageInside);
     fillComboBox();
-    myComponent = showEditor ? addMultilineButton(myComboBox) : myComboBox;
+    myComponent = JBUI.Panels.simplePanel().addToTop(myComboBox);
   }
 
   public ComboBox getComboBox() {
@@ -91,10 +85,11 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     else {
       myExpression = getExpression();
     }
+    super.setEnabled(enable);
   }
 
-  private void initEditor() {
-    myEditor = new XDebuggerComboBoxEditor();
+  private void initEditor(boolean showMultiline, boolean languageInside) {
+    myEditor = new XDebuggerComboBoxEditor(showMultiline, languageInside);
     myComboBox.setEditor(myEditor);
     //myEditor.setItem(myExpression);
     myComboBox.setRenderer(new EditorComboBoxRenderer(myEditor));
@@ -107,8 +102,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   }
 
   private void fillComboBox() {
-    myComboBox.removeAllItems();
-    getRecentExpressions().forEach(myComboBox::addItem);
+    myModel.replaceAll(getRecentExpressions());
     if (myComboBox.getItemCount() > 0) {
       myComboBox.setSelectedIndex(0);
     }
@@ -133,6 +127,15 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   }
 
   @Override
+  protected Document createDocument(XExpression text) {
+    return myDocumentProcessor.apply(super.createDocument(text));
+  }
+
+  public void setDocumentProcessor(Function<Document, Document> documentProcessor) {
+    myDocumentProcessor = documentProcessor;
+  }
+
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myEditor.getEditorTextField();
   }
@@ -142,20 +145,37 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     myComboBox.getEditor().selectAll();
   }
 
+  protected void prepareEditor(Editor editor) {
+    super.prepareEditor(editor);
+    editor.getColorsScheme().setEditorFontSize(
+      Math.min(myComboBox.getFont().getSize(), EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize()));
+  }
+
   private class XDebuggerComboBoxEditor implements ComboBoxEditor {
     private final JComponent myPanel;
     private final EditorComboBoxEditor myDelegate;
 
-    public XDebuggerComboBoxEditor() {
+    public XDebuggerComboBoxEditor(boolean showMultiline, boolean languageInside) {
       myDelegate = new EditorComboBoxEditor(getProject(), getEditorsProvider().getFileType()) {
         @Override
         protected void onEditorCreate(EditorEx editor) {
           editor.putUserData(DebuggerCopyPastePreprocessor.REMOVE_NEWLINES_ON_PASTE, true);
-          editor.getColorsScheme().setEditorFontSize(myComboBox.getFont().getSize());
+          prepareEditor(editor);
+          if (showMultiline) {
+            setExpandable(editor);
+          }
+          foldNewLines(editor);
         }
       };
       myDelegate.getEditorComponent().setFontInheritedFromLAF(false);
-      myPanel = addChooser(myDelegate.getEditorComponent());
+      JComponent comp = myDelegate.getEditorComponent();
+      if (languageInside) {
+        comp = addChooser(comp);
+      }
+      if (showMultiline) {
+        comp = addExpand(comp, true);
+      }
+      myPanel = comp;
     }
 
     public EditorTextField getEditorTextField() {

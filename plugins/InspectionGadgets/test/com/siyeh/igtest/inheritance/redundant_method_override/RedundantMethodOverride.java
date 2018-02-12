@@ -4,7 +4,7 @@ public class RedundantMethodOverride extends S {
 
   @Override
   void <warning descr="Method 'foo()' is identical to its super method">foo</warning>() {
-    System.out.println();
+    System.out.println();;;;;
   }
 
   void bar() {
@@ -84,7 +84,8 @@ class C extends B {
     return super.some();
   }
 }
-class MyList extends ArrayList {
+@interface NotNull {}
+class MyList<E> extends ArrayList<E> {
   @Override
   protected void <warning descr="Method 'removeRange()' is identical to its super method">removeRange</warning>(int fromIndex, int toIndex) {
     super.removeRange(fromIndex, toIndex);
@@ -93,6 +94,10 @@ class MyList extends ArrayList {
   void m() {
     removeRange(0, 1);
     new MyList2().removeRange(0, 0);
+  }
+
+  public boolean add(@NotNull E e) {
+    return super.add(e);
   }
 }
 class MyList2 extends ArrayList {
@@ -143,5 +148,70 @@ class Annotations2 extends Annotations1{
   @Override
   void m() {
     super.m();
+  }
+}
+///////////////
+interface XX {
+  void x();
+}
+interface YY {
+  default void x() {
+    System.out.println();
+  }
+}
+class ZZ implements YY, XX {
+  @Override
+  public void x() {
+    YY.super.x();
+  }
+}
+/////////////////
+class QualifiedThis {
+
+  QualifiedThis get() {
+    return this;
+  }
+
+  QualifiedThis copy() {
+    return new QualifiedThis() {
+      @Override
+      QualifiedThis get() {
+        return QualifiedThis.this;
+      }
+    };
+  }
+}
+////////////////
+class Declaration {
+
+  void localClass() {
+    class One {
+      void x() {}
+    };
+  }
+
+  class Sub extends Declaration {
+    @Override
+    void localClass() {
+      class Two {
+        void y() {}
+      };
+    }
+  }
+}
+//////////////
+class DifferentAnonymous {
+
+  Object x() {
+    return new Object() {
+      int one;
+    };
+  }
+}
+class DifferentAnonymous2 extends DifferentAnonymous {
+
+  @Override
+  Object x() {
+    return new Object() {};
   }
 }

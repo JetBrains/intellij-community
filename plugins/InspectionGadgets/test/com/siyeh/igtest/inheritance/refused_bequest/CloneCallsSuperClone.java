@@ -40,12 +40,22 @@ final class Two {
   }
 }
 class Three {
-  public Three <warning descr="Method 'clone()' does not call 'super.clone()'">clone</warning>() throws CloneNotSupportedException {
+  public Three clone() throws CloneNotSupportedException {
     throw new CloneNotSupportedException();
   }
 }
 class Four {
   public final Four clone() {
     throw new UnsupportedOperationException();
+  }
+}
+class CloneableSingleton implements Cloneable {
+
+  private static final CloneableSingleton INSTANCE = new CloneableSingleton();
+
+  private CloneableSingleton() {}
+
+  public CloneableSingleton clone() {
+    return INSTANCE;
   }
 }

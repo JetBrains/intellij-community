@@ -18,6 +18,7 @@ package com.intellij.codeInsight.editorActions.smartEnter;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -51,6 +52,14 @@ public class IfConditionFixer implements Fixer {
         }
       } else if (rParen == null) {
         doc.insertString(condition.getTextRange().getEndOffset(), ")");
+      }
+    }
+    else if (psiElement instanceof PsiExpression && psiElement.getParent() instanceof PsiExpressionStatement) {
+      PsiElement prevLeaf = PsiTreeUtil.prevVisibleLeaf(psiElement);
+      if (prevLeaf != null && prevLeaf.textMatches(PsiKeyword.IF)) {
+        Document doc = editor.getDocument();
+        doc.insertString(psiElement.getTextRange().getEndOffset(), ")");
+        doc.insertString(psiElement.getTextRange().getStartOffset(), "(");
       }
     }
   }

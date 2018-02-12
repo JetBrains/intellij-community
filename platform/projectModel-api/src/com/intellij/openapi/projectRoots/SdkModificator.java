@@ -17,8 +17,15 @@ package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * The way to modify the {@link Sdk} roots, home path etc.<br>
+ * First you call {@link Sdk#getSdkModificator()}<br>
+ * Then you modify things via SdkModificator setters, e.g. {@link #setHomePath(String)}<br>
+ * Last, you must call {@link #commitChanges()}
+ */
 public interface SdkModificator {
   String getName();
 
@@ -37,13 +44,14 @@ public interface SdkModificator {
 
   void setSdkAdditionalData(SdkAdditionalData data);
 
-  VirtualFile[] getRoots(OrderRootType rootType);
+  @NotNull
+  VirtualFile[] getRoots(@NotNull OrderRootType rootType);
 
-  void addRoot(VirtualFile root, OrderRootType rootType);
+  void addRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType);
 
-  void removeRoot(VirtualFile root, OrderRootType rootType);
+  void removeRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType);
 
-  void removeRoots(OrderRootType rootType);
+  void removeRoots(@NotNull OrderRootType rootType);
 
   void removeAllRoots();
 

@@ -212,7 +212,4 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable, Configura
       (myRenderer.ENTRIES_LIMIT == cloneRenderer.ENTRIES_LIMIT);
     return !valuesEqual;
   }
-
-  public void disposeUIResources() {
-  }
 }

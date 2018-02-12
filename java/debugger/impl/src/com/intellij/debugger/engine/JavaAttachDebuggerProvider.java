@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,29 +15,22 @@
  */
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.DebugEnvironment;
-import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.DefaultDebugEnvironment;
-import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.execution.ExecutionException;
+import com.intellij.debugger.impl.DebuggerManagerImpl;
+import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
-import com.intellij.execution.configurations.RemoteConnection;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessInfo;
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.internal.DebugAttachDetector;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.xdebugger.XDebugProcess;
-import com.intellij.xdebugger.XDebugProcessStarter;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.xdebugger.attach.XDefaultLocalAttachGroup;
 import com.intellij.xdebugger.attach.XLocalAttachDebugger;
 import com.intellij.xdebugger.attach.XLocalAttachDebuggerProvider;
@@ -46,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author egor
@@ -59,11 +53,11 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     }
 
     @Override
-    public void attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) throws ExecutionException {
+    public void attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) {
       Pair<String, Integer> address = getAttachAddress(processInfo);
       assert address != null;
 
-      // TODO: first need to remove circular dependency with execution-impl
+      // TODO: first need to remove circular dependency with intellij.java.execution.impl
       //RunnerAndConfigurationSettings runSettings = RunManager.getInstance(project)
       //  .createRunConfiguration(StringUtil.notNullize(address.first) + ":" + address.second,
       //                          RemoteConfigurationType.getInstance().getFactory());
@@ -73,30 +67,19 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       //configuration.PORT = String.valueOf(address.second);
       //configuration.USE_SOCKET_TRANSPORT = true;
       //configuration.SERVER_MODE = false;
-      //
-      //ProgramRunnerUtil.executeConfiguration(project, runSettings, DefaultDebugExecutor.getDebugExecutorInstance());
 
       String name = getAttachString(address);
       RunnerAndConfigurationSettings runSettings = RunManager.getInstance(project)
-        .createRunConfiguration(name, ConfigurationTypeUtil.findConfigurationType("Remote").getConfigurationFactories()[0]);
+        .createRunConfiguration(name, Objects.requireNonNull(ConfigurationTypeUtil.findConfigurationType("Remote")).getConfigurationFactories()[0]);
 
-      RemoteConnection remoteConnection = new RemoteConnection(true, address.first, String.valueOf(address.second), false);
-      ExecutionEnvironment env = new ExecutionEnvironmentBuilder(project, DefaultDebugExecutor.getDebugExecutorInstance())
-        .runProfile(runSettings.getConfiguration())
-        .build();
-      DebugEnvironment environment = new DefaultDebugEnvironment(env, new RemoteStateState(project, remoteConnection), remoteConnection, 0);
-      final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(env.getProject()).attachVirtualMachine(environment);
-      if (debuggerSession == null) {
-        return;
-      }
+      RunConfiguration remoteConfiguration = runSettings.getConfiguration();
+      String host = address.first != null && !"*".equals(address.first) ? address.first : DebuggerManagerImpl.LOCALHOST_ADDRESS_FALLBACK;
+      ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, String.class, "HOST", host);
+      ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, String.class, "PORT", String.valueOf(address.second));
+      ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, boolean.class, "USE_SOCKET_TRANSPORT", true);
+      ReflectionUtil.setField(remoteConfiguration.getClass(), remoteConfiguration, boolean.class, "SERVER_MODE", false);
 
-      XDebuggerManager.getInstance(project).startSessionAndShowTab(name, null, new XDebugProcessStarter() {
-        @Override
-        @NotNull
-        public XDebugProcess start(@NotNull XDebugSession session) {
-          return JavaDebugProcess.create(session, debuggerSession);
-        }
-      });
+      ProgramRunnerUtil.executeConfiguration(runSettings, DefaultDebugExecutor.getDebugExecutorInstance());
     }
   };
 
@@ -144,6 +127,6 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
   }
 
   private static Pair<String, Integer> getAttachAddress(ProcessInfo processInfo) {
-    return DebugAttachDetector.getAttachAddress(StringUtil.split(processInfo.getCommandLine(), " "));
+    return DebugAttachDetector.getAttachAddress(ParametersListUtil.parse(processInfo.getCommandLine()));
   }
 }

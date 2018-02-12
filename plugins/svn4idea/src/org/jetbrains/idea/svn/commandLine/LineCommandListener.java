@@ -17,12 +17,6 @@ package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.vcs.LineProcessEventListener;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/26/13
- * Time: 10:38 AM
- */
 public interface LineCommandListener extends LineProcessEventListener {
 
   void cancel();

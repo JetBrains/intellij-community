@@ -4,6 +4,8 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.*;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemStatusEvent;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
 import com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade;
 import com.intellij.openapi.externalSystem.service.execution.NotSupportedException;
@@ -12,6 +14,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public abstract class AbstractExternalSystemTask extends UserDataHolderBase implements ExternalSystemTask {
 
-  private static final Logger LOG = Logger.getInstance("#" + AbstractExternalSystemTask.class.getName());
+  private static final Logger LOG = Logger.getInstance(AbstractExternalSystemTask.class);
 
   private final AtomicReference<ExternalSystemTaskState> myState =
     new AtomicReference<>(ExternalSystemTaskState.NOT_STARTED);
@@ -111,7 +114,28 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     ExternalSystemTaskNotificationListenerAdapter adapter = new ExternalSystemTaskNotificationListenerAdapter() {
       @Override
       public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
-        indicator.setText(wrapProgressText(event.getDescription()));
+        if (event instanceof ExternalSystemTaskExecutionEvent &&
+            ((ExternalSystemTaskExecutionEvent)event).getProgressEvent() instanceof ExternalSystemStatusEvent) {
+          ExternalSystemStatusEvent progressEvent = (ExternalSystemStatusEvent)((ExternalSystemTaskExecutionEvent)event).getProgressEvent();
+          String sizeInfo;
+          if (progressEvent.getTotal() <= 0) {
+            indicator.setIndeterminate(true);
+            sizeInfo = "bytes".equals(progressEvent.getUnit()) ? (StringUtil.formatFileSize(progressEvent.getProgress()) + " / ?") : "";
+          }
+          else {
+            indicator.setIndeterminate(false);
+            indicator.setFraction((double)progressEvent.getProgress() / progressEvent.getTotal());
+            sizeInfo = "bytes".equals(progressEvent.getUnit()) ? (StringUtil.formatFileSize(progressEvent.getProgress()) +
+                                                                  " / " +
+                                                                  StringUtil.formatFileSize(progressEvent.getTotal())) : "";
+          }
+          String description = event.getDescription();
+          indicator.setText(wrapProgressText(description) + (sizeInfo.isEmpty() ? "" : "  (" + sizeInfo + ')'));
+        }
+        else {
+          indicator.setIndeterminate(true);
+          indicator.setText(wrapProgressText(event.getDescription()));
+        }
       }
     };
     final ExternalSystemTaskNotificationListener[] ls;
@@ -189,7 +213,6 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     boolean result = false;
     try {
       result = doCancel();
-      setState(result ? ExternalSystemTaskState.CANCELED : ExternalSystemTaskState.CANCELLATION_FAILED);
       return result;
     }
     catch (NotSupportedException e) {

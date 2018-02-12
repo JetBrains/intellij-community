@@ -108,6 +108,7 @@ public final class FormSourceCodeGenerator {
   public void generate(final VirtualFile formFile) {
     myNeedLoadLabelText = false;
     myNeedLoadButtonText = false;
+    myGetFontMethod = null;
 
     final Module module = ModuleUtil.findModuleForFile(formFile, myProject);
     if (module == null) {
@@ -293,6 +294,25 @@ public final class FormSourceCodeGenerator {
     final String loadLabelTextMethodText = getLoadMethodText(AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD, JLabel.class, module);
     generateMethodIfRequired(newClass, method, AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD, loadLabelTextMethodText, myNeedLoadLabelText);
 
+
+    if (myGetFontMethod != null) {
+      String getFontMethod =
+        "/** @noinspection ALL */ " +
+        "private java.awt.Font " + myGetFontMethod +
+        "(String fontName, int style, int size, java.awt.Font currentFont) {" +
+        "if (currentFont == null) return null;" +
+        "String resultName;" +
+        "if (fontName == null) {resultName = currentFont.getName();}" +
+        "else {" +
+        "  java.awt.Font testFont = new java.awt.Font(fontName, java.awt.Font.PLAIN, 10);" +
+        "  if (testFont.canDisplay('a') && testFont.canDisplay('1')) {resultName = fontName;}" +
+        "  else {resultName = currentFont.getName();}" +
+        "}" +
+        "return new java.awt.Font(resultName, style >= 0 ? style : currentFont.getStyle(), size >= 0 ? size : currentFont.getSize());}";
+
+      generateMethodIfRequired(newClass, method, myGetFontMethod, getFontMethod, true);
+    }
+
     newClass = (PsiClass) styler.shortenClassReferences(newClass);
     newClass = (PsiClass) formatter.reformat(newClass);
 
@@ -444,7 +464,6 @@ public final class FormSourceCodeGenerator {
 
   private void generateMethodIfRequired(PsiClass aClass, PsiMethod anchor, final String methodName, String methodText, boolean condition) throws IncorrectOperationException {
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
-    PsiMethod newMethod = null;
     PsiMethod[] oldMethods = aClass.findMethodsByName(methodName, false);
     if (!condition) {
       for(PsiMethod oldMethod: oldMethods) {
@@ -452,12 +471,12 @@ public final class FormSourceCodeGenerator {
       }
     }
     else {
-      newMethod = elementFactory.createMethodFromText(methodText, aClass);
+      PsiMethod newMethod = elementFactory.createMethodFromText(methodText, aClass);
       if (oldMethods.length > 0) {
-        newMethod = (PsiMethod) oldMethods [0].replace(newMethod);
+        oldMethods[0].replace(newMethod);
       }
       else {
-        newMethod = (PsiMethod) aClass.addAfter(newMethod, anchor);
+        aClass.addAfter(newMethod, anchor);
       }
     }
   }
@@ -478,6 +497,7 @@ public final class FormSourceCodeGenerator {
     deleteMethods(aClass, AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME);
     deleteMethods(aClass, AsmCodeGenerator.LOAD_BUTTON_TEXT_METHOD);
     deleteMethods(aClass, AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD);
+    deleteMethods(aClass, AsmCodeGenerator.GET_FONT_METHOD_NAME);
   }
 
   private static void deleteMethods(final PsiClass aClass, final String methodName) throws IncorrectOperationException {
@@ -617,6 +637,11 @@ public final class FormSourceCodeGenerator {
         if (!descriptor.isColorSet()) continue;
       }
 
+      if (propertyClass.equals(Font.class.getName())) {
+        pushFontProperty(variable, (FontDescriptor) value, property.getReadMethodName(), property.getWriteMethodName());
+        continue;
+      }
+
       startMethodCall(variable, property.getWriteMethodName());
 
       if (propertyClass.equals(Dimension.class.getName())) {
@@ -657,9 +682,6 @@ public final class FormSourceCodeGenerator {
       }
       else if (propertyClass.equals(Color.class.getName())) {
         pushColor((ColorDescriptor) value);
-      }
-      else if (propertyClass.equals(Font.class.getName())) {
-        pushFont(variable, (FontDescriptor) value, property.getReadMethodName());
       }
       else if (propertyClass.equals(Icon.class.getName())) {
         pushIcon((IconDescriptor) value);
@@ -996,6 +1018,16 @@ public final class FormSourceCodeGenerator {
     }
   }
 
+  private String myGetFontMethod;
+
+  private void pushFontProperty(String variable, FontDescriptor fontDescriptor, String getterName, String setterName) {
+    myBuffer.append("java.awt.Font ").append(variable).append("Font = ");
+    pushFont(variable, fontDescriptor, getterName);
+
+    myBuffer.append("if (").append(variable).append("Font != null) ").append(variable).append(".").append(setterName).append("(")
+      .append(variable).append("Font);\n");
+  }
+
   private void pushFont(final String variable, final FontDescriptor fontDescriptor, @NonNls final String getterName) {
     if (fontDescriptor.getSwingFont() != null) {
       startStaticMethodCall(UIManager.class, "getFont");
@@ -1003,25 +1035,15 @@ public final class FormSourceCodeGenerator {
       endMethod();
     }
     else {
-      startConstructor(Font.class.getName());
-      if (fontDescriptor.getFontName() != null) {
-        push(fontDescriptor.getFontName());
+      if (myGetFontMethod == null) {
+        myGetFontMethod = AsmCodeGenerator.GET_FONT_METHOD_NAME;
       }
-      else {
-        pushVar(variable + "." + getterName + "().getName()");
-      }
-      if (fontDescriptor.getFontStyle() >= 0) {
-        push(fontDescriptor.getFontStyle(), ourFontStyleMap);
-      }
-      else {
-        pushVar(variable + "." + getterName + "().getStyle()");
-      }
-      if (fontDescriptor.getFontSize() >= 0) {
-        push(fontDescriptor.getFontSize());
-      }
-      else {
-        pushVar(variable + "." + getterName + "().getSize()");
-      }
+
+      startMethodCall("this", myGetFontMethod);
+      push(fontDescriptor.getFontName());
+      push(fontDescriptor.getFontStyle(), ourFontStyleMap);
+      push(fontDescriptor.getFontSize());
+      pushVar(variable + "." + getterName + "()");
       endMethod();
     }
   }

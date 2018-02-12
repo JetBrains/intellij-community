@@ -244,13 +244,13 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     if (!myDisabledSettings.contains(Setting.RESOURCE_PATTERNS)) {
       configuration.removeResourceFilePatterns();
       String extensionString = myResourcePatternsField.getText().trim();
-      applyResourcePatterns(extensionString, (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject));
+      applyResourcePatterns(extensionString, configuration);
     }
     
     BuildManager.getInstance().clearState(myProject);
   }
 
-  private static void applyResourcePatterns(String extensionString, final CompilerConfigurationImpl configuration)
+  public static void applyResourcePatterns(String extensionString, final CompilerConfigurationImpl configuration)
     throws ConfigurationException {
     StringTokenizer tokenizer = new StringTokenizer(extensionString, ";", false);
     List<String[]> errors = new ArrayList<>();
@@ -315,6 +315,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     return "General";
   }
 
+  @Override
   public String getHelpTopic() {
     return null;
   }
@@ -326,9 +327,6 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
 
   public JComponent createComponent() {
     return myPanel;
-  }
-
-  public void disposeUIResources() {
   }
 
   private void createUIComponents() {

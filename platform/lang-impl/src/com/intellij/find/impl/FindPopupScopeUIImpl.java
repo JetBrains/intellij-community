@@ -15,7 +15,9 @@
  */
 package com.intellij.find.impl;
 
-import com.intellij.find.*;
+import com.intellij.find.FindBundle;
+import com.intellij.find.FindModel;
+import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.openapi.module.Module;
@@ -33,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.SwingHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,33 +44,33 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 
-public class FindPopupScopeUIImpl implements FindPopupScopeUI {
-
-  private final ScopeType PROJECT = new ScopeType("Project", FindBundle.message("find.popup.scope.project"), EmptyIcon.ICON_0);
-  private final ScopeType MODULE = new ScopeType("Module", FindBundle.message("find.popup.scope.module"), EmptyIcon.ICON_0);
-  private final ScopeType DIRECTORY = new ScopeType("Directory", FindBundle.message("find.popup.scope.directory"), EmptyIcon.ICON_0);
-  private final ScopeType SCOPE = new ScopeType("Scope", FindBundle.message("find.popup.scope.scope"), EmptyIcon.ICON_0);
+class FindPopupScopeUIImpl implements FindPopupScopeUI {
+  static final ScopeType PROJECT = new ScopeType("Project", FindBundle.message("find.popup.scope.project"), EmptyIcon.ICON_0);
+  static final ScopeType MODULE = new ScopeType("Module", FindBundle.message("find.popup.scope.module"), EmptyIcon.ICON_0);
+  static final ScopeType DIRECTORY = new ScopeType("Directory", FindBundle.message("find.popup.scope.directory"), EmptyIcon.ICON_0);
+  static final ScopeType SCOPE = new ScopeType("Scope", FindBundle.message("find.popup.scope.scope"), EmptyIcon.ICON_0);
 
   @NotNull private final FindUIHelper myHelper;
   @NotNull private final Project myProject;
   @NotNull private final FindPopupPanel myFindPopupPanel;
-  @NotNull private final Pair[] myComponents;
+  @NotNull private final Pair<ScopeType, JComponent>[] myComponents;
 
   private ComboBox<String> myModuleComboBox;
   private FindPopupDirectoryChooser myDirectoryChooser;
   private ScopeChooserCombo myScopeCombo;
 
-  public FindPopupScopeUIImpl(@NotNull FindPopupPanel panel) {
+  FindPopupScopeUIImpl(@NotNull FindPopupPanel panel) {
     myHelper = panel.getHelper();
     myProject = panel.getProject();
     myFindPopupPanel = panel;
     initComponents();
 
-    myComponents = new Pair[]{
-      new Pair(PROJECT, new JLabel()),
-      new Pair(MODULE, shrink(myModuleComboBox)),
-      new Pair(DIRECTORY, myDirectoryChooser),
-      new Pair(SCOPE, shrink(myScopeCombo)),
+    //noinspection unchecked
+    myComponents = (Pair<ScopeType, JComponent>[])new Pair[]{
+      new Pair<>(PROJECT, new JLabel()),
+      new Pair<>(MODULE, shrink(myModuleComboBox)),
+      new Pair<>(DIRECTORY, myDirectoryChooser),
+      new Pair<>(SCOPE, shrink(myScopeCombo)),
     };
   }
 
@@ -80,6 +83,10 @@ public class FindPopupScopeUIImpl implements FindPopupScopeUI {
 
     Arrays.sort(names, String.CASE_INSENSITIVE_ORDER);
     myModuleComboBox = new ComboBox<>(names);
+    SwingHelper.setLongestAsPrototype(myModuleComboBox, Arrays.asList(names));
+    if (myModuleComboBox.getPrototypeDisplayValue() != null) {
+      myModuleComboBox.setMinLength(myModuleComboBox.getPrototypeDisplayValue().length());
+    }
     ActionListener restartSearchListener = e -> scheduleResultsUpdate();
     myModuleComboBox.addActionListener(restartSearchListener);
 
@@ -87,7 +94,7 @@ public class FindPopupScopeUIImpl implements FindPopupScopeUI {
 
     myScopeCombo = new ScopeChooserCombo();
     myScopeCombo.init(myProject, true, true, FindSettings.getInstance().getDefaultScopeName(), new Condition<ScopeDescriptor>() {
-      final String projectFilesScopeName = PsiBundle.message("psi.search.scope.project");
+      //final String projectFilesScopeName = PsiBundle.message("psi.search.scope.project");
       final String moduleFilesScopeName;
 
       {
@@ -99,7 +106,7 @@ public class FindPopupScopeUIImpl implements FindPopupScopeUI {
       @Override
       public boolean value(ScopeDescriptor descriptor) {
         final String display = descriptor.getDisplay();
-        return !projectFilesScopeName.equals(display) && !display.startsWith(moduleFilesScopeName);
+        return /*!projectFilesScopeName.equals(display) &&*/ !display.startsWith(moduleFilesScopeName);
       }
     });
     myScopeCombo.setBrowseListener(new ScopeChooserCombo.BrowseListener() {
@@ -145,7 +152,7 @@ public class FindPopupScopeUIImpl implements FindPopupScopeUI {
     }
     else if (selectedScope == DIRECTORY) {
       String directory = myDirectoryChooser.getDirectory();
-      findModel.setDirectoryName(directory == null ? "" : directory);
+      findModel.setDirectoryName(directory);
     }
     else if (selectedScope == MODULE) {
       findModel.setModuleName((String)myModuleComboBox.getSelectedItem());
@@ -170,7 +177,7 @@ public class FindPopupScopeUIImpl implements FindPopupScopeUI {
 
   @Override
   public boolean hideAllPopups() {
-    final JComboBox[] candidates = new JComboBox[] { myModuleComboBox, myScopeCombo.getComboBox(), myDirectoryChooser.getComboBox() };
+    final JComboBox[] candidates = { myModuleComboBox, myScopeCombo.getComboBox(), myDirectoryChooser.getComboBox() };
     for (JComboBox candidate : candidates) {
       if (candidate.isPopupVisible()) {
         candidate.hidePopup();
@@ -217,13 +224,13 @@ public class FindPopupScopeUIImpl implements FindPopupScopeUI {
   private ScopeType getScope(FindModel model) {
     if (model.isCustomScope()) {
       return SCOPE;
-    } else
+    }
     if (model.isProjectScope()) {
       return PROJECT;
-    } else
+    }
     if (model.getDirectoryName() != null) {
       return DIRECTORY;
-    } else
+    }
     if (model.getModuleName() != null) {
       return MODULE;
     }

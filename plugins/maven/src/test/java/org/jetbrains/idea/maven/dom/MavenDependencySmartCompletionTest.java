@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
 
-import java.io.IOException;
 import java.util.Arrays;
 
 /**
@@ -11,7 +10,7 @@ import java.util.Arrays;
  */
 public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestCase {
 
-  public void testCompletion() throws IOException {
+  public void testCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -25,7 +24,7 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
     assertCompletionVariantsInclude(myProjectPom, "junit:junit");
   }
 
-  public void testInsertDependency() throws IOException {
+  public void testInsertDependency() {
     createProjectPom("<groupId>test</groupId>\n" +
                      "<artifactId>project</artifactId>\n" +
                      "<version>1</version>\n" +
@@ -51,7 +50,7 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                                        "</dependencies>\n"));
   }
 
-  public void testInsertManagedDependency() throws IOException {
+  public void testInsertManagedDependency() {
     createProjectPom("<groupId>test</groupId>\n" +
                      "<artifactId>project</artifactId>\n" +
                      "<version>1</version>\n" +
@@ -93,7 +92,7 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                                        "</dependencies>\n"));
   }
 
-  public void testInsertManagedDependencyWithTypeAndClassifier() throws IOException {
+  public void testInsertManagedDependencyWithTypeAndClassifier() {
     createProjectPom("<groupId>test</groupId>\n" +
                      "<artifactId>project</artifactId>\n" +
                      "<version>1</version>\n" +
@@ -151,7 +150,7 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                                        "</dependencies>\n"));
   }
 
-  public void testCompletionArtifactIdThenVersion() throws IOException {
+  public void testCompletionArtifactIdThenVersion() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -188,7 +187,7 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
     myFixture.getLookupElementStrings().containsAll(Arrays.asList("3.8.1", "4.0"));
   }
 
-  public void testCompletionArtifactIdThenGroupIdThenInsertVersion() throws IOException {
+  public void testCompletionArtifactIdThenGroupIdThenInsertVersion() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -227,7 +226,7 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                                        "</dependencies>\n"));
   }
 
-  public void testCompletionArtifactIdThenGroupIdThenCompleteVersion() throws IOException {
+  public void testCompletionArtifactIdThenGroupIdThenCompleteVersion() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -268,7 +267,7 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
     myFixture.getLookupElementStrings().equals(Arrays.asList("3.3", "3.3.1"));
   }
 
-  public void testCompletionArtifactIdWithFullInsert() throws IOException {
+  public void testCompletionArtifactIdWithFullInsert() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -303,7 +302,7 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                                        "</dependencies>\n"));
   }
 
-  public void testCompletionArtifactIdInsideManagedDependency() throws IOException {
+  public void testCompletionArtifactIdInsideManagedDependency() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
@@ -341,7 +340,7 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                                        "</dependencyManagement>\n"));
   }
 
-  public void testCompletionArtifactIdWithManagedDependency() throws IOException {
+  public void testCompletionArtifactIdWithManagedDependency() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>\n" +
@@ -404,7 +403,7 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
     ));
   }
 
-  public void testCompletionGroupIdWithManagedDependencyWithTypeAndClassifier() throws IOException {
+  public void testCompletionGroupIdWithManagedDependencyWithTypeAndClassifier() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>\n" +

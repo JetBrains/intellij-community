@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,18 +25,19 @@ import org.jetbrains.annotations.Nullable;
  */
 public class DirectoryInfoImpl extends DirectoryInfo {
   public static final int MAX_ROOT_TYPE_ID = Byte.MAX_VALUE;
-  private final VirtualFile myRoot;//original project root for which this information is calculated
+  protected final VirtualFile myRoot;//original project root for which this information is calculated
   private final Module module; // module to which content it belongs or null
   private final VirtualFile libraryClassRoot; // class root in library
   private final VirtualFile contentRoot;
   private final VirtualFile sourceRoot;
-  private final boolean myInModuleSource;
-  private final boolean myInLibrarySource;
-  private final boolean myExcluded;
+  protected final boolean myInModuleSource;
+  protected final boolean myInLibrarySource;
+  protected final boolean myExcluded;
   private final byte mySourceRootTypeId;
+  private final String myUnloadedModuleName;
 
   DirectoryInfoImpl(@NotNull VirtualFile root, Module module, VirtualFile contentRoot, VirtualFile sourceRoot, VirtualFile libraryClassRoot,
-                    boolean inModuleSource, boolean inLibrarySource, boolean isExcluded, int sourceRootTypeId) {
+                    boolean inModuleSource, boolean inLibrarySource, boolean isExcluded, int sourceRootTypeId, @Nullable String unloadedModuleName) {
     myRoot = root;
     this.module = module;
     this.libraryClassRoot = libraryClassRoot;
@@ -45,6 +46,7 @@ public class DirectoryInfoImpl extends DirectoryInfo {
     myInModuleSource = inModuleSource;
     myInLibrarySource = inLibrarySource;
     myExcluded = isExcluded;
+    myUnloadedModuleName = unloadedModuleName;
     if (sourceRootTypeId > MAX_ROOT_TYPE_ID) {
       throw new IllegalArgumentException(
         "Module source root type id " + sourceRootTypeId + " exceeds the maximum allowable value (" + MAX_ROOT_TYPE_ID + ")");
@@ -69,10 +71,10 @@ public class DirectoryInfoImpl extends DirectoryInfo {
   public String toString() {
     return "DirectoryInfo{" +
            "module=" + getModule() +
-           ", isInModuleSource=" + isInModuleSource() +
+           ", isInModuleSource=" + myInModuleSource +
            ", rootTypeId=" + getSourceRootTypeId() +
            ", isInLibrarySource=" + isInLibrarySource() +
-           ", isExcludedFromModule=" + isExcluded() +
+           ", isExcludedFromModule=" + myExcluded +
            ", libraryClassRoot=" + getLibraryClassRoot() +
            ", contentRoot=" + getContentRoot() +
            ", sourceRoot=" + getSourceRoot() +
@@ -80,7 +82,12 @@ public class DirectoryInfoImpl extends DirectoryInfo {
   }
 
   public boolean isInProject() {
-    return !isExcluded();
+    return !myExcluded;
+  }
+
+  @Override
+  public boolean isInProject(@NotNull VirtualFile file) {
+    return !isExcluded(file);
   }
 
   public boolean isIgnored() {
@@ -109,8 +116,22 @@ public class DirectoryInfoImpl extends DirectoryInfo {
     return myInLibrarySource;
   }
 
+  public boolean isInLibrarySource(@NotNull VirtualFile file) {
+    return myInLibrarySource;
+  }
+
   public boolean isExcluded() {
     return myExcluded;
+  }
+
+  @Override
+  public boolean isExcluded(@NotNull VirtualFile file) {
+    return myExcluded;
+  }
+
+  @Override
+  public boolean isInModuleSource(@NotNull VirtualFile file) {
+    return myInModuleSource;
   }
 
   public Module getModule() {
@@ -119,6 +140,11 @@ public class DirectoryInfoImpl extends DirectoryInfo {
 
   public int getSourceRootTypeId() {
     return mySourceRootTypeId;
+  }
+
+  @Override
+  public String getUnloadedModuleName() {
+    return myUnloadedModuleName;
   }
 
   @NotNull

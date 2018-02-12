@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Condition;
 import com.intellij.packageDependencies.ChangeListsScopesProvider;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -33,6 +34,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,7 +101,8 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     myValidationManager.addScopeListener(myScopeListener);
     addActionListener(createScopeChooserListener());
 
-    final JComboBox<ScopeDescriptor> combo = getComboBox();
+    final ComboBox<ScopeDescriptor> combo = (ComboBox<ScopeDescriptor>)getComboBox();
+    combo.setMinimumAndPreferredWidth(JBUI.scale(300));
     combo.setRenderer(new ScopeDescriptionWithDelimiterRenderer());
 
     rebuildModel();

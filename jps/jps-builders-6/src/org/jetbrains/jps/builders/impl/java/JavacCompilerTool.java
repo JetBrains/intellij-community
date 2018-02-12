@@ -63,14 +63,15 @@ public class JavacCompilerTool extends JavaCompilingTool {
       return compiler;
     }
 
-    String message = "System Java Compiler was not found in classpath";
+    String message;
     // trying to obtain additional diagnostic for the case when compiler.jar is present, but there were problems with compiler class loading:
     try {
-      Class.forName("com.sun.tools.javac.api.JavacTool", false, JavacMain.class.getClassLoader());
+      //temporary workaround for IDEA-169747: try to create the instance by hand if it was found
+      return (JavaCompiler)Class.forName("com.sun.tools.javac.api.JavacTool", true, JavacMain.class.getClassLoader()).newInstance();
     }
     catch (Throwable ex) {
       StringWriter stringWriter = new StringWriter();
-      stringWriter.write(message);
+      stringWriter.write("System Java Compiler was not found in classpath");
       stringWriter.write(":\n");
       ex.printStackTrace(new PrintWriter(stringWriter));
       message = stringWriter.getBuffer().toString();

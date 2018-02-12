@@ -49,7 +49,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testMissingLink() throws Exception {
+  public void testMissingLink() {
     File missingFile = new File(myTempDir.getRoot(), "missing_file");
     assertTrue(missingFile.getPath(), !missingFile.exists() || missingFile.delete());
     File missingLinkFile = createSymLink(missingFile.getPath(), myTempDir.getRoot() + "/missing_link", false);
@@ -60,7 +60,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testSelfLink() throws Exception {
+  public void testSelfLink() {
     String target = new File(myTempDir.getRoot(), "self_link").getPath();
     File selfLinkFile = createSymLink(target, target, false);
     VirtualFile selfLinkVFile = refreshAndFind(selfLinkFile);
@@ -70,7 +70,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testDotLink() throws Exception {
+  public void testDotLink() {
     File dotLinkFile = createSymLink(".", myTempDir.getRoot() + "/dot_link");
     VirtualFile dotLinkVFile = refreshAndFind(dotLinkFile);
     assertNotNull(dotLinkVFile);
@@ -317,7 +317,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
     doTestLinkSwitch("text 1", "text 2");
   }
 
-  private void doTestLinkSwitch(String text1, String text2) throws IOException, InterruptedException {
+  private void doTestLinkSwitch(String text1, String text2) throws IOException {
     File target1 = myTempDir.newFile("target1.txt");
     FileUtil.writeToFile(target1, text1);
     File target2 = myTempDir.newFile("target2.txt");

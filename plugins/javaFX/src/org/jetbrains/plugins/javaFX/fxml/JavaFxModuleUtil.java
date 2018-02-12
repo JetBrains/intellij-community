@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -100,7 +101,7 @@ public class JavaFxModuleUtil {
     }
   }
 
-  private static class FxmlPresenceListener extends VirtualFileAdapter {
+  private static class FxmlPresenceListener implements VirtualFileListener {
     private static final Key<ModificationTracker> KEY = Key.create("fxml.presence.modification.tracker");
     private final SimpleModificationTracker myModificationTracker;
 

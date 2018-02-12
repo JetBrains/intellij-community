@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.debugger
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.Navigatable
@@ -23,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.util.SmartList
 import com.intellij.util.ThreeState
+import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePositionWrapper
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.frame.presentation.XKeywordValuePresentation
@@ -312,8 +300,8 @@ class VariableView(override val variableName: String, private val variable: Vari
         }
       }
 
-      override fun setValue(expression: String, callback: XValueModifier.XModificationCallback) {
-        variable.valueModifier!!.setValue(variable, expression, evaluateContext)
+      override fun setValue(expression: XExpression, callback: XValueModifier.XModificationCallback) {
+        variable.valueModifier!!.setValue(variable, expression.expression, evaluateContext)
           .doneRun {
             value = null
             callback.valueModified()
@@ -431,13 +419,17 @@ class VariableView(override val variableName: String, private val variable: Vari
 
       val valueString = value.valueString
       // only WIP reports normal description
-      if (valueString != null && valueString.endsWith("]") && ARRAY_DESCRIPTION_PATTERN.matcher(valueString).find()) {
+      if (valueString != null && (valueString.endsWith(")") || valueString.endsWith(']')) &&
+          ARRAY_DESCRIPTION_PATTERN.matcher(valueString).find()) {
         node.setPresentation(icon, null, valueString, true)
       }
       else {
         context.evaluateContext.evaluate("a.length", Collections.singletonMap<String, Any>("a", value), false)
           .done(node) { node.setPresentation(icon, null, "Array[${it.value.valueString}]", true) }
-          .rejected(node) { node.setPresentation(icon, null, "Internal error: $it", false) }
+          .rejected(node) {
+            logger<VariableView>().error("Failed to evaluate array length: $it")
+            node.setPresentation(icon, null, valueString ?: "Array", true)
+          }
       }
     }
 
@@ -481,7 +473,7 @@ private fun createNumberPresentation(value: String): XValuePresentation {
   return if (value == PrimitiveValue.NA_N_VALUE || value == PrimitiveValue.INFINITY_VALUE) XKeywordValuePresentation(value) else XNumericValuePresentation(value)
 }
 
-private val ARRAY_DESCRIPTION_PATTERN = Pattern.compile("^[a-zA-Z\\d]+\\[\\d+\\]$")
+private val ARRAY_DESCRIPTION_PATTERN = Pattern.compile("^[a-zA-Z\\d]+[\\[(]\\d+[\\])]$")
 
 private class ArrayPresentation(length: Int, className: String?) : XValuePresentation() {
   private val length = Integer.toString(length)

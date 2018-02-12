@@ -221,7 +221,7 @@ public class MasterDetailPopupBuilder implements MasterController {
 
     JComponent toolBar = null;
     if (myActions != null) {
-      ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("", myActions, true);
+      ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("MasterDetailPopup", myActions, true);
       actionToolbar.setReservePlaceAutoPopupIcon(false);
       actionToolbar.setMinimumButtonSize(new Dimension(20, 20));
       toolBar = actionToolbar.getComponent();
@@ -238,8 +238,8 @@ public class MasterDetailPopupBuilder implements MasterController {
       setUseDimensionServiceForXYLocation(myDimensionServiceKey != null).
       setSettingButton(toolBar).
       setSouthComponent(footerPanel).
-      setItemChoosenCallback(itemCallback).
-      setFilteringEnabled(o -> ((ItemWrapper)o).speedSearchText());
+      setItemChoosenCallback(itemCallback);
+      //setFilteringEnabled(o -> ((ItemWrapper)o).speedSearchText());
 
     if (myPopupTuner != null) {
       myPopupTuner.consume(builder);

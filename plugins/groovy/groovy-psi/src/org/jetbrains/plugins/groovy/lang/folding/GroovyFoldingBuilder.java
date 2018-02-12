@@ -80,23 +80,19 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
       descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
     }
 
-    if (type.equals(GroovyTokenTypes.mSL_COMMENT) && !usedComments.contains(element)) {
-      boolean containsCustomRegionMarker = isCustomRegionElement(element);
-      usedComments.add(element);
+    if (type.equals(GroovyTokenTypes.mSL_COMMENT) && usedComments.add(element) && !isCustomRegionElement(element)) {
       PsiElement end = null;
       for (PsiElement current = element.getNextSibling(); current != null; current = current.getNextSibling()) {
         if (PsiImplUtil.isWhiteSpaceOrNls(current)) continue;
 
         IElementType elementType = current.getNode().getElementType();
-        if (elementType == GroovyTokenTypes.mSL_COMMENT) {
+        if (elementType == GroovyTokenTypes.mSL_COMMENT && usedComments.add(current) && !isCustomRegionElement(current)) {
           end = current;
-          usedComments.add(current);
-          containsCustomRegionMarker |= isCustomRegionElement(current);
           continue;
         }
         break;
       }
-      if (end != null && !containsCustomRegionMarker) {
+      if (end != null) {
         final TextRange range = new TextRange(element.getTextRange().getStartOffset(), end.getTextRange().getEndOffset());
         descriptors.add(new FoldingDescriptor(element, range));
       }

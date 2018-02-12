@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,15 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/20/11
  */
 public class Utils {
   public static final Key<Map<BuildTarget<?>, Collection<String>>> REMOVED_SOURCES_KEY = Key.create("_removed_sources_");
@@ -66,19 +68,19 @@ public class Utils {
     String name;
     final int locationHash;
 
-    final File rootFile = new File(projectPath);
-    if (!rootFile.isDirectory() && projectPath.endsWith(".ipr")) {
-      name = StringUtil.trimEnd(rootFile.getName(), ".ipr");
+    final Path rootFile = Paths.get(projectPath);
+    if (!Files.isDirectory(rootFile) && projectPath.endsWith(".ipr")) {
+      name = StringUtil.trimEnd(rootFile.getFileName().toString(), ".ipr");
       locationHash = projectPath.hashCode();
     }
     else {
-      File directoryBased = null;
-      if (PathMacroUtil.DIRECTORY_STORE_NAME.equals(rootFile.getName())) {
+      Path directoryBased = null;
+      if (rootFile.endsWith(PathMacroUtil.DIRECTORY_STORE_NAME)) {
         directoryBased = rootFile;
       }
       else {
-        File child = new File(rootFile, PathMacroUtil.DIRECTORY_STORE_NAME);
-        if (child.exists()) {
+        Path child = rootFile.resolve(PathMacroUtil.DIRECTORY_STORE_NAME);
+        if (Files.exists(child)) {
           directoryBased = child;
         }
       }
@@ -86,7 +88,7 @@ public class Utils {
         return null;
       }
       name = PathUtilRt.suggestFileName(JpsProjectLoader.getDirectoryBaseProjectName(directoryBased));
-      locationHash = directoryBased.getPath().hashCode();
+      locationHash = directoryBased.toString().hashCode();
     }
 
     return new File(systemRoot, name.toLowerCase(Locale.US) + "_" + Integer.toHexString(locationHash));

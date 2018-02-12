@@ -19,7 +19,11 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.ide.diff.DiffElement;
+import com.intellij.ide.diff.DirDiffSettings;
+import com.intellij.internal.statistic.UsageTrigger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class DirDiffTool implements FrameDiffTool {
   public static final DirDiffTool INSTANCE = new DirDiffTool();
@@ -27,7 +31,8 @@ public class DirDiffTool implements FrameDiffTool {
   @NotNull
   @Override
   public DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {
-    return new DirDiffViewer(context, (ContentDiffRequest)request);
+    UsageTrigger.trigger("diff.DirDiffViewer");
+    return createViewer(context, (ContentDiffRequest)request);
   }
 
   @Override
@@ -39,5 +44,20 @@ public class DirDiffTool implements FrameDiffTool {
   @Override
   public String getName() {
     return "Directory viewer";
+  }
+
+  @NotNull
+  public static FrameDiffTool.DiffViewer createViewer(@NotNull DiffContext context,
+                                                      @NotNull ContentDiffRequest request) {
+    return new DirDiffViewer(context, request);
+  }
+
+  @NotNull
+  public static FrameDiffTool.DiffViewer createViewer(@NotNull DiffContext context,
+                                                      @NotNull DiffElement element1,
+                                                      @NotNull DiffElement element2,
+                                                      @NotNull DirDiffSettings settings,
+                                                      @Nullable String helpID) {
+    return new DirDiffViewer(context, element1, element2, settings, helpID);
   }
 }

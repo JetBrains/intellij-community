@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 24-Oct-2008
- */
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.psi.*;

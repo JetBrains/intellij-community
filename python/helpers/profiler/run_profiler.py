@@ -8,7 +8,7 @@ from socket import socket
 
 from _prof_imports import ProfilerResponse
 from prof_io import ProfWriter, ProfReader
-from prof_util import generate_snapshot_filepath, stats_to_response, get_snapshot_basepath, save_main_module, execfile
+from prof_util import generate_snapshot_filepath, stats_to_response, get_snapshot_basepath, save_main_module, execfile, get_fullname
 
 base_snapshot_path = os.getenv('PYCHARM_SNAPSHOT_PATH')
 remote_run = bool(os.getenv('PYCHARM_REMOTE_RUN', ''))
@@ -144,6 +144,15 @@ if __name__ == '__main__':
     host = sys.argv[1]
     port = int(sys.argv[2])
     file = sys.argv[3]
+
+    if file == '-m':
+        module_name = sys.argv[4]
+        filename = get_fullname(module_name)
+        if filename is None:
+            sys.stderr.write("No module named %s\n" % module_name)
+            sys.exit(1)
+        else:
+            file = filename
 
     del sys.argv[0]
     del sys.argv[0]

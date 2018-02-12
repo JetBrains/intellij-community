@@ -15,8 +15,8 @@
  */
 package com.intellij.compiler.impl;
 
-import com.intellij.util.containers.StringInterner;
 import com.intellij.util.containers.EmptyIterator;
+import com.intellij.util.containers.StringInterner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +26,6 @@ import java.util.Stack;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jun 18, 2006
  */
 public class TreeBasedMap<T> {
   private Node<T> myRoot = new Node<T>();
@@ -183,7 +182,7 @@ public class TreeBasedMap<T> {
       final HashMap<String, Node<T>> childrenMap = node.myChildren;
       final boolean hasChildren = childrenMap != null && childrenMap.size() > 0;
       if (hasChildren || node.mappingExists()) {
-        myCurrentNodePath.push(new PathElement<>(node, hasChildren ? childrenMap.keySet().iterator() : EmptyIterator.<String>getInstance()));
+        myCurrentNodePath.push(new PathElement<>(node, hasChildren ? childrenMap.keySet().iterator() : EmptyIterator.getInstance()));
         if (myCurrentNodePath.size() > 2) {
           // do not add separator before the Root and its direct child nodes 
           myCurrentName.append(mySeparator);

@@ -21,8 +21,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.Color;
-import java.awt.Font;
+import java.awt.*;
 
 /**
  * @author Sergey.Malenkov
@@ -161,7 +160,7 @@ public final class TextAttributesReaderTest extends LightPlatformTestCase {
     return read(Option.element(value));
   }
 
-  private TextAttributes read(Element element) throws Exception {
+  private TextAttributes read(Element element) {
     return myReader.read(TextAttributes.class, element);
   }
 

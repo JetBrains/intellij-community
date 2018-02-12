@@ -19,9 +19,11 @@ import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.codeInspection.ex.Tools;
+import com.intellij.lang.Language;
+import com.intellij.lang.MetaLanguage;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTreeNode;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +35,7 @@ import java.util.Set;
 public abstract class InspectionsFilter {
 
   private final Set<HighlightSeverity> mySuitableSeverities = new HashSet<>();
-  private final Set<String> mySuitableLanguageIds = new HashSet<>();
+  private final Set<Language> mySuitableLanguages = new HashSet<>();
   private Boolean mySuitableInspectionsStates;
   private boolean myAvailableOnlyForAnalyze;
   private boolean myShowOnlyCleanupInspections;
@@ -55,8 +57,8 @@ public abstract class InspectionsFilter {
     return mySuitableSeverities.contains(severity);
   }
 
-  public boolean containsLanguageId(final String languageId) {
-    return mySuitableLanguageIds.contains(languageId);
+  public boolean containsLanguage(final Language  language) {
+    return mySuitableLanguages.contains(language);
   }
 
   public void setShowOnlyCleanupInspections(final boolean showOnlyCleanupInspections) {
@@ -89,13 +91,13 @@ public abstract class InspectionsFilter {
     filterChanged();
   }
 
-  public void addLanguageId(String languageId) {
-    mySuitableLanguageIds.add(languageId);
+  public void addLanguage(Language language) {
+    mySuitableLanguages.add(language);
     filterChanged();
   }
 
-  public void removeLanguageId(String languageId) {
-    mySuitableLanguageIds.remove(languageId);
+  public void removeLanguage(Language language) {
+    mySuitableLanguages.remove(language);
     filterChanged();
   }
 
@@ -105,7 +107,7 @@ public abstract class InspectionsFilter {
     myShowOnlyCleanupInspections = false;
     myShowOnlyModifiedInspections = false;
     mySuitableSeverities.clear();
-    mySuitableLanguageIds.clear();
+    mySuitableLanguages.clear();
     filterChanged();
   }
 
@@ -115,7 +117,7 @@ public abstract class InspectionsFilter {
            && !myShowOnlyCleanupInspections
            && !myShowOnlyModifiedInspections
            && mySuitableSeverities.isEmpty()
-           && mySuitableLanguageIds.isEmpty();
+           && mySuitableLanguages.isEmpty();
   }
 
   public boolean matches(@NotNull Tools tools, final InspectionConfigTreeNode node) {
@@ -147,12 +149,16 @@ public abstract class InspectionsFilter {
       }
     }
 
-    final String languageId = tools.getDefaultState().getTool().getLanguage();
-    final boolean containsInSuitableLanguages = mySuitableLanguageIds.isEmpty() || mySuitableLanguageIds.contains(languageId);
-    if (!containsInSuitableLanguages) {
-      return false;
+    if (!mySuitableLanguages.isEmpty()) {
+      String languageId = tools.getDefaultState().getTool().getLanguage();
+      if (languageId == null) return false;
+      Language language = Language.findLanguageByID(languageId);
+      if (language instanceof MetaLanguage) {
+        if (((MetaLanguage)language).getMatchingLanguages().stream().noneMatch(mySuitableLanguages::contains)) return false;
+      } else {
+        if (!mySuitableLanguages.contains(language)) return false;
+      }
     }
-
     return !myShowOnlyModifiedInspections || node.isProperSetting();
   }
 

@@ -42,10 +42,6 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 24-Feb-2006
- */
 public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   /**
    * Always first {@link HighlightDisplayLevel#DO_NOT_SHOW} must be skipped during navigation, editing settings, etc.
@@ -171,13 +167,11 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
     else {
       //enforce include all known
       List<HighlightSeverity> list = getOrderAsList(orderMap);
-      for (int i = 0; i < knownSeverities.size(); i++) {
-        HighlightSeverity stdSeverity = knownSeverities.get(i);
+      for (HighlightSeverity stdSeverity : knownSeverities) {
         if (!list.contains(stdSeverity)) {
           for (int oIdx = 0; oIdx < list.size(); oIdx++) {
             HighlightSeverity orderSeverity = list.get(oIdx);
-            HighlightInfoType type = STANDARD_SEVERITIES.get(orderSeverity.getName());
-            if (type != null && knownSeverities.indexOf(type.getSeverity(null)) > i) {
+            if (orderSeverity.myVal > stdSeverity.myVal) {
               list.add(oIdx, stdSeverity);
               myReadOrder = null;
               break;

@@ -20,36 +20,38 @@ import com.intellij.openapi.vcs.changes.ChangeListListener;
 import com.intellij.openapi.vcs.changes.ChangeListWorker;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 public class MoveChanges implements ChangeListCommand {
   private final String myName;
-  private final Change[] myChanges;
-  private MultiMap<LocalChangeList,Change> myMovedFrom;
+  private final List<Change> myChanges;
+
+  private MultiMap<LocalChangeList, Change> myMovedFrom;
   private LocalChangeList myListCopy;
 
-  public MoveChanges(final String name, final Change[] changes) {
+  public MoveChanges(@NotNull String name, @NotNull Change[] changes) {
     myName = name;
-    myChanges = changes;
+    myChanges = ContainerUtil.skipNulls(Arrays.asList(changes));
   }
 
   public void apply(final ChangeListWorker worker) {
     myMovedFrom = worker.moveChangesTo(myName, myChanges);
-    myListCopy = worker.getCopyByName(myName);
+
+    myListCopy = worker.getChangeListByName(myName);
   }
 
   public void doNotify(final EventDispatcher<ChangeListListener> dispatcher) {
-    if ((myMovedFrom != null) && (myListCopy != null)) {
-      for(LocalChangeList fromList: myMovedFrom.keySet()) {
-        final Collection<Change> changesInList = myMovedFrom.get(fromList);
+    if (myMovedFrom != null && myListCopy != null) {
+      for (LocalChangeList fromList : myMovedFrom.keySet()) {
+        Collection<Change> changesInList = myMovedFrom.get(fromList);
         dispatcher.getMulticaster().changesMoved(changesInList, fromList, myListCopy);
       }
     }
-  }
-
-  public MultiMap<LocalChangeList, Change> getMovedFrom() {
-    return myMovedFrom;
   }
 }

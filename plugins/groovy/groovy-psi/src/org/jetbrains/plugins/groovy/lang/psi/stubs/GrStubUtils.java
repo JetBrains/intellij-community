@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.stubs.StubElement;
@@ -27,6 +12,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -44,40 +30,19 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.openapi.util.io.DataInputOutputUtilRt.readSeq;
+import static com.intellij.openapi.util.io.DataInputOutputUtilRt.writeSeq;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListUtil.hasMaskModifier;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 02.06.2009
- */
 public class GrStubUtils {
-  private static final Logger LOG = Logger.getInstance(GrStubUtils.class);
-  public static final int TOO_LONG = -1;
 
-  public static void writeStringArray(StubOutputStream dataStream, String[] array) throws IOException {
-    if (array.length > Byte.MAX_VALUE) {
-      dataStream.writeByte(TOO_LONG);
-      dataStream.writeInt(array.length);
-    }
-    else {
-      dataStream.writeByte(array.length);
-    }
-    for (String s : array) {
-      LOG.assertTrue(s != null);
-      dataStream.writeName(s);
-    }
+  public static void writeStringArray(@NotNull StubOutputStream dataStream, @NotNull String[] array) throws IOException {
+    writeSeq(dataStream, ContainerUtil.newArrayList(array), dataStream::writeName);
   }
 
-  public static String[] readStringArray(StubInputStream dataStream) throws IOException {
-    int length = dataStream.readByte();
-    if (length == TOO_LONG) {
-      length = dataStream.readInt();
-    }
-    final String[] annNames = new String[length];
-    for (int i = 0; i < length; i++) {
-      annNames[i] = dataStream.readName().toString();
-    }
-    return annNames;
+  @NotNull
+  public static String[] readStringArray(@NotNull StubInputStream dataStream) throws IOException {
+    return ArrayUtil.toStringArray(readSeq(dataStream, () -> StringRef.toString(dataStream.readName())));
   }
 
   public static void writeNullableString(StubOutputStream dataStream, @Nullable String typeText) throws IOException {

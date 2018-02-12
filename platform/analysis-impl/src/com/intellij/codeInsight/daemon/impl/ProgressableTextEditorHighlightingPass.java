@@ -77,7 +77,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     }
     myFinished = false;
     if (myFile != null) {
-      myHighlightingSession = HighlightingSessionImpl.getOrCreateHighlightingSession(myFile, myEditor, (DaemonProgressIndicator)progress, getColorsScheme());
+      myHighlightingSession = HighlightingSessionImpl.getOrCreateHighlightingSession(myFile, (DaemonProgressIndicator)progress, getColorsScheme());
     }
     try {
       collectInformationWithProgress(progress);
@@ -98,7 +98,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
     daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, getId());
     if (myHighlightingSession != null) {
-      myHighlightInfoProcessor.progressIsAdvanced(myHighlightingSession, 1);  //causes traffic light repaint
+      myHighlightInfoProcessor.progressIsAdvanced(myHighlightingSession, getEditor(), 1);  //causes traffic light repaint
     }
   }
 
@@ -127,6 +127,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     return myFinished;
   }
 
+  @Nullable("null means do not show progress")
   protected String getPresentableName() {
     return myPresentableName;
   }
@@ -147,7 +148,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
       if (current >= myNextChunkThreshold) {
         double progress = getProgress();
         myNextChunkThreshold += Math.max(1, myProgressLimit / 100);
-        myHighlightInfoProcessor.progressIsAdvanced(myHighlightingSession, progress);
+        myHighlightInfoProcessor.progressIsAdvanced(myHighlightingSession, getEditor(), progress);
       }
     }
   }

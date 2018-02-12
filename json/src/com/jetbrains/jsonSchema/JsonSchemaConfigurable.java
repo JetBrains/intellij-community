@@ -11,8 +11,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.CollectConsumer;
-import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaReader;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -24,17 +22,17 @@ import java.io.File;
 /**
  * @author Irina.Chernushina on 2/2/2016.
  */
-public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappingsConfigurationBase.SchemaInfo> {
+public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSchemaConfiguration> {
   private final Project myProject;
   @NotNull private final String mySchemaFilePath;
-  @NotNull private final JsonSchemaMappingsConfigurationBase.SchemaInfo mySchema;
+  @NotNull private final UserDefinedJsonSchemaConfiguration mySchema;
   @Nullable private final Runnable myTreeUpdater;
   private JsonSchemaMappingsView myView;
   private String myDisplayName;
   private String myError;
 
   public JsonSchemaConfigurable(Project project,
-                                @NotNull String schemaFilePath, @NotNull JsonSchemaMappingsConfigurationBase.SchemaInfo schema,
+                                @NotNull String schemaFilePath, @NotNull UserDefinedJsonSchemaConfiguration schema,
                                 @Nullable Runnable updateTree) {
     super(true, updateTree);
     myProject = project;
@@ -45,7 +43,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappings
   }
 
   @NotNull
-  public JsonSchemaMappingsConfigurationBase.SchemaInfo getSchema() {
+  public UserDefinedJsonSchemaConfiguration getSchema() {
     return mySchema;
   }
 
@@ -55,7 +53,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappings
   }
 
   @Override
-  public JsonSchemaMappingsConfigurationBase.SchemaInfo getEditableObject() {
+  public UserDefinedJsonSchemaConfiguration getEditableObject() {
     return mySchema;
   }
 
@@ -103,7 +101,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappings
 
   private void doValidation() throws ConfigurationException {
     final File file = new File(myProject.getBasePath(), myView.getSchemaSubPath());
-    VirtualFile vFile = null;
+    VirtualFile vFile;
     if (!file.exists() || (vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)) == null) {
       throw new ConfigurationException((!StringUtil.isEmptyOrSpaces(myDisplayName) ? (myDisplayName + ": ") : "") + "Schema file does not exist");
     }
@@ -111,14 +109,11 @@ public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappings
 
     if (StringUtil.isEmptyOrSpaces(myDisplayName)) throw new ConfigurationException(filename + ": Schema name is empty");
     if (StringUtil.isEmptyOrSpaces(myView.getSchemaSubPath())) throw new ConfigurationException(filename + ": Schema path is empty");
-    final CollectConsumer<String> collectConsumer = new CollectConsumer<>();
-    final JsonSchemaService service = JsonSchemaService.Impl.get(myProject);
-    if (service != null && !service.isSchemaFile(vFile, collectConsumer)) {
-      final String message;
-      if (collectConsumer.getResult().isEmpty()) message = filename + ": Can not read JSON schema from file (Unknown reason)";
-      else message = filename + ": Can not read JSON schema from file: " + StringUtil.join(collectConsumer.getResult(), "; ");
-      logErrorForUser(message);
-      throw new RuntimeConfigurationWarning(message);
+
+    final String error = JsonSchemaReader.checkIfValidJsonSchema(myProject, vFile);
+    if (error != null) {
+      logErrorForUser(error);
+      throw new RuntimeConfigurationWarning(error);
     }
   }
 
@@ -133,8 +128,8 @@ public class JsonSchemaConfigurable extends NamedConfigurable<JsonSchemaMappings
     setDisplayName(mySchema.getName());
   }
 
-  public JsonSchemaMappingsConfigurationBase.SchemaInfo getUiSchema() {
-    final JsonSchemaMappingsConfigurationBase.SchemaInfo info = new JsonSchemaMappingsConfigurationBase.SchemaInfo();
+  public UserDefinedJsonSchemaConfiguration getUiSchema() {
+    final UserDefinedJsonSchemaConfiguration info = new UserDefinedJsonSchemaConfiguration();
     info.setApplicationLevel(mySchema.isApplicationLevel());
     if (myView != null && myView.isInitialized()) {
       info.setName(getDisplayName());

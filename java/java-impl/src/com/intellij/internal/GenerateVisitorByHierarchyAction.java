@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -59,6 +60,7 @@ import java.util.List;
 
 public class GenerateVisitorByHierarchyAction extends AnAction {
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final Ref<String> visitorNameRef = Ref.create("MyVisitor");
     final Ref<PsiClass> parentClassRef = Ref.create(null);
@@ -83,6 +85,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
       }
 
 
+      @Override
       protected JComponent createCenterPanel() {
         final JPanel panel = new JPanel(new BorderLayout());
         panel.add(super.createCenterPanel(), BorderLayout.CENTER);
@@ -97,6 +100,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
         final JTextField nameField = new JTextField(visitorNameRef.get());
         labeledComponent.setComponent(nameField);
         nameField.getDocument().addDocumentListener(new DocumentAdapter() {
+          @Override
           protected void textChanged(final DocumentEvent e) {
             visitorNameRef.set(nameField.getText());
           }
@@ -112,7 +116,8 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
         final Document document = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
         final EditorTextField editorTextField = new EditorTextField(document, project, StdFileTypes.JAVA);
         labeledComponent.setComponent(editorTextField);
-        editorTextField.addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+        editorTextField.addDocumentListener(new DocumentListener() {
+          @Override
           public void documentChanged(final com.intellij.openapi.editor.event.DocumentEvent e) {
             parentClassRef.set(null);
             try {
@@ -162,6 +167,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
     return visitorQName;
   }
 
+  @Override
   public void update(final AnActionEvent e) {
     e.getPresentation().setEnabled(e.getData(CommonDataKeys.PROJECT) != null);
   }
@@ -197,7 +203,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
       }
       pathMap.put(aClass, superClasses);
     }
-    pathMap.put(baseClass, Collections.<PsiClass>emptySet());
+    pathMap.put(baseClass, Collections.emptySet());
     final ArrayList<PsiFile> psiFiles = new ArrayList<>();
     for (Set<PsiClass> implementors : classes.values()) {
       for (PsiClass psiClass : implementors) {
@@ -211,6 +217,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
     }
     final int finalDetectedPrefix = detectClassPrefix(classes.keySet()).length();
     new WriteCommandAction(project, PsiUtilCore.toPsiFileArray(psiFiles)) {
+      @Override
       protected void run(@NotNull final Result result) throws Throwable {
         if (visitorClass == null) {
           final String shortClassName = PsiNameHelper.getShortClassName(visitorName);

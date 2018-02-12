@@ -30,26 +30,26 @@ import com.intellij.util.ArrayUtil;
  */
 public class JUnitDependencyScopeSuggesterTest extends JavaCodeInsightFixtureTestCase {
   @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.addLibrary("junit3", JavaSdkUtil.getJunit3JarPath());
     moduleBuilder.addLibrary("junit4", ArrayUtil.toStringArray(JavaSdkUtil.getJUnit4JarPaths()));
     moduleBuilder.addLibrary("ideaRt", JavaSdkUtil.getIdeaRtJarPath());
     moduleBuilder.addLibrary("empty");
   }
 
-  public void testJunit3() throws Exception {
+  public void testJunit3() {
     assertSame(DependencyScope.TEST, getScope("junit3"));
   }
 
-  public void testJunit4() throws Exception {
+  public void testJunit4() {
     assertSame(DependencyScope.TEST, getScope("junit4"));
   }
 
-  public void testOrdinaryLibrary() throws Exception {
+  public void testOrdinaryLibrary() {
     assertNull(getScope("ideaRt"));
   }
 
-  public void testEmptyLibrary() throws Exception {
+  public void testEmptyLibrary() {
     assertNull(getScope("empty"));
   }
 

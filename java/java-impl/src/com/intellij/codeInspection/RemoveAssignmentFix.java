@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class RemoveAssignmentFix extends RemoveInitializerFix {
   @NotNull
   @Override
-  public String getName() {
+  public String getFamilyName() {
     return InspectionsBundle.message("inspection.unused.assignment.remove.assignment.quickfix");
   }
 

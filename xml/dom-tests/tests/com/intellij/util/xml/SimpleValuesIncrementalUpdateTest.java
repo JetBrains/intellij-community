@@ -24,7 +24,7 @@ import com.intellij.util.xml.impl.DomTestCase;
  */
 public class SimpleValuesIncrementalUpdateTest extends DomTestCase {
 
-  public void testAttributeChange() throws Throwable {
+  public void testAttributeChange() {
     final MyElement element = createElement("<a/>");
     element.getXmlTag().setAttribute("attr", "foo");
     putExpected(new DomEvent(element, false));
@@ -44,7 +44,7 @@ public class SimpleValuesIncrementalUpdateTest extends DomTestCase {
     assertTrue(element.getAttr().isValid());
   }
 
-  public void testAttributeValueChangeAsXmlElementChange() throws Throwable {
+  public void testAttributeValueChangeAsXmlElementChange() {
     final MyElement element = createElement("<a attr=\"foo\"/>");
     final GenericAttributeValue<String> attr = element.getAttr();
     attr.getXmlAttributeValue().getFirstChild().replace(createTag("<a attr=\"bar\"/>").getAttribute("attr", null).getValueElement().getFirstChild());
@@ -53,7 +53,7 @@ public class SimpleValuesIncrementalUpdateTest extends DomTestCase {
     assertTrue(attr.isValid());
   }
 
-  public void testTagValueChange() throws Throwable {
+  public void testTagValueChange() {
     final MyElement element = createElement("<a><child> </child></a>").getChild();
     element.getXmlTag().getValue().setText("abc");
     putExpected(new DomEvent(element, false));
@@ -64,7 +64,7 @@ public class SimpleValuesIncrementalUpdateTest extends DomTestCase {
     assertResultsAndClear();
   }
 
-  public void testAttrXmlEmptyUri() throws Throwable {
+  public void testAttrXmlEmptyUri() {
     final MyElement element = createElement("<a xmlns=\"foo\"><ns-child attr=\"239\"/></a>" , MyElement.class);
     getDomManager().getDomFileDescription(element.getXmlElement()).registerNamespacePolicy("foo", "foo");
 

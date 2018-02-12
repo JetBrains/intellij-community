@@ -58,4 +58,11 @@ public class DefaultLineWrapPositionStrategyTest extends AbstractLineWrapPositio
       "-----------------<EDGE>---------------------------------------------------------";
     doTest(myStrategy, document);
   }
+
+  @Test
+  public void preferNearestWhiteSpaceWrap_InsteadOf_Comma() {
+    String document =
+      "queueing the JSON for later submission, we retain the <WRAP>SimpleRequestDa<EDGE>ta";
+    doTest(myStrategy, document, false);
+  }
 }

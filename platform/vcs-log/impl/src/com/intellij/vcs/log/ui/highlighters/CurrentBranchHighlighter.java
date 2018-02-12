@@ -22,7 +22,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,8 +66,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
 
   @Override
   public void update(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
-    VcsLogBranchFilter branchFilter = dataPack.getFilters().getBranchFilter();
-    mySingleFilteredBranch = branchFilter == null ? null : VcsLogUtil.getSingleFilteredBranch(branchFilter, dataPack.getRefs());
+    mySingleFilteredBranch = VcsLogUtil.getSingleFilteredBranch(dataPack.getFilters(), dataPack.getRefs());
     myConditions.clear();
   }
 

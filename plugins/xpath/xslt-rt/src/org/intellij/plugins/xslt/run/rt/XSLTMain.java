@@ -22,11 +22,6 @@ import javax.xml.transform.Result;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 23.11.2007
-*/
 public interface XSLTMain {
     TransformerFactory createTransformerFactory() throws Exception;
 

@@ -27,12 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
 public class GroovySystemRunFinalizersOnExitInspection extends BaseInspection {
-  @Override
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
-    return THREADING_ISSUES;
-  }
 
   @Override
   @Nls

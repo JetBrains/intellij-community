@@ -25,6 +25,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.jediterm.terminal.HyperlinkStyle;
@@ -46,7 +47,7 @@ import java.io.IOException;
  */
 public class TerminalExecutionConsole implements ConsoleView {
   private JBTerminalWidget myTerminalWidget;
-  private Project myProject;
+  private final Project myProject;
   private final AppendableTerminalDataStream myDataStream;
 
   private final TerminalKeyEncoder myKeyEncoder = new TerminalKeyEncoder();
@@ -82,6 +83,7 @@ public class TerminalExecutionConsole implements ConsoleView {
         };
       }
     };
+    Disposer.register(myTerminalWidget, provider);
 
     TerminalSession session = myTerminalWidget
       .createTerminalSession(
@@ -89,12 +91,12 @@ public class TerminalExecutionConsole implements ConsoleView {
 
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void startNotified(ProcessEvent event) {
+      public void startNotified(@NotNull ProcessEvent event) {
         session.start();
       }
 
       @Override
-      public void onTextAvailable(ProcessEvent event, Key outputType) {
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         try {
           ConsoleViewContentType contentType = null;
           if (outputType != ProcessOutputTypes.STDOUT) {
@@ -113,7 +115,7 @@ public class TerminalExecutionConsole implements ConsoleView {
       }
 
       @Override
-      public void processTerminated(ProcessEvent event) {
+      public void processTerminated(@NotNull ProcessEvent event) {
         myTerminalWidget.getTerminalPanel().setCursorVisible(false);
       }
     });

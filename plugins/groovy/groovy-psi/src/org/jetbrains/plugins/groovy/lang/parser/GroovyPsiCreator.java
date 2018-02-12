@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.parser;
 
@@ -25,6 +11,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.GroovyDocPsiCreator;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrImportAliasImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyASTPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrListOrMapImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrThrowsClauseImpl;
@@ -110,6 +97,7 @@ public class GroovyPsiCreator {
 
     // Imports
     if (elem == GroovyElementTypes.IMPORT_STATEMENT) return new GrImportStatementImpl(node);
+    if (elem == GroovyElementTypes.IMPORT_ALIAS) return new GrImportAliasImpl(node);
 
     // Packaging
     if (elem == GroovyElementTypes.PACKAGE_DEFINITION) return new GrPackageDefinitionImpl(node);
@@ -129,7 +117,7 @@ public class GroovyPsiCreator {
     if (elem == GroovyElementTypes.CASE_LABEL) return new GrCaseLabelImpl(node);
     if (elem == GroovyElementTypes.CASE_SECTION) return new GrCaseSectionImpl(node);
     if (elem == GroovyElementTypes.VARIABLE_DEFINITION || elem == GroovyElementTypes.VARIABLE_DEFINITION_ERROR) return new GrVariableDeclarationImpl(node);
-    if (elem == GroovyElementTypes.TUPLE_EXPRESSION) return new GrTupleExpressionImpl(node);
+    if (elem == GroovyElementTypes.TUPLE) return new GrTupleImpl(node);
     if (elem == GroovyElementTypes.VARIABLE) return new GrVariableImpl(node);
 
     if (elem == GroovyElementTypes.FIELD) return new GrFieldImpl(node);
@@ -190,6 +178,7 @@ public class GroovyPsiCreator {
     if (elem == GroovyElementTypes.CONDITIONAL_EXPRESSION) return new GrConditionalExprImpl(node);
     if (elem == GroovyElementTypes.ELVIS_EXPRESSION) return new GrElvisExprImpl(node);
     if (elem == GroovyElementTypes.ASSIGNMENT_EXPRESSION) return new GrAssignmentExpressionImpl(node);
+    if (elem == GroovyElementTypes.TUPLE_ASSIGNMENT_EXPRESSION) return new GrTupleAssignmentExpressionImpl(node);
 
     if (elem == GroovyElementTypes.LOGICAL_OR_EXPRESSION) return new GrLogicalExpressionImpl(node);
     if (elem == GroovyElementTypes.LOGICAL_AND_EXPRESSION) return new GrLogicalExpressionImpl(node);

@@ -162,7 +162,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
 
   @NotNull
   private GitCommandResult pushDeletion(@NotNull GitRepository repository, @NotNull GitRemote remote, @NotNull String branchName) {
-    return myGit.push(repository, remote, ":" + branchName, false, false, null);
+    return myGit.push(repository, remote, ":" + branchName, false, false, false, null);
   }
 
   @Nullable

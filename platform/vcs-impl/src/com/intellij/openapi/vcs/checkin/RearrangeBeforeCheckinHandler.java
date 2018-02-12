@@ -77,18 +77,14 @@ public class RearrangeBeforeCheckinHandler extends CheckinHandler implements Che
 
   @Override
   public void runCheckinHandlers(@NotNull final Runnable finishAction) {
-    final Runnable performCheckoutAction = new Runnable() {
-      @Override
-      public void run() {
-        FileDocumentManager.getInstance().saveAllDocuments();
-        finishAction.run();
-      }
+    final Runnable performCheckoutAction = () -> {
+      FileDocumentManager.getInstance().saveAllDocuments();
+      finishAction.run();
     };
 
     if (VcsConfiguration.getInstance(myProject).REARRANGE_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(myProject)) {
-      new RearrangeCodeProcessor(
-        myProject, CheckinHandlerUtil.getPsiFiles(myProject, myPanel.getVirtualFiles()), COMMAND_NAME, performCheckoutAction
-      ).run();
+      new RearrangeCodeProcessor(myProject, CheckinHandlerUtil.getPsiFiles(myProject, myPanel.getVirtualFiles()), COMMAND_NAME,
+                                 performCheckoutAction, true).run();
     }
     else {
       performCheckoutAction.run();

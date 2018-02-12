@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.progress.util;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
@@ -25,13 +26,17 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.MacUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -46,7 +51,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   private volatile boolean myRunning;
   private volatile boolean myFinished;
 
-  private volatile boolean myIndeterminate;
+  private volatile boolean myIndeterminate = Registry.is("ide.progress.indeterminate.by.default", true);
   private volatile Object myMacActivity;
   private volatile boolean myShouldStartActivity = true;
 
@@ -126,14 +131,25 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   @Override
   public void checkCanceled() {
+    throwIfCanceled();
+    if (CoreProgressManager.runCheckCanceledHooks(this)) {
+      throwIfCanceled();
+    }
+  }
+
+  private void throwIfCanceled() {
     if (isCanceled() && isCancelable()) {
-      throw new ProcessCanceledException();
+      Throwable trace = getCancellationTrace();
+      throw trace instanceof ProcessCanceledException ? (ProcessCanceledException)trace : new ProcessCanceledException(trace);
     }
-    if (CoreProgressManager.runCheckCanceledHooks()) {
-      if (isCanceled() && isCancelable()) {
-        throw new ProcessCanceledException();
-      }
+  }
+
+  @Nullable
+  protected Throwable getCancellationTrace() {
+    if (this instanceof Disposable) {
+      return ObjectUtils.tryCast(Disposer.getTree().getDisposalInfo((Disposable)this), Throwable.class);
     }
+    return null;
   }
 
   @Override
@@ -163,6 +179,10 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   @Override
   public void setFraction(final double fraction) {
+    if (isIndeterminate()) {
+      LOG.warn("This progress indicator is indeterminate, this may lead to visual inconsistency. Please call setIndeterminate(false) before you start progress.");
+      setIndeterminate(false);
+    }
     myFraction = fraction;
   }
 
@@ -177,11 +197,14 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   public synchronized void popState() {
     LOG.assertTrue(!myTextStack.isEmpty());
     String oldText = myTextStack.pop();
-    double oldFraction = myFractionStack.remove(myFractionStack.size() - 1);
     String oldText2 = myText2Stack.pop();
     setText(oldText);
-    setFraction(oldFraction);
     setText2(oldText2);
+
+    double oldFraction = myFractionStack.remove(myFractionStack.size() - 1);
+    if (!isIndeterminate()) {
+      setFraction(oldFraction);
+    }
   }
 
   @Override

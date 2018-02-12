@@ -24,6 +24,6 @@ public class GroovyMultipleReturnPointsPerMethodInspection
 
   @Override
   public JComponent createOptionsPanel() {
-    return InspectionUtil.createSingleIntegerFieldOptionsPanel(this, "m_limit", getConfigurationLabel());
+    return InspectionUtil.createSingleIntegerFieldOptionsPanel(this, "m_limit", "Return point limit:");
   }
 }

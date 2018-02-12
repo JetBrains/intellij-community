@@ -120,8 +120,8 @@ public class Restarter {
   }
 
   private static void restartOnWindows(String... beforeRestart) throws IOException {
-    Kernel32 kernel32 = (Kernel32)Native.loadLibrary("kernel32", Kernel32.class);
-    Shell32 shell32 = (Shell32)Native.loadLibrary("shell32", Shell32.class);
+    Kernel32 kernel32 = Native.loadLibrary("kernel32", Kernel32.class);
+    Shell32 shell32 = Native.loadLibrary("shell32", Shell32.class);
 
     int pid = kernel32.GetCurrentProcessId();
     IntByReference argc = new IntByReference();

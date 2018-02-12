@@ -35,11 +35,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 25.11.2007
- */
 public abstract class BaseInspection extends XmlSuppressableInspectionTool {
   @Override
   @Nls

@@ -58,8 +58,8 @@ public class PyConsoleParsingContext extends ParsingContext {
 
   public static class ConsoleStatementParsing extends StatementParsing {
 
-    private boolean myStartsWithIPythonSymbol;
-    private PythonConsoleData myPythonConsoleData;
+    private final boolean myStartsWithIPythonSymbol;
+    private final PythonConsoleData myPythonConsoleData;
 
     protected ConsoleStatementParsing(ParsingContext context,
                                       @Nullable FUTURE futureFlag,

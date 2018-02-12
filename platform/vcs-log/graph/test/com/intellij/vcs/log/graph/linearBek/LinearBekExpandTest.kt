@@ -23,7 +23,7 @@ import org.junit.Test
 class LinearBekExpandTest {
   fun runTest(beforeLinearBekBuilder: TestGraphBuilder.() -> Unit, afterExpansionBuilder: TestGraphBuilder.() -> Unit, fromNodeToExpand: Int, toNodeToExpand: Int) {
     val afterLinearBek = runLinearBek(beforeLinearBekBuilder)
-    afterLinearBek.expandEdge(GraphEdge.createNormalEdge(fromNodeToExpand, toNodeToExpand, GraphEdgeType.DOTTED));
+    afterLinearBek.expandEdge(GraphEdge.createNormalEdge(fromNodeToExpand, toNodeToExpand, GraphEdgeType.DOTTED))
     assertEquals(afterExpansionBuilder, afterLinearBek)
   }
 

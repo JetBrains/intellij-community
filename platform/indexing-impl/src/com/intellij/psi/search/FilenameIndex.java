@@ -40,6 +40,10 @@ import java.util.*;
  * @author yole
  */
 public class FilenameIndex {
+
+  /**
+   * @deprecated Not to be used.
+   */
   @Deprecated
   public @NonNls static final ID<String, Void> NAME = ID.create("FilenameIndex");
 
@@ -75,16 +79,16 @@ public class FilenameIndex {
   }
 
   public static boolean processFilesByName(@NotNull final String name,
-                                           boolean includeDirs,
+                                           boolean directories,
                                            @NotNull Processor<? super PsiFileSystemItem> processor,
                                            @NotNull GlobalSearchScope scope,
                                            @NotNull Project project,
                                            @Nullable IdFilter idFilter) {
-    return processFilesByName(name, includeDirs, true, processor, scope, project, idFilter);
+    return processFilesByName(name, directories, true, processor, scope, project, idFilter);
   }
 
   public static boolean processFilesByName(@NotNull final String name,
-                                           boolean includeDirs,
+                                           boolean directories,
                                            boolean caseSensitively,
                                            @NotNull Processor<? super PsiFileSystemItem> processor,
                                            @NotNull final GlobalSearchScope scope,
@@ -105,13 +109,13 @@ public class FilenameIndex {
 
     for(VirtualFile file: files) {
       if (!file.isValid()) continue;
-      if (!includeDirs && !file.isDirectory()) {
+      if (!directories && !file.isDirectory()) {
         PsiFile psiFile = psiManager.findFile(file);
         if (psiFile != null) {
           if(!processor.process(psiFile)) return true;
           ++processedFiles;
         }
-      } else if (includeDirs && file.isDirectory()) {
+      } else if (directories && file.isDirectory()) {
         PsiDirectory dir = psiManager.findDirectory(file);
         if (dir != null) {
           if(!processor.process(dir)) return true;
@@ -157,7 +161,7 @@ public class FilenameIndex {
       return ArrayUtil.toObjectArray(result, PsiFileSystemItem.class);
     }
     //noinspection SuspiciousToArrayCall
-    return result.toArray(new PsiFile[result.size()]);
+    return result.toArray(PsiFile.EMPTY_ARRAY);
   }
 
   /**

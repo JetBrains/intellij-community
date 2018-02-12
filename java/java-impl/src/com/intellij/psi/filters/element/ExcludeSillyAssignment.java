@@ -19,13 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 06.01.2004
- * Time: 17:59:58
- * To change this template use Options | File Templates.
- */
 public class ExcludeSillyAssignment implements ElementFilter {
 
   @Nullable 

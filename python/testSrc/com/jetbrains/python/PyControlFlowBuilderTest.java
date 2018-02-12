@@ -1,36 +1,16 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.controlflow.ControlFlow;
-import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
-import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
-import junit.framework.Assert;
-
-import java.io.IOException;
 
 /**
  * @author oleg
@@ -191,13 +171,7 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   }
   
   public void testTypeAnnotations() {
-    setLanguageLevel(LanguageLevel.PYTHON30);
-    try {
-      doTest();
-    }
-    finally {
-      setLanguageLevel(null);
-    }
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   public void testQualifiedSelfReference() {
@@ -244,6 +218,42 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 
+  // PY-21175
+  public void testImplicitNegativeTypeAssertionAfterIf() {
+    doTest();
+  }
+
+  // PY-21175
+  public void testImplicitNegativeTypeAssertionAfterTwoNestedIf() {
+    doTest();
+  }
+
+  // PY-20889
+  public void testTypesInAndBooleanExpression() {
+    doTest();
+  }
+
+  // PY-20889
+  public void testTypesInOrBooleanExpression() {
+    doTest();
+  }
+
+  // PY-25974
+  public void testAndBooleanExpression() {
+    doTest();
+  }
+
+  // PY-25974
+  public void testOrBooleanExpression() {
+    doTest();
+  }
+
+  // PY-14840
+  // PY-22003
+  public void testPositiveIteration() {
+    doTest();
+  }
+
   private void doTestFirstStatement() {
     final String testName = getTestName(false).toLowerCase();
     configureByFile(testName + ".py");
@@ -253,18 +263,7 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   }
 
   private static void check(final String fullPath, final ControlFlow flow) {
-    final StringBuffer buffer = new StringBuffer();
-    final Instruction[] instructions = flow.getInstructions();
-    for (Instruction instruction : instructions) {
-      buffer.append(instruction).append("\n");
-    }
-    final VirtualFile vFile = PyTestCase.getVirtualFileByName(fullPath);
-    try {
-      final String fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(vFile), "\n");
-      Assert.assertEquals(fileText.trim(), buffer.toString().trim());
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    final String actualCFG = StringUtil.join(flow.getInstructions(), Object::toString, "\n");
+    UsefulTestCase.assertSameLinesWithFile(fullPath, actualCFG, true);
   }
 }

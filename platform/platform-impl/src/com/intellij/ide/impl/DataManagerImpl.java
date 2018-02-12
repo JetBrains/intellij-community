@@ -37,7 +37,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.KeyedLazyInstanceEP;
-import com.intellij.util.containers.WeakValueHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.SwingHelper;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -250,13 +250,6 @@ public class DataManagerImpl extends DataManager {
       }
     }
 
-    if (Registry.is("actionSystem.noContextComponentWhileFocusTransfer")) {
-      IdeFocusManager fm = IdeFocusManager.findInstanceByComponent(activeWindow);
-      if (fm.isFocusBeingTransferred()) {
-        return null;
-      }
-    }
-
     // In case we have an active floating toolwindow and some component in another window focused,
     // we want this other component to receive key events.
     // Walking up the window ownership hierarchy from the floating toolwindow would have led us to the main IdeFrame
@@ -342,7 +335,7 @@ public class DataManagerImpl extends DataManager {
     // that have DataContext as a field.
     private final Reference<Component> myRef;
     private Map<Key, Object> myUserData;
-    private final Map<String, Object> myCachedData = new WeakValueHashMap<>();
+    private final Map<String, Object> myCachedData = ContainerUtil.createWeakValueMap();
 
     public MyDataContext(final Component component) {
       myEventCount = -1;
@@ -420,7 +413,7 @@ public class DataManagerImpl extends DataManager {
     private Map<Key, Object> getOrCreateMap() {
       Map<Key, Object> userData = myUserData;
       if (userData == null) {
-        myUserData = userData = new WeakValueHashMap<>();
+        myUserData = userData = ContainerUtil.createWeakValueMap();
       }
       return userData;
     }

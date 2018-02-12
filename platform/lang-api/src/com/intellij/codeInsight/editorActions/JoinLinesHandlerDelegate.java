@@ -19,6 +19,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -38,7 +39,7 @@ public interface JoinLinesHandlerDelegate {
    * @return the position to place the caret after the operation, or -1 if this handler was not able
    *         to perform the operation.
    */
-  int tryJoinLines(Document document, PsiFile file, int start, final int end);
+  int tryJoinLines(@NotNull Document document, @NotNull PsiFile file, int start, final int end);
 
   /** Return this from {@link #tryJoinLines} if it could not join the lines. */
   int CANNOT_JOIN = -1;

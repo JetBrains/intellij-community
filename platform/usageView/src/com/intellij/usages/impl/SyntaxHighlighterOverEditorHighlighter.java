@@ -15,7 +15,6 @@
  */
 package com.intellij.usages.impl;
 
-import com.intellij.lexer.LayeredLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.util.LayeredHighlighterIterator;
@@ -32,9 +31,6 @@ import com.intellij.psi.impl.search.LexerEditorHighlighterLexer;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* Created by Maxim.Mossienko on 7/31/2014.
-*/
 public class SyntaxHighlighterOverEditorHighlighter implements SyntaxHighlighter {
   private final Lexer lexer;
   private LayeredHighlighterIterator layeredHighlighterIterator;
@@ -46,19 +42,13 @@ public class SyntaxHighlighterOverEditorHighlighter implements SyntaxHighlighter
       lexer = highlighter.getHighlightingLexer();
     } else {
       highlighter = _highlighter;
-      LayeredLexer.ourDisableLayersFlag.set(Boolean.TRUE);
       EditorHighlighter editorHighlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, file);
-
-      try {
-        if (editorHighlighter instanceof LayeredLexerEditorHighlighter) {
-          lexer = new LexerEditorHighlighterLexer(editorHighlighter, false);
-        }
-        else {
-          lexer = highlighter.getHighlightingLexer();
-        }
+      
+      if (editorHighlighter instanceof LayeredLexerEditorHighlighter) {
+        lexer = new LexerEditorHighlighterLexer(editorHighlighter, false);
       }
-      finally {
-        LayeredLexer.ourDisableLayersFlag.set(null);
+      else {
+        lexer = highlighter.getHighlightingLexer();
       }
     }
   }

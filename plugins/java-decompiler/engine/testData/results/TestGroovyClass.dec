@@ -1,0 +1,230 @@
+package pkg;
+
+import groovy.lang.Closure;
+import groovy.lang.GroovyObject;
+import groovy.lang.MetaClass;
+import java.util.concurrent.Callable;
+import org.codehaus.groovy.runtime.GeneratedClosure;
+import org.codehaus.groovy.runtime.ScriptBytecodeAdapter;
+import org.codehaus.groovy.runtime.callsite.CallSite;
+
+public class TestGroovyClass implements GroovyObject {
+   private final TestGroovyClass.Nested n;
+   private final TestGroovyClass.Inner i;
+   private final Runnable r;
+   private final Callable<String> c;
+
+   public TestGroovyClass() {
+      CallSite[] var1 = $getCallSiteArray();
+      Object var2 = var1[0].callConstructor(TestGroovyClass.Nested.class);// 9
+      this.n = (TestGroovyClass.Nested)ScriptBytecodeAdapter.castToType(var2, TestGroovyClass.Nested.class);
+      Object var3 = var1[1].callConstructor(TestGroovyClass.Inner.class, this);
+      this.i = (TestGroovyClass.Inner)ScriptBytecodeAdapter.castToType(var3, TestGroovyClass.Inner.class);
+      TestGroovyClass._closure1 var4 = new TestGroovyClass._closure1(this, this);// 10
+      this.r = var4;
+      TestGroovyClass._closure2 var5 = new TestGroovyClass._closure2(this, this);
+      this.c = var5;
+      MetaClass var6 = this.$getStaticMetaClass();
+      this.metaClass = var6;
+   }
+
+   public final TestGroovyClass.Nested getN() {
+      return this.n;
+   }
+
+   public final TestGroovyClass.Inner getI() {
+      return this.i;
+   }
+
+   public final Runnable getR() {
+      return this.r;
+   }
+
+   public final Callable<String> getC() {
+      return this.c;
+   }
+
+   public static class Nested implements GroovyObject {
+      public Nested() {
+         CallSite[] var1 = $getCallSiteArray();
+         MetaClass var2 = this.$getStaticMetaClass();
+         this.metaClass = var2;
+      }
+   }
+
+   public class Inner implements GroovyObject {
+      public Inner() {
+         CallSite[] var2 = $getCallSiteArray();
+         super();
+         MetaClass var4 = this.$getStaticMetaClass();
+         this.metaClass = var4;
+      }
+   }
+
+   public class _closure1 extends Closure implements GeneratedClosure {
+      public _closure1(Object _outerInstance, Object _thisObject) {
+         CallSite[] var3 = $getCallSiteArray();
+         super(_outerInstance, _thisObject);
+      }
+
+      public Object doCall(Object it) {
+         CallSite[] var2 = $getCallSiteArray();
+         return var2[0].callCurrent(this, "I'm runnable");// 11
+      }
+
+      public Object doCall() {
+         CallSite[] var1 = $getCallSiteArray();
+         return this.doCall((Object)null);
+      }
+   }
+
+   public class _closure2 extends Closure implements GeneratedClosure {
+      public _closure2(Object _outerInstance, Object _thisObject) {
+         CallSite[] var3 = $getCallSiteArray();
+         super(_outerInstance, _thisObject);
+      }
+
+      public Object doCall(Object it) {
+         CallSite[] var2 = $getCallSiteArray();
+         return "I'm callable";// 12
+      }
+
+      public Object doCall() {
+         CallSite[] var1 = $getCallSiteArray();
+         return this.doCall((Object)null);
+      }
+   }
+}
+
+class 'pkg/TestGroovyClass' {
+   method '<init> ()V' {
+      4      17
+      7      17
+      9      18
+      b      18
+      c      18
+      e      18
+      13      18
+      15      19
+      17      19
+      1a      19
+      1f      19
+      25      20
+      27      20
+      28      20
+      2b      20
+      30      20
+      32      21
+      34      21
+      37      21
+      3c      21
+      4a      22
+      50      23
+      5f      24
+      65      25
+      6c      26
+      6f      26
+      75      27
+      7b      28
+   }
+
+   method 'getN ()Lpkg/TestGroovyClass$Nested;' {
+      1      31
+      4      31
+   }
+
+   method 'getI ()Lpkg/TestGroovyClass$Inner;' {
+      1      35
+      4      35
+   }
+
+   method 'getR ()Ljava/lang/Runnable;' {
+      1      39
+      4      39
+   }
+
+   method 'getC ()Ljava/util/concurrent/Callable;' {
+      1      43
+      4      43
+   }
+}
+
+class 'pkg/TestGroovyClass$Nested' {
+   method '<init> ()V' {
+      4      48
+      7      48
+      9      49
+      c      49
+      10      50
+      15      51
+   }
+}
+
+class 'pkg/TestGroovyClass$Inner' {
+   method '<init> (Lpkg/TestGroovyClass;)V' {
+      0      56
+      3      56
+      f      57
+      13      58
+      16      58
+      1c      59
+      22      60
+   }
+}
+
+class 'pkg/TestGroovyClass$_closure1' {
+   method '<init> (Ljava/lang/Object;Ljava/lang/Object;)V' {
+      0      65
+      3      65
+      7      66
+      a      67
+   }
+
+   method 'doCall (Ljava/lang/Object;)Ljava/lang/Object;' {
+      0      70
+      3      70
+      5      71
+      7      71
+      9      71
+      b      71
+      10      71
+   }
+
+   method 'doCall ()Ljava/lang/Object;' {
+      0      75
+      3      75
+      5      76
+      6      76
+      9      76
+   }
+}
+
+class 'pkg/TestGroovyClass$_closure2' {
+   method '<init> (Ljava/lang/Object;Ljava/lang/Object;)V' {
+      0      82
+      3      82
+      7      83
+      a      84
+   }
+
+   method 'doCall (Ljava/lang/Object;)Ljava/lang/Object;' {
+      0      87
+      3      87
+      4      88
+      6      88
+   }
+
+   method 'doCall ()Ljava/lang/Object;' {
+      0      92
+      3      92
+      5      93
+      6      93
+      9      93
+   }
+}
+
+Lines mapping:
+9 <-> 19
+10 <-> 23
+11 <-> 72
+12 <-> 89

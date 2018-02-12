@@ -19,31 +19,26 @@ package org.intellij.plugins.relaxNG;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import org.intellij.plugins.testUtil.CopyFile;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 22.08.2007
- */
 public class RngCompletionTest extends HighlightingTestBase {
   @Override
   public String getTestDataPath() {
     return "completion/rng";
   }
 
-  public void testCompleteRef1() throws Throwable {
+  public void testCompleteRef1() {
     doTestCompletion("complete-ref-1.rng", new String[]{ "start.element" });
   }
 
-  public void testCompleteRef2() throws Throwable {
+  public void testCompleteRef2() {
     doTestCompletion("complete-ref-2.rng", new String[]{"start.element" });
   }
 
   @CopyFile("included.rng")
-  public void testCompleteRef3() throws Throwable {
+  public void testCompleteRef3() {
     doTestCompletion("complete-ref-3.rng", new String[]{ "included.start.element" });
   }
 
-  public void testCompleteRef4() throws Throwable {
+  public void testCompleteRef4() {
     CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     doTestCompletion("complete-ref-4", "rng");
   }

@@ -28,12 +28,6 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: 03.03.2010
- * Time: 16:49:59
- */
 public class TransformClassicClassQuickFix implements LocalQuickFix {
   @NotNull
   public String getFamilyName() {

@@ -169,6 +169,7 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
   }
 
   @Nullable
+  @Deprecated
   protected Navigatable findSuitableNavigatableForLine(@NotNull Project project, @NotNull VirtualFile file, int line) {
     // lets find first non-ws psi element
     

@@ -93,8 +93,8 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.internal.statistic.persistence.ApplicationStatisticsPersistenceComponent</interface-class>
-      <implementation-class>com.intellij.internal.statistic.persistence.ApplicationStatisticsPersistenceComponent</implementation-class>
+      <interface-class>com.intellij.internal.statistic.ApplicationStatisticsPersistenceComponent</interface-class>
+      <implementation-class>com.intellij.internal.statistic.ApplicationStatisticsPersistenceComponent</implementation-class>
     </component>
 
     <component>
@@ -144,6 +144,9 @@
     <component>
       <interface-class>org.jetbrains.ide.BuiltInServerManager</interface-class>
       <implementation-class>org.jetbrains.ide.BuiltInServerManagerImpl</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.ide.customize.WelcomeWizardHelper</implementation-class>
     </component>
   </application-components>
 

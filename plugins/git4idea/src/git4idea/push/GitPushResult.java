@@ -26,7 +26,7 @@ import java.util.Map;
 /**
  * Combined push result for all affected repositories in the project.
  */
-class GitPushResult {
+public class GitPushResult {
 
   @NotNull private final Map<GitRepository, GitPushRepoResult> myResults;
   @NotNull private final UpdatedFiles myUpdatedFiles;

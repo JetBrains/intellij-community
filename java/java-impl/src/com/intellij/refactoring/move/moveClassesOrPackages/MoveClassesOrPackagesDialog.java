@@ -20,8 +20,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -127,6 +127,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
 
     updateControlsEnabled();
     myToPackageRadioButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         updateControlsEnabled();
         IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
@@ -135,6 +136,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
       }
     });
     myMakeInnerClassOfRadioButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         updateControlsEnabled();
         IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
@@ -170,10 +172,12 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
     cardLayout.show(myCardPanel, myHavePackages ? "Package" : "Class");
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myHavePackages ? myWithBrowseButtonReference.getChildComponent() : myClassPackageChooser.getChildComponent();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     boolean isDestinationVisible = getSourceRoots().size() > 1;
     myDestinationFolderCB.setVisible(isDestinationVisible);
@@ -189,7 +193,8 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
 
     GlobalSearchScope scope = JavaProjectRootsUtil.getScopeWithoutGeneratedSources(ProjectScope.getProjectScope(myProject), myProject);
     myInnerClassChooser = new ClassNameReferenceEditor(myProject, null, scope);
-    myInnerClassChooser.addDocumentListener(new DocumentAdapter() {
+    myInnerClassChooser.addDocumentListener(new DocumentListener() {
+      @Override
       public void documentChanged(DocumentEvent e) {
         validateButtons();
       }
@@ -197,10 +202,12 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
 
     // override CardLayout sizing behavior
     myCardPanel = new JPanel() {
+      @Override
       public Dimension getMinimumSize() {
         return myHavePackages ? myMovePackagePanel.getMinimumSize() : myMoveClassPanel.getMinimumSize();
       }
 
+      @Override
       public Dimension getPreferredSize() {
         return myHavePackages ? myMovePackagePanel.getPreferredSize() : myMoveClassPanel.getPreferredSize();
       }
@@ -218,7 +225,8 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
     final ReferenceEditorComboWithBrowseButton packageChooser =
       new PackageNameReferenceEditorCombo("", myProject, RECENTS_KEY, RefactoringBundle.message("choose.destination.package"));
     final Document document = packageChooser.getChildComponent().getDocument();
-    document.addDocumentListener(new DocumentAdapter() {
+    document.addDocumentListener(new DocumentListener() {
+      @Override
       public void documentChanged(DocumentEvent e) {
         validateButtons();
       }
@@ -227,6 +235,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
     return packageChooser;
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     if (!mySearchTextOccurencesEnabled) {
       myCbSearchTextOccurences.setEnabled(false);
@@ -237,6 +246,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
     return myMainPanel;
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return myHavePackages
            ? "#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesDialog.packages"
@@ -321,6 +331,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
     }
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(myHelpID);
   }
@@ -373,6 +384,7 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
     return message;
   }
 
+  @Override
   protected void doAction() {
     saveOpenInEditorOption();
     if (isMoveToPackage()) {

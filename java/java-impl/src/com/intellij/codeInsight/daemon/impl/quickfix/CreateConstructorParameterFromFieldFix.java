@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -175,7 +174,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
         }
 
         addParameterToConstructor(project, file, editor, constructor, filtered.size() == constructors.length
-                                                                      ? fields.toArray(new PsiField[fields.size()])
+                                                                      ? fields.toArray(PsiField.EMPTY_ARRAY)
                                                                       : new PsiField[]{getField()}, cleanupElements);
       }
       finally {
@@ -247,7 +246,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       types.putValue(param.getType(), param);
     }
 
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+    final JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class);
     final boolean preferLongerNames = settings.PREFER_LONGER_NAMES;
     for (PsiVariable param : params) {
       final PsiType paramType = param.getType();
@@ -274,15 +273,11 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     if (containingClass == null) return false;
     final int minUsagesNumber = containingClass.findMethodsBySignature(fromText, false).length > 0 ? 0 : 1;
     final List<ParameterInfoImpl> parameterInfos =
-      ChangeMethodSignatureFromUsageFix.performChange(project, editor, file, constructor, minUsagesNumber, newParamInfos, true, true);
-    if (parameterInfos == null) return false;
-    final ParameterInfoImpl[] resultParams = parameterInfos.toArray(new ParameterInfoImpl[parameterInfos.size()]);
-    return ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return doCreate(project, editor, parameters, constructorPointer, resultParams, usedFields, cleanupElements);
-      }
-    });
+      ChangeMethodSignatureFromUsageFix.performChange(project, editor, file, constructor, minUsagesNumber, newParamInfos, true, true, (List<ParameterInfoImpl> p) -> {
+        final ParameterInfoImpl[] resultParams = p.toArray(new ParameterInfoImpl[0]);
+        doCreate(project, editor, parameters, constructorPointer, resultParams, usedFields, cleanupElements);
+      } );
+    return parameterInfos != null;
   }
 
   private static String createDummyMethod(PsiMethod constructor, ParameterInfoImpl[] newParamInfos) {
@@ -301,7 +296,9 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       if (isUnique(parameters, newName, usedNames)) {
         break;
       }
-      newName = n < nameInfo.names.length && !CodeStyleSettingsManager.getSettings(variable.getProject()).PREFER_LONGER_NAMES 
+      newName = n < nameInfo.names.length &&
+                !CodeStyleSettingsManager.getSettings(
+                  variable.getProject()).getCustomSettings(JavaCodeStyleSettings.class).PREFER_LONGER_NAMES
                 ? nameInfo.names[n++] : nameInfo.names[0] + n++;
     }
     return newName;

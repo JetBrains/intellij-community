@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class FrameStateManagerImpl extends FrameStateManager {
     myShouldSynchronize = false;
     mySyncAlarm = new Alarm();
 
-    app.getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener.Adapter() {
+    app.getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
       @Override
       public void applicationActivated(IdeFrame ideFrame) {
         myActive.onReady();

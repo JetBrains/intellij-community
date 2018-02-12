@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,6 @@ import java.awt.event.FocusListener;
 
 /**
  * @author MYakovlev
- * Date: Jul 1, 2002
  */
 public class SelectInEditorManagerImpl extends SelectInEditorManager implements Disposable, FocusListener, CaretListener{
   private final Project myProject;
@@ -138,14 +137,6 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
   @Override
   public void caretPositionChanged(CaretEvent e) {
     releaseAll();
-  }
-
-  @Override
-  public void caretAdded(CaretEvent e) {
-  }
-
-  @Override
-  public void caretRemoved(CaretEvent e) {
   }
 
   private void releaseAll() {

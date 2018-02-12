@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 15.04.2002
- * Time: 15:29:56
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.makeStatic;
 
 import com.intellij.lang.findUsages.DescriptiveNameUtil;

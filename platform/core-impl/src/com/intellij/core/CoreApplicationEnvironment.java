@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.core;
 
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
@@ -33,7 +19,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.CoreCommandProcessor;
 import com.intellij.openapi.components.ExtensionAreas;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -42,7 +27,6 @@ import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeExtension;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
@@ -67,9 +51,11 @@ import com.intellij.psi.meta.MetaDataRegistrar;
 import com.intellij.psi.stubs.CoreStubTreeLoader;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.Processor;
+import com.intellij.util.graph.GraphAlgorithms;
+import com.intellij.util.graph.impl.GraphAlgorithmsImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
@@ -86,10 +72,17 @@ public class CoreApplicationEnvironment {
   protected final MockApplication myApplication;
   private final CoreLocalFileSystem myLocalFileSystem;
   protected final VirtualFileSystem myJarFileSystem;
+  private final VirtualFileSystem myJrtFileSystem;
   @NotNull private final Disposable myParentDisposable;
+  private final boolean myUnitTestMode;
 
   public CoreApplicationEnvironment(@NotNull Disposable parentDisposable) {
+    this(parentDisposable, true);
+  }
+
+  public CoreApplicationEnvironment(@NotNull Disposable parentDisposable, boolean unitTestMode) {
     myParentDisposable = parentDisposable;
+    myUnitTestMode = unitTestMode;
 
     myFileTypeRegistry = new CoreFileTypeRegistry();
 
@@ -99,6 +92,7 @@ public class CoreApplicationEnvironment {
                                       myParentDisposable);
     myLocalFileSystem = createLocalFileSystem();
     myJarFileSystem = createJarFileSystem();
+    myJrtFileSystem = createJrtFileSystem();
 
     Extensions.registerAreaClass(ExtensionAreas.IDEA_PROJECT, null);
 
@@ -106,8 +100,10 @@ public class CoreApplicationEnvironment {
     registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl(
       charSequence -> new DocumentImpl(charSequence), null));
 
-    VirtualFileSystem[] fs = {myLocalFileSystem, myJarFileSystem};
-    VirtualFileManagerImpl virtualFileManager = new VirtualFileManagerImpl(fs,  myApplication.getMessageBus());
+    VirtualFileSystem[] fs = myJrtFileSystem != null
+                             ? new VirtualFileSystem[]{myLocalFileSystem, myJarFileSystem, myJrtFileSystem}
+                             : new VirtualFileSystem[]{myLocalFileSystem, myJarFileSystem};
+    VirtualFileManagerImpl virtualFileManager = new VirtualFileManagerImpl(fs, myApplication.getMessageBus());
     registerComponentInstance(appContainer, VirtualFileManager.class, virtualFileManager);
 
     registerApplicationService(EncodingManager.class, new CoreEncodingRegistry());
@@ -118,12 +114,12 @@ public class CoreApplicationEnvironment {
     registerApplicationService(StubTreeLoader.class, new CoreStubTreeLoader());
     registerApplicationService(PsiReferenceService.class, new PsiReferenceServiceImpl());
     registerApplicationService(MetaDataRegistrar.class, new MetaRegistry());
-
     registerApplicationService(ProgressManager.class, createProgressIndicatorProvider());
-
     registerApplicationService(JobLauncher.class, createJobLauncher());
     registerApplicationService(CodeFoldingSettings.class, new CodeFoldingSettings());
     registerApplicationService(CommandProcessor.class, new CoreCommandProcessor());
+    registerApplicationService(GraphAlgorithms.class, new GraphAlgorithmsImpl());
+
     myApplication.registerService(ApplicationInfo.class, ApplicationInfoImpl.class);
   }
 
@@ -138,7 +134,12 @@ public class CoreApplicationEnvironment {
 
   @NotNull
   protected MockApplication createApplication(@NotNull Disposable parentDisposable) {
-    return new MockApplicationEx(parentDisposable);
+    return new MockApplicationEx(parentDisposable) {
+      @Override
+      public boolean isUnitTestMode() {
+        return myUnitTestMode;
+      }
+    };
   }
 
   @NotNull
@@ -215,6 +216,11 @@ public class CoreApplicationEnvironment {
   @NotNull
   protected CoreLocalFileSystem createLocalFileSystem() {
     return new CoreLocalFileSystem();
+  }
+
+  @Nullable
+  protected VirtualFileSystem createJrtFileSystem() {
+    return null;
   }
 
   @NotNull
@@ -316,5 +322,10 @@ public class CoreApplicationEnvironment {
   @NotNull
   public VirtualFileSystem getJarFileSystem() {
     return myJarFileSystem;
+  }
+
+  @Nullable
+  public VirtualFileSystem getJrtFileSystem() {
+    return myJrtFileSystem;
   }
 }

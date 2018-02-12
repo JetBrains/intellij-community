@@ -61,7 +61,7 @@ import java.util.regex.Pattern;
  */
 public class MavenResourceCompilerConfigurationGenerator {
 
-  private static Logger LOG = Logger.getInstance(MavenResourceCompilerConfigurationGenerator.class);
+  private static final Logger LOG = Logger.getInstance(MavenResourceCompilerConfigurationGenerator.class);
 
   private static final Pattern SIMPLE_NEGATIVE_PATTERN = Pattern.compile("!\\?(\\*\\.\\w+)");
   private static final String IDEA_MAVEN_DISABLE_MANIFEST = System.getProperty("idea.maven.disable.manifest");
@@ -160,7 +160,7 @@ public class MavenResourceCompilerConfigurationGenerator {
       addResources(resourceConfig.resources, mavenProject.getResources());
       addResources(resourceConfig.testResources, mavenProject.getTestResources());
 
-      addWebResources(module, projectConfig, mavenProject);
+      addWebResources(resourceConfig, module, projectConfig, mavenProject);
       addEjbClientArtifactConfiguration(module, projectConfig, mavenProject);
 
       resourceConfig.filteringExclusions.addAll(MavenProjectsTree.getFilterExclusions(mavenProject));
@@ -334,14 +334,13 @@ public class MavenResourceCompilerConfigurationGenerator {
     }
   }
 
-  private static void addWebResources(@NotNull Module module, MavenProjectConfiguration projectCfg, MavenProject mavenProject) {
+  private static void addWebResources(@NotNull MavenModuleResourceConfiguration resourceConfig, @NotNull Module module,
+                                      MavenProjectConfiguration projectCfg, MavenProject mavenProject) {
     Element warCfg = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-war-plugin");
     if (warCfg == null) return;
 
     boolean filterWebXml = Boolean.parseBoolean(warCfg.getChildTextTrim("filteringDeploymentDescriptors"));
     Element webResources = warCfg.getChild("webResources");
-
-    if (webResources == null && !filterWebXml) return;
 
     String webArtifactName = MavenUtil.getArtifactName("war", module, true);
 
@@ -354,6 +353,20 @@ public class MavenResourceCompilerConfigurationGenerator {
     else {
       LOG.error("MavenWebArtifactConfiguration already exists.");
     }
+
+    addSplitAndTrimmed(artifactResourceCfg.packagingIncludes, warCfg.getChildTextTrim("packagingIncludes"));
+    addSplitAndTrimmed(artifactResourceCfg.packagingExcludes, warCfg.getChildTextTrim("packagingExcludes"));
+    addConfigValues(resourceConfig.filteringExclusions, "nonFilteredFileExtensions", "nonFilteredFileExtension", warCfg);
+
+    String warSourceDirectory = warCfg.getChildTextTrim("warSourceDirectory");
+    if (warSourceDirectory == null) warSourceDirectory = "src/main/webapp";
+    if (!FileUtil.isAbsolute(warSourceDirectory)) {
+      warSourceDirectory = mavenProject.getDirectory() + '/' + warSourceDirectory;
+    }
+    artifactResourceCfg.warSourceDirectory = FileUtil.toSystemIndependentName(StringUtil.trimEnd(warSourceDirectory, '/'));
+
+    addSplitAndTrimmed(artifactResourceCfg.warSourceIncludes, warCfg.getChildTextTrim("warSourceIncludes"));
+    addSplitAndTrimmed(artifactResourceCfg.warSourceExcludes, warCfg.getChildTextTrim("warSourceExcludes"));
 
     if (webResources != null) {
       for (Element resource : webResources.getChildren("resource")) {
@@ -370,25 +383,8 @@ public class MavenResourceCompilerConfigurationGenerator {
 
         r.targetPath = resource.getChildTextTrim("targetPath");
 
-        Element includes = resource.getChild("includes");
-        if (includes != null) {
-          for (Element include : includes.getChildren("include")) {
-            String includeText = include.getTextTrim();
-            if (!includeText.isEmpty()) {
-              r.includes.add(includeText);
-            }
-          }
-        }
-
-        Element excludes = resource.getChild("excludes");
-        if (excludes != null) {
-          for (Element exclude : excludes.getChildren("exclude")) {
-            String excludeText = exclude.getTextTrim();
-            if (!excludeText.isEmpty()) {
-              r.excludes.add(excludeText);
-            }
-          }
-        }
+        addConfigValues(r.includes, "includes", "include", resource);
+        addConfigValues(r.excludes, "excludes", "exclude", resource);
 
         artifactResourceCfg.webResources.add(r);
       }
@@ -396,11 +392,34 @@ public class MavenResourceCompilerConfigurationGenerator {
 
     if (filterWebXml) {
       ResourceRootConfiguration r = new ResourceRootConfiguration();
-      r.directory = mavenProject.getDirectory() + "/src/main/webapp";
+      r.directory = warSourceDirectory;
       r.includes = Collections.singleton("WEB-INF/web.xml");
       r.isFiltered = true;
       r.targetPath = "";
       artifactResourceCfg.webResources.add(r);
+    }
+  }
+
+  private static void addConfigValues(Collection<String> collection, String tag, String subTag, Element resource) {
+    Element config = resource.getChild(tag);
+    if (config != null) {
+      for (Element value : config.getChildren(subTag)) {
+        String text = value.getTextTrim();
+        if (!text.isEmpty()) {
+          collection.add(text);
+        }
+      }
+      if (config.getChildren(subTag).isEmpty()) {
+        addSplitAndTrimmed(collection, config.getTextTrim());
+      }
+    }
+  }
+
+  private static void addSplitAndTrimmed(Collection<String> collection, @Nullable String commaSeparatedList) {
+    if (commaSeparatedList != null) {
+      for (String s : StringUtil.split(commaSeparatedList, ",")) {
+        collection.add(s.trim());
+      }
     }
   }
 
@@ -474,7 +493,7 @@ public class MavenResourceCompilerConfigurationGenerator {
             List<ResourceRootConfiguration> resourcesList = folder.isTestSource() ? configuration.testResources : configuration.resources;
 
             final ResourceRootConfiguration cfg = new ResourceRootConfiguration();
-            cfg.directory = FileUtil.toSystemIndependentName(FileUtil.toSystemIndependentName(file.getPath()));
+            cfg.directory = FileUtil.toSystemIndependentName(file.getPath());
 
             CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
             if (compilerModuleExtension == null) continue;

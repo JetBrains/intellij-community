@@ -16,71 +16,51 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaBackspaceHandler extends BackspaceHandlerDelegate {
   private boolean myToDeleteGt;
 
   @Override
-  public void beforeCharDeleted(char c, PsiFile file, Editor editor) {
-    int offset = editor.getCaretModel().getOffset() - 1;
-    myToDeleteGt = c =='<' &&
-                        file instanceof PsiJavaFile &&
-                        PsiUtil.isLanguageLevel5OrHigher(file)
-                        && JavaTypedHandler.isAfterClassLikeIdentifierOrDot(offset, editor);
+  public void beforeCharDeleted(char c, @NotNull PsiFile file, @NotNull Editor editor) {
+    myToDeleteGt = c == '<' &&
+                   file instanceof PsiJavaFile &&
+                   PsiUtil.isLanguageLevel5OrHigher(file) &&
+                   TypedHandlerUtil.isAfterClassLikeIdentifierOrDot(editor.getCaretModel().getOffset() - 1,
+                                                                    editor, JavaTokenType.DOT, JavaTokenType.IDENTIFIER, true);
   }
 
   @Override
-  public boolean charDeleted(final char c, final PsiFile file, final Editor editor) {
-    int offset = editor.getCaretModel().getOffset();
-    final CharSequence chars = editor.getDocument().getCharsSequence();
-    if (editor.getDocument().getTextLength() <= offset) return false; //virtual space after end of file
-
-    char c1 = chars.charAt(offset);
+  public boolean charDeleted(final char c, @NotNull final PsiFile file, @NotNull final Editor editor) {
     if (c == '<' && myToDeleteGt) {
+      int offset = editor.getCaretModel().getOffset();
+      final CharSequence chars = editor.getDocument().getCharsSequence();
+      if (editor.getDocument().getTextLength() <= offset) return false; //virtual space after end of file
+
+      char c1 = chars.charAt(offset);
       if (c1 != '>') return true;
-      handleLTDeletion(editor, offset, JavaTokenType.LT, JavaTokenType.GT, JavaTypedHandler.INVALID_INSIDE_REFERENCE);
+      TypedHandlerUtil.handleGenericLTDeletion(editor, offset, JavaTokenType.LT, JavaTokenType.GT, JavaTypedHandler.INVALID_INSIDE_REFERENCE);
       return true;
     }
     return false;
   }
 
-  public static void handleLTDeletion(final Editor editor,
-                                       final int offset,
-                                       final IElementType lt,
-                                       final IElementType gt, final TokenSet invalidInsideReference) {
-    HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
-    while (iterator.getStart() > 0 && !invalidInsideReference.contains(iterator.getTokenType())) {
-      iterator.retreat();
-    }
-
-    if (invalidInsideReference.contains(iterator.getTokenType())) iterator.advance();
-
-    int balance = 0;
-    while (!iterator.atEnd() && balance >= 0) {
-      final IElementType tokenType = iterator.getTokenType();
-      if (tokenType == lt) {
-        balance++;
-      }
-      else if (tokenType == gt) {
-        balance--;
-      }
-      else if (invalidInsideReference.contains(tokenType)) {
-        break;
-      }
-
-      iterator.advance();
-    }
-
-    if (balance < 0) {
-      editor.getDocument().deleteString(offset, offset + 1);
-    }
+  /**
+   * needed for API compatibility only
+   * @deprecated Please use {@link TypedHandlerUtil#handleGenericGT} instead
+   */
+  @Deprecated
+  public static void handleLTDeletion(@NotNull final Editor editor,
+                                      final int offset,
+                                      @NotNull final IElementType lt,
+                                      @NotNull final IElementType gt,
+                                      @NotNull final TokenSet invalidInsideReference) {
+    TypedHandlerUtil.handleGenericLTDeletion(editor, offset, lt, gt, invalidInsideReference);
   }
 }

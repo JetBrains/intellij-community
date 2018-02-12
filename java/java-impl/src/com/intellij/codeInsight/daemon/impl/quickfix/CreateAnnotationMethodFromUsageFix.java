@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
-  private static final Logger LOG = Logger.getInstance("#" + CreateAnnotationMethodFromUsageFix.class.getName());
+  private static final Logger LOG = Logger.getInstance(CreateAnnotationMethodFromUsageFix.class);
 
   private final SmartPsiElementPointer<PsiNameValuePair> myNameValuePair;
 
@@ -83,7 +83,7 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
     LOG.assertTrue(type != null);
     final ExpectedTypeInfo[] expectedTypes =
       new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.NONE)};
-    CreateMethodFromUsageFix.doCreate(targetClass, method, true, ContainerUtil.map2List(PsiExpression.EMPTY_ARRAY, Pair.<PsiExpression, PsiType>createFunction(null)),
+    CreateMethodFromUsageFix.doCreate(targetClass, method, true, ContainerUtil.map2List(PsiExpression.EMPTY_ARRAY, Pair.createFunction(null)),
                                       getTargetSubstitutor(nameValuePair), expectedTypes, context);
   }
 

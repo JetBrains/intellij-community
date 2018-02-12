@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class RemoteConfigurable
@@ -20,7 +6,7 @@
  */
 package com.intellij.execution.remote;
 
-import com.intellij.application.options.ModulesComboBox;
+import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.ui.ConfigurationArgumentsHelpArea;
@@ -31,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.components.fields.IntegerField;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,13 +34,13 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   private JRadioButton myRbAttach;
   private JTextField myAddressField;
   private JTextField myHostField;
-  private JTextField myPortField;
+  private IntegerField myPortField;
   private JPanel myShmemPanel;
   private JPanel mySocketPanel;
   private ConfigurationArgumentsHelpArea myHelpArea;
   @NonNls private ConfigurationArgumentsHelpArea myJDK13HelpArea;
   private ConfigurationArgumentsHelpArea myJDK14HelpArea;
-  private LabeledComponent<ModulesComboBox> myModule;
+  private LabeledComponent<ModuleDescriptionsComboBox> myModule;
   private String myHostName = "";
   @NonNls
   protected static final String LOCALHOST = "localhost";
@@ -128,8 +115,9 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     };
     myAddressField.addFocusListener(fieldFocusListener);
     myPortField.addFocusListener(fieldFocusListener);
-
-    myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent(), "<whole project>");
+    
+    myModule.getComponent().allowEmptySelection("<whole project>");
+    myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent());
   }
 
   public void applyEditorTo(@NotNull final RemoteConfiguration configuration) throws ConfigurationException {
@@ -146,6 +134,9 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
       configuration.SHMEM_ADDRESS = null;
     }
     configuration.USE_SOCKET_TRANSPORT = myRbSocket.isSelected();
+    if (configuration.USE_SOCKET_TRANSPORT) {
+      myPortField.validateContent();
+    }
     configuration.SERVER_MODE = myRbListen.isSelected();
     myModuleSelector.applyTo(configuration);
   }
@@ -198,5 +189,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     myJDK13HelpArea.updateText("-Xnoagent -Djava.compiler=NONE " + cmdLine);
   }
 
-
+  private void createUIComponents() {
+    myPortField = new IntegerField("Port", 0, 0xFFFF);
+  }
 }

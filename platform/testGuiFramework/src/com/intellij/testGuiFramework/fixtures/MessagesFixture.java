@@ -107,6 +107,11 @@ public class MessagesFixture {
   }
 
   @NotNull
+  public String getMessage() {
+    return ((Delegate)myDelegate).getMessage();
+  }
+
+  @NotNull
   public MessagesFixture requireMessageContains(@NotNull String message) {
     String actual = ((Delegate)myDelegate).getMessage();
     assertThat(actual).contains(message);

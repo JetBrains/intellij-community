@@ -46,6 +46,8 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 
 public class TabLabel extends JPanel implements Accessible {
+  // If this System property is set to true 'close' button would be shown on the left of text (it's on the right by default)
+  private static final String BUTTON_ON_THE_LEFT_KEY = "closeTabButtonOnTheLeft";
   protected final SimpleColoredComponent myLabel;
 
   private final LayeredIcon myIcon;
@@ -119,18 +121,25 @@ public class TabLabel extends JPanel implements Accessible {
         public void keyPressed(KeyEvent e) {
           if (e.getKeyCode() == KeyEvent.VK_LEFT) {
             int index = myTabs.getIndexOf(myInfo);
-            if (index > 0) {
+            if (index >= 0) {
               e.consume();
               // Select the previous tab, then set the focus its TabLabel.
-              myTabs.select(myTabs.getTabAt(index - 1), false).doWhenDone(() -> myTabs.getSelectedLabel().requestFocusInWindow());
+              TabInfo previous = myTabs.findEnabledBackward(index, true);
+              if (previous != null) {
+                myTabs.select(previous, false).doWhenDone(() -> myTabs.getSelectedLabel().requestFocusInWindow());
+              }
             }
           }
           else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
             int index = myTabs.getIndexOf(myInfo);
-            if (index < myTabs.getTabCount() - 1) {
+            if (index >= 0) {
               e.consume();
-              // Select the next tab, then set the focus its TabLabel.
-              myTabs.select(myTabs.getTabAt(index + 1), false).doWhenDone(() -> myTabs.getSelectedLabel().requestFocusInWindow());
+              // Select the previous tab, then set the focus its TabLabel.
+              TabInfo next = myTabs.findEnabledForward(index, true);
+              if (next != null) {
+                // Select the next tab, then set the focus its TabLabel.
+                myTabs.select(next, false).doWhenDone(() -> myTabs.getSelectedLabel().requestFocusInWindow());
+              }
             }
           }
           }
@@ -219,7 +228,12 @@ public class TabLabel extends JPanel implements Accessible {
   public Insets getInsets() {
     Insets insets = super.getInsets();
     if (myTabs.isEditorTabs() && UISettings.getShadowInstance().getShowCloseButton()) {
+      if (Boolean.getBoolean(BUTTON_ON_THE_LEFT_KEY)) {
+        insets.left = 3;
+      }
+      else {
         insets.right = 3;
+      }
     }
     return insets;
   }
@@ -506,7 +520,7 @@ public class TabLabel extends JPanel implements Accessible {
 
     toggleShowActions(false);
 
-    add(myActionPanel, BorderLayout.EAST);
+    add(myActionPanel, Boolean.getBoolean(BUTTON_ON_THE_LEFT_KEY) ? BorderLayout.WEST : BorderLayout.EAST);
 
     myTabs.revalidateAndRepaint(false);
   }

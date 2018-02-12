@@ -43,7 +43,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Producer;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +69,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
   }
 
   @Override
-  public void doExecute(final Editor editor, Caret caret, final DataContext dataContext) {
+  public void doExecute(@NotNull final Editor editor, Caret caret, final DataContext dataContext) {
     assert caret == null : "Invocation of 'paste' operation for specific caret is not supported";
     execute(editor, dataContext, null);
   }

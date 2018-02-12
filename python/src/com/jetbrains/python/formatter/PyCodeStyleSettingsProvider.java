@@ -42,6 +42,7 @@ public class PyCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
         return new PyCodeStyleMainPanel(getCurrentSettings(), settings);
       }
 
+      @Override
       public String getHelpTopic() {
         return "reference.settingsdialog.codestyle.python";
       }

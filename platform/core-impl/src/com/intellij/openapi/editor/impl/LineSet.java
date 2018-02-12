@@ -17,7 +17,9 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.BitUtil;
+import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.MergingCharSequence;
 import gnu.trove.TByteArrayList;
@@ -38,7 +40,7 @@ public class LineSet{
   private static final int SEPARATOR_MASK = 0x3;
 
   private final int[] myStarts;
-  private final byte[] myFlags;
+  private final byte[] myFlags; // MODIFIED_MASK bit is for is/setModified(line); SEPARATOR_MASK 2 bits stores line separator length: 0..2
   private final int myLength;
 
   private LineSet(int[] starts, byte[] flags, int length) {
@@ -76,10 +78,7 @@ public class LineSet{
                      : genericUpdate(prevText, start, end, replacement);
 
     if (doTest) {
-      MergingCharSequence newText = new MergingCharSequence(
-        new MergingCharSequence(prevText.subSequence(0, start), replacement),
-        prevText.subSequence(end, prevText.length()));
-      result.checkEquals(createLineSet(newText));
+      result.checkEquals(createLineSet(StringUtil.replaceSubSequence(prevText, start, end, replacement)));
     }
     return wholeTextReplaced ? result.clearModificationFlags() : result;
   }
@@ -119,9 +118,12 @@ public class LineSet{
     endOffset = getLineEnd(endLine);
     if (!isLastEmptyLine(endLine)) endLine++;
 
-    replacement = new MergingCharSequence(
-      new MergingCharSequence(prevText.subSequence(startOffset, _start), replacement),
-      prevText.subSequence(_end, endOffset));
+    if (startOffset < _start) {
+      replacement = new MergingCharSequence(prevText.subSequence(startOffset, _start), replacement);
+    }
+    if (_end < endOffset) {
+      replacement = new MergingCharSequence(replacement, prevText.subSequence(_end, endOffset));
+    }
 
     LineSet patch = createLineSet(replacement, true);
     return applyPatch(startOffset, endOffset, startLine, endLine, patch);
@@ -187,7 +189,7 @@ public class LineSet{
   }
 
   private boolean isLastEmptyLine(int index) {
-    return index == myFlags.length && index > 0 && (myFlags[index - 1] & SEPARATOR_MASK) > 0;
+    return index == myFlags.length && index > 0 && getSeparatorLengthUnsafe(index - 1) > 0;
   }
 
   public final int getLineEnd(int index) {
@@ -207,11 +209,20 @@ public class LineSet{
   }
 
   @NotNull
-  final LineSet setModified(int index) {
-    if (isLastEmptyLine(index) || isModified(index)) return this;
+  final LineSet setModified(@NotNull IntArrayList indices) {
+    if (indices.isEmpty()) {
+      return this;
+    }
+    if (indices.size() == 1) {
+      int index = indices.get(0);
+      if (isLastEmptyLine(index) || isModified(index)) return this;
+    }
 
     byte[] flags = myFlags.clone();
-    flags[index] |= MODIFIED_MASK;
+    for (int i=0; i<indices.size();i++) {
+      int index = indices.get(i);
+      flags[index] |= MODIFIED_MASK;
+    }
     return new LineSet(myStarts, flags, myLength);
   }
 
@@ -235,15 +246,15 @@ public class LineSet{
 
   @NotNull
   LineSet clearModificationFlags() {
-    byte[] flags = myFlags.clone();
-    for (int i = 0; i < flags.length; i++) {
-      flags[i] &= ~MODIFIED_MASK;
-    }
-    return new LineSet(myStarts, flags, myLength);
+    return getLineCount() == 0 ? this : clearModificationFlags(0, getLineCount());
   }
 
   final int getSeparatorLength(int index) {
     checkLineIndex(index);
+    return getSeparatorLengthUnsafe(index);
+  }
+
+  private int getSeparatorLengthUnsafe(int index) {
     return index < myFlags.length ? myFlags[index] & SEPARATOR_MASK : 0;
   }
 

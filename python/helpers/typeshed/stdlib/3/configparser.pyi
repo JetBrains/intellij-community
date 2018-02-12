@@ -1,21 +1,30 @@
-# Stubs for configparser
-
 # Based on http://docs.python.org/3.5/library/configparser.html and on
 # reading configparser.py.
 
-from typing import (MutableMapping, Mapping, Dict, Sequence, List, Union,
-                    Iterable, Iterator, Callable, Any, IO, overload, Optional)
+import sys
+from typing import (AbstractSet, MutableMapping, Mapping, Dict, Sequence, List,
+                    Union, Iterable, Iterator, Callable, Any, IO, overload,
+                    Optional, Pattern, Type, TypeVar)
 # Types only used in type comments only
 from typing import Optional, Tuple  # noqa
 
+if sys.version_info >= (3, 6):
+    from os import PathLike
+
 # Internal type aliases
-_section = Dict[str, str]
+_section = Mapping[str, str]
 _parser = MutableMapping[str, _section]
-_converters = Dict[str, Callable[[str], Any]]
+_converter = Callable[[str], Any]
+_converters = Dict[str, _converter]
+_T = TypeVar('_T')
 
+if sys.version_info >= (3, 6):
+    _Path = Union[str, PathLike[str]]
+else:
+    _Path = str
 
-DEFAULTSECT = ...  # type: str
-
+DEFAULTSECT: str
+MAX_INTERPOLATION_DEPTH: int
 
 class Interpolation:
     def before_get(self, parser: _parser,
@@ -40,31 +49,28 @@ class Interpolation:
                      value: str) -> str: ...
 
 
-class BasicInterpolation(Interpolation):
-    pass
-
-
-class ExtendedInterpolation(Interpolation):
-    pass
+class BasicInterpolation(Interpolation): ...
+class ExtendedInterpolation(Interpolation): ...
+class LegacyInterpolation(Interpolation): ...
 
 
 class RawConfigParser(_parser):
     def __init__(self,
-                 defaults: _section = None,
-                 dict_type: Mapping[str, str] = ...,
+                 defaults: Optional[_section] = ...,
+                 dict_type: Type[Mapping[str, str]] = ...,
                  allow_no_value: bool = ...,
                  *,
                  delimiters: Sequence[str] = ...,
                  comment_prefixes: Sequence[str] = ...,
-                 inline_comment_prefixes: Sequence[str] = None,
+                 inline_comment_prefixes: Optional[Sequence[str]] = ...,
                  strict: bool = ...,
                  empty_lines_in_values: bool = ...,
                  default_section: str = ...,
-                 interpolation: Interpolation = None) -> None: ...
+                 interpolation: Optional[Interpolation] = ...) -> None: ...
 
     def __len__(self) -> int: ...
 
-    def __getitem__(self, section: str) -> _section: ...
+    def __getitem__(self, section: str) -> SectionProxy: ...
 
     def __setitem__(self, section: str, options: _section) -> None: ...
 
@@ -84,34 +90,41 @@ class RawConfigParser(_parser):
 
     def has_option(self, section: str, option: str) -> bool: ...
 
-    def read(self, filenames: Union[str, Sequence[str]],
-             encoding: str = None) -> List[str]: ...
+    def read(self, filenames: Union[_Path, Iterable[_Path]],
+             encoding: Optional[str] = ...) -> List[str]: ...
 
-    def read_file(self, f: Iterable[str], source: str = None) -> None: ...
+    def read_file(self, f: Iterable[str], source: Optional[str] = ...) -> None: ...
 
     def read_string(self, string: str, source: str = ...) -> None: ...
 
     def read_dict(self, dictionary: Mapping[str, Mapping[str, Any]],
                   source: str = ...) -> None: ...
 
+    # These get* methods are partially applied (with the same names) in
+    # SectionProxy; the stubs should be kept updated together
     def getint(self, section: str, option: str, *, raw: bool = ..., vars: _section = ..., fallback: int = ...) -> int: ...
 
     def getfloat(self, section: str, option: str, *, raw: bool = ..., vars: _section = ..., fallback: float = ...) -> float: ...
 
     def getboolean(self, section: str, option: str, *, raw: bool = ..., vars: _section = ..., fallback: bool = ...) -> bool: ...
 
+    def _get_conv(self, section: str, option: str, conv: Callable[[str], _T], *, raw: bool = ..., vars: _section = ..., fallback: _T = ...) -> _T: ...
+
     # This is incompatible with MutableMapping so we ignore the type
     def get(self, section: str, option: str, *, raw: bool = ..., vars: _section = ..., fallback: str = ...) -> str:  # type: ignore
         ...
 
-    # This is incompatible with Mapping so we ignore the type.
-    def items(self, section: str = ..., raw: bool = ..., vars: _section = ...) -> Iterable[Tuple[str, _section]]: ...  # type: ignore
+    @overload
+    def items(self, *, raw: bool = ..., vars: _section = ...) -> AbstractSet[Tuple[str, SectionProxy]]: ...
+
+    @overload
+    def items(self, section: str, raw: bool = ..., vars: _section = ...) -> List[Tuple[str, str]]: ...
 
     def set(self, section: str, option: str, value: str) -> None: ...
 
     def write(self,
               fileobject: IO[str],
-              space_around_delimiters: bool = True) -> None: ...
+              space_around_delimiters: bool = ...) -> None: ...
 
     def remove_option(self, section: str, option: str) -> bool: ...
 
@@ -122,17 +135,51 @@ class RawConfigParser(_parser):
 
 class ConfigParser(RawConfigParser):
     def __init__(self,
-                 defaults: _section = None,
+                 defaults: Optional[_section] = ...,
                  dict_type: Mapping[str, str] = ...,
                  allow_no_value: bool = ...,
                  delimiters: Sequence[str] = ...,
                  comment_prefixes: Sequence[str] = ...,
-                 inline_comment_prefixes: Sequence[str] = None,
+                 inline_comment_prefixes: Optional[Sequence[str]] = ...,
                  strict: bool = ...,
                  empty_lines_in_values: bool = ...,
                  default_section: str = ...,
-                 interpolation: Interpolation = None,
+                 interpolation: Optional[Interpolation] = ...,
                  converters: _converters = ...) -> None: ...
+
+class SafeConfigParser(ConfigParser): ...
+
+class SectionProxy(MutableMapping[str, str]):
+    def __init__(self, parser: RawConfigParser, name: str) -> None: ...
+    def __getitem__(self, key: str) -> str: ...
+    def __setitem__(self, key: str, value: str) -> None: ...
+    def __delitem__(self, key: str) -> None: ...
+    def __contains__(self, key: object) -> bool: ...
+    def __len__(self) -> int: ...
+    def __iter__(self) -> Iterator[str]: ...
+    @property
+    def parser(self) -> RawConfigParser: ...
+    @property
+    def name(self) -> str: ...
+    def get(self, option: str, fallback: Optional[str] = ..., *, raw: bool = ..., vars: Optional[_section] = ..., **kwargs: Any) -> str: ...  # type: ignore
+
+    # These are partially-applied version of the methods with the same names in
+    # RawConfigParser; the stubs should be kept updated together
+    def getint(self, option: str, *, raw: bool = ..., vars: _section = ..., fallback: int = ...) -> int: ...
+    def getfloat(self, option: str, *, raw: bool = ..., vars: _section = ..., fallback: float = ...) -> float: ...
+    def getboolean(self, option: str, *, raw: bool = ..., vars: _section = ..., fallback: bool = ...) -> bool: ...
+
+    # SectionProxy can have arbitrary attributes when custon converters are used
+    def __getattr__(self, key: str) -> Callable[..., Any]: ...
+
+class ConverterMapping(MutableMapping[str, Optional[_converter]]):
+    GETTERCRE: Pattern
+    def __init__(self, parser: RawConfigParser) -> None: ...
+    def __getitem__(self, key: str) -> _converter: ...
+    def __setitem__(self, key: str, value: Optional[_converter]) -> None: ...
+    def __delitem__(self, key: str) -> None: ...
+    def __iter__(self) -> Iterator[str]: ...
+    def __len__(self) -> int: ...
 
 
 class Error(Exception):

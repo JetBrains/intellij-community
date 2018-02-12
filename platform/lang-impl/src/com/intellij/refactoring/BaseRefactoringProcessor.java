@@ -23,6 +23,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -33,13 +34,13 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
@@ -49,6 +50,8 @@ import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
@@ -63,13 +66,13 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
+import com.intellij.usages.impl.UnknownUsagesInUnloadedModules;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -135,6 +138,22 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     return myIsPreviewUsages;
   }
 
+  private Set<UnloadedModuleDescription> computeUnloadedModulesFromUseScope(UsageViewDescriptor descriptor) {
+    if (ModuleManager.getInstance(myProject).getUnloadedModuleDescriptions().isEmpty()) {
+      //optimization
+      return Collections.emptySet();
+    }
+
+    Set<UnloadedModuleDescription> unloadedModulesInUseScope = new LinkedHashSet<>();
+    for (PsiElement element : descriptor.getElements()) {
+      SearchScope useScope = element.getUseScope();
+      if (useScope instanceof GlobalSearchScope) {
+        unloadedModulesInUseScope.addAll(((GlobalSearchScope)useScope).getUnloadedModulesBelongingToScope());
+      }
+    }
+    return unloadedModulesInUseScope;
+  }
+
 
   public void setPreviewUsages(boolean isPreviewUsages) {
     myIsPreviewUsages = isPreviewUsages;
@@ -163,27 +182,19 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     final Ref<Boolean> refProcessCanceled = new Ref<>();
     final Ref<Boolean> anyException = new Ref<>();
 
-    final Runnable findUsagesRunnable = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          refUsages.set(DumbService.getInstance(myProject).runReadActionInSmartMode(new Computable<UsageInfo[]>() {
-            @Override
-            public UsageInfo[] compute() {
-              return findUsages();
-            }
-          }));
-        }
-        catch (UnknownReferenceTypeException e) {
-          refErrorLanguage.set(e.getElementLanguage());
-        }
-        catch (ProcessCanceledException e) {
-          refProcessCanceled.set(Boolean.TRUE);
-        }
-        catch (Throwable e) {
-          anyException.set(Boolean.TRUE);
-          LOG.error(e);
-        }
+    final Runnable findUsagesRunnable = () -> {
+      try {
+        refUsages.set(DumbService.getInstance(myProject).runReadActionInSmartMode(this::findUsages));
+      }
+      catch (UnknownReferenceTypeException e) {
+        refErrorLanguage.set(e.getElementLanguage());
+      }
+      catch (ProcessCanceledException e) {
+        refProcessCanceled.set(Boolean.TRUE);
+      }
+      catch (Throwable e) {
+        anyException.set(Boolean.TRUE);
+        LOG.error(e);
       }
     };
 
@@ -214,8 +225,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     final UsageInfo[] usages = refUsages.get();
     assert usages != null;
     UsageViewDescriptor descriptor = createUsageViewDescriptor(usages);
-
-    boolean isPreview = isPreviewUsages(usages);
+    boolean isPreview = isPreviewUsages(usages) || !computeUnloadedModulesFromUseScope(descriptor).isEmpty();
     if (!isPreview) {
       isPreview = !ensureElementsWritable(usages, descriptor) || UsageViewUtil.hasReadOnlyUsages(usages);
       if (isPreview) {
@@ -246,7 +256,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
   protected void previewRefactoring(@NotNull UsageInfo[] usages) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      if (!PREVIEW_IN_TESTS) throw new RuntimeException("Unexpected preview in tests: " + StringUtil.join(usages, info -> info.toString(), ", "));
+      if (!PREVIEW_IN_TESTS) throw new RuntimeException("Unexpected preview in tests: " + StringUtil.join(usages, UsageInfo::toString, ", "));
       ensureElementsWritable(usages, createUsageViewDescriptor(usages));
       execute(usages);
       return;
@@ -254,30 +264,22 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     final UsageViewDescriptor viewDescriptor = createUsageViewDescriptor(usages);
     final PsiElement[] elements = viewDescriptor.getElements();
     final PsiElement2UsageTargetAdapter[] targets = PsiElement2UsageTargetAdapter.convert(elements);
-    Factory<UsageSearcher> factory = new Factory<UsageSearcher>() {
+    Factory<UsageSearcher> factory = () -> new UsageInfoSearcherAdapter() {
       @Override
-      public UsageSearcher create() {
-        return new UsageInfoSearcherAdapter() {
-          @Override
-          public void generate(@NotNull final Processor<Usage> processor) {
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              @Override
-              public void run() {
-                for (int i = 0; i < elements.length; i++) {
-                  elements[i] = targets[i].getElement();
-                }
-                refreshElements(elements);
-              }
-            });
-            processUsages(processor, myProject);
+      public void generate(@NotNull final Processor<Usage> processor) {
+        ApplicationManager.getApplication().runReadAction(() -> {
+          for (int i = 0; i < elements.length; i++) {
+            elements[i] = targets[i].getElement();
           }
+          refreshElements(elements);
+        });
+        processUsages(processor, myProject);
+      }
 
-          @NotNull
-          @Override
-          protected UsageInfo[] findUsages() {
-            return BaseRefactoringProcessor.this.findUsages();
-          }
-        };
+      @NotNull
+      @Override
+      protected UsageInfo[] findUsages() {
+        return BaseRefactoringProcessor.this.findUsages();
       }
     };
 
@@ -289,7 +291,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   }
 
   private boolean ensureElementsWritable(@NotNull final UsageInfo[] usages, @NotNull UsageViewDescriptor descriptor) {
-    Set<PsiElement> elements = new THashSet<>(ContainerUtil.<PsiElement>identityStrategy()); // protect against poorly implemented equality
+    Set<PsiElement> elements = ContainerUtil.newIdentityTroveSet(); // protect against poorly implemented equality
     for (UsageInfo usage : usages) {
       assert usage != null: "Found null element in usages array";
       if (skipNonCodeUsages() && usage.isNonCodeUsage()) continue;
@@ -306,13 +308,10 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   }
 
   protected void execute(@NotNull final UsageInfo[] usages) {
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        Collection<UsageInfo> usageInfos = new LinkedHashSet<>(Arrays.asList(usages));
-        doRefactoring(usageInfos);
-        if (isGlobalUndoAction()) CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
-      }
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+      Collection<UsageInfo> usageInfos = new LinkedHashSet<>(Arrays.asList(usages));
+      doRefactoring(usageInfos);
+      if (isGlobalUndoAction()) CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
     }, getCommandName(), null, getUndoConfirmationPolicy());
   }
 
@@ -392,17 +391,8 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     final PsiElement[] initialElements = viewDescriptor.getElements();
     final UsageTarget[] targets = PsiElement2UsageTargetAdapter.convert(initialElements);
     final Ref<Usage[]> convertUsagesRef = new Ref<>();
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            convertUsagesRef.set(UsageInfo2UsageAdapter.convert(usageInfos));
-          }
-        });
-      }
-    }, "Preprocess usages", true, myProject)) return;
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ApplicationManager.getApplication().runReadAction(() -> convertUsagesRef.set(UsageInfo2UsageAdapter.convert(usageInfos))), "Preprocess usages", true, myProject)) return;
 
     if (convertUsagesRef.isNull()) return;
 
@@ -411,13 +401,17 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     final UsageViewPresentation presentation = createPresentation(viewDescriptor, usages);
 
     final UsageView usageView = viewManager.showUsages(targets, usages, presentation, factory);
+    Set<UnloadedModuleDescription> unloadedModules = computeUnloadedModulesFromUseScope(viewDescriptor);
+    if (!unloadedModules.isEmpty()) {
+      usageView.appendUsage(new UnknownUsagesInUnloadedModules(unloadedModules));
+    }
     customizeUsagesView(viewDescriptor, usageView);
   }
 
   protected void customizeUsagesView(@NotNull final UsageViewDescriptor viewDescriptor, @NotNull final UsageView usageView) {
     Runnable refactoringRunnable = () -> {
       Set<UsageInfo> usagesToRefactor = UsageViewUtil.getNotExcludedUsageInfos(usageView);
-      final UsageInfo[] infos = usagesToRefactor.toArray(new UsageInfo[usagesToRefactor.size()]);
+      final UsageInfo[] infos = usagesToRefactor.toArray(UsageInfo.EMPTY_ARRAY);
       TransactionGuard.getInstance().submitTransactionAndWait(() -> {
         if (ensureElementsWritable(infos, viewDescriptor)) {
           execute(infos);
@@ -444,26 +438,19 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       }
     }
 
-    LocalHistoryAction action = LocalHistory.getInstance().startAction(getCommandName());
+    String commandName = getCommandName();
+    LocalHistoryAction action = LocalHistory.getInstance().startAction(commandName);
 
-    final UsageInfo[] writableUsageInfos = usageInfoSet.toArray(new UsageInfo[usageInfoSet.size()]);
+    final UsageInfo[] writableUsageInfos = usageInfoSet.toArray(UsageInfo.EMPTY_ARRAY);
     try {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       RefactoringListenerManagerImpl listenerManager = (RefactoringListenerManagerImpl)RefactoringListenerManager.getInstance(myProject);
       myTransaction = listenerManager.startTransaction();
       final Map<RefactoringHelper, Object> preparedData = new LinkedHashMap<>();
-      final Runnable prepareHelpersRunnable = new Runnable() {
-        @Override
-        public void run() {
-          for (final RefactoringHelper helper : Extensions.getExtensions(RefactoringHelper.EP_NAME)) {
-            Object operation = ApplicationManager.getApplication().runReadAction(new Computable<Object>() {
-              @Override
-              public Object compute() {
-                return helper.prepareOperation(writableUsageInfos);
-              }
-            });
-            preparedData.put(helper, operation);
-          }
+      final Runnable prepareHelpersRunnable = () -> {
+        for (final RefactoringHelper helper : Extensions.getExtensions(RefactoringHelper.EP_NAME)) {
+          Object operation = ReadAction.compute(() -> helper.prepareOperation(writableUsageInfos));
+          preparedData.put(helper, operation);
         }
       };
 
@@ -496,7 +483,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       };
       ApplicationImpl app = (ApplicationImpl)ApplicationManagerEx.getApplicationEx();
       if (Registry.is("run.refactorings.under.progress")) {
-        app.runWriteActionWithProgressInDispatchThread(getCommandName(), myProject, null, null, indicator -> performRefactoringRunnable.run());
+        app.runWriteActionWithNonCancellableProgressInDispatchThread(commandName, myProject, null, indicator -> performRefactoringRunnable.run());
       }
       else {
         app.runWriteAction(performRefactoringRunnable);
@@ -509,7 +496,12 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         e.getKey().performOperation(myProject, e.getValue());
       }
       myTransaction.commit();
-      app.runWriteAction(() -> performPsiSpoilingRefactoring());
+      if (Registry.is("run.refactorings.under.progress")) {
+        app.runWriteActionWithNonCancellableProgressInDispatchThread(commandName, myProject, null, indicator -> performPsiSpoilingRefactoring());
+      }
+      else {
+        app.runWriteAction(this::performPsiSpoilingRefactoring);
+      }
     }
     finally {
       action.finish();
@@ -555,15 +547,15 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   public final void run() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().assertIsDispatchThread();
-      NonProjectFileWritingAccessProvider.disableChecksDuring(this::doRun);
+      doRun();
       return;
     }
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       LOG.error("Refactorings should not be started inside write action\n because they start progress inside and any read action from the progress task would cause the deadlock", new Exception());
-      DumbService.getInstance(myProject).smartInvokeLater(() -> NonProjectFileWritingAccessProvider.disableChecksDuring(this::doRun));
+      DumbService.getInstance(myProject).smartInvokeLater(this::doRun);
     }
     else {
-      NonProjectFileWritingAccessProvider.disableChecksDuring(this::doRun);
+      doRun();
     }
   }
 
@@ -583,6 +575,17 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
     public static boolean isTestIgnore() {
       return myTestIgnore;
+    }
+
+    @TestOnly
+    public static <T extends Throwable> void withIgnoredConflicts(ThrowableRunnable<T> r) throws T {
+      try {
+        myTestIgnore = true;
+        r.run();
+      }
+      finally {
+        myTestIgnore = false;
+      }
     }
 
     @NotNull
@@ -656,12 +659,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   
   @NotNull
   protected ConflictsDialog createConflictsDialog(@NotNull MultiMap<PsiElement, String> conflicts, @Nullable final UsageInfo[] usages) {
-    return new ConflictsDialog(myProject, conflicts, usages == null ? null : new Runnable() {
-        @Override
-        public void run() {
-          execute(usages);
-        }
-      }, false, true);
+    return new ConflictsDialog(myProject, conflicts, usages == null ? null : (Runnable)() -> execute(usages), false, true);
   }
 
   @NotNull
@@ -677,7 +675,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
 
     @NotNull
-    public Language getElementLanguage() {
+    Language getElementLanguage() {
       return myElementLanguage;
     }
   }
@@ -686,7 +684,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     private final Project myProject;
     private final String myRefactoringId;
 
-    public UndoRefactoringAction(Project project, String refactoringId) {
+    UndoRefactoringAction(@NotNull Project project, @NotNull String refactoringId) {
       myProject = project;
       myRefactoringId = refactoringId;
     }

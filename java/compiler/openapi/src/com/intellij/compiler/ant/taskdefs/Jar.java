@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 19, 2004
  */
 public class Jar extends Tag {
   public Jar(@NonNls final String destFile, @NonNls String duplicate) {

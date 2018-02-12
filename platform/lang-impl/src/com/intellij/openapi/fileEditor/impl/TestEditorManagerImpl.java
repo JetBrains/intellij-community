@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,23 +31,23 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.test.TestEditorManagerImpl");
@@ -65,7 +65,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
     myProject = project;
     registerExtraEditorDataProvider(new TextEditorPsiDataProvider(), null);
 
-    project.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerAdapter() {
+    project.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosed(Project project) {
         if (project == myProject) {
@@ -73,6 +73,17 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
         }
       }
     });
+    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
+      @Override
+      public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
+        for (VirtualFile file : getOpenFiles()) {
+          if (VfsUtilCore.isAncestor(event.getFile(), file, false)) {
+            closeFile(file);
+          }
+        }
+      }
+    }, myProject);
+
   }
 
   @Override
@@ -100,17 +111,14 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
     final FileEditorProvider fileEditorProvider = getProvider();
     Pair<FileEditor[], FileEditorProvider[]> result = Pair.create(new FileEditor[]{fileEditor}, new FileEditorProvider[]{fileEditorProvider});
 
-    modifyTabWell(new Runnable() {
-      @Override
-      public void run() {
-        myTestEditorSplitter.openAndFocusTab(file, fileEditor, fileEditorProvider);
-      }
-    });
+    modifyTabWell(() -> myTestEditorSplitter.openAndFocusTab(file, fileEditor, fileEditorProvider));
 
     return result;
   }
 
   private void modifyTabWell(Runnable tabWellModification) {
+    if (myProject.isDisposed()) return;
+    
     FileEditor lastFocusedEditor = myTestEditorSplitter.getFocusedFileEditor();
     VirtualFile lastFocusedFile  = myTestEditorSplitter.getFocusedFile();
     FileEditorProvider oldProvider = myTestEditorSplitter.getProviderFromFocused();
@@ -125,12 +133,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
         new FileEditorManagerEvent(this, lastFocusedFile, lastFocusedEditor, oldProvider, currentlyFocusedFile, currentlyFocusedEditor, newProvider);
     final FileEditorManagerListener publisher = getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
 
-    notifyPublisher(new Runnable() {
-      @Override
-      public void run() {
-        publisher.selectionChanged(event);
-      }
-    });
+    notifyPublisher(() -> publisher.selectionChanged(event));
   }
 
   @NotNull
@@ -238,7 +241,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public void closeAllFiles() {
-    for (VirtualFile file : new LinkedList<VirtualFile>(myVirtualFile2Editor.keySet())) {
+    for (VirtualFile file : getOpenFiles()) {
       closeFile(file);
     }
   }
@@ -317,7 +320,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   @Override
   @NotNull
   public EditorWindow[] getWindows() {
-    return new EditorWindow[0];  //To change body of implemented methods use File | Settings | File Templates.
+    return new EditorWindow[0];
   }
 
   @Override
@@ -368,12 +371,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
       myActiveFile = null;
     }
 
-    modifyTabWell(new Runnable() {
-      @Override
-      public void run() {
-        myTestEditorSplitter.closeFile(file);
-      }
-    });
+    modifyTabWell(() -> myTestEditorSplitter.closeFile(file));
   }
 
   @Override
@@ -479,7 +477,16 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   @Override
   @NotNull
   public List<FileEditor> openEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
-    return Collections.emptyList();
+    FileEditor[] result = openFileWithProviders(descriptor.getFile(), focusEditor, false).getFirst();
+    for (FileEditor fileEditor : result) {
+      if (getSelectedEditor(descriptor.getFile()) == fileEditor) {
+        if (fileEditor instanceof NavigatableFileEditor) {
+          ((NavigatableFileEditor)fileEditor).navigateTo(descriptor);
+        }
+        break;
+      }
+    }
+    return Arrays.asList(result);
   }
 
   @Override
@@ -533,10 +540,5 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public void setSelectedEditor(@NotNull VirtualFile file, @NotNull String fileEditorProviderId) {
-  }
-
-  @Override
-  public boolean canNavigateInEditor(OpenFileDescriptor openFileDescriptor, Editor e) {
-    return true;
   }
 }

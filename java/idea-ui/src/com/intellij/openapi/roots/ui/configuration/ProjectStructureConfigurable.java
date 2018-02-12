@@ -43,6 +43,7 @@ import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.ui.JBSplitter;
@@ -63,6 +64,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableFilter.ConfigurableId;
@@ -112,7 +114,10 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   private final ModulesConfigurator myModuleConfigurator;
   private JdkListConfigurable myJdkListConfig;
 
-  private final JLabel myEmptySelection = new JLabel("<html><body><center>Select a setting to view or edit its details here</center></body></html>", JLabel.CENTER);
+  private final JLabel myEmptySelection = new JLabel("<html><body><center>Select a setting to view or edit its details here</center></body></html>",
+                                                     SwingConstants.CENTER);
+
+  private final ObsoleteLibraryFilesRemover myObsoleteLibraryFilesRemover;
 
   public ProjectStructureConfigurable(final Project project,
                                       final ProjectLibrariesConfigurable projectLibrariesConfigurable,
@@ -146,6 +151,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     myUiState.proportion = proportion != null ? Float.parseFloat(proportion) : 0;
     final String sideProportion = propertiesComponent.getValue("project.structure.side.proportion");
     myUiState.sideProportion = sideProportion != null ? Float.parseFloat(sideProportion) : 0;
+    myObsoleteLibraryFilesRemover = new ObsoleteLibraryFilesRemover(project);
   }
 
   @Override
@@ -189,7 +195,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     final DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     toolbarGroup.add(new BackAction(myComponent));
     toolbarGroup.add(new ForwardAction(myComponent));
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroup, true);
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ProjectStructure", toolbarGroup, true);
     toolbar.setTargetComponent(myComponent);
     myToolbarComponent = toolbar.getComponent();
     left.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
@@ -335,6 +341,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
       throw exceptionRef.get();
     }
 
+    myObsoleteLibraryFilesRemover.deleteFiles();
     myContext.getDaemonAnalyzer().clearCaches();
     BuildManager.getInstance().scheduleAutoMake();
   }
@@ -593,6 +600,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     return ServiceManager.getService(project, ProjectStructureConfigurable.class);
   }
 
+  @NotNull
   public ProjectSdksModel getProjectJdksModel() {
     return myProjectJdksModel;
   }
@@ -607,6 +615,10 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
   public ProjectConfigurable getProjectConfig() {
     return myProjectConfig;
+  }
+
+  public void registerObsoleteLibraryRoots(@NotNull Collection<VirtualFile> roots) {
+    myObsoleteLibraryFilesRemover.registerObsoleteLibraryRoots(roots);
   }
 
   private void addConfigurable(Configurable configurable, boolean addToSidePanel) {

@@ -25,6 +25,7 @@ import org.zmlx.hg4idea.command.HgGraftCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgErrorUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Collection;
 
@@ -48,7 +49,7 @@ public class HgContinueGraftAction extends HgProcessStateAction {
           if (HgErrorUtil.isAbort(result)) {
             new HgCommandResultNotifier(project).notifyError(result, "Hg Error", "Couldn't continue grafting");
           }
-          HgErrorUtil.markDirtyAndHandleErrors(project, selectedRepo.getRoot());
+          HgUtil.markDirectoryDirty(project, selectedRepo.getRoot());
         }
       }
     }.queue();

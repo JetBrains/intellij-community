@@ -1,13 +1,11 @@
 <html>
 <body>
-Reports any non-atomic operations on volatile fields. Non-atomic
-operations on volatile fields are operations where the volatile field is read and
-the value is used to update the volatile field. It is possible for the value of the
-field to change between the read and write, making the operation possibly invalid.
-In such cases it is better to surround the operation with a synchronized block or
-make use of one of the <b>Atomic*</b> or
-<b>Atomic*FieldUpdater</b> classes
-from the <b>java.util.concurrent.atomic</b> package.
+Reports any non-atomic operations on <b>volatile</b> fields. Non-atomic
+operations on <b>volatile</b> fields are operations where the field is read and
+the value is used to update the field. It is possible for the value of the
+field to change between the read and the write, possibly invalidating the operation.
+The non-atomic operation can be avoided by surrounding it with a synchronized block or
+by making use of one of the classes from the <b>java.util.concurrent.atomic</b> package.
 <!-- tooltip end -->
 <p>
 </body>

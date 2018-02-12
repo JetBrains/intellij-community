@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: Apr 15, 2002
- * Time: 1:32:20 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -40,6 +32,7 @@ public class MakeStaticAction extends BaseRefactoringAction {
     return (elements.length == 1) && (elements[0] instanceof PsiMethod) && !((PsiMethod)elements[0]).isConstructor();
   }
 
+  @Override
   protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element, @NotNull final Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
     if (element instanceof PsiIdentifier) {
       element = element.getParent();

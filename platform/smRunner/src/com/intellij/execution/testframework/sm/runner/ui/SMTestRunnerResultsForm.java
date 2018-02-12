@@ -20,6 +20,9 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.process.BaseOSProcessHandler;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.export.TestResultsXmlFormatter;
@@ -31,11 +34,15 @@ import com.intellij.execution.testframework.sm.runner.history.actions.AbstractIm
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.testframework.ui.TestStatusLine;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -50,7 +57,9 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.SideBorder;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -61,6 +70,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.xml.transform.OutputKeys;
@@ -84,8 +94,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   @NonNls public static final String HISTORY_DATE_FORMAT = "yyyy.MM.dd 'at' HH'h' mm'm' ss's'";
   @NonNls private static final String DEFAULT_SM_RUNNER_SPLITTER_PROPERTY = "SMTestRunner.Splitter.Proportion";
 
-  public static final Color DARK_YELLOW = JBColor.YELLOW.darker();
-  private static final Logger LOG = Logger.getInstance("#" + SMTestRunnerResultsForm.class.getName());
+  private static final Logger LOG = Logger.getInstance(SMTestRunnerResultsForm.class);
 
   private SMTRunnerTestTreeView myTreeView;
 
@@ -114,7 +123,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   // custom progress
   private String myCurrentCustomProgressCategory;
   private final Set<String> myMentionedCategories = new LinkedHashSet<>();
-  private boolean myTestsRunning = true;
+  private volatile boolean myTestsRunning = true;
   private AbstractTestProxy myLastSelected;
   private final Set<Update> myRequests = Collections.synchronizedSet(new HashSet<Update>());
   private boolean myDisposed = false;
@@ -161,7 +170,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myTreeView.setTestResultsViewer(this);
     final SMTRunnerTreeStructure structure = new SMTRunnerTreeStructure(myProject, myTestsRootNode);
     myTreeBuilder = new SMTRunnerTreeBuilder(myTreeView, structure);
-    myTreeBuilder.setTestsComparator(myProperties);
+    myTreeBuilder.setTestsComparator(this);
     Disposer.register(this, myTreeBuilder);
 
     myAnimator = new TestsProgressAnimator(myTreeBuilder);
@@ -223,7 +232,21 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    * @return
    */
   public void onTestingStarted(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
+    myTotalTestCount = 0;
+    myStartedTestCount = 0;
+    myFinishedTestCount = 0;
+    myFailedTestCount = 0;
+    myIgnoredTestCount = 0;
+    myTestsRunning = true;
+    myLastFailed = null;
+    myLastSelected = null;
+    myMentionedCategories.clear();
+
     myAnimator.setCurrentTestCase(myTestsRootNode);
+    if (myEndTime != 0) { // no need to reset when running for the first time
+      resetTreeAndConsoleOnSubsequentTestingStarted();
+      myEndTime = 0;
+    }
     myTreeBuilder.updateFromRoot();
 
     // Status line
@@ -241,11 +264,23 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       myTestsRootNode.addSystemOutput("Testing started at " + DateFormatUtil.formatTime(myStartTime) + " ...\n");
     }
 
+    // update status text
     updateStatusLabel(false);
-
-    // TODO : show info - "Loading..." msg
+    myStatusLine.setIndeterminate(isUndefined());
 
     fireOnTestingStarted();
+  }
+
+  private void resetTreeAndConsoleOnSubsequentTestingStarted() {
+    myTestsRootNode.testingRestarted();
+    ConsoleView consoleView = DataManager.getInstance().getDataContext(myConsole).getData(LangDataKeys.CONSOLE_VIEW);
+    if (consoleView != null) {
+      consoleView.clear();
+    }
+    ProcessHandler handler = myTestsRootNode.getHandler();
+    if (handler instanceof BaseOSProcessHandler) {
+      handler.notifyTextAvailable(((BaseOSProcessHandler)handler).getCommandLine() + "\n", ProcessOutputTypes.SYSTEM);
+    }
   }
 
   public void onTestingFinished(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
@@ -269,7 +304,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       myTestsRunning = false;
       final boolean sortByDuration = TestConsoleProperties.SORT_BY_DURATION.value(myProperties);
       if (sortByDuration) {
-        myTreeBuilder.setTestsComparator(myProperties);
+        myTreeBuilder.setTestsComparator(this);
       }
     };
     if (myLastSelected == null) {
@@ -294,7 +329,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     final TestsUIUtil.TestResultPresentation presentation = new TestsUIUtil.TestResultPresentation(testsRoot, myStartTime > 0, null)
       .getPresentation(myFailedTestCount, 
                        Math.max(0, myFinishedTestCount - myFailedTestCount - myIgnoredTestCount), 
-                       myTotalTestCount - (myFinishedTestCount - myIgnoredTestCount),
+                       myTotalTestCount - myStartedTestCount,
                        myIgnoredTestCount);
     TestsUIUtil.notifyByBalloon(myProperties.getProject(), testsRoot, myProperties, presentation);
     addToHistory(testsRoot, myProperties, this);
@@ -411,6 +446,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     //Do nothing
   }
 
+  @NotNull
   public SMTestProxy.SMRootTestProxy getTestsRootNode() {
     return myTestsRootNode;
   }
@@ -517,11 +553,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     return myStartedTestCount;
   }
 
-  protected int getFinishedTestCount() {
+  public int getFinishedTestCount() {
     return myFinishedTestCount;
   }
 
-  protected int getFailedTestCount() {
+  public int getFailedTestCount() {
     return myFailedTestCount;
   }
 
@@ -529,7 +565,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     return myIgnoredTestCount;
   }
 
-  protected Color getTestsStatusColor() {
+  public Color getTestsStatusColor() {
     return myStatusLine.getStatusColor();
   }
 
@@ -612,15 +648,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       myStatusLine.setStatusColor(ColorProgressBar.RED);
     }
 
-    if (testingFinished) {
-      if (myTotalTestCount == 0) {
-        myStatusLine.setStatusColor(myTestsRootNode.wasLaunched() || !myTestsRootNode.isTestsReporterAttached()
-                                    ? JBColor.LIGHT_GRAY
-                                    : ColorProgressBar.RED);
-      }
-      // else color will be according failed/passed tests
-    }
-
     // launchedAndFinished - is launched and not in progress. If we remove "launched' that onTestingStarted() before
     // initializing will be "launchedAndFinished"
     final boolean launchedAndFinished = myTestsRootNode.wasLaunched() && !myTestsRootNode.isInProgress();
@@ -632,6 +659,17 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
                                                                         myTotalTestCount, myFinishedTestCount,
                                                                         myFailedTestCount, myMentionedCategories,
                                                                         launchedAndFinished));
+    }
+
+    if (testingFinished) {
+      boolean noTestsWereRun = myTotalTestCount == 0 && (myTestsRootNode.wasLaunched() || !myTestsRootNode.isTestsReporterAttached());
+      myStatusLine.onTestsDone(noTestsWereRun ? null : myTestsRootNode.getMagnitudeInfo());
+      final Color editorBackground = EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
+      myConsole.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT | SideBorder.TOP),
+                                             new SideBorder(editorBackground, SideBorder.LEFT)));
+      revalidate();
+      repaint();
+      // else color will be according failed/passed tests
     }
   }
 

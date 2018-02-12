@@ -25,6 +25,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -41,11 +43,11 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     super.setUp();
     myBuilder = new MavenModuleBuilder();
 
-    createJdk("Java 1.5");
+    createJdk();
     setModuleNameAndRoot("module", getProjectPath());
   }
 
-  public void testCreatingBlank() throws Exception {
+  public void testCreatingBlank() {
     if (!hasMavenInstallation()) return;
 
     MavenId id = new MavenId("org.foo", "module", "1.0");
@@ -68,7 +70,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     assertTestSources("module", "src/test/java");
   }
 
-  public void testInheritJdkFromProject() throws Exception {
+  public void testInheritJdkFromProject() {
     if (!hasMavenInstallation()) return;
 
     createNewModule(new MavenId("org.foo", "module", "1.0"));
@@ -76,7 +78,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     assertTrue(manager.isSdkInherited());
   }
 
-  public void testCreatingFromArchetype() throws Exception {
+  public void testCreatingFromArchetype() {
     if (!hasMavenInstallation()) return;
 
     setArchetype(new MavenArchetype("org.apache.maven.archetypes", "maven-archetype-quickstart", "1.0", null, null));
@@ -117,7 +119,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
                  StringUtil.convertLineSeparators(VfsUtil.loadText(myProjectPom)));
   }
 
-  public void testAddingManagedProjectIfNoArrgerator() throws Exception {
+  public void testAddingManagedProjectIfNoArrgerator() {
     if (!hasMavenInstallation()) return;
 
     importProject("<groupId>test</groupId>" +
@@ -134,7 +136,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     assertEquals(2, myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths().size());
   }
 
-  public void testDoNotAddManagedProjectIfAddingAsModuleToAggregator() throws Exception {
+  public void testDoNotAddManagedProjectIfAddingAsModuleToAggregator() {
     if (!hasMavenInstallation()) return;
 
     importProject("<groupId>test</groupId>" +
@@ -288,6 +290,33 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
                  VfsUtil.loadText(myProjectRoot.findFileByRelativePath("subDir/module/pom.xml")));
   }
 
+  public void testSameFolderAsParent() throws Exception {
+    VirtualFile customPomXml = createProjectSubFile("custompom.xml", createPomXml(
+                                                    "<groupId>test</groupId>" +
+                                                    "<artifactId>project</artifactId>" +
+                                                    "<version>1</version>"));
+    importProject(customPomXml);
+    assertModules("project");
+
+    setModuleNameAndRoot("module", getProjectPath());
+    setParentProject(customPomXml);
+
+    createNewModule(new MavenId("org.foo", "module", "1.0"));
+
+    assertContentRoots("project",
+                       getProjectPath() + "/src/main/java",
+                       getProjectPath() + "/src/main/resources",
+                       getProjectPath() + "/src/test/java"
+    );
+    assertContentRoots("module",
+                       getProjectPath());
+
+    MavenProject module = MavenProjectsManager.getInstance(myProject).findProject(getModule("module"));
+
+    MavenDomProjectModel domProjectModel = MavenDomUtil.getMavenDomProjectModel(myProject, module.getFile());
+    assertEquals("custompom.xml", domProjectModel.getMavenParent().getRelativePath().getRawText());
+  }
+
   private void setModuleNameAndRoot(String name, String root) {
     myBuilder.setName(name);
     myBuilder.setModuleFilePath(root + "/" + name + ".iml");
@@ -310,7 +339,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     myBuilder.setArchetype(archetype);
   }
 
-  private void createNewModule(MavenId id) throws Exception {
+  private void createNewModule(MavenId id) {
     myBuilder.setProjectId(id);
 
     new WriteAction() {

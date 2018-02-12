@@ -1,6 +1,6 @@
-# IntelliJ IDEA Community Edition
+# IntelliJ IDEA Community Edition [![official JetBrains project](http://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 ### Building and Running from the IDE
-To develop IntelliJ IDEA, you can use either IntelliJ IDEA Community Edition or IntelliJ IDEA Ultimate not older than 15.0. To build and run the code:
+To develop IntelliJ IDEA, you can use either IntelliJ IDEA Community Edition or IntelliJ IDEA Ultimate not older than 2017.2.5. To build and run the code:
 * Run **getPlugins.sh** / **getPlugins.bat** from the project root directory to check out additional modules.
 * If this git repository is not on 'master' branch you need to checkout the same branches/tags in android and android/tools-base git repositories.
 * Open the project.
@@ -9,6 +9,7 @@ To develop IntelliJ IDEA, you can use either IntelliJ IDEA Community Edition or 
 * Unless you're running on a Mac with an Apple JDK, add <JDK_HOME>/lib/tools.jar to the set of "**IDEA jdk**" jars.
 * Configure a JSDK named "**1.8**", pointing to an installation of JDK 1.8.
 * Add <JDK_18_HOME>/lib/tools.jar to the set of "**1.8**" jars.
+* If 'Maven Integration' plugin is disabled add path variable 'MAVEN_REPOSITORY' pointing to '<USER_HOME>/.m2/repository' directory (File | Settings | Appearance & Behavior | Path Variables).
 * Use Build | Build Project to build the code.
 
 To run the IDE from the built code
@@ -18,6 +19,6 @@ To run tests apply these setting to the **default** JUnit run configuration type
 * Working dir: 
   `<IDEA_HOME>\bin`
 * VM parameters: 
-  `-ea -Xbootclasspath/p:../out/classes/production/boot -Xmx128M -Djava.system.class.loader=com.intellij.util.lang.UrlClassLoader -Didea.config.path=../test-config -Didea.system.path=../test-system`
+  `-ea -Xmx128M -Djava.system.class.loader=com.intellij.util.lang.UrlClassLoader -Didea.config.path=../test-config -Didea.system.path=../test-system`
 
 You can find other useful information at [http://www.jetbrains.org](http://www.jetbrains.org). [Contribute section](http://www.jetbrains.org/display/IJOS/Contribute) of that site describes how you can contribute to IntelliJ IDEA.

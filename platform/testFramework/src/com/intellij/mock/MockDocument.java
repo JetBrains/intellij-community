@@ -16,12 +16,15 @@
 package com.intellij.mock;
 
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.StandaloneDocumentEx;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.LineIterator;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-public class MockDocument extends StandaloneDocumentEx {
+public class MockDocument extends UserDataHolderBase implements DocumentEx {
   private StringBuffer myText = new StringBuffer();
   private long myModStamp = LocalTimeCounter.currentTime();
 
@@ -30,14 +33,8 @@ public class MockDocument extends StandaloneDocumentEx {
 
   @NotNull
   @Override
-  public String getText() {
+  public CharSequence getImmutableCharSequence() {
     return myText.toString();
-  }
-
-  @NotNull
-  @Override
-  public String getText(@NotNull TextRange range) {
-    return range.substring(myText.toString());
   }
 
   @Override
@@ -47,14 +44,13 @@ public class MockDocument extends StandaloneDocumentEx {
     myModStamp = newModificationStamp;
   }
 
-  public CharSequence textToCharArray() {
-    return getText();
+  @Override
+  public void moveText(int srcStart, int srcEnd, int dstOffset) {
+    throw new UnsupportedOperationException();
   }
 
-  @Override
-  @NotNull
-  public char[] getChars() {
-    return getText().toCharArray();
+  public CharSequence textToCharArray() {
+    return getText();
   }
 
   @Override
@@ -99,8 +95,31 @@ public class MockDocument extends StandaloneDocumentEx {
   }
 
   @Override
+  public boolean isWritable() {
+    return false;
+  }
+
+  @Override
   public long getModificationStamp() {
     return myModStamp;
+  }
+
+  @NotNull
+  @Override
+  public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  @NotNull
+  @Override
+  public RangeMarker createGuardedBlock(int startOffset, int endOffset) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  @NotNull
+  @Override
+  public LineIterator createLineIterator() {
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -109,18 +128,26 @@ public class MockDocument extends StandaloneDocumentEx {
   }
 
   @Override
-  public RangeMarker getRangeGuard(int start, int end) {
-    return null;
+  public void setText(@NotNull CharSequence text) {
+    throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  public RangeMarker getOffsetGuard(int offset) {
-    return null;
+  public void registerRangeMarker(@NotNull RangeMarkerEx rangeMarker, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
   }
 
   @Override
-  @NotNull
-  public RangeMarker createRangeMarker(@NotNull final TextRange textRange) {
-    return createRangeMarker(textRange.getStartOffset(), textRange.getEndOffset());
+  public boolean processRangeMarkers(@NotNull Processor<? super RangeMarker> processor) {
+    return false;
+  }
+
+  @Override
+  public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<? super RangeMarker> processor) {
+    return false;
+  }
+
+  @Override
+  public boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
+    return false;
   }
 }

@@ -15,12 +15,15 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.UnsignedShortArrayList;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.concurrent.TimeUnit;
 
 public class PausesStat {
+  private static final Logger LOG = Logger.getInstance(PausesStat.class);
   private static final int N_MAX = 100000;
   // stores durations of the event: (timestamp of the event end) - (timestamp of the event start) in milliseconds.
   private final UnsignedShortArrayList durations = new UnsignedShortArrayList();
@@ -32,10 +35,11 @@ public class PausesStat {
   private Object maxDurationDescription;
   private int totalNumberRecorded;
   private int indexToOverwrite; // used when pauses.size() == N_MAX and we have to overflow cyclically
+  private String startDescription;
 
   public PausesStat(@NotNull String name) {
     myName = name;
-    assert EventQueue.isDispatchThread() : Thread.currentThread();
+    if (!EventQueue.isDispatchThread()) throw new IllegalStateException("expected EDT but got "+Thread.currentThread());
     myEdtThread = Thread.currentThread();
   }
 
@@ -49,30 +53,42 @@ public class PausesStat {
     }
   }
 
-  public void started() {
+  public void started(@NotNull String description) {
     assertEdt();
-    assert !started;
+    LOG.assertTrue(!started);
+    LOG.assertTrue(startTimeStamp == 0, startTimeStamp);
+    startTimeStamp = System.nanoTime();
     started = true;
-    startTimeStamp = System.currentTimeMillis();
+    startDescription = description;
   }
 
   private void assertEdt() {
-    if (Thread.currentThread() != myEdtThread) throw new IllegalStateException("wrong thread: "+Thread.currentThread());
+    if (Thread.currentThread() != myEdtThread) {
+      LOG.error("wrong thread: "+Thread.currentThread());
+    }
   }
 
   public void finished(@NotNull String description) {
     assertEdt();
-    assert started;
-    long finishStamp = System.currentTimeMillis();
-    int duration = (int)(finishStamp - startTimeStamp);
+    LOG.assertTrue(started);
     started = false;
-    duration = Math.min(duration, Short.MAX_VALUE);
-    if (duration > maxDuration) {
-      maxDuration = duration;
+    long finishStamp = System.nanoTime();
+    long startTimeStamp = this.startTimeStamp;
+    int durationMs = (int)TimeUnit.NANOSECONDS.toMillis(finishStamp - startTimeStamp);
+    this.startTimeStamp = 0;
+    if (finishStamp - startTimeStamp < 0 || durationMs < 0) {
+      // sometimes despite all efforts the System.nanoTime() can be non-monotonic
+      // ignore
+      return;
+    }
+
+    durationMs = Math.min(durationMs, Short.MAX_VALUE);
+    if (durationMs > maxDuration) {
+      maxDuration = durationMs;
       maxDurationDescription = description;
     }
     totalNumberRecorded++;
-    register(duration);
+    register(durationMs);
   }
 
   public String statistics() {

@@ -40,6 +40,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,6 +122,11 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
       final JComponent notification = ReadAction.compute(() -> {
         if (!file1.isValid() || !file2.isValid()) {
           return DiffNotifications.createError();
+        }
+
+        if (FileUtilRt.isTooLarge(file1.getLength()) ||
+            FileUtilRt.isTooLarge(file2.getLength())) {
+          return DiffNotifications.createNotification("Files are too large to compare");
         }
 
         try {

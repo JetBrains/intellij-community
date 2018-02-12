@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@ public class DiffManagerTest {
     @NotNull
     @Override
     public DiffContent[] getContents() {
-      return myDiffContents.toArray(new DiffContent[myDiffContents.size()]);
+      return myDiffContents.toArray(new DiffContent[0]);
     }
 
     public void addContent(DiffContent content, String title) {

@@ -17,31 +17,35 @@ package com.intellij.vcs.log.ui.table;
 
 import com.google.common.primitives.Ints;
 import com.intellij.ide.CopyProvider;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsCommitStyleFactory;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogHighlighter;
+import com.intellij.vcs.log.VcsLogHighlighter.VcsCommitStyle;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
@@ -52,22 +56,25 @@ import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.SimpleGraphCellPainter;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
+import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
-import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.CellEditorListener;
+import javax.swing.event.MouseInputListener;
+import javax.swing.event.TableModelEvent;
 import javax.swing.plaf.basic.BasicTableHeaderUI;
 import javax.swing.table.*;
 import java.awt.*;
@@ -79,6 +86,7 @@ import java.util.List;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+import static com.intellij.vcs.log.VcsCommitStyleFactory.createStyle;
 import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.BOLD;
 import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.ITALIC;
 import static com.intellij.vcs.log.ui.table.GraphTableModel.*;
@@ -92,10 +100,13 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   private static final int MAX_DEFAULT_AUTHOR_COLUMN_WIDTH = 300;
   private static final int MAX_ROWS_TO_CALC_WIDTH = 1000;
 
+  public static final String LOADING_COMMITS_TEXT = "Loading commits...";
+  public static final String CHANGES_LOG_TEXT = "Changes log";
+
   @NotNull private final AbstractVcsLogUi myUi;
   @NotNull private final VcsLogData myLogData;
   @NotNull private final MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
-  @NotNull private final TableCellRenderer myDummyRenderer = new DefaultTableCellRenderer();
+  @NotNull private final TableCellRenderer myDummyRenderer = new MyDefaultTableCellRenderer();
   @NotNull private final GraphCommitCellRenderer myGraphCommitCellRenderer;
   @NotNull private final GraphTableController myController;
   @NotNull private final StringCellRenderer myStringCellRenderer;
@@ -120,7 +131,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     myGraphCommitCellRenderer = new GraphCommitCellRenderer(logData, graphCellPainter, this, true, false);
     myStringCellRenderer = new StringCellRenderer();
 
-    getEmptyText().setText("Changes Log");
+    getEmptyText().setText(CHANGES_LOG_TEXT);
     myLogData.getProgress().addProgressIndicatorListener(new MyProgressListener(), ui);
 
     initColumns();
@@ -136,7 +147,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     myController = new GraphTableController(this, ui, logData, graphCellPainter, myGraphCommitCellRenderer);
 
-    getSelectionModel().addListSelectionListener(new MyListSelectionListener());
+    getSelectionModel().addListSelectionListener(e -> mySelection = null);
     getColumnModel().setColumnSelectionAllowed(false);
 
     ScrollingUtil.installActions(this, false);
@@ -165,14 +176,42 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     return Registry.is("vcs.log.speedsearch");
   }
 
+  protected void updateEmptyText() {
+    StatusText statusText = getEmptyText();
+    VisiblePack visiblePack = getModel().getVisiblePack();
+
+    if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0) {
+      if (visiblePack.getFilters().isEmpty()) {
+        statusText.setText("No changes committed.").
+          appendSecondaryText("Commit local changes", VcsLogUiUtil.getLinkAttributes(),
+                              ActionUtil.createActionListener(VcsLogActionPlaces.CHECKIN_PROJECT_ACTION, this, ActionPlaces.UNKNOWN));
+        String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionPlaces.CHECKIN_PROJECT_ACTION);
+        if (!shortcutText.isEmpty()) {
+          statusText.appendSecondaryText(" (" + shortcutText + ")", StatusText.DEFAULT_ATTRIBUTES, null);
+        }
+      }
+      else {
+        statusText.setText("No commits matching filters.").appendSecondaryText("Reset filters", VcsLogUiUtil.getLinkAttributes(),
+                                                                               e -> myUi.getFilterUi().setFilter(null));
+      }
+    }
+    else {
+      statusText.setText(CHANGES_LOG_TEXT);
+    }
+  }
+
   public void updateDataPack(@NotNull VisiblePack visiblePack, boolean permGraphChanged) {
-    VcsLogGraphTable.Selection previousSelection = getSelection();
+    Selection previousSelection = getSelection();
     boolean filtersChanged = !getModel().getVisiblePack().getFilters().equals(visiblePack.getFilters());
 
     getModel().setVisiblePack(visiblePack);
     previousSelection.restore(visiblePack.getVisibleGraph(), true, permGraphChanged);
     for (VcsLogHighlighter highlighter : myHighlighters) {
       highlighter.update(visiblePack, permGraphChanged);
+    }
+
+    if (!getEmptyText().getText().equals(LOADING_COMMITS_TEXT)) {
+      updateEmptyText();
     }
 
     setPaintBusy(false);
@@ -405,7 +444,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     if (rowIndex >= 0 && rowIndex <= getRowCount() - 1) {
       scrollRectToVisible(getCellRect(rowIndex, 0, false));
       setRowSelectionInterval(rowIndex, rowIndex);
-      scrollRectToVisible(getCellRect(rowIndex, 0, false));
+      if (!hasFocus()) {
+        IdeFocusManager.getInstance(myLogData.getProject()).requestFocus(this, true);
+      }
     }
   }
 
@@ -487,7 +528,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
                                                 int column,
                                                 boolean hasFocus,
                                                 final boolean selected) {
-    VcsLogHighlighter.VcsCommitStyle style = getStyle(row, column, hasFocus, selected);
+    VcsCommitStyle style = getStyle(row, column, hasFocus, selected);
 
     assert style.getBackground() != null && style.getForeground() != null && style.getTextStyle() != null;
 
@@ -504,14 +545,16 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     return SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
-  public VcsLogHighlighter.VcsCommitStyle getBaseStyle(int row, int column, boolean hasFocus, boolean selected) {
+  @NotNull
+  public VcsCommitStyle getBaseStyle(int row, int column, boolean hasFocus, boolean selected) {
     Component dummyRendererComponent = myDummyRenderer.getTableCellRendererComponent(this, "", selected, hasFocus, row, column);
-    return VcsCommitStyleFactory
-      .createStyle(dummyRendererComponent.getForeground(), dummyRendererComponent.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);
+    return createStyle(dummyRendererComponent.getForeground(), dummyRendererComponent.getBackground(),
+                       VcsLogHighlighter.TextStyle.NORMAL);
   }
 
-  private VcsLogHighlighter.VcsCommitStyle getStyle(int row, int column, boolean hasFocus, boolean selected) {
-    VcsLogHighlighter.VcsCommitStyle baseStyle = getBaseStyle(row, column, hasFocus, selected);
+  @NotNull
+  VcsCommitStyle getStyle(int row, int column, boolean hasFocus, boolean selected) {
+    VcsCommitStyle baseStyle = getBaseStyle(row, column, hasFocus, selected);
 
     VisibleGraph<Integer> visibleGraph = getVisibleGraph();
     if (row < 0 || row >= visibleGraph.getVisibleCommitCount()) {
@@ -521,15 +564,13 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     RowInfo<Integer> rowInfo = visibleGraph.getRowInfo(row);
 
-    VcsLogHighlighter.VcsCommitStyle defaultStyle = VcsCommitStyleFactory
-      .createStyle(rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : baseStyle.getForeground(), baseStyle.getBackground(),
-                   VcsLogHighlighter.TextStyle.NORMAL);
+    VcsCommitStyle defaultStyle = createStyle(rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : baseStyle.getForeground(),
+                                              baseStyle.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);
 
-    final VcsShortCommitDetails details = myLogData.getMiniDetailsGetter().getCommitDataIfAvailable(rowInfo.getCommit());
+    VcsShortCommitDetails details = myLogData.getMiniDetailsGetter().getCommitDataIfAvailable(rowInfo.getCommit());
     if (details == null) return defaultStyle;
 
-    List<VcsLogHighlighter.VcsCommitStyle> styles =
-      ContainerUtil.map(myHighlighters, highlighter -> highlighter.getStyle(details, selected));
+    List<VcsCommitStyle> styles = ContainerUtil.map(myHighlighters, highlighter -> highlighter.getStyle(details, selected));
     return VcsCommitStyleFactory.combine(ContainerUtil.append(styles, defaultStyle));
   }
 
@@ -584,104 +625,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     repaint();
   }
 
-  static class Selection {
-    @NotNull private final VcsLogGraphTable myTable;
-    @NotNull private final TIntHashSet mySelectedCommits;
-    @Nullable private final Integer myVisibleSelectedCommit;
-    @Nullable private final Integer myDelta;
-    private final boolean myIsOnTop;
-
-
-    public Selection(@NotNull VcsLogGraphTable table) {
-      myTable = table;
-      List<Integer> selectedRows = ContainerUtil.sorted(Ints.asList(myTable.getSelectedRows()));
-      Couple<Integer> visibleRows = ScrollingUtil.getVisibleRows(myTable);
-      myIsOnTop = visibleRows.first - 1 == 0;
-
-      VisibleGraph<Integer> graph = myTable.getVisibleGraph();
-
-      mySelectedCommits = new TIntHashSet();
-
-      Integer visibleSelectedCommit = null;
-      Integer delta = null;
-      for (int row : selectedRows) {
-        if (row < graph.getVisibleCommitCount()) {
-          Integer commit = graph.getRowInfo(row).getCommit();
-          mySelectedCommits.add(commit);
-          if (visibleRows.first - 1 <= row && row <= visibleRows.second && visibleSelectedCommit == null) {
-            visibleSelectedCommit = commit;
-            delta = myTable.getCellRect(row, 0, false).y - myTable.getVisibleRect().y;
-          }
-        }
-      }
-      if (visibleSelectedCommit == null && visibleRows.first - 1 >= 0) {
-        visibleSelectedCommit = graph.getRowInfo(visibleRows.first - 1).getCommit();
-        delta = myTable.getCellRect(visibleRows.first - 1, 0, false).y - myTable.getVisibleRect().y;
-      }
-
-      myVisibleSelectedCommit = visibleSelectedCommit;
-      myDelta = delta;
-    }
-
-    public void restore(@NotNull VisibleGraph<Integer> newVisibleGraph, boolean scrollToSelection, boolean permGraphChanged) {
-      Pair<TIntHashSet, Integer> toSelectAndScroll = findRowsToSelectAndScroll(myTable.getModel(), newVisibleGraph);
-      if (!toSelectAndScroll.first.isEmpty()) {
-        myTable.getSelectionModel().setValueIsAdjusting(true);
-        toSelectAndScroll.first.forEach(row -> {
-          myTable.addRowSelectionInterval(row, row);
-          return true;
-        });
-        myTable.getSelectionModel().setValueIsAdjusting(false);
-      }
-      if (scrollToSelection) {
-        if (myIsOnTop && permGraphChanged) { // scroll on top when some fresh commits arrive
-          scrollToRow(0, 0);
-        }
-        else if (toSelectAndScroll.second != null) {
-          assert myDelta != null;
-          scrollToRow(toSelectAndScroll.second, myDelta);
-        }
-      }
-      // sometimes commits that were selected are now collapsed
-      // currently in this case selection disappears
-      // in the future we need to create a method in LinearGraphController that allows to calculate visible commit for our commit
-      // or answer from collapse action could return a map that gives us some information about what commits were collapsed and where
-    }
-
-    private void scrollToRow(Integer row, Integer delta) {
-      Rectangle startRect = myTable.getCellRect(row, 0, true);
-      myTable.scrollRectToVisible(
-        new Rectangle(startRect.x, Math.max(startRect.y - delta, 0), startRect.width, myTable.getVisibleRect().height));
-    }
-
-    @NotNull
-    private Pair<TIntHashSet, Integer> findRowsToSelectAndScroll(@NotNull GraphTableModel model,
-                                                                 @NotNull VisibleGraph<Integer> visibleGraph) {
-      TIntHashSet rowsToSelect = new TIntHashSet();
-
-      if (model.getRowCount() == 0) {
-        // this should have been covered by facade.getVisibleCommitCount,
-        // but if the table is empty (no commits match the filter), the GraphFacade is not updated, because it can't handle it
-        // => it has previous values set.
-        return Pair.create(rowsToSelect, null);
-      }
-
-      Integer rowToScroll = null;
-      for (int row = 0;
-           row < visibleGraph.getVisibleCommitCount() && (rowsToSelect.size() < mySelectedCommits.size() || rowToScroll == null);
-           row++) { //stop iterating if found all hashes
-        int commit = visibleGraph.getRowInfo(row).getCommit();
-        if (mySelectedCommits.contains(commit)) {
-          rowsToSelect.add(row);
-        }
-        if (myVisibleSelectedCommit != null && myVisibleSelectedCommit == commit) {
-          rowToScroll = row;
-        }
-      }
-      return Pair.create(rowsToSelect, rowToScroll);
-    }
-  }
-
   @NotNull
   public VisibleGraph<Integer> getVisibleGraph() {
     return getModel().getVisiblePack().getVisibleGraph();
@@ -724,82 +667,14 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     return getCursor() == Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
   }
 
-  private static class RootCellRenderer extends JBLabel implements TableCellRenderer {
-    @NotNull private final AbstractVcsLogUi myUi;
-    @NotNull private Color myColor = UIUtil.getTableBackground();
-    @NotNull private Color myBorderColor = UIUtil.getTableBackground();
-    private boolean isNarrow = true;
-
-    RootCellRenderer(@NotNull AbstractVcsLogUi ui) {
-      super("", CENTER);
-      myUi = ui;
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-      setFont(getTableFont());
-      g.setColor(myColor);
-
-      int width = getWidth();
-
-      if (isNarrow) {
-        g.fillRect(0, 0, width - JBUI.scale(ROOT_INDICATOR_WHITE_WIDTH), myUi.getTable().getRowHeight());
-        g.setColor(myBorderColor);
-        g.fillRect(width - JBUI.scale(ROOT_INDICATOR_WHITE_WIDTH), 0, JBUI.scale(ROOT_INDICATOR_WHITE_WIDTH),
-                   myUi.getTable().getRowHeight());
-      }
-      else {
-        g.fillRect(0, 0, width, myUi.getTable().getRowHeight());
-      }
-
-      super.paintComponent(g);
-    }
-
+  private static class MyDefaultTableCellRenderer extends DefaultTableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      String text;
-      Color color;
-
-      if (value instanceof VirtualFile) {
-        VirtualFile root = (VirtualFile)value;
-        int readableRow = ScrollingUtil.getReadableRow(table, Math.round(myUi.getTable().getRowHeight() * 0.5f));
-        if (row < readableRow) {
-          text = "";
-        }
-        else if (row == 0 || !value.equals(table.getModel().getValueAt(row - 1, column)) || readableRow == row) {
-          text = root.getName();
-        }
-        else {
-          text = "";
-        }
-        color = getRootBackgroundColor(root, myUi.getColorManager());
-      }
-      else {
-        text = null;
-        color = UIUtil.getTableBackground(isSelected);
-      }
-
-      myColor = color;
-      Color background = ((VcsLogGraphTable)table).getStyle(row, column, hasFocus, isSelected).getBackground();
-      assert background != null;
-      myBorderColor = background;
-      setForeground(UIUtil.getTableForeground(false));
-
-      if (myUi.isShowRootNames()) {
-        setText(text);
-        isNarrow = false;
-      }
-      else {
-        setText("");
-        isNarrow = true;
-      }
-
-      return this;
-    }
-
-    @Override
-    public void setBackground(Color bg) {
-      myBorderColor = bg;
+      Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+      component.setBackground(isSelected
+                              ? table.hasFocus() ? UIUtil.getListSelectionBackground() : UIUtil.getListUnfocusedSelectionBackground()
+                              : UIUtil.getListBackground());
+      return component;
     }
   }
 
@@ -968,7 +843,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     @Override
     public void mouseReleased(@NotNull MouseEvent e) {
-      if (isOnBorder(e) || isOnRootColumn(e)) return;
       mouseInputListener.mouseReleased(convertMouseEvent(e));
       if (header.getCursor() == Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR)) {
         header.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -977,29 +851,57 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     @Override
     public void mouseEntered(@NotNull MouseEvent e) {
+      mouseInputListener.mouseEntered(convertMouseEvent(e));
     }
 
     @Override
     public void mouseExited(@NotNull MouseEvent e) {
+      mouseInputListener.mouseExited(convertMouseEvent(e));
     }
 
     @Override
     public void mouseDragged(@NotNull MouseEvent e) {
-      if (isOnBorder(e) || isOnRootColumn(e)) return;
-      int deltaX = Math.abs(e.getX() - myStartXCoordinate);
-      int deltaY = Math.abs(e.getY() - myStartYCoordinate);
-      boolean sameColumn = (header.getTable().getColumnModel().getColumn(header.getTable().columnAtPoint(e.getPoint())) ==
-                            header.getDraggedColumn());
-      // start dragging only if mouse moved horizontally
-      // or if dragging was already started earlier (it looks weird to stop mid-dragging)
-      if ((deltaX >= 3 * deltaY && sameColumn) || header.getCursor() == Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR)) {
-        mouseInputListener.mouseDragged(convertMouseEvent(e));
-        // if I change cursor on mouse pressed, it will change on double-click as well
-        // and I do not want that
-        if (header.getDraggedColumn() != null && header.getCursor() == Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR)) {
+      if (!isDraggingEnabled(e)) {
+        return;
+      }
+
+      mouseInputListener.mouseDragged(convertMouseEvent(e));
+      // if I change cursor on mouse pressed, it will change on double-click as well
+      // and I do not want that
+      if (header.getDraggedColumn() != null) {
+        if (header.getCursor() == Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR)) {
           header.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
         }
+        int draggedColumn = header.getTable().convertColumnIndexToView(header.getDraggedColumn().getModelIndex());
+        if (header.getTable().convertColumnIndexToView(ROOT_COLUMN) == draggedColumn + (header.getDraggedDistance() < 0 ? -1 : 1)) {
+          mouseReleased(e); //cancel dragging to the root column
+        }
       }
+    }
+
+    private boolean isDraggingEnabled(@NotNull MouseEvent e) {
+      if (isOnBorder(e) || isOnRootColumn(e)) return false;
+      // can not check for getDragged/Resized column here since they can be set in mousePressed method
+      // their presence does not necessarily means something is being dragged or resized
+      if (header.getCursor() == Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR) ||
+          header.getCursor() == Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR)) {
+        return true;
+      }
+
+      int deltaX = Math.abs(e.getX() - myStartXCoordinate);
+      int deltaY = Math.abs(e.getY() - myStartYCoordinate);
+      Point point = new Point(Math.min(Math.max(e.getX(), 0), header.getTable().getWidth() - 1), e.getY());
+      boolean sameColumn;
+      if (header.getDraggedColumn() == null) {
+        sameColumn = true;
+      }
+      else {
+        sameColumn = (header.getTable().getColumnModel().getColumn(header.getTable().columnAtPoint(point)) ==
+                      header.getDraggedColumn());
+      }
+      // start dragging only if mouse moved horizontally
+      // or if dragging was already started earlier (it looks weird to stop mid-dragging)
+      return deltaX >= 3 * deltaY && sameColumn;
     }
 
     @Override
@@ -1017,25 +919,15 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
   }
 
-  private class MyListSelectionListener implements ListSelectionListener {
-    @Override
-    public void valueChanged(ListSelectionEvent e) {
-      mySelection = null;
-    }
-  }
-
   private class MyProgressListener implements VcsLogProgress.ProgressListener {
-    @NotNull private String myText = "";
-
     @Override
     public void progressStarted() {
-      myText = getEmptyText().getText();
-      getEmptyText().setText("Loading History...");
+      getEmptyText().setText(LOADING_COMMITS_TEXT);
     }
 
     @Override
     public void progressStopped() {
-      getEmptyText().setText(myText);
+      updateEmptyText();
     }
   }
 

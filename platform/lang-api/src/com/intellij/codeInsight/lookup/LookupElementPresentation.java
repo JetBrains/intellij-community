@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author peter
@@ -32,6 +33,7 @@ import java.util.List;
 public class LookupElementPresentation {
   private Icon myIcon;
   private Icon myTypeIcon;
+  private boolean myTypeIconRightAligned;
   private String myItemText;
   private String myTypeText;
   private boolean myStrikeout;
@@ -191,6 +193,7 @@ public class LookupElementPresentation {
     myStrikeout = presentation.myStrikeout;
     myItemTextBold = presentation.myItemTextBold;
     myTypeGrayed = presentation.myTypeGrayed;
+    myTypeIconRightAligned = presentation.myTypeIconRightAligned;
     myItemTextUnderlined = presentation.myItemTextUnderlined;
     myItemTextForeground = presentation.myItemTextForeground;
   }
@@ -203,6 +206,14 @@ public class LookupElementPresentation {
     myTypeGrayed = typeGrayed;
   }
 
+  public boolean isTypeIconRightAligned() {
+    return myTypeIconRightAligned;
+  }
+
+  public void setTypeIconRightAligned(boolean typeIconRightAligned) {
+    myTypeIconRightAligned = typeIconRightAligned;
+  }
+
   public static LookupElementPresentation renderElement(LookupElement element) {
     LookupElementPresentation presentation = new LookupElementPresentation();
     element.renderElement(presentation);
@@ -212,7 +223,7 @@ public class LookupElementPresentation {
   @Override
   public String toString() {
     return "LookupElementPresentation{" +
-           ", itemText='" + myItemText + '\'' +
+           "itemText='" + myItemText + '\'' +
            ", tail=" + myTail +
            ", typeText='" + myTypeText + '\'' +
            '}';
@@ -251,6 +262,22 @@ public class LookupElementPresentation {
     @Nullable
     public Color getForegroundColor() {
       return myFgColor;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof TextFragment)) return false;
+      TextFragment fragment = (TextFragment)o;
+      return myGrayed == fragment.myGrayed &&
+             myItalic == fragment.myItalic &&
+             Objects.equals(text, fragment.text) &&
+             Objects.equals(myFgColor, fragment.myFgColor);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(text, myGrayed, myItalic, myFgColor);
     }
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.ui.popup;
 
@@ -139,8 +125,8 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   @Override
   public IPopupChooserBuilder<T> setRenderer(ListCellRenderer renderer) {
-    if (myChooserComponent instanceof JList) {
-      ((JList)myChooserComponent).setCellRenderer(renderer);
+    if (myChooserComponent instanceof ListWithFilter) {
+      ((ListWithFilter)myChooserComponent).getList().setCellRenderer(renderer);
     }
     return this;
   }
@@ -148,9 +134,9 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   @NotNull
   @Override
   public IPopupChooserBuilder<T> setItemChoosenCallback(@NotNull Consumer<T> callback) {
-    if (myChooserComponent instanceof JList) {
+    if (myChooserComponent instanceof ListWithFilter) {
       setItemChoosenCallback(() -> {
-        Object selectedValue = ((JList)myChooserComponent).getSelectedValue();
+        Object selectedValue = ((ListWithFilter)myChooserComponent).getList().getSelectedValue();
         callback.consume((T)selectedValue);
       });
     }
@@ -161,8 +147,8 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   @Override
   public IPopupChooserBuilder<T> setItemsChoosenCallback(@NotNull Consumer<Set<T>> callback) {
     setItemChoosenCallback(() -> {
-      if (myChooserComponent instanceof JList) {
-        List list = ((JList)myChooserComponent).getSelectedValuesList();
+      if (myChooserComponent instanceof ListWithFilter) {
+        List list = ((ListWithFilter)myChooserComponent).getList().getSelectedValuesList();
         callback.consume(list != null ? ContainerUtil.newHashSet(list) : Collections.emptySet());
       }
     });
@@ -594,18 +580,6 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       return null;
     }
 
-    @Override
-    public Dimension getPreferredSize() {
-      if (isPreferredSizeSet()) {
-        return super.getPreferredSize();
-      }
-      Dimension size = myList.getPreferredSize();
-      size.height = Math.min(size.height, myList.getPreferredScrollableViewportSize().height);
-      JScrollBar bar = getVerticalScrollBar();
-      if (bar != null) size.width += bar.getPreferredSize().width;
-      return size;
-    }
-
     public void setBorder(Border border) {
       if (myList != null){
         myList.setBorder(border);
@@ -652,16 +626,16 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   @Override
   public IPopupChooserBuilder<T> setSelectionMode(int selection) {
-    if (myChooserComponent instanceof JList) {
-      ((JList)myChooserComponent).setSelectionMode(selection);
+    if (myChooserComponent instanceof ListWithFilter) {
+      ((ListWithFilter)myChooserComponent).getList().setSelectionMode(selection);
     }
     return this;
   }
 
   @Override
   public IPopupChooserBuilder<T> setSelectedValue(T preselection, boolean shouldScroll) {
-    if (myChooserComponent instanceof JList) {
-      ((JList)myChooserComponent).setSelectedValue(preselection, shouldScroll);
+    if (myChooserComponent instanceof ListWithFilter) {
+      ((ListWithFilter)myChooserComponent).getList().setSelectedValue(preselection, shouldScroll);
     }
     return this;
   }
@@ -674,9 +648,9 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   @Override
   public IPopupChooserBuilder<T> setItemSelectedCallback(Consumer<T> c) {
-    if (myChooserComponent instanceof JList) {
-      ((JList)myChooserComponent).addListSelectionListener(e -> {
-        Object selectedValue = ((JList)myChooserComponent).getSelectedValue();
+    if (myChooserComponent instanceof ListWithFilter) {
+      ((ListWithFilter)myChooserComponent).getList().addListSelectionListener(e -> {
+        Object selectedValue = ((ListWithFilter)myChooserComponent).getList().getSelectedValue();
         c.consume((T)selectedValue);
       });
     }

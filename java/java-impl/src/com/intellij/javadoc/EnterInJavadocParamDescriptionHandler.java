@@ -1,8 +1,8 @@
 package com.intellij.javadoc;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.CaretModel;
@@ -14,7 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +32,7 @@ public class EnterInJavadocParamDescriptionHandler extends EnterHandlerDelegateA
   public Result postProcessEnter(@NotNull final PsiFile file, @NotNull Editor editor, @NotNull DataContext dataContext) {
     if (!(file instanceof PsiJavaFile)
         || !CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER
-        || !CodeStyleSettingsManager.getSettings(file.getProject()).JD_ALIGN_PARAM_COMMENTS) {
+        || !CodeStyle.getCustomSettings(file, JavaCodeStyleSettings.class).JD_ALIGN_PARAM_COMMENTS) {
       return Result.Continue;
     }
     final CaretModel caretModel = editor.getCaretModel();

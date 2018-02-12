@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
 import com.intellij.codeInsight.lookup.RealLookupElementPresentation;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -42,6 +41,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -142,11 +142,16 @@ public class LookupCellRenderer implements ListCellRenderer {
     FontMetrics boldMetrics = getRealFontMetrics(item, true);
     final LookupElementPresentation presentation = new RealLookupElementPresentation(isSelected ? getMaxWidth() : allowedWidth, 
                                                                                      normalMetrics, boldMetrics, myLookup);
-    AccessToken token = ReadAction.start();
-    try {
+    ApplicationManager.getApplication().runReadAction(() -> {
       if (item.isValid()) {
         try {
           item.renderElement(presentation);
+
+          //In Darcula: default monospaced bold fonts are very similar to their regular versions.
+          //We need to tune foreground colors here to tell bold elements from regular
+          if (presentation.isItemTextBold() && UIUtil.isUnderDarcula()) {
+            presentation.setItemTextForeground(ColorUtil.brighter(presentation.getItemTextForeground(), 2));
+          }
         }
         catch (ProcessCanceledException e) {
           LOG.info(e);
@@ -156,14 +161,12 @@ public class LookupCellRenderer implements ListCellRenderer {
         catch (Exception | Error e) {
           LOG.error(e);
         }
-      } else {
+      }
+      else {
         presentation.setItemTextForeground(JBColor.RED);
         presentation.setItemText("Invalid");
       }
-    }
-    finally {
-      token.finish();
-    }
+    });
 
     myNameComponent.clear();
     myNameComponent.setBackground(background);
@@ -429,6 +432,7 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     myTypeLabel.setBackground(sampleBackground);
     myTypeLabel.setForeground(getTypeTextColor(item, foreground, presentation, selected, nonFocusedSelection));
+    myTypeLabel.setIconOnTheRight(presentation.isTypeIconRightAligned());
     return used;
   }
 

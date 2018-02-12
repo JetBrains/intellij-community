@@ -7,9 +7,6 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 
 import java.util.List;
 
-/**
- * Created by Maxim.Mossienko on 2/17/14.
- */
 public class TreeHashingUtils {
   protected static TreeHashResult hashCodeBlockForIndexing(AbstractTreeHasher treeHasher, FragmentsCollector callBack,
                                                            List<? extends PsiElement> statements,

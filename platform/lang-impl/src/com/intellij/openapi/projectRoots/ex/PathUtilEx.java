@@ -38,17 +38,11 @@ import static com.intellij.util.containers.ContainerUtil.skipNulls;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 14, 2004
  */
 public class PathUtilEx {
 
   private static final Function<Module, Sdk> MODULE_JDK = module -> ModuleRootManager.getInstance(module).getSdk();
-  private static final Convertor<Sdk, String> JDK_VERSION = new Convertor<Sdk, String>() {
-    @Override
-    public String convert(Sdk jdk) {
-      return StringUtil.notNullize(jdk.getVersionString());
-    }
-  };
+  private static final Convertor<Sdk, String> JDK_VERSION = jdk -> StringUtil.notNullize(jdk.getVersionString());
 
   @Nullable
   public static Sdk getAnyJdk(Project project) {

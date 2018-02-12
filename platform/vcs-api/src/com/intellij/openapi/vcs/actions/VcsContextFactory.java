@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -59,8 +58,11 @@ public interface VcsContextFactory {
    * @param file the file for which the FilePath should be created.
    * @param isDirectory whether {@code file} specifies a file or a directory.
    * @return the FilePath instance.
+   *
+   * @deprecated use {@link #createFilePathOn(File, boolean)}
    */
   @NotNull
+  @Deprecated
   FilePath createFilePathOnDeleted(@NotNull File file, boolean isDirectory);
 
   /**
@@ -73,20 +75,6 @@ public interface VcsContextFactory {
    */
   @NotNull
   FilePath createFilePathOn(@NotNull File file, boolean isDirectory);
-
-  /**
-   * Creates a FilePath corresponding to the specified java.io.File. If the file does not exist, uses
-   * detector to determine if the file is a directory.
-   *
-   * @param file the file for which the FilePath should be created.
-   * @param detector - called to get to know whether the file is directory, if local file is not found
-   * @return the FilePath instance.
-   *
-   * @deprecated to remove in IDEA 16. Check the virtual file right away and pass to the right constructor.
-   */
-  @Deprecated
-  @NotNull
-  FilePath createFilePathOn(@NotNull File file, @NotNull NotNullFunction<File, Boolean> detector);
 
   /**
    * Creates a FilePath corresponding to the specified path in a VCS repository. Does not try to locate

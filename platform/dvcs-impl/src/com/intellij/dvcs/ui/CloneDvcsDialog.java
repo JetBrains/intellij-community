@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EditorComboBox;
@@ -42,6 +43,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -118,7 +120,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   }
 
   public String getParentDirectory() {
-    return myParentDirectory.getText();
+    return FileUtil.expandUserHome(myParentDirectory.getText().trim());
   }
 
   public String getDirectoryName() {
@@ -298,7 +300,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
       urls.add(0, myDefaultRepoUrl);
     }
     myRepositoryURL.setHistory(ArrayUtil.toObjectArray(urls, String.class));
-    myRepositoryURL.addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+    myRepositoryURL.addDocumentListener(new com.intellij.openapi.editor.event.DocumentListener() {
       @Override
       public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
         // enable test button only if something is entered in repository URL
@@ -322,6 +324,14 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     final DvcsRememberedInputs rememberedInputs = getRememberedInputs();
     rememberedInputs.addUrl(getSourceRepositoryURL());
     rememberedInputs.setCloneParentDir(getParentDirectory());
+  }
+
+  private static String safeUrlDecode(String encoded) {
+    try {
+      return URLDecoder.decode(encoded, CharsetToolkit.UTF8);
+    } catch(Exception e) {
+      return encoded;
+    }
   }
 
   /**
@@ -348,7 +358,10 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     if (i == -1 && File.separatorChar != '/') {
       i = nonSystemName.lastIndexOf(File.separatorChar);
     }
-    return i >= 0 ? nonSystemName.substring(i + 1) : "";
+    if (i < 0) {
+      return "";
+    }
+    return safeUrlDecode(nonSystemName.substring(i + 1));
   }
 
   @Nullable

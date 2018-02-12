@@ -81,7 +81,7 @@ public abstract class FrameworkSupportNodeBase<T extends FrameworkOrGroup> exten
 
   @NotNull
   public List<FrameworkSupportNodeBase> getChildren() {
-    return children != null ? (List)children : Collections.<FrameworkSupportNodeBase>emptyList();
+    return children != null ? (List)children : Collections.emptyList();
   }
 
   public FrameworkSupportNodeBase getParentNode() {

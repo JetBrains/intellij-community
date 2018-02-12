@@ -162,7 +162,7 @@ public class MavenModelClassesProperties {
       .build()
     );
 
-    res.put(CommonClassNames.JAVA_UTIL_LIST, ImmutableMap.<String, String>of("empty", "boolean"));
+    res.put(CommonClassNames.JAVA_UTIL_LIST, ImmutableMap.of("empty", "boolean"));
 
     res.put("org.apache.maven.model.Build", ImmutableMap.<String, String>builder()
       .put("extensions", CommonClassNames.JAVA_UTIL_LIST)

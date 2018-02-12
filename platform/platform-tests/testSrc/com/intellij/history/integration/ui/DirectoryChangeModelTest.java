@@ -29,7 +29,7 @@ import java.util.List;
 
 
 public class DirectoryChangeModelTest extends IntegrationTestCase {
-  public void testNames() throws IOException {
+  public void testNames() {
     VirtualFile f = createDirectory("foo");
     rename(f, "bar");
 

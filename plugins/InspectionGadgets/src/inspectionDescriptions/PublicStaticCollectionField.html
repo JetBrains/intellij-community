@@ -1,10 +1,11 @@
 <html>
 <body>
-Reports <b>public</b> <b>static</b> Collection fields. Often used
+Reports modifiable <b>public</b> <b>static</b> Collection fields. Often used
 to store collections of constant values, these fields nonetheless represent a security
 hazard, as their contents may be modified, even if the field is declared as <b>final</b>.
 <!-- tooltip end -->
 <p>
-
+  Use the table below to specify methods returning unmodifiable collections.
+  <b>public</b> <b>static</b> Collection fields initialized with these methods will not be reported.
 </body>
 </html>

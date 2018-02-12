@@ -4,10 +4,10 @@ interface I<T extends Exception> {
 
 class C {
   void x(I<?> i) {
-    <error descr="Unhandled exception: java.lang.Exception">i.m();</error>
+    i.<error descr="Unhandled exception: java.lang.Exception">m();</error>
   }
 
   void y(I<? extends Exception> i) {
-    <error descr="Unhandled exception: java.lang.Exception">i.m();</error>
+    i.<error descr="Unhandled exception: java.lang.Exception">m();</error>
   }
 }

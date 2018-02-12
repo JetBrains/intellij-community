@@ -17,6 +17,8 @@ package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -54,7 +56,8 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   protected boolean myBackgrounded;
   private String myProcessId = "<unknown>";
   @Nullable private volatile Runnable myBackgroundHandler;
-  private int myDelayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
+  protected int myDelayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
+  private boolean myModalityEntered;
 
   @FunctionalInterface
   public interface Listener {
@@ -131,6 +134,21 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     myDialog.prepareShowDialog(myDelayInMillis);
   }
 
+  final void enterModality() {
+    if (myModalityProgress == this && !myModalityEntered) {
+      LaterInvocator.enterModal(this, (ModalityStateEx)getModalityState());
+      myModalityEntered = true;
+    }
+  }
+
+  final void exitModality() {
+    if (myModalityProgress == this && myModalityEntered) {
+      myModalityEntered = false;
+      LaterInvocator.leaveModal(this);
+    }
+  }
+
+
   @Override
   public void startBlocking() {
     startBlocking(EmptyRunnable.getInstance());
@@ -150,9 +168,12 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
     enterModality();
     init.run();
-
-    myDialog.startBlocking(myShouldShowCancel);
-    exitModality();
+    try {
+      myDialog.startBlocking(myShouldShowCancel);
+    }
+    finally {
+      exitModality();
+    }
   }
 
   @NotNull
@@ -218,7 +239,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     SwingUtilities.invokeLater(EmptyRunnable.INSTANCE); // Just to give blocking dispatching a chance to go out.
   }
 
-  private boolean isDialogShowing() {
+  protected boolean isDialogShowing() {
     return myDialog != null && myDialog.isShowing();
   }
 

@@ -1,17 +1,11 @@
 import pydevconsole
+import sys
 
-try:
+if sys.version_info[0] >= 3:
+    import builtins as __builtin__ # Py3
+else:
     import __builtin__
-except ImportError:
-    import builtins as __builtin__
 
-try:
-    False
-    True
-except NameError: # version < 2.3 -- didn't have the True/False builtins
-    setattr(__builtin__, 'True', 1)
-    setattr(__builtin__, 'False', 0)
-    
 try:
     import java.lang #@UnusedImport
     from _pydev_bundle import _pydev_jy_imports_tipper
@@ -29,23 +23,23 @@ dir2 = _pydev_imports_tipper.generate_imports_tip_for_module
 #=======================================================================================================================
 class _StartsWithFilter:
     '''
-        Used because we can't create a lambda that'll use an outer scope in jython 2.1 
+        Used because we can't create a lambda that'll use an outer scope in jython 2.1
     '''
-    
-    
+
+
     def __init__(self, start_with):
         self.start_with = start_with.lower()
-        
+
     def __call__(self, name):
         return name.lower().startswith(self.start_with)
 
 #=======================================================================================================================
 # Completer
 #
-# This class was gotten from IPython.completer (dir2 was replaced with the completer already in pydev) 
+# This class was gotten from IPython.completer (dir2 was replaced with the completer already in pydev)
 #=======================================================================================================================
 class Completer:
-    
+
     def __init__(self, namespace=None, global_namespace=None):
         """Create a new completer for the command line.
 
@@ -91,7 +85,7 @@ class Completer:
             #In pydev this option should never be used
             raise RuntimeError('Namespace must be provided!')
             self.namespace = __main__.__dict__ #@UndefinedVariable
-            
+
         if "." in text:
             return self.attr_matches(text)
         else:
@@ -104,18 +98,18 @@ class Completer:
         defined in self.namespace or self.global_namespace that match.
 
         """
-        
-        
+
+
         def get_item(obj, attr):
             return obj[attr]
-        
+
         a = {}
-        
+
         for dict_with_comps in [__builtin__.__dict__, self.namespace, self.global_namespace]: #@UndefinedVariable
             a.update(dict_with_comps)
-            
+
         filter = _StartsWithFilter(text)
-            
+
         return dir2(a, a.keys(), get_item, filter)
 
     def attr_matches(self, text):
@@ -138,7 +132,7 @@ class Completer:
 
         if not m:
             return []
-        
+
         expr, attr = m.group(1, 3)
         try:
             obj = eval(expr, self.namespace)
@@ -153,8 +147,8 @@ class Completer:
         words = dir2(obj, filter=filter)
 
         return words
-        
-    
+
+
 #=======================================================================================================================
 # generate_completions_as_xml
 #=======================================================================================================================

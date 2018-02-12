@@ -24,8 +24,8 @@ import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.impl.VcsGoToRefComparator;
-import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.util.VcsLogUtil;
 
 import java.util.Set;
 
@@ -54,6 +54,6 @@ public class GoToHashOrRefAction extends DumbAwareAction {
   public void update(AnActionEvent e) {
     VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
     VcsLogUi logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    e.getPresentation().setEnabledAndVisible(e.getProject() != null && log != null && logUi != null && logUi instanceof AbstractVcsLogUi);
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null && log != null && logUi instanceof AbstractVcsLogUi);
   }
 }

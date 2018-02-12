@@ -57,7 +57,7 @@ public class JavaSdkUtil {
         jarDirs = new File[]{libEndorsedDir, libDir, classesDir, libExtDir};
       }
     }
-    else if (new File(home, "lib/modules").exists()) {
+    else if (new File(home, "lib/jrt-fs.jar").exists()) {
       jarDirs = ArrayUtil.EMPTY_FILE_ARRAY;
     }
     else {

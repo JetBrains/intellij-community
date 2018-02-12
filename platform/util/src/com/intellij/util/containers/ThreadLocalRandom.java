@@ -18,7 +18,7 @@ package com.intellij.util.containers;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-class ThreadLocalRandom {
+public class ThreadLocalRandom {
   public static int getProbe() {
     return tlr.get().threadLocalRandomProbe;
   }
@@ -36,7 +36,7 @@ class ThreadLocalRandom {
    * Pseudo-randomly advances and records the given probe value for the
    * given thread.
    */
-  static int advanceProbe(int probe) {
+  public static int advanceProbe(int probe) {
     probe ^= probe << 13;   // xorshift
     probe ^= probe >>> 17;
     probe ^= probe << 5;

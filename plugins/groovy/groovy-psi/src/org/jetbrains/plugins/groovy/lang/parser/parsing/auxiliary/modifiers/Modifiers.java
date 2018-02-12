@@ -35,7 +35,12 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 
 public class Modifiers {
+
   public static boolean parse(PsiBuilder builder, GroovyParser parser) {
+    return parse(builder, parser, false);
+  }
+
+  public static boolean parse(PsiBuilder builder, GroovyParser parser, boolean annotationsOnly) {
 
     PsiBuilder.Marker modifiersMarker = builder.mark();
     boolean hasModifiers = false;
@@ -44,7 +49,7 @@ public class Modifiers {
       final PsiBuilder.Marker modifierListItem = builder.mark();
 
       if (hasModifiers) ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
-      final boolean parsed = Annotation.parse(builder, parser) || parseModifier(builder);
+      final boolean parsed = Annotation.parse(builder, parser) || (!annotationsOnly && parseModifier(builder));
 
       if (parsed) {
         if (PathExpression.isQualificationDot(builder)) {

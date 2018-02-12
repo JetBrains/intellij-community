@@ -18,6 +18,7 @@ package com.intellij.util.ui;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.ComboBox;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -90,6 +91,11 @@ public class CalendarView extends JPanel {
     Dimension preferredSize = getPreferredSize();
     setMaximumSize(preferredSize);
     setMaximumSize(preferredSize);
+  }
+
+  @NotNull
+  public Calendar getCalendar() {
+    return myCalendar;
   }
 
   private void fillMonths() {

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileChooser;
 
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
@@ -109,7 +110,7 @@ public class FileElement {
     if (file == null) return false;
     if (isArchiveFileSystem(file) && file.getParent() == null) return true;
     return !file.isDirectory() &&
-           file.getFileType() == FileTypes.ARCHIVE &&
+           FileTypeManager.getInstance().getFileTypeByFileName(file.getNameSequence()) == FileTypes.ARCHIVE &&
            !isArchiveFileSystem(file.getParent());
   }
 

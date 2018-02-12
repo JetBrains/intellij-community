@@ -15,11 +15,16 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
+
+import static com.intellij.ide.ui.laf.intellij.MacIntelliJButtonUI.ARC_SIZE;
 
 /**
  * @author Konstantin Bulenkov
@@ -27,12 +32,21 @@ import java.awt.*;
 public class MacIntelliJButtonBorder implements Border, UIResource {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+    if (!c.hasFocus() ||
+        c instanceof JComponent && UIUtil.isHelpButton((JComponent)c)) return;
 
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      g2.translate(x, y);
+      DarculaUIUtil.paintFocusBorder(g2, width, height, ARC_SIZE, true);
+    } finally {
+      g2.dispose();
+    }
   }
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return JBUI.insets(2,7).asUIResource();
+    return JBUI.insets(3).asUIResource();
   }
 
   @Override

@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -76,7 +77,7 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
       container = PsiTreeUtil.getParentOfType(container, PsiJavaDocumentedElement.class);
       if (container == null) return null;
     }
-    return (PsiJavaDocumentedElement)container;
+    return container instanceof SyntheticElement ? null : (PsiJavaDocumentedElement)container;
   }
 
   @Override
@@ -137,10 +138,9 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
 
   private void suppressByDocComment(@NotNull Project project, PsiJavaDocumentedElement container) {
     PsiDocComment docComment = container.getDocComment();
-    PsiManager manager = PsiManager.getInstance(project);
     if (docComment == null) {
       String commentText = "/** @" + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME + " " + getID(container) + "*/";
-      docComment = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocCommentFromText(commentText);
+      docComment = JavaPsiFacade.getElementFactory(project).createDocCommentFromText(commentText);
       PsiElement firstChild = container.getFirstChild();
       container.addBefore(docComment, firstChild);
     }
@@ -148,18 +148,23 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
       PsiDocTag noInspectionTag = docComment.findTagByName(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME);
       if (noInspectionTag != null) {
         String tagText = noInspectionTag.getText() + ", " + getID(container);
-        noInspectionTag.replace(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocTagFromText(tagText));
+        noInspectionTag.replace(JavaPsiFacade.getElementFactory(project).createDocTagFromText(tagText));
       }
       else {
         String tagText = "@" + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME + " " + getID(container);
-        docComment.add(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocTagFromText(tagText));
+        docComment.add(JavaPsiFacade.getElementFactory(project).createDocTagFromText(tagText));
       }
     }
   }
 
   protected boolean use15Suppressions(@NotNull PsiJavaDocumentedElement container) {
     return JavaSuppressionUtil.canHave15Suppressions(container) &&
-           !JavaSuppressionUtil.alreadyHas14Suppressions(container);
+           !JavaSuppressionUtil.alreadyHas14Suppressions(container) &&
+           !isInjectedToStringLiteral(container); // quotes will be imbalanced when insert annotation value in quotes into literal expression
+  }
+
+  private static boolean isInjectedToStringLiteral(@NotNull PsiJavaDocumentedElement container) {
+    return JavaResolveUtil.findParentContextOfClass(container, PsiLiteralExpression.class, true) != null;
   }
 
   private String getID(@NotNull PsiElement place) {
@@ -172,7 +177,7 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
     if (alternativeID != null) {
       final Module module = ModuleUtilCore.findModuleForPsiElement(place);
       if (module != null) {
-        if (!ClassPathStorageUtil.isDefaultStorage(module)) {
+        if (ClassPathStorageUtil.isClasspathStorage(module)) {
           return alternativeID;
         }
       }

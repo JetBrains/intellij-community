@@ -2,30 +2,40 @@
 
 from typing import (
     Any, Callable, Generator, IO, Iterable, Iterator, Optional, Type,
-    Generic, TypeVar,
+    Generic, TypeVar
 )
 from types import TracebackType
 import sys
+# Aliased here for backwards compatibility; TODO eventually remove this
+from typing import ContextManager as ContextManager
+
+if sys.version_info >= (3, 5):
+    from typing import AsyncContextManager, AsyncIterator
+
+if sys.version_info >= (3, 6):
+    from typing import ContextManager as AbstractContextManager
 
 _T = TypeVar('_T')
+
 _ExitFunc = Callable[[Optional[Type[BaseException]],
-                      Optional[Exception],
+                      Optional[BaseException],
                       Optional[TracebackType]], bool]
 _CM_EF = TypeVar('_CM_EF', ContextManager, _ExitFunc)
 
-# TODO already in PEP, have to get added to mypy
-class ContextManager(Generic[_T]):
-    def __enter__(self) -> _T: ...
-    def __exit__(self, exc_type: Optional[Type[BaseException]],
-                 exc_val: Optional[Exception],
-                 exc_tb: Optional[TracebackType]) -> bool: ...
+if sys.version_info >= (3, 2):
+    class GeneratorContextManager(ContextManager[_T], Generic[_T]):
+        def __call__(self, func: Callable[..., _T]) -> Callable[..., _T]: ...
+    def contextmanager(func: Callable[..., Iterator[_T]]) -> Callable[..., GeneratorContextManager[_T]]: ...
+else:
+    def contextmanager(func: Callable[..., Iterator[_T]]) -> Callable[..., ContextManager[_T]]: ...
 
-def contextmanager(func: Callable[..., Iterator[_T]]) -> Callable[..., ContextManager[_T]]: ...
+if sys.version_info >= (3, 7):
+    def asynccontextmanager(func: Callable[..., AsyncIterator[_T]]) -> Callable[..., AsyncContextManager[_T]]: ...
 
 if sys.version_info < (3,):
     def nested(*mgr: ContextManager[Any]) -> ContextManager[Iterable[Any]]: ...
 
-class closing(Generic[_T], ContextManager[_T]):
+class closing(ContextManager[_T], Generic[_T]):
     def __init__(self, thing: _T) -> None: ...
 
 if sys.version_info >= (3, 4):
@@ -43,6 +53,8 @@ if sys.version_info >= (3,):
     class ContextDecorator:
         def __call__(self, func: Callable[..., None]) -> Callable[..., ContextManager[None]]: ...
 
+    _U = TypeVar('_U', bound='ExitStack')
+
     class ExitStack(ContextManager[ExitStack]):
         def __init__(self) -> None: ...
         def enter_context(self, cm: ContextManager[_T]) -> _T: ...
@@ -51,3 +63,4 @@ if sys.version_info >= (3,):
                      *args: Any, **kwds: Any) -> Callable[..., None]: ...
         def pop_all(self) -> ExitStack: ...
         def close(self) -> None: ...
+        def __enter__(self: _U) -> _U: ...

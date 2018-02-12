@@ -25,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.xml.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.ContentHandler;
@@ -34,11 +35,6 @@ import org.xml.sax.ext.Locator2Impl;
 
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 30.07.2007
-*/
 class Psi2SaxAdapter extends XmlElementVisitor implements PsiElementProcessor<PsiElement> {
   private final ContentHandler myHandler;
 
@@ -96,7 +92,7 @@ class Psi2SaxAdapter extends XmlElementVisitor implements PsiElementProcessor<Ps
       setLocation(tag);
 
       final Map<String,String> map = tag.getLocalNamespaceDeclarations();
-      final String[] prefixes = map.keySet().toArray(new String[map.size()]);
+      final String[] prefixes = ArrayUtil.toStringArray(map.keySet());
       for (String prefix : prefixes) {
         myHandler.startPrefixMapping(prefix, map.get(prefix));
       }

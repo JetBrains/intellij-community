@@ -1,28 +1,9 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * User: anna
- * Date: 06-Jun-2007
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
-import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
@@ -80,19 +61,16 @@ public class ConfigurationsTest {
   }
 
   @AfterMethod
-  public void tearDown() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          myProjectFixture.tearDown();
-          myProjectFixture = null;
-          myFixture.tearDown();
-          myFixture = null;
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+  public void tearDown() {
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        myProjectFixture.tearDown();
+        myProjectFixture = null;
+        myFixture.tearDown();
+        myFixture = null;
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }
@@ -108,7 +86,7 @@ public class ConfigurationsTest {
     renameClass.setSearchInComments(false);
     renameClass.setSearchInNonJavaFiles(false);
     new WriteCommandAction(project) {
-      protected void run(@NotNull final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) {
         renameClass.run();
       }
     }.execute();
@@ -120,7 +98,7 @@ public class ConfigurationsTest {
     renameNotATestMethod.setSearchInComments(false);
     renameNotATestMethod.setSearchInNonJavaFiles(false);
     new WriteCommandAction(project) {
-      protected void run(@NotNull final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) {
         renameNotATestMethod.run();
       }
     }.execute();
@@ -144,7 +122,7 @@ public class ConfigurationsTest {
     renameMethod.setSearchInComments(false);
     renameMethod.setSearchInNonJavaFiles(false);
     new WriteCommandAction(project) {
-      protected void run(@NotNull final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) {
         renameMethod.run();
       }
     }.execute();
@@ -157,7 +135,7 @@ public class ConfigurationsTest {
     renameNotATestMethod1.setSearchInComments(false);
     renameNotATestMethod1.setSearchInNonJavaFiles(false);
     new WriteCommandAction(project) {
-      protected void run(@NotNull final Result result) throws Throwable {
+      protected void run(@NotNull final Result result) {
         renameNotATestMethod1.run();
       }
     }.execute();
@@ -195,9 +173,9 @@ public class ConfigurationsTest {
     final Project project = myProjectFixture.getProject();
     final PsiClass psiClass = findTestClass(project);
     final TestNGInClassConfigurationProducer producer = new TestNGInClassConfigurationProducer();
-    
+
     final MapDataContext dataContext = new MapDataContext();
-    
+
     dataContext.put(CommonDataKeys.PROJECT, project);
     dataContext.put(LangDataKeys.MODULE, ModuleUtil.findModuleForPsiElement(psiClass));
     dataContext.put(Location.DATA_KEY, PsiLocation.fromPsiElement(psiClass));
@@ -225,10 +203,9 @@ public class ConfigurationsTest {
   }
 
   private static TestNGConfiguration createConfiguration(final Project project) {
-    final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
-    final RunnerAndConfigurationSettings settings =
-      manager.createRunConfiguration("testt", TestNGConfigurationType.getInstance().getConfigurationFactories()[0]);
-    manager.addConfiguration(settings, false);
+    final RunManager manager = RunManager.getInstance(project);
+    RunnerAndConfigurationSettings settings = manager.createRunConfiguration("testt", TestNGConfigurationType.getInstance().getConfigurationFactories()[0]);
+    manager.addConfiguration(settings);
     return (TestNGConfiguration)settings.getConfiguration();
   }
 }

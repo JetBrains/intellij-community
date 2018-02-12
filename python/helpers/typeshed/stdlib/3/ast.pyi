@@ -3,20 +3,7 @@
 import typing
 from typing import Any, Union, Iterator
 
-from _ast import (
-    Add, alias, And, arg, arguments, Assert, Assign, AST, AsyncFor,
-    AsyncFunctionDef, AsyncWith, Attribute, AugAssign, AugLoad, AugStore,
-    Await, BinOp, BitAnd, BitOr, BitXor, BoolOp, boolop, Break, Bytes, Call,
-    ClassDef, cmpop, Compare, comprehension, Continue, Del, Delete, Dict,
-    DictComp, Div, Ellipsis, Eq, ExceptHandler, Expr, expr, Expression,
-    expr_context, ExtSlice, FloorDiv, For, FunctionDef, GeneratorExp, Global,
-    Gt, GtE, If, IfExp, Import, ImportFrom, In, Index, Interactive, Invert, Is,
-    IsNot, keyword, Lambda, List, ListComp, Load, LShift, Lt, LtE, MatMult,
-    Mod, mod, Module, Mult, Name, NameConstant, Nonlocal, Not, NotEq, NotIn,
-    Num, operator, Or, Param, Pass, Pow, Raise, Return, RShift, Set, SetComp,
-    Slice, slice, Starred, stmt, Store, Str, Sub, Subscript, Suite, Try, Tuple,
-    UAdd, UnaryOp, unaryop, USub, While, With, withitem, Yield, YieldFrom
-)
+from _ast import *
 
 class NodeVisitor():
     def visit(self, node: AST) -> Any: ...

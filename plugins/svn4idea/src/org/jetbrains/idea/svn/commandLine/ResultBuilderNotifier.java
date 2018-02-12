@@ -29,7 +29,7 @@ public class ResultBuilderNotifier extends ProcessAdapter {
     myResultBuilder = resultBuilder;
   }
 
-  public void processTerminated(final ProcessEvent event) {
+  public void processTerminated(@NotNull final ProcessEvent event) {
     try {
       forceNewLine();
     } finally {
@@ -46,7 +46,7 @@ public class ResultBuilderNotifier extends ProcessAdapter {
     }
   }
 
-  public void onTextAvailable(final ProcessEvent event, final Key outputType) {
+  public void onTextAvailable(@NotNull final ProcessEvent event, @NotNull final Key outputType) {
     onTextAvailable(event.getText(), outputType);
   }
 

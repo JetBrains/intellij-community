@@ -1,0 +1,8 @@
+PsiJavaFile:ExprStatement0.java
+  PsiExpressionStatement
+    PsiReferenceExpression:var
+      PsiReferenceParameterList
+        <empty list>
+      PsiIdentifier:var('var')
+    PsiErrorElement:';' expected
+      <empty list>

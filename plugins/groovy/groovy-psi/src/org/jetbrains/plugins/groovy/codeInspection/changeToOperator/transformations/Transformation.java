@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isSuperExpression;
+
 public abstract class Transformation {
 
   public boolean couldApply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
@@ -38,7 +40,9 @@ public abstract class Transformation {
   public static GrExpression getBase(@NotNull GrMethodCall callExpression) {
     GrExpression expression = callExpression.getInvokedExpression();
     GrReferenceExpression invokedExpression = (GrReferenceExpression)expression;
-    return invokedExpression.getQualifierExpression();
+    GrExpression qualifier = invokedExpression.getQualifierExpression();
+    if (isSuperExpression(qualifier)) return null;
+    return qualifier;
   }
 
   public boolean checkArgumentsCount(@NotNull GrMethodCall callExpression, int count) {

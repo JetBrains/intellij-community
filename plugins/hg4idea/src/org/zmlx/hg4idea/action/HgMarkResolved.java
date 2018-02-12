@@ -32,7 +32,7 @@ public class HgMarkResolved extends HgAbstractFilesAction {
   }
 
   protected void batchPerform(Project project, HgVcs activeVcs,
-    List<VirtualFile> files, DataContext context) throws VcsException {
+    List<VirtualFile> files, DataContext context) {
     HgResolveCommand resolveCommand = new HgResolveCommand(project);
     for (VirtualFile file : files) {
       VirtualFile root = VcsUtil.getVcsRootFor(project, file);

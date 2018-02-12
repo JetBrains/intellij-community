@@ -1,3 +1,6 @@
+// Object method(Object)
+// Object method(Object, Object[])
+// Object method(Object, String)
 import java.lang.invoke.*;
 
 class Main {
@@ -9,6 +12,6 @@ class Main {
 
 class Test {
   public <T> T method(T a) {return null;}
-  public <T> T method(T a, T... b) {return null;}
   public <T> T method(T a, String b) {return null;}
+  public <T> T method(T a, T... b) {return null;}
 }

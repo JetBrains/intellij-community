@@ -29,11 +29,10 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 7/26/11
  */
 public class XmlPropertiesTest extends LightPlatformCodeInsightFixtureTestCase {
 
-  public void testXmlProperties() throws Exception {
+  public void testXmlProperties() {
     myFixture.configureByFile("foo.xml");
     List<PropertiesFile> files = PropertiesReferenceManager.getInstance(getProject()).findPropertiesFiles(myModule, "foo");
     assertEquals(1, files.size());
@@ -44,13 +43,13 @@ public class XmlPropertiesTest extends LightPlatformCodeInsightFixtureTestCase {
     assertEquals(1, properties.size());
   }
 
-  public void testWrongFile() throws Exception {
+  public void testWrongFile() {
     PsiFile psiFile = myFixture.configureByFile("wrong.xml");
     PropertiesFile file = PropertiesImplUtil.getPropertiesFile(psiFile);
     assertNull(file);
   }
 
-  public void testHighlighting() throws Exception {
+  public void testHighlighting() {
     myFixture.testHighlighting("foo.xml");
   }
 

@@ -42,6 +42,8 @@ public class DirDiffToolbarActions extends ActionGroup {
       new EnableEqual(model),
       new EnableRight(model),
       Separator.getInstance(),
+      ActionManager.getInstance().getAction("DirDiffMenu.CompareNewFilesWithEachOtherAction"),
+      Separator.getInstance(),
       new ChangeCompareModeGroup(model),
       Separator.getInstance()));
 
@@ -65,7 +67,7 @@ public class DirDiffToolbarActions extends ActionGroup {
         ((DirDiffModelHolder)action).setModel(model);
       }
     }
-    myActions = actions.toArray(new AnAction[actions.size()]);
+    myActions = actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
   @NotNull

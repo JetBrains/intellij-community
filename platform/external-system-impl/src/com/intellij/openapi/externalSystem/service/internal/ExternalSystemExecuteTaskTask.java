@@ -17,11 +17,15 @@ package com.intellij.openapi.externalSystem.service.internal;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
 import com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade;
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
+import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
@@ -34,7 +38,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Denis Zhdanov
@@ -42,11 +48,28 @@ import java.util.List;
  */
 public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
 
-  @NotNull private final List<ExternalTaskPojo> myTasksToExecute;
+  @NotNull private final List<String> myTasksToExecute;
   @Nullable private final String myVmOptions;
   @Nullable private String myArguments;
   @Nullable private final String myJvmAgentSetup;
+  private final boolean myPassParentEnvs;
+  private final Map<String, String> myEnv;
 
+  public ExternalSystemExecuteTaskTask(@NotNull Project project,
+                                       @NotNull ExternalSystemTaskExecutionSettings settings,
+                                       @Nullable String jvmAgentSetup) throws IllegalArgumentException {
+    super(settings.getExternalSystemId(), ExternalSystemTaskType.EXECUTE_TASK, project, settings.getExternalProjectPath());
+    myTasksToExecute = ContainerUtilRt.newArrayList(settings.getTaskNames());
+    myVmOptions = settings.getVmOptions();
+    myArguments = settings.getScriptParameters();
+    myPassParentEnvs = settings.isPassParentEnvs();
+    myEnv = settings.getEnv();
+    myJvmAgentSetup = jvmAgentSetup;
+  }
+
+  /**
+   * @deprecated use {@link #ExternalSystemExecuteTaskTask(Project, ExternalSystemTaskExecutionSettings, String)}
+   */
   public ExternalSystemExecuteTaskTask(@NotNull ProjectSystemId externalSystemId,
                                        @NotNull Project project,
                                        @NotNull List<ExternalTaskPojo> tasksToExecute,
@@ -54,14 +77,16 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
                                        @Nullable String arguments,
                                        @Nullable String jvmAgentSetup) throws IllegalArgumentException {
     super(externalSystemId, ExternalSystemTaskType.EXECUTE_TASK, project, getLinkedExternalProjectPath(tasksToExecute));
-    myTasksToExecute = tasksToExecute;
+    myTasksToExecute = ContainerUtil.map(tasksToExecute, ExternalTaskPojo::getName);
     myVmOptions = vmOptions;
     myArguments = arguments;
     myJvmAgentSetup = jvmAgentSetup;
+    myPassParentEnvs = true;
+    myEnv = Collections.emptyMap();
   }
 
   @NotNull
-  public List<ExternalTaskPojo> getTasksToExecute() {
+  public List<String> getTasksToExecute() {
     return myTasksToExecute;
   }
 
@@ -79,6 +104,7 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
     myArguments = myArguments == null ? arguments : myArguments + ' ' + arguments;
   }
 
+  @Deprecated
   @NotNull
   private static String getLinkedExternalProjectPath(@NotNull Collection<ExternalTaskPojo> tasks) throws IllegalArgumentException {
     if (tasks.isEmpty()) {
@@ -107,24 +133,42 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
   @SuppressWarnings("unchecked")
   @Override
   protected void doExecute() throws Exception {
-    final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
-    ExternalSystemExecutionSettings settings = ExternalSystemApiUtil.getExecutionSettings(getIdeProject(),
-                                                                                          getExternalProjectPath(),
-                                                                                          getExternalSystemId());
-    KeyFMap keyFMap = getUserMap();
-    for (Key key : keyFMap.getKeys()) {
-      settings.putUserData(key, keyFMap.get(key));
+    ExternalSystemProgressNotificationManagerImpl progressNotificationManager =
+      (ExternalSystemProgressNotificationManagerImpl)ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
+    ExternalSystemTaskId id = getId();
+    String projectPath = getExternalProjectPath();
+
+    ExternalSystemExecutionSettings settings;
+    RemoteExternalSystemTaskManager taskManager;
+    try {
+      progressNotificationManager.onStart(id, projectPath);
+
+      final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
+      settings = ExternalSystemApiUtil.getExecutionSettings(getIdeProject(),
+                                                            projectPath,
+                                                            getExternalSystemId());
+      KeyFMap keyFMap = getUserMap();
+      for (Key key : keyFMap.getKeys()) {
+        settings.putUserData(key, keyFMap.get(key));
+      }
+
+      RemoteExternalSystemFacade facade = manager.getFacade(getIdeProject(), projectPath, getExternalSystemId());
+      taskManager = facade.getTaskManager();
+      final List<String> vmOptions = parseCmdParameters(myVmOptions);
+      final List<String> arguments = parseCmdParameters(myArguments);
+      settings
+        .withVmOptions(vmOptions)
+        .withArguments(arguments)
+        .withEnvironmentVariables(myEnv)
+        .passParentEnvs(myPassParentEnvs);
     }
-    
-    RemoteExternalSystemFacade facade = manager.getFacade(getIdeProject(), getExternalProjectPath(), getExternalSystemId());
-    RemoteExternalSystemTaskManager taskManager = facade.getTaskManager();
-    List<String> taskNames = ContainerUtilRt.map2List(myTasksToExecute, ExternalTaskPojo::getName);
+    catch (Exception e) {
+      progressNotificationManager.onFailure(id, e);
+      progressNotificationManager.onEnd(id);
+      throw e;
+    }
 
-    final List<String> vmOptions = parseCmdParameters(myVmOptions);
-    final List<String> arguments = parseCmdParameters(myArguments);
-    settings.withVmOptions(vmOptions).withArguments(arguments);
-
-    taskManager.executeTasks(getId(), taskNames, getExternalProjectPath(), settings, myJvmAgentSetup);
+    taskManager.executeTasks(id, myTasksToExecute, projectPath, settings, myJvmAgentSetup);
   }
 
   @Override
@@ -137,6 +181,6 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
   }
 
   private static List<String> parseCmdParameters(@Nullable String cmdArgsLine) {
-    return cmdArgsLine != null ? ParametersListUtil.parse(cmdArgsLine) : ContainerUtil.<String>newArrayList();
+    return cmdArgsLine != null ? ParametersListUtil.parse(cmdArgsLine, false, true) : ContainerUtil.newArrayList();
   }
 }

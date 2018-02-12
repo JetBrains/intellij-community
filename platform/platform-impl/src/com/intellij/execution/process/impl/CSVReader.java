@@ -18,6 +18,8 @@
 
 package com.intellij.execution.process.impl;
 
+import com.intellij.util.ArrayUtil;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -32,15 +34,15 @@ import java.util.List;
  */
 class CSVReader {
 
-    private BufferedReader br;
+    private final BufferedReader br;
 
     private boolean hasNext = true;
 
-    private char separator;
+    private final char separator;
 
-    private char quotechar;
+    private final char quotechar;
 
-    private int skipLines;
+    private final int skipLines;
 
     private boolean linesSkiped;
 
@@ -231,7 +233,7 @@ class CSVReader {
             }
         } while (inQuotes);
         tokensOnThisLine.add(sb.toString());
-        return tokensOnThisLine.toArray(new String[0]);
+        return ArrayUtil.toStringArray(tokensOnThisLine);
 
     }
 

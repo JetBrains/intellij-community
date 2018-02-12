@@ -17,6 +17,7 @@ package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -141,7 +142,7 @@ public abstract class ConfigurableOptionsTopHitProvider extends OptionsTopHitPro
     return Collections.emptyList();
   }
 
-  private static final class Option extends BooleanOptionDescription {
+  private static final class Option extends BooleanOptionDescription implements Disposable {
     private final Configurable myConfigurable;
     private final JCheckBox myCheckBox;
 
@@ -149,6 +150,11 @@ public abstract class ConfigurableOptionsTopHitProvider extends OptionsTopHitPro
       super(option, ConfigurableVisitor.ByID.getID(configurable));
       myConfigurable = configurable;
       myCheckBox = checkbox;
+    }
+
+    @Override
+    public void dispose() {
+      myConfigurable.disposeUIResources();
     }
 
     @Override

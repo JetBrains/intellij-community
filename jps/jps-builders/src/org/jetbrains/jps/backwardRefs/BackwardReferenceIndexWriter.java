@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.backwardRefs;
 
+import com.intellij.util.Function;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.InvertedIndex;
@@ -46,11 +47,11 @@ public class BackwardReferenceIndexWriter {
     myIndex = index;
   }
 
-  Exception getRebuildRequestCause() {
+  Throwable getRebuildRequestCause() {
     return myIndex.getRebuildRequestCause();
   }
 
-  void setRebuildCause(Exception e) {
+  void setRebuildCause(Throwable e) {
     myIndex.setRebuildRequestCause(e);
   }
 
@@ -131,7 +132,7 @@ public class BackwardReferenceIndexWriter {
   }
 
   @Nullable
-  LightRef enumerateNames(JavacRef ref) throws IOException {
+  LightRef enumerateNames(JavacRef ref, Function<String, Integer> ownerIdReplacer) throws IOException {
     NameEnumerator nameEnumerator = myIndex.getByteSeqEum();
     if (ref instanceof JavacRef.JavacClass) {
       if (!isPrivate(ref) && !((JavacRef.JavacClass)ref).isAnonymous()) {
@@ -139,16 +140,17 @@ public class BackwardReferenceIndexWriter {
       }
     }
     else {
-      String ownerName = ref.getOwnerName();
       if (isPrivate(ref)) {
         return null;
       }
+      String ownerName = ref.getOwnerName();
+      final Integer ownerPrecalculatedId = ownerIdReplacer.fun(ownerName);
       if (ref instanceof JavacRef.JavacField) {
-        return new LightRef.JavaLightFieldRef(id(ownerName, nameEnumerator), id(ref, nameEnumerator));
+        return new LightRef.JavaLightFieldRef(ownerPrecalculatedId != null ? ownerPrecalculatedId : id(ownerName, nameEnumerator), id(ref, nameEnumerator));
       }
       else if (ref instanceof JavacRef.JavacMethod) {
         int paramCount = ((JavacRef.JavacMethod) ref).getParamCount();
-        return new LightRef.JavaLightMethodRef(id(ownerName, nameEnumerator), id(ref, nameEnumerator), paramCount);
+        return new LightRef.JavaLightMethodRef(ownerPrecalculatedId != null ? ownerPrecalculatedId : id(ownerName, nameEnumerator), id(ref, nameEnumerator), paramCount);
       }
       else {
         throw new AssertionError("unexpected symbol: " + ref + " class: " + ref.getClass());

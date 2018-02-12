@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.editor.impl.view;
 
@@ -52,7 +40,7 @@ import java.text.Bidi;
  * Also contains a cache of several font-related quantities (line height, space width, etc).
  */
 public class EditorView implements TextDrawingCallback, Disposable, Dumpable, HierarchyListener, VisibleAreaListener {
-  private static Key<LineLayout> FOLD_REGION_TEXT_LAYOUT = Key.create("text.layout");
+  private static final Key<LineLayout> FOLD_REGION_TEXT_LAYOUT = Key.create("text.layout");
 
   private final EditorImpl myEditor;
   private final DocumentEx myDocument;
@@ -69,7 +57,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   private TextAttributes myPrefixAttributes; // accessed only in EDT
   private int myBidiFlags; // accessed only in EDT
   
-  private int myPlainSpaceWidth; // guarded by myLock
+  private float myPlainSpaceWidth; // guarded by myLock
   private int myLineHeight; // guarded by myLock
   private int myDescent; // guarded by myLock
   private int myCharHeight; // guarded by myLock
@@ -125,6 +113,14 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   
   LogicalPositionCache getLogicalPositionCache() {
     return myLogicalPositionCache;
+  }
+
+  float getRightAlignmentLineStartX(int visualLine) {
+    return myMapper.getRightAlignmentLineStartX(visualLine);
+  }
+
+  int getRightAlignmentMarginX() {
+    return myMapper.getRightAlignmentMarginX();
   }
 
   @Override
@@ -303,19 +299,21 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
 
   public int getMaxWidthInRange(int startOffset, int endOffset) {
     assertIsDispatchThread();
-    return getMaxWidthInLineRange(offsetToVisualLine(startOffset, false), offsetToVisualLine(endOffset, true));
+    int startVisualLine = offsetToVisualLine(startOffset, false);
+    int endVisualLine = offsetToVisualLine(endOffset, true);
+    return getMaxTextWidthInLineRange(startVisualLine, endVisualLine) + getInsets().left;
   }
 
   /**
-   * If <code>quickEvaluationListener</code> is provided, quick approximate size evaluation becomes enabled, listener will be invoked
+   * If {@code quickEvaluationListener} is provided, quick approximate size evaluation becomes enabled, listener will be invoked
    * if approximation will in fact be used during width calculation.
    */
-  int getMaxWidthInLineRange(int startVisualLine, int endVisualLine) {
+  int getMaxTextWidthInLineRange(int startVisualLine, int endVisualLine) {
     myEditor.getSoftWrapModel().prepareToMapping();
     int maxWidth = 0;
     VisualLinesIterator iterator = new VisualLinesIterator(myEditor, startVisualLine);
     while (!iterator.atEnd() && iterator.getVisualLine() <= endVisualLine) {
-      int width = mySizeManager.getVisualLineWidth(iterator, null);
+      int width = mySizeManager.getVisualLineWidth(iterator, false);
       maxWidth = Math.max(maxWidth, width);
       iterator.advance();
     }
@@ -400,7 +398,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   }
 
   /**
-   * Offset of nearest boundary (not equal to <code>offset</code>) on the same line is returned. <code>-1</code> is returned if 
+   * Offset of nearest boundary (not equal to {@code offset}) on the same line is returned. {@code -1} is returned if
    * corresponding boundary is not found.
    */
   public int findNearestDirectionBoundary(int offset, boolean lookForward) {
@@ -414,7 +412,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     return relativeOffset < 0 ? -1 : lineStartOffset + relativeOffset;
   }
 
-  public int getPlainSpaceWidth() {
+  public float getPlainSpaceWidth() {
     synchronized (myLock) {
       initMetricsIfNeeded();
       return myPlainSpaceWidth;
@@ -486,9 +484,9 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   private void initMetricsIfNeeded() {
     if (myPlainSpaceWidth >= 0) return;
 
-    FontMetrics fm = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
+    FontMetrics fm = FontInfo.getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN), myFontRenderContext);
 
-    int width = FontLayoutService.getInstance().charWidth(fm, ' ');
+    float width = FontLayoutService.getInstance().charWidth2D(fm, ' ');
     myPlainSpaceWidth = width > 0 ? width : 1;
 
     myCharHeight = FontLayoutService.getInstance().charWidth(fm, 'a');
@@ -499,12 +497,12 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     myLineHeight = (int)Math.ceil(fontMetricsHeight * verticalScalingFactor);
 
     int descent = FontLayoutService.getInstance().getDescent(fm);
-    myDescent = (int)Math.floor(descent * verticalScalingFactor);
+    myDescent = descent + (myLineHeight - fontMetricsHeight) / 2;
     myTopOverhang = fontMetricsHeight - myLineHeight + myDescent - descent;
     myBottomOverhang = descent - myDescent;
 
     // assuming that bold italic 'W' gives a good approximation of font's widest character
-    FontMetrics fmBI = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.BOLD_ITALIC));
+    FontMetrics fmBI = FontInfo.getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.BOLD_ITALIC), myFontRenderContext);
     myMaxCharWidth = FontLayoutService.getInstance().charWidth(fmBI, 'W');
   }
   
@@ -517,17 +515,34 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     }
   }
 
-  private void setFontRenderContext(FontRenderContext context) {
-    myFontRenderContext = context == null ? FontInfo.getFontRenderContext(myEditor.getContentComponent()) : context;
+  private boolean setFontRenderContext(FontRenderContext context) {
+    FontRenderContext contextToSet = context == null ? FontInfo.getFontRenderContext(myEditor.getContentComponent()) : context;
+    if (areEqualContexts(myFontRenderContext, contextToSet)) return false;
+    myFontRenderContext = contextToSet.getFractionalMetricsHint() == myEditor.myFractionalMetricsHintValue 
+                          ? contextToSet
+                          : new FontRenderContext(contextToSet.getTransform(), 
+                                                  contextToSet.getAntiAliasingHint(), 
+                                                  myEditor.myFractionalMetricsHintValue);
+    return true;
   }
 
   private void checkFontRenderContext(FontRenderContext context) {
-    FontRenderContext oldContext = myFontRenderContext;
-    setFontRenderContext(context);
-    if (!myFontRenderContext.equals(oldContext)) {
+    if (setFontRenderContext(context)) {
+      synchronized (myLock) {
+        myPlainSpaceWidth = -1;
+      }
       myTextLayoutCache.resetToDocumentSize(false);
       invalidateFoldRegionLayouts();
     }
+  }
+
+  private static boolean areEqualContexts(FontRenderContext c1, FontRenderContext c2) {
+    if (c1 == c2) return true;
+    if (c1 == null || c2 == null) return false;
+    // We ignore fractional metrics aspect of contexts, because we it's not changing during editor's lifecycle.
+    // And it has different values for component graphics (ON/OFF) and component's font metrics (DEFAULT), causing
+    // unnecessary layout cache resets.
+    return c1.getTransform().equals(c2.getTransform()) && c1.getAntiAliasingHint().equals(c2.getAntiAliasingHint());
   }
 
   LineLayout getFoldRegionLayout(FoldRegion foldRegion) {

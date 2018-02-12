@@ -8,4 +8,4 @@ class C:
 
     def m3(self):
         pass
-        # </editor-fold>
+    # </editor-fold>

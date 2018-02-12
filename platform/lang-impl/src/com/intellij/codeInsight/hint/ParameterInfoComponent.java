@@ -1,30 +1,22 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.hint;
 
 import com.google.common.collect.ImmutableMap;
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.util.Function;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -36,6 +28,8 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ParameterInfoComponent extends JPanel {
   private final Object[] myObjects;
@@ -46,11 +40,12 @@ public class ParameterInfoComponent extends JPanel {
   @NotNull private final ParameterInfoHandler myHandler;
 
   private final OneElementComponent[] myPanels;
+  private final JLabel myShortcutLabel;
 
   private final Font NORMAL_FONT;
   private final Font BOLD_FONT;
 
-  private static final Border LAST_ITEM_BORDER = BorderFactory.createEmptyBorder();
+  private static final Border EMPTY_BORDER = BorderFactory.createEmptyBorder();
   private static final Border BOTTOM_BORDER = new SideBorder(new JBColor(JBColor.LIGHT_GRAY, Gray._90), SideBorder.BOTTOM);
 
   protected int myWidthLimit = 500;
@@ -67,7 +62,7 @@ public class ParameterInfoComponent extends JPanel {
     if (o1.getEndOffset() > o2.getEndOffset()) return 1;
     return -1;
   };
-  private boolean myRequestFocus;
+  private final boolean myRequestFocus;
 
   @TestOnly
   public static ParameterInfoUIContextEx createContext(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler, int currentParameterIndex) {
@@ -79,14 +74,15 @@ public class ParameterInfoComponent extends JPanel {
     final ParameterInfoComponent infoComponent = new ParameterInfoComponent(objects, editor, handler);
     infoComponent.setCurrentParameterIndex(currentParameterIndex);
     infoComponent.setParameterOwner(parameterOwner);
-    return infoComponent.new MyParameterContext();
+    return infoComponent.new MyParameterContext(false);
   }
 
   ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler) {
-    this(objects, editor, handler, false);
+    this(objects, editor, handler, false, false);
   }
 
-  ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler, boolean requestFocus) {
+  ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler, 
+                         boolean requestFocus, boolean allowSwitchLabel) {
     super(new BorderLayout());
     myRequestFocus = requestFocus;
 
@@ -121,19 +117,44 @@ public class ParameterInfoComponent extends JPanel {
     pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     add(pane, BorderLayout.CENTER);
 
+    String upShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_METHOD_OVERLOAD_SWITCH_UP);
+    String downShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_METHOD_OVERLOAD_SWITCH_DOWN);
+    if (!allowSwitchLabel || editor instanceof EditorWindow || myObjects.length <= 1 || !myHandler.supportsOverloadSwitching() || 
+        upShortcut.isEmpty() && downShortcut.isEmpty()) {
+      myShortcutLabel = null;
+    }
+    else {
+      myShortcutLabel = new JLabel(
+        upShortcut.isEmpty() || downShortcut.isEmpty() 
+        ? CodeInsightBundle.message("parameter.info.switch.overload.shortcuts.single", upShortcut.isEmpty() ? downShortcut : upShortcut)
+        : CodeInsightBundle.message("parameter.info.switch.overload.shortcuts", upShortcut, downShortcut));
+      myShortcutLabel.setForeground(new JBColor(0x787878, 0x787878));
+      Font labelFont = UIUtil.getLabelFont();
+      myShortcutLabel.setFont(labelFont.deriveFont(labelFont.getSize2D() - (SystemInfo.isWindows ? 1 : 2)));
+      myShortcutLabel.setBorder(new JBEmptyBorder(3, 0, 0, 0));
+      add(myShortcutLabel, BorderLayout.SOUTH);
+    }
     myCurrentParameterIndex = -1;
   }
 
   @Override
   public Dimension getPreferredSize() {
-    int size = myPanels.length;
+    long visibleRows = Stream.of(myPanels).filter(Component::isVisible).count();
     final Dimension preferredSize = super.getPreferredSize();
-    if (size >= 0 && size <= 20) {
+    if (visibleRows <= 20) {
       return preferredSize;
     }
     else {
       return new Dimension(preferredSize.width + 20, 200);
     }
+  }
+
+  @Override
+  public String toString() {
+    return Stream.of(myPanels)
+      .filter(Component::isVisible)
+      .map(c -> c.toString() + (c.getBorder() == BOTTOM_BORDER ? "\n-" : ""))
+      .collect(Collectors.joining("\n"));
   }
 
   public Object getHighlighted() {
@@ -145,8 +166,13 @@ public class ParameterInfoComponent extends JPanel {
   }
 
   class MyParameterContext implements ParameterInfoUIContextEx {
+    private final boolean mySingleParameterInfo;
     private int i;
     private Function<String, String> myEscapeFunction;
+    
+    public MyParameterContext(boolean singleParameterInfo) {
+      mySingleParameterInfo = singleParameterInfo;
+    }
 
     @Override
     public String setupUIComponentPresentation(String text,
@@ -158,14 +184,20 @@ public class ParameterInfoComponent extends JPanel {
                                                Color background) {
       final String resultedText =
         myPanels[i].setup(text, myEscapeFunction, highlightStartOffset, highlightEndOffset, isDisabled, strikeout, isDisabledBeforeHighlight, background);
-      myPanels[i].setBorder(isLastParameterOwner() ? LAST_ITEM_BORDER : BOTTOM_BORDER);
+      myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
       return resultedText;
+    }
+
+    @Override
+    public void setupRawUIComponentPresentation(String htmlText) {
+      myPanels[i].setup(htmlText, getDefaultParameterColor());
+      myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
     }
 
     @Override
     public String setupUIComponentPresentation(final String[] texts, final EnumSet<Flag>[] flags, final Color background) {
       final String resultedText = myPanels[i].setup(texts, myEscapeFunction, flags, background);
-      myPanels[i].setBorder(isLastParameterOwner() ? LAST_ITEM_BORDER : BOTTOM_BORDER);
+      myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
       return resultedText;
     }
 
@@ -199,23 +231,45 @@ public class ParameterInfoComponent extends JPanel {
     }
 
     @Override
+    public boolean isSingleOverload() {
+      return myPanels.length == 1;
+    }
+
+    @Override
+    public boolean isSingleParameterInfo() {
+      return mySingleParameterInfo;
+    }
+
+    private boolean isHighlighted() {
+      return myObjects[i].equals(myHighlighted);
+    }
+
+    @Override
     public Color getDefaultParameterColor() {
       Color color = HintUtil.getInformationColor();
-      return !myObjects[i].equals(myHighlighted) ? color :
+      return mySingleParameterInfo || !isHighlighted() ? color :
              ColorUtil.isDark(color) ? ColorUtil.brighter(color, 2) : ColorUtil.darker(color, 2);
     }
   }
 
-  public void update() {
-    MyParameterContext context = new MyParameterContext();
+  public void update(boolean singleParameterInfo) {
+    MyParameterContext context = new MyParameterContext(singleParameterInfo);
 
     for (int i = 0; i < myObjects.length; i++) {
       context.i = i;
       final Object o = myObjects[i];
 
-      //noinspection unchecked
-      myHandler.updateUI(o, context);
+      if (singleParameterInfo && myObjects.length > 1 && !context.isHighlighted()) {
+        setVisible(i, false);
+      }
+      else {
+        setVisible(i, true);
+        //noinspection unchecked
+        myHandler.updateUI(o, context);
+      }
     }
+
+    if (myShortcutLabel != null) myShortcutLabel.setVisible(!singleParameterInfo);
 
     invalidate();
     validate();
@@ -228,6 +282,10 @@ public class ParameterInfoComponent extends JPanel {
 
   void setEnabled(int index, boolean enabled) {
     myPanels[index].setEnabled(enabled);
+  }
+
+  void setVisible(int index, boolean visible) {
+    myPanels[index].setVisible(visible);
   }
 
   boolean isEnabled(int index) {
@@ -260,6 +318,24 @@ public class ParameterInfoComponent extends JPanel {
     public OneElementComponent() {
       super(new GridBagLayout());
       myOneLineComponents = new OneLineComponent[0]; //TODO ???
+    }
+
+    @Override
+    public String toString() {
+      boolean highlighted = myOneLineComponents.length > 0 && 
+                            !HintUtil.getInformationColor().equals(myOneLineComponents[0].getBackground());
+      String text = Stream.of(myOneLineComponents).filter(Objects::nonNull).map(Object::toString).collect(Collectors.joining());
+      return highlighted ? '[' + text + ']' : text;
+    }
+
+    private void setup(String htmlText, Color background) {
+      removeAll();
+      myOneLineComponents = new OneLineComponent[1];
+      myOneLineComponents[0] = new OneLineComponent();
+      myOneLineComponents[0].doSetup(htmlText, background);
+      add(myOneLineComponents[0], new GridBagConstraints(0,0,1,1,1,0,
+                                                         GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                                         new Insets(0,0,0,0),0,0));
     }
 
     private String setup(String text,
@@ -365,7 +441,7 @@ public class ParameterInfoComponent extends JPanel {
       add(component, new GridBagConstraints(0, index, 1, 1, 1, 0, GridBagConstraints.WEST,
                                             GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
       components.add(component);
-      myOneLineComponents = components.toArray(new OneLineComponent[components.size()]);
+      myOneLineComponents = components.toArray(new OneLineComponent[0]);
       return buf.toString();
     }
   }
@@ -386,6 +462,11 @@ public class ParameterInfoComponent extends JPanel {
                                           new Insets(0, 0, 0, 0), 0, 0));
     }
 
+    @Override
+    public String toString() {
+      return myLabel.getText();
+    }
+
     private String setup(String text,
                          boolean isDisabled,
                          boolean isStrikeout,
@@ -401,18 +482,22 @@ public class ParameterInfoComponent extends JPanel {
     }
 
     private String setup(@NotNull String text, @NotNull Map<TextRange, ParameterInfoUIContextEx.Flag> flagsMap, @NotNull Color background) {
+      if (flagsMap.isEmpty()) {
+        return doSetup(text, background);
+      }
+      else {
+        String labelText = buildLabelText(text, flagsMap);
+        return doSetup(labelText, background);
+      }
+    }
+
+    private String doSetup(@NotNull String text, @NotNull Color background) {
       myLabel.setBackground(background);
       setBackground(background);
 
       myLabel.setForeground(JBColor.foreground());
 
-      if (flagsMap.isEmpty()) {
-        myLabel.setText(XmlStringUtil.wrapInHtml(text));
-      }
-      else {
-        String labelText = buildLabelText(text, flagsMap);
-        myLabel.setText(labelText);
-      }
+      myLabel.setText(XmlStringUtil.wrapInHtml(text));
 
       //IDEA-95904 Darcula parameter info pop-up colors hard to read
       if (UIUtil.isUnderDarcula()) {
@@ -420,6 +505,7 @@ public class ParameterInfoComponent extends JPanel {
       }
       return myLabel.getText();
     }
+
     private String buildLabelText(@NotNull final String text, @NotNull final Map<TextRange, ParameterInfoUIContextEx.Flag> flagsMap) {
       final StringBuilder labelText = new StringBuilder(text);
       final String disabledTag = FLAG_TO_TAG.get(ParameterInfoUIContextEx.Flag.DISABLE);
@@ -464,7 +550,7 @@ public class ParameterInfoComponent extends JPanel {
         faultMap.put(highlightRange.getEndOffset(), endTag.length());
 
       }
-      return XmlStringUtil.wrapInHtml(labelText);
+      return labelText.toString();
     }
 
     private String getTag(@NotNull final String tagValue) {

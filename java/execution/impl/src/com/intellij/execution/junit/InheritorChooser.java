@@ -40,10 +40,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 1/17/12
- */
 public class InheritorChooser {
 
   protected void runForClasses(final List<PsiClass> classes, final PsiMethod method, final ConfigurationContext context, final Runnable performRunnable) {

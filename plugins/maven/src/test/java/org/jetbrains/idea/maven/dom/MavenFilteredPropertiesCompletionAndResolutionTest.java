@@ -559,7 +559,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertNotNull(resolveReference(f, "pom.baseUri"));
   }
 
-  public void testDoNotAddReferenceToDelimiterDefinition() throws Exception {
+  public void testDoNotAddReferenceToDelimiterDefinition() {
     importProject("<groupId>test</groupId>\n" +
                   "<artifactId>project</artifactId>\n" +
                   "<version>1</version>\n" +

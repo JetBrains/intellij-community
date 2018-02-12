@@ -35,7 +35,7 @@ public class WorkingWithOpenProjectTest extends MavenImportingTestCase {
                   "<version>1</version>");
   }
 
-  public void testShouldNotFailOnNewEmptyPomCreation() throws Exception {
+  public void testShouldNotFailOnNewEmptyPomCreation() {
     createModulePom("module", ""); // should not throw an exception
   }
 
@@ -51,7 +51,7 @@ public class WorkingWithOpenProjectTest extends MavenImportingTestCase {
     PsiTestUtil.addContentRoot(getModule("project"), root);  // should not throw an exception
   }
   
-  public void _testSavingAllDocumentBeforeReimport() throws Exception {
+  public void _testSavingAllDocumentBeforeReimport() {
     // cannot make it work die to order of document listeners
 
     myProjectsManager.listenForExternalChanges();

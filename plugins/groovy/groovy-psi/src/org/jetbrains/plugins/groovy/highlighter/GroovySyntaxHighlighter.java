@@ -151,6 +151,7 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase {
     fillMap(ATTRIBUTES, VALID_STRING_ESCAPE, StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN);
     fillMap(ATTRIBUTES, INVALID_STRING_ESCAPE, StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN);
     fillMap(ATTRIBUTES, INVALID_STRING_ESCAPE, StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN);
+    fillMap(ATTRIBUTES, TokenSets.KEYWORDS, KEYWORD);
   }
 
   static {

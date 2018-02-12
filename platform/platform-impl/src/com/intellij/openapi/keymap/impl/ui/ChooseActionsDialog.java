@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,10 +50,10 @@ import java.util.ArrayList;
 public class ChooseActionsDialog extends DialogWrapper {
   private final ActionsTree myActionsTree;
   private FilterComponent myFilterComponent;
-  private TreeExpansionMonitor myTreeExpansionMonitor;
+  private final TreeExpansionMonitor myTreeExpansionMonitor;
   private final ShortcutFilteringPanel myFilteringPanel = new ShortcutFilteringPanel();
-  private Keymap myKeymap;
-  private QuickList[] myQuicklists;
+  private final Keymap myKeymap;
+  private final QuickList[] myQuicklists;
 
   public ChooseActionsDialog(Component parent, Keymap keymap, QuickList[] quicklists) {
     super(parent, true);
@@ -98,12 +98,8 @@ public class ChooseActionsDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel(new BorderLayout());
-
-    panel.add(myActionsTree.getComponent());
-    panel.setPreferredSize(JBUI.size(400, 500));
-
-    return panel;
+    return JBUI.Panels.simplePanel(myActionsTree.getComponent())
+      .withPreferredSize(400, 500);
   }
 
   public String[] getTreeSelectedActionIds() {
@@ -130,31 +126,15 @@ public class ChooseActionsDialog extends DialogWrapper {
   private JPanel createToolbarPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
     DefaultActionGroup group = new DefaultActionGroup();
-    final JComponent toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
+    final JComponent toolbar = ActionManager.getInstance().createActionToolbar("ChooseActionsDialog", group, true).getComponent();
     final CommonActionsManager commonActionsManager = CommonActionsManager.getInstance();
-    final TreeExpander treeExpander = new TreeExpander() {
-      public void expandAll() {
-        TreeUtil.expandAll(myActionsTree.getTree());
-      }
-
-      public boolean canExpand() {
-        return true;
-      }
-
-      public void collapseAll() {
-        TreeUtil.collapseAll(myActionsTree.getTree(), 0);
-      }
-
-      public boolean canCollapse() {
-        return true;
-      }
-    };
+    final TreeExpander treeExpander = KeymapPanel.createTreeExpander(myActionsTree);
     group.add(commonActionsManager.createExpandAllAction(treeExpander, myActionsTree.getTree()));
     group.add(commonActionsManager.createCollapseAllAction(treeExpander, myActionsTree.getTree()));
 
     panel.add(toolbar, BorderLayout.WEST);
     group = new DefaultActionGroup();
-    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("ChooseActionsDialog", group, true);
     actionToolbar.setReservePlaceAutoPopupIcon(false);
     final JComponent searchToolbar = actionToolbar.getComponent();
     final Alarm alarm = new Alarm();
@@ -186,7 +166,7 @@ public class ChooseActionsDialog extends DialogWrapper {
       public void actionPerformed(AnActionEvent e) {
         myFilterComponent.reset();
         myActionsTree.reset(myKeymap, myQuicklists);
-        myFilteringPanel.showPopup(searchToolbar);
+        myFilteringPanel.showPopup(searchToolbar, e.getInputEvent().getComponent());
       }
     });
     group.add(new AnAction(KeyMapBundle.message("filter.clear.action.text"),

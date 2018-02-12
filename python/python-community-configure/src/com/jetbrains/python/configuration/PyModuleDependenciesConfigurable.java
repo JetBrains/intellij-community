@@ -43,7 +43,7 @@ public class PyModuleDependenciesConfigurable implements UnnamedConfigurable {
   private List<Module> myInitialDependencies;
   private JPanel myMainPanel;
   private JPanel myListHolderPanel;
-  private CheckBoxList<Module> myDependenciesList;
+  private final CheckBoxList<Module> myDependenciesList;
 
   public PyModuleDependenciesConfigurable(Module module) {
     myModule = module;
@@ -56,9 +56,8 @@ public class PyModuleDependenciesConfigurable implements UnnamedConfigurable {
   }
 
   private void resetModel() {
-    List<Module> possibleDependencies = new ArrayList<>();
     myInitialDependencies = Arrays.asList(ModuleRootManager.getInstance(myModule).getDependencies());
-    possibleDependencies.addAll(myInitialDependencies);
+    List<Module> possibleDependencies = new ArrayList<>(myInitialDependencies);
     for (Module otherModule : ModuleManager.getInstance(myModule.getProject()).getModules()) {
       if (!possibleDependencies.contains(otherModule) && otherModule != myModule) {
         possibleDependencies.add(otherModule);
@@ -85,7 +84,7 @@ public class PyModuleDependenciesConfigurable implements UnnamedConfigurable {
   private List<Module> collectDependencies() {
     List<Module> result = new ArrayList<>();
     for (int i = 0; i < myDependenciesList.getItemsCount(); i++) {
-      Module module = (Module)myDependenciesList.getItemAt(i);
+      Module module = myDependenciesList.getItemAt(i);
       if (myDependenciesList.isItemSelected(module)) {
         result.add(module);
       }

@@ -34,16 +34,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: 07-Sep-2005
- */
 public class UnusedMessageFormatParameterInspection extends PropertiesInspectionBase {
   public static final String REGEXP = "regexp";
-  @NotNull
-  public String getGroupDisplayName() {
-    return PropertiesBundle.message("properties.files.inspection.group.display.name");
-  }
 
   @NotNull
   public String getDisplayName() {
@@ -106,6 +98,6 @@ public class UnusedMessageFormatParameterInspection extends PropertiesInspection
         }
       }
     }
-    return problemDescriptors.isEmpty() ? null : problemDescriptors.toArray(new ProblemDescriptor[problemDescriptors.size()]);
+    return problemDescriptors.isEmpty() ? null : problemDescriptors.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 }

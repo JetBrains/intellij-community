@@ -18,12 +18,13 @@ package com.intellij.junit5;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.engine.descriptor.MethodTestDescriptor;
+import org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor;
 import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.support.descriptor.*;
 import org.junit.platform.launcher.TestIdentifier;
 
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
@@ -35,15 +36,14 @@ class JUnit5NavigationTest {
   @Test
   void methodNavigation() throws Exception {
     UniqueId uniqueId = UniqueId.parse("[class:JUnit5NavigationTest]/[method:methodNavigation]");
-    MethodTestDescriptor methodTestDescriptor =
-      new MethodTestDescriptor(uniqueId, JUnit5NavigationTest.class, JUnit5NavigationTest.class.getDeclaredMethod("methodNavigation"));
+    TestMethodTestDescriptor methodTestDescriptor =
+      new TestMethodTestDescriptor(uniqueId, JUnit5NavigationTest.class, JUnit5NavigationTest.class.getDeclaredMethod("methodNavigation"));
     TestIdentifier testIdentifier = TestIdentifier.from(methodTestDescriptor);
     Assertions.assertEquals(JUnit5NavigationTest.class.getName(), JUnit5TestExecutionListener.getClassName(testIdentifier));
     Assertions.assertEquals("methodNavigation", JUnit5TestExecutionListener.getMethodName(testIdentifier));
     //Assertions.assertEquals("methodNavigation", testIdentifier.getDisplayName()); todo methodNavigation()
   }
 
-  private final ConfigurableTestDescriptor descriptor = new ConfigurableTestDescriptor();
   private TestSource myTestSource = null;
 
   @Test
@@ -71,8 +71,7 @@ class JUnit5NavigationTest {
 
   @Test
   void locationHintValueForMethodSource() {
-    myTestSource = new MethodSource("className", "methodName");
-    descriptor.use(myTestSource);
+    myTestSource = MethodSource.from("className", "methodName");
     String locationHintValue = locationHintValue();
 
     Assertions.assertTrue(locationHintValue.startsWith("java:"), locationHintValue);
@@ -81,8 +80,7 @@ class JUnit5NavigationTest {
 
   @Test
   void locationHintValueForClassSource() {
-    myTestSource = new ClassSource(String.class);
-    descriptor.use(myTestSource);
+    myTestSource = ClassSource.from(String.class);
     String locationHintValue = locationHintValue();
 
     Assertions.assertTrue(locationHintValue.startsWith("java:"), locationHintValue);
@@ -92,39 +90,35 @@ class JUnit5NavigationTest {
   @Test
   void deriveSuiteOrTestFromDescription() {
     myTestSource = methodOrClassSource();
-
-    descriptor.isTest(true);
-    Assertions.assertTrue(locationHintValue().startsWith("java:test:"));
-
-    descriptor.isTest(false);
     Assertions.assertTrue(locationHintValue().startsWith("java:suite:"));
   }
 
   @Test
-  void locationHintValueForFileSource() {
-    myTestSource = new FileSource(Paths.get("/some/file.txt").toFile());
+  void locationHintValueForFileSource() throws IOException {
+    myTestSource = FileSource.from(Paths.get("/some/file.txt").toFile());
 
-    Assertions.assertEquals("file:///some/file.txt", locationHintValue());
+    Assertions.assertEquals("file://" + ((FileSource)myTestSource).getFile().getCanonicalPath(), locationHintValue());
   }
 
 
   @Test
-  void locationHintValueForFileSourceWithLineInformation() {
-    myTestSource = new FileSource(Paths.get("/some/file.txt").toFile(), new FilePosition(22, 7));
+  void locationHintValueForFileSourceWithLineInformation() throws IOException {
+    myTestSource = FileSource.from(Paths.get("/some/file.txt").toFile(), FilePosition.from(22, 7));
 
-    Assertions.assertEquals("file:///some/file.txt:22", locationHintValue());
+    Assertions.assertEquals("file://" + ((FileSource)myTestSource).getFile().getCanonicalPath() +":22", locationHintValue());
   }
 
   @Test
   void ignoreCompositeSourceWithoutAnySupportedTestSource() {
-    myTestSource = new CompositeTestSource(singletonList(anyUnsupportedTestSource()));
+    myTestSource = CompositeTestSource.from(singletonList(anyUnsupportedTestSource()));
 
     Assertions.assertEquals("", locationHint());
   }
 
   @Test
   void locationHintValueForCompositeSourcePickTheFirstSupportedSourceInTheList() {
-    myTestSource = new CompositeTestSource(Arrays.asList(anyUnsupportedTestSource(), new ClassSource(String.class), new MethodSource("className", "methodName")));
+    myTestSource = CompositeTestSource.from(Arrays.asList(anyUnsupportedTestSource(), ClassSource.from(String.class),
+                                                          MethodSource.from("className", "methodName")));
     String locationHintValue = locationHintValue();
 
     Assertions.assertTrue(locationHintValue.startsWith("java:"), locationHintValue);
@@ -132,23 +126,25 @@ class JUnit5NavigationTest {
   }
 
   private String locationHint() {
-    descriptor.use(myTestSource);
-    TestIdentifier testIdentifier = TestIdentifier.from(descriptor);
+    TestIdentifier testIdentifier = TestIdentifier.from(new ConfigurableTestDescriptor(myTestSource));
     return JUnit5TestExecutionListener.getLocationHint(testIdentifier);
   }
 
   private String locationHintValue() {
-    descriptor.use(myTestSource);
+    return locationHintValue(new ConfigurableTestDescriptor(myTestSource));
+  }
+
+  private static String locationHintValue(final ConfigurableTestDescriptor descriptor) {
     TestIdentifier testIdentifier = TestIdentifier.from(descriptor);
-    return JUnit5TestExecutionListener.getLocationHintValue(testIdentifier.getSource().orElseThrow(IllegalStateException::new), testIdentifier.isTest());
+    return JUnit5TestExecutionListener.getLocationHintValue(testIdentifier.getSource().orElseThrow(IllegalStateException::new));
   }
 
   private static ClassSource anySupportedSource() {
-    return new ClassSource(String.class);
+    return ClassSource.from(String.class);
   }
 
   private static TestSource methodOrClassSource() {
-    return new ClassSource(String.class);
+    return ClassSource.from(String.class);
   }
 
   private static TestSource anyUnsupportedTestSource() {
@@ -167,25 +163,14 @@ class JUnit5NavigationTest {
   private static class ConfigurableTestDescriptor extends AbstractTestDescriptor {
     private boolean myIsTest;
 
-    public ConfigurableTestDescriptor() {
-      super(JUnit5NavigationTest.anyUniqueId(), JUnit5NavigationTest.anyDisplayName());
+    public ConfigurableTestDescriptor(TestSource testSource) {
+      super(JUnit5NavigationTest.anyUniqueId(), JUnit5NavigationTest.anyDisplayName(), testSource);
     }
 
-    public void use(TestSource testSource) {
-      if (null == testSource) {
-        return;
-      }
-      setSource(testSource);
-    }
 
     @Override
-    public boolean isContainer() {
-      return false;
-    }
-
-    @Override
-    public boolean isTest() {
-      return myIsTest;
+    public Type getType() {
+      return myIsTest ? Type.TEST : Type.CONTAINER;
     }
 
     public void isTest(boolean isTest) {

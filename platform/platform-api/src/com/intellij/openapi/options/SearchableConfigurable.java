@@ -31,8 +31,15 @@ import javax.swing.*;
  * @see SearchableOptionContributor
  */
 public interface SearchableConfigurable extends Configurable {
+
+  /**
+   * Unique configurable id.
+   * Note this id should be THE SAME as the one specified in XML.
+   * @see ConfigurableEP#id
+   */
   @NotNull
-  @NonNls String getId();
+  @NonNls
+  String getId();
 
   /**
    * @param option setting search query
@@ -80,6 +87,7 @@ public interface SearchableConfigurable extends Configurable {
         myKids = null;
       }
 
+      @NotNull
       @Override
       public final Configurable[] getConfigurables() {
         if (myKids != null) return myKids;

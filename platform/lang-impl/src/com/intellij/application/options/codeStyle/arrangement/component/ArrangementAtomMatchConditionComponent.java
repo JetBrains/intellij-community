@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -145,7 +146,6 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
 
     final ArrangementRemoveConditionAction action = new ArrangementRemoveConditionAction();
     Icon buttonIcon = action.getTemplatePresentation().getIcon();
-    Dimension buttonSize = new Dimension(buttonIcon.getIconWidth(), buttonIcon.getIconHeight());
     if (closeCallback == null) {
       myCloseButton = null;
       myCloseButtonBounds = null;
@@ -155,10 +155,10 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
         action,
         action.getTemplatePresentation().clone(),
         ArrangementConstants.MATCHING_RULES_CONTROL_PLACE,
-        buttonSize)
+        JBUI.emptySize())
       {
         @Override
-        protected Icon getIcon() {
+        public Icon getIcon() {
           return myCloseButtonHovered ? action.getTemplatePresentation().getHoveredIcon() : action.getTemplatePresentation().getIcon();
         }
       };
@@ -175,7 +175,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
     GridBagConstraints constraints = new GridBag().anchor(GridBagConstraints.WEST).weightx(1)
       .insets(0, 0, 0, myCloseButton == null ? ArrangementConstants.BORDER_ARC_SIZE : 0);
     insetsPanel.add(myTextControl, constraints);
-    insetsPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, ArrangementConstants.HORIZONTAL_PADDING, 0, 0));
+    insetsPanel.setBorder(JBUI.Borders.emptyLeft(ArrangementConstants.HORIZONTAL_PADDING));
     insetsPanel.setOpaque(false);
 
     JPanel roundBorderPanel = new JPanel(new GridBagLayout()) {

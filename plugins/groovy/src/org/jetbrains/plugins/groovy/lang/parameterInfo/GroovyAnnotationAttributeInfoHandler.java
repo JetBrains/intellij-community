@@ -43,7 +43,7 @@ import java.util.Set;
  */
 public class GroovyAnnotationAttributeInfoHandler implements ParameterInfoHandlerWithTabActionSupport<GrAnnotationArgumentList, PsiAnnotationMethod, GrAnnotationNameValuePair> {
 
-  private static final Set<Class> ALLOWED_CLASSES = ContainerUtil.<Class>newHashSet(GrAnnotation.class);
+  private static final Set<Class> ALLOWED_CLASSES = ContainerUtil.newHashSet(GrAnnotation.class);
   private static final Set<Class<GroovyFile>> STOP_SEARCHING_CLASSES = Collections.singleton(GroovyFile.class);
 
   @NotNull
@@ -112,7 +112,7 @@ public class GroovyAnnotationAttributeInfoHandler implements ParameterInfoHandle
       PsiMethod[] methods = o.getMethods();
       if (methods.length > 0) {
         List<PsiAnnotationMethod> annotationMethods = ContainerUtil.findAll(methods, PsiAnnotationMethod.class);
-        return annotationMethods.toArray(new PsiAnnotationMethod[annotationMethods.size()]);
+        return annotationMethods.toArray(PsiAnnotationMethod.EMPTY_ARRAY);
       }
     }
     return PsiAnnotationMethod.EMPTY_ARRAY;

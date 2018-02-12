@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.graphInference;
 
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiUtil;
@@ -25,9 +12,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * User: anna
- */
 public class PsiPolyExpressionUtil {
   public static boolean hasStandaloneForm(PsiExpression expression) {
     if (expression instanceof PsiFunctionalExpression ||
@@ -42,7 +26,7 @@ public class PsiPolyExpressionUtil {
   public static boolean isPolyExpression(final PsiExpression expression) {
     if (expression instanceof PsiFunctionalExpression) {
       return true;
-    } 
+    }
     else if (expression instanceof PsiParenthesizedExpression) {
       return isPolyExpression(((PsiParenthesizedExpression)expression).getExpression());
     }
@@ -109,10 +93,15 @@ public class PsiPolyExpressionUtil {
       @Nullable
       @Override
       public Boolean visitClassType(PsiClassType classType) {
-        for (PsiType type : classType.getParameters()) {
-          if (type.accept(this)) return true;
+        PsiClassType.ClassResolveResult result = classType.resolveGenerics();
+        final PsiClass psiClass = result.getElement();
+        if (psiClass != null) {
+          PsiSubstitutor substitutor = result.getSubstitutor();
+          for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(psiClass)) {
+            PsiType type = substitutor.substitute(parameter);
+            if (type != null && type.accept(this)) return true;
+          }
         }
-        final PsiClass psiClass = classType.resolve();
         return psiClass instanceof PsiTypeParameter && typeParameters.contains(psiClass);
       }
 
@@ -126,9 +115,9 @@ public class PsiPolyExpressionUtil {
 
   private static boolean isInAssignmentOrInvocationContext(PsiExpression expr) {
     final PsiElement context = PsiUtil.skipParenthesizedExprUp(expr.getParent());
-    return context instanceof PsiExpressionList || 
-           context instanceof PsiArrayInitializerExpression || 
-           context instanceof PsiConditionalExpression && (expr instanceof PsiCallExpression || isPolyExpression((PsiExpression)context)) || 
+    return context instanceof PsiExpressionList ||
+           context instanceof PsiArrayInitializerExpression ||
+           context instanceof PsiConditionalExpression && (expr instanceof PsiCallExpression || isPolyExpression((PsiExpression)context)) ||
            isAssignmentContext(expr, context);
   }
 
@@ -136,8 +125,18 @@ public class PsiPolyExpressionUtil {
     return PsiUtil.isCondition(expr, context) ||
            context instanceof PsiReturnStatement ||
            context instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)context).getOperationTokenType() == JavaTokenType.EQ ||
-           context instanceof PsiVariable ||
+           context instanceof PsiVariable && !isVarContext((PsiVariable)context) ||
            context instanceof PsiLambdaExpression;
+  }
+
+  private static boolean isVarContext(PsiVariable variable) {
+    if (PsiUtil.getLanguageLevel(variable).isAtLeast(LanguageLevel.JDK_10)) {
+      PsiTypeElement typeElement = variable.getTypeElement();
+      if (typeElement != null && typeElement.isInferredType()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static boolean isExpressionOfPrimitiveType(@Nullable PsiExpression arg) {
@@ -174,7 +173,7 @@ public class PsiPolyExpressionUtil {
     }
     if (expr == null) return null;
     PsiType type = null;
-    //A class instance creation expression (§15.9) for a class that is convertible to a numeric type.
+    //A class instance creation expression (p15.9) for a class that is convertible to a numeric type.
     //As numeric classes do not have type parameters, at this point expressions with diamonds could be ignored
     if (expr instanceof PsiNewExpression && !PsiDiamondType.hasDiamond((PsiNewExpression)expr) ||
         hasStandaloneForm(expr)) {

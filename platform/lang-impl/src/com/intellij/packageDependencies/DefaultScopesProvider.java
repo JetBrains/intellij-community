@@ -15,6 +15,7 @@
  */
 package com.intellij.packageDependencies;
 
+import com.intellij.ide.scratch.ScratchesNamedScope;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
@@ -47,7 +48,7 @@ public class DefaultScopesProvider extends CustomScopesProviderEx {
     NamedScope projectScope = new ProjectFilesScope();
     NamedScope nonProjectScope = new NonProjectFilesScope();
     myProblemsScope = new ProblemScope(project);
-    myScopes = Arrays.asList(projectScope, getProblemsScope(), getAllScope(), nonProjectScope);
+    myScopes = Arrays.asList(projectScope, getProblemsScope(), getAllScope(), nonProjectScope, new ScratchesNamedScope());
   }
 
   @Override

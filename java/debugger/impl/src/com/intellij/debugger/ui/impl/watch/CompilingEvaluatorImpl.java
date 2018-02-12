@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -35,7 +21,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -44,6 +29,7 @@ import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHand
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
 
 import java.io.File;
@@ -89,8 +75,8 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
       JavaSdkVersion buildRuntimeVersion = runtime.getSecond();
       // if compiler or debuggee version or both are unknown, let source and target be the compiler's defaults
       if (buildRuntimeVersion != null && debuggeeVersion != null) {
-        JavaSdkVersion minVersion = buildRuntimeVersion.ordinal() > debuggeeVersion.ordinal() ? debuggeeVersion : buildRuntimeVersion;
-        String sourceOption = getSourceOption(minVersion.getMaxLanguageLevel());
+        JavaSdkVersion minVersion = debuggeeVersion.compareTo(buildRuntimeVersion) < 0 ? debuggeeVersion : buildRuntimeVersion;
+        String sourceOption = JpsJavaSdkType.complianceOption(minVersion.getMaxLanguageLevel().toJavaVersion());
         options.add("-source");
         options.add(sourceOption);
         options.add("-target");
@@ -128,11 +114,6 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
       }
     }
     return myCompiledClasses;
-  }
-
-  @NotNull
-  private static String getSourceOption(@NotNull LanguageLevel languageLevel) {
-    return "1." + Integer.valueOf(3 + languageLevel.ordinal());
   }
 
   private File generateTempSourceFile(File workingDir) throws IOException {

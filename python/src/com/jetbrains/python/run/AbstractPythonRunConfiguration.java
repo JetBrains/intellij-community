@@ -1,26 +1,16 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configuration.AbstractRunConfiguration;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.testframework.sm.runner.GeneralIdBasedToSMTRunnerEventsConvertor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -46,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -69,7 +59,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
    */
   protected boolean mySkipModuleSerialization;
 
-  public AbstractPythonRunConfiguration(Project project, final ConfigurationFactory factory) {
+  public AbstractPythonRunConfiguration(@NotNull Project project, @NotNull ConfigurationFactory factory) {
     super(project, factory);
     getConfigurationModule().init();
   }
@@ -86,7 +76,10 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     myMappingSettings = mappingSettings;
   }
 
-  public boolean isTestBased() {
+  /**
+   * @return if config uses {@link GeneralIdBasedToSMTRunnerEventsConvertor} or not
+   */
+  public boolean isIdTestBased() {
     return false;
   }
 
@@ -132,7 +125,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
 
     // tabs provided by extensions:
     //noinspection unchecked
-    PythonRunConfigurationExtensionsManager.getInstance().appendEditors(this, (SettingsEditorGroup)group);
+    PythonRunConfigurationExtensionsManager.getInstance().appendEditors(this, group);
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
 
     return group;
@@ -140,6 +133,9 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
 
   protected abstract SettingsEditor<T> createConfigurationEditor();
 
+  /**
+   * <strong>Always call super</strong> when overwriting this method
+   */
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
@@ -301,6 +297,15 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     return getConfigurationModule().getModule();
   }
 
+  @NotNull
+  public final Module getModuleNotNull() throws ExecutionException {
+    final Module module = getModule();
+    if (module == null) {
+      throw new ExecutionException("No module set for configuration, please choose one");
+    }
+    return module;
+  }
+
   public boolean isUseModuleSdk() {
     return myUseModuleSdk;
   }
@@ -330,7 +335,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   }
 
   public static void copyParams(AbstractPythonRunConfigurationParams source, AbstractPythonRunConfigurationParams target) {
-    target.setEnvs(new HashMap<>(source.getEnvs()));
+    target.setEnvs(new LinkedHashMap<>(source.getEnvs()));
     target.setInterpreterOptions(source.getInterpreterOptions());
     target.setPassParentEnvs(source.isPassParentEnvs());
     target.setSdkHome(source.getSdkHome());
@@ -410,7 +415,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   @Override
   public boolean excludeCompileBeforeLaunchOption() {
     final Module module = getModule();
-    return module != null ? ModuleType.get(module) instanceof PythonModuleTypeBase : true;
+    return module == null || ModuleType.get(module) instanceof PythonModuleTypeBase;
   }
 
   public boolean canRunWithCoverage() {

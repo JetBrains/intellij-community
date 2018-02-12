@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,7 +121,7 @@ public class GrSetStrongTypeIntention extends Intention {
     final TypeInfo typeInfo = getOrCreateTypeElement(parent, elementToBuildTemplate);
     final PsiElement replaceElement = typeInfo.elementToReplace;
 
-    TypeConstraint[] constraints = types.toArray(new TypeConstraint[types.size()]);
+    TypeConstraint[] constraints = types.toArray(TypeConstraint.EMPTY_ARRAY);
     ChooseTypeExpression chooseTypeExpression = new ChooseTypeExpression(constraints, element.getManager(), replaceElement.getResolveScope());
 
     TemplateBuilderImpl builder = new TemplateBuilderImpl(elementToBuildTemplate);
@@ -237,7 +237,7 @@ public class GrSetStrongTypeIntention extends Intention {
   protected PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
-      public boolean satisfiedBy(PsiElement element) {
+      public boolean satisfiedBy(@NotNull PsiElement element) {
         PsiElement parent = element.getParent();
 
         PsiElement pparent;

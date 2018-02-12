@@ -12,6 +12,7 @@ public class ChangeVariableTypeToRhsTypeIntentionTest extends IPPTestCase {
 
   public void testSameType() { assertIntentionNotAvailable(); }
   public void testAnonymous() { assertIntentionNotAvailable(); }
+  public void testComments() { doTest(); }
 
   @Override
   protected String getIntentionName() {

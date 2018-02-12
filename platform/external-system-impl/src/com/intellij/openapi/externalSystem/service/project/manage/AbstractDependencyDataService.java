@@ -37,7 +37,10 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Denis Zhdanov
@@ -96,10 +99,16 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
       for (DataNode<E> node : toImport) {
         final AbstractDependencyData data = node.getData();
         Module ownerModule = modelsProvider.findIdeModule(data.getOwnerModule());
+        if (ownerModule == null && modelsProvider.getUnloadedModuleDescription(data.getOwnerModule()) != null) {
+          continue;
+        }
         assert ownerModule != null;
         String depName;
         if(data instanceof ModuleDependencyData) {
           Module targetModule = modelsProvider.findIdeModule(((ModuleDependencyData)data).getTarget());
+          if (targetModule == null && modelsProvider.getUnloadedModuleDescription(((ModuleDependencyData)data).getTarget()) != null) {
+            continue;
+          }
           assert targetModule != null;
           depName = targetModule.getName();
         } else {

@@ -18,7 +18,6 @@ package com.intellij.util.text;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiType;
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,22 +85,17 @@ public class LiteralFormatUtil {
       }
     }
 
-    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    try {
-      buffer.append(prefix);
-      appendFromEnd(buffer, text, groupSize);
-      if (isFP) {
-        if (hasPoint) buffer.append('.');
-        appendFromStart(buffer, fractional, groupSize);
-        buffer.append(exponentMark);
-        appendFromEnd(buffer, exponent, 3);  // exponent is always decimal
-      }
-      buffer.append(suffix);
-      return buffer.toString();
+    final StringBuilder buffer = new StringBuilder();
+    buffer.append(prefix);
+    appendFromEnd(buffer, text, groupSize);
+    if (isFP) {
+      if (hasPoint) buffer.append('.');
+      appendFromStart(buffer, fractional, groupSize);
+      buffer.append(exponentMark);
+      appendFromEnd(buffer, exponent, 3);  // exponent is always decimal
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
-    }
+    buffer.append(suffix);
+    return buffer.toString();
   }
 
   private static void appendFromEnd(final StringBuilder buffer, final String original, final int groupSize) {

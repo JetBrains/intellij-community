@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.zmlx.hg4idea.repo;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -85,11 +86,6 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     if (myMessageBusConnection != null) {
       myMessageBusConnection.disconnect();
     }
-  }
-
-  @Override
-  public void before(@NotNull List<? extends VFileEvent> events) {
-    // everything is handled in #after()
   }
 
   @Override
@@ -162,7 +158,12 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
       myUpdateQueue.queue(new MyUpdater("hgrepositoryUpdate"));
     }
     if (configHgrcChanged) {
-      myUpdateConfigQueue.queue(new MyUpdater("hgconfigUpdate"));
+      myUpdateConfigQueue.queue(new MyUpdater("hgconfigUpdate"){
+        @Override
+        public void run() {
+          myRepository.updateConfig();
+        }
+      });
     }
     if (dirstateFileChanged || hgIgnoreChanged) {
       myRepository.getLocalIgnoredHolder().startRescan();
@@ -170,7 +171,7 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
       myDirtyScopeManager.dirDirtyRecursively(root);
       if (dirstateFileChanged) {
         //update async incoming/outgoing model
-        myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, root);
+        BackgroundTaskUtil.syncPublisher(myProject, HgVcs.REMOTE_TOPIC).update(myProject, root);
       }
     }
   }

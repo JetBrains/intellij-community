@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,10 +56,6 @@ public abstract class CompletionPhase implements Disposable {
   }
 
   public abstract int newCompletionStarted(int time, boolean repeated);
-
-  public boolean fillInCommonPrefix() {
-    return false;
-  }
 
   public static class CommittingDocuments extends CompletionPhase {
     boolean replaced;
@@ -166,15 +162,6 @@ public abstract class CompletionPhase implements Disposable {
       indicator.restorePrefix(() -> indicator.getLookup().restorePrefix());
       return indicator.nextInvocationCount(time, repeated);
     }
-
-    @Override
-    public boolean fillInCommonPrefix() {
-      if (indicator.isAutopopupCompletion()) {
-        return false;
-      }
-
-      return indicator.fillInCommonPrefix(true);
-    }
   }
 
   public static abstract class ZombiePhase extends CompletionPhase {
@@ -188,7 +175,7 @@ public abstract class CompletionPhase implements Disposable {
           CompletionServiceImpl.setCompletionPhase(NoCompletion);
         }
       };
-      final DocumentAdapter documentListener = new DocumentAdapter() {
+      final DocumentListener documentListener = new DocumentListener() {
         @Override
         public void beforeDocumentChange(DocumentEvent e) {
           CompletionServiceImpl.setCompletionPhase(NoCompletion);
@@ -200,7 +187,7 @@ public abstract class CompletionPhase implements Disposable {
           CompletionServiceImpl.setCompletionPhase(NoCompletion);
         }
       };
-      final CaretListener caretListener = new CaretAdapter() {
+      final CaretListener caretListener = new CaretListener() {
         @Override
         public void caretPositionChanged(CaretEvent e) {
           CompletionServiceImpl.setCompletionPhase(NoCompletion);
@@ -245,7 +232,9 @@ public abstract class CompletionPhase implements Disposable {
     @Override
     public int newCompletionStarted(int time, boolean repeated) {
       CompletionServiceImpl.setCompletionPhase(NoCompletion);
-      indicator.restorePrefix(restorePrefix);
+      if (repeated) {
+        indicator.restorePrefix(restorePrefix);
+      }
       return indicator.nextInvocationCount(time, repeated);
     }
 

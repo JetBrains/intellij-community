@@ -1,6 +1,9 @@
 import dis
+import traceback
+from opcode import opmap, EXTENDED_ARG, HAVE_ARGUMENT
 from types import CodeType
-from opcode import opmap
+
+MAX_BYTE = 255
 
 
 def _add_attr_values_from_insert_to_original(original_code, insert_code, insert_code_obj, attribute_name, op_list):
@@ -15,63 +18,137 @@ def _add_attr_values_from_insert_to_original(original_code, insert_code, insert_
     :param insert_code_obj: bytes sequence of inserted code, which should be modified too
     :param attribute_name: name of attribute to modify ('co_names', 'co_consts' or 'co_varnames')
     :param op_list: sequence of bytecodes whose arguments should be changed
-    :return: modified bytes sequence of the code to insert and new values of the attribute `attribute_name` for original code
+    :return: modified bytes sequence of the code to insert and new values of the attribute `attribute_name` for
+    original code
     """
     orig_value = getattr(original_code, attribute_name)
     insert_value = getattr(insert_code, attribute_name)
     orig_names_len = len(orig_value)
     code_with_new_values = list(insert_code_obj)
-    for offset, op, arg in dis._unpack_opargs(insert_code_obj):
+    offset = 0
+    while offset < len(code_with_new_values):
+        op = code_with_new_values[offset]
         if op in op_list:
-            code_with_new_values[offset + 1] += orig_names_len
+            new_val = code_with_new_values[offset + 1] + orig_names_len
+            if new_val > MAX_BYTE:
+                code_with_new_values[offset + 1] = new_val & MAX_BYTE
+                code_with_new_values = code_with_new_values[:offset] + [EXTENDED_ARG, new_val >> 8] + \
+                                       code_with_new_values[offset:]
+                offset += 2
+            else:
+                code_with_new_values[offset + 1] = new_val
+        offset += 2
     new_values = orig_value + insert_value
     return bytes(code_with_new_values), new_values
 
 
-def _modify_new_lines(code_to_modify, code_insert, offset_of_inserted_code):
+def _modify_new_lines(code_to_modify, all_inserted_code):
     """
     Update new lines in order to hide inserted code inside the original code
     :param code_to_modify: code to modify
-    :param code_insert: code to insert
-    :param offset_of_inserted_code: the offset of the inserted code
+    :param all_inserted_code: list of tuples (offset, list of code instructions) with all inserted pieces of code
     :return: bytes sequence of code with updated lines offsets
     """
     new_list = list(code_to_modify.co_lnotab)
-    abs_offset = 0
-    for i in range(0, len(new_list), 2):
+    abs_offset = prev_abs_offset = 0
+    i = 0
+    while i < len(new_list):
+        prev_abs_offset = abs_offset
         abs_offset += new_list[i]
-        if abs_offset == offset_of_inserted_code and (i + 2) < len(new_list):
-            new_list[i + 2] += len(code_insert)
+        for (inserted_offset, inserted_code) in all_inserted_code:
+            if prev_abs_offset <= inserted_offset < abs_offset:
+                size_of_inserted = len(inserted_code)
+                new_list[i] += size_of_inserted
+                abs_offset += size_of_inserted
+        if new_list[i] > MAX_BYTE:
+            new_list[i] = new_list[i] - MAX_BYTE
+            new_list = new_list[:i] + [MAX_BYTE, 0] + new_list[i:]
+        i += 2
     return bytes(new_list)
 
 
-def _update_label_offsets(code_obj, offset_of_inserted_code, size_of_inserted_code):
+def _unpack_opargs(code, inserted_code_list, current_index):
+    """
+    Modified version of `_unpack_opargs` function from module `dis`.
+    We have to use it, because sometimes code can be in an inconsistent state: if EXTENDED_ARG
+    operator was introduced into the code, but it hasn't been inserted into `code_list` yet.
+    In this case we can't use standard `_unpack_opargs` and we should check whether there are
+    some new operators in `inserted_code_list`.
+    """
+    extended_arg = 0
+    for i in range(0, len(code), 2):
+        op = code[i]
+        if op >= HAVE_ARGUMENT:
+            if not extended_arg:
+                # in case if we added EXTENDED_ARG, but haven't inserted it to the source code yet.
+                for code_index in range(current_index, len(inserted_code_list)):
+                    inserted_offset, inserted_code = inserted_code_list[code_index]
+                    if inserted_offset == i and inserted_code[0] == EXTENDED_ARG:
+                        extended_arg = inserted_code[1] << 8
+            arg = code[i+1] | extended_arg
+            extended_arg = (arg << 8) if op == EXTENDED_ARG else 0
+        else:
+            arg = None
+        yield (i, op, arg)
+
+
+def _update_label_offsets(code_obj, breakpoint_offset, breakpoint_code_list):
     """
     Update labels for the relative and absolute jump targets
     :param code_obj: code to modify
-    :param offset_of_inserted_code: offset for the inserted code
-    :param offset_of_inserted_code: size of the inserted code
-    :return: bytes sequence with modified labels
+    :param breakpoint_offset: offset for the inserted code
+    :param breakpoint_code_list: size of the inserted code
+    :return: bytes sequence with modified labels; list of tuples (resulting offset, list of code instructions) with
+    information about all inserted pieces of code
     """
-    offsets_for_modification = []
-    for offset, op, arg in dis._unpack_opargs(code_obj):
-        if arg is not None:
-            if op in dis.hasjrel:
-                # has relative jump target
-                label = offset + 2 + arg
-                if offset < offset_of_inserted_code < label:
-                    # change labels for relative jump targets if code was inserted inside
-                    offsets_for_modification.append(offset)
-            elif op in dis.hasjabs:
-                # change label for absolute jump if code was inserted before it
-                if offset_of_inserted_code <= arg:
-                    offsets_for_modification.append(offset)
+    inserted_code = list()
+    # the list with all inserted pieces of code
+    inserted_code.append((breakpoint_offset, breakpoint_code_list))
     code_list = list(code_obj)
-    for i in range(0, len(code_obj), 2):
-        op = code_list[i]
-        if i in offsets_for_modification and op >= dis.HAVE_ARGUMENT:
-            code_list[i + 1] += size_of_inserted_code
-    return bytes(code_list)
+    j = 0
+
+    while j < len(inserted_code):
+        current_offset, current_code_list = inserted_code[j]
+        offsets_for_modification = []
+
+        for offset, op, arg in _unpack_opargs(code_list, inserted_code, j):
+            if arg is not None:
+                if op in dis.hasjrel:
+                    # has relative jump target
+                    label = offset + 2 + arg
+                    if offset < current_offset < label:
+                        # change labels for relative jump targets if code was inserted inside
+                        offsets_for_modification.append(offset)
+                elif op in dis.hasjabs:
+                    # change label for absolute jump if code was inserted before it
+                    if current_offset < arg:
+                        offsets_for_modification.append(offset)
+        for i in range(0, len(code_list), 2):
+            op = code_list[i]
+            if i in offsets_for_modification and op >= dis.HAVE_ARGUMENT:
+                new_arg = code_list[i + 1] + len(current_code_list)
+                if new_arg <= MAX_BYTE:
+                    code_list[i + 1] = new_arg
+                else:
+                    # handle bytes overflow
+                    if i - 2 > 0 and code_list[i - 2] == EXTENDED_ARG and code_list[i - 1] < MAX_BYTE:
+                        # if new argument > 255 and EXTENDED_ARG already exists we need to increase it's argument
+                        code_list[i - 1] += 1
+                    else:
+                        # if there isn't EXTENDED_ARG operator yet we have to insert the new operator
+                        extended_arg_code = [EXTENDED_ARG, new_arg >> 8]
+                        inserted_code.append((i, extended_arg_code))
+                    code_list[i + 1] = new_arg & MAX_BYTE
+
+        code_list = code_list[:current_offset] + current_code_list + code_list[current_offset:]
+
+        for k in range(len(inserted_code)):
+            offset, inserted_code_list = inserted_code[k]
+            if current_offset < offset:
+                inserted_code[k] = (offset + len(current_code_list), inserted_code_list)
+        j += 1
+
+    return bytes(code_list), inserted_code
 
 
 def _return_none_fun():
@@ -86,7 +163,7 @@ def insert_code(code_to_modify, code_to_insert, before_line):
     :param code_to_modify: Code to modify
     :param code_to_insert: Code to insert
     :param before_line: Number of line for code insertion
-    :return: modified code
+    :return: boolean flag whether insertion was successful, modified code
     """
     linestarts = dict(dis.findlinestarts(code_to_modify))
     if before_line not in linestarts.values():
@@ -98,16 +175,22 @@ def insert_code(code_to_modify, code_to_insert, before_line):
 
     return_none_size = len(_return_none_fun.__code__.co_code)
     code_to_insert_obj = code_to_insert.co_code[:-return_none_size]
-    code_to_insert_obj, new_names = \
-        _add_attr_values_from_insert_to_original(code_to_modify, code_to_insert, code_to_insert_obj, 'co_names', dis.hasname)
-    code_to_insert_obj, new_consts = \
-        _add_attr_values_from_insert_to_original(code_to_modify, code_to_insert, code_to_insert_obj, 'co_consts', [opmap['LOAD_CONST']])
-    code_to_insert_obj, new_vars = \
-        _add_attr_values_from_insert_to_original(code_to_modify, code_to_insert, code_to_insert_obj, 'co_varnames', dis.haslocal)
-    modified_code = _update_label_offsets(code_to_modify.co_code, offset, len(code_to_insert_obj))
-    new_bytes = modified_code[:offset] + code_to_insert_obj + modified_code[offset:]
+    try:
+        code_to_insert_obj, new_names = \
+            _add_attr_values_from_insert_to_original(code_to_modify, code_to_insert, code_to_insert_obj, 'co_names',
+                                                     dis.hasname)
+        code_to_insert_obj, new_consts = \
+            _add_attr_values_from_insert_to_original(code_to_modify, code_to_insert, code_to_insert_obj, 'co_consts',
+                                                     [opmap['LOAD_CONST']])
+        code_to_insert_obj, new_vars = \
+            _add_attr_values_from_insert_to_original(code_to_modify, code_to_insert, code_to_insert_obj, 'co_varnames',
+                                                     dis.haslocal)
+        new_bytes, all_inserted_code = _update_label_offsets(code_to_modify.co_code, offset, list(code_to_insert_obj))
 
-    new_lnotab = _modify_new_lines(code_to_modify, code_to_insert_obj, offset)
+        new_lnotab = _modify_new_lines(code_to_modify, all_inserted_code)
+    except ValueError:
+        traceback.print_exc()
+        return False, code_to_modify
 
     new_code = CodeType(
         code_to_modify.co_argcount,  # integer
@@ -126,4 +209,4 @@ def insert_code(code_to_modify, code_to_insert, before_line):
         code_to_modify.co_freevars,  # tuple
         code_to_modify.co_cellvars  # tuple
     )
-    return new_code
+    return True, new_code

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,16 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyPolyVariantReference;
 
 /**
  * @author ilyas
  */
-public interface GrUnaryExpression extends GrExpression, PsiPolyVariantReference {
+public interface GrUnaryExpression extends GrExpression, GroovyPolyVariantReference {
+
   @NotNull
   IElementType getOperationTokenType();
 
@@ -35,10 +35,6 @@ public interface GrUnaryExpression extends GrExpression, PsiPolyVariantReference
 
   @Nullable
   GrExpression getOperand();
-
-  @NotNull
-  @Override
-  GroovyResolveResult[] multiResolve(final boolean incompleteCode);
 
   boolean isPostfix();
 }

@@ -17,6 +17,7 @@ package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -28,9 +29,10 @@ public abstract class RecentProjectsManager {
   }
 
   @Nullable
+  @SystemIndependent
   public abstract String getLastProjectCreationLocation();
 
-  public abstract void setLastProjectCreationLocation(@Nullable String lastProjectLocation);
+  public abstract void setLastProjectCreationLocation(@Nullable @SystemIndependent String lastProjectLocation);
 
   /** @deprecated do not use this method directly */
   @Deprecated 
@@ -38,9 +40,10 @@ public abstract class RecentProjectsManager {
 
   public abstract void updateLastProjectPath();
 
+  @SystemIndependent
   public abstract String getLastProjectPath();
 
-  public abstract void removePath(@Nullable String path);
+  public abstract void removePath(@Nullable @SystemIndependent String path);
 
   /**
    * @param addClearListItem whether the "Clear List" action should be added to the end of the list.
@@ -55,7 +58,7 @@ public abstract class RecentProjectsManager {
   public void addGroup(ProjectGroup group) {}
   public void removeGroup(ProjectGroup group) {}
 
-  public boolean hasPath(String path) {
+  public boolean hasPath(@SystemIndependent String path) {
     return false;
   }
 }

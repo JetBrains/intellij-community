@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 class Test {
   long cnt() {
-    /*count*/
+      /*count*/
       return (long) Arrays.asList('d', 'e', 'f')./*stream*/size()/*after*/;
   }
 }

@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -158,7 +159,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                 Arrays.asList(Extensions.getExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, myProject)));
     }
 
-    return visitors.toArray(new HighlightVisitor[visitors.size()]);
+    return visitors.toArray(new HighlightVisitor[0]);
   }
 
   void setHighlightVisitorProducer(@NotNull NotNullProducer<HighlightVisitor[]> highlightVisitorProducer) {
@@ -238,7 +239,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       boolean success = collectHighlights(allInsideElements, allInsideRanges, allOutsideElements, allOutsideRanges, progress, filteredVisitors, insideResult, outsideResult, forceHighlightParents);
 
       if (success) {
-        myHighlightInfoProcessor.highlightsOutsideVisiblePartAreProduced(myHighlightingSession, outsideResult, myPriorityRange,
+        myHighlightInfoProcessor.highlightsOutsideVisiblePartAreProduced(myHighlightingSession, getEditor(),
+                                                                         outsideResult, myPriorityRange,
                                                                          myRestrictRange, getId());
 
         if (myUpdateAll) {
@@ -269,7 +271,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     getFile().putUserData(HAS_ERROR_ELEMENT, myHasErrorElement);
 
     if (myUpdateAll) {
-      reportErrorsToWolf();
+      ((HighlightingSessionImpl)myHighlightingSession).applyInEDT(this::reportErrorsToWolf);
     }
   }
 
@@ -302,7 +304,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                   nestedRange, nestedInfos);
       final TextRange priorityIntersection = myPriorityRange.intersection(myRestrictRange);
       if ((!elements1.isEmpty() || !insideResult.isEmpty()) && priorityIntersection != null) { // do not apply when there were no elements to highlight
-        myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, insideResult, myPriorityRange, myRestrictRange, getId());
+        myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), insideResult, myPriorityRange, myRestrictRange, getId());
       }
       runVisitors(elements2, ranges2, chunkSize, progress, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors,
                   nestedRange, nestedInfos);
@@ -314,7 +316,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       assert info != null;
       postInfos.add(info);
     }
-    myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, postInfos, getFile().getTextRange(), getFile().getTextRange(), POST_UPDATE_ALL);
+    myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(),
+                                                                    postInfos, getFile().getTextRange(), getFile().getTextRange(), POST_UPDATE_ALL);
     return success;
   }
 
@@ -350,7 +353,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     int nextLimit = chunkSize;
     for (int i = 0; i < elements.size(); i++) {
       PsiElement element = elements.get(i);
-      progress.checkCanceled();
+      ProgressManager.checkCanceled();
 
       PsiElement parent = element.getParent();
       if (element != getFile() && !skipParentsSet.isEmpty() && element.getFirstChild() != null && skipParentsSet.contains(element)) {
@@ -441,14 +444,13 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private static void cancelAndRestartDaemonLater(@NotNull ProgressIndicator progress,
                                                   @NotNull final Project project) throws ProcessCanceledException {
     progress.cancel();
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
-        Application application = ApplicationManager.getApplication();
-        if (!project.isDisposed() && !application.isDisposed() && !application.isUnitTestMode()) {
-          DaemonCodeAnalyzer.getInstance(project).restart();
-        }
-      }, RESTART_DAEMON_RANDOM.nextInt(100), TimeUnit.MILLISECONDS);
-    }
+    Application application = ApplicationManager.getApplication();
+    int delay = application.isUnitTestMode() ? 0 : RESTART_DAEMON_RANDOM.nextInt(100);
+    EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
+      if (!project.isDisposed()) {
+        DaemonCodeAnalyzer.getInstance(project).restart();
+      }
+    }, delay, TimeUnit.MILLISECONDS);
     throw new ProcessCanceledException();
   }
 
@@ -482,7 +484,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     if (todoItems.length == 0) return;
 
     for (TodoItem todoItem : todoItems) {
-      progress.checkCanceled();
+      ProgressManager.checkCanceled();
       TextRange range = todoItem.getTextRange();
       TextAttributes attributes = todoItem.getPattern().getAttributes().getTextAttributes();
       HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.TODO).range(range);

@@ -170,7 +170,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
    *
    * @param newData new data to merge
    * @param oldData old data to merge
-   * @return merge result of the given data if possible; <code>null</code> otherwise
+   * @return merge result of the given data if possible; {@code null} otherwise
    * @throws IOException                as defined by {@link Transferable#getTransferData(DataFlavor)}
    * @throws UnsupportedFlavorException as defined by {@link Transferable#getTransferData(DataFlavor)}
    */
@@ -239,16 +239,9 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   @Override
   public <T> T getContents(@NotNull DataFlavor flavor) {
     if (areDataFlavorsAvailable(flavor)) {
-      try {
-        Transferable contents = getContents();
-        if (contents != null) {
-          @SuppressWarnings("unchecked") T data = (T)contents.getTransferData(flavor);
-          return data;
-        }
-      }
-      catch (UnsupportedFlavorException | IOException ignore) { }
+      //noinspection unchecked
+      return (T)myClipboardSynchronizer.getData(flavor);
     }
-
     return null;
   }
 
@@ -259,7 +252,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     if (clipString != null && (myData.isEmpty() || !Comparing.equal(clipString, getStringContent(myData.get(0))))) {
       addToTheTopOfTheStack(new StringSelection(clipString));
     }
-    return myData.toArray(new Transferable[myData.size()]);
+    return myData.toArray(new Transferable[0]);
   }
 
   public void removeContent(Transferable t) {

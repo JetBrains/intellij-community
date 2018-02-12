@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author egor
@@ -138,9 +140,11 @@ public class ClassLoadingUtils {
     ArrayType arrayClass = (ArrayType)process.findClass(context, "byte[]", context.getClassLoader());
     ArrayReference reference = process.newInstance(arrayClass, bytes.length);
     DebuggerUtilsEx.keep(reference, context);
-    for (int i = 0; i < bytes.length; i++) {
-      reference.setValue(i, ((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).mirrorOf(bytes[i]));
+    List<Value> mirrors = new ArrayList<>(bytes.length);
+    for (byte b : bytes) {
+      mirrors.add(((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).mirrorOf(b));
     }
+    reference.setValues(mirrors);
     return reference;
   }
 }

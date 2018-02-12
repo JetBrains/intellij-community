@@ -69,7 +69,7 @@ import com.intellij.psi.xml.*;
 
 ALPHA=[:letter:]
 DIGIT=[0-9]
-WS=[\ \n\r\t\f]
+WS=[\ \n\r\t\f\u2028\u2029\u0085]
 S={WS}+
 
 EL_EMBEDMENT_START="${" | "#{"

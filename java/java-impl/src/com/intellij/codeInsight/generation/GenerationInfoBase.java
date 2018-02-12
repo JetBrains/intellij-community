@@ -20,6 +20,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,8 +53,7 @@ public abstract class GenerationInfoBase implements GenerationInfo {
     if (!GenerateMembersUtil.isChildInRange(element, lBrace.getNextSibling(), rBrace)) {
       return null;
     }
-    PsiElement prev = leaf.getPrevSibling();
-    if (prev != null && prev.getNode() != null && prev.getNode().getElementType() == JavaTokenType.END_OF_LINE_COMMENT) {
+    if (leaf.getParent() == aClass && PsiUtilCore.getElementType(leaf.getPrevSibling()) == JavaTokenType.END_OF_LINE_COMMENT) {
       element = leaf.getNextSibling();
     }
     return element;

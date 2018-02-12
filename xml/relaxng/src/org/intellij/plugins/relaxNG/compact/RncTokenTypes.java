@@ -20,18 +20,12 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.kohsuke.rngom.parse.compact.CompactSyntaxConstants;
 
 import java.lang.reflect.Field;
 import java.util.Locale;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 04.08.2007
- */
 public class RncTokenTypes {
   private static final TIntObjectHashMap<IElementType> ourTokenTypes = new TIntObjectHashMap<>();
 
@@ -78,15 +72,12 @@ public class RncTokenTypes {
   private static IElementType get(final String name) {
     assert !ourTokenTypes.isEmpty();
     final Ref<IElementType> ref = new Ref<>();
-    ourTokenTypes.forEachValue(new TObjectProcedure<IElementType>() {
-      @Override
-      public boolean execute(IElementType iElementType) {
-        if (iElementType.toString().equals(name)) {
-          ref.set(iElementType);
-          return false;
-        }
-        return true;
+    ourTokenTypes.forEachValue(iElementType -> {
+      if (iElementType.toString().equals(name)) {
+        ref.set(iElementType);
+        return false;
       }
+      return true;
     });
     return ref.get();
   }

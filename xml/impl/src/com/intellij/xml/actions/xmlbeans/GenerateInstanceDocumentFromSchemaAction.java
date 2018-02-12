@@ -20,12 +20,11 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -38,7 +37,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlBundle;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -71,26 +69,24 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
     dialog.show();
   }
 
-  private void doAction(final Project project, final GenerateInstanceDocumentFromSchemaDialog dialog) {
+  public static void doAction(final Project project, final GenerateInstanceDocumentFromSchemaDialog dialog) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     @NonNls List<String> parameters = new LinkedList<>();
 
     final String url = dialog.getUrl().getText();
     final VirtualFile relativeFile = VfsUtilCore.findRelativeFile(ExternalResourceManager.getInstance().getResourceLocation(url), null);
-    final PsiFile file = PsiManager.getInstance(project).findFile(relativeFile);
-    if (! (file instanceof XmlFile)) {
-      Messages.showErrorDialog(project, "This is not XmlFile" + file == null ? "" : " (" + file.getFileType().getName() + ")", XmlBundle.message("error"));
-      return;
-    }
-
-    VirtualFile relativeFileDir;
     if (relativeFile == null) {
       Messages.showErrorDialog(project, XmlBundle.message("file.doesnt.exist", url), XmlBundle.message("error"));
       return;
-    } else {
-      relativeFileDir = relativeFile.getParent();
     }
+    final PsiFile file = PsiManager.getInstance(project).findFile(relativeFile);
+    if (!(file instanceof XmlFile)) {
+      Messages.showErrorDialog(project, " (" + file.getFileType().getName() + ")", XmlBundle.message("error"));
+      return;
+    }
+
+    VirtualFile relativeFileDir = relativeFile.getParent();
     if (relativeFileDir == null) {
       Messages.showErrorDialog(project, XmlBundle.message("file.doesnt.exist", url), XmlBundle.message("error"));
       return;
@@ -148,22 +144,15 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
     }
 
 
-
-    final VirtualFile baseDirForCreatedInstanceDocument1 = relativeFileDir;
-    String xmlFileName = baseDirForCreatedInstanceDocument1.getPath() + File.separatorChar + dialog.getOutputFileName();
+    String xmlFileName = relativeFileDir.getPath() + File.separatorChar + dialog.getOutputFileName();
 
     try {
         // the generated XML doesn't have any XML declaration -> utf-8
       final File xmlFile = new File(xmlFileName);
       FileUtil.writeToFile(xmlFile, xml);
 
-      VirtualFile virtualFile = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-        @Override
-        @Nullable
-        public VirtualFile compute() {
-          return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(xmlFile);
-        }
-      });
+      VirtualFile virtualFile =
+        WriteAction.compute(() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(xmlFile));
       FileEditorManager.getInstance(project).openFile(virtualFile, true);
     }
     catch (IOException e) {

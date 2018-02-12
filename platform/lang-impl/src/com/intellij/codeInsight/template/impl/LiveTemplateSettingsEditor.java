@@ -27,8 +27,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -80,6 +80,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
   private static final String SPACE = CodeInsightBundle.message("template.shortcut.space");
   private static final String TAB = CodeInsightBundle.message("template.shortcut.tab");
   private static final String ENTER = CodeInsightBundle.message("template.shortcut.enter");
+  private static final String NONE = CodeInsightBundle.message("template.shortcut.none");
   private final Map<TemplateOptionalProcessor, Boolean> myOptions;
   private final TemplateContext myContext;
   private JBPopup myContextPopup;
@@ -105,14 +106,14 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     createComponents(allowNoContext);
 
-    myKeyField.getDocument().addDocumentListener(new com.intellij.ui.DocumentAdapter() {
+    myKeyField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(javax.swing.event.DocumentEvent e) {
         myTemplate.setKey(StringUtil.notNullize(myKeyField.getText()).trim());
         myNodeChanged.run();
       }
     });
-    myDescription.getDocument().addDocumentListener(new com.intellij.ui.DocumentAdapter() {
+    myDescription.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(javax.swing.event.DocumentEvent e) {
         myTemplate.setDescription(myDescription.getText());
@@ -172,18 +173,16 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     panel.add(createShortContextPanel(allowNoContexts), gb.nextLine().next().weighty(0).fillCellNone().anchor(GridBagConstraints.WEST));
 
-    myTemplateEditor.getDocument().addDocumentListener(
-      new DocumentAdapter() {
-        @Override
-        public void documentChanged(DocumentEvent e) {
-          validateEditVariablesButton();
+    myTemplateEditor.getDocument().addDocumentListener(new DocumentListener() {
+      @Override
+      public void documentChanged(DocumentEvent e) {
+        validateEditVariablesButton();
 
-          myTemplate.setString(myTemplateEditor.getDocument().getText());
-          applyVariables(updateVariablesByTemplateText());
-          myNodeChanged.run();
-        }
+        myTemplate.setString(myTemplateEditor.getDocument().getText());
+        applyVariables(updateVariablesByTemplateText());
+        myNodeChanged.run();
       }
-    );
+    });
 
     myEditVariablesButton.addActionListener(
       new ActionListener(){
@@ -243,7 +242,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     gbConstraints.gridx = 1;
     gbConstraints.insets = JBUI.insetsLeft(4);
-    myExpandByCombo = new ComboBox<>(new String[]{myDefaultShortcutItem, SPACE, TAB, ENTER});
+    myExpandByCombo = new ComboBox<>(new String[]{myDefaultShortcutItem, SPACE, TAB, ENTER, NONE});
     myExpandByCombo.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(@NotNull ItemEvent e) {
@@ -257,8 +256,11 @@ public class LiveTemplateSettingsEditor extends JPanel {
         else if(ENTER.equals(selectedItem)) {
           myTemplate.setShortcutChar(TemplateSettings.ENTER_CHAR);
         }
-        else {
+        else if (SPACE.equals(selectedItem)) {
           myTemplate.setShortcutChar(TemplateSettings.SPACE_CHAR);
+        }
+        else {
+          myTemplate.setShortcutChar(TemplateSettings.NONE_CHAR);
         }
       }
     });
@@ -419,6 +421,13 @@ public class LiveTemplateSettingsEditor extends JPanel {
         final TemplateContextType type = (TemplateContextType)((Pair)node.getUserObject()).first;
         if (type != null) {
           context.setEnabled(type, node.isChecked());
+          if (node.isChecked()) {
+            for (TemplateContextType inheritor : hierarchy.get(type)) {
+              if (context.getOwnValue(inheritor) == null) {
+                context.setEnabled(inheritor, false);
+              }
+            }
+          }
         }
         onChange.run();
 
@@ -505,8 +514,11 @@ public class LiveTemplateSettingsEditor extends JPanel {
     else if(myTemplate.getShortcutChar() == TemplateSettings.ENTER_CHAR) {
       myExpandByCombo.setSelectedItem(ENTER);
     }
-    else {
+    else if (myTemplate.getShortcutChar() == TemplateSettings.SPACE_CHAR) {
       myExpandByCombo.setSelectedItem(SPACE);
+    }
+    else {
+      myExpandByCombo.setSelectedItem(TemplateSettings.NONE_CHAR);
     }
 
     CommandProcessor.getInstance().executeCommand(

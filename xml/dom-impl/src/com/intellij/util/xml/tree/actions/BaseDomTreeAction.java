@@ -20,9 +20,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.util.xml.tree.DomModelTreeView;
 
-/**
- * User: Sergey.Vasiliev
- */
 abstract public class BaseDomTreeAction extends AnAction {
   private DomModelTreeView myTreeView;
 

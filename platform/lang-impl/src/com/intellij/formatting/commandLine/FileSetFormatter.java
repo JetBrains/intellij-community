@@ -15,9 +15,8 @@
  */
 package com.intellij.formatting.commandLine;
 
-import com.intellij.formatting.FormatTextRanges;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.lang.LanguageFormatting;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -27,15 +26,14 @@ import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,8 +42,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 
-class FileSetFormatter extends FileSetProcessor {
-  private static final Logger LOG = Logger.getInstance("#" + FileSetFormatter.class.getName());
+public class FileSetFormatter extends FileSetProcessor {
+  private static final Logger LOG = Logger.getInstance(FileSetFormatter.class);
 
   private final static String PROJECT_DIR_PREFIX = PlatformUtils.getPlatformPrefix() + ".format.";
   private final static String PROJECT_DIR_SUFFIX = ".tmp";
@@ -57,10 +55,10 @@ class FileSetFormatter extends FileSetProcessor {
 
   private final @NotNull String myProjectUID;
   private @Nullable Project myProject;
-  private MessageOutput myMessageOutput;
+  private final MessageOutput myMessageOutput;
   private @NotNull CodeStyleSettings mySettings;
 
-  FileSetFormatter(@NotNull MessageOutput messageOutput) {
+  public FileSetFormatter(@NotNull MessageOutput messageOutput) {
     myMessageOutput = messageOutput;
     mySettings = new CodeStyleSettings();
     myProjectUID = UUID.randomUUID().toString();
@@ -76,6 +74,9 @@ class FileSetFormatter extends FileSetProcessor {
     myProject = projectManager.createProject(myProjectUID, projectDir.getPath());
     if (myProject != null) {
       projectManager.openProject(myProject);
+      CodeStyleSettingsManager codeStyleSettingsManager = CodeStyleSettingsManager.getInstance(myProject);
+      codeStyleSettingsManager.setMainProjectCodeStyle(mySettings);
+      codeStyleSettingsManager.USE_PER_PROJECT_SETTINGS = true;
     }
   }
 
@@ -90,8 +91,7 @@ class FileSetFormatter extends FileSetProcessor {
 
   private void closeProject() {
     if (myProject != null) {
-      ProjectManager.getInstance().closeProject(myProject);
-      WriteAction.run(() -> Disposer.dispose(myProject));
+      ProjectUtil.closeAndDispose(myProject);
     }
   }
 
@@ -146,10 +146,10 @@ class FileSetFormatter extends FileSetProcessor {
     return RESULT_MESSAGE_OK.equals(resultMessage);
   }
 
-  private void reformatFile(@NotNull Project project, @NotNull final PsiFile file, @NotNull Document document) {
+  private static void reformatFile(@NotNull Project project, @NotNull final PsiFile file, @NotNull Document document) {
     WriteCommandAction.runWriteCommandAction(project, () -> {
-      CodeFormatterFacade formatterFacade = new CodeFormatterFacade(mySettings, file.getLanguage());
-      formatterFacade.processText(file, new FormatTextRanges(new TextRange(0, file.getTextLength()), true), false);
+      CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+      codeStyleManager.reformatText(file, 0, file.getTextLength());
       PsiDocumentManager.getInstance(project).commitDocument(document);
     });
   }

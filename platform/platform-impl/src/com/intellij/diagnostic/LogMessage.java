@@ -18,6 +18,7 @@ package com.intellij.diagnostic;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.log4j.Layout;
@@ -30,31 +31,25 @@ import java.util.List;
 public class LogMessage extends AbstractMessage {
   private final Throwable myThrowable;
   private final String myHeader;
-  private List<Attachment> myAttachments = null;
+  private List<Attachment> myAttachments;
 
-  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-  public LogMessage(LoggingEvent aEvent) {
-    super();
+  LogMessage(@NotNull LoggingEvent event) {
+    Throwable throwable = event.getThrowableInformation() == null ? null : event.getThrowableInformation().getThrowable();
+    myThrowable = throwable == null ? null : ThrowableInterner.intern(throwable);
 
-    myThrowable = aEvent.getThrowableInformation() == null ? null : aEvent.getThrowableInformation().getThrowable();
-
-    if (aEvent.getMessage() == null || aEvent.getMessage().toString().length() == 0) {
-      myHeader = getThrowable().toString();
-    }
-    else {
-      myHeader = aEvent.getMessage().toString();
-    }
+    myHeader =
+      event.getMessage() == null || event.getMessage().toString().isEmpty() ?
+      getThrowable().toString() : event.getMessage().toString();
   }
 
-  public LogMessage(IdeaLoggingEvent aEvent) {
-    super();
-
-    myThrowable = aEvent.getThrowable();
+  LogMessage(@NotNull IdeaLoggingEvent event) {
+    Throwable throwable = event.getThrowable();
+    myThrowable = throwable == null ? null : ThrowableInterner.intern(throwable);
 
     String header = null;
 
-    if (!StringUtil.isEmptyOrSpaces(aEvent.getMessage())) {
-      header = aEvent.getMessage();
+    if (!StringUtil.isEmptyOrSpaces(event.getMessage())) {
+      header = event.getMessage();
     }
 
     if (myThrowable != null) {
@@ -93,7 +88,7 @@ public class LogMessage extends AbstractMessage {
     return StringUtil.join(IdeaLogger.getThrowableRenderer().doRender(getThrowable()), Layout.LINE_SEP);
   }
 
-  public void addAttachment(Attachment attachment) {
+  void addAttachment(@NotNull Attachment attachment) {
     if (myAttachments == null) {
       myAttachments = ContainerUtil.createLockFreeCopyOnWriteList();
     }

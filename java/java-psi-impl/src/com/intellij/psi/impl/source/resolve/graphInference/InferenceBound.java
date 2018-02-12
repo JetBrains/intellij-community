@@ -15,9 +15,6 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference;
 
-/**
-* User: anna
-*/
 public enum InferenceBound {
   UPPER,
   LOWER,

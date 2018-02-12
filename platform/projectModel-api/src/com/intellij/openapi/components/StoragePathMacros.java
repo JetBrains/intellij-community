@@ -57,7 +57,7 @@ public class StoragePathMacros {
   /**
    * {@link Project#getWorkspaceFile() Workspace} file key.
    * <p/>
-   * <code>'Workspace file'</code> holds settings that are local to a particular environment and should not be shared with another
+   * {@code 'Workspace file'} holds settings that are local to a particular environment and should not be shared with another
    * team members.
    */
   @NonNls @NotNull public static final String WORKSPACE_FILE = "$WORKSPACE_FILE$";

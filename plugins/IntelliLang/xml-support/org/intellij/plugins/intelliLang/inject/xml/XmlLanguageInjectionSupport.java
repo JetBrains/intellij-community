@@ -19,7 +19,6 @@ package org.intellij.plugins.intelliLang.inject.xml;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -37,7 +36,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.EditInjectionSettingsAction;
-import org.intellij.plugins.intelliLang.inject.InjectLanguageAction;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.config.*;
 import org.intellij.plugins.intelliLang.inject.config.ui.AbstractInjectionPanel;
@@ -127,7 +125,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
       newInjections.add(newInjection);
     }
     configuration.replaceInjectionsWithUndo(
-      project, newInjections, injections, Collections.<PsiElement>emptyList());
+      project, newInjections, injections, Collections.emptyList());
     return true;
   }
 
@@ -145,7 +143,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
       configuration.replaceInjectionsWithUndo(
         project, Collections.singletonList(newInjection),
         Collections.singletonList(originalInjection),
-        Collections.<PsiElement>emptyList());
+        Collections.emptyList());
     }
     return true;
   }
@@ -184,9 +182,9 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
 
     AbstractTagInjection result;
     final InjectionPlace place = injection.getInjectionPlaces()[0];
-    final ElementPattern<PsiElement> rootPattern = place.getElementPattern();
-    final ElementPatternCondition<PsiElement> rootCondition = rootPattern.getCondition();
-    final Class<PsiElement> elementClass = rootCondition.getInitialCondition().getAcceptedClass();
+    final ElementPattern<? extends PsiElement> rootPattern = place.getElementPattern();
+    final ElementPatternCondition<? extends PsiElement> rootCondition = rootPattern.getCondition();
+    final Class<? extends PsiElement> elementClass = rootCondition.getInitialCondition().getAcceptedClass();
     if (XmlAttribute.class.equals(elementClass)) {
       result = new XmlAttributeInjection().copyFrom(injection);
     }
@@ -195,7 +193,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     }
     else return null;
     result.setInjectionPlaces(InjectionPlace.EMPTY_ARRAY);
-    for (PatternCondition<? super PsiElement> condition : rootCondition.getConditions()) {
+    for (PatternCondition<?> condition : rootCondition.getConditions()) {
       final String value = extractValue(condition);
       if ("withLocalName".equals(condition.getDebugMethodName())) {
         if (value == null) return null;
@@ -278,10 +276,6 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     }
   }
 
-  public Configurable[] createSettings(final Project project, final Configuration configuration) {
-    return new Configurable[0];
-  }
-
   private static boolean doInjectInXmlText(final XmlText host, final String languageId) {
     final XmlTag tag = host.getParentTag();
     if (tag != null) {
@@ -304,7 +298,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     configuration.replaceInjectionsWithUndo(
       project, Collections.singletonList(newInjection),
       ContainerUtil.createMaybeSingletonList(originalInjection),
-      Collections.<PsiElement>emptyList());
+      Collections.emptyList());
   }
 
   private static boolean doInjectInAttributeValue(final XmlAttributeValue host, final String languageId) {
@@ -331,7 +325,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     configuration.replaceInjectionsWithUndo(
       project, Collections.singletonList(newInjection),
       ContainerUtil.createMaybeSingletonList(originalInjection),
-      Collections.<PsiElement>emptyList());
+      Collections.emptyList());
   }
 
   private static ArrayList<BaseInjection> collectInjections(final PsiElement host,

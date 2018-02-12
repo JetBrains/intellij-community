@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,8 @@
 package com.intellij.debugger.impl;
 
 /**
- * @author Eugene Zhuravlev
- *         Date: 1/30/12
+ * @deprecated Use {@link DebuggerManagerListener} directly
  */
+@Deprecated
 public class DebuggerManagerAdapter implements DebuggerManagerListener{
-  @Override
-  public void sessionCreated(DebuggerSession session) {
-  }
-
-  @Override
-  public void sessionAttached(DebuggerSession session) {
-  }
-
-  @Override
-  public void sessionDetached(DebuggerSession session) {
-  }
-
-  @Override
-  public void sessionRemoved(DebuggerSession session) {
-  }
 }

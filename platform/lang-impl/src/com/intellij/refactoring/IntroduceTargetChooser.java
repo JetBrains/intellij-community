@@ -15,8 +15,11 @@
  */
 package com.intellij.refactoring;
 
+import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
@@ -91,12 +94,12 @@ public class IntroduceTargetChooser {
                                                                             int selection) {
     AtomicReference<ScopeHighlighter> highlighter = new AtomicReference<>(new ScopeHighlighter(editor));
 
-    JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(expressions)
-      .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-      .setSelectedValue(expressions.get(selection > -1 ? selection : null), true)
-      .setAccessibleName(title)
-      .setItemSelectedCallback((expr) -> {
+    JBPopup popup = JBPopupFactory.getInstance()
+                                  .createPopupChooserBuilder(expressions)
+                                  .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+                                  .setSelectedValue(expressions.get(selection > -1 ? selection : null), true)
+                                  .setAccessibleName(title)
+                                  .setItemSelectedCallback((expr) -> {
         ScopeHighlighter h = highlighter.get();
         if (h == null) return;
         h.dropHighlight();
@@ -105,22 +108,22 @@ public class IntroduceTargetChooser {
           h.highlight(Pair.create(range, Collections.singletonList(range)));
         }
       })
-      .setTitle(title)
-      .setMovable(false)
-      .setResizable(false)
-      .setRequestFocus(true)
-      .setItemChoosenCallback((expr) -> {
+                                  .setTitle(title)
+                                  .setMovable(false)
+                                  .setResizable(false)
+                                  .setRequestFocus(true)
+                                  .setItemChoosenCallback((expr) -> {
         if (expr != null && expr.isValid()) {
           callback.pass(expr);
         }
       })
-      .addListener(new JBPopupAdapter() {
+                                  .addListener(new JBPopupAdapter() {
         @Override
         public void onClosed(LightweightWindowEvent event) {
           highlighter.getAndSet(null).dropHighlight();
         }
       })
-      .setRenderer(new DefaultListCellRenderer() {
+                                  .setRenderer(new DefaultListCellRenderer() {
         @Override
         public Component getListCellRendererComponent(JList list,
                                                       Object value,
@@ -142,8 +145,12 @@ public class IntroduceTargetChooser {
           }
           return rendererComponent;
         }
-      })
-      .createPopup().showInBestPositionFor(editor);
+      }).createPopup();
+    popup.showInBestPositionFor(editor);
+    Project project = editor.getProject();
+    if (project != null) {
+      NavigationUtil.hidePopupIfDumbModeStarts(popup, project);
+    }
   }
 
   private static class MyIntroduceTarget<T extends PsiElement> extends PsiIntroduceTarget<T> {

@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.descriptors.ConfigFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.build.PluginBuildConfiguration;
 import org.jetbrains.idea.devkit.build.PluginBuildUtil;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
@@ -115,6 +116,12 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   }
 
   public static List<Module> getCandidateModules(Module module) {
+    if (PsiUtil.isIdeaProject(module.getProject())) {
+      Set<Module> dependents = new HashSet<>();
+      ModuleUtilCore.collectModulesDependsOn(module, dependents);
+      return new ArrayList<>(dependents);
+    }
+
     final Module[] modules = ModuleManager.getInstance(module.getProject()).getModules();
     final List<Module> candidates = new ArrayList<>(modules.length);
     final Set<Module> deps = new HashSet<>(modules.length);

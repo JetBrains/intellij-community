@@ -18,6 +18,7 @@ package com.intellij.vcs.log.history;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -33,11 +34,13 @@ import java.util.Date;
 public class VcsLogFileRevision extends VcsFileRevisionEx {
   @NotNull private final ContentRevision myRevision;
   @NotNull private final FilePath myPath;
-  private final long myAuthorTime;
-  @NotNull private final String myFullMessage;
-  @Nullable private byte[] myContent = null;
   @NotNull private final VcsUser myAuthor;
   @NotNull private final VcsUser myCommitter;
+  private final long myAuthorTime;
+  private final long myCommitTime;
+  @NotNull private final String myFullMessage;
+
+  @Nullable private byte[] myContent = null;
 
   public VcsLogFileRevision(@NotNull VcsFullCommitDetails details, @NotNull ContentRevision revision, @NotNull FilePath path) {
     myRevision = revision;
@@ -46,6 +49,7 @@ public class VcsLogFileRevision extends VcsFileRevisionEx {
     myAuthor = details.getAuthor();
     myCommitter = details.getCommitter();
     myAuthorTime = details.getAuthorTime();
+    myCommitTime = details.getCommitTime();
     myFullMessage = details.getFullMessage();
   }
 
@@ -99,19 +103,24 @@ public class VcsLogFileRevision extends VcsFileRevisionEx {
 
   @Override
   public byte[] loadContent() throws IOException, VcsException {
-    if (myContent != null) return myContent;
-
-    String content = myRevision.getContent();
-    if (content != null) {
-      myContent = content.getBytes(myPath.getCharset().name());
-      return myContent;
+    if (myContent == null) {
+      if (myRevision instanceof ByteBackedContentRevision) {
+        myContent = ((ByteBackedContentRevision)myRevision).getContentAsBytes();
+      }
+      else {
+        String content = myRevision.getContent();
+        if (content != null) {
+          myContent = content.getBytes(myPath.getCharset().name());
+        }
+      }
     }
-    return null;
+
+    return myContent;
   }
 
   @Nullable
   @Override
-  public byte[] getContent() throws IOException, VcsException {
+  public byte[] getContent() {
     return myContent;
   }
 
@@ -123,6 +132,14 @@ public class VcsLogFileRevision extends VcsFileRevisionEx {
 
   @Override
   public Date getRevisionDate() {
+    Calendar cal = Calendar.getInstance();
+    cal.setTimeInMillis(myCommitTime);
+    return cal.getTime();
+  }
+
+  @Nullable
+  @Override
+  public Date getAuthorDate() {
     Calendar cal = Calendar.getInstance();
     cal.setTimeInMillis(myAuthorTime);
     return cal.getTime();

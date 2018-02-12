@@ -59,4 +59,12 @@ public class CoreVirtualFilePointerManager extends VirtualFilePointerManager {
   public VirtualFilePointerContainer createContainer(@NotNull Disposable parent, @Nullable VirtualFilePointerListener listener) {
     return new VirtualFilePointerContainerImpl(this, parent, listener);
   }
+
+  @NotNull
+  @Override
+  public VirtualFilePointer createDirectoryPointer(@NotNull String url,
+                                                   boolean recursively,
+                                                   @NotNull Disposable parent, @NotNull VirtualFilePointerListener listener) {
+    return create(url, parent, listener);
+  }
 }

@@ -159,7 +159,7 @@ public class ExtractClosureFromMethodProcessor extends ExtractClosureProcessorBa
       result.add(new UsageInfo(overridingMethod));
     }
 
-    final UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
+    final UsageInfo[] usageInfos = result.toArray(UsageInfo.EMPTY_ARRAY);
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 

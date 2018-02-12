@@ -62,12 +62,10 @@ public class PatternGradleConfigurationProducer extends GradleTestRunConfigurati
     assert contextLocation != null;
 
     final LinkedHashSet<String> tests = new LinkedHashSet<>();
-    final PsiElement element = myBaseConfigurationProducer.checkPatterns(context, tests);
-    if (element == null) {
+    myBaseConfigurationProducer.checkPatterns(context, tests);
+    if (tests.isEmpty()) {
       return false;
     }
-    sourceElement.set(element);
-
     String projectPath = null;
 
     Set<String> scriptParameters = ContainerUtil.newLinkedHashSet();
@@ -117,6 +115,10 @@ public class PatternGradleConfigurationProducer extends GradleTestRunConfigurati
   @Override
   protected boolean doIsConfigurationFromContext(ExternalSystemRunConfiguration configuration, ConfigurationContext context) {
     return false;
+  }
+
+  public boolean isMultipleElementsSelected(ConfigurationContext context) {
+    return myBaseConfigurationProducer.isMultipleElementsSelected(context);
   }
 
   private static class GradlePatternBasedConfigurationProducer extends AbstractPatternBasedConfigurationProducer {

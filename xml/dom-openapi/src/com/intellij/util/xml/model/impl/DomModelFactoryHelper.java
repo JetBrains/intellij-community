@@ -23,9 +23,6 @@ import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class DomModelFactoryHelper<T extends DomElement> {
   protected final Class<T> myClass;
   protected final ModelMerger myModelMerger;

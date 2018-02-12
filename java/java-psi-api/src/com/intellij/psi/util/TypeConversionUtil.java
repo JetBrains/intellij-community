@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -414,6 +414,9 @@ public class TypeConversionUtil {
     }
     if (type instanceof PsiClassType) {
       final PsiClass psiClass = ((PsiClassType)type).resolve();
+      if (psiClass instanceof PsiTypeParameter) {
+        return InheritanceUtil.isInheritor(psiClass, true, CommonClassNames.JAVA_LANG_ENUM);
+      }
       return psiClass != null && psiClass.isEnum();
     }
     return false;
@@ -463,6 +466,9 @@ public class TypeConversionUtil {
   }
   public static boolean isNumericType(PsiType type) {
     return type != null && isNumericType(getTypeRank(type));
+  }
+  public static boolean isIntegralNumberType(PsiType type) {
+    return type != null && getTypeRank(type) <= LONG_RANK;
   }
 
   /**
@@ -652,7 +658,7 @@ public class TypeConversionUtil {
       final PsiArrayAccessExpression arrayAccessExpression = (PsiArrayAccessExpression)element;
       final PsiExpression arrayExpression = arrayAccessExpression.getArrayExpression();
       final PsiType type = arrayExpression.getType();
-      if (type == null || !(type instanceof PsiArrayType)) return false;
+      if (!(type instanceof PsiArrayType)) return false;
       final PsiExpression indexExpression = arrayAccessExpression.getIndexExpression();
       if (indexExpression == null) return false;
       final PsiType indexType = indexExpression.getType();
@@ -1192,7 +1198,7 @@ public class TypeConversionUtil {
 
   @Contract("null -> false")
   public static boolean isPrimitiveWrapper(final PsiType type) {
-    return type != null && isPrimitiveWrapper(type.getCanonicalText());
+    return type instanceof PsiClassType && isPrimitiveWrapper(type.getCanonicalText());
   }
 
   @Contract("null -> false")

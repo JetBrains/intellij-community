@@ -16,6 +16,7 @@
 package com.intellij.util.graph;
 
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 
 import java.util.*;
 
@@ -28,15 +29,18 @@ public class CachingSemiGraph<Node> implements GraphGenerator.SemiGraph<Node> {
   }
 
   private final Set<Node> myNodes;
-  private final Map<Node, Set<Node>> myIn;
+  private final Map<Node, List<Node>> myIn;
 
   private CachingSemiGraph(InboundSemiGraph<Node> original) {
     myNodes = ContainerUtil.newLinkedHashSet(original.getNodes());
-    myIn = new LinkedHashMap<Node, Set<Node>>();
+    myIn = new THashMap<Node, List<Node>>();
     for (Node node : myNodes) {
-      Set<Node> value = new LinkedHashSet<Node>();
-      ContainerUtil.addAll(value, original.getIn(node));
-      myIn.put(node, value);
+      final Iterator<Node> inIterator = original.getIn(node);
+      if (inIterator.hasNext()) {
+        ArrayList<Node> value = new ArrayList<Node>();
+        ContainerUtil.addAll(value, inIterator);
+        myIn.put(node, value);
+      }
     }
   }
 
@@ -47,7 +51,10 @@ public class CachingSemiGraph<Node> implements GraphGenerator.SemiGraph<Node> {
 
   @Override
   public Iterator<Node> getIn(Node n) {
-    return myIn.get(n).iterator();
+    final List<Node> inNodes = myIn.get(n);
+    return inNodes != null
+           ? inNodes.iterator()
+           : ContainerUtil.<Node>emptyIterator();
   }
 
   //<editor-fold desc="Deprecated stuff.">

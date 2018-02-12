@@ -37,7 +37,7 @@ public class JavaRainbowVisitor extends RainbowVisitor {
         || element instanceof PsiLocalVariable
         || element instanceof PsiParameter
         || element instanceof PsiDocParamRef) {
-      PsiElement context = PsiTreeUtil.findFirstParent(element, p -> p instanceof PsiMethod);
+      PsiElement context = PsiTreeUtil.findFirstParent(element, p -> p instanceof PsiMethod || p instanceof PsiClassInitializer || p instanceof PsiLambdaExpression);
       if (context != null) {
         PsiElement rainbowElement = element instanceof PsiReferenceExpression || element instanceof PsiDocParamRef
                             ? element : ((PsiVariable)element).getNameIdentifier();

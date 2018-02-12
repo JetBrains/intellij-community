@@ -15,14 +15,13 @@
  */
 package com.siyeh.ipp.types;
 
-import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
 
 public class MakeMethodDefaultTest extends IPPTestCase {
  
   @Override
   protected String getIntentionName() {
-    return "Make method default";
+    return "Make 'foo()' default";
   }
 
   @Override
@@ -30,15 +29,20 @@ public class MakeMethodDefaultTest extends IPPTestCase {
     return "types/makeDefault";
   }
 
-  public void testInInterface() throws Exception {
+  public void testInInterface() {
     doTest();
   }
 
-  public void testAlreadyDefault() throws Exception {
+  public void testAlreadyDefault() {
     assertIntentionNotAvailable();
   }
 
-  public void testAlreadyHasBody() throws Exception {
+  public void testAlreadyHasBody() {
     assertIntentionNotAvailable();
   }
+  
+  public void testAnnotationType() {
+    assertIntentionNotAvailable();
+  }
+  
 }

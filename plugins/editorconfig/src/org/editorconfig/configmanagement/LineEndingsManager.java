@@ -67,8 +67,7 @@ public class LineEndingsManager extends FileDocumentManagerAdapter {
     if (file == null) return;
     if (!Utils.isEnabled(CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings())) return;
 
-    final String filePath = Utils.getFilePath(myProject, file);
-    final List<EditorConfig.OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(myProject, filePath);
+    final List<EditorConfig.OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(myProject, file);
     final String lineEndings = Utils.configValueForKey(outPairs, lineEndingsKey);
     if (!lineEndings.isEmpty()) {
       try {
@@ -84,7 +83,7 @@ public class LineEndingsManager extends FileDocumentManagerAdapter {
         }
       }
       catch (IllegalArgumentException e) {
-        Utils.invalidConfigMessage(myProject, lineEndings, lineEndingsKey, filePath);
+        Utils.invalidConfigMessage(myProject, lineEndings, lineEndingsKey, file.getCanonicalPath());
       }
     }
   }

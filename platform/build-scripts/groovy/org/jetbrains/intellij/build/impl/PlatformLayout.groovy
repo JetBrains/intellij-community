@@ -32,6 +32,7 @@ import java.util.function.Consumer
  */
 class PlatformLayout extends BaseLayout {
   List<String> excludedProjectLibraries = []
+  final List<String> projectLibrariesWithRemovedVersionFromJarNames = []
 
   static PlatformLayout platform(Consumer<PlatformLayout> customizer, @DelegatesTo(PlatformLayoutSpec) Closure body = {}) {
     def layout = new PlatformLayout()
@@ -59,6 +60,16 @@ class PlatformLayout extends BaseLayout {
      */
     void withoutProjectLibrary(String libraryName) {
       layout.excludedProjectLibraries << libraryName
+    }
+
+    /**
+     * Remove version numbers from {@code libraryName}'s JAR file names before copying to the product distributions. Currently it's needed
+     * for libraries included into bootstrap classpath of the platform, because their names are hardcoded in startup scripts and it's not
+     * convenient to change them each time the library is updated. <strong>Do not use this method for anything else.</strong> This method
+     * will be removed when build scripts automatically compose bootstrap classpath.
+     */
+    void removeVersionFromProjectLibraryJarNames(String libraryName) {
+      layout.projectLibrariesWithRemovedVersionFromJarNames << libraryName
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -30,6 +30,7 @@ import com.intellij.openapi.util.ZipperUpdater;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
@@ -59,7 +60,7 @@ public class ChangelistConflictTracker {
   private final ChangeListAdapter myChangeListListener;
 
   private final FileDocumentManager myDocumentManager;
-  private final DocumentAdapter myDocumentListener;
+  private final DocumentListener myDocumentListener;
 
   private final FileStatusManager myFileStatusManager;
   private final Set<VirtualFile> myCheckSet;
@@ -92,7 +93,7 @@ public class ChangelistConflictTracker {
       }
       checkFiles(localSet);
     };
-    myDocumentListener = new DocumentAdapter() {
+    myDocumentListener = new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         if (!myOptions.TRACKING_ENABLED) {
@@ -112,14 +113,14 @@ public class ChangelistConflictTracker {
     myChangeListListener = new ChangeListAdapter() {
       @Override
       public void changeListChanged(ChangeList list) {
-        if (myChangeListManager.isDefaultChangeList(list)) {
+        if (((LocalChangeList)list).isDefault()) {
           clearChanges(list.getChanges());
         }
       }
 
       @Override
       public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
-        if (myChangeListManager.isDefaultChangeList(toList)) {
+        if (((LocalChangeList)toList).isDefault()) {
           clearChanges(changes);
         }
       }
@@ -146,7 +147,7 @@ public class ChangelistConflictTracker {
   }
 
   private void checkOneFile(VirtualFile file, LocalChangeList defaultList) {
-    if (file == null) {
+    if (file == null || !shouldDetectConflictsFor(file)) {
       return;
     }
     LocalChangeList changeList = myChangeListManager.getChangeList(file);
@@ -172,6 +173,7 @@ public class ChangelistConflictTracker {
   }
 
   public boolean isWritingAllowed(@NotNull VirtualFile file) {
+    if (!shouldDetectConflictsFor(file)) return true;
     if (isFromActiveChangelist(file)) return true;
     Conflict conflict = myConflicts.get(file.getPath());
     return conflict != null && conflict.ignored;
@@ -179,7 +181,11 @@ public class ChangelistConflictTracker {
 
   public boolean isFromActiveChangelist(VirtualFile file) {
     LocalChangeList changeList = myChangeListManager.getChangeList(file);
-    return changeList == null || myChangeListManager.isDefaultChangeList(changeList);
+    return changeList == null || changeList.isDefault();
+  }
+
+  public boolean shouldDetectConflictsFor(@NotNull VirtualFile file) {
+    return !LineStatusTrackerManager.getInstance(myProject).arePartialChangelistsEnabled(file);
   }
 
   private void clearChanges(Collection<Change> changes) {
@@ -267,7 +273,8 @@ public class ChangelistConflictTracker {
     String path = file.getPath();
     Conflict conflict = myConflicts.get(path);
     if (conflict != null && !conflict.ignored) {
-      if (isFromActiveChangelist(file)) {
+      if (!shouldDetectConflictsFor(file) ||
+          isFromActiveChangelist(file)) {
         myConflicts.remove(path);
         return false;
       }

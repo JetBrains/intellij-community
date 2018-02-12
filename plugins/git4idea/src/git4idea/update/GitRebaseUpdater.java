@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
@@ -38,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import static java.util.Collections.singletonList;
 
@@ -53,11 +51,11 @@ public class GitRebaseUpdater extends GitUpdater {
 
   public GitRebaseUpdater(@NotNull Project project,
                           @NotNull Git git,
-                          @NotNull VirtualFile root,
-                          @NotNull final Map<VirtualFile, GitBranchPair> trackedBranches,
+                          @NotNull GitRepository repository,
+                          @NotNull GitBranchPair branchAndTracked,
                           @NotNull ProgressIndicator progressIndicator,
                           @NotNull UpdatedFiles updatedFiles) {
-    super(project, git, root, trackedBranches, progressIndicator, updatedFiles);
+    super(project, git, repository, branchAndTracked, progressIndicator, updatedFiles);
     myRebaser = new GitRebaser(myProject, git, myProgressIndicator);
     myChangeListManager = ChangeListManager.getInstance(project);
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
@@ -76,20 +74,14 @@ public class GitRebaseUpdater extends GitUpdater {
     LOG.info("doUpdate ");
     String remoteBranch = getRemoteBranchToMerge();
     List<String> params = singletonList(remoteBranch);
-    return myRebaser.rebase(myRoot, params, new Runnable() {
-      @Override
-      public void run() {
-        cancel();
-      }
-    }, null);
+    return myRebaser.rebase(myRoot, params, () -> cancel(), null);
   }
 
   @NotNull
   private String getRemoteBranchToMerge() {
-    GitBranchPair gitBranchPair = myTrackedBranches.get(myRoot);
-    GitBranch dest = gitBranchPair.getDest();
+    GitBranch dest = myBranchPair.getDest();
     LOG.assertTrue(dest != null, String.format("Destination branch is null for source branch %s in %s",
-                                               gitBranchPair.getBranch().getName(), myRoot));
+                                               myBranchPair.getBranch().getName(), myRoot));
     return dest.getName();
   }
 

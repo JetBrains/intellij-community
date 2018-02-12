@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * User : catherine
  */
-public class RestStructureViewModel extends StructureViewModelBase implements StructureViewModel.ElementInfoProvider, StructureViewModel.ExpandInfoProvider {
+public class RestStructureViewModel extends StructureViewModelBase implements StructureViewModel.ElementInfoProvider {
   public RestStructureViewModel(@NotNull PsiFile psiFile, @Nullable Editor editor) {
     super(psiFile, editor, new RestStructureViewElement(psiFile));
     withSorters(Sorter.ALPHA_SORTER);
@@ -44,16 +44,7 @@ public class RestStructureViewModel extends StructureViewModelBase implements St
 
   @Override
   public boolean isAlwaysLeaf(StructureViewTreeElement element) {
-    return element.getValue() instanceof RestTitle;
+    return element.getChildren().length == 0;
   }
 
-  @Override
-  public boolean isAutoExpand(@NotNull StructureViewTreeElement element) {
-    return element.getValue() instanceof PsiFile;
-  }
-
-  @Override
-  public boolean isSmartExpand() {
-    return false;
-  }
 }

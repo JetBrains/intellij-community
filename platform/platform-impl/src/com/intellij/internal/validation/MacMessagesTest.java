@@ -42,7 +42,7 @@ public class MacMessagesTest extends AnAction {
 
   private static class SimpleDialogWrapper extends DialogWrapper {
 
-    private  JTextArea jbTextField = new JTextArea(1, 30);
+    private final JTextArea jbTextField = new JTextArea(1, 30);
 
     SimpleDialogWrapper(@Nullable Project project) {
       super(project);
@@ -117,9 +117,6 @@ public class MacMessagesTest extends AnAction {
               showTestMessage(p1);
             }, ModalityState.any());
           }
-
-          @Override
-          public void onCancel() {}
         };
         ProgressManager.getInstance().run(task);
 

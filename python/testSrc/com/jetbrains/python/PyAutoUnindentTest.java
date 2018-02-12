@@ -20,39 +20,38 @@ import com.jetbrains.python.fixtures.PyTestCase;
 /**
  * Checks auto-unindenting of 'else' and friends.
  * User: dcheryasov
- * Date: Mar 5, 2010 2:49:38 PM
  */
 public class PyAutoUnindentTest extends PyTestCase {
 
-  public void testSingleElse() throws Exception{
+  public void testSingleElse() {
     doTypingTest();
   }
 
-  public void testNestedElse() throws Exception{
+  public void testNestedElse() {
     doTypingTest();
   }
 
-  public void testMisplacedElse() throws Exception{
+  public void testMisplacedElse() {
     doTypingTest();
   }
 
-  public void testSimpleElif() throws Exception{
+  public void testSimpleElif() {
     doTypingTest();
   }
 
-  public void testInnerElif() throws Exception{
+  public void testInnerElif() {
     doTypingTest();
   }
 
-  public void testSimpleExcept() throws Exception{
+  public void testSimpleExcept() {
     doTypingTest();
   }
 
-  public void testSimpleFinally() throws Exception{
+  public void testSimpleFinally() {
     doTypingTest();
   }
 
-  public void testNestedFinally() throws Exception{
+  public void testNestedFinally() {
     doTypingTest();
   }
 
@@ -64,7 +63,7 @@ public class PyAutoUnindentTest extends PyTestCase {
 
 
 
-  private void doTypingTest() throws Exception {
+  private void doTypingTest() {
     final String testName = "editing/" + getTestName(true);
     myFixture.configureByFile(testName + ".py");
     myFixture.type(':');

@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.plugins.groovy.lang.resolve
 
@@ -23,6 +11,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
+
+import static org.jetbrains.plugins.groovy.util.ThrowingTransformation.disableTransformations
 
 /**
  * @author Max Medvedev
@@ -641,23 +631,6 @@ a {
 ''', 'Boo'
   }
 
-  void 'test delegate within index property'() {
-    assertScript '''\
-class A {
-    def getAt(@DelegatesTo(Boo) Closure c) {}
-}
-
-class Boo {
-    def foo() {}
-}
-
-def a = new A()
-a[{
-    fo<caret>o()
-}]
-''', 'Boo'
-  }
-
   void 'test delegate within constructor argument'() {
     assertScript '''\
 class A {
@@ -720,14 +693,14 @@ class Methods {
   static m1(@DelegatesTo(value = String, strategy = Closure.DELEGATE_ONLY) Closure c) {}
 }
 '''
+    disableTransformations testRootDisposable
+
     // resolve to outer closure parameter
-    resolveByText('''\
+    resolveByText '''\
 def c = { String s1 ->
   Methods.m1 { s<caret>1 + toUpperCase() }
 }
-''').with {
-      assert it instanceof GrParameter
-    }
+''', GrParameter
 
     // resolve to outer closure local variable
     resolveByText('''\
@@ -735,18 +708,16 @@ def c = { String s1 ->
   def s2 = "123"
   Methods.m1 { s<caret>2 + toUpperCase() }
 }
-''').with {
-      assert it instanceof GrVariable && !(it instanceof GrField) && !(it instanceof GrParameter)
+''', GrVariable).with {
+      assert !(it instanceof GrField) && !(it instanceof GrParameter)
     }
 
     // resolve to outer method parameter
-    resolveByText('''\
+    resolveByText '''\
 def m(String s1) {
   Methods.m1 {s<caret>1 + toUpperCase() }
 }
-''').with {
-      assert it instanceof GrParameter
-    }
+''', GrParameter
 
     // resolve to outer method local variable
     resolveByText('''\
@@ -754,8 +725,8 @@ def m(String s1) {
   def s2 = "123"
   Methods.m1 { s1 + s<caret>2 + toUpperCase() }
 }
-''').with {
-      assert it instanceof GrVariable && !(it instanceof GrField) && !(it instanceof GrParameter)
+''', GrVariable).with {
+      assert !(it instanceof GrField) && !(it instanceof GrParameter)
     }
   }
 

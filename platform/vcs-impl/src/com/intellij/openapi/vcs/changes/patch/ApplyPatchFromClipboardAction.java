@@ -43,7 +43,7 @@ public class ApplyPatchFromClipboardAction extends DumbAwareAction {
 
     public MyApplyPatchFromClipboardDialog(@NotNull Project project, @NotNull String clipboardText) {
       super(project, new ApplyPatchDefaultExecutor(project), Collections.emptyList(), ApplyPatchMode.APPLY_PATCH_IN_MEMORY,
-            new LightVirtualFile("clipboardPatchFile", clipboardText), null, ChangeListManager.getInstance(project).getDefaultChangeList(),
+            new LightVirtualFile("clipboardPatchFile", clipboardText), null, null,
             null, null, null, false);
     }
 

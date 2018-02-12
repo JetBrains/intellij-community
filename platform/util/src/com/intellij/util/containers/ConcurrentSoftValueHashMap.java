@@ -16,35 +16,18 @@
 
 package com.intellij.util.containers;
 
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
-import java.util.Map;
 
 /**
  * Concurrent strong key:K -> soft value:V map
  * Null keys are NOT allowed
  * Null values are NOT allowed
- * @deprecated Use {@link ContainerUtil#createConcurrentSoftValueMap()} instead
+ * Use {@link ContainerUtil#createConcurrentSoftValueMap()} to create this
  */
 final class ConcurrentSoftValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,V> {
-  ConcurrentSoftValueHashMap(@NotNull Map<K, V> map) {
-    super(map);
-  }
-
-  ConcurrentSoftValueHashMap() {
-  }
-
-  public ConcurrentSoftValueHashMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
-    super(initialCapacity, loadFactor, concurrencyLevel);
-  }
-
-  public ConcurrentSoftValueHashMap(int initialCapacity, float loadFactor, int concurrencyLevel, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
-    super(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
-  }
-
   private static class MySoftReference<K, V> extends SoftReference<V> implements ValueReference<K, V> {
     private final K key;
     private MySoftReference(@NotNull K key, @NotNull V referent, @NotNull ReferenceQueue<V> q) {
@@ -75,7 +58,13 @@ final class ConcurrentSoftValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,
 
   @NotNull
   @Override
-  protected ValueReference<K, V> createValueReference(@NotNull K key, @NotNull V value) {
+  ValueReference<K, V> createValueReference(@NotNull K key, @NotNull V value) {
     return new MySoftReference<K,V>(key, value, myQueue);
+  }
+
+  //todo remove when Kotlin stops calling containsKey()
+  @Override
+  public boolean containsKey(Object key) {
+    return get(key) != null;  // Kotlin still calls containsKey()
   }
 }

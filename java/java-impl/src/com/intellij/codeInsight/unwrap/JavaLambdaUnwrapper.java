@@ -18,6 +18,7 @@ package com.intellij.codeInsight.unwrap;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -27,7 +28,7 @@ public class JavaLambdaUnwrapper extends JavaUnwrapper {
   }
 
   @Override
-  public boolean isApplicableTo(PsiElement e) {
+  public boolean isApplicableTo(@NotNull PsiElement e) {
     return e instanceof PsiLambdaExpression;
   }
 
@@ -36,7 +37,7 @@ public class JavaLambdaUnwrapper extends JavaUnwrapper {
     PsiElement from = JavaAnonymousUnwrapper.findElementToExtractFrom(element);
     PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)element;
     PsiElement body = lambdaExpression.getBody();
-    if (body instanceof PsiExpression || body instanceof PsiCodeBlock && ((PsiCodeBlock)body).getStatements().length == 1) {
+    if (body instanceof PsiExpression || body instanceof PsiCodeBlock && ((PsiCodeBlock)body).getStatementCount() == 1) {
       List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(lambdaExpression);
       if (returnExpressions.size() == 1
           && !PsiType.VOID.equals(returnExpressions.get(0).getType())

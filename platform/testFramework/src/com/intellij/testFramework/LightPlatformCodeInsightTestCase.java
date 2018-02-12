@@ -20,6 +20,7 @@ import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -29,7 +30,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -73,8 +73,6 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTestCase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.LightCodeInsightTestCase");
-
   protected static Editor myEditor;
   protected static PsiFile myFile;
   protected static VirtualFile myVFile;
@@ -171,7 +169,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
                                                   boolean checkCaret) {
     return new WriteCommandAction<Document>(null) {
       @Override
-      protected void run(@NotNull Result<Document> result) throws Throwable {
+      protected void run(@NotNull Result<Document> result) {
         final Document fakeDocument = new DocumentImpl(fileText);
 
         EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
@@ -196,15 +194,15 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   @NotNull
   protected static Editor configureFromFileTextWithoutPSI(@NonNls @NotNull final String fileText) {
-    return new WriteCommandAction<Editor>(null) {
+    return new WriteCommandAction<Editor>(getProject()) {
       @Override
-      protected void run(@NotNull Result<Editor> result) throws Throwable {
+      protected void run(@NotNull Result<Editor> result) {
         final Document fakeDocument = EditorFactory.getInstance().createDocument(fileText);
         EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
 
         String newFileText = fakeDocument.getText();
         Document document = EditorFactory.getInstance().createDocument(newFileText);
-        final Editor editor = EditorFactory.getInstance().createEditor(document);
+        final Editor editor = EditorFactory.getInstance().createEditor(document, getProject());
         ((EditorImpl)editor).setCaretActive();
 
         EditorTestUtil.setCaretsAndSelection(editor, caretsState);
@@ -239,26 +237,23 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   @NotNull
   protected static Editor createSaveAndOpenFile(@NotNull String relativePath, @NotNull String fileText) throws IOException {
-    return WriteCommandAction.runWriteCommandAction(getProject(), new ThrowableComputable<Editor, IOException>() {
-      @Override
-      public Editor compute() throws IOException {
-        VirtualFile myVFile = VfsTestUtil.createFile(getSourceRoot(),relativePath);
-        VfsUtil.saveText(myVFile, fileText);
-        final FileDocumentManager manager = FileDocumentManager.getInstance();
-        final Document document = manager.getDocument(myVFile);
-        assertNotNull("Can't create document for '" + relativePath + "'", document);
-        manager.reloadFromDisk(document);
-        document.insertString(0, " ");
-        document.deleteString(0, 1);
-        PsiFile myFile = getPsiManager().findFile(myVFile);
-        assertNotNull("Can't create PsiFile for '" + relativePath + "'. Unknown file type most probably.", myFile);
-        assertTrue(myFile.isPhysical());
-        Editor myEditor = createEditor(myVFile);
-        myVFile.setCharset(CharsetToolkit.UTF8_CHARSET);
+    return WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<Editor, IOException>)() -> {
+      VirtualFile myVFile = VfsTestUtil.createFile(getSourceRoot(),relativePath);
+      VfsUtil.saveText(myVFile, fileText);
+      final FileDocumentManager manager = FileDocumentManager.getInstance();
+      final Document document = manager.getDocument(myVFile);
+      assertNotNull("Can't create document for '" + relativePath + "'", document);
+      manager.reloadFromDisk(document);
+      document.insertString(0, " ");
+      document.deleteString(0, 1);
+      PsiFile myFile = getPsiManager().findFile(myVFile);
+      assertNotNull("Can't create PsiFile for '" + relativePath + "'. Unknown file type most probably.", myFile);
+      assertTrue(myFile.isPhysical());
+      Editor myEditor = createEditor(myVFile);
+      myVFile.setCharset(CharsetToolkit.UTF8_CHARSET);
 
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-        return myEditor;
-      }
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      return myEditor;
     });
   }
 
@@ -271,12 +266,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     });
   }
 
-  private static void setupEditorForInjectedLanguage() {
+  protected static void setupEditorForInjectedLanguage() {
     if (myEditor != null) {
+      Editor hostEditor = myEditor instanceof EditorWindow ? ((EditorWindow)myEditor).getDelegate() : myEditor;
+      PsiFile hostFile = myFile == null ? null : InjectedLanguageManager.getInstance(getProject()).getTopLevelFile(myFile);
       final Ref<EditorWindow> editorWindowRef = new Ref<>();
-      myEditor.getCaretModel().runForEachCaret(caret -> {
-        Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile);
-        if (caret == myEditor.getCaretModel().getPrimaryCaret() && editor instanceof EditorWindow) {
+      hostEditor.getCaretModel().runForEachCaret(caret -> {
+        Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(hostEditor, hostFile);
+        if (caret == hostEditor.getCaretModel().getPrimaryCaret() && editor instanceof EditorWindow) {
           editorWindowRef.set((EditorWindow)editor);
         }
       });

@@ -17,7 +17,9 @@ package com.intellij.util.containers;
 
 import java.util.Collection;
 
+/** Use {@link java.util.HashSet} */
 @SuppressWarnings("ClassNameSameAsAncestorName")
+@Deprecated
 public class HashSet<E> extends java.util.HashSet<E> {
   public HashSet() { }
 

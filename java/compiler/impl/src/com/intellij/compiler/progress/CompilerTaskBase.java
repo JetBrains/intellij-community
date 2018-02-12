@@ -47,7 +47,7 @@ public abstract class CompilerTaskBase extends Task.Backgroundable {
   @Override
   public void run(@NotNull final ProgressIndicator indicator) {
     myIndicator = indicator;
-
+    myIndicator.setIndeterminate(false);
     beforeRun();
 
     final Semaphore semaphore = ((CompilerManagerImpl)CompilerManager.getInstance(myProject)).getCompilationSemaphore();

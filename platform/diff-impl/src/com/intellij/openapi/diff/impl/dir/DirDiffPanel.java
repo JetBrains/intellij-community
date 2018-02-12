@@ -30,12 +30,12 @@ import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.dir.actions.DirDiffToolbarActions;
 import com.intellij.openapi.diff.impl.dir.actions.RefreshDirDiffAction;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -79,10 +79,10 @@ import static com.intellij.util.ArrayUtil.toObjectArray;
  */
 @SuppressWarnings({"unchecked"})
 public class DirDiffPanel implements Disposable, DataProvider {
-  private static final Logger LOG = Logger.getInstance(DirDiffPanel.class);
-
   public static final String DIVIDER_PROPERTY = "dir.diff.panel.divider.location";
+
   private static final int DIVIDER_PROPERTY_DEFAULT_VALUE = 200;
+
   private JPanel myDiffPanel;
   private JBTable myTable;
   private JPanel myComponent;
@@ -97,7 +97,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
   private JBLabel myFilterLabel;
   private JPanel myFilesPanel;
   private JPanel myHeaderPanel;
-  private FilterComponent myFilter;
+  private final FilterComponent myFilter;
   private final DirDiffTableModel myModel;
   private final DirDiffWindow myDiffWindow;
   private final MyDiffRequestProcessor myDiffRequestProcessor;
@@ -130,21 +130,22 @@ public class DirDiffPanel implements Disposable, DataProvider {
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        final int lastIndex = e.getLastIndex();
-        final int firstIndex = e.getFirstIndex();
-        final DirDiffElementImpl last = myModel.getElementAt(lastIndex);
-        final DirDiffElementImpl first = myModel.getElementAt(firstIndex);
+        ListSelectionModel selectionModel = (ListSelectionModel)e.getSource();
+        int lastIndex = e.getLastIndex();
+        int firstIndex = e.getFirstIndex();
+        DirDiffElementImpl last = myModel.getElementAt(lastIndex);
+        DirDiffElementImpl first = myModel.getElementAt(firstIndex);
         if (last == null || first == null) {
           update(false);
           return;
         }
-        if (last.isSeparator()) {
-          final int ind = lastIndex + ((lastIndex < firstIndex) ? 1 : -1);
-          myTable.getSelectionModel().addSelectionInterval(ind, ind);
+        if (last.isSeparator() && selectionModel.isSelectedIndex(lastIndex)) {
+          int ind = lastIndex + ((lastIndex < firstIndex) ? 1 : -1);
+          selectionModel.addSelectionInterval(ind, ind);
         }
-        else if (first.isSeparator()) {
-          final int ind = firstIndex + ((firstIndex < lastIndex) ? 1 : -1);
-          myTable.getSelectionModel().addSelectionInterval(ind, ind);
+        if (first.isSeparator() && selectionModel.isSelectedIndex(firstIndex)) {
+          int ind = firstIndex + ((firstIndex < lastIndex) ? 1 : -1);
+          selectionModel.addSelectionInterval(ind, ind);
         }
         else {
           update(false);
@@ -218,10 +219,13 @@ public class DirDiffPanel implements Disposable, DataProvider {
     final ActionToolbar toolbar = actionManager.createActionToolbar("DirDiff", actions, true);
     registerCustomShortcuts(actions, myTable);
     myToolBarPanel.add(toolbar.getComponent(), BorderLayout.CENTER);
-    final JBLabel label = new JBLabel("Use Space button or mouse click to change operation for the selected elements." +
-                                      " Enter to perform.", SwingConstants.CENTER);
-    label.setForeground(UIUtil.getInactiveTextColor());
-    UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, label);
+    if (model.isOperationsEnabled()) {
+      final JBLabel label = new JBLabel("Use Space button or mouse click to change operation for the selected elements." +
+                                        " Enter to perform.", SwingConstants.CENTER);
+      label.setForeground(UIUtil.getInactiveTextColor());
+      UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, label);
+      myFilesPanel.add(label, BorderLayout.SOUTH);
+    }
     DataManager.registerDataProvider(myFilesPanel, this);
     myTable.addMouseListener(new PopupHandler() {
       @Override
@@ -231,7 +235,6 @@ public class DirDiffPanel implements Disposable, DataProvider {
         popupMenu.show(comp, x, y);
       }
     });
-    myFilesPanel.add(label, BorderLayout.SOUTH);
     final JBLoadingPanel loadingPanel = new JBLoadingPanel(new BorderLayout(), wnd.getDisposable());
     loadingPanel.addListener(new JBLoadingPanelListener.Adapter() {
       boolean showHelp = true;
@@ -252,7 +255,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
       }
     });
     loadingPanel.add(myComponent, BorderLayout.CENTER);
-    myTable.putClientProperty(myModel.DECORATOR, loadingPanel);
+    UIUtil.putClientProperty(myTable, DirDiffTableModel.DECORATOR_KEY, loadingPanel);
     myTable.addComponentListener(new ComponentAdapter() {
       @Override
       public void componentShown(ComponentEvent e) {
@@ -262,33 +265,17 @@ public class DirDiffPanel implements Disposable, DataProvider {
     });
     myRootPanel.removeAll();
     myRootPanel.add(loadingPanel, BorderLayout.CENTER);
-    myFilter = new FilterComponent("dir.diff.filter", 15, false) {
-      @Override
-      public void filter() {
-        fireFilterUpdated();
-      }
-
-      @Override
-      protected void onEscape(KeyEvent e) {
-        e.consume();
-        focusTable();
-      }
-
-      @Override
-      protected JComponent getPopupLocationComponent() {
-        return UIUtil.findComponentOfType(super.getPopupLocationComponent(), JTextComponent.class);
-      }
-    };
+    myFilter = new MyFilterComponent();
 
     myModel.addModelListener(new DirDiffModelListener() {
       @Override
       public void updateStarted() {
-        myFilter.setEnabled(false);
+        UIUtil.setEnabled(myFilter, false, true);
       }
 
       @Override
       public void updateFinished() {
-        myFilter.setEnabled(true);
+        UIUtil.setEnabled(myFilter, true, true);
       }
     });
     myFilter.getTextEditor().setColumns(10);
@@ -646,6 +633,31 @@ public class DirDiffPanel implements Disposable, DataProvider {
       int result = sourceElement != null ? sourceElement.hashCode() : 0;
       result = 31 * result + (targetElement != null ? targetElement.hashCode() : 0);
       return result;
+    }
+  }
+
+  private class MyFilterComponent extends FilterComponent {
+    public MyFilterComponent() {
+      super("dir.diff.filter", 15, false);
+
+      DumbAwareAction.create(e -> userTriggeredFilter())
+        .registerCustomShortcutSet(CommonShortcuts.ENTER, this);
+    }
+
+    @Override
+    public void filter() {
+      fireFilterUpdated();
+    }
+
+    @Override
+    protected void onEscape(@NotNull KeyEvent e) {
+      e.consume();
+      focusTable();
+    }
+
+    @Override
+    protected JComponent getPopupLocationComponent() {
+      return UIUtil.findComponentOfType(super.getPopupLocationComponent(), JTextComponent.class);
     }
   }
 }

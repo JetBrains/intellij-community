@@ -24,7 +24,6 @@ import javax.swing.*;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 9/28/12
  */
 public interface ProjectTemplate {
 
@@ -44,6 +43,7 @@ public interface ProjectTemplate {
   /**
    * @return null if ok, error message otherwise
    */
+  @Deprecated
   @Nullable
   ValidationInfo validateSettings();
 }

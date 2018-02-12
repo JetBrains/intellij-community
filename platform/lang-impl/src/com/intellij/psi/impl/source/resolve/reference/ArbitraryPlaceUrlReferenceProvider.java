@@ -56,7 +56,7 @@ public class ArbitraryPlaceUrlReferenceProvider extends PsiReferenceProvider {
             }
             provider.createUrlReference(element, link.getTargetUrl(), link.getRange(), refs);
           }
-          PsiReference[] references = refs != null ? refs.toArray(new PsiReference[refs.size()]) : PsiReference.EMPTY_ARRAY;
+          PsiReference[] references = refs != null ? refs.toArray(PsiReference.EMPTY_ARRAY) : PsiReference.EMPTY_ARRAY;
           return new CachedValueProvider.Result<>(references, element, navigationConfiguration);
         }, false);
       }

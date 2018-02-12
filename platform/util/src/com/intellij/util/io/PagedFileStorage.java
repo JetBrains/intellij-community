@@ -190,7 +190,9 @@ public class PagedFileStorage implements Forceable {
   }
 
   ByteBufferWrapper getByteBuffer(long address, boolean modify) {
-    return getBufferWrapper(address / myPageSize, modify);
+    long page = address / myPageSize;
+    assert page >= 0 && page <= MAX_PAGES_COUNT:address + " in " + myFile;
+    return getBufferWrapper(page, modify);
   }
 
   public final short getShort(long addr) {

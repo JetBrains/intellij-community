@@ -16,23 +16,26 @@
 package com.intellij.lang.html;
 
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
+import com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper;
 import com.intellij.psi.impl.source.codeStyle.PreFormatProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
   @NotNull
@@ -42,15 +45,19 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
     if (psiElement != null &&
         psiElement.isValid() &&
         psiElement.getLanguage().is(HTMLLanguage.INSTANCE)) {
-      CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(psiElement.getProject());
-      CodeStyleSettings.QuoteStyle quoteStyle = settings.HTML_QUOTE_STYLE;
-      if (quoteStyle != CodeStyleSettings.QuoteStyle.None && settings.HTML_ENFORCE_QUOTES) {
-        HtmlQuotesConverter converter = new HtmlQuotesConverter(quoteStyle, psiElement, range);
+      CodeStyleSettings rootSettings = CodeStyleSettingsManager.getSettings(psiElement.getProject());
+      HtmlCodeStyleSettings htmlSettings = rootSettings.getCustomSettings(HtmlCodeStyleSettings.class);
+      CodeStyleSettings.QuoteStyle quoteStyle = htmlSettings.HTML_QUOTE_STYLE;
+      if (quoteStyle != CodeStyleSettings.QuoteStyle.None && htmlSettings.HTML_ENFORCE_QUOTES) {
+        PostFormatProcessorHelper postFormatProcessorHelper =
+          new PostFormatProcessorHelper(rootSettings.getCommonSettings(HTMLLanguage.INSTANCE));
+        postFormatProcessorHelper.setResultTextRange(range);
+        HtmlQuotesConverter converter = new HtmlQuotesConverter(quoteStyle, psiElement, postFormatProcessorHelper);
         Document document = converter.getDocument();
         if (document != null) {
           DocumentUtil.executeInBulk(document, true, converter);
         }
-        return converter.getTextRange();
+        return postFormatProcessorHelper.getResultTextRange();
       }
     }
     return range;
@@ -58,36 +65,33 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
 
 
   public static class HtmlQuotesConverter extends XmlRecursiveElementVisitor implements Runnable {
-    private TextRange myTextRange;
+    private final TextRange myOriginalRange;
     private final Document myDocument;
     private final PsiDocumentManager myDocumentManager;
-    private final PsiElement myElement;
-    private int myDelta = 0;
-    private final char myQuoteChar;
+    private final PostFormatProcessorHelper myPostProcessorHelper;
+    private final PsiElement myContext;
+    private final String myNewQuote;
 
-    public HtmlQuotesConverter(CodeStyleSettings.QuoteStyle style,
-                                @NotNull PsiElement element,
-                                @NotNull TextRange textRange) {
-      Project project = element.getProject();
-      PsiFile file = element.getContainingFile();
-      myElement = element;
-      myTextRange = new TextRange(textRange.getStartOffset(), textRange.getEndOffset());
+    public HtmlQuotesConverter(@NotNull CodeStyleSettings.QuoteStyle style,
+                               @NotNull PsiElement context,
+                               @NotNull PostFormatProcessorHelper postFormatProcessorHelper) {
+      myPostProcessorHelper = postFormatProcessorHelper;
+      Project project = context.getProject();
+      PsiFile file = context.getContainingFile();
+      myContext = context;
+      myOriginalRange = postFormatProcessorHelper.getResultTextRange();
       myDocumentManager = PsiDocumentManager.getInstance(project);
-      myDocument = myDocumentManager.getDocument(file);
+      myDocument = file.getViewProvider().getDocument();
       switch (style) {
         case Single:
-          myQuoteChar = '\'';
+          myNewQuote = "\'";
           break;
         case Double:
-          myQuoteChar = '"';
+          myNewQuote = "\"";
           break;
         default:
-          myQuoteChar = 0;
+          myNewQuote = String.valueOf(0);
       }
-    }
-
-    public TextRange getTextRange() {
-      return myTextRange.grown(myDelta);
     }
 
     public Document getDocument() {
@@ -96,60 +100,51 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
 
     @Override
     public void visitXmlAttributeValue(XmlAttributeValue value) {
-      if (myTextRange.contains(value.getTextRange())) {
+      //use original range to check because while we are modifying document, element ranges returned from getTextRange() are not updated.
+      if (myOriginalRange.contains(value.getTextRange())) {
         PsiElement child = value.getFirstChild();
         if (child != null &&
             !containsQuoteChars(value) // For now we skip values containing quotes to be inserted/replaced
           ) {
-          String newValue = null;
           if (child.getNode().getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER) {
             PsiElement lastChild = value.getLastChild();
             if (lastChild != null && lastChild.getNode().getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER) {
               CharSequence delimiterChars = child.getNode().getChars();
-              if (delimiterChars.length() == 1) {
-                char existingQuote = delimiterChars.charAt(0);
-                if (existingQuote != myQuoteChar) {
-                  newValue = convertQuotes(value);
-                }
+              if (delimiterChars.length() == 1 && !StringUtil.equals(delimiterChars, myNewQuote)) {
+                int startOffset = value.getTextRange().getStartOffset();
+                int endOffset = value.getTextRange().getEndOffset();
+                replaceString(startOffset, startOffset + 1, myNewQuote);
+                replaceString(endOffset - 1, endOffset, myNewQuote);
               }
             }
           }
           else if (child.getNode().getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN
                    && child == value.getLastChild()) {
-            newValue = surroundWithQuotes(value);
-          }
-          if (newValue != null) {
-            int startOffset = value.getTextRange().getStartOffset() + myDelta;
-            int endOffset = value.getTextRange().getEndOffset() + myDelta;
-            myDocument.replaceString(startOffset, endOffset, newValue);
-            myDelta += newValue.length() - value.getTextLength();
+            insertString(child.getTextRange().getStartOffset(), myNewQuote);
+            insertString(child.getTextRange().getEndOffset(), myNewQuote);
           }
         }
       }
     }
 
-    @Nullable
-    private String convertQuotes(@NotNull XmlAttributeValue value) {
-      String currValue = value.getNode().getChars().toString();
-      if (currValue.length() >= 2) {
-        return myQuoteChar + currValue.substring(1, currValue.length() - 1) + myQuoteChar;
-      }
-      return null;
+    private void replaceString(int start, int end, String newValue) {
+      final int mappedStart = myPostProcessorHelper.mapOffset(start);
+      final int mappedEnd = myPostProcessorHelper.mapOffset(end);
+      myDocument.replaceString(mappedStart, mappedEnd, newValue);
+      myPostProcessorHelper.updateResultRange(end - start, newValue.length());
     }
 
-    @NotNull
-    private String surroundWithQuotes(@NotNull XmlAttributeValue value) {
-      String currValue = value.getNode().getChars().toString();
-      return myQuoteChar + currValue + myQuoteChar;
+    private void insertString(int offset, String value) {
+      final int mappedOffset = myPostProcessorHelper.mapOffset(offset);
+      myDocument.insertString(mappedOffset, value);
+      myPostProcessorHelper.updateResultRange(0, value.length());
     }
 
     private boolean containsQuoteChars(@NotNull XmlAttributeValue value) {
       for (PsiElement child = value.getFirstChild(); child != null; child = child.getNextSibling()) {
-        if (!isDelimiter(child.getNode().getElementType())) {
-          CharSequence valueChars = child.getNode().getChars();
-          for (int i = 0; i < valueChars.length(); i ++) {
-            if (valueChars.charAt(i) == myQuoteChar) return true;
-          }
+        if (!isDelimiter(child.getNode().getElementType()) 
+            && StringUtil.contains(child.getNode().getChars(), myNewQuote)) {
+          return true;
         }
       }
       return false;
@@ -164,9 +159,15 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
     public void run() {
       if (myDocument != null) {
         myDocumentManager.doPostponedOperationsAndUnblockDocument(myDocument);
-        myElement.accept(this);
+        myContext.accept(this);
         myDocumentManager.commitDocument(myDocument);
       }
+    }
+
+    public static void runOnElement(@NotNull CodeStyleSettings.QuoteStyle quoteStyle, @NotNull PsiElement element) {
+      PostFormatProcessorHelper postFormatProcessorHelper = new PostFormatProcessorHelper(CodeStyle.getDefaultSettings());
+      postFormatProcessorHelper.setResultTextRange(element.getTextRange());
+      new HtmlQuotesConverter(quoteStyle, element, postFormatProcessorHelper).run();
     }
   }
 }

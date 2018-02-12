@@ -33,7 +33,7 @@ import java.io.StringReader;
  */
 public class TestEventXmlXPathView implements TestEventXmlView {
   private final XPath xpath;
-  private Document xmlDocument;
+  private final Document xmlDocument;
 
   /**
    * Parses the given XML string as a DOM document, using the JDK parser. The parser does not

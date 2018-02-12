@@ -57,7 +57,7 @@ public class PsiElementConcatenationInspectionTest extends LightQuickFixParamete
     return PluginPathManager.getPluginHomePath("devkit") + "/testData";
   }
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

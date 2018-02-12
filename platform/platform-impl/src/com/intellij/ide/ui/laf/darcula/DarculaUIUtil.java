@@ -16,19 +16,36 @@
 package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ui.ColorUtil;
+import com.intellij.ide.ui.laf.IntelliJLaf;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
+import com.intellij.openapi.editor.event.EditorMouseAdapter;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.ui.ComboBoxCompositeEditor;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.geom.RoundRectangle2D;
 
+import static com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI.isSearchFieldWithHistoryPopup;
+import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.HOVER_PROPERTY;
+import static com.intellij.util.ui.MacUIUtil.MAC_FILL_BORDER;
 import static javax.swing.SwingConstants.EAST;
 import static javax.swing.SwingConstants.WEST;
 
@@ -36,88 +53,131 @@ import static javax.swing.SwingConstants.WEST;
  * @author Konstantin Bulenkov
  */
 public class DarculaUIUtil {
-  private static final Color GLOW_COLOR = new JBColor(new Color(31, 121, 212), new Color(96, 175, 255));
+  @SuppressWarnings("UseJBColor")
+  private static final Color MAC_ACTIVE_ERROR_COLOR = new Color(0x80f53b3b, true);
+  private static final Color DEFAULT_ACTIVE_ERROR_COLOR = new JBColor(0xe53e4d, 0x8b3c3c);
 
   @SuppressWarnings("UseJBColor")
-  private static final Color MAC_ACTIVE_ERROR_COLOR = new Color(0x80ff0f0f, true);
-  private static final JBColor DEFAULT_ACTIVE_ERROR_COLOR = new JBColor(0xe53e4d, 0x8b3c3c);
+  private static final Color MAC_INACTIVE_ERROR_COLOR = new Color(0x80f7bcbc, true);
+  private static final Color DEFAULT_INACTIVE_ERROR_COLOR = new JBColor(0xebbcbc, 0x725252);
+
+  public static final Color ACTIVE_ERROR_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_ACTIVE_ERROR_COLOR : DEFAULT_ACTIVE_ERROR_COLOR);
+  public static final Color INACTIVE_ERROR_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_INACTIVE_ERROR_COLOR : DEFAULT_INACTIVE_ERROR_COLOR);
 
   @SuppressWarnings("UseJBColor")
-  private static final Color MAC_INACTIVE_ERROR_COLOR = new Color(0x80f2aaaa, true);
-  private static final JBColor DEFAULT_INACTIVE_ERROR_COLOR = new JBColor(0xebbcbc, 0x725252);
+  private static final Color MAC_ACTIVE_WARNING_COLOR = new Color(0x80e9ad43, true);
+  private static final Color DEFAULT_ACTIVE_WARNING_COLOR = new JBColor(0xe2a53a, 0xac7920);
 
-  private static final Color ACTIVE_ERROR_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_ACTIVE_ERROR_COLOR : DEFAULT_ACTIVE_ERROR_COLOR);
-  private static final Color INACTIVE_ERROR_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_INACTIVE_ERROR_COLOR : DEFAULT_INACTIVE_ERROR_COLOR);
+  @SuppressWarnings("UseJBColor")
+  private static final Color MAC_INACTIVE_WARNING_COLOR = new Color(0x80ffda99, true);
+  private static final Color DEFAULT_INACTIVE_WARNING_COLOR = new JBColor(0xffd385, 0x6e5324);
 
-  public static void paintFocusRing(Graphics g, Rectangle bounds) {
-    MacUIUtil.paintFocusRing((Graphics2D)g, GLOW_COLOR, bounds);
-  }
+  public static final Color ACTIVE_WARNING_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_ACTIVE_WARNING_COLOR : DEFAULT_ACTIVE_WARNING_COLOR);
+  public static final Color INACTIVE_WARNING_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_INACTIVE_WARNING_COLOR : DEFAULT_INACTIVE_WARNING_COLOR);
 
-  public static void paintFocusOval(Graphics g, int x, int y, int width, int height) {
-    MacUIUtil.paintFocusRing((Graphics2D)g, GLOW_COLOR, new Rectangle(x, y, width, height), true);
-  }
+  private static final Color MAC_REGULAR_COLOR = new JBColor(new Color(0x80479cfc, true), new Color(0x395d82));
+  private static final Color DEFAULT_REGULAR_COLOR = new JBColor(new Color(0x8ab2eb), new Color(0x395d82));
 
-  public static void paintSearchFocusRing(Graphics2D g, Rectangle bounds, Component component) {
-    paintSearchFocusRing(g, bounds, component, -1);
-  }
+  private static final Color REGULAR_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_REGULAR_COLOR : DEFAULT_REGULAR_COLOR);
+  private static final Color GRAPHITE_COLOR = new JBColor(new Color(0x8099979d, true), new Color(0x676869));
 
-  public static void paintSearchFocusRing(Graphics2D g, Rectangle bounds, Component component, int maxArcSize) {
-    int correction = UIUtil.isUnderAquaLookAndFeel() ? 30 : UIUtil.isUnderDarcula() ? 50 : 0;
-    final Color[] colors = new Color[]{
-      ColorUtil.toAlpha(GLOW_COLOR, 180 - correction),
-      ColorUtil.toAlpha(GLOW_COLOR, 120 - correction),
-      ColorUtil.toAlpha(GLOW_COLOR, 70  - correction),
-      ColorUtil.toAlpha(GLOW_COLOR, 100 - correction),
-      ColorUtil.toAlpha(GLOW_COLOR, 50  - correction)
+  public enum Outline {
+    error {
+      public void setGraphicsColor(Graphics2D g, boolean focused) {
+        g.setColor(focused ? ACTIVE_ERROR_COLOR : INACTIVE_ERROR_COLOR);
+      }
+    },
+
+    warning {
+      public void setGraphicsColor(Graphics2D g, boolean focused) {
+        g.setColor(focused ? ACTIVE_WARNING_COLOR: INACTIVE_WARNING_COLOR);
+      }
     };
 
-    final Object oldAntialiasingValue = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-    final Object oldStrokeControlValue = g.getRenderingHint(RenderingHints.KEY_STROKE_CONTROL);
-
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
-
-
-    final Rectangle r = new Rectangle(bounds.x - 3, bounds.y - 3, bounds.width + 6, bounds.height + 6);
-    int arcSize = r.height - 1;
-    if (maxArcSize>0) arcSize = Math.min(maxArcSize, arcSize);
-    if (arcSize %2 == 1) arcSize--;
-
-
-    g.setColor(component.getBackground());
-    g.fillRoundRect(r.x + 2, r.y + 2, r.width - 5, r.height - 5, arcSize - 4, arcSize - 4);
-
-    g.setColor(colors[0]);
-    g.drawRoundRect(r.x + 2, r.y + 2, r.width - 5, r.height - 5, arcSize-4, arcSize-4);
-
-    g.setColor(colors[1]);
-    g.drawRoundRect(r.x + 1, r.y + 1, r.width - 3, r.height - 3, arcSize-2, arcSize-2);
-
-    g.setColor(colors[2]);
-    g.drawRoundRect(r.x, r.y, r.width - 1, r.height - 1, arcSize, arcSize);
-
-
-    g.setColor(colors[3]);
-    g.drawRoundRect(r.x+3, r.y+3, r.width - 7, r.height - 7, arcSize-6, arcSize-6);
-
-    g.setColor(colors[4]);
-    g.drawRoundRect(r.x+4, r.y+4, r.width - 9, r.height - 9, arcSize-8, arcSize-8);
-
-    // restore rendering hints
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAntialiasingValue);
-    g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, oldStrokeControlValue);
+    abstract public void setGraphicsColor(Graphics2D g, boolean focused);
   }
 
-  public static void paintErrorBorder(Graphics2D g, int width, int height, boolean hasFocus) {
-    int lw = JBUI.scale(UIUtil.isUnderDefaultMacTheme() ? 3 : 2);
-    Shape shape = new RoundRectangle2D.Double(lw, lw, width - lw * 2, height - lw * 2, lw, lw);
+  /**
+   * Deprecated in favor of {@link #paintFocusBorder(Graphics2D, int, int, float, boolean)}
+   */
+  @Deprecated
+  public static void paintFocusRing(Graphics g, Rectangle r) {
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      g2.translate(r.x, r.y);
+      paintFocusBorder(g2, r.width, r.height, arc(), true);
+    } finally {
+      g2.dispose();
+    }
+  }
+
+  public static void paintFocusOval(Graphics2D g, float x, float y, float width, float height) {
+    g.setPaint(IntelliJLaf.isGraphite() ? GRAPHITE_COLOR : REGULAR_COLOR);
+
+    float blw = bw() + lw(g);
+    Path2D shape = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+    shape.append(new Ellipse2D.Float(x - blw, y - blw, width + blw*2, height + blw*2), false);
+    shape.append(new Ellipse2D.Float(x, y, width, height), false);
+    g.fill(shape);
+  }
+
+  @Deprecated
+  public static void paintErrorBorder(Graphics2D g, int width, int height, int arc, boolean symmetric, boolean hasFocus) {
+    paintOutlineBorder(g, width, height, arc, symmetric, hasFocus, Outline.error);
+  }
+
+  public static void paintOutlineBorder(Graphics2D g, int width, int height, float arc, boolean symmetric, boolean hasFocus, Outline type) {
+    type.setGraphicsColor(g, hasFocus);
+    doPaint(g, width, height, arc, symmetric);
+  }
+
+  public static void paintFocusBorder(Graphics2D g, int width, int height, int arc, boolean symmetric) {
+    paintFocusBorder(g, width, height, (float)arc, symmetric);
+  }
+
+  public static void paintFocusBorder(Graphics2D g, int width, int height, float arc, boolean symmetric) {
+    g.setPaint(IntelliJLaf.isGraphite() ? GRAPHITE_COLOR : REGULAR_COLOR);
+    doPaint(g, width, height, arc, symmetric);
+  }
+
+  @SuppressWarnings("SuspiciousNameCombination")
+  private static void doPaint(Graphics2D g, int width, int height, float arc, boolean symmetric) {
+    float bw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(3) : bw();
+    float lw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(UIUtil.isRetina(g) ? 0.5f : 1.0f) : JBUI.scale(0.5f);
 
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-    g.setPaint(hasFocus ? ACTIVE_ERROR_COLOR : INACTIVE_ERROR_COLOR);
-    g.setStroke(new OuterStroke(lw));
-    g.draw(shape);
+    float outerArc = arc > 0 ? arc + bw - JBUI.scale(2f) : bw;
+    float rightOuterArc = symmetric ? outerArc : JBUI.scale(6f);
+    Path2D outerRect = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+    outerRect.moveTo(width - rightOuterArc, 0);
+    outerRect.quadTo(width, 0, width, rightOuterArc);
+    outerRect.lineTo(width, height - rightOuterArc);
+    outerRect.quadTo(width, height, width - rightOuterArc, height);
+    outerRect.lineTo(outerArc, height);
+    outerRect.quadTo(0, height, 0, height - outerArc);
+    outerRect.lineTo(0, outerArc);
+    outerRect.quadTo(0, 0, outerArc, 0);
+    outerRect.closePath();
+
+    bw += lw;
+    float rightInnerArc = symmetric ? outerArc : JBUI.scale(7f);
+    Path2D innerRect = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+    innerRect.moveTo(width - rightInnerArc, bw);
+    innerRect.quadTo(width - bw, bw , width - bw, rightInnerArc);
+    innerRect.lineTo(width - bw, height - rightInnerArc);
+    innerRect.quadTo(width - bw, height - bw, width - rightInnerArc, height - bw);
+    innerRect.lineTo(outerArc, height - bw);
+    innerRect.quadTo(bw, height - bw, bw, height - outerArc);
+    innerRect.lineTo(bw, outerArc);
+    innerRect.quadTo(bw, bw, outerArc, bw);
+    innerRect.closePath();
+
+    Path2D path = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+    path.append(outerRect, false);
+    path.append(innerRect, false);
+    g.fill(path);
   }
 
   public static boolean isCurrentEventShiftDownEvent() {
@@ -141,36 +201,221 @@ public class DarculaUIUtil {
     return -1;
   }
 
-  private static class OuterStroke implements Stroke {
-    private final BasicStroke stroke;
-
-    private OuterStroke(float width) {
-      stroke = new BasicStroke(width);
+  public static class MacEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
+    public MacEditorTextFieldBorder(EditorTextField editorTextField, EditorEx editor) {
+      super(editorTextField, editor);
     }
 
-    public Shape createStrokedShape(Shape s) {
-      float lw = stroke.getLineWidth();
-      float delta = lw / 2f;
+    @Override
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+      if (isComboBoxEditor(c)) {
+        g.setColor(c.getBackground());
+        g.fillRect(x, y, width, height);
+        return;
+      }
 
-      if (s instanceof Rectangle2D) {
-        Rectangle2D rs = (Rectangle2D) s;
-        return stroke.createStrokedShape(
-          new Rectangle2D.Double(rs.getX() - delta,
-                                 rs.getY() - delta,
-                                 rs.getWidth() + lw,
-                                 rs.getHeight() + lw));
-      } else if (s instanceof RoundRectangle2D) {
-        RoundRectangle2D rrs = (RoundRectangle2D) s;
-        return stroke.createStrokedShape(
-          new RoundRectangle2D.Double(rrs.getX() - delta,
-                                      rrs.getY() - delta,
-                                      rrs.getWidth() + lw,
-                                      rrs.getHeight() + lw,
-                                      rrs.getArcWidth() + lw,
-                                      rrs.getArcHeight() + lw));
-      } else {
-        throw new UnsupportedOperationException("Shape is not supported");
+      EditorTextField editorTextField = UIUtil.getParentOfType(EditorTextField.class, c);
+      if (editorTextField == null) return;
+
+      Graphics2D g2 = (Graphics2D)g.create();
+      try {
+        if (c.isOpaque() || (c instanceof JComponent && ((JComponent)c).getClientProperty(MAC_FILL_BORDER) == Boolean.TRUE)) {
+          g2.setColor(UIUtil.getPanelBackground());
+          g2.fillRect(x, y, width, height);
+        }
+
+        Rectangle2D rect = new Rectangle2D.Float(x + JBUI.scale(3), y + JBUI.scale(3), width - JBUI.scale(3)*2, height - JBUI.scale(3)*2);
+        g2.setColor(c.getBackground());
+        g2.fill(rect);
+
+        if (!editorTextField.isEnabled()) {
+          g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
+        }
+
+        float bw = UIUtil.isRetina(g2) ? 0.5f : 1.0f;
+        Path2D outline = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+        outline.append(rect, false);
+        outline.append(new Rectangle2D.Float((float)rect.getX() + bw,
+                                             (float)rect.getY() + bw,
+                                             (float)rect.getWidth() - 2*bw,
+                                             (float)rect.getHeight() - 2*bw), false);
+        g2.setColor(Gray.xBC);
+        g2.fill(outline);
+
+        g2.translate(x, y);
+
+        boolean hasFocus = editorTextField.getFocusTarget().hasFocus();
+        Object op = editorTextField.getClientProperty("JComponent.outline");
+        if (op != null) {
+          paintOutlineBorder(g2, width, height, 0, true, hasFocus, Outline.valueOf(op.toString()));
+        } else if (editorTextField.isEnabled() && editorTextField.isVisible() && hasFocus) {
+          paintFocusBorder(g2, width, height, 0, true);
+        }
+      } finally {
+        g2.dispose();
       }
     }
+
+    @Override
+    public Insets getBorderInsets(Component c) {
+      return isComboBoxEditor(c) ?
+             JBUI.insets(1, 3, 2, 3).asUIResource() :
+             JBUI.insets(5, 8).asUIResource();
+    }
+  }
+
+  public static class WinEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
+    public WinEditorTextFieldBorder(EditorTextField editorTextField, EditorEx editor) {
+      super(editorTextField, editor);
+      editor.addEditorMouseListener(new EditorMouseAdapter() {
+        @Override
+        public void mouseEntered(EditorMouseEvent e) {
+          editorTextField.putClientProperty(HOVER_PROPERTY, Boolean.TRUE);
+          editorTextField.repaint();
+        }
+
+        @Override
+        public void mouseExited(EditorMouseEvent e) {
+          editorTextField.putClientProperty(HOVER_PROPERTY, Boolean.FALSE);
+          editorTextField.repaint();
+        }
+      });
+    }
+
+    @Override
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+      if (isComboBoxEditor(c)) {
+        g.setColor(c.getBackground());
+        g.fillRect(x, y, width, height);
+        return;
+      }
+
+      EditorTextField editorTextField = UIUtil.getParentOfType(EditorTextField.class, c);
+      if (editorTextField == null) return;
+
+      Graphics2D g2 = (Graphics2D)g.create();
+      try {
+        Rectangle r = new Rectangle(x, y, width, height);
+
+        if (UIUtil.getParentOfType(Wrapper.class, c) != null && isSearchFieldWithHistoryPopup(c)) {
+          JBInsets.removeFrom(r, JBUI.insets(2, 0));
+        }
+
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+
+        // Fill background area of border
+        if (isBorderOpaque() || c.getParent() != null) {
+          g2.setColor(c.getParent().getBackground());
+
+          Path2D borderArea = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+          borderArea.append(r, false);
+
+          Rectangle innerRect = new Rectangle(r);
+          JBInsets.removeFrom(innerRect, JBUI.insets(2));
+          borderArea.append(innerRect, false);
+          g2.fill(borderArea);
+        }
+
+        // draw border itself
+        boolean hasFocus = editorTextField.getFocusTarget().hasFocus();
+        int bw = 1;
+
+        Object op = editorTextField.getClientProperty("JComponent.outline");
+        if (op != null) {
+          Outline.valueOf(op.toString()).setGraphicsColor(g2, c.hasFocus());
+          bw = 2;
+        } else {
+          if (hasFocus) {
+            g2.setColor(UIManager.getColor("TextField.focusedBorderColor"));
+          } else if (editorTextField.isEnabled() &&
+                     editorTextField.getClientProperty(HOVER_PROPERTY) == Boolean.TRUE) {
+            g2.setColor(UIManager.getColor("TextField.hoverBorderColor"));
+          } else {
+            g2.setColor(UIManager.getColor("TextField.borderColor"));
+          }
+          JBInsets.removeFrom(r, JBUI.insets(1));
+        }
+
+        if (!editorTextField.isEnabled()) {
+          g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.47f));
+        }
+
+        Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+        border.append(r, false);
+
+        Rectangle innerRect = new Rectangle(r);
+        JBInsets.removeFrom(innerRect, JBUI.insets(bw));
+        border.append(innerRect, false);
+
+        g2.fill(border);
+      } finally {
+        g2.dispose();
+      }
+    }
+
+    @Override
+    public Insets getBorderInsets(Component c) {
+      if (UIUtil.getParentOfType(ComboBoxCompositeEditor.class, c) != null) {
+        return JBUI.emptyInsets().asUIResource();
+      } else {
+        return isComboBoxEditor(c) ? JBUI.insets(1, 6).asUIResource() : JBUI.insets(4, 6).asUIResource();
+      }
+    }
+  }
+
+  public static class MouseHoverPropertyTrigger extends MouseAdapter {
+    private final JComponent repaintComponent;
+    private final String     hoverProperty;
+
+    public MouseHoverPropertyTrigger(@NotNull JComponent repaintComponent, @NotNull String hoverProperty) {
+      this.repaintComponent = repaintComponent;
+      this.hoverProperty = hoverProperty;
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+      setHover((JComponent)e.getComponent(), Boolean.TRUE);
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+      setHover((JComponent)e.getComponent(), Boolean.FALSE);
+    }
+
+    private void setHover(JComponent c, Boolean value) {
+      if (c.isEnabled()) {
+        c.putClientProperty(hoverProperty, value);
+        repaintComponent.repaint();
+      }
+    }
+  }
+
+  public static float lw(Graphics2D g2) {
+    return UIUtil.isJreHiDPI(g2) ? JBUI.scale(0.5f) : 1.0f;
+  }
+
+  public static float bw() {
+    return JBUI.scale(2);
+  }
+
+  public static float arc() {
+    return JBUI.scale(5.0f);
+  }
+
+  public static Color getOutlineColor(boolean enabled) {
+    if (UIUtil.isUnderDarcula()) {
+      return enabled ? Gray._100 : Gray._83;
+    }
+    return Gray.xBC ;
+  }
+
+  public static Color getArrowButtonFillColor(boolean hasFocus, boolean enabled, Color defaultColor) {
+    Color color = UIManager.getColor(hasFocus ? "ComboBox.darcula.arrowFocusedFillColor" : "ComboBox.darcula.arrowFillColor");
+    return color == null ? defaultColor : enabled ? color : getOutlineColor(false);
+  }
+
+  public static boolean isEmpty(Dimension d) {
+    return d == null || d.width == 0 && d.height == 0;
   }
 }

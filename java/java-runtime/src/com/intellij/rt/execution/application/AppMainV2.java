@@ -18,6 +18,7 @@ package com.intellij.rt.execution.application;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.lang.instrument.Instrumentation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -61,7 +62,7 @@ public class AppMainV2 {
             try {
               while (true) {
                 String msg = reader.readLine();
-                if ("TERM".equals(msg)) {
+                if (msg == null || "TERM".equals(msg)) {
                   return;
                 }
                 else if ("BREAK".equals(msg)) {
@@ -87,19 +88,6 @@ public class AppMainV2 {
     };
     t.setDaemon(true);
     t.start();
-  }
-
-  public static void premain(String args) {
-    try {
-      int p = args.indexOf(':');
-      if (p < 0) throw new IllegalArgumentException("incorrect parameter: " + args);
-      boolean helperLibLoaded = loadHelper(args.substring(p + 1));
-      int portNumber = Integer.parseInt(args.substring(0, p));
-      startMonitor(portNumber, helperLibLoaded);
-    }
-    catch (Throwable t) {
-      System.err.println("Launcher failed - \"Dump Threads\" and \"Exit\" actions are unavailable (" + t.getMessage() + ')');
-    }
   }
 
   public static void main(String[] args) throws Throwable {
@@ -157,6 +145,26 @@ public class AppMainV2 {
     }
     catch (Throwable e) {
       return false;
+    }
+  }
+
+  public static class Agent {
+    public static void premain(String args, Instrumentation i) {
+      AppMainV2.premain(args);
+    }
+  }
+
+  // todo[r.sh] inline some time after 2017.1.1 release
+  public static void premain(String args) {
+    try {
+      int p = args.indexOf(':');
+      if (p < 0) throw new IllegalArgumentException("incorrect parameter: " + args);
+      boolean helperLibLoaded = loadHelper(args.substring(p + 1));
+      int portNumber = Integer.parseInt(args.substring(0, p));
+      startMonitor(portNumber, helperLibLoaded);
+    }
+    catch (Throwable t) {
+      System.err.println("Launcher failed - \"Dump Threads\" and \"Exit\" actions are unavailable (" + t.getMessage() + ')');
     }
   }
 }

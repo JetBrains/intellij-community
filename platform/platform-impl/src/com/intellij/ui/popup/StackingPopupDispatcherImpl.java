@@ -28,16 +28,16 @@ import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.List;
+import java.util.Collection;
 import java.util.Stack;
 import java.util.stream.Stream;
 
 public class StackingPopupDispatcherImpl extends StackingPopupDispatcher implements AWTEventListener, KeyEventDispatcher {
 
   private final Stack<JBPopup> myStack = new Stack<>();
-  private final List<JBPopup> myPersistentPopups = new WeakList<>();
+  private final Collection<JBPopup> myPersistentPopups = new WeakList<>();
 
-  private final List<JBPopup> myAllPopups = new WeakList<>();
+  private final Collection<JBPopup> myAllPopups = new WeakList<>();
 
 
   private StackingPopupDispatcherImpl() {
@@ -73,8 +73,7 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
 
   @Override
   public void hidePersistentPopups() {
-    List<JBPopup> list = myPersistentPopups;
-    for (JBPopup each : list) {
+    for (JBPopup each : myPersistentPopups) {
       if (each.isNativePopup()) {
         each.setUiVisible(false);
       }
@@ -83,8 +82,7 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
 
   @Override
   public void restorePersistentPopups() {
-    List<JBPopup> list = myPersistentPopups;
-    for (JBPopup each : list) {
+    for (JBPopup each : myPersistentPopups) {
       if (each.isNativePopup()) {
         each.setUiVisible(true);
       }
@@ -203,7 +201,12 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
 
   @Override
   public boolean close() {
-    return closeActivePopup();
+    if (!closeActivePopup()) return false;
+    // try to close other popups in the stack
+    while (closeActivePopup()) {
+      // close all popups one by one
+    }
+    return true; // at least one popup was closed
   }
 
   @Override
@@ -222,8 +225,8 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
   public boolean closeActivePopup() {
     if (myStack.isEmpty()) return false;
 
-    final AbstractPopup popup = (AbstractPopup)myStack.pop();
-    if (popup != null && popup.isVisible() && popup.isCancelOnWindowDeactivation()) {
+    final AbstractPopup popup = (AbstractPopup)myStack.peek();
+    if (popup != null && popup.isVisible() && popup.isCancelOnWindowDeactivation() && popup.canClose()) {
       popup.cancel();
       return true;
     }

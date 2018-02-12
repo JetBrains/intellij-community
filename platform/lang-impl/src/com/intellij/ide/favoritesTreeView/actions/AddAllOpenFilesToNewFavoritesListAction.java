@@ -23,10 +23,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 
-/**
- * User: anna
- * Date: Feb 28, 2005
- */
 class AddAllOpenFilesToNewFavoritesListAction extends AnAction implements DumbAware {
   public AddAllOpenFilesToNewFavoritesListAction() {
     super(IdeBundle.message("action.add.all.open.tabs.to.new.favorites.list"),

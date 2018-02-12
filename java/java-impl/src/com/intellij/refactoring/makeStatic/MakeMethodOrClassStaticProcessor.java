@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 16.04.2002
- * Time: 15:37:30
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.makeStatic;
 
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
@@ -127,7 +119,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
         result.add(usage);
       }
     }
-    return result.toArray(new UsageInfo[result.size()]);
+    return result.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   private static UsageInfo[] filterInternalUsages(UsageInfo[] usages) {
@@ -137,7 +129,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
         result.add(usage);
       }
     }
-    return result.toArray(new UsageInfo[result.size()]);
+    return result.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   protected MultiMap<PsiElement,String> getConflictDescriptions(UsageInfo[] usages) {
@@ -240,7 +232,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
       }
     }
 
-    return result.toArray(new UsageInfo[result.size()]);
+    return result.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   protected abstract void findExternalUsages(ArrayList<UsageInfo> result);
@@ -304,6 +296,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
     return false;
   }
 
+  @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("make.static.command", DescriptiveNameUtil.getDescriptiveName(myMember));
   }

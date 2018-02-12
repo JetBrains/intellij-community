@@ -27,31 +27,31 @@ import org.jetbrains.annotations.Nullable;
 
 abstract class SmartPointerElementInfo {
   @Nullable
-  public Document getDocumentToSynchronize() {
+  Document getDocumentToSynchronize() {
     return null;
   }
 
-  public void fastenBelt() {
+  void fastenBelt() {
   }
 
   @Nullable
-  public abstract PsiElement restoreElement();
+  abstract PsiElement restoreElement();
 
-  public abstract PsiFile restoreFile();
+  abstract PsiFile restoreFile();
 
-  public abstract int elementHashCode(); // must be immutable
-  public abstract boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other);
+  abstract int elementHashCode(); // must be immutable
+  abstract boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other);
 
-  public abstract VirtualFile getVirtualFile();
+  abstract VirtualFile getVirtualFile();
 
   @Nullable
-  public abstract Segment getRange();
+  abstract Segment getRange();
   @NotNull
-  public abstract Project getProject();
+  abstract Project getProject();
 
-  public void cleanup() {
+  void cleanup() {
   }
 
   @Nullable
-  public abstract Segment getPsiRange();
+  abstract Segment getPsiRange();
 }

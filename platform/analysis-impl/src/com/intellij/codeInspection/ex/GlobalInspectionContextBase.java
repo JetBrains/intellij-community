@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -122,8 +122,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
       final String[] availableProfileNames = profileManager.getAvailableProfileNames();
       if (availableProfileNames.length == 0) {
-        //can't be
-        return null;
+        throw new IllegalStateException("There should be at least one inspection profile");
       }
       profile = profileManager.getProfile(availableProfileNames[0], true);
     }
@@ -239,6 +238,12 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
       public void onSuccess() {
         notifyInspectionsFinished(scope);
       }
+
+      @Override
+      public void onCancel() {
+        // execute cleanup in EDT because of myTools
+        cleanup();
+      }
     });
   }
 
@@ -249,15 +254,10 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
       public boolean shouldStartInBackground() {
         return true;
       }
-
-      @Override
-      public void processSentToBackground() {
-
-      }
     };
   }
 
-  protected void notifyInspectionsFinished(AnalysisScope scope) {
+  protected void notifyInspectionsFinished(@NotNull AnalysisScope scope) {
   }
 
   public void performInspectionsWithProgress(@NotNull final AnalysisScope scope, final boolean runGlobalToolsOnly, final boolean isOfflineInspections) {
@@ -265,6 +265,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     if (myProgressIndicator == null) {
       throw new IllegalStateException("Inspections must be run under progress");
     }
+    myProgressIndicator.setIndeterminate(false);
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     //init manager in read action
     RefManagerImpl refManager = (RefManagerImpl)getRefManager();
@@ -277,14 +278,8 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
       //to override current progress in order to hide useless messages/%
       ProgressManager.getInstance().executeProcessUnderProgress(() -> runTools(scope, runGlobalToolsOnly, isOfflineInspections), ProgressWrapper.wrap(myProgressIndicator));
     }
-    catch (ProcessCanceledException e) {
-      cleanup();
+    catch (ProcessCanceledException | IndexNotReadyException e) {
       throw e;
-    }
-    catch (IndexNotReadyException e) {
-      cleanup();
-      DumbService.getInstance(myProject).showDumbModeNotification("Usage search is not available until indices are ready");
-      throw new ProcessCanceledException();
     }
     catch (Throwable e) {
       LOG.error(e);
@@ -414,7 +409,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
       }
       GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext(false);
       final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-      AnalysisScope analysisScope = new AnalysisScope(new LocalSearchScope(psiElements.toArray(new PsiElement[psiElements.size()])), project);
+      AnalysisScope analysisScope = new AnalysisScope(new LocalSearchScope(psiElements.toArray(PsiElement.EMPTY_ARRAY)), project);
       globalContext.codeCleanup(analysisScope, profile, null, runnable, true);
     };
 

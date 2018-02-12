@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 19-Aug-2006
- * Time: 14:54:29
- */
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -40,7 +34,7 @@ public class AvailablePluginsTableModel extends PluginTableModel {
   public static final String BUILTIN_REPO = "Built-in Plugin Repository";
 
   private String myCategory = ALL;
-  private TreeSet<String> myAvailableCategories = new TreeSet<>();
+  private final TreeSet<String> myAvailableCategories = new TreeSet<>();
   private String myRepository = ALL;
   private String myVendor = null;
 

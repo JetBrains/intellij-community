@@ -30,10 +30,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: 2/9/12
- */
 public class ChangeMethodSignatureFromUsageReverseOrderFix extends ChangeMethodSignatureFromUsageFix {
   public ChangeMethodSignatureFromUsageReverseOrderFix(@NotNull PsiMethod targetMethod,
                                                        @NotNull PsiExpression[] expressions,

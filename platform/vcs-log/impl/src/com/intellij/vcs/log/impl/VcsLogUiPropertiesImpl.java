@@ -33,12 +33,15 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
                              MainVcsLogUiProperties.SHOW_LONG_EDGES,
                              MainVcsLogUiProperties.BEK_SORT_TYPE,
                              MainVcsLogUiProperties.SHOW_ROOT_NAMES,
-                             MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW,
-                             MainVcsLogUiProperties.SHOW_TAG_NAMES,
                              MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE,
                              MainVcsLogUiProperties.TEXT_FILTER_REGEX,
                              CommonUiProperties.COLUMN_ORDER);
   private final Set<PropertiesChangeListener> myListeners = ContainerUtil.newLinkedHashSet();
+  @NotNull private final VcsLogApplicationSettings myAppSettings;
+
+  public VcsLogUiPropertiesImpl(@NotNull VcsLogApplicationSettings appSettings) {
+    myAppSettings = appSettings;
+  }
 
   public static class State {
     public boolean SHOW_DETAILS_IN_CHANGES = true;
@@ -49,8 +52,6 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     public Deque<UserGroup> RECENTLY_FILTERED_BRANCH_GROUPS = new ArrayDeque<>();
     public Map<String, Boolean> HIGHLIGHTERS = ContainerUtil.newTreeMap();
     public Map<String, List<String>> FILTERS = ContainerUtil.newTreeMap();
-    public boolean COMPACT_REFERENCES_VIEW = true;
-    public boolean SHOW_TAG_NAMES = false;
     public TextFilterSettings TEXT_FILTER_SETTINGS = new TextFilterSettings();
     public Map<Integer, Integer> COLUMN_WIDTH = ContainerUtil.newHashMap();
     public List<Integer> COLUMN_ORDER = ContainerUtil.newArrayList();
@@ -64,6 +65,10 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   @NotNull
   @Override
   public <T> T get(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
+    if (myAppSettings.exists(property)) {
+      return myAppSettings.get(property);
+    }
+
     if (CommonUiProperties.SHOW_DETAILS.equals(property)) {
       return (T)Boolean.valueOf(getState().SHOW_DETAILS_IN_CHANGES);
     }
@@ -72,12 +77,6 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     }
     else if (SHOW_ROOT_NAMES.equals(property)) {
       return (T)Boolean.valueOf(getState().SHOW_ROOT_NAMES);
-    }
-    else if (COMPACT_REFERENCES_VIEW.equals(property)) {
-      return (T)Boolean.valueOf(getState().COMPACT_REFERENCES_VIEW);
-    }
-    else if (SHOW_TAG_NAMES.equals(property)) {
-      return (T)Boolean.valueOf(getState().SHOW_TAG_NAMES);
     }
     else if (BEK_SORT_TYPE.equals(property)) {
       return (T)PermanentGraph.SortType.values()[getState().BEK_SORT_TYPE];
@@ -109,6 +108,11 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   @SuppressWarnings("unchecked")
   @Override
   public <T> void set(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property, @NotNull T value) {
+    if (myAppSettings.exists(property)) {
+      myAppSettings.set(property, value);
+      return;
+    }
+
     if (CommonUiProperties.SHOW_DETAILS.equals(property)) {
       getState().SHOW_DETAILS_IN_CHANGES = (Boolean)value;
     }
@@ -117,12 +121,6 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     }
     else if (SHOW_ROOT_NAMES.equals(property)) {
       getState().SHOW_ROOT_NAMES = (Boolean)value;
-    }
-    else if (COMPACT_REFERENCES_VIEW.equals(property)) {
-      getState().COMPACT_REFERENCES_VIEW = (Boolean)value;
-    }
-    else if (SHOW_TAG_NAMES.equals(property)) {
-      getState().SHOW_TAG_NAMES = (Boolean)value;
     }
     else if (BEK_SORT_TYPE.equals(property)) {
       getState().BEK_SORT_TYPE = ((PermanentGraph.SortType)value).ordinal();
@@ -150,7 +148,8 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
 
   @Override
   public <T> boolean exists(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
-    if (SUPPORTED_PROPERTIES.contains(property) ||
+    if (myAppSettings.exists(property) ||
+        SUPPORTED_PROPERTIES.contains(property) ||
         property instanceof VcsLogHighlighterProperty ||
         property instanceof CommonUiProperties.TableColumnProperty) {
       return true;
@@ -226,11 +225,13 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   @Override
   public void addChangeListener(@NotNull PropertiesChangeListener listener) {
     myListeners.add(listener);
+    myAppSettings.addChangeListener(listener);
   }
 
   @Override
   public void removeChangeListener(@NotNull PropertiesChangeListener listener) {
     myListeners.remove(listener);
+    myAppSettings.removeChangeListener(listener);
   }
 
   public static class UserGroup {
@@ -277,6 +278,8 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
 
     public abstract void onColumnOrderChanged();
 
+    public abstract void onShowChangesFromParentsChanged();
+
     @Override
     public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
       if (CommonUiProperties.SHOW_DETAILS.equals(property)) {
@@ -308,6 +311,9 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
       }
       else if (property instanceof CommonUiProperties.TableColumnProperty) {
         onColumnWidthChanged(((CommonUiProperties.TableColumnProperty)property).getColumn());
+      }
+      else if (SHOW_CHANGES_FROM_PARENTS.equals(property)) {
+        onShowChangesFromParentsChanged();
       }
       else {
         throw new UnsupportedOperationException("Property " + property + " does not exist");

@@ -28,7 +28,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class QualifyThisOrSuperArgumentFix implements IntentionAction {
-  protected static final Logger LOG = Logger.getInstance("#" + QualifyThisOrSuperArgumentFix.class.getName());
+  protected static final Logger LOG = Logger.getInstance(QualifyThisOrSuperArgumentFix.class);
   protected final PsiExpression myExpression;
   protected final PsiClass myPsiClass;
   private String myText;

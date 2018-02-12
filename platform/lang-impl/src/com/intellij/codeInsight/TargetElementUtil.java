@@ -1,23 +1,5 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/*
- * User: anna
- * Date: 30-Jan-2008
- */
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -28,9 +10,9 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -52,6 +34,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -322,7 +305,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     PsiElement parent = element;
 
     int offset = offsetInElement;
-    while (parent != null) {
+    while (parent != null && !(parent instanceof PsiFileSystemItem)) {
       for (PomDeclarationSearcher searcher : PomDeclarationSearcher.EP_NAME.getExtensions()) {
         searcher.findDeclarationsAt(parent, offset, consumer);
         if (!targets.isEmpty()) {
@@ -350,10 +333,8 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
     PsiElement parent;
     if ((parent = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class, false)) != null) {
-      boolean isInjected = parent instanceof PsiFile
-                           && InjectedLanguageManager.getInstance(parent.getProject()).isInjectedFragment((PsiFile)parent);
-      // A bit hacky depends on navigation offset correctly overridden
-      if (!isInjected && parent.getTextOffset() == element.getTextRange().getStartOffset()) {
+      // A bit hacky: depends on the named element's text offset being overridden correctly
+      if (!(parent instanceof PsiFile) && parent.getTextOffset() == element.getTextRange().getStartOffset()) {
         if (evaluator == null || evaluator.isAcceptableNamedParent(parent)) {
           return parent;
         }
@@ -414,9 +395,9 @@ public class TargetElementUtil extends TargetElementUtilBase {
       final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
       List<PsiElement> navigatableResults = new ArrayList<>(results.length);
 
-      for(ResolveResult r:results) {
+      for (ResolveResult r : results) {
         PsiElement element = r.getElement();
-        if (EditSourceUtil.canNavigate(element) || element instanceof Navigatable && ((Navigatable)element).canNavigateToSource()) {
+        if (isNavigatableSource(element)) {
           navigatableResults.add(element);
         }
       }
@@ -428,6 +409,12 @@ public class TargetElementUtil extends TargetElementUtilBase {
       return Collections.singleton(resolved);
     }
     return Collections.emptyList();
+  }
+
+
+  @Contract("null -> false")
+  public boolean isNavigatableSource(@Nullable PsiElement element) {
+    return EditSourceUtil.canNavigate(element) || element instanceof Navigatable && ((Navigatable)element).canNavigateToSource();
   }
 
   @Override
@@ -448,7 +435,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
   @Override
   public boolean acceptImplementationForReference(@Nullable PsiReference reference, @Nullable PsiElement element) {
-    TargetElementEvaluatorEx2 evaluator = element != null ? getElementEvaluatorsEx2(element.getLanguage()) : null;
+    TargetElementEvaluatorEx2 evaluator = element != null ? getElementEvaluatorsEx2(ReadAction.compute(element::getLanguage)) : null;
     return evaluator == null || evaluator.acceptImplementationForReference(reference, element);
   }
 

@@ -17,13 +17,8 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import org.jetbrains.annotations.NonNls;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Comparator;
-import java.util.Date;
-import java.util.Locale;
 
 /**
  * @author yole
@@ -51,14 +46,12 @@ public interface ChangeListGroupingStrategy {
     }
 
     public Comparator<CommittedChangeList> getComparator() {
-      return new Comparator<CommittedChangeList>() {
-        public int compare(final CommittedChangeList o1, final CommittedChangeList o2) {
-          int rc = o1.getCommitterName().compareToIgnoreCase(o2.getCommitterName());
-          if (rc == 0) {
-            return -o1.getCommitDate().compareTo(o2.getCommitDate());
-          }
-          return rc;
+      return (o1, o2) -> {
+        int rc = o1.getCommitterName().compareToIgnoreCase(o2.getCommitterName());
+        if (rc == 0) {
+          return -o1.getCommitDate().compareTo(o2.getCommitDate());
         }
+        return rc;
       };
     }
   };

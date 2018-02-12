@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,18 @@ package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,36 +74,42 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
     final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class);
 
     if (function != null) {
+      if (LanguageLevel.forElement(function).isPython2() && function.getParameterList().hasPositionalContainer()) {
+        return false;
+      }
+
+      final boolean caretInParameterList = PsiTreeUtil.isAncestor(function.getParameterList(), element, true);
+
       for (PyCallExpression call : findKeywordContainerCalls(function)) {
         final PyExpression firstArgument = ArrayUtil.getFirstElement(call.getArguments());
         final String firstArgumentValue = PyStringLiteralUtil.getStringValue(firstArgument);
-        if (firstArgumentValue == null || !PyNames.isIdentifierString(firstArgumentValue)) {
-          return false;
+        if (firstArgumentValue != null &&
+            PyNames.isIdentifier(firstArgumentValue) &&
+            (caretInParameterList || PsiTreeUtil.isAncestor(call, element, true))) {
+          return true;
         }
       }
 
       for (PySubscriptionExpression subscription : findKeywordContainerSubscriptions(function)) {
         final PyExpression indexExpression = subscription.getIndexExpression();
         final String indexValue = PyStringLiteralUtil.getStringValue(indexExpression);
-        if (indexValue == null || !PyNames.isIdentifierString(indexValue)) {
-          return false;
+        if (indexValue != null &&
+            PyNames.isIdentifier(indexValue) &&
+            (caretInParameterList || PsiTreeUtil.isAncestor(subscription, element, true))) {
+          return true;
         }
       }
-
-      return getKeywordContainer(function) != null;
     }
 
     return false;
   }
 
   @Nullable
-  private static PyParameter getKeywordContainer(@NotNull PyFunction function) {
-    return Arrays
-      .stream(function.getParameterList().getParameters())
-      .filter(PyNamedParameter.class::isInstance)
-      .map(PyNamedParameter.class::cast)
-      .filter(PyNamedParameter::isKeywordContainer)
-      .findFirst()
+  private static PyParameter getKeywordContainer(@NotNull PyParameterList parameterList) {
+    return StreamEx
+      .of(parameterList.getParameters())
+      .select(PyNamedParameter.class)
+      .findFirst(PyNamedParameter::isKeywordContainer)
       .orElse(null);
   }
 
@@ -133,15 +142,12 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
         .ofNullable(subscription.getIndexExpression())
         .map(indexExpression -> PyUtil.as(indexExpression, PyStringLiteralExpression.class))
         .map(PyStringLiteralExpression::getStringValue)
-        .map(indexValue -> elementGenerator.createExpressionFromText(LanguageLevel.forElement(function), indexValue))
+        .filter(PyNames::isIdentifier)
         .ifPresent(
-          parameter -> {
-            final int anchorIndex = function.getContainingClass() == null ? 0 : 1;
-            final PsiElement comma = (PsiElement)elementGenerator.createComma();
+          indexValue -> {
+            final PyExpression parameter = elementGenerator.createExpressionFromText(LanguageLevel.forElement(function), indexValue);
 
-            function.getParameterList().addBefore(parameter, function.getParameterList().getParameters()[anchorIndex]);
-            function.getParameterList().addBefore(comma, function.getParameterList().getParameters()[anchorIndex]);
-
+            insertParameter(function.getParameterList(), parameter, false, elementGenerator);
             subscription.replace(parameter);
           }
         );
@@ -157,22 +163,15 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
         .map(ArrayUtil::getFirstElement)
         .map(firstArgument -> PyUtil.as(firstArgument, PyStringLiteralExpression.class))
         .map(PyStringLiteralExpression::getStringValue)
+        .filter(PyNames::isIdentifier)
         .ifPresent(
           indexValue -> {
-            final PyNamedParameter parameterWithDefaultValue = getParameterWithDefaultValue(elementGenerator, call, indexValue);
-            final PyExpression parameter = elementGenerator.createExpressionFromText(LanguageLevel.forElement(function), indexValue);
-            final PyParameter keywordContainer = getKeywordContainer(function);
-
+            final PyNamedParameter parameter = createParameter(elementGenerator, call, indexValue);
             if (parameter != null) {
-              if (parameterWithDefaultValue != null) {
-                function.getParameterList().addBefore(parameterWithDefaultValue, keywordContainer);
-              }
-              else {
-                function.getParameterList().addBefore(parameter, keywordContainer);
-              }
-              function.getParameterList().addBefore((PsiElement)elementGenerator.createComma(), keywordContainer);
+              final PyExpression parameterUsage = elementGenerator.createExpressionFromText(LanguageLevel.forElement(function), indexValue);
 
-              call.replace(parameter);
+              insertParameter(function.getParameterList(), parameter, parameter.hasDefaultValue(), elementGenerator);
+              call.replace(parameterUsage);
             }
           }
         );
@@ -181,13 +180,12 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
 
   @NotNull
   private static <T> List<T> findKeywordContainerUsages(@NotNull PyFunction function,
-                                                        @NotNull BiPredicate<PsiElement, String> usagePredicate) {
-    final PyParameter keywordContainer = getKeywordContainer(function);
-    final String keywordContainerName = keywordContainer == null ? null : keywordContainer.getName();
+                                                        @NotNull BiPredicate<PsiElement, PyParameter> usagePredicate) {
+    final PyParameter keywordContainer = getKeywordContainer(function.getParameterList());
 
-    if (keywordContainerName != null) {
-      final List<T> result = new ArrayList<T>();
-      final Stack<PsiElement> stack = new Stack<PsiElement>();
+    if (keywordContainer != null) {
+      final List<T> result = new ArrayList<>();
+      final Stack<PsiElement> stack = new Stack<>();
 
       for (PyStatement statement : function.getStatementList().getStatements()) {
         stack.push(statement);
@@ -195,7 +193,7 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
         while (!stack.isEmpty()) {
           final PsiElement element = stack.pop();
 
-          if (usagePredicate.test(element, keywordContainerName)) {
+          if (usagePredicate.test(element, keywordContainer)) {
             //noinspection unchecked
             result.add((T)element);
           }
@@ -213,34 +211,51 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
     return Collections.emptyList();
   }
 
-  private static boolean isKeywordContainerSubscription(@Nullable PsiElement element, @NotNull String keywordContainerName) {
-    return element instanceof PySubscriptionExpression &&
-           keywordContainerName.equals(((PySubscriptionExpression)element).getOperand().getText());
+  private static boolean isKeywordContainerSubscription(@Nullable PsiElement element, @NotNull PyParameter keywordContainer) {
+    if (element instanceof PySubscriptionExpression) {
+      final PyExpression operand = ((PySubscriptionExpression)element).getOperand();
+      if (operand instanceof PyReferenceExpression) {
+        return ((PyReferenceExpression)operand).getReference().isReferenceTo(keywordContainer);
+      }
+    }
+
+    return false;
   }
 
-  private static boolean isKeywordContainerCall(@Nullable PsiElement element, @NotNull String keywordContainerName) {
-    return Optional
-      .ofNullable(PyUtil.as(element, PyCallExpression.class))
-      .map(PyCallExpression::getCallee)
-      .map(callee -> PyUtil.as(callee, PyQualifiedExpression.class))
-      .filter(
-        callee -> {
-          final PyExpression qualifier = callee.getQualifier();
-          return qualifier != null &&
-                 qualifier.getText().equals(keywordContainerName) &&
-                 ArrayUtil.contains(callee.getReferencedName(), "get", PyNames.GETITEM);
+  private static boolean isKeywordContainerCall(@Nullable PsiElement element, @NotNull PyParameter keywordContainer) {
+    if (element instanceof PyCallExpression) {
+      final PyExpression callee = ((PyCallExpression)element).getCallee();
+      if (callee instanceof PyQualifiedExpression) {
+        final PyQualifiedExpression qualifiedCallee = (PyQualifiedExpression)callee;
+        final PyExpression qualifier = qualifiedCallee.getQualifier();
+
+        if (qualifier instanceof PyReferenceExpression) {
+          return ((PyReferenceExpression)qualifier).getReference().isReferenceTo(keywordContainer) &&
+                 ArrayUtil.contains(qualifiedCallee.getReferencedName(), "get", "pop", PyNames.GETITEM);
         }
-      )
-      .isPresent();
+      }
+    }
+    return false;
+  }
+
+  private static void insertParameter(@NotNull PyParameterList parameterList,
+                                      @NotNull PyElement parameter,
+                                      boolean hasDefaultValue,
+                                      @NotNull PyElementGenerator elementGenerator) {
+    final PyElement placeToInsertParameter = findCompatiblePlaceToInsertParameter(parameterList, hasDefaultValue);
+
+    parameterList.addBefore(parameter, placeToInsertParameter);
+    parameterList.addBefore((PsiElement)elementGenerator.createComma(), placeToInsertParameter);
   }
 
   @Nullable
-  private static PyNamedParameter getParameterWithDefaultValue(@NotNull PyElementGenerator elementGenerator,
-                                                               @NotNull PyCallExpression call,
-                                                               @NotNull String parameterName) {
+  private static PyNamedParameter createParameter(@NotNull PyElementGenerator elementGenerator,
+                                                  @NotNull PyCallExpression call,
+                                                  @NotNull String parameterName) {
     final PyExpression[] arguments = call.getArguments();
     if (arguments.length > 1) {
-      return elementGenerator.createParameter(parameterName + "=" + arguments[1].getText());
+      final PyExpression argument = PyUtil.peelArgument(arguments[1]);
+      return argument == null ? null : elementGenerator.createParameter(parameterName + "=" + argument.getText());
     }
 
     final PyQualifiedExpression callee = PyUtil.as(call.getCallee(), PyQualifiedExpression.class);
@@ -248,6 +263,22 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
       return elementGenerator.createParameter(parameterName + "=" + PyNames.NONE);
     }
 
-    return null;
+    return elementGenerator.createParameter(parameterName);
+  }
+
+  @Nullable
+  private static PyElement findCompatiblePlaceToInsertParameter(@NotNull PyParameterList parameterList, boolean hasDefaultValue) {
+    if (hasDefaultValue) return getKeywordContainer(parameterList);
+
+    final List<PyParameter> parameters = Arrays.asList(parameterList.getParameters());
+    for (Pair<PyParameter, PyParameter> currentAndNext : ContainerUtil.zip(parameters, parameters.subList(1, parameters.size()))) {
+      final PyParameter current = currentAndNext.getFirst();
+      if (current instanceof PyNamedParameter && ((PyNamedParameter)current).isPositionalContainer()) {
+        return currentAndNext.getSecond();
+      }
+    }
+
+    return ContainerUtil.find(parameterList.getParameters(),
+                              p -> p.hasDefaultValue() || p instanceof PyNamedParameter && ((PyNamedParameter)p).isKeywordContainer());
   }
 }

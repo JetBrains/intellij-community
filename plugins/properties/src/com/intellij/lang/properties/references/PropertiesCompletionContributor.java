@@ -30,7 +30,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,7 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -94,9 +93,11 @@ public class PropertiesCompletionContributor extends CompletionContributor {
       boolean hasBundle = resourceBundle != EmptyResourceBundle.getInstance();
       if (hasBundle) {
         PropertiesFile defaultPropertiesFile = resourceBundle.getDefaultPropertiesFile();
-        IProperty defaultProperty = defaultPropertiesFile.findPropertyByKey(key);
-        if (defaultProperty != null) {
-          value = defaultProperty.getValue();
+        if (defaultPropertiesFile.getContainingFile() != propertiesFile.getContainingFile()) {
+          IProperty defaultProperty = defaultPropertiesFile.findPropertyByKey(key);
+          if (defaultProperty != null) {
+            value = defaultProperty.getValue();
+          }
         }
       }
 
@@ -130,11 +131,10 @@ public class PropertiesCompletionContributor extends CompletionContributor {
   }
 
   public static LookupElement[] getVariants(Set<Object> variants) {
-    List<LookupElement> elements = ContainerUtil.mapNotNull(variants, (NullableFunction<Object, LookupElement>)o -> {
-      if (o instanceof String) return LookupElementBuilder.create((String)o).withIcon(PlatformIcons.PROPERTY_ICON);
-      return createVariant((IProperty)o);
-    });
-    return elements.toArray(new LookupElement[elements.size()]);
+    return variants.stream().map(o -> o instanceof String
+           ? LookupElementBuilder.create((String)o).withIcon(PlatformIcons.PROPERTY_ICON)
+           : createVariant((IProperty)o))
+      .filter(Objects::nonNull).toArray(LookupElement[]::new);
   }
 
   @Nullable

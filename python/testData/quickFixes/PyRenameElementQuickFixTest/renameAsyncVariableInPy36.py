@@ -1,0 +1,1 @@
+<warning descr="'async' and 'await' are keywords in Python 3.7 and newer">async</warning> = 1

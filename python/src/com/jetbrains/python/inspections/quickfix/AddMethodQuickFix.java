@@ -47,13 +47,12 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 /**
  * Adds a method foo to class X if X.foo() is unresolved.
  * User: dcheryasov
- * Date: Apr 5, 2009 6:51:26 PM
  */
 public class AddMethodQuickFix implements LocalQuickFix {
 
   private final String myClassName;
   private final boolean myReplaceUsage;
-  private String myIdentifier;
+  private final String myIdentifier;
 
   public AddMethodQuickFix(String identifier, String className,
                            boolean replaceUsage) {

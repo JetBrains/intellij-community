@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
@@ -36,7 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.*;
@@ -46,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -83,7 +85,9 @@ public class JavaMarkObjectActionHandler extends MarkObjectActionHandler {
       public Priority getPriority() {
         return Priority.HIGH;
       }
-      public void threadAction() {
+
+      @Override
+      public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         boolean sessionRefreshNeeded = true;
         try {
           if (markup != null) {
@@ -95,7 +99,9 @@ public class JavaMarkObjectActionHandler extends MarkObjectActionHandler {
             try {
               final boolean suggestAdditionalMarkup = canSuggestAdditionalMarkup(debugProcess, valueDescriptor.getValue());
               SwingUtilities.invokeAndWait(() -> {
-                ObjectMarkupPropertiesDialog dialog = new ObjectMarkupPropertiesDialog(parent, defaultText, suggestAdditionalMarkup);
+                Map<ObjectReference, ValueMarkup> markupMap = NodeDescriptorImpl.getMarkupMap(debugProcess);
+                Collection<ValueMarkup> existingNames = markupMap != null ? markupMap.values() : Collections.emptySet();
+                ObjectMarkupPropertiesDialog dialog = new ObjectMarkupPropertiesDialog(parent, defaultText, suggestAdditionalMarkup, existingNames);
                 if (dialog.showAndGet()) {
                   result.set(Pair.create(dialog.getConfiguredMarkup(), dialog.isMarkAdditionalFields()));
                 }

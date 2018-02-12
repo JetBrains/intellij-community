@@ -2,8 +2,8 @@ package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxEventHandlerInspection;
 
@@ -18,89 +18,90 @@ public class JavaFxEventHandlerInspectionTest extends AbstractJavaFXTestCase {
   }
 
 
-  public void testHighlightExact() throws Exception {
+  public void testHighlightExact() {
     doHighlightingTest();
   }
 
-  public void testHighlightNonVoid() throws Exception {
+  public void testHighlightNonVoid() {
     final JavaFxEventHandlerInspection inspection = new JavaFxEventHandlerInspection();
     inspection.myDetectNonVoidReturnType = true;
     myFixture.enableInspections(inspection);
     doHighlightingTest();
   }
 
-  public void testHighlightAmbiguous() throws Exception {
+  public void testHighlightAmbiguous() {
     doHighlightingTest();
   }
 
-  public void testHighlightGeneric() throws Exception {
+  public void testHighlightGeneric() {
     doHighlightingTest();
   }
 
-  public void testHighlightRaw() throws Exception {
+  public void testHighlightRaw() {
     doHighlightingTest();
   }
 
-  public void testHighlightHalfRaw() throws Exception {
+  public void testHighlightHalfRaw() {
     doHighlightingTest();
   }
 
-  public void testHighlightSpecific() throws Exception {
+  public void testHighlightSpecific() {
     doHighlightingTest();
   }
 
-  public void testHighlightSuper() throws Exception {
+  public void testHighlightSuper() {
     doHighlightingTest();
   }
 
-  public void testHighlightWildcard() throws Exception {
+  public void testHighlightWildcard() {
     doHighlightingTest();
   }
 
-  public void testQuickfixRaw() throws Exception {
-    doQuickfixTest("Create method 'void onSort(SortEvent)'");
+  public void testQuickfixRaw() {
+    doQuickfixTest("Create method 'onSort'");
   }
 
-  public void testQuickfixHalfRaw() throws Exception {
-    doQuickfixTest("Create method 'void onSort(SortEvent)'");
+  public void testQuickfixHalfRaw() {
+    doQuickfixTest("Create method 'onSort'");
   }
 
-  public void testQuickfixSpecific() throws Exception {
-    doQuickfixTest("Create method 'void onSort(SortEvent)'");
+  public void testQuickfixSpecific() {
+    doQuickfixTest("Create method 'onSort'");
   }
 
-  public void testQuickfixNoField() throws Exception {
-    doQuickfixTest("Create method 'void onSort(SortEvent)'");
+  public void testQuickfixNoField() {
+    doQuickfixTest("Create method 'onSort'");
   }
 
-  public void testQuickfixFieldType()throws Exception {
+  public void testQuickfixFieldType() {
     doQuickfixTest("Change field 'table' type to 'javafx.scene.control.TableView<java.util.Map<java.lang.String,java.lang.Double>>'");
   }
 
-  public void testQuickfixNoFieldNested() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+  public void testQuickfixNoFieldNested() {
+    final JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
     final boolean oldImports = settings.INSERT_INNER_CLASS_IMPORTS;
     try {
       settings.INSERT_INNER_CLASS_IMPORTS = true;
-      doQuickfixTest("Create method 'void onColumnEditStart(CellEditEvent)'");
+      doQuickfixTest("Create method 'onColumnEditStart'");
     }
     finally {
       settings.INSERT_INNER_CLASS_IMPORTS = oldImports;
     }
   }
 
-  public void testQuickfixSuper() throws Exception {
-    doQuickfixTest("Create method 'void click(MouseEvent)'");
+  public void testQuickfixSuper() {
+    doQuickfixTest("Create method 'click'");
   }
 
-  private void doHighlightingTest() throws Exception {
+  private void doHighlightingTest() {
     myFixture.configureByFiles(getTestName(true) + ".fxml", getTestName(false) + ".java");
     myFixture.checkHighlighting();
   }
 
-  private void doQuickfixTest(final String actionName) throws Exception {
+  private void doQuickfixTest(final String actionName) {
     String path = getTestName(true) + ".fxml";
-    final IntentionAction intention = myFixture.getAvailableIntention(actionName, path, getTestName(false) + ".java");
+    myFixture.configureByFiles(path, getTestName(false) + ".java");
+    IntentionAction intention = myFixture.findSingleIntention(actionName);
     assertNotNull(intention);
     myFixture.launchAction(intention);
     myFixture.checkResultByFile(getTestName(false) + ".java", getTestName(false) + "_after.java", true);

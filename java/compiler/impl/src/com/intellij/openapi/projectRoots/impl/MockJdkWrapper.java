@@ -43,52 +43,63 @@ public final class MockJdkWrapper implements Sdk {
     myDelegate = delegate;
   }
 
+  @Override
   public VirtualFile getHomeDirectory() {
     return LocalFileSystem.getInstance().findFileByIoFile(new File(getHomePath()));
   }
 
+  @Override
   public String getHomePath() {
     final String homePath = FileUtil.toSystemDependentName(myHomePath == null ? myDelegate.getHomePath() : myHomePath);
     return StringUtil.trimEnd(homePath, File.separator);
   }
 
+  @Override
   @NotNull
   public SdkTypeId getSdkType() {
     return myDelegate.getSdkType();
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myDelegate.getName();
   }
 
+  @Override
   public String getVersionString() {
     return myDelegate.getVersionString();
   }
 
+  @Override
   @NotNull
   public RootProvider getRootProvider() {
     return myDelegate.getRootProvider();
   }
 
+  @Override
   public <T> T getUserData(@NotNull Key<T> key) {
     return myDelegate.getUserData(key);
   }
 
+  @Override
   public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
     myDelegate.putUserData(key, value);
   }
 
+  @Override
   @NotNull
   public Object clone() throws CloneNotSupportedException {
     Sdk delegateClone = (Sdk)myDelegate.clone();
     return new MockJdkWrapper(myHomePath, delegateClone);
   }
 
+  @Override
   public SdkAdditionalData getSdkAdditionalData() {
     return null;
   }
 
+  @Override
   @NotNull
   public SdkModificator getSdkModificator() {
     return myDelegate.getSdkModificator();

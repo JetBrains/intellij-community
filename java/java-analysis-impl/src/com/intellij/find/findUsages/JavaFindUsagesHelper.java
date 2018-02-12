@@ -25,7 +25,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.references.PomService;
@@ -192,7 +191,7 @@ public class JavaFindUsagesHelper {
       final PsiMethod psiMethod = (PsiMethod)element;
       boolean isAbstract = ReadAction.compute(() -> psiMethod.hasModifierProperty(PsiModifier.ABSTRACT));
       final JavaMethodFindUsagesOptions methodOptions = (JavaMethodFindUsagesOptions)options;
-      if (isAbstract && methodOptions.isImplementingMethods || methodOptions.isOverridingMethods) {
+      if (isAbstract && methodOptions.isImplementingMethods || !isAbstract && methodOptions.isOverridingMethods) {
         if (!processOverridingMethods(psiMethod, processor, methodOptions)) return false;
         FunctionalExpressionSearch.search(psiMethod, methodOptions.searchScope).forEach(new PsiElementProcessorAdapter<>(
           expression -> addResult(expression, options, processor)));
@@ -204,8 +203,7 @@ public class JavaFindUsagesHelper {
     }
     final Boolean isSearchable = ReadAction.compute(() -> ThrowSearchUtil.isSearchable(element));
     if (!isSearchable && options.isSearchForTextOccurrences && options.searchScope instanceof GlobalSearchScope) {
-      Collection<String> stringsToSearch = ApplicationManager.getApplication().runReadAction(
-        (NullableComputable<Collection<String>>)() -> getElementNames(element));
+      Collection<String> stringsToSearch = ReadAction.compute(() -> getElementNames(element));
       // todo add to fastTrack
       if (!FindUsagesHelper.processUsagesInText(element, stringsToSearch, (GlobalSearchScope)options.searchScope, processor)) return false;
     }
@@ -254,8 +252,8 @@ public class JavaFindUsagesHelper {
         if (progress != null) {
           String name = ReadAction.compute(aClass::getName);
           progress.setText(FindBundle.message("find.searching.for.references.to.class.progress", name));
-          progress.checkCanceled();
         }
+        ProgressManager.checkCanceled();
         boolean success = ReferencesSearch.search(new ReferencesSearch.SearchParameters(aClass, options.searchScope, false, options.fastTrack)).forEach(new ReadActionProcessor<PsiReference>() {
           @Override
           public boolean processInReadAction(final PsiReference psiReference) {

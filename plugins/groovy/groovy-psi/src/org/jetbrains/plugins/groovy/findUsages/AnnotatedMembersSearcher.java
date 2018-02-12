@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.AnnotatedElementsSearcher;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -46,19 +46,10 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiModifierListOw
 
   @NotNull
   private static List<PsiModifierListOwner> getAnnotatedMemberCandidates(final PsiClass clazz, final GlobalSearchScope scope) {
-    final String name = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        return clazz.getName();
-      }
-    });
+    final String name = ReadAction.compute(() -> clazz.getName());
     if (name == null) return Collections.emptyList();
-    final Collection<PsiElement> members = ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiElement>>() {
-      @Override
-      public Collection<PsiElement> compute() {
-        return StubIndex.getElements(GrAnnotatedMemberIndex.KEY, name, clazz.getProject(), scope, PsiElement.class);
-      }
-    });
+    final Collection<PsiElement> members = ReadAction
+      .compute(() -> StubIndex.getElements(GrAnnotatedMemberIndex.KEY, name, clazz.getProject(), scope, PsiElement.class));
     if (members.isEmpty()) {
       return Collections.emptyList();
     }
@@ -83,12 +74,7 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiModifierListOw
     final PsiClass annClass = p.getAnnotationClass();
     assert annClass.isAnnotationType() : "Annotation type should be passed to annotated members search";
 
-    final String annotationFQN = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        return annClass.getQualifiedName();
-      }
-    });
+    final String annotationFQN = ReadAction.compute(() -> annClass.getQualifiedName());
     assert annotationFQN != null;
 
     final SearchScope scope = p.getScope();
@@ -119,21 +105,18 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiModifierListOw
     }
 
     for (final PsiModifierListOwner candidate : candidates) {
-      boolean accepted = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
-        @Override
-        public Boolean compute() {
-          if (AnnotatedElementsSearcher.isInstanceof(candidate, p.getTypes())) {
-            PsiModifierList list = candidate.getModifierList();
-            if (list != null) {
-              for (PsiAnnotation annotation : list.getAnnotations()) {
-                if ((p.isApproximate() || annotationFQN.equals(annotation.getQualifiedName())) && !consumer.process(candidate)) {
-                  return false;
-                }
+      boolean accepted = ReadAction.compute(() -> {
+        if (AnnotatedElementsSearcher.isInstanceof(candidate, p.getTypes())) {
+          PsiModifierList list = candidate.getModifierList();
+          if (list != null) {
+            for (PsiAnnotation annotation : list.getAnnotations()) {
+              if ((p.isApproximate() || annotationFQN.equals(annotation.getQualifiedName())) && !consumer.process(candidate)) {
+                return false;
               }
             }
           }
-          return true;
         }
+        return true;
       });
       if (!accepted) return false;
     }

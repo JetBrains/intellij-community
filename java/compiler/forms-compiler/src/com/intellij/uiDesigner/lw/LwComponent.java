@@ -43,13 +43,13 @@ public abstract class LwComponent implements IComponent{
    */
   private final String myClassName;
   /**
-   * Parent LwContainer. This field is always not <code>null</code>
+   * Parent LwContainer. This field is always not {@code null}
    * is the component is in hierarchy. But the root of hierarchy
-   * has <code>null</code> parent indeed.
+   * has {@code null} parent indeed.
    */
   private LwContainer myParent;
   /**
-   * never <code>null</code>
+   * never {@code null}
    */
   private final GridConstraints myConstraints;
 
@@ -121,7 +121,7 @@ public abstract class LwComponent implements IComponent{
 
   /**
    * @return component's constraints in XY layout. This method rever
-   * returns <code>null</code>.
+   * returns {@code null}.
    */
   public final Rectangle getBounds(){
     return (Rectangle)myBounds.clone();
@@ -129,7 +129,7 @@ public abstract class LwComponent implements IComponent{
 
   /**
    * @return component's constraints in GridLayoutManager. This method never
-   * returns <code>null</code>.
+   * returns {@code null}.
    */
   public final GridConstraints getConstraints(){
     return myConstraints;
@@ -176,7 +176,7 @@ public abstract class LwComponent implements IComponent{
   }
 
   /**
-   * @return <code>null</code> only if component class is not valid.
+   * @return {@code null} only if component class is not valid.
    * Class validation is performed with {@link com.intellij.uiDesigner.compiler.Utils#validateJComponentClass(ClassLoader,String,boolean)}
    */
   public final Element getErrorComponentProperties(){
@@ -186,7 +186,6 @@ public abstract class LwComponent implements IComponent{
   public final LwIntrospectedProperty[] getAssignedIntrospectedProperties() {
     final LwIntrospectedProperty[] properties = new LwIntrospectedProperty[myIntrospectedProperty2Value.size()];
     final Iterator iterator = myIntrospectedProperty2Value.keySet().iterator();
-    //noinspection ForLoopThatDoesntUseLoopVariable
     for (int i=0; iterator.hasNext(); i++) {
       properties[i] = (LwIntrospectedProperty)iterator.next();
     }
@@ -221,13 +220,12 @@ public abstract class LwComponent implements IComponent{
 
     final HashMap name2property = provider.getLwProperties(getComponentClassName());
     if (name2property == null) {
-      myErrorComponentProperties = (Element)propertiesElement.clone();
+      myErrorComponentProperties = propertiesElement.clone();
       return;
     }
 
-    final List propertyElements = propertiesElement.getChildren();
-    for (int i = 0; i < propertyElements.size(); i++) {
-      final Element t = (Element)propertyElements.get(i);
+    final List<Element> propertyElements = propertiesElement.getChildren();
+    for (Element t : propertyElements) {
       final String name = t.getName();
       final LwIntrospectedProperty property = (LwIntrospectedProperty)name2property.get(name);
       if (property == null){
@@ -248,9 +246,8 @@ public abstract class LwComponent implements IComponent{
   private void readClientProperties(final Element element) {
     Element propertiesElement = LwXmlReader.getChild(element, UIFormXmlConstants.ELEMENT_CLIENT_PROPERTIES);
     if (propertiesElement == null) return;
-    final List clientPropertyList = propertiesElement.getChildren();
-    for(int i=0; i<clientPropertyList.size(); i++) {
-      final Element prop = (Element) clientPropertyList.get(i);
+    final List<Element> clientPropertyList = propertiesElement.getChildren();
+    for (Element prop : clientPropertyList) {
       final String propName = prop.getName();
       final String className = LwXmlReader.getRequiredString(prop, UIFormXmlConstants.ATTRIBUTE_CLASS);
 

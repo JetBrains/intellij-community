@@ -37,9 +37,6 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.field.GroovyInplaceFie
 import javax.swing.*;
 import java.util.ArrayList;
 
-/**
- * Created by Max Medvedev on 8/29/13
- */
 public class GrInplaceConstantIntroducer extends GrAbstractInplaceIntroducer<GrIntroduceConstantSettings> {
   private final GrInplaceIntroduceConstantPanel myPanel;
   private final GrIntroduceContext myContext;
@@ -213,9 +210,7 @@ public class GrInplaceConstantIntroducer extends GrAbstractInplaceIntroducer<GrI
     return super.performRefactoring();
   }
 
-  /**
-   * Created by Max Medvedev on 8/29/13
-   */
+ 
   public class GrInplaceIntroduceConstantPanel {
     private JBCheckBox myMoveToAnotherClassJBCheckBox;
     private JPanel myRootPane;

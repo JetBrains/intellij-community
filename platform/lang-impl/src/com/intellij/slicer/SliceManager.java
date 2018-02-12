@@ -1,35 +1,17 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.ide.impl.ContentManagerWatcher;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.content.BaseLabel;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementDescriptionUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.util.RefactoringDescriptionLocation;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -60,43 +42,6 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
     myProject = project;
   }
 
-  @NotNull
-  private Disposable addPsiListener(@NotNull final ProgressIndicator indicator) {
-    Disposable disposable = Disposer.newDisposable();
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
-      @Override
-      public void beforeChildAddition(@NotNull PsiTreeChangeEvent event) {
-        indicator.cancel();
-      }
-
-      @Override
-      public void beforeChildRemoval(@NotNull PsiTreeChangeEvent event) {
-        indicator.cancel();
-      }
-
-      @Override
-      public void beforeChildReplacement(@NotNull PsiTreeChangeEvent event) {
-        indicator.cancel();
-      }
-
-      @Override
-      public void beforeChildMovement(@NotNull PsiTreeChangeEvent event) {
-        indicator.cancel();
-      }
-
-      @Override
-      public void beforeChildrenChange(@NotNull PsiTreeChangeEvent event) {
-        indicator.cancel();
-      }
-
-      @Override
-      public void beforePropertyChange(@NotNull PsiTreeChangeEvent event) {
-        indicator.cancel();
-      }
-    }, disposable);
-    return disposable;
-  }
-
   private ContentManager getContentManager(boolean dataFlowToThis) {
     if (dataFlowToThis) {
       if (myBackContentManager == null) {
@@ -119,7 +64,7 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
     String dialogTitle = getElementDescription((dataFlowToThis ? BACK_TOOLWINDOW_ID : FORTH_TOOLWINDOW_ID) + " ", element, null);
 
     dialogTitle = Pattern.compile("(<style>.*</style>)|<[^<>]*>", Pattern.DOTALL).matcher(dialogTitle).replaceAll("");
-    SliceAnalysisParams params = handler.askForParams(element, dataFlowToThis, myStoredSettings, dialogTitle);
+    SliceAnalysisParams params = handler.askForParams(element, dataFlowToThis, myStoredSettings, StringUtil.unescapeXml(dialogTitle));
     if (params == null) return;
 
     SliceRootNode rootNode = new SliceRootNode(myProject, new DuplicateMap(),
@@ -179,32 +124,13 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
            "</body></html>";
   }
 
-  void runInterruptibly(@NotNull ProgressIndicator progress,
-                        @NotNull Runnable onCancel,
-                        @NotNull Runnable runnable) throws ProcessCanceledException {
-    Disposable disposable = addPsiListener(progress);
-    try {
-      progress.checkCanceled();
-      ProgressManager.getInstance().executeProcessUnderProgress(runnable, progress);
-    }
-    catch (ProcessCanceledException e) {
-      progress.cancel();
-      //reschedule for later
-      onCancel.run();
-      throw e;
-    }
-    finally {
-      Disposer.dispose(disposable);
-    }
-  }
-
   @Override
   public StoredSettingsBean getState() {
     return myStoredSettings;
   }
 
   @Override
-  public void loadState(StoredSettingsBean state) {
+  public void loadState(@NotNull StoredSettingsBean state) {
     myStoredSettings.analysisUIOptions.save(state.analysisUIOptions);
   }
 }

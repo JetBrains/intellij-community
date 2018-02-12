@@ -2,11 +2,10 @@ package com.intellij.lang.javascript.boilerplate;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -66,10 +65,7 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
 
   @Override
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
-                              @Nullable GithubTagInfo tag, @NotNull Module module) {
-    if (tag == null) {
-      return;
-    }
+                              @NotNull GithubTagInfo tag, @NotNull Module module) {
     try {
       unpackToDir(project, VfsUtilCore.virtualToIoFile(baseDir), tag);
     }
@@ -160,12 +156,8 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
   }
 
   public ActionLink createGitHubLink() {
-    final ActionLink link = new ActionLink(getName() + " on GitHub", new AnAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        BrowserUtil.open("https://github.com/" + getGithubUserName() + "/" + getGithubRepositoryName());
-      }
-    });
+    ActionLink link = new ActionLink(getName() + " on GitHub", DumbAwareAction.create(e ->
+        BrowserUtil.open("https://github.com/" + getGithubUserName() + "/" + getGithubRepositoryName())));
     link.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
     return link;
   }

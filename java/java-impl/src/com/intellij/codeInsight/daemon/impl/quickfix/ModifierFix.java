@@ -119,13 +119,12 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
                              @NotNull PsiElement endElement) {
     final PsiModifierList myModifierList = (PsiModifierList)startElement;
     PsiVariable variable = myVariable == null ? null : myVariable.getElement();
-    return myModifierList.isValid() &&
-           myModifierList.getManager().isInProject(myModifierList) &&
+    return myModifierList.getManager().isInProject(myModifierList) &&
            myModifierList.hasExplicitModifier(myModifier) != myShouldHave &&
            (variable == null || variable.isValid());
   }
 
-  private void changeModifierList (PsiModifierList modifierList) {
+  private void changeModifierList (@NotNull PsiModifierList modifierList) {
     try {
       modifierList.setModifierProperty(myModifier, myShouldHave);
     }
@@ -200,11 +199,24 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       changeModifierList(modifierList);
-      if (myShouldHave && owner instanceof PsiMethod && PsiModifier.ABSTRACT.equals(myModifier)) {
-        final PsiMethod method = (PsiMethod)owner;
-        final PsiClass aClass = method.getContainingClass();
-        if (aClass != null && !aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-          changeModifierList(aClass.getModifierList());
+      if (myShouldHave && owner instanceof PsiMethod) {
+        if (PsiModifier.ABSTRACT.equals(myModifier)) {
+          final PsiMethod method = (PsiMethod)owner;
+          final PsiClass aClass = method.getContainingClass();
+          if (aClass != null && !aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            PsiModifierList classModifierList = aClass.getModifierList();
+            if (classModifierList != null) {
+              changeModifierList(classModifierList);
+            }
+          }
+        }
+        else if (PsiModifier.PUBLIC.equals(myModifier) &&
+                 ((PsiMethod)owner).getBody() != null &&
+                 !((PsiMethod)owner).hasModifierProperty(PsiModifier.STATIC)) {
+          PsiClass containingClass = ((PsiMethod)owner).getContainingClass();
+          if (containingClass != null && containingClass.isInterface()) {
+            modifierList.setModifierProperty(PsiModifier.DEFAULT, true);
+          }
         }
       }
       UndoUtil.markPsiFileForUndo(containingFile);

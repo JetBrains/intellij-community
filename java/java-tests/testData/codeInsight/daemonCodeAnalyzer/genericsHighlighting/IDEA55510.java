@@ -3,7 +3,7 @@ abstract class IdeaBugTest<M extends IdeaBugTest.Mapping>
         static class Mapping {}
 }
 
-class BugTestSub extends IdeaBugTest<<error descr="SubMapping is not accessible in current context">BugTestSub.SubMapping</error>>
+class BugTestSub extends IdeaBugTest<<error descr="Mapping is not accessible in current context">BugTestSub.SubMapping</error>>
 {
         public abstract static class SubMapping extends Mapping {}
 }
@@ -44,7 +44,7 @@ class Parent<T extends Parent.NestedParent>
 
 class Test
 {
-  public final static class Child extends Parent<<error descr="NestedChild is not accessible in current context">Child.NestedChild</error>>
+  public final static class Child extends Parent<<error descr="NestedParent is not accessible in current context">Child.NestedChild</error>>
   {
     private static interface NestedChild extends NestedParent
     {

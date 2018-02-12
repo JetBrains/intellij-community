@@ -110,9 +110,43 @@ public class Parsing {
     myBuilder.advanceLexer();
   }
 
+  protected void advanceAsync(boolean falseAsync) {
+    if (falseAsync) {
+      advanceError(myBuilder, "'async' keyword is not expected here");
+    }
+    else {
+      myBuilder.advanceLexer();
+    }
+  }
+
+  protected static void advanceIdentifierLike(@NotNull PsiBuilder builder) {
+    if (isFalseIdentifier(builder)) {
+      String tokenText = builder.getTokenText();
+      advanceError(builder, "'" + tokenText + "' keyword can't be used as identifier in Python 2");
+    }
+    else {
+      builder.advanceLexer();
+    }
+  }
+
+  protected static void advanceError(@NotNull PsiBuilder builder, String message) {
+    final PsiBuilder.Marker err = builder.mark();
+    builder.advanceLexer();
+    err.error(message);
+  }
+
+  protected static boolean isIdentifier(@NotNull PsiBuilder builder) {
+    return builder.getTokenType() == PyTokenTypes.IDENTIFIER || isFalseIdentifier(builder);
+  }
+
+  private static boolean isFalseIdentifier(@NotNull PsiBuilder builder) {
+    return builder.getTokenType() == PyTokenTypes.EXEC_KEYWORD ||
+           builder.getTokenType() == PyTokenTypes.PRINT_KEYWORD;
+  }
+
   protected static void buildTokenElement(IElementType type, PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
-    builder.advanceLexer();
+    advanceIdentifierLike(builder);
     marker.done(type);
   }
 

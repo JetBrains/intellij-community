@@ -45,10 +45,7 @@ public class SourceComparator implements Comparator<NodeDescriptor>{
         }
       }
     }
-    int index1 = nodeDescriptor1.getIndex();
-    int index2 = nodeDescriptor2.getIndex();
-    if (index1 == index2) return 0;
-    return index1 < index2 ? -1 : +1;
+    return Integer.compare(nodeDescriptor1.getIndex(), nodeDescriptor2.getIndex());
   }
 
   private static int getWeight(NodeDescriptor descriptor) {

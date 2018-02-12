@@ -25,10 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * User: anna
- * Date: 17-Feb-2006
- */
 public class UncheckedWarningLocalInspection extends UncheckedWarningLocalInspectionBase {
 
   @NotNull

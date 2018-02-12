@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemBefor
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import icons.GradleIcons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -50,7 +51,7 @@ public class GradleBeforeRunTaskProvider extends ExternalSystemBeforeRunTaskProv
 
   @Nullable
   @Override
-  public ExternalSystemBeforeRunTask createTask(RunConfiguration runConfiguration) {
+  public ExternalSystemBeforeRunTask createTask(@NotNull RunConfiguration runConfiguration) {
     return new ExternalSystemBeforeRunTask(ID, GradleConstants.SYSTEM_ID);
   }
 }

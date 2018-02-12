@@ -58,7 +58,7 @@ internal class KdbxHeader {
   }
 
   /* the cipher in use */
-  var cipherUuid = AES_CIPHER
+  var cipherUuid = AES_CIPHER!!
     private set
 
   /* whether the data is compressed */
@@ -109,7 +109,7 @@ internal class KdbxHeader {
     val b = ByteBuffer.wrap(uuid)
     val incoming = UUID(b.long, b.getLong(8))
     if (incoming != AES_CIPHER) {
-      throw IllegalStateException("Unknown Cipher UUID ${incoming.toString()}")
+      throw IllegalStateException("Unknown Cipher UUID $incoming")
     }
     this.cipherUuid = incoming
   }
@@ -132,7 +132,7 @@ private fun getFinalKeyDigest(key: ByteArray, masterSeed: ByteArray, transformSe
   System.arraycopy(key, 0, transformedKey, 0, transformedKey.size)
 
   // transform rounds times
-  for (rounds in 0..transformRounds - 1) {
+  for (rounds in 0 until transformRounds) {
     engine.processBlock(transformedKey, 0, transformedKey, 0)
     engine.processBlock(transformedKey, 16, transformedKey, 16)
   }
@@ -143,7 +143,7 @@ private fun getFinalKeyDigest(key: ByteArray, masterSeed: ByteArray, transformSe
   return md.digest(transformedKeyDigest)
 }
 
-fun sha256MessageDigest() = MessageDigest.getInstance("SHA-256")
+fun sha256MessageDigest(): MessageDigest = MessageDigest.getInstance("SHA-256")
 
 /**
  * Create a decrypted input stream from an encrypted one

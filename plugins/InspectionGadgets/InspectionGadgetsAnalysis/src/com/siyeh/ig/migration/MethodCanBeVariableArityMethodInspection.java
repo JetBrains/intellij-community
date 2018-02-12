@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 Bas Leijdekkers
+ * Copyright 2011-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -31,10 +30,14 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+import static com.siyeh.InspectionGadgetsBundle.message;
+
 public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
   public boolean ignoreByteAndShortArrayParameters = false;
+
+  public boolean ignoreAllPrimitiveArrayParameters = false;
 
   @SuppressWarnings("PublicField")
   public boolean ignoreOverridingMethods = false;
@@ -52,26 +55,24 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message("method.can.be.variable.arity.method.display.name");
+    return message("method.can.be.variable.arity.method.display.name");
   }
 
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("method.can.be.variable.arity.method.problem.descriptor");
+    return message("method.can.be.variable.arity.method.problem.descriptor");
   }
 
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("method.can.be.variable.arity.method.ignore.byte.short.option"),
-                      "ignoreByteAndShortArrayParameters");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.methods.overriding.super.method"), "ignoreOverridingMethods");
-    panel.addCheckbox(InspectionGadgetsBundle.message("only.report.public.methods.option"), "onlyReportPublicMethods");
-    panel.addCheckbox(InspectionGadgetsBundle.message("method.can.be.variable.arity.method.ignore.multiple.arrays.option"),
-                      "ignoreMultipleArrayParameters");
-    panel.addCheckbox(InspectionGadgetsBundle.message("method.can.be.variable.arity.method.ignore.multidimensional.arrays.option"),
-                      "ignoreMultiDimensionalArrayParameters");
+    final JCheckBox box = panel.addCheckboxEx(message("method.can.be.variable.arity.method.ignore.byte.short.option"), "ignoreByteAndShortArrayParameters");
+    panel.addDependentCheckBox(message("method.can.be.variable.arity.method.ignore.all.primitive.arrays.option"), "ignoreAllPrimitiveArrayParameters", box);
+    panel.addCheckbox(message("ignore.methods.overriding.super.method"), "ignoreOverridingMethods");
+    panel.addCheckbox(message("only.report.public.methods.option"), "onlyReportPublicMethods");
+    panel.addCheckbox(message("method.can.be.variable.arity.method.ignore.multiple.arrays.option"), "ignoreMultipleArrayParameters");
+    panel.addCheckbox(message("method.can.be.variable.arity.method.ignore.multidimensional.arrays.option"), "ignoreMultiDimensionalArrayParameters");
     return panel;
   }
 
@@ -104,11 +105,11 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
         return;
       }
       final PsiParameter lastParameter = parameters[parameters.length - 1];
-      if (NullableNotNullManager.isNullable(lastParameter)) {
-        return;
-      }
       final PsiType type = lastParameter.getType();
       if (!(type instanceof PsiArrayType) || type instanceof PsiEllipsisType) {
+        return;
+      }
+      if (NullableNotNullManager.isNullable(lastParameter)) {
         return;
       }
       final PsiArrayType arrayType = (PsiArrayType)type;
@@ -119,6 +120,9 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
       }
       if (ignoreByteAndShortArrayParameters) {
         if (PsiType.BYTE.equals(componentType) || PsiType.SHORT.equals(componentType)) {
+          return;
+        }
+        if (ignoreAllPrimitiveArrayParameters && componentType instanceof PsiPrimitiveType) {
           return;
         }
       }

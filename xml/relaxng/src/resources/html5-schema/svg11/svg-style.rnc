@@ -27,7 +27,7 @@ namespace a = "http://relaxng.org/ns/compatibility/annotations/1.0"
 ##   
 [ xml:lang = "en" ]
 grammar {
-    ClassList.datatype = xsd:NMTOKENS
+    ClassList.datatype = xsd:string
     StyleSheet.datatype = xsd:string
     
     ## 

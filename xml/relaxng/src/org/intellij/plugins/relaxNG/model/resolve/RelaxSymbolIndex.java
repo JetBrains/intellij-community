@@ -50,11 +50,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 09.06.2010
-*/
 public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
   @NonNls
   public static final ID<String, Void> NAME = ID.create("RelaxSymbolIndex");
@@ -89,7 +84,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
         }
       }
     }
-    return result.toArray(new NavigationItem[result.size()]);
+    return result.toArray(NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY);
   }
 
   @NotNull

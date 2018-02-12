@@ -107,7 +107,7 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
    *
    * @param value property value which should be serialized.
    * @param writer writer which should be used for serialization. It is assumed that
-   * before invocation of this method <code>writer</code> already has opened tag
+   * before invocation of this method {@code writer} already has opened tag
    * that corresponds to this property. You can just append some attributes
    * here or add some subtags.
    */
@@ -170,7 +170,7 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
     final PsiMethod[] psiMethods = componentClass.findMethodsByName(myReadMethod.getName(), true);
     for(PsiMethod method: psiMethods) {
       if (!method.hasModifierProperty(PsiModifier.STATIC) &&
-          method.getParameterList().getParametersCount() == 0) {
+          method.getParameterList().isEmpty()) {
         return true;
       }
     }

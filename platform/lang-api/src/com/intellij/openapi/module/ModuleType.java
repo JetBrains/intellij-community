@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,7 +111,7 @@ public abstract class ModuleType<T extends ModuleBuilder> {
   }
 
   public static boolean is(@NotNull Module module, @NotNull ModuleType moduleType) {
-    return moduleType.getId().equals(module.getOptionValue(Module.ELEMENT_TYPE));
+    return moduleType.getId().equals(module.getModuleTypeName());
   }
 
   @NotNull
@@ -120,7 +120,7 @@ public abstract class ModuleType<T extends ModuleBuilder> {
     if (instance == null) {
       return EMPTY;
     }
-    return instance.findByID(module.getOptionValue(Module.ELEMENT_TYPE));
+    return instance.findByID(module.getModuleTypeName());
   }
 
   @NotNull

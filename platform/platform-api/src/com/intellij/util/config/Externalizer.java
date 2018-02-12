@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package com.intellij.util.config;
 
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
@@ -73,12 +72,7 @@ public interface Externalizer<T> {
     @Override
     public T readValue(Element dataElement) {
       T data = myFactory.create();
-      try {
-        data.readExternal(dataElement);
-      }
-      catch (InvalidDataException e) {
-        throw new RuntimeException(e);
-      }
+      data.readExternal(dataElement);
       return data;
     }
 

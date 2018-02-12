@@ -1,24 +1,14 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.java.decompiler.main.collectors;
 
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.main.TextBuffer;
+import org.jetbrains.java.decompiler.util.TextBuffer;
+import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructContext;
+import org.jetbrains.java.decompiler.struct.StructField;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -28,6 +18,8 @@ public class ImportCollector {
 
   private final Map<String, String> mapSimpleNames = new HashMap<>();
   private final Set<String> setNotImportedNames = new HashSet<>();
+  // set of field names in this class and all its predecessors.
+  private final Set<String> setFieldNames = new HashSet<>();
   private final String currentPackageSlash;
   private final String currentPackagePoint;
 
@@ -43,6 +35,34 @@ public class ImportCollector {
       currentPackageSlash = "";
       currentPackagePoint = "";
     }
+
+    Map<String, StructClass> classes = DecompilerContext.getStructContext().getClasses();
+    StructClass currentClass = root.classStruct;
+    while (currentClass != null) {
+      // all field names for the current class ..
+      for (StructField f : currentClass.getFields()) {
+        setFieldNames.add(f.getName());
+      }
+
+      // .. and traverse through parent.
+      currentClass = currentClass.superClass != null ? classes.get(currentClass.superClass.getString()) : null;
+    }
+  }
+
+  /**
+   * Check whether the package-less name ClassName is shaded by variable in a context of
+   * the decompiled class
+   * @param classToName - pkg.name.ClassName - class to find shortname for
+   * @return ClassName if the name is not shaded by local field, pkg.name.ClassName otherwise
+   */
+  public String getShortNameInClassContext(String classToName) {
+    String shortName = getShortName(classToName);
+    if (setFieldNames.contains(shortName)) {
+      return classToName;
+    }
+    else {
+      return shortName;
+    }
   }
 
   public String getShortName(String fullName) {
@@ -50,13 +70,14 @@ public class ImportCollector {
   }
 
   public String getShortName(String fullName, boolean imported) {
-    ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(fullName.replace('.', '/'));
+    ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(fullName.replace('.', '/')); //todo[r.sh] anonymous classes?
 
     String result = null;
     if (node != null && node.classStruct.isOwn()) {
       result = node.simpleName;
 
       while (node.parent != null && node.type == ClassNode.CLASS_MEMBER) {
+        //noinspection StringConcatenationInLoop
         result = node.parent.simpleName + '.' + result;
         node = node.parent;
       }

@@ -63,6 +63,11 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
     }
 
     @Override
+    public boolean isQueryValid() {
+      return myElementToSearch.isValid();
+    }
+
+    @Override
     @NotNull
     public Project getProject() {
       return myProject;
@@ -175,7 +180,7 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
 
   @NotNull
   private static Query<PsiReference> uniqueResults(@NotNull Query<PsiReference> composite) {
-    return new UniqueResultsQuery<>(composite, ContainerUtil.<ReferenceDescriptor>canonicalStrategy(), ReferenceDescriptor.MAPPER);
+    return new UniqueResultsQuery<>(composite, ContainerUtil.canonicalStrategy(), ReferenceDescriptor.MAPPER);
   }
 
   public static void searchOptimized(@NotNull PsiElement element,

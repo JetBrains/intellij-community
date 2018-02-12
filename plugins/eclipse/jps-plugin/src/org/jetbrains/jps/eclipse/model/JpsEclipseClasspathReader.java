@@ -19,7 +19,6 @@ import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.*;
@@ -37,10 +36,6 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * User: anna
- * Date: 10/29/12
- */
 class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule> {
   private static final Logger LOG = Logger.getInstance(JpsEclipseClasspathReader.class);
   private final Map<String, String> myLibLevels;

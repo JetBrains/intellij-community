@@ -24,10 +24,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -54,10 +55,10 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
 
   @Override
   protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
-    addCastVariants(parameters, result.getPrefixMatcher(), result);
+    addCastVariants(parameters, result.getPrefixMatcher(), result, false);
   }
 
-  static void addCastVariants(@NotNull CompletionParameters parameters, PrefixMatcher matcher, @NotNull Consumer<LookupElement> result) {
+  static void addCastVariants(@NotNull CompletionParameters parameters, PrefixMatcher matcher, @NotNull Consumer<LookupElement> result, boolean quick) {
     if (!shouldSuggestCast(parameters)) return;
 
     PsiElement position = parameters.getPosition();
@@ -72,9 +73,8 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
             result.consume(PsiTypeLookupItem.createLookupItem(info.getType(), parent));
           }
         }
-        ExpectedTypeInfo info = getParenthesizedCastExpectationByOperandType(position);
-        if (info != null) {
-          addHierarchyTypes(parameters, matcher, info, type -> result.consume(PsiTypeLookupItem.createLookupItem(type, parent)));
+        for (ExpectedTypeInfo info : getParenthesizedCastExpectationByOperandType(position)) {
+          addHierarchyTypes(parameters, matcher, info, type -> result.consume(PsiTypeLookupItem.createLookupItem(type, parent)), quick);
         }
         return;
       }
@@ -103,33 +103,34 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
     }
   }
 
-  @Nullable
-  static ExpectedTypeInfo getParenthesizedCastExpectationByOperandType(PsiElement position) {
+  @NotNull
+  static List<ExpectedTypeInfo> getParenthesizedCastExpectationByOperandType(PsiElement position) {
     PsiElement parenthesisOwner = getParenthesisOwner(position);
     PsiExpression operand = getCastedExpression(parenthesisOwner);
-    if (operand == null || !(parenthesisOwner.getParent() instanceof PsiParenthesizedExpression)) return null;
+    if (operand == null || !(parenthesisOwner.getParent() instanceof PsiParenthesizedExpression)) return Collections.emptyList();
 
-    PsiType dfaType = GuessManager.getInstance(operand.getProject()).getControlFlowExpressionType(operand);
-    if (dfaType != null) {
-      return new ExpectedTypeInfoImpl(dfaType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, dfaType, TailType.NONE, null, () -> null);
+    List<PsiType> dfaTypes = GuessManager.getInstance(operand.getProject()).getControlFlowExpressionTypeConjuncts(operand);
+    if (!dfaTypes.isEmpty()) {
+      return ContainerUtil.map(dfaTypes, dfaType -> 
+        new ExpectedTypeInfoImpl(dfaType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, dfaType, TailType.NONE, null, () -> null));
     }
 
     PsiType type = operand.getType();
-    return type == null || type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ? null :
-           new ExpectedTypeInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.NONE, null, () -> null);
+    return type == null || type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ? Collections.emptyList() :
+           Collections.singletonList(new ExpectedTypeInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.NONE, null, () -> null));
   }
 
-  private static void addHierarchyTypes(CompletionParameters parameters, PrefixMatcher matcher, ExpectedTypeInfo info, Consumer<PsiType> result) {
+  private static void addHierarchyTypes(CompletionParameters parameters, PrefixMatcher matcher, ExpectedTypeInfo info, Consumer<PsiType> result, boolean quick) {
     PsiType infoType = info.getType();
     PsiClass infoClass = PsiUtil.resolveClassInClassTypeOnly(infoType);
     if (info.getKind() == ExpectedTypeInfo.TYPE_OR_SUPERTYPE) {
       InheritanceUtil.processSupers(infoClass, true, superClass -> {
         if (!CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
-          result.consume(JavaPsiFacade.getElementFactory(superClass.getProject()).createType(superClass));
+          result.consume(JavaPsiFacade.getElementFactory(superClass.getProject()).createType(CompletionUtil.getOriginalOrSelf(superClass)));
         }
         return true;
       });
-    } else if (infoType instanceof PsiClassType) {
+    } else if (infoType instanceof PsiClassType && !quick) {
       JavaInheritorsGetter.processInheritors(parameters, Collections.singleton((PsiClassType)infoType), matcher, type -> {
         if (!infoType.equals(type)) {
           result.consume(type);
@@ -150,7 +151,7 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
 
     if (parenthesisOwner instanceof PsiParenthesizedExpression) {
       PsiElement next = parenthesisOwner.getNextSibling();
-      while (next != null && (next instanceof PsiEmptyExpressionImpl || next instanceof PsiErrorElement || next instanceof PsiWhiteSpace)) {
+      while ((next instanceof PsiEmptyExpressionImpl || next instanceof PsiErrorElement || next instanceof PsiWhiteSpace)) {
         next = next.getNextSibling();
       }
       if (next instanceof PsiExpression) {

@@ -31,11 +31,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.ui.SimpleEditorCustomization;
-import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -127,8 +129,12 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
     }
   }
 
+  public static Set<String> getSpellCheckingToolNames() {
+    return Collections.unmodifiableSet(SPELL_CHECK_TOOLS.keySet());
+  }
+
   private static class MyInspectionProfileStrategy implements Function<InspectionProfileImpl, InspectionProfileWrapper> {
-    private final Map<InspectionProfile, MyInspectionProfileWrapper> myWrappers = new WeakHashMap<>();
+    private final Map<InspectionProfile, MyInspectionProfileWrapper> myWrappers = ContainerUtil.createWeakMap();
     private boolean myUseSpellCheck;
 
     @NotNull
@@ -159,7 +165,7 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
 
     @Override
     public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
-      return myUseSpellCheck && SPELL_CHECK_TOOLS.containsKey(key.toString());
+      return SPELL_CHECK_TOOLS.containsKey(key.toString()) ? myUseSpellCheck : super.isToolEnabled(key, element);
     }
 
     public void setUseSpellCheck(boolean useSpellCheck) {

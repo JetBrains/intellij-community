@@ -22,11 +22,10 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +40,7 @@ public abstract class FileAnnotation {
 
   @NotNull private final Project myProject;
 
+  private boolean myIsClosed;
   private Runnable myCloser;
   private Consumer<FileAnnotation> myReloader;
 
@@ -173,11 +173,21 @@ public abstract class FileAnnotation {
   }
 
 
+  public synchronized boolean isClosed() {
+    return myIsClosed;
+  }
+
   /**
    * Notify that annotations should be closed
    */
-  public final void close() {
-    myCloser.run();
+  public synchronized final void close() {
+    myIsClosed = true;
+    if (myCloser != null) {
+      myCloser.run();
+
+      myCloser = null;
+      myReloader = null;
+    }
   }
 
   /**
@@ -187,21 +197,23 @@ public abstract class FileAnnotation {
    *
    * @param newFileAnnotation annotations to be shown
    */
-  public final void reload(@NotNull FileAnnotation newFileAnnotation) {
+  public synchronized final void reload(@NotNull FileAnnotation newFileAnnotation) {
     if (myReloader != null) myReloader.consume(newFileAnnotation);
   }
 
   /**
    * @see #close()
    */
-  public final void setCloser(@NotNull Runnable closer) {
+  public synchronized final void setCloser(@NotNull Runnable closer) {
+    if (myIsClosed) return;
     myCloser = closer;
   }
 
   /**
    * @see #reload()
    */
-  public final void setReloader(@Nullable Consumer<FileAnnotation> reloader) {
+  public synchronized final void setReloader(@Nullable Consumer<FileAnnotation> reloader) {
+    if (myIsClosed) return;
     myReloader = reloader;
   }
 

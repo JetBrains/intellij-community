@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.annotate.AnnotationSource;
 import com.intellij.openapi.vcs.annotate.AnnotationSourceSwitcher;
@@ -33,13 +32,11 @@ class SwitchAnnotationSourceAction extends AnAction {
   private final static String ourShowMerged = VcsBundle.message("annotation.switch.to.merged.text");
   private final static String ourHideMerged = VcsBundle.message("annotation.switch.to.original.text");
   private final AnnotationSourceSwitcher mySwitcher;
-  private final EditorGutterComponentEx myGutter;
   private final List<Consumer<AnnotationSource>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myShowMerged;
 
-  SwitchAnnotationSourceAction(final AnnotationSourceSwitcher switcher, final EditorGutterComponentEx gutter) {
+  SwitchAnnotationSourceAction(final AnnotationSourceSwitcher switcher) {
     mySwitcher = switcher;
-    myGutter = gutter;
     myShowMerged = mySwitcher.getDefaultSource().showMerged();
   }
 
@@ -59,6 +56,7 @@ class SwitchAnnotationSourceAction extends AnAction {
     for (Consumer<AnnotationSource> listener : myListeners) {
       listener.consume(newSource);
     }
-    myGutter.revalidateMarkup();
+
+    AnnotateActionGroup.revalidateMarkupInAllEditors();
   }
 }

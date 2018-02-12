@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.richcopy;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -21,8 +7,12 @@ import com.intellij.codeInsight.editorActions.CopyPastePostProcessor;
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RawText;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -32,9 +22,8 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.impl.FontInfo;
+import com.intellij.openapi.editor.impl.FontFallbackIterator;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -45,7 +34,6 @@ import com.intellij.openapi.editor.richcopy.view.RawTextWithMarkup;
 import com.intellij.openapi.editor.richcopy.view.RtfTransferableData;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
@@ -63,10 +51,10 @@ import java.util.List;
  * Generates text with markup (in RTF and HTML formats) for interaction via clipboard with third-party applications.
  *
  * Interoperability with the following applications was tested:
- *   MS Office 2010 (Word, PowerPoint, Outlook), OpenOffice (Writer, Impress), Gmail, Mac TextEdit, Mac Mail.
+ *   MS Office 2010 (Word, PowerPoint, Outlook), OpenOffice (Writer, Impress), Gmail, Mac TextEdit, Mac Mail, Mac Keynote.
  */
 public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithMarkup> {
-  private static final Logger LOG = Logger.getInstance("#" + TextWithMarkupProcessor.class.getName());
+  private static final Logger LOG = Logger.getInstance(TextWithMarkupProcessor.class);
 
   private List<RawTextWithMarkup> myResult;
 
@@ -76,6 +64,8 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
     if (!RichCopySettings.getInstance().isEnabled()) {
       return Collections.emptyList();
     }
+
+    EditorHighlighter highlighter = null;
 
     try {
       RichCopySettings settings = RichCopySettings.getInstance();
@@ -95,8 +85,8 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
       logInitial(editor, startOffsets, endOffsets, indentSymbolsToStrip, firstLineStartOffset);
       CharSequence text = editor.getDocument().getCharsSequence();
       EditorColorsScheme schemeToUse = settings.getColorsScheme(editor.getColorsScheme());
-      EditorHighlighter highlighter = HighlighterFactory.createHighlighter(file.getViewProvider().getVirtualFile(),
-                                                                           schemeToUse, file.getProject());
+      highlighter = HighlighterFactory.createHighlighter(file.getViewProvider().getVirtualFile(),
+                                                         schemeToUse, file.getProject());
       highlighter.setText(text);
       MarkupModel markupModel = DocumentMarkupModel.forDocument(editor.getDocument(), file.getProject(), false);
       Context context = new Context(text, schemeToUse, indentSymbolsToStrip);
@@ -144,21 +134,13 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
       createResult(syntaxInfo, editor);
       return ObjectUtils.notNull(myResult, Collections.<RawTextWithMarkup>emptyList());
     }
-    catch (Exception e) {
+    catch (Throwable t) {
       // catching the exception so that the rest of copy/paste functionality can still work fine
-      LOG.error(e);
+      LOG.error("Error generating text with markup", 
+                new Attachment("exception", t),
+                new Attachment("highlighter.txt", String.valueOf(highlighter)));
     }
     return Collections.emptyList();
-  }
-
-  @Override
-  public void processTransferableData(Project project,
-                                      Editor editor,
-                                      RangeMarker bounds,
-                                      int caretOffset,
-                                      Ref<Boolean> indented,
-                                      List<RawTextWithMarkup> values) {
-
   }
 
   void createResult(SyntaxInfo syntaxInfo, Editor editor) {
@@ -827,60 +809,45 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
   }
 
   private static class SegmentIterator {
+    private final FontFallbackIterator myIterator = new FontFallbackIterator();
     private final CharSequence myCharSequence;
-    private final FontPreferences myFontPreferences;
-
-    private int myCurrentStartOffset;
-    private int myCurrentOffset;
     private int myEndOffset;
-    private int myFontStyle;
-    private String myCurrentFontFamilyName;
-    private String myNextFontFamilyName;
+    private boolean myAdvanceCalled;
 
     private SegmentIterator(CharSequence charSequence, FontPreferences fontPreferences) {
       myCharSequence = charSequence;
-      myFontPreferences = fontPreferences;
+      myIterator.setPreferredFonts(fontPreferences);
     }
 
     public void reset(int startOffset, int endOffset, int fontStyle) {
-      myCurrentOffset = startOffset;
+      myIterator.setFontStyle(fontStyle);
+      myIterator.start(myCharSequence, startOffset, endOffset);
       myEndOffset = endOffset;
-      myFontStyle = fontStyle;
+      myAdvanceCalled = false;
     }
 
     public boolean atEnd() {
-      return myCurrentOffset >= myEndOffset;
+      return myIterator.atEnd() || myIterator.getEnd() == myEndOffset;
     }
 
     public void advance() {
-      myCurrentFontFamilyName = myNextFontFamilyName;
-      myCurrentStartOffset = myCurrentOffset;
-      for (; myCurrentOffset < myEndOffset; myCurrentOffset++) {
-        FontInfo fontInfo = ComplementaryFontsRegistry.getFontAbleToDisplay(myCharSequence.charAt(myCurrentOffset),
-                                                                            myFontStyle,
-                                                                            myFontPreferences, null);
-        String fontFamilyName = fontInfo.getFont().getFamily();
-
-        if (myCurrentFontFamilyName == null) {
-          myCurrentFontFamilyName = fontFamilyName;
-        }
-        else if (!myCurrentFontFamilyName.equals(fontFamilyName)) {
-          myNextFontFamilyName = fontFamilyName;
-          break;
-        }
+      if (!myAdvanceCalled) {
+        myAdvanceCalled = true;
+        return;
       }
+      myIterator.advance();
     }
 
     public int getCurrentStartOffset() {
-      return myCurrentStartOffset;
+      return myIterator.getStart();
     }
 
     public int getCurrentEndOffset() {
-      return myCurrentOffset;
+      return myIterator.getEnd();
     }
 
     public String getCurrentFontFamilyName() {
-      return myCurrentFontFamilyName;
+      return myIterator.getFont().getFamily();
     }
   }
 

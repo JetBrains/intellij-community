@@ -23,9 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by Max Medvedev on 17/03/14
- */
 public class GroovyHashBangFileTypeDetector implements FileTypeRegistry.FileTypeDetector {
   @Nullable
   @Override

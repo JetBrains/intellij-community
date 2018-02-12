@@ -100,6 +100,11 @@ public class MockFileDocumentManagerImpl extends FileDocumentManager {
   }
 
   @Override
+  public boolean isPartialPreviewOfALargeFile(@NotNull Document document) {
+    return false;
+  }
+
+  @Override
   public void reloadFromDisk(@NotNull Document document) {
   }
 

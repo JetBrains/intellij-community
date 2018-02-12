@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.testIntegration.createTest;
 
 import com.intellij.CommonBundle;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.icons.AllIcons;
@@ -28,11 +29,12 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
@@ -46,6 +48,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.ui.MemberSelectionTable;
@@ -58,6 +61,7 @@ import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.ui.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -71,6 +75,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
@@ -95,7 +100,7 @@ public class CreateTestDialog extends DialogWrapper {
   private JCheckBox myGenerateBeforeBox = new JCheckBox(CodeInsightBundle.message("intention.create.test.dialog.setUp"));
   private JCheckBox myGenerateAfterBox = new JCheckBox(CodeInsightBundle.message("intention.create.test.dialog.tearDown"));
   private JCheckBox myShowInheritedMethodsBox = new JCheckBox(CodeInsightBundle.message("intention.create.test.dialog.show.inherited"));
-  private MemberSelectionTable myMethodsTable = new MemberSelectionTable(Collections.<MemberInfo>emptyList(), null);
+  private MemberSelectionTable myMethodsTable = new MemberSelectionTable(Collections.emptyList(), null);
   private JButton myFixLibraryButton = new JButton(CodeInsightBundle.message("intention.create.test.dialog.fix.library"));
   private JPanel myFixLibraryPanel;
   private JLabel myFixLibraryLabel;
@@ -117,7 +122,10 @@ public class CreateTestDialog extends DialogWrapper {
   }
 
   protected String suggestTestClassName(PsiClass targetClass) {
-    return targetClass.getName() + "Test";
+    JavaCodeStyleSettings customSettings = CodeStyle.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class);
+    String prefix = customSettings.TEST_NAME_PREFIX;
+    String suffix = customSettings.TEST_NAME_SUFFIX;
+    return prefix + targetClass.getName() + suffix;
   }
 
   private boolean isSuperclassSelectedManually() {
@@ -257,7 +265,7 @@ public class CreateTestDialog extends DialogWrapper {
     panel.add(new JLabel(CodeInsightBundle.message("intention.create.test.dialog.class.name")), constr);
 
     myTargetClassNameField = new EditorTextField(suggestTestClassName(myTargetClass));
-    myTargetClassNameField.getDocument().addDocumentListener(new DocumentAdapter() {
+    myTargetClassNameField.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         getOKAction().setEnabled(PsiNameHelper.getInstance(myProject).isIdentifier(getClassName()));
@@ -354,8 +362,7 @@ public class CreateTestDialog extends DialogWrapper {
 
     final DefaultComboBoxModel model = (DefaultComboBoxModel)myLibrariesCombo.getModel();
 
-    final List<TestFramework> descriptors = new ArrayList<>();
-    descriptors.addAll(Arrays.asList(Extensions.getExtensions(TestFramework.EXTENSION_NAME)));
+    final List<TestFramework> descriptors = new SmartList<>(Extensions.getExtensions(TestFramework.EXTENSION_NAME));
     descriptors.sort((d1, d2) -> Comparing.compare(d1.getName(), d2.getName()));
 
     for (final TestFramework descriptor : descriptors) {
@@ -507,33 +514,37 @@ public class CreateTestDialog extends DialogWrapper {
     final String packageName = getPackageName();
     final PackageWrapper targetPackage = new PackageWrapper(PsiManager.getInstance(myProject), packageName);
 
-    final VirtualFile selectedRoot = new ReadAction<VirtualFile>() {
-      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
-        final List<VirtualFile> testFolders = CreateTestAction.computeTestRoots(myTargetModule);
-        List<VirtualFile> roots;
-        if (testFolders.isEmpty()) {
-          roots = new ArrayList<>();
-          List<String> urls = CreateTestAction.computeSuitableTestRootUrls(myTargetModule);
-          for (String url : urls) {
+    final VirtualFile selectedRoot = ReadAction.compute(() -> {
+      final List<VirtualFile> testFolders = CreateTestAction.computeTestRoots(myTargetModule);
+      List<VirtualFile> roots;
+      if (testFolders.isEmpty()) {
+        roots = new ArrayList<>();
+        List<String> urls = CreateTestAction.computeSuitableTestRootUrls(myTargetModule);
+        for (String url : urls) {
+          try {
             ContainerUtil.addIfNotNull(roots, VfsUtil.createDirectories(VfsUtilCore.urlToPath(url)));
           }
-          if (roots.isEmpty()) {
-            JavaProjectRootsUtil.collectSuitableDestinationSourceRoots(myTargetModule, roots);
+          catch (IOException e) {
+            throw new RuntimeException(e);
           }
-          if (roots.isEmpty()) return;
-        } else {
-          roots = new ArrayList<>(testFolders);
         }
-
-        if (roots.size() == 1) {
-          result.setResult(roots.get(0));
+        if (roots.isEmpty()) {
+          JavaProjectRootsUtil.collectSuitableDestinationSourceRoots(myTargetModule, roots);
         }
-        else {
-          PsiDirectory defaultDir = chooseDefaultDirectory(targetPackage.getDirectories(), roots);
-          result.setResult(MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, roots, defaultDir));
-        }
+        if (roots.isEmpty()) return null;
       }
-    }.execute().getResultObject();
+      else {
+        roots = new ArrayList<>(testFolders);
+      }
+
+      if (roots.size() == 1) {
+        return (roots.get(0));
+      }
+      else {
+        PsiDirectory defaultDir = chooseDefaultDirectory(targetPackage.getDirectories(), roots);
+        return (MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, roots, defaultDir));
+      }
+    });
 
     if (selectedRoot == null) return null;
 
@@ -547,8 +558,9 @@ public class CreateTestDialog extends DialogWrapper {
   @Nullable
   private PsiDirectory chooseDefaultDirectory(PsiDirectory[] directories, List<VirtualFile> roots) {
     List<PsiDirectory> dirs = new ArrayList<>();
+    PsiManager psiManager = PsiManager.getInstance(myProject);
     for (VirtualFile file : ModuleRootManager.getInstance(myTargetModule).getSourceRoots(JavaSourceRootType.TEST_SOURCE)) {
-      final PsiDirectory dir = PsiManager.getInstance(myProject).findDirectory(file);
+      final PsiDirectory dir = psiManager.findDirectory(file);
       if (dir != null) {
         dirs.add(dir);
       }
@@ -565,14 +577,17 @@ public class CreateTestDialog extends DialogWrapper {
       final VirtualFile file = dir.getVirtualFile();
       for (VirtualFile root : roots) {
         if (VfsUtilCore.isAncestor(root, file, false)) {
-          final PsiDirectory rootDir = PsiManager.getInstance(myProject).findDirectory(root);
+          final PsiDirectory rootDir = psiManager.findDirectory(root);
           if (rootDir != null) {
             return rootDir;
           }
         }
       }
     }
-    return null;
+    return ModuleManager.getInstance(myProject)
+      .getModuleDependentModules(myTargetModule)
+      .stream().flatMap(module -> ModuleRootManager.getInstance(module).getSourceRoots(JavaSourceRootType.TEST_SOURCE).stream())
+      .map(root -> psiManager.findDirectory(root)).findFirst().orElse(null);
   }
 
   private String getPackageName() {

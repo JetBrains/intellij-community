@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.highlighting
 
 import com.intellij.codeInsight.daemon.RainbowVisitor
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -30,6 +17,10 @@ class PyRainbowVisitor : RainbowVisitor() {
 
   companion object {
     private val IGNORED_NAMES = setOf(PyNames.NONE, PyNames.TRUE, PyNames.FALSE)
+    private val DEFAULT_HIGHLIGHTING_KEY = DefaultLanguageHighlighterColors.LOCAL_VARIABLE
+
+    @JvmStatic
+    val HIGHLIGHTING_KEYS = setOf(PyHighlighter.PY_PARAMETER, DEFAULT_HIGHLIGHTING_KEY)
   }
 
   override fun suitableForFile(file: PsiFile) = file is PyFile
@@ -61,10 +52,9 @@ class PyRainbowVisitor : RainbowVisitor() {
   private fun processNamedParameter(namedParameter: PyNamedParameter) {
     val context = getNamedParameterContext(namedParameter) ?: return
     val name = namedParameter.name ?: return
+    val element = namedParameter.nameIdentifier ?: return
 
-    getHighlightedParameterElements(namedParameter).forEach {
-      addInfo(context, it, name, PyHighlighter.PY_PARAMETER)
-    }
+    addInfo(context, element, name, PyHighlighter.PY_PARAMETER)
   }
 
   private fun getReferenceContext(referenceExpression: PyReferenceExpression,
@@ -121,19 +111,8 @@ class PyRainbowVisitor : RainbowVisitor() {
 
   private fun updateNameIfGlobal(context: PsiElement, name: String?) = if (context is PyFile && name != null) "global_$name" else name
 
-  private fun getHighlightedParameterElements(namedParameter: PyNamedParameter): List<PsiElement> {
-    val nameIdentifier = namedParameter.nameIdentifier
-
-    return if (namedParameter.isPositionalContainer || namedParameter.isKeywordContainer) {
-      listOfNotNull(namedParameter.firstChild, nameIdentifier)
-    }
-    else {
-      listOfNotNull(nameIdentifier)
-    }
-  }
-
-  private fun addInfo(context: PsiElement, rainbowElement: PsiElement, name: String, colorKey: TextAttributesKey? = null) {
-    addInfo(getInfo(context, rainbowElement, name, colorKey))
+  private fun addInfo(context: PsiElement, rainbowElement: PsiElement, name: String, key: TextAttributesKey? = DEFAULT_HIGHLIGHTING_KEY) {
+    addInfo(getInfo(context, rainbowElement, name, key))
   }
 
   private fun getLeastCommonScope(elements: Collection<PsiElement>): ScopeOwner? {

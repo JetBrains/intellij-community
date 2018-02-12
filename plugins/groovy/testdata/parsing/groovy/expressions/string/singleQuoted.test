@@ -1,0 +1,37 @@
+'
+''
+'\'
+'\''
+'\\'
+'foo
+'foo'
+'\t\n'
+'\j\i'
+-----
+Groovy script
+  Literal
+    PsiElement(string)(''')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(string)('''')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(string)(''\'')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(string)(''\''')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(string)(''\\'')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(string)(''foo')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(string)(''foo'')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(string)(''\t\n'')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(string)(''\j\i'')

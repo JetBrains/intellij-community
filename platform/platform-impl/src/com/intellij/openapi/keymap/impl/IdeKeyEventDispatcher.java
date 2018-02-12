@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,12 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.internal.statistic.customUsageCollectors.ui.ShortcutsCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -521,6 +523,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
         final JLabel label = (JLabel)component;
         if (label.getDisplayedMnemonic() == keyCode) return true;
       }
+      if (component instanceof ActionButtonWithText) {
+        if (((ActionButtonWithText)component).getMnemonic() == keyCode) return true;
+      }
       if (component instanceof Container) {
         if (hasMnemonic((Container)component, keyCode)) return true;
       }
@@ -558,6 +563,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     @Override
     public void performAction(@NotNull InputEvent e, @NotNull AnAction action, @NotNull AnActionEvent actionEvent) {
       e.consume();
+      ShortcutsCollector.record(actionEvent);
 
       DataContext ctx = actionEvent.getDataContext();
       if (action instanceof ActionGroup && !((ActionGroup)action).canBePerformed(ctx)) {
@@ -582,7 +588,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
     List<AnActionEvent> nonDumbAwareAction = new ArrayList<>();
     List<AnAction> actions = myContext.getActions();
-    for (final AnAction action : actions.toArray(new AnAction[actions.size()])) {
+    for (final AnAction action : actions.toArray(AnAction.EMPTY_ARRAY)) {
       Presentation presentation = myPresentationFactory.getPresentation(action);
 
       // Mouse modifiers are 0 because they have no any sense when action is invoked via keyboard
@@ -622,7 +628,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     if (!nonDumbAwareAction.isEmpty()) {
-      showDumbModeWarningLaterIfNobodyConsumesEvent(e, nonDumbAwareAction.toArray(new AnActionEvent[nonDumbAwareAction.size()]));
+      showDumbModeWarningLaterIfNobodyConsumesEvent(e, nonDumbAwareAction.toArray(new AnActionEvent[0]));
     }
 
     return false;

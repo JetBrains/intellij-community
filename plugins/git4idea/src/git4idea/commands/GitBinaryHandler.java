@@ -20,7 +20,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitVcs;
+import git4idea.util.GitVcsConsoleWriter;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
@@ -53,38 +53,36 @@ public class GitBinaryHandler extends GitHandler {
 
   @Override
   protected void startHandlingStreams() {
-    handleStream(myProcess.getErrorStream(), myStderr, "Error stream copy of "+myCommandLine.getCommandLineString());
-    handleStream(myProcess.getInputStream(), myStdout, "Output stream copy of "+myCommandLine.getCommandLineString());
+    handleStream(myProcess.getErrorStream(), myStderr, "Error stream copy of " + myCommandLine.getCommandLineString());
+    handleStream(myProcess.getInputStream(), myStdout, "Output stream copy of " + myCommandLine.getCommandLineString());
   }
 
   /**
    * Handle the single stream
+   *
    * @param in  the standard input
    * @param out the standard output
    */
   private void handleStream(final InputStream in, final ByteArrayOutputStream out, @NotNull String cmd) {
-    Thread t = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          byte[] buffer = new byte[BUFFER_SIZE];
-          while (true) {
-            int rc = in.read(buffer);
-            if (rc == -1) {
-              break;
-            }
-            out.write(buffer, 0, rc);
+    Thread t = new Thread(() -> {
+      try {
+        byte[] buffer = new byte[BUFFER_SIZE];
+        while (true) {
+          int rc = in.read(buffer);
+          if (rc == -1) {
+            break;
           }
+          out.write(buffer, 0, rc);
         }
-        catch (IOException e) {
-          //noinspection ThrowableInstanceNeverThrown
-          if (!myException.compareAndSet(null, new VcsException("Stream IO problem", e))) {
-            LOG.error("Problem reading stream", e);
-          }
+      }
+      catch (IOException e) {
+        //noinspection ThrowableInstanceNeverThrown
+        if (!myException.compareAndSet(null, new VcsException("Stream IO problem", e))) {
+          LOG.error("Problem reading stream", e);
         }
-        finally {
-          mySteamSemaphore.release(1);
-        }
+      }
+      finally {
+        mySteamSemaphore.release(1);
       }
     }, cmd);
     t.setDaemon(true);
@@ -120,10 +118,15 @@ public class GitBinaryHandler extends GitHandler {
    * @throws VcsException in case of the problem with running git
    */
   public byte[] run() throws VcsException {
+    Project project = project();
+    GitVcsConsoleWriter vcsConsoleWriter = project != null
+                                           ? GitVcsConsoleWriter.getInstance(project)
+                                           : null;
+
     addListener(new GitHandlerListener() {
       @Override
       public void processTerminated(int exitCode) {
-        if (exitCode != 0 && !isIgnoredErrorCode(exitCode)) {
+        if (exitCode != 0) {
           Charset cs = getCharset();
           String message = new String(myStderr.toByteArray(), cs);
           if (message.length() == 0) {
@@ -136,8 +139,8 @@ public class GitBinaryHandler extends GitHandler {
             }
           }
           else {
-            if (!isStderrSuppressed()) {
-              GitVcs.getInstance(myProject).showErrorMessages(message);
+            if (vcsConsoleWriter != null && !isStderrSuppressed()) {
+              vcsConsoleWriter.showErrorMessage(message);
             }
           }
           if (message != null) {
@@ -159,7 +162,11 @@ public class GitBinaryHandler extends GitHandler {
         }
       }
     });
-    GitHandlerUtil.runInCurrentThread(this, null);
+    if (vcsConsoleWriter != null && !mySilent) {
+      vcsConsoleWriter.showCommandLine("[" + GitImpl.stringifyWorkingDir(project.getBasePath(), getWorkingDirectory()) + "] "
+                                       + printableCommandLine());
+    }
+    runInCurrentThread();
     //noinspection ThrowableResultOfMethodCallIgnored
     if (myException.get() != null) {
       throw myException.get();

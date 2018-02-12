@@ -16,7 +16,7 @@
 package com.intellij.internal.statistic.libraryJar;
 
 import com.intellij.facet.frameworks.SettingsConnectionService;
-import com.intellij.internal.statistic.StatisticsUploadAssistant;
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
@@ -38,7 +38,7 @@ import java.net.URL;
 public class LibraryJarStatisticsService extends SettingsConnectionService implements StartupActivity, DumbAware {
   private static final String FILE_NAME = "statistics/library-jar-statistics.xml";
   private static final String DEFAULT_SETTINGS_URL = "https://www.jetbrains.com/idea/download-assistant.xml";
-  private static final String DEFAULT_SERVICE_URL = "http://frameworks.jetbrains.com";
+  private static final String DEFAULT_SERVICE_URL = "https://frameworks.jetbrains.com";
 
   private static final LibraryJarStatisticsService myInstance = new LibraryJarStatisticsService();
   private LibraryJarDescriptor[] myDescriptors;

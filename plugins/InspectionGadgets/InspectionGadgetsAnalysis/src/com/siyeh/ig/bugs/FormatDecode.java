@@ -188,7 +188,7 @@ class FormatDecode {
           case 's': // formatted string (general)
           case 'S':
             checkFlags(flagBits, LEFT_JUSTIFY | ALTERNATE | PREVIOUS, specifier);
-            allowed = ALL_VALIDATOR;
+            allowed = (flagBits & ALTERNATE) != 0 ? new FormattableValidator(specifier) : ALL_VALIDATOR;
             break;
           case 'c': // unicode character
           case 'C':
@@ -248,11 +248,11 @@ class FormatDecode {
       }
       storeValidator(allowed, pos, parameters, argumentCount);
     }
-    if (i < formatString.length() - 1) {
+    if (i < formatString.length()) {
       checkText(formatString.substring(i));
     }
 
-    return parameters.toArray(new Validator[parameters.size()]);
+    return parameters.toArray(new Validator[0]);
   }
 
   private static void checkNoPrecision(String precision, String specifier) {
@@ -387,6 +387,18 @@ class FormatDecode {
              PsiType.FLOAT.equals(type) ||
              CommonClassNames.JAVA_LANG_FLOAT.equals(text) ||
              "java.math.BigDecimal".equals(text);
+    }
+  }
+
+  private static class FormattableValidator extends Validator {
+
+    public FormattableValidator(String specifier) {
+      super(specifier);
+    }
+
+    @Override
+    public boolean valid(PsiType type) {
+      return InheritanceUtil.isInheritor(type, "java.util.Formattable");
     }
   }
 

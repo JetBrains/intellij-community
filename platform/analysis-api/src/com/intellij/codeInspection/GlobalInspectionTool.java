@@ -17,10 +17,9 @@ package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.JobDescriptor;
-import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefGraphAnnotator;
-import com.intellij.codeInspection.reference.RefManager;
-import com.intellij.codeInspection.reference.RefVisitor;
+import com.intellij.codeInspection.reference.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,10 +77,29 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
     globalContext.getRefManager().iterate(new RefVisitor() {
       @Override public void visitElement(@NotNull RefEntity refEntity) {
         if (!globalContext.shouldCheck(refEntity, GlobalInspectionTool.this)) return;
+        if (!isInScope(refEntity)) return;
         CommonProblemDescriptor[] descriptors = checkElement(refEntity, scope, manager, globalContext, problemDescriptionsProcessor);
         if (descriptors != null) {
           problemDescriptionsProcessor.addProblemElement(refEntity, descriptors);
         }
+      }
+
+      private boolean isInScope(@NotNull RefEntity refEntity) {
+        if (refEntity instanceof RefElement) {
+          SmartPsiElementPointer pointer = ((RefElement)refEntity).getPointer();
+          if (pointer != null) {
+            VirtualFile virtualFile = pointer.getVirtualFile();
+            if (virtualFile != null && !scope.contains(virtualFile)) return false;
+          }
+          else {
+            RefEntity owner = refEntity.getOwner();
+            return owner == null || isInScope(owner);
+          }
+        }
+        if (refEntity instanceof RefModule) {
+          return scope.containsModule(((RefModule)refEntity).getModule());
+        }
+        return true;
       }
     });
   }

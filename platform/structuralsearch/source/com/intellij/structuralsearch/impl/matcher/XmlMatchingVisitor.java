@@ -1,16 +1,12 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.XmlElementVisitor;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.psi.xml.*;
-import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
-import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.XmlElementVisitor;
+import com.intellij.psi.xml.*;
+import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
+import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 
 /**
 * @author Eugene.Kudelevsky
@@ -24,24 +20,18 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
     myCaseSensitive = myMatchingVisitor.getMatchContext().getOptions().isCaseSensitiveMatch();
   }
 
-  @Override
-  public void visitElement(final PsiElement element) {
-    myMatchingVisitor.setResult(element.textMatches(element));
-  }
-
   @Override public void visitXmlAttribute(XmlAttribute attribute) {
     final XmlAttribute another = (XmlAttribute)myMatchingVisitor.getElement();
     final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(attribute.getName());
 
-    myMatchingVisitor.setResult(isTypedVar || matches(attribute.getName(), another.getName()));
+    if (!myMatchingVisitor.setResult(isTypedVar || matches(attribute.getName(), another.getName()))) return;
     final XmlAttributeValue valueElement = attribute.getValueElement();
-    if (myMatchingVisitor.getResult() && valueElement != null) {
-      myMatchingVisitor.setResult(myMatchingVisitor.match(valueElement, another.getValueElement()));
-    }
+    if (valueElement != null && !myMatchingVisitor.setResult(myMatchingVisitor.match(valueElement, another.getValueElement()))) return;
 
-    if (myMatchingVisitor.getResult() && isTypedVar) {
-      MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(attribute.getName());
-      myMatchingVisitor.setResult(((SubstitutionHandler)handler).handle(another, myMatchingVisitor.getMatchContext()));
+    if (isTypedVar) {
+      final SubstitutionHandler handler =
+        (SubstitutionHandler)myMatchingVisitor.getMatchContext().getPattern().getHandler(attribute.getName());
+      myMatchingVisitor.setResult(handler.handle(another, myMatchingVisitor.getMatchContext()));
     }
   }
 
@@ -49,14 +39,11 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
     final XmlAttributeValue another = (XmlAttributeValue)myMatchingVisitor.getElement();
     final String text = value.getValue();
 
-    final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(text);
-    MatchingHandler handler;
-
-    if (isTypedVar && (handler = myMatchingVisitor.getMatchContext().getPattern().getHandler( text )) instanceof SubstitutionHandler) {
-      String text2 = another.getText();
-      int offset = text2.length() > 0 && ( text2.charAt(0) == '"' || text2.charAt(0) == '\'') ? 1:0;
-      myMatchingVisitor.setResult(((SubstitutionHandler)handler).handle(another, offset, text2.length() - offset,
-                                                                        myMatchingVisitor.getMatchContext()));
+    if (myMatchingVisitor.getMatchContext().getPattern().isTypedVar(text)) {
+      final SubstitutionHandler handler = (SubstitutionHandler)myMatchingVisitor.getMatchContext().getPattern().getHandler(text);
+      final String text2 = another.getText();
+      final int offset = !text2.isEmpty() && (text2.charAt(0) == '"' || text2.charAt(0) == '\'') ? 1 : 0;
+      myMatchingVisitor.setResult(handler.handle(another, offset, text2.length() - offset, myMatchingVisitor.getMatchContext()));
     } else {
       myMatchingVisitor.setResult(matches(text, another.getValue()));
     }
@@ -66,50 +53,23 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
     final XmlTag another = (XmlTag)myMatchingVisitor.getElement();
     final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(tag.getName());
 
-    myMatchingVisitor.setResult((matches(tag.getName(), another.getName()) || isTypedVar) &&
-                                myMatchingVisitor.matchInAnyOrder(tag.getAttributes(), another.getAttributes()));
+    if (!myMatchingVisitor.setResult((matches(tag.getName(), another.getName()) || isTypedVar) &&
+                                     myMatchingVisitor.matchInAnyOrder(tag.getAttributes(), another.getAttributes()))) return;
 
-    if(myMatchingVisitor.getResult()) {
-      final XmlTagChild[] contentChildren = tag.getValue().getChildren();
-
-      if (contentChildren.length > 0) {
-        PsiElement[] patternNodes = contentChildren;
-        PsiElement[] matchedNodes = another.getValue().getChildren();
-
-        if (contentChildren.length != 1) {
-          patternNodes = filterOutWhitespace(patternNodes);
-          matchedNodes = filterOutWhitespace(matchedNodes);
-        }
-
-        final boolean result = myMatchingVisitor.matchSequentially(
-          new ArrayBackedNodeIterator(patternNodes),
-          new ArrayBackedNodeIterator(matchedNodes)
-        );
-        myMatchingVisitor.setResult(result);
-      }
+    final SsrFilteringNodeIterator patternNodes = new SsrFilteringNodeIterator(new ArrayBackedNodeIterator(tag.getValue().getChildren()));
+    if (patternNodes.current() != null) {
+      final SsrFilteringNodeIterator matchNodes =
+        new SsrFilteringNodeIterator(new ArrayBackedNodeIterator(another.getValue().getChildren()));
+      if (!myMatchingVisitor.setResult(myMatchingVisitor.matchSequentially(patternNodes, matchNodes))) return;
     }
 
-    if (myMatchingVisitor.getResult() && isTypedVar) {
+    if (isTypedVar) {
       final PsiElement[] children = another.getChildren();
       if (children.length > 1) {
-        MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler( tag.getName() );
-        myMatchingVisitor.setResult(((SubstitutionHandler)handler).handle(children[1], myMatchingVisitor.getMatchContext()));
+        final SubstitutionHandler handler = (SubstitutionHandler)myMatchingVisitor.getMatchContext().getPattern().getHandler(tag.getName());
+        myMatchingVisitor.setResult(handler.handle(children[1], myMatchingVisitor.getMatchContext()));
       }
     }
-  }
-
-  private static PsiElement[] filterOutWhitespace(PsiElement[] children) {
-    final List<PsiElement> result = new ArrayList<>(children.length);
-    for(PsiElement child : children) {
-      if (child instanceof XmlText) {
-        final PsiElement[] grandChildren = child.getChildren();
-        if (grandChildren.length == 1 && grandChildren[0] instanceof PsiWhiteSpace) {
-          continue;
-        }
-      }
-      result.add(child);
-    }
-    return PsiUtilCore.toPsiElementArray(result);
   }
 
   @Override public void visitXmlText(XmlText text) {
@@ -117,8 +77,9 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
     final PsiElement element = myMatchingVisitor.getElement();
     if (isTypedVar) {
       myMatchingVisitor.setResult(myMatchingVisitor.handleTypedElement(text, element));
-    } else {
-      myMatchingVisitor.setResult(matches(text.getText(), element.getText()));
+    }
+    else {
+      myMatchingVisitor.setResult(element instanceof XmlText && matches(text.getText().trim(), element.getText().trim()));
     }
   }
 

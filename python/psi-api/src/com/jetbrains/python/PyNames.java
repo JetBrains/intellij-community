@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ public class PyNames {
    * int type
    */
   public static final String TYPE_INT = "int";
+  public static final String TYPE_LONG = "long";
   /**
    * unicode string type (see {@link #TYPE_STRING_TYPES}
    */
@@ -63,6 +64,12 @@ public class PyNames {
    */
   public static final String TYPE_TIME = "datetime.time";
 
+  public static final String TYPE_BYTES = "bytes";
+
+  public static final String TYPE_BYTEARRAY = "bytearray";
+
+  public static final String TYPE_ENUM = "enum.Enum";
+
   private PyNames() {
   }
 
@@ -78,6 +85,7 @@ public class PyNames {
   public static final String NEW = "__new__";
   public static final String GETATTR = "__getattr__";
   public static final String GETATTRIBUTE = "__getattribute__";
+  public static final String GET = "__get__";
   public static final String __CLASS__ = "__class__";
   public static final String DUNDER_METACLASS = "__metaclass__";
   public static final String METACLASS = "metaclass";
@@ -89,6 +97,7 @@ public class PyNames {
   public static final String NONE = "None";
   public static final String TRUE = "True";
   public static final String FALSE = "False";
+  public static final String ELLIPSIS = "...";
 
   public static final String TYPES_FUNCTION_TYPE = "types.FunctionType";
   public static final String TYPES_METHOD_TYPE = "types.UnboundMethodType";
@@ -99,6 +108,7 @@ public class PyNames {
 
   public static final String CLASSMETHOD = "classmethod";
   public static final String STATICMETHOD = "staticmethod";
+  public static final String OVERLOAD = "overload";
 
   public static final String PROPERTY = "property";
   public static final String SETTER = "setter";
@@ -112,6 +122,7 @@ public class PyNames {
   public static final String ISINSTANCE = "isinstance";
   public static final String ASSERT_IS_INSTANCE = "assertIsInstance";
   public static final String HAS_ATTR = "hasattr";
+  public static final String ISSUBCLASS = "issubclass";
 
   public static final String DOC = "__doc__";
   public static final String DOCFORMAT = "__docformat__";
@@ -170,9 +181,17 @@ public class PyNames {
   public static final String ANEXT = "__anext__";
   public static final String AENTER = "__aenter__";
   public static final String AEXIT = "__aexit__";
+  public static final String DUNDER_AWAIT = "__await__";
   public static final String SIZEOF = "__sizeof__";
   public static final String INIT_SUBCLASS = "__init_subclass__";
   public static final String FSPATH = "__fspath__";
+  public static final String COMPLEX = "__complex__";
+  public static final String FLOAT = "__float__";
+  public static final String INT = "__int__";
+  public static final String BYTES = "__bytes__";
+  public static final String ABS = "__abs__";
+  public static final String ROUND = "__round__";
+  public static final String CLASS_GETITEM = "__class_getitem__";
 
   public static final String NAME = "__name__";
   public static final String ENTER = "__enter__";
@@ -181,7 +200,8 @@ public class PyNames {
   public static final String CALLABLE_BUILTIN = "callable";
   public static final String NAMEDTUPLE = "namedtuple";
   public static final String COLLECTIONS = "collections";
-  public static final String COLLECTIONS_NAMEDTUPLE = COLLECTIONS + "." + NAMEDTUPLE;
+  public static final String COLLECTIONS_NAMEDTUPLE_PY2 = COLLECTIONS + "." + NAMEDTUPLE;
+  public static final String COLLECTIONS_NAMEDTUPLE_PY3 = COLLECTIONS + "." + INIT + "." + NAMEDTUPLE;
 
   public static final String FORMAT = "format";
 
@@ -194,6 +214,7 @@ public class PyNames {
   public static final String SLICE = "slice";
 
   public static final String KEYS = "keys";
+  public static final String APPEND = "append";
   public static final String EXTEND = "extend";
   public static final String UPDATE = "update";
 
@@ -201,6 +222,7 @@ public class PyNames {
 
   public static final String NOSE_TEST = "nose";
   public static final String PY_TEST = "pytest";
+  public static final String TRIAL_TEST = "Twisted";
 
   public static final String TEST_CASE = "TestCase";
 
@@ -212,10 +234,12 @@ public class PyNames {
 
   public static final String UNNAMED_ELEMENT = "<unnamed>";
 
+  public static final String UNDERSCORE = "_";
+
   /**
    * Contains all known predefined names of "__foo__" form.
    */
-  public static ImmutableSet<String> UnderscoredAttributes = ImmutableSet.of(
+  public static final ImmutableSet<String> UNDERSCORED_ATTRIBUTES = ImmutableSet.of(
     "__all__",
     "__annotations__",
     "__author__",
@@ -244,7 +268,7 @@ public class PyNames {
     "__version__"
   );
 
-  public static ImmutableSet<String> COMPARISON_OPERATORS = ImmutableSet.of(
+  public static final ImmutableSet<String> COMPARISON_OPERATORS = ImmutableSet.of(
     "__eq__",
     "__ne__",
     "__lt__",
@@ -255,7 +279,7 @@ public class PyNames {
     "__contains__"
   );
 
-  public static ImmutableSet<String> SUBSCRIPTION_OPERATORS = ImmutableSet.of(
+  public static final ImmutableSet<String> SUBSCRIPTION_OPERATORS = ImmutableSet.of(
     GETITEM,
     SETITEM,
     DELITEM
@@ -282,7 +306,7 @@ public class PyNames {
   private static final BuiltinDescription _exit_descr = new BuiltinDescription("(self, exc_type, exc_val, exc_tb)");
 
   private static final ImmutableMap<String, BuiltinDescription> BuiltinMethods = ImmutableMap.<String, BuiltinDescription>builder()
-    .put("__abs__", _only_self_descr)
+    .put(ABS, _only_self_descr)
     .put("__add__", _self_other_descr)
     .put("__and__", _self_other_descr)
       //_BuiltinMethods.put("__all__", _only_self_descr);
@@ -293,7 +317,7 @@ public class PyNames {
       //_BuiltinMethods.put("__class__", _only_self_descr);
     .put("__cmp__", _self_other_descr)
     .put("__coerce__", _self_other_descr)
-    .put("__complex__", _only_self_descr)
+    .put(COMPLEX, _only_self_descr)
     .put("__contains__", _self_item_descr)
     .put("__copy__", _only_self_descr)
       //_BuiltinMethods.put("__debug__", _only_self_descr);
@@ -311,7 +335,7 @@ public class PyNames {
     .put("__exit__", _exit_descr)
     .put("__eq__", _self_other_descr)
       //_BuiltinMethods.put("__file__", _only_self_descr);
-    .put("__float__", _only_self_descr)
+    .put(FLOAT, _only_self_descr)
     .put("__floor__", _only_self_descr)
     .put("__floordiv__", _self_other_descr)
       //_BuiltinMethods.put("__future__", _only_self_descr);
@@ -337,7 +361,7 @@ public class PyNames {
     .put("__imul__", _self_other_descr)
     .put("__index__", _only_self_descr)
     .put(INIT, _only_self_descr)
-    .put("__int__", _only_self_descr)
+    .put(INT, _only_self_descr)
     .put("__invert__", _only_self_descr)
     .put("__ior__", _self_other_descr)
     .put("__ipow__", _self_other_descr)
@@ -402,31 +426,31 @@ public class PyNames {
     .put("__xor__", _self_other_descr)
     .build();
 
-  public static ImmutableMap<String, BuiltinDescription> PY2_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
+  public static final ImmutableMap<String, BuiltinDescription> PY2_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
     .putAll(BuiltinMethods)
     .put("__nonzero__", _only_self_descr)
     .put("__div__", _self_other_descr)
     .put(NEXT, _only_self_descr)
     .build();
 
-  public static ImmutableMap<String, BuiltinDescription> PY3_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
+  public static final ImmutableMap<String, BuiltinDescription> PY3_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
     .putAll(BuiltinMethods)
     .put("__bool__", _only_self_descr)
-    .put("__bytes__", _only_self_descr)
+    .put(BYTES, _only_self_descr)
     .put("__format__", new BuiltinDescription("(self, format_spec)"))
     .put("__instancecheck__", new BuiltinDescription("(self, instance)"))
     .put("__prepare__", new BuiltinDescription("(metacls, name, bases)"))
-    .put("__round__", new BuiltinDescription("(self, n=None)"))
+    .put(ROUND, new BuiltinDescription("(self, n=None)"))
     .put("__subclasscheck__", new BuiltinDescription("(self, subclass)"))
     .put(DUNDER_NEXT, _only_self_descr)
     .build();
 
-  public static ImmutableMap<String, BuiltinDescription> PY35_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
+  public static final ImmutableMap<String, BuiltinDescription> PY35_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
     .putAll(PY3_BUILTIN_METHODS)
     .put("__imatmul__", _self_other_descr)
     .put("__matmul__", _self_other_descr)
     .put("__rmatmul__", _self_other_descr)
-    .put("__await__", _only_self_descr)
+    .put(DUNDER_AWAIT, _only_self_descr)
     .put(AENTER, _only_self_descr)
     .put(AEXIT, _exit_descr)
     .put(AITER, _only_self_descr)
@@ -440,19 +464,43 @@ public class PyNames {
     .put("__fspath__", _only_self_descr)
     .build();
 
+  public static final ImmutableMap<String, BuiltinDescription> PY37_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
+    .putAll(PY36_BUILTIN_METHODS)
+    .put(CLASS_GETITEM, new BuiltinDescription("(cls, item)"))
+    .put("__mro_entries__", new BuiltinDescription("(self, bases)"))
+    .build();
+
+  @NotNull
+  private static final ImmutableMap<String, BuiltinDescription> PY37_MODULE_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
+    .put("__getattr__", new BuiltinDescription("(name)"))
+    .put("__dir__", new BuiltinDescription("()"))
+    .build();
+
   public static ImmutableMap<String, BuiltinDescription> getBuiltinMethods(LanguageLevel level) {
-    if (level.isAtLeast(LanguageLevel.PYTHON36)) {
+    if (level.isAtLeast(LanguageLevel.PYTHON37)) {
+      return PY37_BUILTIN_METHODS;
+    }
+    else if (level.isAtLeast(LanguageLevel.PYTHON36)) {
       return PY36_BUILTIN_METHODS;
     }
     else if (level.isAtLeast(LanguageLevel.PYTHON35)) {
       return PY35_BUILTIN_METHODS;
     }
-    else if (level.isAtLeast(LanguageLevel.PYTHON30)) {
+    else if (!level.isPython2()) {
       return PY3_BUILTIN_METHODS;
     }
     else {
       return PY2_BUILTIN_METHODS;
     }
+  }
+
+  @NotNull
+  public static ImmutableMap<String, BuiltinDescription> getModuleBuiltinMethods(@NotNull LanguageLevel level) {
+    if (level.isAtLeast(LanguageLevel.PYTHON37)) {
+      return PY37_MODULE_BUILTIN_METHODS;
+    }
+
+    return ImmutableMap.of();
   }
 
   // canonical names, not forced by interpreter
@@ -501,7 +549,7 @@ public class PyNames {
   /**
    * Contains keywords as of CPython 2.5.
    */
-  public static ImmutableSet<String> Keywords = ImmutableSet.of(
+  public static final ImmutableSet<String> KEYWORDS = ImmutableSet.of(
     AND,
     DEL,
     FROM,
@@ -535,7 +583,7 @@ public class PyNames {
     TRY
   );
 
-  public static Set<String> BuiltinInterfaces = ImmutableSet.of(
+  public static final Set<String> BUILTIN_INTERFACES = ImmutableSet.of(
     CALLABLE, HASHABLE, ITERABLE, ITERATOR, SIZED, CONTAINER, SEQUENCE, MAPPING, ABC_COMPLEX, ABC_REAL, ABC_RATIONAL, ABC_INTEGRAL,
     ABC_NUMBER
   );
@@ -547,11 +595,12 @@ public class PyNames {
    * @return true iff the name is either a keyword or a reserved name, like None.
    */
   public static boolean isReserved(@NonNls String name) {
-    return Keywords.contains(name) || NONE.equals(name);
+    return KEYWORDS.contains(name) || NONE.equals(name);
   }
 
   // NOTE: includes unicode only good for py3k
-  private final static Pattern IDENTIFIER_PATTERN = Pattern.compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*");
+  public static final String IDENTIFIER_RE = "\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*";
+  private final static Pattern IDENTIFIER_PATTERN = Pattern.compile(IDENTIFIER_RE);
 
   /**
    * TODO: dependency on language level.
@@ -569,6 +618,41 @@ public class PyNames {
 
   public static boolean isRightOperatorName(@Nullable String name) {
     return name != null && (name.matches("__r[a-z]+__") || CONTAINS.equals(name));
+  }
+
+  public static boolean isRightOperatorName(@Nullable String referencedName, @Nullable String calleeName) {
+    if (isRightOperatorName(calleeName)) return true;
+
+    return referencedName != null && calleeName != null && calleeName.equals(leftToRightComparisonOperatorName(referencedName));
+  }
+
+  @Nullable
+  public static String leftToRightOperatorName(@Nullable String name) {
+    if (name == null) return null;
+
+    final String rightComparisonOperatorName = leftToRightComparisonOperatorName(name);
+    if (rightComparisonOperatorName != null) return rightComparisonOperatorName;
+
+    return name.replaceFirst("__([a-z]+)__", "__r$1__");
+  }
+
+  @Nullable
+  private static String leftToRightComparisonOperatorName(@NotNull String name) {
+    switch (name) {
+      case "__lt__":
+        return "__gt__";
+      case "__gt__":
+        return "__lt__";
+      case "__ge__":
+      return "__le__";
+      case "__le__":
+        return "__ge__";
+      case "__eq__":
+      case "__ne__":
+        return name;
+      default:
+        return null;
+    }
   }
 
   /**
@@ -596,7 +680,7 @@ public class PyNames {
 
   public static final ImmutableSet<String> PY3_ONLY_FUNCTION_SPECIAL_ATTRIBUTES = ImmutableSet.of("__annotations__", "__kwdefaults__");
 
-  public static final ImmutableSet<String> METHOD_SPECIAL_ATTRIBUTES = ImmutableSet.of("__func__", "__self__");
+  public static final ImmutableSet<String> METHOD_SPECIAL_ATTRIBUTES = ImmutableSet.of("__func__", "__self__", "__name__");
 
   public static final ImmutableSet<String> LEGACY_METHOD_SPECIAL_ATTRIBUTES = ImmutableSet.of("im_func", "im_self", "im_class");
 

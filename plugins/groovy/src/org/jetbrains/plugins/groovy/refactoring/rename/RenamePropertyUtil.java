@@ -101,15 +101,15 @@ public class RenamePropertyUtil {
   }
 
   private static Pair<List<? extends PsiElement>, String> property(List<PsiElement> list, String name) {
-    return Pair.<List<? extends PsiElement>, String>create(list, name);
+    return Pair.create(list, name);
   }
 
   private static Pair<List<? extends PsiElement>, String> cancel() {
-    return Pair.<List<? extends PsiElement>, String>create(Collections.<PsiElement>emptyList(), null);
+    return Pair.create(Collections.emptyList(), null);
   }
 
   private static Pair<List<? extends PsiElement>, String> member(PsiMember m) {
-    return Pair.<List<? extends PsiElement>, String>create(Collections.singletonList(m), null);
+    return Pair.create(Collections.singletonList(m), null);
   }
 
   private static class AskDialog extends DialogWrapper {

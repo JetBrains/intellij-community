@@ -10,9 +10,9 @@ import javax.swing.*;
  * @author ksafonov
  */
 public class CommentsTabForm {
-  private LabeledTextComponent myCommentsArea;
+  private final LabeledTextComponent myCommentsArea;
   private JPanel myContentPane;
-  private LabeledTextComponent myErrorComponent;
+  private final LabeledTextComponent myErrorComponent;
   private JPanel myErrorPanel;
   private JPanel myCommentsPanel;
 
@@ -24,7 +24,7 @@ public class CommentsTabForm {
     myCommentsArea.setTitle(DiagnosticBundle.message("error.dialog.comment.prompt"));
     
     JTextArea errorArea = myErrorComponent.getTextComponent();
-    //errorArea.setPreferredSize(new Dimension(IdeErrorsDialog.COMPONENTS_WIDTH, -1));
+    //errorArea.setPreferredSize(JBUI.size(IdeErrorsDialog.COMPONENTS_WIDTH, -1));
     errorArea.setLineWrap(true);
     errorArea.setEditable(false);
     errorArea.setBackground(UIUtil.getTextFieldBackground());

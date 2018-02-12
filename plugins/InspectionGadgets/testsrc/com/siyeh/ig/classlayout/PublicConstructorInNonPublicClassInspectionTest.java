@@ -20,7 +20,7 @@ import com.siyeh.ig.IGInspectionTestCase;
 public class PublicConstructorInNonPublicClassInspectionTest
   extends IGInspectionTestCase {
 
-  public void test() throws Exception {
+  public void test() {
     doTest("com/siyeh/igtest/classlayout/public_constructor_in_non_public_class",
            new PublicConstructorInNonPublicClassInspection());
   }

@@ -26,7 +26,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: May 25, 2010
  */
 public class AntDomPropertyValueConverter extends WrappingConverter{
 
@@ -34,7 +33,7 @@ public class AntDomPropertyValueConverter extends WrappingConverter{
     final String raw = domElement.getRawText();
     if (raw != null) {
       if (raw.contains("${") || raw.contains(File.separator) || (File.separatorChar != '/' && raw.contains("/"))) {
-        return Collections.<Converter>singletonList(new AntPathConverter());
+        return Collections.singletonList(new AntPathConverter());
       }
     }
     return Collections.emptyList();

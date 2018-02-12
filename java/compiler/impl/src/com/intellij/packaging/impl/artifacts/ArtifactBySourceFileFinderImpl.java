@@ -60,7 +60,7 @@ public class ArtifactBySourceFileFinderImpl extends ArtifactBySourceFileFinder {
           for (ComplexPackagingElementType<?> type : PackagingElementFactory.getInstance().getComplexElementTypes()) {
             ContainerUtil.addIfNotNull(trackers, type.getAllSubstitutionsModificationTracker(myProject));
           }
-          return CachedValueProvider.Result.create(result, trackers.toArray(new ModificationTracker[trackers.size()]));
+          return CachedValueProvider.Result.create(result, trackers);
         }, false);
     }
     return myFile2Artifacts;
@@ -111,6 +111,6 @@ public class ArtifactBySourceFileFinderImpl extends ArtifactBySourceFileFinder {
       }
       file = file.getParent();
     }
-    return result != null ? result : Collections.<Artifact>emptyList();
+    return result != null ? result : Collections.emptyList();
   }
 }

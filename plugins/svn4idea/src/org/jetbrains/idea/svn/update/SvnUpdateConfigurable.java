@@ -34,6 +34,7 @@ public abstract class SvnUpdateConfigurable implements Configurable {
     myProject = project;
   }
 
+  @Override
   public String getHelpTopic() {
     return HELP_ID;
   }

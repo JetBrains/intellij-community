@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,13 @@ public class FontUtil {
     return canDisplay(font, '\u2191', defaultValue);
   }
 
+  /**
+   * The method checks whether the font can display the character.
+   *
+   * If the character should be shown in editor, the method might return incorrect result,
+   * since the editor will try to use fallback fonts if the base one cannot display the character.
+   * In this case use {@link com.intellij.openapi.editor.ex.util.EditorUtil#displayCharInEditor()} instead.
+   */
   @NotNull
   public static String canDisplay(@NotNull Font font, char value, @NotNull String defaultValue) {
     return font.canDisplay(value) ? String.valueOf(value) : defaultValue;
@@ -38,7 +45,12 @@ public class FontUtil {
 
   @NotNull
   public static String spaceAndThinSpace() {
-    return " " + canDisplay(UIUtil.getLabelFont(), '\u2009', " ");
+    return " " + thinSpace();
+  }
+  
+  @NotNull
+  public static String thinSpace() {
+    return canDisplay(UIUtil.getLabelFont(), '\u2009', " ");
   }
 
   @NotNull

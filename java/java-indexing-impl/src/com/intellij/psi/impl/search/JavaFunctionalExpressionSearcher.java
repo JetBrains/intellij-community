@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.psi.impl.search;
 
@@ -25,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -47,7 +36,7 @@ import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -143,7 +132,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   private static MultiMap<VirtualFile, FunExprOccurrence> getAllOccurrences(List<SamDescriptor> descriptors) {
     MultiMap<VirtualFile, FunExprOccurrence> result = MultiMap.createLinkedSet();
     for (SamDescriptor descriptor : descriptors) {
-      ReadAction.run(() -> {
+      descriptor.dumbService.runReadActionInSmartMode(() -> {
         for (FunctionalExpressionKey key : descriptor.generateKeys()) {
           FileBasedIndex.getInstance().processValues(JavaFunctionalExpressionIndex.INDEX_ID, key, null, (file, infos) -> {
             ProgressManager.checkCanceled();
@@ -187,8 +176,9 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   private static List<FunExprOccurrence> filterInapplicable(List<PsiClass> samClasses,
                                                             VirtualFile vFile,
                                                             Collection<FunExprOccurrence> occurrences, Project project) {
-    return ReadAction.compute(() -> project.isDisposed() ? Collections.emptyList()
-                                                         : ContainerUtil.filter(occurrences, it -> it.canHaveType(samClasses, vFile)));
+    return DumbService.getInstance(project).runReadActionInSmartMode(
+      () -> project.isDisposed() ? Collections.emptyList()
+                                 : ContainerUtil.filter(occurrences, it -> it.canHaveType(samClasses, vFile)));
   }
 
   private static boolean processFile(@NotNull Processor<PsiFunctionalExpression> consumer,
@@ -280,6 +270,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     final int samParamCount;
     final boolean booleanCompatible;
     final boolean isVoid;
+    final DumbService dumbService;
     GlobalSearchScope effectiveUseScope;
 
     SamDescriptor(PsiClass samClass, PsiMethod samMethod, PsiType samType, GlobalSearchScope useScope) {
@@ -288,11 +279,15 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
       this.samParamCount = samMethod.getParameterList().getParametersCount();
       this.booleanCompatible = FunctionalExpressionKey.isBooleanCompatible(samType);
       this.isVoid = PsiType.VOID.equals(samType);
+      this.dumbService = DumbService.getInstance(samClass.getProject());
     }
 
     List<FunctionalExpressionKey> generateKeys() {
+      String name = samClass.isValid() ? samClass.getName() : null;
+      if (name == null) return Collections.emptyList();
+
       List<FunctionalExpressionKey> result = new ArrayList<>();
-      for (String lambdaType : new String[]{assertNotNull(samClass.getName()), ""}) {
+      for (String lambdaType : new String[]{assertNotNull(name), ""}) {
         for (int lambdaParamCount : new int[]{FunctionalExpressionKey.UNKNOWN_PARAM_COUNT, samParamCount}) {
           result.add(new FunctionalExpressionKey(lambdaParamCount, FunctionalExpressionKey.CoarseType.UNKNOWN, lambdaType));
           if (isVoid) {
@@ -312,7 +307,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     @NotNull
     private Set<VirtualFile> getMostLikelyFiles(GlobalSearchScope searchScope) {
       Set<VirtualFile> files = ContainerUtil.newLinkedHashSet();
-      ReadAction.run(() -> {
+      dumbService.runReadActionInSmartMode(() -> {
         if (!samClass.isValid()) return;
 
         String className = samClass.getName();
@@ -342,6 +337,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
                                                            @NotNull Project project,
                                                            @NotNull Processor<PsiFunctionalExpression> consumer) {
     CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstance(project);
+    if (compilerReferenceService == null) return true;
     for (SamDescriptor descriptor : descriptors) {
       if (!processFunctionalExpressions(performSearchUsingCompilerIndices(descriptor,
                                                                           searchScope,
@@ -355,7 +351,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   private static CompilerDirectHierarchyInfo performSearchUsingCompilerIndices(@NotNull SamDescriptor descriptor,
                                                                                @NotNull GlobalSearchScope searchScope,
                                                                                @NotNull CompilerReferenceService service) {
-    return service.getFunExpressions(descriptor.samClass, descriptor.effectiveUseScope, searchScope, JavaFileType.INSTANCE);
+    return service.getFunExpressions(descriptor.samClass, searchScope, JavaFileType.INSTANCE);
   }
 
 

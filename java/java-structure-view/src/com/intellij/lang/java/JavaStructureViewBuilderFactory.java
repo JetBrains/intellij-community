@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 public class JavaStructureViewBuilderFactory implements PsiStructureViewFactory {
   @Override
   @Nullable
-  public StructureViewBuilder getStructureViewBuilder(final PsiFile psiFile) {
+  public StructureViewBuilder getStructureViewBuilder(@NotNull final PsiFile psiFile) {
     if (!(psiFile instanceof PsiJavaFile)) return null;
     return new TreeBasedStructureViewBuilder() {
       @Override

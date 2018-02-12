@@ -1,81 +1,151 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
+import com.intellij.codeInsight.completion.CompletionMemory
+import com.intellij.codeInsight.completion.JavaMethodCallElement
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
 import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl
 import com.intellij.psi.impl.source.tree.java.PsiNewExpressionImpl
 import com.intellij.psi.util.TypeConversionUtil
+import com.intellij.util.IncorrectOperationException
 
 
 object JavaInlayHintsProvider {
 
-  fun createHints(callExpression: PsiCallExpression): Set<InlayInfo> {
+  fun hints(callExpression: PsiCallExpression): Set<InlayInfo> {
+    if (JavaMethodCallElement.isCompletionMode(callExpression)) {
+      val argumentList = callExpression.argumentList?:return emptySet()
+      val text = argumentList.text
+      if (text == null || !text.startsWith('(') || !text.endsWith(')')) return emptySet()
+
+      val method = CompletionMemory.getChosenMethod(callExpression)?:return emptySet()
+
+      val params = method.parameterList.parameters
+      val arguments = argumentList.expressions
+      
+      return  params.mapIndexedNotNull { i, parameter -> 
+        val paramName = parameter.name ?: return@mapIndexedNotNull null
+        val varargHint = parameter.type is PsiEllipsisType && params.size > 1 && 
+                         (arguments.size == params.size - 1 || params.size == 2 && arguments.isEmpty())
+        val paramToShow = (if (varargHint) ", " else "") + paramName
+        val offset = if (i < arguments.size) inlayOffset(arguments[i]) 
+                        else if (varargHint && i == arguments.size) callExpression.textRange.endOffset - 1
+                        else argumentList.textOffset + 1
+        InlayInfo(paramToShow, offset, false, params.size == 1, varargHint)
+      }.toSet()
+    }
+    
+    if (!EditorSettingsExternalizable.getInstance().isShowParameterNameHints) return emptySet()
+    
     val resolveResult = callExpression.resolveMethodGenerics()
-    val hints = createHintsForResolvedMethod(callExpression, resolveResult)
+    val hints = methodHints(callExpression, resolveResult)
     if (hints.isNotEmpty()) return hints
     
     return when (callExpression) {
-      is PsiMethodCallExpressionImpl -> createMergedHints(callExpression, callExpression.methodExpression.multiResolve(false))
-      is PsiNewExpressionImpl -> createMergedHints(callExpression, callExpression.constructorFakeReference.multiResolve(false))
+      is PsiMethodCallExpressionImpl -> mergedHints(callExpression, callExpression.methodExpression.multiResolve(false))
+      is PsiNewExpressionImpl -> mergedHints(callExpression, callExpression.constructorFakeReference.multiResolve(false))
       else -> emptySet()
     }
   }
 
-  private fun createMergedHints(callExpression: PsiCallExpression, 
-                                results: Array<out ResolveResult>): Set<InlayInfo> {
+  private fun mergedHints(callExpression: PsiCallExpression,
+                          results: Array<out ResolveResult>): Set<InlayInfo> {
     val resultSet = results
       .filter { it.element != null }
-      .map { createHintsForResolvedMethod(callExpression, it) }
-      
-    if (resultSet.isEmpty() || resultSet.any { it.isEmpty() }) return emptySet()
-    
+      .map { methodHints(callExpression, it) }
+
+    if (resultSet.isEmpty()) return emptySet()
+    if (resultSet.size == 1) {
+      return resultSet.first()
+    }
+
+    val chosenMethod: PsiMethod? = CompletionMemory.getChosenMethod(callExpression)
+    if (chosenMethod != null) {
+      val callInfo = callInfo(callExpression, chosenMethod)
+      return hintSet(callInfo, PsiSubstitutor.EMPTY)
+    }
+
+    //we can show hints for same named parameters of overloaded methods, even if don't know exact method
     return resultSet.reduce { left, right -> left.intersect(right) }
+      .map { InlayInfo(it.text, it.offset, isShowOnlyIfExistedBefore = true) }
+      .toSet()
   }
 
-  private fun createHintsForResolvedMethod(callExpression: PsiCallExpression, resolveResult: ResolveResult): Set<InlayInfo> {
+  private fun methodHints(callExpression: PsiCallExpression, resolveResult: ResolveResult): Set<InlayInfo> {
     val element = resolveResult.element
     val substitutor = (resolveResult as? JavaResolveResult)?.substitutor ?: PsiSubstitutor.EMPTY
     
     if (element is PsiMethod && isMethodToShow(element, callExpression)) {
-      val info = getCallInfo(callExpression, element)
-      return createHintSet(info, substitutor)
+      val info = callInfo(callExpression, element)
+      if (isCallInfoToShow(info)) {
+        return hintSet(info, substitutor)
+      }
     }
     
     return emptySet()
   }
 
-  private fun createHintSet(info: CallInfo, substitutor: PsiSubstitutor): Set<InlayInfo> {
-    val args = info.regularArgs.filter { it.isAssignable(substitutor) }
-
-    val resultSet = mutableSetOf<InlayInfo>()
-    with(resultSet) {
-      getVarArgInlay(info)?.let { add(it) }
-
-      val hintsProvider = JavaInlayParameterHintsProvider.getInstance()
-      if (hintsProvider.isShowForParamsWithSameType.get()) {
-        addAll(createSameTypeInlays(args))
-      }
-
-      addAll(createUnclearInlays(args))
+  private fun isCallInfoToShow(info: CallInfo): Boolean {
+    val hintsProvider = JavaInlayParameterHintsProvider.getInstance()
+    if (hintsProvider.ignoreOneCharOneDigitHints.get() && info.allParamsSequential()) {
+      return false
     }
+    return true
+  }
+
+  private fun String.decomposeOrderedParams(): Pair<String, Int>? {
+    val firstDigit = indexOfFirst { it.isDigit() }
+    if (firstDigit < 0) return null
+
+    val prefix = substring(0, firstDigit)
+    try {
+      val number = substring(firstDigit, length).toInt()
+      return prefix to number
+    }
+    catch (e: NumberFormatException) {
+      return null
+    }
+  }
+
+  private fun CallInfo.allParamsSequential(): Boolean {
+    val paramNames = regularArgs
+      .map { it.parameter.name?.decomposeOrderedParams() }
+      .filterNotNull()
+
+    if (paramNames.size > 1 && paramNames.size == regularArgs.size) {
+      val prefixes = paramNames.map { it.first }
+      if (prefixes.toSet().size != 1) return false
+
+      val numbers = paramNames.map { it.second }
+      val first = numbers.first()
+      if (first == 0 || first == 1) {
+        return numbers.areSequential()
+      }
+    }
+
+    return false
+  }
+
+  private fun hintSet(info: CallInfo, substitutor: PsiSubstitutor): Set<InlayInfo> {
+    val resultSet = mutableSetOf<InlayInfo>()
+
+    val varargInlay = info.varargsInlay(substitutor)
+    if (varargInlay != null) {
+      resultSet.add(varargInlay)
+    }
+    
+    if (isShowForParamsWithSameType()) {
+      resultSet.addAll(info.sameTypeInlays())
+    }
+    
+    resultSet.addAll(info.unclearInlays(substitutor))
 
     return resultSet
   }
+
+  private fun isShowForParamsWithSameType() = JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.get()
 
   private fun isMethodToShow(method: PsiMethod, callExpression: PsiCallExpression): Boolean {
     val params = method.parameterList.parameters
@@ -95,22 +165,8 @@ object JavaInlayHintsProvider {
     }
     return true
   }
-
-  private fun createUnclearInlays(args: List<CallArgumentInfo>): List<InlayInfo> {
-    return args
-      .filter { isUnclearExpression(it.argument) }
-      .mapNotNull { createInlayInfo(it.argument, it.parameter) }
-  }
-
-  private fun getVarArgInlay(info: CallInfo): InlayInfo? {
-    if (info.varArg == null || info.varArgExpressions.isEmpty()) return null
-    val hasUnclearExpressions = info.varArgExpressions.find { isUnclearExpression(it) } != null
-    if (hasUnclearExpressions) {
-      return createInlayInfo(info.varArgExpressions.first(), info.varArg)
-    }
-    return null
-  }
-
+  
+  
   private fun isBuilderLike(expression: PsiCallExpression, method: PsiMethod): Boolean {
     if (expression is PsiNewExpression) return false
 
@@ -127,27 +183,8 @@ object JavaInlayHintsProvider {
     }
     return false
   }
-
-  private fun createSameTypeInlays(args: List<CallArgumentInfo>): List<InlayInfo> {
-    val all = args.map { it.parameter.typeText() }
-    val duplicated = all.toMutableList()
-
-    all.distinct().forEach {
-      duplicated.remove(it)
-    }
-
-    return args
-      .filter { duplicated.contains(it.parameter.typeText()) }
-      .mapNotNull { createInlayInfo(it.argument, it.parameter) }
-  }
-
-  private fun createInlayInfo(callArgument: PsiExpression, methodParam: PsiParameter): InlayInfo? {
-    val paramName = methodParam.name ?: return null
-    val paramToShow = (if (methodParam.type is PsiEllipsisType) "..." else "") + paramName
-    return InlayInfo(paramToShow, callArgument.textRange.startOffset)
-  }
-
-  private fun getCallInfo(callExpression: PsiCallExpression, method: PsiMethod): CallInfo {
+  
+  private fun callInfo(callExpression: PsiCallExpression, method: PsiMethod): CallInfo {
     val params = method.parameterList.parameters
     val hasVarArg = params.lastOrNull()?.isVarArgs ?: false
     val regularParamsCount = if (hasVarArg) params.size - 1 else params.size
@@ -164,35 +201,118 @@ object JavaInlayHintsProvider {
     return CallInfo(regularArgInfos, varargParam, varargExpressions)
   }
   
-  private fun isUnclearExpression(callArgument: PsiElement): Boolean {
-    val isShowHint = when (callArgument) {
-      is PsiLiteralExpression -> true
-      is PsiThisExpression -> true
-      is PsiBinaryExpression -> true
-      is PsiPolyadicExpression -> true
-      is PsiPrefixExpression -> {
-        val tokenType = callArgument.operationTokenType
-        val isLiteral = callArgument.operand is PsiLiteralExpression
-        isLiteral && (JavaTokenType.MINUS == tokenType || JavaTokenType.PLUS == tokenType)
+}
+
+private fun List<Int>.areSequential(): Boolean {
+  if (size == 0) throw IncorrectOperationException("List is empty")
+  val ordered = (first()..first() + size - 1).toList()
+  if (ordered.size == size) {
+    return zip(ordered).all { it.first == it.second }
+  }
+  return false
+}
+
+
+private fun inlayInfo(info: CallArgumentInfo, showOnlyIfExistedBefore: Boolean = false): InlayInfo? {
+  return inlayInfo(info.argument, info.parameter, showOnlyIfExistedBefore)
+}
+
+
+private fun inlayInfo(callArgument: PsiExpression, methodParam: PsiParameter, showOnlyIfExistedBefore: Boolean = false): InlayInfo? {
+  val paramName = methodParam.name ?: return null
+  val paramToShow = (if (methodParam.type is PsiEllipsisType) "..." else "") + paramName
+  val offset = inlayOffset(callArgument)
+  return InlayInfo(paramToShow, offset, showOnlyIfExistedBefore)
+}
+
+fun inlayOffset(callArgument: PsiExpression): Int = inlayOffset(callArgument, false)
+
+fun inlayOffset(callArgument: PsiExpression, atEnd: Boolean): Int {
+  if (callArgument.textRange.isEmpty) {
+    val next = callArgument.nextSibling as? PsiWhiteSpace
+    if (next != null) return next.textRange.endOffset
+  }
+  return if (atEnd) callArgument.textRange.endOffset else callArgument.textRange.startOffset
+}
+
+private fun isUnclearExpression(callArgument: PsiElement): Boolean {
+  val isShowHint = when (callArgument) {
+    is PsiLiteralExpression -> true
+    is PsiThisExpression -> true
+    is PsiBinaryExpression -> true
+    is PsiPolyadicExpression -> true
+    is PsiPrefixExpression -> {
+      val tokenType = callArgument.operationTokenType
+      val isLiteral = callArgument.operand is PsiLiteralExpression
+      isLiteral && (JavaTokenType.MINUS == tokenType || JavaTokenType.PLUS == tokenType)
+    }
+    else -> false
+  }
+
+  return isShowHint
+}
+
+
+private class CallInfo(val regularArgs: List<CallArgumentInfo>, val varArg: PsiParameter?, val varArgExpressions: List<PsiExpression>) {
+  
+  
+  fun unclearInlays(substitutor: PsiSubstitutor): List<InlayInfo> {
+    val inlays = mutableListOf<InlayInfo>() 
+    
+    for (callInfo in regularArgs) {
+      val inlay = when {
+        isUnclearExpression(callInfo.argument) -> inlayInfo(callInfo)
+        !callInfo.isAssignable(substitutor) -> inlayInfo(callInfo, showOnlyIfExistedBefore = true)
+        else -> null
       }
-      else -> false
+      
+      inlay?.let { inlays.add(inlay) }
+    }
+    
+    return inlays
+  }
+
+  
+  fun sameTypeInlays(): List<InlayInfo> {
+    val all = regularArgs.map { it.parameter.typeText() }
+    val duplicated = all.toMutableList()
+
+    all.distinct().forEach {
+      duplicated.remove(it)
     }
 
-    return isShowHint
+    return regularArgs
+      .filter { duplicated.contains(it.parameter.typeText()) && it.argument.text != it.parameter.name }
+      .mapNotNull { inlayInfo(it) }
+  }
+
+  
+  fun varargsInlay(substitutor: PsiSubstitutor): InlayInfo? {
+    if (varArg == null) return null
+
+    var hasUnassignable = false
+    for (expr in varArgExpressions) {
+      if (isUnclearExpression(expr)) {
+        return inlayInfo(varArgExpressions.first(), varArg)
+      }
+      hasUnassignable = hasUnassignable || !varArg.isAssignable(expr, substitutor)
+    }
+    
+    return if (hasUnassignable) inlayInfo(varArgExpressions.first(), varArg, showOnlyIfExistedBefore = true) else null
+  }
+  
+}
+
+
+private class CallArgumentInfo(val parameter: PsiParameter, val argument: PsiExpression) {
+  fun isAssignable(substitutor: PsiSubstitutor): Boolean {
+    return parameter.isAssignable(argument, substitutor)
   }
 }
 
 
-private class CallInfo(val regularArgs: List<CallArgumentInfo>,
-                       val varArg: PsiParameter?,
-                       val varArgExpressions: List<PsiExpression>)
-
-
-private class CallArgumentInfo(val parameter: PsiParameter, val argument: PsiExpression)
-
-
-private fun CallArgumentInfo.isAssignable(substitutor: PsiSubstitutor): Boolean {
-  val substitutedType = substitutor.substitute(parameter.type)
+private fun PsiParameter.isAssignable(argument: PsiExpression, substitutor: PsiSubstitutor = PsiSubstitutor.EMPTY): Boolean {
+  val substitutedType = substitutor.substitute(type)
   if (PsiPolyExpressionUtil.isPolyExpression(argument)) return true
   return argument.type?.isAssignableTo(substitutedType) ?: false
 }

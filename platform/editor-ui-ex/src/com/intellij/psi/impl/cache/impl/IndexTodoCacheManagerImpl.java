@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 16, 2008
  */
 public class IndexTodoCacheManagerImpl implements TodoCacheManager {
   private final Project myProject;
@@ -81,7 +80,7 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
 
   @Override
   public int getTodoCount(@NotNull final VirtualFile file, @NotNull final IndexPatternProvider patternProvider) {
-    if (myProject.isDefault()) {
+    if (myProject.isDefault() || !ProjectFileIndex.getInstance(myProject).isInContent(file)) {
       return 0;
     }
     if (file instanceof VirtualFileWindow) return -1;
@@ -91,7 +90,7 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
 
   @Override
   public int getTodoCount(@NotNull final VirtualFile file, @NotNull final IndexPattern pattern) {
-    if (myProject.isDefault()) {
+    if (myProject.isDefault() || !ProjectFileIndex.getInstance(myProject).isInContent(file)) {
       return 0;
     }
     if (file instanceof VirtualFileWindow) return -1;

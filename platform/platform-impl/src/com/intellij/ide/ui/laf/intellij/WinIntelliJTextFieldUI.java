@@ -15,39 +15,146 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
+import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
+import java.awt.event.MouseListener;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class WinIntelliJTextFieldUI extends DarculaTextFieldUI {
-  public WinIntelliJTextFieldUI(JTextField textField) {
-    super(textField);
-  }
+public class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
+  public static final String HOVER_PROPERTY = "JTextField.hover";
+
+  private MouseListener hoverListener;
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
-    return new WinIntelliJTextFieldUI((JTextField)c);
+    return new WinIntelliJTextFieldUI();
   }
 
   @Override
-  protected void paintBackground(Graphics graphics) {
-    super.paintBackground(graphics);
+  public void installListeners() {
+    super.installListeners();
+    hoverListener = new DarculaUIUtil.MouseHoverPropertyTrigger(getComponent(), HOVER_PROPERTY);
+    getComponent().addMouseListener(hoverListener);
   }
 
   @Override
-  protected void paintDarculaBackground(Graphics2D g, JTextComponent c, Border border) {
-    super.paintDarculaBackground(g, c, border);
+  public void uninstallListeners() {
+    super.uninstallListeners();
+    if (hoverListener != null) {
+      getComponent().removeMouseListener(hoverListener);
+    }
   }
 
   @Override
-  protected void paintSearchField(Graphics2D g, JTextComponent c, Rectangle r) {
-    super.paintSearchField(g, c, r);
+  protected void paintBackground(Graphics g) {
+    JTextComponent c = getComponent();
+    if (UIUtil.getParentOfType(JComboBox.class, c) != null) return;
+
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+
+      Container parent = c.getParent();
+      if (c.isOpaque() && parent != null) {
+        g2.setColor(parent.getBackground());
+        g2.fillRect(0, 0, c.getWidth(), c.getHeight());
+      }
+
+      if (c.getBorder() instanceof WinIntelliJTextBorder) {
+        paintTextFieldBackground(c, g2);
+      } else if (c.isOpaque()) {
+        super.paintBackground(g);
+      }
+    } finally {
+      g2.dispose();
+    }
+  }
+
+  static void paintTextFieldBackground(JComponent c, Graphics2D g2) {
+    g2.setColor(c.isEnabled() ? c.getBackground() : UIManager.getColor("Button.background"));
+
+    if (!c.isEnabled()) {
+      g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
+    }
+
+    Rectangle r = new Rectangle(c.getSize());
+    JBInsets.removeFrom(r, JBUI.insets(2));
+    adjustInWrapperRect(r, c);
+
+    g2.fill(r);
+  }
+
+  static void adjustInWrapperRect(Rectangle r, Component c) {
+    if (UIUtil.getParentOfType(Wrapper.class, c) != null && isSearchFieldWithHistoryPopup(c)) {
+      int delta = c.getHeight() - c.getPreferredSize().height;
+      if (delta > 0) {
+        delta -= delta % 2 == 0 ? 0 : 1;
+        JBInsets.removeFrom(r, JBUI.insets(delta / 2, 0));
+      }
+    }
+  }
+
+  @Override
+  protected int getMinimumHeight() {
+    JComponent c = getComponent();
+    return DarculaEditorTextFieldBorder.isComboBoxEditor(c) ||
+           UIUtil.getParentOfType(JSpinner.class, c) != null ?
+           JBUI.scale(18) : JBUI.scale(24);
+  }
+
+  @Override
+  protected Icon getSearchIcon(boolean hovered, boolean clickable) {
+    Icon icon = UIManager.getIcon(clickable ? "TextField.darcula.searchWithHistory.icon" : "TextField.darcula.search.icon");
+    if (icon != null && clickable) {
+      return new Icon() {
+        @Override
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+          icon.paintIcon(c, g, x, y + JBUI.scale(1));
+        }
+
+        @Override
+        public int getIconWidth() {
+          return icon.getIconWidth() + JBUI.scale(4);
+        }
+
+        @Override
+        public int getIconHeight() {
+          return icon.getIconHeight();
+        }
+      };
+    }
+    return icon != null ? icon : IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/search.png", DarculaTextFieldUI.class, true);
+  }
+
+  @Override
+  protected int getSearchIconGap() {
+    return 0;
+  }
+
+  @Override
+  protected Icon getClearIcon(boolean hovered, boolean clickable) {
+    if (!clickable) return null;
+    Icon icon = UIManager.getIcon("TextField.darcula.clear.icon");
+    return icon != null ? icon : IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/clear.png", DarculaTextFieldUI.class, true);
+  }
+
+  @Override
+  protected int getClearIconGap() {
+    return JBUI.scale(3);
   }
 }

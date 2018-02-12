@@ -55,11 +55,11 @@ public class AppExecutorUtil {
 
   /**
    * Returns {@link ScheduledExecutorService} which allows to {@link ScheduledExecutorService#schedule(Callable, long, TimeUnit)} tasks later
-   * and execute them in parallel in the application pool (see {@link #getAppExecutorService()} not more than at {@code maxSimultaneousTasks} at a time.
+   * and execute them in parallel in the application pool (see {@link #getAppExecutorService()} not more than at {@code maxThreads} at a time.
    */
   @NotNull
-  public static ScheduledExecutorService createBoundedScheduledExecutorService(@NotNull String name, int maxSimultaneousTasks) {
-    return new BoundedScheduledExecutorService(name, getAppExecutorService(), maxSimultaneousTasks);
+  public static ScheduledExecutorService createBoundedScheduledExecutorService(@NotNull String name, int maxThreads) {
+    return new BoundedScheduledExecutorService(name, getAppExecutorService(), maxThreads);
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.DfaFactType;
+import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -25,6 +28,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.FormatUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -130,12 +134,13 @@ public class MalformedFormatStringInspectionBase extends BaseInspection {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
-      final PsiExpression[] arguments = argumentList.getExpressions();
-      final int formatArgumentIndex = findFirstStringArgumentIndex(arguments);
+      PsiExpression[] arguments = argumentList.getExpressions();
+      int formatArgumentIndex = findFirstStringArgumentIndex(arguments);
       if (formatArgumentIndex < 0) {
         return;
       }
       final PsiExpression formatArgument = arguments[formatArgumentIndex];
+      formatArgumentIndex++;
       if (!ExpressionUtils.hasStringType(formatArgument) || !PsiUtil.isConstantExpression(formatArgument)) {
         return;
       }
@@ -147,7 +152,7 @@ public class MalformedFormatStringInspectionBase extends BaseInspection {
       if (value == null) {
         return;
       }
-      final int argumentCount = arguments.length - (formatArgumentIndex + 1);
+      int argumentCount = arguments.length - (formatArgumentIndex);
       final FormatDecode.Validator[] validators;
       try {
         validators = FormatDecode.decode(value, argumentCount);
@@ -156,29 +161,64 @@ public class MalformedFormatStringInspectionBase extends BaseInspection {
         registerError(formatArgument, e);
         return;
       }
-      if (validators.length != argumentCount) {
-        if (argumentCount == 1) {
-          final PsiExpression argument = arguments[formatArgumentIndex + 1];
-          final PsiType argumentType = argument.getType();
-          if (argumentType instanceof PsiArrayType) {
+      if (argumentCount == 1) {
+        final PsiExpression argument = resolveIfPossible(arguments[formatArgumentIndex]);
+        final PsiType argumentType = argument.getType();
+        if (argumentType instanceof PsiArrayType) {
+          final PsiArrayInitializerExpression arrayInitializer;
+          if (argument instanceof PsiNewExpression) {
+            final PsiNewExpression newExpression = (PsiNewExpression)argument;
+            arrayInitializer = newExpression.getArrayInitializer();
+          }
+          else if (argument instanceof PsiArrayInitializerExpression) {
+            arrayInitializer = (PsiArrayInitializerExpression)argument;
+          }
+          else {
             return;
           }
+          if (arrayInitializer == null) {
+            return;
+          }
+          arguments = arrayInitializer.getInitializers();
+          argumentCount = arguments.length;
+          formatArgumentIndex = 0;
         }
+      }
+      if (validators.length != argumentCount) {
         registerMethodCallError(expression, validators, Integer.valueOf(argumentCount));
         return;
       }
       for (int i = 0; i < validators.length; i++) {
         final FormatDecode.Validator validator = validators[i];
-        final PsiExpression argument = arguments[i + formatArgumentIndex + 1];
+        final PsiExpression argument = arguments[i + formatArgumentIndex];
         final PsiType argumentType = argument.getType();
         if (argumentType == null) {
           continue;
         }
         if (validator != null && !validator.valid(argumentType)) {
-          registerError(argument, validators, Integer.valueOf(argumentCount), argumentType, validator);
-          return;
+          TypeConstraint fact = CommonDataflow.getExpressionFact(argument, DfaFactType.TYPE_CONSTRAINT);
+          PsiType preciseType = fact != null ? fact.getPsiType() : null;
+          if (preciseType == null || !validator.valid(preciseType)) {
+            registerError(argument, validators, Integer.valueOf(argumentCount), argumentType, validator);
+          }
         }
       }
+    }
+
+    private PsiExpression resolveIfPossible(PsiExpression expression) {
+      expression = ParenthesesUtils.stripParentheses(expression);
+      if (expression instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+        final PsiElement target = referenceExpression.resolve();
+        if (target instanceof PsiVariable && target.getContainingFile() == expression.getContainingFile()) {
+          final PsiVariable variable = (PsiVariable)target;
+          final PsiExpression initializer = variable.getInitializer();
+          if (initializer != null) {
+            return initializer;
+          }
+        }
+      }
+      return expression;
     }
   }
 }

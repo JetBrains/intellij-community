@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.completion.AllClassesGetter;
-import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
@@ -64,9 +61,9 @@ public class CodeInsightUtil {
       }
     }
     if (expression == null && findStatementsInRange(file, startOffset, endOffset).length == 0) {
-      PsiElement element = PsiTreeUtil.skipSiblingsBackward(file.findElementAt(endOffset), PsiWhiteSpace.class);
+      PsiElement element = PsiTreeUtil.skipWhitespacesBackward(file.findElementAt(endOffset));
       if (element != null) {
-        element = PsiTreeUtil.skipSiblingsBackward(element.getLastChild(), PsiWhiteSpace.class, PsiComment.class);
+        element = PsiTreeUtil.skipWhitespacesAndCommentsBackward(element.getLastChild());
         if (element != null) {
           final int newEndOffset = element.getTextRange().getEndOffset();
           if (newEndOffset < endOffset) {
@@ -128,11 +125,17 @@ public class CodeInsightUtil {
         element2 = element2.getParent();
       }
     }
-    if (endOffset != element2.getTextRange().getEndOffset()) return PsiElement.EMPTY_ARRAY;
+    if (endOffset != element2.getTextRange().getEndOffset() && !isAtTrailingComment(element1, element2, endOffset)) {
+      return PsiElement.EMPTY_ARRAY;
+    }
 
-    if (parent instanceof PsiCodeBlock && parent.getParent() instanceof PsiBlockStatement &&
+    if (parent instanceof PsiCodeBlock &&
         element1 == ((PsiCodeBlock)parent).getLBrace() && element2 == ((PsiCodeBlock)parent).getRBrace()) {
-      return new PsiElement[]{parent.getParent()};
+      if (parent.getParent() instanceof PsiBlockStatement) {
+        return new PsiElement[]{parent.getParent()};
+      }
+      PsiElement[] children = parent.getChildren();
+      return getStatementsInRange(children, ((PsiCodeBlock)parent).getFirstBodyElement(), ((PsiCodeBlock)parent).getLastBodyElement());
     }
 
 /*
@@ -142,6 +145,33 @@ public class CodeInsightUtil {
 */
 
     PsiElement[] children = parent.getChildren();
+    return getStatementsInRange(children, element1, element2);
+  }
+
+  private static boolean isAtTrailingComment(PsiElement element1, PsiElement element2, int offset) {
+    if (element1 == element2 && element1 instanceof PsiExpressionStatement) {
+      for (PsiElement child = element1.getLastChild(); child != null; child = child.getPrevSibling()) {
+        if (PsiUtil.isJavaToken(child, JavaTokenType.SEMICOLON) && child.getTextRange().getEndOffset() == offset) {
+          return false; // findExpressionInRange() counts this as an expression - don't interfere with it
+        }
+      }
+    }
+    PsiElement trailing = element2;
+    while (trailing.getTextRange().contains(offset) && trailing.getLastChild() != null) {
+      trailing = trailing.getLastChild();
+    }
+    while (trailing instanceof PsiComment || trailing instanceof PsiWhiteSpace) {
+      PsiElement previous = trailing.getPrevSibling();
+      if (trailing.getTextRange().contains(offset)) {
+        return true;
+      }
+      trailing = previous;
+    }
+    return false;
+  }
+
+  @NotNull
+  private static PsiElement[] getStatementsInRange(PsiElement[] children, PsiElement element1, PsiElement element2) {
     ArrayList<PsiElement> array = new ArrayList<>();
     boolean flag = false;
     for (PsiElement child : children) {
@@ -216,7 +246,7 @@ public class CodeInsightUtil {
       }
       if (!found) array.add(expr);
     }
-    return array.toArray(new PsiExpression[array.size()]);
+    return array.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
   private static void addExpressionOccurrences(PsiExpression expr, List<PsiExpression> array, PsiElement scope) {
@@ -234,20 +264,19 @@ public class CodeInsightUtil {
 
   @NotNull
   public static PsiExpression[] findReferenceExpressions(PsiElement scope, PsiElement referee) {
-    ArrayList<PsiElement> array = new ArrayList<>();
-    if (scope != null) {
-      addReferenceExpressions(array, scope, referee);
-    }
-    return array.toArray(new PsiExpression[array.size()]);
+    if (scope == null) return PsiExpression.EMPTY_ARRAY;
+    List<PsiExpression> array = new ArrayList<>();
+    addReferenceExpressions(array, scope, referee);
+    return array.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
-  private static void addReferenceExpressions(ArrayList<PsiElement> array, PsiElement scope, PsiElement referee) {
+  private static void addReferenceExpressions(List<PsiExpression> array, PsiElement scope, PsiElement referee) {
     PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
       if (child instanceof PsiReferenceExpression) {
         PsiElement ref = ((PsiReferenceExpression)child).resolve();
         if (ref != null && PsiEquivalenceUtil.areElementsEquivalent(ref, referee)) {
-          array.add(child);
+          array.add((PsiExpression)child);
         }
       }
       addReferenceExpressions(array, child, referee);
@@ -258,7 +287,7 @@ public class CodeInsightUtil {
     final PsiElement lBrace = psiClass.getLBrace();
     return positionCursor(project, targetFile, lBrace != null ? lBrace : psiClass);
   }
-  
+
   public static Editor positionCursor(final Project project, PsiFile targetFile, @NotNull PsiElement element) {
     TextRange range = element.getTextRange();
     LOG.assertTrue(range != null, "element: " + element + "; valid: " + element.isValid());
@@ -298,7 +327,7 @@ public class CodeInsightUtil {
     if (baseClass.hasModifierProperty(PsiModifier.FINAL)) return;
 
     if (matcher.getPrefix().length() > 2) {
-      JBTreeTraverser<PsiClass> traverser = new JBTreeTraverser<>(c -> Arrays.asList(c.getInnerClasses()));
+      JBTreeTraverser<PsiClass> traverser = JBTreeTraverser.of(PsiClass::getInnerClasses);
       AllClassesGetter.processJavaClasses(matcher, context.getProject(), scope, psiClass -> {
         Iterable<PsiClass> inheritors = traverser.withRoot(psiClass).filter(c -> c.isInheritor(baseClass, true));
         return ContainerUtil.process(inheritors, inheritorsProcessor);
@@ -340,11 +369,12 @@ public class CodeInsightUtil {
     PsiManager manager = context.getManager();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     PsiResolveHelper resolveHelper = facade.getResolveHelper();
+    PsiElementFactory factory = facade.getElementFactory();
 
     return inheritor -> {
       ProgressManager.checkCanceled();
 
-      if (!facade.getResolveHelper().isAccessible(inheritor, context, null)) {
+      if (!resolveHelper.isAccessible(inheritor, context, null)) {
         return true;
       }
 
@@ -357,57 +387,29 @@ public class CodeInsightUtil {
 
       PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(baseClass, inheritor, PsiSubstitutor.EMPTY);
       if (superSubstitutor == null) return true;
-      if (getRawSubtypes) {
-        result.consume(createType(inheritor, facade.getElementFactory().createRawSubstitutor(inheritor), arrayDim));
-        return true;
-      }
 
-      PsiSubstitutor inheritorSubstitutor = PsiSubstitutor.EMPTY;
-      for (PsiTypeParameter inheritorParameter : PsiUtil.typeParametersIterable(inheritor)) {
-        for (PsiTypeParameter baseParameter : PsiUtil.typeParametersIterable(baseClass)) {
-          final PsiType substituted = superSubstitutor.substitute(baseParameter);
-          PsiClass inheritorCandidateParameter = PsiUtil.resolveClassInType(substituted);
-          if (inheritorCandidateParameter instanceof PsiTypeParameter &&
-              ((PsiTypeParameter)inheritorCandidateParameter).getOwner() == inheritor &&
-               inheritorCandidateParameter != inheritorParameter) {
-            continue;
-          }
-          PsiType arg = baseSubstitutor.substitute(baseParameter);
-          if (arg instanceof PsiWildcardType) {
-            PsiType bound = ((PsiWildcardType)arg).getBound();
-            arg = bound != null ? bound : ((PsiWildcardType)arg).getExtendsBound();
-          }
-          PsiType substitution = resolveHelper.getSubstitutionForTypeParameter(inheritorParameter,
-                                                                               substituted,
-                                                                               arg,
-                                                                               true,
-                                                                               PsiUtil.getLanguageLevel(context));
-          if (PsiType.NULL.equals(substitution) || substitution instanceof PsiWildcardType) continue;
-          if (substitution == null) {
-            result.consume(createType(inheritor, facade.getElementFactory().createRawSubstitutor(inheritor), arrayDim));
-            return true;
-          }
-          inheritorSubstitutor = inheritorSubstitutor.put(inheritorParameter, substitution);
-          break;
-        }
-      }
-
-      PsiType toAdd = createType(inheritor, inheritorSubstitutor, arrayDim);
+      List<PsiType> typeArgs = getRawSubtypes ? null : getExpectedTypeArgs(context, inheritor, Arrays.asList(inheritor.getTypeParameters()), baseType);
+      PsiClassType inheritorType = typeArgs == null || typeArgs.contains(null)
+                                   ? factory.createType(inheritor, factory.createRawSubstitutor(inheritor))
+                                   : factory.createType(inheritor, typeArgs.toArray(PsiType.EMPTY_ARRAY));
+      PsiType toAdd = PsiTypesUtil.createArrayType(inheritorType, arrayDim);
       if (baseType.isAssignableFrom(toAdd)) {
         result.consume(toAdd);
       }
+
       return true;
     };
   }
 
-  private static PsiType createType(PsiClass cls,
-                             PsiSubstitutor currentSubstitutor,
-                             int arrayDim) {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(cls.getProject()).getElementFactory();
-    PsiType newType = elementFactory.createType(cls, currentSubstitutor);
-    for(int i = 0; i < arrayDim; i++){
-      newType = newType.createArrayType();
+  @NotNull
+  public static List<PsiType> getExpectedTypeArgs(PsiElement context,
+                                                  PsiTypeParameterListOwner paramOwner,
+                                                  Iterable<PsiTypeParameter> typeParams, PsiClassType expectedType) {
+    if (paramOwner instanceof PsiClass) {
+      return GenericsUtil.getExpectedTypeArguments(context, (PsiClass)paramOwner, typeParams, expectedType);
     }
-    return newType;
+
+    PsiSubstitutor substitutor = SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor((PsiMethod)paramOwner, expectedType);
+    return ContainerUtil.map(typeParams, substitutor::substitute);
   }
 }

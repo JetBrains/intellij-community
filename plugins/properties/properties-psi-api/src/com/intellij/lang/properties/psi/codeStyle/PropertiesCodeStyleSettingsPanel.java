@@ -16,15 +16,10 @@
 package com.intellij.lang.properties.psi.codeStyle;
 
 import com.intellij.application.options.codeStyle.OptionTableWithPreviewPanel;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.lang.Language;
+import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
-import com.intellij.testFramework.LightVirtualFile;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -44,35 +39,11 @@ public class PropertiesCodeStyleSettingsPanel extends OptionTableWithPreviewPane
   @Override
   protected void initTables() {
     addOption("ALIGN_GROUP_FIELD_DECLARATIONS", "Align properties in column");
-    showStandardOptions("ALIGN_GROUP_FIELD_DECLARATIONS");
-    showCustomOption(PropertiesCodeStyleSettings.class, "SPACES_AROUND_KEY_VALUE_DELIMITER",
-                     "Insert space around key-value delimiter", null);
-    showCustomOption(PropertiesCodeStyleSettings.class,
-                     "KEY_VALUE_DELIMITER_CODE",
-                     "Key-value delimiter", null,
-                     new String[]{"=", ":", "whitespace symbol"}, new int[]{0, 1, 2});
-    showCustomOption(PropertiesCodeStyleSettings.class, "KEEP_BLANK_LINES",
-                     "Keep blank lines", null);
   }
 
   @Nullable
   @Override
-  protected EditorHighlighter createHighlighter(EditorColorsScheme scheme) {
-    return EditorHighlighterFactory.getInstance().createEditorHighlighter(new LightVirtualFile("p.properties"), scheme, null);
-  }
-
-  @NotNull
-  @Override
-  protected FileType getFileType() {
-    return StdFileTypes.PROPERTIES;
-  }
-
-  @Nullable
-  @Override
-  protected String getPreviewText() {
-    return "key1=value\n" +
-           "some_key=some_value\n\n" +
-           "#commentaries\n" +
-           "last.key=some text here";
+  public Language getDefaultLanguage() {
+    return PropertiesLanguage.INSTANCE;
   }
 }

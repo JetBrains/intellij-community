@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,7 @@ public interface InferenceContext {
       return manager.getCachedValue(element, key, () -> CachedValueProvider.Result.create(computable.compute(), PsiModificationTracker.MODIFICATION_COUNT), false);
     }
 
+    @NotNull
     @Override
     public <T extends PsiPolyVariantReference> GroovyResolveResult[] multiResolve(@NotNull T ref,
                                                                                   boolean incomplete,
@@ -77,6 +78,7 @@ public interface InferenceContext {
 
   <T> T getCachedValue(@NotNull GroovyPsiElement element, @NotNull Computable<T> computable);
 
+  @NotNull
   <T extends PsiPolyVariantReference> GroovyResolveResult[] multiResolve(@NotNull T ref, boolean incomplete, @NotNull ResolveCache.PolyVariantResolver<T> resolver);
 
   @Nullable

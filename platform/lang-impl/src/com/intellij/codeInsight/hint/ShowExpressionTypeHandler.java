@@ -28,12 +28,10 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.IntroduceTargetChooser;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -43,6 +41,11 @@ import java.util.Map;
 import java.util.Set;
 
 public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
+  private final boolean myRequestFocus;
+
+  public ShowExpressionTypeHandler(boolean requestFocus) {
+    myRequestFocus = requestFocus;
+  }
 
   @Override
   public boolean startInWriteAction() {
@@ -80,7 +83,10 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
         final String informationHint = provider.getInformationHint(expression);
         TextRange range = expression.getTextRange();
         editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-        ApplicationManager.getApplication().invokeLater(() -> HintManager.getInstance().showInformationHint(editor, informationHint));
+        ApplicationManager.getApplication().invokeLater(() -> {
+          HintManager.getInstance().setRequestFocusForNextHint(myRequestFocus);
+          HintManager.getInstance().showInformationHint(editor, informationHint);
+        });
       }
     };
     if (map.isEmpty()) {
@@ -102,12 +108,8 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
 
   @NotNull
   public static Set<ExpressionTypeProvider> getHandlers(final Project project, Language... languages) {
-    return JBIterable.of(languages).flatten(new Function<Language, Iterable<ExpressionTypeProvider>>() {
-      @Override
-      public Iterable<ExpressionTypeProvider> fun(Language language) {
-        return DumbService.getInstance(project).filterByDumbAwareness(LanguageExpressionTypes.INSTANCE.allForLanguage(language));
-      }
-    }).addAllTo(ContainerUtil.<ExpressionTypeProvider>newLinkedHashSet());
+    return JBIterable.of(languages).flatten(
+      language -> DumbService.getInstance(project).filterByDumbAwareness(LanguageExpressionTypes.INSTANCE.allForLanguage(language))).addAllTo(ContainerUtil.newLinkedHashSet());
   }
 
 }

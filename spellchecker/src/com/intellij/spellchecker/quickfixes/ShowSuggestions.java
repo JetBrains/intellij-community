@@ -16,15 +16,21 @@
 package com.intellij.spellchecker.quickfixes;
 
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.spellchecker.SpellCheckerManager;
 import icons.SpellcheckerIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
 
+import static com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil.findInjectionHost;
 
 public abstract class ShowSuggestions implements LocalQuickFix, Iconable {
 
@@ -48,5 +54,17 @@ public abstract class ShowSuggestions implements LocalQuickFix, Iconable {
 
   public Icon getIcon(int flags) {
     return SpellcheckerIcons.Spellcheck;
+  }
+
+  @Nullable
+  protected Editor getEditor(PsiElement element, @NotNull Project project) {
+    return findInjectionHost(element) != null
+           ? InjectedLanguageUtil.openEditorFor(element.getContainingFile(), project)
+           : FileEditorManager.getInstance(project).getSelectedTextEditor();
+  }
+  
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 }

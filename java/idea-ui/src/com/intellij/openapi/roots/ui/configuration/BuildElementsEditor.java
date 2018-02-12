@@ -1,25 +1,5 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 28-Jun-2006
- * Time: 19:03:32
- */
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.util.BrowseFilesListener;
@@ -36,6 +16,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.InsertPathAction;
+import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -76,6 +57,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
       public void saveUrl(String url) {
         if (myInheritCompilerOutput.isSelected()) return;  //do not override settings if any
         getCompilerExtension().setCompilerOutputPath(url);
+        fireConfigurationChanged();
       }
     });
     myTestsOutputPathPanel = createOutputPathPanel(ProjectBundle.message("module.paths.test.output.title"), new CommitPathRunnable() {
@@ -83,6 +65,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
       public void saveUrl(String url) {
         if (myInheritCompilerOutput.isSelected()) return; //do not override settings if any
         getCompilerExtension().setCompilerOutputPathForTests(url);
+        fireConfigurationChanged();
       }
     });
 
@@ -91,6 +74,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
       @Override
       public void actionPerformed(final ActionEvent e) {
         getCompilerExtension().setExcludeOutput(myCbExcludeOutput.isSelected());
+        fireConfigurationChanged();
       }
     });
 
@@ -187,10 +171,11 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     myCbExcludeOutput.setEnabled(enabled);
     getCompilerExtension().inheritCompilerOutputPath(!enabled);
     updateOutputPathPresentation();
+    fireConfigurationChanged();
   }
 
   private CommitableFieldPanel createOutputPathPanel(final String title, final CommitPathRunnable commitPathRunnable) {
-    final JTextField textField = new JTextField();
+    final JTextField textField = new ExtendableTextField();
     final FileChooserDescriptor outputPathsChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     outputPathsChooserDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, getModel().getModule());
     outputPathsChooserDescriptor.setHideIgnored(false);

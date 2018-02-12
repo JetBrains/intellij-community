@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,8 +45,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.LockSupport;
 
 public class AutoPopupController implements Disposable {
   /**
@@ -56,9 +62,21 @@ public class AutoPopupController implements Disposable {
    * This doesn't affect other conditions when autopopup is not possible (e.g. power save mode).
    */
   public static final Key<Boolean> ALWAYS_AUTO_POPUP = Key.create("Always Show Completion Auto-Popup");
+  /**
+   * If editor has Boolean.TRUE by this key completion popup would be shown without advertising text at the bottom.
+   */
+  public static final Key<Boolean> NO_ADS = Key.create("Show Completion Auto-Popup without Ads");
+
+  /**
+   * If editor has Boolean.TRUE by this key completion popup would be shown every time when editor gets focus.
+   * For example this key can be used for TextFieldWithAutoCompletion.
+   * (TextFieldWithAutoCompletion looks like standard JTextField and completion shortcut is not obvious to be active)
+   */
+  public static final Key<Boolean> AUTO_POPUP_ON_FOCUS_GAINED = Key.create("Show Completion Auto-Popup On Focus Gained");
+
 
   private final Project myProject;
-  private final Alarm myAlarm = new Alarm();
+  private final Alarm myAlarm = new Alarm(this);
 
   public static AutoPopupController getInstance(Project project){
     return ServiceManager.getService(project, AutoPopupController.class);
@@ -73,21 +91,16 @@ public class AutoPopupController implements Disposable {
     ActionManagerEx.getInstanceEx().addAnActionListener(new AnActionListener() {
       @Override
       public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-        cancelAllRequest();
+        cancelAllRequests();
       }
 
       @Override
       public void beforeEditorTyping(char c, DataContext dataContext) {
-        cancelAllRequest();
-      }
-
-
-      @Override
-      public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
+        cancelAllRequests();
       }
     }, this);
 
-    IdeEventQueue.getInstance().addActivityListener(() -> cancelAllRequest(), this);
+    IdeEventQueue.getInstance().addActivityListener(this::cancelAllRequests, this);
   }
 
   public void autoPopupMemberLookup(final Editor editor, @Nullable final Condition<PsiFile> condition){
@@ -142,7 +155,9 @@ public class AutoPopupController implements Disposable {
   }
 
   private void addRequest(final Runnable request, final int delay) {
-    Runnable runnable = () -> myAlarm.addRequest(request, delay);
+    Runnable runnable = () -> {
+      if (!myAlarm.isDisposed()) myAlarm.addRequest(request, delay);
+    };
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       runnable.run();
     } else {
@@ -150,12 +165,11 @@ public class AutoPopupController implements Disposable {
     }
   }
 
-  private void cancelAllRequest() {
+  public void cancelAllRequests() {
     myAlarm.cancelAllRequests();
   }
 
   public void autoPopupParameterInfo(@NotNull final Editor editor, @Nullable final PsiElement highlightedMethod){
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
     if (DumbService.isDumb(myProject)) return;
     if (PowerSaveMode.isEnabled()) return;
 
@@ -171,12 +185,15 @@ public class AutoPopupController implements Disposable {
         if (file == null) return;
       }
 
-      final PsiFile file1 = file;
       Runnable request = () -> {
-        if (!myProject.isDisposed() && !DumbService.isDumb(myProject) && !editor.isDisposed() && editor.getComponent().isShowing()) {
+        if (!myProject.isDisposed() && !DumbService.isDumb(myProject) && !editor.isDisposed() && 
+            (ApplicationManager.getApplication().isUnitTestMode() || editor.getComponent().isShowing())) {
           int lbraceOffset = editor.getCaretModel().getOffset() - 1;
           try {
-            ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod, false);
+            PsiFile file1 = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+            if (file1 != null) {
+              ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod, false, true);
+            }
           }
           catch (IndexNotReadyException ignored) { //anything can happen on alarm
           }
@@ -204,5 +221,16 @@ public class AutoPopupController implements Disposable {
         runnable.run();
       }
     }));
+  }
+
+  @TestOnly
+  public void waitForDelayedActions(long timeout, @NotNull TimeUnit unit) throws TimeoutException {
+    long deadline = System.currentTimeMillis() + unit.toMillis(timeout);
+    while (System.currentTimeMillis() < deadline) {
+      if (myAlarm.isEmpty()) return;
+      LockSupport.parkNanos(10_000_000);
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    throw new TimeoutException();
   }
 }

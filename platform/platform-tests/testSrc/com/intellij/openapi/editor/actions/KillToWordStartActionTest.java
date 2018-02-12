@@ -19,43 +19,41 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
 /**
  * @author Denis Zhdanov
  * @since 4/19/11 4:21 PM
  */
 public class KillToWordStartActionTest extends LightPlatformCodeInsightTestCase {
 
-  public void testAfterWordEnd() throws IOException {
+  public void testAfterWordEnd() {
     doTest(
       "this is a test string    <caret>",
       "this is a test <caret>"
     );
   }
 
-  public void testAtWordEnd() throws IOException {
+  public void testAtWordEnd() {
     doTest(
       "this is a test string<caret>",
       "this is a test <caret>"
     );
   }
 
-  public void testInTheMiddleOfTheWord() throws IOException {
+  public void testInTheMiddleOfTheWord() {
     doTest(
       "this is a test str<caret>ing",
       "this is a test <caret>ing"
     );
   }
 
-  public void testInTheWordStart() throws IOException {
+  public void testInTheWordStart() {
     doTest(
       "this is a test <caret>string",
       "this is a <caret>string"
     );
   }
   
-  public void testInWhiteSpaceAtLineStart() throws IOException {
+  public void testInWhiteSpaceAtLineStart() {
     doTest(
       "this is the first string  \n" +
       " <caret>  this is the second string",
@@ -63,7 +61,7 @@ public class KillToWordStartActionTest extends LightPlatformCodeInsightTestCase 
     );
   }
 
-  public void testAtLineStart() throws IOException {
+  public void testAtLineStart() {
     doTest(
       "this is the first string  \n" +
       "<caret>  this is the second string",
@@ -71,27 +69,27 @@ public class KillToWordStartActionTest extends LightPlatformCodeInsightTestCase 
     );
   }
 
-  public void testInWhiteSpaceAtDocumentStart() throws IOException {
+  public void testInWhiteSpaceAtDocumentStart() {
     doTest(
       "    <caret>  this is the first string",
       "<caret>  this is the first string"
     );
   }
 
-  public void testAtDocumentStart() throws IOException {
+  public void testAtDocumentStart() {
     doTest(
       "<caret>  this is the first string",
       "<caret>  this is the first string"
     );
   }
 
-  public void testEscapeChars() throws Exception {
+  public void testEscapeChars() {
     configureFromFileText(getTestName(false) + ".java", "class Foo { String s = \"a\\nb<caret>\"; }");
     killToWordStart();
     checkResultByText("class Foo { String s = \"a\\n<caret>\"; }");
   }
   
-  public void testNearDocumentStartInCamelHumpsMode() throws IOException {
+  public void testNearDocumentStartInCamelHumpsMode() {
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     boolean savedValue = editorSettings.isCamelWords();
     editorSettings.setCamelWords(true);
@@ -103,7 +101,7 @@ public class KillToWordStartActionTest extends LightPlatformCodeInsightTestCase 
     }
   }
 
-  private void doTest(@NotNull String before, @NotNull String after) throws IOException {
+  private void doTest(@NotNull String before, @NotNull String after) {
     configureFromFileText(getTestName(false) + ".txt", before);
     killToWordStart();
     checkResultByText(after);

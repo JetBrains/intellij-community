@@ -15,16 +15,11 @@
  */
 package com.intellij.openapi.diff.impl.dir.actions;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.diff.BackgroundOperatingDiffElement;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.ShortcutSet;
-import com.intellij.openapi.diff.impl.dir.DirDiffElementImpl;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
-import com.intellij.openapi.util.SystemInfo;
-
-import java.util.List;
+import com.intellij.util.containers.JBIterable;
 
 import static com.intellij.ide.diff.DirDiffOperation.*;
 
@@ -36,28 +31,23 @@ public class SynchronizeDiff extends DirDiffAction {
 
   public SynchronizeDiff(DirDiffTableModel model, boolean selectedOnly) {
     super(model);
-    getTemplatePresentation().setText(selectedOnly ? "Synchronize Selected" : "Synchronize All");
-    getTemplatePresentation().setIcon(selectedOnly ? AllIcons.Actions.Resume : AllIcons.Actions.Rerun);
     mySelectedOnly = selectedOnly;
+    ActionUtil.copyFrom(this, selectedOnly ? "DirDiffMenu.SynchronizeDiff" : "DirDiffMenu.SynchronizeDiff.All");
   }
 
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
-    if (e.getPresentation().isEnabled() &&
-        (getModel().getSourceDir() instanceof BackgroundOperatingDiffElement ||
-         getModel().getTargetDir() instanceof BackgroundOperatingDiffElement)) {
-      List<DirDiffElementImpl> elements = mySelectedOnly ? getModel().getSelectedElements() : getModel().getElements();
-      for (DirDiffElementImpl dirDiffElement : elements) {
-        if ((dirDiffElement.getSource() == null || dirDiffElement.getSource().isOperationsEnabled()) &&
-            (dirDiffElement.getTarget() == null || dirDiffElement.getTarget().isOperationsEnabled()) &&
-            (dirDiffElement.getOperation() == COPY_FROM || dirDiffElement.getOperation() == COPY_TO || dirDiffElement.getOperation() == DELETE)) {
-          e.getPresentation().setEnabled(true);
-          return;
-        }
-      }
-      e.getPresentation().setEnabled(false);
+    if (!e.getPresentation().isEnabled()) {
+      return;
     }
+    boolean enabled = e.getData(CommonDataKeys.EDITOR) == null;
+    enabled &= !JBIterable.from(mySelectedOnly ? getModel().getSelectedElements() : getModel().getElements())
+      .filter(d -> d.getOperation() == COPY_FROM || d.getOperation() == COPY_TO || d.getOperation() == DELETE)
+      .filter(d -> d.getSource() == null || d.getSource().isOperationsEnabled())
+      .filter(d -> d.getTarget() == null || d.getTarget().isOperationsEnabled())
+      .isEmpty();
+    e.getPresentation().setEnabled(enabled);
   }
 
   @Override
@@ -71,17 +61,7 @@ public class SynchronizeDiff extends DirDiffAction {
   }
 
   @Override
-  public ShortcutSet getShortcut() {
-    return CustomShortcutSet.fromString(mySelectedOnly ? "ENTER" : SystemInfo.isMac ? "meta ENTER" : "control ENTER");
-  }
-
-  @Override
   public boolean isSelected(AnActionEvent e) {
-    return false;
-  }
-
-  @Override
-  protected boolean isFullReload() {
     return false;
   }
 

@@ -21,7 +21,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
 
   override fun setUp() {
     super.setUp()
-    myGitSettings.isAutoCommitOnCherryPick = true
+    settings.isAutoCommitOnCherryPick = true
   }
 
   fun `test simple cherry-pick`() {
@@ -33,7 +33,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
 
     assertSuccessfulNotification("Cherry-pick successful", "${shortHash(commit)} fix #1")
     assertLastMessage("fix #1\n\n(cherry picked from commit ${commit})")
-    assertOnlyDefaultChangelist()
+    changeListManager.assertOnlyDefaultChangelist()
   }
 
   fun `test dirty tree conflicting with commit`() {
@@ -49,13 +49,13 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
   }
 
   fun `test unresolved conflict with cherry-picked commit should produce a changelist`() {
-    val commit = prepareConflict()
+    val commit = repo.prepareConflict()
     `do nothing on merge`()
 
     cherryPick(commit)
 
     `assert merge dialog was shown`()
-    assertChangelistCreated("on_master (cherry picked from commit ${shortHash(commit)})")
+    changeListManager.assertChangeListExists("on_master\n\n(cherry picked from commit ${shortHash(commit)})")
     assertWarningNotification("Cherry-picked with conflicts", """
       ${shortHash(commit)} on_master
       Unresolved conflicts remain in the working tree. <a href='resolve'>Resolve them.<a/>
@@ -67,18 +67,19 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
   }
 
   fun `test resolve conflicts but cancel commit`() {
-    val commit = prepareConflict()
-    vcsHelper.onMerge { git("add -u .") }
-    vcsHelper.onCommit { msg -> false }
+    val commit = repo.prepareConflict()
+    `mark as resolved on merge`()
+    vcsHelper.onCommit { false }
 
     cherryPick(commit)
 
     `assert merge dialog was shown`()
-    assertChangelistCreated("on_master (cherry picked from commit ${shortHash(commit)})")
+    `assert commit dialog was shown`()
+    changeListManager.assertChangeListExists("on_master\n\n(cherry picked from commit ${shortHash(commit)})")
     assertNoNotification()
   }
 
-  fun `test cherry-pick 2 commit`() {
+  fun `test cherry-pick 2 commits`() {
     branch("feature")
     val commit1 = file("one.txt").create().addCommit("fix #1").hash()
     val commit2 = file("two.txt").create().addCommit("fix #2").hash()
@@ -111,7 +112,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
 
     cherryPick(commit1, commit2, commit3)
 
-    assertErrorNotification("Cherry-pick failed", """
+    assertErrorNotification("Cherry-pick Failed", """
       ${shortHash(commit2)} appended common
       Your local changes would be overwritten by cherry-pick.
       Commit your changes or stash them to proceed.
@@ -140,7 +141,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
   // IDEA-73548
   fun `test nothing to commit`() {
     val commit = file("c.txt").create().addCommit("fix #1").hash()
-    checkoutNew("feature")
+    repo.checkoutNew("feature")
 
     cherryPick(commit)
 
@@ -151,7 +152,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
   // IDEA-73548
   fun `test several commits one of which have already been applied`() {
     file("common.txt").create("common content\n").addCommit("common file")
-    checkoutNew("feature")
+    repo.checkoutNew("feature")
     val commit1 = file("a.txt").create("initial\n").addCommit("fix #1").hash()
     val emptyCommit = file("common.txt").append("more to common\n").addCommit("to common").hash()
     val commit3 = file("a.txt").append("more\n").addCommit("fix #2").hash()
@@ -172,6 +173,6 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
     assertSuccessfulNotification("Cherry-picked 2 commits from 3","""
       ${shortHash(commit1)} fix #1
       ${shortHash(commit3)} fix #2
-      ${shortHash(emptyCommit)} wasn't picked, because all changes from it have already been applied.""")
+      ${shortHash(emptyCommit)} was skipped, because all changes have already been applied.""")
   }
 }

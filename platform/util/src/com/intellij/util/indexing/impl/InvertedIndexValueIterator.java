@@ -19,9 +19,6 @@ import com.intellij.util.indexing.ValueContainer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by Maxim.Mossienko on 11/22/2016.
- */
 @ApiStatus.Experimental
 public interface InvertedIndexValueIterator<Value> extends ValueContainer.ValueIterator<Value> {
   @Override

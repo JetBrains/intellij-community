@@ -140,6 +140,27 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
       ("      " - "   -   ").default()
       testAll()
     }
+
+    lines_inner {
+      ("X Y ) {_ A B C" - "X Y Z ) {_ y B C ) {")
+      ("         -    " - "   --      -    ----").default()
+      ("         -    " - "    -      -     ---").ignore()
+      testAll()
+    }
+
+    // TODO
+    words {
+      ("@Deprecated @NotNull" - "@NotNull")
+      (" ------------       " - "        ").default()
+      testAll()
+    }
+
+    // TODO
+    words {
+      ("@Deprecated_ @NotNull" - "@NotNull")
+      (" -------------       " - "        ").default()
+      testAll()
+    }
   }
 
   fun testOldDiffBug() {
@@ -152,6 +173,18 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
     lines_inner {
       ("x'>" - "x'y'>")
       ("   " - "  -- ").default()
+      testAll()
+    }
+
+    lines_inner {
+      ("x'>" - "x'y'>")
+      ("   " - "  -- ").default()
+      testAll()
+    }
+
+    lines_inner {
+      ("x'y'>" - "x'>")
+      ("  -- " - "   ").default()
       testAll()
     }
   }
@@ -218,6 +251,12 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
       ("A xy B" - "a xy b")
       ("-    -" - "-    -").ignore()
       testIgnore()
+    }
+
+    words {
+      ("A_B_" - "X_")
+      ("--- " - "- ").default()
+      testAll()
     }
   }
 
@@ -334,6 +373,26 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
     lines_inner {
       (".   " - "   .")
       (" ---" - "--- ").default()
+      testDefault()
+    }
+
+    lines_inner {
+      ("A B_C D" - "A_B C_D")
+      (" -  -- " - " - --  ").default()
+      (" -  -- " - "   --  ").trim()
+      ("    -  " - "    -  ").ignore()
+      testAll()
+    }
+
+    lines_inner {
+      ("B_C_D_" - "X_Y_Z_")
+      ("- - - " - "- - - ").default()
+      testAll()
+    }
+
+    words {
+      ("!x_!_z" - "!_!_y z")
+      (" -    " - "    -- ").default()
       testDefault()
     }
   }

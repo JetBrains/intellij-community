@@ -66,7 +66,7 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> impleme
   @Override
   public Collection<VirtualFile> getRoots() {
     Module module = getValue();
-    return module != null ? Arrays.asList(ModuleRootManager.getInstance(module).getContentRoots()) : Collections.<VirtualFile>emptyList();
+    return module != null ? Arrays.asList(ModuleRootManager.getInstance(module).getContentRoots()) : Collections.emptyList();
   }
 
   @Override

@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: valentin
- * Date: 29.01.2004
- * Time: 21:10:56
- */
 package com.intellij.openapi.fileTypes.ex;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,6 +23,7 @@ import javax.swing.*;
 
 public abstract class FakeFileType implements FileTypeIdentifiableByVirtualFile {
 
+  @Override
   @NotNull
   public String getDefaultExtension() {
     return "fakeExtension";
@@ -38,14 +33,17 @@ public abstract class FakeFileType implements FileTypeIdentifiableByVirtualFile 
     return null;
   }
 
+  @Override
   public boolean isBinary() {
     return true;
   }
 
+  @Override
   public boolean isReadOnly() {
     return true;
   }
 
+  @Override
   public String getCharset(@NotNull VirtualFile file, @NotNull final byte[] content) {
     return null;
   }

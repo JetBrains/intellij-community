@@ -25,13 +25,6 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 06.02.2003
- * Time: 16:05:20
- * To change this template use Options | File Templates.
- */
 public class LookupItemUtil{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.LookupItemUtil");
 

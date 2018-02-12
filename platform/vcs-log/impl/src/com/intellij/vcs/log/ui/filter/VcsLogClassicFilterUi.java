@@ -33,7 +33,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextField;
-import com.intellij.ui.SearchTextFieldWithStoredHistory;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
@@ -45,6 +44,7 @@ import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -184,6 +184,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     return Pair.create(textFilter, hashFilter);
   }
 
+  /**
+   * Only VcsLogBranchFilter, VcsLogStructureFilter and null (which means resetting all filters) are currently supported.
+   */
   @Override
   public void setFilter(@Nullable VcsLogFilter filter) {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -451,7 +454,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     }
   }
 
-  private static class TextFilterField extends SearchTextFieldWithStoredHistory {
+  private static class TextFilterField extends SearchTextField {
     @NotNull private final TextFilterModel myTextFilterModel;
 
     public TextFilterField(@NotNull TextFilterModel model) {

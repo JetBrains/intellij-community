@@ -1,4 +1,4 @@
-// "Simplify boolean expression" "true"
+// "Remove 'if' statement" "true"
 class X {
     void f() {
         int i = 2;

@@ -21,7 +21,7 @@ import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import static org.junit.Assert.assertArrayEquals;
 
 public class MoveLineTest extends AbstractEditorTest {
-  public void testInlaysAreMovedWithText() throws Exception {
+  public void testInlaysAreMovedWithText() {
     initText("<caret>ab\ncd\n");
     addInlay(1);
     executeAction(IdeActions.ACTION_MOVE_LINE_DOWN_ACTION);

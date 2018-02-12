@@ -1,11 +1,3 @@
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 4, 2002
- * Time: 4:01:21 PM
- * To change template for new interface use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package test.deadcode;
 
 import java.io.IOException;

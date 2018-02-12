@@ -1,13 +1,14 @@
 package org.jetbrains.idea.maven.server.embedder;
 
-import com.intellij.util.containers.WeakValueHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 
+import java.util.Map;
+
 public class RemoteNativeMavenProjectHolder implements NativeMavenProjectHolder {
-  private static final WeakValueHashMap<Integer, RemoteNativeMavenProjectHolder> myMap =
-    new WeakValueHashMap<Integer, RemoteNativeMavenProjectHolder>();
+  private static final Map<Integer, RemoteNativeMavenProjectHolder> myMap = ContainerUtil.createWeakValueMap();
 
   private final MavenProject myMavenProject;
 

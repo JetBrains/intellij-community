@@ -179,7 +179,8 @@ public abstract class JavaCodeStyleManager {
   public abstract String propertyNameToVariableName(@NonNls @NotNull String propertyName, @NotNull VariableKind variableKind);
 
   /**
-   * Suggests a unique name for the variable used at the specified location.
+   * Suggests a unique name for the variable used at the specified location. The returned name is guaranteed to not shadow
+   * the existing name.
    *
    * @param baseName    the base name for the variable.
    * @param place       the location where the variable will be used.
@@ -190,12 +191,13 @@ public abstract class JavaCodeStyleManager {
   public abstract String suggestUniqueVariableName(@NonNls @NotNull String baseName, PsiElement place, boolean lookForward);
 
   /**
-   * Suggests a unique name for the variable used at the specified location.
+   * Suggests a unique names for the variable used at the specified location. The resulting name info may contain names which
+   * shadow existing names.
    *
    * @param baseNameInfo the base name info for the variable.
    * @param place        the location where the variable will be used.
    * @param lookForward  if true, the existing variables are searched in both directions; if false - only backward
-   * @return the generated unique name
+   * @return the generated unique name info.
    */
   @NotNull
   public SuggestedNameInfo suggestUniqueVariableName(@NotNull SuggestedNameInfo baseNameInfo,

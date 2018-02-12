@@ -1,42 +1,74 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.util.containers.FactoryMap;
+import com.intellij.openapi.util.AtomicClearableLazyValue;
+import com.intellij.util.containers.WeakInterner;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.TObjectHashingStrategy;
+import gnu.trove.TObjectIntHashMap;
+import gnu.trove.TObjectIntProcedure;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Enumeration;
 
 /**
  * @author max
  */
 public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
+  private static final WeakInterner<LevelAndCount[]> LEVEL_AND_COUNT_INTERNER = new WeakInterner<>(new TObjectHashingStrategy<LevelAndCount[]>() {
+    @Override
+    public int computeHashCode(LevelAndCount[] object) {
+      return Arrays.hashCode(object);
+    }
+
+    @Override
+    public boolean equals(LevelAndCount[] o1, LevelAndCount[] o2) {
+      return Arrays.equals(o1, o2);
+    }
+  });
+
+  protected final AtomicClearableLazyValue<LevelAndCount[]> myProblemLevels = new AtomicClearableLazyValue<LevelAndCount[]>() {
+    @NotNull
+    @Override
+    protected LevelAndCount[] compute() {
+      TObjectIntHashMap<HighlightDisplayLevel> counter = new TObjectIntHashMap<>();
+      visitProblemSeverities(counter);
+      LevelAndCount[] arr = new LevelAndCount[counter.size()];
+      final int[] i = {0};
+      counter.forEachEntry(new TObjectIntProcedure<HighlightDisplayLevel>() {
+        @Override
+        public boolean execute(HighlightDisplayLevel l, int c) {
+          arr[i[0]++] = new LevelAndCount(l, c);
+          return true;
+        }
+      });
+      Arrays.sort(arr, Comparator.<LevelAndCount, HighlightSeverity>comparing(levelAndCount -> levelAndCount.getLevel().getSeverity())
+        .reversed());
+      return doesNeedInternProblemLevels() ? LEVEL_AND_COUNT_INTERNER.intern(arr) : arr;
+    }
+  };
   protected volatile InspectionTreeUpdater myUpdater;
-  protected InspectionTreeNode  (Object userObject) {
+
+  protected InspectionTreeNode(Object userObject) {
     super(userObject);
+  }
+
+  protected boolean doesNeedInternProblemLevels() {
+    return false;
   }
 
   @Nullable
@@ -44,11 +76,35 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     return null;
   }
 
-  public void visitProblemSeverities(FactoryMap<HighlightDisplayLevel, Integer> counter) {
+  @NotNull
+  public LevelAndCount[] getProblemLevels() {
+    if (!isProblemCountCacheValid()) {
+      dropProblemCountCaches();
+    }
+    return myProblemLevels.getValue();
+  }
+
+  private void dropProblemCountCaches() {
+    InspectionTreeNode current = this;
+    while (current != null) {
+      current.myProblemLevels.drop();
+      current = (InspectionTreeNode)current.getParent();
+    }
+  }
+
+  protected boolean isProblemCountCacheValid() {
+    return true;
+  }
+
+  protected void visitProblemSeverities(@NotNull TObjectIntHashMap<HighlightDisplayLevel> counter) {
     Enumeration enumeration = children();
     while (enumeration.hasMoreElements()) {
       InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
-      child.visitProblemSeverities(counter);
+      for (LevelAndCount levelAndCount : child.getProblemLevels()) {
+        if (!counter.adjustValue(levelAndCount.getLevel(), levelAndCount.getCount())) {
+          counter.put(levelAndCount.getLevel(), levelAndCount.getCount());
+        }
+      }
     }
   }
 
@@ -66,8 +122,15 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     return true;
   }
 
-  public boolean isExcluded(ExcludedInspectionTreeNodesManager excludedManager) {
-    return excludedManager.isExcluded(this);
+  public boolean isExcluded() {
+    Enumeration enumeration = children();
+    while (enumeration.hasMoreElements()) {
+      InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
+      if (!child.isExcluded()) {
+        return false;
+      }
+    }
+    return getChildCount() != 0;
   }
 
   public boolean appearsBold() {
@@ -75,29 +138,23 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
   }
 
   @Nullable
-  public String getCustomizedTailText() {
+  public String getTailText() {
     return null;
   }
 
-  public FileStatus getNodeStatus() {
-    return FileStatus.NOT_CHANGED;
-  }
-
-  public void excludeElement(ExcludedInspectionTreeNodesManager excludedManager) {
-    excludedManager.exclude(this);
+  public void excludeElement() {
     Enumeration enumeration = children();
     while (enumeration.hasMoreElements()) {
       InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
-      child.excludeElement(excludedManager);
+      child.excludeElement();
     }
   }
 
-  public void amnestyElement(ExcludedInspectionTreeNodesManager excludedManager) {
-    excludedManager.amnesty(this);
+  public void amnestyElement() {
     Enumeration enumeration = children();
     while (enumeration.hasMoreElements()) {
       InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
-      child.amnestyElement(excludedManager);
+      child.amnestyElement();
     }
   }
 
@@ -110,7 +167,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
         }
       }
       int index = TreeUtil.indexedBinarySearch(this, child, InspectionResultsViewComparator.getInstance());
-      if (!allowDuplication && index >= 0){
+      if (!allowDuplication && index >= 0) {
         return (InspectionTreeNode)getChildAt(index);
       }
       insert(child, Math.abs(index + 1));
@@ -123,7 +180,8 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     super.add(newChild);
     if (myUpdater != null) {
       ((InspectionTreeNode)newChild).propagateUpdater(myUpdater);
-      myUpdater.updateWithPreviewPanel(this);
+      dropProblemCountCaches();
+      myUpdater.updateWithPreviewPanel();
     }
   }
 
@@ -132,8 +190,12 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     super.insert(newChild, childIndex);
     if (myUpdater != null) {
       ((InspectionTreeNode)newChild).propagateUpdater(myUpdater);
-      myUpdater.updateWithPreviewPanel(this);
+      dropProblemCountCaches();
+      myUpdater.updateWithPreviewPanel();
     }
+  }
+
+  protected void nodeAddedToTree() {
   }
 
   private void propagateUpdater(InspectionTreeUpdater updater) {
@@ -143,6 +205,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     while (enumeration.hasMoreElements()) {
       InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
       child.propagateUpdater(updater);
+      child.nodeAddedToTree();
     }
   }
 

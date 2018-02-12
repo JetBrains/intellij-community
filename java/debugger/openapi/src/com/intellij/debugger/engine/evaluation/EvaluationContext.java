@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,13 @@ public interface EvaluationContext extends StackFrameContext{
   @Nullable
   ClassLoaderReference getClassLoader() throws EvaluateException;
 
+  /**
+   * @deprecated Use {@link #computeThisObject()} instead, EvaluationContext now may lazily compute this object
+   */
+  @Deprecated
   @Nullable
   Value getThisObject();
+
+  @Nullable
+  Value computeThisObject() throws EvaluateException;
 }

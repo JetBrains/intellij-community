@@ -47,6 +47,20 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
    * @see UIUtil#putClientProperty
    */
   public static final Key<RegionPainter<Object>> TRACK = Key.create("JB_SCROLL_BAR_TRACK");
+  /**
+   * This constraint should be used to add a component that will be shown before the scrollbar's track.
+   * Note that the previously added leading component will be removed.
+   *
+   * @see #addImpl(Component, Object, int)
+   */
+  public static final String LEADING = "JB_SCROLL_BAR_LEADING_COMPONENT";
+  /**
+   * This constraint should be used to add a component that will be shown after the scrollbar's track.
+   * Note that the previously added trailing component will be removed.
+   *
+   * @see #addImpl(Component, Object, int)
+   */
+  public static final String TRAILING = "JB_SCROLL_BAR_TRAILING_COMPONENT";
 
   private static final double THRESHOLD = 1D + 1E-5D;
   private final Interpolator myInterpolator = new Interpolator(this::getValue, this::setCurrentValue);
@@ -67,6 +81,17 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
     super(orientation, value, extent, min, max);
     setModel(new Model(value, extent, min, max));
     putClientProperty("JScrollBar.fastWheelScrolling", Boolean.TRUE); // fast scrolling for JDK 6
+  }
+
+  @Override
+  protected void addImpl(Component component, Object name, int index) {
+    Key<Component> key = LEADING.equals(name) ? DefaultScrollBarUI.LEADING : TRAILING.equals(name) ? DefaultScrollBarUI.TRAILING : null;
+    if (key != null) {
+      Component old = UIUtil.getClientProperty(this, key);
+      UIUtil.putClientProperty(this, key, component);
+      if (old != null) remove(old);
+    }
+    super.addImpl(component, name, index);
   }
 
   @Override

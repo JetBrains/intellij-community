@@ -152,7 +152,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   protected void disableInspectionTool(@NotNull String shortName){
     InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(getProject()).getCurrentProfile();
     if (profile.getInspectionTool(shortName, getProject()) != null) {
-      profile.disableTool(shortName, getProject());
+      profile.setToolEnabled(shortName, false);
     }
   }
 
@@ -174,7 +174,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
         }
       }
     }
-    return result.toArray(new LocalInspectionTool[result.size()]);
+    return result.toArray(LocalInspectionTool.EMPTY_ARRAY);
   }
 
   protected void doTest(@NonNls @NotNull String filePath, boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) throws Exception {

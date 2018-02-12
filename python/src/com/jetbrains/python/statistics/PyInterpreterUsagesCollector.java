@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.statistics;
 
-import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
+import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
 import com.intellij.internal.statistic.CollectUsagesException;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
@@ -34,7 +34,7 @@ import java.util.Set;
 /**
  * @author yole
  */
-public class PyInterpreterUsagesCollector extends AbstractApplicationUsagesCollector {
+public class PyInterpreterUsagesCollector extends AbstractProjectsUsagesCollector {
   private static final String GROUP_ID = "py-interpreter";
 
   @NotNull
@@ -56,7 +56,7 @@ public class PyInterpreterUsagesCollector extends AbstractApplicationUsagesColle
           versionString += " [virtualenv]";
         }
 
-        if (PythonSdkType.isCondaVirtualEnv(pythonSdk)) {
+        if (PythonSdkType.isConda(pythonSdk)) {
           versionString += " [condavenv]";
         }
         result.add(new UsageDescriptor(versionString, 1));

@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.util;
 
@@ -23,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 @Deprecated
@@ -43,13 +32,17 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
   public JDOMExternalizableStringList() {
   }
 
-  public JDOMExternalizableStringList(@NotNull Collection<? extends String> c) {
+  public JDOMExternalizableStringList(@NotNull Collection<String> c) {
     super(c);
   }
 
   @Override
   public void readExternal(Element element) {
-    clear();
+    readList(this, element);
+  }
+
+  public static void readList(@NotNull List<String> strings, Element element) {
+    strings.clear();
 
     Class callerClass = null;
     for (Element listElement : element.getChildren(ATTR_LIST)) {
@@ -65,7 +58,7 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
         String itemClassString = listItemElement.getAttributeValue(ATTR_CLASS);
         Class itemClass;
         try {
-          itemClass = Class.forName(itemClassString, true, classLoader);
+          itemClass = itemClassString == null ? String.class : Class.forName(itemClassString, true, classLoader);
         }
         catch (ClassNotFoundException ex) {
           throw new IllegalDataException("Unable to read list item: unable to load class: " + itemClassString + " \n" + ex.getMessage());
@@ -75,19 +68,23 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
 
         LOG.assertTrue(String.class.equals(itemClass));
 
-        add(listItem);
+        strings.add(listItem);
       }
     }
   }
 
   @Override
   public void writeExternal(Element element) {
-    int listSize = size();
+    writeList(this, element);
+  }
+
+  private static void writeList(@NotNull List<String> strings, @NotNull Element element) {
+    int listSize = strings.size();
     Element listElement = new Element(ATTR_LIST);
     listElement.setAttribute(ATTR_LISTSIZE, Integer.toString(listSize));
     element.addContent(listElement);
     for (int i = 0; i < listSize; i++) {
-      String listItem = get(i);
+      String listItem = strings.get(i);
       if (listItem != null) {
         Element itemElement = new Element(ATTR_ITEM);
         itemElement.setAttribute(ATTR_INDEX, Integer.toString(i));

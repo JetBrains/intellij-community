@@ -26,9 +26,9 @@ class chain(Iterator[_T], Generic[_T]):
 def compress(data: Iterable[_T], selectors: Iterable[Any]) -> Iterator[_T]: ...
 def dropwhile(predicate: Callable[[_T], Any],
               iterable: Iterable[_T]) -> Iterator[_T]: ...
-def ifilter(predicate: Callable[[_T], Any],
+def ifilter(predicate: Optional[Callable[[_T], Any]],
             iterable: Iterable[_T]) -> Iterator[_T]: ...
-def ifilterfalse(predicate: Callable[[_T], Any],
+def ifilterfalse(predicate: Optional[Callable[[_T], Any]],
                  iterable: Iterable[_T]) -> Iterator[_T]: ...
 
 @overload
@@ -40,48 +40,126 @@ def groupby(iterable: Iterable[_T],
 @overload
 def islice(iterable: Iterable[_T], stop: int) -> Iterator[_T]: ...
 @overload
-def islice(iterable: Iterable[_T], start: int, stop: Optional[int],
+def islice(iterable: Iterable[_T], start: Optional[int], stop: Optional[int],
            step: int = ...) -> Iterator[_T]: ...
 
 _T1 = TypeVar('_T1')
 _T2 = TypeVar('_T2')
 _T3 = TypeVar('_T3')
 _T4 = TypeVar('_T4')
+_T5 = TypeVar('_T5')
+_T6 = TypeVar('_T6')
 
 @overload
-def imap(func: Callable[[_T1], _S], iter1: Iterable[_T1]) -> Iterable[_S]: ...
+def imap(func: Callable[[_T1], _S], iter1: Iterable[_T1]) -> Iterator[_S]: ...
 @overload
 def imap(func: Callable[[_T1, _T2], _S],
         iter1: Iterable[_T1],
-        iter2: Iterable[_T2]) -> Iterable[_S]: ...  # TODO more than two iterables
+        iter2: Iterable[_T2]) -> Iterator[_S]: ...
+@overload
+def imap(func: Callable[[_T1, _T2, _T3], _S],
+         iter1: Iterable[_T1], iter2: Iterable[_T2],
+         iter3: Iterable[_T3]) -> Iterator[_S]: ...
+
+@overload
+def imap(func: Callable[[_T1, _T2, _T3, _T4], _S],
+         iter1: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3],
+         iter4: Iterable[_T4]) -> Iterator[_S]: ...
+
+@overload
+def imap(func: Callable[[_T1, _T2, _T3, _T4, _T5], _S],
+         iter1: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3],
+         iter4: Iterable[_T4], iter5: Iterable[_T5]) -> Iterator[_S]: ...
+
+@overload
+def imap(func: Callable[[_T1, _T2, _T3, _T4, _T5, _T6], _S],
+         iter1: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3],
+         iter4: Iterable[_T4], iter5: Iterable[_T5],
+         iter6: Iterable[_T6]) -> Iterator[_S]: ...
+
+@overload
+def imap(func: Callable[..., _S],
+         iter1: Iterable[Any], iter2: Iterable[Any], iter3: Iterable[Any],
+         iter4: Iterable[Any], iter5: Iterable[Any], iter6: Iterable[Any],
+         iter7: Iterable[Any], *iterables: Iterable[Any]) -> Iterator[_S]: ...
 
 def starmap(func: Any, iterable: Iterable[Any]) -> Iterator[Any]: ...
 def takewhile(predicate: Callable[[_T], Any],
               iterable: Iterable[_T]) -> Iterator[_T]: ...
-def tee(iterable: Iterable[Any], n: int = ...) -> Iterator[Any]: ...
+def tee(iterable: Iterable[_T], n: int = ...) -> Tuple[Iterator[_T], ...]: ...
 
 @overload
-def izip(iter1: Iterable[_T1]) -> Iterable[Tuple[_T1]]: ...
+def izip(iter1: Iterable[_T1]) -> Iterator[Tuple[_T1]]: ...
 @overload
 def izip(iter1: Iterable[_T1],
-         iter2: Iterable[_T2]) -> Iterable[Tuple[_T1, _T2]]: ...
+         iter2: Iterable[_T2]) -> Iterator[Tuple[_T1, _T2]]: ...
 @overload
 def izip(iter1: Iterable[_T1], iter2: Iterable[_T2],
-         iter3: Iterable[_T3]) -> Iterable[Tuple[_T1, _T2, _T3]]: ...
+         iter3: Iterable[_T3]) -> Iterator[Tuple[_T1, _T2, _T3]]: ...
 @overload
 def izip(iter1: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3],
-         iter4: Iterable[_T4]) -> Iterable[Tuple[_T1, _T2,
-                                           _T3, _T4]]: ...  # TODO more than four iterables
+         iter4: Iterable[_T4]) -> Iterator[Tuple[_T1, _T2,
+                                           _T3, _T4]]: ...
+@overload
+def izip(iter1: Iterable[_T1], iter2: Iterable[_T2],
+         iter3: Iterable[_T3], iter4: Iterable[_T4],
+         iter5: Iterable[_T5]) -> Iterator[Tuple[_T1, _T2,
+                                                 _T3, _T4, _T5]]: ...
+@overload
+def izip(iter1: Iterable[_T1], iter2: Iterable[_T2],
+         iter3: Iterable[_T3], iter4: Iterable[_T4],
+         iter5: Iterable[_T5], iter6: Iterable[_T6]) -> Iterator[Tuple[_T1, _T2, _T3,
+                                                                 _T4, _T5, _T6]]: ...
+@overload
+def izip(iter1: Iterable[Any], iter2: Iterable[Any],
+         iter3: Iterable[Any], iter4: Iterable[Any],
+         iter5: Iterable[Any], iter6: Iterable[Any],
+         iter7: Iterable[Any], *iterables: Iterable[Any]) -> Iterator[Tuple[Any, ...]]: ...
+
 def izip_longest(*p: Iterable[Any],
                  fillvalue: Any = ...) -> Iterator[Any]: ...
 
-# TODO: Return type should be Iterator[Tuple[..]], but unknown tuple shape.
-#       Iterator[Sequence[_T]] loses this type information.
-def product(*p: Iterable[_T], repeat: int = ...) -> Iterator[Sequence[_T]]: ...
+@overload
+def product(iter1: Iterable[_T1]) -> Iterator[Tuple[_T1]]: ...
+@overload
+def product(iter1: Iterable[_T1],
+            iter2: Iterable[_T2]) -> Iterator[Tuple[_T1, _T2]]: ...
+@overload
+def product(iter1: Iterable[_T1],
+            iter2: Iterable[_T2],
+            iter3: Iterable[_T3]) -> Iterator[Tuple[_T1, _T2, _T3]]: ...
+@overload
+def product(iter1: Iterable[_T1],
+            iter2: Iterable[_T2],
+            iter3: Iterable[_T3],
+            iter4: Iterable[_T4]) -> Iterator[Tuple[_T1, _T2, _T3, _T4]]: ...
+@overload
+def product(iter1: Iterable[_T1],
+            iter2: Iterable[_T2],
+            iter3: Iterable[_T3],
+            iter4: Iterable[_T4],
+            iter5: Iterable[_T5]) -> Iterator[Tuple[_T1, _T2, _T3, _T4, _T5]]: ...
+@overload
+def product(iter1: Iterable[_T1],
+            iter2: Iterable[_T2],
+            iter3: Iterable[_T3],
+            iter4: Iterable[_T4],
+            iter5: Iterable[_T5],
+            iter6: Iterable[_T6]) -> Iterator[Tuple[_T1, _T2, _T3, _T4, _T5, _T6]]: ...
+@overload
+def product(iter1: Iterable[Any],
+            iter2: Iterable[Any],
+            iter3: Iterable[Any],
+            iter4: Iterable[Any],
+            iter5: Iterable[Any],
+            iter6: Iterable[Any],
+            iter7: Iterable[Any], *iterables: Iterable) -> Iterator[Tuple]: ...
+@overload
+def product(*iter: Iterable[_T], repeat: int) -> Iterator[Tuple[_T, ...]]: ...
 
 def permutations(iterable: Iterable[_T],
                  r: int = ...) -> Iterator[Sequence[_T]]: ...
 def combinations(iterable: Iterable[_T],
-                 r: int) -> Iterable[Sequence[_T]]: ...
+                 r: int) -> Iterator[Sequence[_T]]: ...
 def combinations_with_replacement(iterable: Iterable[_T],
-                                  r: int) -> Iterable[Sequence[_T]]: ...
+                                  r: int) -> Iterator[Sequence[_T]]: ...

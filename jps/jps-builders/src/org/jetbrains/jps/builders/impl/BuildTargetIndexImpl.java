@@ -24,8 +24,6 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.ModuleBuildTarget;
-import org.jetbrains.jps.incremental.ResourcesTarget;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.*;
@@ -36,7 +34,7 @@ import java.util.*;
 public class BuildTargetIndexImpl implements BuildTargetIndex {
   private final BuildTargetRegistry myRegistry;
   private final BuildRootIndexImpl myBuildRootIndex;
-  private Map<BuildTarget<?>, Collection<BuildTarget<?>>> myDependencies;
+  private final Map<BuildTarget<?>, Collection<BuildTarget<?>>> myDependencies;
   private List<BuildTargetChunk> myTargetChunks;
 
   public BuildTargetIndexImpl(BuildTargetRegistry targetRegistry, BuildRootIndexImpl buildRootIndex) {
@@ -85,12 +83,13 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
     Graph<BuildTarget<?>> graph = GraphGenerator.generate(new InboundSemiGraph<BuildTarget<?>>() {
       @Override
       public Collection<BuildTarget<?>> getNodes() {
-        return realTargets;
+        return allTargets;
       }
 
       @Override
       public Iterator<BuildTarget<?>> getIn(BuildTarget<?> n) {
-        return myDependencies.get(n).iterator();
+        Collection<BuildTarget<?>> deps = myDependencies.get(n);
+        return deps != null ? deps.iterator() : Collections.emptyIterator();
       }
     });
 
@@ -117,9 +116,7 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
           }
         }
       }
-      else {
-        realDependencies.add(dep);
-      }
+      realDependencies.add(dep);
     }
     realDependencies.trimToSize();
     return realDependencies;
@@ -127,24 +124,23 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
 
   @Override
   public boolean isDummy(@NotNull BuildTarget<?> target) {
-    return (target instanceof ModuleBuildTarget || target instanceof ResourcesTarget) //todo[nik] introduce method in BuildTarget instead
-         && myBuildRootIndex.getTargetRoots(target, null).isEmpty();
+    return target.getTargetType().isFileBased() && myBuildRootIndex.getTargetRoots(target, null).isEmpty();
   }
 
   @Override
   public Set<BuildTarget<?>> getDependenciesRecursively(@NotNull BuildTarget<?> target, @NotNull CompileContext context) {
     initializeChunks(context);
     LinkedHashSet<BuildTarget<?>> result = new LinkedHashSet<>();
-    for (BuildTarget<?> dep : myDependencies.get(target)) {
-      collectDependenciesRecursively(dep, result);
+    for (BuildTarget<?> dep : getDependencies(target, context)) {
+      collectDependenciesRecursively(dep, result, context);
     }
     return result;
   }
 
-  private void collectDependenciesRecursively(BuildTarget<?> target, LinkedHashSet<BuildTarget<?>> result) {
+  private void collectDependenciesRecursively(BuildTarget<?> target, LinkedHashSet<BuildTarget<?>> result, CompileContext context) {
     if (result.add(target)) {
-      for (BuildTarget<?> dep : myDependencies.get(target)) {
-        collectDependenciesRecursively(dep, result);
+      for (BuildTarget<?> dep : getDependencies(target,context)) {
+        collectDependenciesRecursively(dep, result, context);
       }
     }
   }
@@ -153,7 +149,8 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
   @Override
   public Collection<BuildTarget<?>> getDependencies(@NotNull BuildTarget<?> target, @NotNull CompileContext context) {
     initializeChunks(context);
-    return myDependencies.get(target);
+    Collection<BuildTarget<?>> deps = myDependencies.get(target);
+    return deps != null ? deps : Collections.emptyList();
   }
 
   @NotNull

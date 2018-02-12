@@ -8,7 +8,7 @@ from typing import (
     TypeVar, Callable, Type,
 )
 import sys
-from types import TracebackType
+from types import FrameType, TracebackType
 from mypy_extensions import NoReturn
 
 _T = TypeVar('_T')
@@ -20,18 +20,18 @@ byteorder = ...  # type: str
 builtin_module_names = ...  # type: Sequence[str] # actually a tuple of strings
 copyright = ...  # type: str
 # dllhandle = 0  # Windows only
-dont_write_bytecode = False
+dont_write_bytecode: bool
 __displayhook__ = ...  # type: Any # contains the original value of displayhook
 __excepthook__ = ...  # type: Any  # contains the original value of excepthook
 exec_prefix = ...  # type: str
 executable = ...  # type: str
 float_repr_style = ...  # type: str
-hexversion = 0  # this is a 32-bit int
+hexversion: int
 last_type = ...  # type: Any
 last_value = ...  # type: Any
 last_traceback = ...  # type: Any
-maxsize = 0
-maxunicode = 0
+maxsize: int
+maxunicode: int
 meta_path = ...  # type: List[Any]
 modules = ...  # type: Dict[str, Any]
 path = ...  # type: List[str]
@@ -90,16 +90,16 @@ class _float_info:
 
 hash_info = ...  # type: _hash_info
 class _hash_info:
-    width = 0    # width in bits used for hash values
-    modulus = 0  # prime modulus P used for numeric hash scheme
-    inf = 0      # hash value returned for a positive infinity
-    nan = 0      # hash value returned for a nan
-    imag = 0     # multiplier used for the imaginary part of a complex number
+    width = 0
+    modulus = 0
+    inf = 0
+    nan = 0
+    imag = 0
 
 int_info = ...  # type: _int_info
 class _int_info:
-    bits_per_digit = 0  # number of bits held in each digit. Python integers are stored internally in base 2**int_info.bits_per_digit
-    sizeof_digit = 0    # size in bytes of C type used to represent a digit
+    bits_per_digit = 0
+    sizeof_digit = 0
 
 class _version_info(Tuple[int, int, int, str, int]):
     major = 0
@@ -109,8 +109,6 @@ class _version_info(Tuple[int, int, int, str, int]):
     serial = 0
 version_info = ...  # type: _version_info
 
-
-# ----- sys function stubs -----
 def call_tracing(fn: Callable[..., _T], args: Any) -> _T: ...
 def _clear_type_cache() -> None: ...
 def _current_frames() -> Dict[int, Any]: ...
@@ -122,12 +120,12 @@ def exc_info() -> Tuple[Optional[Type[BaseException]],
                         Optional[BaseException],
                         Optional[TracebackType]]: ...
 # sys.exit() accepts an optional argument of anything printable
-def exit(arg: Any = ...) -> NoReturn:
+def exit(arg: object = ...) -> NoReturn:
     raise SystemExit()
 def getcheckinterval() -> int: ...  # deprecated
 def getdefaultencoding() -> str: ...
 def getdlopenflags() -> int: ...  # Unix only
-def getfilesystemencoding() -> str: ...  # cannot return None
+def getfilesystemencoding() -> str: ...
 def getrefcount(arg: Any) -> int: ...
 def getrecursionlimit() -> int: ...
 
@@ -139,12 +137,18 @@ def getsizeof(obj: object, default: int) -> int: ...
 def getswitchinterval() -> float: ...
 
 @overload
-def _getframe() -> Any: ...
+def _getframe() -> FrameType: ...
 @overload
-def _getframe(depth: int) -> Any: ...
+def _getframe(depth: int) -> FrameType: ...
 
-def getprofile() -> Any: ...  # TODO return type
-def gettrace() -> Any: ...  # TODO return
+_ProfileFunc = Callable[[FrameType, str, Any], Any]
+def getprofile() -> Optional[_ProfileFunc]: ...
+def setprofile(profilefunc: Optional[_ProfileFunc]) -> None: ...
+
+_TraceFunc = Callable[[FrameType, str, Any], Optional[Callable[[FrameType, str, Any], Any]]]
+def gettrace() -> Optional[_TraceFunc]: ...
+def settrace(tracefunc: _TraceFunc) -> None: ...
+
 def getwindowsversion() -> Any: ...  # Windows only, TODO return type
 def intern(string: str) -> str: ...
 
@@ -153,14 +157,8 @@ if sys.version_info >= (3, 5):
 
 def setcheckinterval(interval: int) -> None: ...  # deprecated
 def setdlopenflags(n: int) -> None: ...  # Linux only
-def setprofile(profilefunc: Any) -> None: ...  # TODO type
 def setrecursionlimit(limit: int) -> None: ...
 def setswitchinterval(interval: float) -> None: ...
-def settrace(tracefunc: Any) -> None: ...  # TODO type
-# Trace functions should have three arguments: frame, event, and arg. frame
-# is the current stack frame. event is a string: 'call', 'line', 'return',
-# 'exception', 'c_call', 'c_return', or 'c_exception'. arg depends on the
-# event type.
 def settscdump(on_flag: bool) -> None: ...
 
 def gettotalrefcount() -> int: ...  # Debug builds only

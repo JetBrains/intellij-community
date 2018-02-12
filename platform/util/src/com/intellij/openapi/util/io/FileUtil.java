@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.FilePathHashingStrategy;
 import com.intellij.util.text.StringFactory;
@@ -76,6 +78,15 @@ public class FileUtil extends FileUtilRt {
     return StringUtil.join(parts, File.separator);
   }
 
+  /**
+   * Gets the relative path from the {@code base} to the {@code file} regardless existence or the type of the {@code base}.
+   * <p>
+   * NOTE: if the file(not directory) passed as the {@code base} the result can not be used as a relative path from the {@code base} parent directory to the {@code file}
+   *
+   * @param base the base
+   * @param file the file
+   * @return the relative path from the {@code base} to the {@code file} or {@code null}
+   */
   @Nullable
   public static String getRelativePath(File base, File file) {
     return FileUtilRt.getRelativePath(base, file);
@@ -357,7 +368,7 @@ public class FileUtil extends FileUtilRt {
       }
     }
     if (!tempFiles.isEmpty()) {
-      return startDeletionThread(tempFiles.toArray(new File[tempFiles.size()]));
+      return startDeletionThread(tempFiles.toArray(new File[0]));
     }
     return new FixedFuture<Void>(null);
   }
@@ -477,17 +488,7 @@ public class FileUtil extends FileUtilRt {
   @SuppressWarnings("Duplicates")
   private static void performCopy(@NotNull File fromFile, @NotNull File toFile, final boolean syncTimestamp) throws IOException {
     if (filesEqual(fromFile, toFile)) return;
-    final FileOutputStream fos;
-    try {
-      fos = openOutputStream(toFile);
-    }
-    catch (IOException e) {
-      if (SystemInfo.isWindows && e.getMessage() != null && e.getMessage().contains("denied") &&
-          WinUACTemporaryFix.nativeCopy(fromFile, toFile, syncTimestamp)) {
-        return;
-      }
-      throw e;
-    }
+    final FileOutputStream fos = openOutputStream(toFile);
 
     try {
       final FileInputStream fis = new FileInputStream(fromFile);
@@ -536,10 +537,14 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static void copy(@NotNull InputStream inputStream, int maxSize, @NotNull OutputStream outputStream) throws IOException {
+    copy(inputStream, (long)maxSize, outputStream);
+  }
+
+  public static void copy(@NotNull InputStream inputStream, long maxSize, @NotNull OutputStream outputStream) throws IOException {
     final byte[] buffer = getThreadLocalBuffer();
-    int toRead = maxSize;
+    long toRead = maxSize;
     while (toRead > 0) {
-      int read = inputStream.read(buffer, 0, Math.min(buffer.length, toRead));
+      int read = inputStream.read(buffer, 0, (int)Math.min(buffer.length, toRead));
       if (read < 0) break;
       toRead -= read;
       outputStream.write(buffer, 0, read);
@@ -1192,13 +1197,13 @@ public class FileUtil extends FileUtilRt {
     return sanitizeFileName(name, true);
   }
 
-  /** @deprecated use {@link #sanitizeFileName(String, boolean)} (to be removed in IDEA 17) */
-  public static String sanitizeName(@NotNull String name) {
-    return sanitizeFileName(name, false);
-  }
-
   @NotNull
   public static String sanitizeFileName(@NotNull String name, boolean strict) {
+    return sanitizeFileName(name, strict, "_");
+  }
+  
+  @NotNull
+  public static String sanitizeFileName(@NotNull String name, boolean strict, String replacement) {
     StringBuilder result = null;
 
     int last = 0;
@@ -1208,8 +1213,8 @@ public class FileUtil extends FileUtilRt {
       boolean appendReplacement = true;
       if (c > 0 && c < 255) {
         if (strict
-            ? (Character.isLetterOrDigit(c) || (c == '_'))
-            : (Character.isJavaIdentifierPart(c) || (c == ' ') || (c == '@') || (c == '-'))) {
+            ? Character.isLetterOrDigit(c) || c == '_'
+            : Character.isJavaIdentifierPart(c) || c == ' ' || c == '@' || c == '-') {
           continue;
         }
       }
@@ -1224,7 +1229,7 @@ public class FileUtil extends FileUtilRt {
         result.append(name, last, i);
       }
       if (appendReplacement) {
-        result.append('_');
+        result.append(replacement);
       }
       last = i + 1;
     }
@@ -1291,10 +1296,26 @@ public class FileUtil extends FileUtilRt {
     }
   }
 
-  public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<File> processor) {
-    return processFilesRecursively(root, processor, null);
+  @NotNull
+  public static JBTreeTraverser<File> fileTraverser(@Nullable File root) {
+    return FILE_TRAVERSER.withRoot(root);
   }
 
+  private static final JBTreeTraverser<File> FILE_TRAVERSER = JBTreeTraverser.from(new Function<File, Iterable<File>>() {
+    @Override
+    public Iterable<File> fun(File file) {
+      return file != null && file.isDirectory() ? JBIterable.of(file.listFiles()) : JBIterable.<File>empty();
+    }
+  });
+
+  public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<File> processor) {
+    return fileTraverser(root).bfsTraversal().processEach(processor);
+  }
+
+  /**
+   * @see FileUtil#fileTraverser(File)
+   */
+  @Deprecated
   public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<File> processor,
                                                 @Nullable final Processor<File> directoryFilter) {
     final LinkedList<File> queue = new LinkedList<File>();
@@ -1450,16 +1471,16 @@ public class FileUtil extends FileUtilRt {
     return files == null ? defaultFiles : files;
   }
 
-  public static boolean isHashBangLine(CharSequence firstCharsIfText, String marker) {
+  public static boolean isHashBangLine(@Nullable CharSequence firstCharsIfText, @NotNull String marker) {
     if (firstCharsIfText == null) {
       return false;
     }
-    final int lineBreak = StringUtil.indexOf(firstCharsIfText, '\n');
-    if (lineBreak < 0) {
+    if (!StringUtil.startsWith(firstCharsIfText, "#!")) {
       return false;
     }
-    String firstLine = firstCharsIfText.subSequence(0, lineBreak).toString();
-    return firstLine.startsWith("#!") && firstLine.contains(marker);
+
+    final int lineBreak = StringUtil.indexOf(firstCharsIfText, '\n', 2);
+    return lineBreak >= 0 && StringUtil.indexOf(firstCharsIfText, marker, 2, lineBreak) != -1;
   }
 
   @NotNull

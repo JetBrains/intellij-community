@@ -133,7 +133,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
           }
         }
       }
-      return elements.toArray(new PsiElement[elements.size()]);
+      return elements.toArray(PsiElement.EMPTY_ARRAY);
     }
     else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       if (getSelectedPsiFiles().length != 0) {

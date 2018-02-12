@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,17 +78,8 @@ open class AsyncPromise<T> : Promise<T>, Getter<T> {
   override fun notify(child: AsyncPromise<in T>) {
     LOG.assertTrue(child !== this)
 
-    when (state) {
-      State.PENDING -> {
-        addHandlers(Consumer({ child.catchError { child.setResult(it) } }), Consumer({ child.setError(it) }))
-      }
-      State.FULFILLED -> {
-        @Suppress("UNCHECKED_CAST")
-        child.setResult(result as T)
-      }
-      State.REJECTED -> {
-        child.setError((result as Throwable?)!!)
-      }
+    if (child.state == State.PENDING) {
+      processed(child)
     }
   }
 
@@ -113,17 +104,17 @@ open class AsyncPromise<T> : Promise<T>, Getter<T> {
     return promise
   }
 
-  override fun processed(fulfilled: AsyncPromise<in T>): Promise<T> {
+  override fun processed(child: AsyncPromise<in T>): Promise<T> {
     when (state) {
       State.PENDING -> {
-        addHandlers(Consumer({ result -> fulfilled.catchError { fulfilled.setResult(result) } }), Consumer({ fulfilled.setError(it) }))
+        addHandlers(Consumer({ child.catchError { child.setResult(it) } }), Consumer({ child.setError(it) }))
       }
       State.FULFILLED -> {
         @Suppress("UNCHECKED_CAST")
-        fulfilled.setResult(result as T)
+        child.setResult(result as T)
       }
       State.REJECTED -> {
-        fulfilled.setError((result as Throwable?)!!)
+        child.setError((result as Throwable?)!!)
       }
     }
     return this

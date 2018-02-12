@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ public class JavaStaticGroup extends XValueGroup implements NodeDescriptorProvid
   public void computeChildren(@NotNull final XCompositeNode node) {
     JavaValue.scheduleCommand(myEvaluationContext, node, new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
         @Override
-        public void contextAction() throws Exception {
+        public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
           final XValueChildrenList children = new XValueChildrenList();
 
           final ReferenceType refType = myStaticDescriptor.getType();

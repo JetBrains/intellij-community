@@ -1,10 +1,10 @@
 def keywordonly_sum(*, k1=0, k2):
     return k1 + k2
 
-def keywordonly_sum_bad1(p, <error descr="named arguments must follow bare *">*</error>):
+def keywordonly_sum_bad1(p, <error descr="named parameters must follow bare *">*</error>):
     pass
 
-def keywordonly_sum_bad2(p1, *, <error descr="named arguments must follow bare *">**k1</error>):
+def keywordonly_sum_bad2(p1, *, <error descr="named parameters must follow bare *">**k1</error>):
     pass
 
 def keywordonly_and_kwarg_sum(*, k1, k2, **kwarg):

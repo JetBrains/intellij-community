@@ -36,13 +36,6 @@ public class GroovyNonShortCircuitBooleanInspection extends BaseInspection {
   @Override
   @Nls
   @NotNull
-  public String getGroupDisplayName() {
-    return PROBABLE_BUGS;
-  }
-
-  @Override
-  @Nls
-  @NotNull
   public String getDisplayName() {
     return "Non short-circuit boolean";
   }

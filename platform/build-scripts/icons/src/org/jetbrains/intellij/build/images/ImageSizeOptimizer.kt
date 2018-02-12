@@ -35,14 +35,17 @@ class ImageSizeOptimizer(val projectHome: File) {
     }
   }
 
-  fun optimizeImages(file: File) {
+  fun optimizeImages(file: File): Int {
     if (file.isDirectory) {
+      var count = 0
       file.listFiles().forEach {
-        optimizeImages(it)
+        count += optimizeImages(it)
       }
+      return count
     }
     else {
-      tryToReduceSize(file)
+      val success = tryToReduceSize(file)
+      return if (success) 1 else 0
     }
   }
 
@@ -51,10 +54,10 @@ class ImageSizeOptimizer(val projectHome: File) {
     println("PNG size optimization: $optimizedTotal bytes in total")
   }
 
-  private fun tryToReduceSize(file: File) {
-    val image = optimizeImage(file) ?: return
+  private fun tryToReduceSize(file: File): Boolean {
+    val image = optimizeImage(file) ?: return false
 
-    if (image.hasOptimumSize) return
+    if (image.hasOptimumSize) return true
 
     try {
       FileUtil.writeToFile(file, image.optimizedArray)
@@ -64,6 +67,7 @@ class ImageSizeOptimizer(val projectHome: File) {
       throw Exception("Cannot optimize " + file.absolutePath)
     }
     println("${file.absolutePath} ${image.compressionStats}")
+    return true
   }
 
   companion object {

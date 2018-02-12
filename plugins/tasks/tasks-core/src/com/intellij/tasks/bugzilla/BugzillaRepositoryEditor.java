@@ -65,10 +65,10 @@ public class BugzillaRepositoryEditor extends BaseRepositoryEditor<BugzillaRepos
   @Override
   protected JComponent createCustomPanel() {
     myProductLabel = new JBLabel("Product:", SwingConstants.RIGHT);
-    myProductInput = TextFieldWithAutoCompletion.create(myProject, Collections.<String>emptyList(), true,
+    myProductInput = TextFieldWithAutoCompletion.create(myProject, Collections.emptyList(), true,
                                                         myRepository.getProductName());
     myComponentLabel = new JBLabel("Component:", SwingConstants.RIGHT);
-    myComponentInput = TextFieldWithAutoCompletion.create(myProject, Collections.<String>emptyList(), false,
+    myComponentInput = TextFieldWithAutoCompletion.create(myProject, Collections.emptyList(), false,
                                                           myRepository.getComponentName());
     return FormBuilder.createFormBuilder()
       .addLabeledComponent(myProductLabel, myProductInput)

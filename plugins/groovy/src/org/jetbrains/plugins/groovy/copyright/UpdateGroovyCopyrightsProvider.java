@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 30-Nov-2009
- */
 package org.jetbrains.plugins.groovy.copyright;
 
 import com.intellij.openapi.fileTypes.FileType;

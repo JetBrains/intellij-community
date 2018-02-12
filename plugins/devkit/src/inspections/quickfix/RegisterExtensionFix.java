@@ -33,7 +33,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.PsiNavigateUtil;
@@ -45,17 +44,15 @@ import org.jetbrains.idea.devkit.dom.Extensions;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.util.ExtensionPointCandidate;
 
-import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.Set;
 
-/**
- * @author yole
- */
 public class RegisterExtensionFix implements IntentionAction {
   private final PsiClass myExtensionClass;
-  private final List<ExtensionPointCandidate> myEPCandidates;
+  private final Set<ExtensionPointCandidate> myEPCandidates;
 
-  public RegisterExtensionFix(PsiClass extensionClass, List<ExtensionPointCandidate> epCandidates) {
+  public RegisterExtensionFix(PsiClass extensionClass, Set<ExtensionPointCandidate> epCandidates) {
     myExtensionClass = extensionClass;
     myEPCandidates = epCandidates;
   }
@@ -84,11 +81,11 @@ public class RegisterExtensionFix implements IntentionAction {
 
   private void doFix(Editor editor, final DomFileElement<IdeaPlugin> element) {
     if (myEPCandidates.size() == 1) {
-      registerExtension(element, myEPCandidates.get(0));
+      registerExtension(element, myEPCandidates.iterator().next());
     }
     else {
       final BaseListPopupStep<ExtensionPointCandidate> popupStep =
-        new BaseListPopupStep<ExtensionPointCandidate>("Choose Extension Point", myEPCandidates) {
+        new BaseListPopupStep<ExtensionPointCandidate>("Choose Extension Point", new ArrayList<>(myEPCandidates)) {
           @Override
           public PopupStep onChosen(ExtensionPointCandidate selectedValue, boolean finalChoice) {
             registerExtension(element, selectedValue);

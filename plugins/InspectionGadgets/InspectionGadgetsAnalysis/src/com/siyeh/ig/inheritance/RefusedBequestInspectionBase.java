@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,7 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.CloneUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.psiutils.*;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -108,13 +106,13 @@ public class RefusedBequestInspectionBase extends BaseInspection {
       if (method.getNameIdentifier() == null) {
         return;
       }
-      final PsiMethod leastConcreteSuperMethod = getDirectSuperMethod(method);
-      if (leastConcreteSuperMethod == null) {
+      final PsiMethod superMethod = getDirectSuperMethod(method);
+      if (superMethod == null) {
         return;
       }
       final String methodName = method.getName();
       if (!HardcodedMethodConstants.CLONE.equals(methodName)) {
-        final PsiClass superClass = leastConcreteSuperMethod.getContainingClass();
+        final PsiClass superClass = superMethod.getContainingClass();
         if (superClass != null) {
           final String superClassName = superClass.getQualifiedName();
           if (CommonClassNames.JAVA_LANG_OBJECT.equals(superClassName)) {
@@ -122,27 +120,27 @@ public class RefusedBequestInspectionBase extends BaseInspection {
           }
         }
       }
-      if (ignoreEmptySuperMethods) {
-        final PsiElement element = leastConcreteSuperMethod.getNavigationElement();
-        final PsiMethod superMethod = element instanceof PsiMethod ? (PsiMethod)element : leastConcreteSuperMethod;
-        if (MethodUtils.isTrivial(superMethod, true)) {
-          return;
-        }
-      }
-      if (onlyReportWhenAnnotated && !CloneUtils.isClone(method) && !isJUnitSetUpOrTearDown(method) && !MethodUtils.isFinalize(method)) {
-        if (!AnnotationUtil.isAnnotated(leastConcreteSuperMethod, annotations)) {
-          return;
-        }
-      }
-      final PsiClass aClass = method.getContainingClass();
-      if ((aClass != null && aClass.hasModifierProperty(PsiModifier.FINAL) || method.hasModifierProperty(PsiModifier.FINAL)) &&
-          MethodUtils.isTrivial(method, true)) {
+      if (ignoreEmptySuperMethods && isTrivial(superMethod)) {
         return;
       }
-      if (MethodCallUtils.containsSuperMethodCall(method)) {
+      final boolean isClone = CloneUtils.isClone(method);
+      if (onlyReportWhenAnnotated && !AnnotationUtil.isAnnotated(superMethod, annotations, 0)) {
+        if (!isClone && !isJUnitSetUpOrTearDown(method) && !MethodUtils.isFinalize(method) || isTrivial(superMethod)) {
+          return;
+        }
+      }
+      if (isClone && ClassUtils.isSingleton(method.getContainingClass())) {
+        return;
+      }
+      if (MethodCallUtils.containsSuperMethodCall(method) || ControlFlowUtils.methodAlwaysThrowsException(method)) {
         return;
       }
       registerMethodError(method);
+    }
+
+    private boolean isTrivial(PsiMethod method) {
+      final PsiElement element = method.getNavigationElement();
+      return MethodUtils.isTrivial(element instanceof PsiMethod ? (PsiMethod)element : method, true);
     }
 
     private boolean isJUnitSetUpOrTearDown(PsiMethod method) {
@@ -150,7 +148,7 @@ public class RefusedBequestInspectionBase extends BaseInspection {
       if (!"setUp".equals(name) && !"tearDown".equals(name)) {
         return false;
       }
-      if (method.getParameterList().getParametersCount() != 0) {
+      if (!method.getParameterList().isEmpty()) {
         return false;
       }
       final PsiClass aClass = method.getContainingClass();
@@ -160,14 +158,7 @@ public class RefusedBequestInspectionBase extends BaseInspection {
     @Nullable
     private PsiMethod getDirectSuperMethod(PsiMethod method) {
       final PsiMethod superMethod = MethodUtils.getSuper(method);
-      if (superMethod ==  null || superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return null;
-      }
-      final PsiClass containingClass = superMethod.getContainingClass();
-      if (containingClass == null || containingClass.isInterface()) {
-        return null;
-      }
-      return superMethod;
+      return superMethod == null || superMethod.hasModifierProperty(PsiModifier.ABSTRACT) ? null : superMethod;
     }
   }
 }

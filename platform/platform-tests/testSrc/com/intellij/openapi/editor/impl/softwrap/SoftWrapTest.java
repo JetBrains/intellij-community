@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestFileType;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -29,21 +28,21 @@ import java.util.regex.Pattern;
 
 public class SoftWrapTest extends AbstractEditorTest {
 
-  public void testCollapsedRegionWithLongPlaceholderAtLineStart1() throws IOException {
+  public void testCollapsedRegionWithLongPlaceholderAtLineStart1() {
     doTestSoftWraps(10, "<fold text='veryVeryVeryLongPlaceholder'>foo</fold>");
   }
 
-  public void testCollapsedRegionWithLongPlaceholderAtLineStart2() throws IOException {
+  public void testCollapsedRegionWithLongPlaceholderAtLineStart2() {
     doTestSoftWraps(10, "<fold text='veryVeryVeryLongPlaceholder'>foo</fold><wrap>bar");
   }
 
-  public void testCollapsedRegionWithLongPlaceholderAtLineStart3() throws IOException {
+  public void testCollapsedRegionWithLongPlaceholderAtLineStart3() {
     doTestSoftWraps(10, "<fold text='veryVeryVeryLongPlaceholder'>foo</fold>\nvery long <wrap>text");
   }
 
   private static final String TAGS_PATTERN = "(<fold(\\stext=\'([^\']*)\')?>)|(</fold>)|<wrap>";
 
-  private void doTestSoftWraps(int wrapWidth, String text) throws IOException {
+  private void doTestSoftWraps(int wrapWidth, String text) {
     List<MyFoldRegion> foldRegions = new ArrayList<>();
     List<Integer> wrapPositions = new ArrayList<>();
     int foldInsertPosition = 0;

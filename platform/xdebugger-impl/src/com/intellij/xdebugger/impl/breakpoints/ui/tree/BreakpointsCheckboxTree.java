@@ -20,10 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.util.containers.Convertor;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
-
-import javax.swing.tree.TreePath;
 
 public class BreakpointsCheckboxTree extends CheckboxTree {
 
@@ -62,18 +59,15 @@ public class BreakpointsCheckboxTree extends CheckboxTree {
 
   @Override
   protected void installSpeedSearch() {
-    new TreeSpeedSearch(this, new Convertor<TreePath, String>() {
-      @Override
-      public String convert(TreePath path) {
-        Object node = path.getLastPathComponent();
-        if (node instanceof BreakpointItemNode) {
-          return ((BreakpointItemNode)node).getBreakpointItem().speedSearchText();
-        }
-        else if (node instanceof BreakpointsGroupNode) {
-          return ((BreakpointsGroupNode)node).getGroup().getName();
-        }
-        return "";
+    new TreeSpeedSearch(this, path -> {
+      Object node = path.getLastPathComponent();
+      if (node instanceof BreakpointItemNode) {
+        return ((BreakpointItemNode)node).getBreakpointItem().speedSearchText();
       }
+      else if (node instanceof BreakpointsGroupNode) {
+        return ((BreakpointsGroupNode)node).getGroup().getName();
+      }
+      return "";
     });
   }
 

@@ -20,8 +20,10 @@ class Foo {
   }
 
   public Foo getFoo(String name) {
-    if (name != null)
-        Inner inner = new Inner(name).invoke();if (inner.is()) return inner.getFoo();
+    if (name != null) {
+        Inner inner = new Inner(name).invoke();
+        if (inner.is()) return inner.getFoo();
+    }
 
 
       return null;

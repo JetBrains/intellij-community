@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -384,7 +370,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       pipette.setUI(new BasicButtonUI());
       pipette.setRolloverEnabled(true);
       pipette.setIcon(AllIcons.Ide.Pipette);
-      pipette.setBorder(IdeBorderFactory.createEmptyBorder());
+      pipette.setBorder(JBUI.Borders.empty());
       pipette.setRolloverIcon(AllIcons.Ide.Pipette_rollover);
       pipette.setFocusable(false);
       pipette.addActionListener(new ActionListener() {
@@ -438,8 +424,8 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   private static class ColorWheelPanel extends JPanel {
-    private ColorWheel myColorWheel;
-    private SlideComponent myBrightnessComponent;
+    private final ColorWheel myColorWheel;
+    private final SlideComponent myBrightnessComponent;
     private SlideComponent myOpacityComponent = null;
 
     private ColorWheelPanel(ColorListener listener, boolean enableOpacity, boolean opacityInPercent) {
@@ -917,7 +903,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     private ColorPicker myColorPicker;
     private final boolean myEnableOpacity;
     private final boolean myOpacityInPercent;
-    
+
     public ColorPickerDialog(@NotNull Component parent, String caption, @Nullable Color preselectedColor, boolean enableOpacity,
                              List<ColorPickerListener> listeners, boolean opacityInPercent) {
       super(parent, true);
@@ -931,7 +917,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       setOKButtonText("Choose");
       super.init();
     }
-    
+
     @Override
     protected JComponent createCenterPanel() {
       if (myColorPicker == null) {
@@ -966,9 +952,9 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   public static class ColorWheelImageProducer extends MemoryImageSource {
-    private int[] myPixels;
-    private int myWidth;
-    private int myHeight;
+    private final int[] myPixels;
+    private final int myWidth;
+    private final int myHeight;
     private float myBrightness = 1f;
 
     private float[] myHues;
@@ -1047,11 +1033,11 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     private static final int SIZE = 30;
     private static final int DIALOG_SIZE = SIZE - 4;
     private static final Point HOT_SPOT = new Point(DIALOG_SIZE / 2, DIALOG_SIZE / 2);
-    
+
     private final Rectangle myCaptureRect = new Rectangle(-4, -4, 8, 8);
     private final Rectangle myZoomRect = new Rectangle(0, 0, SIZE, SIZE);
     private final Point myPreviousLocation = new Point();
-    
+
     private Graphics2D myGraphics;
     private BufferedImage myImage;
     private BufferedImage myPipetteImage;
@@ -1080,11 +1066,9 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       // it seems like it's the lowest value for opacity for mouse events to be processed correctly
       WindowManager.getInstance().setAlphaModeRatio(picker, SystemInfo.isMac ? 0.95f : 0.99f);
 
-      if (SystemInfo.isJavaVersionAtLeast("1.7")) {
-        Area area = new Area(new Rectangle(0, 0, DIALOG_SIZE, DIALOG_SIZE));
-        area.subtract(new Area(new Rectangle(SIZE / 2 - 1, SIZE / 2 - 1, 3, 3)));
-        picker.setShape(area);
-      }
+      Area area = new Area(new Rectangle(0, 0, DIALOG_SIZE, DIALOG_SIZE));
+      area.subtract(new Area(new Rectangle(SIZE / 2 - 1, SIZE / 2 - 1, 3, 3)));
+      picker.setShape(area);
       return picker;
     }
 
@@ -1151,7 +1135,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
       return pickerDialog;
     }
-    
+
     private void updatePipette() {
       Dialog pickerDialog = getPickerDialog();
       if (pickerDialog != null && pickerDialog.isShowing()) {
@@ -1162,7 +1146,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
           setColor(c);
           myPreviousLocation.setLocation(mouseLoc);
           myCaptureRect.setBounds(mouseLoc.x - HOT_SPOT.x + SIZE / 2 - 2, mouseLoc.y - HOT_SPOT.y + SIZE / 2 - 2, 5, 5);
-          
+
           BufferedImage capture = myRobot.createScreenCapture(myCaptureRect);
 
           // Clear the cursor graphics

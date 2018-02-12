@@ -49,6 +49,10 @@ public interface AntBuildFileBase extends AntBuildFile {
 
   boolean isRunInBackground();
 
+  boolean isColoredOutputMessages();
+  
+  boolean isCollapseFinishedTargets();
+
   void readWorkspaceProperties(final Element element) throws InvalidDataException;
 
   void writeWorkspaceProperties(final Element element) throws WriteExternalException;

@@ -99,9 +99,9 @@ public class ExternalDocumentValidator {
 
   private void runJaxpValidation(final XmlElement element, Validator.ValidationHost host) {
     final PsiFile file = element.getContainingFile();
+    if (file == null || file.getVirtualFile() == null) return;
 
     if (myFile == file &&
-        file != null &&
         myModificationStamp == file.getModificationStamp() &&
         !ValidateXmlActionHandler.isValidationDependentFilesOutOfDate((XmlFile)file) &&
         SoftReference.dereference(myInfos)!=null // we have validated before
@@ -266,7 +266,7 @@ public class ExternalDocumentValidator {
 
     });
 
-    myHandler.doValidate((XmlFile)element.getContainingFile());
+    myHandler.doValidate((XmlFile)file);
 
     myFile = file;
     myModificationStamp = myFile.getModificationStamp();

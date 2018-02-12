@@ -22,7 +22,6 @@
 
     <action id="EditorLookupUp" class="com.intellij.codeInsight.lookup.impl.LookupActionHandler$UpAction"/>
     <action id="EditorLookupDown" class="com.intellij.codeInsight.lookup.impl.LookupActionHandler$DownAction"/>
-
   </actions>
 
   <xi:include href="/idea/PlatformActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -45,6 +44,7 @@
       <separator/>
       <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
       <action id="CodeCleanup" class="com.intellij.codeInspection.actions.CodeCleanupAction"/>
+      <action id="SilentCodeCleanup" class="com.intellij.codeInspection.actions.SilentCodeCleanupAction" />
       <action id="RunInspection" class="com.intellij.codeInspection.actions.RunInspectionAction" />
       <action id="PopupHector" class="com.intellij.codeInsight.daemon.impl.PopupHectorAction"/>
       <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>

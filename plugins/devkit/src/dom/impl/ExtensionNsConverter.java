@@ -55,11 +55,9 @@ public class ExtensionNsConverter extends ResolvingConverter<IdeaPlugin> {
       // a plugin can extend itself
       return ideaPlugin;
     }
-    return ContainerUtil.find(getVariants(context), new Condition<IdeaPlugin>() {
-      public boolean value(IdeaPlugin o) {
-        final String id = o.getPluginId();
-        return id != null && id.equals(s);
-      }
+    return ContainerUtil.find(getVariants(context), (Condition<IdeaPlugin>)o -> {
+      final String id = o.getPluginId();
+      return id != null && id.equals(s);
     });
   }
 

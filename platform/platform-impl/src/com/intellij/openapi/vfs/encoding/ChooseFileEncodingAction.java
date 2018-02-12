@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Jul 19, 2007
- * Time: 5:53:46 PM
- */
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.icons.AllIcons;
@@ -27,14 +21,22 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.IconDeferrer;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
@@ -46,7 +48,7 @@ import java.util.List;
 public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   private final VirtualFile myVirtualFile;
 
-  public ChooseFileEncodingAction(@Nullable VirtualFile virtualFile) {
+  protected ChooseFileEncodingAction(@Nullable VirtualFile virtualFile) {
     myVirtualFile = virtualFile;
   }
 
@@ -68,7 +70,36 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
         public void update(AnActionEvent e) {
           super.update(e);
           String description = charsetFilter.fun(charset);
-          e.getPresentation().setIcon(description == null ? AllIcons.General.Warning : null);
+          Icon defer;
+          if (virtualFile == null || virtualFile.isDirectory()) {
+            defer = null;
+          }
+          else {
+            NotNullLazyValue<CharSequence> myText = VolatileNotNullLazyValue.createValue(()->LoadTextUtil.loadText(virtualFile));
+            NotNullLazyValue<byte[]> myBytes = VolatileNotNullLazyValue.createValue(() -> {
+              try {
+                return virtualFile.contentsToByteArray();
+              }
+              catch (IOException e1) {
+                return ArrayUtil.EMPTY_BYTE_ARRAY;
+              }
+            });
+            defer = IconDeferrer.getInstance().defer(null, Pair.create(virtualFile, charset), pair -> {
+              VirtualFile myFile = pair.getFirst();
+              Charset charset = pair.getSecond();
+              CharSequence text = myText.getValue();
+              byte[] bytes = myBytes.getValue();
+              EncodingUtil.Magic8 safeToReload = EncodingUtil.isSafeToReloadIn(myFile, text, bytes, charset);
+              EncodingUtil.Magic8 safeToConvert = EncodingUtil.Magic8.ABSOLUTELY;
+              if (safeToReload != EncodingUtil.Magic8.ABSOLUTELY) {
+                safeToConvert = EncodingUtil.isSafeToConvertTo(myFile, text, bytes, charset);
+              }
+              return safeToReload == EncodingUtil.Magic8.ABSOLUTELY || safeToConvert == EncodingUtil.Magic8.ABSOLUTELY ? null :
+                     safeToReload == EncodingUtil.Magic8.WELL_IF_YOU_INSIST || safeToConvert == EncodingUtil.Magic8.WELL_IF_YOU_INSIST ?
+                     AllIcons.General.Warning : AllIcons.General.Error;
+            });
+          }
+          e.getPresentation().setIcon(defer);
           e.getPresentation().setDescription(description);
         }
       };
@@ -76,7 +107,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
     }
   }
 
-  public static final Charset NO_ENCODING = new Charset("NO_ENCODING", null) {
+  protected static final Charset NO_ENCODING = new Charset("NO_ENCODING", null) {
     @Override
     public boolean contains(final Charset cs) {
       return false;

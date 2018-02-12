@@ -16,70 +16,66 @@
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupVirtualFile;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
-/**
-* @author yole
-*/
 public class TestDataNavigationHandler implements GutterIconNavigationHandler<PsiMethod> {
-  public void navigate(MouseEvent e, final PsiMethod elt) {
+  @Override
+  public void navigate(MouseEvent e, PsiMethod elt) {
     List<String> fileNames = getFileNames(elt);
 
-    if (fileNames == null || fileNames.isEmpty()) {
+    if (fileNames.isEmpty()) {
       return;
     }
     navigate(new RelativePoint(e), fileNames, elt.getProject());
   }
 
-  @Nullable
+  @NotNull
   static List<String> getFileNames(PsiMethod method) {
+    return getFileNames(method, true);
+  }
+
+  @NotNull
+  static List<String> getFileNames(PsiMethod method, boolean collectByExistingFiles) {
     List<String> fileNames = null;
     String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(method.getContainingClass());
     if (testDataPath != null) {
-      fileNames = new TestDataReferenceCollector(testDataPath, method.getName().substring(4)).collectTestDataReferences(method);
+      fileNames = new TestDataReferenceCollector(testDataPath, method.getName().substring(4))
+        .collectTestDataReferences(method, collectByExistingFiles);
     }
 
-    if (fileNames == null || fileNames.isEmpty()) {
+    if (collectByExistingFiles && (fileNames == null || fileNames.isEmpty())) {
       fileNames = TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(method);
+    }
+    if (fileNames == null) {
+      fileNames = Collections.emptyList();
     }
     return fileNames;
   }
 
-  public static void navigate(@NotNull final RelativePoint point,
-                              @NotNull List<String> testDataFiles, 
-                              final Project project) {
+  public static void navigate(@NotNull RelativePoint point,
+                              @NotNull List<String> testDataFiles,
+                              Project project) {
     if (testDataFiles.size() == 1) {
-      openFileByIndex(project, testDataFiles, 0);
+      TestDataUtil.openOrAskToCreateFile(project, testDataFiles.get(0));
     }
     else if (testDataFiles.size() > 1) {
-      TestDataGroupVirtualFile groupFile = getTestDataGroup(testDataFiles);
+      TestDataGroupVirtualFile groupFile = TestDataUtil.getTestDataGroup(testDataFiles);
       if (groupFile != null) {
         new OpenFileDescriptor(project, groupFile).navigate(true);
       }
@@ -89,104 +85,85 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     }
   }
 
-  @Nullable
-  private static TestDataGroupVirtualFile getTestDataGroup(List<String> fileNames) {
-    if (fileNames.size() != 2) {
-      return null;
-    }
-    VirtualFile file1 = LocalFileSystem.getInstance().refreshAndFindFileByPath(fileNames.get(0));
-    VirtualFile file2 = LocalFileSystem.getInstance().refreshAndFindFileByPath(fileNames.get(1));
-    if (file1 == null || file2 == null) {
-      return null;
-    }
-    final int commonPrefixLength = StringUtil.commonPrefixLength(file1.getName(), file2.getName());
-    if (file1.getName().substring(commonPrefixLength).toLowerCase().contains("after")) {
-      return new TestDataGroupVirtualFile(file2, file1);
-    }
-    if (file2.getName().substring(commonPrefixLength).toLowerCase().contains("after")) {
-      return new TestDataGroupVirtualFile(file1, file2);
-    }
-    return null;
+  @NotNull
+  public static List<String> fastGetTestDataPathsByRelativePath(@NotNull String testDataFileRelativePath, PsiMethod method) {
+    return getFileNames(method, false).stream()
+      .filter(path -> path.endsWith(testDataFileRelativePath.startsWith("/") ? testDataFileRelativePath : "/" + testDataFileRelativePath))
+      .distinct()
+      .collect(Collectors.toList());
   }
 
-  private static void showNavigationPopup(final Project project, final List<String> fileNames, final RelativePoint point) {
-    List<String> listPaths = new ArrayList<>(fileNames);
-    final String CREATE_MISSING_OPTION = "Create Missing Files";
-    if (fileNames.size() == 2) {
-      VirtualFile file1 = LocalFileSystem.getInstance().refreshAndFindFileByPath(fileNames.get(0));
-      VirtualFile file2 = LocalFileSystem.getInstance().refreshAndFindFileByPath(fileNames.get(1));
-      if (file1 == null || file2 == null) {
-        listPaths.add(CREATE_MISSING_OPTION);
+  /**
+   * Shows navigation popup with list of testdata files and (optionally) "Create missing files" option.
+   * @param project project.
+   * @param filePaths paths of testdata files with "/" path separator. This List can be changed.
+   * @param point point where the popup will be shown.
+   */
+  private static void showNavigationPopup(Project project, List<String> filePaths, RelativePoint point) {
+    List<TestDataNavigationElement> elementsToDisplay = getElementsToDisplay(project, filePaths);
+
+    // if at least one file doesn't exist add "Create missing files" element
+    for (String path : filePaths) {
+      if (LocalFileSystem.getInstance().refreshAndFindFileByPath(path) == null) {
+        elementsToDisplay.add(TestDataNavigationElementFactory.createForCreateMissingFilesOption(filePaths));
+        break;
       }
     }
-    final JList list = new JBList(ArrayUtil.toStringArray(listPaths));
-    list.setCellRenderer(new ColoredListCellRenderer() {
+
+    JList<TestDataNavigationElement> list = new JBList<>(elementsToDisplay);
+    list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    list.setCellRenderer(new ColoredListCellRenderer<TestDataNavigationElement>() {
       @Override
-      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        String path = (String)value;
-        String fileName = PathUtil.getFileName(path);
-        if (!fileName.equals(CREATE_MISSING_OPTION)) {
-          final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
-          setIcon(fileType.getIcon());
-        }
-        append(String.format("%s (%s)", fileName, PathUtil.getParentPath(path)));
+      protected void customizeCellRenderer(@NotNull JList list, TestDataNavigationElement element, int index,
+                                           boolean selected, boolean hasFocus) {
+        element.getTitleFragments().forEach(pair -> append(pair.getFirst(), pair.getSecond()));
+        setIcon(element.getIcon());
       }
     });
     IPopupChooserBuilder builder = JBPopupFactory.getInstance().createPopupChooserBuilder(list);
     builder.setItemChoosenCallback(() -> {
-      final int[] indices = list.getSelectedIndices();
-      if (ArrayUtil.indexOf(indices, fileNames.size()) >= 0) {
-        createMissingFiles(project, fileNames);
-      }
-      else {
-        for (int index : indices) {
-          openFileByIndex(project, fileNames, index);
-        }
+      TestDataNavigationElement selectedElement = list.getSelectedValue();
+      if (selectedElement != null) {
+        selectedElement.performAction(project);
       }
     }).createPopup().show(point);
   }
 
-  private static void createMissingFiles(Project project, List<String> fileNames) {
-    for (String name : fileNames) {
-      if (LocalFileSystem.getInstance().refreshAndFindFileByPath(name) == null) {
-        createFileByName(project, name);
-      }
-    }
-    final TestDataGroupVirtualFile testDataGroup = getTestDataGroup(fileNames);
-    if (testDataGroup != null) {
-      new OpenFileDescriptor(project, testDataGroup).navigate(true);
-    }
-  }
+  private static List<TestDataNavigationElement> getElementsToDisplay(Project project, List<String> filePaths) {
+    ContainerUtil.removeDuplicates(filePaths);
+    Collections.sort(filePaths, String.CASE_INSENSITIVE_ORDER);
 
-  private static void openFileByIndex(final Project project, final List<String> fileNames, final int index) {
-    final String path = fileNames.get(index);
-    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-    if (file != null) {
-      new OpenFileDescriptor(project, file).navigate(true);
-    }
-    else {
-      int rc = Messages.showYesNoDialog(project, "The referenced testdata file " + path + " does not exist. Would you like to create it?",
-                                        "Create Testdata File", Messages.getQuestionIcon());
-      if (rc == Messages.YES) {
-        VirtualFile vFile = createFileByName(project, path);
-        new OpenFileDescriptor(project, vFile).navigate(true);
+    List<TestDataNavigationElement> result = new ArrayList<>();
+    Set<String> usedPaths = new HashSet<>();
+    for (String path1 : filePaths) {
+      if (usedPaths.contains(path1)) {
+        continue;
       }
-    }
-  }
 
-  private static VirtualFile createFileByName(final Project project, final String path) {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-      public VirtualFile compute() {
-        try {
-          final File file = new File(path);
-          final VirtualFile parent = VfsUtil.createDirectories(file.getParent());
-          return parent.createChildData(this, file.getName());
+      boolean groupFound = false;
+      for (String path2 : filePaths) {
+        if (usedPaths.contains(path2) || path2.equals(path1)) {
+          continue;
         }
-        catch (IOException e) {
-          Messages.showErrorDialog(project, e.getMessage(), "Create Testdata File");
-          return null;
+
+        TestDataGroupVirtualFile group = TestDataUtil.getTestDataGroup(path1, path2);
+        if (group == null) {
+          continue;
         }
+
+        groupFound = true;
+        result.add(TestDataNavigationElementFactory.createForGroup(project, group));
+        usedPaths.add(path1);
+        usedPaths.add(path2);
+        break;
       }
-    });
+
+      if (!groupFound) {
+        result.add(TestDataNavigationElementFactory.createForFile(project, path1));
+        usedPaths.add(path1);
+      }
+    }
+
+    return result;
   }
 }

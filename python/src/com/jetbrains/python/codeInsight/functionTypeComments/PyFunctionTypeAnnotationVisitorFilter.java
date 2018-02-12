@@ -32,6 +32,7 @@ public class PyFunctionTypeAnnotationVisitorFilter implements PythonVisitorFilte
              visitorClass == PyMandatoryEncodingInspection.class ||
              visitorClass == PyNonAsciiCharInspection.class ||
              visitorClass == PyInterpreterInspection.class ||
-             visitorClass == PyPep8Inspection.class);
+             visitorClass == PyPep8Inspection.class ||
+             visitorClass == PyCompatibilityInspection.class);
   }
 }

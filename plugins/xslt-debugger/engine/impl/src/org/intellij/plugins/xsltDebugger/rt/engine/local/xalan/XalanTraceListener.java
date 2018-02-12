@@ -15,11 +15,6 @@ import org.intellij.plugins.xsltDebugger.rt.engine.local.LocalDebugger;
 import javax.xml.transform.SourceLocator;
 import java.io.PrintWriter;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 09.01.2009
-*/
 public class XalanTraceListener extends PrintTraceListener {
   private final LocalDebugger myDebugger;
   private final TransformerImpl myTransformer;
@@ -130,7 +125,7 @@ public class XalanTraceListener extends PrintTraceListener {
     private final String mySystemId;
     private final int myLineNumber;
     private final int myMatchedNode;
-    private String myPath;
+    private final String myPath;
 
     public MySourceFrame(Debugger.SourceFrame sourceFrame, DTM dtm, int node) {
       super(sourceFrame);

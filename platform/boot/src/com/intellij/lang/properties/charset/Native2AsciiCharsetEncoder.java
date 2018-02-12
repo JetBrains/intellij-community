@@ -36,6 +36,7 @@ class Native2AsciiCharsetEncoder extends CharsetEncoder {
     myBaseCharset = charset.getBaseCharset();
   }
 
+  @Override
   protected CoderResult encodeLoop(CharBuffer in, ByteBuffer out) {
     while (in.position() < in.limit()) {
       in.mark();

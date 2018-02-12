@@ -23,10 +23,6 @@ import com.intellij.openapi.project.DumbAware;
 
 import javax.swing.*;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 14.10.2008
- */
 public class GroovyDocReducePackageAction extends AnAction implements DumbAware {
   private final JList myPackagesList;
   private final DefaultListModel myDataModel;

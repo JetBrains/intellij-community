@@ -25,6 +25,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.MarkupEditorFilter;
+import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
@@ -111,7 +113,6 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
     return new LineMarkerInfo<PsiElement>(element, element.getTextRange(), icon, Pass.LINE_MARKERS,
                                           tooltipProvider, null,
                                           GutterIconRenderer.Alignment.CENTER) {
-      @Nullable
       @Override
       public GutterIconRenderer createGutterRenderer() {
         return new LineMarkerGutterIconRenderer<PsiElement>(this) {
@@ -125,12 +126,17 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
             return true;
           }
 
-          @Nullable
           @Override
           public ActionGroup getPopupMenuActions() {
             return actionGroup;
           }
         };
+      }
+
+      @NotNull
+      @Override
+      public MarkupEditorFilter getEditorFilter() {
+        return MarkupEditorFilterFactory.createIsNotDiffFilter();
       }
     };
   }

@@ -1,3 +1,5 @@
+// Test()
+// Test(int)
 import java.lang.invoke.*;
 
 class Main {

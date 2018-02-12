@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.components.*;
@@ -79,11 +65,11 @@ public class DimensionService implements PersistentStateComponent<Element> {
 
   /**
    * @param key a String key to perform a query for.
-   * @return point stored under the specified <code>key</code>. The method returns
-   * <code>null</code> if there is no stored value under the <code>key</code>. If point
-   * is outside of current screen bounds then the method returns <code>null</code>. It
+   * @return point stored under the specified {@code key}. The method returns
+   * {@code null} if there is no stored value under the {@code key}. If point
+   * is outside of current screen bounds then the method returns {@code null}. It
    * properly works in multi-monitor configuration.
-   * @throws java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
+   * @throws java.lang.IllegalArgumentException if {@code key} is {@code null}.
    */
   @Nullable
   public synchronized Point getLocation(String key) {
@@ -106,12 +92,12 @@ public class DimensionService implements PersistentStateComponent<Element> {
   }
 
   /**
-   * Store specified <code>point</code> under the <code>key</code>. If <code>point</code> is
-   * <code>null</code> then the value stored under <code>key</code> will be removed.
+   * Store specified {@code point} under the {@code key}. If {@code point} is
+   * {@code null} then the value stored under {@code key} will be removed.
    *
    * @param key   a String key to store location for.
    * @param point location to save.
-   * @throws java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
+   * @throws java.lang.IllegalArgumentException if {@code key} is {@code null}.
    */
   public synchronized void setLocation(String key, Point point) {
     setLocation(key, point, guessProject());
@@ -132,9 +118,9 @@ public class DimensionService implements PersistentStateComponent<Element> {
 
   /**
    * @param key a String key to perform a query for.
-   * @return point stored under the specified <code>key</code>. The method returns
-   * <code>null</code> if there is no stored value under the <code>key</code>.
-   * @throws java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
+   * @return point stored under the specified {@code key}. The method returns
+   * {@code null} if there is no stored value under the {@code key}.
+   * @throws java.lang.IllegalArgumentException if {@code key} is {@code null}.
    */
   @Nullable
   public synchronized Dimension getSize(@NotNull @NonNls String key) {
@@ -154,12 +140,12 @@ public class DimensionService implements PersistentStateComponent<Element> {
   }
 
   /**
-   * Store specified <code>size</code> under the <code>key</code>. If <code>size</code> is
-   * <code>null</code> then the value stored under <code>key</code> will be removed.
+   * Store specified {@code size} under the {@code key}. If {@code size} is
+   * {@code null} then the value stored under {@code key} will be removed.
    *
    * @param key  a String key to to save size for.
    * @param size a Size to save.
-   * @throws java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
+   * @throws java.lang.IllegalArgumentException if {@code key} is {@code null}.
    */
   public synchronized void setSize(@NotNull @NonNls String key, Dimension size) {
     setSize(key, size, guessProject());
@@ -215,7 +201,7 @@ public class DimensionService implements PersistentStateComponent<Element> {
   }
 
   @Override
-  public void loadState(final Element element) {
+  public void loadState(@NotNull final Element element) {
     myKey2Location.clear();
     myKey2Size.clear();
     myKey2ExtendedState.clear();

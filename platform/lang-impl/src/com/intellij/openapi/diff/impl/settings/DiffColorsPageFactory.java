@@ -16,8 +16,10 @@
 package com.intellij.openapi.diff.impl.settings;
 
 import com.intellij.application.options.colors.*;
+import com.intellij.diff.util.DiffLineSeparatorRenderer;
 import com.intellij.diff.util.TextDiffTypeFactory;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider;
 import com.intellij.openapi.options.colors.ColorDescriptor;
@@ -27,6 +29,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class DiffColorsPageFactory implements ColorAndFontPanelFactory, ColorAndFontDescriptorsProvider, DisplayPrioritySortable {
@@ -36,7 +39,11 @@ public class DiffColorsPageFactory implements ColorAndFontPanelFactory, ColorAnd
   @NotNull
   public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
     final SchemesPanel schemesPanel = new SchemesPanel(options);
-    final DiffColorDescriptionPanel descriptionPanel = new DiffColorDescriptionPanel(options);
+
+    CompositeColorDescriptionPanel descriptionPanel = new CompositeColorDescriptionPanel();
+    descriptionPanel.addDescriptionPanel(new ColorAndFontDescriptionPanel(), it -> it instanceof ColorAndFontDescription);
+    descriptionPanel.addDescriptionPanel(new DiffColorDescriptionPanel(options), it -> it instanceof TextAttributesDescription);
+
     final OptionsPanelImpl optionsPanel = new OptionsPanelImpl(options, schemesPanel, DIFF_GROUP, descriptionPanel);
     final DiffPreviewPanel previewPanel = new DiffPreviewPanel();
 
@@ -55,14 +62,22 @@ public class DiffColorsPageFactory implements ColorAndFontPanelFactory, ColorAnd
   @Override
   public AttributesDescriptor[] getAttributeDescriptors() {
     TextDiffTypeFactory.TextDiffTypeImpl[] diffTypes = TextDiffTypeFactory.getInstance().getAllDiffTypes();
-    List<AttributesDescriptor> attributes = ContainerUtil.map(diffTypes, (type) -> new AttributesDescriptor(type.getName(), type.getKey()));
+    List<AttributesDescriptor> attributes = ContainerUtil.map(diffTypes, type -> {
+      return new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.diff.type.tag.prefix") + type.getName(), type.getKey());
+    });
     return ArrayUtil.toObjectArray(attributes, AttributesDescriptor.class);
   }
 
   @NotNull
   @Override
   public ColorDescriptor[] getColorDescriptors() {
-    return ColorDescriptor.EMPTY_ARRAY;
+    List<ColorDescriptor> descriptors = new ArrayList<>();
+
+    descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.diff.separator.background"), DiffLineSeparatorRenderer.BACKGROUND, ColorDescriptor.Kind.BACKGROUND));
+    descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.diff.separator.top_border"), DiffLineSeparatorRenderer.TOP_BORDER, ColorDescriptor.Kind.BACKGROUND));
+    descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.vcs.diff.separator.bottom_border"), DiffLineSeparatorRenderer.BOTTOM_BORDER, ColorDescriptor.Kind.BACKGROUND));
+
+    return ArrayUtil.toObjectArray(descriptors, ColorDescriptor.class);
   }
 
   @Override

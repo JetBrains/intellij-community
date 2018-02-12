@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 29-Dec-2008
- */
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.*;
@@ -45,17 +41,23 @@ import java.util.Collections;
 import java.util.List;
 
 class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiLiteralExpression> {
-  private static final Logger LOG = Logger.getInstance("#" + HighlightSuppressedWarningsHandler.class.getName());
+  private static final Logger LOG = Logger.getInstance(HighlightSuppressedWarningsHandler.class);
 
   private final PsiAnnotation myTarget;
   private final PsiLiteralExpression mySuppressedExpression;
+  @NotNull
   private final ProperTextRange myPriorityRange;
 
-  HighlightSuppressedWarningsHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiAnnotation target, @Nullable PsiLiteralExpression suppressedExpression) {
+
+  HighlightSuppressedWarningsHandler(@NotNull Editor editor,
+                                     @NotNull PsiFile file,
+                                     @NotNull PsiAnnotation target,
+                                     @Nullable PsiLiteralExpression suppressedExpression,
+                                     @NotNull ProperTextRange priorityRange) {
     super(editor, file);
     myTarget = target;
     mySuppressedExpression = suppressedExpression;
-    myPriorityRange = VisibleHighlightingPassFactory.calculateVisibleRange(myEditor);
+    myPriorityRange = priorityRange;
   }
 
   @Override
@@ -138,20 +140,25 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
         toolWrapper.initialize(context);
       }
       ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
-      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      Runnable inspect = () -> pass.doInspectInBatch(context, managerEx, toolsCopy);
-      if (indicator == null) {
-        ProgressManager.getInstance().executeProcessUnderProgress(inspect, new ProgressIndicatorBase());
-      }
-      else {
-        inspect.run();
-      }
-
-      for (HighlightInfo info : pass.getInfos()) {
-        final PsiElement element = CollectHighlightsUtil.findCommonParent(myFile, info.startOffset, info.endOffset);
-        if (element != null) {
-          addOccurrence(element);
+      try {
+        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        Runnable inspect = () -> pass.doInspectInBatch(context, managerEx, toolsCopy);
+        if (indicator == null) {
+          ProgressManager.getInstance().executeProcessUnderProgress(inspect, new ProgressIndicatorBase());
         }
+        else {
+          inspect.run();
+        }
+
+        for (HighlightInfo info : pass.getInfos()) {
+          final PsiElement element = CollectHighlightsUtil.findCommonParent(myFile, info.startOffset, info.endOffset);
+          if (element != null) {
+            addOccurrence(element);
+          }
+        }
+      }
+      finally {
+        ((RefManagerImpl)context.getRefManager()).inspectionReadActionFinished();
       }
     }
   }

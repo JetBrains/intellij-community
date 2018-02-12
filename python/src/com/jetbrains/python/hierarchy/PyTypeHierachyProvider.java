@@ -30,12 +30,6 @@ import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Jul 31, 2009
- * Time: 6:00:21 PM
- */
 public class PyTypeHierachyProvider implements HierarchyProvider {
   @Nullable
   public PsiElement getTarget(@NotNull DataContext dataContext) {

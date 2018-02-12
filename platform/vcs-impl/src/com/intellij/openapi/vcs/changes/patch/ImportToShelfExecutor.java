@@ -34,7 +34,6 @@ import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -78,15 +77,13 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
         final List<FilePatch> allPatches = new ArrayList<>();
         for (VirtualFile virtualFile : patchGroupsToApply.keySet()) {
           final File ioCurrentBase = new File(virtualFile.getPath());
-          allPatches.addAll(ContainerUtil.map(patchGroupsToApply.get(virtualFile), new Function<TextFilePatchInProgress, TextFilePatch>() {
-            public TextFilePatch fun(TextFilePatchInProgress patchInProgress) {
-              final TextFilePatch was = patchInProgress.getPatch();
-              was.setBeforeName(
-                PathUtil.toSystemIndependentName(FileUtil.getRelativePath(ioBase, new File(ioCurrentBase, was.getBeforeName()))));
-              was.setAfterName(
-                PathUtil.toSystemIndependentName(FileUtil.getRelativePath(ioBase, new File(ioCurrentBase, was.getAfterName()))));
-              return was;
-            }
+          allPatches.addAll(ContainerUtil.map(patchGroupsToApply.get(virtualFile), patchInProgress -> {
+            final TextFilePatch was = patchInProgress.getPatch();
+            was.setBeforeName(
+              PathUtil.toSystemIndependentName(FileUtil.getRelativePath(ioBase, new File(ioCurrentBase, was.getBeforeName()))));
+            was.setAfterName(
+              PathUtil.toSystemIndependentName(FileUtil.getRelativePath(ioBase, new File(ioCurrentBase, was.getAfterName()))));
+            return was;
           }));
         }
         if (!allPatches.isEmpty()) {
@@ -107,7 +104,7 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
                 }
               }
               Collection<PatchEP> values = extensions.values();
-              patchTransitExtensions = values.toArray(new PatchEP[values.size()]);
+              patchTransitExtensions = values.toArray(new PatchEP[0]);
             }
             catch (PatchSyntaxException e) {
               VcsBalloonProblemNotifier

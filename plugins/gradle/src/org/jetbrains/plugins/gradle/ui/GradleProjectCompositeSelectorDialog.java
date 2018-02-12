@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,8 +61,8 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
   private JPanel contentPanel;
   @SuppressWarnings("unused")
   private JBLabel myDescriptionLbl;
-  private ExternalSystemUiAware myExternalSystemUiAware;
-  private CheckboxTree myTree;
+  private final ExternalSystemUiAware myExternalSystemUiAware;
+  private final CheckboxTree myTree;
 
   public GradleProjectCompositeSelectorDialog(@NotNull Project project, String compositeRootProjectPath) {
     super(project, true);
@@ -70,7 +71,7 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
     myExternalSystemUiAware = ExternalSystemUiUtil.getUiAware(GradleConstants.SYSTEM_ID);
     myTree = createTree();
 
-    setTitle(String.format("%s Project Build Composite", GradleConstants.SYSTEM_ID.getReadableName()));
+    setTitle("Composite Build Configuration");
     init();
   }
 
@@ -81,7 +82,7 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
       addExtraAction(new SelectAllButton()).
       addExtraAction(new UnselectAllButton()).
       setToolbarPosition(ActionToolbarPosition.BOTTOM).
-      setToolbarBorder(IdeBorderFactory.createEmptyBorder());
+      setToolbarBorder(JBUI.Borders.empty());
     contentPanel.add(decorator.createPanel());
     return mainPanel;
   }
@@ -121,7 +122,7 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
   private CheckboxTree createTree() {
     final CheckedTreeNode root = new CheckedTreeNode();
     if (myCompositeRootSettings != null) {
-      List<TreeNode> nodes = ContainerUtil.newArrayList();
+      List<CheckedTreeNode> nodes = ContainerUtil.newArrayList();
       for (GradleProjectSettings projectSettings : GradleSettings.getInstance(myProject).getLinkedProjectsSettings()) {
         if (projectSettings == myCompositeRootSettings) continue;
         if (projectSettings.getCompositeBuild() != null &&
@@ -140,6 +141,8 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
         nodes.add(treeNode);
       }
 
+      ContainerUtil.sort(nodes, (o1, o2) ->
+        StringUtil.naturalCompare((String)((Pair)o1.getUserObject()).first, (String)((Pair)o2.getUserObject()).first));
       TreeUtil.addChildrenTo(root, nodes);
     }
 

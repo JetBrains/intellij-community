@@ -23,8 +23,10 @@ import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.util.ui.UIUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -55,7 +57,7 @@ public class RunHotswapDialogImpl extends OptionsDialog implements RunHotswapDia
     }
     items.sort(Comparator.comparing(debuggerSession -> debuggerSession.getSession().getSessionName()));
     myElementsChooser = new ElementsChooser<>(items, true);
-    myPanel.setBorder(IdeBorderFactory.createEmptyBorder(10, 0, 5, 0));
+    myPanel.setBorder(JBUI.Borders.empty(10, 0, 5, 0));
     //myElementsChooser.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 0, 0));
     if (sessions.size() > 0) {
       myElementsChooser.selectElements(items.subList(0, 1));
@@ -122,12 +124,7 @@ public class RunHotswapDialogImpl extends OptionsDialog implements RunHotswapDia
   }
 
   public Collection<DebuggerSession> getSessionsToReload() {
-    final List<SessionItem> markedElements = myElementsChooser.getMarkedElements();
-    final List<DebuggerSession>  sessions = new ArrayList<>(markedElements.size());
-    for (SessionItem item : markedElements) {
-      sessions.add(item.getSession());
-    }
-    return sessions;
+    return StreamEx.of(myElementsChooser.getMarkedElements()).map(SessionItem::getSession).toList();
   }
 
   private static class SessionItem {

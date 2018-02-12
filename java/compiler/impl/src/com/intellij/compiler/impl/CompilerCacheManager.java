@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.generic.GenericCompiler;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,9 +35,8 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: May 4, 2008
  */
-public class CompilerCacheManager implements ProjectComponent {
+public class CompilerCacheManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompilerCacheManager");
   private final Map<Compiler, Object> myCompilerToCacheMap = new HashMap<>();
   private final Map<GenericCompiler<?,?,?>, GenericCompilerCache<?,?,?>> myGenericCachesMap = new HashMap<>();
@@ -55,27 +52,9 @@ public class CompilerCacheManager implements ProjectComponent {
   public static CompilerCacheManager getInstance(Project project) {
     return project.getComponent(CompilerCacheManager.class);
   }
-  
-  @Override
-  public void projectOpened() {
-  }
 
   @Override
-  public void projectClosed() {
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "CompilerCacheManager";
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
+  public void dispose() {
     flushCaches();
   }
   

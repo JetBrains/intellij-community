@@ -29,10 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * User: anna
- * Date: Dec 7, 2004
- */
 public interface InspectionProfile extends Comparable {
   @NotNull
   String getName();

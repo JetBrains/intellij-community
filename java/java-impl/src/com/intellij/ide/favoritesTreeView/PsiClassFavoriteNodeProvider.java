@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 21-Jan-2008
- */
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.favoritesTreeView.smartPointerPsiNodes.ClassSmartPointerNode;

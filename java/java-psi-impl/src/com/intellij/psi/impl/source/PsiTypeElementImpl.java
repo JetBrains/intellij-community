@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
@@ -25,7 +26,6 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -74,6 +74,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     PsiType type = null;
     List<PsiAnnotation> annotations = new SmartList<>();
 
+    PsiElement parent = getParent();
     for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiComment || child instanceof PsiWhiteSpace) continue;
 
@@ -95,6 +96,10 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
         String text = child.getText();
         type = annotations.isEmpty() ? PsiJavaParserFacadeImpl.getPrimitiveType(text) : new PsiPrimitiveType(text, createProvider(annotations));
       }
+      else if (PsiUtil.isJavaToken(child, JavaTokenType.VAR_KEYWORD)) {
+        assert type == null : this;
+        type = inferVarType(parent);
+      }
       else if (child instanceof PsiJavaCodeReferenceElement) {
         assert type == null : this;
         type = new PsiClassReferenceType(getReferenceComputable((PsiJavaCodeReferenceElement)child), null, createProvider(annotations));
@@ -111,8 +116,8 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       if (PsiUtil.isJavaToken(child, JavaTokenType.QUEST) ||
           child instanceof ASTNode && ((ASTNode)child).getElementType() == JavaElementType.DUMMY_ELEMENT && "any".equals(child.getText())) {
         assert type == null : this;
-        PsiElement boundKind = PsiTreeUtil.skipSiblingsForward(child, PsiComment.class, PsiWhiteSpace.class);
-        PsiElement boundType = PsiTreeUtil.skipSiblingsForward(boundKind, PsiComment.class, PsiWhiteSpace.class);
+        PsiElement boundKind = PsiTreeUtil.skipWhitespacesAndCommentsForward(child);
+        PsiElement boundType = PsiTreeUtil.skipWhitespacesAndCommentsForward(boundKind);
         if (PsiUtil.isJavaToken(boundKind, JavaTokenType.EXTENDS_KEYWORD) && boundType instanceof PsiTypeElement) {
           type = PsiWildcardType.createExtends(getManager(), ((PsiTypeElement)boundType).getType());
         }
@@ -143,12 +148,67 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
     if (type == null) return PsiType.NULL;
 
-    PsiElement parent = getParent();
     if (parent instanceof PsiModifierListOwner) {
       type = JavaSharedImplUtil.applyAnnotations(type, ((PsiModifierListOwner)parent).getModifierList());
     }
 
     return type;
+  }
+
+  private PsiType inferVarType(PsiElement parent) {
+    if (parent instanceof PsiParameter) {
+      PsiElement declarationScope = ((PsiParameter)parent).getDeclarationScope();
+      if (declarationScope instanceof PsiForeachStatement) {
+        PsiExpression iteratedValue = ((PsiForeachStatement)declarationScope).getIteratedValue();
+        if (iteratedValue != null) {
+          return JavaGenericsUtil.getCollectionItemType(iteratedValue);
+        }
+      }
+    }
+    else {
+      for (PsiElement e = this; e != null; e = e.getNextSibling()) {
+        if (e instanceof PsiExpression) {
+          if (!(e instanceof PsiArrayInitializerExpression) &&
+              !isSelfReferenced((PsiExpression)e, parent)) {
+            PsiExpression expression = (PsiExpression)e;
+            PsiType type = JavaVarTypeUtil.ourVarGuard.doPreventingRecursion(expression, true, () -> expression.getType());
+            return type == null ? null : JavaVarTypeUtil.getUpwardProjection(type);
+          }
+          return null;
+        }
+      }
+    }
+    return null;
+  }
+
+  private static boolean isSelfReferenced(PsiExpression initializer, PsiElement parent) {
+    class SelfReferenceVisitor extends JavaRecursiveElementVisitor {
+      private boolean referenced = false;
+
+      @Override
+      public void visitElement(PsiElement element) {
+        if (referenced) return;
+        super.visitElement(element);
+      }
+
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        super.visitReferenceExpression(expression);
+        if (expression.resolve() == parent) {
+          referenced = true;
+        }
+      }
+    }
+
+    SelfReferenceVisitor visitor = new SelfReferenceVisitor();
+    initializer.accept(visitor);
+    return visitor.referenced;
+  }
+
+  @Override
+  public boolean isInferredType() {
+    PsiElement firstChild = getFirstChild();
+    return firstChild != null && PsiUtil.isJavaToken(firstChild, JavaTokenType.VAR_KEYWORD);
   }
 
   @NotNull
@@ -250,7 +310,9 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     // neighbouring type annotations are logical part of this type element and should be dropped
     PsiImplUtil.markTypeAnnotations(this);
     PsiElement result = super.replace(newElement);
-    PsiImplUtil.deleteTypeAnnotations((PsiTypeElement)result);
+    if (result instanceof PsiTypeElement) {
+      PsiImplUtil.deleteTypeAnnotations((PsiTypeElement)result);
+    }
     return result;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,8 @@ import com.intellij.openapi.externalSystem.model.project.Identifiable;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
@@ -54,6 +55,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.CachedValueImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +81,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
   private static final com.intellij.openapi.util.Key<DataNodeCheckedTreeNode> CONNECTED_UI_NODE_KEY =
     com.intellij.openapi.util.Key.create("connectedUiNode");
   @NotNull
-  private Project myProject;
+  private final Project myProject;
   private JBLoadingPanel loadingPanel;
   private JPanel mainPanel;
   private JPanel contentPanel;
@@ -123,7 +125,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
   }
 
   private void init(@NotNull ExternalProjectInfo projectInfo) {
-    ProjectDataManager.getInstance().ensureTheDataIsReadyToUse(projectInfo.getExternalProjectStructure());
+    ProjectDataManagerImpl.getInstance().ensureTheDataIsReadyToUse(projectInfo.getExternalProjectStructure());
     myProjectInfo = projectInfo;
     myExternalSystemUiAware = ExternalSystemUiUtil.getUiAware(myProjectInfo.getProjectSystemId());
     myTree = createTree();
@@ -163,7 +165,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
       addExtraAction(new ShowSelectedOnlyButton()).
       addExtraAction(new SelectRequiredButton()).
       setToolbarPosition(ActionToolbarPosition.BOTTOM).
-      setToolbarBorder(IdeBorderFactory.createEmptyBorder());
+      setToolbarBorder(JBUI.Borders.empty());
 
     contentPanel.add(decorator.createPanel());
     loadingPanel = new JBLoadingPanel(new BorderLayout(), getDisposable());
@@ -435,7 +437,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
   private class DataNodeCheckedTreeNode extends CheckedTreeNode {
     private final DataNode myDataNode;
     @Nullable
-    private Icon icon;
+    private final Icon icon;
     private String text;
     @Nullable
     private String comment;

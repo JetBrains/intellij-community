@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,13 @@ import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -62,13 +65,19 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
         result.add((PsiAnnotation)child);
       }
     }
-    return result == null ? PsiAnnotation.EMPTY_ARRAY : result.toArray(new PsiAnnotation[result.size()]);
+    return result == null ? PsiAnnotation.EMPTY_ARRAY : result.toArray(PsiAnnotation.EMPTY_ARRAY);
   }
 
   @Override
   public boolean isValid() {
     PsiJavaCodeReferenceElement reference = myReference.compute();
-    return reference != null && reference.isValid();
+    if (reference != null && reference.isValid()) {
+      for (PsiAnnotation annotation : getAnnotations(false)) {
+        if (!annotation.isValid()) return false;
+      }
+      return true;
+    }
+    return false;
   }
 
   @Override
@@ -80,6 +89,34 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   @NotNull
   public GlobalSearchScope getResolveScope() {
     return getReference().getResolveScope();
+  }
+
+  @NotNull
+  @Override
+  public PsiAnnotation[] getAnnotations() {
+    return getAnnotations(true);
+  }
+
+  private PsiAnnotation[] getAnnotations(boolean merge) {
+    PsiAnnotation[] annotations = super.getAnnotations();
+
+    if (merge) {
+      PsiJavaCodeReferenceElement reference = myReference.compute();
+      if (reference != null && reference.isValid() && reference.isQualified()) {
+        PsiAnnotation[] embedded = collectAnnotations(reference);
+        if (annotations.length > 0 && embedded.length > 0) {
+          LinkedHashSet<PsiAnnotation> set = ContainerUtil.newLinkedHashSet();
+          ContainerUtil.addAll(set, annotations);
+          ContainerUtil.addAll(set, embedded);
+          annotations = set.toArray(PsiAnnotation.EMPTY_ARRAY);
+        }
+        else {
+          annotations = ArrayUtil.mergeArrays(annotations, embedded);
+        }
+      }
+    }
+
+    return annotations;
   }
 
   @Override
@@ -187,18 +224,11 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   }
 
   @NotNull
-  public PsiClassType createImmediateCopy() {
-    ClassResolveResult resolveResult = resolveGenerics();
-    PsiClass element = resolveResult.getElement();
-    return element == null ? this : new PsiImmediateClassType(element, resolveResult.getSubstitutor());
-  }
-
-  @NotNull
   @Override
   public String getPresentableText(boolean annotated) {
     String presentableText = PsiNameHelper.getPresentableText(getReference());
 
-    PsiAnnotation[] annotations = annotated ? getAnnotations() : PsiAnnotation.EMPTY_ARRAY;
+    PsiAnnotation[] annotations = annotated ? getAnnotations(false) : PsiAnnotation.EMPTY_ARRAY;
     if (annotations.length == 0) return presentableText;
 
     StringBuilder sb = new StringBuilder();
@@ -223,7 +253,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
     PsiJavaCodeReferenceElement reference = getReference();
     if (reference instanceof PsiAnnotatedJavaCodeReferenceElement) {
       PsiAnnotatedJavaCodeReferenceElement ref = (PsiAnnotatedJavaCodeReferenceElement)reference;
-      PsiAnnotation[] annotations = annotated ? getAnnotations() : PsiAnnotation.EMPTY_ARRAY;
+      PsiAnnotation[] annotations = annotated ? getAnnotations(false) : PsiAnnotation.EMPTY_ARRAY;
       return ref.getCanonicalText(annotated, annotations.length == 0 ? null : annotations);
     }
     return reference.getCanonicalText();

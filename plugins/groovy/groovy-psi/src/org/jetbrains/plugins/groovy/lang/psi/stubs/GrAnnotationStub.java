@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public class GrAnnotationStub extends StubBase<GrAnnotation> {
   private static final Logger LOG = Logger.getInstance(GrAnnotationStub.class);
 
   private final String myText;
-  private SoftReference<GrAnnotation> myPsiRef;
+  private volatile SoftReference<GrAnnotation> myPsiRef;
 
   public GrAnnotationStub(StubElement parent, String text) {
     super(parent, GroovyElementTypes.ANNOTATION);

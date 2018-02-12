@@ -1,2 +1,3 @@
 def <caret>f(x, y):
-    return 42
+    z = x ** y
+    return z

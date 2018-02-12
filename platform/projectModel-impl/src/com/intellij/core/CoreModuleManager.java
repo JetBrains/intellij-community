@@ -21,6 +21,7 @@ import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -47,21 +48,19 @@ public class CoreModuleManager extends ModuleManagerImpl {
 
   @NotNull
   @Override
-  protected ModuleEx createAndLoadModule(@NotNull String filePath, @NotNull VirtualFile file) throws IOException {
+  protected ModuleEx createAndLoadModule(@NotNull String filePath) throws IOException {
     final ModuleEx module = createModule(filePath);
+    VirtualFile vFile = StandardFileSystems.local().findFileByPath(filePath);
     try {
+      assert vFile != null;
       ModuleRootManagerImpl.ModuleRootManagerState state = new ModuleRootManagerImpl.ModuleRootManagerState();
-      state.readExternal(CoreProjectLoader.loadStorageFile(module, file).get("NewModuleRootManager"));
+      state.readExternal(CoreProjectLoader.loadStorageFile(module, vFile).get("NewModuleRootManager"));
       ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).loadState(state);
     }
     catch (JDOMException e) {
       throw new IOException(e);
     }
     return module;
-  }
-
-  @Override
-  protected void deliverPendingEvents() {
   }
 
   public void loadModules() {

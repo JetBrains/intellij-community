@@ -15,15 +15,12 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.DoubleClickListener;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.CatchingConsumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +49,7 @@ public class InstalledPackagesPanel extends JPanel {
   private final AnActionButton myUninstallButton;
 
   protected final JBTable myPackagesTable;
-  private DefaultTableModel myPackagesTableModel;
+  private final DefaultTableModel myPackagesTableModel;
   // can be accessed from any thread
   protected volatile PackageManagementService myPackageManagementService;
   protected final Project myProject;
@@ -83,6 +80,7 @@ public class InstalledPackagesPanel extends JPanel {
     myPackagesTable.setPreferredScrollableViewportSize(null);
     myPackagesTable.setStriped(true);
     myPackagesTable.getTableHeader().setReorderingAllowed(false);
+    new TableSpeedSearch(myPackagesTable);
 
     myUpgradeButton = new AnActionButton("Upgrade", IconUtil.getMoveUpIcon()) {
       @Override
@@ -90,7 +88,7 @@ public class InstalledPackagesPanel extends JPanel {
         upgradeAction();
       }
     };
-    myInstallButton = new AnActionButton("Install", IconUtil.getAddIcon()) {
+    myInstallButton = new DumbAwareActionButton("Install", IconUtil.getAddIcon()) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (myPackageManagementService != null) {
@@ -111,6 +109,7 @@ public class InstalledPackagesPanel extends JPanel {
         .addExtraAction(myUninstallButton)
         .addExtraAction(myUpgradeButton);
 
+    decorator.addExtraActions(getExtraActions());
     add(decorator.createPanel());
     myInstallButton.setEnabled(false);
     myUninstallButton.setEnabled(false);
@@ -143,6 +142,10 @@ public class InstalledPackagesPanel extends JPanel {
         return false;
       }
     }.installOn(myPackagesTable);
+  }
+
+  protected AnActionButton[] getExtraActions() {
+    return new AnActionButton[0];
   }
 
   @NotNull
@@ -473,6 +476,7 @@ public class InstalledPackagesPanel extends JPanel {
         @Override
         public void consume(Exception e) {
           UIUtil.invokeLaterIfNeeded(() -> decrement());
+          LOG.warn("Cannot fetch the latest version of the installed package " + pkg, e);
         }
 
         @Override
@@ -530,6 +534,7 @@ public class InstalledPackagesPanel extends JPanel {
           }, ModalityState.stateForComponent(myPackagesTable));
         }
         catch (IOException ignored) {
+          LOG.warn("Cannot refresh the list of available packages with their latest versions", ignored);
           myPackagesTable.setPaintBusy(false);
         }
       }

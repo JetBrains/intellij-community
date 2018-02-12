@@ -42,10 +42,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: 3/13/13
- */
 public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
 
   public static final String COMPILER_NAME = "Java FX Packager";
@@ -176,6 +172,11 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     }
 
     @Override
+    protected void registerJavaFxPackagerInfo(String message) {
+      myCompileContext.processMessage(new CompilerMessage(COMPILER_NAME, BuildMessage.Kind.INFO, message));
+    }
+
+    @Override
     protected String getHtmlTemplateFile() {
       return myProperties.myState.getHtmlTemplateFile();
     }
@@ -262,6 +263,11 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     @Override
     public List<JavaFxManifestAttribute> getCustomManifestAttributes() {
       return myProperties.myState.getCustomManifestAttributes();
+    }
+
+    @Override
+    protected JavaFxPackagerConstants.MsgOutputLevel getMsgOutputLevel() {
+      return myProperties.myState.getMsgOutputLevel();
     }
 
     private JpsArtifact getPreloaderArtifact() {

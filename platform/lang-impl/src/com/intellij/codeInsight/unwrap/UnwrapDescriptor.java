@@ -16,16 +16,18 @@
 
 package com.intellij.codeInsight.unwrap;
 
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public interface UnwrapDescriptor {
-  List<Pair<PsiElement, Unwrapper>> collectUnwrappers(Project project, Editor editor, PsiFile file);
+  @NotNull
+  List<Pair<PsiElement, Unwrapper>> collectUnwrappers(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file);
   boolean showOptionsDialog();
   boolean shouldTryToRestoreCaretPosition();
 }

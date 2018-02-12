@@ -28,13 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 08.09.2003
- * Time: 17:27:43
- * To change this template use Options | File Templates.
- */
 public class XmlNSDescriptorSequence implements XmlNSDescriptor{
   final List<XmlNSDescriptor> sequence = new ArrayList<>();
 
@@ -68,7 +61,7 @@ public class XmlNSDescriptorSequence implements XmlNSDescriptor{
       ContainerUtil.addAll(descriptors, descriptor.getRootElementsDescriptors(document));
     }
 
-    return descriptors.toArray(new XmlElementDescriptor[descriptors.size()]);
+    return descriptors.toArray(XmlElementDescriptor.EMPTY_ARRAY);
   }
 
   @Override

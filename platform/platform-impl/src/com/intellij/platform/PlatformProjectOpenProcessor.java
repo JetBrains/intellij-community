@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform;
 
 import com.intellij.ide.GeneralSettings;
@@ -32,7 +18,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -40,7 +25,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
-import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.projectImport.ProjectOpenedCallback;
@@ -74,14 +58,15 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
   @Nullable
   public static PlatformProjectOpenProcessor getInstanceIfItExists() {
     ProjectOpenProcessor[] processors = Extensions.getExtensions(EXTENSION_POINT_NAME);
-    for(ProjectOpenProcessor processor: processors) {
+    for (ProjectOpenProcessor processor : processors) {
       if (processor instanceof PlatformProjectOpenProcessor) {
-        return (PlatformProjectOpenProcessor) processor;
+        return (PlatformProjectOpenProcessor)processor;
       }
     }
     return null;
   }
 
+  @Override
   public boolean canOpenProject(final VirtualFile file) {
     return file.isDirectory();
   }
@@ -97,10 +82,16 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
   }
 
   @Nullable
+  @Override
   public Project doOpenProject(@NotNull VirtualFile virtualFile, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {
     EnumSet<Option> options = EnumSet.noneOf(Option.class);
     if (forceOpenInNewFrame) options.add(Option.FORCE_NEW_FRAME);
     return doOpenProject(virtualFile, projectToClose, -1, null, options);
+  }
+
+  @Nullable
+  public Project doOpenProject(@NotNull VirtualFile file, @Nullable Project projectToClose, int line, @NotNull EnumSet<Option> options) {
+    return doOpenProject(file, projectToClose, line, null, options);
   }
 
   /** @deprecated use {@link #doOpenProject(VirtualFile, Project, int, ProjectOpenedCallback, EnumSet)} (to be removed in IDEA 2019) */
@@ -135,7 +126,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
       }
       else {
         baseDir = virtualFile.getParent();
-        while (baseDir != null && !ProjectKt.isProjectDirectoryExistsUsingIo(baseDir)) {
+        while (baseDir != null && !com.intellij.openapi.project.ProjectUtil.isProjectDirectoryExistsUsingIo(baseDir)) {
           baseDir = baseDir.getParent();
         }
       }
@@ -219,9 +210,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
       }
     }
     else {
-      PathKt.createDirectories(projectDir);
       project = projectManager.newProject(dummyProject ? dummyProjectName : baseDir.getName(), baseDir.getPath(), true, dummyProject);
-
       newProject = true;
     }
 
@@ -245,13 +234,13 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
       project.save();
     }
 
-    openFileFromCommandLine(project, virtualFile, line);
+    if (!virtualFile.isDirectory()) {
+      openFileFromCommandLine(project, virtualFile, line);
+    }
 
     if (!projectManager.openProject(project)) {
       WelcomeFrame.showIfNoProjectOpened();
-      final Project finalProject = project;
-      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(finalProject));
-      return project;
+      return null;
     }
 
     if (callback != null) {
@@ -283,16 +272,11 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     return false;
   }
 
-  private static void openFileFromCommandLine(final Project project, final VirtualFile file, final int line) {
+  private static void openFileFromCommandLine(Project project, VirtualFile file, int line) {
     StartupManager.getInstance(project).registerPostStartupActivity(
       (DumbAwareRunnable)() -> ApplicationManager.getApplication().invokeLater(() -> {
-        if (!project.isDisposed() && file.isValid() && !file.isDirectory()) {
-          if (line > 0) {
-            new OpenFileDescriptor(project, file, line - 1, 0).navigate(true);
-          }
-          else {
-            new OpenFileDescriptor(project, file).navigate(true);
-          }
+        if (!project.isDisposed() && file.isValid()) {
+          (line > 0 ? new OpenFileDescriptor(project, file, line - 1, 0) : new OpenFileDescriptor(project, file)).navigate(true);
         }
       }, ModalityState.NON_MODAL));
   }

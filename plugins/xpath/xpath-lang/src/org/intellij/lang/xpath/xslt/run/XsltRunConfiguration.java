@@ -37,10 +37,7 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -88,7 +85,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     public boolean myOpenOutputFile;
     public boolean myOpenInBrowser;
     public boolean mySmartErrorHandling = true;
-    @Deprecated // this is only used if the dynamic selection of a port fails  
+    @Deprecated // this is only used if the dynamic selection of a port fails
     public int myRunnerPort = 34873;
     public String myVmArguments;
     public String myWorkingDirectory;
@@ -218,7 +215,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
 
     @Override
     @SuppressWarnings({ "unchecked" })
-    public void readExternal(Element element) throws InvalidDataException {
+    public void readExternal(@NotNull Element element) throws InvalidDataException {
         super.readExternal(element);
         DefaultJDOMExternalizer.readExternal(this, element);
 
@@ -281,7 +278,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     }
 
     @Override
-    public void writeExternal(Element element) throws WriteExternalException {
+    public void writeExternal(@NotNull Element element) throws WriteExternalException {
         super.writeExternal(element);
         DefaultJDOMExternalizer.writeExternal(this, element);
 
@@ -440,25 +437,25 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
     }
 
     private static Sdk ourDefaultSdk;
-  
+
     private static synchronized Sdk getDefaultSdk() {
         if (ourDefaultSdk == null) {
             final String jdkHome = SystemProperties.getJavaHome();
-            final String versionName = ProjectBundle.message("sdk.java.name.template", SystemProperties.getJavaVersion());
+            final String versionName = ProjectBundle.message("sdk.java.name.template", SystemInfo.JAVA_VERSION);
             Sdk sdk = ProjectJdkTable.getInstance().createSdk(versionName, new SimpleJavaSdkType());
             SdkModificator modificator = sdk.getSdkModificator();
             modificator.setHomePath(jdkHome);
             modificator.commitChanges();
             ourDefaultSdk = sdk;
         }
-        
+
         return ourDefaultSdk;
     }
-  
+
     @Nullable
     public Sdk getEffectiveJDK() {
         if (!XsltRunSettingsEditor.ALLOW_CHOOSING_SDK) {
-            return getDefaultSdk(); 
+            return getDefaultSdk();
         }
         if (myJdkChoice == JdkChoice.JDK) {
             return myJdk != null ? ProjectJdkTable.getInstance().findJdk(myJdk) : null;

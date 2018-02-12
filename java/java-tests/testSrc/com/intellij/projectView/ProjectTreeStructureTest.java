@@ -190,13 +190,16 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
                          " testContentRootUnderExcluded.iml\n");
   }
 
-  public void testQualifiedModuleNames() throws Exception {
+  public void testQualifiedModuleNames() {
     VirtualFile testDataRoot = ModuleRootManager.getInstance(myModule).getContentRoots()[0];
     Module a = createModule("a");
     PsiTestUtil.addContentRoot(a, testDataRoot.findFileByRelativePath("a"));
 
     Module main = createModule("a.main");
     PsiTestUtil.addContentRoot(main, testDataRoot.findFileByRelativePath("a/main"));
+
+    Module foo = createModule("a.foo");
+    PsiTestUtil.addContentRoot(foo, testDataRoot.findFileByRelativePath("a/Foo"));
 
     Module util = createModule("util");
     PsiTestUtil.addContentRoot(util, testDataRoot.findFileByRelativePath("a/util"));
@@ -218,10 +221,13 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
     };
     String treeStructure = ModuleGroupTestsKt.runWithQualifiedModuleNamesEnabled(() -> PlatformTestUtil.print(myStructure, myStructure.getRootElement(), nodePresenter));
     assertEquals("testQualifiedModuleNames\n" +
+                 " a.foo.iml\n" +
                  " a.iml\n" +
                  " a.main.iml\n" +
                  " qualifiedModuleNames [testQualifiedModuleNames]\n" +
                  "  a\n" +
+                 "   Foo\n" +
+                 "    foo.txt\n" +
                  "   b [x.b]\n" +
                  "    b.txt\n" +
                  "   main\n" +

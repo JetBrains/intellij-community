@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
@@ -29,7 +15,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class DefiniteAssignmentUtil {
 
-  public static void checkVariable(PsiVariable variable, DefiniteAssignment definiteAssignment) {
+  public static void checkVariable(DefiniteAssignment definiteAssignment) {
+    final PsiVariable variable = definiteAssignment.getVariable();
     if (variable.getInitializer() != null) {
       throw new IllegalArgumentException("variable has initializer, check for assignment to the field");
     }
@@ -474,8 +461,9 @@ public final class DefiniteAssignmentUtil {
       definiteAssignment.set(da, definiteAssignment.isDefinitelyUnassigned());
       checkCodeBlock(finallyBlock, definiteAssignment);
       resultDu &= definiteAssignment.isDefinitelyUnassigned(); // spec problem
+      resultDa |= definiteAssignment.isDefinitelyAssigned();
     }
-    definiteAssignment.set(resultDa | definiteAssignment.isDefinitelyAssigned(), resultDu);
+    definiteAssignment.set(resultDa, resultDu);
   }
 
   private static void checkWhileStatement(PsiWhileStatement whileStatement, DefiniteAssignment definiteAssignment) {
@@ -661,7 +649,11 @@ public final class DefiniteAssignmentUtil {
   }
 
   private static void checkLambdaExpression(PsiLambdaExpression lambdaExpression, DefiniteAssignment definiteAssignment) {
+    // JLS 16.1.10
     final PsiElement body = lambdaExpression.getBody();
+    final boolean du = definiteAssignment.isDefinitelyUnassigned();
+    final boolean da = definiteAssignment.isDefinitelyAssigned();
+    definiteAssignment.set(da, false);
     if (body instanceof PsiExpression) {
       final PsiExpression bodyExpression = (PsiExpression)body;
       checkExpression(bodyExpression, definiteAssignment, BooleanExpressionValue.UNDEFINED);
@@ -670,6 +662,7 @@ public final class DefiniteAssignmentUtil {
       final PsiCodeBlock codeBlock = (PsiCodeBlock)body;
       checkCodeBlock(codeBlock, definiteAssignment);
     }
+    definiteAssignment.set(da, du);
   }
 
   private static void checkMethodCallExpression(PsiMethodCallExpression methodCallExpression,

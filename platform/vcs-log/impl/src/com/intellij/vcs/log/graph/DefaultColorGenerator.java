@@ -31,7 +31,7 @@ public class DefaultColorGenerator implements ColorGenerator {
   }
 
   private static int rangeFix(int n) {
-    return Math.abs(n) % 100 + 70;
+    return Math.abs(n % 100) + 70;
   }
 
   @NotNull

@@ -14,34 +14,19 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 26, 2002
- * Time: 10:48:06 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.DfaInstructionState;
+import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 
 public class FlushVariableInstruction extends Instruction {
   private final DfaVariableValue myVariable;
-  private final boolean myDependentsOnly;
 
   public FlushVariableInstruction(DfaVariableValue expr) {
-    this(expr, false);
-  }
-
-  public FlushVariableInstruction(DfaVariableValue variable, boolean dependentsOnly) {
-    myVariable = variable;
-    myDependentsOnly = dependentsOnly;
-  }
-
-  public boolean isDependentsOnly() {
-    return myDependentsOnly;
+    myVariable = expr;
   }
 
   public DfaVariableValue getVariable() {

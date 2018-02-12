@@ -2,14 +2,15 @@ Backward Hierarchy:
 java.lang.Object -> Bar Foo
 
 Backward References:
-Bar in Bar Foo
-Bar.<init>(0) in Bar
-Bar.m(0) in Bar
-Foo in Bar Foo
-Foo.<init>(0) in Foo
-Foo.m(0) in Foo
-java.lang.Object.<init>(0) in Bar Foo
+Bar in Bar Foo occurrences = 3
+Bar.<init>(0) in Foo occurrences = 1
+Bar.m(0) in Bar occurrences = 1
+Foo in Bar Foo occurrences = 3
+Foo.<init>(0) in Bar occurrences = 1
+Foo.m(0) in Foo occurrences = 1
 
 Class Definitions:
 Bar in Bar
 Foo in Foo
+
+Members Signatures:

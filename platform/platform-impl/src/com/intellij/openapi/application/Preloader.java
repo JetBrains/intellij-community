@@ -16,7 +16,7 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ApplicationComponentAdapter;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -32,7 +32,7 @@ import java.util.concurrent.Executor;
 /**
  * @author peter
  */
-public class Preloader implements ApplicationComponentAdapter, Disposable {
+public class Preloader implements Disposable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.Preloader");
   private final Executor myExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("com.intellij.openapi.application.Preloader pool");
   private final ProgressIndicator myIndicator = new ProgressIndicatorBase();

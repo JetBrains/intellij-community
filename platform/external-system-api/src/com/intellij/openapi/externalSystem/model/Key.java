@@ -41,7 +41,7 @@ public class Key<T> implements Serializable, Comparable<Key<?>> {
   private final int myProcessingWeight;
 
   /**
-   * Creates new <code>Key</code> object.
+   * Creates new {@code Key} object.
    * 
    * @param dataClass         class of the payload data which will be associated with the current key
    * @param processingWeight  there is a possible case that when a {@link DataNode} object has children of more than on type (children

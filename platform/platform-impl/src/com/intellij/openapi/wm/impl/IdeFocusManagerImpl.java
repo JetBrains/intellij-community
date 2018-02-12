@@ -19,10 +19,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Expirable;
 import com.intellij.openapi.util.ExpirableRunnable;
-import com.intellij.openapi.wm.FocusCommand;
-import com.intellij.openapi.wm.FocusRequestor;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 
 public class IdeFocusManagerImpl extends IdeFocusManager {
   private final ToolWindowManagerImpl myToolWindowManager;
@@ -43,12 +39,6 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
   @NotNull
   public ActionCallback requestFocus(@NotNull final Component c, final boolean forced) {
     return getGlobalInstance().requestFocus(c, forced);
-  }
-
-  @Override
-  @NotNull
-  public ActionCallback requestFocus(@NotNull final FocusCommand command, final boolean forced) {
-    return getGlobalInstance().requestFocus(command, forced);
   }
 
   @Override
@@ -83,11 +73,6 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
   }
 
   @Override
-  public boolean dispatch(@NotNull KeyEvent e) {
-    return getGlobalInstance().dispatch(e);
-  }
-
-  @Override
   public void typeAheadUntil(@NotNull ActionCallback callback, @NotNull String cause) {
     getGlobalInstance().typeAheadUntil(callback, cause);
   }
@@ -102,23 +87,6 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
   @Override
   public boolean isFocusTransferEnabled() {
     return getGlobalInstance().isFocusTransferEnabled();
-  }
-
-  @NotNull
-  @Override
-  public Expirable getTimestamp(boolean trackOnlyForcedCommands) {
-    return getGlobalInstance().getTimestamp(trackOnlyForcedCommands);
-  }
-
-  @NotNull
-  @Override
-  public FocusRequestor getFurtherRequestor() {
-    return getGlobalInstance().getFurtherRequestor();
-  }
-
-  @Override
-  public void revalidateFocus(@NotNull ExpirableRunnable runnable) {
-    getGlobalInstance().revalidateFocus(runnable);
   }
 
   @Override
@@ -149,11 +117,6 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
   @Override
   public void toFront(JComponent c) {
     getGlobalInstance().toFront(c);
-  }
-
-  @Override
-  public boolean isFocusBeingTransferred() {
-    return getGlobalInstance().isFocusBeingTransferred();
   }
 
   @Override

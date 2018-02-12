@@ -32,13 +32,14 @@ public class JavaPolyadicExpressionUnwrapper extends JavaUnwrapper {
     super("");
   }
 
+  @NotNull
   @Override
-  public String getDescription(PsiElement e) {
+  public String getDescription(@NotNull PsiElement e) {
     return CodeInsightBundle.message("unwrap.with.placeholder", e.getText());
   }
 
   @Override
-  public boolean isApplicableTo(PsiElement e) {
+  public boolean isApplicableTo(@NotNull PsiElement e) {
     if (!(e.getParent() instanceof PsiPolyadicExpression)) {
       return false;
     }

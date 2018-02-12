@@ -1,8 +1,8 @@
 default namespace = "http://www.w3.org/1999/xhtml"
 include "common.rnc" {
-		XMLonly = empty
-		HTMLonly = notAllowed
-		v5only = notAllowed
+        XMLonly = empty
+        HTMLonly = notAllowed
+        v5only = notAllowed
 }
 start = html.elem
 include "phrase.rnc"

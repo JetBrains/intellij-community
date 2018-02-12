@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ide.util.newProjectWizard;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -34,7 +35,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +47,6 @@ import java.io.File;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 19.09.13
  */
 public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardStep> {
   protected final WizardContext myWizardContext;
@@ -68,7 +68,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
   @Override
   protected String addStepComponent(Component component) {
     if (component instanceof JComponent) {
-      ((JComponent)component).setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 0));
+      ((JComponent)component).setBorder(JBUI.Borders.empty());
     }
     return super.addStepComponent(component);
   }
@@ -138,6 +138,25 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     }
     return path;
   }
+
+  @Nullable
+  public ProjectBuilder getBuilder(Project project) {
+    final ProjectBuilder builder = getProjectBuilder();
+    if (builder instanceof ModuleBuilder) {
+      final ModuleBuilder moduleBuilder = (ModuleBuilder)builder;
+      if (moduleBuilder.getName() == null) {
+        moduleBuilder.setName(getProjectName());
+      }
+      if (moduleBuilder.getModuleFilePath() == null) {
+        moduleBuilder.setModuleFilePath(getModuleFilePath());
+      }
+    }
+    if (builder == null || !builder.validate(project, project)) {
+      return null;
+    }
+    return builder;
+  }
+
 
   @Override
   protected void updateStep() {

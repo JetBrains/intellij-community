@@ -18,12 +18,14 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.JdomKt;
@@ -33,6 +35,9 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -213,11 +218,11 @@ public class MavenIndicesManager implements Disposable {
     return StringUtil.split(name, "/");
   }
 
-  public void scheduleUpdate(Project project, List<MavenIndex> indices) {
-    scheduleUpdate(project, indices, true);
+  public Promise<Void> scheduleUpdate(Project project, List<MavenIndex> indices) {
+    return scheduleUpdate(project, indices, true);
   }
 
-  private void scheduleUpdate(final Project projectOrNull, List<MavenIndex> indices, final boolean fullUpdate) {
+  private Promise<Void> scheduleUpdate(final Project projectOrNull, List<MavenIndex> indices, final boolean fullUpdate) {
     final List<MavenIndex> toSchedule = new ArrayList<>();
 
     synchronized (myUpdatingIndicesLock) {
@@ -228,17 +233,26 @@ public class MavenIndicesManager implements Disposable {
 
       myWaitingIndices.addAll(toSchedule);
     }
-    if (toSchedule.isEmpty()) return;
+    if (toSchedule.isEmpty()) {
+      return Promises.resolvedPromise();
+    }
+
+    final AsyncPromise<Void> promise = new AsyncPromise<>();
     myUpdatingQueue.run(new Task.Backgroundable(projectOrNull, IndicesBundle.message("maven.indices.updating"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
+          indicator.setIndeterminate(false);
           doUpdateIndices(projectOrNull, toSchedule, fullUpdate, new MavenProgressIndicator(indicator));
         }
         catch (MavenProcessCanceledException ignore) {
         }
+        finally {
+          promise.setResult(null);
+        }
       }
     });
+    return promise;
   }
 
   private void doUpdateIndices(final Project projectOrNull, List<MavenIndex> indices, boolean fullUpdate, MavenProgressIndicator indicator)
@@ -285,13 +299,8 @@ public class MavenIndicesManager implements Disposable {
     throws MavenProcessCanceledException {
     MavenGeneralSettings settings;
 
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
-      settings = project.isDisposed() ? null : MavenProjectsManager.getInstance(project).getGeneralSettings().clone();
-    }
-    finally {
-      accessToken.finish();
-    }
+    settings = ReadAction
+      .compute(() -> project.isDisposed() ? null : MavenProjectsManager.getInstance(project).getGeneralSettings().clone());
 
     if (settings == null) {
       // project was closed
@@ -314,6 +323,9 @@ public class MavenIndicesManager implements Disposable {
     ensureInitialized();
     Set<MavenArchetype> result = new THashSet<>(myIndexer.getArchetypes());
     result.addAll(myUserArchetypes);
+    for (MavenIndex index : myIndices.getIndices()) {
+      result.addAll(index.getArchetypes());
+    }
 
     for (MavenArchetypesProvider each : Extensions.getExtensions(MavenArchetypesProvider.EP_NAME)) {
       result.addAll(each.getArchetypes());

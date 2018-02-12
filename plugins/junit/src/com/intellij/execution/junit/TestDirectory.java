@@ -17,6 +17,7 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.TestClassCollector;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
@@ -25,6 +26,7 @@ import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -36,12 +38,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.Collection;
 
-/**
-* User: anna
-* Date: 4/21/11
-*/
 class TestDirectory extends TestPackage {
   public TestDirectory(JUnitConfiguration configuration, ExecutionEnvironment environment) {
     super(configuration, environment);
@@ -75,9 +74,19 @@ class TestDirectory extends TestPackage {
       @Override
       public Module[] getModulesToCompile() {
         final Collection<Module> validModules = getConfiguration().getValidModules();
-        return validModules.toArray(new Module[validModules.size()]);
+        return validModules.toArray(Module.EMPTY_ARRAY);
       }
     };
+  }
+
+  @Nullable
+  @Override
+  protected Path getRootPath() {
+    final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(getConfiguration().getPersistentData().getDirName()));
+    if (file == null) return null;
+    Module dirModule = ModuleUtilCore.findModuleForFile(file, getConfiguration().getProject());
+    if (dirModule == null) return null;
+    return TestClassCollector.getRootPath(dirModule, true);
   }
 
   @Override

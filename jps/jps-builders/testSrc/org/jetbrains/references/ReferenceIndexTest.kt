@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,6 +127,71 @@ class ReferenceIndexTest : ReferenceIndexTestBase() {
 
   fun testStaticallyImportedConstant() {
     assertIndexOnRebuild("pack/Foo.java", "pack/Bar.java")
+  }
+
+  fun testOccurrences() {
+
+    assertIndexOnRebuild("Foo.java", "Bar.java")
+  }
+
+  fun testConstructors() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testAnnotation() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testUnqualifiedMethodCallResolution() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testUnqualifiedMethodCallResolution2() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testUnqualifiedMethodCallResolution3() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testUnqualifiedMethodCallResolution4() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testUnqualifiedMethodCallResolution5() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testQualifierResolution() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testSignatureDataIndex() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testClassWithModifiers() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testParameterlessExplicitConstructor() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testDefaultConstructorUsage() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testCastData() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testCastDataArrays() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testCastDataGenerics() {
+    assertIndexOnRebuild("Foo.java")
   }
 }
 

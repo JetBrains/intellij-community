@@ -23,14 +23,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.DirectoryProjectGenerator;
+import com.intellij.platform.DirectoryProjectGeneratorBase;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class TemplateProjectDirectoryGenerator implements DirectoryProjectGenerator<Object> {
+public class TemplateProjectDirectoryGenerator<T> extends DirectoryProjectGeneratorBase<T> {
   private final LocalArchivedTemplate myTemplate;
   private final ModuleBuilder myModuleBuilder;
 
@@ -55,7 +55,7 @@ public class TemplateProjectDirectoryGenerator implements DirectoryProjectGenera
   @Override
   public void generateProject(@NotNull Project newProject,
                               @NotNull VirtualFile baseDir,
-                              @Nullable Object settings,
+                              @NotNull T settings,
                               @NotNull Module module) {
     throw new IllegalStateException("Usn't supposed to be invoked, use generateProject(String, String) instead.");
   }

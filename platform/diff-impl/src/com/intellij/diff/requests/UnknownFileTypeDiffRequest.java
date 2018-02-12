@@ -55,12 +55,9 @@ public class UnknownFileTypeDiffRequest extends ComponentDiffRequest {
     label.append("Can't show diff for unknown file type. ",
                  new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getInactiveTextColor()));
     if (myFileName != null) {
-      label.append("Associate", SimpleTextAttributes.LINK_ATTRIBUTES, new Runnable() {
-        @Override
-        public void run() {
-          FileType type = FileTypeChooser.associateFileType(myFileName);
-          if (type != null) onSuccess(context);
-        }
+      label.append("Associate", SimpleTextAttributes.LINK_ATTRIBUTES, (Runnable)() -> {
+        FileType type = FileTypeChooser.associateFileType(myFileName);
+        if (type != null) onSuccess(context);
       });
       LinkMouseListenerBase.installSingleTagOn(label);
     }

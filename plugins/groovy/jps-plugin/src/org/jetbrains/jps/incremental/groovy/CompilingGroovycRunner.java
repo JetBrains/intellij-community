@@ -66,7 +66,7 @@ class CompilingGroovycRunner extends JpsGroovycRunner<JavaSourceRootDescriptor, 
     final BuildRootIndex rootsIndex = context.getProjectDescriptor().getBuildRootIndex();
     for (ModuleBuildTarget target : generationOutputs.keySet()) {
       File root = new File(generationOutputs.get(target));
-      rootsIndex.associateTempRoot(context, target, new JavaSourceRootDescriptor(root, target, true, true, "", Collections.<File>emptySet()));
+      rootsIndex.associateTempRoot(context, target, new JavaSourceRootDescriptor(root, target, true, true, "", Collections.emptySet()));
     }
   }
 

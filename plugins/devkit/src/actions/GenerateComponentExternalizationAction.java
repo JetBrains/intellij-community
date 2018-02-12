@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.actions;
 
+import com.intellij.codeInsight.actions.CodeInsightEditorAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -32,11 +33,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
-/**
- * @author max
- */
 public class GenerateComponentExternalizationAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.actions.GenerateComponentExternalizationAction");
+  private static final Logger LOG = Logger.getInstance(GenerateComponentExternalizationAction.class);
 
   @NonNls private final static String BASE_COMPONENT = "com.intellij.openapi.components.BaseComponent";
   @NonNls private final static String PERSISTENCE_STATE_COMPONENT = "com.intellij.openapi.components.PersistentStateComponent";
@@ -45,13 +43,11 @@ public class GenerateComponentExternalizationAction extends AnAction {
 
   @Override
   public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    if (project != null) {
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-    }
+    CodeInsightEditorAction.beforeActionPerformedUpdate(e);
     super.beforeActionPerformedUpdate(e);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final PsiClass target = getComponentInContext(e.getDataContext());
     assert target != null;
@@ -128,6 +124,7 @@ public class GenerateComponentExternalizationAction extends AnAction {
     return contextClass;
   }
 
+  @Override
   public void update(AnActionEvent e) {
     super.update(e);
     final PsiClass target = getComponentInContext(e.getDataContext());

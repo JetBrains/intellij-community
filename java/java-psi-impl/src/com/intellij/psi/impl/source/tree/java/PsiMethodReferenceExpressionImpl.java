@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
   @Nullable
   @Override
   public PsiType getFunctionalInterfaceType() {
-    return FunctionalInterfaceParameterizationUtil.getGroundTargetType(LambdaUtil.getFunctionalInterfaceType(this, true));
+    return getGroundTargetType(LambdaUtil.getFunctionalInterfaceType(this, true));
   }
 
   @Override
@@ -132,10 +132,16 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
     return false;
   }
 
+  @Nullable
+  @Override
+  public PsiType getGroundTargetType(PsiType functionalInterfaceType) {
+    return FunctionalInterfaceParameterizationUtil.getGroundTargetType(functionalInterfaceType);
+  }
+
   @Override
   public PsiMember getPotentiallyApplicableMember() {
     return CachedValuesManager.getCachedValue(this, () -> CachedValueProvider.Result
-      .create(getPotentiallyApplicableMemberInternal(), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, PsiMethodReferenceExpressionImpl.this));
+      .create(getPotentiallyApplicableMemberInternal(), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, this));
   }
 
   private PsiMember getPotentiallyApplicableMemberInternal() {
@@ -167,7 +173,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
       if (result.isEmpty()) {
         return null;
       }
-      methods = result.toArray(new PsiMethod[result.size()]);
+      methods = result.toArray(PsiMethod.EMPTY_ARRAY);
     }
     else if (isConstructor()) {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
@@ -200,7 +206,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
         // not variable arity
         if (psiMethod.isVarArgs()) return null;
 
-        //If this method/constructor is generic (§8.4.4), then the method reference expression provides TypeArguments.
+        //If this method/constructor is generic (p8.4.4), then the method reference expression provides TypeArguments.
         if (psiMethod.getTypeParameters().length > 0) {
           final PsiReferenceParameterList parameterList = getParameterList();
           return parameterList != null && parameterList.getTypeParameterElements().length > 0 ? psiMethod : null;
@@ -210,7 +216,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
     }
     return null;
   }
-  
+
   @Override
   public PsiExpression getQualifierExpression() {
     final PsiElement qualifier = getQualifier();
@@ -384,7 +390,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
       }
     }
 
-    left = FunctionalInterfaceParameterizationUtil.getGroundTargetType(left);
+    left = getGroundTargetType(left);
     if (!isPotentiallyCompatible(left)) {
       return false;
     }
@@ -399,8 +405,8 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
      //   The function type identifies a single compile-time declaration corresponding to the reference.
      //   One of the following is true:
      //      i)The return type of the function type is void.
-     //     ii)The return type of the function type is R; 
-     //        the result of applying capture conversion (5.1.10) to the return type of the invocation type (15.12.2.6) of the chosen declaration is R', 
+     //     ii)The return type of the function type is R;
+     //        the result of applying capture conversion (5.1.10) to the return type of the invocation type (15.12.2.6) of the chosen declaration is R',
      //        where R is the target type that may be used to infer R'; neither R nor R' is void; and R' is compatible with R in an assignment context.
 
     Map<PsiElement, PsiType> map = LambdaUtil.getFunctionalTypeMap();

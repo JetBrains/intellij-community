@@ -22,10 +22,10 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +34,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
-  private static final Logger LOG = Logger.getInstance("#" + CreateMethodFromMethodReferenceFix.class.getName());
+  private static final Logger LOG = Logger.getInstance(CreateMethodFromMethodReferenceFix.class);
 
   private final SmartPsiElementPointer myMethodReferenceExpression;
 
@@ -46,7 +46,7 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
   protected boolean isAvailableImpl(int offset) {
     final PsiMethodReferenceExpression call = getMethodReference();
     if (call == null || !call.isValid()) return false;
-    final PsiType functionalInterfaceType = call.getFunctionalInterfaceType();
+    final PsiType functionalInterfaceType = getFunctionalExpressionType(call);
     if (functionalInterfaceType == null || 
         LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType) == null){
       return false;
@@ -60,6 +60,16 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
       return true;
     }
     return false;
+  }
+
+  private static PsiType getFunctionalExpressionType(PsiMethodReferenceExpression ref) {
+    PsiType functionalInterfaceType = ref.getFunctionalInterfaceType();
+    if (functionalInterfaceType != null) return functionalInterfaceType;
+    Ref<PsiType> type = new Ref<>();
+    if (LambdaUtil.processParentOverloads(ref, (fType) -> type.set(fType))) {
+      return type.get();
+    }
+    return null;
   }
 
   @Override
@@ -125,7 +135,7 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
 
     final PsiElement context = PsiTreeUtil.getParentOfType(expression, PsiClass.class, PsiMethod.class);
 
-    final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
+    final PsiType functionalInterfaceType = getFunctionalExpressionType(expression);
     final PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(classResolveResult);
     LOG.assertTrue(interfaceMethod != null);

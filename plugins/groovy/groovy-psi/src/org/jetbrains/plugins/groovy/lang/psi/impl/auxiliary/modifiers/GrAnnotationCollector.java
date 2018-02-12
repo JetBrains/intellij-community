@@ -54,7 +54,7 @@ public class GrAnnotationCollector {
     }
 
 
-    return result.toArray(new GrAnnotation[result.size()]);
+    return result.toArray(GrAnnotation.EMPTY_ARRAY);
   }
 
   private static boolean hasAliases(@NotNull GrAnnotation[] rawAnnotations) {
@@ -153,7 +153,7 @@ public class GrAnnotationCollector {
         map.put(pair.getName() != null ? pair.getName() : "value", pair);
       }
       if (attributes.length == 0 && !annotations.containsKey(qname)) {
-        annotations.put(qname, ContainerUtil.<String, PsiNameValuePair>newLinkedHashMap());
+        annotations.put(qname, ContainerUtil.newLinkedHashMap());
       }
     }
 
@@ -168,7 +168,7 @@ public class GrAnnotationCollector {
         if (member instanceof GrReferenceExpression) {
           final PsiElement resolved = ((GrReferenceExpression)member).resolve();
           if (resolved instanceof PsiClass && ((PsiClass)resolved).isAnnotationType()) {
-            annotations.put(((PsiClass)resolved).getQualifiedName(), ContainerUtil.<String, PsiNameValuePair>newLinkedHashMap());
+            annotations.put(((PsiClass)resolved).getQualifiedName(), ContainerUtil.newLinkedHashMap());
           }
         }
       }

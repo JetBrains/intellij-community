@@ -1,31 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.navigator;
 
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunManagerListener;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.ide.util.treeView.TreeState;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -59,7 +43,8 @@ import java.util.Collections;
 import java.util.List;
 
 @State(name = "MavenProjectNavigator", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
-public class MavenProjectsNavigator extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenProjectsNavigatorState> {
+public class MavenProjectsNavigator extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenProjectsNavigatorState>,
+                                                                                   Disposable, ProjectComponent {
   public static final String TOOL_WINDOW_ID = "Maven Projects";
 
   private static final URL ADD_ICON_URL = MavenProjectsNavigator.class.getResource("/general/add.png");
@@ -68,8 +53,8 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
   private MavenProjectsNavigatorState myState = new MavenProjectsNavigatorState();
 
   private MavenProjectsManager myProjectsManager;
-  private MavenTasksManager myTasksManager;
-  private MavenShortcutsManager myShortcutsManager;
+  private final MavenTasksManager myTasksManager;
+  private final MavenShortcutsManager myShortcutsManager;
 
   private SimpleTree myTree;
   private MavenProjectsStructure myStructure;
@@ -105,7 +90,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
   }
 
   @Override
-  public void loadState(MavenProjectsNavigatorState state) {
+  public void loadState(@NotNull MavenProjectsNavigatorState state) {
     myState = state;
     scheduleStructureUpdate();
   }
@@ -181,17 +166,14 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
   private void doInit() {
     listenForProjectsChanges();
     if (isUnitTestMode()) return;
-    MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        if (myProject.isDisposed()) return;
-        initToolWindow();
-      }
+    MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {
+      if (myProject.isDisposed()) return;
+      initToolWindow();
     });
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     myToolWindow = null;
     myProjectsManager = null;
   }
@@ -213,13 +195,6 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
       }
     });
 
-    RunManagerEx.getInstanceEx(myProject).addRunManagerListener(new RunManagerListener() {
-      @Override
-      public void beforeRunTasksChanged() {
-        scheduleStructureRequest(() -> myStructure.updateGoals());
-      }
-    });
-
     MavenRunner.getInstance(myProject).getSettings().addListener(new MavenRunnerSettings.Listener() {
       @Override
       public void skipTestsChanged() {
@@ -227,7 +202,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
       }
     });
 
-    ((RunManagerEx)RunManager.getInstance(myProject)).addRunManagerListener(new RunManagerListener() {
+    myProject.getMessageBus().connect().subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
       private void changed() {
         scheduleStructureRequest(() -> myStructure.updateRunConfigurations());
       }
@@ -245,6 +220,11 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
       @Override
       public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
         changed();
+      }
+
+      @Override
+      public void beforeRunTasksChanged() {
+        scheduleStructureRequest(() -> myStructure.updateGoals());
       }
     });
   }
@@ -357,16 +337,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
       r.run();
 
       if (shouldCreate) {
-        if (myState.treeState != null) {
-          TreeState treeState = new TreeState();
-          try {
-            treeState.readExternal(myState.treeState);
-            treeState.applyTo(myTree);
-          }
-          catch (InvalidDataException e) {
-            MavenLog.LOG.info(e);
-          }
-        }
+        TreeState.createFrom(myState.treeState).applyTo(myTree);
       }
     });
   }

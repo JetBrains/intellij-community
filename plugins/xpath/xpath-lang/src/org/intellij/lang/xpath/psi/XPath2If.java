@@ -17,11 +17,6 @@ package org.intellij.lang.xpath.psi;
 
 import org.jetbrains.annotations.Nullable;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 04.01.11
-*/
 public interface XPath2If extends XPathExpression {
   @Nullable
   XPathExpression getCondition();

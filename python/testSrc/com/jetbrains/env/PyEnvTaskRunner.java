@@ -1,3 +1,6 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.jetbrains.env;
 
 import com.google.common.collect.Lists;
@@ -7,14 +10,11 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdkTools.PyTestSdkTools;
-import com.jetbrains.python.sdkTools.SdkCreationType;
+import com.jetbrains.python.tools.sdkTools.PySdkTools;
+import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.Set;
@@ -36,16 +36,30 @@ public class PyEnvTaskRunner {
 
     List<String> passedRoots = Lists.newArrayList();
 
-    for (String root : myRoots) {
-      LOG.warn(String.format("Running on root %s", root));
+    final Set<String> requiredTags = Sets.union(testTask.getTags(), Sets.newHashSet(tagsRequiedByTest));
 
-      final Set<String> requredTags = Sets.union(testTask.getTags(), Sets.newHashSet(tagsRequiedByTest));
-      final boolean suitableForTask = isSuitableForTask(PyEnvTestCase.loadEnvTags(root), requredTags);
+    final Set<String> tagsToCover = null;
+
+    for (String root : myRoots) {
+
+      List<String> envTags = PyEnvTestCase.loadEnvTags(root);
+      final boolean suitableForTask = isSuitableForTask(envTags, requiredTags);
       final boolean shouldRun = shouldRun(root, testTask);
       if (!suitableForTask || !shouldRun) {
         LOG.warn(String.format("Skipping %s (compatible with tags: %s, should run:%s)", root, suitableForTask, shouldRun));
         continue;
       }
+
+      if (tagsToCover != null && envTags.size() > 0 && !isNeededToRun(tagsToCover, envTags)) {
+        LOG.warn(String.format("Skipping %s (test already was executed on a similar environment)", root));
+        continue;
+      }
+
+      if (tagsToCover != null) {
+        tagsToCover.removeAll(envTags);
+      }
+
+      LOG.warn(String.format("Running on root %s", root));
 
       try {
         testTask.setUp(testName);
@@ -56,18 +70,17 @@ public class PyEnvTaskRunner {
         else {
           testTask.useNormalTimeout();
         }
-        final String executable = getExecutable(root, testTask);
-        if (executable == null) {
-          throw new RuntimeException("Cannot find Python interpreter in " + root);
-        }
-        final Sdk sdk = createSdkByExecutable(executable);
+        final String executable = PythonSdkType.getPythonExecutable(root);
+        assert executable != null : "No executable in " + root;
 
-        /**
-         * Skipping test if {@link PyTestTask} reports it does not support this language level
+        final Sdk sdk = getSdk(executable, testTask);
+
+        /*
+          Skipping test if {@link PyTestTask} reports it does not support this language level
          */
         final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
         if (testTask.isLanguageLevelSupported(languageLevel)) {
-          testTask.runTestOn(executable);
+          testTask.runTestOn(executable, sdk);
           passedRoots.add(root);
         }
         else {
@@ -90,6 +103,8 @@ public class PyEnvTaskRunner {
       }
       finally {
         try {
+          // Teardown should be called on main thread because fixture teardown checks for
+          // thread leaks, and blocked main thread is considered as leaked
           testTask.tearDown();
         }
         catch (Exception e) {
@@ -108,29 +123,35 @@ public class PyEnvTaskRunner {
     }
   }
 
-  /**
-   * Create SDK by path to python exectuable
-   *
-   * @param executable path executable
-   * @return sdk or null if there is no sdk on this path
-   * @throws InvalidSdkException bad sdk
-   */
-  @Nullable
-  private static Sdk createSdkByExecutable(@NotNull final String executable) throws InvalidSdkException, IOException {
-    final URL rootUrl = new URL(String.format("file:///%s", executable));
-    final VirtualFile url = VfsUtil.findFileByURL(rootUrl);
-    if (url == null) {
-      return null;
+  private static boolean isNeededToRun(@NotNull Set<String> tagsToCover, @NotNull List<String> envTags) {
+    for (String tag : envTags) {
+      if (tagsToCover.contains(tag)) {
+        return true;
+      }
     }
-    return PyTestSdkTools.createTempSdk(url, SdkCreationType.EMPTY_SDK, null);
+
+    return false;
   }
+
 
   protected boolean shouldRun(String root, PyTestTask task) {
     return true;
   }
 
-  protected String getExecutable(String root, PyTestTask testTask) {
-    return PythonSdkType.getPythonExecutable(root);
+  /**
+   * Get SDK by executable*
+   */
+  @NotNull
+  protected Sdk getSdk(@NotNull final String executable, @NotNull final PyTestTask testTask) {
+    try {
+      final URL rootUrl = new URL(String.format("file:///%s", executable));
+      final VirtualFile url = VfsUtil.findFileByURL(rootUrl);
+      assert url != null : "No file " + rootUrl;
+      return PySdkTools.createTempSdk(url, SdkCreationType.EMPTY_SDK, null);
+    }
+    catch (Exception ex) {
+      throw new RuntimeException(ex);
+    }
   }
 
   protected String getEnvType() {
@@ -159,7 +180,6 @@ public class PyEnvTaskRunner {
 
     return necessaryTags.isEmpty();
   }
-
 
   public static boolean isJython(@NotNull String sdkHome) {
     return sdkHome.toLowerCase().contains("jython");

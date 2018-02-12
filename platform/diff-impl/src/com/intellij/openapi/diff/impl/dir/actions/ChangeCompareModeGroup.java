@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 
 /**
@@ -32,12 +31,12 @@ import java.util.ArrayList;
  */
 public class ChangeCompareModeGroup extends ComboBoxAction implements ShortcutProvider, DumbAware {
   private final DefaultActionGroup myGroup;
-  private DirDiffSettings mySettings;
+  private final DirDiffSettings mySettings;
   private JButton myButton;
 
   public ChangeCompareModeGroup(DirDiffTableModel model) {
     mySettings = model.getSettings();
-    getTemplatePresentation().setText(mySettings.compareMode.getPresentableName(mySettings));
+    getTemplatePresentation().setText(mySettings.compareMode.getPresentableName());
     final ArrayList<ChangeCompareModeAction> actions = new ArrayList<>();
     if (model.getSettings().showCompareModes) {
       for (DirDiffSettings.CompareMode mode : DirDiffSettings.CompareMode.values()) {
@@ -48,7 +47,7 @@ public class ChangeCompareModeGroup extends ComboBoxAction implements ShortcutPr
       getTemplatePresentation().setVisible(false);
       getTemplatePresentation().setEnabled(false);
     }
-    myGroup = new DefaultActionGroup(actions.toArray(new ChangeCompareModeAction[actions.size()]));
+    myGroup = new DefaultActionGroup(actions.toArray(new ChangeCompareModeAction[0]));
   }
 
   @Override
@@ -59,20 +58,18 @@ public class ChangeCompareModeGroup extends ComboBoxAction implements ShortcutPr
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
-    getTemplatePresentation().setText(mySettings.compareMode.getPresentableName(mySettings));
-    e.getPresentation().setText(mySettings.compareMode.getPresentableName(mySettings));
+    getTemplatePresentation().setText(mySettings.compareMode.getPresentableName());
+    e.getPresentation().setText(mySettings.compareMode.getPresentableName());
   }
 
   @Override
   public JComponent createCustomComponent(Presentation presentation) {
-    JPanel panel = new JPanel(new BorderLayout());
     final JLabel label = new JLabel("Compare by:");
     label.setDisplayedMnemonicIndex(0);
-    panel.add(label, BorderLayout.WEST);
     myButton = (JButton)super.createCustomComponent(presentation).getComponent(0);
-    panel.add(myButton, BorderLayout.CENTER);
-    panel.setBorder(IdeBorderFactory.createEmptyBorder(2, 6, 2, 0));
-    return panel;
+    return JBUI.Panels.simplePanel(myButton)
+      .addToLeft(label)
+      .withBorder(JBUI.Borders.empty(2, 6, 2, 0));
   }
 
   @NotNull

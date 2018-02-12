@@ -17,7 +17,8 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.lang.LanguageImportStatements;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
@@ -41,7 +42,6 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.MutablePicoContainer;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -124,7 +124,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     }
   }
 
-  public void testInsertion() throws IOException {
+  public void testInsertion() {
     doTest(
       "public class B {\n" +
       "       int a = 3;\n" +
@@ -148,7 +148,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     return new ChangedLines(from, to);
   }
 
-  public void testDeletion() throws IOException {
+  public void testDeletion() {
     doTest(
       "public class B {\n" +
       "           int a = 3;\n" +
@@ -167,7 +167,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     );
   }
 
-  public void testNoReformatOn_DeletionModification() throws IOException {
+  public void testNoReformatOn_DeletionModification() {
     doTest(
       "public class B {\n" +
       "           int a = 3;\n" +
@@ -185,7 +185,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     );
   }
 
-  public void testModification() throws IOException {
+  public void testModification() {
     doTest(
       "public class B {\n" +
       "           int a = 3;\n" +
@@ -207,7 +207,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     );
   }
 
-  public void testModificationCRLF() throws IOException {
+  public void testModificationCRLF() {
     doTest(
       "public class B {\r\n" +
       "           int a = 3;\r\n" +
@@ -229,7 +229,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     );
   }
 
-  public void testReformatFiles() throws IOException {
+  public void testReformatFiles() {
     ChangedFilesStructure fs = new ChangedFilesStructure(myWorkingDirectory);
 
     PsiFile m1 = fs.createFile("Test1.java", COMMITTED, MODIFIED);
@@ -245,7 +245,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     assertFormattedLines(NO_CHANGED_LINES, u1, u2);
   }
 
-  public void testNoChangesNoFormatting() throws IOException {
+  public void testNoChangesNoFormatting() {
     ChangedFilesStructure fs = new ChangedFilesStructure(myWorkingDirectory);
 
     PsiFile u1 = fs.createFile("Test1.java", COMMITTED, COMMITTED);
@@ -257,7 +257,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
   }
 
 
-  public void testReformatOnlyChanged() throws IOException {
+  public void testReformatOnlyChanged() {
     ChangedFilesStructure fs = new ChangedFilesStructure(myWorkingDirectory);
 
     PsiFile untouched1 = fs.createFile("Test1.java", COMMITTED, COMMITTED);
@@ -274,7 +274,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     assertFormattedLines(NO_CHANGED_LINES, untouched1, untouched2);
   }
 
-  public void testReformatInAllSubtree() throws IOException {
+  public void testReformatInAllSubtree() {
     ChangedFilesStructure fs = new ChangedFilesStructure(myWorkingDirectory);
     PsiFile modified11 = fs.createFile("Test4.java", COMMITTED, MODIFIED);
     PsiFile modified12 = fs.createFile("Test5.java", COMMITTED, MODIFIED);
@@ -294,7 +294,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     assertFormattedLines(NO_CHANGED_LINES, modified11, modified12);
   }
 
-  public void testOptimizeImportsInModule() throws IOException {
+  public void testOptimizeImportsInModule() {
     ChangedFilesStructure fs = new ChangedFilesStructure(myWorkingDirectory);
 
     String initialFile = "initial file";
@@ -348,7 +348,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
     container.registerComponentInstance(key, factory);
   }
 
-  private void doTest(@NotNull String committed, @NotNull String modified, @NotNull ChangedLines... lines) throws IOException {
+  private void doTest(@NotNull String committed, @NotNull String modified, @NotNull ChangedLines... lines) {
     ChangedFilesStructure fs = new ChangedFilesStructure(myWorkingDirectory);
     PsiFile file = fs.createFile("Test.java", committed, modified);
     reformatDirectory(myWorkingDirectory);
@@ -385,21 +385,20 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
   }
 
   class ChangedFilesStructure {
-    private TestFileStructure myFileStructure;
+    private final TestFileStructure myFileStructure;
 
     public ChangedFilesStructure(@NotNull PsiDirectory directory) {
       myFileStructure = new TestFileStructure(getModule(), directory);
     }
 
-    public void createDirectoryAndMakeItCurrent() throws IOException {
+    public void createDirectoryAndMakeItCurrent() {
       myFileStructure.createDirectoryAndMakeItCurrent("inner");
     }
 
     @NotNull
     public PsiFile createFile(@NotNull String fileName,
                               @NotNull String committedContent,
-                              @NotNull String actualContent) throws IOException
-    {
+                              @NotNull String actualContent) {
       PsiFile file = myFileStructure.addTestFile(fileName, actualContent);
       if (committedContent != actualContent) {
         registerCommittedRevision(committedContent, file);

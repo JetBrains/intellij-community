@@ -1,36 +1,25 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.*;
-import com.intellij.debugger.apiAdapters.TransportServiceWrapper;
 import com.intellij.debugger.engine.*;
+import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.GetJPDADialog;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
+import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -49,20 +38,30 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
+import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.jar.Attributes;
 import java.util.stream.Stream;
@@ -70,6 +69,7 @@ import java.util.stream.Stream;
 @State(name = "DebuggerManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class DebuggerManagerImpl extends DebuggerManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerManagerImpl");
+  public static final String LOCALHOST_ADDRESS_FALLBACK = "127.0.0.1";
 
   private final Project myProject;
   private final HashMap<ProcessHandler, DebuggerSession> mySessions = new HashMap<>();
@@ -172,18 +172,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   }
 
   @Override
-  public void disposeComponent() {
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void projectClosed() {
-  }
-
-  @Override
   public void projectOpened() {
     myBreakpointManager.init();
   }
@@ -197,7 +185,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   }
 
   @Override
-  public void loadState(Element state) {
+  public void loadState(@NotNull Element state) {
     myBreakpointManager.readExternal(state);
   }
 
@@ -242,7 +230,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       // so we shouldn't add the listener to avoid calling stop() twice
       processHandler.addProcessListener(new ProcessAdapter() {
         @Override
-        public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
+        public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
           ProcessHandler processHandler = event.getProcessHandler();
           final DebugProcessImpl debugProcess = getDebugProcess(processHandler);
           if (debugProcess != null) {
@@ -307,7 +295,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     else {
       processHandler.addProcessListener(new ProcessAdapter() {
         @Override
-        public void startNotified(ProcessEvent event) {
+        public void startNotified(@NotNull ProcessEvent event) {
           DebugProcessImpl debugProcess = getDebugProcess(processHandler);
           if (debugProcess != null) {
             debugProcess.addDebugProcessListener(listener);
@@ -327,7 +315,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     else {
       processHandler.addProcessListener(new ProcessAdapter() {
         @Override
-        public void startNotified(ProcessEvent event) {
+        public void startNotified(@NotNull ProcessEvent event) {
           DebugProcessImpl debugProcess = getDebugProcess(processHandler);
           if (debugProcess != null) {
             debugProcess.removeDebugProcessListener(listener);
@@ -384,13 +372,14 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       throw new ExecutionException(DebuggerBundle.message("error.jdk.not.specified"));
     }
     final JavaSdkVersion version = JavaSdk.getInstance().getVersion(jdk);
-    String versionString = jdk.getVersionString();
     if (version == JavaSdkVersion.JDK_1_0 || version == JavaSdkVersion.JDK_1_1) {
+      String versionString = jdk.getVersionString();
       throw new ExecutionException(DebuggerBundle.message("error.unsupported.jdk.version", versionString));
     }
     if (SystemInfo.isWindows && version == JavaSdkVersion.JDK_1_2) {
       final VirtualFile homeDirectory = jdk.getHomeDirectory();
       if (homeDirectory == null || !homeDirectory.isValid()) {
+        String versionString = jdk.getVersionString();
         throw new ExecutionException(DebuggerBundle.message("error.invalid.jdk.home", versionString));
       }
       //noinspection HardCodedStringLiteral
@@ -432,11 +421,19 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     return DebuggerSettings.getInstance().FORCE_CLASSIC_VM;
   }
 
+  public static RemoteConnection createDebugParameters(final JavaParameters parameters,
+                                                       final boolean debuggerInServerMode,
+                                                       int transport, final String debugPort,
+                                                       boolean checkValidity) throws ExecutionException {
+    return createDebugParameters(parameters, debuggerInServerMode, transport, debugPort, checkValidity, true);
+  }
+
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static RemoteConnection createDebugParameters(final JavaParameters parameters,
                                                        final boolean debuggerInServerMode,
                                                        int transport, final String debugPort,
-                                                       boolean checkValidity)
+                                                       boolean checkValidity,
+                                                       boolean addAsyncDebuggerAgent)
     throws ExecutionException {
     if (checkValidity) {
       checkTargetJPDAInstalled(parameters);
@@ -459,9 +456,9 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       address = debugPort;
     }
 
-    final TransportServiceWrapper transportService = TransportServiceWrapper.getTransportService(useSockets);
-    final String debugAddress = debuggerInServerMode && useSockets ? "127.0.0.1:" + address : address;
-    String debuggeeRunProperties = "transport=" + transportService.transportId() + ",address=" + debugAddress;
+    final String debugAddress = debuggerInServerMode && useSockets ? LOCALHOST_ADDRESS_FALLBACK + ":" + address : address;
+    String debuggeeRunProperties =
+      "transport=" + DebugProcessImpl.findConnector(useSockets, debuggerInServerMode).transport().name() + ",address=" + debugAddress;
     if (debuggerInServerMode) {
       debuggeeRunProperties += ",suspend=y,server=n";
     }
@@ -476,6 +473,10 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
 
     ApplicationManager.getApplication().runReadAction(() -> {
       JavaSdkUtil.addRtJar(parameters.getClassPath());
+
+      if (addAsyncDebuggerAgent) {
+        addDebuggerAgent(parameters);
+      }
 
       final Sdk jdk = parameters.getJdk();
       final boolean forceClassicVM = shouldForceClassicVM(jdk);
@@ -509,7 +510,115 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       parameters.getVMParametersList().replaceOrPrepend("-classic", forceClassicVM ? "-classic" : "");
     });
 
-    return new RemoteConnection(useSockets, "127.0.0.1", address, debuggerInServerMode);
+    return new RemoteConnection(useSockets, LOCALHOST_ADDRESS_FALLBACK, address, debuggerInServerMode);
+  }
+
+  private static final String AGENT_FILE_NAME = "debugger-agent.jar";
+  private static final String STORAGE_FILE_NAME = "debugger-agent-storage.jar";
+
+  private static void addDebuggerAgent(JavaParameters parameters) {
+    if (StackCapturingLineBreakpoint.isAgentEnabled()) {
+      String prefix = "-javaagent:";
+      ParametersList parametersList = parameters.getVMParametersList();
+      if (parametersList.getParameters().stream().noneMatch(p -> p.startsWith(prefix) && p.contains(AGENT_FILE_NAME))) {
+        Sdk jdk = parameters.getJdk();
+        String version = jdk != null ? JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION) : null;
+        if (version != null) {
+          JavaSdkVersion sdkVersion = JavaSdkVersion.fromVersionString(version);
+          if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_6)) {
+            File classesRoot = new File(PathUtil.getJarPathForClass(DebuggerManagerImpl.class));
+            File agentFile;
+            if (classesRoot.isFile()) {
+              agentFile = new File(classesRoot.getParentFile(), "rt/" + AGENT_FILE_NAME);
+            }
+            else {
+              File artifactsInBuildScripts = new File(classesRoot.getParentFile().getParentFile().getParentFile(), "project-artifacts");
+              if (artifactsInBuildScripts.exists()) {
+                //running tests via build scripts
+                agentFile = new File(artifactsInBuildScripts, "debugger_agent/" + AGENT_FILE_NAME);
+              }
+              else {
+                //running IDE or tests in IDE
+                agentFile = new File(classesRoot.getParentFile().getParentFile(), "/artifacts/debugger_agent/" + AGENT_FILE_NAME);
+              }
+            }
+            if (agentFile.exists()) {
+              String agentPath = handleSpacesInPath(agentFile.getAbsolutePath());
+              if (agentPath != null) {
+                parametersList.add(prefix + agentPath + "=" + generateAgentSettings());
+              }
+            }
+            else {
+              LOG.warn("Capture agent not found: " + agentFile);
+            }
+          }
+          else {
+            LOG.warn("Capture agent is not supported for jre " + version);
+          }
+        }
+      }
+    }
+  }
+
+  @Nullable
+  private static String handleSpacesInPath(String agentPath) {
+    if (agentPath.contains(" ")) {
+      File targetDir = new File(PathManager.getSystemPath(), "captureAgent");
+      if (targetDir.getAbsolutePath().contains(" ")) {
+        try {
+          targetDir = FileUtil.createTempDirectory("capture", "jars");
+          if (targetDir.getAbsolutePath().contains(" ")) {
+            LOG.info("Capture agent was not used since the agent path contained spaces: " + agentPath);
+            return null;
+          }
+        }
+        catch (IOException e) {
+          LOG.info(e);
+          return null;
+        }
+      }
+
+      try {
+        targetDir.mkdirs();
+        Path source = Paths.get(agentPath);
+        Path target = targetDir.toPath().resolve(AGENT_FILE_NAME);
+        Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(source.getParent().resolve(STORAGE_FILE_NAME), targetDir.toPath().resolve(STORAGE_FILE_NAME),
+                   StandardCopyOption.REPLACE_EXISTING);
+        return target.toString();
+      }
+      catch (IOException e) {
+        LOG.info(e);
+        return null;
+      }
+    }
+    return agentPath;
+  }
+
+  private static String generateAgentSettings() {
+    Properties properties = new Properties();
+    properties.setProperty("asm-lib", PathUtil.getJarPathForClass(MethodVisitor.class));
+    if (Registry.is("debugger.capture.points.agent.debug")) {
+      properties.setProperty("debug", "true");
+    }
+    int idx = 0;
+    for (CaptureSettingsProvider.AgentPoint point : CaptureSettingsProvider.getPoints()) {
+      properties.setProperty((point.isCapture() ? "capture" : "insert") + idx++,
+                             point.myClassName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
+                             point.myMethodName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
+                             point.myKey.asString());
+    }
+    try {
+      File file = FileUtil.createTempFile("capture", ".props");
+      try (FileOutputStream out = new FileOutputStream(file)) {
+        properties.store(out, null);
+        return file.getAbsolutePath();
+      }
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+    return null;
   }
 
   private static boolean shouldForceNoJIT(Sdk jdk) {

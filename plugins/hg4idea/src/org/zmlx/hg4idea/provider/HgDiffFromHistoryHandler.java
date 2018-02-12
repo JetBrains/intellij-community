@@ -51,7 +51,7 @@ public class HgDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<HgFileR
 
   @NotNull
   @Override
-  protected List<Change> getAffectedChanges(@NotNull FilePath path, @NotNull HgFileRevision rev) throws VcsException {
+  protected List<Change> getAffectedChanges(@NotNull FilePath path, @NotNull HgFileRevision rev) {
     return executeDiff(path, null, rev);
   }
 

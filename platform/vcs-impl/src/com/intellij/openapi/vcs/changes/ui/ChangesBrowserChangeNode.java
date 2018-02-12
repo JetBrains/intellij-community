@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,35 +73,27 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
     if (renderer.isShowFlatten()) {
       FilePath parentPath = filePath.getParentPath();
       if (parentPath != null) {
-        renderer.append(spaceAndThinSpace() + FileUtil.getLocationRelativeToUserHome(parentPath.getPath()),
-                        SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        appendParentPath(renderer, parentPath);
       }
-      appendSwitched(renderer, file);
-    }
-    else if (getFileCount() != 1 || getDirectoryCount() != 0) {
-      appendSwitched(renderer, file);
-      appendCount(renderer);
-    }
-    else {
-      appendSwitched(renderer, file);
     }
 
-    renderer.setIcon(getIcon(change, filePath));
+    appendSwitched(renderer, file);
+
+    if (!renderer.isShowFlatten() && getFileCount() != 1 || getDirectoryCount() != 0) {
+      appendCount(renderer);
+    }
+
+    Icon additionalIcon = change.getAdditionalIcon();
+    if (additionalIcon != null) {
+      renderer.setIcon(additionalIcon);
+    }
+    else {
+      renderer.setIcon(filePath.getFileType(), filePath.isDirectory() || !isLeaf());
+    }
 
     if (myDecorator != null) {
       myDecorator.decorate(change, renderer, renderer.isShowFlatten());
     }
-  }
-
-  @Nullable
-  private Icon getIcon(@NotNull Change change, @NotNull FilePath filePath) {
-    Icon result = change.getAdditionalIcon();
-
-    if (result == null) {
-      result = filePath.isDirectory() || !isLeaf() ? PlatformIcons.DIRECTORY_CLOSED_ICON : filePath.getFileType().getIcon();
-    }
-
-    return result;
   }
 
   private void appendSwitched(@NotNull ChangesBrowserNodeRenderer renderer, @Nullable VirtualFile file) {
@@ -132,10 +123,7 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
     return CHANGE_SORT_WEIGHT;
   }
 
-  public int compareUserObjects(final Object o2) {
-    if (o2 instanceof Change) {
-      return ChangesUtil.getFilePath(getUserObject()).getName().compareToIgnoreCase(ChangesUtil.getFilePath((Change)o2).getName());
-    }
-    return 0;
+  public int compareUserObjects(final Change o2) {
+    return ChangesComparator.getInstance(true).compare(getUserObject(), o2);
   }
 }

@@ -26,13 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 06.05.2003
- * Time: 23:32:45
- * To change this template use Options | File Templates.
- */
 public class PsiLabelReference implements PsiReference{
   private final PsiStatement myStatement;
   private PsiIdentifier myIdentifier;

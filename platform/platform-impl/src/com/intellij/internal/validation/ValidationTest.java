@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
  * @author Konstantin Bulenkov
  */
 public class ValidationTest extends DialogWrapper {
-  private ValidTest myPanel;
+  private final ValidTest myPanel;
   final ValidationInfo[] ERRORS;
 
   protected ValidationTest(Project project) {
@@ -42,16 +42,16 @@ public class ValidationTest extends DialogWrapper {
       new ValidationInfo("Field3. Value is not chosen", myPanel.field3),
       new ValidationInfo("Field4: Select A or B", myPanel.p4),
       new ValidationInfo("Field5: You should accept license agreement<br/>text text text text text text text text text text text text<br/>text text text text text text text text text text text text"),
+      new ValidationInfo("editableComboBox: should contain some value", myPanel.comboBox),
+      new ValidationInfo("Spinner should contain values between 20 and 30", myPanel.spinner)
     };
 
     init();
+
+    myPanel.field5.addActionListener(e -> myPanel.spinner.setEnabled(myPanel.field5.isSelected()));
+    myPanel.spinner.setEnabled(myPanel.field5.isSelected());
   }
 
-
-  @Override
-  protected boolean postponeValidation() {
-    return true;
-  }
 
   @Override
   public JComponent getPreferredFocusedComponent() {
@@ -74,6 +74,16 @@ public class ValidationTest extends DialogWrapper {
     if (myPanel.field3.getSelectedItem() == null || "".equals(myPanel.field3.getSelectedItem())) result.add(ERRORS[2]);
     if (!myPanel.field4A.isSelected() && !myPanel.field4B.isSelected()) result.add(ERRORS[3]);
     if (!myPanel.field5.isSelected()) result.add(ERRORS[4]);
+    if (myPanel.comboBox.getSelectedItem() == null || "".equals(myPanel.comboBox.getSelectedItem()) ||
+        myPanel.comboBox.getEditor().getItem() == null) result.add(ERRORS[5]);
+
+    Object value = myPanel.spinner.getValue();
+    try {
+      int iv = Integer.parseInt(String.valueOf(value));
+      if (value == null || iv < 20 || iv > 30) result.add(ERRORS[6]);
+    } catch (NumberFormatException nfe) {
+      result.add(ERRORS[6]);
+    }
 
     return result;
   }

@@ -20,6 +20,7 @@ import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSynchronizedStatement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaSynchronizedUnwrapper extends JavaUnwrapper {
   public JavaSynchronizedUnwrapper() {
@@ -27,7 +28,7 @@ public class JavaSynchronizedUnwrapper extends JavaUnwrapper {
   }
 
   @Override
-  public boolean isApplicableTo(PsiElement e) {
+  public boolean isApplicableTo(@NotNull PsiElement e) {
     return e instanceof PsiSynchronizedStatement;
   }
 

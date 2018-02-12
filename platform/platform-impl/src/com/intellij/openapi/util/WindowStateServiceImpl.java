@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -26,10 +12,13 @@ import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * @author Sergey.Malenkov
@@ -47,11 +36,11 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   private static final Logger LOG = Logger.getInstance(WindowStateService.class);
   private final Map<String, WindowState> myStateMap = new TreeMap<>();
 
-  abstract Point getDefaultLocationFor(Object object, @NotNull String key);
+  abstract Point getDefaultLocationFor(@NotNull String key);
 
-  abstract Dimension getDefaultSizeFor(Object object, @NotNull String key);
+  abstract Dimension getDefaultSizeFor(@NotNull String key);
 
-  abstract Rectangle getDefaultBoundsFor(Object object, @NotNull String key);
+  abstract Rectangle getDefaultBoundsFor(@NotNull String key);
 
   abstract boolean getDefaultMaximizedFor(Object object, @NotNull String key);
 
@@ -87,7 +76,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   }
 
   @Override
-  public final void loadState(Element element) {
+  public final void loadState(@NotNull Element element) {
     synchronized (myStateMap) {
       myStateMap.clear();
       for (Element child : element.getChildren()) {
@@ -138,8 +127,8 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
       }
     }
     if (location == null && size == null) {
-      location = getDefaultLocationFor(object, key);
-      size = getDefaultSizeFor(object, key);
+      location = getDefaultLocationFor(key);
+      size = getDefaultSizeFor(key);
       if (!isVisible(location, size)) {
         return false;
       }
@@ -178,7 +167,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     synchronized (myStateMap) {
       location = getFor(object, key, Point.class);
     }
-    return location != null ? location : getDefaultLocationFor(object, key);
+    return location != null ? location : getDefaultLocationFor(key);
   }
 
   @Override
@@ -192,7 +181,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     synchronized (myStateMap) {
       size = getFor(object, key, Dimension.class);
     }
-    return size != null ? size : getDefaultSizeFor(object, key);
+    return size != null ? size : getDefaultSizeFor(key);
   }
 
   @Override
@@ -206,7 +195,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     synchronized (myStateMap) {
       bounds = getFor(object, key, Rectangle.class);
     }
-    return bounds != null ? bounds : getDefaultBoundsFor(object, key);
+    return bounds != null ? bounds : getDefaultBoundsFor(key);
   }
 
   @Override
@@ -216,11 +205,27 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     putFor(object, key, location, true, size, true, false, false, false, false);
   }
 
+  @SuppressWarnings("unchecked")
   private <T> T getFor(Object object, @NotNull String key, @NotNull Class<T> type) {
     GraphicsDevice screen = getScreen(object);
-    T state = get(getKey(screen, key), type);
+    float scale = getSysScale(screen);
+
+    Function<String, T> getState = (_key) -> {
+      WindowState state = myStateMap.get(_key);
+      if (state == null) return null;
+      state = state.copy().scaleDown(scale);
+      if (isVisible(state)) {
+        if (type == WindowState.class) return (T)state;
+        if (type == Point.class) return (T)state.getLocation();
+        if (type == Dimension.class) return (T)state.getSize();
+        if (type == Rectangle.class) return (T)state.getBounds();
+      }
+      return null;
+    };
+
+    T state = getState.apply(getKey(screen, key));
     if (state == null) {
-      state = get(getOldKey(screen, key), type);
+      state = getState.apply(getOldKey(screen, key));
     }
     if (state != null) {
       return state;
@@ -228,29 +233,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     if (object != null) {
       return getFor(null, key, type);
     }
-    return get(new KeyPair(key, 1f), type);
-  }
-
-  @SuppressWarnings("unchecked")
-  private <T> T get(@NotNull KeyPair keyPair, @NotNull Class<T> type) {
-    WindowState state = myStateMap.get(keyPair.first);
-    if (state == null) return null;
-    state = state.copy().scaleDown(keyPair.second);
-    if (isVisible(state)) {
-      if (type == WindowState.class) {
-        return (T)state;
-      }
-      if (type == Point.class) {
-        return (T)state.getLocation();
-      }
-      if (type == Dimension.class) {
-        return (T)state.getSize();
-      }
-      if (type == Rectangle.class) {
-        return (T)state.getBounds();
-      }
-    }
-    return null;
+    return getState.apply(key);
   }
 
   private void putFor(Object object, @NotNull String key,
@@ -260,48 +243,64 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
                       boolean fullScreen, boolean fullScreenSet) {
     synchronized (myStateMap) {
       GraphicsDevice screen = getScreen(object);
-      putImpl(getKey(screen, key), location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
+      float scale = getSysScale(screen);
+
+      BiFunction<String, String, Void> putState = (newKey, oldKey) -> {
+        // remove & migrate the old key state
+        WindowState oldState = oldKey != null ? myStateMap.remove(oldKey) : null;
+        if (oldState != null) {
+          oldState.scaleDown(scale);
+          WindowState newState = myStateMap.get(newKey);
+          if (newState != null) {
+            newState.merge(oldState);
+          } else {
+            myStateMap.put(newKey, oldState);
+          }
+        }
+        // put the new key state
+        WindowState state = myStateMap.get(newKey);
+        if (state != null) {
+          if (state.set(location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet)) {
+            state.scaleUp(scale);
+          } else {
+            myStateMap.remove(newKey);
+          }
+        }
+        else {
+          state = new WindowState();
+          if (state.set(location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet)) {
+            state.scaleUp(scale);
+            myStateMap.put(newKey, state);
+          }
+        }
+        return null;
+      };
+
+      putState.apply(getKey(screen, key), getOldKey(screen, key));
       if (screen != null) {
-        putImpl(getKey(null, key), location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
+        putState.apply(getKey(null, key), getOldKey(null, key));
       }
-      putImpl(new KeyPair(key, 1f), location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
+      putState.apply(key, null);
     }
   }
 
-  private void putImpl(@NotNull KeyPair keyPair,
-                       Point location, boolean locationSet,
-                       Dimension size, boolean sizeSet,
-                       boolean maximized, boolean maximizedSet,
-                       boolean fullScreen, boolean fullScreenSet) {
-    WindowState state = myStateMap.get(keyPair.first);
-    if (state != null) {
-      if (state.set(location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet)) {
-        state.scaleUp(keyPair.second);
-      } else {
-        myStateMap.remove(keyPair);
-      }
-    }
-    else {
-      state = new WindowState();
-      if (state.set(location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet)) {
-        state.scaleUp(keyPair.second);
-        myStateMap.put(keyPair.first, state);
-      }
-    }
+  private static float getSysScale(GraphicsDevice screen) {
+    return UIUtil.isJreHiDPIEnabled() && screen != null ? JBUI.sysScale(screen.getDefaultConfiguration()) : 1f;
   }
 
   /*
    * todo: old hidpi-unaware key; to be removed
    */
   @NotNull
-  private static KeyPair getOldKey(GraphicsDevice screen, String key) {
+  private static String getOldKey(@Nullable GraphicsDevice screen, String key) {
     GraphicsEnvironment environment = GraphicsEnvironment.getLocalGraphicsEnvironment();
     if (environment.isHeadlessInstance()) {
-      return new KeyPair(key + ".headless", 1f);
+      return key + ".headless";
     }
     StringBuilder sb = new StringBuilder(key);
     for (GraphicsDevice device : environment.getScreenDevices()) {
       Rectangle bounds = device.getDefaultConfiguration().getBounds();
+      normalizeSize(device, bounds);
       sb.append('/').append(bounds.x);
       sb.append('.').append(bounds.y);
       sb.append('.').append(bounds.width);
@@ -309,22 +308,22 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     }
     if (screen != null) {
       Rectangle bounds = screen.getDefaultConfiguration().getBounds();
+      normalizeSize(screen, bounds);
       sb.append('@').append(bounds.x);
       sb.append('.').append(bounds.y);
       sb.append('.').append(bounds.width);
       sb.append('.').append(bounds.height);
     }
-    return new KeyPair(sb.toString(), 1f);
+    return sb.toString();
   }
 
   @NotNull
-  private static KeyPair getKey(GraphicsDevice screen, String key) {
+  private static String getKey(@Nullable GraphicsDevice screen, String key) {
     GraphicsEnvironment environment = GraphicsEnvironment.getLocalGraphicsEnvironment();
     if (environment.isHeadlessInstance()) {
-      return new KeyPair(key + ".headless", 1f);
+      return key + ".headless";
     }
     StringBuilder sb = new StringBuilder(key);
-    float scale = 1f;
     // not storing screen x,y due to relying on isVisible(state) on key retrieval
     if (screen == null) {
       for (GraphicsDevice device : environment.getScreenDevices()) {
@@ -341,13 +340,10 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
       sb.append('.').append(bounds.height);
       if (JBUI.isPixHiDPI(screen.getDefaultConfiguration())) {
         int dpi = ((int)(96 * JBUI.pixScale(screen.getDefaultConfiguration())));
-        sb.append("@" + dpi + "dpi");
-      }
-      if (UIUtil.isJreHiDPIEnabled()) {
-        scale = JBUI.sysScale(screen.getDefaultConfiguration());
+        sb.append("@").append(dpi).append("dpi");
       }
     }
-    return new KeyPair(sb.toString(), scale);
+    return sb.toString();
   }
 
   private static void normalizeSize(GraphicsDevice screen, Rectangle bounds) {
@@ -371,14 +367,12 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     }
     if (object instanceof Window) {
       Window window = (Window)object;
-      object = ScreenUtil.getScreenDevice(window.getBounds());
-      if (object == null) {
-        LOG.warn("cannot find a screen for " + window);
-        return null;
+      GraphicsConfiguration gc = window.getGraphicsConfiguration();
+      GraphicsDevice device = gc != null ?
+        window.getGraphicsConfiguration().getDevice() : ScreenUtil.getScreenDevice(window.getBounds());
+      if (device != null) {
+        return device;
       }
-    }
-    if (object instanceof GraphicsDevice) {
-      return (GraphicsDevice)object;
     }
     LOG.warn("cannot find a screen for " + object);
     return null;
@@ -443,6 +437,18 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
       }
       return myLocation != null || mySize != null;
     }
+
+    /**
+     * Merges this state with the passed one, preferring this state.
+     */
+    private void merge(@NotNull WindowState state) {
+      if (myLocation == null && state.myLocation != null) {
+        myLocation = state.myLocation.getLocation();
+      }
+      if (mySize == null && state.mySize != null) {
+        mySize = state.mySize.getSize();
+      }
+    }
   }
 
   private static boolean isVisible(WindowState state) {
@@ -460,11 +466,5 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
       return false;
     }
     return ScreenUtil.isVisible(new Rectangle(location, size));
-  }
-  
-  private static class KeyPair extends Pair<String, Float> {
-    public KeyPair(String key, Float scale) {
-      super(key, scale);
-    }
   }
 }

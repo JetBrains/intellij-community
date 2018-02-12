@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -54,6 +40,7 @@ import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.BuildTargetConfiguration;
 import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
 import org.jetbrains.jps.incremental.storage.OutputToTargetRegistry;
+import org.jetbrains.jps.incremental.storage.SourceToOutputMappingImpl;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.javac.ExternalJavacManager;
 import org.jetbrains.jps.javac.JavacMain;
@@ -77,14 +64,13 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/17/11
  */
 public class IncProjectBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.IncProjectBuilder");
 
   private static final String CLASSPATH_INDEX_FILE_NAME = "classpath.index";
   //private static final boolean GENERATE_CLASSPATH_INDEX = Boolean.parseBoolean(System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION, "false"));
-  private static final boolean SYNC_DELETE = Boolean.parseBoolean(System.getProperty("jps.sync.delete", SystemInfo.isWindows ? "true" : "false"));
+  private static final boolean SYNC_DELETE = Boolean.parseBoolean(System.getProperty("jps.sync.delete", "false"));
   private static final GlobalContextKey<Set<BuildTarget<?>>> TARGET_WITH_CLEARED_OUTPUT = GlobalContextKey.create("_targets_with_cleared_output_");
   public static final int MAX_BUILDER_THREADS;
   static {
@@ -214,7 +200,8 @@ public class IncProjectBuilder {
       if (cause instanceof PersistentEnumerator.CorruptedException ||
           cause instanceof MappingFailedException ||
           cause instanceof IOException ||
-          cause instanceof BuildDataCorruptedException) {
+          cause instanceof BuildDataCorruptedException ||
+          (cause instanceof RuntimeException && cause.getCause() instanceof IOException)) {
         requestRebuild(e, cause);
       }
       else {
@@ -463,6 +450,11 @@ public class IncProjectBuilder {
           }
         }
       }
+      for (BuildTargetType<?> type : TargetTypeRegistry.getInstance().getTargetTypes()) {
+        if (context.getScope().isAllTargetsOfTypeAffected(type)) {
+          cleanOutputOfStaleTargets(type, context);
+        }
+      }
     }
     catch (ProjectBuildException e) {
       ex = e;
@@ -503,22 +495,61 @@ public class IncProjectBuilder {
     }
   }
 
+  private void cleanOutputOfStaleTargets(BuildTargetType<?> type, CompileContext context) {
+    List<Pair<String, Integer>> targetIds = myProjectDescriptor.dataManager.getTargetsState().getStaleTargetIds(type);
+    if (targetIds.isEmpty()) return;
+
+    context.processMessage(new ProgressMessage("Cleaning old output directories..."));
+    for (Pair<String, Integer> ids : targetIds) {
+      String stringId = ids.first;
+      try {
+        SourceToOutputMappingImpl mapping = null;
+        try {
+          mapping = myProjectDescriptor.dataManager.createSourceToOutputMapForStaleTarget(type, stringId);
+          clearOutputFiles(context, mapping, type, ids.second);
+        }
+        finally {
+          if (mapping != null) {
+            mapping.close();
+          }
+        }
+        FileUtil.delete(myProjectDescriptor.dataManager.getDataPaths().getTargetDataRoot(type, stringId));
+        myProjectDescriptor.dataManager.getTargetsState().cleanStaleTarget(type, stringId);
+      }
+      catch (IOException e) {
+        LOG.warn(e);
+        myMessageDispatcher.processMessage(new CompilerMessage("", BuildMessage.Kind.WARNING, "Failed to delete output files from obsolete '" + stringId + "' target: " + e.toString()));
+      }
+    }
+  }
+
   public static void clearOutputFiles(CompileContext context, BuildTarget<?> target) throws IOException {
     final SourceToOutputMapping map = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
-    final THashSet<File> dirsToDelete = target instanceof ModuleBasedTarget ? new THashSet<>(FileUtil.FILE_HASHING_STRATEGY) : null;
-    for (String srcPath : map.getSources()) {
-      final Collection<String> outs = map.getOutputs(srcPath);
+    BuildTargetType<?> targetType = target.getTargetType();
+    clearOutputFiles(context, map, targetType, context.getProjectDescriptor().dataManager.getTargetsState().getBuildTargetId(target));
+    registerTargetsWithClearedOutput(context, Collections.singletonList(target));
+  }
+
+  private static void clearOutputFiles(CompileContext context,
+                                       SourceToOutputMapping mapping,
+                                       BuildTargetType<?> targetType,
+                                       int targetId) throws IOException {
+    final THashSet<File> dirsToDelete = targetType instanceof ModuleBasedBuildTargetType<?>
+                                        ? new THashSet<>(FileUtil.FILE_HASHING_STRATEGY) : null;
+    OutputToTargetRegistry outputToTargetRegistry = context.getProjectDescriptor().dataManager.getOutputToTargetRegistry();
+    for (String srcPath : mapping.getSources()) {
+      final Collection<String> outs = mapping.getOutputs(srcPath);
       if (outs != null && !outs.isEmpty()) {
         List<String> deletedPaths = new ArrayList<>();
         for (String out : outs) {
           BuildOperations.deleteRecursively(out, deletedPaths, dirsToDelete);
         }
+        outputToTargetRegistry.removeMapping(outs, targetId);
         if (!deletedPaths.isEmpty()) {
           context.processMessage(new FileDeletedEvent(deletedPaths));
         }
       }
     }
-    registerTargetsWithClearedOutput(context, Collections.singletonList(target));
     if (dirsToDelete != null) {
       FSOperations.pruneEmptyDirs(context, dirsToDelete);
     }
@@ -604,11 +635,7 @@ public class IncProjectBuilder {
     // check that output and source roots are not overlapping
     final CompileScope compileScope = context.getScope();
     final List<File> filesToDelete = new ArrayList<>();
-    final Predicate<BuildTarget<?>> forcedBuild = new Predicate<BuildTarget<?>>() {
-      public boolean apply(BuildTarget<?> input) {
-        return compileScope.isBuildForced(input);
-      }
-    };
+    final Predicate<BuildTarget<?>> forcedBuild = input -> compileScope.isBuildForced(input);
     for (Map.Entry<File, Collection<BuildTarget<?>>> entry : rootsToDelete.entrySet()) {
       context.checkCanceled();
       final File outputRoot = entry.getKey();
@@ -1238,7 +1265,7 @@ public class IncProjectBuilder {
             if (!files.isEmpty()) {
               final SourceToOutputMapping mapping = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
               for (File srcFile : files) {
-                mapping.setOutputs(srcFile.getPath(), Collections.<String>emptyList());
+                mapping.setOutputs(srcFile.getPath(), Collections.emptyList());
               }
             }
           }

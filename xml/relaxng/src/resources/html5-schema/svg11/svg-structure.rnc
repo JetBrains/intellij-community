@@ -62,6 +62,7 @@ grammar {
         SVG.Presentation.attrib,
         SVG.GraphicalEvents.attrib,
         SVG.External.attrib,
+        common.attrs.aria?,
         attribute viewBox { ViewBoxSpec.datatype }?,
         [ a:defaultValue = "xMidYMid meet" ]
         attribute preserveAspectRatio {

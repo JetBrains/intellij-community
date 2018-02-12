@@ -38,7 +38,7 @@ public class MethodParenthesesHandler extends ParenthesesInsertHandler<LookupEle
   }
 
   public static boolean hasParams(LookupElement item, LookupElement[] allItems, final boolean overloadsMatter, final PsiMethod method) {
-    boolean hasParams = method.getParameterList().getParametersCount() > 0;
+    boolean hasParams = !method.getParameterList().isEmpty();
     if (overloadsMatter){
       hasParams |= hasOverloads(allItems, method);
     }

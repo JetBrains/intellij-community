@@ -15,6 +15,7 @@ from mypy_extensions import NoReturn
 from __builtin__ import unichr as unichr
 from StringIO import StringIO as StringIO, StringIO as BytesIO
 from functools import wraps as wraps
+from . import moves
 
 
 _T = TypeVar('_T')
@@ -82,7 +83,7 @@ def assertRegex(self: unittest.TestCase, text: AnyStr, expected_regex: Union[Any
 
 def reraise(tp: Optional[Type[BaseException]], value: Optional[BaseException], tb: Optional[types.TracebackType] = ...) -> NoReturn: ...
 def exec_(_code_: Union[unicode, types.CodeType], _globs_: Dict[str, Any] = ..., _locs_: Dict[str, Any] = ...): ...
-def raise_from(value: BaseException, from_value: BaseException) -> None: ...
+def raise_from(value: BaseException, from_value: Optional[BaseException]) -> NoReturn: ...
 
 print_ = print
 

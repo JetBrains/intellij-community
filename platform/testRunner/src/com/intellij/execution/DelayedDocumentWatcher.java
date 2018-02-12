@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,15 @@ import com.intellij.execution.testframework.autotest.AutoTestWatcher;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -109,7 +109,7 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
     return myModificationStamp == modificationStamp;
   }
 
-  private class MyDocumentAdapter extends DocumentAdapter {
+  private class MyDocumentAdapter implements DocumentListener {
     @Override
     public void documentChanged(DocumentEvent event) {
       if (myDocumentSavingInProgress) {
@@ -165,16 +165,13 @@ public class DelayedDocumentWatcher implements AutoTestWatcher {
   private void asyncCheckErrors(@NotNull final Collection<VirtualFile> files,
                                 @NotNull final Consumer<Boolean> errorsFoundConsumer) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      final boolean errorsFound = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          for (VirtualFile file : files) {
-            if (PsiErrorElementUtil.hasErrors(myProject, file)) {
-              return true;
-            }
+      final boolean errorsFound = ReadAction.compute(() -> {
+        for (VirtualFile file : files) {
+          if (PsiErrorElementUtil.hasErrors(myProject, file)) {
+            return true;
           }
-          return false;
         }
+        return false;
       });
       ApplicationManager.getApplication().invokeLater(() -> errorsFoundConsumer.consume(errorsFound), ModalityState.any());
     });

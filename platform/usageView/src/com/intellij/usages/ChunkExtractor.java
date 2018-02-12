@@ -19,7 +19,10 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -39,7 +42,6 @@ import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.usages.impl.SyntaxHighlighterOverEditorHighlighter;
 import com.intellij.usages.impl.rules.UsageType;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringFactory;
@@ -90,12 +92,7 @@ public class ChunkExtractor {
         @NotNull
         @Override
         protected Map<PsiFile, ChunkExtractor> create() {
-          return new FactoryMap<PsiFile, ChunkExtractor>() {
-            @Override
-            protected ChunkExtractor create(PsiFile psiFile) {
-              return new ChunkExtractor(psiFile);
-            }
-          };
+          return FactoryMap.create(psiFile -> new ChunkExtractor(psiFile));
         }
       };
     }
@@ -179,7 +176,7 @@ public class ChunkExtractor {
       for (TextRange range : editable) {
         createTextChunks(usageInfo2UsageAdapter, chars, range.getStartOffset(), range.getEndOffset(), true, result);
       }
-      return result.toArray(new TextChunk[result.size()]);
+      return result.toArray(TextChunk.EMPTY_ARRAY);
     }
     return createTextChunks(usageInfo2UsageAdapter, chars, fragmentToShowStart, fragmentToShowEnd, true, result);
   }
@@ -229,7 +226,7 @@ public class ChunkExtractor {
       processIntersectingRange(usageInfo2UsageAdapter, chars, hiStart, hiEnd, tokenHighlights, selectUsageWithBold, result);
     }
 
-    return result.toArray(new TextChunk[result.size()]);
+    return result.toArray(TextChunk.EMPTY_ARRAY);
   }
 
   private void processIntersectingRange(@NotNull UsageInfo2UsageAdapter usageInfo2UsageAdapter,

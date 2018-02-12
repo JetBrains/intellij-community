@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.startup.StartupActionScriptManager;
+import com.intellij.ide.startup.StartupActionScriptManager.DeleteCommand;
+import com.intellij.ide.startup.StartupActionScriptManager.UnzipCommand;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -35,7 +37,6 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
@@ -45,6 +46,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 /**
  * @author stathik
@@ -264,7 +267,7 @@ public class PluginInstaller {
         // add command to delete the 'action script' file
         IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
         if (pluginDescriptor != null) {
-          StartupActionScriptManager.ActionCommand deleteOld = new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPath());
+          StartupActionScriptManager.ActionCommand deleteOld = new DeleteCommand(pluginDescriptor.getPath());
           StartupActionScriptManager.addActionCommand(deleteOld);
 
           fireState(pluginDescriptor, false);
@@ -280,34 +283,53 @@ public class PluginInstaller {
                              @NotNull String pluginName,
                              boolean deleteFromFile,
                              @NotNull IdeaPluginDescriptor descriptor) throws IOException {
-    //noinspection HardCodedStringLiteral
+    List<StartupActionScriptManager.ActionCommand> commands = new ArrayList<>();
+
     if (fromFile.getName().endsWith(".jar")) {
       // add command to copy file to the IDEA/plugins path
-      StartupActionScriptManager.ActionCommand copyPlugin =
-        new StartupActionScriptManager.CopyCommand(fromFile, new File(PathManager.getPluginsPath() + File.separator + fromFile.getName()));
-      StartupActionScriptManager.addActionCommand(copyPlugin);
+      commands.add(new StartupActionScriptManager.CopyCommand(fromFile, new File(PathManager.getPluginsPath(), fromFile.getName())));
     }
     else {
       // add command to unzip file to the IDEA/plugins path
       String unzipPath;
-      if (ZipUtil.isZipContainsFolder(fromFile)) {
+      String dir = findFirstTopLevelDirectoryName(fromFile);
+      if (dir != null) {
         unzipPath = PathManager.getPluginsPath();
+        commands.add(new DeleteCommand(new File(unzipPath, dir)));
       }
       else {
         unzipPath = PathManager.getPluginsPath() + File.separator + pluginName;
+        commands.add(new DeleteCommand(new File(unzipPath)));
       }
 
-      StartupActionScriptManager.ActionCommand unzip = new StartupActionScriptManager.UnzipCommand(fromFile, new File(unzipPath));
-      StartupActionScriptManager.addActionCommand(unzip);
+      commands.add(new UnzipCommand(fromFile, new File(unzipPath)));
     }
 
     // add command to remove temp plugin file
     if (deleteFromFile) {
-      StartupActionScriptManager.ActionCommand deleteTemp = new StartupActionScriptManager.DeleteCommand(fromFile);
-      StartupActionScriptManager.addActionCommand(deleteTemp);
+      commands.add(new DeleteCommand(fromFile));
     }
 
+    StartupActionScriptManager.addActionCommands(commands);
+
     fireState(descriptor, true);
+  }
+
+  @Nullable
+  public static String findFirstTopLevelDirectoryName(@NotNull File zip) throws IOException {
+    try (ZipFile zipFile = new ZipFile(zip)) {
+      Enumeration en = zipFile.entries();
+      while (en.hasMoreElements()) {
+        ZipEntry zipEntry = (ZipEntry)en.nextElement();
+        // we do not necessarily get a separate entry for the subdirectory when the file
+        // in the ZIP archive is placed in a subdirectory, so we need to check if the slash
+        // is found anywhere in the path
+        String name = zipEntry.getName();
+        int i = name.indexOf('/');
+        if (i >= 0) return name.substring(0, i);
+      }
+    }
+    return null;
   }
 
   private static List<PluginStateListener> myStateListeners;

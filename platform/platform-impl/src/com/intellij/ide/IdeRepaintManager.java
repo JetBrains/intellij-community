@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Oct 30, 2006
- * Time: 8:41:56 PM
- */
 package com.intellij.ide;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -78,11 +72,6 @@ public class IdeRepaintManager extends RepaintManager {
   
   {
     DisplayChangeDetector.getInstance().addListener(new DisplayChangeHandler());
-  }
-
-  @Override
-  public void validateInvalidComponents() {
-    super.validateInvalidComponents();
   }
 
   @Override

@@ -42,6 +42,7 @@ public final class ImagesConfigurable extends BaseConfigurableWithChangeSupport 
     return DISPLAY_NAME;
   }
 
+  @Override
   public String getHelpTopic() {
     return "preferences.images";
   }

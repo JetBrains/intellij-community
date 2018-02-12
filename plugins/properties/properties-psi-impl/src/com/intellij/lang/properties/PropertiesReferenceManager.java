@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.lang.properties;
 
@@ -37,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author max
@@ -56,15 +45,11 @@ public class PropertiesReferenceManager {
 
   @NotNull
   public List<PropertiesFile> findPropertiesFiles(@NotNull final Module module, final String bundleName) {
-    ConcurrentFactoryMap<String, List<PropertiesFile>> map =
+    ConcurrentMap<String, List<PropertiesFile>> map =
       CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
-        ConcurrentFactoryMap<String, List<PropertiesFile>> factoryMap = new ConcurrentFactoryMap<String, List<PropertiesFile>>() {
-          @Nullable
-          @Override
-          protected List<PropertiesFile> create(String bundleName1) {
-            return findPropertiesFiles(GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module), bundleName1, BundleNameEvaluator.DEFAULT);
-          }
-        };
+        ConcurrentMap<String, List<PropertiesFile>> factoryMap = ConcurrentFactoryMap.createMap(
+          bundleName1 -> findPropertiesFiles(GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module), bundleName1,
+                                             BundleNameEvaluator.DEFAULT));
         return CachedValueProvider.Result.create(factoryMap, PsiModificationTracker.MODIFICATION_COUNT);
       });
     return map.get(bundleName);
@@ -77,13 +62,11 @@ public class PropertiesReferenceManager {
 
 
     final ArrayList<PropertiesFile> result = new ArrayList<>();
-    processPropertiesFiles(searchScope, new PropertiesFileProcessor() {
-      public boolean process(String baseName, PropertiesFile propertiesFile) {
-        if (baseName.equals(bundleName)) {
-          result.add(propertiesFile);
-        }
-        return true;
+    processPropertiesFiles(searchScope, (baseName, propertiesFile) -> {
+      if (baseName.equals(bundleName)) {
+        result.add(propertiesFile);
       }
+      return true;
     }, bundleNameEvaluator);
     return result;
   }

@@ -1,32 +1,26 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.testFramework;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.PerformanceWatcher;
+import com.intellij.lang.Language;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
@@ -35,9 +29,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
@@ -46,6 +41,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.Equality;
 import gnu.trove.THashSet;
 import junit.framework.AssertionFailedError;
 import junit.framework.Test;
@@ -84,8 +80,10 @@ public abstract class UsefulTestCase extends TestCase {
   private static final Map<String, Long> TOTAL_TEARDOWN_COST_MILLIS = new HashMap<>();
 
   static {
+    IdeaForkJoinWorkerThreadFactory.setupPoisonFactory();
     Logger.setFactory(TestLoggerFactory.class);
   }
+  protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);
 
   @NotNull
   private final Disposable myTestRootDisposable = new TestDisposable();
@@ -106,7 +104,7 @@ public abstract class UsefulTestCase extends TestCase {
       CodeInsightSettings defaultSettings = new CodeInsightSettings();
       Element oldS = new Element("temp");
       defaultSettings.writeExternal(oldS);
-      DEFAULT_SETTINGS_EXTERNALIZED = JDOMUtil.writeElement(oldS, "\n");
+      DEFAULT_SETTINGS_EXTERNALIZED = JDOMUtil.writeElement(oldS);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
@@ -130,6 +128,9 @@ public abstract class UsefulTestCase extends TestCase {
     }
     boolean isStressTest = isStressTest();
     ApplicationInfoImpl.setInStressTest(isStressTest);
+    if (isPerformanceTest()) {
+      Timings.getStatistics();
+    }
     // turn off Disposer debugging for performance tests
     Disposer.setDebugMode(!isStressTest);
   }
@@ -137,6 +138,8 @@ public abstract class UsefulTestCase extends TestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
+      // don't use method references here to make stack trace reading easier
+      //noinspection Convert2MethodRef
       new RunAll(
         () -> disposeRootDisposable(),
         () -> cleanupSwingDataStructures(),
@@ -232,6 +235,29 @@ public abstract class UsefulTestCase extends TestCase {
     containerMap.clear();
   }
 
+  public static void checkForJdkTableLeaks(@NotNull Sdk[] oldSdks) {
+    ProjectJdkTable table = ProjectJdkTable.getInstance();
+    if (table != null) {
+      Sdk[] jdks = table.getAllJdks();
+      if (jdks.length != 0) {
+        Set<Sdk> leaked = new THashSet<>(Arrays.asList(jdks));
+        Set<Sdk> old = new THashSet<>(Arrays.asList(oldSdks));
+        leaked.removeAll(old);
+
+        try {
+          if (!leaked.isEmpty()) {
+            fail("Leaked SDKs: " + leaked);
+          }
+        }
+        finally {
+          for (Sdk jdk : leaked) {
+            WriteAction.run(()-> table.removeJdk(jdk));
+          }
+        }
+      }
+    }
+  }
+
   protected void checkForSettingsDamage() {
     Application app = ApplicationManager.getApplication();
     if (isStressTest() || app == null || app instanceof MockApplication) {
@@ -245,18 +271,20 @@ public abstract class UsefulTestCase extends TestCase {
 
     myOldCodeStyleSettings = null;
 
-    doCheckForSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings());
+    doCheckForSettingsDamage(oldCodeStyleSettings, CodeStyle.getDefaultSettings());
   }
 
   public static void doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings,
                                               @NotNull CodeStyleSettings currentCodeStyleSettings) {
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    // don't use method references here to make stack trace reading easier
+    //noinspection Convert2MethodRef
     new RunAll()
       .append(() -> {
         try {
           Element newS = new Element("temp");
           settings.writeExternal(newS);
-          Assert.assertEquals("Code insight settings damaged", DEFAULT_SETTINGS_EXTERNALIZED, JDOMUtil.writeElement(newS, "\n"));
+          Assert.assertEquals("Code insight settings damaged", DEFAULT_SETTINGS_EXTERNALIZED, JDOMUtil.writeElement(newS));
         }
         catch (AssertionError error) {
           CodeInsightSettings clean = new CodeInsightSettings();
@@ -286,15 +314,22 @@ public abstract class UsefulTestCase extends TestCase {
 
   void storeSettings() {
     if (!isStressTest() && ApplicationManager.getApplication() != null) {
-      myOldCodeStyleSettings = getCurrentCodeStyleSettings().clone();
+      myOldCodeStyleSettings = CodeStyle.getDefaultSettings().clone();
       myOldCodeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
     }
   }
 
   @NotNull
   protected CodeStyleSettings getCurrentCodeStyleSettings() {
-    if (CodeStyleSchemes.getInstance().getCurrentScheme() == null) return new CodeStyleSettings();
-    return CodeStyleSettingsManager.getInstance().getCurrentSettings();
+    return CodeStyle.getDefaultSettings();
+  }
+
+  protected final CommonCodeStyleSettings getLanguageSettings(@NotNull Language language) {
+    return getCurrentCodeStyleSettings().getCommonSettings(language);
+  }
+
+  protected final <T extends CustomCodeStyleSettings> CustomCodeStyleSettings getCustomSettings(@NotNull Class<T> settingsClass) {
+    return getCurrentCodeStyleSettings().getCustomSettings(settingsClass);
   }
 
   @NotNull
@@ -335,7 +370,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected boolean shouldRunTest() {
-    return PlatformTestUtil.canRunTest(getClass());
+    return TestFrameworkUtil.canRunTest(getClass());
   }
 
   protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
@@ -480,23 +515,39 @@ public abstract class UsefulTestCase extends TestCase {
     assertOrderedEquals(errorMsg, actual, Arrays.asList(expected));
   }
 
-  public static <T> void assertOrderedEquals(@NotNull Iterable<? extends T> actual, @NotNull Collection<? extends T> expected) {
+  public static <T> void assertOrderedEquals(@NotNull Iterable<? extends T> actual, @NotNull Iterable<? extends T> expected) {
     assertOrderedEquals(null, actual, expected);
   }
 
   public static <T> void assertOrderedEquals(String errorMsg,
                                              @NotNull Iterable<? extends T> actual,
-                                             @NotNull Collection<? extends T> expected) {
-    List<T> list = new ArrayList<>();
-    for (T t : actual) {
-      list.add(t);
-    }
-    if (!list.equals(new ArrayList<T>(expected))) {
+                                             @NotNull Iterable<? extends T> expected) {
+    //noinspection unchecked
+    assertOrderedEquals(errorMsg, actual, expected, Equality.CANONICAL);
+  }
+
+  public static <T> void assertOrderedEquals(String errorMsg,
+                                             @NotNull Iterable<? extends T> actual,
+                                             @NotNull Iterable<? extends T> expected,
+                                             @NotNull Equality<? super T> comparator) {
+    if (!equals(actual, expected, comparator)) {
       String expectedString = toString(expected);
       String actualString = toString(actual);
       Assert.assertEquals(errorMsg, expectedString, actualString);
       Assert.fail("Warning! 'toString' does not reflect the difference.\nExpected: " + expectedString + "\nActual: " + actualString);
     }
+  }
+
+  private static <T> boolean equals(@NotNull Iterable<? extends T> a1,
+                                    @NotNull Iterable<? extends T> a2,
+                                    @NotNull Equality<? super T> comparator) {
+    Iterator<? extends T> it1 = a1.iterator();
+    Iterator<? extends T> it2 = a2.iterator();
+    while (it1.hasNext() || it2.hasNext()) {
+      if (!it1.hasNext() || !it2.hasNext()) return false;
+      if (!comparator.equals(it1.next(), it2.next())) return false;
+    }
+    return true;
   }
 
   @SafeVarargs
@@ -807,20 +858,15 @@ public abstract class UsefulTestCase extends TestCase {
     Element newS = new Element("temp");
     settings.writeExternal(newS);
 
-    String newString = JDOMUtil.writeElement(newS, "\n");
-    String oldString = JDOMUtil.writeElement(oldS, "\n");
+    String newString = JDOMUtil.writeElement(newS);
+    String oldString = JDOMUtil.writeElement(oldS);
     Assert.assertEquals("Code style settings damaged", oldString, newString);
   }
 
   public boolean isPerformanceTest() {
     String testName = getName();
     String className = getClass().getName();
-    return isPerformanceTest(testName, className);
-  }
-
-  public static boolean isPerformanceTest(@Nullable String testName, @Nullable String className) {
-    return testName != null && StringUtil.containsIgnoreCase(testName, "performance") ||
-           className != null && StringUtil.containsIgnoreCase(className, "performance");
+    return TestFrameworkUtil.isPerformanceTest(testName, className);
   }
 
   /**
@@ -834,7 +880,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   private static boolean isStressTest(String testName, String className) {
-    return isPerformanceTest(testName, className) ||
+    return TestFrameworkUtil.isPerformanceTest(testName, className) ||
            containsStressWords(testName) ||
            containsStressWords(className);
   }
@@ -877,8 +923,8 @@ public abstract class UsefulTestCase extends TestCase {
    * @param exceptionClass   Expected exception type
    * @param runnable         Block annotated with some exception type
    */
-  protected <T extends Throwable> void assertThrows(@NotNull Class<? extends Throwable> exceptionClass,
-                                                    @NotNull ThrowableRunnable<T> runnable) throws T {
+  public static <T extends Throwable> void assertThrows(@NotNull Class<? extends Throwable> exceptionClass,
+                                                           @NotNull ThrowableRunnable<T> runnable) throws T {
     assertThrows(exceptionClass, null, runnable);
   }
 
@@ -891,8 +937,9 @@ public abstract class UsefulTestCase extends TestCase {
    * @param runnable         Block annotated with some exception type
    */
   @SuppressWarnings({"unchecked", "SameParameterValue"})
-  protected <T extends Throwable> void assertThrows(@NotNull Class<? extends Throwable> exceptionClass, @Nullable String expectedErrorMsg,
-                                                    @NotNull ThrowableRunnable<T> runnable) throws T {
+  public static <T extends Throwable> void assertThrows(@NotNull Class<? extends Throwable> exceptionClass,
+                                                        @Nullable String expectedErrorMsg,
+                                                        @NotNull ThrowableRunnable<T> runnable) throws T {
     assertExceptionOccurred(true, new AbstractExceptionCase() {
       @Override
       public Class<Throwable> getExpectedExceptionClass() {

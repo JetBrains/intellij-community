@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,12 @@ package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.LibraryUtil;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,7 +84,7 @@ public class BooleanParameterInspection extends BaseInspection {
           return;
         }
       }
-      if (PropertyUtil.isSimpleSetter(method) || LibraryUtil.isOverrideOfLibraryMethod(method)) {
+      if (PropertyUtilBase.isSimplePropertySetter(method) || LibraryUtil.isOverrideOfLibraryMethod(method)) {
         return;
       }
       final PsiParameterList parameterList = method.getParameterList();
@@ -91,7 +92,10 @@ public class BooleanParameterInspection extends BaseInspection {
       int count = 0;
       for (PsiParameter parameter : parameters) {
         final PsiType type = parameter.getType();
-        if (!PsiPrimitiveType.BOOLEAN.equals(type)) {
+        if (!PsiType.BOOLEAN.equals(type)) {
+          continue;
+        }
+        if (MethodCallUtils.isUsedAsSuperConstructorCallArgument(parameter, true)) {
           continue;
         }
         count++;

@@ -26,16 +26,16 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.AbstractActionWithPanel;
 import com.intellij.platform.DirectoryProjectGenerator;
-import com.intellij.platform.WebProjectGenerator;
+import com.intellij.platform.ProjectGeneratorPeer;
 import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.NullableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -51,23 +51,21 @@ import java.util.List;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame.BOTTOM_PANEL;
 
-public class ProjectSettingsStepBase extends AbstractActionWithPanel implements DumbAware, Disposable {
-  protected DirectoryProjectGenerator myProjectGenerator;
-  protected NullableConsumer<ProjectSettingsStepBase> myCallback;
+public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implements DumbAware, Disposable {
+  protected DirectoryProjectGenerator<T> myProjectGenerator;
+  protected AbstractNewProjectStep.AbstractCallback myCallback;
   protected TextFieldWithBrowseButton myLocationField;
   protected File myProjectDirectory;
   protected JButton myCreateButton;
   protected JLabel myErrorLabel;
+  protected NotNullLazyValue<ProjectGeneratorPeer<T>> myLazyGeneratorPeer;
 
-  public ProjectSettingsStepBase(DirectoryProjectGenerator projectGenerator,
-                                 NullableConsumer<ProjectSettingsStepBase> callback) {
+  public ProjectSettingsStepBase(DirectoryProjectGenerator<T> projectGenerator,
+                                 AbstractNewProjectStep.AbstractCallback callback) {
     super();
     getTemplatePresentation().setIcon(projectGenerator.getLogo());
     getTemplatePresentation().setText(projectGenerator.getName());
     myProjectGenerator = projectGenerator;
-    if (projectGenerator instanceof WebProjectTemplate) {
-      ((WebProjectTemplate)projectGenerator).reset();
-    }
     myCallback = callback;
     myProjectDirectory = findSequentNonExistingUntitled();
   }
@@ -77,7 +75,24 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
   }
 
   @Override
+  public void onPanelSelected() {
+    checkWebProjectValid();
+  }
+
+  @NotNull
+  @Override
+  public JButton getActionButton() {
+    return myCreateButton;
+  }
+
+  @NotNull
+  protected NotNullLazyValue<ProjectGeneratorPeer<T>> createLazyPeer() {
+    return myProjectGenerator.createLazyPeer();
+  }
+
+  @Override
   public JPanel createPanel() {
+    myLazyGeneratorPeer = createLazyPeer();
     final JPanel mainPanel = new JPanel(new BorderLayout());
 
     final JLabel label = createErrorLabel();
@@ -129,10 +144,14 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
           if (dialog != null) {
             dialog.close(DialogWrapper.OK_EXIT_CODE);
           }
-          myCallback.consume(ProjectSettingsStepBase.this);
+          myCallback.consume(ProjectSettingsStepBase.this, getPeer());
         }
       }
     };
+  }
+
+  protected ProjectGeneratorPeer<T> getPeer() {
+    return myLazyGeneratorPeer.getValue();
   }
 
   protected final JPanel createContentPanelWithAdvancedSettingsPanel() {
@@ -148,7 +167,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
 
   protected void initGeneratorListeners() {
     if (myProjectGenerator instanceof WebProjectTemplate) {
-      ((WebProjectTemplate)myProjectGenerator).getPeer().addSettingsStateListener(new WebProjectGenerator.SettingsStateListener() {
+      getPeer().addSettingsListener(new ProjectGeneratorPeer.SettingsListener() {
         @Override
         public void stateChanged(boolean validSettings) {
           checkValid();
@@ -177,6 +196,10 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
     };
     myLocationField.getTextField().getDocument().addDocumentListener(documentAdapter);
     Disposer.register(this, () -> myLocationField.getTextField().getDocument().removeDocumentListener(documentAdapter));
+    checkWebProjectValid();
+  }
+
+  private void checkWebProjectValid() {
     if (myProjectGenerator instanceof WebProjectTemplate && !((WebProjectTemplate)myProjectGenerator).postponeValidation()) {
       checkValid();
     }
@@ -198,12 +221,16 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
     if (myProjectGenerator != null) {
       final String baseDirPath = myLocationField.getTextField().getText();
       ValidationResult validationResult = myProjectGenerator.validate(baseDirPath);
+      final ValidationInfo peerValidationResult = getPeer().validate();
       if (!validationResult.isOk()) {
         setErrorText(validationResult.getErrorMessage());
         return false;
+      } else if (peerValidationResult != null) {
+        setErrorText(peerValidationResult.message);
+        return false;
       }
       if (myProjectGenerator instanceof WebProjectTemplate) {
-        final WebProjectGenerator.GeneratorPeer peer = ((WebProjectTemplate)myProjectGenerator).getPeer();
+        final ProjectGeneratorPeer<T> peer = getPeer();
         final ValidationInfo validationInfo = peer.validate();
         if (validationInfo != null) {
           setErrorText(validationInfo.message);
@@ -218,7 +245,7 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
   protected JPanel createAndFillContentPanel() {
     WebProjectSettingsStepWrapper settingsStep = new WebProjectSettingsStepWrapper();
     if (myProjectGenerator instanceof WebProjectTemplate) {
-      ((WebProjectTemplate)myProjectGenerator).getPeer().buildUI(settingsStep);
+      getPeer().buildUI(settingsStep);
     }
     else if (myProjectGenerator instanceof TemplateProjectDirectoryGenerator) {
       ((TemplateProjectDirectoryGenerator)myProjectGenerator).buildUI(settingsStep);
@@ -266,24 +293,21 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
 
   @Nullable
   protected JPanel createAdvancedSettings() {
-    if (myProjectGenerator instanceof WebProjectTemplate) {
-      final JPanel jPanel = new JPanel(new VerticalFlowLayout(0, 5));
-      jPanel.add(((WebProjectTemplate)myProjectGenerator).getPeer().getComponent());
-      return jPanel;
-    }
-    return null;
+    final JPanel jPanel = new JPanel(new VerticalFlowLayout(0, 5));
+    jPanel.add(getPeer().getComponent(myLocationField, () -> checkValid()));
+    return jPanel;
   }
 
-  public DirectoryProjectGenerator getProjectGenerator() {
+  public DirectoryProjectGenerator<T> getProjectGenerator() {
     return myProjectGenerator;
   }
 
   public final String getProjectLocation() {
-    return myLocationField.getText();
+    return FileUtil.expandUserHome(FileUtil.toSystemIndependentName(myLocationField.getText()));
   }
 
   public final void setLocation(@NotNull final String location) {
-    myLocationField.setText(location);
+    myLocationField.setText(FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(location)));
   }
 
   protected final LabeledComponent<TextFieldWithBrowseButton> createLocationComponent() {
@@ -309,9 +333,5 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
   }
 
   @Override
-  public void dispose() {
-    if (myProjectGenerator instanceof WebProjectTemplate) {
-      ((WebProjectTemplate)myProjectGenerator).reset();
-    }
-  }
+  public void dispose() {}
 }

@@ -19,6 +19,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
@@ -154,7 +155,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   }
 
   private static JavaResolveResult getStaticFactory(final PsiNewExpression newExpression, final PsiElement context) {
-    return context == newExpression
+    return context == newExpression && !MethodCandidateInfo.isOverloadCheck()
            ? CachedValuesManager.getCachedValue(newExpression,
                                                 () -> new CachedValueProvider.Result<>(
                                                   getStaticFactoryCandidateInfo(newExpression, newExpression),
@@ -167,7 +168,14 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     if (staticFactoryCandidateInfo == null) {
       return DiamondInferenceResult.NULL_RESULT;
     }
-    final PsiSubstitutor inferredSubstitutor = ourDiamondGuard.doPreventingRecursion(context, false, () -> staticFactoryCandidateInfo.getSubstitutor());
+    final Ref<String> refError = new Ref<>();
+    final PsiSubstitutor inferredSubstitutor = ourDiamondGuard.doPreventingRecursion(context, false, () -> {
+      PsiSubstitutor substitutor = staticFactoryCandidateInfo.getSubstitutor();
+      if (staticFactoryCandidateInfo instanceof MethodCandidateInfo) {
+        refError.set(((MethodCandidateInfo)staticFactoryCandidateInfo).getInferenceErrorMessageAssumeAlreadyComputed());
+      }
+      return substitutor;
+    });
     if (inferredSubstitutor == null) {
       return DiamondInferenceResult.NULL_RESULT;
     }
@@ -176,10 +184,10 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       return DiamondInferenceResult.UNRESOLVED_CONSTRUCTOR;
     }
 
-    final String errorMessage = ((MethodCandidateInfo)staticFactoryCandidateInfo).getInferenceErrorMessage();
+    final String errorMessage = refError.get();
 
     //15.9.3 Choosing the Constructor and its Arguments
-    //The return type and throws clause of cj are the same as the return type and throws clause determined for mj (§15.12.2.6)
+    //The return type and throws clause of cj are the same as the return type and throws clause determined for mj (p15.12.2.6)
     if (errorMessage == null && InferenceSession.wasUncheckedConversionPerformed(context)) {
       return DiamondInferenceResult.RAW_RESULT;
     }
@@ -398,6 +406,10 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
           return psiParameter.getType().getCanonicalText() + " p" + myIdx++;
         }
       }, ",")).append(")");
+      PsiClassType[] types = constructor.getThrowsList().getReferencedTypes();
+      if (types.length > 0) {
+        buf.append("throws ").append(StringUtil.join(types, type -> type.getCanonicalText(), ", "));
+      }
     }
     buf.append("{}");
 
@@ -416,7 +428,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     if (listOwner != null) {
       Collections.addAll(params, listOwner.getTypeParameters());
     }
-    return params.toArray(new PsiTypeParameter[params.size()]);
+    return params.toArray(PsiTypeParameter.EMPTY_ARRAY);
   }
 
 
@@ -459,7 +471,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   public static boolean hasDefaultConstructor(@NotNull final PsiClass psiClass) {
     final PsiMethod[] constructors = psiClass.getConstructors();
     for (PsiMethod method : constructors) {
-      if (method.getParameterList().getParametersCount() == 0) return true;
+      if (method.getParameterList().isEmpty()) return true;
     }
     return constructors.length == 0;
   }

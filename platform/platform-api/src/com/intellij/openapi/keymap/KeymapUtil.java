@@ -17,6 +17,8 @@ package com.intellij.openapi.keymap;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
@@ -56,6 +58,7 @@ public class KeymapUtil {
   private KeymapUtil() {
   }
 
+  @NotNull
   public static String getShortcutText(@NotNull Shortcut shortcut) {
     String s = "";
 
@@ -86,7 +89,8 @@ public class KeymapUtil {
     return s;
   }
 
-  public static Icon getShortcutIcon(Shortcut shortcut) {
+  @NotNull
+  public static Icon getShortcutIcon(@NotNull Shortcut shortcut) {
     if (shortcut instanceof KeyboardShortcut) {
       return AllIcons.General.KeyboardShortcut;
     }
@@ -98,6 +102,7 @@ public class KeymapUtil {
     }
   }
 
+  @NotNull
   public static String getMouseShortcutText(@NotNull MouseShortcut shortcut) {
     if (shortcut instanceof PressureShortcut) return shortcut.toString();
     return getMouseShortcutText(shortcut.getButton(), shortcut.getModifiers(), shortcut.getClickCount());
@@ -109,7 +114,8 @@ public class KeymapUtil {
    * @param clickCount    target clicks count
    * @return string representation of passed mouse shortcut.
    */
-  public static String getMouseShortcutText(int button, @JdkConstants.InputEventMask int modifiers, int clickCount) {
+  @NotNull
+  private static String getMouseShortcutText(int button, @JdkConstants.InputEventMask int modifiers, int clickCount) {
     String resource;
     if (button == MouseShortcut.BUTTON_WHEEL_UP) {
       resource = "mouse.wheel.rotate.up.shortcut.text";
@@ -122,7 +128,8 @@ public class KeymapUtil {
     }
     else if (clickCount < 3) {
       resource = "mouse.double.click.shortcut.text";
-    } else {
+    }
+    else {
       throw new IllegalStateException("unknown clickCount: " + clickCount);
     }
     return KeyMapBundle.message(resource, getModifiersText(mapNewModifiers(modifiers)), button);
@@ -149,6 +156,7 @@ public class KeymapUtil {
     return modifiers;
   }
 
+  @NotNull
   public static String getKeystrokeText(KeyStroke accelerator) {
     if (accelerator == null) return "";
     if (SystemInfo.isMac) {
@@ -160,17 +168,31 @@ public class KeymapUtil {
       acceleratorText = getModifiersText(modifiers);
     }
 
-    final int code = accelerator.getKeyCode();
-    String keyText = SystemInfo.isMac ? MacKeymapUtil.getKeyText(code) : KeyEvent.getKeyText(code);
-    // [vova] this is dirty fix for bug #35092
-    if(CANCEL_KEY_TEXT.equals(keyText)){
-      keyText = BREAK_KEY_TEXT;
-    }
-
-    acceleratorText += keyText;
+    acceleratorText += getKeyText(accelerator.getKeyCode());
     return acceleratorText.trim();
   }
 
+  @NotNull
+  public static String getKeyText(int code) {
+    switch (code) {
+      case KeyEvent.VK_BACK_QUOTE:     return "`";
+      case KeyEvent.VK_SEPARATOR:      return ",";
+      case KeyEvent.VK_DECIMAL:        return ".";
+      case KeyEvent.VK_SLASH:          return "/";
+      case KeyEvent.VK_BACK_SLASH:     return "\\";
+      case KeyEvent.VK_PERIOD:         return ".";
+      case KeyEvent.VK_SEMICOLON:      return ";";
+      case KeyEvent.VK_CLOSE_BRACKET:  return "]";
+      case KeyEvent.VK_OPEN_BRACKET:   return "[";
+      case KeyEvent.VK_EQUALS:         return "=";
+    }
+
+    String result = SystemInfo.isMac ? MacKeymapUtil.getKeyText(code) : KeyEvent.getKeyText(code);
+    // [vova] this is dirty fix for bug #35092
+    return CANCEL_KEY_TEXT.equals(result) ? BREAK_KEY_TEXT : result;
+  }
+
+  @NotNull
   private static String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
     if (SystemInfo.isMac) {
       //try {
@@ -189,17 +211,22 @@ public class KeymapUtil {
     }
 
     final String keyModifiersText = KeyEvent.getKeyModifiersText(modifiers);
-    if (keyModifiersText.isEmpty()) {
-      return keyModifiersText;
+    return keyModifiersText.isEmpty() ? keyModifiersText : keyModifiersText + "+";
+  }
+
+  @NotNull
+  public static ShortcutSet getActiveKeymapShortcuts(@Nullable String actionId) {
+    Application application = ApplicationManager.getApplication();
+    KeymapManager keymapManager = application == null ? null : application.getComponent(KeymapManager.class);
+    if (keymapManager == null || actionId == null) {
+      return new CustomShortcutSet(Shortcut.EMPTY_ARRAY);
     }
-    else {
-      return keyModifiersText + "+";
-    }
+    return new CustomShortcutSet(keymapManager.getActiveKeymap().getShortcuts(actionId));
   }
 
   @NotNull
   public static String getFirstKeyboardShortcutText(@NotNull String actionId) {
-    Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
+    Shortcut[] shortcuts = getActiveKeymapShortcuts(actionId).getShortcuts();
     KeyboardShortcut shortcut = ContainerUtil.findInstance(shortcuts, KeyboardShortcut.class);
     return shortcut == null? "" : getShortcutText(shortcut);
   }
@@ -223,7 +250,8 @@ public class KeymapUtil {
            shortcuts.length > 0 ? getShortcutText(shortcuts[0]) : "";
   }
 
-  public static String getShortcutsText(Shortcut[] shortcuts) {
+  @NotNull
+  public static String getShortcutsText(@NotNull Shortcut[] shortcuts) {
     if (shortcuts.length == 0) {
       return "";
     }
@@ -239,13 +267,14 @@ public class KeymapUtil {
   }
 
   /**
-   * Factory method. It parses passed string and creates <code>MouseShortcut</code>.
+   * Factory method. It parses passed string and creates {@code MouseShortcut}.
    *
    * @param keystrokeString       target keystroke
    * @return                      shortcut for the given keystroke
-   * @throws InvalidDataException if <code>keystrokeString</code> doesn't represent valid <code>MouseShortcut</code>.
+   * @throws InvalidDataException if {@code keystrokeString} doesn't represent valid {@code MouseShortcut}.
    */
-  public static MouseShortcut parseMouseShortcut(String keystrokeString) throws InvalidDataException {
+  @NotNull
+  public static MouseShortcut parseMouseShortcut(@NotNull String keystrokeString) throws InvalidDataException {
     if (Registry.is("ide.mac.forceTouch") && keystrokeString.startsWith("Force touch")) {
       return new PressureShortcut(2);
     }
@@ -288,30 +317,75 @@ public class KeymapUtil {
     return new MouseShortcut(button, modifiers, clickCount);
   }
 
-  public static String getKeyModifiersTextForMacOSLeopard(@JdkConstants.InputEventMask int modifiers) {
-    StringBuilder buf = new StringBuilder();
-      if ((modifiers & InputEvent.META_MASK) != 0) {
-          buf.append("\u2318");
-      }
-      if ((modifiers & InputEvent.CTRL_MASK) != 0) {
-          buf.append(Toolkit.getProperty("AWT.control", "Ctrl"));
-      }
-      if ((modifiers & InputEvent.ALT_MASK) != 0) {
-          buf.append("\u2325");
-      }
-      if ((modifiers & InputEvent.SHIFT_MASK) != 0) {
-          buf.append(Toolkit.getProperty("AWT.shift", "Shift"));
-      }
-      if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) {
-          buf.append(Toolkit.getProperty("AWT.altGraph", "Alt Graph"));
-      }
-      if ((modifiers & InputEvent.BUTTON1_MASK) != 0) {
-          buf.append(Toolkit.getProperty("AWT.button1", "Button1"));
-      }
-      return buf.toString();
+  /**
+   * @return string representation of passed mouse shortcut. This method should
+   *         be used only for serializing of the {@code MouseShortcut}
+   */
+  @NotNull
+  public static String getMouseShortcutString(@NotNull MouseShortcut shortcut) {
+    if (Registry.is("ide.mac.forceTouch") && shortcut instanceof PressureShortcut) {
+      return "Force touch";
+    }
+
+    StringBuilder buffer = new StringBuilder();
+
+    // modifiers
+    int modifiers = shortcut.getModifiers();
+    if ((InputEvent.SHIFT_DOWN_MASK & modifiers) > 0) {
+      buffer.append(SHIFT);
+      buffer.append(' ');
+    }
+    if ((InputEvent.CTRL_DOWN_MASK & modifiers) > 0) {
+      buffer.append(CONTROL);
+      buffer.append(' ');
+    }
+    if ((InputEvent.META_DOWN_MASK & modifiers) > 0) {
+      buffer.append(META);
+      buffer.append(' ');
+    }
+    if ((InputEvent.ALT_DOWN_MASK & modifiers) > 0) {
+      buffer.append(ALT);
+      buffer.append(' ');
+    }
+    if ((InputEvent.ALT_GRAPH_DOWN_MASK & modifiers) > 0) {
+      buffer.append(ALT_GRAPH);
+      buffer.append(' ');
+    }
+
+    // button
+    buffer.append("button").append(shortcut.getButton()).append(' ');
+
+    if (shortcut.getClickCount() > 1) {
+      buffer.append(DOUBLE_CLICK);
+    }
+    return buffer.toString().trim(); // trim trailing space (if any)
   }
 
-  public static boolean isTooltipRequest(KeyEvent keyEvent) {
+  @NotNull
+  public static String getKeyModifiersTextForMacOSLeopard(@JdkConstants.InputEventMask int modifiers) {
+    StringBuilder buf = new StringBuilder();
+    if ((modifiers & InputEvent.META_MASK) != 0) {
+      buf.append("\u2318");
+    }
+    if ((modifiers & InputEvent.CTRL_MASK) != 0) {
+      buf.append(Toolkit.getProperty("AWT.control", "Ctrl"));
+    }
+    if ((modifiers & InputEvent.ALT_MASK) != 0) {
+      buf.append("\u2325");
+    }
+    if ((modifiers & InputEvent.SHIFT_MASK) != 0) {
+      buf.append(Toolkit.getProperty("AWT.shift", "Shift"));
+    }
+    if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) {
+      buf.append(Toolkit.getProperty("AWT.altGraph", "Alt Graph"));
+    }
+    if ((modifiers & InputEvent.BUTTON1_MASK) != 0) {
+      buf.append(Toolkit.getProperty("AWT.button1", "Button1"));
+    }
+    return buf.toString();
+  }
+
+  public static boolean isTooltipRequest(@NotNull KeyEvent keyEvent) {
     if (ourTooltipKeysProperty == null) {
       ourTooltipKeysProperty = Registry.get("ide.forcedShowTooltip");
       ourTooltipKeysProperty.addListener(new RegistryValueListener.Adapter() {
@@ -339,7 +413,7 @@ public class KeymapUtil {
     return code == KeyEvent.VK_META || code == KeyEvent.VK_CONTROL || code == KeyEvent.VK_SHIFT || code == KeyEvent.VK_ALT;
   }
 
-  private static void updateTooltipRequestKey(RegistryValue value) {
+  private static void updateTooltipRequestKey(@NotNull RegistryValue value) {
     final String text = value.asString();
 
     ourTooltipKeys.clear();
@@ -385,6 +459,12 @@ public class KeymapUtil {
   }
 
   @NotNull
+  public static String createTooltipText(@NotNull String name, @NotNull String actionId) {
+    String text = getFirstKeyboardShortcutText(actionId);
+    return text.isEmpty() ? name : name + " (" + text + ")";
+  }
+
+  @NotNull
   public static String createTooltipText(@Nullable String name, @NotNull AnAction action) {
     String toolTipText = name == null ? "" : name;
     while (StringUtil.endsWithChar(toolTipText, '.')) {
@@ -400,9 +480,9 @@ public class KeymapUtil {
   /**
    * Checks that one of the mouse shortcuts assigned to the provided action has the same modifiers as provided
    */
-  public static boolean matchActionMouseShortcutsModifiers(final Keymap activeKeymap,
+  public static boolean matchActionMouseShortcutsModifiers(@NotNull Keymap activeKeymap,
                                                            @JdkConstants.InputEventMask int modifiers,
-                                                           final String actionId) {
+                                                           @NotNull String actionId) {
     final MouseShortcut syntheticShortcut = new MouseShortcut(MouseEvent.BUTTON1, modifiers, 1);
     for (Shortcut shortcut : activeKeymap.getShortcuts(actionId)) {
       if (shortcut instanceof MouseShortcut) {
@@ -418,6 +498,7 @@ public class KeymapUtil {
   /**
    * Creates shortcut corresponding to a single-click event
    */
+  @NotNull
   public static MouseShortcut createMouseShortcut(@NotNull MouseEvent e) {
     int button = MouseShortcut.getButton(e);
     int modifiers = e.getModifiersEx();
@@ -436,7 +517,7 @@ public class KeymapUtil {
   /**
    * @param component    target component to reassign previously mapped action (if any)
    * @param oldKeyStroke previously mapped keystroke (e.g. standard one that you want to use in some different way)
-   * @param newKeyStroke new keystroke to be assigned. <code>null</code> value means 'just unregister previously mapped action'
+   * @param newKeyStroke new keystroke to be assigned. {@code null} value means 'just unregister previously mapped action'
    * @param condition    one of
    *                     <ul>
    *                     <li>JComponent.WHEN_FOCUSED,</li>
@@ -444,7 +525,7 @@ public class KeymapUtil {
    *                     <li>JComponent.WHEN_IN_FOCUSED_WINDOW</li>
    *                     <li>JComponent.UNDEFINED_CONDITION</li>
    *                     </ul>
-   * @return <code>true</code> if the action is reassigned successfully
+   * @return {@code true} if the action is reassigned successfully
    */
   public static boolean reassignAction(@NotNull JComponent component,
                                        @NotNull KeyStroke oldKeyStroke,
@@ -455,7 +536,7 @@ public class KeymapUtil {
   /**
    * @param component    target component to reassign previously mapped action (if any)
    * @param oldKeyStroke previously mapped keystroke (e.g. standard one that you want to use in some different way)
-   * @param newKeyStroke new keystroke to be assigned. <code>null</code> value means 'just unregister previously mapped action'
+   * @param newKeyStroke new keystroke to be assigned. {@code null} value means 'just unregister previously mapped action'
    * @param condition    one of
    *                     <ul>
    *                     <li>JComponent.WHEN_FOCUSED,</li>
@@ -463,8 +544,8 @@ public class KeymapUtil {
    *                     <li>JComponent.WHEN_IN_FOCUSED_WINDOW</li>
    *                     <li>JComponent.UNDEFINED_CONDITION</li>
    *                     </ul>
-   * @param muteOldKeystroke if <code>true</code> old keystroke wouldn't work anymore
-   * @return <code>true</code> if the action is reassigned successfully
+   * @param muteOldKeystroke if {@code true} old keystroke wouldn't work anymore
+   * @return {@code true} if the action is reassigned successfully
    */
   public static boolean reassignAction(@NotNull JComponent component,
                                        @NotNull KeyStroke oldKeyStroke,
@@ -484,7 +565,7 @@ public class KeymapUtil {
   private static final class RedispatchEventAction extends AbstractAction {
     private final Component myComponent;
 
-    public RedispatchEventAction(Component component) {
+    RedispatchEventAction(@NotNull Component component) {
       myComponent = component;
     }
 

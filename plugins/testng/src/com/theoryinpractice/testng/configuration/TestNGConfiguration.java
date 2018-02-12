@@ -1,25 +1,7 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: amrk
- * Date: Jul 2, 2005
- * Time: 12:16:02 AM
- */
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -62,17 +44,13 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
   @NonNls private static final String PATTERNS_EL_NAME = "patterns";
   @NonNls private static final String PATTERN_EL_NAME = "pattern";
   @NonNls private static final String TEST_CLASS_ATT_NAME = "testClass";
-  
+
   //private TestNGResultsContainer resultsContainer;
   protected TestData data;
   protected transient Project project;
   public boolean ALTERNATIVE_JRE_PATH_ENABLED;
   public String ALTERNATIVE_JRE_PATH;
-  
 
-
-  public static final String DEFAULT_PACKAGE_NAME = ExecutionBundle.message("default.package.presentable.name");
-  public static final String DEFAULT_PACKAGE_CONFIGURATION_NAME = ExecutionBundle.message("default.package.configuration.name");
   private final RefactoringListeners.Accessor<PsiPackage> myPackage = new RefactoringListeners.Accessor<PsiPackage>() {
     public void setName(final String qualifiedName) {
       final boolean generatedName = isGeneratedName();
@@ -126,7 +104,7 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
     return null;
   }
 
-  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
     final TestData data = getPersistantData();
     if (data.TEST_OBJECT.equals(TestType.SOURCE.getType()) || data.getChangeList() != null) {
       return new TestNGTestDiscoveryRunnableState(env, this);
@@ -156,7 +134,7 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
     return testObject != null ? testObject.getActionName() : null;
   }
 
-  public void setVMParameters(String value) {
+  public void setVMParameters(@Nullable String value) {
     data.setVMParameters(value);
   }
 
@@ -177,7 +155,7 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
   }
 
   public String getWorkingDirectory() {
-    return data.getWorkingDirectory(project);
+    return data.getWorkingDirectory();
   }
 
   public void setEnvs(@NotNull Map<String, String> envs) {
@@ -236,6 +214,11 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
   @Override
   public String prepareParameterizedParameter(String paramSetName) {
     return TestNGConfigurationProducer.getInvocationNumber(paramSetName);
+  }
+
+  @Override
+  public TestSearchScope getTestSearchScope() {
+    return getPersistantData().getScope();
   }
 
   public void setPackageConfiguration(Module module, PsiPackage pkg) {
@@ -302,9 +285,7 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     final TestNGTestObject testObject = TestNGTestObject.fromConfig(this);
-    if (testObject != null) {
-      testObject.checkConfiguration();
-    }
+    testObject.checkConfiguration();
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
     ProgramParametersUtil.checkWorkingDirectoryExist(this, getProject(), getConfigurationModule().getModule());
     JavaParametersUtil.checkAlternativeJRE(this);
@@ -312,10 +293,9 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
   }
 
   @Override
-  public void readExternal(Element element) {
+  public void readExternal(@NotNull Element element) {
     super.readExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
-    readModule(element);
     DefaultJDOMExternalizer.readExternal(this, element);
     DefaultJDOMExternalizer.readExternal(getPersistantData(), element);
     EnvironmentVariablesComponent.readExternal(element, getPersistantData().getEnvs());
@@ -342,8 +322,7 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
     final Element patternsElement = element.getChild(PATTERNS_EL_NAME);
     if (patternsElement != null) {
       final LinkedHashSet<String> tests = new LinkedHashSet<>();
-      for (Object o : patternsElement.getChildren(PATTERN_EL_NAME)) {
-        Element patternElement = (Element)o;
+      for (Element patternElement : patternsElement.getChildren(PATTERN_EL_NAME)) {
         tests.add(patternElement.getAttributeValue(TEST_CLASS_ATT_NAME));
       }
       getPersistantData().setPatterns(tests);
@@ -351,16 +330,14 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
-    writeModule(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
     DefaultJDOMExternalizer.writeExternal(getPersistantData(), element);
     EnvironmentVariablesComponent.writeExternal(element, getPersistantData().getEnvs());
 
     Element propertiesElement = element.getChild("properties");
-
     if (propertiesElement == null) {
       propertiesElement = new Element("properties");
       element.addContent(propertiesElement);

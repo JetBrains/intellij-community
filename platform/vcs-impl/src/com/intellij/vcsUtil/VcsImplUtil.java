@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 /**
- * <p>{@link VcsUtil} extension that needs access to the {@code vcs-impl} module.</p>
+ * <p>{@link VcsUtil} extension that needs access to the {@code intellij.platform.vcs.impl} module.</p>
  *
  * @author Kirill Likhodedov
  */
@@ -40,7 +40,7 @@ public class VcsImplUtil {
    */
   public static void showErrorMessage(final Project project, final String message, final String title)
   {
-    Runnable task = new Runnable() {  public void run() {  Messages.showErrorDialog(project, message, title);  } };
+    Runnable task = () -> Messages.showErrorDialog(project, message, title);
     WaitForProgressToShow.runOrInvokeLaterAboveProgress(task, null, project);
   }
 

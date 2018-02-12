@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,17 +146,19 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
     for (FileEditor editor : editors) {
       if (editor instanceof TextEditor) {
         Editor e = ((TextEditor)editor).getEditor();
-        unfoldCurrentLine(e);
-        if (focusEditor) {
-          IdeFocusManager.getInstance(myProject).requestFocus(e.getContentComponent(), true);
-        }
+        FileEditorManager.getInstance(myProject).runWhenLoaded(e, () -> {
+          unfoldCurrentLine(e);
+          if (focusEditor) {
+            IdeFocusManager.getInstance(myProject).requestFocus(e.getContentComponent(), true);
+          }
+        });
       }
     }
     return !editors.isEmpty();
   }
 
   private void navigateInProjectView(boolean requestFocus) {
-    SelectInContext context = new FileSelectInContext(myProject, myFile);
+    SelectInContext context = new FileSelectInContext(myProject, myFile, null);
     for (SelectInTarget target : SelectInManager.getInstance(myProject).getTargets()) {
       if (target.canSelect(context)) {
         target.selectIn(context, requestFocus);
@@ -166,10 +168,6 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
   }
 
   public void navigateIn(@NotNull Editor e) {
-    if (!FileEditorManager.getInstance(myProject).canNavigateInEditor(this, e)) {
-      navigateInAnyFileEditor(myProject, true);
-      return;
-    }
     final int offset = getOffset();
     CaretModel caretModel = e.getCaretModel();
     boolean caretMoved = false;
@@ -189,8 +187,10 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
 
     if (caretMoved) {
       e.getSelectionModel().removeSelection();
-      scrollToCaret(e);
-      unfoldCurrentLine(e);
+      FileEditorManager.getInstance(myProject).runWhenLoaded(e, () -> {
+        scrollToCaret(e);
+        unfoldCurrentLine(e);
+      });
     }
   }
 

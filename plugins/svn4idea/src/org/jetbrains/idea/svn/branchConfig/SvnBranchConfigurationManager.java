@@ -1,27 +1,16 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package org.jetbrains.idea.svn.branchConfig;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -31,7 +20,6 @@ import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.vcs.ProgressManagerQueue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -70,8 +58,8 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
     myBunch = new NewRootBunch(project, myBranchesLoader);
   }
 
-  public static SvnBranchConfigurationManager getInstance(final Project project) {
-    SvnBranchConfigurationManager result = PeriodicalTasksCloser.getInstance().safeGetService(project, SvnBranchConfigurationManager.class);
+  public static SvnBranchConfigurationManager getInstance(@NotNull Project project) {
+    SvnBranchConfigurationManager result = ServiceManager.getService(project, SvnBranchConfigurationManager.class);
 
     if (result != null) {
       result.initialize();
@@ -86,7 +74,6 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
      * version of "support SVN in IDEA". for features tracking. should grow
      */
     public Long myVersion;
-    public boolean mySupportsUserInfoFilter;
   }
 
   public Long getSupportValue() {
@@ -111,8 +98,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
 
     SvnBranchMapperManager.getInstance().notifyBranchesChanged(myProject, vcsRoot, configuration);
 
-    final MessageBus messageBus = myProject.getMessageBus();
-    messageBus.syncPublisher(VcsConfigurationChangeListener.BRANCHES_CHANGED).execute(myProject, vcsRoot);
+    BackgroundTaskUtil.syncPublisher(myProject, VcsConfigurationChangeListener.BRANCHES_CHANGED).execute(myProject, vcsRoot);
   }
 
   public ConfigurationBean getState() {
@@ -128,11 +114,10 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
 
       result.myConfigurationMap.put(key, helper.prepareForSerialization(configuration));
     }
-    result.mySupportsUserInfoFilter = true;
     return result;
   }
 
-  public void loadState(ConfigurationBean object) {
+  public void loadState(@NotNull ConfigurationBean object) {
     myConfigurationBean = object;
   }
 
@@ -158,9 +143,10 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
       }
 
       final SvnBranchConfiguration configToConvert;
-      if ((! myConfigurationBean.mySupportsUserInfoFilter) || configuration.isUserinfoInUrl()) {
+      if (configuration.isUserinfoInUrl()) {
         configToConvert = helper.afterDeserialization(entry.getKey(), configuration);
-      } else {
+      }
+      else {
         configToConvert = configuration;
       }
       final SvnBranchConfigurationNew newConfig = new SvnBranchConfigurationNew();
@@ -168,9 +154,10 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
       newConfig.setUserinfoInUrl(configToConvert.isUserinfoInUrl());
       for (String branchUrl : configToConvert.getBranchUrls()) {
         List<SvnBranchItem> stored = getStored(branchUrl);
-        if (stored != null && ! stored.isEmpty()) {
+        if (stored != null && !stored.isEmpty()) {
           newConfig.addBranches(branchUrl, new InfoStorage<>(stored, InfoReliability.setByUser));
-        } else {
+        }
+        else {
           branchPointsToLoad.add(Pair.create(root, newConfig));
           newConfig.addBranches(branchUrl, new InfoStorage<>(new ArrayList<>(), InfoReliability.empty));
         }

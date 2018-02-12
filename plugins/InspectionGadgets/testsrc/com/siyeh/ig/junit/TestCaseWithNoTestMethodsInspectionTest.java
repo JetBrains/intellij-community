@@ -29,7 +29,9 @@ public class TestCaseWithNoTestMethodsInspectionTest extends LightInspectionTest
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new TestCaseWithNoTestMethodsInspection();
+    TestCaseWithNoTestMethodsInspection inspection = new TestCaseWithNoTestMethodsInspection();
+    inspection.ignoreSupers = true;
+    return inspection;
   }
 
   @Override
@@ -39,7 +41,14 @@ public class TestCaseWithNoTestMethodsInspectionTest extends LightInspectionTest
       "public abstract class TestCase {" +
       "    protected void setUp() throws Exception {}" +
       "    protected void tearDown() throws Exception {}" +
-      "}"
+      "}",
+      "package junit.framework;\n" +
+      "public interface Test {\n" +
+      "    public abstract int countTestCases();\n" +
+      "    public abstract void run(TestResult result);\n" +
+      "}",
+      "package org.junit.jupiter.api;" +
+      "public @interface Test {}"
     };
   }
 }

@@ -18,10 +18,6 @@ package org.jetbrains.plugins.groovy.actions.generate.equals;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.actions.generate.GrBaseGenerateAction;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 28.05.2008
- */
 public class GroovyGenerateEqualsAction extends GrBaseGenerateAction {
   public GroovyGenerateEqualsAction() {
     super(new GroovyGenerateEqualsHandler());

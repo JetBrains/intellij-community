@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 public class StaticCallOnSubclassInspection extends BaseInspection implements CleanupLocalInspectionTool {
@@ -66,8 +66,7 @@ public class StaticCallOnSubclassInspection extends BaseInspection implements Cl
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiIdentifier name = (PsiIdentifier)descriptor.getPsiElement();
       final PsiReferenceExpression expression = (PsiReferenceExpression)name.getParent();
       if (expression == null) {
@@ -88,8 +87,10 @@ public class StaticCallOnSubclassInspection extends BaseInspection implements Cl
         return;
       }
       final String containingClassName = containingClass.getQualifiedName();
-      final String argText = argumentList.getText();
-      PsiReplacementUtil.replaceExpressionAndShorten(call, containingClassName + '.' + call.getTypeArgumentList().getText() + methodName + argText);
+      CommentTracker commentTracker = new CommentTracker();
+      final String argText = commentTracker.text(argumentList);
+      final String typeArgText = commentTracker.text(call.getTypeArgumentList());
+      PsiReplacementUtil.replaceExpressionAndShorten(call, containingClassName + '.' + typeArgText + methodName + argText, commentTracker);
     }
   }
 

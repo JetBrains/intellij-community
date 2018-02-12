@@ -15,8 +15,8 @@
  */
 package com.intellij.execution.dashboard.tree;
 
-import com.intellij.execution.dashboard.DashboardGroup;
-import com.intellij.execution.dashboard.DashboardNode;
+import com.intellij.execution.dashboard.RunDashboardGroup;
+import com.intellij.execution.dashboard.RunDashboardNode;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
@@ -30,14 +30,14 @@ import java.util.List;
 /**
  * @author konstantin.aleev
  */
-public class GroupingNode extends AbstractTreeNode<Pair<Object, DashboardGroup>> implements DashboardNode {
+public class GroupingNode extends AbstractTreeNode<Pair<Object, RunDashboardGroup>> implements RunDashboardNode {
   private final List<AbstractTreeNode> myChildren = new ArrayList<>();
 
-  public GroupingNode(Project project, Object parent, DashboardGroup group) {
+  public GroupingNode(Project project, Object parent, RunDashboardGroup group) {
     super(project, Pair.create(parent, group));
   }
 
-  public DashboardGroup getGroup() {
+  public RunDashboardGroup getGroup() {
     //noinspection ConstantConditions ???
     return getValue().getSecond();
   }

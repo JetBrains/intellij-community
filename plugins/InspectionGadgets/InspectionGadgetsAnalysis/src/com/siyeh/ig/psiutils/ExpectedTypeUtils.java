@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,7 +124,10 @@ public class ExpectedTypeUtils {
 
     @Override
     public void visitVariable(@NotNull PsiVariable variable) {
-      expectedType = variable.getType();
+      final PsiTypeElement typeElement = variable.getTypeElement();
+      if (typeElement != null && !typeElement.isInferredType()) {
+        expectedType = variable.getType();
+      }
     }
 
     @Override
@@ -234,18 +237,7 @@ public class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
-      final PsiType type = expression.getType();
-      if (type instanceof PsiPrimitiveType) {
-        expectedType = type;
-      }
-      else {
-        expectedType = PsiPrimitiveType.getUnboxedType(type);
-      }
-    }
-
-    @Override
-    public void visitPostfixExpression(@NotNull PsiPostfixExpression expression) {
+    public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
       final PsiType type = expression.getType();
       if (type instanceof PsiPrimitiveType) {
         expectedType = type;
@@ -621,10 +613,10 @@ public class ExpectedTypeUtils {
       if (parameters.length == 0) {
         return null;
       }
-
-      PsiSubstitutor substitutor = result.getSubstitutor();
-      boolean isVarargs = result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).isVarargs();
-      PsiType parameterType = PsiTypesUtil.getParameterType(parameters, parameterPosition, isVarargs);
+      final boolean isVarargs = result instanceof MethodCandidateInfo && 
+                                ((MethodCandidateInfo)result).getApplicabilityLevel() == MethodCandidateInfo.ApplicabilityLevel.VARARGS;
+      final PsiType parameterType = PsiTypesUtil.getParameterType(parameters, parameterPosition, isVarargs);
+      final PsiSubstitutor substitutor = result.getSubstitutor();
       final PsiType type = GenericsUtil.getVariableTypeByExpressionType(substitutor.substitute(parameterType));
       if (type == null) {
         return null;

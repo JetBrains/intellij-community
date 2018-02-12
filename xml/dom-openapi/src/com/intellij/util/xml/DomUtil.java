@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author peter
@@ -52,21 +53,13 @@ public class DomUtil {
   private static final Class<Void> DUMMY = void.class;
   private static final Key<DomFileElement> FILE_ELEMENT_KEY = Key.create("dom file element");
 
-  private static final ConcurrentFactoryMap<Type, Class> ourTypeParameters = new ConcurrentFactoryMap<Type, Class>() {
-    @Override
-    @NotNull
-    protected Class create(final Type key) {
+  private static final ConcurrentMap<Type, Class> ourTypeParameters = ConcurrentFactoryMap.createMap(key-> {
       final Class<?> result = substituteGenericType(GENERIC_VALUE_TYPE_VARIABLE, key);
       return result == null ? DUMMY : result;
     }
-  };
-  private static final ConcurrentFactoryMap<Couple<Type>, Class> ourVariableSubstitutions = new ConcurrentFactoryMap<Couple<Type>, Class>() {
-    @Override
-    @Nullable
-    protected Class create(final Couple<Type> key) {
-      return ReflectionUtil.substituteGenericType(key.first, key.second);
-    }
-  };
+  );
+  private static final ConcurrentMap<Couple<Type>, Class> ourVariableSubstitutions =
+    ConcurrentFactoryMap.createMap(key -> ReflectionUtil.substituteGenericType(key.first, key.second));
 
   public static Class extractParameterClassFromGenericType(Type type) {
     return getGenericValueParameter(type);
@@ -240,7 +233,7 @@ public class DomUtil {
 
     if (parent instanceof DomFileElement) {
       final DomFileElement element = (DomFileElement)parent;
-      return tags ? Arrays.asList(element.getRootElement()) : Collections.<DomElement>emptyList();
+      return tags ? Arrays.asList(element.getRootElement()) : Collections.emptyList();
     }
 
     final XmlElement xmlElement = parent.getXmlElement();

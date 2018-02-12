@@ -73,6 +73,12 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
 
   @NotNull
   @Override
+  public LocalQuickFixAndIntentionActionOnPsiElement createAssignmentToComparisonFix(PsiAssignmentExpression expr) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @NotNull
+  @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createImplementMethodsFix(@NotNull PsiClass psiClass) {
     return QuickFixes.EMPTY_FIX;
   }
@@ -206,6 +212,12 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createReuseVariableDeclarationFix(@NotNull PsiLocalVariable psiLocalVariable) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createNavigateToAlreadyDeclaredVariableFix(@NotNull PsiLocalVariable variable) {
     return QuickFixes.EMPTY_FIX;
   }
 
@@ -385,6 +397,12 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
 
   @NotNull
   @Override
+  public IntentionAction createInsertThisFix(@NotNull PsiMethod constructor) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @NotNull
+  @Override
   public IntentionAction createInsertSuperFix(@NotNull PsiMethod psiMethod) {
     return QuickFixes.EMPTY_FIX;
   }
@@ -440,6 +458,12 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createStaticImportMethodFix(@NotNull PsiMethodCallExpression psiMethodCallExpression) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createQualifyStaticMethodCallFix(@NotNull PsiMethodCallExpression call) {
     return QuickFixes.EMPTY_FIX;
   }
 
@@ -635,12 +659,6 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createWrapLongWithMathToIntExactFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
-    return QuickFixes.EMPTY_FIX;
-  }
-
-  @NotNull
-  @Override
   public IntentionAction createWrapWithOptionalFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
     return QuickFixes.EMPTY_FIX;
   }
@@ -659,7 +677,9 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createCollectionToArrayFix(@NotNull PsiExpression collectionExpression, @NotNull PsiArrayType arrayType) {
+  public IntentionAction createCollectionToArrayFix(@NotNull PsiExpression collectionExpression,
+                                                    @NotNull PsiExpression expressionToReplace,
+                                                    @NotNull PsiArrayType arrayType) {
     return QuickFixes.EMPTY_FIX;
   }
 
@@ -671,7 +691,26 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createWrapStringWithFileFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createAccessStaticViaInstanceFix(PsiReferenceExpression methodRef,
+                                                                                      JavaResolveResult result) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createWrapWithAdapterFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createDeleteSideEffectAwareFix(@NotNull PsiExpressionStatement statement) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @Nullable
+  @Override
+  public IntentionAction createCreateClassInPackageInModuleFix(@NotNull Module module, @Nullable String packageName) {
     return QuickFixes.EMPTY_FIX;
   }
 }

@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.psi.PyStatementWithElse;
 import com.jetbrains.python.psi.impl.PyIfPartElifImpl;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -44,13 +45,13 @@ public class PyElIfUnwrapper extends PyUnwrapper {
   }
 
   @Override
-  public PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract) {
+  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract) {
     super.collectAffectedElements(e, toExtract);
     return PsiTreeUtil.getParentOfType(e, PyStatementWithElse.class);
   }
 
   @Override
-  public boolean isApplicableTo(PsiElement e) {
+  public boolean isApplicableTo(@NotNull PsiElement e) {
     if (e instanceof PyIfPartElifImpl) {
       final PyStatementList statementList = ((PyIfPartElifImpl)e).getStatementList();
       if (statementList != null) {

@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 31.01.2007
- * Time: 13:56:12
- */
 package com.intellij.execution;
 
 import com.intellij.execution.configuration.RunConfigurationExtensionBase;
@@ -50,10 +44,6 @@ public abstract class RunConfigurationExtension extends RunConfigurationExtensio
   @Override
   protected boolean isEnabledFor(@NotNull RunConfigurationBase applicableConfiguration, @Nullable RunnerSettings runnerSettings) {
     return true;
-  }
-
-  @Override
-  protected void extendTemplateConfiguration(@NotNull RunConfigurationBase configuration) {
   }
 
   public void cleanUserData(RunConfigurationBase runConfigurationBase) {}

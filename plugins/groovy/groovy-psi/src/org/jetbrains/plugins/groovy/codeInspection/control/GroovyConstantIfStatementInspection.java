@@ -32,12 +32,6 @@ public class GroovyConstantIfStatementInspection extends BaseInspection {
 
   @Override
   @NotNull
-  public String getGroupDisplayName() {
-    return CONTROL_FLOW;
-  }
-
-  @Override
-  @NotNull
   public String getDisplayName() {
     return "Constant if statement";
   }

@@ -30,7 +30,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.highlighting.DomCollectionProblemDescriptor;

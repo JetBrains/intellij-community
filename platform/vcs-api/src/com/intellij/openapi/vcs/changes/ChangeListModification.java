@@ -20,15 +20,17 @@ import org.jetbrains.annotations.Nullable;
 
 public interface ChangeListModification {
   LocalChangeList addChangeList(@NotNull String name, @Nullable final String comment);
+
+  void setDefaultChangeList(@NotNull String name);
   void setDefaultChangeList(@NotNull LocalChangeList list);
 
-  void removeChangeList(final String name);
-  void removeChangeList(final LocalChangeList list);
+  void removeChangeList(@NotNull String name);
+  void removeChangeList(@NotNull LocalChangeList list);
 
-  void moveChangesTo(final LocalChangeList list, final Change... changes);
+  void moveChangesTo(@NotNull LocalChangeList list, @NotNull Change... changes);
 
   // added - since ChangeListManager wouldn't pass internal lists, only copies
-  boolean setReadOnly(final String name, final boolean value);
+  boolean setReadOnly(@NotNull String name, final boolean value);
 
   boolean editName(@NotNull String fromName, @NotNull String toName);
   @Nullable

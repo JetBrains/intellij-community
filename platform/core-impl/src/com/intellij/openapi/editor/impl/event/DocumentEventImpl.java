@@ -69,7 +69,6 @@ public class DocumentEventImpl extends DocumentEvent {
     myIsWholeDocReplaced = getDocument().getTextLength() != 0 && wholeTextReplaced;
     assert initialStartOffset >= 0 : initialStartOffset;
     assert initialOldLength >= 0 : initialOldLength;
-    assert initialStartOffset+initialOldLength <= document.getTextLength() : "initialStartOffset = " + initialStartOffset + "; initialOldLength = " + initialOldLength+";document.getTextLength() = " + document.getTextLength();
   }
 
   @Override
@@ -173,7 +172,7 @@ public class DocumentEventImpl extends DocumentEvent {
 
   // line numbers in Diff.Change are relative to change start
   private Diff.Change reBuildDiffIfNeeded() throws FilesTooBigForDiffException {
-    if (myChange == TOO_BIG_FILE) throw new FilesTooBigForDiffException(0);
+    if (myChange == TOO_BIG_FILE) throw new FilesTooBigForDiffException();
     if (myChange == null) {
       try {
         myChange = Diff.buildChanges(myOldString, myNewString);

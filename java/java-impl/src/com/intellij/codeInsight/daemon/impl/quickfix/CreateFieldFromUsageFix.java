@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
 
   public static void createFieldFromUsageTemplate(final PsiClass targetClass,
                                                   final Project project,
-                                                  final ExpectedTypeInfo[] expectedTypes,
+                                                  final Object expectedTypes,
                                                   final PsiField field,
                                                   final boolean createConstantField,
                                                   final PsiElement context) {
@@ -138,11 +138,11 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
     });
   }
 
-  private static boolean shouldCreateFinalMember(@NotNull PsiReferenceExpression ref, @NotNull PsiClass targetClass) {
+  public static boolean shouldCreateFinalMember(@NotNull PsiReferenceExpression ref, @NotNull PsiClass targetClass) {
     if (!PsiTreeUtil.isAncestor(targetClass, ref, true)) {
       return false;
     }
-    final PsiElement element = PsiTreeUtil.getParentOfType(ref, PsiClassInitializer.class, PsiMethod.class);
+    final PsiElement element = PsiTreeUtil.getParentOfType(ref, PsiClassInitializer.class, PsiMethod.class, PsiField.class);
     if (element instanceof PsiClassInitializer) {
       return true;
     }

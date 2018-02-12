@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 02.11.2006
- * Time: 22:13:55
- */
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -36,6 +30,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
+import com.intellij.openapi.vcs.changes.ui.CommitDialogChangesBrowser;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -72,26 +67,33 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
                                        @NotNull List<VirtualFile> files,
                                        @NotNull Condition<FileStatus> unversionedFileCondition,
                                        @Nullable ChangesBrowserBase browser) {
-    boolean result = true;
+    LocalChangeList targetChangeList = null;
+    Consumer<List<Change>> changeConsumer = null;
 
-    if (!files.isEmpty()) {
-      FileDocumentManager.getInstance().saveAllDocuments();
-
-      @SuppressWarnings("unchecked")
-      Consumer<List<Change>> consumer = browser == null ? null : changes -> {
-        browser.rebuildList();
-        browser.getViewer().excludeChanges((List)files);
-        browser.getViewer().includeChanges((List)changes);
-      };
-      ChangeListManagerImpl manager = ChangeListManagerImpl.getInstanceImpl(project);
-      LocalChangeList targetChangeList =
-        browser == null ? manager.getDefaultChangeList() : (LocalChangeList)browser.getSelectedChangeList();
-      List<VcsException> exceptions = manager.addUnversionedFiles(targetChangeList, files, unversionedFileCondition, consumer);
-
-      result = exceptions.isEmpty();
+    if (browser instanceof CommitDialogChangesBrowser) {
+      targetChangeList = ((CommitDialogChangesBrowser)browser).getSelectedChangeList();
     }
 
-    return result;
+    if (browser != null) {
+      changeConsumer = changes -> browser.getViewer().includeChanges(changes);
+    }
+
+    return addUnversioned(project, files, targetChangeList, changeConsumer, unversionedFileCondition);
+  }
+
+  private static boolean addUnversioned(@NotNull Project project,
+                                        @NotNull List<VirtualFile> files,
+                                        @Nullable LocalChangeList targetChangeList,
+                                        @Nullable Consumer<List<Change>> changesConsumer,
+                                        @NotNull Condition<FileStatus> unversionedFileCondition) {
+    if (files.isEmpty()) return true;
+
+    ChangeListManagerImpl manager = ChangeListManagerImpl.getInstanceImpl(project);
+    if (targetChangeList == null) targetChangeList = manager.getDefaultChangeList();
+
+    FileDocumentManager.getInstance().saveAllDocuments();
+    List<VcsException> exceptions = manager.addUnversionedFiles(targetChangeList, files, unversionedFileCondition, changesConsumer);
+    return exceptions.isEmpty();
   }
 
   @NotNull

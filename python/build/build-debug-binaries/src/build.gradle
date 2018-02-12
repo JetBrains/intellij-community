@@ -1,0 +1,87 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
+plugins {
+  id "com.jetbrains.python.envs" version "0.0.19"
+}
+
+ext {
+  pydevDir = new File(projectDir, '/../../../helpers/pydev/')
+}
+
+envs {
+  def customBuildDir = System.getenv().get("PYCHARM_BUILD_DIR")
+  project.buildDir = customBuildDir? new File(customBuildDir): buildDir
+  bootstrapDirectory = new File(buildDir, 'pythons')
+  envsDirectory = new File(buildDir, 'envs')
+
+  zipRepository = new URL("http://repo.labs.intellij.net/pycharm/python-archives-windows/")
+  shouldUseZipsFromRepository = Os.isFamily(Os.FAMILY_WINDOWS)
+
+  python "python26_64", "2.6.6", "64"
+  virtualenv "py26_64", "python26_64", ["cython"]
+
+  python "python27_64", "2.7.14", "64"
+  virtualenv "py27_64", "python27_64", ["cython"]
+
+  python "python34_64", "3.4.4", "64"
+  virtualenv "py34_64", "python34_64", ["cython"]
+
+  python "python35_64", "3.5.3", "64"
+  virtualenv "py35_64", "python35_64", ["cython"]
+
+  python "python36_64", "3.6.3", "64"
+  virtualenv "py36_64", "python36_64", ["cython"]
+
+  if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+    python "python26_32", "2.6.6", "32"
+    virtualenv "py26_32", "python26_32", ["cython"]
+
+    python "python27_32", "2.7.14", "32"
+    virtualenv "py27_32", "python27_32", ["cython"]
+
+    python "python34_32", "3.4.4", "32"
+    virtualenv "py34_32", "python34_32", ["cython"]
+
+    python "python35_32", "3.5.3", "32"
+    virtualenv "py35_32", "python35_32", ["cython"]
+
+    python "python36_32", "3.6.3", "32"
+    virtualenv "py36_32", "python36_32", ["cython"]
+  }
+}
+
+task buildBinariesOnWindows(dependsOn: 'build_envs') << {
+  exec {
+    workingDir pydevDir
+
+    environment PYTHONPATH: pydevDir,
+                MINICONDA32_ENVS: envs.envsDirectory,
+                MINICONDA64_ENVS: envs.envsDirectory
+
+    commandLine "${envs.envsDirectory}/py27_32/Scripts/python.exe", "build_tools/build_binaries_windows.py"
+  }
+}
+
+task buildBinariesOnMac(dependsOn: 'build_envs') << {
+  exec {
+    workingDir pydevDir
+
+    environment PYTHONPATH: pydevDir,
+                MINICONDA64_ENVS: envs.envsDirectory
+
+    commandLine "${envs.envsDirectory}/py36_64/bin/python", "build_tools/build_binaries_osx.py"
+  }
+}
+
+task buildBinaries() {
+  if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+    dependsOn buildBinariesOnWindows
+  }
+  else if (Os.isFamily(Os.FAMILY_MAC)) {
+    dependsOn buildBinariesOnMac
+  }
+}
+
+task wrapper(type: Wrapper) << {
+  gradleVersion = '4.2'
+}

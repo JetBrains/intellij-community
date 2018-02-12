@@ -16,6 +16,7 @@
 
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -24,10 +25,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.LightIdeaTestFixture;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
@@ -36,8 +37,9 @@ import com.intellij.testFramework.fixtures.LightIdeaTestFixture;
 public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixture {
   private final LightProjectDescriptor myProjectDescriptor;
   private CodeStyleSettings myOldCodeStyleSettings;
+  private SdkLeakTracker myOldSdks;
 
-  public LightIdeaTestFixtureImpl(LightProjectDescriptor projectDescriptor) {
+  public LightIdeaTestFixtureImpl(@NotNull LightProjectDescriptor projectDescriptor) {
     myProjectDescriptor = projectDescriptor;
   }
 
@@ -53,20 +55,24 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
     myOldCodeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
 
     application.setDataProvider(new TestDataProvider(getProject()));
+    myOldSdks = new SdkLeakTracker();
   }
 
   @Override
-  public void tearDown() throws Exception {
+  public void tearDown() {
     Project project = getProject();
-    CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
+    CodeStyle.dropTemporarySettings(project);
     CodeStyleSettings oldCodeStyleSettings = myOldCodeStyleSettings;
     myOldCodeStyleSettings = null;
 
+    // don't use method references here to make stack trace reading easier
+    //noinspection Convert2MethodRef
     new RunAll()
       .append(() -> UsefulTestCase.doCheckForSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings()))
+      .append(() -> super.tearDown()) // call all disposables' dispose() while the project is still open
       .append(() -> LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication()))
       .append(() -> LightPlatformTestCase.checkEditorsReleased())
-      .append(super::tearDown)
+      .append(() -> myOldSdks.checkForJdkTableLeaks())
       .append(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project))
       .append(() -> PersistentFS.getInstance().clearIdCache())
       .append(() -> PlatformTestCase.cleanupApplicationCaches(project))
@@ -80,7 +86,7 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
 
   protected CodeStyleSettings getCurrentCodeStyleSettings() {
     if (CodeStyleSchemes.getInstance().getCurrentScheme() == null) return new CodeStyleSettings();
-    return CodeStyleSettingsManager.getSettings(getProject());
+    return CodeStyle.getSettings(getProject());
   }
 
   @Override

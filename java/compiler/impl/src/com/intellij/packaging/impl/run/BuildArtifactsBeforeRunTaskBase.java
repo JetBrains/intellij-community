@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public abstract class BuildArtifactsBeforeRunTaskBase<Self extends BuildArtifact
   }
 
   @Override
-  public void readExternal(Element element) {
+  public void readExternal(@NotNull Element element) {
     super.readExternal(element);
     final List<Element> children = element.getChildren(myElementName);
     final ArtifactPointerManager pointerManager = ArtifactPointerManager.getInstance(myProject);
@@ -62,7 +62,7 @@ public abstract class BuildArtifactsBeforeRunTaskBase<Self extends BuildArtifact
   }
 
   @Override
-  public void writeExternal(Element element) {
+  public void writeExternal(@NotNull Element element) {
     super.writeExternal(element);
     for (ArtifactPointer pointer : myArtifactPointers) {
       element.addContent(new Element(myElementName).setAttribute(NAME_ATTRIBUTE, pointer.getArtifactName()));

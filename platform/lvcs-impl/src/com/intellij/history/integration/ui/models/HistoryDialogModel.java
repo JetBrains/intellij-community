@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.history.integration.ui.models;
 
@@ -25,9 +11,8 @@ import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.patches.PatchCreator;
 import com.intellij.history.integration.revertion.Reverter;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -84,20 +69,18 @@ public abstract class HistoryDialogModel {
   }
 
   protected Pair<Revision, List<RevisionItem>> calcRevisionsCache() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Pair<Revision, List<RevisionItem>>>() {
-      public Pair<Revision, List<RevisionItem>> compute() {
-        myGateway.registerUnsavedDocuments(myVcs);
-        String path = myFile.getPath();
-        RootEntry root = myGateway.createTransientRootEntry();
-        RevisionsCollector collector = new RevisionsCollector(myVcs, root, path, myProject.getLocationHash(), myFilter);
+    return ReadAction.compute(() -> {
+      myGateway.registerUnsavedDocuments(myVcs);
+      String path = myFile.getPath();
+      RootEntry root = myGateway.createTransientRootEntry();
+      RevisionsCollector collector = new RevisionsCollector(myVcs, root, path, myProject.getLocationHash(), myFilter);
 
-        List<Revision> all = collector.getResult();
-        return Pair.create(all.get(0), groupRevisions(all.subList(1, all.size())));
-      }
+      List<Revision> all = collector.getResult();
+      return Pair.create(all.get(0), groupRevisions(all.subList(1, all.size())));
     });
   }
 
-  private List<RevisionItem> groupRevisions(List<Revision> revs) {
+  private static List<RevisionItem> groupRevisions(List<Revision> revs) {
     LinkedList<RevisionItem> result = new LinkedList<>();
 
     for (Revision each : ContainerUtil.iterateBackward(revs)) {

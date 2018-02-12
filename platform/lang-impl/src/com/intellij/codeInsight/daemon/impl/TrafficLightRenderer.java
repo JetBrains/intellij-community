@@ -90,7 +90,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     myDocument = document;
     myFile = file;
     mySeverityRegistrar = SeverityRegistrar.getSeverityRegistrar(myProject);
-    refresh();
+    refresh(null);
 
     if (project != null) {
       final MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
@@ -113,7 +113,12 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     }
   }
 
-  private void refresh() {
+  @NotNull
+  public SeverityRegistrar getSeverityRegistrar() {
+    return mySeverityRegistrar;
+  }
+
+  protected void refresh(@Nullable EditorMarkupModelImpl editorMarkupModel) {
     int maxIndex = mySeverityRegistrar.getSeverityMaxIndex();
     if (errorCount != null && maxIndex + 1 == errorCount.length) return;
     errorCount = new int[maxIndex + 1];
@@ -130,8 +135,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     ErrorStripeRenderer renderer = editorMarkupModel.getErrorStripeRenderer();
     if (renderer instanceof TrafficLightRenderer) {
       TrafficLightRenderer tlr = (TrafficLightRenderer)renderer;
-      tlr.refresh();
-      ((EditorMarkupModelImpl)editorMarkupModel).repaintVerticalScrollBar();
+      EditorMarkupModelImpl markupModelImpl = (EditorMarkupModelImpl)editorMarkupModel;
+      tlr.refresh(markupModelImpl);
+      markupModelImpl.repaintVerticalScrollBar();
       if (tlr.myFile == null || tlr.myFile.isValid()) return;
       Disposer.dispose(tlr);
     }
@@ -164,8 +170,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     public boolean errorAnalyzingFinished; // all passes done
     List<ProgressableTextEditorHighlightingPass> passStati = Collections.emptyList();
     public int[] errorCount = ArrayUtil.EMPTY_INT_ARRAY;
-    public String reasonWhyDisabled;
-    public String reasonWhySuspended;
+    String reasonWhyDisabled;
+    String reasonWhySuspended;
 
     public DaemonCodeAnalyzerStatus() {
     }
@@ -201,7 +207,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         status.errorAnalyzingFinished = true;
         return status;
       }
-      else if (myFile instanceof PsiCompiledElement) {
+      if (myFile instanceof PsiCompiledElement) {
         status.reasonWhyDisabled = "File is decompiled";
         status.errorAnalyzingFinished = true;
         return status;
@@ -245,7 +251,10 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < passes.size(); i++) {
       TextEditorHighlightingPass tepass = passes.get(i);
-      if (!(tepass instanceof ProgressableTextEditorHighlightingPass)) continue;
+      if (!(tepass instanceof ProgressableTextEditorHighlightingPass) ||
+          StringUtil.isEmpty(((ProgressableTextEditorHighlightingPass)tepass).getPresentableName())) {
+        continue;
+      }
       ProgressableTextEditorHighlightingPass pass = (ProgressableTextEditorHighlightingPass)tepass;
 
       if (pass.getProgress() < 0) continue;
@@ -385,7 +394,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     for (ProgressableTextEditorHighlightingPass pass : status.passStati) {
       JProgressBar progressBar = new JProgressBar(0, MAX);
       progressBar.setMaximum(MAX);
-      progressBar.putClientProperty("JComponent.sizeVariant", "mini");
+      UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, progressBar);
       JLabel percLabel = new JLabel();
       percLabel.setText(TrafficProgressPanel.MAX_TEXT);
       passes.put(pass, Pair.create(progressBar, percLabel));

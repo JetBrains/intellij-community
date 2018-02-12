@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,12 +142,12 @@ public class PyMoveFileHandler extends MoveFileHandler {
   }
 
   private static boolean canBeRelative(@NotNull PyFromImportStatement statement) {
-    return !LanguageLevel.forElement(statement).isPy3K() || statement.getRelativeLevel() > 0;
+    return LanguageLevel.forElement(statement).isPython2() || statement.getRelativeLevel() > 0;
   }
 
 
   private static boolean canBeRelative(@NotNull PyImportElement statement) {
-    return !LanguageLevel.forElement(statement).isPy3K();
+    return LanguageLevel.forElement(statement).isPython2();
   }
 
   /**
@@ -194,7 +194,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
   }
 
   private static boolean probablyNamespacePackage(@NotNull PsiFile anchor, @NotNull PsiDirectory destination, @NotNull PsiDirectory root) {
-    if (!LanguageLevel.forElement(anchor).isAtLeast(LanguageLevel.PYTHON33)) {
+    if (LanguageLevel.forElement(anchor).isPython2()) {
       return false;
     }
     while (destination != null && destination != root) {
@@ -281,7 +281,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
       }
     }
     if (!updatedFiles.isEmpty()) {
-      final PyImportOptimizer optimizer = new PyImportOptimizer();
+      final PyImportOptimizer optimizer = PyImportOptimizer.onlyRemoveUnused();
       for (PsiFile file : updatedFiles) {
         final boolean injectedFragment = InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file);
         if (!injectedFragment) {
@@ -310,20 +310,17 @@ public class PyMoveFileHandler extends MoveFileHandler {
    * @param importStatement import statement to update
    * @param qualifiedName   qualified name of new import source
    * @return updated import statement
-   * @see #replaceWithQualifiedExpression(com.intellij.psi.PsiElement, com.intellij.psi.util.QualifiedName)
+   * @see #replaceWithQualifiedExpression(PsiElement, QualifiedName)
    */
   @NotNull
   private static PsiElement replaceRelativeImportSourceWithQualifiedExpression(@NotNull PyFromImportStatement importStatement,
                                                                                @Nullable QualifiedName qualifiedName) {
     final Couple<PsiElement> range = getRelativeImportSourceRange(importStatement);
     if (range != null && qualifiedName != null) {
-      if (range.getFirst() == range.getSecond()) {
-        replaceWithQualifiedExpression(range.getFirst(), qualifiedName);
-      }
-      else {
+      if (range.getFirst() != range.getSecond()) {
         importStatement.deleteChildRange(range.getFirst().getNextSibling(), range.getSecond());
-        replaceWithQualifiedExpression(range.getFirst(), qualifiedName);
       }
+      replaceWithQualifiedExpression(range.getFirst(), qualifiedName);
     }
     return importStatement;
   }
@@ -332,7 +329,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
   private static Couple<PsiElement> getRelativeImportSourceRange(@NotNull PyFromImportStatement statement) {
     final PsiElement fromKeyword = statement.getFirstChild();
     assert fromKeyword.getNode().getElementType() == PyTokenTypes.FROM_KEYWORD;
-    final PsiElement elementAfterFrom = PsiTreeUtil.skipSiblingsForward(fromKeyword, PsiWhiteSpace.class);
+    final PsiElement elementAfterFrom = PsiTreeUtil.skipWhitespacesForward(fromKeyword);
     if (elementAfterFrom == null) {
       return null;
     }
@@ -344,7 +341,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
       PsiElement next = elementAfterFrom;
       do {
         lastDot = next;
-        next = PsiTreeUtil.skipSiblingsForward(next, PsiWhiteSpace.class);
+        next = PsiTreeUtil.skipWhitespacesForward(next);
       }
       while (next != null && next.getNode().getElementType() == PyTokenTypes.DOT);
       if (next instanceof PyReferenceExpression) {

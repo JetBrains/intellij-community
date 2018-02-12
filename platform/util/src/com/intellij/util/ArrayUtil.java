@@ -233,9 +233,8 @@ public class ArrayUtil extends ArrayUtilRt {
   @NotNull
   @Contract(pure=true)
   public static Object[] toObjectArray(@NotNull Collection<?> collection) {
-    if (collection.isEmpty()) return EMPTY_OBJECT_ARRAY;
     //noinspection SSBasedInspection
-    return collection.toArray(new Object[collection.size()]);
+    return collection.toArray(EMPTY_OBJECT_ARRAY);
   }
 
   @NotNull
@@ -787,6 +786,15 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @Contract(pure=true)
+  public static int indexOf(@NotNull byte[] ints, byte value, int start, int end) {
+    for (int i = start; i < end; i++) {
+      if (ints[i] == value) return i;
+    }
+
+    return -1;
+  }
+
+  @Contract(pure=true)
   public static <T> int lastIndexOf(@NotNull final T[] src, final T obj) {
     for (int i = src.length - 1; i >= 0; i--) {
       final T o = src[i];
@@ -891,13 +899,13 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @Nullable
-  @Contract(pure=true)
+  @Contract(value = "null -> null", pure=true)
   public static <T> T getFirstElement(@Nullable T[] array) {
     return array != null && array.length > 0 ? array[0] : null;
   }
 
   @Nullable
-  @Contract(pure=true)
+  @Contract(value = "null -> null", pure=true)
   public static <T> T getLastElement(@Nullable T[] array) {
     return array != null && array.length > 0 ? array[array.length - 1] : null;
   }

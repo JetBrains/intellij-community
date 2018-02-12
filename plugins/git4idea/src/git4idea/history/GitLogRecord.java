@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
@@ -47,25 +46,27 @@ class GitLogRecord {
   private static final Logger LOG = Logger.getInstance(GitLogRecord.class);
 
   @NotNull private final Map<GitLogParser.GitLogOption, String> myOptions;
-  @NotNull private final List<String> myPaths;
   @NotNull private final List<GitLogStatusInfo> myStatusInfo;
   private final boolean mySupportsRawBody;
 
   private GitHandler myHandler;
 
   GitLogRecord(@NotNull Map<GitLogParser.GitLogOption, String> options,
-               @NotNull List<String> paths,
                @NotNull List<GitLogStatusInfo> statusInfo,
                boolean supportsRawBody) {
     myOptions = options;
-    myPaths = paths;
     myStatusInfo = statusInfo;
     mySupportsRawBody = supportsRawBody;
   }
 
   @NotNull
-  private List<String> getPaths() {
-    return myPaths;
+  private Collection<String> getPaths() {
+    LinkedHashSet<String> result = ContainerUtil.newLinkedHashSet();
+    for (GitLogStatusInfo info : myStatusInfo) {
+      result.add(info.getFirstPath());
+      if (info.getSecondPath() != null) result.add(info.getSecondPath());
+    }
+    return result;
   }
 
   @NotNull
@@ -79,7 +80,7 @@ class GitLogRecord {
     String prefix = root.getPath() + "/";
     for (String strPath : getPaths()) {
       final String subPath = GitUtil.unescapePath(strPath);
-      final FilePath revisionPath = VcsUtil.getFilePathForDeletedFile(prefix + subPath, false);
+      final FilePath revisionPath = VcsUtil.getFilePath(prefix + subPath, false);
       res.add(revisionPath);
     }
     return res;
@@ -99,6 +100,11 @@ class GitLogRecord {
   @NotNull
   String getHash() {
     return lookup(HASH);
+  }
+
+  @NotNull
+  String getTreeHash() {
+    return lookup(TREE);
   }
 
   @NotNull
@@ -185,32 +191,15 @@ class GitLogRecord {
     return parseRefNames(decorate);
   }
 
-  /**
-   * Returns the list of tags and the list of branches.
-   * A single method is used to return both, because they are returned together by Git and we don't want to parse them twice.
-   *
-   * @param allBranchesSet
-   * @return
-   */
-  /*Pair<List<String>, List<String>> getTagsAndBranches(SymbolicRefs refs) {
-    final String decorate = myOptions.get(REF_NAMES);
-    final String[] refNames = parseRefNames(decorate);
-    final List<String> tags = refNames.length > 0 ? new ArrayList<String>() : Collections.<String>emptyList();
-    final List<String> branches = refNames.length > 0 ? new ArrayList<String>() : Collections.<String>emptyList();
-    for (String refName : refNames) {
-      if (refs.contains(refName)) {
-        // also some gits can return ref name twice (like (HEAD, HEAD), so check we will show it only once)
-        if (!branches.contains(refName)) {
-          branches.add(shortBuffer(refName));
-        }
-      } else {
-        if (!tags.contains(refName)) {
-          tags.add(shortBuffer(refName));
-        }
-      }
-    }
-    return Pair.create(tags, branches);
-  }*/
+  @NotNull
+  public Map<GitLogParser.GitLogOption, String> getOptions() {
+    return myOptions;
+  }
+
+  public boolean isSupportsRawBody() {
+    return mySupportsRawBody;
+  }
+
   @NotNull
   private static List<String> parseRefNames(@Nullable final String decoration) {
     if (decoration == null) {
@@ -226,12 +215,7 @@ class GitLogRecord {
       final String POINTER = " -> ";   // HEAD -> refs/heads/master in Git 2.4.3+
       if (item.contains(POINTER)) {
         List<String> parts = StringUtil.split(item, POINTER);
-        result.addAll(ContainerUtil.map(parts, new Function<String, String>() {
-          @Override
-          public String fun(String s) {
-            return shortBuffer(s.trim());
-          }
-        }));
+        result.addAll(ContainerUtil.map(parts, s -> shortBuffer(s.trim())));
       }
       else {
         int colon = item.indexOf(':'); // tags have the "tag:" prefix.
@@ -248,7 +232,8 @@ class GitLogRecord {
 
   @NotNull
   public List<Change> parseChanges(@NotNull Project project, @NotNull VirtualFile vcsRoot) throws VcsException {
-    return GitChangesParser.parse(project, vcsRoot, myStatusInfo, getHash(), getDate(), Arrays.asList(getParentsHashes()));
+    String[] hashes = getParentsHashes();
+    return GitChangesParser.parse(project, vcsRoot, myStatusInfo, getHash(), getDate(), hashes.length == 0 ? null : hashes[0]);
   }
 
   /**
@@ -260,7 +245,7 @@ class GitLogRecord {
 
   @Override
   public String toString() {
-    return String.format("GitLogRecord{myOptions=%s, myPaths=%s, myStatusInfo=%s, mySupportsRawBody=%s, myHandler=%s}",
-                         myOptions, myPaths, myStatusInfo, mySupportsRawBody, myHandler);
+    return String.format("GitLogRecord{myOptions=%s, myStatusInfo=%s, mySupportsRawBody=%s, myHandler=%s}",
+                         myOptions, myStatusInfo, mySupportsRawBody, myHandler);
   }
 }

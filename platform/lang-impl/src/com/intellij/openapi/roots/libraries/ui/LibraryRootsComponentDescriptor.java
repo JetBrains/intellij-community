@@ -64,7 +64,6 @@ public abstract class LibraryRootsComponentDescriptor {
 
   /**
    * @return descriptor for the file chooser which will be shown when 'Attach Files' button is pressed
-   * @param libraryName
    */
   @NotNull
   public FileChooserDescriptor createAttachFilesChooserDescriptor(@Nullable String libraryName) {

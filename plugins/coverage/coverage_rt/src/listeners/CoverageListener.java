@@ -1,7 +1,3 @@
-/*
- * User: anna
- * Date: 19-Feb-2010
- */
 package com.intellij.coverage.listeners;
 
 public abstract class CoverageListener {
@@ -15,7 +11,7 @@ public abstract class CoverageListener {
       final char ch = fileName.charAt(i);
 
       if (ch > 0 && ch < 255) {
-        if (Character.isLetterOrDigit(ch)) {
+        if (Character.isJavaIdentifierPart(ch) || ch == ' ' || ch == '@' || ch == '-') {
           result.append(ch);
         }
         else {

@@ -17,6 +17,7 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -113,7 +114,8 @@ public class OrderRootType {
     return allTypes;
   }
 
-  protected static <T> T getOrderRootType(final Class<? extends T> orderRootTypeClass) {
+  @NotNull
+  protected static <T> T getOrderRootType(@NotNull Class<? extends T> orderRootTypeClass) {
     OrderRootType[] rootTypes = Extensions.getExtensions(EP_NAME);
     for (OrderRootType rootType : rootTypes) {
       if (orderRootTypeClass.isInstance(rootType)) {

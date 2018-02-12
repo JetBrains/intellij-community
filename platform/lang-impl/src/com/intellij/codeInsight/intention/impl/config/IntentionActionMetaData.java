@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -33,7 +34,7 @@ public final class IntentionActionMetaData extends BeforeAfterActionMetaData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionActionMetaData");
   @NotNull private final IntentionAction myAction;
   @NotNull public final String[] myCategory;
-  private URL myDirURL = null;
+  private URL myDirURL;
   @NonNls private static final String INTENTION_DESCRIPTION_FOLDER = "intentionDescriptions";
 
   public IntentionActionMetaData(@NotNull IntentionAction action,
@@ -48,9 +49,9 @@ public final class IntentionActionMetaData extends BeforeAfterActionMetaData {
 
   public IntentionActionMetaData(@NotNull final IntentionAction action,
                                  @NotNull final String[] category,
-                                 final TextDescriptor description,
-                                 final TextDescriptor[] exampleUsagesBefore,
-                                 final TextDescriptor[] exampleUsagesAfter) {
+                                 @NotNull TextDescriptor description,
+                                 @NotNull TextDescriptor[] exampleUsagesBefore,
+                                 @NotNull TextDescriptor[] exampleUsagesAfter) {
     super(description, exampleUsagesBefore, exampleUsagesAfter);
 
     myAction = action;
@@ -98,6 +99,7 @@ public final class IntentionActionMetaData extends BeforeAfterActionMetaData {
     return myAction;
   }
 
+  @Override
   @NotNull
   protected URL getDirURL() {
     if (myDirURL == null) {
@@ -106,8 +108,15 @@ public final class IntentionActionMetaData extends BeforeAfterActionMetaData {
     if (myDirURL == null) { //plugin compatibility
       myDirURL = getIntentionDescriptionDirURL(myLoader, getFamily());
     }
-    LOG.assertTrue(myDirURL != null, "Intention Description Dir URL is null: " +
-                                     getFamily() + "; " + myDescriptionDirectoryName + ", " + myLoader);
+    if (myDirURL == null) {
+      PluginId pluginId = getPluginId();
+      String errorMessage = "Intention Description Dir URL is null: " + getFamily() + "; " + myDescriptionDirectoryName;
+      if (pluginId != null) {
+        throw new PluginException(errorMessage, pluginId);
+      } else {
+        throw new RuntimeException(errorMessage);
+      }
+    }
     return myDirURL;
   }
 }

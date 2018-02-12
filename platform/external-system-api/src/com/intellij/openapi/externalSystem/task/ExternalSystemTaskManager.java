@@ -19,14 +19,14 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
- * Abstraction layer for executing gradle tasks.
+ * Abstraction layer for executing external system tasks.
  * 
  * @author Denis Zhdanov
  * @since 3/14/13 5:04 PM
@@ -52,7 +52,9 @@ public interface ExternalSystemTaskManager<S extends ExternalSystemExecutionSett
                             @Nullable S settings,
                             @Nullable String jvmAgentSetup,
                             @NotNull ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
-    executeTasks(id, taskNames, projectPath, settings, Collections.emptyList(), Collections.emptyList(), jvmAgentSetup, listener);
+    List<String> vmOptions = settings == null ? ContainerUtil.emptyList() : ContainerUtil.newArrayList(settings.getVmOptions());
+    List<String> arguments = settings == null ? ContainerUtil.emptyList() : ContainerUtil.newArrayList(settings.getArguments());
+    executeTasks(id, taskNames, projectPath, settings, vmOptions, arguments, jvmAgentSetup, listener);
   }
 
   boolean cancelTask(@NotNull ExternalSystemTaskId id,

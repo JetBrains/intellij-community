@@ -48,7 +48,7 @@ public class ExcludeFolderImpl extends ContentFolderBaseImpl implements Clonable
     LOG.assertTrue(ELEMENT_NAME.equals(element.getName()));
   }
 
-  public ExcludeFolderImpl(@NotNull ExcludeFolderImpl that, @NotNull ContentEntryImpl contentEntry) {
+  private ExcludeFolderImpl(@NotNull ExcludeFolderImpl that, @NotNull ContentEntryImpl contentEntry) {
     super(that, contentEntry);
   }
 

@@ -111,7 +111,7 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
 
   @Override
   protected List<ErrorInfo> getErrors(@NotNull PropertiesContainer container) {
-    return container instanceof RadComponent ? RadComponent.getError((RadComponent)container) : Collections.<ErrorInfo>emptyList();
+    return container instanceof RadComponent ? RadComponent.getError((RadComponent)container) : Collections.emptyList();
   }
 
   @NotNull
@@ -157,7 +157,7 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
       removeSelectionListener();
 
       if (myArea == null) {
-        update(Collections.<PropertiesContainer>emptyList(), null);
+        update(Collections.emptyList(), null);
       }
       else {
         update(myArea.getSelection(), myDesigner.getSelectionProperty(getCurrentKey()));

@@ -1,0 +1,14 @@
+<idea-plugin>
+  <id>com.intellij</id>
+  <name>myPlugin</name>
+
+  <extensionPoints>
+    <extensionPoint name="myEp" interface="java.util.List" />
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <myEp implementation="java.util.ArrayList" id="arrayListExtension1"/>
+    <myEp implementation="java.util.ArrayList" id="arrayListExtension2"/>
+    <myEp implementation="java.util.LinkedList" id="linkedListExtension"/>
+  </extensions>
+</idea-plugin>

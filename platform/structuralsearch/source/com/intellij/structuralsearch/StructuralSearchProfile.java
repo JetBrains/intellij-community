@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -26,13 +13,14 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
-import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
+import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ParameterInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementBuilder;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
@@ -47,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 
 /**
  * @author Eugene.Kudelevsky
@@ -62,18 +49,10 @@ public abstract class StructuralSearchProfile {
   public abstract PsiElementVisitor createMatchingVisitor(@NotNull GlobalMatchingVisitor globalVisitor);
 
   @NotNull
-  public abstract PsiElementVisitor getLexicalNodesFilter(@NotNull LexicalNodesFilter filter);
+  public abstract NodeFilter getLexicalNodesFilter();
 
   @NotNull
   public abstract CompiledPattern createCompiledPattern();
-
-  public static String getTypeName(FileType fileType) {
-    return fileType.getName().toLowerCase();
-  }
-
-  public final boolean canProcess(@NotNull FileType fileType) {
-    return fileType instanceof LanguageFileType && isMyLanguage(((LanguageFileType)fileType).getLanguage());
-  }
 
   public abstract boolean isMyLanguage(@NotNull Language language);
 
@@ -145,12 +124,12 @@ public abstract class StructuralSearchProfile {
     return null;
   }
 
-  @Nullable
+  @NotNull
   public abstract Class<? extends TemplateContextType> getTemplateContextTypeClass();
 
   public final TemplateContextType getTemplateContextType() {
     final Class<? extends TemplateContextType> clazz = getTemplateContextTypeClass();
-    return clazz != null ? ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), clazz) : null;
+    return ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), clazz);
   }
 
   @Nullable
@@ -163,17 +142,12 @@ public abstract class StructuralSearchProfile {
     return null;
   }
 
-  public void checkSearchPattern(Project project, MatchOptions options) {
+  public void checkSearchPattern(CompiledPattern pattern) {
   }
 
   public void checkReplacementPattern(Project project, ReplaceOptions options) {
-    String fileType = getTypeName(options.getMatchOptions().getFileType());
+    String fileType = options.getMatchOptions().getFileType().getName().toLowerCase();
     throw new UnsupportedPatternException(SSRBundle.message("replacement.not.supported.for.filetype", fileType));
-  }
-
-  @NotNull
-  public Language getLanguage(PsiElement element) {
-    return element.getLanguage();
   }
 
   // only for nodes not filtered by lexical-nodes filter; they can be by default
@@ -232,10 +206,10 @@ public abstract class StructuralSearchProfile {
                                 MatchResult match,
                                 StringBuilder result,
                                 int offset,
-                                HashMap<String, MatchResult> matchMap) {
+                                ReplacementInfo replacementInfo) {
     if (info.getName().equals(match.getName())) {
       String replacementString = match.getMatchImage();
-      boolean forceAddingNewLine = false;
+      boolean removeSemicolon = false;
       if (match.hasSons() && !match.isScopeMatch()) {
         // compound matches
         StringBuilder buf = new StringBuilder();
@@ -247,24 +221,27 @@ public abstract class StructuralSearchProfile {
             if (info.isArgumentContext()) {
               buf.append(',');
             } else {
-              buf.append(' ');
+              final PsiElement sibling = currentElement.getPrevSibling();
+              buf.append(sibling instanceof PsiWhiteSpace ? sibling.getText() : " ");
             }
           }
 
           buf.append(matchResult.getMatchImage());
-          forceAddingNewLine = currentElement instanceof PsiComment;
+          removeSemicolon = currentElement instanceof PsiComment;
         }
         replacementString = buf.toString();
       } else {
         if (info.isStatementContext()) {
-          forceAddingNewLine = match.getMatch() instanceof PsiComment;
+          removeSemicolon = match.getMatch() instanceof PsiComment;
         }
       }
 
       offset = Replacer.insertSubstitution(result, offset, info, replacementString);
-      if (forceAddingNewLine && info.isStatementContext()) {
-        result.insert(info.getStartIndex() + offset + 1, '\n');
-        offset++;
+      if (info.isStatementContext() &&
+           (removeSemicolon || StringUtil.endsWithChar(replacementString, ';') || StringUtil.endsWithChar(replacementString, '}'))) {
+        final int start = info.getStartIndex() + offset;
+        result.delete(start, start + 1);
+        offset--;
       }
     }
     return offset;
@@ -297,6 +274,6 @@ public abstract class StructuralSearchProfile {
 
   @NotNull
   public PsiElement getPresentableElement(PsiElement element) {
-    return element;
+    return isIdentifier(element) ? element.getParent() : element;
   }
 }

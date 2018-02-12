@@ -25,12 +25,9 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiVariable;
 
-/**
-* User: anna
-*/
 public abstract class VisibilityListener {
   private final Editor myEditor;
-  private static final Logger LOG = Logger.getInstance("#" + VisibilityListener.class.getName());
+  private static final Logger LOG = Logger.getInstance(VisibilityListener.class);
 
   protected VisibilityListener(Editor editor) {
     myEditor = editor;

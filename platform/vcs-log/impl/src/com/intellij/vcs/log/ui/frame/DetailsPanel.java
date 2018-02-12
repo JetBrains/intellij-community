@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,38 +20,56 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.CommitPresentation;
 import com.intellij.vcs.log.ui.table.CommitSelectionListener;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
+import com.intellij.vcs.log.util.TroveUtil;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+
+import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.buildPresentation;
 
 /**
  * @author Kirill Likhodedov
  */
-public class DetailsPanel extends JPanel implements EditorColorsListener {
+public class DetailsPanel extends JPanel implements EditorColorsListener, Disposable {
   private static final int MAX_ROWS = 50;
   private static final int MIN_SIZE = 20;
 
@@ -65,7 +83,8 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
   @NotNull private final VcsLogColorManager myColorManager;
 
   @NotNull private List<Integer> mySelection = ContainerUtil.emptyList();
-  @NotNull private Set<VcsFullCommitDetails> myCommitDetails = Collections.emptySet();
+  @NotNull private TIntHashSet myCommitIds = new TIntHashSet();
+  @Nullable private ProgressIndicator myResolveIndicator = null;
 
   public DetailsPanel(@NotNull VcsLogData logData,
                       @NotNull VcsLogColorManager colorManager,
@@ -74,47 +93,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
     myColorManager = colorManager;
 
     myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    myMainContentPanel = new ScrollablePanel() {
-      @Override
-      public boolean getScrollableTracksViewportWidth() {
-        boolean expanded = false;
-        for (Component c : getComponents()) {
-          if (c instanceof CommitPanel && ((CommitPanel)c).isExpanded()) {
-            expanded = true;
-            break;
-          }
-        }
-        return !expanded;
-      }
-
-      @Override
-      public Dimension getPreferredSize() {
-        Dimension preferredSize = super.getPreferredSize();
-        int height = Math.max(preferredSize.height, myScrollPane.getViewport().getHeight());
-        JBScrollPane scrollPane = UIUtil.getParentOfType(JBScrollPane.class, this);
-        if (scrollPane == null || getScrollableTracksViewportWidth()) {
-          return new Dimension(preferredSize.width, height);
-        }
-        else {
-          return new Dimension(Math.max(preferredSize.width, scrollPane.getViewport().getWidth()), height);
-        }
-      }
-
-      @Override
-      public Color getBackground() {
-        return CommitPanel.getCommitDetailsBackground();
-      }
-
-      @Override
-      protected void paintChildren(Graphics g) {
-        if (StringUtil.isNotEmpty(myEmptyText.getText())) {
-          myEmptyText.paint(this, g);
-        }
-        else {
-          super.paintChildren(g);
-        }
-      }
-    };
+    myMainContentPanel = new MyMainContentPanel();
     myEmptyText = new StatusText(myMainContentPanel) {
       @Override
       protected boolean isStatusVisible() {
@@ -125,8 +104,8 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
 
     myMainContentPanel.setOpaque(false);
     myScrollPane.setViewportView(myMainContentPanel);
-    myScrollPane.setBorder(IdeBorderFactory.createEmptyBorder());
-    myScrollPane.setViewportBorder(IdeBorderFactory.createEmptyBorder());
+    myScrollPane.setBorder(JBUI.Borders.empty());
+    myScrollPane.setViewportBorder(JBUI.Borders.empty());
 
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), parent, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
       @Override
@@ -140,6 +119,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
     add(myLoadingPanel, BorderLayout.CENTER);
 
     myEmptyText.setText("Commit details");
+    Disposer.register(parent, this);
   }
 
   @Override
@@ -166,6 +146,9 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
     }
   }
 
+  protected void navigate(@NotNull CommitId commitId) {
+  }
+
   private void rebuildCommitPanels(int[] selection) {
     myEmptyText.setText("");
 
@@ -178,7 +161,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
       if (i > 0) {
         myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null));
       }
-      myMainContentPanel.add(new CommitPanel(myLogData, myColorManager));
+      myMainContentPanel.add(new CommitPanel(myLogData, myColorManager, this::navigate));
     }
 
     // clear superfluous items
@@ -199,6 +182,67 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
     repaint();
   }
 
+  private void resolveHashes(@NotNull List<CommitId> ids,
+                             @NotNull List<CommitPresentation> presentations,
+                             @NotNull Set<String> unResolvedHashes,
+                             @NotNull Condition<Object> expired) {
+    if (!unResolvedHashes.isEmpty()) {
+      myResolveIndicator = BackgroundTaskUtil.executeOnPooledThread(this, () -> {
+        MultiMap<String, CommitId> resolvedHashes = MultiMap.createSmart();
+
+        Set<String> fullHashes =
+          ContainerUtil.newHashSet(ContainerUtil.filter(unResolvedHashes, h -> h.length() == HashImpl.FULL_HASH_LENGTH));
+        for (String fullHash : fullHashes) {
+          Hash hash = HashImpl.build(fullHash);
+          for (VirtualFile root : myLogData.getRoots()) {
+            CommitId id = new CommitId(hash, root);
+            if (myLogData.getStorage().containsCommit(id)) {
+              resolvedHashes.putValue(fullHash, id);
+            }
+          }
+        }
+        unResolvedHashes.removeAll(fullHashes);
+
+        if (!unResolvedHashes.isEmpty()) {
+          myLogData.getStorage().iterateCommits(commitId -> {
+
+            for (String hashString : unResolvedHashes) {
+              if (StringUtil.startsWithIgnoreCase(commitId.getHash().asString(), hashString)) {
+                resolvedHashes.putValue(hashString, commitId);
+              }
+            }
+            return false;
+          });
+        }
+
+        List<CommitPresentation> resolvedPresentations = ContainerUtil.map2List(presentations,
+                                                                                presentation -> presentation.resolve(resolvedHashes));
+        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        ApplicationManager.getApplication().invokeLater(() -> {
+                                                          myResolveIndicator = null;
+                                                          setPresentations(ids, resolvedPresentations);
+                                                        },
+                                                        Conditions.or(o -> myResolveIndicator != indicator, expired));
+      });
+    }
+  }
+
+  private void cancelResolve() {
+    if (myResolveIndicator != null) {
+      myResolveIndicator.cancel();
+      myResolveIndicator = null;
+    }
+  }
+
+  private void setPresentations(@NotNull List<CommitId> ids,
+                                @NotNull List<? extends CommitPresentation> presentations) {
+    assert ids.size() == presentations.size();
+    for (int i = 0; i < mySelection.size(); i++) {
+      CommitPanel commitPanel = getCommitPanel(i);
+      commitPanel.setCommit(ids.get(i), presentations.get(i));
+    }
+  }
+
   @NotNull
   private CommitPanel getCommitPanel(int index) {
     return (CommitPanel)myMainContentPanel.getComponent(2 * index);
@@ -210,6 +254,11 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
     return new Dimension(Math.max(minimumSize.width, JBUI.scale(MIN_SIZE)), Math.max(minimumSize.height, JBUI.scale(MIN_SIZE)));
   }
 
+  @Override
+  public void dispose() {
+    cancelResolve();
+  }
+
   private class CommitSelectionListenerForDetails extends CommitSelectionListener {
     public CommitSelectionListenerForDetails(VcsLogGraphTable graphTable) {
       super(DetailsPanel.this.myLogData, graphTable);
@@ -217,20 +266,27 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
 
     @Override
     protected void onDetailsLoaded(@NotNull List<VcsFullCommitDetails> detailsList) {
-      Set<VcsFullCommitDetails> newCommitDetails = ContainerUtil.newHashSet(detailsList);
-      for (int i = 0; i < mySelection.size(); i++) {
-        CommitPanel commitPanel = getCommitPanel(i);
-        commitPanel.setCommit(detailsList.get(i));
-      }
+      List<CommitId> ids = ContainerUtil.map(detailsList,
+                                             detail -> new CommitId(detail.getId(), detail.getRoot()));
+      Set<String> unResolvedHashes = ContainerUtil.newHashSet();
+      List<CommitPresentation> presentations = ContainerUtil.map(detailsList,
+                                                                 detail -> buildPresentation(myLogData.getProject(), detail,
+                                                                                             unResolvedHashes));
+      setPresentations(ids, presentations);
 
-      if (!ContainerUtil.intersects(myCommitDetails, newCommitDetails)) {
+      TIntHashSet newCommitDetails = TroveUtil.map2IntSet(detailsList, c -> myLogData.getStorage().getCommitIndex(c.getId(), c.getRoot()));
+      if (!TroveUtil.intersects(myCommitIds, newCommitDetails)) {
         myScrollPane.getVerticalScrollBar().setValue(0);
       }
-      myCommitDetails = newCommitDetails;
+      myCommitIds = newCommitDetails;
+
+      List<Integer> currentSelection = mySelection;
+      resolveHashes(ids, presentations, unResolvedHashes, o -> currentSelection != mySelection);
     }
 
     @Override
     protected void onSelection(@NotNull int[] selection) {
+      cancelResolve();
       rebuildCommitPanels(selection);
       final List<Integer> currentSelection = mySelection;
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -251,10 +307,8 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
 
     @Override
     protected void onEmptySelection() {
-      myEmptyText.setText("No commits selected");
-      myMainContentPanel.removeAll();
-      mySelection = ContainerUtil.emptyList();
-      myCommitDetails = Collections.emptySet();
+      cancelResolve();
+      setEmpty("No commits selected");
     }
 
     @NotNull
@@ -271,6 +325,64 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
     @Override
     protected void stopLoading() {
       myLoadingPanel.stopLoading();
+    }
+
+    @Override
+    protected void onError(@NotNull Throwable error) {
+      setEmpty("Error loading commits");
+    }
+
+    private void setEmpty(@NotNull String text) {
+      myEmptyText.setText(text);
+      myMainContentPanel.removeAll();
+      mySelection = ContainerUtil.emptyList();
+      myCommitIds = new TIntHashSet();
+    }
+  }
+
+  private class MyMainContentPanel extends ScrollablePanel {
+    @Override
+    public boolean getScrollableTracksViewportWidth() {
+      boolean expanded = false;
+      for (Component c : getComponents()) {
+        if (c instanceof CommitPanel && ((CommitPanel)c).isExpanded()) {
+          expanded = true;
+          break;
+        }
+      }
+      // expanded containing branches are displayed in a table, it is more convenient to have a scrollbar in this case
+      return !expanded;
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension preferredSize = super.getPreferredSize();
+      int height = Math.max(preferredSize.height, myScrollPane.getViewport().getHeight());
+      JBScrollPane scrollPane = UIUtil.getParentOfType(JBScrollPane.class, this);
+      if (scrollPane == null || getScrollableTracksViewportWidth()) {
+        return new Dimension(preferredSize.width, height);
+      }
+      else {
+        // we want content panel to fill all available horizontal space in order to display root label in the upper-right corner
+        // but when containing branches are expanded, we show a horizontal scrollbar, so content panel width wont be automatically adjusted
+        // here it is done manually
+        return new Dimension(Math.max(preferredSize.width, scrollPane.getViewport().getWidth()), height);
+      }
+    }
+
+    @Override
+    public Color getBackground() {
+      return CommitPanel.getCommitDetailsBackground();
+    }
+
+    @Override
+    protected void paintChildren(Graphics g) {
+      if (StringUtil.isNotEmpty(myEmptyText.getText())) {
+        myEmptyText.paint(this, g);
+      }
+      else {
+        super.paintChildren(g);
+      }
     }
   }
 }

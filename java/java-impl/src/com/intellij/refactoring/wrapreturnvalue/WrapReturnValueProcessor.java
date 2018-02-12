@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.MoveDestination;
@@ -44,7 +44,6 @@ import com.intellij.refactoring.wrapreturnvalue.usageInfo.UnwrapCall;
 import com.intellij.refactoring.wrapreturnvalue.usageInfo.WrapReturnValue;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -110,7 +109,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
         return unboxedType.getCanonicalText() + "Value()";
       }
 
-      final PsiMethod getter = PropertyUtil.findGetterForField(myDelegateField);
+      final PsiMethod getter = PropertyUtilBase.findGetterForField(myDelegateField);
       return getter != null ? getter.getName() : "";
     }
     return "";
@@ -331,6 +330,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
     return true;
   }
 
+  @NotNull
   protected String getCommandName() {
     final PsiClass containingClass = myMethod.getContainingClass();
     return RefactorJBundle.message("wrapped.return.command.name", myClassName, containingClass.getName(), '.', myMethod.getName());
@@ -357,7 +357,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
       final PsiExpression returnValue = statement.getReturnValue();
       if (myUseExistingClass && returnValue instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)returnValue;
-        if (callExpression.getArgumentList().getExpressions().length == 0) {
+        if (callExpression.getArgumentList().isEmpty()) {
           final PsiReferenceExpression callMethodExpression = callExpression.getMethodExpression();
           final String methodName = callMethodExpression.getReferenceName();
           if (Comparing.strEqual(myUnwrapMethodName, methodName)) {

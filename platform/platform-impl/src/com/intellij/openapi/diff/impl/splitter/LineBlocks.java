@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class LineBlocks {
-  public static final LineBlocks EMPTY = new LineBlocks(Collections.<Diff>emptyList());
+  public static final LineBlocks EMPTY = new LineBlocks(Collections.emptyList());
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.splitter.LineBlocks");
   private final List<Diff> myDiffs;
 
@@ -170,7 +170,7 @@ public class LineBlocks {
     for (LineFragment fragment : lines) {
       if (fragment.getType() != null) filtered.add(fragment);
     }
-    return createLineBlocks(filtered.toArray(new LineBlock[filtered.size()]));
+    return createLineBlocks(filtered.toArray(new LineBlock[0]));
   }
 
   static LineBlocks createLineBlocks(LineBlock[] blocks) {

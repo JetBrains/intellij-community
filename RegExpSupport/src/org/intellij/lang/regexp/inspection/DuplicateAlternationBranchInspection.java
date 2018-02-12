@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.intellij.lang.regexp.inspection;
 
@@ -46,21 +34,26 @@ public class DuplicateAlternationBranchInspection extends LocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new DuplicateAlternationBranchVisitor(holder);
+    return new DuplicateAlternationBranchVisitor(holder, isOnTheFly);
   }
 
   private static class DuplicateAlternationBranchVisitor extends RegExpElementVisitor {
 
     private final ProblemsHolder myHolder;
+    private final boolean myIsOnTheFly;
 
-    public DuplicateAlternationBranchVisitor(ProblemsHolder holder) {
+    public DuplicateAlternationBranchVisitor(ProblemsHolder holder, boolean isOnTheFly) {
       myHolder = holder;
+      myIsOnTheFly = isOnTheFly;
     }
 
     @Override
     public void visitRegExpPattern(RegExpPattern pattern) {
-      final Set<RegExpBranch> reported = new HashSet<>(2);
       final RegExpBranch[] branches = pattern.getBranches();
+      if (branches.length < 2) {
+        return;
+      }
+      final Set<RegExpBranch> reported = new HashSet<>(2);
       for (int i = 0; i < branches.length - 1; i++) {
         final RegExpBranch branch1 = branches[i];
         if (branch1.getAtoms().length == 0) {
@@ -69,15 +62,19 @@ public class DuplicateAlternationBranchInspection extends LocalInspectionTool {
         for (int j = i + 1; j < branches.length; j++) {
           final RegExpBranch branch2 = branches[j];
           if (RegExpEquivalenceChecker.areElementsEquivalent(branch1, branch2)) {
-            if (reported.add(branch1)) {
-              myHolder.registerProblem(branch1, "Duplicate branch in alternation", new DuplicateAlternationBranchFix());
+            if (reported.add(branch1) && myIsOnTheFly) {
+              registerProblem(branch1);
             }
             if (reported.add(branch2)) {
-              myHolder.registerProblem(branch2, "Duplicate branch in alternation", new DuplicateAlternationBranchFix());
+              registerProblem(branch2);
             }
           }
         }
       }
+    }
+
+    private void registerProblem(RegExpBranch branch1) {
+      myHolder.registerProblem(branch1, "Duplicate branch in alternation", new DuplicateAlternationBranchFix());
     }
   }
 

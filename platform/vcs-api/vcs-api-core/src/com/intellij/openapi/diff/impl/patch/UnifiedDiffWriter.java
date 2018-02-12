@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 24.11.2006
- * Time: 15:29:45
- */
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.extensions.Extensions;
@@ -28,7 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

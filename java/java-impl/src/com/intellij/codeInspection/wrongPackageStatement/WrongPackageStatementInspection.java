@@ -21,10 +21,6 @@ import com.intellij.psi.PsiFile;
 
 import java.util.List;
 
-/**
- * User: anna
- * Date: 14-Nov-2005
- */
 public class WrongPackageStatementInspection extends WrongPackageStatementInspectionBase {
   @Override
   protected void addMoveToPackageFix(PsiFile file, String packName, List<LocalQuickFix> availableFixes) {

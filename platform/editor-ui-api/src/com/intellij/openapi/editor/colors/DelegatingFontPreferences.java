@@ -18,67 +18,57 @@ package com.intellij.openapi.editor.colors;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.function.Supplier;
 
-public class DelegatingFontPreferences implements FontPreferences {
-  private FontPreferences myDelegate;
+public class DelegatingFontPreferences extends FontPreferences {
+  private final Supplier<FontPreferences> myDelegateSupplier;
 
-  public DelegatingFontPreferences(FontPreferences delegate) {
-    myDelegate = delegate;
+  public DelegatingFontPreferences(@NotNull Supplier<FontPreferences> delegateSupplier) {
+    myDelegateSupplier = delegateSupplier;
   }
 
   @NotNull
   @Override
   public List<String> getEffectiveFontFamilies() {
-    return myDelegate.getEffectiveFontFamilies();
+    return myDelegateSupplier.get().getEffectiveFontFamilies();
   }
 
   @NotNull
   @Override
   public List<String> getRealFontFamilies() {
-    return myDelegate.getRealFontFamilies();
+    return myDelegateSupplier.get().getRealFontFamilies();
   }
 
   @NotNull
   @Override
   public String getFontFamily() {
-    return myDelegate.getFontFamily();
+    return myDelegateSupplier.get().getFontFamily();
   }
 
   @Override
   public int getSize(@NotNull String fontFamily) {
-    return myDelegate.getSize(fontFamily);
+    return myDelegateSupplier.get().getSize(fontFamily);
   }
 
   @Override
   public void copyTo(@NotNull FontPreferences preferences) {
-    myDelegate.copyTo(preferences);
+    myDelegateSupplier.get().copyTo(preferences);
   }
 
   @Override
   public boolean useLigatures() {
-    return myDelegate.useLigatures();
+    return myDelegateSupplier.get().useLigatures();
   }
 
   @Override
   public boolean hasSize(@NotNull String fontName) {
-    return myDelegate.hasSize(fontName);
+    return myDelegateSupplier.get().hasSize(fontName);
   }
 
   @Override
   public float getLineSpacing() {
-    return myDelegate.getLineSpacing();
+    return myDelegateSupplier.get().getLineSpacing();
   }
 
-  @Override
-  public void setLineSpacing(float lineSpacing) {
-    myDelegate.setLineSpacing(lineSpacing);
-  }
 
-  @Override
-  public boolean equals(Object obj) {
-    if (obj instanceof DelegatingFontPreferences) {
-      return myDelegate.equals(((DelegatingFontPreferences)obj).myDelegate);
-    }
-    return false;
-  }
 }

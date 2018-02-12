@@ -736,7 +736,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, MavenPropertiesVirtualFileSystem.getInstance().findEnvProperty(myProject, getEnvVar()).getPsiElement());
   }
 
-  public void testUpperCaseEnvPropertiesOnWindows() throws Exception {
+  public void testUpperCaseEnvPropertiesOnWindows() {
     if (!SystemInfo.isWindows) return;
 
     createProjectPom("<groupId>test</groupId>" +
@@ -776,7 +776,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertUnresolved(myProjectPom);
   }
 
-  public void testHighlightUnresolvedProperties() throws Exception {
+  public void testHighlightUnresolvedProperties() {
     createProjectPom("<groupId>test</groupId>\n" +
                      "<artifactId>child</artifactId>\n" +
                      "<version>1</version>\n" +
@@ -898,7 +898,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertContain(variants, "user.home", "env." + getEnvVar());
   }
 
-  public void testDoNotIncludeCollectionPropertiesInCompletion() throws Exception {
+  public void testDoNotIncludeCollectionPropertiesInCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -906,7 +906,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertCompletionVariantsDoNotInclude(myProjectPom, "project.dependencies", "env.\\=C\\:", "idea.config.path");
   }
 
-  public void testCompletingAfterOpenBrace() throws Exception {
+  public void testCompletingAfterOpenBrace() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -915,7 +915,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertCompletionVariantsInclude(myProjectPom, "project.groupId", "groupId");
   }
 
-  public void testCompletingAfterOpenBraceInOpenTag() throws Exception {
+  public void testCompletingAfterOpenBraceInOpenTag() {
     if (ignore()) return;
 
     createProjectPom("<groupId>test</groupId>" +
@@ -926,7 +926,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertCompletionVariantsInclude(myProjectPom, "project.groupId", "groupId");
   }
 
-  public void testCompletingAfterOpenBraceAndSomeText() throws Exception {
+  public void testCompletingAfterOpenBraceAndSomeText() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -937,7 +937,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertDoNotContain(variants, "groupId");
   }
 
-  public void testCompletingAfterOpenBraceAndSomeTextWithDot() throws Exception {
+  public void testCompletingAfterOpenBraceAndSomeTextWithDot() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -948,7 +948,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertDoNotContain(variants, "project.name");
   }
 
-  public void testDoNotCompleteAfterNonWordCharacter() throws Exception {
+  public void testDoNotCompleteAfterNonWordCharacter() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +

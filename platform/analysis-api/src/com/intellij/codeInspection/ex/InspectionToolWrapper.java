@@ -34,9 +34,10 @@ import java.net.URL;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 9/28/11
  */
 public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E extends InspectionEP> {
+  public static final InspectionToolWrapper[] EMPTY_ARRAY = new InspectionToolWrapper[0];
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionToolWrapper");
 
   protected T myTool;
@@ -188,13 +189,13 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
       return superGetDescriptionUrl();
     }
     String fileName = getDescriptionFileName();
-    return myEP.getLoaderForClass().getResource("/inspectionDescriptions/" + fileName);
+    return myEP.getLoaderForClass().getResource("inspectionDescriptions/" + fileName);
   }
 
   @Nullable
   protected URL superGetDescriptionUrl() {
     final String fileName = getDescriptionFileName();
-    return ResourceUtil.getResource(getDescriptionContextClass(), "/inspectionDescriptions", fileName);
+    return ResourceUtil.getResource(getDescriptionContextClass(), "inspectionDescriptions", fileName);
   }
 
   @NotNull

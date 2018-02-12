@@ -32,7 +32,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jul 18, 2007
  */
 public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDescriptor>> {
   private final ProjectStructureDetector myDetector;
@@ -104,7 +103,7 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
   protected List<ModuleDescriptor> calculate() {
     myInsight.scanModules();
     final List<ModuleDescriptor> suggestedModules = myInsight.getSuggestedModules();
-    return suggestedModules != null? suggestedModules : Collections.<ModuleDescriptor>emptyList();
+    return suggestedModules != null? suggestedModules : Collections.emptyList();
   }
 
   @Override

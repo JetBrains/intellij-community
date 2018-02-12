@@ -15,9 +15,9 @@
  */
 package org.jetbrains.idea.svn.history;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.RepositoryLocation;
@@ -25,7 +25,7 @@ import com.intellij.openapi.vcs.changes.committed.ChangesBunch;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesAdapter;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.containers.SoftHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,12 +42,12 @@ public class LoadedRevisionsCache implements Disposable {
   private final MessageBusConnection myConnection;
 
   public static LoadedRevisionsCache getInstance(final Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetService(project, LoadedRevisionsCache.class);
+    return ServiceManager.getService(project, LoadedRevisionsCache.class);
   }
 
   private LoadedRevisionsCache(final Project project) {
     myProject = project;
-    myMap = (ApplicationManager.getApplication().isUnitTestMode()) ? new HashMap<>() : new SoftHashMap<>();
+    myMap = (ApplicationManager.getApplication().isUnitTestMode()) ? new HashMap<>() : ContainerUtil.createSoftMap();
 
     myConnection = project.getMessageBus().connect();
     myConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesAdapter() {

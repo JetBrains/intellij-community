@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 29-Aug-2008
- */
 package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.FixableUsageInfo;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 
 public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
@@ -39,7 +34,7 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
     final PsiMethod constructor = element.resolveConstructor();
     if (constructor == null) {
       if (element.getArgumentList() != null) {
-        if (constructors.length == 1 && constructors[0].getParameterList().getParametersCount() > 0 || constructors.length > 1) {
+        if (constructors.length == 1 && !constructors[0].getParameterList().isEmpty() || constructors.length > 1) {
           myConflict = CONSTRUCTOR_MATCHING_SUPER_NOT_FOUND;
         }
       }

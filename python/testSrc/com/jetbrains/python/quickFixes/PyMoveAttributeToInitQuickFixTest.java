@@ -21,9 +21,6 @@ import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyAttributeOutsideInitInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 
-/**
- * User: ktisha
- */
 @TestDataPath("$CONTENT_ROOT/../testData/quickFixes/PyMoveAttributeToInitQuickFixTest")
 public class PyMoveAttributeToInitQuickFixTest extends PyQuickFixTestCase {
 
@@ -60,7 +57,7 @@ public class PyMoveAttributeToInitQuickFixTest extends PyQuickFixTestCase {
   }
 
   public void testPy3K() {
-    doQuickFixTest(PyAttributeOutsideInitInspection.class, PyBundle.message("QFIX.move.attribute"), LanguageLevel.PYTHON33);
+    doQuickFixTest(PyAttributeOutsideInitInspection.class, PyBundle.message("QFIX.move.attribute"), LanguageLevel.PYTHON34);
   }
 
 }

@@ -230,10 +230,8 @@ internal class Generator(outputDir: String, private val rootPackage: String, req
 
 val READER_INTERFACE_NAME = "ProtocolResponseReader"
 
-  // todo DOMDebugger
 private val INCLUDED_DOMAINS = arrayOf("CSS", "Debugger", "DOM", "Inspector", "Log", "Network", "Page", "Runtime", "ServiceWorker",
-                                       "Tracing", "Worker",
-                                       "Console")
+                                       "Tracing", "Target", "Overlay", "Console", "DOMDebugger")
 
 fun generateMethodNameSubstitute(originalName: String, out: TextOutput): String {
   if (originalName != "this") {

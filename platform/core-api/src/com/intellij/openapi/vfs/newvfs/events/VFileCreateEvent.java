@@ -27,7 +27,6 @@ public class VFileCreateEvent extends VFileEvent {
   @NotNull private final VirtualFile myParent;
   private final boolean myDirectory;
   @NotNull private final String myChildName;
-  private final boolean myReCreation;
   private VirtualFile myCreatedFile;
 
   public VFileCreateEvent(Object requestor,
@@ -35,20 +34,10 @@ public class VFileCreateEvent extends VFileEvent {
                           @NotNull String childName,
                           final boolean isDirectory,
                           final boolean isFromRefresh) {
-    this(requestor, parent, childName, isDirectory, isFromRefresh, false);
-  }
-
-  public VFileCreateEvent(Object requestor,
-                          @NotNull VirtualFile parent,
-                          @NotNull String childName,
-                          boolean isDirectory,
-                          boolean isFromRefresh,
-                          boolean isReCreation) {
     super(requestor, isFromRefresh);
     myChildName = childName;
     myParent = parent;
     myDirectory = isDirectory;
-    myReCreation = isReCreation;
   }
 
   @NotNull
@@ -65,20 +54,16 @@ public class VFileCreateEvent extends VFileEvent {
     return myParent;
   }
 
-  public boolean isReCreation() {
-    return myReCreation;
-  }
-
   @NonNls
   @Override
   public String toString() {
-    return "VfsEvent[" + (myReCreation ? "re" : "") + "create " + (myDirectory ? "dir " : "file ") +
+    return "VfsEvent[create " + (myDirectory ? "dir " : "file ") +
            myChildName +  " in " + myParent.getUrl() + "]";
   }
 
   @NotNull
   @Override
-  public String getPath() {
+  protected String computePath() {
     return myParent.getPath() + "/" + myChildName;
   }
 
@@ -101,8 +86,8 @@ public class VFileCreateEvent extends VFileEvent {
   @Override
   public boolean isValid() {
     if (myParent.isValid()) {
-      final VirtualFile child = myParent.findChild(myChildName);
-      return !myReCreation && child == null || myReCreation && child != null;
+      boolean childExists = myParent.findChild(myChildName) != null;
+      return !childExists;
     }
 
     return false;
@@ -118,8 +103,6 @@ public class VFileCreateEvent extends VFileEvent {
     if (myDirectory != event.myDirectory) return false;
     if (!myChildName.equals(event.myChildName)) return false;
     if (!myParent.equals(event.myParent)) return false;
-    if (myReCreation != event.myReCreation) return false;
-
     return true;
   }
 
@@ -128,7 +111,6 @@ public class VFileCreateEvent extends VFileEvent {
     int result = myParent.hashCode();
     result = 31 * result + (myDirectory ? 1 : 0);
     result = 31 * result + myChildName.hashCode();
-    result = 31 * result + (myReCreation ? 1 : 0);
     return result;
   }
 }

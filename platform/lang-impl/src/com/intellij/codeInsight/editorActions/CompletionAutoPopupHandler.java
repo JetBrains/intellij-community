@@ -41,8 +41,9 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler");
   public static volatile boolean ourTestingAutopopup = false;
 
+  @NotNull
   @Override
-  public Result checkAutoPopup(char charTyped, final Project project, final Editor editor, final PsiFile file) {
+  public Result checkAutoPopup(char charTyped, @NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
 
     if (LOG.isDebugEnabled()) {
@@ -59,7 +60,7 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
       return Result.STOP;
     }
 
-    if (Character.isLetter(charTyped) || charTyped == '_') {
+    if (Character.isLetterOrDigit(charTyped) || charTyped == '_') {
       AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
       return Result.STOP;
     }

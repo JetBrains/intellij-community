@@ -23,7 +23,6 @@ import com.intellij.history.core.LocalHistoryTestCase;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -36,7 +35,7 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
   LocalHistoryFacade vcs = new InMemoryLocalHistoryFacade();
 
   @Test
-  public void testSelectionWasNotChanged() throws FilesTooBigForDiffException {
+  public void testSelectionWasNotChanged() {
     List<Revision> rr = createRevisions("abc\ndef\nghi", "abc1\ndef1\nghi1");
     SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 2);
 
@@ -48,7 +47,7 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
   }
 
   @Test
-  public void testSelectionWasMoved() throws FilesTooBigForDiffException {
+  public void testSelectionWasMoved() {
     List<Revision> rr = createRevisions("abc\ndef\nghi", "def\nghi");
     SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 1);
 
@@ -60,7 +59,7 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
   }
 
   @Test
-  public void testSelectionForVeryOldRevisionTakenBackward() throws FilesTooBigForDiffException {
+  public void testSelectionForVeryOldRevisionTakenBackward() {
     List<Revision> rr = createRevisions("ghi\nabc\ndef", "abc\nghi\ndef", "abc\ndef\nghi");
     SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 1);
 
@@ -74,7 +73,7 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
   }
 
   @Test
-  public void testNormalizingLineEnds() throws FilesTooBigForDiffException {
+  public void testNormalizingLineEnds() {
     List<Revision> rr = createRevisions("abc\ndef\nghi", "abc\r\ndef\r\nghi");
     SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 1);
 
@@ -86,7 +85,7 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
   }
 
   @Test
-  public void testProgressOnGetSelection() throws FilesTooBigForDiffException {
+  public void testProgressOnGetSelection() {
     List<Revision> rr = createRevisions("one", "two", "three", "four");
     SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 0);
 
@@ -103,7 +102,7 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
   }
 
   @Test
-  public void testProgressOnCanCalculate() throws FilesTooBigForDiffException {
+  public void testProgressOnCanCalculate() {
     List<Revision> rr = createRevisions("one", "two");
     SelectionCalculator c = new SelectionCalculator(gw, rr, 0, 0);
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl;
 
 import com.intellij.ide.highlighter.ModuleFileType;
@@ -32,6 +18,10 @@ import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.module.impl.scopes.ModuleScopeProviderImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.impl.ProjectImpl;
+import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
+import com.intellij.openapi.roots.ProjectModelElement;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,8 +36,6 @@ import org.picocontainer.MutablePicoContainer;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.openapi.module.impl.ModulePathKt.getModuleNameByFilePath;
-
 /**
  * @author max
  */
@@ -61,15 +49,15 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   private final ModuleScopeProvider myModuleScopeProvider;
 
-  public ModuleImpl(@NotNull String filePath, @NotNull Project project) {
-    super(project, "Module " + getModuleNameByFilePath(filePath));
+  ModuleImpl(@NotNull String name, @NotNull Project project) {
+    super(project, "Module " + name);
 
     getPicoContainer().registerComponentInstance(Module.class, this);
 
     myProject = project;
     myModuleScopeProvider = new ModuleScopeProviderImpl(this);
 
-    myName = getModuleNameByFilePath(filePath);
+    myName = name;
   }
 
   @Override
@@ -79,12 +67,10 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   }
 
   @Override
-  public void init(@NotNull final String path, @Nullable VirtualFile file, @Nullable final Runnable beforeComponentCreation) {
-    init((ProgressIndicator)null, () -> {
+  public void init(@Nullable Runnable beforeComponentCreation) {
+    init(null, () -> {
       // create ServiceManagerImpl at first to force extension classes registration
       getPicoContainer().getComponentInstance(ModuleServiceManagerImpl.class);
-      ServiceKt.getStateStore(this).setPath(path, file);
-
       if (beforeComponentCreation != null) {
         beforeComponentCreation.run();
       }
@@ -96,6 +82,13 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   protected ProgressIndicator getProgressIndicator() {
     // module loading progress is not tracked, progress updated by ModuleManagerImpl on module load
     return null;
+  }
+
+  @Override
+  public boolean isDisposed() {
+    // in case of light project in tests when it's temporarily disposed, the module should be treated as disposed too.
+    //noinspection TestOnlyProblems
+    return super.isDisposed() || ((ProjectImpl)myProject).isLight() && myProject.isDisposed();
   }
 
   @Override
@@ -135,7 +128,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   public void rename(@NotNull String newName, boolean notifyStorage) {
     myName = newName;
     if (notifyStorage) {
-      ServiceKt.getStateStore(this).getStateStorageManager()
+      ServiceKt.getStateStore(this).getStorageManager()
         .rename(StoragePathMacros.MODULE_FILE, newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     }
   }
@@ -143,7 +136,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   @Override
   @NotNull
   public String getModuleFilePath() {
-    return ServiceKt.getStateStore(this).getStateStorageManager().expandMacros(StoragePathMacros.MODULE_FILE);
+    return ServiceKt.getStateStore(this).getStorageManager().expandMacros(StoragePathMacros.MODULE_FILE);
   }
 
   @Override
@@ -213,9 +206,14 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   }
 
   @Override
-  public void setOption(@NotNull String key, @NotNull String value) {
+  public void setOption(@NotNull String key, @Nullable String value) {
     DeprecatedModuleOptionManager manager = getOptionManager();
-    if (!value.equals(manager.state.options.put(key, value))) {
+    if (value == null) {
+      if (manager.state.options.remove(key) != null) {
+        manager.incModificationCount();
+      }
+    }
+    else if (!value.equals(manager.state.options.put(key, value))) {
       manager.incModificationCount();
     }
   }
@@ -224,14 +222,6 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   private DeprecatedModuleOptionManager getOptionManager() {
     //noinspection ConstantConditions
     return ModuleServiceManager.getService(this, DeprecatedModuleOptionManager.class);
-  }
-
-  @Override
-  public void clearOption(@NotNull String key) {
-    DeprecatedModuleOptionManager manager = getOptionManager();
-    if (manager.state.options.remove(key) != null) {
-      manager.incModificationCount();
-    }
   }
 
   @Override
@@ -304,7 +294,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     myModuleScopeProvider.clearCache();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public String toString() {
     if (myName == null) return "Module (not initialized)";
     return "Module: '" + getName() + "'";
@@ -333,7 +323,25 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   }
 
   @State(name = "DeprecatedModuleOptionManager")
-  static class DeprecatedModuleOptionManager extends SimpleModificationTracker implements PersistentStateComponent<DeprecatedModuleOptionManager.State> {
+  static class DeprecatedModuleOptionManager extends SimpleModificationTracker implements PersistentStateComponent<DeprecatedModuleOptionManager.State>,
+                                                                                          ProjectModelElement {
+    private final Module module;
+
+    public DeprecatedModuleOptionManager(@NotNull Module module) {
+      this.module = module;
+    }
+
+    @Override
+    @Nullable
+    public ProjectModelExternalSource getExternalSource() {
+      if (state.options.size() > 1 || (state.options.size() == 1 && !state.options.containsKey(Module.ELEMENT_TYPE) /* unrealistic case, but just to be sure */)) {
+        return null;
+      }
+      else {
+        return ExternalProjectSystemRegistry.getInstance().getExternalSource(module);
+      }
+    }
+
     static final class State {
       @Property(surroundWithTag = false)
       @MapAnnotation(surroundKeyWithTag = false, surroundValueWithTag = false, surroundWithTag = false, entryTagName = "option")
@@ -349,7 +357,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     }
 
     @Override
-    public void loadState(State state) {
+    public void loadState(@NotNull State state) {
       this.state = state;
     }
   }

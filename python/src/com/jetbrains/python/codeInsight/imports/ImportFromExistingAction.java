@@ -38,6 +38,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -46,6 +47,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * Turns an unqualified unresolved identifier into qualified and resolvable.
@@ -113,8 +116,6 @@ public class ImportFromExistingAction implements QuestionAction {
 
   private void selectSourceAndDo() {
     // GUI part
-    ImportCandidateHolder[] items = mySources.toArray(new ImportCandidateHolder[mySources.size()]); // silly JList can't handle modern collections
-
     DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext -> JBPopupFactory.getInstance()
       .createPopupChooserBuilder(mySources)
       .setRenderer(new CellRenderer(myName))
@@ -143,7 +144,9 @@ public class ImportFromExistingAction implements QuestionAction {
   private void addImportStatement(ImportCandidateHolder item) {
     final Project project = myTarget.getProject();
     final PyElementGenerator gen = PyElementGenerator.getInstance(project);
-    AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(myTarget, item.getFile());
+
+    final PsiFileSystemItem filesystemAnchor = ObjectUtils.chooseNotNull(as(item.getImportable(), PsiFileSystemItem.class), item.getFile());
+    AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(myTarget, filesystemAnchor);
     PsiFile file = myTarget.getContainingFile();
     InjectedLanguageManager manager = InjectedLanguageManager.getInstance(project);
     if (manager.isInjectedFragment(file)) {

@@ -32,7 +32,7 @@ import static org.junit.Assume.assumeNotNull;
 public class GithubRequestQueringTest extends GithubTest {
 
   @Override
-  protected void beforeTest() throws Exception {
+  protected void beforeTest() {
     assumeNotNull(myLogin2);
   }
 

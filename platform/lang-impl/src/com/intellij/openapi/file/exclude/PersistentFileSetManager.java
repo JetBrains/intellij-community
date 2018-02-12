@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.file.exclude;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -59,9 +45,8 @@ class PersistentFileSetManager implements PersistentStateComponent<Element> {
 
   @NotNull
   private Collection<VirtualFile> getSortedFiles() {
-    List<VirtualFile> sortedFiles = new ArrayList<>();
-    sortedFiles.addAll(myFiles);
-    Collections.sort(sortedFiles, (file1, file2) -> file1.getPath().toLowerCase().compareTo(file2.getPath().toLowerCase()));
+    List<VirtualFile> sortedFiles = new ArrayList<>(myFiles);
+    Collections.sort(sortedFiles, Comparator.comparing(file -> file.getPath().toLowerCase()));
     return sortedFiles;
   }
   
@@ -78,7 +63,7 @@ class PersistentFileSetManager implements PersistentStateComponent<Element> {
   }
 
   @Override
-  public void loadState(Element state) {
+  public void loadState(@NotNull Element state) {
     final VirtualFileManager vfManager = VirtualFileManager.getInstance();
     for (Object child : state.getChildren(FILE_ELEMENT)) {
       if (child instanceof Element) {

@@ -40,7 +40,7 @@ public class SshTunnelRuntimeModule extends BaseCommandRuntimeModule {
   }
 
   @Override
-  public void onStart(@NotNull Command command) throws SvnBindException {
+  public void onStart(@NotNull Command command) {
     if (!CommandRuntime.isLocal(command)) {
       if (!SvnConfiguration.SshConnectionType.SUBVERSION_CONFIG.equals(getState().sshConnectionType)) {
         command.put("--config-option", "config:tunnels:ssh=" + StringUtil.notNullize(buildTunnelValue()));

@@ -22,16 +22,17 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Describes logic for injecting language inside hosting PSI element.
  * E.g. "inject XPath language into all XML attributes named 'select' that sit inside XML tag prefixed with 'xsl:'".
- * @see com.intellij.psi.PsiLanguageInjectionHost
+ * @see PsiLanguageInjectionHost
  * @see com.intellij.lang.injection.MultiHostInjector
  */
+@FunctionalInterface
 public interface LanguageInjector {
   ExtensionPointName<LanguageInjector> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.languageInjector");
 
   /**
    * @param host PSI element inside which your language will be injected.
    * @param injectionPlacesRegistrar stores places where injection occurs. <br>
-   *        Call its {@link com.intellij.psi.InjectedLanguagePlaces#addPlace(com.intellij.lang.Language, com.intellij.openapi.util.TextRange, String, String)}
+   *        Call its {@link InjectedLanguagePlaces#addPlace(com.intellij.lang.Language, com.intellij.openapi.util.TextRange, String, String)}
    *        method to register particular injection place.
    *        For example, to inject your language in string literal inside quotes, you might want to <br>
    *        {@code injectionPlacesRegistrar.addPlace(myLanguage, new TextRange(1,host.getTextLength()-1))}

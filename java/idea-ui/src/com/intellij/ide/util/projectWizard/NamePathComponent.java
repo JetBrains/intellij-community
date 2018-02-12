@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.BrowseFilesListener;
-import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
@@ -45,22 +45,21 @@ import java.io.File;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 30, 2003
  */
 public class NamePathComponent extends JPanel{
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.NamePathComponent");
 
-  private JTextField myTfName;
-  private JTextField myTfPath;
+  private final JTextField myTfName;
+  private final JTextField myTfPath;
   private boolean myIsNameChangedByUser = false;
   private boolean myIsPathChangedByUser = false;
   private boolean myIsPathNameSyncEnabled = true;
   private boolean myIsNamePathSyncEnabled = true;
   private boolean myIsSyncEnabled = true;
 
-  private FieldPanel myPathPanel;
-  private JLabel myNameLabel;
-  private JLabel myPathLabel;
+  private final FieldPanel myPathPanel;
+  private final JLabel myNameLabel;
+  private final JLabel myPathLabel;
   private boolean myShouldBeAbsolute;
 
   public NamePathComponent(String nameLabelText, String pathLabelText, char nameMnemonic, char locationMnemonic, final String pathChooserTitle, final String pathChooserDescription) {
@@ -143,8 +142,8 @@ public class NamePathComponent extends JPanel{
   public boolean validateNameAndPath(WizardContext context, boolean defaultFormat) throws ConfigurationException {
     String name = getNameValue();
     if (StringUtil.isEmptyOrSpaces(name)) {
-      ApplicationInfo info = ApplicationInfo.getInstance();
-      throw new ConfigurationException(IdeBundle.message("prompt.new.project.file.name", info.getVersionName(), context.getPresentationName()));
+      ApplicationNamesInfo info = ApplicationNamesInfo.getInstance();
+      throw new ConfigurationException(IdeBundle.message("prompt.new.project.file.name", info.getFullProductName(), context.getPresentationName()));
     }
 
     String projectDirectory = getPath();
@@ -218,7 +217,7 @@ public class NamePathComponent extends JPanel{
   public JTextField getNameComponent() {
     return myTfName;
   }
-  
+
   @NotNull
   public JLabel getPathLabel() {
     return myPathLabel;
@@ -227,7 +226,7 @@ public class NamePathComponent extends JPanel{
   public JTextField getPathComponent() {
     return myTfPath;
   }
-  
+
   @NotNull
   public FieldPanel getPathPanel() {
     return myPathPanel;

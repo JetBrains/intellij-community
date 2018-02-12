@@ -18,13 +18,12 @@ package com.intellij.util.net;
 import com.google.common.net.HostAndPort;
 import com.google.common.net.InetAddresses;
 import com.google.common.net.InternetDomainName;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurableUi;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.PortField;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.RelativeFont;
@@ -36,8 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -71,14 +68,9 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
   private JLabel myNoProxyForLabel;
   private JCheckBox myPacUrlCheckBox;
   private JTextField myPacUrlTextField;
-  private volatile boolean myConnectionCheckInProgress;
 
   @Override
   public boolean isModified(@NotNull HttpConfigurable settings) {
-    if (!isValid()) {
-      return false;
-    }
-
     return !Comparing.strEqual(myProxyExceptions.getText().trim(), settings.PROXY_EXCEPTIONS) ||
            settings.USE_PROXY_PAC != myAutoDetectProxyRb.isSelected() ||
            settings.USE_PAC_URL != myPacUrlCheckBox.isSelected() ||
@@ -112,36 +104,18 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
       RelativeFont.BOLD.install(mySystemProxyDefined);
     }
 
-    myProxyAuthCheckBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        enableProxyAuthentication(myProxyAuthCheckBox.isSelected());
-      }
-    });
-    myPacUrlCheckBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        myPacUrlTextField.setEnabled(myPacUrlCheckBox.isSelected());
-      }
-    });
+    myProxyAuthCheckBox.addActionListener(e -> enableProxyAuthentication(myProxyAuthCheckBox.isSelected()));
+    myPacUrlCheckBox.addActionListener(e -> myPacUrlTextField.setEnabled(myPacUrlCheckBox.isSelected()));
 
-    ActionListener listener = new ActionListener() {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        enableProxy(myUseHTTPProxyRb.isSelected());
-      }
-    };
+    ActionListener listener = e -> enableProxy(myUseHTTPProxyRb.isSelected());
     myUseHTTPProxyRb.addActionListener(listener);
     myAutoDetectProxyRb.addActionListener(listener);
     myNoProxyRb.addActionListener(listener);
 
-    myClearPasswordsButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        settings.clearGenericPasswords();
-        //noinspection DialogTitleCapitalization
-        Messages.showMessageDialog(myMainPanel, "Proxy passwords were cleared.", "Auto-detected Proxy", Messages.getInformationIcon());
-      }
+    myClearPasswordsButton.addActionListener(e -> {
+      settings.clearGenericPasswords();
+      //noinspection DialogTitleCapitalization
+      Messages.showMessageDialog(myMainPanel, "Proxy passwords were cleared.", "Auto-detected Proxy", Messages.getInformationIcon());
     });
 
     configureCheckButton();
@@ -153,71 +127,58 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
       return;
     }
 
-    myCheckButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        final String title = "Check Proxy Settings";
-        final String answer = Messages.showInputDialog(myMainPanel, "Warning: your settings will be saved.\n\nEnter any URL to check connection to:",
-                                                       title, Messages.getQuestionIcon(), "http://", null);
-        if (StringUtil.isEmptyOrSpaces(answer)) {
-          return;
-        }
+    myCheckButton.addActionListener(event -> {
+      String error = isValid();
+      if (error != null) {
+        Messages.showErrorDialog(myMainPanel, error);
+        return;
+      }
 
-        final HttpConfigurable settings = HttpConfigurable.getInstance();
+      final String title = "Check Proxy Settings";
+      final String answer =
+        Messages.showInputDialog(myMainPanel, "Warning: your settings will be saved.\n\nEnter any URL to check connection to:",
+                                 title, Messages.getQuestionIcon(), "http://", null);
+      if (StringUtil.isEmptyOrSpaces(answer)) {
+        return;
+      }
+
+      final HttpConfigurable settings = HttpConfigurable.getInstance();
+      try {
         apply(settings);
-        final AtomicReference<IOException> exceptionReference = new AtomicReference<>();
-        myCheckButton.setEnabled(false);
-        myCheckButton.setText("Check connection (in progress...)");
-        myConnectionCheckInProgress = true;
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          try {
-            //already checked for null above
-            //noinspection ConstantConditions
-            HttpRequests.request(answer)
-              .readTimeout(3 * 1000)
-              .tryConnect();
-          }
-          catch (IOException e1) {
-            exceptionReference.set(e1);
-          }
+      }
+      catch (ConfigurationException e) {
+        return;
+      }
 
-          //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(() -> {
-            myConnectionCheckInProgress = false;
-            reset(settings);  // since password might have been set
-            Component parent;
-            if (myMainPanel.isShowing()) {
-              parent = myMainPanel;
-              myCheckButton.setText("Check connection");
-              myCheckButton.setEnabled(canEnableConnectionCheck());
-            }
-            else {
-              IdeFrame frame = IdeFocusManager.findInstance().getLastFocusedFrame();
-              if (frame == null) {
-                return;
-              }
-              parent = frame.getComponent();
-            }
-            //noinspection ThrowableResultOfMethodCallIgnored
-            final IOException exception = exceptionReference.get();
-            if (exception == null) {
-              Messages.showMessageDialog(parent, "Connection successful", title, Messages.getInformationIcon());
-            }
-            else {
-              final String message = exception.getMessage();
-              if (settings.USE_HTTP_PROXY) {
-                settings.LAST_ERROR = message;
-              }
-              Messages.showErrorDialog(parent, errorText(message));
-            }
-          });
-        });
+      final AtomicReference<IOException> exceptionReference = new AtomicReference<>();
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        try {
+          HttpRequests.request(answer).readTimeout(3 * 1000).tryConnect();
+        }
+        catch (IOException e) {
+          exceptionReference.set(e);
+        }
+      }, "Check Connection", true, null);
+
+      reset(settings);  // since password might have been set
+
+      //noinspection ThrowableResultOfMethodCallIgnored
+      final IOException exception = exceptionReference.get();
+      if (exception == null) {
+        Messages.showMessageDialog(myMainPanel, "Connection successful", title, Messages.getInformationIcon());
+      }
+      else {
+        final String message = exception.getMessage();
+        if (settings.USE_HTTP_PROXY) {
+          settings.LAST_ERROR = message;
+        }
+        Messages.showErrorDialog(myMainPanel, errorText(message));
       }
     });
   }
 
   private boolean canEnableConnectionCheck() {
-    return !myNoProxyRb.isSelected() && !myConnectionCheckInProgress;
+    return !myNoProxyRb.isSelected();
   }
 
   @Override
@@ -259,23 +220,24 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
     return "Problem with connection: " + s;
   }
 
-  private boolean isValid() {
+  @Nullable
+  private String isValid() {
     if (myUseHTTPProxyRb.isSelected()) {
       String host = getText(myProxyHostTextField);
       if (host == null) {
-        return false;
+        return "Host name is empty";
       }
 
       try {
         HostAndPort parsedHost = HostAndPort.fromString(host);
         if (parsedHost.hasPort()) {
-          return false;
+          return "Invalid host value";
         }
         host = parsedHost.getHostText();
 
         try {
           InetAddresses.forString(host);
-          return true;
+          return null;
         }
         catch (IllegalArgumentException e) {
           // it is not an IPv4 or IPv6 literal
@@ -284,20 +246,26 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
         InternetDomainName.from(host);
       }
       catch (IllegalArgumentException e) {
-        return false;
+        return "Invalid host value";
       }
 
       if (myProxyAuthCheckBox.isSelected()) {
-        return !StringUtil.isEmptyOrSpaces(myProxyLoginTextField.getText()) && myProxyPasswordTextField.getPassword().length > 0;
+        if (StringUtil.isEmptyOrSpaces(myProxyLoginTextField.getText())) {
+          return "Login is empty";
+        }
+        if (myProxyPasswordTextField.getPassword().length == 0) {
+          return "Password is empty";
+        }
       }
     }
-    return true;
+    return null;
   }
 
   @Override
-  public void apply(@NotNull HttpConfigurable settings) {
-    if (!isValid()) {
-      return;
+  public void apply(@NotNull HttpConfigurable settings) throws ConfigurationException {
+    String error = isValid();
+    if (error != null) {
+      throw new ConfigurationException(error);
     }
 
     if (isModified(settings)) {
@@ -347,12 +315,10 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
   }
 
   private void enableProxyAuthentication(boolean enabled) {
-    myProxyPasswordLabel.setEnabled(enabled);
     myProxyLoginLabel.setEnabled(enabled);
-
     myProxyLoginTextField.setEnabled(enabled);
+    myProxyPasswordLabel.setEnabled(enabled);
     myProxyPasswordTextField.setEnabled(enabled);
-
     myRememberProxyPasswordCheckBox.setEnabled(enabled);
   }
 

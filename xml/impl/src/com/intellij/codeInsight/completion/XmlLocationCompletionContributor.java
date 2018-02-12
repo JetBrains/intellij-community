@@ -19,16 +19,17 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.DependentNSReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReference;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.xml.XmlNamespaceHelper;
@@ -55,10 +56,12 @@ public class XmlLocationCompletionContributor extends CompletionContributor {
       if (((URLReference)reference).isSchemaLocation()) {
         Object[] objects = completeSchemaLocation(reference.getElement());
         result.addAllElements(ContainerUtil.map(objects, MAPPING));
+        if (objects.length > 0) result.stopHere();
         return;
       }
       Object[] objects = completeNamespace(reference.getElement());
       result.addAllElements(ContainerUtil.map(objects, MAPPING));
+      if (objects.length > 0) result.stopHere();
       return;
     }
     if (reference instanceof PsiMultiReference) reference = ((PsiMultiReference)reference).getReferences()[0];

@@ -19,13 +19,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NonNls;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 30.01.2003
- * Time: 13:57:35
- * To change this template use Options | File Templates.
- */
 public class TextFilter extends PlainTextFilter {
 
   public TextFilter(@NonNls String value){

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,53 +45,73 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     super(debugName);
   }
 
+  @Override
   @NotNull
   public PsiElement createElement(@NotNull final ASTNode node) {
     return new PyFunctionImpl(node);
   }
 
+  @Override
   public PyFunction createPsi(@NotNull final PyFunctionStub stub) {
     return new PyFunctionImpl(stub);
   }
 
+  @Override
   @NotNull
   public PyFunctionStub createStub(@NotNull final PyFunction psi, final StubElement parentStub) {
-    PyFunctionImpl function = (PyFunctionImpl)psi;
-    String message = function.extractDeprecationMessage();
+    final PyFunctionImpl function = (PyFunctionImpl)psi;
+    final String message = function.extractDeprecationMessage();
     final PyStringLiteralExpression docStringExpression = function.getDocStringExpression();
     final String typeComment = function.getTypeCommentAnnotation();
-    return new PyFunctionStubImpl(psi.getName(), PyPsiUtils.strValue(docStringExpression),
-                                  message, 
-                                  function.isAsync(), 
+    final String annotationContent = function.getAnnotationValue();
+    return new PyFunctionStubImpl(psi.getName(),
+                                  PyPsiUtils.strValue(docStringExpression),
+                                  message,
+                                  function.isAsync(),
+                                  function.isGenerator(),
+                                  function.onlyRaisesNotImplementedError(),
                                   typeComment,
+                                  annotationContent,
                                   parentStub,
                                   getStubElementType());
   }
 
-  public void serialize(@NotNull final PyFunctionStub stub, @NotNull final StubOutputStream dataStream)
-      throws IOException {
+  @Override
+  public void serialize(@NotNull final PyFunctionStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     dataStream.writeUTFFast(StringUtil.notNullize(stub.getDocString()));
     dataStream.writeName(stub.getDeprecationMessage());
     dataStream.writeBoolean(stub.isAsync());
+    dataStream.writeBoolean(stub.isGenerator());
+    dataStream.writeBoolean(stub.onlyRaisesNotImplementedError());
     dataStream.writeName(stub.getTypeComment());
+    dataStream.writeName(stub.getAnnotation());
   }
 
+  @Override
   @NotNull
   public PyFunctionStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     String name = StringRef.toString(dataStream.readName());
     String docString = dataStream.readUTFFast();
     StringRef deprecationMessage = dataStream.readName();
     final boolean isAsync = dataStream.readBoolean();
+    final boolean isGenerator = dataStream.readBoolean();
+    final boolean onlyRaisesNotImplementedError = dataStream.readBoolean();
     final StringRef typeComment = dataStream.readName();
-    return new PyFunctionStubImpl(name, StringUtil.nullize(docString), 
+    final StringRef annotationContent = dataStream.readName();
+    return new PyFunctionStubImpl(name,
+                                  StringUtil.nullize(docString),
                                   deprecationMessage == null ? null : deprecationMessage.getString(),
-                                  isAsync, 
+                                  isAsync,
+                                  isGenerator,
+                                  onlyRaisesNotImplementedError,
                                   typeComment == null ? null : typeComment.getString(),
+                                  annotationContent == null ? null : annotationContent.getString(),
                                   parentStub,
                                   getStubElementType());
   }
 
+  @Override
   public void indexStub(@NotNull final PyFunctionStub stub, @NotNull final IndexSink sink) {
     final String name = stub.getName();
     if (name != null) {

@@ -27,6 +27,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.Producer;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,7 +44,7 @@ public class OnePixelDivider extends Divider {
   });
 
   private boolean myVertical;
-  private Splittable mySplitter;
+  private final Splittable mySplitter;
   private boolean myResizeEnabled;
   private boolean mySwitchOrientationEnabled;
   protected Point myPoint;
@@ -195,7 +196,7 @@ public class OnePixelDivider extends Divider {
     removeAll();
     myVertical = vertical;
     final int cursorType = isVertical() ? Cursor.N_RESIZE_CURSOR : Cursor.W_RESIZE_CURSOR;
-    setCursor(Cursor.getPredefinedCursor(cursorType));
+    UIUtil.setCursor(this, Cursor.getPredefinedCursor(cursorType));
   }
 
   @Override

@@ -28,15 +28,17 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.ui.*;
@@ -45,11 +47,11 @@ import com.intellij.ui.components.OnOffButton;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -63,6 +65,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
 
@@ -72,7 +75,6 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   @Nullable private final Project myProject;
   private final Component myContextComponent;
   @Nullable private final Editor myEditor;
-  @Nullable private final PsiFile myFile;
 
   protected final ActionManager myActionManager = ActionManager.getInstance();
 
@@ -90,22 +92,28 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     return map;
   });
 
-  private final ModalityState myModality = ModalityState.defaultModalityState();
+  private final ModalityState myModality;
 
-  public GotoActionModel(@Nullable Project project, Component component, @Nullable Editor editor, @Nullable PsiFile file) {
+  public GotoActionModel(@Nullable Project project, Component component, @Nullable Editor editor) {
+    this(project, component, editor, ModalityState.defaultModalityState());
+  }
+
+  public GotoActionModel(@Nullable Project project, Component component, @Nullable Editor editor, @Nullable ModalityState modalityState) {
     myProject = project;
     myContextComponent = component;
     myEditor = editor;
-    myFile = file;
+    myModality = modalityState;
     ActionGroup mainMenu = (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
+    assert mainMenu != null;
     collectActions(myActionGroups, mainMenu, mainMenu.getTemplatePresentation().getText());
   }
 
   @NotNull
   Map<String, ApplyIntentionAction> getAvailableIntentions() {
     Map<String, ApplyIntentionAction> map = new TreeMap<>();
-    if (myProject != null && myEditor != null && myFile != null) {
-      ApplyIntentionAction[] children = ApplyIntentionAction.getAvailableIntentions(myEditor, myFile);
+    if (myProject != null && !myProject.isDisposed() && myEditor != null && !myEditor.isDisposed()) {
+      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+      ApplyIntentionAction[] children = file == null ? null : ApplyIntentionAction.getAvailableIntentions(myEditor, file);
       if (children != null) {
         for (ApplyIntentionAction action : children) {
           map.put(action.getName(), action);
@@ -123,7 +131,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   @Nullable
   @Override
   public String getCheckBoxName() {
-    return null;
+    return IdeBundle.message("checkbox.disabled.included");
   }
 
   @Override
@@ -133,7 +141,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   @Override
   public String getNotInMessage() {
-    return IdeBundle.message("label.no.menu.actions.found");
+    return IdeBundle.message("label.no.enabled.actions.found");
   }
 
   @Override
@@ -143,7 +151,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   @Override
   public boolean loadInitialCheckBoxState() {
-    return true;
+    return false;
   }
 
   @Override
@@ -191,13 +199,14 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
     @Override
     public int compareTo(@NotNull MatchedValue o) {
+      if (o == this) return 0;
       int diff = o.getMatchingDegree() - getMatchingDegree();
       if (diff != 0) return diff;
 
       boolean edt = ApplicationManager.getApplication().isDispatchThread();
 
       if (value instanceof ActionWrapper && o.value instanceof ActionWrapper) {
-        if (edt) {
+        if (edt || ((ActionWrapper)value).hasPresentation() && ((ActionWrapper)o.value).hasPresentation()) {
           boolean p1Enable = ((ActionWrapper)value).isAvailable();
           boolean p2enable = ((ActionWrapper)o.value).isAvailable();
           if (p1Enable && !p2enable) return -1;
@@ -216,8 +225,8 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
         return edt && ((ActionWrapper)o.value).isAvailable() ? 1 : -1;
       }
       
-      if (value instanceof OptionDescription && o.value instanceof BooleanOptionDescription) return 1;
-      if (o.value instanceof OptionDescription && value instanceof BooleanOptionDescription) return -1;
+      if (value instanceof BooleanOptionDescription && !(o.value instanceof BooleanOptionDescription) && o.value instanceof OptionDescription) return -1;
+      if (o.value instanceof BooleanOptionDescription && !(value instanceof BooleanOptionDescription) && value instanceof OptionDescription) return 1;
 
       if (value instanceof OptionDescription && !(o.value instanceof OptionDescription)) return 1;
       if (o.value instanceof OptionDescription && !(value instanceof OptionDescription)) return -1;
@@ -243,12 +252,19 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   }
 
   @NotNull
-  private static JLabel createIconLabel(@Nullable Icon icon) {
+  private static JLabel createIconLabel(@Nullable Icon icon, boolean disabled) {
     LayeredIcon layeredIcon = new LayeredIcon(2);
     layeredIcon.setIcon(EMPTY_ICON, 0);
-    if (icon != null && icon.getIconWidth() <= EMPTY_ICON.getIconWidth() && icon.getIconHeight() <= EMPTY_ICON.getIconHeight()) {
-      layeredIcon
-        .setIcon(icon, 1, (-icon.getIconWidth() + EMPTY_ICON.getIconWidth()) / 2, (EMPTY_ICON.getIconHeight() - icon.getIconHeight()) / 2);
+    if (icon == null) return new JLabel(layeredIcon);
+    
+    int width = icon.getIconWidth();
+    int height = icon.getIconHeight();
+    int emptyIconWidth = EMPTY_ICON.getIconWidth();
+    int emptyIconHeight = EMPTY_ICON.getIconHeight();
+    if (width <= emptyIconWidth && height <= emptyIconHeight) {
+      layeredIcon.setIcon(disabled && IconLoader.isGoodSize(icon) ? IconLoader.getDisabledIcon(icon) : icon, 1, 
+                          (emptyIconWidth - width) / 2, 
+                          (emptyIconHeight - height) / 2);
     }
 
     return new JLabel(layeredIcon);
@@ -269,8 +285,8 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   }
 
   public static Color defaultActionForeground(boolean isSelected, @Nullable Presentation presentation) {
-    if (isSelected) return UIUtil.getListSelectionForeground();
     if (presentation != null && (!presentation.isEnabled() || !presentation.isVisible())) return UIUtil.getInactiveTextColor();
+    if (isSelected) return UIUtil.getListSelectionForeground();
     return UIUtil.getListForeground();
   }
 
@@ -287,7 +303,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   }
 
   @NotNull
-  String getGroupName(@NotNull OptionDescription description) {
+  public String getGroupName(@NotNull OptionDescription description) {
     String name = description.getGroupName();
     if (name == null) name = myConfigurablesNames.getValue().get(description.getConfigurableId());
     String settings = SystemInfo.isMac ? "Preferences" : "Settings";
@@ -295,6 +311,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     return settings + " > " + name;
   }
 
+  @NotNull
   Map<String, String> getConfigurablesNames() {
     return myConfigurablesNames.getValue();
   }
@@ -401,46 +418,28 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   @NotNull
   public SortedSet<Object> sortItems(@NotNull Set<Object> elements) {
-    List<ActionWrapper> toUpdate = getActionsToUpdate(elements);
-    if (!toUpdate.isEmpty()) {
-      updateActions(toUpdate);
-    }
-
     TreeSet<Object> objects = ContainerUtilRt.newTreeSet(this);
     objects.addAll(elements);
     return objects;
   }
 
-  @NotNull
-  private static List<ActionWrapper> getActionsToUpdate(@NotNull Set<Object> elements) {
-    List<ActionWrapper> toUpdate = new ArrayList<>();
-    for (Object element : elements) {
-      if (element instanceof MatchedValue) {
-        Comparable value = ((MatchedValue)element).value;
-        if (value instanceof ActionWrapper && !((ActionWrapper)value).hasPresentation()) {
-          toUpdate.add((ActionWrapper)value);
-        }
+  private void updateOnEdt(Runnable update) {
+    Semaphore semaphore = new Semaphore(1);
+    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    ApplicationManager.getApplication().invokeLater(() -> {
+      try {
+        update.run();
       }
-    }
-    return toUpdate;
-  }
+      finally {
+        semaphore.up();
+      }
+    }, myModality, __ -> indicator != null && indicator.isCanceled());
 
-  private void updateActions(List<ActionWrapper> toUpdate) {
-    TransferToEDTQueue<ActionWrapper> queue = new TransferToEDTQueue<ActionWrapper>("goto action", aw -> {
-      aw.getPresentation();
-      return true;
-    }, Conditions.FALSE, 50) {
-      @Override
-      protected void schedule(@NotNull Runnable updateRunnable) {
-        ApplicationManager.getApplication().invokeLater(updateRunnable, myModality);
+    while (!semaphore.waitFor(10)) {
+      if (indicator != null && indicator.isCanceled()) {
+        // don't use `checkCanceled` because some smart devs might suppress PCE and end up with a deadlock like IDEA-177788
+        throw new ProcessCanceledException();
       }
-    };
-    for (ActionWrapper wrapper : toUpdate) {
-      queue.offer(wrapper);
-    }
-    while (queue.size() > 0) {
-      ProgressManager.checkCanceled();
-      TimeoutUtil.sleep(50);
     }
   }
 
@@ -463,13 +462,15 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     @NotNull private final MatchMode myMode;
     @Nullable  private final String myGroupName;
     private final DataContext myDataContext;
+    private final GotoActionModel myModel;
     private volatile Presentation myPresentation;
 
-    public ActionWrapper(@NotNull AnAction action, @Nullable String groupName, @NotNull MatchMode mode, DataContext dataContext) {
+    public ActionWrapper(@NotNull AnAction action, @Nullable String groupName, @NotNull MatchMode mode, DataContext dataContext, GotoActionModel model) {
       myAction = action;
       myMode = mode;
       myGroupName = groupName;
       myDataContext = dataContext;
+      myModel = model;
     }
 
     @NotNull
@@ -494,7 +495,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       if (byText != 0) return byText;
       int byTextLength = StringUtil.notNullize(myText).length() - StringUtil.notNullize(oText).length();
       if (byTextLength != 0) return byTextLength;
-      int byGroup = Comparing.compare(myGroupName, o.getGroupName());
+      int byGroup = Comparing.compare(myGroupName, o.myGroupName);
       if (byGroup != 0) return byGroup;
       int byDesc = StringUtil.compare(myPresentation.getDescription(), oPresentation.getDescription(), true);
       if (byDesc != 0) return byDesc;
@@ -502,12 +503,20 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     }
 
     public boolean isAvailable() {
-      return getPresentation().isEnabledAndVisible();
+      Presentation presentation = getPresentation();
+      return presentation != null && presentation.isEnabledAndVisible();
     }
 
     public Presentation getPresentation() {
       if (myPresentation != null) return myPresentation;
-      return myPresentation = updateActionBeforeShow(myAction, myDataContext).getPresentation();
+      Runnable r = () -> myPresentation = updateActionBeforeShow(myAction, myDataContext).getPresentation();
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        r.run();
+      } else {
+        myModel.updateOnEdt(r);
+      }
+
+      return myPresentation;
     }
 
     private boolean hasPresentation() {
@@ -555,7 +564,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
                                                   int index, boolean isSelected, boolean cellHasFocus) {
       boolean showIcon = UISettings.getInstance().getShowIconsInMenus();
       JPanel panel = new JPanel(new BorderLayout());
-      panel.setBorder(IdeBorderFactory.createEmptyBorder(2));
+      panel.setBorder(JBUI.Borders.empty(2));
       panel.setOpaque(true);
       Color bg = UIUtil.getListBackground(isSelected);
       panel.setBackground(bg);
@@ -577,21 +586,29 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       Object value = ((MatchedValue) matchedValue).value;
       String pattern = ((MatchedValue)matchedValue).pattern;
 
-      Border eastBorder = IdeBorderFactory.createEmptyBorder(0, 0, 0, 2);
+      Border eastBorder = JBUI.Borders.emptyRight(2);
       if (value instanceof ActionWrapper) {
         ActionWrapper actionWithParentGroup = (ActionWrapper)value;
         AnAction anAction = actionWithParentGroup.getAction();
         Presentation presentation = anAction.getTemplatePresentation();
         boolean toggle = anAction instanceof ToggleAction;
         String groupName = actionWithParentGroup.getAction() instanceof ApplyIntentionAction ? null : actionWithParentGroup.getGroupName();
-        Color fg = defaultActionForeground(isSelected, actionWithParentGroup.getPresentation());
+        Presentation actionPresentation = actionWithParentGroup.getPresentation();
+        Color fg = defaultActionForeground(isSelected, actionPresentation);
+        boolean disabled = actionPresentation != null && (!actionPresentation.isEnabled() || !actionPresentation.isVisible());
+
+        if (disabled) {
+          groupFg = UIUtil.getLabelDisabledForeground();
+        }
+        
         if (showIcon) {
-          panel.add(createIconLabel(presentation.getIcon()), BorderLayout.WEST);
+          Icon icon = presentation.getIcon();
+          panel.add(createIconLabel(icon, disabled), BorderLayout.WEST);
         }
         appendWithColoredMatches(nameComponent, getName(presentation.getText(), groupName, toggle), pattern, fg, isSelected);
         panel.setToolTipText(presentation.getDescription());
 
-        Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(ActionManager.getInstance().getId(anAction));
+        Shortcut[] shortcuts = getActiveKeymapShortcuts(ActionManager.getInstance().getId(anAction)).getShortcuts();
         String shortcutText = KeymapUtil.getPreferredShortcutText(
           shortcuts);
         if (StringUtil.isNotEmpty(shortcutText)) {
@@ -658,7 +675,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       OnOffButton button = new OnOffButton();
       button.setSelected(selected);
       panel.add(button, BorderLayout.EAST);
-      panel.setBorder(IdeBorderFactory.createEmptyBorder(0, 2, 0, 2));
+      panel.setBorder(JBUI.Borders.empty(0, 2));
     }
 
     @NotNull

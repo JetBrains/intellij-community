@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import groovy.transform.CompileStatic
 @CompileStatic
 @Canonical
 class ProprietaryBuildTools {
-  public static final ProprietaryBuildTools DUMMY = new ProprietaryBuildTools(null, null, null)
+  public static final ProprietaryBuildTools DUMMY = new ProprietaryBuildTools(null, null, null, null)
 
   /**
    * This tool is required to sign *.exe files in Windows distribution. If it is {@code null} the files won't be signed and Windows may show
@@ -39,8 +39,13 @@ class ProprietaryBuildTools {
   ScrambleTool scrambleTool
 
   /**
-   * Describes address and credentials of Mac machine which is used to sign and build *.dmg installer for Mac OS. If {@code null} only *.sit
+   * Describes address and credentials of Mac machine which is used to sign and build *.dmg installer for macOS. If {@code null} only *.sit
    * archive will be built.
    */
   MacHostProperties macHostProperties
+
+  /**
+   * Describes a server that can be used to download built artifacts
+   */
+  ArtifactsServer artifactsServer
 }

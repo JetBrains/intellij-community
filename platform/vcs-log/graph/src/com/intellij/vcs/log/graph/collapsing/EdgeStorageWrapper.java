@@ -37,17 +37,7 @@ public class EdgeStorageWrapper {
   @NotNull private final Function<Integer, Integer> myGetNodeIdByIndex;
 
   public EdgeStorageWrapper(@NotNull EdgeStorage edgeStorage, @NotNull final LinearGraph graph) {
-    this(edgeStorage, new Function<Integer, Integer>() {
-      @Override
-      public Integer fun(Integer nodeId) {
-        return graph.getNodeIndex(nodeId);
-      }
-    }, new Function<Integer, Integer>() {
-      @Override
-      public Integer fun(Integer nodeIndex) {
-        return graph.getNodeId(nodeIndex);
-      }
-    });
+    this(edgeStorage, nodeId -> graph.getNodeIndex(nodeId), nodeIndex -> graph.getNodeId(nodeIndex));
   }
 
   public EdgeStorageWrapper(@NotNull EdgeStorage edgeStorage,

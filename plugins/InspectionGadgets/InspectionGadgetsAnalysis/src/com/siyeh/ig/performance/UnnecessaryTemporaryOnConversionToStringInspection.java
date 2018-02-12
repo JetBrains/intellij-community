@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,13 @@ package com.siyeh.ig.performance;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,16 +120,15 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiMethodCallExpression expression =
-        (PsiMethodCallExpression)descriptor.getPsiElement();
-      final String newExpression =
-        calculateReplacementExpression(expression);
-      if (newExpression == null) {
-        return;
-      }
-      PsiReplacementUtil.replaceExpression(expression, newExpression);
+    public void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiMethodCallExpression expression = (PsiMethodCallExpression)descriptor.getPsiElement();
+      PsiExpression[] args = expression.getArgumentList().getExpressions();
+      if (args.length == 0) return;
+      final String newExpression = calculateReplacementExpression(expression);
+      if (newExpression == null) return;
+      CommentTracker commentTracker = new CommentTracker();
+      commentTracker.markUnchanged(args[0]);
+      PsiReplacementUtil.replaceExpression(expression, newExpression, commentTracker);
     }
   }
 

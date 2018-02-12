@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -44,7 +42,6 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
 
   public boolean myHighlightIfGroovyObjectOverridden = true;
   public boolean myHighlightIfMissingMethodsDeclared = true;
-  public boolean myHighlightInnerClasses = true;
 
   public static boolean isSuppressed(@NotNull PsiElement ref) {
     return isElementToolSuppressedIn(ref, SHORT_NAME);
@@ -64,7 +61,6 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
     optionsPanel.addCheckbox(GroovyInspectionBundle.message("highlight.if.groovy.object.methods.overridden"), "myHighlightIfGroovyObjectOverridden");
     optionsPanel.addCheckbox(GroovyInspectionBundle.message("highlight.if.missing.methods.declared"), "myHighlightIfMissingMethodsDeclared");
-    optionsPanel.addCheckbox(GroovyBundle.message("highlight.constructor.calls.of.a.non.static.inner.classes.without.enclosing.instance.passed"), "myHighlightInnerClasses");
     return optionsPanel;
   }
 
@@ -79,13 +75,6 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
   @NotNull
   private static InspectionProfile getInspectionProfile(@NotNull Project project) {
     return InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-  }
-
-  @Override
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
-    return BaseInspection.PROBABLE_BUGS;
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public abstract class InspectionElementsMerger {
   private static Map<String, InspectionElementsMerger> ourMergers;
 
   @Nullable
-  public synchronized static InspectionElementsMerger getMerger(String shortName) {
+  public static synchronized InspectionElementsMerger getMerger(String shortName) {
     if (ourMergers == null) {
       ourMergers = new HashMap<>();
       for (InspectionElementsMerger merger : Extensions.getExtensions(EP_NAME)) {
@@ -45,10 +45,14 @@ public abstract class InspectionElementsMerger {
     return ourMergers.get(shortName);
   }
 
+  /**
+   * @return shortName of the new merged inspection.
+   */
+  @NotNull
   public abstract String getMergedToolName();
 
   /**
-   * @return the shortNames of the merged inspections
+   * @return the shortNames of the inspections whose settings needs to be merged.
    */
   @NotNull
   public abstract String[] getSourceToolNames();

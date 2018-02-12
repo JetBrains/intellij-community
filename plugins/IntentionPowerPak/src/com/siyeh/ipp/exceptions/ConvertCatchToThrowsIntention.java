@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2016 Bas Leijdekkers
+ * Copyright 2007-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,12 @@
  */
 package com.siyeh.ipp.exceptions;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +41,7 @@ public class ConvertCatchToThrowsIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element) {
     final PsiCatchSection catchSection = (PsiCatchSection)element.getParent();
     final NavigatablePsiElement owner = PsiTreeUtil.getParentOfType(catchSection, PsiMethod.class, PsiLambdaExpression.class);
     final PsiMethod method;
@@ -64,31 +63,13 @@ public class ConvertCatchToThrowsIntention extends Intention {
     // YY. Do you want to modify the base method?"
     //                                             [Yes][No][Cancel]
     WriteAction.run(() -> {
-      final PsiReferenceList throwsList = method.getThrowsList();
-      final PsiType catchType = catchSection.getCatchType();
-      addToThrowsList(throwsList, catchType);
+      addToThrowsList(method.getThrowsList(), catchSection.getCatchType());
       final PsiTryStatement tryStatement = catchSection.getTryStatement();
-      final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
-      if (catchSections.length > 1 || tryStatement.getResourceList() != null || tryStatement.getFinallyBlock() != null) {
+      if (tryStatement.getCatchSections().length > 1 || tryStatement.getResourceList() != null || tryStatement.getFinallyBlock() != null) {
         catchSection.delete();
       }
       else {
-        final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-        if (tryBlock == null) {
-          return;
-        }
-        final PsiCodeBlock parentCodeBlock = PsiTreeUtil.getParentOfType(tryStatement, PsiCodeBlock.class);
-        if (parentCodeBlock == null || !DeclarationSearchUtils.containsConflictingDeclarations(tryBlock, parentCodeBlock)) {
-          final PsiElement first = tryBlock.getFirstBodyElement();
-          final PsiElement last = tryBlock.getLastBodyElement();
-          if (first != null && last != null) {
-            tryStatement.getParent().addRangeAfter(first, last, tryStatement);
-          }
-          tryStatement.delete();
-        }
-        else {
-          tryStatement.replace(tryBlock);
-        }
+        BlockUtils.unwrapTryBlock(tryStatement);
       }
     });
   }

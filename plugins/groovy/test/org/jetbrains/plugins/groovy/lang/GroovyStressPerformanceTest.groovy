@@ -57,6 +57,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
 
   ThrowableRunnable configureAndHighlight(String text) {
     return {
+      myFixture.psiManager.dropPsiCaches()
       myFixture.configureByText 'a.groovy', text
       myFixture.doHighlighting()
     } as ThrowableRunnable
@@ -119,13 +120,13 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
     myFixture.type 'foo {}\n'
     PsiDocumentManager.getInstance(project).commitAllDocuments()
 
-    PlatformTestUtil.startPerformanceTest("Reparse is not incremental", 10000, {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 10000, {
       story.toCharArray().each {
         myFixture.type it
         PsiDocumentManager.getInstance(project).commitAllDocuments()
       }
 
-    } as ThrowableRunnable).useLegacyScaling().assertTiming()
+    } as ThrowableRunnable).assertTiming()
   }
 
   void testManyAnnotatedFields() {
@@ -135,11 +136,11 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
     }
     text += "}"
 
-    measureHighlighting(text, 5000)
+    measureHighlighting(text, 250)
   }
 
   private void measureHighlighting(String text, int time) {
-    IdeaTestUtil.startPerformanceTest("slow", time, configureAndHighlight(text)).cpuBound().usesAllCPUCores().useLegacyScaling().assertTiming()
+    IdeaTestUtil.startPerformanceTest(getTestName(false), time, configureAndHighlight(text)).usesAllCPUCores().assertTiming()
   }
 
   void testDeeplyNestedClosures() {
@@ -151,7 +152,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
       defs += "def foo$i(Closure cl) {}\n"
     }
     myFixture.enableInspections(new MissingReturnInspection())
-    measureHighlighting(defs + text, 10000)
+    measureHighlighting(defs + text, 300)
   }
 
   void testDeeplyNestedClosuresInCompileStatic() {
@@ -166,7 +167,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
     myFixture.enableInspections(new MissingReturnInspection())
 
     addCompileStatic()
-    measureHighlighting(defs + "\n @groovy.transform.CompileStatic def compiledStatically() {\ndef a = ''\n" + text + "\n}", 10000)
+    measureHighlighting(defs + "\n @groovy.transform.CompileStatic def compiledStatically() {\ndef a = ''\n" + text + "\n}", 500)
   }
 
   void testDeeplyNestedClosuresInGenericCalls() {
@@ -177,7 +178,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
     }
     myFixture.enableInspections(new MissingReturnInspection())
 
-    measureHighlighting("def <T> void foo(T t, Closure cl) {}\n$text", 10000)
+    measureHighlighting("def <T> void foo(T t, Closure cl) {}\n$text", 1600)
   }
 
   void testDeeplyNestedClosuresInGenericCalls2() {
@@ -187,11 +188,11 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
       text = "foo(it) { $text }"
     }
     myFixture.enableInspections(new MissingReturnInspection())
-    measureHighlighting("def <T> void foo(T t, Closure<T> cl) {}\n$text", 10000)
+    measureHighlighting("def <T> void foo(T t, Closure<T> cl) {}\n$text", 1200)
   }
 
   void testManyAnnotatedScriptVariables() {
-    measureHighlighting((0..100).collect { "@Anno String i$it = null" }.join("\n"), 10000)
+    measureHighlighting((0..100).collect { "@Anno String i$it = null" }.join("\n"), 1000)
   }
 
   void "test no recursion prevention when resolving supertype"() {
@@ -254,13 +255,13 @@ class SomeClass {
   void someMethod(String s) {}
 }
 """
-    measureHighlighting(text, 8000)
+    measureHighlighting(text, 14_000)
   }
 
   void "test infer only the variable types that are needed"() {
     addGdsl '''contribute(currentType(String.name)) {
   println 'sleeping'
-  Thread.sleep(1000)
+  Thread.sleep(100_000)
   method name:'foo', type:String, params:[:], namedParams:[
     parameter(name:'param1', type:String),
   ]
@@ -273,7 +274,7 @@ while (true) {
   f.canoPath<caret>
 }
 '''
-    IdeaTestUtil.startPerformanceTest("slow", 300, configureAndComplete(text)).cpuBound().usesAllCPUCores().useLegacyScaling().assertTiming()
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 20_000, configureAndComplete(text)).attempts(1).usesAllCPUCores().assertTiming()
   }
 
   void testClosureRecursion() {
@@ -446,7 +447,7 @@ class AwsService {
     }
 }
 '''
-    measureHighlighting(text, 1000)
+    measureHighlighting(text, 700)
   }
 
   ThrowableRunnable configureAndComplete(String text) {
@@ -476,7 +477,7 @@ ${(1..classMethodCount).collect({"void foo${it}() {}"}).join("\n")}
                   "}"
     myFixture.configureByText('a.groovy', '')
     assert myFixture.file instanceof GroovyFile
-    PlatformTestUtil.startPerformanceTest('many siblings', 10000, {
+    PlatformTestUtil.startPerformanceTest('many siblings', 1000, {
       // clear caches
       WriteCommandAction.runWriteCommandAction(project) {
         myFixture.editor.document.text = ""
@@ -490,7 +491,7 @@ ${(1..classMethodCount).collect({"void foo${it}() {}"}).join("\n")}
       for (ref in refs) {
         assert ref.resolve(): ref.text
       }
-    }).cpuBound().attempts(2).assertTiming()
+    }).attempts(2).assertTiming()
   }
 
   @CompileStatic
@@ -520,14 +521,14 @@ public class Yoo$i implements Serializable, Cloneable, Hoo$i<String> {}
 public class Doo$i {}
 """
     }
-    IdeaTestUtil.startPerformanceTest("testing dfa", 5000, {
+    IdeaTestUtil.startPerformanceTest("testing dfa", 800, {
       myFixture.checkHighlighting true, false, false
     }).setup({
       myFixture.enableInspections GroovyAssignabilityCheckInspection, UnusedDefInspection, GrUnusedIncDecInspection
       configure 1
       myFixture.checkHighlighting true, false, false
       configure 2
-    }).attempts(1).cpuBound().assertTiming()
+    }).attempts(1).assertTiming()
   }
 
   void 'test resolve long chains'() {

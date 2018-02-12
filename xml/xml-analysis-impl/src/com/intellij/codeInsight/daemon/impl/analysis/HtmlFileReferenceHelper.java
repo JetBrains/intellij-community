@@ -53,7 +53,7 @@ public class HtmlFileReferenceHelper extends FileReferenceHelper {
         final VirtualFile base = virtualFile.findFileByRelativePath(basePath);
         final PsiDirectory result = base != null ? PsiManager.getInstance(project).findDirectory(base) : null;
         if (result != null) {
-          return Collections.<PsiFileSystemItem>singletonList(result);
+          return Collections.singletonList(result);
         }
       }
     }

@@ -36,6 +36,12 @@ import java.util.List;
  */
 public interface VcsFullCommitDetails extends VcsCommitMetadata {
 
+  /**
+   * For a merge commit this method should return combined changes from all parents.
+   */
   @NotNull
   Collection<Change> getChanges();
+
+  @NotNull
+  Collection<Change> getChanges(int parent);
 }

@@ -38,7 +38,7 @@ public interface ContentFolder extends Synthetic {
   /**
    * Returns the content entry to which this root belongs.
    *
-   * @return this <code>ContentFolder</code>s {@link com.intellij.openapi.roots.ContentEntry}.
+   * @return this {@code ContentFolder}s {@link com.intellij.openapi.roots.ContentEntry}.
    */
   @NotNull
   ContentEntry getContentEntry();

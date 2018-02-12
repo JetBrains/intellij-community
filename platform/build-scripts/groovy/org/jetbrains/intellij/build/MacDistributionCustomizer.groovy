@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import groovy.transform.CompileStatic
 @CompileStatic
 abstract class MacDistributionCustomizer {
   /**
-   * Path to icns file containing product icon bundle for Mac OS distribution
+   * Path to icns file containing product icon bundle for macOS distribution
    * For full description of icns files see <a href="https://en.wikipedia.org/wiki/Apple_Icon_Image_format">Apple Icon Image Format</a>
    */
   String icnsPath
@@ -34,15 +34,20 @@ abstract class MacDistributionCustomizer {
   String icnsPathForEAP = null
 
   /**
-   * The minimum version of Mac OS where the product is allowed to be installed
+   * An unique identifier string that specifies the app type of the bundle. The string should be in reverse DNS format using only the Roman alphabet in upper and lower case (A-Z, a-z), the dot ("."), and the hyphen ("-")
+   * See <a href="https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070">CFBundleIdentifier</a> for details
    */
-  String minOSXVersion = "10.8"
+  String bundleIdentifier
 
   /**
-   * Help bundle identifier for bundle in <a href="https://developer.apple.com/library/mac/documentation/Carbon/Conceptual/ProvidingUserAssitAppleHelp/authoring_help/authoring_help_book.html">Apple Help Bundle</a> format
-   * If there's no help bundled, leave empty
+   * Path to an image which will be injected into .dmg file
    */
-  String helpId = ""
+  String dmgImagePath
+
+  /**
+   * The minimum version of macOS where the product is allowed to be installed
+   */
+  String minOSXVersion = "10.8"
 
   /**
    * String with declarations of additional file types that should be automatically opened by the application.
@@ -80,31 +85,20 @@ abstract class MacDistributionCustomizer {
   boolean associateIpr = false
 
   /**
-   * If {@code true} YourKit agent will be automatically attached when an EAP build of the product starts under Mac OS. This property is
+   * If {@code true} YourKit agent will be automatically attached when an EAP build of the product starts under macOS. This property is
    * taken into account only if {@link ProductProperties#enableYourkitAgentInEAP} is {@code true}.
    */
   boolean enableYourkitAgentInEAP = true
 
   /**
-   * Relative paths to files in Mac OS distribution which should take 'executable' permissions
+   * Relative paths to files in macOS distribution which should take 'executable' permissions
    */
   List<String> extraExecutables = []
 
   /**
-   * Relative paths to files in Mac OS distribution which should be signed
+   * Relative paths to files in macOS distribution which should be signed
    */
   List<String> binariesToSign = []
-
-  /**
-   * An unique identifier string that specifies the app type of the bundle. The string should be in reverse DNS format using only the Roman alphabet in upper and lower case (A–Z, a–z), the dot (“.”), and the hyphen (“-”)
-   * See <a href="https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070">CFBundleIdentifier</a> for details
-   */
-  String bundleIdentifier
-
-  /**
-   * Path to an image which will be injected into .dmg file
-   */
-  String dmgImagePath
 
   /**
    * Path to a image which will be injected into .dmg file for EAP builds (if {@code null} dmgImagePath will be used)
@@ -118,7 +112,7 @@ abstract class MacDistributionCustomizer {
    * @return application bundle directory name
    */
   String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
-    String suffix = applicationInfo.isEAP ? " ${applicationInfo.majorVersion}.${applicationInfo.minorVersion} EAP" : ""
+    String suffix = applicationInfo.isEAP ? " ${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart} EAP" : ""
     "$applicationInfo.productName${suffix}.app"
   }
 
@@ -128,6 +122,20 @@ abstract class MacDistributionCustomizer {
    * @return map propertyName-&gt;propertyValue
    */
   Map<String, String> getCustomIdeaProperties(ApplicationInfoProperties applicationInfo) { [:] }
+
+  /**
+   * Help bundle identifier for bundle in <a href="https://developer.apple.com/library/mac/documentation/Carbon/Conceptual/ProvidingUserAssitAppleHelp/authoring_help/authoring_help_book.html">Apple Help Bundle</a> format.
+   * If this field has non-null value, {@link #getPathToHelpZip} must be overriden to specify path to archive with help files.
+   */
+  String helpId = null
+
+  /**
+   * Override this method if you need to bundle help with macOS distribution of the product.
+   * @return path to zip archive containing directory "{@link #helpId}.help" with bundled help files inside.
+   */
+  String getPathToHelpZip(BuildContext context) {
+    null
+  }
 
   /**
    * Additional files to be copied to the distribution, e.g. help bundle or debugger binaries

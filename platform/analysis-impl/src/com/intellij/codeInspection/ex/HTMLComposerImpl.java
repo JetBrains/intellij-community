@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 22, 2001
- * Time: 4:54:17 PM
- * To change template for new interface use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
@@ -210,10 +202,9 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
       String refElementName = refElement.getName();
       final PsiElement element = refElement.getElement();
       if (element != null) {
-        final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
-        if (virtualFile != null) {
-          refElementName = ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), element.getProject(),
-                                                                       true, false);
+        VirtualFile file = PsiUtilCore.getVirtualFile(element);
+        if (file != null) {
+          refElementName = ProjectUtilCore.displayUrlRelativeToProject(file, file.getPresentableUrl(), element.getProject(), true, false);
         }
       }
       buf.append(refElementName);

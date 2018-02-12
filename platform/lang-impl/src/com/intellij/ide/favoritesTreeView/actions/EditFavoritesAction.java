@@ -27,9 +27,6 @@ import com.intellij.ui.CommonActionsPanel;
 
 import java.util.Set;
 
-/**
- * User: Vassiliy.Kudryashov
- */
 public class EditFavoritesAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(AnActionEvent e) {

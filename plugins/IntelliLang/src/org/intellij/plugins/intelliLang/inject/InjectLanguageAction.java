@@ -15,7 +15,6 @@
  */
 package org.intellij.plugins.intelliLang.inject;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -27,6 +26,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -37,12 +37,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.injection.Injectable;
 import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ColoredListCellRendererWrapper;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.FileContentUtil;
@@ -68,7 +67,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
   public static final String LAST_INJECTED_LANGUAGE = "LAST_INJECTED_LANGUAGE";
   public static final Key<Processor<PsiLanguageInjectionHost>> FIX_KEY = Key.create("inject fix key");
 
-  private static FixPresenter DEFAULT_FIX_PRESENTER = (editor, range, pointer, text, handler) -> {
+  private static final FixPresenter DEFAULT_FIX_PRESENTER = (editor, range, pointer, text, handler) -> {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
@@ -80,6 +79,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     });
   };
 
+  @NotNull
   public static List<Injectable> getAllInjectables() {
     Language[] languages = InjectedLanguage.getAvailableLanguages();
     List<Injectable> list = new ArrayList<>();
@@ -101,10 +101,10 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     return INJECT_LANGUAGE_FAMILY;
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final PsiLanguageInjectionHost host = findInjectionHost(editor, file);
+  public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiLanguageInjectionHost host = findInjectionHost(editor, file);
     if (host == null) return false;
-    final List<Pair<PsiElement, TextRange>> injectedPsi = InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(host);
+    List<Pair<PsiElement, TextRange>> injectedPsi = InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(host);
     if (injectedPsi == null || injectedPsi.isEmpty()) {
       return !InjectedReferencesContributor.isInjected(file.findReferenceAt(editor.getCaretModel().getOffset()));
     }
@@ -112,31 +112,48 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
   }
 
   @Nullable
-  protected static PsiLanguageInjectionHost findInjectionHost(Editor editor, PsiFile file) {
+  protected static PsiLanguageInjectionHost findInjectionHost(@NotNull Editor editor,
+                                                              @NotNull PsiFile file) {
     if (editor instanceof EditorWindow) return null;
-    final int offset = editor.getCaretModel().getOffset();
-    final PsiLanguageInjectionHost host = PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiLanguageInjectionHost.class, false);
-    if (host == null) return null;
-    return host.isValidHost()? host : null;
+    int offset = editor.getCaretModel().getOffset();
+    FileViewProvider vp = file.getViewProvider();
+    for (Language language : vp.getLanguages()) {
+      PsiLanguageInjectionHost host = PsiTreeUtil.getParentOfType(vp.findElementAt(offset, language), PsiLanguageInjectionHost.class, false);
+      if (host != null && host.isValidHost()) {
+        return host;
+      }
+    }
+    return null;
   }
 
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project,
+                     @NotNull Editor editor,
+                     @NotNull PsiFile file) throws IncorrectOperationException {
+    SmartPsiElementPointer<PsiFile> filePointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(file);
     doChooseLanguageToInject(editor, injectable -> {
-      ApplicationManager.getApplication().runReadAction(() -> {
-        if (!project.isDisposed()) {
-          invokeImpl(project, editor, file, injectable);
-        }
+      ReadAction.run(() -> {
+        if (project.isDisposed()) return;
+        PsiFile psiFile = filePointer.getElement();
+        if (psiFile == null || editor.isDisposed()) return;
+        invokeImpl(project, editor, psiFile, injectable);
       });
       return false;
     });
   }
 
-  public static void invokeImpl(@NotNull Project project, Editor editor, final PsiFile file, Injectable injectable) {
+  public static void invokeImpl(@NotNull Project project,
+                                @NotNull Editor editor,
+                                @NotNull PsiFile file,
+                                @NotNull Injectable injectable) {
     invokeImpl(project, editor, file, injectable, DEFAULT_FIX_PRESENTER);
   }
 
-  public static void invokeImpl(@NotNull Project project, Editor editor, final PsiFile file, Injectable injectable, @NotNull FixPresenter fixPresenter) {
-    final PsiLanguageInjectionHost host = findInjectionHost(editor, file);
+  public static void invokeImpl(@NotNull Project project,
+                                @NotNull Editor editor,
+                                @NotNull PsiFile file,
+                                @NotNull Injectable injectable,
+                                @NotNull FixPresenter fixPresenter) {
+    PsiLanguageInjectionHost host = findInjectionHost(editor, file);
     if (host == null) return;
     if (defaultFunctionalityWorked(host, injectable.getId())) return;
 
@@ -149,10 +166,10 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
         }
       }
       if (TemporaryPlacesRegistry.getInstance(project).getLanguageInjectionSupport().addInjectionInPlace(language, host)) {
-        final Processor<PsiLanguageInjectionHost> data = host.getUserData(FIX_KEY);
+        Processor<PsiLanguageInjectionHost> data = host.getUserData(FIX_KEY);
         String text = StringUtil.escapeXml(language.getDisplayName()) + " was temporarily injected.";
         if (data != null) {
-          final SmartPsiElementPointer<PsiLanguageInjectionHost> pointer =
+          SmartPsiElementPointer<PsiLanguageInjectionHost> pointer =
             SmartPointerManager.getInstance(project).createSmartPsiElementPointer(host);
           String fixText = text + "<br>Do you want to insert annotation? " + KeymapUtil
             .getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
@@ -165,23 +182,26 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     }
     finally {
       if (injectable.getLanguage() != null) {    // no need for reference injection
-        FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
+        FileContentUtil.reparseFiles(project, Collections.emptyList(), true);
       }
       else {
-        ((PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker()).incCounter();
-        DaemonCodeAnalyzer.getInstance(project).restart();
+        PsiManager.getInstance(project).dropPsiCaches();
       }
     }
   }
 
-  private static boolean defaultFunctionalityWorked(final PsiLanguageInjectionHost host, String id) {
+  private static boolean defaultFunctionalityWorked(PsiLanguageInjectionHost host, String id) {
     return Configuration.getProjectInstance(host.getProject()).setHostInjectionEnabled(host, Collections.singleton(id), true);
   }
 
   public static boolean doChooseLanguageToInject(Editor editor, final Processor<Injectable> onChosen) {
-    ColoredListCellRendererWrapper<Injectable> renderer = new ColoredListCellRendererWrapper<Injectable>() {
+    ColoredListCellRenderer<Injectable> renderer = new ColoredListCellRenderer<Injectable>() {
       @Override
-      protected void doCustomize(JList list, Injectable language, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList<? extends Injectable> list,
+                                           Injectable language,
+                                           int index,
+                                           boolean selected,
+                                           boolean hasFocus) {
         setIcon(language.getIcon());
         append(language.getDisplayName());
         String description = language.getAdditionalDescription();
@@ -210,7 +230,8 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
       .setFilteringEnabled(language -> ((Injectable)language).getDisplayName())
       .setSelectedValue(lastInjected, true);
     if (lastInjected != null) {
-      builder = builder.setSelectedValue(lastInjected, true);
+      Injectable injectable = ContainerUtil.find(injectables, o -> lastInjected.equals(o.getId()));
+      builder = builder.setSelectedValue(injectable, true);
     }
     builder.createPopup().showInBestPositionFor(editor);
     return true;

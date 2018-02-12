@@ -45,7 +45,7 @@ public class JetBrainsAnnotationsExternalLibraryResolver extends ExternalLibrary
       if (annotationsJar.exists()) {
         return Collections.singletonList(FileUtil.toSystemIndependentName(annotationsJar.getAbsolutePath()));
       }
-      return getPathsToAnnotationsDirectoriesInDevelopmentMode("annotations");
+      return getPathsToAnnotationsDirectoriesInDevelopmentMode("intellij.platform.annotations.java5");
     }
   };
 
@@ -57,7 +57,7 @@ public class JetBrainsAnnotationsExternalLibraryResolver extends ExternalLibrary
       if (annotationsJar.exists()) {
         return Collections.singletonList(FileUtil.toSystemIndependentName(annotationsJar.getAbsolutePath()));
       }
-      return getPathsToAnnotationsDirectoriesInDevelopmentMode("annotations-java8");
+      return getPathsToAnnotationsDirectoriesInDevelopmentMode("intellij.platform.annotations");
     }
   };
 

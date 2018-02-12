@@ -15,6 +15,7 @@
  */
 package com.intellij.diff;
 
+import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
 import com.intellij.diff.actions.DocumentFragmentContent;
 import com.intellij.diff.contents.*;
 import com.intellij.diff.tools.util.DiffNotifications;
@@ -37,11 +38,14 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.BinaryLightVirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.LightColors;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +53,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.datatransfer.DataFlavor;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 
 public class DiffContentFactoryImpl extends DiffContentFactoryEx {
@@ -150,15 +153,17 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   @Override
   public DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable FileType fileType) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    if (file == null) return new DocumentContentImpl(project, document, fileType, null, null, null, null);
-    return create(project, document, file);
+    if (file != null) return new FileDocumentContentImpl(project, document, file);
+    return new DocumentContentImpl(project, document, fileType, null, null, null, null);
   }
 
   @NotNull
   @Override
-  public DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable VirtualFile file) {
-    if (file != null) return new FileDocumentContentImpl(project, document, file);
-    return new DocumentContentImpl(document);
+  public DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable VirtualFile highlightFile) {
+    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    if (file != null && file.equals(highlightFile)) return new FileDocumentContentImpl(project, document, file);
+    if (highlightFile == null) return new DocumentContentImpl(document);
+    return new DocumentContentImpl(project, document, highlightFile.getFileType(), highlightFile, null, null, null);
   }
 
   @NotNull
@@ -172,22 +177,13 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   @NotNull
   @Override
   public DiffContent create(@Nullable Project project, @NotNull VirtualFile file) {
-    if (file.isDirectory()) return new DirectoryContentImpl(project, file);
-    DocumentContent content = createDocument(project, file);
-    if (content != null) return content;
-    return new FileContentImpl(project, file);
+    return createContentFromFile(project, file);
   }
 
   @Nullable
   @Override
   public DocumentContent createDocument(@Nullable Project project, @NotNull final VirtualFile file) {
-    // TODO: add notification, that file is decompiled ?
-    if (file.isDirectory()) return null;
-    Document document = ReadAction.compute(() -> {
-      return FileDocumentManager.getInstance().getDocument(file);
-    });
-    if (document == null) return null;
-    return new FileDocumentContentImpl(project, document, file);
+    return ObjectUtils.tryCast(createContentFromFile(project, file), DocumentContent.class);
   }
 
   @Nullable
@@ -202,7 +198,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   @Override
   public DocumentContent createFragment(@Nullable Project project, @NotNull Document document, @NotNull TextRange range) {
     DocumentContent content = create(project, document);
-    return new DocumentFragmentContent(project, content, range);
+    return createFragment(project, content, range);
   }
 
   @NotNull
@@ -258,6 +254,19 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   @Override
   public DiffContent createFromBytes(@Nullable Project project,
                                      @NotNull byte[] content,
+                                     @NotNull FileType fileType,
+                                     @NotNull String fileName) throws IOException {
+    if (isBinaryContent(content, fileType)) {
+      return createBinaryImpl(project, content, fileType, fileName, null);
+    }
+
+    return createDocumentFromBytes(project, content, fileType, fileName);
+  }
+
+  @NotNull
+  @Override
+  public DiffContent createFromBytes(@Nullable Project project,
+                                     @NotNull byte[] content,
                                      @NotNull VirtualFile highlightFile) throws IOException {
     if (isBinaryContent(content, highlightFile.getFileType())) {
       return createBinaryImpl(project, content, highlightFile.getFileType(), highlightFile.getName(), highlightFile);
@@ -268,16 +277,26 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
   @NotNull
   @Override
+  public DocumentContent createDocumentFromBytes(@Nullable Project project,
+                                                 @NotNull byte[] content,
+                                                 @NotNull FileType fileType,
+                                                 @NotNull String fileName) {
+    Charset charset = guessCharset(project, content, fileType);
+    return createFromBytesImpl(project, content, fileType, fileName, null, charset);
+  }
+
+  @NotNull
+  @Override
   public DocumentContent createDocumentFromBytes(@Nullable Project project, @NotNull byte[] content, @NotNull FilePath filePath) {
-    return createFromBytesImpl(project, content, filePath.getFileType(), filePath.getName(), filePath.getVirtualFile(),
-                               filePath.getCharset());
+    Charset charset = guessCharset(content, filePath);
+    return createFromBytesImpl(project, content, filePath.getFileType(), filePath.getName(), filePath.getVirtualFile(), charset);
   }
 
   @NotNull
   @Override
   public DocumentContent createDocumentFromBytes(@Nullable Project project, @NotNull byte[] content, @NotNull VirtualFile highlightFile) {
-    return createFromBytesImpl(project, content, highlightFile.getFileType(), highlightFile.getName(), highlightFile,
-                               highlightFile.getCharset());
+    Charset charset = guessCharset(content, highlightFile);
+    return createFromBytesImpl(project, content, highlightFile.getFileType(), highlightFile.getName(), highlightFile, charset);
   }
 
   @NotNull
@@ -287,6 +306,31 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                   @NotNull FileType type,
                                   @NotNull String fileName) throws IOException {
     return createBinaryImpl(project, content, type, fileName, null);
+  }
+
+
+  @NotNull
+  private static DiffContent createContentFromFile(@Nullable Project project,
+                                                   @NotNull VirtualFile file) {
+    return createContentFromFile(project, file, file);
+  }
+
+  @NotNull
+  private static DiffContent createContentFromFile(@Nullable Project project,
+                                                   @NotNull VirtualFile file,
+                                                   @Nullable VirtualFile highlightFile) {
+    if (file.isDirectory()) return new DirectoryContentImpl(project, file, highlightFile);
+
+    Document document = ReadAction.compute(() -> {
+      return FileDocumentManager.getInstance().getDocument(file);
+    });
+    if (document != null) {
+      // TODO: add notification if file is decompiled ?
+      return new FileDocumentContentImpl(project, document, file, highlightFile);
+    }
+    else {
+      return new FileContentImpl(project, file, highlightFile);
+    }
   }
 
   @NotNull
@@ -306,8 +350,9 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       file = new BinaryLightVirtualFile(fileName, type, content);
       file.setWritable(false);
     }
+    file.putUserData(DiffUtil.TEMP_FILE_KEY, Boolean.TRUE);
 
-    return new FileContentImpl(project, file, highlightFile);
+    return createContentFromFile(project, file, highlightFile);
   }
 
   @NotNull
@@ -352,23 +397,13 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                                      @NotNull String fileName,
                                                      @Nullable VirtualFile highlightFile,
                                                      @NotNull Charset charset) {
-    if (fileType.isBinary()) {
-      fileType = PlainTextFileType.INSTANCE;
+    if (fileType.isBinary()) fileType = PlainTextFileType.INSTANCE;
 
-      Charset guessedCharset = guessCharsetFromContent(content);
-      if (guessedCharset != null) charset = guessedCharset;
-    }
-
-    Charset bomCharset = CharsetToolkit.guessFromBOM(content);
-    boolean isBOM = bomCharset != null;
-    if (isBOM) charset = bomCharset;
+    boolean isBOM = CharsetToolkit.guessFromBOM(content) != null;
 
     boolean malformedContent = false;
-    String text;
-    try {
-      text = CharsetToolkit.tryDecodeString(content, charset);
-    }
-    catch (CharacterCodingException e) {
+    String text = CharsetToolkit.tryDecodeString(content, charset);
+    if (text == null) {
       text = CharsetToolkit.decodeString(content, charset);
       malformedContent = true;
     }
@@ -382,6 +417,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
     return documentContent;
   }
+
 
   @NotNull
   private static VirtualFile createTemporalFile(@Nullable Project project,
@@ -435,7 +471,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       LightVirtualFile file = new LightVirtualFile(fileName, fileType, content);
       file.setWritable(!readOnly);
 
-      file.putUserData(DiffPsiFileSupport.KEY, true);
+      OutsidersPsiFileSupport.markFile(file);
 
       Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document == null) return null;
@@ -451,6 +487,37 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       return guessCharsetFromContent(content) == null;
     }
     return fileType.isBinary();
+  }
+
+
+  @NotNull
+  public static Charset guessCharset(@NotNull byte[] content, @NotNull FilePath filePath) {
+    return guessCharset(content, filePath.getFileType(), filePath.getCharset());
+  }
+
+  @NotNull
+  public static Charset guessCharset(@NotNull byte[] content, @NotNull VirtualFile highlightFile) {
+    return guessCharset(content, highlightFile.getFileType(), highlightFile.getCharset());
+  }
+
+  @NotNull
+  public static Charset guessCharset(@Nullable Project project, @NotNull byte[] content, @NotNull FileType fileType) {
+    EncodingManager e = project != null ? EncodingProjectManager.getInstance(project) : EncodingManager.getInstance();
+    return guessCharset(content, fileType, e.getDefaultCharset());
+  }
+
+
+  @NotNull
+  private static Charset guessCharset(@NotNull byte[] content, @NotNull FileType fileType, @NotNull Charset defaultCharset) {
+    Charset bomCharset = CharsetToolkit.guessFromBOM(content);
+    if (bomCharset != null) return bomCharset;
+
+    if (fileType.isBinary()) {
+      Charset guessedCharset = guessCharsetFromContent(content);
+      if (guessedCharset != null) return guessedCharset;
+    }
+
+    return defaultCharset;
   }
 
   @Nullable

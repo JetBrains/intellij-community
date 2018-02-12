@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.roots;
 
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -30,6 +16,7 @@ import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.vcs.test.VcsPlatformTest;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,18 +36,18 @@ public abstract class VcsRootBaseTest extends VcsPlatformTest {
   protected VirtualFile myRepository;
 
   private VcsRootChecker myExtension;
-  private RootModelImpl myRootModel;
+  protected RootModelImpl myRootModel;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
-    cd(myProjectRoot);
+    cd(projectRoot);
     Module module = doCreateRealModuleIn("foo", myProject, EmptyModuleType.getInstance());
     myRootModel = ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).getRootModel();
     mkdir("repository");
-    myProjectRoot.refresh(false, true);
-    myRepository = myProjectRoot.findChild("repository");
+    projectRoot.refresh(false, true);
+    myRepository = projectRoot.findChild("repository");
 
     myVcs = new MockAbstractVcs(myProject);
     ExtensionPoint<VcsRootChecker> point = getExtensionPoint();
@@ -110,27 +97,29 @@ public abstract class VcsRootBaseTest extends VcsPlatformTest {
    */
   public void initProject(@NotNull VcsRootConfiguration vcsRootConfiguration)
     throws IOException {
-    createDirs(vcsRootConfiguration.getMockRoots());
+    createDirs(vcsRootConfiguration.getVcsRoots());
     Collection<String> contentRoots = vcsRootConfiguration.getContentRoots();
     createProjectStructure(myProject, contentRoots);
     if (!contentRoots.isEmpty()) {
-      for (String root : contentRoots) {
-        myProjectRoot.refresh(false, true);
-        VirtualFile f = myProjectRoot.findFileByRelativePath(root);
-        if (f != null) {
-          myRootModel.addContentEntry(f);
+      EdtTestUtil.runInEdtAndWait(() -> {
+        for (String root : contentRoots) {
+          VirtualFile f = projectRoot.findFileByRelativePath(root);
+          if (f != null) {
+            myRootModel.addContentEntry(f);
+          }
         }
-      }
+      });
     }
   }
 
-  static void createProjectStructure(@NotNull Project project, @NotNull Collection<String> paths) {
+  void createProjectStructure(@NotNull Project project, @NotNull Collection<String> paths) {
     for (String path : paths) {
       cd(project.getBaseDir().getPath());
-      File f = new File(project.getBaseDir().getPath(), path);
+      File f = new File(project.getBasePath(), path);
       f.mkdirs();
       LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
     }
+    projectRoot.refresh(false, true);
   }
 
   private void createDirs(@NotNull Collection<String> mockRoots) throws IOException {
@@ -144,12 +133,8 @@ public abstract class VcsRootBaseTest extends VcsPlatformTest {
     File projectDir = createChild(baseDir, maxDepth - 1);
     cd(projectDir.getPath());
     for (String path : mockRoots) {
-      File file = new File(projectDir, path);
-      file.mkdirs();
-      File mockDir = new File(file, DOT_MOCK);
+      File mockDir = new File(new File(projectDir, path), DOT_MOCK);
       mockDir.mkdirs();
-      myFilesToDelete.add(mockDir);
-      mockDir.deleteOnExit();
       LocalFileSystem.getInstance().refreshAndFindFileByIoFile(mockDir);
     }
   }

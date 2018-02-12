@@ -10,6 +10,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.enums.Enum java.lang.Class getEnumClass()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.enums.Enum java.lang.Object readResolve()'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -20,6 +25,11 @@
     </item>
     <item name='org.apache.commons.lang.enums.Enum java.lang.String getNameInOtherClassLoader(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.enums.Enum java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.enums.Enum java.util.Iterator iterator(java.lang.Class) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -75,6 +85,11 @@
     </item>
     <item name='org.apache.commons.lang.enums.ValuedEnum int getValueInOtherClassLoader(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.enums.ValuedEnum java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.enums.ValuedEnum org.apache.commons.lang.enums.Enum getEnum(java.lang.Class, int)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>

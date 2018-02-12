@@ -24,6 +24,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.ide.fileTemplates.ui.CreateFromTemplateDialog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,6 +40,7 @@ import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.Collections;
 import java.util.Map;
@@ -49,10 +51,12 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
 
   @Override
   public PsiPackage getPackage(@NotNull PsiDirectory dir) {
-    ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(dir.getProject()).getFileIndex();
-    String packageName = projectFileIndex.getPackageNameByDirectory(dir.getVirtualFile());
-    if (packageName == null) return null;
-    return JavaPsiFacade.getInstance(dir.getProject()).findPackage(packageName);
+    Project project = dir.getProject();
+    ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    VirtualFile virtualFile = dir.getVirtualFile();
+    String packageName = projectFileIndex.getPackageNameByDirectory(virtualFile);
+    if (packageName == null || projectFileIndex.isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.RESOURCES)) return null;
+    return JavaPsiFacade.getInstance(project).findPackage(packageName);
   }
 
   @Override
@@ -72,7 +76,7 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
                               @NotNull String name,
                               @NotNull String templateName,
                               boolean askForUndefinedVariables) throws IncorrectOperationException {
-    return createClass(dir, name, templateName, askForUndefinedVariables, Collections.<String, String>emptyMap());
+    return createClass(dir, name, templateName, askForUndefinedVariables, Collections.emptyMap());
   }
 
   @Override
@@ -117,7 +121,7 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
   }
 
   private static PsiClass createClassFromTemplate(@NotNull PsiDirectory dir, String name, String templateName) throws IncorrectOperationException {
-    return createClassFromTemplate(dir, name, templateName, false, Collections.<String, String>emptyMap());
+    return createClassFromTemplate(dir, name, templateName, false, Collections.emptyMap());
   }
 
   private static PsiClass createClassFromTemplate(@NotNull PsiDirectory dir,
@@ -159,6 +163,9 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
     PsiClass[] classes = file.getClasses();
     if (classes.length < 1) {
       throw new IncorrectOperationException(getIncorrectTemplateMessage(templateName, project));
+    }
+    if (template.isLiveTemplateEnabled()) {
+      CreateFromTemplateActionBase.startLiveTemplate(file);
     }
     return classes[0];
   }

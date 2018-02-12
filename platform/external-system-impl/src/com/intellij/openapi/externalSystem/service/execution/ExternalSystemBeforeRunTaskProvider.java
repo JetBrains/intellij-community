@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public abstract class ExternalSystemBeforeRunTaskProvider extends BeforeRunTaskP
   }
 
   @Override
-  public boolean configureTask(RunConfiguration runConfiguration, ExternalSystemBeforeRunTask task) {
+  public boolean configureTask(@NotNull RunConfiguration runConfiguration, @NotNull ExternalSystemBeforeRunTask task) {
     ExternalSystemEditTaskDialog dialog = new ExternalSystemEditTaskDialog(myProject, task.getTaskExecutionSettings(), mySystemId);
     dialog.setTitle(ExternalSystemBundle.message("tasks.select.task.title", mySystemId.getReadableName()));
 
@@ -87,7 +87,7 @@ public abstract class ExternalSystemBeforeRunTaskProvider extends BeforeRunTaskP
   }
 
   @Override
-  public boolean canExecuteTask(RunConfiguration configuration, ExternalSystemBeforeRunTask beforeRunTask) {
+  public boolean canExecuteTask(@NotNull RunConfiguration configuration, @NotNull ExternalSystemBeforeRunTask beforeRunTask) {
     final ExternalSystemTaskExecutionSettings executionSettings = beforeRunTask.getTaskExecutionSettings();
 
     final List<ExternalTaskPojo> tasks = ContainerUtilRt.newArrayList();
@@ -106,9 +106,9 @@ public abstract class ExternalSystemBeforeRunTaskProvider extends BeforeRunTaskP
 
   @Override
   public boolean executeTask(DataContext context,
-                             RunConfiguration configuration,
-                             ExecutionEnvironment env,
-                             ExternalSystemBeforeRunTask beforeRunTask) {
+                             @NotNull RunConfiguration configuration,
+                             @NotNull ExecutionEnvironment env,
+                             @NotNull ExternalSystemBeforeRunTask beforeRunTask) {
 
     final ExternalSystemTaskExecutionSettings executionSettings = beforeRunTask.getTaskExecutionSettings();
 

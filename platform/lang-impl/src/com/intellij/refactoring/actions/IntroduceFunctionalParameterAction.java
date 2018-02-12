@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 06.05.2002
- * Time: 14:03:43
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.actions;
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider;

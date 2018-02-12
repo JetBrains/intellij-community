@@ -18,6 +18,7 @@ package com.intellij.find.impl;
 import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 
+@FunctionalInterface
 public interface FindPopupScopeUIProvider {
   static FindPopupScopeUIProvider getInstance() {
     return ServiceManager.getService(FindPopupScopeUIProvider.class);

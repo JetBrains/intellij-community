@@ -1010,7 +1010,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
                  "value2=\\value\n");
   }
 
-  public void testDoNotFilterButCopyBigFiles() throws Exception {
+  public void testDoNotFilterButCopyBigFiles() {
     assertEquals(FileTypeManager.getInstance().getFileTypeByFileName("file.xyz"), FileTypes.UNKNOWN);
 
     new WriteAction() {

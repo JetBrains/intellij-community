@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.google.common.collect.ImmutableMap;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInspection.*;
@@ -46,6 +47,7 @@ import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
+import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +80,9 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
 
   @Override
   public void visitPyFunction(final PyFunction node) {
-    processScope(node);
+    if (!PyiUtil.isOverload(node, myTypeEvalContext)) {
+      processScope(node);
+    }
   }
 
   @Override
@@ -92,10 +96,10 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   }
 
   private void processScope(final ScopeOwner owner) {
-    if (owner.getContainingFile() instanceof PyExpressionCodeFragment || callsLocals(owner)) {
+    if (owner.getContainingFile() instanceof PyExpressionCodeFragment) {
       return;
     }
-    if (!(owner instanceof PyClass)) {
+    if (!(owner instanceof PyClass) && !callsLocals(owner)) {
       collectAllWrites(owner);
     }
     collectUsedReads(owner);
@@ -154,7 +158,14 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         final String name = readWriteInstruction.getName();
         // Ignore empty, wildcards, global and nonlocal names
         final Scope scope = ControlFlowCache.getScope(owner);
-        if (name == null || "_".equals(name) || scope.isGlobal(name) || scope.isNonlocal(name)) {
+        if (name == null || PyNames.UNDERSCORE.equals(name) || scope.isGlobal(name) || scope.isNonlocal(name)) {
+          continue;
+        }
+        if (element instanceof PyTargetExpression && ((PyTargetExpression)element).isQualified()) {
+          continue;
+        }
+        // Ignore underscore-prefixed parameters
+        if (name.startsWith(PyNames.UNDERSCORE) && element instanceof PyParameter) {
           continue;
         }
         // Ignore elements out of scope
@@ -183,9 +194,11 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
       final PyFunction function = (PyFunction)owner;
       final String functionName = function.getName();
 
-      return !PyNames.INIT.equals(functionName) &&
-             function.getContainingClass() != null &&
-             PyNames.getBuiltinMethods(LanguageLevel.forElement(function)).containsKey(functionName);
+      final LanguageLevel level = LanguageLevel.forElement(function);
+      final ImmutableMap<String, PyNames.BuiltinDescription> builtinMethods =
+        function.getContainingClass() != null ? PyNames.getBuiltinMethods(level) : PyNames.getModuleBuiltinMethods(level);
+
+      return !PyNames.INIT.equals(functionName) && builtinMethods.containsKey(functionName);
     }
 
     return false;
@@ -367,9 +380,9 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
             fixes.add(new AddFieldQuickFix(name, name, containingClass.getName(), false));
           }
           if (canRemove) {
-            fixes.add(new PyRemoveParameterQuickFix());
+            fixes.add(new PyRemoveParameterQuickFix(myTypeEvalContext));
           }
-          registerWarning(element, PyBundle.message("INSP.unused.locals.parameter.isnot.used", name), fixes.toArray(new LocalQuickFix[fixes.size()]));
+          registerWarning(element, PyBundle.message("INSP.unused.locals.parameter.isnot.used", name), fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
         else {
           if (myIgnoreTupleUnpacking && isTupleUnpacking(element)) {
@@ -448,12 +461,14 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   }
 
   private static class ReplaceWithWildCard implements LocalQuickFix {
+    @Override
     @NotNull
     public String getFamilyName() {
       return PyBundle.message("INSP.unused.locals.replace.with.wildcard");
     }
 
-    public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement psiElement = descriptor.getPsiElement();
       final PyFile pyFile = (PyFile) PyElementGenerator.getInstance(psiElement.getProject()).createDummyFile(LanguageLevel.getDefault(),
                                                                                                              "for _ in tuples:\n  pass"

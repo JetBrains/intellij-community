@@ -1,8 +1,8 @@
 class Test {
-    /**
-     * @apiNote note1
-     * @implNote implNote
-     * @implSpec implSpec
-     */
-     public void i() {}
+  /**
+   * @apiNote note1
+   * @implNote implNote
+   * @implSpec implSpec
+   */
+  public void i() {}
 }

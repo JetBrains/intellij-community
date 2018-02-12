@@ -47,7 +47,7 @@ import java.io.IOException;
 
 public class VcsHistoryUtil {
   @Deprecated
-  public static Key<Pair<FilePath, VcsRevisionNumber>> REVISION_INFO_KEY = DiffUserDataKeysEx.REVISION_INFO;
+  public static final Key<Pair<FilePath, VcsRevisionNumber>> REVISION_INFO_KEY = DiffUserDataKeysEx.REVISION_INFO;
 
   private static final Logger LOG = Logger.getInstance(VcsHistoryUtil.class);
 
@@ -112,11 +112,7 @@ public class VcsHistoryUtil {
     diffContent1.putUserData(DiffUserDataKeysEx.REVISION_INFO, getRevisionInfo(revision1));
     diffContent2.putUserData(DiffUserDataKeysEx.REVISION_INFO, getRevisionInfo(revision2));
 
-    WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-      public void run() {
-        DiffManager.getInstance().showDiff(project, request);
-      }
-    }, null, project);
+    WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> DiffManager.getInstance().showDiff(project, request), null, project);
   }
 
   @Nullable
@@ -200,12 +196,9 @@ public class VcsHistoryUtil {
         }
         catch (final VcsException e) {
           LOG.info(e);
-          WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-            public void run() {
-              Messages.showErrorDialog(VcsBundle.message("message.text.cannot.show.differences", e.getLocalizedMessage()),
-                                       VcsBundle.message("message.title.show.differences"));
-            }
-          }, null, project);
+          WaitForProgressToShow.runOrInvokeLaterAboveProgress(
+            () -> Messages.showErrorDialog(VcsBundle.message("message.text.cannot.show.differences", e.getLocalizedMessage()),
+                                         VcsBundle.message("message.title.show.differences")), null, project);
         }
         catch (IOException e) {
           LOG.info(e);

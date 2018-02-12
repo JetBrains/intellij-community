@@ -78,7 +78,7 @@ public class ListUtil {
     return removeSelectedItems(list, null);
   }
 
-  public static List removeIndices(JList list, int[] indices) {
+  public static <T> List<T> removeIndices(JList<T> list, int[] indices) {
     return removeIndices(list, indices, null);
   }
 

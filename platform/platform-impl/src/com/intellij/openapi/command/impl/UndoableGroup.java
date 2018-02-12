@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.command.impl;
 
@@ -26,11 +14,9 @@ import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +36,7 @@ class UndoableGroup {
   private EditorAndState myStateAfter;
   private final Project myProject;
   private final UndoConfirmationPolicy myConfirmationPolicy;
+  private boolean myTemporary;
 
   private boolean myValid;
 
@@ -73,6 +60,7 @@ class UndoableGroup {
     myTransparent = transparent;
     myValid = valid;
     composeStartFinishGroup(manager.getUndoStacksHolder());
+    myTemporary = transparent;
   }
 
   public boolean isGlobal() {
@@ -81,6 +69,20 @@ class UndoableGroup {
 
   public boolean isTransparent() {
     return myTransparent;
+  }
+
+  /**
+   * We allow transparent actions to be performed while we're in the middle of undo stack, without breaking it (i.e. without dropping
+   * redo stack contents). Such actions are stored in undo stack as 'temporary' actions, and are dropped (not further kept in stacks)
+   * on undo/redo. If a non-transparent action is performed after a temporary one, the latter is converted to normal (permanent) action,
+   * and redo stack is cleared.
+   */
+  public boolean isTemporary() {
+    return myTemporary;
+  }
+
+  public void makePermanent() {
+    myTemporary = false;
   }
 
   public boolean isUndoable() {
@@ -156,7 +158,6 @@ class UndoableGroup {
       }
     });
     if (exception[0] != null) reportUndoProblem(exception[0], isUndo);
-    commitAllDocuments();
   }
 
   private static DocumentEx getDocumentToSetBulkMode(UndoableAction action) {
@@ -242,12 +243,6 @@ class UndoableGroup {
       }
     }
     return false;
-  }
-
-  private static void commitAllDocuments() {
-    for (Project p : ProjectManager.getInstance().getOpenProjects()) {
-      PsiDocumentManager.getInstance(p).commitAllDocuments();
-    }
   }
 
   private void reportUndoProblem(UnexpectedUndoException e, boolean isUndo) {

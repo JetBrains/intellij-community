@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
@@ -76,22 +77,31 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.Modifi
     final ArrayList<Library> result = new ArrayList<>();
     final Iterator<Library> libraryIterator = getLibraryIterator();
     ContainerUtil.addAll(result, libraryIterator);
-    return result.toArray(new Library[result.size()]);
+    return result.toArray(Library.EMPTY_ARRAY);
   }
 
+  @NotNull
   @Override
   public Library createLibrary() {
     return createLibrary(null);
   }
 
+  @NotNull
   @Override
   public Library createLibrary(String name) {
     return createLibrary(name, null);
   }
 
+  @NotNull
   @Override
-  public Library createLibrary(String name, @Nullable PersistentLibraryKind kind) {
-    LibraryOrderEntry orderEntry = new ModuleLibraryOrderEntryImpl(name, kind, myRootModel, myProjectRootManager);
+  public Library createLibrary(String name, @Nullable PersistentLibraryKind type) {
+    return createLibrary(name, type, null);
+  }
+
+  @NotNull
+  @Override
+  public Library createLibrary(String name, @Nullable PersistentLibraryKind kind, @Nullable ProjectModelExternalSource externalSource) {
+    ModuleLibraryOrderEntryImpl orderEntry = new ModuleLibraryOrderEntryImpl(name, kind, myRootModel, myProjectRootManager, externalSource);
     myRootModel.addOrderEntry(orderEntry);
     return orderEntry.getLibrary();
   }
@@ -122,19 +132,16 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.Modifi
     return new ConvertingIterator<>(filteringIterator, ORDER_ENTRY_TO_LIBRARY_CONVERTOR);
   }
 
+  @NotNull
   @Override
   public String getTableLevel() {
     return LibraryTableImplUtil.MODULE_LEVEL;
   }
 
+  @NotNull
   @Override
   public LibraryTablePresentation getPresentation() {
     return MODULE_LIBRARY_TABLE_PRESENTATION;
-  }
-
-  @Override
-  public boolean isEditable() {
-    return true;
   }
 
   @Override

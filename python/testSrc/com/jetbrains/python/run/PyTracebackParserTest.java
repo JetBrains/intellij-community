@@ -30,7 +30,7 @@ public class PyTracebackParserTest extends TestCase {
   /**
    * Ensures we find link in stack trace
    */
-  public void testLineWithLink() throws Exception {
+  public void testLineWithLink() {
     final LinkInTrace linkInTrace = new PyTracebackParser().findLinkInTrace("File \"foo/bar.py\", line 42 failed");
     Assert.assertNotNull("Failed to parse line", linkInTrace);
     Assert.assertEquals("Bad file name", "foo/bar.py", linkInTrace.getFileName());
@@ -42,7 +42,7 @@ public class PyTracebackParserTest extends TestCase {
   /**
    * lines with out of file references should not have links
    */
-  public void testLineNoLink() throws Exception {
+  public void testLineNoLink() {
     Assert.assertNull("File with no lines should not work", new PyTracebackParser().findLinkInTrace("File \"foo/bar.py\""));
     Assert.assertNull("No file name provided, but link found", new PyTracebackParser().findLinkInTrace("line 42 failed"));
   }

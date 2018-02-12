@@ -1,23 +1,13 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
+import com.intellij.debugger.jdi.JvmtiError;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.registry.Registry;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.event.EventSet;
@@ -26,6 +16,7 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 /**
  * @author lex
@@ -33,12 +24,12 @@ import java.util.*;
 public class SuspendManagerImpl implements SuspendManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.SuspendManager");
 
-  private final LinkedList<SuspendContextImpl> myEventContexts  = new LinkedList<>();
+  private final Deque<SuspendContextImpl> myEventContexts = new ConcurrentLinkedDeque<>();
   /**
    * contexts, paused at breakpoint or another debugger event requests. Note that thread, explicitly paused by user is not considered as
    * "paused at breakpoint" and JDI prohibits data queries on its stack frames
    */
-  private final LinkedList<SuspendContextImpl> myPausedContexts = new LinkedList<>();
+  private final Deque<SuspendContextImpl> myPausedContexts = new ConcurrentLinkedDeque<>();
   private final Set<ThreadReferenceProxyImpl>  myFrozenThreads  = Collections.synchronizedSet(new HashSet<>());
 
   private final DebugProcessImpl myDebugProcess;
@@ -76,7 +67,7 @@ public class SuspendManagerImpl implements SuspendManager {
                 //InternalException 13 means that there are running threads that we are trying to resume
                 //On MacOS it happened that native thread didn't stop while some java thread reached breakpoint
                 //noinspection StatementWithEmptyBody
-                if (/*Patches.MAC_RESUME_VM_HACK && */e.errorCode() == 13) {
+                if (/*Patches.MAC_RESUME_VM_HACK && */e.errorCode() == JvmtiError.THREAD_NOT_SUSPENDED) {
                   //Its funny, but second resume solves the problem
                 }
                 else {
@@ -146,7 +137,8 @@ public class SuspendManagerImpl implements SuspendManager {
             //InternalException 13 means that there are running threads that we are trying to resume
             //On MacOS it happened that native thread didn't stop while some java thread reached breakpoint
             //noinspection StatementWithEmptyBody
-            if (/*Patches.MAC_RESUME_VM_HACK && */e.errorCode() == 13 && set.suspendPolicy() == EventRequest.SUSPEND_ALL) {
+            if (/*Patches.MAC_RESUME_VM_HACK && */e.errorCode() == JvmtiError.THREAD_NOT_SUSPENDED &&
+                                                  set.suspendPolicy() == EventRequest.SUSPEND_ALL) {
               //Its funny, but second resume solves the problem
             }
             else {
@@ -192,7 +184,7 @@ public class SuspendManagerImpl implements SuspendManager {
 
   @Override
   public SuspendContextImpl getPausedContext() {
-    return !myPausedContexts.isEmpty() ? myPausedContexts.getFirst() : null;
+    return myPausedContexts.peekFirst();
   }
 
   public void popContext(SuspendContextImpl suspendContext) {
@@ -221,7 +213,7 @@ public class SuspendManagerImpl implements SuspendManager {
   @Override
   public List<SuspendContextImpl> getEventContexts() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    return Collections.unmodifiableList(myEventContexts);
+    return new ArrayList<>(myEventContexts);
   }
 
   @Override
@@ -311,8 +303,10 @@ public class SuspendManagerImpl implements SuspendManager {
         LOG.debug("vote paused");
         myDebugProcess.logThreads();
         myDebugProcess.cancelRunToCursorBreakpoint();
-        final ThreadReferenceProxyImpl thread = suspendContext.getThread();
-        myDebugProcess.deleteStepRequests(thread != null ? thread.getThreadReference() : null);
+        if (!Registry.is("debugger.keep.step.requests")) {
+          ThreadReferenceProxyImpl thread = suspendContext.getThread();
+          myDebugProcess.deleteStepRequests(thread != null ? thread.getThreadReference() : null);
+        }
         notifyPaused(suspendContext);
       }
     }
@@ -336,6 +330,6 @@ public class SuspendManagerImpl implements SuspendManager {
   }
 
   public List<SuspendContextImpl> getPausedContexts() {
-    return myPausedContexts;
+    return new ArrayList<>(myPausedContexts);
   }
 }

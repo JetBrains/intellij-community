@@ -27,7 +27,7 @@ import java.awt.datatransfer.DataFlavor;
  */
 public class KillRegionActionTest extends AbstractRegionToKillRingTest {
 
-  protected void doTest(@NotNull String text) throws Exception {
+  protected void doTest(@NotNull String text) {
     configureFromFileText(getTestName(false) + ".txt", text);
     Pair<String,String> parseResult = parse();
     killRegion();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import org.jetbrains.annotations.NotNull;
 
 public final class JavaHighlightInfoTypes {
@@ -28,7 +28,7 @@ public final class JavaHighlightInfoTypes {
   }
   
   public final static HighlightInfoType UNUSED_IMPORT = new HighlightInfoType.HighlightInfoTypeSeverityByKey(
-    HighlightDisplayKey.findOrRegister(UnusedImportLocalInspection.SHORT_NAME, UnusedImportLocalInspection.DISPLAY_NAME), CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
+    HighlightDisplayKey.findOrRegister(UnusedImportInspection.SHORT_NAME, UnusedImportInspection.DISPLAY_NAME), CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
 
   public final static HighlightInfoType JAVA_KEYWORD = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, JavaHighlightingColors.KEYWORD);
 

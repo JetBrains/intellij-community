@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements VirtualFileManagerListener, CommandListener,
-                                                                               BulkFileListener {
+public class LocalHistoryEventDispatcher implements VirtualFileManagerListener, CommandListener,
+                                                    BulkFileListener, VirtualFileListener {
   private static final Key<Boolean> WAS_VERSIONED_KEY =
     Key.create(LocalHistoryEventDispatcher.class.getSimpleName() + ".WAS_VERSIONED_KEY");
 
@@ -64,18 +64,9 @@ public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements V
   }
 
   @Override
-  public void beforeCommandFinished(CommandEvent e) { }
-
-  @Override
   public void commandFinished(CommandEvent e) {
     endChangeSet(e.getCommandName());
   }
-
-  @Override
-  public void undoTransparentActionStarted() { }
-
-  @Override
-  public void undoTransparentActionFinished() { }
 
   public void startAction() {
     myGateway.registerUnsavedDocuments(myVcs);

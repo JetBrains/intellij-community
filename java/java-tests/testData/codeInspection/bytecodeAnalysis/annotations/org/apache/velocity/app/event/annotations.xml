@@ -23,6 +23,26 @@
     <item name='org.apache.velocity.app.event.EventCartridge boolean removeEventHandler(org.apache.velocity.app.event.EventHandler) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.velocity.app.event.EventCartridge java.util.Iterator getIncludeEventHandlers()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.app.event.EventCartridge java.util.Iterator getInvalidReferenceEventHandlers()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.app.event.EventCartridge java.util.Iterator getMethodExceptionEventHandlers()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.app.event.EventCartridge java.util.Iterator getNullSetEventHandlers()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.app.event.EventCartridge java.util.Iterator getReferenceInsertionEventHandlers()'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -94,6 +114,11 @@
     <item name='org.apache.velocity.app.event.EventHandlerUtil void iterateOverEventHandlers(java.util.Iterator, org.apache.velocity.app.event.EventHandlerMethodExecutor) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.velocity.app.event.IncludeEventHandler.IncludeEventExecutor IncludeEventExecutor(org.apache.velocity.context.Context, java.lang.String, java.lang.String, java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.app.event.IncludeEventHandler.IncludeEventExecutor boolean isDone()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -106,6 +131,11 @@
     </item>
     <item name='org.apache.velocity.app.event.IncludeEventHandler.IncludeEventExecutor void execute(org.apache.velocity.app.event.EventHandler) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.app.event.InvalidReferenceEventHandler.InvalidGetMethodExecutor InvalidGetMethodExecutor(org.apache.velocity.context.Context, java.lang.String, java.lang.Object, java.lang.String, org.apache.velocity.util.introspection.Info)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.velocity.app.event.InvalidReferenceEventHandler.InvalidGetMethodExecutor boolean isDone()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -120,6 +150,11 @@
     <item name='org.apache.velocity.app.event.InvalidReferenceEventHandler.InvalidGetMethodExecutor void execute(org.apache.velocity.app.event.EventHandler) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.velocity.app.event.InvalidReferenceEventHandler.InvalidMethodExecutor InvalidMethodExecutor(org.apache.velocity.context.Context, java.lang.String, java.lang.Object, java.lang.String, org.apache.velocity.util.introspection.Info)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.app.event.InvalidReferenceEventHandler.InvalidMethodExecutor boolean isDone()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -132,6 +167,11 @@
     </item>
     <item name='org.apache.velocity.app.event.InvalidReferenceEventHandler.InvalidMethodExecutor void execute(org.apache.velocity.app.event.EventHandler) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.app.event.InvalidReferenceEventHandler.InvalidSetMethodExecutor InvalidSetMethodExecutor(org.apache.velocity.context.Context, java.lang.String, java.lang.String, org.apache.velocity.util.introspection.Info)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.velocity.app.event.InvalidReferenceEventHandler.InvalidSetMethodExecutor boolean isDone()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -147,6 +187,11 @@
     <item name='org.apache.velocity.app.event.InvalidReferenceEventHandler.InvalidSetMethodExecutor void execute(org.apache.velocity.app.event.EventHandler) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.velocity.app.event.MethodExceptionEventHandler.MethodExceptionExecutor MethodExceptionExecutor(org.apache.velocity.context.Context, java.lang.Class, java.lang.String, java.lang.Exception)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.app.event.MethodExceptionEventHandler.MethodExceptionExecutor boolean isDone()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -159,6 +204,11 @@
     </item>
     <item name='org.apache.velocity.app.event.MethodExceptionEventHandler.MethodExceptionExecutor void execute(org.apache.velocity.app.event.EventHandler) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.app.event.NullSetEventHandler.ShouldLogOnNullSetExecutor ShouldLogOnNullSetExecutor(org.apache.velocity.context.Context, java.lang.String, java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.velocity.app.event.NullSetEventHandler.ShouldLogOnNullSetExecutor boolean isDone()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -179,6 +229,11 @@
         </annotation>
     </item>
     <item name='org.apache.velocity.app.event.ReferenceInsertionEventHandler.referenceInsertExecutor java.lang.Object getReturnValue()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.app.event.ReferenceInsertionEventHandler.referenceInsertExecutor referenceInsertExecutor(org.apache.velocity.context.Context, java.lang.String, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ class LibNotifyWrapper implements SystemNotificationsImpl.Notifier {
     return ourInstance;
   }
 
-  @SuppressWarnings("SpellCheckingInspection")
+  @SuppressWarnings({"SpellCheckingInspection", "UnusedReturnValue"})
   private interface LibNotify extends Library {
     int notify_init(String appName);
     void notify_uninit();
@@ -52,7 +52,7 @@ class LibNotifyWrapper implements SystemNotificationsImpl.Notifier {
   private boolean myDisposed = false;
 
   private LibNotifyWrapper() {
-    myLibNotify = (LibNotify)Native.loadLibrary("libnotify.so.4", LibNotify.class);
+    myLibNotify = Native.loadLibrary("libnotify.so.4", LibNotify.class);
 
     String appName = ApplicationNamesInfo.getInstance().getProductName();
     if (myLibNotify.notify_init(appName) == 0) {

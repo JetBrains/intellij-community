@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurableUi;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
@@ -60,11 +61,10 @@ public class SshSettingsPanel implements ConfigurableUi<SvnConfiguration> {
   private TextFieldWithBrowseButton myPrivateKeyPathField;
 
   private String mySshTunnelFromConfig;
-  private SvnConfiguration mySvnConfiguration;
+  private final SvnConfiguration mySvnConfiguration;
 
-  public void load(@NotNull SvnConfiguration svnConfiguration) {
-    mySvnConfiguration = svnConfiguration;
-
+  public SshSettingsPanel(@NotNull Project project) {
+    mySvnConfiguration = SvnConfiguration.getInstance(project);
     init();
   }
 

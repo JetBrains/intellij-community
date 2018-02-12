@@ -21,11 +21,6 @@ import org.intellij.plugins.relaxNG.compact.psi.RncElementVisitor;
 import org.intellij.plugins.relaxNG.compact.psi.RncExternalRef;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 10.08.2007
- */
 public class RncExternalRefImpl extends RncFileReferenceImpl implements RncExternalRef {
   public RncExternalRefImpl(ASTNode node) {
     super(node);

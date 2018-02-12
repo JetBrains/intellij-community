@@ -234,7 +234,7 @@ int _PYDEVD_ExecWithGILSetSysStrace(bool showDebugInfo, bool isDebug){
     CHECK_NULL(pyImportModFunc, "PyImport_ImportModuleNoBlock not found.\n", 8);
 
 
-    PyObjectHolder pydevdTracingMod = PyObjectHolder(isDebug, pyImportModFunc("pydevd_tracing"));
+    PyObjectHolder pydevdTracingMod = PyObjectHolder(isDebug, pyImportModFunc("_pydevd_bundle.pydevd_tracing"));
     CHECK_NULL(pydevdTracingMod.ToPython(), "pydevd_tracing module null.\n", 9);
 
     if(!pyHasAttrFunc(pydevdTracingMod.ToPython(), "_original_settrace")){
@@ -271,7 +271,7 @@ int _PYDEVD_ExecWithGILSetSysStrace(bool showDebugInfo, bool isDebug){
         }
         return 13;
     }
-
+    
     PyObjectHolder traceFunc = PyObjectHolder(isDebug, pyGetAttr(globalDbg.ToPython(), "trace_dispatch"));
     CHECK_NULL(traceFunc.ToPython(), "pydevd.GetGlobalDebugger().trace_dispatch returned null!\n", 14);
     

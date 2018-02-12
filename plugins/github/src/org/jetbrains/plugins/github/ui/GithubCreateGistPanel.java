@@ -25,7 +25,7 @@ import javax.swing.*;
  */
 public class GithubCreateGistPanel {
   private JTextArea myDescriptionTextArea;
-  private JCheckBox myPrivateCheckBox;
+  private JCheckBox mySecretCheckBox;
   private JPanel myPanel;
   private JCheckBox myAnonymousCheckBox;
   private JCheckBox myOpenInBrowserCheckBox;
@@ -38,8 +38,8 @@ public class GithubCreateGistPanel {
     myFileNameField.setVisible(false);
   }
 
-  public boolean isPrivate(){
-    return myPrivateCheckBox.isSelected();
+  public boolean isSecret(){
+    return mySecretCheckBox.isSelected();
   }
 
   public boolean isAnonymous(){
@@ -50,8 +50,8 @@ public class GithubCreateGistPanel {
     return myOpenInBrowserCheckBox.isSelected();
   }
 
-  public void setPrivate(final boolean isPrivate){
-    myPrivateCheckBox.setSelected(isPrivate);
+  public void setSecret(final boolean isSecret){
+    mySecretCheckBox.setSelected(isSecret);
   }
 
   public void setAnonymous(final boolean anonymous){

@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceDependency;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author nik
@@ -35,7 +36,7 @@ public class JpsModuleSourceOrderEntry extends JpsOrderEntry<JpsModuleSourceDepe
   }
 
   @Override
-  public <R> R accept(RootPolicy<R> policy, @Nullable R initialValue) {
+  public <R> R accept(@NotNull RootPolicy<R> policy, @Nullable R initialValue) {
     return policy.visitModuleSourceOrderEntry(this, initialValue);
   }
 
@@ -47,7 +48,7 @@ public class JpsModuleSourceOrderEntry extends JpsOrderEntry<JpsModuleSourceDepe
 
   @Override
   @NotNull
-  public VirtualFile[] getFiles(OrderRootType type) {
+  public VirtualFile[] getFiles(@NotNull OrderRootType type) {
     if (OrderRootType.SOURCES.equals(type)) {
       return getRootModel().getSourceRoots();
     }
@@ -56,10 +57,10 @@ public class JpsModuleSourceOrderEntry extends JpsOrderEntry<JpsModuleSourceDepe
 
   @Override
   @NotNull
-  public String[] getUrls(OrderRootType type) {
-    final ArrayList<String> result = new ArrayList<>();
+  public String[] getUrls(@NotNull OrderRootType type) {
     if (OrderRootType.SOURCES.equals(type)) {
       final ContentEntry[] content = getRootModel().getContentEntries();
+      List<String> result = new ArrayList<>();
       for (ContentEntry contentEntry : content) {
         final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
         for (SourceFolder sourceFolder : sourceFolders) {

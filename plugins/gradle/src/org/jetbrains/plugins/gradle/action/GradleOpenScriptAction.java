@@ -22,7 +22,7 @@ import org.jetbrains.plugins.gradle.util.GradleBundle;
  */
 public class GradleOpenScriptAction extends AbstractGradleLinkedProjectAction implements DumbAware {
 
-  private static final Logger LOG = Logger.getInstance("#" + GradleOpenScriptAction.class.getName());
+  private static final Logger LOG = Logger.getInstance(GradleOpenScriptAction.class);
 
   public GradleOpenScriptAction() {
     getTemplatePresentation().setText(GradleBundle.message("gradle.action.open.script.text"));

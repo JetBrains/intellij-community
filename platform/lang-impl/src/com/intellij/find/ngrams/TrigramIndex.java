@@ -22,7 +22,6 @@ package com.intellij.find.ngrams;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
 import com.intellij.openapi.util.text.TrigramBuilder;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
@@ -46,12 +45,7 @@ public class TrigramIndex extends ScalarIndexExtension<Integer> implements Custo
 
   public static final ID<Integer,Void> INDEX_ID = ID.create("Trigram.Index");
 
-  private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
-    @Override
-    public boolean acceptInput(@NotNull VirtualFile file) {
-      return isIndexable(file.getFileType());
-    }
-  };
+  private static final FileBasedIndex.InputFilter INPUT_FILTER = file -> isIndexable(file.getFileType());
 
   public static boolean isIndexable(FileType fileType) {
     return ENABLED && !fileType.isBinary();

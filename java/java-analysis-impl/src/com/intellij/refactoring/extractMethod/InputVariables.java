@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 22-Jun-2009
- */
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.openapi.project.Project;
@@ -34,6 +30,7 @@ import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.UniqueNameGenerator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -66,7 +63,7 @@ public class InputVariables {
   /**
    * copy use only
    */
-  public InputVariables(List<VariableData> inputVariables,
+  private InputVariables(List<VariableData> inputVariables,
                         Project project,
                         LocalSearchScope scope) {
     myProject = project;
@@ -90,6 +87,10 @@ public class InputVariables {
 
     myInputVariables.clear();
     myInputVariables.addAll(wrapInputVariables(myInitialParameters));
+  }
+
+  public boolean isPassFields() {
+    return myPassFields;
   }
 
   public ArrayList<VariableData> wrapInputVariables(final List<? extends PsiVariable> inputVariables) {
@@ -340,6 +341,11 @@ public class InputVariables {
         }
       }
     }
+  }
+
+  public void foldExtractedParameter(@NotNull PsiVariable extractedParameter, @NotNull PsiExpression value) {
+    myFoldingAvailable = true;
+    myFolding.putCallArgument(extractedParameter, value);
   }
 
   public boolean isFoldingSelectedByDefault() {

@@ -60,7 +60,7 @@ public class FileContentUtilCore {
       }
 
       BulkFileListener publisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
-      List<VFileEvent> eventList = new ArrayList<>(events);
+      List<VFileEvent> eventList = Collections.unmodifiableList(new ArrayList<>(events));
       publisher.before(eventList);
       publisher.after(eventList);
     });

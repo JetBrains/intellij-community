@@ -242,12 +242,7 @@ public class ConvertFormatOperatorToMethodIntention extends PyBaseIntentionActio
     if (binaryExpression == null) {
       return false;
     }
-    final LanguageLevel languageLevel = LanguageLevel.forElement(binaryExpression);
-    if (languageLevel.isOlderThan(LanguageLevel.PYTHON26)) {
-      return false;
-    }
-    if (binaryExpression.getLeftExpression() instanceof PyStringLiteralExpression 
-        && binaryExpression.getOperator() == PyTokenTypes.PERC) {
+    if (binaryExpression.getLeftExpression() instanceof PyStringLiteralExpression && binaryExpression.getOperator() == PyTokenTypes.PERC) {
       final PyStringLiteralExpression str = (PyStringLiteralExpression)binaryExpression.getLeftExpression();
       if ((str.getText().length() > 0 && Character.toUpperCase(str.getText().charAt(0)) == 'B')) {
         return false;
@@ -286,7 +281,7 @@ public class ConvertFormatOperatorToMethodIntention extends PyBaseIntentionActio
     String prefix = "";
     final LanguageLevel languageLevel = guessLanguageLevel(project);
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(rhs);
-    if (!languageLevel.isPy3K() && PyTypeChecker.match(builtinCache.getUnicodeType(languageLevel), rhsType, context) &&
+    if (languageLevel.isPython2() && PyTypeChecker.match(builtinCache.getUnicodeType(languageLevel), rhsType, context) &&
         !PyTypeChecker.match(builtinCache.getBytesType(languageLevel), rhsType, context)) {
       prefix = "u";
     }
@@ -359,7 +354,7 @@ public class ConvertFormatOperatorToMethodIntention extends PyBaseIntentionActio
     PsiElement seeker = start;
     while (seeker != null) {
       seeker = seeker.getNextSibling();
-      if (seeker != null && seeker instanceof PsiWhiteSpace) sb.append(seeker.getText());
+      if (seeker instanceof PsiWhiteSpace) sb.append(seeker.getText());
       else break;
     }
     return Pair.create(sb.toString(), seeker);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -26,7 +12,6 @@ import com.jetbrains.python.debugger.PyDebuggerEditorsProvider;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -237,7 +222,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-6745
   public void testQualNameAttribute() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-7389
@@ -247,7 +232,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-7389
   public void testComprehensionScope33() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-7516
@@ -424,8 +409,8 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   }
 
   protected VirtualFile prepareFile() {
-    myFixture.copyDirectoryToProject(getTestDirectory(false), "");
-    return myFixture.configureByFile(getTestDirectory(false) + "/" + getTestName(true) + ".py").getVirtualFile();
+    myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
+    return myFixture.configureByFile(getTestDirectoryPath() + "/" + getTestName(true) + ".py").getVirtualFile();
   }
 
   protected void doEvaluateExpressionTest(@NotNull VirtualFile mainFile, @NotNull String expression, int lineNumber) {
@@ -469,7 +454,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-14359, PY-14158
-  public void testInspectionSettingsSerializable() throws Exception {
+  public void testInspectionSettingsSerializable() {
     final PyUnresolvedReferencesInspection inspection = new PyUnresolvedReferencesInspection();
     inspection.ignoredIdentifiers.add("foo.Bar.*");
     final Element serialized = new Element("tmp");
@@ -529,71 +514,6 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   public void testPropertyNotListedInSlots() {
     doTest();
   }
-  
-  // PY-2748
-  public void testFormatStringPositional() {
-    doTest();
-  }
-
-  // PY-2748
-  public void testFormatStringKeyword() {
-    doTest();
-  }
-
-  // PY-2748
-  public void testPercentStringPositional() {
-    doTest();
-  }
-
-  // PY-2748
-  public void testPercentStringKeyword() {
-    doTest();
-  }
-
-  // PY-2748
-  public void testFormatStringPackedFunctionCall() {
-    doTest();
-  }
-
-  // PY-2748
-  public void testPercentStringFunctionCall() {
-    doTest();
-  }
-
-  // PY-2748
-  public void testFormatStringPackedReference() {
-    doTest();
-  }
-
-  // PY-2748
-  public void testPercentStringReference() {
-    doTest();
-  }
-
-  // PY-2748
-  public void testFormatStringDictLiteralArgumentWithReferenceExprKeys() {
-    doTest();
-  }
-
-  // PY-2748
-  public void testPercentStringDictLiteralArgumentWithReferenceExprKeys() {
-    doTest();
-  }
-  
-  // PY-2748
-  public void testFormatStringDictLiteralArgumentWithNumericExprKeys() {
-    doTest();
-  }
-  
-  // PY-18769
-  public void testFormatStringInRegularExpressions() {
-    doTest();
-  }
-  
-  // PY-18751
-  public void testFormatStringInMapExpression() {
-    doTest();
-  }
 
   // PY-18751
   public void testStringWithFormatSyntax() {
@@ -605,82 +525,6 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  // PY-18751
-  public void testPercentStringWithFormatStringReplacementSymbols() {
-    doTest();
-  }
-
-  // PY-18751, PY-18824
-  public void testFormatStringWithPercentStringReplacementSymbols() {
-    doTest();
-  }
-  
-  // PY-18837
-  public void testPercentStringWithDictArgument() {
-    doTest();
-  }
-
-  // PY-18115
-  public void testPercentStringWithDictCallArgument() {
-    doTest();
-  }
-
-  // PY-18115
-  public void testPercentStringWithTupleSlicing() {
-    doTest();
-  }
-
-  // PY-18115
-  public void testPercentStringWithDictElement() {
-    doTest();
-  }
-
-  // PY-18115
-  public void testPercentStringWithEmptyDict() {
-    doTest();
-  }
-
-  // PY-18115
-  public void testPercentStringWithDictCall() {
-    doTest();
-  }
-
-  // PY-18115
-  public void testFormatStringPositionalSubstitutionWithDictArg() {
-    doTest();
-  }
-
-  // PY-18115
-  public void testPercentStringWithCallArgument() {
-    doTest();
-  }
-
-  // PY-18115
-  public void testFormatStringWithEmptyDictArg() {
-    doTest();
-  }
-
-  // PY-18115
-  public void testFormatStringWithDictLiteralExprInsideDictCall() {
-    doTest();
-  }
-  
-  // PY-18115
-  public void testFormatStringWithDictArgWithCallExprKey() {
-    doTest();
-  }
-
-  // PY-18115
-  public void testFormatStringWithPackedAndNonPackedArgs() {
-    doTest();
-  }
-  
-  
-  // PY-18950
-  public void testPercentStringKeywordArgumentWithReferenceKeyDictArgument() {
-    doTest();
-  }
-
   // PY-18254
   public void testVarargsAnnotatedWithFunctionComment() {
     doTest();
@@ -688,37 +532,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-18521
   public void testFunctionTypeCommentUsesImportsFromTyping() {
-    myFixture.copyDirectoryToProject("typing", "");
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
-  }
-  
-  // PY-19084
-  public void testPercentStringPositionalListArgument() {
-    doTest();
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
-  // PY-19084
-  public void testPercentStringPositionalSetArgument() {
-    doTest();
-  }
-
-  // PY-19084
-  public void testPercentStringPositionalDictArgument() {
-    doTest();
-  }
-
-  // PY-19084
-  public void testPercentStringKeywordListArgument() {
-    doTest();
-  }
-
-  // PY-19084
-  public void testPercentStringKeywordSetArgument() {
-    doTest();
-  }
-
-  // PY-19084
-  public void testPercentStringKeywordTupleArgument() {
+  // PY-22620
+  public void testTupleTypeCommentsUseImportsFromTyping() {
     doTest();
   }
 
@@ -736,11 +554,6 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   public void testSixWithMetaclass() {
     doTest();
   }
-  
-  // PY-21707
-  public void testMultilineFormatString() {
-    doTest();
-  }
 
   // PY-21651
   public void testInstanceAttributeCreatedThroughWithStatement() {
@@ -755,7 +568,111 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     assertEquals("foo.py", fooVFile.getName());
 
     final PsiFile fooPsiFile = PsiManager.getInstance(myFixture.getProject()).findFile(fooVFile);
-    assertNotParsed((PyFile)fooPsiFile);
+    assertNotParsed(fooPsiFile);
+  }
+
+  // PY-23164
+  public void testInstanceAttributeCreatedInsideWithStatement() {
+    doTest();
+  }
+
+  // PY-22828
+  public void testNoProtectedBuiltinNames() {
+    doTest();
+  }
+
+  // PY-22741, PY-22808
+  public void testListIndexedByUnknownType() {
+    doTest();
+  }
+
+  // PY-23540
+  public void testMemberFromMetaclassWhenSuperclassMetaclassIsABCMeta() {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
+  }
+
+  // PY-23623
+  public void testCachedOperatorInRecursivelyTypeInference() {
+    doTest();
+  }
+
+  // PY-25118
+  public void testInnerClassAsNamedTupleDefinitionMember() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-5500
+  public void testUnknownElementInDunderAll() {
+    doTest();
+  }
+
+  // PY-15071
+  public void testImportedPrivateNameListedInDunderAll() {
+    doMultiFileTest();
+  }
+
+  // PY-25695
+  public void testDynamicDunderAll() {
+    doMultiFileTest();
+  }
+
+  public void testDunderAll() {
+    doMultiFileTest();
+  }
+
+  // PY-25794
+  public void testStubOnlyReExportedModule() {
+    doMultiFileTest();
+  }
+
+  // PY-24637
+  public void testPy2TrueInDocTest() {
+    doTest();
+  }
+
+  // PY-20889
+  public void testTypeAssertionInBooleanOperations() {
+    doTest();
+  }
+
+  // PY-22312
+  public void testUnionContainingUnknownType() {
+    doTest();
+  }
+
+  // PY-26368
+  public void testForwardReferencesInClassBody() {
+    doTest();
+  }
+
+  // PY-26243
+  public void testNotImportedModuleInDunderAll() {
+    doMultiFileTest("pkg/__init__.py");
+  }
+
+  // PY-26243
+  public void testNotImportedPackageInDunderAll() {
+    doMultiFileTest("pkg/__init__.py");
+  }
+
+  // PY-27146
+  public void testPrivateMemberOwnerResolvedToStub() {
+    doMultiFileTest();
+  }
+
+  // PY-28017
+  public void testModuleWithGetAttr() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+  }
+
+  // PY-22868
+  public void testStubWithGetAttr() {
+    doMultiFileTest();
+  }
+
+  // PY-27913
+  public void testDunderClassGetItem() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doTest);
   }
 
   @NotNull

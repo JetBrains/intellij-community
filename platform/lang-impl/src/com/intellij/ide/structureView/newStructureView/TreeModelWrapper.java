@@ -47,7 +47,7 @@ public class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel 
   @NotNull
   public Grouper[] getGroupers() {
     List<Grouper> filtered = filterActive(myModel.getGroupers());
-    return filtered.toArray(new Grouper[filtered.size()]);
+    return filtered.toArray(Grouper.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -76,14 +76,14 @@ public class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel 
   @NotNull
   public Sorter[] getSorters() {
     List<Sorter> filtered = filterActive(myModel.getSorters());
-    return filtered.toArray(new Sorter[filtered.size()]);
+    return filtered.toArray(Sorter.EMPTY_ARRAY);
   }
 
   @Override
   @NotNull
   public Filter[] getFilters() {
     List<Filter> filtered = filterActive(myModel.getFilters());
-    return filtered.toArray(new Filter[filtered.size()]);
+    return filtered.toArray(Filter.EMPTY_ARRAY);
   }
 
   @Override

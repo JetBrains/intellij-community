@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
@@ -231,7 +217,7 @@ public class PackageUtil {
           directoryList.add(directory);
         }
       }
-      PsiDirectory[] sourceDirectories = directoryList.toArray(new PsiDirectory[directoryList.size()]);
+      PsiDirectory[] sourceDirectories = directoryList.toArray(PsiDirectory.EMPTY_ARRAY);
       psiDirectory = DirectoryChooserUtil.selectDirectory(project, sourceDirectories, baseDir,
                                      File.separatorChar + packageName.replace('.', File.separatorChar));
       if (psiDirectory == null) return null;
@@ -292,7 +278,7 @@ public class PackageUtil {
           result.add(moduleDirectory);
         }
       }
-      moduleDirectories = result.toArray(new PsiDirectory[result.size()]);
+      moduleDirectories = result.toArray(PsiDirectory.EMPTY_ARRAY);
     }
     return moduleDirectories;
   }
@@ -397,5 +383,9 @@ public class PackageUtil {
   @NotNull
   public static PsiDirectory findOrCreateSubdirectory(@NotNull PsiDirectory directory, @NotNull String directoryName) {
     return CreateFileAction.findOrCreateSubdirectory(directory, directoryName);
+  }
+
+  public static boolean isPackageInfoFile(@Nullable PsiElement element) {
+    return element instanceof PsiJavaFile && PsiPackage.PACKAGE_INFO_FILE.equals(((PsiJavaFile)element).getName());
   }
 }

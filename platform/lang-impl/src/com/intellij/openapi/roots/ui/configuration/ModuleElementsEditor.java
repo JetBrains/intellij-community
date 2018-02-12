@@ -24,19 +24,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.navigation.History;
+import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.EventListener;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Oct 4, 2003
- *         Time: 7:24:37 PM
  */
 public abstract class ModuleElementsEditor implements ModuleConfigurationEditor {
   @NotNull protected final Project myProject;
   protected JComponent myComponent;
   private final CompositeDisposable myDisposables = new CompositeDisposable();
+  private final EventDispatcher<ModuleElementsEditorListener> myDispatcher = EventDispatcher.create(ModuleElementsEditorListener.class);
 
   protected History myHistory;
   private final ModuleConfigurationState myState;
@@ -48,6 +49,14 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
 
   public void setHistory(final History history) {
     myHistory = history;
+  }
+
+  public void addListener(ModuleElementsEditorListener listener) {
+    myDispatcher.addListener(listener);
+  }
+
+  protected void fireConfigurationChanged() {
+    myDispatcher.getMulticaster().configurationChanged();
   }
 
   @Override
@@ -68,9 +77,6 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
 
   @Override
   public void apply() throws ConfigurationException {}
-
-  @Override
-  public void reset() {}
 
   public void moduleCompileOutputChanged(final String baseUrl, final String moduleName) {}
 
@@ -98,4 +104,8 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
   }
 
   protected abstract JComponent createComponentImpl();
+
+  interface ModuleElementsEditorListener extends EventListener {
+    void configurationChanged();
+  }
 }

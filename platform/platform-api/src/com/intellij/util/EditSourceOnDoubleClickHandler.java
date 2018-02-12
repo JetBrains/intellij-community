@@ -16,7 +16,6 @@
 package com.intellij.util;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ModalityState;
@@ -24,11 +23,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -114,31 +112,21 @@ public class EditSourceOnDoubleClickHandler {
       final Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project == null) return false;
 
-      final TreePath selectionPath = myTree.getSelectionPath();
+      TreePath selectionPath = myTree.getSelectionPath();
       if (selectionPath == null || !clickPath.equals(selectionPath)) return false;
-      final Object lastPathComponent = selectionPath.getLastPathComponent();
-      if (((TreeNode)lastPathComponent).isLeaf() || !expandOnDoubleClick(((TreeNode)lastPathComponent))) {
+      Object last = selectionPath.getLastPathComponent();
+      if (myTree.getModel().isLeaf(last) || myTree.getToggleClickCount() != e.getClickCount()) {
         //Node expansion for non-leafs has a higher priority
-        processDoubleClick(e, dataContext, (TreeNode) lastPathComponent);
+        processDoubleClick(e, dataContext, selectionPath);
         return true;
       }
       return false;
     }
 
     @SuppressWarnings("UnusedParameters")
-    protected void processDoubleClick(final MouseEvent e, final DataContext dataContext, final TreeNode lastPathComponent) {
+    protected void processDoubleClick(@NotNull MouseEvent e, @NotNull DataContext dataContext, @NotNull TreePath treePath) {
       OpenSourceUtil.openSourcesFrom(dataContext, true);
       if (myWhenPerformed != null) myWhenPerformed.run();
-    }
-
-    private static boolean expandOnDoubleClick(final TreeNode treeNode) {
-      if (treeNode instanceof DefaultMutableTreeNode) {
-        final Object userObject = ((DefaultMutableTreeNode)treeNode).getUserObject();
-        if (userObject instanceof NodeDescriptor) {
-          return ((NodeDescriptor)userObject).expandOnDoubleClick();
-        }
-      }
-      return true;
     }
 
   }

@@ -40,7 +40,7 @@ public final class WinPythonSdkFlavorTest {
   private WinRegistryService myMock;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     myControl = EasyMock.createControl(MockType.NICE);
     myMock = myControl.createMock(WinRegistryService.class);
   }

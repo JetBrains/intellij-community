@@ -29,13 +29,6 @@ public class GroovyNegatedIfInspection extends BaseInspection {
   @Override
   @Nls
   @NotNull
-  public String getGroupDisplayName() {
-    return CONFUSING_CODE_CONSTRUCTS;
-  }
-
-  @Override
-  @Nls
-  @NotNull
   public String getDisplayName() {
     return "Negated if condition expression";
   }

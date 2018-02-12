@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import org.jetbrains.annotations.NotNull;
 
 class MoveCaretLeftOrRightHandler extends EditorActionHandler {
   enum Direction {LEFT, RIGHT}
@@ -36,7 +37,7 @@ class MoveCaretLeftOrRightHandler extends EditorActionHandler {
   }
 
   @Override
-  public void doExecute(Editor editor, Caret caret, DataContext dataContext) {
+  public void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     final CaretModel caretModel = editor.getCaretModel();
     ScrollingModel scrollingModel = editor.getScrollingModel();

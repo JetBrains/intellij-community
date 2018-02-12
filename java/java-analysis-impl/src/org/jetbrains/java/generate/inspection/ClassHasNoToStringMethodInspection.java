@@ -146,7 +146,7 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                 final PsiMethod[] toStringMethods = clazz.findMethodsByName("toString", false);
                 for (PsiMethod method : toStringMethods) {
                     final PsiParameterList parameterList = method.getParameterList();
-                    if (parameterList.getParametersCount() == 0) {
+                    if (parameterList.isEmpty()) {
                         // toString() method found
                         return;
                     }
@@ -154,7 +154,7 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                 final PsiMethod[] superMethods = clazz.findMethodsByName("toString", true);
                 for (PsiMethod method : superMethods) {
                     final PsiParameterList parameterList = method.getParameterList();
-                    if (parameterList.getParametersCount() != 0) {
+                    if (!parameterList.isEmpty()) {
                         continue;
                     }
                     if (method.hasModifierProperty(PsiModifier.FINAL)) {
@@ -163,7 +163,7 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                     }
                 }
                 holder.registerProblem(nameIdentifier, "Class '" + clazz.getName() + "' does not override 'toString()' method",
-                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, GenerateToStringQuickFix.getInstance());
+                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, createFixes(holder));
             }
         };
     }

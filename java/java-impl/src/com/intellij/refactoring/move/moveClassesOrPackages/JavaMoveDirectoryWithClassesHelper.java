@@ -7,6 +7,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.usageView.UsageInfo;
@@ -115,6 +116,12 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
                                PsiDirectory directory,
                                MultiMap<PsiElement, String> conflicts) {
     RefactoringConflictsUtil.analyzeModuleConflicts(project, files, infos, directory, conflicts);
+    if (directory != null) {
+      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
+      if (aPackage != null) {
+        MoveClassesOrPackagesProcessor.detectPackageLocalsUsed(conflicts, files.toArray(PsiElement.EMPTY_ARRAY), new PackageWrapper(aPackage));
+      }
+    }
   }
 
   @Override

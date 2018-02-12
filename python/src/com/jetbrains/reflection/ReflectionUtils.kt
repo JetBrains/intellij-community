@@ -1,29 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.reflection
 
-import com.intellij.util.containers.HashMap
 import java.beans.Introspector
 import java.beans.PropertyDescriptor
+import java.lang.ref.SoftReference
 import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.jvm.javaType
-import kotlin.reflect.memberProperties
+import kotlin.reflect.full.memberProperties
 
 /**
  * Tools to fetch properties both from Java and Kotlin code and to copy them from one object to another.
@@ -98,6 +84,21 @@ private fun KProperty<*>.isAnnotated(annotation: KClass<*>): Boolean {
   return this.annotations.find { annotation.java.isAssignableFrom(it.javaClass) } != null
 }
 
+
+private val membersCache: MutableMap<KClass<*>, SoftReference<Collection<KProperty<*>>>> = com.intellij.util.containers.ContainerUtil.createSoftMap()
+
+private fun KClass<*>.memberPropertiesCached(): Collection<KProperty<*>> {
+  synchronized(membersCache) {
+    val cache = membersCache[this]?.get()
+    if (cache != null) {
+      return cache
+    }
+    val memberProperties = this.memberProperties
+    membersCache.put(this, SoftReference(memberProperties))
+    return memberProperties
+  }
+}
+
 /**
  * @param instance object with properties (see module doc)
  * @param annotationToFilterByClass optional annotation class to fetch only kotlin properties annotated with it. Only supported in Kotlin
@@ -116,7 +117,7 @@ fun getProperties(instance: Any, annotationToFilterByClass: Class<*>? = null, us
   else {
     // Kotlin props
     val klass = instance.javaClass.kotlin
-    val allKotlinProperties = LinkedHashSet(klass.memberProperties.filterIsInstance(KProperty::class.java))
+    val allKotlinProperties = LinkedHashSet(klass.memberPropertiesCached().filterIsInstance(KProperty::class.java))
 
     val delegatedProperties = ArrayList<Property>() // See DelegationProperty doc
     allKotlinProperties.filter { it.isAnnotated(DelegationProperty::class) }.forEach {

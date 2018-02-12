@@ -1,14 +1,17 @@
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UsageSearchContext;
-import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -19,25 +22,30 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
   private THashSet<PsiFile> filesToScan;
   private THashSet<PsiFile> filesToScan2;
 
-  private final boolean myFindMatchingFiles;
   private final Project myProject;
+  private final SearchScope myScope;
+  private final boolean myCaseSensitive;
 
-  FindInFilesOptimizingSearchHelper(CompileContext context, boolean findMatchingFiles, Project project) {
-    super(context);
-    myFindMatchingFiles = findMatchingFiles;
+  private boolean myTransactionStarted = false;
+
+  FindInFilesOptimizingSearchHelper(SearchScope scope, boolean caseSensitive, Project project) {
+    myScope = scope;
+    myCaseSensitive = caseSensitive;
     myProject = project;
 
-    if (myFindMatchingFiles && filesToScan == null) {
+    if (scope instanceof GlobalSearchScope && filesToScan == null) {
       filesToScan = new THashSet<>();
       filesToScan2 = new THashSet<>();
     }
     myFileProcessor = new MyFileProcessor();
   }
 
+  @Override
   public boolean doOptimizing() {
-    return myFindMatchingFiles;
+    return myScope instanceof GlobalSearchScope;
   }
 
+  @Override
   public void clear() {
     super.clear();
 
@@ -47,43 +55,58 @@ class FindInFilesOptimizingSearchHelper extends OptimizingSearchHelperBase {
     }
   }
 
-  protected void doAddSearchWordInCode(final String refname) {
-    final MatchOptions options = context.getOptions();
-    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, refname, UsageSearchContext.IN_CODE,
-                                                                     (GlobalSearchScope)options.getScope(), options.isCaseSensitiveMatch());
+  @Override
+  protected void doAddSearchWordInCode(@NotNull String word) {
+    myTransactionStarted = true;
+    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, word,
+                                                                     (short)(UsageSearchContext.IN_CODE | UsageSearchContext.IN_PLAIN_TEXT),
+                                                                     (GlobalSearchScope)myScope, myCaseSensitive);
   }
 
-  protected void doAddSearchWordInText(final String refname) {
-    final MatchOptions options = context.getOptions();
-    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, refname, UsageSearchContext.IN_PLAIN_TEXT,
-                                                                     (GlobalSearchScope)options.getScope(), options.isCaseSensitiveMatch());
+  @Override
+  protected void doAddSearchWordInText(@NotNull String word) {
+    myTransactionStarted = true;
+    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, word, UsageSearchContext.IN_PLAIN_TEXT,
+                                                                     (GlobalSearchScope)myScope, myCaseSensitive);
   }
 
-  protected void doAddSearchWordInComments(final String refname) {
-    final MatchOptions options = context.getOptions();
-    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, refname, UsageSearchContext.IN_COMMENTS,
-                                                                     (GlobalSearchScope)options.getScope(), options.isCaseSensitiveMatch());
+  @Override
+  protected void doAddSearchWordInComments(@NotNull String word) {
+    myTransactionStarted = true;
+    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, word, UsageSearchContext.IN_COMMENTS,
+                                                                     (GlobalSearchScope)myScope, myCaseSensitive);
   }
 
-  protected void doAddSearchWordInLiterals(final String refname) {
-    final MatchOptions options = context.getOptions();
-    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, refname, UsageSearchContext.IN_STRINGS,
-                                                                     (GlobalSearchScope)options.getScope(), options.isCaseSensitiveMatch());
+  @Override
+  protected void doAddSearchWordInLiterals(@NotNull String word) {
+    myTransactionStarted = true;
+    CacheManager.SERVICE.getInstance(myProject).processFilesWithWord(myFileProcessor, word, UsageSearchContext.IN_STRINGS,
+                                                                     (GlobalSearchScope)myScope, myCaseSensitive);
   }
 
+  @Override
   public void endTransaction() {
+    if (!myTransactionStarted) return;
+    myTransactionStarted = false;
     super.endTransaction();
     final THashSet<PsiFile> map = filesToScan;
-    if (map.size() > 0) map.clear();
+    if (!map.isEmpty()) map.clear();
     filesToScan = filesToScan2;
     filesToScan2 = map;
   }
 
+  @NotNull
+  @Override
   public Set<PsiFile> getFilesSetToScan() {
+    assert !myTransactionStarted;
+    if (filesToScan == null) {
+      return Collections.emptySet();
+    }
     return filesToScan;
   }
 
   private class MyFileProcessor implements Processor<PsiFile> {
+    @Override
     public boolean process(PsiFile file) {
       if (scanRequest == 0 || filesToScan.contains(file)) {
         filesToScan2.add(file);

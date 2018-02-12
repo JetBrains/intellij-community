@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class EditorLastActionTrackerTest extends LightPlatformCodeInsightFixtureTestCase {
@@ -51,28 +52,28 @@ public class EditorLastActionTrackerTest extends LightPlatformCodeInsightFixture
     super.tearDown();
   }
 
-  public void testLastActionIsAvailable() throws Exception {
+  public void testLastActionIsAvailable() {
     assertEquals(SAMPLE_ACTION, myTracker.getLastActionId());
   }
 
-  public void testMouseClickClearsLastAction() throws Exception {
+  public void testMouseClickClearsLastAction() {
     new EditorMouseFixture((EditorImpl)myFixture.getEditor()).clickAt(0, 1);
     assertNull(myTracker.getLastActionId());
   }
 
-  public void testTypingClearsLastAction() throws Exception {
+  public void testTypingClearsLastAction() {
     myFixture.type('A');
     assertNull(myTracker.getLastActionId());
   }
 
-  public void testTwoEditors() throws Exception {
+  public void testTwoEditors() {
     myFixture.configureByText(getTestName(true) + "-other.txt", "doesn't matter as well");
     myFixture.performEditorAction(SAMPLE_ACTION);
   }
 
   private class MyActionHandler extends EditorActionHandler {
     @Override
-    public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       assertNull(myTracker.getLastActionId());
     }
   }

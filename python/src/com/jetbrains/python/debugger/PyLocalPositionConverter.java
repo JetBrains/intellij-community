@@ -15,11 +15,9 @@
  */
 package com.jetbrains.python.debugger;
 
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -92,9 +90,9 @@ public class PyLocalPositionConverter implements PyPositionConverter {
     return new PyLocalSourcePosition(filePath, line);
   }
 
-  protected static int convertLocalLineToRemote(VirtualFile file, int line) {
-    AccessToken lock = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
+  protected static int convertLocalLineToRemote(VirtualFile file, int l) {
+    return ReadAction.compute(() -> {
+      int line = l;
       final Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document != null) {
         while (PyDebugSupportUtils.isContinuationLine(document, line)) {
@@ -102,14 +100,11 @@ public class PyLocalPositionConverter implements PyPositionConverter {
         }
       }
       return line + 1;
-    }
-    finally {
-      lock.finish();
-    }
+    });
   }
 
   @Nullable
-  public XSourcePosition convertFromPython(@NotNull final PySourcePosition position) {
+  public XSourcePosition convertFromPython(@NotNull final PySourcePosition position, String frameName) {
     return createXSourcePosition(getVirtualFile(position.getFile()), position.getLine());
   }
 
@@ -189,12 +184,8 @@ public class PyLocalPositionConverter implements PyPositionConverter {
   }
 
   private static int convertRemoteLineToLocal(final VirtualFile vFile, int line) {
-    final Document document = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
-      @Override
-      public Document compute() {
-        return FileDocumentManager.getInstance().getDocument(vFile);
-      }
-    });
+    final Document document =
+      ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(vFile));
 
     line--;
     if (document != null) {

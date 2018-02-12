@@ -1,0 +1,16 @@
+<idea-plugin>
+  <id>foo</id>
+  <extensionPoints>
+    <extensionPoint name="<weak_warning descr="Invalid EP name 'Smth', must contain only latin characters, digits and dots and must not start/end with dot">Smth</weak_warning>"/>
+    <extensionPoint name="<weak_warning descr="Invalid EP name '.smth', must contain only latin characters, digits and dots and must not start/end with dot">.smth</weak_warning>"/>
+    <extensionPoint name="<weak_warning descr="Invalid EP name 'smth.', must contain only latin characters, digits and dots and must not start/end with dot">smth.</weak_warning>"/>
+    <extensionPoint name="<weak_warning descr="Invalid EP name 'SMTH', must contain only latin characters, digits and dots and must not start/end with dot">SMTH</weak_warning>"/>
+    <extensionPoint name="<weak_warning descr="Invalid EP name '.', must contain only latin characters, digits and dots and must not start/end with dot">.</weak_warning>"/>
+    <extensionPoint name="<weak_warning descr="Invalid EP name 'sm_th', must contain only latin characters, digits and dots and must not start/end with dot">sm_th</weak_warning>"/>
+
+    <extensionPoint name="smth"/>
+    <extensionPoint name="sm.th"/>
+    <extensionPoint name="sm1th"/>
+    <extensionPoint name="smth2"/>
+  </extensionPoints>
+</idea-plugin>

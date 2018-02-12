@@ -11,6 +11,7 @@ import sun.misc.BASE64Decoder;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 
@@ -25,7 +26,7 @@ public class IpnbImagePanel extends IpnbCodeOutputPanel<IpnbImageOutputCell> {
   protected JComponent createViewPanel() {
     final String png = myCell.getBase64String();
 
-    final JBLabel label = new JBLabel();
+    final JBLabel label = new ResizableIconLabel();
     if (!StringUtil.isEmptyOrSpaces(png)) {
       try {
         byte[] btDataFile = new BASE64Decoder().decodeBuffer(png);
@@ -41,5 +42,22 @@ public class IpnbImagePanel extends IpnbCodeOutputPanel<IpnbImageOutputCell> {
     label.setOpaque(true);
 
     return label;
+  }
+
+  static class ResizableIconLabel extends JBLabel {
+    @Override
+    public void paintComponent(Graphics g) {
+      final Icon icon = getIcon();
+      if (icon instanceof ImageIcon) {
+        final Image image = ((ImageIcon)icon).getImage();
+        if (getWidth() < image.getWidth(null)) {
+          g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
+          image.flush();
+        }
+        else {
+          super.paintComponent(g);
+        }
+      }
+    }
   }
 }

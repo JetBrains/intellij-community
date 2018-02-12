@@ -72,7 +72,7 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
                                                                                           consoleProperties);
       final ConsoleView consoleView =
         new PythonDebugLanguageConsoleView(project, PythonSdkType.findSdkByPath(myConfiguration.getInterpreterPath()),
-                                           testsOutputConsoleView);
+                                           testsOutputConsoleView, true);
       consoleView.attachToProcess(processHandler);
       addTracebackFilter(project, consoleView, processHandler);
       return consoleView;
@@ -86,7 +86,7 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
 
   protected PythonTRunnerConsoleProperties createConsoleProperties(Executor executor) {
     final PythonTRunnerConsoleProperties properties = new PythonTRunnerConsoleProperties(myConfiguration, executor, true, getTestLocator());
-    if (myConfiguration.isTestBased()) {
+    if (myConfiguration.isIdTestBased()) {
       properties.makeIdTestBased();
     }
     return properties;

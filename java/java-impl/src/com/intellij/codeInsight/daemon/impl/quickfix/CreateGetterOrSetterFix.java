@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +48,7 @@ public class CreateGetterOrSetterFix implements IntentionAction, LowPriorityActi
     myCreateGetter = createGetter;
     myCreateSetter = createSetter;
     myField = field;
-    myPropertyName = PropertyUtil.suggestPropertyName(field);
+    myPropertyName = PropertyUtilBase.suggestPropertyName(field);
   }
 
   @Override
@@ -86,13 +87,13 @@ public class CreateGetterOrSetterFix implements IntentionAction, LowPriorityActi
     }
 
     if (myCreateGetter){
-      if (isStaticFinal(myField) || PropertyUtil.findPropertyGetter(aClass, myPropertyName, isStatic(myField), false) != null){
+      if (isStaticFinal(myField) || PropertyUtilBase.findPropertyGetter(aClass, myPropertyName, isStatic(myField), false) != null){
         return false;
       }
     }
 
     if (myCreateSetter){
-      if(isFinal(myField) || PropertyUtil.findPropertySetter(aClass, myPropertyName, isStatic(myField), false) != null){
+      if(isFinal(myField) || PropertyUtilBase.findPropertySetter(aClass, myPropertyName, isStatic(myField), false) != null){
         return false;
       }
     }

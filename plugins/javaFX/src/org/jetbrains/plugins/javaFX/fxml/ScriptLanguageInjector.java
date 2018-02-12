@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.lang.Language;
@@ -21,6 +22,7 @@ public class ScriptLanguageInjector implements MultiHostInjector {
   private static final XmlElementPattern.XmlTextPattern SCRIPT_PATTERN = XmlPatterns.xmlText().withParent(
     XmlPatterns.xmlTag().withName(FxmlConstants.FX_SCRIPT));
 
+  @Override
   public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement host) {
     if (SCRIPT_PATTERN.accepts(host)) {
       final List<String> registeredLanguages = JavaFxPsiUtil.parseInjectedLanguages((XmlFile)host.getContainingFile());
@@ -38,6 +40,7 @@ public class ScriptLanguageInjector implements MultiHostInjector {
     }
   }
 
+  @Override
   @NotNull
   public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
     return Collections.singletonList(XmlText.class);

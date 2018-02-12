@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.CommonBundle;
@@ -20,29 +6,30 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.notification.*;
 import com.intellij.notification.impl.NotificationSettings;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
-import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.components.State;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcherImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Alarm;
@@ -60,6 +47,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
+import org.jetbrains.idea.maven.importing.MavenPomPathModuleService;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
@@ -73,10 +61,12 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @State(name = "MavenProjectsManager")
 public class MavenProjectsManager extends MavenSimpleProjectComponent
-  implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponent {
+  implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponent, Disposable, ProjectComponent {
   private static final int IMPORT_DELAY = 1000;
   private static final String NON_MANAGED_POM_NOTIFICATION_GROUP_ID = "Maven: non-managed pom.xml";
   private static final NotificationGroup NON_MANAGED_POM_NOTIFICATION_GROUP =
@@ -111,11 +101,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private final EventDispatcher<MavenProjectsTree.Listener> myProjectsTreeDispatcher =
     EventDispatcher.create(MavenProjectsTree.Listener.class);
   private final List<Listener> myManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private ModificationTracker myModificationTracker;
+  private final ModificationTracker myModificationTracker;
 
   private MavenWorkspaceSettings myWorkspaceSettings;
 
-  private MavenMergingUpdateQueue mySaveQueue;
+  private final MavenMergingUpdateQueue mySaveQueue;
   private static final int SAVE_DELAY = 1000;
 
   public static MavenProjectsManager getInstance(Project p) {
@@ -127,7 +117,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     myEmbeddersManager = new MavenEmbeddersManager(project);
     myModificationTracker = new MavenModificationTracker(this);
     myInitializationAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
-    mySaveQueue = new MavenMergingUpdateQueue("Maven save queue", SAVE_DELAY, !isUnitTestMode(), null);
+    mySaveQueue = new MavenMergingUpdateQueue("Maven save queue", SAVE_DELAY, !isUnitTestMode(), this);
   }
 
   @Override
@@ -139,7 +129,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @Override
-  public void loadState(MavenProjectsManagerState state) {
+  public void loadState(@NotNull MavenProjectsManagerState state) {
     myState = state;
     if (isInitialized()) {
       applyStateToTree();
@@ -148,9 +138,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @Override
-  public void disposeComponent() {
-    super.disposeComponent();
-    Disposer.dispose(mySaveQueue);
+  public void dispose() {
   }
 
   public ModificationTracker getModificationTracker() {
@@ -196,14 +184,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       CompilerManager.getInstance(myProject).addBeforeTask(new CompileTask() {
         @Override
         public boolean execute(CompileContext context) {
-          AccessToken token = ReadAction.start();
-
-          try {
-            new MavenResourceCompilerConfigurationGenerator(myProject, myProjectsTree).generateBuildConfiguration(context.isRebuild());
-          }
-          finally {
-            token.finish();
-          }
+          ApplicationManager.getApplication().runReadAction(() -> new MavenResourceCompilerConfigurationGenerator(myProject, myProjectsTree).generateBuildConfiguration(context.isRebuild()));
           return true;
         }
       });
@@ -216,13 +197,9 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       return;
     }
 
-    File baseDir = VfsUtilCore.virtualToIoFile(project.getBaseDir());
-    File pomXml = new File(baseDir, "pom.xml");
+    List<VirtualFile> pomFiles = MavenUtil.streamPomFiles(project, project.getBaseDir()).collect(Collectors.toList());
 
-    if (pomXml.exists()) {
-      final VirtualFile file = VfsUtil.findFileByIoFile(pomXml, true);
-      if (file == null) return;
-
+    for (VirtualFile file : pomFiles) {
       showBalloon(
         ProjectBundle.message("maven.orphan.notification.title"),
         ProjectBundle.message("maven.orphan.notification.msg", file.getPresentableUrl()),
@@ -230,7 +207,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
           @Override
           protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
             if ("#add".equals(e.getDescription())) {
-              addManagedFilesOrUnignore(ContainerUtil.list(file));
+              addManagedFilesOrUnignore(Collections.singletonList(file));
               notification.expire();
             }
             else if ("#disable".equals(e.getDescription())) {
@@ -475,14 +452,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
             MavenImportingSettings importingSettings;
 
-            AccessToken token = ReadAction.start();
-            try {
-              if (myProject.isDisposed()) return;
-              importingSettings = getImportingSettings();
-            }
-            finally {
-              token.finish();
-            }
+            importingSettings = ReadAction.compute(() -> myProject.isDisposed() ? null : getImportingSettings());
+            if (importingSettings == null) return;
 
             scheduleArtifactsDownloading(Collections.singleton(projectWithChanges.first),
                                          null,
@@ -552,40 +523,18 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     return isInitialized();
   }
 
-  public boolean isMavenizedModule(final Module m) {
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
-      return !m.isDisposed() && "true".equals(m.getOptionValue(getMavenizedModuleOptionName()));
-    }
-    finally {
-      accessToken.finish();
-    }
+  public boolean isMavenizedModule(@NotNull Module m) {
+    return ReadAction.compute(() -> !m.isDisposed() && ExternalSystemModulePropertyManager.getInstance(m).isMavenized());
   }
 
   public void setMavenizedModules(Collection<Module> modules, boolean mavenized) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     for (Module m : modules) {
       if (m.isDisposed()) continue;
-
-      if (mavenized) {
-        m.setOption(getMavenizedModuleOptionName(), "true");
-
-        // clear external system API options
-        // see com.intellij.openapi.externalSystem.service.project.manage.ModuleDataService#setModuleOptions
-        m.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
-        m.clearOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
-        m.clearOption(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
-        m.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_GROUP_KEY);
-        m.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION_KEY);
-      }
-      else {
-        m.clearOption(getMavenizedModuleOptionName());
-      }
+      ExternalSystemModulePropertyManager.getInstance(m).setMavenized(mavenized);
+      // force re-save (since can be stored externally)
+      ((ModuleRootManagerImpl)ModuleRootManager.getInstance(m)).stateChanged();
     }
-  }
-
-  private static String getMavenizedModuleOptionName() {
-    return "org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule";
   }
 
   @TestOnly
@@ -739,10 +688,31 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @Nullable
-  private static VirtualFile findPomFile(@NotNull Module module, @NotNull MavenModelsProvider modelsProvider) {
+  private VirtualFile findPomFile(@NotNull Module module, @NotNull MavenModelsProvider modelsProvider) {
+    String pomFileUrl = MavenPomPathModuleService.getInstance(module).getPomFileUrl();
+    if (pomFileUrl != null) {
+      return VirtualFileManager.getInstance().findFileByUrl(pomFileUrl);
+    }
     for (VirtualFile root : modelsProvider.getContentRoots(module)) {
-      for (VirtualFile child : root.getChildren()) {
-        if (MavenUtil.isPomFileName(child.getName())) return child;
+      List<VirtualFile> pomFiles = MavenUtil.streamPomFiles(module.getProject(), root).collect(Collectors.toList());
+      if (pomFiles.isEmpty()) {
+        continue;
+      }
+
+      if (pomFiles.size() == 1) {
+        return pomFiles.get(0);
+      }
+
+      for (VirtualFile file : pomFiles) {
+        if (module.getName().equals(file.getNameWithoutExtension())) {
+          return file;
+        }
+        MavenProject mavenProject = findProject(file);
+        if (mavenProject != null) {
+          if (module.getName().equals(mavenProject.getMavenId().getArtifactId())) {
+            return file;
+          }
+        }
       }
     }
     return null;
@@ -872,7 +842,10 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         toResolve = new LinkedHashSet<>(myProjectsToResolve);
         myProjectsToResolve.clear();
       }
-      if(toResolve.isEmpty()) return;
+      if(toResolve.isEmpty()) {
+        result.setResult(Collections.emptyList());
+        return;
+      }
 
       final ResolveContext context = new ResolveContext();
       Runnable onCompletion = () -> {
@@ -1064,7 +1037,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     final Ref<Runnable> wrapper = new Ref<>();
     wrapper.set(() -> {
       if (!StartupManagerEx.getInstanceEx(myProject).postStartupActivityPassed()) {
-        myInitializationAlarm.addRequest(() -> wrapper.get().run(), 1000);
+        myInitializationAlarm.addRequest(wrapper.get(), 1000);
         return;
       }
       runnable.run();
@@ -1147,7 +1120,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     final Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges;
     final boolean importModuleGroupsRequired;
     synchronized (myImportingDataLock) {
-      projectsToImportWithChanges = new LinkedHashMap<>(myProjectsToImport);
+      projectsToImportWithChanges = Collections.unmodifiableMap(new LinkedHashMap<>(myProjectsToImport));
       myProjectsToImport.clear();
       importModuleGroupsRequired = myImportModuleGroupsRequired;
       myImportModuleGroupsRequired = false;
@@ -1208,12 +1181,14 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     myImportingQueue.restartTimer();
 
     MavenProjectImporter projectImporter = importer.get();
-    if (projectImporter == null) return Collections.emptyList();
-
-    return projectImporter.getCreatedModules();
+    List<Module> createdModules = projectImporter == null ? Collections.emptyList() : projectImporter.getCreatedModules();
+    if (!projectsToImportWithChanges.isEmpty()) {
+      myProject.getMessageBus().syncPublisher(MavenImportListener.TOPIC).importFinished(projectsToImportWithChanges.keySet(), createdModules);
+    }
+    return createdModules;
   }
 
-  private static Map<VirtualFile, Module> getFileToModuleMapping(MavenModelsProvider modelsProvider) {
+  private Map<VirtualFile, Module> getFileToModuleMapping(MavenModelsProvider modelsProvider) {
     Map<VirtualFile, Module> result = new THashMap<>();
     for (Module each : modelsProvider.getModules()) {
       VirtualFile f = findPomFile(each, modelsProvider);
@@ -1224,11 +1199,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private List<VirtualFile> collectAllAvailablePomFiles() {
     List<VirtualFile> result = new ArrayList<>(getFileToModuleMapping(new MavenDefaultModelsProvider(myProject)).keySet());
-    for (VirtualFile child : myProject.getBaseDir().getChildren()) {
-      if (MavenUtil.isPomFileName(child.getName())) {
-        result.add(child);
-      }
-    }
+    MavenUtil.streamPomFiles(myProject, myProject.getBaseDir()).forEach(result::add);
     return result;
   }
 
@@ -1271,6 +1242,29 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     }
 
     default void importAndResolveScheduled() {
+    }
+  }
+
+  public static class ExternalWatcherContributor implements ExternalSystemProjectsWatcherImpl.Contributor {
+
+    @Override
+    public void markDirtyAllExternalProjects(@NotNull Project project) {
+      runWhenFullyOpen(project, (manager) -> manager.doScheduleUpdateProjects(null, true, false));
+    }
+
+    @Override
+    public void markDirty(@NotNull Module module) {
+      runWhenFullyOpen(module.getProject(), (manager) -> {
+        MavenProject mavenProject = manager.findProject(module);
+        if (mavenProject != null) {
+          manager.doScheduleUpdateProjects(ContainerUtil.list(mavenProject), true, false);
+        }
+      });
+    }
+
+    private static void runWhenFullyOpen(@NotNull Project project, @NotNull Consumer<MavenProjectsManager> consumer) {
+      MavenProjectsManager manager = getInstance(project);
+      manager.runWhenFullyOpen(() -> consumer.accept(manager));
     }
   }
 }

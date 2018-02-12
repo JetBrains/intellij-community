@@ -47,7 +47,9 @@ public class ChangeListCompletionContributor extends CompletionContributor imple
 
   @Override
   public boolean invokeAutoPopup(@NotNull PsiElement position, char typeChar) {
-    return true;
+    PsiFile file = position.getContainingFile();
+    Document cachedDocument = PsiDocumentManager.getInstance(file.getProject()).getCachedDocument(file);
+    return cachedDocument != null && cachedDocument.getUserData(COMBO_BOX_KEY) != null;
   }
 }
 

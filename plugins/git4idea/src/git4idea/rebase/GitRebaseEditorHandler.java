@@ -15,22 +15,34 @@
  */
 package git4idea.rebase;
 
-import git4idea.commands.GitHandler;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.UUID;
 
 /**
- * The interface
+ * <p>Serves as the GIT_EDITOR during interactive rebase: it is called by Git instead of vim,
+ * and allows to edit the list of rebased commits, and to reword commit messages.</p>
+ * <p>This handler should be registered in the {@link GitRebaseEditorService}.</p>
  */
 public interface GitRebaseEditorHandler {
-  /**
-   * Edit commits request
-   *
-   * @param path the path to editing
-   * @return the exit code to be returned from editor
-   */
-  int editCommits(String path);
 
   /**
-   * @return the handler for the git process
+   * Handle the request from Git to edit some information during rebase.
+   * Such information can be: the list of commits to be interactively rebased, or a commit message to be reworded.
+   *
+   * @param path the path of the file to edit: default text should be read from this file and should be saved to this file after editing.
+   * @return the exit code which will be returned to Git from the editor.
    */
-  GitHandler getHandler();
+  int editCommits(@NotNull String path);
+
+  /**
+   * Unique number of the handler registered in the {@link com.intellij.ide.XmlRpcServer}
+   */
+  @NotNull
+  UUID getHandlerNo();
+
+  /**
+   * Return true if the editing was cancelled by user.
+   */
+  boolean wasEditorCancelled();
 }

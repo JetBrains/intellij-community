@@ -20,12 +20,14 @@ import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -78,17 +80,47 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
     if (declaredElements.length == 1) {
       PsiLocalVariable var = (PsiLocalVariable)declaredElements[0];
       if (var.getInitializer() == null) return false;
+      if (var.getTypeElement().isInferredType()) {
+        return false;
+      } 
+      PsiElement parent = decl.getParent();
+      if (parent instanceof PsiForStatement) {
+        String varName = var.getName();
+        if (varName == null) {
+          return false;
+        }
+
+        parent = parent.getNextSibling();
+        while (parent != null) {
+          Ref<Boolean> conflictFound = new Ref<>(false);
+          parent.accept(new JavaRecursiveElementWalkingVisitor() {
+            @Override
+            public void visitClass(PsiClass aClass) { }
+
+            @Override
+            public void visitVariable(PsiVariable variable) {
+              super.visitVariable(variable);
+              if (varName.equals(variable.getName())) {
+                conflictFound.set(true);
+                stopWalking();
+              }
+            }
+          });
+          if (conflictFound.get()) {
+            return false;
+          }
+          parent = parent.getNextSibling();
+        }
+      }
       setText(CodeInsightBundle.message("intention.split.declaration.assignment.text"));
       return true;
     }
-    else if (declaredElements.length > 1) {
+    else {
       if (decl.getParent() instanceof PsiForStatement) return false;
 
       setText(CodeInsightBundle.message("intention.split.declaration.text"));
       return true;
     }
-
-    return false;
   }
 
   @Override
@@ -116,11 +148,12 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
         .createStatementFromText(var.getName() + "=xxx;", null);
       statement = (PsiExpressionStatement)CodeStyleManager.getInstance(project).reformat(statement);
       PsiAssignmentExpression assignment = (PsiAssignmentExpression)statement.getExpression();
+      CommentTracker commentTracker = new CommentTracker();
       PsiExpression initializer = var.getInitializer();
       PsiExpression rExpression = RefactoringUtil.convertInitializerToNormalExpression(initializer, var.getType());
 
-      assignment.getRExpression().replace(rExpression);
-      initializer.delete();
+      commentTracker.replace(assignment.getRExpression(), rExpression);
+      commentTracker.deleteAndRestoreComments(initializer);
 
       PsiElement block = decl.getParent();
       if (block instanceof PsiForStatement) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 
 package com.intellij.openapi.util;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -45,5 +48,17 @@ public abstract class AtomicNullableLazyValue<T> extends NullableLazyValue<T> {
       }
     }
     return value;
+  }
+
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+  @NotNull
+  public static <T> AtomicNullableLazyValue<T> createValue(@NotNull final Factory<T> value) {
+    return new AtomicNullableLazyValue<T>() {
+      @Nullable
+      @Override
+      protected T compute() {
+        return value.create();
+      }
+    };
   }
 }

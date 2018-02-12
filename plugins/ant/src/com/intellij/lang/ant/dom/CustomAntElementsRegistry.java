@@ -54,7 +54,6 @@ import java.util.*;
  * Storage for user-defined tasks and data types
  * parsed from ant files
  * @author Eugene Zhuravlev
- *         Date: Jul 1, 2010
  */
 public class CustomAntElementsRegistry {
 
@@ -218,7 +217,7 @@ public class CustomAntElementsRegistry {
         }
       }
     }
-    return errors == null? Collections.<String>emptyList() : errors;
+    return errors == null ? Collections.emptyList() : errors;
   }
   
   private void rememberNamedClassLoader(AntDomCustomClasspathComponent typedef, AntDomProject antProject) {

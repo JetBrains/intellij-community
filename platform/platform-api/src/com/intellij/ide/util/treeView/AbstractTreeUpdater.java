@@ -51,7 +51,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     myTreeBuilder = treeBuilder;
     final JTree tree = myTreeBuilder.getTree();
     final JComponent component = tree instanceof TreeTableTree ? ((TreeTableTree)tree).getTreeTable() : tree;
-    myUpdateQueue = new MergingUpdateQueue("UpdateQueue", 300, component.isShowing(), component) {
+    myUpdateQueue = new MergingUpdateQueue("UpdateQueue", 100, component.isShowing(), component) {
       @Override
       protected Alarm createAlarm(@NotNull Alarm.ThreadToUse thread, Disposable parent) {
         return new Alarm(thread, parent) {
@@ -119,6 +119,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     assert !toAdd.isExpired();
 
     final AbstractTreeUi ui = myTreeBuilder.getUi();
+    if (ui == null) return;
 
     if (ui.isUpdatingChildrenNow(toAdd.getNode())) {
       toAdd.expire();
@@ -180,7 +181,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
 
 
     myNodeQueue.add(toAdd);
-    myTreeBuilder.getUi().addActivity();
+    ui.addActivity();
 
     myUpdateCount = newUpdateCount;
     toAdd.setUpdateStamp(myUpdateCount);
@@ -257,7 +258,8 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
         @Override
         public void perform() {
           try {
-            myTreeBuilder.getUi().updateSubtreeNow(eachPass, false);
+            AbstractTreeUi ui = myTreeBuilder.getUi();
+            if (ui != null) ui.updateSubtreeNow(eachPass, false);
           }
           catch (ProcessCanceledException ignored) {
           }
@@ -265,9 +267,10 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
       });
     }
 
-    if (isReleased()) return;
+    AbstractTreeUi ui = myTreeBuilder.getUi();
+    if (ui == null) return;
 
-    myTreeBuilder.getUi().maybeReady();
+    ui.maybeReady();
 
     maybeRunAfterUpdate();
   }
@@ -330,12 +333,11 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   }
 
   public void runAfterUpdate(final Runnable runnable) {
-    if (runnable == null) return;
-    synchronized (myRunAfterUpdate) {
-      myRunAfterUpdate.add(runnable);
+    if (runnable != null) {
+      synchronized (myRunAfterUpdate) {
+        myRunAfterUpdate.add(runnable);
+      }
     }
-
-    maybeRunAfterUpdate();
   }
 
   public synchronized void runBeforeUpdate(final Runnable runnable) {
@@ -415,13 +417,16 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   public void reset() {
     TreeUpdatePass[] passes;
     synchronized (this) {
-      passes = myNodeQueue.toArray(new TreeUpdatePass[myNodeQueue.size()]);
+      passes = myNodeQueue.toArray(new TreeUpdatePass[0]);
       myNodeQueue.clear();
     }
     myUpdateQueue.cancelAllUpdates();
 
-    for (TreeUpdatePass each : passes) {
-      myTreeBuilder.getUi().addToCancelled(each.getNode());
+    AbstractTreeUi ui = myTreeBuilder.getUi();
+    if (ui != null) {
+      for (TreeUpdatePass each : passes) {
+        ui.addToCancelled(each.getNode());
+      }
     }
   }
 }

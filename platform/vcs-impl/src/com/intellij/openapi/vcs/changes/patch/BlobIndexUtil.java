@@ -21,7 +21,7 @@ import com.google.common.io.Files;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.BinaryContentRevision;
+import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.util.ObjectUtils;
@@ -67,8 +67,8 @@ public class BlobIndexUtil {
   @NotNull
   private static byte[] getContentBytes(@NotNull ContentRevision revision, @NotNull Charset charset) throws VcsException {
     byte[] binaryContent;
-    if (revision instanceof BinaryContentRevision) {
-      binaryContent = ((BinaryContentRevision)revision).getBinaryContent();
+    if (revision instanceof ByteBackedContentRevision) {
+      binaryContent = ((ByteBackedContentRevision)revision).getContentAsBytes();
     }
     else {
       String stringContent = revision.getContent();

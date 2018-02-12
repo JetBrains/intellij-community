@@ -16,25 +16,15 @@
 
 package com.intellij.profile.codeInspection.ui.header;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
-import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
@@ -43,14 +33,10 @@ import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBInsets;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
 
 public abstract class InspectionToolsConfigurable extends BaseConfigurable
   implements ErrorsConfigurable, SearchableConfigurable, Configurable.NoScroll {
@@ -150,62 +136,6 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     return wholePanel;
   }
 
-  public static InspectionProfileImpl importInspectionProfile(@NotNull Element rootElement,
-                                                              @NotNull BaseInspectionProfileManager profileManager,
-                                                              @NotNull Project project) {
-    InspectionProfileImpl profile =
-      new InspectionProfileImpl("TempProfile", InspectionToolRegistrar.getInstance(), profileManager);
-    if (Comparing.strEqual(rootElement.getName(), "component")) {
-      //import right from .idea/inspectProfiles/xxx.xml
-      rootElement = rootElement.getChildren().get(0);
-    }
-    final Set<String> levels = new HashSet<>();
-    for (Element inspectElement : rootElement.getChildren("inspection_tool")) {
-      addLevelIfNotNull(levels, inspectElement);
-      for (Element s : inspectElement.getChildren("scope")) {
-        addLevelIfNotNull(levels, s);
-      }
-    }
-    for (Iterator<String> iterator = levels.iterator(); iterator.hasNext(); ) {
-      String level = iterator.next();
-      if (profileManager.getOwnSeverityRegistrar().getSeverity(level) != null) {
-        iterator.remove();
-      }
-    }
-    if (!levels.isEmpty()) {
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        if (Messages.showYesNoDialog(project, "Undefined severities detected: " +
-                                                  StringUtil.join(levels, ", ") +
-                                                  ". Do you want to create them?", "Warning", Messages.getWarningIcon()) ==
-            Messages.YES) {
-          for (String level : levels) {
-            final TextAttributes textAttributes = CodeInsightColors.WARNINGS_ATTRIBUTES.getDefaultAttributes();
-            HighlightInfoType.HighlightInfoTypeImpl info =
-              new HighlightInfoType.HighlightInfoTypeImpl(new HighlightSeverity(level, 50),
-                                                          TextAttributesKey
-                                                            .createTextAttributesKey(level));
-            profileManager.getOwnSeverityRegistrar()
-              .registerSeverity(new SeverityRegistrar.SeverityBasedTextAttributes(textAttributes.clone(), info),
-                                textAttributes.getErrorStripeColor());
-          }
-        }
-      } else {
-        throw new AssertionError("All of levels must exist in unit-test mode, but actual not exist levels = " + levels);
-      }
-    }
-    profile.readExternal(rootElement);
-    profile.setProjectLevel(false);
-    profile.initInspectionTools(project);
-    return profile;
-  }
-
-  private static void addLevelIfNotNull(Set<String> levels, Element inspectElement) {
-    final String level = inspectElement.getAttributeValue("level");
-    if (level != null) {
-      levels.add(level);
-    }
-  }
-
   protected abstract InspectionProfileImpl getCurrentProfile();
 
   @Override
@@ -240,7 +170,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   }
 
   private void doReset() {
-    disposeUIResources();
+    disposeProfilePanels();
     myAbstractSchemesPanel.reset();
     final InspectionProfileModifiableModel currentModifiableModel = myAbstractSchemesPanel.getModel().getModifiableModelFor(getCurrentProfile());
     myAbstractSchemesPanel.selectScheme(currentModifiableModel);
@@ -266,6 +196,11 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
   @Override
   public void disposeUIResources() {
+    disposeProfilePanels();
+    Disposer.dispose(myAbstractSchemesPanel);
+  }
+
+  private void disposeProfilePanels() {
     if (mySelectionAlarm != null) {
       Disposer.dispose(mySelectionAlarm);
       mySelectionAlarm = null;

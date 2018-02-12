@@ -1,5 +1,4 @@
-import java.time.LocalDateTime;
-import java.util.List;
+import java.util.*;
 
 public class LongRangeKnownMethods {
   void testIndexOf(String s) {
@@ -11,10 +10,13 @@ public class LongRangeKnownMethods {
     }
   }
 
-  void testLocalDateTime(LocalDateTime ldt) {
-    if(<warning descr="Condition 'ldt.getHour() == 24' is always 'false'">ldt.getHour() == 24</warning>) System.out.println(1);
-    if(<warning descr="Condition 'ldt.getMinute() >= 0' is always 'true'">ldt.getMinute() >= 0</warning>) System.out.println(2);
-    if(<warning descr="Condition 'ldt.getSecond() >= 60' is always 'false'">ldt.getSecond() >= 60</warning>) System.out.println(3);
+  void testExternalAnnotations(int i, long l) {
+    if(<warning descr="Condition 'Integer.bitCount(i) == -1' is always 'false'">Integer.bitCount(i) == -1</warning>) {
+      System.out.println("Impossible");
+    }
+    if(Long.<error descr="Cannot resolve method 'numberOfLeadingZeroes(long)'">numberOfLeadingZeroes</error>(l) <= 64) {
+      System.out.println("Always");
+    }
   }
 
   private static int twiceIndexOf(String text, int start, int end) {
@@ -81,7 +83,7 @@ public class LongRangeKnownMethods {
   }
 
   void testEqualsIgnoreCase(String s) {
-    if(s.equalsIgnoreCase("xyz") && s.isEmpty()) {
+    if(<warning descr="Condition 's.equalsIgnoreCase(\"xyz\") && s.isEmpty()' is always 'false'">s.equalsIgnoreCase("xyz") && <warning descr="Condition 's.isEmpty()' is always 'false' when reached">s.isEmpty()</warning></warning>) {
       System.out.println("Never");
     }
   }
@@ -148,6 +150,115 @@ public class LongRangeKnownMethods {
       System.out.println("possible");
     } else if(<warning descr="Condition 'y < 0' is always 'false'">y < 0</warning>) {
       System.out.println("impossible");
+    }
+  }
+
+  void testStringComparison(String name) {
+    // Parentheses misplaced -- found in AndroidStudio
+    if (!(name.equals("layout_width") && <warning descr="Condition '!(name.equals(\"layout_height\"))' is always 'true'">!(<warning descr="Condition 'name.equals(\"layout_height\")' is always 'false'">name.equals("layout_height")</warning>)</warning> &&
+          <warning descr="Condition '!(name.equals(\"id\"))' is always 'true'">!(<warning descr="Condition 'name.equals(\"id\")' is always 'false'">name.equals("id")</warning>)</warning>)) {
+      System.out.println("ok");
+    }
+  }
+
+  void testFlush(MyReader r) {
+    if(r.getValue().equals("abc")) {
+      r.readNext();
+      if(r.getValue().equals("abcd")) {
+        System.out.println("ok");
+      }
+    }
+  }
+
+  void testNoFlush(MyReader r) {
+    if(r.getValue().equals("abc")) {
+      if(<warning descr="Condition 'r.getValue().equals(\"abcd\")' is always 'false'">r.getValue().equals("abcd")</warning>) {
+        System.out.println("ok");
+      }
+    }
+  }
+
+  static class MyReader {
+    private String value = "";
+
+    final String getValue() {
+      return value;
+    }
+
+    void readNext() {
+      value = new Scanner(System.in).next();
+    }
+  }
+
+  void testEmptyList(List<String> list) {
+    if (<warning descr="Condition 'list.get(0).isEmpty() && list.isEmpty()' is always 'false'">list.get(0).isEmpty() && <warning descr="Condition 'list.isEmpty()' is always 'false' when reached">list.isEmpty()</warning></warning>) {
+      System.out.println("impossible");
+    }
+  }
+
+  void testEmptyListGet(List<String> list) {
+    if (list.isEmpty()) {
+      System.out.println(list.<warning descr="The call to 'get' always fails as index is out of bounds">get</warning>(0));
+    }
+  }
+
+  void testBoundError(List<String> list) {
+    if (list.size() < 10) {
+      System.out.println(list.<warning descr="The call to 'get' always fails as index is out of bounds">get</warning>(10));
+    }
+  }
+
+  void testCollectionArray(Set<Object> currentElements, Object[] elements) {
+    if(!currentElements.isEmpty() && elements.length == currentElements.size()) {
+      if (<warning descr="Condition 'elements.length > 0' is always 'true'">elements.length > 0</warning>) {
+        System.out.println("Yes");
+      }
+    }
+  }
+
+  public String getOrThrow(int index, List<String> localVariables) {
+    if (index < localVariables.size()) {
+      return localVariables.get(index);
+    }
+    else if (<warning descr="Condition 'index < 0' is always 'false'">index < 0</warning>) {
+      throw new IndexOutOfBoundsException();
+    }
+    else return "";
+  }
+
+  void testSetFirst(TreeSet<Integer> set) {
+    if (set.first() == 0 && <warning descr="Condition 'set.size() > 0' is always 'true' when reached">set.size() > 0</warning>) {
+      System.out.println("Impossible");
+    }
+  }
+
+  void testMap(HashMap<String, Integer> map) {
+    if(<warning descr="Condition 'map.isEmpty() && map.containsKey(\"xyz\")' is always 'false'">map.isEmpty() && <warning descr="Condition 'map.containsKey(\"xyz\")' is always 'false' when reached">map.containsKey("xyz")</warning></warning>) {
+      System.out.println("Impossible");
+    }
+  }
+
+  void testMapContainsValue(TreeMap<String, Integer> map) {
+    if(<warning descr="Condition 'map.containsValue(1) && map.size() < 1' is always 'false'">map.containsValue(1) && <warning descr="Condition 'map.size() < 1' is always 'false' when reached">map.size() < 1</warning></warning>) {
+      System.out.println("Impossible");
+    }
+  }
+
+  void testMapEquals(Map<String, String> map, Map<String, String> otherMap) {
+    if(<warning descr="Condition 'map.isEmpty() && otherMap.equals(map) && otherMap.containsValue(\"xyz\")' is always 'false'">map.isEmpty() && otherMap.equals(map) && <warning descr="Condition 'otherMap.containsValue(\"xyz\")' is always 'false'">otherMap.containsValue("xyz")</warning></warning>) {
+      System.out.println("Impossible");
+    }
+  }
+
+  void testListIndexOf(List<String> list) {
+    if(<warning descr="Condition 'list.size() == 10 && list.indexOf(\"xyz\") == 15' is always 'false'">list.size() == 10 && <warning descr="Condition 'list.indexOf(\"xyz\") == 15' is always 'false' when reached">list.indexOf("xyz") == 15</warning></warning>) {
+      System.out.println("Impossible");
+    }
+  }
+
+  void testGetUnknown(List<String> list, int index) {
+    if(<warning descr="Condition 'list.get(index).isEmpty() && list.isEmpty()' is always 'false'">list.get(index).isEmpty() && <warning descr="Condition 'list.isEmpty()' is always 'false' when reached">list.isEmpty()</warning></warning>) {
+      System.out.println("Impossible");
     }
   }
 }

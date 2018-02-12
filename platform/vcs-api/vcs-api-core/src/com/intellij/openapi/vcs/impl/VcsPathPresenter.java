@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
  */
 public abstract class VcsPathPresenter {
   public static VcsPathPresenter getInstance(Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetService(project, VcsPathPresenter.class);
+    return ServiceManager.getService(project, VcsPathPresenter.class);
   }
 
   /**

@@ -41,7 +41,6 @@ import java.util.Set;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 2/16/12
 */
 class OutputFilesSink implements OutputFileConsumer {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.java.OutputFilesSink");
@@ -79,7 +78,7 @@ class OutputFilesSink implements OutputFileConsumer {
               myOutputConsumer.registerCompiledClass(rootDescriptor.target, new CompiledClass(fileObject.getFile(), srcFile, fileObject.getClassName(), content)); // todo: avoid array copying?
             }
             else {
-              myOutputConsumer.registerOutputFile(rootDescriptor.target, fileObject.getFile(), Collections.<String>singleton(sourcePath));
+              myOutputConsumer.registerOutputFile(rootDescriptor.target, fileObject.getFile(), Collections.singleton(sourcePath));
             }
           }
         }

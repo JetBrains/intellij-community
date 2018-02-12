@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.xdebugger.impl.frame;
 
@@ -26,6 +14,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
+import java.util.HashMap;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -38,12 +27,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
+import java.util.Map;
 
 /**
  * @author nik
  */
 public class XDebuggerFramesList extends DebuggerFramesList {
   private final Project myProject;
+  private final Map<VirtualFile, Color> myFileColors = new HashMap<>();
 
   private static final TransferHandler DEFAULT_TRANSFER_HANDLER = new TransferHandler() {
     @Override
@@ -118,6 +109,12 @@ public class XDebuggerFramesList extends DebuggerFramesList {
     });
   }
 
+  @Override
+  public void clear() {
+    super.clear();
+    myFileColors.clear();
+  }
+
   @Nullable
   private static VirtualFile getFile(XStackFrame frame) {
     XSourcePosition position = frame.getSourcePosition();
@@ -143,6 +140,8 @@ public class XDebuggerFramesList extends DebuggerFramesList {
   }
 
   private class XDebuggerGroupedFrameListRenderer extends GroupedItemsListRenderer {
+    private final XDebuggerFrameListRenderer myOriginalRenderer = new XDebuggerFrameListRenderer(myProject);
+
     public XDebuggerGroupedFrameListRenderer() {
       super(new ListItemDescriptorAdapter() {
         @Nullable
@@ -151,21 +150,30 @@ public class XDebuggerFramesList extends DebuggerFramesList {
           return null;
         }
 
+        @Nullable
+        @Override
+        public String getCaptionAboveOf(Object value) {
+          return value instanceof ItemWithSeparatorAbove ? ((ItemWithSeparatorAbove)value).getCaptionAboveOf() : null;
+        }
+
         @Override
         public boolean hasSeparatorAboveOf(Object value) {
-          if (value instanceof ItemWithSeparatorAbove) {
-            return ((ItemWithSeparatorAbove)value).hasSeparatorAbove();
-          }
-          return false;
+          return value instanceof ItemWithSeparatorAbove && ((ItemWithSeparatorAbove)value).hasSeparatorAbove();
         }
       });
+      mySeparatorComponent.setCaptionCentered(false);
     }
 
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      ((XDebuggerFrameListRenderer)myComponent).getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      return component;
+      if (myDescriptor.hasSeparatorAboveOf(value)) {
+        Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        ((XDebuggerFrameListRenderer)myComponent).getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        return component;
+      }
+      else {
+        return myOriginalRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      }
     }
 
     @Override
@@ -175,7 +183,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
     }
   }
 
-  private static class XDebuggerFrameListRenderer extends ColoredListCellRenderer {
+  private class XDebuggerFrameListRenderer extends ColoredListCellRenderer {
     private final FileColorManager myColorsManager;
 
     public XDebuggerFrameListRenderer(@NotNull Project project) {
@@ -204,24 +212,44 @@ public class XDebuggerFramesList extends DebuggerFramesList {
 
       XStackFrame stackFrame = (XStackFrame)value;
       if (!selected) {
-        Color c = null;
-        XSourcePosition position = stackFrame.getSourcePosition();
-        if (position != null) {
-          final VirtualFile virtualFile = position.getFile();
-          if (virtualFile.isValid()) {
-            c = myColorsManager.getFileColor(virtualFile);
-          }
+        Color c = getFrameBgColor(stackFrame);
+        if (c != null) {
+          setBackground(c);
         }
-        else {
-          c = myColorsManager.getScopeColor(NonProjectFilesScope.NAME);
-        }
-        if (c != null) setBackground(c);
       }
       stackFrame.customizePresentation(this);
+    }
+
+    Color getFrameBgColor(XStackFrame stackFrame) {
+      if (stackFrame instanceof ItemWithCustomBackgroundColor) {
+        return ((ItemWithCustomBackgroundColor)stackFrame).getBackgroundColor();
+      }
+      VirtualFile virtualFile = getFile(stackFrame);
+      if (virtualFile != null) {
+        // handle null value
+        if (myFileColors.containsKey(virtualFile)) {
+          return myFileColors.get(virtualFile);
+        }
+        else if (virtualFile.isValid()) {
+          Color color = myColorsManager.getFileColor(virtualFile);
+          myFileColors.put(virtualFile, color);
+          return color;
+        }
+      }
+      else {
+        return myColorsManager.getScopeColor(NonProjectFilesScope.NAME);
+      }
+      return null;
     }
   }
 
   public interface ItemWithSeparatorAbove {
     boolean hasSeparatorAbove();
+    String getCaptionAboveOf();
+  }
+
+  public interface ItemWithCustomBackgroundColor {
+    @Nullable
+    Color getBackgroundColor();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,24 @@
  */
 package com.siyeh.ig.numeric;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class OctalLiteralInspectionTest extends IGInspectionTestCase {
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/numeric/octal_inspection",
-           new OctalLiteralInspection());
+public class OctalLiteralInspectionTest extends LightInspectionTestCase {
+
+  public void testOctalRecognition() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new OctalLiteralInspection();
+  }
+
+  @Override
+  protected String getBasePath() {
+    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/numeric/octal_inspection";
   }
 }

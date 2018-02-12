@@ -17,6 +17,7 @@ package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMStacktraceParser;
 import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
@@ -32,7 +33,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
@@ -53,11 +53,14 @@ import java.util.List;
  * @author Roman Chernyatchik
  */
 public class SMTestProxy extends AbstractTestProxy {
+  public static final Key<String> NODE_ID = Key.create("test.proxy.id");
+
   private static final Logger LOG = Logger.getInstance(SMTestProxy.class.getName());
 
   private final String myName;
   private boolean myIsSuite;
   private final String myLocationUrl;
+  private final String myMetainfo;
   private final boolean myPreservePresentableName;
 
   private List<SMTestProxy> myChildren;
@@ -86,9 +89,14 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   public SMTestProxy(String testName, boolean isSuite, @Nullable String locationUrl, boolean preservePresentableName) {
+    this(testName, isSuite, locationUrl, null, preservePresentableName);
+  }
+
+  public SMTestProxy(String testName, boolean isSuite, @Nullable String locationUrl, @Nullable String metainfo, boolean preservePresentableName) {
     myName = testName;
     myIsSuite = isSuite;
     myLocationUrl = locationUrl;
+    myMetainfo = metainfo;
     myPreservePresentableName = preservePresentableName;
   }
 
@@ -210,9 +218,11 @@ public class SMTestProxy extends AbstractTestProxy {
     //
     //TODO reset children cache
     child.setParent(this);
-    // if parent is being printed then all childs output
-    // should be also send to the same printer
-    child.setPrinter(myPrinter);
+
+    boolean printOwnContentOnly = this instanceof SMRootTestProxy && ((SMRootTestProxy)this).shouldPrintOwnContentOnly();
+    if (!printOwnContentOnly) {
+      child.setPrinter(myPrinter);
+    }
     if (myPreferredPrinter != null && child.myPreferredPrinter == null) {
       child.setPreferredPrinter(myPreferredPrinter);
     }
@@ -250,17 +260,11 @@ public class SMTestProxy extends AbstractTestProxy {
       String protocolId = VirtualFileManager.extractProtocol(locationUrl);
       if (protocolId != null) {
         String path = VirtualFileManager.extractPath(locationUrl);
-        if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator) || Registry.is("dumb.aware.run.configurations")) {
-          try {
-            DumbService.getInstance(project).setAlternativeResolveEnabled(true);
-            List<Location> locations = myLocator.getLocation(protocolId, path, project, searchScope);
-            if (!locations.isEmpty()) {
-              return locations.get(0);
-            }
-          }
-          finally {
-            DumbService.getInstance(project).setAlternativeResolveEnabled(false);
-          }
+        if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator)) {
+          return DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> {
+            List<Location> locations = myLocator.getLocation(protocolId, path, myMetainfo, project, searchScope);
+            return !locations.isEmpty() ? locations.get(0) : null;
+          });
         }
       }
     }
@@ -372,7 +376,7 @@ public class SMTestProxy extends AbstractTestProxy {
 
   private String getDurationString() {
     final Long duration = getDuration();
-    return duration != null ? StringUtil.formatDuration(duration.longValue()) : null;
+    return duration != null ? StringUtil.formatDuration(duration.longValue(), "\u2009") : null;
   }
 
   @Override
@@ -603,17 +607,17 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   public void addStdOutput(final String output, final Key outputType) {
-    addAfterLastPassed(new Printable() {
-      public void printOn(final Printer printer) {
-        printer.print(output, ConsoleViewContentType.getConsoleViewType(outputType));
-      }
-    });
+    addOutput(output, outputType);
   }
 
   public void addStdErr(final String output) {
+    addOutput(output, ProcessOutputTypes.STDERR);
+  }
+
+  public void addOutput(@NotNull String output, @NotNull Key outputType) {
     addAfterLastPassed(new Printable() {
-      public void printOn(final Printer printer) {
-        printer.print(output, ConsoleViewContentType.ERROR_OUTPUT);
+      public void printOn(@NotNull Printer printer) {
+        printer.print(output, ConsoleViewContentType.getConsoleViewType(outputType));
       }
     });
   }
@@ -645,11 +649,7 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   public void addSystemOutput(final String output) {
-    addAfterLastPassed(new Printable() {
-      public void printOn(final Printer printer) {
-        printer.print(output, ConsoleViewContentType.SYSTEM_OUTPUT);
-      }
-    });
+    addOutput(output, ProcessOutputTypes.SYSTEM);
   }
 
   @NotNull
@@ -723,6 +723,11 @@ public class SMTestProxy extends AbstractTestProxy {
   @Nullable
   public String getLocationUrl() {
     return myLocationUrl;
+  }
+
+  @Nullable
+  public String getMetainfo() {
+    return myMetainfo;
   }
 
   /**
@@ -881,6 +886,7 @@ public class SMTestProxy extends AbstractTestProxy {
     private String myComment;
     private String myRootLocationUrl;
     private ProcessHandler myHandler;
+    private boolean myShouldPrintOwnContentOnly = false;
 
     public SMRootTestProxy() {
       this(false);
@@ -947,6 +953,30 @@ public class SMTestProxy extends AbstractTestProxy {
         return SuiteFinishedState.TESTS_REPORTER_NOT_ATTACHED;
       }
       return super.determineSuiteStateOnFinished();
+    }
+
+    public void testingRestarted() {
+      if (!getChildren().isEmpty()) {
+        getChildren().clear();
+      }
+      clear();
+    }
+
+    boolean shouldPrintOwnContentOnly() {
+      return myShouldPrintOwnContentOnly;
+    }
+
+    public void setShouldPrintOwnContentOnly(boolean shouldPrintOwnContentOnly) {
+      myShouldPrintOwnContentOnly = shouldPrintOwnContentOnly;
+    }
+
+    public void printOn(@NotNull Printer printer) {
+      if (myShouldPrintOwnContentOnly) {
+        printOwnPrintablesOn(printer, false);
+      }
+      else {
+        super.printOn(printer);
+      }
     }
   }
 }

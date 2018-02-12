@@ -16,11 +16,10 @@
 package git4idea;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
@@ -96,26 +95,15 @@ public class GitUserRegistry implements Disposable, VcsListener {
 
   @Override
   public void directoryMappingChanged() {
-    GitVcs vcs = GitVcs.getInstance(myProject);
-    if (vcs == null) {
-      return;
-    }
-    final VirtualFile[] roots = myVcsManager.getRootsUnderVcs(vcs);
-    final Collection<VirtualFile> rootsToCheck = ContainerUtil.filter(roots, new Condition<VirtualFile>() {
-      @Override
-      public boolean value(VirtualFile root) {
-        return getUser(root) == null;
-      }
-    });
+    final VirtualFile[] roots = myVcsManager.getRootsUnderVcs(GitVcs.getInstance(myProject));
+    final Collection<VirtualFile> rootsToCheck = ContainerUtil.filter(roots, root -> getUser(root) == null);
     if (!rootsToCheck.isEmpty()) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        public void run() {
-          for (VirtualFile root : rootsToCheck) {
-            getOrReadUser(root);
-          }
+      Runnable task = () -> {
+        for (VirtualFile root : rootsToCheck) {
+          getOrReadUser(root);
         }
-      });
+      };
+      BackgroundTaskUtil.executeOnPooledThread(myProject, task);
     }
   }
-
 }

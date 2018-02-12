@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
@@ -31,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RemoveInitializerFix implements LocalQuickFix {
-  private static final Logger LOG = Logger.getInstance("#" + RemoveInitializerFix.class.getName());
+  private static final Logger LOG = Logger.getInstance(RemoveInitializerFix.class);
 
   @Override
   @NotNull
@@ -90,8 +91,15 @@ public class RemoveInitializerFix implements LocalQuickFix {
           parent.replace(statementFromText);
         }
         else {
-          declaration.getParent().addBefore(statementFromText, declaration);
           elementToDelete.delete();
+          if (declaration instanceof PsiClass) {
+            PsiClassInitializer initializer = factory.createClassInitializer();
+            initializer = (PsiClassInitializer)declaration.addAfter(initializer, variable);
+            initializer.getBody().add(statementFromText);
+            return;
+          }
+          PsiElement grandParent = declaration.getParent();
+          BlockUtils.addBefore(((PsiStatement) (grandParent instanceof PsiForStatement ? grandParent : declaration)), statementFromText);
         }
       }
     });

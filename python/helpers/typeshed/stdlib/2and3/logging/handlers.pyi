@@ -11,7 +11,7 @@ if sys.version_info >= (3,):
 else:
     from Queue import Queue
 # TODO update socket stubs to add SocketKind
-SocketKind = int
+_SocketKind = int
 
 
 class WatchedFileHandler(Handler):
@@ -29,7 +29,7 @@ class WatchedFileHandler(Handler):
 
 if sys.version_info >= (3,):
     class BaseRotatingHandler(FileHandler):
-        namer = ...  # type: Optional[Callable[[str], None]]
+        namer = ...  # type: Optional[Callable[[str], str]]
         rotator = ...  # type: Optional[Callable[[str, str], None]]
         def __init__(self, filename: str, mode: str,
                      encoding: Optional[str] = ...,
@@ -122,7 +122,7 @@ class SysLogHandler(Handler):
     LOG_LOCAL6 = ...  # type: int
     LOG_LOCAL7 = ...  # type: int
     def __init__(self, address: Union[Tuple[str, int], str] = ...,
-            facility: int = ..., socktype: SocketKind = ...) -> None: ...
+            facility: int = ..., socktype: _SocketKind = ...) -> None: ...
     def encodePriority(self, facility: Union[int, str],
                        priority: Union[int, str]) -> int: ...
     def mapPriority(self, levelName: int) -> str: ...
@@ -180,7 +180,7 @@ class HTTPHandler(Handler):
     def mapLogRecord(self, record: LogRecord) -> Dict[str, Any]: ...
 
 
-if sys.version_info > (3,):
+if sys.version_info >= (3,):
     class QueueHandler(Handler):
         def __init__(self, queue: Queue) -> None: ...
         def prepare(self, record: LogRecord) -> Any: ...

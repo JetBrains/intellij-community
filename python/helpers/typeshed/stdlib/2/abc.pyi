@@ -1,11 +1,7 @@
-from typing import Any, Dict, Set, Union, Tuple
+from typing import Any, Dict, Set, Tuple, Type
 import _weakrefset
 
-# mypy has special processing for ABCMeta and abstractmethod.
-
-WeakSet = ...  # type: _weakrefset.WeakSet
-_InstanceType = ...  # type: type
-types = ...  # type: module
+# NOTE: mypy has special processing for ABCMeta and abstractmethod.
 
 def abstractmethod(funcobj: Any) -> Any: ...
 
@@ -21,11 +17,7 @@ class ABCMeta(type):
     def __instancecheck__(cls: "ABCMeta", instance: Any) -> Any: ...
     def __subclasscheck__(cls: "ABCMeta", subclass: Any) -> Any: ...
     def _dump_registry(cls: "ABCMeta", *args: Any, **kwargs: Any) -> None: ...
-    # TODO: subclass: Union["ABCMeta", type, Tuple[type, ...]]
-    def register(cls: "ABCMeta", subclass: Any) -> None: ...
-
-class _C:
-    pass
+    def register(cls: "ABCMeta", subclass: Type[Any]) -> None: ...
 
 # TODO: The real abc.abstractproperty inherits from "property".
 class abstractproperty(object):

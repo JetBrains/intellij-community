@@ -22,7 +22,6 @@ import java.util.ResourceBundle;
 /**
   * MUST BE COMPILED WITH JDK 1.1 IN ORDER TO SUPPORT JAVAC LAUNCHING FOR ALL JDKs
   * @author Eugene Zhuravlev
-  *         Date: Oct 10, 2005
   */
 public class JavacResourcesReader {
   public static final String MSG_PATTERNS_START = "__patterns_start";
@@ -117,7 +116,6 @@ public class JavacResourcesReader {
         return ResourceBundle.getBundle(BUNDLE_NAMES[i]);
       }
       catch (MissingResourceException ignored) {
-        continue;
       }
     }
     return null;
@@ -150,7 +148,7 @@ public class JavacResourcesReader {
 
   private static class IgnoredWarningBundleKey extends BundleKey {
     public IgnoredWarningBundleKey(final String messageKey) {
-      super(JavacResourcesReader.MSG_IGNORED, new String[]{"compiler.warn.warning", messageKey});
+      super(MSG_IGNORED, new String[]{"compiler.warn.warning", messageKey});
     }
 
     public String getCategoryValue(ResourceBundle messagesBundle) {

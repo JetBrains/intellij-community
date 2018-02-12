@@ -22,7 +22,6 @@ import java.io.File;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 16, 2004
  */
 public class MultipleFileProjectBuild extends ProjectBuild{
   public MultipleFileProjectBuild(Project project, GenerationOptions genOptions) {

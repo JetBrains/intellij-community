@@ -15,11 +15,6 @@
  */
 package org.intellij.plugins.xsltDebugger.rt.engine;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 09.05.11
-*/
 public interface Watchable {
   boolean ping();
 }

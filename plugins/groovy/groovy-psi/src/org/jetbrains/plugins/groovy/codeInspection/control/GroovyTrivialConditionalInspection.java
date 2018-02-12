@@ -39,12 +39,6 @@ public class GroovyTrivialConditionalInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return CONTROL_FLOW;
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

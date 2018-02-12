@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,26 +20,28 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.codeStyle.CodeStyleConfigurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SortedListModel;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Comparator;
 
-public class CodeStyleGenerationConfigurable implements Configurable {
+public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
   private final JavaVisibilityPanel myJavaVisibilityPanel;
   JPanel myPanel;
   private JTextField myFieldPrefixField;
@@ -67,12 +69,16 @@ public class CodeStyleGenerationConfigurable implements Configurable {
   private JBCheckBox myReplaceInstanceOfCb;
   private JBCheckBox myReplaceCastCb;
   private JBCheckBox myReplaceNullCheckCb;
+  private JTextField myTestClassPrefix;
+  private JTextField myTestClassSuffix;
+  private JTextField mySubclassPrefix;
+  private JTextField mySubclassSuffix;
   private CommenterForm myCommenterForm;
   private SortedListModel<String> myRepeatAnnotationsModel;
 
   public CodeStyleGenerationConfigurable(CodeStyleSettings settings) {
     mySettings = settings;
-    myPanel.setBorder(IdeBorderFactory.createEmptyBorder(2, 2, 2, 2));
+    myPanel.setBorder(JBUI.Borders.empty(2, 2, 2, 2));
     myJavaVisibilityPanel = new JavaVisibilityPanel(false, true, RefactoringBundle.message("default.visibility.border.title"));
   }
 
@@ -88,44 +94,47 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     return myPanel;
   }
 
-  public void disposeUIResources() {
-  }
-
   public String getDisplayName() {
     return ApplicationBundle.message("title.code.generation");
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.settingsdialog.IDE.globalcodestyle.codegen";
   }
 
-  public void reset(CodeStyleSettings settings) {
-    myCbPreferLongerNames.setSelected(settings.PREFER_LONGER_NAMES);
+  public void reset(@NotNull CodeStyleSettings settings) {
+    JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+    myCbPreferLongerNames.setSelected(javaSettings.PREFER_LONGER_NAMES);
 
-    myFieldPrefixField.setText(settings.FIELD_NAME_PREFIX);
-    myStaticFieldPrefixField.setText(settings.STATIC_FIELD_NAME_PREFIX);
-    myParameterPrefixField.setText(settings.PARAMETER_NAME_PREFIX);
-    myLocalVariablePrefixField.setText(settings.LOCAL_VARIABLE_NAME_PREFIX);
+    myFieldPrefixField.setText(javaSettings.FIELD_NAME_PREFIX);
+    myStaticFieldPrefixField.setText(javaSettings.STATIC_FIELD_NAME_PREFIX);
+    myParameterPrefixField.setText(javaSettings.PARAMETER_NAME_PREFIX);
+    myLocalVariablePrefixField.setText(javaSettings.LOCAL_VARIABLE_NAME_PREFIX);
+    mySubclassPrefix.setText(javaSettings.SUBCLASS_NAME_PREFIX);
+    myTestClassPrefix.setText(javaSettings.TEST_NAME_PREFIX);
 
-    myFieldSuffixField.setText(settings.FIELD_NAME_SUFFIX);
-    myStaticFieldSuffixField.setText(settings.STATIC_FIELD_NAME_SUFFIX);
-    myParameterSuffixField.setText(settings.PARAMETER_NAME_SUFFIX);
-    myLocalVariableSuffixField.setText(settings.LOCAL_VARIABLE_NAME_SUFFIX);
+    myFieldSuffixField.setText(javaSettings.FIELD_NAME_SUFFIX);
+    myStaticFieldSuffixField.setText(javaSettings.STATIC_FIELD_NAME_SUFFIX);
+    myParameterSuffixField.setText(javaSettings.PARAMETER_NAME_SUFFIX);
+    myLocalVariableSuffixField.setText(javaSettings.LOCAL_VARIABLE_NAME_SUFFIX);
+    mySubclassSuffix.setText(javaSettings.SUBCLASS_NAME_SUFFIX);
+    myTestClassSuffix.setText(javaSettings.TEST_NAME_SUFFIX);
 
-    myCbGenerateFinalLocals.setSelected(settings.GENERATE_FINAL_LOCALS);
-    myCbGenerateFinalParameters.setSelected(settings.GENERATE_FINAL_PARAMETERS);
+    myCbGenerateFinalLocals.setSelected(javaSettings.GENERATE_FINAL_LOCALS);
+    myCbGenerateFinalParameters.setSelected(javaSettings.GENERATE_FINAL_PARAMETERS);
 
-    myCbUseExternalAnnotations.setSelected(settings.USE_EXTERNAL_ANNOTATIONS);
-    myInsertOverrideAnnotationCheckBox.setSelected(settings.INSERT_OVERRIDE_ANNOTATION);
-    myRepeatSynchronizedCheckBox.setSelected(settings.REPEAT_SYNCHRONIZED);
-    myJavaVisibilityPanel.setVisibility(settings.VISIBILITY);
+    myCbUseExternalAnnotations.setSelected(javaSettings.USE_EXTERNAL_ANNOTATIONS);
+    myInsertOverrideAnnotationCheckBox.setSelected(javaSettings.INSERT_OVERRIDE_ANNOTATION);
+    myRepeatSynchronizedCheckBox.setSelected(javaSettings.REPEAT_SYNCHRONIZED);
+    myJavaVisibilityPanel.setVisibility(javaSettings.VISIBILITY);
 
-    myReplaceCastCb.setSelected(settings.REPLACE_CAST);
-    myReplaceInstanceOfCb.setSelected(settings.REPLACE_INSTANCEOF);
-    myReplaceNullCheckCb.setSelected(settings.REPLACE_NULL_CHECK);
+    myReplaceCastCb.setSelected(javaSettings.REPLACE_CAST);
+    myReplaceInstanceOfCb.setSelected(javaSettings.REPLACE_INSTANCEOF);
+    myReplaceNullCheckCb.setSelected(javaSettings.REPLACE_NULL_CHECK);
 
     myRepeatAnnotationsModel.clear();
-    myRepeatAnnotationsModel.addAll(settings.getRepeatAnnotations());
+    myRepeatAnnotationsModel.addAll(javaSettings.getRepeatAnnotations());
     myCommenterForm.reset(settings);
   }
 
@@ -133,35 +142,40 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     reset(mySettings);
   }
 
-  public void apply(CodeStyleSettings settings) throws ConfigurationException {
-    settings.PREFER_LONGER_NAMES = myCbPreferLongerNames.isSelected();
+  public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
+    JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+    javaSettings.PREFER_LONGER_NAMES = myCbPreferLongerNames.isSelected();
 
-    settings.FIELD_NAME_PREFIX = setPrefixSuffix(myFieldPrefixField.getText(), true);
-    settings.STATIC_FIELD_NAME_PREFIX = setPrefixSuffix(myStaticFieldPrefixField.getText(), true);
-    settings.PARAMETER_NAME_PREFIX = setPrefixSuffix(myParameterPrefixField.getText(), true);
-    settings.LOCAL_VARIABLE_NAME_PREFIX = setPrefixSuffix(myLocalVariablePrefixField.getText(), true);
+    javaSettings.FIELD_NAME_PREFIX = setPrefixSuffix(myFieldPrefixField.getText(), true);
+    javaSettings.STATIC_FIELD_NAME_PREFIX = setPrefixSuffix(myStaticFieldPrefixField.getText(), true);
+    javaSettings.PARAMETER_NAME_PREFIX = setPrefixSuffix(myParameterPrefixField.getText(), true);
+    javaSettings.LOCAL_VARIABLE_NAME_PREFIX = setPrefixSuffix(myLocalVariablePrefixField.getText(), true);
+    javaSettings.SUBCLASS_NAME_PREFIX = setPrefixSuffix(mySubclassPrefix.getText(), true);
+    javaSettings.TEST_NAME_PREFIX = setPrefixSuffix(myTestClassPrefix.getText(), true);
 
-    settings.FIELD_NAME_SUFFIX = setPrefixSuffix(myFieldSuffixField.getText(), false);
-    settings.STATIC_FIELD_NAME_SUFFIX = setPrefixSuffix(myStaticFieldSuffixField.getText(), false);
-    settings.PARAMETER_NAME_SUFFIX = setPrefixSuffix(myParameterSuffixField.getText(), false);
-    settings.LOCAL_VARIABLE_NAME_SUFFIX = setPrefixSuffix(myLocalVariableSuffixField.getText(), false);
+    javaSettings.FIELD_NAME_SUFFIX = setPrefixSuffix(myFieldSuffixField.getText(), false);
+    javaSettings.STATIC_FIELD_NAME_SUFFIX = setPrefixSuffix(myStaticFieldSuffixField.getText(), false);
+    javaSettings.PARAMETER_NAME_SUFFIX = setPrefixSuffix(myParameterSuffixField.getText(), false);
+    javaSettings.LOCAL_VARIABLE_NAME_SUFFIX = setPrefixSuffix(myLocalVariableSuffixField.getText(), false);
+    javaSettings.SUBCLASS_NAME_SUFFIX = setPrefixSuffix(mySubclassSuffix.getText(), false);
+    javaSettings.TEST_NAME_SUFFIX = setPrefixSuffix(myTestClassSuffix.getText(), false);
 
-    settings.GENERATE_FINAL_LOCALS = myCbGenerateFinalLocals.isSelected();
-    settings.GENERATE_FINAL_PARAMETERS = myCbGenerateFinalParameters.isSelected();
+    javaSettings.GENERATE_FINAL_LOCALS = myCbGenerateFinalLocals.isSelected();
+    javaSettings.GENERATE_FINAL_PARAMETERS = myCbGenerateFinalParameters.isSelected();
 
-    settings.USE_EXTERNAL_ANNOTATIONS = myCbUseExternalAnnotations.isSelected();
-    settings.INSERT_OVERRIDE_ANNOTATION = myInsertOverrideAnnotationCheckBox.isSelected();
-    settings.REPEAT_SYNCHRONIZED = myRepeatSynchronizedCheckBox.isSelected();
+    javaSettings.USE_EXTERNAL_ANNOTATIONS = myCbUseExternalAnnotations.isSelected();
+    javaSettings.INSERT_OVERRIDE_ANNOTATION = myInsertOverrideAnnotationCheckBox.isSelected();
+    javaSettings.REPEAT_SYNCHRONIZED = myRepeatSynchronizedCheckBox.isSelected();
     
-    settings.VISIBILITY = myJavaVisibilityPanel.getVisibility();
+    javaSettings.VISIBILITY = myJavaVisibilityPanel.getVisibility();
 
-    settings.REPLACE_CAST = myReplaceCastCb.isSelected();
-    settings.REPLACE_INSTANCEOF = myReplaceInstanceOfCb.isSelected();
-    settings.REPLACE_NULL_CHECK = myReplaceNullCheckCb.isSelected();
+    javaSettings.REPLACE_CAST = myReplaceCastCb.isSelected();
+    javaSettings.REPLACE_INSTANCEOF = myReplaceInstanceOfCb.isSelected();
+    javaSettings.REPLACE_NULL_CHECK = myReplaceNullCheckCb.isSelected();
 
 
     myCommenterForm.apply(settings);
-    settings.setRepeatAnnotations(myRepeatAnnotationsModel.getItems());
+    javaSettings.setRepeatAnnotations(myRepeatAnnotationsModel.getItems());
 
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       DaemonCodeAnalyzer.getInstance(project).settingsChanged();
@@ -182,34 +196,39 @@ public class CodeStyleGenerationConfigurable implements Configurable {
   }
 
   public boolean isModified(CodeStyleSettings settings) {
-    boolean isModified = isModified(myCbPreferLongerNames, settings.PREFER_LONGER_NAMES);
+    JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+    boolean isModified = isModified(myCbPreferLongerNames, javaSettings.PREFER_LONGER_NAMES);
 
-    isModified |= isModified(myFieldPrefixField, settings.FIELD_NAME_PREFIX);
-    isModified |= isModified(myStaticFieldPrefixField, settings.STATIC_FIELD_NAME_PREFIX);
-    isModified |= isModified(myParameterPrefixField, settings.PARAMETER_NAME_PREFIX);
-    isModified |= isModified(myLocalVariablePrefixField, settings.LOCAL_VARIABLE_NAME_PREFIX);
+    isModified |= isModified(myFieldPrefixField, javaSettings.FIELD_NAME_PREFIX);
+    isModified |= isModified(myStaticFieldPrefixField, javaSettings.STATIC_FIELD_NAME_PREFIX);
+    isModified |= isModified(myParameterPrefixField, javaSettings.PARAMETER_NAME_PREFIX);
+    isModified |= isModified(myLocalVariablePrefixField, javaSettings.LOCAL_VARIABLE_NAME_PREFIX);
+    isModified |= isModified(mySubclassPrefix, javaSettings.SUBCLASS_NAME_PREFIX);
+    isModified |= isModified(myTestClassPrefix, javaSettings.TEST_NAME_PREFIX);
 
-    isModified |= isModified(myFieldSuffixField, settings.FIELD_NAME_SUFFIX);
-    isModified |= isModified(myStaticFieldSuffixField, settings.STATIC_FIELD_NAME_SUFFIX);
-    isModified |= isModified(myParameterSuffixField, settings.PARAMETER_NAME_SUFFIX);
-    isModified |= isModified(myLocalVariableSuffixField, settings.LOCAL_VARIABLE_NAME_SUFFIX);
+    isModified |= isModified(myFieldSuffixField, javaSettings.FIELD_NAME_SUFFIX);
+    isModified |= isModified(myStaticFieldSuffixField, javaSettings.STATIC_FIELD_NAME_SUFFIX);
+    isModified |= isModified(myParameterSuffixField, javaSettings.PARAMETER_NAME_SUFFIX);
+    isModified |= isModified(myLocalVariableSuffixField, javaSettings.LOCAL_VARIABLE_NAME_SUFFIX);
+    isModified |= isModified(mySubclassSuffix, javaSettings.SUBCLASS_NAME_SUFFIX);
+    isModified |= isModified(myTestClassSuffix, javaSettings.TEST_NAME_SUFFIX);
 
-    isModified |= isModified(myCbGenerateFinalLocals, settings.GENERATE_FINAL_LOCALS);
-    isModified |= isModified(myCbGenerateFinalParameters, settings.GENERATE_FINAL_PARAMETERS);
+    isModified |= isModified(myCbGenerateFinalLocals, javaSettings.GENERATE_FINAL_LOCALS);
+    isModified |= isModified(myCbGenerateFinalParameters, javaSettings.GENERATE_FINAL_PARAMETERS);
 
-    isModified |= isModified(myCbUseExternalAnnotations, settings.USE_EXTERNAL_ANNOTATIONS);
-    isModified |= isModified(myInsertOverrideAnnotationCheckBox, settings.INSERT_OVERRIDE_ANNOTATION);
-    isModified |= isModified(myRepeatSynchronizedCheckBox, settings.REPEAT_SYNCHRONIZED);
+    isModified |= isModified(myCbUseExternalAnnotations, javaSettings.USE_EXTERNAL_ANNOTATIONS);
+    isModified |= isModified(myInsertOverrideAnnotationCheckBox, javaSettings.INSERT_OVERRIDE_ANNOTATION);
+    isModified |= isModified(myRepeatSynchronizedCheckBox, javaSettings.REPEAT_SYNCHRONIZED);
 
-    isModified |= isModified(myReplaceCastCb, settings.REPLACE_CAST);
-    isModified |= isModified(myReplaceInstanceOfCb, settings.REPLACE_INSTANCEOF);
-    isModified |= isModified(myReplaceNullCheckCb, settings.REPLACE_NULL_CHECK);
+    isModified |= isModified(myReplaceCastCb, javaSettings.REPLACE_CAST);
+    isModified |= isModified(myReplaceInstanceOfCb, javaSettings.REPLACE_INSTANCEOF);
+    isModified |= isModified(myReplaceNullCheckCb, javaSettings.REPLACE_NULL_CHECK);
 
-    isModified |= !settings.VISIBILITY.equals(myJavaVisibilityPanel.getVisibility());
+    isModified |= !javaSettings.VISIBILITY.equals(myJavaVisibilityPanel.getVisibility());
     
     isModified |= myCommenterForm.isModified(settings);
 
-    isModified |= !myRepeatAnnotationsModel.getItems().equals(settings.getRepeatAnnotations());
+    isModified |= !myRepeatAnnotationsModel.getItems().equals(javaSettings.getRepeatAnnotations());
 
     return isModified;
   }

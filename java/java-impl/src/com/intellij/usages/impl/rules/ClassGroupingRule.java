@@ -26,24 +26,27 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
+import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.PsiElementUsage;
-import com.intellij.usages.rules.UsageGroupingRule;
-import com.intellij.psi.util.FileTypeUtils;
+import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
  * @author max
  */
-public class ClassGroupingRule implements UsageGroupingRule, DumbAware {
+public class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAware {
+  @Nullable
   @Override
-  public UsageGroup groupUsage(@NotNull Usage usage) {
+  protected UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
     if (!(usage instanceof PsiElementUsage)) {
       return null;
     }

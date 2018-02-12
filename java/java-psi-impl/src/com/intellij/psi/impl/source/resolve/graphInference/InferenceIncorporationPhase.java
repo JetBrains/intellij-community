@@ -25,16 +25,12 @@ import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeCompa
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqualityConstraint;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.*;
 
-/**
- * User: anna
- */
 public class InferenceIncorporationPhase {
-  private static final Logger LOG = Logger.getInstance("#" + InferenceIncorporationPhase.class.getName());
+  private static final Logger LOG = Logger.getInstance(InferenceIncorporationPhase.class);
   private final InferenceSession mySession;
   private final List<Pair<InferenceVariable[], PsiClassType>> myCaptures = new ArrayList<>();
   private final Map<InferenceVariable, Map<InferenceBound, Set<PsiType>>> myCurrentBounds =
@@ -153,7 +149,7 @@ public class InferenceIncorporationPhase {
         if (aType instanceof PsiWildcardType) {
 
           for (PsiType eqBound : eqBounds) {
-            if (!isInferenceVariableOrFreshTypeParameter(eqBound)) {
+            if (!isInferenceVariableOrFreshTypeParameter(inferenceVariable, eqBound)) {
               return false;
             }
           }
@@ -181,7 +177,7 @@ public class InferenceIncorporationPhase {
             }
 
             for (PsiType lowerBound : lowerBounds) {
-              if (isInferenceVariableOrFreshTypeParameter(lowerBound)) {
+              if (isInferenceVariableOrFreshTypeParameter(inferenceVariable, lowerBound)) {
                 return false;
               }
             }
@@ -202,7 +198,7 @@ public class InferenceIncorporationPhase {
             }
 
             for (PsiType lowerBound : lowerBounds) {
-              if (isInferenceVariableOrFreshTypeParameter(lowerBound)) {
+              if (isInferenceVariableOrFreshTypeParameter(inferenceVariable, lowerBound)) {
                 return false;
               }
             }
@@ -243,10 +239,12 @@ public class InferenceIncorporationPhase {
     }
   }
 
-  private static Boolean isInferenceVariableOrFreshTypeParameter(PsiType eqBound) {
+  private static Boolean isInferenceVariableOrFreshTypeParameter(InferenceVariable inferenceVariable,
+                                                                 PsiType eqBound) {
     final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(eqBound);
     if (psiClass instanceof InferenceVariable ||
-        psiClass instanceof PsiTypeParameter && TypeConversionUtil.isFreshVariable((PsiTypeParameter)psiClass)) return true;
+        psiClass instanceof PsiTypeParameter && TypeConversionUtil.isFreshVariable((PsiTypeParameter)psiClass) ||
+        eqBound instanceof PsiCapturedWildcardType && eqBound.equals(inferenceVariable.getUserData(InferenceSession.ORIGINAL_CAPTURE))) return true;
     return false;
   }
 
@@ -350,9 +348,9 @@ public class InferenceIncorporationPhase {
 
 
   /**
-   * If two bounds have the form α <: S and α <: T, and if for some generic class or interface, G, 
+   * If two bounds have the form alpha <: S and alpha <: T, and if for some generic class or interface, G,
    * there exists a supertype (4.10) of S of the form G<S1, ..., Sn> and a supertype of T of the form G<T1, ..., Tn>, 
-   * then for all i, 1 ≤ i ≤ n, if Si and Ti are types (not wildcards), the constraint ⟨Si = Ti⟩ is implied.
+   * then for all i, 1 <= i <= n, if Si and Ti are types (not wildcards), the constraint (Si = Ti) is implied.
    */
   private boolean upUp(List<PsiType> upperBounds) {
     return InferenceSession.findParameterizationOfTheSameGenericClass(upperBounds, pair -> {

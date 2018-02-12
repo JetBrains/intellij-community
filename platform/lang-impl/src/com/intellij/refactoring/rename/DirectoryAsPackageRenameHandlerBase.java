@@ -46,7 +46,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author yole
@@ -71,10 +73,10 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
 
   @Override
   public boolean isAvailableOnDataContext(final DataContext dataContext) {
-    PsiElement element = adjustForRename(dataContext, PsiElementRenameHandler.getElement(dataContext));
-    if (element instanceof PsiDirectory) {
-      final VirtualFile virtualFile = ((PsiDirectory)element).getVirtualFile();
-      final Project project = element.getProject();
+    PsiElement directory = adjustForRename(dataContext, PsiElementRenameHandler.getElement(dataContext));
+    if (directory != null) {
+      final VirtualFile virtualFile = ((PsiDirectory)directory).getVirtualFile();
+      final Project project = directory.getProject();
       if (Comparing.equal(project.getBaseDir(), virtualFile)) return false;
       if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile)) {
         return true;
@@ -83,17 +85,16 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
     return false;
   }
 
-  private static PsiElement adjustForRename(DataContext dataContext, PsiElement element) {
+  private PsiDirectory adjustForRename(DataContext dataContext, PsiElement element) {
     if (element instanceof PsiDirectoryContainer) {
       final Module module = LangDataKeys.MODULE.getData(dataContext);
       if (module != null) {
-        final PsiDirectory[] directories = ((PsiDirectoryContainer)element).getDirectories(GlobalSearchScope.moduleScope(module));
-        if (directories.length >= 1) {
-          element = directories[0];
-        }
+        PsiDirectory[] directories = ((PsiDirectoryContainer)element).getDirectories(GlobalSearchScope.moduleScope(module));
+        Optional<PsiDirectory> directoryWithPackage = Arrays.stream(directories).filter(directory -> getPackage(directory) != null).findFirst();
+        return directoryWithPackage.orElse(null);
       }
     }
-    return element;
+    return element instanceof PsiDirectory && getPackage((PsiDirectory)element) != null ? (PsiDirectory)element : null;
   }
 
   @Override

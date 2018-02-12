@@ -11,23 +11,32 @@
   <vendor>JetBrains</vendor>
 
   <depends>com.intellij.properties</depends>
+  <depends config-file="gradle-devkit.xml" optional="true">org.jetbrains.plugins.gradle</depends>
 
   <resource-bundle>org.jetbrains.idea.devkit.DevKitBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
+    <virtualFileSystem key="testdata" implementationClass="org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupFileSystem" />
+    <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorTabTitleProvider" />
+    <fileIconProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupFileIconProvider" />
 
     <runLineMarkerContributor language="JAVA" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider"/>
     <fileEditorProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorProvider"/>
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataAsRelatedFileProvider"/>
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestCaseAsRelatedFileProvider"/>
+    <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.navigation.DescriptionInspectionGotoRelatedProvider" />
     <psi.referenceContributor language="JAVA" implementation="org.jetbrains.idea.devkit.testAssistant.TestDataReferenceContributor"/>
     <getDataRule key="Location" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestLocationDataRule"/>
+
+    <automaticRenamerFactory implementation="org.jetbrains.idea.devkit.refactoring.InspectionAutomaticRenamerFactory"/>
 
     <junitPatcher implementation="org.jetbrains.idea.devkit.run.JUnitDevKitPatcher"/>
     <antBuildGen implementation="org.jetbrains.idea.devkit.build.ant.ChunkBuildPluginExtension"/>
     <compiler.buildTargetScopeProvider implementation="org.jetbrains.idea.devkit.build.PluginModuleBuildScopeProvider"/>
 
-    <dom.fileDescription implementation="org.jetbrains.idea.devkit.dom.impl.PluginXmlDomFileDescription"/>
+    <xmlStructureViewBuilderProvider implementation="org.jetbrains.idea.devkit.navigation.structure.PluginDescriptorXmlStructureViewBuilderProvider"/>
+
+    <dom.fileDescription implementation="org.jetbrains.idea.devkit.dom.impl.PluginDescriptorDomFileDescription"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Extensions"
                   extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Action"
@@ -42,7 +51,11 @@
                         implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionPointImpl"/>
     <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.Extensions"
                         implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionsImpl"/>
-    <useScopeEnlarger implementation="org.jetbrains.idea.devkit.DevKitUseScopeEnlarger"/>
+
+    <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex"/>
+
+    <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorEditorTabTitleProvider"/>
+    <useScopeEnlarger implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorUseScopeEnlarger"/>
     <properties.implicitPropertyUsageProvider implementation="org.jetbrains.idea.devkit.inspections.RegistryImplicitPropertyUsageProvider"/>
 
     <configurationType implementation="org.jetbrains.idea.devkit.run.PluginConfigurationType"/>
@@ -52,6 +65,8 @@
     <fileTemplateGroup implementation="org.jetbrains.idea.devkit.DevKitFileTemplatesFactory"/>
     <lang.documentationProvider language="XML"
                                 implementationClass="org.jetbrains.idea.devkit.references.extensions.ExtensionPointDocumentationProvider"/>
+
+    <completion.contributor implementationClass="org.jetbrains.idea.devkit.completion.ExtensionOrderKeywordCompletionContributor" language="XML" />
 
     <localInspection language="XML" shortName="PluginXmlValidity" displayName="Plugin.xml Validity" applyToDialects="false"
                      groupKey="inspections.group.name" enabledByDefault="true" level="ERROR"
@@ -65,6 +80,9 @@
     <localInspection language="JAVA" shortName="InspectionUsingGrayColors" displayName="Using new Color(a,a,a)"
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UseGrayInspection"/>
+    <localInspection language="JAVA" shortName="InspectionUniqueToolbarId" displayName="Specify toolbar id"
+                     groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.UniqueToolbarIdInspection"/>
     <localInspection language="JAVA" shortName="IntentionDescriptionNotFoundInspection" displayName="Intention Description Checker"
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.IntentionDescriptionNotFoundInspection"/>
@@ -86,7 +104,7 @@
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.InspectionMappingConsistencyInspection"/>
 
-    <localInspection language="JAVA" shortName="UndesirableClassUsage" displayName="Undesirable class usage"
+    <localInspection language="UAST" shortName="UndesirableClassUsage" displayName="Undesirable class usage"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UndesirableClassUsageInspection"/>
@@ -110,6 +128,10 @@
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareInsetsInspection"/>
+    <localInspection language="JAVA" shortName="UseDPIAwareBorders" displayName="Use DPI-aware borders"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseDPIAwareEmptyBorderInspection"/>
     <localInspection language="JAVA" shortName="UseCouple" displayName="Use Couple instead of Pair"
                      groupKey="inspections.group.name"
                      enabledByDefault="false" level="WARNING"
@@ -125,10 +147,14 @@
     <localInspection language="JAVA" shortName="UnsafeReturnStatementVisitor" displayName="Unsafe return statements visitor"
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UnsafeReturnStatementVisitorInspection"/>
-    <localInspection language="JAVA" shortName="StatefulEp" displayName="Stateful Extension"
+    <localInspection language="UAST" shortName="StatefulEp" displayName="Stateful Extension"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.StatefulEpInspection"/>
+    <localInspection language="UAST" shortName="UElementAsPsi" displayName="UElement as PsiElement usage"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.UElementAsPsiInspection"/>
     <localInspection language="JAVA" shortName="UsePrimitiveTypes" displayName="Use .equals with primitive types"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
@@ -148,12 +174,18 @@
                      displayName="Using PsiElement string representation to generate new expression is incorrect"
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PsiElementConcatenationInspection"/>
+    <localInspection language="UAST" shortName="PresentationAnnotation" displayName="Invalid icon path in @Presentation"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.PresentationAnnotationInspection"/>
 
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
     <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.devkit.dom.impl.I18nReferenceContributor"/>
+    <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.ExperimentalFeatureIdContributor"/>
     <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>
+    <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.TestDataFilesReferencesContributor"/>
     <referencesSearch implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>
     <unusedDeclarationFixProvider implementation="org.jetbrains.idea.devkit.inspections.quickfix.RegisterExtensionFixProvider"/>
 
@@ -170,13 +202,19 @@
     <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.checkResultByFile("/>
     <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.access$"/>
     <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl$"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformTestCase"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformCodeInsightTestCase"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.PlatformTestCase"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.EditorActionTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.ExpectedHighlightingData"/>
 
     <codeInsight.lineMarkerProvider language="JAVA"
                                     implementationClass="org.jetbrains.idea.devkit.navigation.DescriptionTypeRelatedItemLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="JAVA"
                                     implementationClass="org.jetbrains.idea.devkit.navigation.ExtensionPointDeclarationRelatedItemLineMarkerProvider"/>
-    <codeInsight.implementedAtRuntime implementation="org.jetbrains.idea.devkit.inspections.DevKitImplementedAtRuntimeCondition"/>
+    <codeInsight.lineMarkerProvider language="JAVA"
+                                    implementationClass="org.jetbrains.idea.devkit.navigation.ExtensionDeclarationRelatedItemLineMarkerProvider"/>
+    <codeInsight.implicitSubclassProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitSubclassProvider"/>
 
     <annotator language="Properties" implementationClass="org.jetbrains.idea.devkit.inspections.RegistryPropertiesAnnotator"/>
 
@@ -184,9 +222,12 @@
     <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DefaultHiDPIThemeFilter"/>
     <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DarculaThemeFilter"/>
     <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DarculaHiDPIThemeFilter"/>
-    
+
     <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.internal.IconsGeneratedSourcesFilter"/>
+
+    <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.PluginDescriptorXIncludeReferenceContributor"/>
+    <psi.fileReferenceHelper implementation="org.jetbrains.idea.devkit.references.PluginDescriptorXIncludeFileReferenceHelper"/>
 
     <!-- must be before SubstringConsoleFolding to be able to fold the entire stacktrace -->
     <console.folding order="first" implementation="com.intellij.testFramework.FailedTestDebugLogConsoleFolding"/>
@@ -207,22 +248,19 @@
       <add-to-group anchor="after" group-id="BuildMenu" relative-to-action="BuildArtifact"/>
     </group>
 
-    <action class="org.jetbrains.idea.devkit.actions.NewApplicationComponentAction" text="Application Component"
-            id="NewApplicationComponent">
-      <add-to-group anchor="last" group-id="NewGroup"/>
-    </action>
+    <group id="DevkitNewActions" text="Plugin DevKit" icon="AllIcons.Nodes.Plugin" popup="true"
+           class="com.intellij.ide.actions.NonTrivialActionGroup">
+      <action class="org.jetbrains.idea.devkit.actions.NewActionAction" text="Action" id="NewAction"/>
+      <separator/>
+      <action text="Application Service" id="NewApplicationService"
+              class="org.jetbrains.idea.devkit.actions.service.NewApplicationServiceAction"/>
+      <action text="Project Service" id="NewProjectService"
+              class="org.jetbrains.idea.devkit.actions.service.NewProjectServiceAction"/>
+      <action text="Module Service" id="NewModuleService"
+              class="org.jetbrains.idea.devkit.actions.service.NewModuleServiceAction"/>
+      <add-to-group group-id="NewGroup" anchor="last"/>
+    </group>
 
-    <action class="org.jetbrains.idea.devkit.actions.NewProjectComponentAction" text="Project Component" id="NewProjectComponent">
-      <add-to-group anchor="last" group-id="NewGroup"/>
-    </action>
-
-    <action class="org.jetbrains.idea.devkit.actions.NewModuleComponentAction" text="Module Component" id="NewModuleComponent">
-      <add-to-group anchor="last" group-id="NewGroup"/>
-    </action>
-
-    <action class="org.jetbrains.idea.devkit.actions.NewActionAction" text="Action" id="NewAction">
-      <add-to-group anchor="last" group-id="NewGroup"/>
-    </action>
 
     <action class="org.jetbrains.idea.devkit.actions.GenerateComponentExternalizationAction" text="Generate Externalization"
             id="GenerateExternalization">
@@ -257,6 +295,11 @@
     <action id="DumpCleanTestData" internal="true" class="org.jetbrains.idea.devkit.internal.DumpCleanHighlightingTestdataAction">
       <add-to-group group-id="Internal.Dump"/>
     </action>
+
+    <action class="org.jetbrains.idea.devkit.actions.MigrateModuleNamesInSourcesAction" id="ReplaceModuleNamesInSources" internal="true">
+      <add-to-group group-id="FindMenuGroup" anchor="last"/>
+    </action>
+
   </actions>
 
 </idea-plugin>

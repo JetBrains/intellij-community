@@ -18,10 +18,7 @@ package com.intellij.refactoring.makeStatic;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -80,7 +77,8 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
       constructors = new PsiMethod[]{defConstructor};
     }
 
-    boolean generateFinalParams = CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS;
+    boolean generateFinalParams =
+      CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS;
     for (PsiMethod constructor : constructors) {
       final MethodJavaDocHelper javaDocHelper = new MethodJavaDocHelper(constructor);
       PsiParameterList paramList = constructor.getParameterList();

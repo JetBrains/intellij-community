@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.palette;
 
 import com.intellij.ide.ui.LafManager;
@@ -141,7 +127,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
   }
 
   @Override
-  public void loadState(Element state) {
+  public void loadState(@NotNull Element state) {
     myClass2Properties.clear();
     myClassName2Item.clear();
     myGroups.clear();
@@ -231,8 +217,8 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
   }
 
   /**
-   * @return <code>ComponentItem</code> for the UI bean with the specified <code>componentClassName</code>.
-   * The method returns <code>null</code> if palette has no information about the specified
+   * @return {@code ComponentItem} for the UI bean with the specified {@code componentClassName}.
+   * The method returns {@code null} if palette has no information about the specified
    * class.
    */
   @Nullable
@@ -268,7 +254,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
   }
 
   /**
-   * Adds specified <code>item</code> to the palette.
+   * Adds specified {@code item} to the palette.
    *
    * @param item item to be added
    * @throws IllegalArgumentException if an item for the same class
@@ -725,14 +711,14 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
       throw new RuntimeException(e);
     }
 
-    final IntrospectedProperty[] properties = result.toArray(new IntrospectedProperty[result.size()]);
+    final IntrospectedProperty[] properties = result.toArray(new IntrospectedProperty[0]);
     myClass2Properties.put(aClass, properties);
     return properties;
   }
 
   /**
-   * @return introspected property with the given <code>name</code> of the
-   * specified <code>class</code>. The method returns <code>null</code> if there is no
+   * @return introspected property with the given {@code name} of the
+   * specified {@code class}. The method returns {@code null} if there is no
    * property with the such name.
    */
   @Nullable

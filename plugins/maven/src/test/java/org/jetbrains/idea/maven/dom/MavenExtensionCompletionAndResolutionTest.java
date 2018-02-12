@@ -40,7 +40,7 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
                   "<version>1</version>");
   }
 
-  public void testGroupIdCompletion() throws Exception {
+  public void testGroupIdCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -56,7 +56,7 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
     assertCompletionVariants(myProjectPom, "org.codehaus.plexus", "test", "org.apache.maven.plugins", "org.codehaus.mojo", "intellij.test");
   }
 
-  public void testArtifactIdCompletion() throws Exception {
+  public void testArtifactIdCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -92,7 +92,7 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
     }
   }
 
-  public void testArtifactWithoutGroupCompletion() throws Exception {
+  public void testArtifactWithoutGroupCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -138,7 +138,7 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
     assertResolved(myProjectPom, findPsiFile(f));
   }
 
-  public void testResolvingAbsentPlugins() throws Exception {
+  public void testResolvingAbsentPlugins() {
     removeFromLocalRepository("org/apache/maven/plugins/maven-compiler-plugin");
 
     createProjectPom("<groupId>test</groupId>" +
@@ -158,7 +158,7 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
     ref.resolve(); // shouldn't throw;
   }
 
-  public void testDoNotHighlightAbsentGroupIdAndVersion() throws Throwable {
+  public void testDoNotHighlightAbsentGroupIdAndVersion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -173,7 +173,7 @@ public class MavenExtensionCompletionAndResolutionTest extends MavenDomWithIndic
     checkHighlighting();
   }
 
-  public void testHighlightingAbsentArtifactId() throws Throwable {
+  public void testHighlightingAbsentArtifactId() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +

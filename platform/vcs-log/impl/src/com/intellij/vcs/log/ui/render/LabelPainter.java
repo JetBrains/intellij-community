@@ -157,7 +157,7 @@ public class LabelPainter {
 
     for (RefGroup group : refGroups) {
       List<Color> colors = group.getColors();
-      LabelIcon labelIcon = new LabelIcon(height, background, colors.toArray(new Color[colors.size()]));
+      LabelIcon labelIcon = new LabelIcon(height, background, colors.toArray(new Color[0]));
       int newWidth = width + labelIcon.getIconWidth() + (group != ContainerUtil.getLastItem(refGroups) ? COMPACT_MIDDLE_PADDING : 0);
 
       String text = shortenRefName(group.getName(), fontMetrics, availableWidth - newWidth);
@@ -191,7 +191,7 @@ public class LabelPainter {
       }
 
       List<Color> colors = group.getColors();
-      LabelIcon labelIcon = new LabelIcon(height, background, colors.toArray(new Color[colors.size()]));
+      LabelIcon labelIcon = new LabelIcon(height, background, colors.toArray(new Color[0]));
       int newWidth = width + labelIcon.getIconWidth() + (i != refGroups.size() - 1 ? MIDDLE_PADDING : 0);
 
       String text = getGroupText(group, fontMetrics, availableWidth - newWidth - doNotFitWidth);
@@ -234,7 +234,7 @@ public class LabelPainter {
       }
     }
 
-    return result.toArray(new Color[result.size()]);
+    return result.toArray(new Color[0]);
   }
 
   @NotNull
@@ -243,7 +243,7 @@ public class LabelPainter {
       return shortenRefName(group.getName(), fontMetrics, availableWidth);
     }
 
-    String text = "";
+    StringBuilder text = new StringBuilder();
     String remainder = ", ...";
     String separator = ", ";
     int remainderWidth = fontMetrics.stringWidth(remainder);
@@ -255,15 +255,15 @@ public class LabelPainter {
       String refName = shortenRefName(group.getRefs().get(i).getName(), fontMetrics, width);
       int refNameWidth = fontMetrics.stringWidth(refName);
       if (width - refNameWidth < 0 && !firstRef) {
-        text += remainder;
+        text.append(remainder);
         break;
       }
       else {
-        text += (firstRef ? "" : separator) + refName;
+        text.append(firstRef ? "" : separator).append(refName);
         availableWidth -= (firstRef ? 0 : separatorWidth) + refNameWidth;
       }
     }
-    return text;
+    return text.toString();
   }
 
   @Nullable

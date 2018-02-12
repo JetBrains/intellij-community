@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
@@ -38,7 +37,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,7 +74,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     return QuickFixBundle.message("create.method.from.usage.text", name);
   }
 
-  private static boolean isMethodSignatureExists(PsiMethodCallExpression call, PsiClass target) {
+  public static boolean isMethodSignatureExists(PsiMethodCallExpression call, PsiClass target) {
     String name = call.getMethodExpression().getReferenceName();
     final JavaResolveResult resolveResult = call.getMethodExpression().advancedResolve(false);
     PsiExpressionList list = call.getArgumentList();
@@ -87,7 +85,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     return false;
   }
 
-  static boolean hasErrorsInArgumentList(final PsiMethodCallExpression call) {
+  public static boolean hasErrorsInArgumentList(final PsiMethodCallExpression call) {
     Project project = call.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(call.getContainingFile());
     if (document == null) return true;
@@ -175,9 +173,9 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
 
     PsiExpression[] arguments = expression.getArgumentList().getExpressions();
     doCreate(targetClass, method, shouldBeAbstract,
-             ContainerUtil.map2List(arguments, Pair.<PsiExpression, PsiType>createFunction(null)),
+             ContainerUtil.map2List(arguments, Pair.createFunction(null)),
              getTargetSubstitutor(expression),
-             CreateFromUsageUtils.guessExpectedTypes(expression, true),
+             CreateFromUsageUtils.guessExpectedTypes(expression, expression.getParent() instanceof PsiStatement),
              context);
   }
 
@@ -239,8 +237,8 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     CreateFromUsageUtils.setupMethodParameters(method, builder, context, substitutor, arguments);
     final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
     if (returnTypeElement != null) {
-      new GuessTypeParameters(JavaPsiFacade.getInstance(project).getElementFactory())
-        .setupTypeElement(returnTypeElement, expectedTypes, substitutor, builder, context, targetClass);
+      new GuessTypeParameters(project, JavaPsiFacade.getInstance(project).getElementFactory(), builder, substitutor)
+        .setupTypeElement(returnTypeElement, expectedTypes, context, targetClass);
     }
     PsiCodeBlock body = method.getBody();
     builder.setEndVariableAfter(shouldBeAbstract || body == null ? method : body.getLBrace());

@@ -20,7 +20,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.inspections.quickfix.PyCreatePropertyQuickFix;
 import com.jetbrains.python.psi.*;
@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Checks that properties are accessed correctly.
  * User: dcheryasov
- * Date: Jun 29, 2010 5:55:52 AM
  */
 public class PyPropertyAccessInspection extends PyInspection {
   @Nls

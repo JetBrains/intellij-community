@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -33,8 +34,8 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.Query;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +43,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.List;
+import java.util.Set;
 
 public class DirectoryIndexImpl extends DirectoryIndex {
   private static final Logger LOG = Logger.getInstance(DirectoryIndexImpl.class);
@@ -116,7 +118,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   protected RootIndex.InfoCache createRootInfoCache() {
     return new RootIndex.InfoCache() {
       // Upsource can't use int-mapping because different files may have the same id there
-      private final ConcurrentIntObjectMap<DirectoryInfo> myInfoCache = ContainerUtil.createConcurrentIntObjectMap();
+      private final IntObjectMap<DirectoryInfo> myInfoCache = ContainerUtil.createConcurrentIntObjectMap();
       @Override
       public void cacheInfo(@NotNull VirtualFile dir, @NotNull DirectoryInfo info) {
         myInfoCache.put(((NewVirtualFile)dir).getId(), info);
@@ -132,7 +134,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   @Override
   public DirectoryInfo getInfoForDirectory(@NotNull VirtualFile dir) {
     DirectoryInfo info = getInfoForFile(dir);
-    return info.isInProject() ? info : null;
+    return info.isInProject(dir) ? info : null;
   }
 
   @NotNull
@@ -170,8 +172,15 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     return getRootIndex().getOrderEntries(info);
   }
 
+  @Override
+  @NotNull
+  public Set<String> getDependentUnloadedModules(@NotNull Module module) {
+    checkAvailability();
+    return getRootIndex().getDependentUnloadedModules(module);
+  }
+
   @TestOnly
-  void assertConsistency(DirectoryInfo info) {
+  public void assertConsistency(DirectoryInfo info) {
     List<OrderEntry> entries = getOrderEntries(info);
     for (int i = 1; i < entries.size(); i++) {
       assert RootIndex.BY_OWNER_MODULE.compare(entries.get(i - 1), entries.get(i)) <= 0;

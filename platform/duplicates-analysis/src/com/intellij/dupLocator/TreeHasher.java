@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 07-Mar-2007
- */
 package com.intellij.dupLocator;
 
 import com.intellij.psi.PsiElement;

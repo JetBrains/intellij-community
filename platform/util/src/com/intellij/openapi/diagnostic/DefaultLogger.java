@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.diagnostic;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import org.apache.log4j.Level;
@@ -23,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DefaultLogger extends Logger {
+  private static boolean ourMirrorToStderr = true;
+
   @SuppressWarnings("UnusedParameters")
   public DefaultLogger(String category) { }
 
@@ -59,12 +63,14 @@ public class DefaultLogger extends Logger {
   public void error(String message, @Nullable Throwable t, @NotNull String... details) {
     t = checkException(t);
     message += attachmentsToString(t);
-    System.err.println("ERROR: " + message);
-    if (t != null) t.printStackTrace(System.err);
-    if (details.length > 0) {
-      System.out.println("details: ");
-      for (String detail : details) {
-        System.out.println(detail);
+    if (shouldDumpExceptionToStderr()) {
+      System.err.println("ERROR: " + message);
+      if (t != null) t.printStackTrace(System.err);
+      if (details.length > 0) {
+        System.err.println("details: ");
+        for (String detail : details) {
+          System.err.println(detail);
+        }
       }
     }
 
@@ -84,4 +90,21 @@ public class DefaultLogger extends Logger {
     }
     return "";
   }
+
+  public static boolean shouldDumpExceptionToStderr() {
+    return ourMirrorToStderr;
+  }
+
+  public static void disableStderrDumping(@NotNull Disposable parentDisposable) {
+    final boolean prev = ourMirrorToStderr;
+    ourMirrorToStderr = false;
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        ourMirrorToStderr = prev;
+      }
+    });
+  }
+
 }

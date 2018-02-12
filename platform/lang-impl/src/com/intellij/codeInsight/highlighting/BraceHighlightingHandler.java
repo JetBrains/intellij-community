@@ -1,36 +1,19 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Sep 27, 2002
- * Time: 3:10:17 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -50,6 +33,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Conditions;
@@ -65,7 +49,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,9 +69,9 @@ public class BraceHighlightingHandler {
    * Holds weak references to the editors that are being processed at non-EDT.
    * <p/>
    * Is intended to be used to avoid submitting unnecessary new processing request from EDT, i.e. it's assumed that the collection
-   * is accessed from the single thread (EDT).
+   * Must be accessed from the EDT only.
    */
-  private static final Set<Editor> PROCESSED_EDITORS = Collections.newSetFromMap(new WeakHashMap<Editor, Boolean>());
+  private static final Set<Editor> PROCESSED_EDITORS = Collections.newSetFromMap(ContainerUtil.createWeakMap());
 
   @NotNull private final Project myProject;
   @NotNull private final Editor myEditor;
@@ -119,33 +103,29 @@ public class BraceHighlightingHandler {
       return;
     }
     final int offset = editor.getCaretModel().getOffset();
-    final Project project = editor.getProject();
-    final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
-    if (!isValidFile(psiFile)) return;
+
+    // any request to the UI component need to be done from EDT
+    final ModalityState modalityState = ModalityState.stateForComponent(editor.getComponent());
+    final DumbAwareRunnable removeEditorFromProcessed = () -> PROCESSED_EDITORS.remove(editor);
+
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
-        final PsiFile injected;
+      if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(() ->
+        {
         try {
-          if (psiFile instanceof PsiBinaryFile || !isValidEditor(editor) || !isValidFile(psiFile)) {
-            injected = null;
+        ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(()->{
+        if (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(()->{
+          if (!isValidEditor(editor)) {
+            removeFromProcessedLater(editor);
+            return;
           }
-          else {
-            injected = getInjectedFileIfAny(editor, project, offset, psiFile, alarm);
-          }
-        }
-        catch (RuntimeException e) {
-          // Reset processing flag in case of unexpected exception.
-          ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
-            @Override
-            public void run() {
-              PROCESSED_EDITORS.remove(editor);
-            }
-          });
-          throw e;
-        }
-        ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
-          @Override
-          public void run() {
+          @SuppressWarnings("ConstantConditions") // the `project` is valid after the `isValidEditor` call
+          @NotNull final Project project = editor.getProject();
+
+          final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
+          PsiFile injected = psiFile instanceof PsiBinaryFile || !isValidFile(psiFile)
+                             ? null
+                             : getInjectedFileIfAny(editor, project, offset, psiFile, alarm);
+          ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
             try {
               if (isValidEditor(editor) && isValidFile(injected)) {
                 Editor newEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injected);
@@ -154,18 +134,32 @@ public class BraceHighlightingHandler {
               }
             }
             finally {
-              PROCESSED_EDITORS.remove(editor);
+              removeEditorFromProcessed.run();
             }
-          }
-        }, ModalityState.stateForComponent(editor.getComponent()));
-      })) {
+          }, modalityState);
+        })) {
+          removeFromProcessedLater(editor);
+          }}
+      );
+      }
+      catch(Exception e) {
+        // Reset processing flag in case of unexpected exception.
+        removeFromProcessedLater(editor);
+        throw e;
+      }
+     }
+          )) {
         // write action is queued in AWT. restart after it's finished
         ApplicationManager.getApplication().invokeLater(() -> {
-          PROCESSED_EDITORS.remove(editor);
+          removeEditorFromProcessed.run();
           lookForInjectedAndMatchBracesInOtherThread(editor, alarm, processor);
-        }, ModalityState.stateForComponent(editor.getComponent()));
+        }, modalityState);
       }
     });
+  }
+
+  private static void removeFromProcessedLater(@NotNull Editor editor) {
+    ApplicationManager.getApplication().invokeLater(() -> PROCESSED_EDITORS.remove(editor));
   }
 
   private static boolean isValidFile(PsiFile file) {
@@ -186,7 +180,7 @@ public class BraceHighlightingHandler {
     Document document = editor.getDocument();
     // when document is committed, try to highlight braces in injected lang - it's fast
     if (PsiDocumentManager.getInstance(project).isCommitted(document)) {
-      final PsiElement injectedElement = InjectedLanguageUtil.findInjectedElementNoCommit(psiFile, offset);
+      final PsiElement injectedElement = InjectedLanguageManager.getInstance(psiFile.getProject()).findInjectedElementAt(psiFile, offset);
       if (injectedElement != null /*&& !(injectedElement instanceof PsiWhiteSpace)*/) {
         final PsiFile injected = injectedElement.getContainingFile();
         if (injected != null) {
@@ -445,11 +439,6 @@ public class BraceHighlightingHandler {
       return;
     }
 
-    EditorColorsScheme scheme = myEditor.getColorsScheme();
-    final TextAttributes attributes =
-      matched ? scheme.getAttributes(CodeInsightColors.MATCHED_BRACE_ATTRIBUTES)
-              : scheme.getAttributes(CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES);
-
     if (rBrace != null && !scopeHighlighting) {
       highlightBrace(rBrace, matched);
     }
@@ -469,10 +458,7 @@ public class BraceHighlightingHandler {
       if (endLine - startLine > 0) {
         final Runnable runnable = () -> {
           if (myProject.isDisposed() || myEditor.isDisposed()) return;
-          Color color = attributes.getBackgroundColor();
-          if (color == null) return;
-          color = ColorUtil.isDark(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()) ? ColorUtil.shift(color, 1.5d) : color.darker();
-          lineMarkFragment(startLine, endLine, color);
+          lineMarkFragment(startLine, endLine, matched);
         };
 
         if (!scopeHighlighting) {
@@ -535,7 +521,7 @@ public class BraceHighlightingHandler {
     myAlarm.addRequest(() -> {
       if (myProject.isDisposed()) return;
       PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
-        if (!myEditor.getComponent().isShowing()) return;
+        if (myEditor.isDisposed() || !myEditor.getComponent().isShowing()) return;
         Rectangle viewRect = myEditor.getScrollingModel().getVisibleArea();
         if (y < viewRect.y) {
           int start = lbraceStart;
@@ -548,6 +534,7 @@ public class BraceHighlightingHandler {
           int line2 = myDocument.getLineNumber(range.getEndOffset());
           line1 = Math.max(line1, line2 - 5);
           range = new TextRange(myDocument.getLineStartOffset(line1), range.getEndOffset());
+          HintManager.getInstance().hideAllHints();
           LightweightHint hint = EditorFragmentComponent.showEditorFragmentHint(myEditor, range, true, true);
           myEditor.putUserData(HINT_IN_EDITOR_KEY, hint);
         }
@@ -567,9 +554,10 @@ public class BraceHighlightingHandler {
       hint.hide();
       myEditor.putUserData(HINT_IN_EDITOR_KEY, null);
     }
+    removeLineMarkers();
   }
 
-  private void lineMarkFragment(int startLine, int endLine, @NotNull Color color) {
+  private void lineMarkFragment(int startLine, int endLine, boolean matched) {
     removeLineMarkers();
 
     if (startLine >= endLine || endLine >= myDocument.getLineCount()) return;
@@ -577,8 +565,11 @@ public class BraceHighlightingHandler {
     int startOffset = myDocument.getLineStartOffset(startLine);
     int endOffset = myDocument.getLineStartOffset(endLine);
 
+    LineMarkerRenderer renderer = createLineMarkerRenderer(matched);
+    if (renderer == null) return;
+
     RangeHighlighter highlighter = myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, 0, null, HighlighterTargetArea.LINES_IN_RANGE);
-    highlighter.setLineMarkerRenderer(new MyLineMarkerRenderer(color));
+    highlighter.setLineMarkerRenderer(renderer);
     myEditor.putUserData(LINE_MARKER_IN_EDITOR_KEY, highlighter);
   }
 
@@ -589,6 +580,20 @@ public class BraceHighlightingHandler {
       marker.dispose();
     }
     myEditor.putUserData(LINE_MARKER_IN_EDITOR_KEY, null);
+  }
+
+  @Nullable
+  public static LineMarkerRenderer createLineMarkerRenderer(boolean matched) {
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    final TextAttributes attributes =
+      matched ? scheme.getAttributes(CodeInsightColors.MATCHED_BRACE_ATTRIBUTES)
+        : scheme.getAttributes(CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES);
+
+    Color color = attributes.getBackgroundColor();
+    if (color == null) return null;
+
+    color = ColorUtil.isDark(scheme.getDefaultBackground()) ? ColorUtil.shift(color, 1.5d) : color.darker();
+    return new MyLineMarkerRenderer(color);
   }
 
   private static class MyLineMarkerRenderer implements LineMarkerRenderer {

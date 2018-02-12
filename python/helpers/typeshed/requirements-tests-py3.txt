@@ -1,5 +1,5 @@
-mypy-lang>=0.4.6
-typed-ast>=0.6.1
-flake8==3.2.1
-flake8-bugbear>=16.12.2
-flake8-pyi>=16.12.2
+git+https://github.com/python/mypy.git@master
+typed-ast>=1.0.4
+flake8==3.3.0
+flake8-bugbear>=17.3.0
+flake8-pyi>=17.1.0

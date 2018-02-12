@@ -39,7 +39,7 @@ public abstract class BaseTerminalModule extends LineCommandAdapter implements C
   }
 
   @Override
-  public void onStart(@NotNull Command command) throws SvnBindException {
+  public void onStart(@NotNull Command command) {
   }
 
   /**

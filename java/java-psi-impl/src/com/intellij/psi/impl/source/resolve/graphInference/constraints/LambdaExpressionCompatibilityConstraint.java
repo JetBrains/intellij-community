@@ -8,15 +8,11 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.Function;
 
 import java.util.List;
 
-/**
- * User: anna
- */
 public class LambdaExpressionCompatibilityConstraint implements ConstraintFormula {
-  private static final Logger LOG = Logger.getInstance("#" + LambdaExpressionCompatibilityConstraint.class.getName());
+  private static final Logger LOG = Logger.getInstance(LambdaExpressionCompatibilityConstraint.class);
   private final PsiLambdaExpression myExpression;
   private PsiType myT;
 
@@ -84,7 +80,7 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
           final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
           return psiClass instanceof InferenceVariable && nestedSubstitutor.getSubstitutionMap().containsValue(type) ? (InferenceVariable)psiClass : null;
         });
-        if (!isProperType) {
+        if (!isProperType || myExpression.hasFormalParameterTypes()) {
           for (PsiExpression returnExpression : returnExpressions) {
             constraints.add(new ExpressionCompatibilityConstraint(returnExpression, returnType));
           }

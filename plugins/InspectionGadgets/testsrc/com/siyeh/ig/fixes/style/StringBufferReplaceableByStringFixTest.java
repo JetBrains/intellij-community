@@ -1,5 +1,8 @@
 package com.siyeh.ig.fixes.style;
 
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.style.StringBufferReplaceableByStringInspection;
@@ -39,7 +42,20 @@ public class StringBufferReplaceableByStringFixTest extends IGQuickFixesTestCase
   public void testComplex2() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
   public void testLinebreaks() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
   public void testSlashSlashInLiteral() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
+  public void testHelperVariable() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
   public void testComment1() { doTest(); }
   public void testComment2() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
   public void testComment3() { doTest(); }
+
+  public void testComplexSignOnNextLine() {
+    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    settings.BINARY_OPERATION_SIGN_ON_NEXT_LINE = true;
+    try {
+      doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix"));
+    }
+    finally {
+      settings.BINARY_OPERATION_SIGN_ON_NEXT_LINE = false;
+    }
+  }
+
 }

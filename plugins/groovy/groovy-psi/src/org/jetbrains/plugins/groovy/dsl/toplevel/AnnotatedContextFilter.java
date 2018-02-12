@@ -56,7 +56,7 @@ public class AnnotatedContextFilter implements ContextFilter {
   private static Map<String, Boolean> getPossibleAnnotations(final PsiFile file) {
     return CachedValuesManager.getCachedValue(file, () -> {
       Map<String, Boolean> result = StringUtil.contains(file.getViewProvider().getContents(), "@")
-                                    ? ConcurrentFactoryMap.createConcurrentMap(anno -> hasNameInFile(file, anno))
+                                    ? ConcurrentFactoryMap.createMap(anno -> hasNameInFile(file, anno))
                                     : Collections.emptyMap();
       return CachedValueProvider.Result.create(result, file);
     });

@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 public class ColorSchemeImporter implements SchemeImporter<EditorColorsScheme> {
 
   private final static String[] FILE_EXTENSIONS =
-    new String[] {EditorColorsManager.COLOR_SCHEME_FILE_EXTENSION.substring(1)};
+    new String[] {EditorColorsManager.COLOR_SCHEME_FILE_EXTENSION.substring(1), "jar"};
 
   @NotNull
   @Override
@@ -56,16 +56,9 @@ public class ColorSchemeImporter implements SchemeImporter<EditorColorsScheme> {
     return scheme;
   }
 
-  private static String getSchemeName(@NotNull Element root) throws SchemeImportException {
+  static String getSchemeName(@NotNull Element root) throws SchemeImportException {
     String name = root.getAttributeValue("name");
     if (name == null) throw new SchemeImportException("Scheme 'name' attribute is missing.");
     return name;
-  }
-
-
-  @Nullable
-  @Override
-  public String getAdditionalImportInfo(@NotNull EditorColorsScheme scheme) {
-    return null;
   }
 }

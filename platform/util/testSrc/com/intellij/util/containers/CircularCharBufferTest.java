@@ -20,7 +20,7 @@ import org.junit.Test;
 
 public class CircularCharBufferTest {
   @Test
-  public void testSingleAdd() throws Exception {
+  public void testSingleAdd() {
     CircularCharBuffer queue = new CircularCharBuffer(0);
     char value = '1';
     queue.add(value);
@@ -30,7 +30,7 @@ public class CircularCharBufferTest {
   }
 
   @Test
-  public void testResize1() throws Exception {
+  public void testResize1() {
     CircularCharBuffer queue = new CircularCharBuffer(4);
     char[] buf = {'1', '2', '3', '4', '5'};
     queue.add(buf);
@@ -42,7 +42,7 @@ public class CircularCharBufferTest {
   }
 
   @Test
-  public void testResize2() throws Exception {
+  public void testResize2() {
     CircularCharBuffer queue = new CircularCharBuffer(4, 16);
     char[] buf = {'1', '2', '3', '4', '5', '6', '7', '8'};
     queue.add(buf);
@@ -67,7 +67,7 @@ public class CircularCharBufferTest {
   }
 
   @Test
-  public void testAddString() throws Exception {
+  public void testAddString() {
     CircularCharBuffer queue = new CircularCharBuffer(2, 16);
     queue.add("");
     Assert.assertEquals(0, queue.size());
@@ -79,7 +79,7 @@ public class CircularCharBufferTest {
   }
 
   @Test
-  public void testOverflow() throws Exception {
+  public void testOverflow() {
     CircularCharBuffer queue = new CircularCharBuffer(1, 4);
     queue.add("1");
     Assert.assertEquals("1", queue.getText());
@@ -102,7 +102,7 @@ public class CircularCharBufferTest {
   }
 
   @Test
-  public void testOverflowComplex() throws Exception {
+  public void testOverflowComplex() {
     CircularCharBuffer queue = new CircularCharBuffer(1, 10);
     String alphabet = "abcdefghijklmnopqrstuvwxyz";
     queue.add(alphabet);

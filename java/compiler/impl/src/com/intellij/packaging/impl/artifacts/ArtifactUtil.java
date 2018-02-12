@@ -73,7 +73,13 @@ public class ArtifactUtil {
   private static <S> PackagingElement<S> copyElement(@NotNull PackagingElement<S> element, @NotNull Project project) {
     //noinspection unchecked
     final PackagingElement<S> copy = (PackagingElement<S>)element.getType().createEmpty(project);
-    copy.loadState(element.getState());
+    S state = element.getState();
+    if (state != null) {
+      copy.loadState(state);
+    }
+    else {
+      copy.noStateLoaded();
+    }
     return copy;
   }
 
@@ -451,7 +457,7 @@ public class ArtifactUtil {
                                        @NotNull PackagingElementResolvingContext context,
                                        @NotNull ParentElementProcessor processor,
                                        int maxLevel) {
-    return processParents(artifact, context, processor, FList.<Pair<Artifact, CompositePackagingElement<?>>>emptyList(), maxLevel,
+    return processParents(artifact, context, processor, FList.emptyList(), maxLevel,
                           new THashSet<>());
   }
 

@@ -16,11 +16,9 @@
 package git4idea.actions;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
-import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeDialog;
 import org.jetbrains.annotations.NotNull;
@@ -40,29 +38,19 @@ public class GitMerge extends GitMergeAction {
   @Nullable
   @Override
   protected DialogState displayDialog(@NotNull Project project, @NotNull List<VirtualFile> gitRoots, @NotNull VirtualFile defaultRoot) {
-    GitVcs vcs = GitVcs.getInstance(project);
-    if (vcs == null) {
-      return null;
-    }
     final GitMergeDialog dialog = new GitMergeDialog(project, gitRoots, defaultRoot);
     try {
       dialog.updateBranches();
     }
     catch (VcsException e) {
-      if (vcs.getExecutableValidator().checkExecutableAndShowMessageIfNeeded(null)) {
-        vcs.showErrors(Collections.singletonList(e), GitBundle.getString("merge.retrieving.branches"));
-      }
+      GitVcs vcs = GitVcs.getInstance(project);
+      vcs.showErrors(Collections.singletonList(e), GitBundle.getString("merge.retrieving.branches"));
       return null;
     }
     if (!dialog.showAndGet()) {
       return null;
     }
     return new DialogState(dialog.getSelectedRoot(), GitBundle.message("merging.title", dialog.getSelectedRoot().getPath()),
-                           new Computable<GitLineHandler>() {
-                             @Override
-                             public GitLineHandler compute() {
-                               return dialog.handler();
-                             }
-                           });
+                           () -> dialog.handler());
   }
 }

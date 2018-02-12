@@ -7,6 +7,6 @@ class SideEffects {
   }
 
   int <caret>f() {
-    return i = 1;
+    return (i = 1) + 2;
   }
 }

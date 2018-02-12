@@ -19,11 +19,6 @@ package org.intellij.plugins.relaxNG.xml.dom.impl;
 import org.intellij.plugins.relaxNG.model.Pattern;
 import org.intellij.plugins.relaxNG.xml.dom.RngGrammar;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 19.08.2007
- */
 public abstract class RngGrammarImpl extends RngDomElementBase implements RngGrammar {
   @Override
   public void accept(Visitor visitor) {

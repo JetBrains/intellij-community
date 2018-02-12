@@ -25,17 +25,16 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author pegov
@@ -105,8 +104,9 @@ public class PopupPositionManager {
     final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (focusOwner == null) return null;
 
-    if (focusOwner instanceof JBList) {
-      return new PositionAdjuster(SwingUtilities.getWindowAncestor(focusOwner));
+    JBPopup popup = PopupUtil.getPopupContainerFor(focusOwner);
+    if (popup != null) {
+      return new PositionAdjuster(popup.getContent());
     }
 
     final Component existing = discoverPopup(LangDataKeys.POSITION_ADJUSTER_POPUP, focusOwner);
@@ -114,8 +114,6 @@ public class PopupPositionManager {
       return new PositionAdjuster2(existing, discoverPopup(LangDataKeys.PARENT_POPUP, focusOwner));
     }
 
-    //final Window window = SwingUtilities.getWindowAncestor(focusOwner);
-    //return window == null ? null : new PositionAdjuster(window);
     return null;
   }
 
@@ -216,7 +214,7 @@ public class PopupPositionManager {
       }
       else {
         // ok, popup does not fit, will try to resize it
-        final java.util.List<Rectangle> boxes = new ArrayList<>();
+        final List<Rectangle> boxes = new ArrayList<>();
         // right
         boxes.add(crop(myScreenRect, new Rectangle(myRelativeOnScreen.x + myRelativeTo.getWidth() + myGap, myRelativeOnScreen.y,
                                                    myScreenRect.width, myScreenRect.height)));
@@ -234,8 +232,8 @@ public class PopupPositionManager {
                                                    myScreenRect.width, myScreenRect.height)));
 
         Collections.sort(boxes, (o1, o2) -> {
-          final int i = new Integer(o1.width).compareTo(o2.width);
-          return i == 0 ? new Integer(o1.height).compareTo(o2.height) : i;
+          final int i = Integer.compare(o1.width, o2.width);
+          return i == 0 ? Integer.compare(o1.height, o2.height) : i;
         });
 
         final Rectangle suitableBox = boxes.get(boxes.size() - 1);

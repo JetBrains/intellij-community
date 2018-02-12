@@ -36,11 +36,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 01.08.2007
-*/
 public class RngCompactLanguage extends Language {
   public static final String ID = "RELAX-NG";
 

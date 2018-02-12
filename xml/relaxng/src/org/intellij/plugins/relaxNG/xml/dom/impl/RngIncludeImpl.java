@@ -24,11 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 19.08.2007
- */
 public abstract class RngIncludeImpl extends RngDomElementBase implements RngInclude {
   @Override
   public void accept(Visitor visitor) {
@@ -45,6 +40,6 @@ public abstract class RngIncludeImpl extends RngDomElementBase implements RngInc
   public RngDefine[] getOverrides() {
     // TODO: include stuff inside DIVs - fix when this is actually used
     final List<RngDefine> defines = DomUtil.getChildrenOfType(this, RngDefine.class);
-    return defines.toArray(new RngDefine[defines.size()]);
+    return defines.toArray(new RngDefine[0]);
   }
 }

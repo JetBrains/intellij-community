@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,10 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ImportUtils;
 import com.siyeh.ig.testFrameworks.AssertHint;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -85,7 +83,8 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
         return;
       }
 
-      AssertHint hint = AssertHint.create(expression, methodName -> AssertHint.JUnitCommonAssertNames.COMMON_ASSERT_METHODS.get(methodName), false);
+      AssertHint hint = AssertHint.create(expression, methodName ->
+        AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT.get(methodName), false);
       if (hint == null) {
         return;
       }
@@ -121,7 +120,7 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
 
     private boolean absentInJUnit5(PsiMethod psiMethod, String methodName) {
       if ("fail".equals(methodName)) {
-        return psiMethod.getParameterList().getParametersCount() == 0;
+        return psiMethod.getParameterList().isEmpty();
       }
       if ("assertNotEquals".equals(methodName)) {
         PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
@@ -156,13 +155,16 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
-      final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiMethodCallExpression methodCallExpression =
+        PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
       if (methodCallExpression == null) {
         return;
       }
 
-      AssertHint assertHint = AssertHint.create(methodCallExpression, methodName -> AssertHint.JUnitCommonAssertNames.COMMON_ASSERT_METHODS.get(methodName), false);
+      AssertHint assertHint =
+        AssertHint.create(methodCallExpression, methodName -> AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT
+          .get(methodName), false);
       if (assertHint == null) {
         return;
       }
@@ -188,11 +190,8 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
       }
 
       PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-      final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier != null || !ImportUtils.addStaticImport(qualifiedName, methodName, methodExpression)) {
-        methodExpression.setQualifierExpression(JavaPsiFacade.getElementFactory(project).createReferenceExpression(newAssertClass));
-        JavaCodeStyleManager.getInstance(project).shortenClassReferences(methodExpression);
-      }
+      methodExpression.setQualifierExpression(JavaPsiFacade.getElementFactory(project).createReferenceExpression(newAssertClass));
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(methodExpression);
     }
 
     @Nls

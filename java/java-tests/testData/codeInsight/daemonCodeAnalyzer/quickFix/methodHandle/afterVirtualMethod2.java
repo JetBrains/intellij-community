@@ -1,3 +1,6 @@
+// void method()
+// String method(String)
+// String method(String, String[])
 import java.lang.invoke.*;
 
 class Main {
@@ -9,6 +12,6 @@ class Main {
 
 class Test {
   public void method() {}
-  public String method(String a) {return a;}
   public String method(String a, String... b) {return a;}
+  public String method(String a) {return a;}
 }

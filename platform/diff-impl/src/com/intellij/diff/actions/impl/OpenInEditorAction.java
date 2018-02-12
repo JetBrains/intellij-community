@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.actions.EditSourceAction;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -44,7 +43,7 @@ public class OpenInEditorAction extends EditSourceAction implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    if (!ActionPlaces.isToolbarPlace(e.getPlace())) {
+    if (!e.isFromActionToolbar()) {
       e.getPresentation().setEnabledAndVisible(true);
       return;
     }

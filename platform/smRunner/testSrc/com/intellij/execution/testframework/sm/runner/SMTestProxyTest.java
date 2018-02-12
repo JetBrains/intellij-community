@@ -19,13 +19,9 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
-import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.easymock.EasyMock;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static com.intellij.execution.testframework.sm.runner.states.TestStateInfo.Magnitude;
 
@@ -86,7 +82,7 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertFalse(mySuite.isLeaf());
   }
 
-  public void testAppendedChildToTestShouldMakeItSuite() throws Exception {
+  public void testAppendedChildToTestShouldMakeItSuite() {
     mySuite = createTestProxy("unroll spock test");
     assertFalse(mySuite.isSuite());
     assertFalse(mySuite.isDefect());

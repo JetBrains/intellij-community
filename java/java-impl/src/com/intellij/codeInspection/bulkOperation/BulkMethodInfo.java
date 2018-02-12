@@ -57,17 +57,31 @@ public class BulkMethodInfo {
     if (!(qualifierType instanceof PsiClassType)) return false;
     PsiType type = iterable.getType();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(iterable.getProject());
+    JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(iterable.getProject());
     String text = iterable.getText();
     if (type instanceof PsiArrayType) {
       PsiType componentType = ((PsiArrayType)type).getComponentType();
       if (!useArraysAsList || componentType instanceof PsiPrimitiveType) return false;
-      PsiClass listClass =
-        JavaPsiFacade.getInstance(iterable.getProject()).findClass(CommonClassNames.JAVA_UTIL_LIST, iterable.getResolveScope());
+      PsiClass listClass = psiFacade.findClass(CommonClassNames.JAVA_UTIL_LIST, iterable.getResolveScope());
       if (listClass == null) return false;
-      type = factory.createType(listClass, componentType);
+      if (!listClass.hasTypeParameters()){
+        // Raw List class - Java 1.4?
+        type = factory.createType(listClass);
+      } else if (listClass.getTypeParameters().length == 1) {
+        type = factory.createType(listClass, componentType);
+      } else {
+        return false;
+      }
       text = CommonClassNames.JAVA_UTIL_ARRAYS + ".asList(" + text + ")";
     }
-    if (!InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ITERABLE)) return false;
+    PsiClass aClass = PsiUtil.resolveClassInType(type);
+    if (aClass == null) return false;
+    PsiClass commonParent = psiFacade.findClass(CommonClassNames.JAVA_LANG_ITERABLE, aClass.getResolveScope());
+    if (commonParent == null) {
+      // No Iterable class in Java 1.4
+      commonParent = psiFacade.findClass(CommonClassNames.JAVA_UTIL_COLLECTION, aClass.getResolveScope());
+    }
+    if(!InheritanceUtil.isInheritorOrSelf(aClass, commonParent, true)) return false;
     PsiExpression expression = factory.createExpressionFromText(qualifier.getText() + "." + myBulkName + "(" + text + ")", iterable);
     if (!(expression instanceof PsiMethodCallExpression)) return false;
     PsiMethodCallExpression call = (PsiMethodCallExpression)expression;

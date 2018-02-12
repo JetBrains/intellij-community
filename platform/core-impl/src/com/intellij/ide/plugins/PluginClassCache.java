@@ -17,8 +17,11 @@ package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author peter
@@ -27,13 +30,13 @@ class PluginClassCache {
   private static final Object ourLock = new Object();
   private final TObjectIntHashMap<PluginId> myClassCounts = new TObjectIntHashMap<>();
 
-  public void addPluginClass(PluginId pluginId) {
+  void addPluginClass(@NotNull PluginId pluginId) {
     synchronized(ourLock) {
       myClassCounts.put(pluginId, myClassCounts.get(pluginId) + 1);
     }
   }
 
-  public void dumpPluginClassStatistics() {
+  void dumpPluginClassStatistics() {
     if (!Boolean.valueOf(System.getProperty("idea.is.internal")).booleanValue()) return;
 
     List<PluginId> counters;

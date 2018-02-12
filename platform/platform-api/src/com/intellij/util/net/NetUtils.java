@@ -184,9 +184,7 @@ public class NetUtils {
                                       int expectedContentLength) throws IOException, ProcessCanceledException {
     if (indicator != null) {
       indicator.checkCanceled();
-      if (expectedContentLength < 0) {
-        indicator.setIndeterminate(true);
-      }
+      indicator.setIndeterminate(expectedContentLength <= 0);
     }
     CountingGZIPInputStream gzipStream = ObjectUtils.tryCast(inputStream, CountingGZIPInputStream.class);
     final byte[] buffer = new byte[8 * 1024];
@@ -203,6 +201,14 @@ public class NetUtils {
         if (expectedContentLength > 0) {
           indicator.setFraction((double)bytesRead / expectedContentLength);
         }
+      }
+    }
+    if (gzipStream != null) {
+      // Amount of read bytes may have changed when 'inputStream.read(buffer)' returns -1
+      // E.g. reading GZIP trailer doesn't produce inflated stream data.
+      bytesRead = gzipStream.getCompressedBytesRead();
+      if (indicator != null && expectedContentLength > 0) {
+        indicator.setFraction((double)bytesRead / expectedContentLength);
       }
     }
 

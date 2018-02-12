@@ -132,7 +132,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
 
   @NotNull
   public List<Library> getSelectedLibraries() {
-    return myResult == null? Collections.<Library>emptyList() : myResult;
+    return myResult == null ? Collections.emptyList() : myResult;
   }
 
   protected void queueUpdateAndSelect(@NotNull final Library library) {
@@ -322,7 +322,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
 
   private static class LibraryTableDescriptor extends LibrariesTreeNodeBase<LibraryTable> {
     private final int myWeight;
-    private boolean myAutoExpand;
+    private final boolean myAutoExpand;
 
     protected LibraryTableDescriptor(final Project project,
                                      final NodeDescriptor parentDescriptor,

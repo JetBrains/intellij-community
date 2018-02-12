@@ -32,9 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.Collections;
 import java.util.Set;
 
-/**
- * Created by Max Medvedev on 25/04/14
- */
 public class CompleteReferencesWithSameQualifier {
   private final GrReferenceExpression myRefExpr;
   private final PrefixMatcher myMatcher;

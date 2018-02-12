@@ -15,6 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.dsl.toplevel.scopes
 
+import com.intellij.patterns.ElementPattern
+import com.intellij.patterns.PsiClassPattern
+import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.psi.SyntheticElement
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.dsl.toplevel.*
@@ -24,12 +27,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 
 import static com.intellij.patterns.PlatformPatterns.*
-import static com.intellij.patterns.PsiJavaPatterns.psiClass
 import static com.intellij.patterns.StandardPatterns.*
 import static org.jetbrains.plugins.groovy.lang.psi.patterns.GrAnnotationPattern.annotation
 import static org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns.groovyScript
 import static org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns.methodCall
-
 /**
  * @author ilyas
  */
@@ -51,8 +52,8 @@ class ClassScope extends Scope {
     if (namePattern) {
       def match = string().matches(namePattern)
       result << new PlaceContextFilter(psiElement().inside(or(
-        psiClass().withQualifiedName(match),
-        psiClass().withName(match))
+        PsiJavaPatterns.psiClass().withQualifiedName(match),
+        PsiJavaPatterns.psiClass().withName(match))
       ))
     }
     return result
@@ -137,12 +138,19 @@ class ScriptScope extends Scope {
 
     // Process unqualified references only
     if (!args.ctype) {
-      result << ClassContextFilter.fromClassPattern(psiClass().and(instanceOf(SyntheticElement)))
+      ElementPattern synt = instanceOf(SyntheticElement)
+
+      PsiClassPattern psiClass = PsiJavaPatterns.psiClass()
+      ElementPattern pattern = doAnd(psiClass, synt)
+      result << ClassContextFilter.fromClassPattern(pattern)
     }
 
     return result
   }
 
+  private PsiClassPattern doAnd(PsiClassPattern psiClass, ElementPattern synt) {
+    psiClass.and(synt)
+  }
 }
 
 @CompileStatic

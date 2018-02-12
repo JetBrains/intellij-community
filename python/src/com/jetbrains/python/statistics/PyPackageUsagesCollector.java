@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.statistics;
 
-import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
+import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
 import com.intellij.internal.statistic.CollectUsagesException;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
@@ -24,7 +24,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.jetbrains.python.packaging.PyPIPackageUtil;
+import com.jetbrains.python.packaging.PyPIPackageCache;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -38,7 +38,7 @@ import java.util.Set;
 /**
  * @author yole
  */
-public class PyPackageUsagesCollector extends AbstractApplicationUsagesCollector {
+public class PyPackageUsagesCollector extends AbstractProjectsUsagesCollector {
   private static final String GROUP_ID = "py-packages";
 
   @NotNull
@@ -51,7 +51,7 @@ public class PyPackageUsagesCollector extends AbstractApplicationUsagesCollector
         ApplicationManager.getApplication().runReadAction(() -> {
           List<PyRequirement> requirements = PyPackageManager.getInstance(pythonSdk).getRequirements(m);
           if (requirements != null) {
-            Collection<String> packages = new HashSet<>(PyPIPackageUtil.INSTANCE.getPackageNames());
+            Collection<String> packages = new HashSet<>(PyPIPackageCache.getInstance().getPackageNames());
             for (PyRequirement requirement : requirements) {
               String name = requirement.getName();
               if (packages.contains(name)) {

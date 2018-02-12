@@ -112,7 +112,7 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
     ArrayList<UsageInfo> toInline = new ArrayList<>();
     collectRefs(myLocal, controlFlow, writes, mySettings.getWriteInstructionNumber(), toInline);
 
-    return toInline.toArray(new UsageInfo[toInline.size()]);
+    return toInline.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   /**
@@ -229,6 +229,7 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
   }
 
 
+  @NotNull
   @Override
   protected String getCommandName() {
     return RefactoringBundle.message("inline.command", myLocal.getName());

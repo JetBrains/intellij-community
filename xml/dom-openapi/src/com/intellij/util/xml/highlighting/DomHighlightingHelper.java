@@ -59,11 +59,11 @@ public abstract class DomHighlightingHelper {
         result.addAll(list);
       }
     }
-    return result == null ? Collections.<DomElementProblemDescriptor>emptyList() : result;
+    return result == null ? Collections.emptyList() : result;
   }
 
   private <T extends Annotation> List<DomElementProblemDescriptor> checkAnno(final DomElement element, final DomCustomAnnotationChecker<T> checker, DomElementAnnotationHolder holder) {
     final T annotation = element.getAnnotation(checker.getAnnotationClass());
-    return annotation != null ? checker.checkForProblems(annotation, element, holder, this) : Collections.<DomElementProblemDescriptor>emptyList();
+    return annotation != null ? checker.checkForProblems(annotation, element, holder, this) : Collections.emptyList();
   }
 }

@@ -15,9 +15,16 @@
  */
 package org.jetbrains.java.generate.template;
 
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.generate.GenerationUtil;
+import org.jetbrains.java.generate.exception.GenerateCodeException;
 
 import java.io.Serializable;
+import java.util.Collections;
 
 /**
  * A template contains the method body and the filename of the resource where
@@ -193,11 +200,16 @@ public class TemplateResource implements Serializable {
   /**
    * Gets the method that this template is for (toString)
    */
-  public String getTargetMethodName() {
-    String s = getMethodSignature();
-    s = before(s, "(");
-    int i = s.lastIndexOf(" ");
-    return s.substring(i).trim();
+  public String getTargetMethodName(PsiClass clazz) {
+    try {
+      String text = GenerationUtil.velocityGenerateCode(clazz, Collections.emptyList(), Collections.emptyMap(), template, 0, true);
+      return JavaPsiFacade.getElementFactory(clazz.getProject())
+          .createMethodFromText(text, clazz, PsiUtil.getLanguageLevel(clazz))
+          .getName();
+    }
+    catch (GenerateCodeException | IncorrectOperationException ignore) {
+      return null;
+    }
   }
 
   /**

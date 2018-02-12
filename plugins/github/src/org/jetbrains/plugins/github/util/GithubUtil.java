@@ -35,11 +35,11 @@ import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.containers.Convertor;
 import git4idea.DialogManager;
 import git4idea.GitUtil;
+import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitSimpleHandler;
-import git4idea.config.GitVcsApplicationSettings;
-import git4idea.config.GitVersion;
-import git4idea.i18n.GitBundle;
+import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitLineHandler;
+import git4idea.config.GitExecutableManager;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -375,23 +375,7 @@ public class GithubUtil {
   }
 
   public static boolean testGitExecutable(final Project project) {
-    final GitVcsApplicationSettings settings = GitVcsApplicationSettings.getInstance();
-    final String executable = settings.getPathToGit();
-    final GitVersion version;
-    try {
-      version = GitVersion.identifyVersion(executable);
-    }
-    catch (Exception e) {
-      GithubNotifications.showErrorDialog(project, GitBundle.getString("find.git.error.title"), e);
-      return false;
-    }
-
-    if (!version.isSupported()) {
-      GithubNotifications.showWarningDialog(project, GitBundle.message("find.git.unsupported.message", version.toString(), GitVersion.MIN),
-                                            GitBundle.getString("find.git.success.title"));
-      return false;
-    }
-    return true;
+    return GitExecutableManager.getInstance().testGitExecutableVersionValid(project);
   }
 
   public static boolean isRepositoryOnGitHub(@NotNull GitRepository repository) {
@@ -429,14 +413,15 @@ public class GithubUtil {
                                         @NotNull GitRepository repository,
                                         @NotNull String remote,
                                         @NotNull String url) {
-    final GitSimpleHandler handler = new GitSimpleHandler(project, repository.getRoot(), GitCommand.REMOTE);
+    final GitLineHandler handler = new GitLineHandler(project, repository.getRoot(), GitCommand.REMOTE);
     handler.setSilent(true);
 
     try {
       handler.addParameters("add", remote, url);
-      handler.run();
-      if (handler.getExitCode() != 0) {
-        GithubNotifications.showError(project, "Can't add remote", "Failed to add GitHub remote: '" + url + "'. " + handler.getStderr());
+      GitCommandResult result = Git.getInstance().runCommand(handler);
+      result.getOutputOrThrow();
+      if (result.getExitCode() != 0) {
+        GithubNotifications.showError(project, "Can't add remote", "Failed to add GitHub remote: '" + url + "'. " + result.getErrorOutputAsJoinedString());
         return false;
       }
       // catch newly added remote

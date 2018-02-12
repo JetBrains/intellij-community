@@ -188,12 +188,10 @@ public interface Filter {
     
     private final TextAttributes myFollowedHyperlinkAttributes;
 
-    @SuppressWarnings("deprecation")
     public ResultItem(final int highlightStartOffset, final int highlightEndOffset, @Nullable final HyperlinkInfo hyperlinkInfo) {
       this(highlightStartOffset, highlightEndOffset, hyperlinkInfo, null, null);
     }
 
-    @SuppressWarnings("deprecation")
     public ResultItem(final int highlightStartOffset,
                       final int highlightEndOffset,
                       @Nullable final HyperlinkInfo hyperlinkInfo,

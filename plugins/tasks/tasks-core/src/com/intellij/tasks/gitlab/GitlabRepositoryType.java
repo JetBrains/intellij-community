@@ -5,7 +5,7 @@ import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.tasks.impl.BaseRepositoryType;
 import com.intellij.util.Consumer;
-import icons.TasksIcons;
+import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -23,7 +23,7 @@ public class GitlabRepositoryType extends BaseRepositoryType<GitlabRepository>{
   @NotNull
   @Override
   public Icon getIcon() {
-    return TasksIcons.Gitlab;
+    return TasksCoreIcons.Gitlab;
   }
 
   @NotNull

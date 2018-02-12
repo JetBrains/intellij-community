@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,6 @@ package com.intellij.debugger.impl;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Jun 4, 2003
- * Time: 12:45:56 PM
- * To change this template use Options | File Templates.
- */
 public abstract class DebuggerStateManager {
   private final EventDispatcher<DebuggerContextListener> myEventDispatcher = EventDispatcher.create(DebuggerContextListener.class);
 
@@ -45,5 +38,9 @@ public abstract class DebuggerStateManager {
 
   protected void fireStateChanged(@NotNull DebuggerContextImpl newContext, DebuggerSession.Event event) {
     myEventDispatcher.getMulticaster().changeEvent(newContext, event);
+  }
+
+  void dispose() {
+    myEventDispatcher.getListeners().clear();
   }
 }

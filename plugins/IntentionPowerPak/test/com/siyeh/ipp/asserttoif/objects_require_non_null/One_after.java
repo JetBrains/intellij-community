@@ -6,7 +6,7 @@ import java.util.Objects;
 
 class One {
   private String s;
-  One(String s) {
+  One(@NotNull String s) {
     this.s = Objects.requireNonNull(s);
   }
 }

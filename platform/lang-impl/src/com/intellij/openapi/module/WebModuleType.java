@@ -21,7 +21,7 @@ public class WebModuleType extends WebModuleTypeBase<ModuleBuilder> {
 
   @NotNull
   public <T> ModuleBuilder createModuleBuilder(@NotNull WebProjectTemplate<T> webProjectTemplate) {
-    return new WebModuleBuilder(webProjectTemplate);
+    return new WebModuleBuilder<>(webProjectTemplate);
   }
 
 }

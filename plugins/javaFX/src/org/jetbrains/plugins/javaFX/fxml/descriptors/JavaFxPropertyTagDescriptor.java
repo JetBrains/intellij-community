@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
@@ -25,10 +26,6 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 1/10/13
- */
 public class JavaFxPropertyTagDescriptor implements XmlElementDescriptor {
   private final PsiClass myPsiClass;
   private final String myName;

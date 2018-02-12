@@ -31,20 +31,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.PersistentOrderRootType;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.ui.*;
 import com.intellij.openapi.roots.libraries.ui.impl.RootDetectionUtil;
+import com.intellij.openapi.roots.ui.configuration.ModificationOfImportedModelWarningComponent;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
@@ -53,10 +52,9 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,7 +68,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 11, 2004
  */
 public class LibraryRootsComponent implements Disposable, LibraryEditorComponent {
   static final UrlComparator ourUrlComparator = new UrlComparator();
@@ -79,9 +76,11 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private JPanel myTreePanel;
   private MultiLineLabel myPropertiesLabel;
   private JPanel myPropertiesPanel;
+  private JPanel myBottomPanel;
   private LibraryPropertiesEditor myPropertiesEditor;
   private Tree myTree;
   private LibraryTableTreeBuilder myTreeBuilder;
+  private final ModificationOfImportedModelWarningComponent myModificationOfImportedModelWarningComponent;
   private VirtualFile myLastChosen;
 
   private final Collection<Runnable> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -112,6 +111,8 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     if (myDescriptor == null) {
       myDescriptor = new DefaultLibraryRootsComponentDescriptor();
     }
+    myModificationOfImportedModelWarningComponent = new ModificationOfImportedModelWarningComponent();
+    myBottomPanel.add(BorderLayout.CENTER, myModificationOfImportedModelWarningComponent.getLabel());
     init(new LibraryTreeStructure(this, myDescriptor));
     updatePropertiesLabel();
     onRootsChanged();
@@ -136,7 +137,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     StringBuilder text = new StringBuilder();
     final LibraryType<?> type = getLibraryEditor().getType();
     final Set<LibraryKind> excluded =
-      type != null ? Collections.<LibraryKind>singleton(type.getKind()) : Collections.<LibraryKind>emptySet();
+      type != null ? Collections.singleton(type.getKind()) : Collections.emptySet();
     for (String description : LibraryPresentationManager.getInstance().getDescriptions(getLibraryEditor().getFiles(OrderRootType.CLASSES),
                                                                                        excluded)) {
       if (text.length() > 0) {
@@ -319,6 +320,10 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     return ArrayUtil.toObjectArray(elements);
   }
 
+  public void onLibraryRenamed() {
+    updateModificationOfImportedModelWarning();
+  }
+
   @Nullable
   private static Object getPathElement(final TreePath selectionPath) {
     if (selectionPath == null) {
@@ -490,6 +495,19 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     for (Runnable listener : myListeners) {
       listener.run();
     }
+    updateModificationOfImportedModelWarning();
+  }
+
+  private void updateModificationOfImportedModelWarning() {
+    LibraryEditor libraryEditor = getLibraryEditor();
+    ProjectModelExternalSource externalSource = libraryEditor.getExternalSource();
+    if (externalSource != null && hasChanges()) {
+      String name = libraryEditor instanceof ExistingLibraryEditor ? ((ExistingLibraryEditor)libraryEditor).getLibrary().getName() : libraryEditor.getName();
+      myModificationOfImportedModelWarningComponent.showWarning(name != null ? "Library '" + name + "'" : "Library", externalSource);
+    }
+    else {
+      myModificationOfImportedModelWarningComponent.hideWarning();
+    }
   }
 
   public void addListener(Runnable listener) {
@@ -511,7 +529,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       VirtualFile[] files = getLibraryEditor().getFiles(type);
       for (VirtualFile file : files) {
         if (!VfsUtilCore.isUnder(file, excludedRoots)) {
-          roots.add(PathUtil.getLocalFile(file));
+          roots.add(VfsUtil.getLocalFile(file));
         }
       }
     }
@@ -529,7 +547,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
       descriptor.setTitle("Exclude from Library");
       descriptor.setDescription("Select directories which should be excluded from the library content. Content of excluded directories won't be processed by IDE.");
       Set<VirtualFile> roots = getNotExcludedRoots();
-      descriptor.setRoots(roots.toArray(new VirtualFile[roots.size()]));
+      descriptor.setRoots(roots.toArray(VirtualFile.EMPTY_ARRAY));
       if (roots.size() < 2) {
         descriptor.withTreeRootVisible(true);
       }

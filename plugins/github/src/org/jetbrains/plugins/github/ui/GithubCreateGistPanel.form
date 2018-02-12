@@ -50,12 +50,12 @@
           </component>
         </children>
       </scrollpane>
-      <component id="3fe2f" class="javax.swing.JCheckBox" binding="myPrivateCheckBox">
+      <component id="3fe2f" class="javax.swing.JCheckBox" binding="mySecretCheckBox">
         <constraints>
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Private"/>
+          <text value="Secret"/>
         </properties>
       </component>
       <component id="5586a" class="javax.swing.JCheckBox" binding="myAnonymousCheckBox">

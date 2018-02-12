@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.find.FindBundle;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
@@ -30,9 +31,10 @@ import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -119,6 +121,19 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         elementsToSearch.add(parameters[idx]);
       }
     }
+
+    final PsiClass aClass = ReadAction.compute(method::getContainingClass);
+    if (aClass != null) {
+      FunctionalExpressionSearch.search(aClass).forEach(element -> {
+        if (element instanceof PsiLambdaExpression) {
+          PsiParameter[] parameters = ((PsiLambdaExpression)element).getParameterList().getParameters();
+          if (idx < parameters.length) {
+            elementsToSearch.add(parameters[idx]);
+          }
+        } 
+      });
+    }
+    
     return PsiUtilCore.toPsiElementArray(elementsToSearch);
   }
 
@@ -132,11 +147,14 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       final PsiElement scope = parameter.getDeclarationScope();
       if (scope instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)scope;
-        if (PsiUtil.canBeOverriden(method)) {
+        if (PsiUtil.canBeOverridden(method)) {
           final PsiClass aClass = method.getContainingClass();
           LOG.assertTrue(aClass != null); //Otherwise can not be overriden
 
           boolean hasOverridden = OverridingMethodsSearch.search(method).findFirst() != null;
+          if (!hasOverridden) {
+            hasOverridden = FunctionalExpressionSearch.search(aClass).findFirst() != null;
+          }
           if (hasOverridden && askWhetherShouldSearchForParameterInOverridingMethods(element, parameter)) {
             return getParameterElementsToSearch(parameter, method);
           }
@@ -159,13 +177,13 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         final String propertyName = JavaCodeStyleManager.getInstance(getProject()).variableNameToPropertyName(fieldName, VariableKind.FIELD);
         Set<PsiMethod> accessors = new THashSet<>();
         boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
-        PsiMethod getter = PropertyUtil.findPropertyGetterWithType(propertyName, isStatic, field.getType(),
-                                     ContainerUtil.iterate(containingClass.getMethods()));
+        PsiMethod getter = PropertyUtilBase.findPropertyGetterWithType(propertyName, isStatic, field.getType(),
+                                                                       ContainerUtil.iterate(containingClass.getMethods()));
         if (getter != null) accessors.add(getter);
-        PsiMethod setter = PropertyUtil.findPropertySetterWithType(propertyName, isStatic, field.getType(),
-                                     ContainerUtil.iterate(containingClass.getMethods()));
+        PsiMethod setter = PropertyUtilBase.findPropertySetterWithType(propertyName, isStatic, field.getType(),
+                                                                       ContainerUtil.iterate(containingClass.getMethods()));
         if (setter != null) accessors.add(setter);
-        accessors.addAll(PropertyUtil.getAccessors(containingClass, fieldName));
+        accessors.addAll(PropertyUtilBase.getAccessors(containingClass, fieldName));
         if (!accessors.isEmpty()) {
           boolean containsPhysical = ContainerUtil.find(accessors, psiMethod -> psiMethod.isPhysical()) != null;
           final boolean doSearch = !containsPhysical || askShouldSearchAccessors(fieldName);
@@ -250,7 +268,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       }
       for (PsiMethod superMethod : superMethods) {
         if (resolveScope != null) {
-          superMethod = PsiSuperMethodUtil.correctMethodByScope(superMethod, resolveScope);
+          superMethod = PsiSuperMethodUtil.correctMethodByScope(superMethod, resolveScope).orElse(superMethod);
         }
         result.addAll(MethodReferencesSearch.search(superMethod, searchScope, true).findAll());
       }

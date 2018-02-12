@@ -33,7 +33,7 @@ public class YAMLFoldingBuilder extends FoldingBuilderEx implements DumbAware {
   public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
     List<FoldingDescriptor> descriptors = new LinkedList<>();
     collectDescriptors(root, descriptors);
-    return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
+    return descriptors.toArray(FoldingDescriptor.EMPTY);
   }
 
   private static void collectDescriptors(@NotNull final PsiElement element, @NotNull final List<FoldingDescriptor> descriptors) {

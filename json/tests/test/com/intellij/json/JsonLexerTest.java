@@ -17,7 +17,7 @@ public class JsonLexerTest extends LexerTestCase {
     return null;
   }
 
-  public void testEscapeSlash() throws Exception {
+  public void testEscapeSlash() {
     // WEB-2803
     doTest("[\"\\/\",-1,\"\\n\", 1]",
            "[ ('[')\n" +

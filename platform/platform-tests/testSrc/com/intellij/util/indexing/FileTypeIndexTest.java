@@ -26,11 +26,10 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 7/24/12
  */
 public class FileTypeIndexTest extends LightPlatformCodeInsightFixtureTestCase {
 
-  public void testAddFileType() throws Exception {
+  public void testAddFileType() {
     addAndRemoveFileType();
   }
 

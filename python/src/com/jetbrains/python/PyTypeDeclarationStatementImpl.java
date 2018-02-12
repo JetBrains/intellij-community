@@ -44,6 +44,12 @@ public class PyTypeDeclarationStatementImpl extends PyElementImpl implements PyT
     return findChildByClass(PyAnnotation.class);
   }
 
+  @Nullable
+  @Override
+  public String getAnnotationValue() {
+    return getAnnotationContentFromPsi(this);
+  }
+
   @Override
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyTypeDeclarationStatement(this);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -99,7 +100,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
       }
       final PsiExpression expression = (PsiExpression)element;
       final String expressionText = "java.util.Objects.equals(" + myName1 + "," + myName2 + ")";
-      PsiReplacementUtil.replaceExpressionAndShorten(expression, myEquals ? expressionText : "!" + expressionText);
+      PsiReplacementUtil.replaceExpressionAndShorten(expression, myEquals ? expressionText : "!" + expressionText, new CommentTracker());
     }
   }
 
@@ -123,6 +124,9 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
       }
       final PsiExpression qualifierExpression = getQualifierExpression(expression);
       if (qualifierExpression instanceof PsiThisExpression || qualifierExpression instanceof PsiSuperExpression) {
+        return;
+      }
+      if (isNotNullExpressionOrConstant(qualifierExpression)) {
         return;
       }
       final PsiElement parentExpression =
@@ -273,6 +277,33 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     }
   }
 
+  private static boolean isNotNullExpressionOrConstant(PsiExpression expression) {
+    int preventEndlessLoop = 5;
+    expression = ParenthesesUtils.stripParentheses(expression);
+    while (expression instanceof PsiReferenceExpression) {
+      if (--preventEndlessLoop == 0) return false;
+      expression = findFinalVariableDefinition((PsiReferenceExpression)expression);
+    }
+    if (expression instanceof PsiNewExpression ||
+        expression instanceof PsiArrayInitializerExpression ||
+        expression instanceof PsiClassObjectAccessExpression) {
+      return true;
+    }
+    return PsiUtil.isConstantExpression(expression);
+  }
+
+  @Nullable
+  private static PsiExpression findFinalVariableDefinition(@NotNull PsiReferenceExpression expression) {
+    final PsiElement resolved = expression.resolve();
+    if (resolved instanceof PsiVariable) {
+      final PsiVariable variable = (PsiVariable)resolved;
+      if (variable.hasModifierProperty(PsiModifier.FINAL)) {
+        return ParenthesesUtils.stripParentheses(variable.getInitializer());
+      }
+    }
+    return null;
+  }
+
   private static PsiExpression getArgumentExpression(PsiMethodCallExpression callExpression) {
     final PsiExpression[] expressions = callExpression.getArgumentList().getExpressions();
     return expressions.length == 1 ? ParenthesesUtils.stripParentheses(expressions[0]) : null;
@@ -361,45 +392,45 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
 
   private static class NoSideEffectExpressionEquivalenceChecker extends EquivalenceChecker {
     @Override
-    protected Decision newExpressionsAreEquivalentDecision(@NotNull PsiNewExpression newExpression1,
-                                                           @NotNull PsiNewExpression newExpression2) {
-      return EXACTLY_UN_MATCHES;
+    protected Match newExpressionsMatch(@NotNull PsiNewExpression newExpression1,
+                                        @NotNull PsiNewExpression newExpression2) {
+      return EXACT_MISMATCH;
     }
 
     @Override
-    protected Decision methodCallExpressionsAreEquivalentDecision(@NotNull PsiMethodCallExpression methodCallExpression1,
-                                                                  @NotNull PsiMethodCallExpression methodCallExpression2) {
-      return EXACTLY_UN_MATCHES;
+    protected Match methodCallExpressionsMatch(@NotNull PsiMethodCallExpression methodCallExpression1,
+                                               @NotNull PsiMethodCallExpression methodCallExpression2) {
+      return EXACT_MISMATCH;
     }
 
     @Override
-    protected Decision assignmentExpressionsAreEquivalentDecision(@NotNull PsiAssignmentExpression assignmentExpression1,
-                                                                  @NotNull PsiAssignmentExpression assignmentExpression2) {
-      return EXACTLY_UN_MATCHES;
+    protected Match assignmentExpressionsMatch(@NotNull PsiAssignmentExpression assignmentExpression1,
+                                               @NotNull PsiAssignmentExpression assignmentExpression2) {
+      return EXACT_MISMATCH;
     }
 
     @Override
-    protected Decision arrayInitializerExpressionsAreEquivalentDecision(@NotNull PsiArrayInitializerExpression arrayInitializerExpression1,
-                                                                        @NotNull PsiArrayInitializerExpression arrayInitializerExpression2) {
-      return EXACTLY_UN_MATCHES;
+    protected Match arrayInitializerExpressionsMatch(@NotNull PsiArrayInitializerExpression arrayInitializerExpression1,
+                                                     @NotNull PsiArrayInitializerExpression arrayInitializerExpression2) {
+      return EXACT_MISMATCH;
     }
 
     @Override
-    protected Decision prefixExpressionsAreEquivalentDecision(@NotNull PsiPrefixExpression prefixExpression1,
-                                                              @NotNull PsiPrefixExpression prefixExpression2) {
+    protected Match prefixExpressionsMatch(@NotNull PsiPrefixExpression prefixExpression1,
+                                           @NotNull PsiPrefixExpression prefixExpression2) {
       if (isSideEffectUnaryOperator(prefixExpression1.getOperationTokenType())) {
-        return EXACTLY_UN_MATCHES;
+        return EXACT_MISMATCH;
       }
-      return super.prefixExpressionsAreEquivalentDecision(prefixExpression1, prefixExpression2);
+      return super.prefixExpressionsMatch(prefixExpression1, prefixExpression2);
     }
 
     @Override
-    protected Decision postfixExpressionsAreEquivalentDecision(@NotNull PsiPostfixExpression postfixExpression1,
-                                                               @NotNull PsiPostfixExpression postfixExpression2) {
+    protected Match postfixExpressionsMatch(@NotNull PsiPostfixExpression postfixExpression1,
+                                            @NotNull PsiPostfixExpression postfixExpression2) {
       if (isSideEffectUnaryOperator(postfixExpression1.getOperationTokenType())) {
-        return EXACTLY_UN_MATCHES;
+        return EXACT_MISMATCH;
       }
-      return super.postfixExpressionsAreEquivalentDecision(postfixExpression1, postfixExpression2);
+      return super.postfixExpressionsMatch(postfixExpression1, postfixExpression2);
     }
 
     private static boolean isSideEffectUnaryOperator(IElementType tokenType) {

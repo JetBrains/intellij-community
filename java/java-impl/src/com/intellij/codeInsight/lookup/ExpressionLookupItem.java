@@ -15,7 +15,9 @@
  */
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -73,6 +75,12 @@ public class ExpressionLookupItem extends LookupElement implements TypedLookupIt
     presentation.setItemText(myPresentableText);
     PsiType type = getType();
     presentation.setTypeText(type == null ? null : type.getPresentableText());
+  }
+
+  @Override
+  public void handleInsert(InsertionContext context) {
+    context.commitDocument();
+    JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(context.getFile(), context.getStartOffset(), context.getTailOffset());
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -173,22 +174,24 @@ public class AssertHint {
   }
 
   public static class JUnitCommonAssertNames {
-    @NonNls public static final Map<String, Integer> COMMON_ASSERT_METHODS = new HashMap<>(13);
+    @NonNls public static final Map<String, Integer> ASSERT_METHOD_2_PARAMETER_COUNT;
 
     static {
-      COMMON_ASSERT_METHODS.put("assertArrayEquals", 2);
-      COMMON_ASSERT_METHODS.put("assertEquals", 2);
-      COMMON_ASSERT_METHODS.put("assertNotEquals", 2);
-      COMMON_ASSERT_METHODS.put("assertFalse", 1);
-      COMMON_ASSERT_METHODS.put("assumeFalse", 1);
-      COMMON_ASSERT_METHODS.put("assertNotNull", 1);
-      COMMON_ASSERT_METHODS.put("assertNotSame", 2);
-      COMMON_ASSERT_METHODS.put("assertNull", 1);
-      COMMON_ASSERT_METHODS.put("assertSame", 2);
-      COMMON_ASSERT_METHODS.put("assertThat", 2);
-      COMMON_ASSERT_METHODS.put("assertTrue", 1);
-      COMMON_ASSERT_METHODS.put("assumeTrue", 1);
-      COMMON_ASSERT_METHODS.put("fail", 0);
+      final HashMap<String, Integer> map = new HashMap<>(13);
+      map.put("assertArrayEquals", 2);
+      map.put("assertEquals", 2);
+      map.put("assertNotEquals", 2);
+      map.put("assertFalse", 1);
+      map.put("assumeFalse", 1);
+      map.put("assertNotNull", 1);
+      map.put("assertNotSame", 2);
+      map.put("assertNull", 1);
+      map.put("assertSame", 2);
+      map.put("assertThat", 2);
+      map.put("assertTrue", 1);
+      map.put("assumeTrue", 1);
+      map.put("fail", 0);
+      ASSERT_METHOD_2_PARAMETER_COUNT = Collections.unmodifiableMap(map);
     }
   }
 }

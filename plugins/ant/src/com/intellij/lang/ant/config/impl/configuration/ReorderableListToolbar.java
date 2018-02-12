@@ -16,7 +16,6 @@
 package com.intellij.lang.ant.config.impl.configuration;
 
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.ui.ReorderableListController;
@@ -44,6 +43,6 @@ public class ReorderableListToolbar<T> extends ReorderableListController<T> {
   }
 
   public ActionToolbar createActionToolbar(final boolean horizontal) {
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, createActionGroup(), horizontal);
+    return ActionManager.getInstance().createActionToolbar("AntReorderableListToolbar", createActionGroup(), horizontal);
   }
 }

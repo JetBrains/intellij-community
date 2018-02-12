@@ -57,7 +57,7 @@ public class Suggestion implements Comparable<Suggestion> {
 
   @Override
   public int compareTo(@NotNull Suggestion o) {
-    int c = new Integer(getMetrics()).compareTo(o.getMetrics());
+    int c = Integer.compare(getMetrics(), o.getMetrics());
     return c != 0 ? c : StringUtil.compare(word, o.word, true);
   }
 

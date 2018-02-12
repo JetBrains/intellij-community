@@ -15,30 +15,38 @@
  */
 package org.jetbrains.plugins.gradle.execution.build;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiJavaModule;
 import com.intellij.task.ExecuteRunConfigurationTask;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +56,7 @@ import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.Collections;
+import java.util.List;
 
 /**
  * TODO take into account applied 'application' gradle plugins or existing JavaExec tasks
@@ -80,6 +89,7 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
     JavaParametersUtil.configureConfiguration(params, applicationConfiguration);
     params.getVMParametersList().addParametersString(applicationConfiguration.getVMParameters());
 
+    String javaModuleName = null;
     String javaExePath = null;
     try {
       final Sdk jdk = JavaParametersUtil.createProjectJdk(project, applicationConfiguration.getAlternativeJrePath());
@@ -89,25 +99,16 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
       javaExePath = ((JavaSdkType)type).getVMExecutablePath(jdk);
       if (javaExePath == null) throw new RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"));
       javaExePath = FileUtil.toSystemIndependentName(javaExePath);
+      javaModuleName = findJavaModuleName(jdk, applicationConfiguration.getConfigurationModule(), mainClass);
     }
     catch (CantRunException e) {
       ExecutionErrorDialog.show(e, "Cannot use specified JRE", project);
     }
 
-    StringBuilder parametersString = new StringBuilder();
-    for (String parameter : params.getProgramParametersList().getParameters()) {
-      parametersString.append("args '").append(parameter).append("'\n");
-    }
-
-    StringBuilder vmParametersString = new StringBuilder();
-    for (String parameter : params.getVMParametersList().getParameters()) {
-      vmParametersString.append("jvmArgs '").append(parameter).append("'\n");
-    }
-
     ExternalSystemTaskExecutionSettings taskSettings = new ExternalSystemTaskExecutionSettings();
     taskSettings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.getId());
     taskSettings.setExternalProjectPath(ExternalSystemApiUtil.getExternalProjectPath(module));
-    final String runAppTaskName = "run " + mainClass.getName();
+    final String runAppTaskName = mainClass.getName() + ".main()";
     taskSettings.setTaskNames(Collections.singletonList(runAppTaskName));
 
     String executorId = executor == null ? DefaultRunExecutor.EXECUTOR_ID : executor.getId();
@@ -129,21 +130,41 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
       }
       if (sourceSetName == null) return null;
 
+      String workingDir = ProgramParametersUtil.getWorkingDir(applicationConfiguration, project, module);
+      workingDir = workingDir == null ? null : FileUtil.toSystemIndependentName(workingDir);
+
+      String parametersString = createEscapedParameters(params.getProgramParametersList().getParameters(), "args");
+      String vmParametersString = createEscapedParameters(params.getVMParametersList().getParameters(), "jvmArgs");
+
+      // @formatter:off
       @Language("Groovy")
-      String initScript = "projectsEvaluated {\n" +
-                          "  rootProject.allprojects {\n" +
-                          "    if(project.path == '" + gradlePath + "' && project.sourceSets) {\n" +
-                          "      project.tasks.create(name: '" + runAppTaskName + "', overwrite: true, type: JavaExec) {\n" +
-                          (javaExePath != null ?
-                           "        executable = '" + javaExePath + "'\n" : "") +
-                          "        classpath = project.sourceSets.'" + sourceSetName + "'.runtimeClasspath\n" +
-                          "        main = '" + mainClass.getQualifiedName() + "'\n" +
-                          parametersString.toString() +
-                          vmParametersString.toString() +
+      String initScript = "allprojects {\n" +
+                          "    afterEvaluate { project ->\n" +
+                          "      if(project.path == '" + gradlePath + "' && project?.convention?.findPlugin(JavaPluginConvention)) {\n" +
+                          "         project.tasks.create(name: '" + runAppTaskName + "', overwrite: true, type: JavaExec) {\n" +
+                                      (javaExePath == null ? "" :
+                          "           executable = '" + javaExePath + "'\n") +
+                          "           classpath = project.sourceSets.'" + sourceSetName + "'.runtimeClasspath\n" +
+                          "           main = '" + mainClass.getQualifiedName() + "'\n" +
+                                      parametersString +
+                                      vmParametersString +
+                                      (StringUtil.isNotEmpty(workingDir) ?
+                          "           workingDir = '" + workingDir + "'\n" : "") +
+                          "           standardInput = System.in\n" +
+                                      (javaModuleName == null ? "" :
+                          "           inputs.property('moduleName', '" + javaModuleName + "')\n" +
+                          "           doFirst {\n" +
+                          "             jvmArgs += [\n" +
+                          "               '--module-path', classpath.asPath,\n" +
+                          "               '--module', '" + javaModuleName + "/" + mainClass.getQualifiedName() + "'\n" +
+                          "             ]\n" +
+                          "             classpath = files()\n"+
+                          "           }\n") +
+                          "         }\n" +
                           "      }\n" +
                           "    }\n" +
-                          "  }\n" +
                           "}\n";
+      // @formatter:on
 
       runConfiguration.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, initScript);
       return environment;
@@ -151,5 +172,27 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
     else {
       return null;
     }
+  }
+
+  private static String createEscapedParameters(List<String> parameters, String prefix) {
+    StringBuilder result = new StringBuilder();
+    for (String parameter : parameters) {
+      if (StringUtil.isEmpty(parameter)) continue;
+      String escaped = StringUtil.escapeChars(parameter, '\\', '"', '\'');
+      result.append(prefix).append(" '").append(escaped).append("'\n");
+    }
+    return result.toString();
+  }
+
+  @Nullable
+  private static String findJavaModuleName(Sdk sdk, JavaRunConfigurationModule module, PsiClass mainClass) {
+    if (JavaSdkUtil.isJdkAtLeast(sdk, JavaSdkVersion.JDK_1_9)) {
+      PsiJavaModule mainModule = DumbService.getInstance(module.getProject()).computeWithAlternativeResolveEnabled(
+        () -> JavaModuleGraphUtil.findDescriptorByElement(module.findClass(mainClass.getQualifiedName())));
+      if (mainModule != null) {
+        return mainModule.getName();
+      }
+    }
+    return null;
   }
 }

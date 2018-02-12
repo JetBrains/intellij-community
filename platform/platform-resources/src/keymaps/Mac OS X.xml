@@ -389,4 +389,8 @@
   <action id="EmojiAndSymbols">
     <keyboard-shortcut first-keystroke="control meta SPACE"/>
   </action>
+
+  <action id="RunDashboard.ShowConfigurations">
+    <keyboard-shortcut first-keystroke="shift meta T"/>
+  </action>
 </keymap>

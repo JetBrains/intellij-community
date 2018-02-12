@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,16 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionStatement;
-import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.*;
+import com.intellij.util.containers.OrderedSet;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class ResultOfObjectAllocationIgnoredInspectionBase extends BaseInspection {
+
+  @SuppressWarnings("PublicField") public OrderedSet<String> ignoredClasses = new OrderedSet<>();
 
   @Override
   @NotNull
@@ -42,7 +43,7 @@ public class ResultOfObjectAllocationIgnoredInspectionBase extends BaseInspectio
     return new ResultOfObjectAllocationIgnoredVisitor();
   }
 
-  private static class ResultOfObjectAllocationIgnoredVisitor extends BaseInspectionVisitor {
+  private class ResultOfObjectAllocationIgnoredVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitExpressionStatement(@NotNull PsiExpressionStatement statement) {
@@ -53,10 +54,19 @@ public class ResultOfObjectAllocationIgnoredInspectionBase extends BaseInspectio
       }
       final PsiNewExpression newExpression = (PsiNewExpression)expression;
       final PsiExpression[] arrayDimensions = newExpression.getArrayDimensions();
-      if (arrayDimensions.length != 0) {
+      if (arrayDimensions.length != 0 || newExpression.getArrayInitializer() != null) {
         return;
       }
-      if (newExpression.getArrayInitializer() != null) {
+      final PsiJavaCodeReferenceElement reference = newExpression.getClassOrAnonymousClassReference();
+      if (reference == null) {
+        return;
+      }
+      final PsiElement target = reference.resolve();
+      if (!(target instanceof PsiClass)) {
+        return;
+      }
+      final PsiClass aClass = (PsiClass)target;
+      if (!(expression instanceof PsiAnonymousClass) && ignoredClasses.contains(aClass.getQualifiedName())) {
         return;
       }
       registerNewExpressionError(newExpression, newExpression);

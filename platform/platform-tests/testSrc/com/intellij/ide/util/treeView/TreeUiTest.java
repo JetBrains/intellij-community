@@ -17,7 +17,6 @@ package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.*;
 import com.intellij.ui.LoadingNode;
 import com.intellij.util.Time;
@@ -25,7 +24,6 @@ import com.intellij.util.WaitFor;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestSuite;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,7 +31,6 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -53,13 +50,13 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   public void testEmptyInvisibleRoot() throws Exception {
     myTree.setRootVisible(false);
     showTree();
-    assertTree("+/\n");
+    assertTree("/\n");
 
     updateFromRoot();
-    assertTree("+/\n");
+    assertTree("/\n");
 
     buildNode("/", false);
-    assertTree("+/\n");
+    assertTree("/\n");
 
     myTree.setRootVisible(true);
     buildNode("/", false);
@@ -144,12 +141,9 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       }
     };
 
-    invokeLaterIfNeeded(() -> getBuilder().batch(new Progressive() {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        indicatorRef.set(indicator);
-        expandNext(toExpand, 0, indicator, done);
-      }
+    invokeLaterIfNeeded(() -> getBuilder().batch(indicator -> {
+      indicatorRef.set(indicator);
+      expandNext(toExpand, 0, indicator, done);
     }).notify(done));
 
     waitBuilderToCome(o -> done.isProcessed());
@@ -390,12 +384,9 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     final ActionCallback done = new ActionCallback();
     final Ref<ProgressIndicator> indicatorRef = new Ref<>();
 
-    invokeLaterIfNeeded(() -> getBuilder().batch(new Progressive() {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        indicatorRef.set(indicator);
-        expandNext(toExpand, 0, indicator, done);
-      }
+    invokeLaterIfNeeded(() -> getBuilder().batch(indicator -> {
+      indicatorRef.set(indicator);
+      expandNext(toExpand, 0, indicator, done);
     }).notify(done));
 
     waitBuilderToCome(o -> done.isProcessed() || myCancelRequest != null);
@@ -458,7 +449,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     myRoot.removeAll();
     updateFromRoot();
 
-    assertTree("+/\n");
+    assertTree("/\n");
   }
 
   public void testAutoExpand() throws Exception {
@@ -1381,24 +1372,21 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                              final int start,
                              final int end,
                              @Nullable final Runnable eachRunnable,
-                             @Nullable final Runnable endRunnable) throws InvocationTargetException, InterruptedException {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        for (int i = start; i <= end; i++) {
-          Node eachFile = node.addChild("File " + i);
-          myAutoExpand.add(eachFile.getElement());
-          eachFile.addChild("message 1 for " + i);
-          eachFile.addChild("message 2 for " + i);
+                             @Nullable final Runnable endRunnable) {
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      for (int i = start; i <= end; i++) {
+        Node eachFile = node.addChild("File " + i);
+        myAutoExpand.add(eachFile.getElement());
+        eachFile.addChild("message 1 for " + i);
+        eachFile.addChild("message 2 for " + i);
 
-          if (eachRunnable != null) {
-            eachRunnable.run();
-          }
+        if (eachRunnable != null) {
+          eachRunnable.run();
         }
+      }
 
-        if (endRunnable != null) {
-          endRunnable.run();
-        }
+      if (endRunnable != null) {
+        endRunnable.run();
       }
     });
   }
@@ -1410,7 +1398,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   private void runAndInterrupt(final Runnable action,
                                final String interruptAction,
                                final Object interruptElement,
-                               final Interruption interruption) throws Exception {
+                               final Interruption interruption) {
     myElementUpdate.clear();
 
     final boolean[] wasInterrupted = new boolean[]{false};
@@ -2401,47 +2389,47 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     }
 
     @Override
-    public void testSelectionGoesToParentWhenOnlyChildMoved2() throws Exception {
+    public void testSelectionGoesToParentWhenOnlyChildMoved2() {
       //todo
     }
 
     @Override
-    public void testQueryStructureWhenExpand() throws Exception {
+    public void testQueryStructureWhenExpand() {
       //todo
     }
 
     @Override
-    public void testMoveElementToAdjacentEmptyParentWithSmartExpandAndSerialUpdateSubtrees() throws Exception {
+    public void testMoveElementToAdjacentEmptyParentWithSmartExpandAndSerialUpdateSubtrees() {
       // doesn't make sense since pass-through mode is always serial, it doesn't queue for updates
     }
 
     @Override
-    public void testElementMove1() throws Exception {
+    public void testElementMove1() {
       //todo
     }
 
     @Override
-    public void testClear() throws Exception {
+    public void testClear() {
       //todo
     }
 
     @Override
-    public void testDoubleCancelUpdate() throws Exception {
+    public void testDoubleCancelUpdate() {
       // doesn't make sense in pass-through mode
     }
 
     @Override
-    public void testNoExtraJTreeModelUpdate() throws Exception {
+    public void testNoExtraJTreeModelUpdate() {
       // doesn't make sense in pass-through mode
     }
 
     @Override
-    public void testSelectWhenUpdatesArePending() throws Exception {
+    public void testSelectWhenUpdatesArePending() {
       // doesn't make sense in pass-through mode
     }
 
     @Override
-    public void testBigTreeUpdate() throws Exception {
+    public void testBigTreeUpdate() {
       // doesn't make sense in pass-through mode
     }
   }
@@ -2470,12 +2458,12 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     }
 
     @Override
-    public void testNoInfiniteSmartExpand() throws Exception {
+    public void testNoInfiniteSmartExpand() {
       //todo
     }
 
     @Override
-    public void testBigTreeUpdate() throws Exception {
+    public void testBigTreeUpdate() {
       //to slow, tested the same in VeryQuickBgLoadingTest
     }
   }
@@ -2491,12 +2479,12 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     }
 
     @Override
-    public void testNoInfiniteSmartExpand() throws Exception {
+    public void testNoInfiniteSmartExpand() {
       //todo
     }
 
     @Override
-    public void testBigTreeUpdate() throws Exception {
+    public void testBigTreeUpdate() {
       //to slow, tested the same in VeryQuickBgLoadingTest
     }
   }
@@ -2508,17 +2496,17 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     }
 
     @Override
-    public void testNoInfiniteSmartExpand() throws Exception {
+    public void testNoInfiniteSmartExpand() {
       // todo;
     }
 
     @Override
-    public void testReleaseBuilderDuringUpdate() throws Exception {
+    public void testReleaseBuilderDuringUpdate() {
       // todo
     }
 
     @Override
-    public void testReleaseBuilderDuringGetChildren() throws Exception {
+    public void testReleaseBuilderDuringGetChildren() {
       // todo
     }
   }

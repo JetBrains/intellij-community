@@ -15,130 +15,49 @@
  */
 package com.intellij.execution.console;
 
-import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.util.SimpleModificationTracker;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedList;
-import java.util.List;
-
 /**
- * @author Gregory.Shrago
+ * @author Yuli Fiterman
  */
-class ConsoleHistoryModel extends SimpleModificationTracker {
-  /** @noinspection FieldCanBeLocal*/
-  private final Object myLock;
-  private final LinkedList<String> myEntries;
-  private int myIndex;
 
-  ConsoleHistoryModel(@Nullable ConsoleHistoryModel masterModel) {
-    myEntries = masterModel == null ? new LinkedList<>() : masterModel.myEntries;
-    myLock = masterModel == null ? this : masterModel.myLock;  // hard ref to master model
-    resetIndex();
-  }
-
-  ConsoleHistoryModel copy() {
-    return new ConsoleHistoryModel(this);
-  }
-
-  public void resetEntries(@NotNull List<String> entries) {
-    synchronized (myLock) {
-      myEntries.clear();
-      myEntries.addAll(entries.subList(0, Math.min(entries.size(), getMaxHistorySize())));
-      incModificationCount();
-    }
-  }
-
-  public void addToHistory(@Nullable String statement) {
-    if (StringUtil.isEmptyOrSpaces(statement)) return;
-
-    synchronized (myLock) {
-      int maxHistorySize = getMaxHistorySize();
-      myEntries.remove(statement);
-      int size = myEntries.size();
-      if (size >= maxHistorySize && size > 0) {
-        myEntries.removeFirst();
-      }
-      myEntries.addLast(statement);
-      incModificationCount();
-    }
-  }
-
-  @Override
-  public void incModificationCount() {
-    resetIndex();
-    super.incModificationCount();
-  }
-
-  protected void resetIndex() {
-    synchronized (myLock) {
-      myIndex = myEntries.size();
-    }
-  }
-
-  public int getMaxHistorySize() {
-    return UISettings.getInstance().getConsoleCommandHistoryLimit();
-  }
-
-  public void removeFromHistory(String statement) {
-    synchronized (myLock) {
-      myEntries.remove(statement);
-      incModificationCount();
-    }
-  }
-
-  public List<String> getEntries() {
-    synchronized (myLock) {
-      return ContainerUtil.newArrayList(myEntries);
-    }
-  }
-
-  public boolean isEmpty() {
-    synchronized (myLock) {
-      return myEntries.isEmpty();
-    }
-  }
-
-  public int getHistorySize() {
-    synchronized (myLock) {
-      return myEntries.size();
-    }
-  }
+public interface ConsoleHistoryModel extends ConsoleHistoryBaseModel {
 
   @Nullable
-  public String getHistoryNext() {
-    synchronized (myLock) {
-      if (myIndex >= 0) --myIndex;
-      return getCurrentEntry();
-    }
-  }
+  Entry getHistoryNext();
 
   @Nullable
-  public String getHistoryPrev() {
-    synchronized (myLock) {
-      if (myIndex <= myEntries.size() - 1) ++myIndex;
-      return getCurrentEntry();
-    }
+  Entry getHistoryPrev();
+
+  boolean hasHistory();
+
+  int getCurrentIndex();
+
+  void setContent(@NotNull String userContent);
+
+  /* if true then overrides the navigation behavior such that the down key on last line always navigates to prev instead of only when there
+     are no more characters in from of the caret
+   */
+  default boolean prevOnLastLine() {
+    return false;
   }
 
-  public boolean hasHistory(final boolean next) {
-    synchronized (myLock) {
-      return next ? myIndex > 0 : myIndex < myEntries.size() - 1;
-    }
-  }
+  class Entry {
+    private final String text;
+    private final int offset;
 
-  String getCurrentEntry() {
-    synchronized (myLock) {
-      return myIndex >= 0 && myIndex < myEntries.size() ? myEntries.get(myIndex) : null;
+    public Entry(String text, int offset) {
+      this.text = text;
+      this.offset = offset;
     }
-  }
 
-  int getCurrentIndex() {
-    synchronized (myLock) {
-      return myIndex;
+    public String getText() {
+      return text;
+    }
+
+    public int getOffset() {
+      return offset;
     }
   }
 }

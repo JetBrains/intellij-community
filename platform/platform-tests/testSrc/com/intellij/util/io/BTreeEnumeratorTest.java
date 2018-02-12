@@ -15,9 +15,9 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.IntObjectCache;
 import gnu.trove.THashMap;
 import junit.framework.TestCase;
@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class BTreeEnumeratorTest extends TestCase {
+  private static final Logger LOG = Logger.getInstance(BTreeEnumeratorTest.class);
   private static final String COLLISION_1 = "";
   private static final String COLLISION_2 = "\u0000";
   private static final String UTF_1 = "\ue534";
@@ -55,10 +56,15 @@ public class BTreeEnumeratorTest extends TestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myEnumerator.close();
-    IOUtil.deleteAllFilesStartingWith(myFile);
-    assertTrue(!myFile.exists());
-    super.tearDown();
+    try {
+      myEnumerator.close();
+      IOUtil.deleteAllFilesStartingWith(myFile);
+      assertTrue(!myFile.exists());
+    }
+    finally {
+      super.tearDown();
+      
+    }
   }
 
   public void testAddEqualStrings() throws IOException {
@@ -103,14 +109,14 @@ public class BTreeEnumeratorTest extends TestCase {
     int id1 = myEnumerator.enumerate(COLLISION_1);
     
     assertEquals(id1, myEnumerator.tryEnumerate(COLLISION_1));
-    assertEquals(PersistentEnumerator.NULL_ID, myEnumerator.tryEnumerate(COLLISION_2));
+    assertEquals(PersistentEnumeratorBase.NULL_ID, myEnumerator.tryEnumerate(COLLISION_2));
     
     int id2 = myEnumerator.enumerate(COLLISION_2);
     assertFalse(id1 == id2);
 
     assertEquals(id1, myEnumerator.tryEnumerate(COLLISION_1));
     assertEquals(id2, myEnumerator.tryEnumerate(COLLISION_2));
-    assertEquals(PersistentEnumerator.NULL_ID, myEnumerator.tryEnumerate("some string"));
+    assertEquals(PersistentEnumeratorBase.NULL_ID, myEnumerator.tryEnumerate("some string"));
     
     assertEquals(COLLISION_1, myEnumerator.valueOf(id1));
     assertEquals(COLLISION_2, myEnumerator.valueOf(id2));
@@ -173,7 +179,7 @@ public class BTreeEnumeratorTest extends TestCase {
       }
     };
 
-    PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator performance failed", 2500, () -> {
+    PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator", 1000, () -> {
       stringCache.addDeletedPairsListener(listener);
       for (int i = 0; i < 100000; ++i) {
         final String string = createRandomString();
@@ -181,9 +187,9 @@ public class BTreeEnumeratorTest extends TestCase {
       }
       stringCache.removeDeletedPairsListener(listener);
       stringCache.removeAll();
-    }).useLegacyScaling().assertTiming();
+    }).assertTiming();
     myEnumerator.close();
-    System.out.printf("File size = %d bytes\n", myFile.length());
+    LOG.debug(String.format("File size = %d bytes\n", myFile.length()));
   }
 
   private static final StringBuilder builder = new StringBuilder(100);

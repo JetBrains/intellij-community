@@ -12,6 +12,8 @@ class JavaPsiFacade {
 
 interface PsiElement {
   PsiClass getContainingClass();
+
+  void mm();
 }
 
 interface PsiClass extends PsiElement {

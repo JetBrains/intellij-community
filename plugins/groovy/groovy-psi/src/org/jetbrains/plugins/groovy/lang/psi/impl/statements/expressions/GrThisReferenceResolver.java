@@ -12,9 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-/**
- * Created by Max Medvedev on 15/06/14
- */
 public class GrThisReferenceResolver {
   @Nullable("null if ref is not actually 'this' reference")
   public static GroovyResolveResult[] resolveThisExpression(@NotNull GrReferenceExpression ref) {

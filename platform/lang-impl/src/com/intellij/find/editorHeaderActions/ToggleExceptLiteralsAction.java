@@ -19,6 +19,6 @@ import com.intellij.find.FindModel;
 
 public class ToggleExceptLiteralsAction extends EditorHeaderSetSearchContextAction {
   public ToggleExceptLiteralsAction() {
-    super("Except L&iterals", FindModel.SearchContext.EXCEPT_STRING_LITERALS);
+    super("Except String L&iterals", FindModel.SearchContext.EXCEPT_STRING_LITERALS);
   }
 }

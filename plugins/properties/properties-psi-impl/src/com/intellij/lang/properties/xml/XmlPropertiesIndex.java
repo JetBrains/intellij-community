@@ -34,7 +34,6 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.xml.NanoXmlUtil;
 import net.n3.nanoxml.StdXMLReader;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.Collections;
@@ -43,7 +42,6 @@ import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 7/25/11
  */
 public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesIndex.Key, String>
   implements FileBasedIndex.FileTypeSpecificInputFilter, DataIndexer<XmlPropertiesIndex.Key, String, FileContent>,
@@ -135,11 +133,10 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
   }
 
   private static boolean isAccepted(CharSequence bytes) {
-    MyIXMLBuilderAdapter builder = parse(bytes, true);
-    return builder != null && builder.accepted;
+    return parse(bytes, true).accepted;
   }
 
-  @Nullable
+  @NotNull
   private static MyIXMLBuilderAdapter parse(CharSequence text, boolean stopIfAccepted) {
     StdXMLReader reader = new StdXMLReader(CharArrayUtil.readerFromCharSequence(text)) {
       @Override

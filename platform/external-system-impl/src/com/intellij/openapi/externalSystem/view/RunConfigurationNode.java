@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,12 @@ package com.intellij.openapi.externalSystem.view;
 
 import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.treeStructure.SimpleTree;
@@ -100,10 +98,8 @@ public class RunConfigurationNode extends ExternalSystemNode {
 
   @Override
   public void handleDoubleClickOrEnter(SimpleTree tree, InputEvent inputEvent) {
-    final Project project = getExternalProjectsView().getProject();
-    ProgramRunnerUtil.executeConfiguration(project, mySettings, DefaultRunExecutor.getRunExecutorInstance());
-    final RunManagerEx runManagerEx = RunManagerEx.getInstanceEx(project);
-    runManagerEx.setSelectedConfiguration(mySettings);
+    ProgramRunnerUtil.executeConfiguration(mySettings, DefaultRunExecutor.getRunExecutorInstance());
+    RunManager.getInstance(mySettings.getConfiguration().getProject()).setSelectedConfiguration(mySettings);
   }
 
   @Nullable

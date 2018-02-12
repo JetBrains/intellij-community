@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 11.04.2006
- * Time: 00:14:22
- */
 package org.intellij.lang.xpath.validation.inspections.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
@@ -50,14 +44,6 @@ public interface XPathQuickFixFactory {
   abstract class Fix<E extends PsiElement> extends LocalQuickFixAndIntentionActionOnPsiElement {
     protected Fix(E element) {
       super(element);
-    }
-
-    @Override
-    public boolean isAvailable(@NotNull Project project,
-                               @NotNull PsiFile file,
-                               @NotNull PsiElement startElement,
-                               @NotNull PsiElement endElement) {
-      return startElement.isValid() && startElement.getParent().isValid();
     }
 
     @Override

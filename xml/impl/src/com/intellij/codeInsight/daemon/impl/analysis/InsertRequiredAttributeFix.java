@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.editorActions.XmlEditUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -35,15 +36,12 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
+import com.intellij.xml.XmlExtension.AttributeValuePresentation;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: 18-Nov-2005
- */
 public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
   private final String myAttrName;
   private final String[] myValues;
@@ -100,11 +98,20 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
     if (anchor == null) return;
 
     final Template template = TemplateManager.getInstance(project).createTemplate("", "");
+    String valuePostfix = "\"";
     if (indirectSyntax) {
       if (anchorIsEmptyTag) template.addTextSegment(">");
       template.addTextSegment("<jsp:attribute name=\"" + myAttrName + "\">");
-    } else {
-      template.addTextSegment(" " + myAttrName + (!insertShorthand ? "=\"" : ""));
+    }
+    else {
+      template.addTextSegment(" " + myAttrName);
+      if (!insertShorthand) {
+        String quote = XmlEditUtil.getAttributeQuote(file);
+        AttributeValuePresentation presentation = XmlExtension.getExtension(file).getAttributeValuePresentation(attrDescriptor, quote);
+
+        valuePostfix = presentation.getPostfix();
+        template.addTextSegment("=" + presentation.getPrefix());
+      }
     }
 
     Expression expression = new Expression() {
@@ -137,7 +144,7 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
       template.addEndVariable();
       if (anchorIsEmptyTag) template.addTextSegment("</" + myTag.getName() + ">");
     } else if (!insertShorthand) {
-      template.addTextSegment("\"");
+      template.addTextSegment(valuePostfix);
     }
 
     final PsiElement anchor1 = anchor;
@@ -167,10 +174,5 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
     else {
       runnable.run();
     }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 }

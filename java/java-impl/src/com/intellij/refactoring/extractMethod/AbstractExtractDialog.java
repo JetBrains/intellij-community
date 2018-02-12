@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 15-May-2008
- */
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.psi.PsiModifier;
@@ -38,4 +34,6 @@ public interface AbstractExtractDialog {
 
   void show();
   boolean isOK();
+
+  default boolean isPreviewUsages() {return false;}
 }

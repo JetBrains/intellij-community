@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,12 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -54,23 +55,37 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
   protected boolean myPaintingNow;
 
   public ComboBox() {
-    this(-1);
+    init(-1);
   }
 
-  public ComboBox(final ComboBoxModel<E> model) {
-    this(model, -1);
+  public ComboBox(int width) {
+    init(width);
+  }
+
+  public ComboBox(@NotNull ComboBoxModel<E> model) {
+    super(model);
+    init(-1);
+  }
+
+  public ComboBox(@NotNull E[] items) {
+    super(items);
+    init(-1);
+  }
+
+  public ComboBox(@NotNull E[] items, int width) {
+    super(items);
+    init(width);
+  }
+
+  public ComboBox(@NotNull ComboBoxModel<E> model, int width) {
+    super(model);
+    init(width);
   }
 
   /**
    * @param width preferred width of the combobox. Value {@code -1} means undefined.
    */
-  public ComboBox(final int width) {
-    this(new DefaultComboBoxModel<>(), width);
-  }
-
-
-  public ComboBox(final ComboBoxModel<E> model, final int width) {
-    super(model);
+  private void init(int width) {
     myMinimumAndPreferredWidth = width;
     registerCancelOnEscape();
     UIUtil.installComboBoxCopyAction(this);
@@ -101,7 +116,7 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
   public void setPopupVisible(boolean visible) {
     if (!isSwingPopup()) {
       if (visible && (myJBPopup == null || myJBPopup.isDisposed())) {
-        final JBList list = createJBList(getModel());
+        final JBList<E> list = createJBList(getModel());
         myJBPopup = JBPopupFactory.getInstance()
           .createPopupChooserBuilder(list)
           .setItemChoosenCallback(() -> {
@@ -117,7 +132,7 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
           .setFocusOwners(new Component[]{this})
           .setMinSize(new Dimension(getWidth(), -1))
           .createPopup();
-        list.setBorder(IdeBorderFactory.createEmptyBorder());
+        list.setBorder(JBUI.Borders.empty());
         myJBPopup.showUnderneathOf(this);
         list.addFocusListener(new FocusAdapter() {
           @Override
@@ -131,7 +146,9 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     }
 
     if (getModel().getSize() == 0 && visible) return;
-    if (visible && JBPopupFactory.getInstance().getChildFocusedPopup(this) != null) return;
+    if (visible &&
+        ApplicationManager.getApplication() != null /* Allow ComboBox on welcome wizard*/ &&
+        JBPopupFactory.getInstance().getChildFocusedPopup(this) != null) return;
 
     final boolean wasShown = isPopupVisible();
     super.setPopupVisible(visible);
@@ -139,7 +156,6 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
         && visible
         && isEditable()
         && !UIManager.getBoolean("ComboBox.isEnterSelectablePopup")) {
-
       final ComboBoxEditor editor = getEditor();
       final Object item = editor.getItem();
       final Object selectedItem = getSelectedItem();
@@ -149,13 +165,14 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     }
   }
 
-  protected JBList createJBList(ComboBoxModel model) {
-    return new JBList(model);
+  protected JBList<E> createJBList(ComboBoxModel<E> model) {
+    return new JBList<>(model);
   }
 
   @Override
   public void eventDispatched(AWTEvent event) {
-    if (event.getID() == WindowEvent.WINDOW_OPENED) {
+    if (event.getID() == WindowEvent.WINDOW_OPENED
+        && ApplicationManager.getApplication() != null /* Allow ComboBox on welcome wizard*/) {
       final WindowEvent we = (WindowEvent)event;
       for (JBPopup each : JBPopupFactory.getInstance().getChildPopups(this)) {
         if (each.getContent() != null && SwingUtilities.isDescendingFrom(each.getContent(), we.getWindow())) {
@@ -187,20 +204,9 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     }
   }
 
-
   @Nullable
   public ComboPopup getPopup() {
     return UIUtil.getComboBoxPopup(this);
-  }
-
-  public ComboBox(final E[] items, final int preferredWidth) {
-    super(items);
-    myMinimumAndPreferredWidth = preferredWidth;
-    registerCancelOnEscape();
-  }
-
-  public ComboBox(@NotNull E[] items) {
-    this(items, -1);
   }
 
   public boolean isSwingPopup() {
@@ -248,7 +254,7 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
   }
 
   @Override
-  public final Dimension getPreferredSize() {
+  public Dimension getPreferredSize() {
     int width = myMinimumAndPreferredWidth;
     final Dimension preferredSize = super.getPreferredSize();
     if (width < 0) {
@@ -259,17 +265,13 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
   }
 
   @Override
-  protected Dimension getOriginalPreferredSize() {
-    return super.getPreferredSize();
-  }
-
-  @Override
   public void paint(Graphics g) {
     try {
       myPaintingNow = true;
       super.paint(g);
       if (Boolean.TRUE != getClientProperty("JComboBox.isTableCellEditor") && isEditable) MacUIUtil.drawComboboxFocusRing(this, g);
-    } finally {
+    }
+    finally {
       myPaintingNow = false;
     }
   }
@@ -309,8 +311,10 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     }
 
     @Override
-    public void addActionListener(final ActionListener l) {
-    }
+    public void addActionListener(ActionListener l) { }
+
+    @Override
+    public void removeActionListener(ActionListener l) { }
 
     @Override
     public Component getEditorComponent() {
@@ -320,10 +324,6 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
     @Override
     public Object getItem() {
       return myDelegate == null ? null : myDelegate.getItem();
-    }
-
-    @Override
-    public void removeActionListener(final ActionListener l) {
     }
 
     @Override

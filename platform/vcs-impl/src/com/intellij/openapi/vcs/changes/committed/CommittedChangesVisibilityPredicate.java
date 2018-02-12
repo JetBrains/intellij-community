@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsType;
 import com.intellij.util.NotNullFunction;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,12 +29,10 @@ import org.jetbrains.annotations.NotNull;
 public class CommittedChangesVisibilityPredicate implements NotNullFunction<Project, Boolean> {
   @NotNull
   public Boolean fun(final Project project) {
-    final AbstractVcs[] abstractVcses = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
-    for(AbstractVcs vcs: abstractVcses) {
-      if (vcs.getCommittedChangesProvider() != null && VcsType.centralized.equals(vcs.getType())) {
-        return Boolean.TRUE;
-      }
-    }
-    return Boolean.FALSE;
+    return StreamEx.of(ProjectLevelVcsManager.getInstance(project).getAllActiveVcss()).anyMatch(vcs -> isCommittedChangesAvailable(vcs));
+  }
+
+  public static boolean isCommittedChangesAvailable(@NotNull AbstractVcs vcs) {
+    return vcs.getCommittedChangesProvider() != null && VcsType.centralized.equals(vcs.getType());
   }
 }

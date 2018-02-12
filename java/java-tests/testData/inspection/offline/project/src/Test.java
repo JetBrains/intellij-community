@@ -1,7 +1,3 @@
-/**
- * User: anna
- * Date: 25-Apr-2006
- */
 public class Test {
   private boolean myFlag = false;
   @SuppressWarnings({"PointlessBooleanExpression"})

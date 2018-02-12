@@ -9,7 +9,8 @@ class A {
     <error descr="Missing return statement">}</error>);
 
 
-    Map<Integer, Integer> map = Stream.iterate(5, <error descr="no instance(s) of type variable(s) T exist so that Stream<T> conforms to Map<Integer, Integer>">t -> t + 5</error>);
+    Map<Integer, Integer> map = Stream.iterate(5, <error descr="Incompatible types. Required Map<Integer, Integer> but 'iterate' was inferred to Stream<T>:
+no instance(s) of type variable(s) T exist so that Stream<T> conforms to Map<Integer, Integer>">t -> t + 5</error>);
   }
 
 

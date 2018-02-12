@@ -22,31 +22,43 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.util.function.Supplier;
 
 public class CreateFromTemplateAction extends CreateFromTemplateActionBase {
+  private final Supplier<FileTemplate> myTemplate;
 
-  private final FileTemplate myTemplate;
+  /** Avoid calling the constructor from normal IDE actions, because:
+   *  - Normal actions are preloaded at startup
+   *  - Accessing FileTemplate out of FileTemplateManager triggers costly initialization
+   */
+  public CreateFromTemplateAction(@NotNull FileTemplate template) {
+    this(template.getName(), FileTemplateUtil.getIcon(template), () -> template);
+  }
 
-  public CreateFromTemplateAction(FileTemplate template){
-    super(template.getName(), null, FileTemplateUtil.getIcon(template));
+  public CreateFromTemplateAction(String templateName, @Nullable Icon icon, @NotNull Supplier<FileTemplate> template){
+    super(templateName, null, icon);
     myTemplate = template;
   }
 
   @Override
   protected FileTemplate getTemplate(final Project project, final PsiDirectory dir) {
-    return myTemplate;
+    return myTemplate.get();
   }
 
   @Override
   public void update(AnActionEvent e){
     super.update(e);
     Presentation presentation = e.getPresentation();
-    boolean isEnabled = CreateFromTemplateGroup.canCreateFromTemplate(e, myTemplate);
+    boolean isEnabled = CreateFromTemplateGroup.canCreateFromTemplate(e, myTemplate.get());
     presentation.setEnabled(isEnabled);
     presentation.setVisible(isEnabled);
   }
 
   public FileTemplate getTemplate() {
-    return myTemplate;
+    return myTemplate.get();
   }
 }

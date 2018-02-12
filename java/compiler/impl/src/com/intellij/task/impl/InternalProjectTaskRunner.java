@@ -15,16 +15,15 @@
  */
 package com.intellij.task.impl;
 
-import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.ExecutionManagerImpl;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
@@ -48,6 +47,7 @@ import java.util.stream.Stream;
  */
 public class InternalProjectTaskRunner extends ProjectTaskRunner {
   private static final Logger LOG = Logger.getInstance(InternalProjectTaskRunner.class);
+  public static final Key<Object> EXECUTION_SESSION_ID_KEY = ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY;
 
   @Override
   public void run(@NotNull Project project,
@@ -67,13 +67,6 @@ public class InternalProjectTaskRunner extends ProjectTaskRunner {
   @Override
   public boolean canRun(@NotNull ProjectTask projectTask) {
     return true;
-  }
-
-  @Override
-  public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
-                                                         @NotNull ExecuteRunConfigurationTask task,
-                                                         @Nullable Executor executor) {
-    return null;
   }
 
   public static Map<Class<? extends ProjectTask>, List<ProjectTask>> groupBy(@NotNull Collection<? extends ProjectTask> tasks) {
@@ -171,7 +164,7 @@ public class InternalProjectTaskRunner extends ProjectTaskRunner {
                                           boolean includeDependentModules,
                                           boolean includeRuntimeDependencies) {
     CompileScope scope = compilerManager.createModulesCompileScope(
-      modules.toArray(new Module[modules.size()]), includeDependentModules, includeRuntimeDependencies);
+      modules.toArray(Module.EMPTY_ARRAY), includeDependentModules, includeRuntimeDependencies);
     RunConfiguration configuration = context.getRunConfiguration();
     if (configuration != null) {
       scope.putUserData(CompilerManager.RUN_CONFIGURATION_KEY, configuration);

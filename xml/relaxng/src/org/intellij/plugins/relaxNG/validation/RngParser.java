@@ -69,11 +69,6 @@ import org.xml.sax.helpers.DefaultHandler;
 import java.io.StringReader;
 import java.util.concurrent.ConcurrentMap;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 19.07.2007
-*/
 public class RngParser {
   private static final Logger LOG = Logger.getInstance("#org.intellij.plugins.relaxNG.validation.RngParser");
 
@@ -91,7 +86,7 @@ public class RngParser {
     }
   };
 
-  private static final ConcurrentMap<String, DPattern> ourCache = ContainerUtil.createConcurrentSoftMap();
+  private static final ConcurrentMap<String, DPattern> ourCache = ContainerUtil.createConcurrentSoftValueMap();
 
   private static DatatypeLibraryFactory createXsdDatatypeFactory() {
     try {
@@ -126,10 +121,7 @@ public class RngParser {
       pattern = parsePattern(descriptorFile, eh, false);
     }
     if (pattern != null) {
-      DPattern oldPattern = ourCache.putIfAbsent(url, pattern);
-      if (oldPattern != null) {
-        return oldPattern;
-      }
+      ourCache.put(url, pattern);
     }
     return pattern;
   }

@@ -17,16 +17,20 @@ package com.siyeh.ipp.modifiers;
 
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
-import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.changeSignature.JavaChangeSignatureUsageProcessor;
+import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
@@ -69,6 +73,10 @@ abstract class ModifierIntention extends Intention implements LowPriorityAction 
       return;
     }
     final MultiMap<PsiElement, String> conflicts = checkForConflicts(member);
+    if (conflicts == null) {
+      //canceled by user
+      return;
+    }
     final Project project = member.getProject();
     final boolean conflictsDialogOK;
     if (conflicts.isEmpty()) {
@@ -83,8 +91,23 @@ abstract class ModifierIntention extends Intention implements LowPriorityAction 
   }
 
   private void changeModifier(PsiModifierList modifierList) {
+    PsiElement parent = modifierList.getParent();
+    @VisibilityConstant final String modifier = getModifier();
+    if (parent instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)parent;
+      //no myPrepareSuccessfulSwingThreadCallback means that the conflicts when any, won't be shown again
+      new ChangeSignatureProcessor(parent.getProject(),
+                                   method,
+                                   false,
+                                   modifier,
+                                   method.getName(),
+                                   method.getReturnType(),
+                                   ParameterInfoImpl.fromMethod(method),
+                                   JavaThrownExceptionInfo.extractExceptions(method))
+        .run();
+      return;
+    }
     WriteAction.run(() -> {
-      final String modifier = getModifier();
       modifierList.setModifierProperty(modifier, true);
       if (!PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
         final Project project = modifierList.getProject();
@@ -92,7 +115,7 @@ abstract class ModifierIntention extends Intention implements LowPriorityAction 
         final PsiElement sibling = modifierList.getNextSibling();
         if (sibling instanceof PsiWhiteSpace) {
           sibling.replace(whitespace);
-          CodeStyleManager.getInstance(project).reformatRange(modifierList.getParent(), modifierList.getTextOffset(),
+          CodeStyleManager.getInstance(project).reformatRange(parent, modifierList.getTextOffset(),
                                                               modifierList.getNextSibling().getTextOffset());
         }
       }
@@ -124,88 +147,35 @@ abstract class ModifierIntention extends Intention implements LowPriorityAction 
     if (modifierList == null || modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
       return MultiMap.emptyInstance();
     }
+    PsiModifierList copy = (PsiModifierList)modifierList.copy();
+    copy.setModifierProperty(getModifier(), true);
+    SearchScope useScope = member.getUseScope();
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-    if (member instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)member;
-      SuperMethodsSearch.search(method, method.getContainingClass(), true, false).forEach(
-        methodSignature -> {
-          final PsiMethod superMethod = methodSignature.getMethod();
-          if (!hasCompatibleVisibility(superMethod, true)) {
-            conflicts.putValue(superMethod, IntentionPowerPackBundle.message(
-              "0.will.have.incompatible.access.privileges.with.super.1",
-              RefactoringUIUtil.getDescription(method, false),
-              RefactoringUIUtil.getDescription(superMethod, true)));
-          }
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      if (member instanceof PsiMethod) {
+        JavaChangeSignatureUsageProcessor.ConflictSearcher.searchForHierarchyConflicts((PsiMethod)member, conflicts, getModifier());
+      }
+
+      final Query<PsiReference> search = ReferencesSearch.search(member, useScope);
+      search.forEach(reference -> {
+        final PsiElement element = reference.getElement();
+        if (JavaResolveUtil.isAccessible(member, member.getContainingClass(), copy, element, null, null)) {
           return true;
-        });
-      OverridingMethodsSearch.search(method).forEach(overridingMethod -> {
-        if (!isVisibleFromOverridingMethod(method, overridingMethod)) {
-          conflicts.putValue(overridingMethod, IntentionPowerPackBundle.message(
-            "0.will.no.longer.be.visible.from.overriding.1",
-            RefactoringUIUtil.getDescription(method, false),
-            RefactoringUIUtil.getDescription(overridingMethod, true)));
         }
-        else if (!hasCompatibleVisibility(overridingMethod, false)) {
-          conflicts.putValue(overridingMethod, IntentionPowerPackBundle.message(
-            "0.will.have.incompatible.access.privileges.with.overriding.1",
-            RefactoringUIUtil.getDescription(method, false),
-            RefactoringUIUtil.getDescription(overridingMethod, true)));
+        final PsiElement context = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiField.class, PsiClass.class, PsiFile.class);
+        if (context == null) {
+          return true;
         }
-        return false;
+        conflicts.putValue(element, RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
+                                                              RefactoringUIUtil.getDescription(member, false),
+                                                              PsiBundle.visibilityPresentation(getModifier()),
+                                                              RefactoringUIUtil.getDescription(context, true)));
+        return true;
       });
+    }, RefactoringBundle.message("detecting.possible.conflicts"), true, member.getProject())) {
+      return null;
     }
-    final PsiModifierList modifierListCopy = (PsiModifierList)modifierList.copy();
-    modifierListCopy.setModifierProperty(getModifier(), true);
-    final Query<PsiReference> search = ReferencesSearch.search(member, member.getUseScope());
-    search.forEach(reference -> {
-      final PsiElement element = reference.getElement();
-      if (JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierListCopy, element, null, null)) {
-        return true;
-      }
-      final PsiElement context = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiField.class, PsiClass.class, PsiFile.class);
-      if (context == null) {
-        return true;
-      }
-      conflicts.putValue(element, RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
-                                                            RefactoringUIUtil.getDescription(member, false),
-                                                            PsiBundle.visibilityPresentation(getModifier()),
-                                                            RefactoringUIUtil.getDescription(context, true)));
-      return true;
-    });
     return conflicts;
-  }
-
-  private boolean hasCompatibleVisibility(PsiMethod method, boolean isSuper) {
-    if (getModifier().equals(PsiModifier.PRIVATE)) {
-      return false;
-    }
-    else if (getModifier().equals(PsiModifier.PACKAGE_LOCAL)) {
-      if (isSuper) {
-        return !(method.hasModifierProperty(PsiModifier.PUBLIC) || method.hasModifierProperty(PsiModifier.PROTECTED));
-      }
-      return true;
-    }
-    else if (getModifier().equals(PsiModifier.PROTECTED)) {
-      if (isSuper) {
-        return !method.hasModifierProperty(PsiModifier.PUBLIC);
-      }
-      else {
-        return method.hasModifierProperty(PsiModifier.PROTECTED) || method.hasModifierProperty(PsiModifier.PUBLIC);
-      }
-    }
-    else if (getModifier().equals(PsiModifier.PUBLIC)) {
-      if (!isSuper) {
-        return method.hasModifierProperty(PsiModifier.PUBLIC);
-      }
-      return true;
-    }
-    throw new AssertionError();
-  }
-
-  private boolean isVisibleFromOverridingMethod(PsiMethod method, PsiMethod overridingMethod) {
-    final PsiModifierList modifierListCopy = (PsiModifierList)method.getModifierList().copy();
-    modifierListCopy.setModifierProperty(getModifier(), true);
-    return JavaResolveUtil.isAccessible(method, method.getContainingClass(), modifierListCopy, overridingMethod, null, null);
   }
 
   @VisibilityConstant

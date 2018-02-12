@@ -49,7 +49,7 @@ public class CompilerEncodingConfiguration {
   public CompilerEncodingConfiguration(JpsModel jpsModel, BuildRootIndex index) {
     myJpsModel = jpsModel;
     JpsEncodingProjectConfiguration configuration = JpsEncodingConfigurationService.getInstance().getEncodingConfiguration(jpsModel.getProject());
-    myUrlToCharset = configuration != null ? configuration.getUrlToEncoding() : Collections.<String, String>emptyMap();
+    myUrlToCharset = configuration != null ? configuration.getUrlToEncoding() : Collections.emptyMap();
     myProjectCharset = JpsEncodingConfigurationService.getInstance().getProjectEncoding(jpsModel);
     myRootsIndex = index;
   }

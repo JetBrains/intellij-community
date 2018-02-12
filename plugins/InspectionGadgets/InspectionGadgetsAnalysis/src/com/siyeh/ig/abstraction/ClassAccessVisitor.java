@@ -15,10 +15,8 @@
  */
 package com.siyeh.ig.abstraction;
 
-import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.LibraryUtil;
@@ -36,6 +34,12 @@ class ClassAccessVisitor extends JavaRecursiveElementWalkingVisitor {
 
   ClassAccessVisitor(PsiClass currentClass) {
     this.currentClass = currentClass;
+  }
+
+  @Override
+  public void visitElement(PsiElement element) {
+    ProgressManager.checkCanceled();
+    super.visitElement(element);
   }
 
   @Override
@@ -68,6 +72,7 @@ class ClassAccessVisitor extends JavaRecursiveElementWalkingVisitor {
     }
     PsiClass lexicallyEnclosingClass = currentClass;
     while (lexicallyEnclosingClass != null) {
+      ProgressManager.checkCanceled();
       if (lexicallyEnclosingClass.isInheritor(calledClass, true)) {
         return;
       }

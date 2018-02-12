@@ -16,23 +16,22 @@
 package com.intellij.openapi.options.colors;
 
 import com.intellij.openapi.editor.colors.ColorKey;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Describes a color which can be configured in a custom colors and fonts page.
  *
  * @see ColorSettingsPage#getColorDescriptors()
  */
-public final class ColorDescriptor {
+public final class ColorDescriptor extends AbstractKeyDescriptor<ColorKey> {
   public static final ColorDescriptor[] EMPTY_ARRAY = new ColorDescriptor[0];
 
-  public static enum Kind {
+  public enum Kind {
     BACKGROUND,
     FOREGROUND
   }
 
   private final Kind myKind;
-  private final String myDisplayName;
-  private final ColorKey myKey;
 
   /**
    * Creates a color descriptor with the specified name and color key.
@@ -41,10 +40,9 @@ public final class ColorDescriptor {
    * @param key         the color key for which the color is specified.
    * @param kind        the type of color corresponding to the color key (foreground or background).
    */
-  public ColorDescriptor(String displayName, ColorKey key, Kind kind) {
+  public ColorDescriptor(@NotNull String displayName, @NotNull ColorKey key, @NotNull Kind kind) {
+    super(displayName, key);
     myKind = kind;
-    myDisplayName = displayName;
-    myKey = key;
   }
 
   /**
@@ -52,25 +50,15 @@ public final class ColorDescriptor {
    *
    * @return the type of color.
    */
+  @NotNull
   public Kind getKind() {
     return myKind;
   }
 
-  /**
-   * Returns the name of the color shown in the colors list.
-   *
-   * @return the name of the color.
-   */
-  public String getDisplayName() {
-    return myDisplayName;
-  }
-
-  /**
-   * Returns the color key for which the color is specified.
-   *
-   * @return the color key.
-   */
+  @SuppressWarnings("RedundantMethodOverride") // binary compatibility
+  @NotNull
+  @Override
   public ColorKey getKey() {
-    return myKey;
+    return super.getKey();
   }
 }

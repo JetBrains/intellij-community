@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -21,7 +7,6 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,9 +18,10 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -72,6 +58,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.vcs.ViewUpdateInfoNotification;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
@@ -81,9 +68,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @State(name = "ProjectLevelVcsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements ProjectComponent, PersistentStateComponent<Element> {
+public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements ProjectComponent, PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl");
   @NonNls private static final String SETTINGS_EDITED_MANUALLY = "settingsEditedManually";
 
@@ -119,7 +107,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private boolean myHaveLegacyVcsConfiguration;
   private final DefaultVcsRootPolicy myDefaultVcsRootPolicy;
 
-  private volatile int myBackgroundOperationCounter;
+  @NotNull private final AtomicInteger myBackgroundOperationCounter = new AtomicInteger();
 
   private final Set<ActionKey> myBackgroundRunningTasks = ContainerUtil.newHashSet();
 
@@ -145,7 +133,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
     myInitialization = new VcsInitialization(myProject);
     Disposer.register(project, myInitialization); // wait for the thread spawned in VcsInitialization to terminate
-    projectManager.addProjectManagerListener(project, new ProjectManagerAdapter() {
+    projectManager.addProjectManagerListener(project, new ProjectManagerListener() {
       @Override
       public void projectClosing(Project project) {
         Disposer.dispose(myInitialization);
@@ -220,7 +208,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     releaseConsole();
     myMappings.disposeMe();
     Disposer.dispose(myAnnotationLocalChangesListener);
@@ -284,7 +272,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   @Nullable
-  public AbstractVcs getVcsFor(final FilePath file) {
+  public AbstractVcs getVcsFor(@NotNull FilePath file) {
     final VirtualFile vFile = ChangesUtil.findValidParentAccurately(file);
     return ReadAction.compute(() -> {
       if (!ApplicationManager.getApplication().isUnitTestMode() && !myProject.isInitialized()) return null;
@@ -313,11 +301,11 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   @Nullable
-  public VcsRoot getVcsRootObjectFor(final VirtualFile file) {
+  public VcsRoot getVcsRootObjectFor(@Nullable VirtualFile file) {
+    if (file == null) return null;
     final VcsDirectoryMapping mapping = myMappings.getMappingFor(file);
-    if (mapping == null) {
-      return null;
-    }
+    if (mapping == null) return null;
+
     final String directory = mapping.getDirectory();
     final AbstractVcs vcs = findVcsByName(mapping.getVcs());
     if (directory.isEmpty()) {
@@ -328,25 +316,19 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   @Nullable
-  public VirtualFile getVcsRootFor(final FilePath file) {
-    if (myProject.isDisposed()) return null;
+  public VirtualFile getVcsRootFor(@Nullable FilePath file) {
+    if (file == null || myProject.isDisposed()) return null;
+
     VirtualFile vFile = ChangesUtil.findValidParentAccurately(file);
-    if (vFile != null) {
-      return getVcsRootFor(vFile);
-    }
-    return null;
+    return vFile != null ? getVcsRootFor(vFile) : null;
   }
 
   @Override
-  public VcsRoot getVcsRootObjectFor(final FilePath file) {
-    if (myProject.isDisposed()) {
-      return null;
-    }
+  public VcsRoot getVcsRootObjectFor(@Nullable FilePath file) {
+    if (file == null || myProject.isDisposed()) return null;
+
     VirtualFile vFile = ChangesUtil.findValidParentAccurately(file);
-    if (vFile != null) {
-      return getVcsRootObjectFor(vFile);
-    }
-    return null;
+    return vFile != null ? getVcsRootObjectFor(vFile) : null;
   }
 
   public void unregisterVcs(@NotNull AbstractVcs vcs) {
@@ -358,6 +340,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     AllVcses.getInstance(myProject).unregisterManually(vcs);
   }
 
+  @Nullable
   @Override
   public ContentManager getContentManager() {
     if (myContentManager == null) {
@@ -433,7 +416,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       panel.add(myConsole.getComponent(), BorderLayout.CENTER);
 
       ActionToolbar toolbar = ActionManager.getInstance()
-        .createActionToolbar(ActionPlaces.UNKNOWN, new DefaultActionGroup(myConsole.createConsoleActions()), false);
+        .createActionToolbar("VcsManager", new DefaultActionGroup(myConsole.createConsoleActions()), false);
       panel.add(toolbar.getComponent(), BorderLayout.WEST);
 
       content = ContentFactory.SERVICE.getInstance().createContent(panel, displayName, true);
@@ -481,11 +464,15 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return myOptionsAndConfirmations.getOrCreateCustomOption(vcsActionName, vcs);
   }
 
+  @CalledInAwt
   @Override
   public void showProjectOperationInfo(final UpdatedFiles updatedFiles, String displayActionName) {
-    showUpdateProjectInfo(updatedFiles, displayActionName, ActionInfo.STATUS, false);
+    UpdateInfoTree tree = showUpdateProjectInfo(updatedFiles, displayActionName, ActionInfo.STATUS, false);
+    if (tree != null) ViewUpdateInfoNotification.focusUpdateInfoTree(myProject, tree);
   }
 
+  @CalledInAwt
+  @Nullable
   @Override
   public UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles, String displayActionName, ActionInfo actionInfo, boolean canceled) {
     if (!myProject.isOpen() || myProject.isDisposed()) return null;
@@ -494,8 +481,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       return null;  // content manager is made null during dispose; flag is set later
     }
     final UpdateInfoTree updateInfoTree = new UpdateInfoTree(contentManager, myProject, updatedFiles, displayActionName, actionInfo);
-    ContentUtilEx.addTabbedContent(contentManager, updateInfoTree, "Update Info", DateFormatUtil.formatDateTime(System.currentTimeMillis()), true, updateInfoTree);
-    ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS).activate(null);
+    ContentUtilEx.addTabbedContent(contentManager, updateInfoTree, "Update Info", DateFormatUtil.formatDateTime(System.currentTimeMillis()), false, updateInfoTree);
     updateInfoTree.expandRootChildren();
     return updateInfoTree;
   }
@@ -578,7 +564,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   @Override
-  public void loadState(Element state) {
+  public void loadState(@NotNull Element state) {
     mySerialization.readExternalUtil(state, myOptionsAndConfirmations);
     final Attribute attribute = state.getAttribute(SETTINGS_EDITED_MANUALLY);
     if (attribute != null) {
@@ -631,20 +617,20 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public void startBackgroundVcsOperation() {
-    myBackgroundOperationCounter++;
+    myBackgroundOperationCounter.incrementAndGet();
   }
 
   @Override
   public void stopBackgroundVcsOperation() {
     // in fact, the condition is "should not be called under ApplicationManager.invokeLater() and similar"
     assert !ApplicationManager.getApplication().isDispatchThread() || ApplicationManager.getApplication().isUnitTestMode();
-    LOG.assertTrue(myBackgroundOperationCounter > 0, "myBackgroundOperationCounter > 0");
-    myBackgroundOperationCounter--;
+    int counter = myBackgroundOperationCounter.getAndDecrement();
+    LOG.assertTrue(counter > 0, "myBackgroundOperationCounter was " + counter + " while should have been > 0");
   }
 
   @Override
   public boolean isBackgroundVcsOperationRunning() {
-    return myBackgroundOperationCounter > 0;
+    return myBackgroundOperationCounter.get() > 0;
   }
 
   @Override
@@ -684,7 +670,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         vcsRoots.add(new VcsRoot(vcs, root));
       }
     }
-    return vcsRoots.toArray(new VcsRoot[vcsRoots.size()]);
+    return vcsRoots.toArray(new VcsRoot[0]);
   }
 
   @Override
@@ -694,7 +680,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public void notifyDirectoryMappingChanged() {
-    myProject.getMessageBus().syncPublisher(VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
+    BackgroundTaskUtil.syncPublisher(myProject, VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
   }
 
   void readDirectoryMappings(final Element element) {
@@ -845,13 +831,17 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   @Override
-  public boolean isIgnored(VirtualFile vf) {
-    if (Registry.is("ide.hide.excluded.files")) {
-      return myExcludedIndex.isExcludedFile(vf);
-    }
-    else {
-      return myExcludedIndex.isUnderIgnored(vf);
-    }
+  public boolean isIgnored(@NotNull VirtualFile vf) {
+    return ReadAction.compute(() -> {
+      if (myProject.isDisposed()) return false;
+
+      if (Registry.is("ide.hide.excluded.files")) {
+        return myExcludedIndex.isExcludedFile(vf);
+      }
+      else {
+        return myExcludedIndex.isUnderIgnored(vf);
+      }
+    });
   }
 
   private boolean isInDirectoryBasedRoot(@Nullable VirtualFile file) {
@@ -878,7 +868,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @TestOnly
   public void waitForInitialized() {
-    myInitialization.waitForCompletion();
+    myInitialization.waitFinished();
   }
 
   private static class ActionKey {

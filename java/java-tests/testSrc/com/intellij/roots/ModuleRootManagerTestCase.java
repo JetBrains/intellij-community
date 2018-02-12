@@ -15,17 +15,16 @@
  */
 package com.intellij.roots;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.ModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -92,20 +91,14 @@ public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
   }
 
   protected VirtualFile getJDomJar() {
-    return getJarFromLibDir("jdom.jar");
+    return IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("JDOM");
   }
 
   protected VirtualFile getJDomSources() {
-    return getJarFromLibDir("src/jdom.zip");
-  }
-
-
-  protected VirtualFile getJarFromLibDir(final String name) {
-    final VirtualFile file = getVirtualFile(PathManager.findFileInLibDirectory(name));
-    assertNotNull(name + " not found", file);
-    final VirtualFile jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(file);
-    assertNotNull(name + " is not jar", jarFile);
-    return jarFile;
+    String url = assertOneElement(IntelliJProjectConfiguration.getProjectLibrary("JDOM").getSourcesUrls());
+    VirtualFile jar = VirtualFileManager.getInstance().refreshAndFindFileByUrl(url);
+    assertNotNull(jar);
+    return jar;
   }
 
   protected VirtualFile addSourceRoot(Module module, boolean testSource) throws IOException {
@@ -121,20 +114,17 @@ public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
   }
 
   protected Library createLibrary(final String name, final @Nullable VirtualFile classesRoot, final @Nullable VirtualFile sourceRoot) {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<Library>() {
-      @Override
-      public Library compute() {
-        final Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).createLibrary(name);
-        final Library.ModifiableModel model = library.getModifiableModel();
-        if (classesRoot != null) {
-          model.addRoot(classesRoot, OrderRootType.CLASSES);
-        }
-        if (sourceRoot != null) {
-          model.addRoot(sourceRoot, OrderRootType.SOURCES);
-        }
-        model.commit();
-        return library;
+    return WriteAction.compute(() -> {
+      final Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).createLibrary(name);
+      final Library.ModifiableModel model = library.getModifiableModel();
+      if (classesRoot != null) {
+        model.addRoot(classesRoot, OrderRootType.CLASSES);
       }
+      if (sourceRoot != null) {
+        model.addRoot(sourceRoot, OrderRootType.SOURCES);
+      }
+      model.commit();
+      return library;
     });
   }
 
@@ -147,6 +137,6 @@ public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
   }
 
   protected VirtualFile getAsmJar() {
-    return getJarFromLibDir("asm-all.jar");
+    return IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("ASM");
   }
 }

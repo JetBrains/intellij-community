@@ -64,11 +64,11 @@ class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
     throw UnsupportedOperationException()
   }
 
-  override fun showFileHistory(historyProvider: VcsHistoryProvider, path: FilePath, vcs: AbstractVcs<*>, repositoryPath: String?) {
+  override fun showFileHistory(historyProvider: VcsHistoryProvider, path: FilePath, vcs: AbstractVcs<*>) {
     throw UnsupportedOperationException()
   }
 
-  override fun showFileHistory(historyProvider: VcsHistoryProvider, annotationProvider: AnnotationProvider?, path: FilePath, repositoryPath: String?, vcs: AbstractVcs<*>) {
+  override fun showFileHistory(historyProvider: VcsHistoryProvider, annotationProvider: AnnotationProvider?, path: FilePath, vcs: AbstractVcs<*>) {
     throw UnsupportedOperationException()
   }
 
@@ -77,10 +77,6 @@ class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
   }
 
   override fun showErrors(exceptionGroups: Map<HotfixData, List<VcsException>>, tabDisplayName: String) {
-    throw UnsupportedOperationException()
-  }
-
-  override fun showDifferences(cvsVersionOn: VcsFileRevision, cvsVersionOn1: VcsFileRevision, file: File) {
     throw UnsupportedOperationException()
   }
 
@@ -97,10 +93,6 @@ class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
   }
 
   override fun showWhatDiffersBrowser(parent: Component?, changes: Collection<Change>, title: String) {
-    throw UnsupportedOperationException()
-  }
-
-  override fun <T : CommittedChangeList, U : ChangeBrowserSettings> chooseCommittedChangeList(provider: CommittedChangesProvider<T, U>, location: RepositoryLocation): T? {
     throw UnsupportedOperationException()
   }
 

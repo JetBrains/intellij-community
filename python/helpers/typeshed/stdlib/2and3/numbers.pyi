@@ -5,7 +5,7 @@
 # Note: these stubs are incomplete. The more complex type
 # signatures are currently omitted.
 
-from typing import Any, Optional, TypeVar
+from typing import Any, Optional, TypeVar, SupportsFloat
 from abc import ABCMeta, abstractmethod
 import sys
 
@@ -59,7 +59,7 @@ class Complex(Number):
     if sys.version_info < (3, 0):
         def __ne__(self, other: object) -> bool: ...
 
-class Real(Complex):
+class Real(Complex, SupportsFloat):
     @abstractmethod
     def __float__(self) -> float: ...
     @abstractmethod
@@ -70,7 +70,7 @@ class Real(Complex):
         @abstractmethod
         def __ceil__(self) -> int: ...
         @abstractmethod
-        def __round__(self, ndigits: Optional[int] = None): ...
+        def __round__(self, ndigits: Optional[int] = ...): ...
     def __divmod__(self, other): ...
     def __rdivmod__(self, other): ...
     @abstractmethod

@@ -116,7 +116,7 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
   @Override
   @NotNull
   public GrAnnotation[] getAnnotations() {
-    return myAnnotations.toArray(new GrAnnotation[myAnnotations.size()]);
+    return myAnnotations.toArray(GrAnnotation.EMPTY_ARRAY);
   }
 
   @Override

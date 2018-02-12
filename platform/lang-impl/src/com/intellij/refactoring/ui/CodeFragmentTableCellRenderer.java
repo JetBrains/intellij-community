@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -73,7 +73,7 @@ public class CodeFragmentTableCellRenderer implements TableCellRenderer {
     }
 
     editorTextField.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-    editorTextField.setBorder((hasFocus || isSelected) ? BorderFactory.createLineBorder(table.getSelectionBackground()) : IdeBorderFactory.createEmptyBorder(1));
+    editorTextField.setBorder((hasFocus || isSelected) ? BorderFactory.createLineBorder(table.getSelectionBackground()) : JBUI.Borders.empty(1));
     if (isSelected && document != null) {
       final Color bg = table.getSelectionBackground();
       final Color fg = table.getSelectionForeground();

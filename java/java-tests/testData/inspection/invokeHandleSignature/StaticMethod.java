@@ -9,10 +9,10 @@ class Main {
     l.findStatic(Test.class, "method3", MethodType.methodType(String.class, String.class, String[].class));
 
     l.findStatic(Test.class, "method1", <warning descr="Cannot resolve method 'Test method1()'">MethodType.methodType(Test.class)</warning>);
-    l.findStatic(Test.class, "method2", <warning descr="Cannot resolve method 'int method2(java.lang.String)'">MethodType.methodType(int.class, String.class)</warning>);
-    l.findStatic(Test.class, "method3", <warning descr="Cannot resolve method 'java.lang.String method3()'">MethodType.methodType(String.class)</warning>);
+    l.findStatic(Test.class, "method2", <warning descr="Cannot resolve method 'int method2(String)'">MethodType.methodType(int.class, String.class)</warning>);
+    l.findStatic(Test.class, "method3", <warning descr="Cannot resolve method 'String method3()'">MethodType.methodType(String.class)</warning>);
 
-    l.<warning descr="Method 'method1' is not static">findVirtual</warning>(Test.class, "method1", MethodType.methodType(void.class));
+    l.<warning descr="Method 'method1' is static">findVirtual</warning>(Test.class, "method1", MethodType.methodType(void.class));
     l.findStatic(Test.class, <warning descr="Cannot resolve method 'doesntExist'">"doesntExist"</warning>, MethodType.methodType(String.class));
   }
 }

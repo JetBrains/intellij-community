@@ -1,38 +1,32 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.actions.ThreadDumpAction;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.JavaExecutionStack;
 import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
+import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.unscramble.ThreadState;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.sun.jdi.ReferenceType;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -42,6 +36,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 /**
  * @author lex
@@ -110,8 +105,20 @@ class ReloadClassesWorker {
     final Project project = debugProcess.getProject();
     final BreakpointManager breakpointManager = (DebuggerManagerEx.getInstanceEx(project)).getBreakpointManager();
     breakpointManager.disableBreakpoints(debugProcess);
+    StackCapturingLineBreakpoint.deleteAll(debugProcess);
 
     //virtualMachineProxy.suspend();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Threads before hotswap:\n",
+                StreamEx.of(ThreadDumpAction.buildThreadStates(virtualMachineProxy)).map(ThreadState::getStackTrace).joining("\n"));
+    }
+
+    if (Registry.is("debugger.resume.yourkit.threads")) {
+      virtualMachineProxy.allThreads().stream()
+        .filter(ThreadReferenceProxyImpl::isResumeOnHotSwap)
+        .filter(ThreadReferenceProxyImpl::isSuspended)
+        .forEach(t -> IntStream.range(0, t.getSuspendCount()).forEach(i -> t.resume()));
+    }
 
     try {
       RedefineProcessor redefineProcessor = new RedefineProcessor(virtualMachineProxy);
@@ -212,6 +219,7 @@ class ReloadClassesWorker {
     if (!project.isDisposed()) {
       try {
         breakpointManager.enableBreakpoints(debugProcess);
+        StackCapturingLineBreakpoint.createAll(debugProcess);
       }
       catch (Exception e) {
         processException(e);

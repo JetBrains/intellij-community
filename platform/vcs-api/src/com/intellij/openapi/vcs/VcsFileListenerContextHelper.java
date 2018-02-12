@@ -21,12 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 10/7/11
- * Time: 6:40 PM
- */
 public class VcsFileListenerContextHelper {
   // to ignore by listeners
   private final Set<FilePath> myDeletedContext;

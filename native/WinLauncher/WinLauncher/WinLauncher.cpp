@@ -155,7 +155,7 @@ bool FindJVMInSettings() {
   if (LoadString(hInst, IDS_VM_OPTIONS_PATH, buffer, _MAX_PATH)) {
     ExpandEnvironmentStrings(buffer, copy, _MAX_PATH - 1);
     std::wstring path(copy);
-    path += L"\\config" + module.substr(module.find_last_of('\\')) + L".jdk";
+    path += module.substr(module.find_last_of('\\')) + L".jdk";
     FILE *f = _tfopen(path.c_str(), _T("rt"));
     if (!f) return false;
 
@@ -267,6 +267,7 @@ bool LocateJVM()
 
   std::vector<std::string> jrePaths;
   if(need64BitJRE) jrePaths.push_back(GetAdjacentDir("jre64"));
+  jrePaths.push_back(GetAdjacentDir("jre32"));
   jrePaths.push_back(GetAdjacentDir("jre"));
   for(std::vector<std::string>::iterator it = jrePaths.begin(); it != jrePaths.end(); ++it) {
     if (FindValidJVM((*it).c_str()) && Is64BitJRE(jvmPath) == need64BitJRE)
@@ -419,13 +420,6 @@ bool AddClassPathOptions(std::vector<std::string>& vmOptionLines)
   if (classPath.size() == 0) return false;
   vmOptionLines.push_back(std::string("-Djava.class.path=") + classPath);
 
-  std::string bootClassPathLibs = LoadStdString(IDS_BOOTCLASSPATH_LIBS);
-  std::string bootClassPath = CollectLibJars(bootClassPathLibs);
-  if (bootClassPath.size() > 0)
-  {
-    vmOptionLines.push_back(std::string("-Xbootclasspath/a:") + bootClassPath);
-  }
-
   return true;
 }
 
@@ -507,6 +501,12 @@ bool LoadVMOptions()
     }
   }
 
+  std::wstring::size_type pos = module.find_last_of(L"\\bin\\", -1);
+  if (pos > 0)
+  {
+      files.push_back(module.substr(0, pos - 5) + L".vmoptions");
+  }
+
   if (LoadString(hInst, IDS_VM_OPTIONS_PATH, buffer, _MAX_PATH))
   {
     ExpandEnvironmentStrings(buffer, copy, _MAX_PATH - 1);
@@ -515,6 +515,7 @@ bool LoadVMOptions()
   }
 
   files.push_back(module + L".vmoptions");
+
   std::wstring used;
   std::vector<std::string> vmOptionLines;
 

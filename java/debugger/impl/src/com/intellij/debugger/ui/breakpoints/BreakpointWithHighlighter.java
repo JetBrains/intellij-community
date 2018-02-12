@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.debugger.ui.breakpoints;
 
@@ -23,19 +11,19 @@ import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -46,6 +34,7 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xml.CommonXmlStrings;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
+import com.sun.jdi.request.BreakpointRequest;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,11 +42,6 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperti
 
 import javax.swing.*;
 
-/**
- * User: lex
- * Date: Sep 2, 2003
- * Time: 3:22:55 PM
- */
 public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperties> extends Breakpoint<P> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter");
 
@@ -130,7 +114,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     return this;
   }
 
-  private void updateCaches(DebugProcessImpl debugProcess) {
+  private void updateCaches(@Nullable DebugProcessImpl debugProcess) {
     myIcon = calcIcon(debugProcess);
     myClassName = JVMNameUtil.getSourcePositionClassDisplayName(debugProcess, getSourcePosition());
     myPackageName = JVMNameUtil.getSourcePositionPackageDisplayName(debugProcess, getSourcePosition());
@@ -184,12 +168,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   }
 
   protected static boolean isPositionValid(@Nullable final XSourcePosition sourcePosition) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return sourcePosition != null && sourcePosition.getFile().isValid();
-      }
-    }).booleanValue();
+    return ReadAction.compute(() -> sourcePosition != null && sourcePosition.getFile().isValid()).booleanValue();
   }
 
   @Nullable
@@ -235,37 +214,23 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   @Override
   public void reload() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    XSourcePosition position = myXBreakpoint.getSourcePosition();
-    PsiFile psiFile = getPsiFile();
-    if (position != null && psiFile != null) {
-      mySourcePosition = SourcePosition.createFromLine(psiFile, position.getLine());
-      reload(psiFile);
-    }
-    else {
-      mySourcePosition = null;
+    mySourcePosition = DebuggerUtilsEx.toSourcePosition(myXBreakpoint.getSourcePosition(), myProject);
+    if (mySourcePosition != null) {
+      reload(mySourcePosition.getFile());
     }
   }
 
   @Nullable
-  public PsiFile getPsiFile() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    XSourcePosition position = myXBreakpoint.getSourcePosition();
-    if (position != null) {
-      VirtualFile file = position.getFile();
-      if (file.isValid()) {
-        return PsiManager.getInstance(myProject).findFile(file);
-      }
-    }
-    return null;
-  }
-
-  static void createLocationBreakpointRequest(@NotNull FilteredRequestor requestor,
-                                              @Nullable Location location,
-                                              @NotNull DebugProcessImpl debugProcess) {
+  static BreakpointRequest createLocationBreakpointRequest(@NotNull FilteredRequestor requestor,
+                                                           @Nullable Location location,
+                                                           @NotNull DebugProcessImpl debugProcess) {
     if (location != null) {
       RequestManagerImpl requestsManager = debugProcess.getRequestsManager();
-      requestsManager.enableRequest(requestsManager.createBreakpointRequest(requestor, location));
+      BreakpointRequest request = requestsManager.createBreakpointRequest(requestor, location);
+      requestsManager.enableRequest(request);
+      return request;
     }
+    return null;
   }
 
   @Override
@@ -362,13 +327,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   }
 
   protected static PsiClass getPsiClassAt(@Nullable final SourcePosition sourcePosition) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-      @Nullable
-      @Override
-      public PsiClass compute() {
-        return JVMNameUtil.getClassAt(sourcePosition);
-      }
-    });
+    return ReadAction.compute(() -> JVMNameUtil.getClassAt(sourcePosition));
   }
 
   @Override
@@ -384,7 +343,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
 
   @Nullable
   public Document getDocument() {
-    PsiFile file = getPsiFile();
+    PsiFile file = DebuggerUtilsEx.getPsiFile(myXBreakpoint.getSourcePosition(), myProject);
     if (file != null) {
       return PsiDocumentManager.getInstance(myProject).getDocument(file);
     }
@@ -421,13 +380,8 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   }
 
   public String toString() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        return CommonXmlStrings.HTML_START + CommonXmlStrings.BODY_START
-               + getDescription()
-               + CommonXmlStrings.BODY_END + CommonXmlStrings.HTML_END;
-      }
-    });
+    return ReadAction.compute(() -> CommonXmlStrings.HTML_START + CommonXmlStrings.BODY_START
+                                    + getDescription()
+                                    + CommonXmlStrings.BODY_END + CommonXmlStrings.HTML_END);
   }
 }

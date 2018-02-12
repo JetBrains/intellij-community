@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 07-Aug-2008
- */
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.util.UserDataHolderBase;

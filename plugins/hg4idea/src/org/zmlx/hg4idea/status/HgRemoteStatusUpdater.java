@@ -19,6 +19,7 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -69,24 +70,20 @@ public class HgRemoteStatusUpdater implements HgUpdater {
       return;
     }
     myUpdateStarted.set(true);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        new Task.Backgroundable(project, getProgressTitle(), true) {
-          public void run(@NotNull ProgressIndicator indicator) {
-            if (project.isDisposed()) return;
-            final VirtualFile[] roots =
-              root != null ? new VirtualFile[]{root} : ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(myVcs);
-            updateChangesStatusSynchronously(project, roots, myIncomingStatus, true);
-            updateChangesStatusSynchronously(project, roots, myOutgoingStatus, false);
+    ApplicationManager.getApplication().invokeLater(() -> new Task.Backgroundable(project, getProgressTitle(), true) {
+      public void run(@NotNull ProgressIndicator indicator) {
+        if (project.isDisposed()) return;
+        final VirtualFile[] roots =
+          root != null ? new VirtualFile[]{root} : ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(myVcs);
+        updateChangesStatusSynchronously(project, roots, myIncomingStatus, true);
+        updateChangesStatusSynchronously(project, roots, myOutgoingStatus, false);
 
-            project.getMessageBus().syncPublisher(HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).update();
+        BackgroundTaskUtil.syncPublisher(project, HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).update();
 
-            indicator.stop();
-            myUpdateStarted.set(false);
-          }
-        }.queue();
+        indicator.stop();
+        myUpdateStarted.set(false);
       }
-    });
+    }.queue());
   }
 
 
@@ -95,11 +92,7 @@ public class HgRemoteStatusUpdater implements HgUpdater {
     busConnection.subscribe(HgVcs.REMOTE_TOPIC, this);
 
     int checkIntervalSeconds = HgGlobalSettings.getIncomingCheckIntervalSeconds();
-    changesUpdaterScheduledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
-      public void run() {
-        update(myVcs.getProject());
-      }
-    }, 5, checkIntervalSeconds, TimeUnit.SECONDS);
+    changesUpdaterScheduledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> update(myVcs.getProject()), 5, checkIntervalSeconds, TimeUnit.SECONDS);
   }
 
   public void deactivate() {

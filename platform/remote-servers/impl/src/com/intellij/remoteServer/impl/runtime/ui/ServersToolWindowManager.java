@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.remoteServer.impl.runtime.ui;
 
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -23,23 +22,22 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServerListener;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public abstract class ServersToolWindowManager extends AbstractProjectComponent {
-
+public abstract class ServersToolWindowManager {
+  @NotNull private final Project myProject;
   private final String myWindowId;
   private final Icon myIcon;
 
-  public ServersToolWindowManager(final Project project, String windowId, Icon icon) {
-    super(project);
+  public ServersToolWindowManager(@NotNull Project project, String windowId, Icon icon) {
+    myProject = project;
     myWindowId = windowId;
     myIcon = icon;
-  }
 
-  public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(() -> setupListeners());
+    StartupManager.getInstance(project).registerPostStartupActivity(() -> setupListeners());
   }
 
   public void setupListeners() {
@@ -67,29 +65,53 @@ public abstract class ServersToolWindowManager extends AbstractProjectComponent 
 
       if (toolWindow == null) {
         if (available) {
-          createToolWindow(myProject, toolWindowManager).show(null);
+          createToolWindow(myProject, toolWindowManager, false).show(null);
         }
         return;
       }
 
-      boolean doShow = !toolWindow.isAvailable() && available;
-      if (toolWindow.isAvailable() && !available) {
-        toolWindow.hide(null);
-      }
-      toolWindow.setAvailable(available, null);
-      if (showIfAvailable && doShow) {
-        toolWindow.show(null);
-      }
+      doUpdateWindowAvailable(toolWindow, showIfAvailable, available);
     });
   }
 
-  private ToolWindow createToolWindow(Project project, ToolWindowManager toolWindowManager) {
+  protected void doUpdateWindowAvailable(@NotNull ToolWindow toolWindow, boolean showIfAvailable, boolean available) {
+    boolean doShow = !toolWindow.isAvailable() && available;
+    if (toolWindow.isAvailable() && !available) {
+      toolWindow.hide(null);
+    }
+    toolWindow.setAvailable(available, null);
+    if (showIfAvailable && doShow) {
+      toolWindow.show(null);
+    }
+  }
+
+  /**
+   * @deprecated use {@link #createToolWindow(Project, ToolWindowManager, boolean)}
+   */
+  @Deprecated
+  protected ToolWindow createToolWindow(Project project, ToolWindowManager toolWindowManager) {
+    return createToolWindow(project, toolWindowManager, false);
+  }
+
+  protected ToolWindow createToolWindow(Project project, ToolWindowManager toolWindowManager, boolean deferContentCreation) {
     ToolWindow toolWindow = toolWindowManager.registerToolWindow(myWindowId, false, ToolWindowAnchor.BOTTOM);
     toolWindow.setIcon(myIcon);
-    getFactory().createToolWindowContent(project, toolWindow);
+
+    Runnable createContent = () -> getFactory().createToolWindowContent(project, toolWindow);
+    if (deferContentCreation) {
+      UiNotifyConnector.doWhenFirstShown(toolWindow.getContentManager().getComponent(), createContent);
+    }
+    else {
+      createContent.run();
+    }
     return toolWindow;
   }
 
   @NotNull
   protected abstract ServersToolWindowFactory getFactory();
+
+  @NotNull
+  protected final Project getProject() {
+    return myProject;
+  }
 }

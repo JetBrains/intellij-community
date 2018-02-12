@@ -44,8 +44,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.ui.Gray;
-import com.intellij.xml.breadcrumbs.BreadcrumbsInfoProvider;
+import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.xml.breadcrumbs.BreadcrumbsXmlWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,7 +65,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
 
   private final PsiFile myFile;
   private final EditorEx myEditor;
-  private final BreadcrumbsInfoProvider myInfoProvider;
+  private final BreadcrumbsProvider myInfoProvider;
 
   private final List<Pair<TextRange, TextRange>> myPairsToHighlight = new ArrayList<>();
 
@@ -75,7 +74,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     myFile = file;
     myEditor = editor;
     final FileViewProvider viewProvider = file.getManager().findViewProvider(file.getVirtualFile());
-    myInfoProvider = BreadcrumbsXmlWrapper.findInfoProvider(viewProvider);
+    myInfoProvider = BreadcrumbsXmlWrapper.findInfoProvider(editor, viewProvider);
   }
 
   @Override
@@ -268,33 +267,24 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     return highlighter;
   }
 
+  static Color toLineMarkerColor(int gray, Color color) {
+    //noinspection UseJBColor
+    return color == null ? null : new Color(
+      toLineMarkerColor(gray, color.getRed()),
+      toLineMarkerColor(gray, color.getGreen()),
+      toLineMarkerColor(gray, color.getBlue()));
+  }
+
+  private static int toLineMarkerColor(int gray, int color) {
+    int value = (int)(gray * 0.6 + 0.32 * color);
+    return value < 0 ? 0 : value > 255 ? 255 : value;
+  }
 
   private static Color[] toColorsForLineMarkers(Color[] baseColors) {
     final Color[] colors = new Color[baseColors.length];
-    final Color tagBackground = Gray._239;
-    final double transparency = 0.4;
-    final double factor = 0.8;
-
     for (int i = 0; i < colors.length; i++) {
-      final Color color = baseColors[i];
-
-      if (color == null) {
-        colors[i] = null;
-        continue;
-      }
-
-      int r = (int)(color.getRed() * factor);
-      int g = (int)(color.getGreen() * factor);
-      int b = (int)(color.getBlue() * factor);
-
-      r = (int)(tagBackground.getRed() * (1 - transparency) + r * transparency);
-      g = (int)(tagBackground.getGreen() * (1 - transparency) + g * transparency);
-      b = (int)(tagBackground.getBlue() * (1 - transparency) + b * transparency);
-
-      //noinspection UseJBColor
-      colors[i] = new Color(r, g, b);
+      colors[i] = toLineMarkerColor(239, baseColors[i]);
     }
-
     return colors;
   }
 

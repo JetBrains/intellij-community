@@ -18,6 +18,19 @@ package com.intellij.openapi.util;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AtomicClearableLazyValue<T> extends ClearableLazyValue<T> {
+
+  /** @noinspection MethodOverridesStaticMethodOfSuperclass*/
+  @NotNull
+  public static <T> AtomicClearableLazyValue<T> create(final Computable<T> computable) {
+    return new AtomicClearableLazyValue<T>() {
+      @NotNull
+      @Override
+      protected T compute() {
+        return computable.compute();
+      }
+    };
+  }
+
   @NotNull
   @Override
   public final synchronized T getValue() {

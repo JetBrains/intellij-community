@@ -27,18 +27,20 @@ import com.intellij.psi.codeStyle.extractor.values.Generation;
 import com.intellij.psi.codeStyle.extractor.values.Gens;
 import com.intellij.psi.codeStyle.extractor.values.Value;
 import com.intellij.psi.codeStyle.extractor.values.ValuesExtractionResult;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public class Utils {
-  public static int CRITICAL_SYMBOL_WEIGHT = 100;
+  public static final int CRITICAL_SYMBOL_WEIGHT = 100;
 
   public static void logError(String message) {
     System.out.println(message); //TODO reasonable implementation
   }
 
+  @Contract(pure = true)
   public static int getTabSize(@Nullable CommonCodeStyleSettings.IndentOptions options) {
     return options == null ? 4 : options.TAB_SIZE;
   }
@@ -54,10 +56,13 @@ public class Utils {
       .length();
   }
 
+  @Contract(pure = true)
   public static boolean isSpace(char c) {
     return " \t\n".indexOf(c) >= 0;
   }
 
+  @SuppressWarnings("unused")
+  @Contract(pure = true)
   public static boolean isBracket(char c) {
     return "(){}[]<>".indexOf(c) >= 0;
   }
@@ -166,7 +171,7 @@ public class Utils {
       }
       final int age = generation.getAge();
       if (indicator != null) {
-        indicator.setText2(" age:" + age + "/" + generation.getParentKind());
+        indicator.setText2("Age:" + age + " Defects:" + generation.getParentKind());
         indicator.setFraction(0.5 * age / Generation.GEN_COUNT);
       }
       generation = Generation.createNextGeneration(differ, generation);
@@ -178,6 +183,7 @@ public class Utils {
   static final long RAND_MAX_32 = ((1L << 31L) - 1L);
   static final long RAND_MAX = ((1L << 15L) - 1L);
 
+  @SuppressWarnings("unused")
   public static void resetRandom() {
     rseed = 0;
   }

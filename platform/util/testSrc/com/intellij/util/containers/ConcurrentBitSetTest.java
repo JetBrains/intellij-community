@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.testFramework.Timings;
 import com.intellij.util.ConcurrencyUtil;
 import junit.framework.TestCase;
 
@@ -70,15 +71,15 @@ public class ConcurrentBitSetTest extends TestCase {
     assertEquals(bitSet, emptySet);
   }
 
-  public void testStress() throws InterruptedException {
+  public void testStress() {
     final ConcurrentBitSet bitSet = new ConcurrentBitSet();
-    int N = 100;
+    int N = Timings.adjustAccordingToMySpeed(100, true);
     final int L = 100;
 
     Thread[] threads = new Thread[N];
     for (int i=0; i<N;i++) {
       Thread thread = new Thread(() -> {
-        for (int i1 = 0; i1 < 10000; i1++) {
+        for (int i1 = 0; i1 < 10_000; i1++) {
           for (int j = 0; j < L; j++) {
             bitSet.flip(j);
           }
@@ -91,10 +92,10 @@ public class ConcurrentBitSetTest extends TestCase {
 
     assertEquals(-1, bitSet.nextSetBit(0));
   }
-  public void testStress2_Performance() throws InterruptedException {
+  public void testStress2_Performance() {
     final ConcurrentBitSet bitSet = new ConcurrentBitSet();
-    int N = 10;
-    final int L = 1000000;
+    int N = Timings.adjustAccordingToMySpeed(10, true);
+    final int L = 1_000_000;
 
     Thread[] threads = new Thread[N];
     for (int i=0; i<N;i++) {

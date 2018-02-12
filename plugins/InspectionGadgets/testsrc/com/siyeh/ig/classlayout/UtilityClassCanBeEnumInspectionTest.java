@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,29 @@
  */
 package com.siyeh.ig.classlayout;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.Nullable;
 
 public class UtilityClassCanBeEnumInspectionTest extends LightInspectionTestCase {
 
   public void testUtilityClassCanBeEnum() {
     doTest();
+  }
+
+  public void testQuickfix() {
+    myFixture.configureByText("aaa.java", "public final class <caret>Util {\n" +
+                                          "  public static void driveCar() {}\n" +
+                                          "}");
+    final IntentionAction intention = myFixture.getAvailableIntention("Convert to 'enum'");
+    assertNotNull(intention);
+    myFixture.launchAction(intention);
+    myFixture.checkResult("public enum Util {\n" +
+                          "    ;\n" +
+                          "\n" +
+                          "    public static void driveCar() {}\n" +
+                          "}");
   }
 
   @Nullable

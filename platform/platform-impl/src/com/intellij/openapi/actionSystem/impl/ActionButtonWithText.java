@@ -15,10 +15,13 @@
  */
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBInsets;
@@ -118,7 +121,14 @@ public class ActionButtonWithText extends ActionButton {
 
   @Override
   void updateToolTipText() {
-    setToolTipText(myPresentation.getDescription());
+    String description = myPresentation.getDescription();
+    if (Registry.is("ide.helptooltip.enabled")) {
+      if (StringUtil.isNotEmpty(description)) {
+        new HelpTooltip().setDescription(description).installOn(this);
+      }
+    } else {
+      setToolTipText(description);
+    }
   }
 
   public void paintComponent(Graphics g) {
@@ -133,9 +143,9 @@ public class ActionButtonWithText extends ActionButton {
                                                      SwingConstants.CENTER, horizontalTextAlignment(),
                                                      SwingConstants.CENTER, horizontalTextPosition(),
                                                      viewRect, iconRect, textRect, iconTextSpace());
-    ActionButtonLook look = ActionButtonLook.IDEA_LOOK;
+    ActionButtonLook look = ActionButtonLook.SYSTEM_LOOK;
     look.paintBackground(g, this);
-    look.paintIconAt(g, this, icon, iconRect.x, iconRect.y);
+    look.paintIconAt(g, icon, iconRect.x, iconRect.y);
     look.paintBorder(g, this);
 
     UISettings.setupAntialiasing(g);
@@ -158,10 +168,12 @@ public class ActionButtonWithText extends ActionButton {
     return UIUtil.getInactiveTextColor();
   }
 
+  @SuppressWarnings("unused")
   public void setHorizontalTextPosition(@MagicConstant(valuesFromClass = SwingConstants.class) int position) {
     myHorizontalTextPosition = position;
   }
 
+  @SuppressWarnings("unused")
   public void setHorizontalTextAlignment(@MagicConstant(flagsFromClass = SwingConstants.class) int alignment) {
     myHorizontalTextAlignment = alignment;
   }
@@ -205,5 +217,9 @@ public class ActionButtonWithText extends ActionButton {
   private String getText() {
     final String text = myPresentation.getText();
     return text != null ? text : "";
+  }
+
+  public int getMnemonic() {
+    return KeyEvent.getExtendedKeyCodeForChar(myPresentation.getMnemonic());
   }
 }

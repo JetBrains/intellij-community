@@ -33,10 +33,10 @@ public class JavaModuleBuildTargetType extends ModuleBasedBuildTargetType<Module
   public static final JavaModuleBuildTargetType TEST = new JavaModuleBuildTargetType("java-test", true);
   public static final List<JavaModuleBuildTargetType> ALL_TYPES = Arrays.asList(PRODUCTION, TEST);
 
-  private boolean myTests;
+  private final boolean myTests;
 
   private JavaModuleBuildTargetType(String typeId, boolean tests) {
-    super(typeId);
+    super(typeId, true);
     myTests = tests;
   }
 

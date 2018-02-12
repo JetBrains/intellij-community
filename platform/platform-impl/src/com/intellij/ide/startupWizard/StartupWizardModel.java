@@ -25,7 +25,6 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.ui.wizard.WizardModel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,11 +37,11 @@ import java.util.*;
 public class StartupWizardModel extends WizardModel {
   private final Set<String> myDisabledPluginIds = new HashSet<>();
   private final Map<String, SelectPluginsStep> myStepMap = new HashMap<>();
-  private Map<PluginId, SelectPluginsStep> myPluginToStepMap = new HashMap<>();
-  private MultiMap<IdeaPluginDescriptor, IdeaPluginDescriptor> myBackwardDependencies =
+  private final Map<PluginId, SelectPluginsStep> myPluginToStepMap = new HashMap<>();
+  private final MultiMap<IdeaPluginDescriptor, IdeaPluginDescriptor> myBackwardDependencies =
     new MultiMap<>();
   private SelectPluginsStep myOtherStep;
-  private IdeaPluginDescriptor[] myAllPlugins;
+  private final IdeaPluginDescriptor[] myAllPlugins;
 
   public StartupWizardModel(final List<ApplicationInfoEx.PluginChooserPage> pluginChooserPages) {
     super(ApplicationNamesInfo.getInstance().getFullProductName() + " Initial Configuration Wizard");
@@ -60,7 +59,7 @@ public class StartupWizardModel extends WizardModel {
       add(myOtherStep);
     }
 
-    myAllPlugins = PluginManager.loadDescriptors(null, ContainerUtil.<String>newArrayList());
+    myAllPlugins = PluginManager.loadDescriptors(null, ContainerUtil.newArrayList());
     for (IdeaPluginDescriptor pluginDescriptor : myAllPlugins) {
       if (pluginDescriptor.getPluginId().getIdString().equals("com.intellij")) {
         // skip 'IDEA CORE' plugin

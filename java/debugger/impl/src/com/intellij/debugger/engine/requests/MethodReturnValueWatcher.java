@@ -1,26 +1,20 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.debugger.engine.requests;
 
+import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.ui.overhead.OverheadProducer;
+import com.intellij.debugger.ui.overhead.OverheadTimings;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.ArrayUtil;
+import com.intellij.ui.SimpleColoredComponent;
 import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.MethodEntryEvent;
@@ -32,13 +26,10 @@ import com.sun.jdi.request.MethodExitRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.InvocationTargetException;
-
 /**
  * @author Eugene Zhuravlev
- *         Date: Nov 23, 2006
  */
-public class MethodReturnValueWatcher  {
+public class MethodReturnValueWatcher implements OverheadProducer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.requests.MethodReturnValueWatcher");
   private @Nullable Method myLastExecutedMethod;
   private @Nullable Value myLastMethodReturnValue;
@@ -48,14 +39,13 @@ public class MethodReturnValueWatcher  {
   private @Nullable Method myEntryMethod;
   private @Nullable MethodExitRequest myExitRequest;
 
-  private java.lang.reflect.Method myReturnValueMethod;
-  private volatile boolean myEnabled;
-  private boolean myFeatureEnabled;
+  private volatile boolean myTrackingEnabled;
   private final EventRequestManager myRequestManager;
+  private final DebugProcess myProcess;
 
-  public MethodReturnValueWatcher(EventRequestManager requestManager) {
+  public MethodReturnValueWatcher(EventRequestManager requestManager, DebugProcess process) {
     myRequestManager = requestManager;
-    myFeatureEnabled = DebuggerSettings.getInstance().WATCH_RETURN_VALUES;
+    myProcess = process;
   }
 
   private void processMethodExitEvent(MethodExitEvent event) {
@@ -69,21 +59,12 @@ public class MethodReturnValueWatcher  {
         createExitRequest().enable();
       }
       final Method method = event.method();
-      //myLastMethodReturnValue = event.returnValue();
-      try {
-        if (myReturnValueMethod == null) {
-          //noinspection HardCodedStringLiteral
-          myReturnValueMethod = MethodExitEvent.class.getDeclaredMethod("returnValue", ArrayUtil.EMPTY_CLASS_ARRAY);
-        }
-        final Value retVal = (Value)myReturnValueMethod.invoke(event);
-        
-        if (method == null || !"void".equals(method.returnTypeName())) {
-          // remember methods with non-void return types only
-          myLastExecutedMethod = method;
-          myLastMethodReturnValue = retVal;
-        }
-      }
-      catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException ignored) {
+      final Value retVal = event.returnValue();
+
+      if (method == null || !DebuggerUtilsEx.isVoid(method)) {
+        // remember methods with non-void return types only
+        myLastExecutedMethod = method;
+        myLastMethodReturnValue = retVal;
       }
     }
     catch (UnsupportedOperationException ex) {
@@ -133,17 +114,17 @@ public class MethodReturnValueWatcher  {
     return myLastMethodReturnValue;
   }
 
-  public boolean isFeatureEnabled() {
-    return myFeatureEnabled;
-  }
-
   public boolean isEnabled() {
-    return myEnabled;
+    return DebuggerSettings.getInstance().WATCH_RETURN_VALUES;
   }
 
-  public void setFeatureEnabled(final boolean featureEnabled) {
-    myFeatureEnabled = featureEnabled;
+  public void setEnabled(final boolean enabled) {
+    DebuggerSettings.getInstance().WATCH_RETURN_VALUES = enabled;
     clear();
+  }
+
+  public boolean isTrackingEnabled() {
+    return myTrackingEnabled;
   }
 
   public void enable(ThreadReference thread) {
@@ -155,8 +136,8 @@ public class MethodReturnValueWatcher  {
   }
   
   private void setTrackingEnabled(boolean trackingEnabled, final ThreadReference thread) {
-    myEnabled = trackingEnabled;
-    updateRequestState(trackingEnabled && myFeatureEnabled, thread);
+    myTrackingEnabled = trackingEnabled;
+    updateRequestState(trackingEnabled && isEnabled(), thread);
   }
 
   public void clear() {
@@ -177,6 +158,7 @@ public class MethodReturnValueWatcher  {
         myExitRequest = null;
       }
       if (enabled) {
+        OverheadTimings.add(myProcess, this, 1, null);
         clear();
         myThread = thread;
 
@@ -236,5 +218,11 @@ public class MethodReturnValueWatcher  {
       processMethodExitEvent(((MethodExitEvent)event));
     }
     return true;
+  }
+
+  @Override
+  public void customizeRenderer(SimpleColoredComponent renderer) {
+    renderer.setIcon(AllIcons.Debugger.WatchLastReturnValue);
+    renderer.append(DebuggerBundle.message("action.watches.method.return.value.enable"));
   }
 }

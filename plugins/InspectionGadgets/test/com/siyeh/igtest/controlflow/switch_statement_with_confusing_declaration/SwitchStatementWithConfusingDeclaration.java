@@ -7,7 +7,7 @@ public class SwitchStatementWithConfusingDeclaration
         switch(3)
         {
             case 2:
-                int x = 0;
+                int <warning descr="Local variable 'x' declared in one 'switch' branch and used in another">x</warning> = 0;
                 break;
             case 3:
                 x = 3;

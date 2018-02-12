@@ -1,11 +1,12 @@
 package com.siyeh.igtest.style.size_replaceable_by_is_empty;
 
 import java.util.Collection;
+import java.util.ArrayList;
 
 public class SizeReplaceableByIsEmpty {
 
   boolean foo(String s) {
-    return s.length() == 0;
+    return <warning descr="'s.length() == 0' can be replaced with 's.isEmpty()'">s.length() == 0</warning>;
   }
 
   boolean bas(StringBuilder b) {
@@ -13,7 +14,7 @@ public class SizeReplaceableByIsEmpty {
   }
 
   boolean bar(Collection c) {
-    return c.size() == 0;
+    return <warning descr="'c.size() == 0' can be replaced with 'c.isEmpty()'">c.size() == 0</warning>;
   }
 
   class String {
@@ -32,5 +33,9 @@ public class SizeReplaceableByIsEmpty {
     {
       return this.size() == 0;
     }
+  }
+
+  boolean x(ArrayList<String> list) {
+    return list.size() == 0;
   }
 }

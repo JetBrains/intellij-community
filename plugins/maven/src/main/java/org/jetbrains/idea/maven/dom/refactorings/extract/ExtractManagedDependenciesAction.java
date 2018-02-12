@@ -196,7 +196,7 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
       if (models.size() == 1 && !hasExclusions) {
         MavenDomProjectModel model = models.iterator().next();
         if (funOccurrences.fun(model).size() == 0) {
-          return new ProcessData(model, Collections.<MavenDomDependency>emptySet(), false);
+          return new ProcessData(model, Collections.emptySet(), false);
         }
       }
 
@@ -207,7 +207,7 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
         MavenDomProjectModel model = dialog.getSelectedProject();
 
         return new ProcessData(model,
-                               dialog.isReplaceAllOccurrences() ? funOccurrences.fun(model) : Collections.<MavenDomDependency>emptySet(),
+                               dialog.isReplaceAllOccurrences() ? funOccurrences.fun(model) : Collections.emptySet(),
                                dialog.isExtractExclusions());
       }
 

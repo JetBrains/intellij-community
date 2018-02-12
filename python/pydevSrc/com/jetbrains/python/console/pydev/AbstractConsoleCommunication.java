@@ -78,4 +78,13 @@ public abstract class AbstractConsoleCommunication implements ConsoleCommunicati
   public void setConsoleFile(VirtualFile consoleFile) {
     myConsoleFile = consoleFile;
   }
+
+  public void notifyInputReceived() {
+    if (waitingForInput) {
+      waitingForInput = false;
+      for (ConsoleCommunicationListener listener : communicationListeners) {
+        listener.commandExecuted(false);
+      }
+    }
+  }
 }

@@ -308,7 +308,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
   }
 
   /**
-   * Uninstalls the previously installed <code>LayoutManager</code>.
+   * Uninstalls the previously installed {@code LayoutManager}.
    *
    * @param root Root pane.
    */
@@ -321,8 +321,8 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
 
   /**
    * Installs the necessary state onto the JRootPane to render client
-   * decorations. This is ONLY invoked if the <code>JRootPane</code> has a
-   * decoration style other than <code>JRootPane.NONE</code>.
+   * decorations. This is ONLY invoked if the {@code JRootPane} has a
+   * decoration style other than {@code JRootPane.NONE}.
    *
    * @param root Root pane.
    */

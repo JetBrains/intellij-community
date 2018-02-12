@@ -129,13 +129,13 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
 
     try {
       for (int i = lo; i < hi; ++i) {
-        progressIndicator.checkCanceled();
+        ProgressManager.checkCanceled();
         if (!processor.process(array.get(i))) {
           throw new ComputationAbortedException();
         }
         long finish = System.currentTimeMillis();
         long elapsed = finish - start;
-        if (elapsed > 5 && hi - i >= 2 && getSurplusQueuedTaskCount() <= JobSchedulerImpl.CORES_COUNT) {
+        if (elapsed > 5 && hi - i >= 2 && getSurplusQueuedTaskCount() <= JobSchedulerImpl.getJobPoolParallelism()) {
           int mid = i + hi >>> 1;
           right = new ApplierCompleter<>(this, runInReadAction, failFastOnAcquireReadAction, progressIndicator, array, processor, mid, hi, failedSubTasks, right);
           //children.add(right);
@@ -218,6 +218,7 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
     ApplierCompleter<T> right = this;
     Throwable result = throwable;
     while (right != null) {
+      ProgressManager.checkCanceled();
       if (right.tryUnfork()) {
         right.execAndForkSubTasks();
         result = moreImportant(result, right.throwable);
@@ -231,9 +232,11 @@ class ApplierCompleter<T> extends CountedCompleter<Void> {
     final boolean[] result = {true};
     // these tasks could not be executed in the other thread; do them here
     for (final ApplierCompleter<T> task : failedSubTasks) {
+      ProgressManager.checkCanceled();
       ApplicationManager.getApplication().runReadAction(() ->
         task.wrapInReadActionAndIndicator(() -> {
           for (int i = task.lo; i < task.hi; ++i) {
+            ProgressManager.checkCanceled();
             if (!task.processor.process(task.array.get(i))) {
               result[0] = false;
               break;

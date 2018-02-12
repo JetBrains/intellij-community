@@ -1,14 +1,15 @@
 import codecs
+from typing import Text, Tuple
 
 class IncrementalEncoder(codecs.IncrementalEncoder):
-    pass
-class IncrementalDecoder(codecs.BufferedIncrementalDecoder):
-    pass
-class StreamWriter(codecs.StreamWriter):
-    pass
-class StreamReader(codecs.StreamReader):
-    pass
+    def encode(self, input: Text, final: bool = ...) -> bytes: ...
 
-def getregentry() -> codecs.CodecInfo: pass
-def encode(input: str, errors: str = ...) -> bytes: pass
-def decode(input: bytes, errors: str = ...) -> str: pass
+class IncrementalDecoder(codecs.BufferedIncrementalDecoder):
+    def _buffer_decode(self, input: bytes, errors: str, final: bool) -> Tuple[Text, int]: ...
+
+class StreamWriter(codecs.StreamWriter): ...
+class StreamReader(codecs.StreamReader): ...
+
+def getregentry() -> codecs.CodecInfo: ...
+def encode(input: Text, errors: Text = ...) -> bytes: ...
+def decode(input: bytes, errors: Text = ...) -> Text: ...

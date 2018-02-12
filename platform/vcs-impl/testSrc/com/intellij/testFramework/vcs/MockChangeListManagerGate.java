@@ -34,6 +34,7 @@ public class MockChangeListManagerGate implements ChangeListManagerGate {
     myManager = manager;
   }
 
+  @NotNull
   @Override
   public List<LocalChangeList> getListsCopy() {
     return myManager.getChangeListsCopy();
@@ -44,13 +45,15 @@ public class MockChangeListManagerGate implements ChangeListManagerGate {
     return myManager.findChangeList(name);
   }
 
+  @NotNull
   @Override
-  public LocalChangeList addChangeList(final String name, final String comment) {
+  public LocalChangeList addChangeList(@NotNull final String name, final String comment) {
     return myManager.addChangeList(name, comment);
   }
 
+  @NotNull
   @Override
-  public LocalChangeList findOrCreateList(final String name, final String comment) {
+  public LocalChangeList findOrCreateList(@NotNull final String name, final String comment) {
     LocalChangeList changeList = myManager.findChangeList(name);
     if (changeList == null) {
       changeList = myManager.addChangeList(name, comment);
@@ -59,25 +62,25 @@ public class MockChangeListManagerGate implements ChangeListManagerGate {
   }
 
   @Override
-  public void editComment(final String name, final String comment) {
+  public void editComment(@NotNull final String name, final String comment) {
     myManager.editComment(name, comment);
   }
 
   @Override
-  public void editName(String oldName, String newName) {
+  public void editName(@NotNull String oldName, @NotNull String newName) {
     myManager.editName(oldName, newName);
   }
 
   @Override
-  public void setListsToDisappear(Collection<String> names) { }
+  public void setListsToDisappear(@NotNull Collection<String> names) { }
 
   @Override
-  public FileStatus getStatus(VirtualFile file) {
+  public FileStatus getStatus(@NotNull VirtualFile file) {
     return null;
   }
 
   @Override
-  public FileStatus getStatus(File file) {
+  public FileStatus getStatus(@NotNull File file) {
     return null;
   }
 

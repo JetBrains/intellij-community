@@ -16,7 +16,7 @@
 package com.intellij.openapi.editor;
 
 /**
- * Defines common interface for <code>'soft wrap'</code>, i.e. for virtual line break that doesn't present at actual file on a disk
+ * Defines common interface for {@code 'soft wrap'}, i.e. for virtual line break that doesn't present at actual file on a disk
  * but is used exclusively during document representation.
  *
  * @author Denis Zhdanov

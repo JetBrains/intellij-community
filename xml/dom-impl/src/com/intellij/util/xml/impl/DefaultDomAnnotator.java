@@ -19,6 +19,7 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
@@ -65,21 +66,15 @@ public class DefaultDomAnnotator implements Annotator {
 
   @Override
   public void annotate(@NotNull final PsiElement psiElement, @NotNull AnnotationHolder holder) {
-    final List<Annotation> list = (List<Annotation>)holder;
-
-    final DomManagerImpl domManager = DomManagerImpl.getDomManager(psiElement.getProject());
-    final DomFileDescription description = domManager.getDomFileDescription(psiElement);
+    PsiFile file = holder.getCurrentAnnotationSession().getFile();
+    final DomManagerImpl domManager = DomManagerImpl.getDomManager(file.getProject());
+    final DomFileDescription description = domManager.getDomFileDescription(file);
     if (description != null) {
       final DomElement domElement = getDomElement(psiElement, domManager);
       if (domElement != null) {
-        runInspection(domElement, list);
+        final DomFileElement root = DomUtil.getFileElement(domElement);
+        runInspection(getAnnotationsManager(domElement).getMockInspection(root), root, (List<Annotation>)holder);
       }
     }
   }
-
-  public final void runInspection(final DomElement domElement, final List<Annotation> list) {
-    final DomFileElement root = DomUtil.getFileElement(domElement);
-    runInspection(getAnnotationsManager(domElement).getMockInspection(root), root, list);
-  }
-
 }

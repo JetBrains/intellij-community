@@ -43,9 +43,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * User: Vassiliy.Kudryashov
- */
 public class JdkPopupAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileChooser.actions.JDKPopupAction");
 
@@ -128,7 +125,7 @@ public class JdkPopupAction extends AnAction {
               }
             });
           }
-          return result.toArray(new AnAction[result.size()]);
+          return result.toArray(AnAction.EMPTY_ARRAY);
         }
       });
     JPopupMenu menuComponent = menu.getComponent();

@@ -35,9 +35,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * User: Vassiliy.Kudryashov
- */
 public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider<Bookmark> implements BookmarksListener {
   private final BookmarkManager myBookmarkManager;
   private final FavoritesManager myFavoritesManager;
@@ -162,7 +159,7 @@ public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider
           if (bookmark == null) {
             return;
           }
-          BookmarkManager.getInstance(project).editDescription(bookmark);
+          BookmarkManager.getInstance(project).editDescription(bookmark, component);
         }
         return;
       case REMOVE:

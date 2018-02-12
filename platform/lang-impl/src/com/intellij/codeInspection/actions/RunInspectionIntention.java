@@ -26,6 +26,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -47,10 +48,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 21-Feb-2006
- */
 public class RunInspectionIntention implements IntentionAction, HighPriorityAction {
   private final static Logger LOG = Logger.getInstance(RunInspectionIntention.class);
 
@@ -82,9 +79,10 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
     final Module module = file != null ? ModuleUtilCore.findModuleForPsiElement(file) : null;
     AnalysisScope analysisScope = new AnalysisScope(project);
     if (file != null) {
-      final VirtualFile virtualFile = file.getVirtualFile();
+      PsiFile topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
+      final VirtualFile virtualFile = topLevelFile.getVirtualFile();
       if (file.isPhysical() && virtualFile != null && virtualFile.isInLocalFileSystem()) {
-        analysisScope = new AnalysisScope(file);
+        analysisScope = new AnalysisScope(topLevelFile);
       }
     }
 
@@ -101,7 +99,7 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
       AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
       project,
       customScope,
-      module != null ? module.getName() : null,
+      module,
       true, AnalysisUIOptions.getInstance(project), context);
     if (!dlg.showAndGet()) {
       return;

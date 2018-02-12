@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 05-Jun-2009
- */
 package com.intellij.rt.execution.junit;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public interface IdeaTestRunner {
-  void createListeners(ArrayList listeners);
+  void createListeners(ArrayList listeners, int count);
 
   /**
    * @return -2 internal failure
@@ -46,7 +42,7 @@ public interface IdeaTestRunner {
                                           String name,
                                           int count,
                                           boolean sendTree) {
-      testRunner.createListeners(listeners);
+      testRunner.createListeners(listeners, count);
       if (count == 1) {
         return testRunner.startRunnerWithArgs(args, name, count, sendTree);
       }

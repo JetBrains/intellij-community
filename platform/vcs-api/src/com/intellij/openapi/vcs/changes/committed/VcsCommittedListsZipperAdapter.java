@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashSet;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -68,12 +69,13 @@ public abstract class VcsCommittedListsZipperAdapter implements VcsCommittedList
       return lists.get(0);
     }
     final CommittedChangeList result = lists.get(0);
+
+    Set<Change> processed = new THashSet<>(result.getChanges());
+
     for (int i = 1; i < lists.size(); i++) {
-      final CommittedChangeList list = lists.get(i);
-      for (Change change : list.getChanges()) {
-        final Collection<Change> resultChanges = result.getChanges();
-        if (! resultChanges.contains(change)) {
-          resultChanges.add(change);
+      for (Change change : lists.get(i).getChanges()) {
+        if (!processed.add(change)) {
+          result.getChanges().add(change);
         }
       }
     }

@@ -1,39 +1,24 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.framework;
 
 import com.intellij.diagnostic.AbstractMessage;
 import com.intellij.diagnostic.MessagePool;
-import com.intellij.ide.PrivacyPolicy;
 import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.gdpr.EndUserAgreement;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SwitchBootJdkAction;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,13 +26,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture;
+import com.intellij.testGuiFramework.fixtures.RadioButtonFixture;
 import com.intellij.testGuiFramework.matcher.ClassNameMatcher;
 import com.intellij.ui.KeyStrokeAdapter;
-import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.PopupFactoryImpl;
-import com.intellij.ui.popup.list.ListPopupModel;
 import com.intellij.util.JdkBundle;
+import com.intellij.util.PathUtil;
 import com.intellij.util.Producer;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
 import org.fest.swing.core.*;
 import org.fest.swing.core.Robot;
@@ -60,9 +45,6 @@ import org.fest.swing.fixture.*;
 import org.fest.swing.timing.Condition;
 import org.fest.swing.timing.Pause;
 import org.fest.swing.timing.Timeout;
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,7 +55,6 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -93,10 +74,8 @@ import static org.fest.swing.timing.Timeout.timeout;
 import static org.fest.util.Strings.isNullOrEmpty;
 import static org.fest.util.Strings.quote;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
 
-public final class
-GuiTestUtil {
+public final class GuiTestUtil {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.tests.gui.framework.GuiTestUtil");
 
@@ -104,6 +83,8 @@ GuiTestUtil {
   public static final Timeout MINUTE_TIMEOUT = timeout(1, MINUTES);
   public static final Timeout SHORT_TIMEOUT = timeout(2, MINUTES);
   public static final Timeout LONG_TIMEOUT = timeout(5, MINUTES);
+  public static final Timeout TEN_MIN_TIMEOUT = timeout(10, MINUTES);
+  public static final Timeout FIFTEEN_MIN_TIMEOUT = timeout(15, MINUTES);
 
   public static final String GUI_TESTS_RUNNING_IN_SUITE_PROPERTY = "gui.tests.running.in.suite";
 
@@ -113,11 +94,10 @@ GuiTestUtil {
 
   public static final String JDK_HOME_FOR_TESTS = "JDK_HOME_FOR_TESTS";
   public static final String TEST_DATA_DIR = "GUI_TEST_DATA_DIR";
+  public static final String FIRST_START = "GUI_FIRST_START";
   private static final EventQueue SYSTEM_EVENT_QUEUE = Toolkit.getDefaultToolkit().getSystemEventQueue();
   private static final File TMP_PROJECT_ROOT = createTempProjectCreationDir();
 
-  // Called by MethodInvoker via reflection
-  @SuppressWarnings("unused")
   public static void failIfIdeHasFatalErrors() {
     final MessagePool messagePool = MessagePool.getInstance();
     List<AbstractMessage> fatalErrors = messagePool.getFatalErrors(true, true);
@@ -187,25 +167,29 @@ GuiTestUtil {
         return path;
       }
     }
-    System.out.println("Please specify " + description + ", using system property " + quote(propertyName));
+    LOG.warn("Please specify " + description + ", using system property " + quote(propertyName));
     return null;
   }
 
   public static void setUpDefaultProjectCreationLocationPath() {
-    RecentProjectsManager.getInstance().setLastProjectCreationLocation(getProjectCreationDirPath().getPath());
+    RecentProjectsManager.getInstance().setLastProjectCreationLocation(PathUtil.toSystemIndependentName(getProjectCreationDirPath().getPath()));
   }
 
   // Called by IdeTestApplication via reflection.
   @SuppressWarnings("UnusedDeclaration")
   public static void waitForIdeToStart() {
+    String firstStart = getSystemPropertyOrEnvironmentVariable(FIRST_START);
+    boolean isFirstStart = firstStart != null && firstStart.toLowerCase().equals("true");
     GuiActionRunner.executeInEDT(false);
     Robot robot = null;
     try {
       robot = BasicRobot.robotWithCurrentAwtHierarchy();
-      final MyProjectManagerListener listener = new MyProjectManagerListener();
 
       //[ACCEPT IntelliJ IDEA Privacy Policy Agreement]
       acceptAgreementIfNeeded(robot);
+
+      final MyProjectManagerListener listener = new MyProjectManagerListener();
+      final Ref<MessageBusConnection> connection = new Ref<>();
 
       findFrame(new GenericTypeMatcher<Frame>(Frame.class) {
         @Override
@@ -213,7 +197,8 @@ GuiTestUtil {
           if (frame instanceof IdeFrame) {
             if (frame instanceof IdeFrameImpl) {
               listener.myActive = true;
-              ProjectManager.getInstance().addProjectManagerListener(listener);
+              connection.set(ApplicationManager.getApplication().getMessageBus().connect());
+              connection.get().subscribe(ProjectManager.TOPIC, listener);
             }
             return true;
           }
@@ -244,7 +229,11 @@ GuiTestUtil {
                                !progressManager.hasProgressIndicator() &&
                                !progressManager.hasUnsafeProgressIndicator();
               if (isIdle) {
-                ProjectManager.getInstance().removeProjectManagerListener(listener);
+                MessageBusConnection busConnection = connection.get();
+                if (busConnection != null) {
+                  connection.set(null);
+                  busConnection.disconnect();
+                }
               }
               return isIdle;
             }
@@ -264,8 +253,8 @@ GuiTestUtil {
   private static void acceptAgreementIfNeeded(Robot robot) {
     final String policyAgreement = "Privacy Policy Agreement";
 
-    Pair<PrivacyPolicy.Version, String> policy = PrivacyPolicy.getContent();
-    boolean showPrivacyPolicyAgreement = !PrivacyPolicy.isVersionAccepted(policy.getFirst());
+    EndUserAgreement.Document doc = EndUserAgreement.getLatestDocument();
+    boolean showPrivacyPolicyAgreement = !doc.isAccepted();
     if (!showPrivacyPolicyAgreement) {
       LOG.info(policyAgreement + " dialog should be skipped on this system.");
       return;
@@ -292,12 +281,7 @@ GuiTestUtil {
       execute(new GuiTask() {
         @Override
         protected void executeInEDT() throws Throwable {
-          EdtInvocationManager.getInstance().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              acceptButton.doClick();
-            }
-          });
+          EdtInvocationManager.getInstance().invokeLater(() -> acceptButton.doClick());
         }
       });
     }
@@ -328,7 +312,7 @@ GuiTestUtil {
       completeInstallationDialog.button("Evaluate for free for 30 days").click();
     }
     catch (WaitTimedOutError we) {
-      System.out.println("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
+      LOG.error("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
     }
   }
 
@@ -342,7 +326,7 @@ GuiTestUtil {
       completeInstallationDialog.button("Evaluate for free for 30 days").click();
     }
     catch (WaitTimedOutError we) {
-      System.out.println("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
+      LOG.error("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
     }
   }
 
@@ -356,7 +340,7 @@ GuiTestUtil {
       completeInstallationDialog.button("Skip All and Set Defaults").click();
     }
     catch (WaitTimedOutError we) {
-      System.out.println("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
+      LOG.error("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
     }
   }
 
@@ -386,7 +370,7 @@ GuiTestUtil {
     String testDataDirEnvVar = getSystemPropertyOrEnvironmentVariable(TEST_DATA_DIR);
     if (testDataDirEnvVar != null) return new File(testDataDirEnvVar);
 
-    String testDataPath = PathManager.getHomePath() + "/community/platform/testGuiFramework/testData";
+    String testDataPath = PathManagerEx.getCommunityHomePath() + "/platform/testGuiFramework/testData";
     assertNotNull(testDataPath);
     assertThat(testDataPath).isNotEmpty();
     testDataPath = toCanonicalPath(toSystemDependentName(testDataPath));
@@ -418,105 +402,6 @@ GuiTestUtil {
         }
       });
     }
-  }
-
-  /**
-   * Waits until an IDE popup is shown (and returns it
-   */
-  public static JBList waitForPopup(@NotNull Robot robot) {
-    return waitUntilFound(robot, null, new GenericTypeMatcher<JBList>(JBList.class) {
-      @Override
-      protected boolean isMatching(@NotNull JBList list) {
-        ListModel model = list.getModel();
-        return model instanceof ListPopupModel;
-      }
-    });
-  }
-
-  /**
-   * Clicks an IntelliJ/Studio popup menu item with the given label prefix
-   *
-   * @param labelPrefix the target menu item label prefix
-   * @param component   a component in the same window that the popup menu is associated with
-   * @param robot       the robot to drive it with
-   */
-  public static void clickPopupMenuItem(@NotNull String labelPrefix, @NotNull Component component, @NotNull Robot robot) {
-    clickPopupMenuItemMatching(new PrefixMatcher(labelPrefix), component, robot);
-  }
-
-  public static void clickPopupMenuItem(@NotNull String label, boolean searchByPrefix, @NotNull Component component, @NotNull Robot robot) {
-    if (searchByPrefix) {
-      clickPopupMenuItemMatching(new PrefixMatcher(label), component, robot);
-    }
-    else {
-      clickPopupMenuItemMatching(new EqualsMatcher(label), component, robot);
-    }
-  }
-
-  public static void clickPopupMenuItem(@NotNull String label, boolean searchByPrefix, @NotNull Component component, @NotNull Robot robot, @NotNull Timeout timeout) {
-    if (searchByPrefix) {
-      clickPopupMenuItemMatching(new PrefixMatcher(label), component, robot, timeout);
-    }
-    else {
-      clickPopupMenuItemMatching(new EqualsMatcher(label), component, robot, timeout);
-    }
-  }
-
-  public static void clickPopupMenuItemMatching(@NotNull Matcher<String> labelMatcher, @NotNull Component component, @NotNull Robot robot) {
-    clickPopupMenuItemMatching(labelMatcher, component, robot, SHORT_TIMEOUT);
-  }
-
-  public static void clickPopupMenuItemMatching(@NotNull Matcher<String> labelMatcher, @NotNull Component component, @NotNull Robot robot, @NotNull Timeout timeout) {
-    // IntelliJ doesn't seem to use a normal JPopupMenu, so this won't work:
-    //    JPopupMenu menu = myRobot.findActivePopupMenu();
-    // Instead, it uses a JList (technically a JBList), which is placed somewhere
-    // under the root pane.
-
-    Container root = getRootContainer(component);
-
-    // First find the JBList which holds the popup. There could be other JBLists in the hierarchy,
-    // so limit it to one that is actually used as a popup, as identified by its model being a ListPopupModel:
-    assertNotNull(root);
-
-    JBList list = waitUntilFound(robot, null,  new GenericTypeMatcher<JBList>(JBList.class) {
-      @Override
-      protected boolean isMatching(@NotNull JBList list) {
-        ListModel model = list.getModel();
-        return model instanceof ListPopupModel;
-      }
-    }, timeout);
-
-
-    // We can't use the normal JListFixture method to click by label since the ListModel items are
-    // ActionItems whose toString does not reflect the text, so search through the model items instead:
-    ListPopupModel model = (ListPopupModel)list.getModel();
-    List<String> items = new ArrayList<>();
-    for (int i = 0; i < model.getSize(); i++) {
-      Object elementAt = model.getElementAt(i);
-      if (elementAt instanceof PopupFactoryImpl.ActionItem) {
-        PopupFactoryImpl.ActionItem
-          item = (PopupFactoryImpl.ActionItem)elementAt;
-        String s = item.getText();
-        if (labelMatcher.matches(s)) {
-          new JListFixture(robot, list).clickItem(i);
-          return;
-        }
-        items.add(s);
-      }
-      else { // For example package private class IntentionActionWithTextCaching used in quickfix popups
-        String s = elementAt.toString();
-        if (labelMatcher.matches(s)) {
-          new JListFixture(robot, list).clickItem(i);
-          return;
-        }
-        items.add(s);
-      }
-    }
-
-    if (items.isEmpty()) {
-      fail("Could not find any menu items in popup");
-    }
-    fail("Did not find menu item '" + labelMatcher + "' among " + StringUtil.join(items, ", "));
   }
 
   /**
@@ -660,7 +545,7 @@ GuiTestUtil {
   }
 
   public static void skip(@NotNull String testName) {
-    System.out.println("Skipping test '" + testName + "'");
+    LOG.info("Skipping test '" + testName + "'");
   }
 
   /**
@@ -694,7 +579,7 @@ GuiTestUtil {
         else if (allFound.size() > 1) {
           // Only allow a single component to be found, otherwise you can get some really confusing
           // test failures; the matcher should pick a specific enough instance
-          fail("Found more than one " + matcher.supportedType().getSimpleName() + " which matches the criteria: " + allFound);
+          throw new ComponentLookupException("Found more than one " + matcher.supportedType().getSimpleName() + " which matches the criteria: " + allFound);
         }
         return found;
       }
@@ -703,20 +588,37 @@ GuiTestUtil {
     return reference.get();
   }
 
+
   /**
    * Waits until no components match the given criteria under the given root
    */
   public static <T extends Component> void waitUntilGone(@NotNull final Robot robot,
-                                                         @NotNull final Container root,
+                                                         @Nullable final Container root,
                                                          @NotNull final GenericTypeMatcher<T> matcher) {
     Pause.pause(new Condition("Find component using " + matcher.toString()) {
       @Override
       public boolean test() {
-        Collection<T> allFound = robot.finder().findAll(root, matcher);
+        Collection<T> allFound = (root == null) ? robot.finder().findAll(matcher) : robot.finder().findAll(root, matcher);
         return allFound.isEmpty();
       }
     }, SHORT_TIMEOUT);
   }
+
+  /**
+   * Waits until no components match the given criteria under the given root
+   */
+  public static <T extends Component> void waitUntilGone(@NotNull final Robot robot,
+                                                         @Nullable final Container root, int timeoutInSeconds,
+                                                         @NotNull final GenericTypeMatcher<T> matcher) {
+    Pause.pause(new Condition("Find component using " + matcher.toString()) {
+      @Override
+      public boolean test() {
+        Collection<T> allFound = (root == null) ? robot.finder().findAll(matcher) : robot.finder().findAll(root, matcher);
+        return allFound.isEmpty();
+      }
+    }, timeout(timeoutInSeconds, SECONDS));
+  }
+
 
   @Nullable
   public static String getSystemPropertyOrEnvironmentVariable(@NotNull String name) {
@@ -724,7 +626,7 @@ GuiTestUtil {
     return s == null ? System.getenv(name) : s;
   }
 
-  private static class MyProjectManagerListener extends ProjectManagerAdapter {
+  private static class MyProjectManagerListener implements ProjectManagerListener {
     boolean myActive;
     boolean myNotified;
 
@@ -733,45 +635,6 @@ GuiTestUtil {
       myNotified = true;
     }
   }
-
-  private static class PrefixMatcher extends BaseMatcher<String> {
-
-    private final String prefix;
-
-    public PrefixMatcher(String prefix) {
-      this.prefix = prefix;
-    }
-
-    @Override
-    public boolean matches(Object item) {
-      return item instanceof String && ((String)item).startsWith(prefix);
-    }
-
-    @Override
-    public void describeTo(Description description) {
-      description.appendText("with prefix '" + prefix + "'");
-    }
-  }
-
-  private static class EqualsMatcher extends BaseMatcher<String> {
-
-    private final String wanted;
-
-    public EqualsMatcher(String wanted) {
-      this.wanted = wanted;
-    }
-
-    @Override
-    public boolean matches(Object item) {
-      return item instanceof String && ((String)item).equals(wanted);
-    }
-
-    @Override
-    public void describeTo(Description description) {
-      description.appendText("equals to '" + wanted + "'");
-    }
-  }
-
 
   public static String adduction(String s) {
     char ESCAPE_SYMBOL = '\u001B';
@@ -784,11 +647,9 @@ GuiTestUtil {
     }
   }
 
-  public static String getBundledJdLocation() {
-
-    ArrayList<JdkBundle> bundleList = SwitchBootJdkAction.findJdkPaths().toArrayList();
-    //we believe that Idea has at least one bundled jdk
-    JdkBundle jdkBundle = bundleList.get(0);
+  public static String getBundledJdkLocation() {
+    JdkBundle jdkBundle = JdkBundle.createBundled();
+    if (jdkBundle == null) jdkBundle = JdkBundle.createBoot();
     String homeSubPath = SystemInfo.isMac ? "/Contents/Home" : "";
     return jdkBundle.getLocation().getAbsolutePath() + homeSubPath;
   }
@@ -810,24 +671,24 @@ GuiTestUtil {
     return new JTreeFixture(robot, actionTree);
   }
 
-  public static JRadioButtonFixture findRadioButton(@NotNull Robot robot, @NotNull Container container, @NotNull String text, @NotNull Timeout timeout){
+  public static RadioButtonFixture findRadioButton(@NotNull Robot robot, @Nullable Container container, @NotNull String text, @NotNull Timeout timeout){
     JRadioButton radioButton = waitUntilFound(robot, container, new GenericTypeMatcher<JRadioButton>(JRadioButton.class) {
       @Override
       protected boolean isMatching(@Nonnull JRadioButton button) {
         return (button.getText() != null && button.getText().equals(text));
       }
     }, timeout);
-    return new JRadioButtonFixture(robot, radioButton);
+    return new RadioButtonFixture(robot, radioButton);
   }
 
-  public static JRadioButtonFixture findRadioButton(@NotNull Robot robot, @NotNull Container container, @NotNull String text){
+  public static RadioButtonFixture findRadioButton(@NotNull Robot robot, @NotNull Container container, @NotNull String text){
     JRadioButton radioButton = waitUntilFound(robot, container, new GenericTypeMatcher<JRadioButton>(JRadioButton.class) {
       @Override
       protected boolean isMatching(@Nonnull JRadioButton button) {
         return (button.getText() != null && button.getText().equals(text));
       }
     }, SHORT_TIMEOUT);
-    return new JRadioButtonFixture(robot, radioButton);
+    return new RadioButtonFixture(robot, radioButton);
   }
 
   public static JComboBoxFixture findComboBox(@NotNull Robot robot, @NotNull Container container, @NotNull String labelText) {
@@ -857,7 +718,6 @@ GuiTestUtil {
   }
 
   public static void invokeAction(@NotNull Robot robot, @NotNull String actionId) {
-
     KeyboardShortcut keyboardShortcut = ActionManager.getInstance().getKeyboardShortcut(actionId);
 
     assert keyboardShortcut != null;
@@ -875,5 +735,9 @@ GuiTestUtil {
         return produce;
       }
     }, timeout);
+  }
+
+  public static Component getListCellRendererComponent(JList list, Object value, int index) {
+    return list.getCellRenderer().getListCellRendererComponent(list, value, index, true, true);
   }
 }

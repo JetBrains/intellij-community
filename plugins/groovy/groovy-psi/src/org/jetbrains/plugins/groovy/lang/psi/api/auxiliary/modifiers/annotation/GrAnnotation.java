@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation;
 
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -28,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 public interface GrAnnotation extends GrCondition, PsiAnnotation, GrAnnotationMemberValue {
 
   GrAnnotation[] EMPTY_ARRAY = new GrAnnotation[0];
+  ArrayFactory<GrAnnotation> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new GrAnnotation[count];
 
   @NotNull
   GrCodeReferenceElement getClassReference();

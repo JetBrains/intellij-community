@@ -19,21 +19,17 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.template.*;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -60,7 +56,7 @@ public class PyDocstringGenerator {
   private final List<DocstringParam> myRemovedParams = Lists.newArrayList();
   private final String myDocStringText;
   // Updated after buildAndInsert()
-  @Nullable private PyDocStringOwner myDocStringOwner;
+  @Nullable private final PyDocStringOwner myDocStringOwner;
   private final String myDocStringIndent;
   private final DocStringFormat myDocStringFormat;
   private final PsiElement mySettingsAnchor;
@@ -281,16 +277,13 @@ public class PyDocstringGenerator {
         if (type != null) {
           // Google and Numpy docstring formats combine type and description in single declaration, thus
           // if both declaration with type and without it are requested, we should filter out duplicates
-          if (format == DocStringFormat.GOOGLE || format == DocStringFormat.NUMPY) {
-            filtered.add(new DocstringParam(param.getName(), type, param.isReturnValue()));
-          }
-          else {
+          if (format != DocStringFormat.GOOGLE && format != DocStringFormat.NUMPY) {
             // In reST and Epydoc for each parameter add two tags, e.g. in reST (Sphinx)
             // :param foo:
             // :type foo:
             filtered.add(param);
-            filtered.add(new DocstringParam(param.getName(), type, param.isReturnValue()));
           }
+          filtered.add(new DocstringParam(param.getName(), type, param.isReturnValue()));
         }
         else {
           // no type was given and it's not required by settings
@@ -352,13 +345,15 @@ public class PyDocstringGenerator {
       return;
     }
     builder.replaceRange(substring.getTextRange(), getDefaultType(getParamToEdit()));
-    Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
+    Template template = PyUtil.updateDocumentUnblockedAndCommitted(myDocStringOwner, document -> {
+      return ((TemplateBuilderImpl)builder).buildInlineTemplate();
+    });
     final VirtualFile virtualFile = myDocStringOwner.getContainingFile().getVirtualFile();
     if (virtualFile == null) return;
     final Project project = myDocStringOwner.getProject();
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, virtualFile, docStringExpression.getTextOffset());
-    Editor targetEditor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-    if (targetEditor != null) {
+    final Editor targetEditor = PsiUtilBase.findEditor(myDocStringOwner);
+    if (targetEditor != null && template != null) {
+      targetEditor.getCaretModel().moveToOffset(docStringExpression.getTextOffset());
       TemplateManager.getInstance(project).startTemplate(targetEditor, template);
     }
   }
@@ -530,43 +525,26 @@ public class PyDocstringGenerator {
       }
       final PyStatementList statements = container.getStatementList();
       final String indentation = PyIndentUtil.getElementIndent(statements);
-      final Document document = PsiDocumentManager.getInstance(project).getDocument(myDocStringOwner.getContainingFile());
 
-      if (document != null) {
+      PyUtil.updateDocumentUnblockedAndCommitted(myDocStringOwner, document -> {
         final PsiElement beforeStatements = statements.getPrevSibling();
-        final boolean onSameLine = !(beforeStatements instanceof PsiWhiteSpace) || !beforeStatements.textContains('\n');
-        if (onSameLine || statements.getStatements().length == 0) {
-          String replacementWithLineBreaks = "\n" + indentation + replacementText;
-          if (statements.getStatements().length > 0) {
-            replacementWithLineBreaks += "\n" + indentation;
-          }
-          final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-          documentManager.doPostponedOperationsAndUnblockDocument(document);
-          final TextRange range = beforeStatements.getTextRange();
-          try {
-            if (beforeStatements instanceof PsiWhiteSpace) {
-              if (statements.getStatements().length > 0) {
-                document.replaceString(range.getStartOffset(), range.getEndOffset(), replacementWithLineBreaks);
-              }
-              else {
-                // preserve original spacing, since it probably separates function and other declarations
-                document.insertString(range.getStartOffset(), replacementWithLineBreaks);
-              }
-            }
-            else {
-              document.insertString(range.getEndOffset(), replacementWithLineBreaks);
-            }
-          }
-          finally {
-            documentManager.commitDocument(document);
-          }
+        String replacementWithLineBreaks = "\n" + indentation + replacementText;
+        if (statements.getStatements().length > 0) {
+          replacementWithLineBreaks += "\n" + indentation;
+        }
+        final TextRange range = beforeStatements.getTextRange();
+        if (!(beforeStatements instanceof PsiWhiteSpace)) {
+          document.insertString(range.getEndOffset(), replacementWithLineBreaks);
+        }
+        else if (statements.getStatements().length == 0 && beforeStatements.textContains('\n')) {
+          // preserve original spacing, since it probably separates function and other declarations
+          document.insertString(range.getStartOffset(), replacementWithLineBreaks);
         }
         else {
-          statements.addBefore(replacement, statements.getStatements()[0]);
+          document.replaceString(range.getStartOffset(), range.getEndOffset(), replacementWithLineBreaks);
         }
-      }
+      });
     }
-    myDocStringOwner = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(myDocStringOwner);
     return myDocStringOwner;
   }
 

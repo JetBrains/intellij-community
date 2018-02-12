@@ -55,6 +55,7 @@ csv
 ctypes
 curses
 datetime
+dataclasses
 dbhash
 dbm
 decimal
@@ -201,6 +202,7 @@ rlcompleter
 robotparser
 runpy
 sched
+secrets
 select
 selectors
 sets

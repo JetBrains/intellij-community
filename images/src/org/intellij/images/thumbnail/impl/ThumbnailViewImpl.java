@@ -27,10 +27,12 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import icons.ImagesIcons;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.editor.actionSystem.ImageEditorActions;
+import org.intellij.images.search.TagFilter;
 import org.intellij.images.thumbnail.ThumbnailView;
 import org.intellij.images.thumbnail.actions.ThemeFilter;
 import org.intellij.images.vfs.IfsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -48,6 +50,7 @@ final class ThumbnailViewImpl implements ThumbnailView {
   private VirtualFile root = null;
   private final ThumbnailViewUI myThubmnailViewUi;
   private ThemeFilter myFilter;
+  private TagFilter[] myTagFilters;
 
   public ThumbnailViewImpl(Project project) {
     this.project = project;
@@ -131,6 +134,18 @@ final class ThumbnailViewImpl implements ThumbnailView {
     return myFilter;
   }
 
+  @Override
+  public void setTagFilters(TagFilter[] filter) {
+    myTagFilters = filter;
+    updateUI();
+  }
+
+  @Nullable
+  @Override
+  public TagFilter[] getTagFilters() {
+    return myTagFilters;
+  }
+
   public void setVisible(boolean visible) {
     toolWindow.setAvailable(visible, null);
     if (visible) {
@@ -140,6 +155,11 @@ final class ThumbnailViewImpl implements ThumbnailView {
     else {
       getUI().dispose();
     }
+  }
+
+  @Override
+  public void refresh() {
+    updateUI();
   }
 
   private void updateUI() {

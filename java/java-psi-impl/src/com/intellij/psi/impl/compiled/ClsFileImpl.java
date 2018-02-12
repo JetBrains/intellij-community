@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,6 +17,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Key;
@@ -52,6 +38,7 @@ import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.StubbedSpine;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -355,8 +342,8 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   @Override
   @NotNull
-  @SuppressWarnings("deprecation")
   public PsiElement getNavigationElement() {
+    //noinspection deprecation
     for (ClsCustomNavigationPolicy customNavigationPolicy : Extensions.getExtensions(ClsCustomNavigationPolicy.EP_NAME)) {
       if (customNavigationPolicy instanceof ClsCustomNavigationPolicyEx) {
         try {
@@ -370,9 +357,9 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     }
 
     return CachedValuesManager.getCachedValue(this, () -> {
-      PsiElement target = JavaPsiImplementationHelper.getInstance(getProject()).getClsFileNavigationElement(ClsFileImpl.this);
+      PsiElement target = JavaPsiImplementationHelper.getInstance(getProject()).getClsFileNavigationElement(this);
       ModificationTracker tracker = FileIndexFacade.getInstance(getProject()).getRootModificationTracker();
-      return CachedValueProvider.Result.create(target, ClsFileImpl.this, target.getContainingFile(), tracker);
+      return CachedValueProvider.Result.create(target, this, target.getContainingFile(), tracker);
     });
   }
 
@@ -556,9 +543,10 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     return stubTree;
   }
 
+  @NotNull
   @Override
-  public ASTNode findTreeForStub(final StubTree tree, final StubElement<?> stub) {
-    return null;
+  public StubbedSpine getStubbedSpine() {
+    return getStubTree().getSpine();
   }
 
   @Override
@@ -635,7 +623,8 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       String className = file.getNameWithoutExtension();
       String internalName = reader.getClassName();
       boolean module = internalName.equals("module-info") && BitUtil.isSet(reader.getAccess(), Opcodes.ACC_MODULE);
-      LanguageLevel level = ClsParsingUtil.getLanguageLevelByVersion(reader.readShort(6));
+      JavaSdkVersion jdkVersion = ClsParsingUtil.getJdkVersionByBytecode(reader.readShort(6));
+      LanguageLevel level = jdkVersion != null ? jdkVersion.getMaxLanguageLevel() : null;
 
       if (module) {
         PsiJavaFileStub stub = new PsiJavaFileStubImpl(null, "", level, true);
@@ -651,7 +640,9 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
           reader.accept(visitor, EMPTY_ATTRIBUTES, ClassReader.SKIP_FRAMES);
           if (visitor.getResult() != null) return stub;
         }
-        catch (OutOfOrderInnerClassException ignored) { }
+        catch (OutOfOrderInnerClassException e) {
+          if (LOG.isTraceEnabled()) LOG.trace(file.getPath());
+        }
       }
 
       return null;

@@ -17,11 +17,6 @@ package org.intellij.lang.xpath.psi;
 
 import org.intellij.lang.xpath.psi.impl.XPath2ElementImpl;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 08.04.11
-*/
 public class XPath2ElementVisitor extends XPathElementVisitor {
   public void visitXPath2TypeReference(XPath2TypeReference o) {
     visitXPathElement(o);

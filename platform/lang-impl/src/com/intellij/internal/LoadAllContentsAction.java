@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 28-Jun-2007
- */
 package com.intellij.internal;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -28,12 +24,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VFileProperty;
-import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,23 +56,20 @@ public class LoadAllContentsAction extends AnAction implements DumbAware {
     count.set(0);
     totalSize.set(0);
     ApplicationManagerEx.getApplicationEx().runProcessWithProgressSynchronously(
-      () -> ProjectRootManager.getInstance(project).getFileIndex().iterateContent(new ContentIterator() {
-        @Override
-        public boolean processFile(VirtualFile fileOrDir) {
-          if (fileOrDir.isDirectory() || fileOrDir.is(VFileProperty.SPECIAL)) {
-            return true;
-          }
-          try {
-            count.incrementAndGet();
-            byte[] bytes = FileUtil.loadFileBytes(new File(fileOrDir.getPath()));
-            totalSize.addAndGet(bytes.length);
-            ProgressManager.getInstance().getProgressIndicator().setText(fileOrDir.getPresentableUrl());
-          }
-          catch (IOException e1) {
-            LOG.error(e1);
-          }
+      () -> ProjectRootManager.getInstance(project).getFileIndex().iterateContent(fileOrDir -> {
+        if (fileOrDir.isDirectory() || fileOrDir.is(VFileProperty.SPECIAL)) {
           return true;
         }
+        try {
+          count.incrementAndGet();
+          byte[] bytes = FileUtil.loadFileBytes(new File(fileOrDir.getPath()));
+          totalSize.addAndGet(bytes.length);
+          ProgressManager.getInstance().getProgressIndicator().setText(fileOrDir.getPresentableUrl());
+        }
+        catch (IOException e1) {
+          LOG.error(e1);
+        }
+        return true;
       }), "Loading", false, project);
 
     long end = System.currentTimeMillis();

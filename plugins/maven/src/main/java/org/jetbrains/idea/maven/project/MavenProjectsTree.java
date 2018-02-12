@@ -15,8 +15,8 @@
  */
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -662,8 +662,7 @@ public class MavenProjectsTree {
   private MavenProjectTimestamp calculateTimestamp(final MavenProject mavenProject,
                                                    final MavenExplicitProfiles explicitProfiles,
                                                    final MavenGeneralSettings generalSettings) {
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
+    return ReadAction.compute(() -> {
       long pomTimestamp = getFileTimestamp(mavenProject.getFile());
       MavenProject parent = findParent(mavenProject);
       long parentLastReadStamp = parent == null ? -1 : parent.getLastReadStamp();
@@ -681,10 +680,7 @@ public class MavenProjectsTree {
                                        userSettingsTimestamp,
                                        globalSettingsTimestamp,
                                        profilesHashCode);
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 
   private static long getFileTimestamp(VirtualFile file) {
@@ -1244,7 +1240,13 @@ public class MavenProjectsTree {
       String baseDir = entry.getKey().getPath();
       MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, baseDir, baseDir);
       try {
-        embedder.customizeForResolve(getWorkspaceMap(), console, process, generalSettings.isAlwaysUpdateSnapshots());
+        Properties userProperties = new Properties();
+        for (MavenProject mavenProject : mavenProjects) {
+          for (MavenImporter mavenImporter : mavenProject.getSuitableImporters()) {
+            mavenImporter.customizeUserProperties(project, mavenProject, userProperties);
+          }
+        }
+        embedder.customizeForResolve(getWorkspaceMap(), console, process, generalSettings.isAlwaysUpdateSnapshots(), userProperties);
         doResolve(project, entry.getValue(), generalSettings, embedder, context, process);
       }
       finally {

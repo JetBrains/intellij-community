@@ -1,6 +1,6 @@
-from typing import Any, Callable, Generator, TypeVar
+from typing import Any, Callable, Generator, List, TypeVar
 
-__all__ = ...  # type: str
+__all__: List[str]
 
 _F = TypeVar('_F', bound=Callable[..., Any])
 

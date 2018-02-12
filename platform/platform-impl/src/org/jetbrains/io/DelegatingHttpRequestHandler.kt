@@ -26,8 +26,8 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.QueryStringDecoder
 import io.netty.util.AttributeKey
-import org.apache.sanselan.ImageFormat
-import org.apache.sanselan.Sanselan
+import org.apache.commons.imaging.ImageFormats
+import org.apache.commons.imaging.Imaging
 import org.jetbrains.ide.HttpRequestHandler
 import java.awt.image.BufferedImage
 
@@ -69,7 +69,7 @@ internal class DelegatingHttpRequestHandler : DelegatingHttpRequestHandlerBase()
       if (icon != null) {
         val image = UIUtil.createImage(icon.iconWidth, icon.iconHeight, BufferedImage.TYPE_INT_ARGB)
         icon.paintIcon(null, image.graphics, 0, 0)
-        val icoBytes = Sanselan.writeImageToBytes(image, ImageFormat.IMAGE_FORMAT_ICO, null)
+        val icoBytes = Imaging.writeImageToBytes(image, ImageFormats.ICO, null)
         response(FileResponses.getContentType(urlDecoder.path()), Unpooled.wrappedBuffer(icoBytes))
           .addNoCache()
           .send(context.channel(), request)

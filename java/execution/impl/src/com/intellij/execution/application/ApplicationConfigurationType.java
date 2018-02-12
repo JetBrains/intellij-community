@@ -67,6 +67,11 @@ public class ApplicationConfigurationType implements ConfigurationType {
     return new ConfigurationFactory[]{myFactory};
   }
 
+  @Override
+  public boolean isDumbAware() {
+    return true;
+  }
+
   @Nullable
   public static PsiClass getMainClass(PsiElement element) {
     while (element != null) {

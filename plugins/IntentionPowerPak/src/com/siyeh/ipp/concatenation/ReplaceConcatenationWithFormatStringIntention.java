@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2015 Bas Leijdekkers
+ * Copyright 2008-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.siyeh.ipp.concatenation;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiConcatenationUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -36,7 +36,7 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element) {
     PsiPolyadicExpression expression = (PsiPolyadicExpression)element;
     PsiElement parent = expression.getParent();
     while (ExpressionUtils.isConcatenation(parent)) {
@@ -44,25 +44,26 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
       parent = expression.getParent();
     }
     final StringBuilder formatString = new StringBuilder();
-    final List<PsiExpression> formatParameters = new ArrayList();
+    final List<PsiExpression> formatParameters = new ArrayList<>();
     PsiConcatenationUtil.buildFormatString(expression, formatString, formatParameters, true);
     if (replaceWithPrintfExpression(expression, formatString, formatParameters)) {
       return;
     }
+    CommentTracker commentTracker = new CommentTracker();
     final StringBuilder newExpression = new StringBuilder();
     newExpression.append("java.lang.String.format(\"");
     newExpression.append(formatString);
     newExpression.append('\"');
     for (PsiExpression formatParameter : formatParameters) {
       newExpression.append(", ");
-      newExpression.append(formatParameter.getText());
+      newExpression.append(commentTracker.text(formatParameter));
     }
     newExpression.append(')');
-    PsiReplacementUtil.replaceExpression(expression, newExpression.toString());
+    PsiReplacementUtil.replaceExpression(expression, newExpression.toString(), commentTracker);
   }
 
   private static boolean replaceWithPrintfExpression(PsiExpression expression, CharSequence formatString,
-                                                     List<PsiExpression> formatParameters) throws IncorrectOperationException {
+                                                     List<PsiExpression> formatParameters) {
     final PsiElement expressionParent = expression.getParent();
     if (!(expressionParent instanceof PsiExpressionList)) {
       return false;
@@ -97,24 +98,22 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
         !"java.io.Printwriter".equals(qualifiedName)) {
       return false;
     }
+    CommentTracker commentTracker = new CommentTracker();
     final StringBuilder newExpression = new StringBuilder();
     final PsiExpression qualifier = methodExpression.getQualifierExpression();
     if (qualifier != null) {
-      newExpression.append(qualifier.getText());
-      newExpression.append('.');
+      newExpression.append(commentTracker.text(qualifier)).append('.');
     }
-    newExpression.append("printf(\"");
-    newExpression.append(formatString);
+    newExpression.append("printf(\"").append(formatString);
     if (insertNewline) {
       newExpression.append("%n");
     }
     newExpression.append('\"');
     for (PsiExpression formatParameter : formatParameters) {
-      newExpression.append(", ");
-      newExpression.append(formatParameter.getText());
+      newExpression.append(", ").append(commentTracker.text(formatParameter));
     }
     newExpression.append(')');
-    PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString());
+    PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString(), commentTracker);
     return true;
   }
 }

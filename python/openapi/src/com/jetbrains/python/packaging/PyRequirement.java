@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.editor.Document;
@@ -22,9 +20,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
+import com.jetbrains.python.packaging.requirement.PyRequirementVersion;
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionNormalizer;
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +36,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 /**
- * @author vlan
+ * @apiNote This class will be converted to interface in 2018.2.
  */
 public class PyRequirement {
 
@@ -53,11 +54,28 @@ public class PyRequirement {
   @NotNull
   private static final String NAME_GROUP = "name";
 
+  // PEP-508
+  // https://www.python.org/dev/peps/pep-0508/
+
+  @NotNull
+  private static final String IDENTIFIER_REGEXP = "[A-Za-z0-9]([-_\\.]?[A-Za-z0-9])*";
+
+  @NotNull
+  private static final String NAME_REGEXP = "(?<" + NAME_GROUP + ">" + IDENTIFIER_REGEXP + ")";
+
+  @NotNull
+  private static final String EXTRAS_REGEXP =
+    "\\[" + IDENTIFIER_REGEXP + "(" + LINE_WS_REGEXP + "*," + LINE_WS_REGEXP + "*" + IDENTIFIER_REGEXP + ")*" + "\\]";
+
   // archive-related regular expressions
 
   @NotNull
   private static final Pattern GITHUB_ARCHIVE_URL =
     Pattern.compile("https?://github\\.com/[^/\\s]+/(?<" + NAME_GROUP + ">[^/\\s]+)/archive/\\S+" + COMMENT_REGEXP);
+
+  @NotNull
+  private static final Pattern GITLAB_ARCHIVE_URL =
+    Pattern.compile("https?://gitlab\\.com/[^/\\s]+/(?<" + NAME_GROUP + ">[^/\\s]+)/repository/\\S+" + COMMENT_REGEXP);
 
   @NotNull
   private static final Pattern ARCHIVE_URL =
@@ -104,11 +122,23 @@ public class PyRequirement {
   private static final String VCS_EGG_AFTER_SUBDIR_GROUP = "egga";
 
   @NotNull
+  private static final String VCS_EXTRAS_BEFORE_SUBDIR_GROUP = "extrasb";
+
+  @NotNull
+  private static final String VCS_EXTRAS_AFTER_SUBDIR_GROUP = "extrasa";
+
+  @NotNull
   private static final String VCS_PARAMS_REGEXP =
     "(" +
-    "(#egg=(?<" + VCS_EGG_BEFORE_SUBDIR_GROUP + ">[^&\\s]+)(&subdirectory=\\S+)?)" +
+    "(" +
+    "#egg=(?<" + VCS_EGG_BEFORE_SUBDIR_GROUP + ">[^&\\s\\[\\]]+)(?<" + VCS_EXTRAS_BEFORE_SUBDIR_GROUP + ">" + EXTRAS_REGEXP + ")?" +
+    "(&subdirectory=\\S+)?" +
+    ")" +
     "|" +
-    "(#subdirectory=[^&\\s]+&egg=(?<" + VCS_EGG_AFTER_SUBDIR_GROUP + ">\\S+))" +
+    "(" +
+    "#subdirectory=[^&\\s]+" +
+    "&egg=(?<" + VCS_EGG_AFTER_SUBDIR_GROUP + ">[^\\s\\[\\]]+)(?<" + VCS_EXTRAS_AFTER_SUBDIR_GROUP + ">" + EXTRAS_REGEXP + ")?" +
+    ")" +
     ")?";
 
   @NotNull
@@ -141,25 +171,14 @@ public class PyRequirement {
   // requirement-related regular expressions
   // don't forget to update calculateRequirementInstallOptions(Matcher) after this section changing
 
-  // PEP-508 + PEP-440
-  // https://www.python.org/dev/peps/pep-0508/
-  // https://www.python.org/dev/peps/pep-0440/
-  @NotNull
-  private static final String IDENTIFIER_REGEXP = "[A-Za-z0-9]([-_\\.]?[A-Za-z0-9])*";
-
-  @NotNull
-  private static final String REQUIREMENT_NAME_REGEXP = "(?<" + NAME_GROUP + ">" + IDENTIFIER_REGEXP + ")";
-
   @NotNull
   private static final String REQUIREMENT_EXTRAS_GROUP = "extras";
 
   @NotNull
-  private static final String REQUIREMENT_EXTRAS_REGEXP =
-    "(?<" + REQUIREMENT_EXTRAS_GROUP + ">" +
-    "\\[" +
-    IDENTIFIER_REGEXP + "(" + LINE_WS_REGEXP + "*," + LINE_WS_REGEXP + "*" + IDENTIFIER_REGEXP + ")*" +
-    "\\]" +
-    ")?";
+  private static final String REQUIREMENT_EXTRAS_REGEXP = "(?<" + REQUIREMENT_EXTRAS_GROUP + ">" + EXTRAS_REGEXP + ")?";
+
+  // PEP-440
+  // https://www.python.org/dev/peps/pep-0440/
 
   @NotNull
   private static final String REQUIREMENT_VERSIONS_SPECS_GROUP = "versionspecs";
@@ -185,7 +204,7 @@ public class PyRequirement {
   @NotNull
   private static final Pattern REQUIREMENT = Pattern.compile(
     "(?<" + REQUIREMENT_GROUP + ">" +
-    REQUIREMENT_NAME_REGEXP +
+    NAME_REGEXP +
     LINE_WS_REGEXP + "*" +
     REQUIREMENT_EXTRAS_REGEXP +
     LINE_WS_REGEXP + "*" +
@@ -206,22 +225,56 @@ public class PyRequirement {
   @NotNull
   private final String myExtras;
 
+  /**
+   * @deprecated Use {@link PyPackageManager#parseRequirements(String)} instead.
+   * This constructor will be removed in 2018.2.
+   */
+  @Deprecated
   public PyRequirement(@NotNull String name) {
     this(name, Collections.emptyList());
   }
 
-  public PyRequirement(@NotNull String name, @NotNull String version) {
-    this(name, Collections.singletonList(calculateVersionSpec(version, PyRequirementRelation.EQ)));
+  /**
+   * @deprecated Use {@link PyPackageManager#parseRequirements(String)} instead.
+   * This constructor will be removed in 2018.2.
+   */
+  @Deprecated
+  public PyRequirement(@NotNull String name, @NotNull PyRequirementRelation relation, @NotNull String version) {
+    this(name, Collections.singletonList(calculateVersionSpec(version, relation)));
   }
 
+  /**
+   * @deprecated Use {@link PyPackageManager#parseRequirements(String)} instead.
+   * This constructor will be removed in 2018.2.
+   */
+  @Deprecated
+  public PyRequirement(@NotNull String name, @NotNull String version) {
+    this(name, PyRequirementRelation.EQ, version);
+  }
+
+  /**
+   * @deprecated Use {@link PyPackageManager#parseRequirements(String)} instead.
+   * This constructor will be removed in 2018.2.
+   */
+  @Deprecated
   public PyRequirement(@NotNull String name, @NotNull String version, @NotNull List<String> installOptions) {
     this(name, Collections.singletonList(calculateVersionSpec(version, PyRequirementRelation.EQ)), installOptions);
   }
 
+  /**
+   * @deprecated Use {@link PyPackageManager#parseRequirements(String)} instead.
+   * This constructor will be removed in 2018.2.
+   */
+  @Deprecated
   public PyRequirement(@NotNull String name, @NotNull String version, @NotNull List<String> installOptions, @NotNull String extras) {
     this(name, Collections.singletonList(calculateVersionSpec(version, PyRequirementRelation.EQ)), installOptions, extras);
   }
 
+  /**
+   * @deprecated Use {@link PyPackageManager#parseRequirements(String)} instead.
+   * This constructor will be removed in 2018.2.
+   */
+  @Deprecated
   public PyRequirement(@NotNull String name, @NotNull List<PyRequirementVersionSpec> versionSpecs) {
     myName = name;
     myVersionSpecs = versionSpecs;
@@ -229,6 +282,11 @@ public class PyRequirement {
     myInstallOptions = Collections.singletonList(toString());
   }
 
+  /**
+   * @deprecated Use {@link PyPackageManager#parseRequirements(String)} instead.
+   * This constructor will be removed in 2018.2.
+   */
+  @Deprecated
   public PyRequirement(@NotNull String name, @NotNull List<PyRequirementVersionSpec> versionSpecs, @NotNull List<String> installOptions) {
     myName = name;
     myVersionSpecs = versionSpecs;
@@ -236,6 +294,11 @@ public class PyRequirement {
     myExtras = "";
   }
 
+  /**
+   * @deprecated Use {@link PyPackageManager#parseRequirements(String)} instead.
+   * This constructor will be removed in 2018.2.
+   */
+  @Deprecated
   public PyRequirement(@NotNull String name,
                        @NotNull List<PyRequirementVersionSpec> versionSpecs,
                        @NotNull List<String> installOptions,
@@ -246,14 +309,39 @@ public class PyRequirement {
     myExtras = extras;
   }
 
+  /**
+   * @deprecated This method will be removed in 2018.2.
+   */
+  @NotNull
+  @Deprecated
+  public PyRequirement withVersionComparator(@NotNull Comparator<String> comparator) {
+    return new PyRequirement(myName,
+                             ContainerUtil.map(myVersionSpecs, spec -> spec.withVersionComparator(comparator)), myInstallOptions, myExtras);
+  }
+
   @NotNull
   public String getName() {
     return myName;
   }
 
+  /**
+   * @deprecated Use {@link PyRequirement#getName()} and {@link PyRequirement#getExtras()} instead.
+   * This method will be removed in 2018.2.
+   */
   @NotNull
+  @Deprecated
   public String getFullName() {
     return myName + myExtras;
+  }
+
+  @NotNull
+  public String getExtras() {
+    return myExtras;
+  }
+
+  @NotNull
+  public List<PyRequirementVersionSpec> getVersionSpecs() {
+    return myVersionSpecs;
   }
 
   @NotNull
@@ -271,7 +359,7 @@ public class PyRequirement {
     if (o == this) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    PyRequirement that = (PyRequirement)o;
+    final PyRequirement that = (PyRequirement)o;
 
     if (!myName.equals(that.myName)) return false;
     if (!myVersionSpecs.equals(that.myVersionSpecs)) return false;
@@ -302,11 +390,21 @@ public class PyRequirement {
       .orElse(null);
   }
 
+  /**
+   * @deprecated Use {@link PyPackageManager#parseRequirements(String)} instead.
+   * This method will be removed in 2018.2.
+   */
   @Nullable
+  @Deprecated
   public static PyRequirement fromLine(@NotNull String line) {
-    final PyRequirement githubArchiveUrl = parseGithubArchiveUrl(line);
+    final PyRequirement githubArchiveUrl = parseGitArchiveUrl(GITHUB_ARCHIVE_URL, line);
     if (githubArchiveUrl != null) {
       return githubArchiveUrl;
+    }
+
+    final PyRequirement gitlabArchiveUrl = parseGitArchiveUrl(GITLAB_ARCHIVE_URL, line);
+    if (gitlabArchiveUrl != null) {
+      return gitlabArchiveUrl;
     }
 
     final PyRequirement archiveUrl = parseArchiveUrl(line);
@@ -322,28 +420,45 @@ public class PyRequirement {
     return parseRequirement(line);
   }
 
+  /**
+   * @deprecated Use {@link PyPackageManager#parseRequirements(String)} instead.
+   * This method will be removed in 2018.2.
+   */
   @NotNull
+  @Deprecated
   public static List<PyRequirement> fromText(@NotNull String text) {
     return fromText(text, null, new HashSet<>());
   }
 
+  /**
+   * @deprecated Use {@link PyPackageManager#parseRequirements(String)} instead.
+   * This method will be removed in 2018.2.
+   */
   @NotNull
+  @Deprecated
   public static List<PyRequirement> fromFile(@NotNull VirtualFile file) {
     return fromText(loadText(file), file, new HashSet<>());
   }
 
+  /**
+   * @deprecated Use {@link PyRequirement} instead.
+   * This method will be removed in 2018.2.
+   */
   @NotNull
+  @Deprecated
   public static PyRequirementVersionSpec calculateVersionSpec(@NotNull String version, @NotNull PyRequirementRelation expectedRelation) {
-    final String normalizedVersion = PyRequirementVersionNormalizer.normalize(version);
+    if (expectedRelation == PyRequirementRelation.STR_EQ) return new PyRequirementVersionSpec(version);
+
+    final PyRequirementVersion normalizedVersion = PyRequirementVersionNormalizer.normalize(version);
 
     return normalizedVersion == null ?
-           new PyRequirementVersionSpec(PyRequirementRelation.STR_EQ, version) :
+           new PyRequirementVersionSpec(version) :
            new PyRequirementVersionSpec(expectedRelation, normalizedVersion);
   }
 
   @Nullable
-  private static PyRequirement parseGithubArchiveUrl(@NotNull String line) {
-    final Matcher matcher = GITHUB_ARCHIVE_URL.matcher(line);
+  private static PyRequirement parseGitArchiveUrl(@NotNull Pattern pattern, @NotNull String line) {
+    final Matcher matcher = pattern.matcher(line);
 
     if (matcher.matches()) {
       return new PyRequirement(matcher.group(NAME_GROUP), Collections.emptyList(), Collections.singletonList(dropComments(line, matcher)));
@@ -357,8 +472,9 @@ public class PyRequirement {
     final Matcher matcher = ARCHIVE_URL.matcher(line);
 
     if (matcher.matches()) {
-      return createVcsOrArchiveRequirement(Collections.singletonList(dropComments(line, matcher)),
-                                           parseNameAndVersionFromVcsOrArchive(matcher.group(NAME_GROUP)));
+      return createVcsOrArchiveRequirement(parseNameAndVersionFromVcsOrArchive(matcher.group(NAME_GROUP)),
+                                           Collections.singletonList(dropComments(line, matcher)),
+                                           null);
     }
 
     return null;
@@ -412,14 +528,12 @@ public class PyRequirement {
       visitedFiles.add(containingFile);
     }
 
-    return splitByLinesAndCollapse(text)
-      .stream()
-      .map(line -> parseLine(line, containingFile, visitedFiles))
-      .flatMap(Collection::stream)
-      .filter(req -> req != null)
-      .collect(Collectors.toCollection(LinkedHashSet::new))
-      .stream()
-      .collect(Collectors.toList());
+    return StreamEx
+      .of(splitByLinesAndCollapse(text))
+      .flatCollection(line -> parseLine(line, containingFile, visitedFiles))
+      .nonNull()
+      .distinct()
+      .toList();
   }
 
   @NotNull
@@ -465,19 +579,31 @@ public class PyRequirement {
   }
 
   @NotNull
-  private static PyRequirement createVcsOrArchiveRequirement(@NotNull List<String> installOptions,
-                                                             @NotNull Pair<String, String> nameAndVersion) {
+  private static PyRequirement createVcsOrArchiveRequirement(@NotNull Pair<String, String> nameAndVersion,
+                                                             @NotNull List<String> installOptions,
+                                                             @Nullable String extras) {
     final String name = nameAndVersion.getFirst();
     final String version = nameAndVersion.getSecond();
 
     if (version == null) {
-      return new PyRequirement(name, Collections.emptyList(), installOptions);
+      if (extras == null) {
+        return new PyRequirement(name, Collections.emptyList(), installOptions);
+      }
+      else {
+        return new PyRequirement(name, Collections.emptyList(), installOptions, extras);
+      }
     }
 
-    return new PyRequirement(name, Collections.singletonList(calculateVersionSpec(version, PyRequirementRelation.EQ)), installOptions);
+    final List<PyRequirementVersionSpec> versionSpecs = Collections.singletonList(calculateVersionSpec(version, PyRequirementRelation.EQ));
+    if (extras == null) {
+      return new PyRequirement(name, versionSpecs, installOptions);
+    }
+    else {
+      return new PyRequirement(name, versionSpecs, installOptions, extras);
+    }
   }
 
-  @Nullable
+  @NotNull
   private static PyRequirement createVcsRequirement(@NotNull Matcher matcher) {
     final String path = matcher.group(PATH_IN_VCS_GROUP);
     final String egg = getEgg(matcher);
@@ -486,7 +612,7 @@ public class PyRequirement {
     final Pair<String, String> nameAndVersion =
       parseNameAndVersionFromVcsOrArchive(egg == null ? StringUtil.trimEnd(project, ".git") : egg);
 
-    return createVcsOrArchiveRequirement(calculateVcsInstallOptions(matcher), nameAndVersion);
+    return createVcsOrArchiveRequirement(nameAndVersion, calculateVcsInstallOptions(matcher), getVcsExtras(matcher));
   }
 
   @NotNull
@@ -645,6 +771,13 @@ public class PyRequirement {
   }
 
   @Nullable
+  private static String getVcsExtras(@NotNull Matcher matcher) {
+    final String beforeSubdir = matcher.group(VCS_EXTRAS_BEFORE_SUBDIR_GROUP);
+
+    return beforeSubdir == null ? matcher.group(VCS_EXTRAS_AFTER_SUBDIR_GROUP) : beforeSubdir;
+  }
+
+  @Nullable
   private static PyRequirementVersionSpec parseVersionSpec(@NotNull String versionSpec) {
     PyRequirementRelation relation = null;
 
@@ -675,13 +808,7 @@ public class PyRequirement {
 
     if (relation != null) {
       final int versionIndex = findFirstNotWhiteSpaceAfter(versionSpec, relation.toString().length());
-      final String version = versionSpec.substring(versionIndex);
-
-      if (relation == PyRequirementRelation.STR_EQ) {
-        return new PyRequirementVersionSpec(relation, version);
-      }
-
-      return calculateVersionSpec(version, relation);
+      return calculateVersionSpec(versionSpec.substring(versionIndex), relation);
     }
 
     return null;

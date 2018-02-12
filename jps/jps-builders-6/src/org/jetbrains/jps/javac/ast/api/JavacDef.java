@@ -48,4 +48,29 @@ public abstract class JavacDef {
       return myClasses;
     }
   }
+
+  public static class JavacMemberDef extends JavacDef {
+    private final JavacRef myRawReturnType;
+    private final byte myArrayDimension;
+    private final boolean myStatic;
+
+    public JavacMemberDef(JavacRef element, JavacRef rawReturnType, byte dimension, boolean isStatic) {
+      super(element);
+      myRawReturnType = rawReturnType;
+      myArrayDimension = dimension;
+      myStatic = isStatic;
+    }
+
+    public JavacRef getReturnType() {
+      return myRawReturnType;
+    }
+
+    public byte getIteratorKind() {
+      return myArrayDimension;
+    }
+
+    public boolean isStatic() {
+      return myStatic;
+    }
+  }
 }

@@ -22,7 +22,7 @@ import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsSavingComponent
-import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.openapi.diagnostic.runAndLogException
 import org.jetbrains.concurrency.runAsync
 import java.nio.file.Paths
 
@@ -32,7 +32,7 @@ fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   }
   else if (settings.providerType == ProviderType.KEEPASS) {
     val dbFile = settings.state.keepassDb?.let {
-      LOG.catchAndLog { return@let Paths.get(it) }
+      LOG.runAndLogException { return@let Paths.get(it) }
       return@let null
     }
     return KeePassCredentialStore(dbFile = dbFile)
@@ -133,11 +133,11 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
 }
 
 internal fun createPersistentCredentialStore(existing: KeePassCredentialStore? = null, convertFileStore: Boolean = false): PasswordStorage {
-  LOG.catchAndLog {
+  LOG.runAndLogException {
     for (factory in CredentialStoreFactory.CREDENTIAL_STORE_FACTORY.extensions) {
       val store = factory.create() ?: continue
       if (convertFileStore) {
-        LOG.catchAndLog {
+        LOG.runAndLogException {
           val fileStore = KeePassCredentialStore()
           fileStore.copyTo(store)
           fileStore.clear()

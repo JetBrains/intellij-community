@@ -1,4 +1,4 @@
 @org.junit.Test
-public void ${NAME}() throws Exception {
+public void ${NAME}() {
   ${BODY}
 }

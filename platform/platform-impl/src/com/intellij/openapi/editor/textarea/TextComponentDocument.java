@@ -15,8 +15,9 @@
  */
 package com.intellij.openapi.editor.textarea;
 
-import com.intellij.openapi.editor.StandaloneDocument;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.text.BadLocationException;
@@ -26,7 +27,7 @@ import javax.swing.text.JTextComponent;
 /**
  * @author yole
  */
-public class TextComponentDocument extends StandaloneDocument {
+public class TextComponentDocument extends UserDataHolderBase implements com.intellij.openapi.editor.Document {
   private final JTextComponent myTextComponent;
 
   public TextComponentDocument(final JTextComponent textComponent) {
@@ -35,7 +36,7 @@ public class TextComponentDocument extends StandaloneDocument {
 
   @NotNull
   @Override
-  public String getText() {
+  public CharSequence getImmutableCharSequence() {
     try {
       final Document document = myTextComponent.getDocument();
       return document.getText(0, document.getLength());
@@ -55,12 +56,6 @@ public class TextComponentDocument extends StandaloneDocument {
     catch (BadLocationException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  @Override
-  @NotNull
-  public char[] getChars() {
-    throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
@@ -123,5 +118,27 @@ public class TextComponentDocument extends StandaloneDocument {
   @Override
   public boolean isWritable() {
     return true;
+  }
+
+  @NotNull
+  @Override
+  public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  @NotNull
+  @Override
+  public RangeMarker createGuardedBlock(int startOffset, int endOffset) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  @Override
+  public void setText(@NotNull CharSequence text) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  @Override
+  public long getModificationStamp() {
+    throw new UnsupportedOperationException("Not implemented");
   }
 }

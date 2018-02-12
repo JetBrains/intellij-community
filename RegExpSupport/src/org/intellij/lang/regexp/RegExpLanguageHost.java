@@ -20,16 +20,25 @@ import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.EnumSet;
+
 /**
  * @author yole
  */
 public interface RegExpLanguageHost {
+
+  EnumSet<RegExpGroup.Type> EMPTY_NAMED_GROUP_TYPES = EnumSet.noneOf(RegExpGroup.Type.class);
+
   boolean characterNeedsEscaping(char c);
   boolean supportsPerl5EmbeddedComments();
   boolean supportsPossessiveQuantifiers();
   boolean supportsPythonConditionalRefs();
   boolean supportsNamedGroupSyntax(RegExpGroup group);
   boolean supportsNamedGroupRefSyntax(RegExpNamedGroupRef ref);
+  @NotNull
+  default EnumSet<RegExpGroup.Type> getSupportedNamedGroupTypes(RegExpElement context) {
+    return EMPTY_NAMED_GROUP_TYPES;
+  }
   boolean supportsExtendedHexCharacter(RegExpChar regExpChar);
 
   default boolean isValidGroupName(String name, @NotNull PsiElement context) {
@@ -116,7 +125,7 @@ public interface RegExpLanguageHost {
     /** Finite repetition inside lookbehind with different minimum, maximum values allowed */
     FINITE_REPETITION,
 
-    /** Full regex syntax inside lookbehind ,i.e. star (*) and plus (*) repetition and backreferences, allowed. */
+    /** Full regex syntax inside lookbehind, i.e. star (*) and plus (*) repetition and backreferences, allowed. */
     FULL
   }
 }

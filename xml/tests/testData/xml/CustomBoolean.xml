@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Test xmlns="customBoolean">
+    <Valid>AnyTokenIsOkay</Valid>
+    <!--Even item from enumeration is not valid-->
+    <NotValid>True</NotValid>
+</Test>

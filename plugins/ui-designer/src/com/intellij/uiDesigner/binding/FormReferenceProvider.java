@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,12 @@ package com.intellij.uiDesigner.binding;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -35,6 +36,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.uiDesigner.GuiFormFileType;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.util.ProcessingContext;
@@ -50,6 +52,7 @@ import java.util.Map;
  * @author yole
  */
 public class FormReferenceProvider extends PsiReferenceProvider {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.binding.FormReferenceProvider");
   private static class CachedFormData {
     PsiReference[] myReferences;
     Map<String, Pair<PsiType, TextRange>> myFieldNameToTypeMap;
@@ -65,8 +68,8 @@ public class FormReferenceProvider extends PsiReferenceProvider {
   @NotNull
   public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
     if (element instanceof PsiPlainTextFile) {
-      final PsiPlainTextFile plainTextFile = (PsiPlainTextFile) element;
-      if (plainTextFile.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {
+      PsiPlainTextFile plainTextFile = (PsiPlainTextFile) element;
+      if (plainTextFile.getFileType().equals(GuiFormFileType.INSTANCE)) {
         return getCachedData(plainTextFile).myReferences;
       }
     }
@@ -119,11 +122,10 @@ public class FormReferenceProvider extends PsiReferenceProvider {
 
   private static void processReferences(final PsiPlainTextFile file, final PsiReferenceProcessor processor) {
     final Project project = file.getProject();
-    final XmlTag rootTag = ApplicationManager.getApplication().runReadAction(new Computable<XmlTag>() {
-      public XmlTag compute() {
-        final XmlFile xmlFile = (XmlFile) PsiFileFactory.getInstance(project).createFileFromText("a.xml", XmlFileType.INSTANCE, file.getViewProvider().getContents());
-        return xmlFile.getRootTag();
-      }
+    final XmlTag rootTag = ReadAction.compute(() -> {
+      final XmlFile xmlFile = (XmlFile)PsiFileFactory.getInstance(project)
+        .createFileFromText("a.xml", XmlFileType.INSTANCE, file.getViewProvider().getContents());
+      return xmlFile.getRootTag();
     });
 
     if (rootTag == null || !Utils.FORM_NAMESPACE.equals(rootTag.getNamespace())) {
@@ -275,35 +277,33 @@ public class FormReferenceProvider extends PsiReferenceProvider {
                                                final String className) {
     final XmlAttribute valueAttribute = tag.getAttribute(UIFormXmlConstants.ATTRIBUTE_VALUE, null);
     if (valueAttribute != null) {
-      PsiReference reference = ApplicationManager.getApplication().runReadAction(new Computable<PsiReference>() {
-        @Nullable
-        public PsiReference compute() {
-          final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(file.getProject());
-          final Module module = ModuleUtil.findModuleForPsiElement(file);
-          if (module == null) return null;
-          final GlobalSearchScope scope = module.getModuleWithDependenciesAndLibrariesScope(false);
-          PsiClass psiClass = psiFacade.findClass(className, scope);
-          if (psiClass != null) {
-            PsiMethod getter = PropertyUtil.findPropertyGetter(psiClass, tag.getName(), false, true);
-            if (getter != null) {
-              final PsiType returnType = getter.getReturnType();
-              if (returnType instanceof PsiClassType) {
-                PsiClassType propClassType = (PsiClassType)returnType;
-                PsiClass propClass = propClassType.resolve();
-                if (propClass != null) {
-                  if (propClass.isEnum()) {
-                    return new FormEnumConstantReference(file, getValueRange(valueAttribute), propClassType);
-                  }
-                  PsiClass iconClass = psiFacade.findClass("javax.swing.Icon", scope);
-                  if (iconClass != null && InheritanceUtil.isInheritorOrSelf(propClass, iconClass, true)) {
-                    return new ResourceFileReference(file, getValueRange(valueAttribute));
-                  }
+      PsiReference reference = ReadAction.compute(() -> {
+        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(file.getProject());
+        final Module module = ModuleUtilCore.findModuleForPsiElement(file);
+        if (module == null) return null;
+        final GlobalSearchScope scope = module.getModuleWithDependenciesAndLibrariesScope(false);
+        PsiClass psiClass = psiFacade.findClass(className, scope);
+        if (psiClass != null) {
+          PsiMethod getter = PropertyUtilBase.findPropertyGetter(psiClass, tag.getName(), false, true);
+          if (getter != null) {
+            final PsiType returnType = getter.getReturnType();
+            if (returnType instanceof PsiClassType) {
+              PsiClassType propClassType = (PsiClassType)returnType;
+              PsiClass propClass = propClassType.resolve();
+              if (propClass != null) {
+                if (propClass.isEnum()) {
+                  return new FormEnumConstantReference(file, getValueRange(valueAttribute), propClassType);
+                }
+                PsiClass iconClass = psiFacade.findClass("javax.swing.Icon", scope);
+                if (iconClass != null && InheritanceUtil.isInheritorOrSelf(propClass, iconClass, true)) {
+                  return new ResourceFileReference(file, getValueRange(valueAttribute));
                 }
               }
             }
           }
-          return null;
-      }});
+        }
+        return null;
+      });
       if (reference != null) {
         if (reference instanceof ResourceFileReference) {
           processPackageReferences(file, processor, valueAttribute);

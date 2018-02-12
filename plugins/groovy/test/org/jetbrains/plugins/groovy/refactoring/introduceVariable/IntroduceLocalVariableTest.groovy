@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduceVariable
 
-import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase
 import org.jetbrains.plugins.groovy.intentions.declaration.GrIntroduceLocalVariableIntention
 import org.jetbrains.plugins.groovy.util.TestUtils
-
 /**
  * @author siosio
  */
@@ -52,12 +51,9 @@ class IntroduceLocalVariableTest extends GrIntentionTestCase {
   protected void doTest() {
     myFixture.configureByFile("${getTestName(false)}.groovy")
     def intentions = myFixture.availableIntentions
-
-    for (intention in intentions) {
-      if (intention instanceof IntentionActionWrapper) intention = intention.delegate
-      if (intention instanceof GrIntroduceLocalVariableIntention) {
-        new MockGrIntroduceLocalVariableIntention().invoke(myFixture.project, myFixture.editor, myFixture.file)
-      }
+    IntentionAction intention = myFixture.getAvailableIntention("Introduce local variable")
+    if (intention != null) {
+      new MockGrIntroduceLocalVariableIntention().invoke(myFixture.project, myFixture.editor, myFixture.file)
     }
     myFixture.checkResultByFile("${getTestName(false)}-after.groovy")
   }

@@ -15,12 +15,6 @@
  */
 package com.intellij.openapi.vcs;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 9/14/12
- * Time: 11:25 AM
- */
 public interface CommitMessageI {
   /**
    * Sets the description for the check-in.

@@ -20,7 +20,6 @@ import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.actions.ExecutorProvider;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.NewRunConfigurationPopup;
@@ -98,7 +97,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
   @Nullable
   @Override
   public JComponent createComponent() {
-    myModel = new ProjectStartupTasksTableModel(RunManagerEx.getInstanceEx(myProject));
+    myModel = new ProjectStartupTasksTableModel();
     myTable = new JBTable(myModel);
     myTable.getEmptyText().setText("Add run configurations with the + button");
     new TableSpeedSearch(myTable);
@@ -106,16 +105,13 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
     defaultEditor.setClickCountToStart(1);
 
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    new DumbAwareAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        final int row = myTable.getSelectedRow();
-        if (row >= 0 && myModel.isCellEditable(row, ProjectStartupTasksTableModel.IS_SHARED_COLUMN)) {
-          myModel.setValueAt(!Boolean.TRUE.equals(myTable.getValueAt(row, ProjectStartupTasksTableModel.IS_SHARED_COLUMN)),
-                             row, ProjectStartupTasksTableModel.IS_SHARED_COLUMN);
-        }
+    DumbAwareAction.create(e -> {
+      int row = myTable.getSelectedRow();
+      if (row >= 0 && myModel.isCellEditable(row, ProjectStartupTasksTableModel.IS_SHARED_COLUMN)) {
+        myModel.setValueAt(!Boolean.TRUE.equals(myTable.getValueAt(row, ProjectStartupTasksTableModel.IS_SHARED_COLUMN)),
+                           row, ProjectStartupTasksTableModel.IS_SHARED_COLUMN);
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(KeyEvent.VK_SPACE), myTable);
+    }).registerCustomShortcutSet(new CustomShortcutSet(KeyEvent.VK_SPACE), myTable);
     myTable.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
@@ -183,7 +179,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
   private void refreshDataUpdateSelection(RunnerAndConfigurationSettings settings) {
     if (myTable.isEmpty()) return;
     myModel.reValidateConfigurations(new Processor<RunnerAndConfigurationSettings>() {
-      private RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
+      private final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
       @Override
       public boolean process(RunnerAndConfigurationSettings settings) {
         return runManager.getConfigurationById(settings.getUniqueID()) != null;
@@ -213,26 +209,23 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
 
       @Override
       public String getText() {
-        return UIUtil.removeMnemonic(ExecutionBundle.message("add.new.run.configuration.acrtion.name"));
+        return UIUtil.removeMnemonic(ExecutionBundle.message("add.new.run.configuration.action2.name"));
       }
 
       @Override
       public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
         final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
-        final ConfigurationType[] factories = runManager.getConfigurationFactories();
         final Condition<ConfigurationType> filter = new Condition<ConfigurationType>() {
           private final RunnerRegistry myRegistry = RunnerRegistry.getInstance();
 
           @Override
           public boolean value(ConfigurationType configurationType) {
             ConfigurationFactory factory;
-            return !UnknownConfigurationType.INSTANCE.equals(configurationType) &&
-                   ((factory = runManager.getFactory(configurationType.getId(), null)) != null) &&
+            return ((factory = runManager.getFactory(configurationType.getId(), null)) != null) &&
                    myRegistry.getRunner(executor.getId(), runManager.getConfigurationTemplate(factory).getConfiguration()) != null;
           }
         };
-        final List<ConfigurationType> factoriesList = ContainerUtil.filter(Arrays.asList(factories), filter);
-        final ListPopup popup = NewRunConfigurationPopup.createAddPopup(factoriesList, "",
+        final ListPopup popup = NewRunConfigurationPopup.createAddPopup(ContainerUtil.filter(runManager.getConfigurationFactoriesWithoutUnknown(), filter), "",
                                                                         factory -> ApplicationManager.getApplication().invokeLater(() -> {
                                                                           final EditConfigurationsDialog dialog = new EditConfigurationsDialog(project, factory);
                                                                           if (dialog.showAndGet()) {

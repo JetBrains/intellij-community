@@ -15,25 +15,37 @@
  */
 package com.jetbrains.python.newProject;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.icons.AllIcons.General;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.DirectoryProjectGenerator;
+import com.intellij.platform.DirectoryProjectGeneratorBase;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.webcore.packaging.PackageManagementService.ErrorDescription;
+import com.intellij.webcore.packaging.PackagesNotificationPanel;
+import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.remote.*;
+import com.jetbrains.python.sdk.PyLazySdk;
 import com.jetbrains.python.sdk.PySdkUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseListener;
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -58,10 +70,17 @@ import java.util.function.Consumer;
  *   </li>
  *   </ol>
  * </p>
+ * <h2>How to report framework installation failures</h2>
+ * <p>{@link PyNewProjectSettings#getSdk()} may return null, or something else may prevent package installation.
+ * Use {@link #reportPackageInstallationFailure(String, Pair)} in this case.
+ * </p>
  *
  * @param <T> project settings
  */
-public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> implements DirectoryProjectGenerator<T> {
+public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> extends DirectoryProjectGeneratorBase<T> {
+  public static final PyNewProjectSettings NO_SETTINGS = new PyNewProjectSettings();
+  private static final Logger LOGGER = Logger.getInstance(PythonProjectGenerator.class);
+
   private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
   private final boolean myAllowRemoteProjectCreation;
   @Nullable private MouseListener myErrorLabelMouseListener;
@@ -127,9 +146,10 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> imp
   @Override
   public final void generateProject(@NotNull final Project project,
                                     @NotNull final VirtualFile baseDir,
-                                    @Nullable final T settings,
+                                    @NotNull final T settings,
                                     @NotNull final Module module) {
-    if (settings == null) {
+    // Use NO_SETTINGS to avoid nullable settings of project generator
+    if (settings == NO_SETTINGS) {
       // We are in Intellij Module and framework is implemented as project template, not facet.
       // See class doc for mote info
       configureProjectNoSettings(project, baseDir, module);
@@ -141,6 +161,14 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> imp
     // If we deal with remote project -- use remote manager to configure it
     final PythonRemoteInterpreterManager remoteManager = PythonRemoteInterpreterManager.getInstance();
     final Sdk sdk = settings.getSdk();
+
+    if (sdk instanceof PyLazySdk) {
+      final Sdk createdSdk = ((PyLazySdk)sdk).create();
+      settings.setSdk(createdSdk);
+      if (createdSdk != null) {
+        SdkConfigurationUtil.addSdk(createdSdk);
+      }
+    }
 
     final PyProjectSynchronizer synchronizer = (remoteManager != null ? remoteManager.getSynchronizer(sdk) : null);
 
@@ -243,6 +271,11 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> imp
     return null;
   }
 
+  /**
+   * @deprecated This method no longer has any effect. The standard interpreter chooser UI is always shown.
+   */
+  @Deprecated
+  @Contract(" -> false")
   public boolean hideInterpreter() {
     return false;
   }
@@ -260,7 +293,41 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> imp
   }
 
   /**
+   * @param sdkAndException if you have SDK and execution exception provide them here (both must not be null).
+   */
+  protected static void reportPackageInstallationFailure(@NotNull final String frameworkName,
+                                                         @Nullable final Pair<Sdk, ExecutionException> sdkAndException) {
+
+    final ErrorDescription errorDescription = getErrorDescription(sdkAndException);
+    final Application app = ApplicationManager.getApplication();
+    app.invokeLater(() -> PackagesNotificationPanel.showError(String.format("Install %s failed", frameworkName), errorDescription));
+  }
+
+  @NotNull
+  private static ErrorDescription getErrorDescription(@Nullable final Pair<Sdk, ExecutionException> sdkAndException) {
+    ErrorDescription errorDescription = null;
+    if (sdkAndException != null) {
+      final ExecutionException exception = sdkAndException.second;
+      errorDescription = PyPackageManagementService.toErrorDescription(Collections.singletonList(exception), sdkAndException.first);
+      if (errorDescription == null) {
+        errorDescription = ErrorDescription.fromMessage(exception.getMessage());
+      }
+    }
+
+    if (errorDescription == null) {
+      errorDescription = ErrorDescription.fromMessage("Choose another SDK");
+    }
+    return errorDescription;
+  }
+
+  @Nullable
+  public String getPreferredEnvironmentType() {
+    return null;
+  }
+
+  /**
    * To be thrown if project can't be created on this sdk
+   *
    * @author Ilya.Kazakevich
    */
   public static class PyNoProjectAllowedOnSdkException extends Exception {

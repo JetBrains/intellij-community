@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,11 +34,7 @@ import org.picocontainer.PicoContainer;
  */
 public interface ComponentManager extends UserDataHolder, Disposable {
   /**
-   * Gets the component by its name
-   *
-   * @param name the name of the component
-   * @return component with given name or null if there is no such component
-   * @see NamedComponent#getComponentName()
+   * @deprecated Use {@link #getComponent(Class)} instead.
    */
   BaseComponent getComponent(@NotNull String name);
 

@@ -21,20 +21,13 @@ import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Eugene.Kudelevsky
- * Date: 3/29/11
- * Time: 4:21 PM
- * To change this template use File | Settings | File Templates.
- */
 public class HtmlGotoRelatedProvider extends GotoRelatedProvider {
   @NotNull
   @Override

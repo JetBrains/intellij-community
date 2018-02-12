@@ -1,24 +1,14 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.nio.file.attribute.DosFileAttributeView;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -34,30 +24,35 @@ public class Utils {
     return fileName.endsWith(".zip") || fileName.endsWith(".jar");
   }
 
-  private static File findUniqueName(String path) throws IOException {
-    int index = 0;
-    File myTempFile;
-    do {
-      myTempFile = new File(path + ".tmp." + index++);
+  public static String findDirectory(long requiredFreeSpace) {
+    String dir = System.getProperty("idea.updater.log");
+    if (dir == null || !isValidDir(dir, requiredFreeSpace)) {
+      dir = System.getProperty("java.io.tmpdir");
+      if (!isValidDir(dir, requiredFreeSpace)) {
+        dir = System.getProperty("user.home");
+      }
     }
-    while (myTempFile.exists());
-    return myTempFile;
+    return dir;
+  }
+
+  private static boolean isValidDir(String path, long space) {
+    File dir = new File(path);
+    return dir.isDirectory() && dir.canWrite() && dir.getUsableSpace() >= space;
   }
 
   public static File getTempFile(String name) throws IOException {
     if (myTempDir == null) {
-      myTempDir = findUniqueName(Runner.getDir(REQUIRED_FREE_SPACE) + "/idea.updater.files");
-      if (!myTempDir.mkdirs()) throw new IOException("Cannot create working directory: " + myTempDir);
+      myTempDir = Files.createTempDirectory(Paths.get(findDirectory(REQUIRED_FREE_SPACE)), "idea.updater.files.").toFile();
       Runner.logger().info("created working directory: " + myTempDir);
     }
-    return findUniqueName(myTempDir.getPath() + '/' + name);
-  }
 
-  public static File createTempDir() throws IOException {
-    File tempDir = getTempFile("temp");
-    if (!tempDir.mkdir()) throw new IOException("Cannot create temp directory: " + tempDir);
-    Runner.logger().info("created temp directory: " + tempDir.getPath());
-    return tempDir;
+    File myTempFile;
+    int index = 0;
+    do {
+      myTempFile = new File(myTempDir, name + ".tmp." + index++);
+    }
+    while (myTempFile.exists());
+    return myTempFile;
   }
 
   public static void cleanup() throws IOException {
@@ -69,7 +64,7 @@ public class Utils {
 
   public static void delete(File file) throws IOException {
     Path start = file.toPath();
-    if (Files.exists(start)) {
+    if (Files.exists(start, LinkOption.NOFOLLOW_LINKS)) {
       Files.walkFileTree(start, new SimpleFileVisitor<Path>() {
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
@@ -95,10 +90,19 @@ public class Utils {
           return;
         }
       }
+      catch (AccessDeniedException e) {
+        try {
+          DosFileAttributeView view = Files.getFileAttributeView(path, DosFileAttributeView.class);
+          if (view != null && view.readAttributes().isReadOnly()) {
+            view.setReadOnly(false);
+            continue;
+          }
+        }
+        catch (IOException ignore) { }
+      }
       catch (IOException ignore) { }
 
-      try { Thread.sleep(10); }
-      catch (InterruptedException ignore) { }
+      pause(10);
     }
 
     throw new IOException("Cannot delete: " + path);
@@ -115,7 +119,7 @@ public class Utils {
     }
   }
 
-  public static boolean isLink(File file) throws IOException {
+  public static boolean isLink(File file) {
     return Files.isSymbolicLink(file.toPath());
   }
 
@@ -270,7 +274,7 @@ public class Utils {
     private final List<? extends ZipEntry> myEntries;
     private InputStream myStream = null;
     private int myNextEntry = 0;
-    private byte[] myByte = new byte[1];
+    private final byte[] myByte = new byte[1];
 
     private NormalizedZipInputStream(File file) throws IOException {
       myZip = new ZipFile(file);
@@ -323,5 +327,10 @@ public class Utils {
     public synchronized void writeTo(OutputStream out) throws IOException {
       writeBytes(buf, count, out);
     }
+  }
+
+  public static void pause(long millis) {
+    try { Thread.sleep(millis); }
+    catch (InterruptedException ignore) { }
   }
 }

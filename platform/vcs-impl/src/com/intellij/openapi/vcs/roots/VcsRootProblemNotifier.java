@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,15 +43,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.openapi.project.ProjectUtil.guessProjectDir;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
 import static com.intellij.openapi.vcs.VcsDirectoryMapping.PROJECT_CONSTANT;
 import static com.intellij.openapi.vcs.VcsRootError.Type.UNREGISTERED_ROOT;
-import static com.intellij.project.ProjectKt.guessProjectDir;
 import static com.intellij.util.ObjectUtils.notNull;
-import static com.intellij.util.containers.ContainerUtil.filter;
-import static com.intellij.util.containers.ContainerUtil.getFirstItem;
-import static com.intellij.util.containers.ContainerUtil.sorted;
+import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Collections.singletonList;
 
 /**

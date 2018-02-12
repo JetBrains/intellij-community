@@ -26,7 +26,7 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 
 public class RandomAccessFileInputStream extends InputStream {
-  private RandomAccessFile raf;
+  private final RandomAccessFile raf;
   private long cur;
   private long limit;
 

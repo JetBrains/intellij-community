@@ -53,7 +53,7 @@ public class NewStyleConvertToFStringProcessor extends BaseConvertToFStringProce
   @NotNull
   @Override
   protected PySubstitutionChunkReference createReference(@NotNull Field field) {
-    return new PySubstitutionChunkReference(myPyString, field, ObjectUtils.chooseNotNull(field.getAutoPosition(), 0), false);
+    return new PySubstitutionChunkReference(myPyString, field, ObjectUtils.chooseNotNull(field.getAutoPosition(), 0));
   }
 
   @Override

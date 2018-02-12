@@ -19,17 +19,12 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.project.model.JpsLibraryManager;
 import org.jetbrains.jps.model.library.JpsLibrary;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * @author nik
  */
 public class JpsLibraryManagerImpl implements JpsLibraryManager {
-  private final Map<JpsLibrary, Library> myLibraries = new HashMap<>();
-
   @Override
   public Library getLibrary(JpsLibrary library) {
-    return myLibraries.get(library);
+    return null;
   }
 }

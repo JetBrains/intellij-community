@@ -51,7 +51,8 @@ public class UpdateAction extends BaseUpdateAction {
   protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
     Runner.logger().info("Update action. File: " + toFile.getAbsolutePath());
 
-    File source = getSource(backupDir);
+    //in case no backup is required
+    File source = backupDir == null ? toFile : getSource(backupDir);
     if (!isMove()) {
       try (InputStream in = Utils.findEntryInputStream(patchFile, getPath())) {
         if (in == null) {

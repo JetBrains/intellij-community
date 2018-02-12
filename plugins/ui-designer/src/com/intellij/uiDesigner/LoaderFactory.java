@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,7 +133,7 @@ public final class LoaderFactory {
       // ignore
     }
 
-    final URL[] _urls = urls.toArray(new URL[urls.size()]);
+    final URL[] _urls = urls.toArray(new URL[0]);
     return new DesignTimeClassLoader(Arrays.asList(_urls), LoaderFactory.class.getClassLoader(), moduleName);
   }
 
@@ -155,7 +155,7 @@ public final class LoaderFactory {
   }
 
   private static class DesignTimeClassLoader extends UrlClassLoader {
-    static { registerAsParallelCapable(); }
+    static { if (registerAsParallelCapable()) markParallelCapable(DesignTimeClassLoader.class); }
 
     private final String myModuleName;
 

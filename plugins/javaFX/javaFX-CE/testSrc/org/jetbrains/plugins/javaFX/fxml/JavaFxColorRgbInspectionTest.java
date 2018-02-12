@@ -13,15 +13,15 @@ public class JavaFxColorRgbInspectionTest extends AbstractJavaFXTestCase {
     myFixture.enableInspections(new JavaFxColorRgbInspection());
   }
 
-  public void testAttributeHighlighting() throws Exception {
+  public void testAttributeHighlighting() {
     doTestHighlighting();
   }
 
-  public void testTagHighlighting() throws Exception {
+  public void testTagHighlighting() {
     doTestHighlighting();
   }
 
-  public void testFxReference() throws Exception {
+  public void testFxReference() {
     doTestHighlighting();
   }
 

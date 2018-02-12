@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 28-Jun-2007
- */
 package com.intellij.internal;
 
 import com.intellij.openapi.actionSystem.AnAction;

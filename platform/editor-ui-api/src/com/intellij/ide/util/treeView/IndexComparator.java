@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Aug 30, 2002
- */
 package com.intellij.ide.util.treeView;
 
 import java.util.Comparator;

@@ -15,8 +15,8 @@
  */
 package org.jetbrains.plugins.gradle.model;
 
-import com.google.common.base.Objects;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.internal.impldep.com.google.common.base.Objects;
 
 import java.io.File;
 import java.util.ArrayList;

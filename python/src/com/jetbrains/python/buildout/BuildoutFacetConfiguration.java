@@ -39,7 +39,6 @@ import java.util.List;
  * Stores buildout facet config data.
  * <br/>
  * User: dcheryasov
- * Date: Jul 25, 2010
  */
 public class BuildoutFacetConfiguration implements FacetConfiguration {
 
@@ -93,7 +92,7 @@ public class BuildoutFacetConfiguration implements FacetConfiguration {
 
   private class Tab extends FacetEditorTab {
 
-    private BuildoutConfigPanel myPanel;
+    private final BuildoutConfigPanel myPanel;
 
     private Tab(Module module) {
       myPanel = new BuildoutConfigPanel(module, BuildoutFacetConfiguration.this);

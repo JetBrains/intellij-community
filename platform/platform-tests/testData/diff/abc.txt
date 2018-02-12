@@ -1,0 +1,15 @@
+class abc {
+  public void f() {
+<<<<<<< abc.txt
+    def
+=======
+    abc
+>>>>>>> 1.14
+  int F() {
+  	asdfklasdfl
+  	asdgfsagdfhasfdhg
+  	sdafjklklas
+  	sdafjkllksadf
+
+  }
+}

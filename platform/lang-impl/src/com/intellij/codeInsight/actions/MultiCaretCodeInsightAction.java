@@ -76,10 +76,7 @@ public abstract class MultiCaretCodeInsightAction extends AnAction {
 
   @Override
   public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    if (project != null) {
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-    }
+    CodeInsightEditorAction.beforeActionPerformedUpdate(e);
     super.beforeActionPerformedUpdate(e);
   }
 

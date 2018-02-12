@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.DumbAware;
@@ -63,6 +62,10 @@ import java.util.Map;
 public class AnnotateToggleAction extends ToggleAction implements DumbAware {
   public static final ExtensionPointName<Provider> EP_NAME =
     ExtensionPointName.create("com.intellij.openapi.vcs.actions.AnnotateToggleAction.Provider");
+
+  public AnnotateToggleAction() {
+    setEnabledInModalContext(true);
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -117,6 +120,8 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
                                  @NotNull final AbstractVcs vcs,
                                  @NotNull final UpToDateLineNumberProvider upToDateLineNumbers,
                                  final boolean warnAboutSuspiciousAnnotations) {
+    if (project.isDisposed() || editor.isDisposed()) return;
+
     if (warnAboutSuspiciousAnnotations) {
       int expectedLines = Math.max(upToDateLineNumbers.getLineCount(), 1);
       int actualLines = Math.max(fileAnnotation.getLineCount(), 1);
@@ -127,6 +132,24 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
         return;
       }
     }
+
+
+    fileAnnotation.setCloser(() -> {
+      UIUtil.invokeLaterIfNeeded(() -> {
+        if (project.isDisposed()) return;
+        editor.getGutter().closeAllAnnotations();
+      });
+    });
+
+    fileAnnotation.setReloader(newFileAnnotation -> {
+      if (editor.getGutter().isAnnotationsShown()) {
+        assert Comparing.equal(fileAnnotation.getFile(), newFileAnnotation.getFile());
+        doAnnotate(editor, project, currentFile, newFileAnnotation, vcs, upToDateLineNumbers, false);
+      }
+    });
+
+    if (fileAnnotation.isClosed()) return;
+
 
     Disposable disposable = new Disposable() {
       @Override
@@ -149,21 +172,6 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
 
     editor.getGutter().closeAllAnnotations();
 
-    fileAnnotation.setCloser(() -> {
-      UIUtil.invokeLaterIfNeeded(() -> {
-        if (project.isDisposed()) return;
-        editor.getGutter().closeAllAnnotations();
-      });
-    });
-
-    fileAnnotation.setReloader(newFileAnnotation -> {
-      if (editor.getGutter().isAnnotationsShown()) {
-        assert Comparing.equal(fileAnnotation.getFile(), newFileAnnotation.getFile());
-        doAnnotate(editor, project, currentFile, newFileAnnotation, vcs, upToDateLineNumbers, false);
-      }
-    });
-
-    final EditorGutterComponentEx editorGutter = (EditorGutterComponentEx)editor.getGutter();
     final List<AnnotationFieldGutter> gutters = new ArrayList<>();
     final AnnotationSourceSwitcher switcher = fileAnnotation.getAnnotationSourceSwitcher();
 
@@ -185,7 +193,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       final MergeSourceAvailableMarkerGutter mergeSourceGutter =
         new MergeSourceAvailableMarkerGutter(fileAnnotation, presentation, bgColorMap);
 
-      SwitchAnnotationSourceAction switchAction = new SwitchAnnotationSourceAction(switcher, editorGutter);
+      SwitchAnnotationSourceAction switchAction = new SwitchAnnotationSourceAction(switcher);
       presentation.addAction(switchAction);
       switchAction.addSourceSwitchListener(currentRevisionGutter);
       switchAction.addSourceSwitchListener(mergeSourceGutter);
@@ -207,7 +215,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       gutters.add(new HistoryIdColumn(fileAnnotation, presentation, bgColorMap, historyIds));
     }
     gutters.add(new HighlightedAdditionalColumn(fileAnnotation, presentation, bgColorMap));
-    final AnnotateActionGroup actionGroup = new AnnotateActionGroup(gutters, editorGutter, bgColorMap);
+    final AnnotateActionGroup actionGroup = new AnnotateActionGroup(gutters, bgColorMap);
     presentation.addAction(actionGroup, 1);
     gutters.add(new ExtraFieldGutter(fileAnnotation, presentation, bgColorMap, actionGroup));
 

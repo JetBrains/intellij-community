@@ -26,11 +26,6 @@ import org.intellij.plugins.relaxNG.compact.psi.RncGrammar;
 import org.intellij.plugins.relaxNG.compact.psi.RncPattern;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 13.08.2007
- */
 public class RncGrammarImpl extends RncElementImpl implements RncGrammar {
   public RncGrammarImpl(ASTNode node) {
     super(node);

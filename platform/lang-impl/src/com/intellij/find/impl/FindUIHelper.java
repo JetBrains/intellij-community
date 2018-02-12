@@ -31,61 +31,49 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class FindUIHelper implements Disposable {
+class FindUIHelper implements Disposable {
   @NotNull private final Project myProject;
   @NotNull private  FindModel myModel;
    FindModel myPreviousModel;
   @NotNull private Runnable myOkHandler;
 
-  private FindUI myUI;
+  FindUI myUI;
 
-  public FindUIHelper(@NotNull Project project, @NotNull FindModel model, @NotNull Runnable okHandler) {
+  FindUIHelper(@NotNull Project project, @NotNull FindModel model, @NotNull Runnable okHandler) {
     myProject = project;
     myModel = model;
     myOkHandler = okHandler;
     myUI = getOrCreateUI();
-    Disposer.register(this, new Disposable() {
-      @Override
-      public void dispose() {
-        if (!Disposer.isDisposed(myUI.getDisposable())) {
-          Disposer.dispose(myUI.getDisposable());
-        }
-      }
-    });
-    Disposer.register(myUI.getDisposable(), new Disposable() {
-      @Override
-      public void dispose() {
-        if (!Disposer.isDisposed(this)) {
-          Disposer.dispose(FindUIHelper.this);
-        }
-      }
-    });
+    myUI.initByModel();
   }
 
-  protected FindUI getOrCreateUI() {
-    if (Registry.is("ide.find.as.popup")) {
-      if (myUI instanceof FindPopupPanel) {
-        return myUI;
+  private FindUI getOrCreateUI() {
+    boolean newInstanceRequired = myUI instanceof FindPopupPanel && !Registry.is("ide.find.as.popup") ||
+                                  myUI instanceof FindDialog && Registry.is("ide.find.as.popup") ||
+                                  myUI == null;
+    if (newInstanceRequired) {
+      if (Registry.is("ide.find.as.popup")) {
+        myUI = new FindPopupPanel(this);
       }
-      return myUI = new FindPopupPanel(this);
+      else {
+        FindDialog findDialog = new FindDialog(this);
+        registerAction("ReplaceInPath", true, findDialog);
+        registerAction("FindInPath", false, findDialog);
+        myUI = findDialog;
+      }
+      Disposer.register(myUI.getDisposable(), this);
     }
-    else {
-      
-      FindDialog findDialog = new FindDialog(this);
-      registerAction("ReplaceInPath", true, findDialog);
-      registerAction("FindInPath", false, findDialog);
-      return findDialog;
-    }
+    return myUI;
   }
 
   private void registerAction(String actionName, boolean replace, FindDialog findDialog) {
     AnAction action = ActionManager.getInstance().getAction(actionName);
-    JRootPane findDialogRootComponent = ((JDialog)(findDialog.getWindow())).getRootPane();
+    JRootPane findDialogRootComponent = ((JDialog)findDialog.getWindow()).getRootPane();
     new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myModel.setReplaceState(replace);
-        findDialog.updateReplaceVisibility();
+        findDialog.initByModel();
       }
       //@NotNull
       //private DataContextWrapper prepareDataContextForFind(@NotNull AnActionEvent e) {
@@ -127,7 +115,6 @@ public class FindUIHelper implements Disposable {
   public void setModel(@NotNull FindModel model) {
     myModel = model;
     myUI.initByModel();
-    myUI.updateReplaceVisibility();
   }
 
   public void setOkHandler(@NotNull Runnable okHandler) {
@@ -141,10 +128,14 @@ public class FindUIHelper implements Disposable {
 
   @Override
   public void dispose() {
+    if (myUI != null && !Disposer.isDisposed(myUI.getDisposable())) {
+      Disposer.dispose(myUI.getDisposable());
+    }
     myUI = null;
-    //todo
   }
+
   void updateFindSettings() {
+    ((FindManagerImpl)FindManager.getInstance(myProject)).changeGlobalSettings(myModel);
     FindSettings findSettings = FindSettings.getInstance();
     findSettings.setCaseSensitive(myModel.isCaseSensitive());
     if (myModel.isReplaceState()) {
@@ -190,9 +181,8 @@ public class FindUIHelper implements Disposable {
   }
 
   void setUseSeparateView(boolean separateView) {
-    if (myModel.isOpenInNewTabEnabled()) {
-      myModel.setOpenInNewTab(separateView);
-    }
+    if (!myModel.isOpenInNewTabEnabled()) throw new IllegalStateException("'Open in new Tab' is not enabled");
+    myModel.setOpenInNewTab(separateView);
     FindSettings.getInstance().setShowResultsInSeparateView(separateView);
   }
 
@@ -204,21 +194,13 @@ public class FindUIHelper implements Disposable {
 
   String getTitle() {
     if (myModel.isReplaceState()){
-      if (myModel.isMultipleFiles()){
-        return FindBundle.message("find.replace.in.project.dialog.title");
-      }
-      else{
-        return FindBundle.message("find.replace.text.dialog.title");
-      }
+      return myModel.isMultipleFiles()
+             ? FindBundle.message("find.replace.in.project.dialog.title")
+             : FindBundle.message("find.replace.text.dialog.title");
     }
-    else{
-      if (myModel.isMultipleFiles()){
-        return FindBundle.message("find.in.path.dialog.title");
-      }
-      else{
-        return FindBundle.message("find.text.dialog.title");
-      }
-    }
+    return myModel.isMultipleFiles() ?
+           FindBundle.message("find.in.path.dialog.title") :
+           FindBundle.message("find.text.dialog.title");
   }
 
   public boolean isReplaceState() {
@@ -231,7 +213,7 @@ public class FindUIHelper implements Disposable {
   }
 
   public void doOKAction() {
-    ((FindManagerImpl)FindManager.getInstance(myProject)).changeGlobalSettings(myModel);
+    updateFindSettings();
     myOkHandler.run();
   }
 }

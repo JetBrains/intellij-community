@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io;
 
 import com.intellij.openapi.Disposable;
@@ -23,7 +9,6 @@ import com.intellij.util.NotNullProducer;
 import com.intellij.util.SystemProperties;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.oio.OioEventLoopGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +19,7 @@ import java.util.Random;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.intellij.util.io.NettyKt.MultiThreadEventLoopGroup;
 import static com.intellij.util.io.NettyKt.serverBootstrap;
 
 public class BuiltInServer implements Disposable {
@@ -53,9 +39,7 @@ public class BuiltInServer implements Disposable {
     }
   }
 
-  private BuiltInServer(@NotNull EventLoopGroup eventLoopGroup,
-                        int port,
-                        @NotNull ChannelRegistrar channelRegistrar) {
+  private BuiltInServer(@NotNull EventLoopGroup eventLoopGroup, int port, @NotNull ChannelRegistrar channelRegistrar) {
     this.eventLoopGroup = eventLoopGroup;
     this.port = port;
     this.channelRegistrar = channelRegistrar;
@@ -86,7 +70,7 @@ public class BuiltInServer implements Disposable {
                                     int portsCount,
                                     boolean tryAnyPort,
                                     @Nullable NotNullProducer<ChannelHandler> handler) throws Exception {
-    return start(new NioEventLoopGroup(workerCount, new BuiltInServerThreadFactory()), true, firstPort, portsCount, tryAnyPort, handler);
+    return start(MultiThreadEventLoopGroup(workerCount, new BuiltInServerThreadFactory()), true, firstPort, portsCount, tryAnyPort, handler);
   }
 
   @NotNull
@@ -96,15 +80,15 @@ public class BuiltInServer implements Disposable {
                                             boolean tryAnyPort,
                                             @Nullable NotNullProducer<ChannelHandler> handler) throws Exception {
     BuiltInServerThreadFactory threadFactory = new BuiltInServerThreadFactory();
-    NioEventLoopGroup nioEventLoopGroup;
+    EventLoopGroup loopGroup;
     try {
-      nioEventLoopGroup = new NioEventLoopGroup(workerCount, threadFactory);
+      loopGroup = MultiThreadEventLoopGroup(workerCount, threadFactory);
     }
     catch (IllegalStateException e) {
       Logger.getInstance(BuiltInServer.class).warn(e);
-      return start(new OioEventLoopGroup(1, threadFactory), true, 6942, 50, false, handler);
+      loopGroup = new OioEventLoopGroup(1, threadFactory);
     }
-    return start(nioEventLoopGroup, true, firstPort, portsCount, tryAnyPort, handler);
+    return start(loopGroup, true, firstPort, portsCount, tryAnyPort, handler);
   }
 
   @NotNull
@@ -127,7 +111,7 @@ public class BuiltInServer implements Disposable {
     final PortUnificationServerHandler portUnificationServerHandler = channelHandler == null ? new PortUnificationServerHandler() : null;
     bootstrap.childHandler(new ChannelInitializer() {
       @Override
-      protected void initChannel(@NotNull Channel channel) throws Exception {
+      protected void initChannel(@NotNull Channel channel) {
         channel.pipeline().addLast(channelRegistrar, channelHandler == null ? portUnificationServerHandler : channelHandler.produce());
       }
     });

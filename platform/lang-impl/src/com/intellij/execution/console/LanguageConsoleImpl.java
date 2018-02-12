@@ -32,8 +32,8 @@ import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -89,7 +89,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
   private final JPanel myPanel = new JPanel(new MyLayout());
   private final JScrollBar myScrollBar = new JBScrollBar(Adjustable.HORIZONTAL);
-  private final DocumentAdapter myDocumentAdapter = new DocumentAdapter() {
+  private final DocumentListener myDocumentAdapter = new DocumentListener() {
     @Override
     public void documentChanged(DocumentEvent event) {
       myPanel.revalidate();
@@ -134,13 +134,13 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     myConsoleEditor.getDocument().addDocumentListener(myDocumentAdapter);
     myConsoleEditor.getScrollPane().getHorizontalScrollBar().setEnabled(false);
     myConsoleEditor.addFocusListener(myFocusListener);
+    myConsoleEditor.getSettings().setVirtualSpace(false);
     myCurrentEditor = myConsoleEditor;
     Document historyDocument = ((EditorFactoryImpl)editorFactory).createDocument(true);
     UndoUtil.disableUndoFor(historyDocument);
-    myHistoryViewer = (EditorEx)editorFactory.createViewer(historyDocument, getProject());
+    myHistoryViewer = (EditorEx)editorFactory.createViewer(historyDocument, getProject(), EditorKind.CONSOLE);
     myHistoryViewer.getDocument().addDocumentListener(myDocumentAdapter);
 
-    myScrollBar.setOpaque(false);
     myScrollBar.setModel(new MyModel(myScrollBar, myHistoryViewer, myConsoleEditor));
     myScrollBar.putClientProperty(Alignment.class, Alignment.BOTTOM);
 
@@ -183,6 +183,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     setPromptInner(myPrompt);
   }
 
+  @Override
   public void setConsoleEditorEnabled(boolean consoleEditorEnabled) {
     if (isConsoleEditorEnabled() == consoleEditorEnabled) {
       return;
@@ -219,9 +220,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
       @Override
       public void keyTyped(KeyEvent event) {
         if (isConsoleEditorEnabled() && UIUtil.isReallyTypedEvent(event)) {
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(myConsoleEditor.getContentComponent(), true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myConsoleEditor.getContentComponent(), true));
           myConsoleEditor.processKeyTyped(event);
         }
       }
@@ -230,24 +229,29 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     EmptyAction.registerActionShortcuts(myHistoryViewer.getComponent(), myConsoleEditor.getComponent());
   }
 
+  @Override
   public final boolean isConsoleEditorEnabled() {
     return myConsoleEditor.getComponent().isVisible();
   }
 
+  @Override
   @Nullable
   public String getPrompt() {
     return myPrompt;
   }
 
+  @Override
   @Nullable
   public ConsoleViewContentType getPromptAttributes() {
     return myPromptAttributes;
   }
 
+  @Override
   public void setPromptAttributes(@NotNull ConsoleViewContentType textAttributes) {
     myPromptAttributes = textAttributes;
   }
 
+  @Override
   public void setPrompt(@Nullable String prompt) {
     // always add space to the prompt otherwise it may look ugly
     myPrompt = prompt != null && !prompt.endsWith(" ") ? prompt + " " : prompt;
@@ -262,45 +266,54 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     });
   }
 
+  @Override
   public void setEditable(boolean editable) {
     myConsoleEditor.setRendererMode(!editable);
     setPromptInner(editable ? myPrompt : "");
   }
 
+  @Override
   public boolean isEditable() {
     return !myConsoleEditor.isRendererMode();
   }
 
+  @Override
   @NotNull
   public final PsiFile getFile() {
     return myHelper.getFileSafe();
   }
 
+  @Override
   @NotNull
   public final VirtualFile getVirtualFile() {
     return myHelper.virtualFile;
   }
 
+  @Override
   @NotNull
   public final EditorEx getHistoryViewer() {
     return myHistoryViewer;
   }
 
+  @Override
   @NotNull
   public final Document getEditorDocument() {
     return myEditorDocument;
   }
 
+  @Override
   @NotNull
   public final EditorEx getConsoleEditor() {
     return myConsoleEditor;
   }
 
+  @Override
   @NotNull
   public String getTitle() {
     return myHelper.title;
   }
 
+  @Override
   public void setTitle(@NotNull String title) {
     myHelper.setTitle(title);
   }
@@ -488,21 +501,25 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     }
   }
 
+  @Override
   @NotNull
   public EditorEx getCurrentEditor() {
     return ObjectUtils.notNull(myCurrentEditor, myConsoleEditor);
   }
 
+  @Override
   @NotNull
   public Language getLanguage() {
     return getFile().getLanguage();
   }
 
+  @Override
   public void setLanguage(@NotNull Language language) {
     myHelper.setLanguage(language);
     myHelper.getFileSafe();
   }
 
+  @Override
   public void setInputText(@NotNull final String query) {
     DocumentUtil.writeInRunUndoTransparentAction(() -> myConsoleEditor.getDocument().setText(StringUtil.convertLineSeparators(query)));
   }
@@ -541,7 +558,10 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     public Document getDocument() {
       Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
       if (document == null) {
-        throw new AssertionError("no document for: " + virtualFile);
+        Language language = (virtualFile instanceof LightVirtualFile) ? ((LightVirtualFile)virtualFile).getLanguage() : null;
+        throw new AssertionError(String.format("no document for: %s (fileType: %s, language: %s, length: %s, valid: %s)",
+                                               virtualFile,
+                                               virtualFile.getFileType(), language, virtualFile.getLength(), virtualFile.isValid()));
       }
       return document;
     }

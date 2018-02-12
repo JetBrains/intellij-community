@@ -17,66 +17,73 @@ package org.jetbrains.ether;
 
 /**
  * @author: db
- * Date: 26.07.11
  */
 public class AnnotationTest extends IncrementalTestCase {
-  public AnnotationTest() throws Exception {
+  public AnnotationTest() {
     super("annotations");
   }
 
-  public void testAddAnnotationTarget() throws Exception {
+  public void testAddAnnotationTarget() {
     doTest();
   }
 
-  public void testAddAnnotationTypeMemberWithDefaultValue() throws Exception {
+  public void testAddAnnotationTargetTypeUse() {
+    doTest();
+  }
+  
+  public void testAddTypeUseAnnotationTarget() {
     doTest();
   }
 
-  public void testAddAnnotationTypeMemberWithDefaultValue2() throws Exception {
+  public void testAddAnnotationTypeMemberWithDefaultValue() {
     doTest();
   }
 
-  public void testAddAnnotationTypeMemberWithoutDefaultValue() throws Exception {
+  public void testAddAnnotationTypeMemberWithDefaultValue2() {
     doTest();
   }
 
-  public void testAddDefaultToAnnotationMember() throws Exception {
+  public void testAddAnnotationTypeMemberWithoutDefaultValue() {
     doTest();
   }
 
-  public void testChangeAnnotationRetentionPolicy() throws Exception {
+  public void testAddDefaultToAnnotationMember() {
     doTest();
   }
 
-  public void testChangeAnnotationRetentionPolicy1() throws Exception {
+  public void testChangeAnnotationRetentionPolicy() {
     doTest();
   }
 
-  public void testChangeAnnotationRetentionPolicy2() throws Exception {
+  public void testChangeAnnotationRetentionPolicy1() {
     doTest();
   }
 
-  public void testChangeAnnotationRetentionPolicy3() throws Exception {
+  public void testChangeAnnotationRetentionPolicy2() {
     doTest();
   }
 
-  public void testChangeAnnotationRetentionPolicy4() throws Exception {
+  public void testChangeAnnotationRetentionPolicy3() {
     doTest();
   }
 
-  public void testChangeAnnotationTypeMemberType() throws Exception {
+  public void testChangeAnnotationRetentionPolicy4() {
     doTest();
   }
 
-  public void testChangeAnnotationTypeMemberTypeArray() throws Exception {
+  public void testChangeAnnotationTypeMemberType() {
     doTest();
   }
 
-  public void testChangeAnnotationTypeMemberTypeEnumArray() throws Exception {
+  public void testChangeAnnotationTypeMemberTypeArray() {
     doTest();
   }
 
-  public void testClassAsArgument() throws Exception {
+  public void testChangeAnnotationTypeMemberTypeEnumArray() {
+    doTest();
+  }
+
+  public void testClassAsArgument() {
     doTest();
   }
 
@@ -93,31 +100,35 @@ public class AnnotationTest extends IncrementalTestCase {
      doTest();
  } */
 
-  public void testRemoveAnnotationTarget() throws Exception {
+  public void testRemoveAnnotationTarget() {
     doTest();
   }
 
-  public void testRemoveAnnotationTypeMember() throws Exception {
+  public void testRemoveTypeUseAnnotationTarget() {
     doTest();
   }
 
-  public void testRemoveAnnotationTypeMember1() throws Exception {
+  public void testRemoveAnnotationTypeMember() {
     doTest();
   }
 
-  public void testRemoveDefaultFromAnnotationMember() throws Exception {
+  public void testRemoveAnnotationTypeMember1() {
     doTest();
   }
 
-  public void testConservativeNonIncremental() throws Exception {
+  public void testRemoveDefaultFromAnnotationMember() {
     doTest();
   }
 
-  public void testConservativeNonIncremental1() throws Exception {
+  public void testConservativeNonIncremental() {
     doTest();
   }
 
-  public void testAnnotationsTracker() throws Exception {
+  public void testConservativeNonIncremental1() {
+    doTest();
+  }
+
+  public void testAnnotationsTracker() {
     doTest();
   }
 }

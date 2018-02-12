@@ -25,11 +25,6 @@ import java.util.Map;
 
 import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.*;
 
-/**
- * Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 09.08.2007
-*/
 public class PatternParsing extends DeclarationParsing {
 
   @SuppressWarnings({"unchecked"})

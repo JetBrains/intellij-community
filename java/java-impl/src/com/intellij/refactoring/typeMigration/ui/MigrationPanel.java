@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -50,7 +51,7 @@ import com.intellij.usages.TextChunk;
 import com.intellij.usages.UsageInfoToUsageConverter;
 import com.intellij.usages.UsagePresentation;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -73,7 +74,6 @@ import java.util.Set;
 
 /**
  * @author anna
- * Date: 24-Mar-2008
  */
 public class MigrationPanel extends JPanel implements Disposable {
   @NonNls private static final String MIGRATION_USAGES = "migration.usages";
@@ -234,10 +234,12 @@ public class MigrationPanel extends JPanel implements Disposable {
     final JButton rerunButton = new JButton(RefactoringBundle.message("type.migration.rerun.button.text"));
     rerunButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
-        UsageViewManager.getInstance(myProject).closeContent(myContent);
-        final TypeMigrationDialog.MultipleElements dialog =
-          new TypeMigrationDialog.MultipleElements(myProject, myInitialRoots, myLabeler.getMigrationRootTypeFunction(), myLabeler.getRules());
-        dialog.show();
+        TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+          UsageViewManager.getInstance(myProject).closeContent(myContent);
+          final TypeMigrationDialog.MultipleElements dialog =
+            new TypeMigrationDialog.MultipleElements(myProject, myInitialRoots, myLabeler.getMigrationRootTypeFunction(), myLabeler.getRules());
+          dialog.show();
+        });
       }
     });
     panel.add(rerunButton, gc);
@@ -315,7 +317,7 @@ public class MigrationPanel extends JPanel implements Disposable {
             collectInfos(usageInfos, (MigrationNode)userObject);
           }
         }
-        return usageInfos.toArray(new TypeMigrationUsageInfo[usageInfos.size()]);
+        return usageInfos.toArray(new TypeMigrationUsageInfo[0]);
       }
       return null;
     }

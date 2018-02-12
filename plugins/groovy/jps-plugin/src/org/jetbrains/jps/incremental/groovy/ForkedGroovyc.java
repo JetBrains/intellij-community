@@ -91,7 +91,7 @@ class ForkedGroovyc implements GroovycFlavor {
     final List<String> cmd = ExternalProcessUtil.buildJavaCommandLine(
       getJavaExecutable(myChunk),
       "org.jetbrains.groovy.compiler.rt.GroovycRunner",
-      Collections.<String>emptyList(), classpath,
+      Collections.emptyList(), classpath,
       vmParams,
       getProgramParams(tempFile, settings, forStubs)
     );
@@ -104,7 +104,7 @@ class ForkedGroovyc implements GroovycFlavor {
       }
 
       @Override
-      public void notifyTextAvailable(String text, Key outputType) {
+      public void notifyTextAvailable(@NotNull String text, @NotNull Key outputType) {
         parser.notifyTextAvailable(text, outputType);
       }
     };

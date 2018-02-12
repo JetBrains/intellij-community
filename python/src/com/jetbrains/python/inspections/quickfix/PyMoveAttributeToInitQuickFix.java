@@ -28,9 +28,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: ktisha
- */
 public class PyMoveAttributeToInitQuickFix implements LocalQuickFix {
 
   public PyMoveAttributeToInitQuickFix() {

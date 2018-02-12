@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,13 +43,25 @@ public class InlineUtil {
   private InlineUtil() {}
 
   @NotNull
-  public static PsiExpression inlineVariable(PsiVariable variable, PsiExpression initializer, PsiJavaCodeReferenceElement ref)
+  public static PsiExpression inlineVariable(PsiVariable variable, PsiExpression initializer, PsiJavaCodeReferenceElement ref) throws IncorrectOperationException {
+    return inlineVariable(variable, initializer, ref, null);
+  }
+
+  @NotNull
+  public static PsiExpression inlineVariable(PsiVariable variable,
+                                             PsiExpression initializer,
+                                             PsiJavaCodeReferenceElement ref,
+                                             PsiExpression thisAccessExpr)
     throws IncorrectOperationException {
+    final PsiElement parent = ref.getParent();
+    if (parent instanceof PsiResourceExpression) {
+      LOG.error("Unable to inline resource reference");
+      return (PsiExpression)ref;
+    }
     PsiManager manager = initializer.getManager();
 
     PsiClass thisClass = RefactoringChangeUtil.getThisClass(initializer);
     PsiClass refParent = RefactoringChangeUtil.getThisClass(ref);
-    final PsiElement parent = ref.getParent();
     final PsiType varType = variable.getType();
     initializer = RefactoringUtil.convertInitializerToNormalExpression(initializer, varType);
     if (initializer instanceof PsiPolyadicExpression) {
@@ -68,7 +80,9 @@ public class InlineUtil {
     ChangeContextUtil.encodeContextInfo(initializer, false);
     PsiExpression expr = (PsiExpression)replaceDiamondWithInferredTypesIfNeeded(initializer, ref);
 
-    PsiThisExpression thisAccessExpr = createThisExpression(manager, thisClass, refParent);
+    if (thisAccessExpr == null) {
+      thisAccessExpr = createThisExpression(manager, thisClass, refParent);
+    }
 
     expr = (PsiExpression)ChangeContextUtil.decodeContextInfo(expr, thisClass, thisAccessExpr);
     PsiType exprType = RefactoringUtil.getTypeByExpression(expr);
@@ -138,10 +152,15 @@ public class InlineUtil {
   }
 
   private static PsiExpression surroundWithCast(PsiVariable variable, PsiExpression expr) {
-    PsiTypeCastExpression cast = (PsiTypeCastExpression)JavaPsiFacade.getElementFactory(expr.getProject()).createExpressionFromText("(t)a", null);
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(expr.getProject());
+    PsiTypeCastExpression cast = (PsiTypeCastExpression)factory.createExpressionFromText("(t)a", null);
     PsiTypeElement castTypeElement = cast.getCastType();
     assert castTypeElement != null;
-    castTypeElement.replace(variable.getTypeElement());
+    PsiTypeElement typeElement = variable.getTypeElement();
+    if (typeElement == null) {
+      typeElement = factory.createTypeElement(variable.getType());
+    }
+    castTypeElement.replace(typeElement);
     final PsiExpression operand = cast.getOperand();
     assert operand != null;
     operand.replace(expr);
@@ -207,13 +226,13 @@ public class InlineUtil {
           lastInitializerSibling = nextSibling;
         }
         if (lastInitializerSibling instanceof PsiWhiteSpace) {
-          lastInitializerSibling = PsiTreeUtil.skipSiblingsBackward(lastInitializerSibling, PsiWhiteSpace.class);
+          lastInitializerSibling = PsiTreeUtil.skipWhitespacesBackward(lastInitializerSibling);
         }
         if (lastInitializerSibling.getNode().getElementType() == JavaTokenType.COMMA) {
           lastInitializerSibling = lastInitializerSibling.getPrevSibling();
         }
         PsiElement firstElement = initializers[0];
-        final PsiElement leadingComment = PsiTreeUtil.skipSiblingsBackward(firstElement, PsiWhiteSpace.class);
+        final PsiElement leadingComment = PsiTreeUtil.skipWhitespacesBackward(firstElement);
         if (leadingComment instanceof PsiComment) {
           firstElement = leadingComment;
         }
@@ -296,12 +315,15 @@ public class InlineUtil {
 
   public static TailCallType getTailCallType(@NotNull final PsiReference psiReference) {
     PsiElement element = psiReference.getElement();
-    if (element instanceof PsiMethodReferenceExpression) return TailCallType.None;
+    if (element instanceof PsiMethodReferenceExpression) return TailCallType.Return;
     PsiExpression methodCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
     if (methodCall == null) return TailCallType.None;
-    if (methodCall.getParent() instanceof PsiReturnStatement) return TailCallType.Return;
-    if (methodCall.getParent() instanceof PsiExpressionStatement) {
-      PsiStatement callStatement = (PsiStatement) methodCall.getParent();
+    PsiElement callParent = methodCall.getParent();
+    if (callParent instanceof PsiReturnStatement || callParent instanceof PsiLambdaExpression) {
+      return TailCallType.Return;
+    }
+    if (callParent instanceof PsiExpressionStatement) {
+      PsiStatement callStatement = (PsiStatement)callParent;
       PsiMethod callerMethod = PsiTreeUtil.getParentOfType(callStatement, PsiMethod.class);
       if (callerMethod != null) {
         final PsiStatement[] psiStatements = callerMethod.getBody().getStatements();

@@ -26,13 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
-/**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jul 22, 2003
- * Time: 5:46:17 PM
- * To change this template use Options | File Templates.
- */
 public class MacrosGroup extends ActionGroup {
   @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
@@ -44,7 +37,7 @@ public class MacrosGroup extends ActionGroup {
       actions.add(actionManager.getAction(id));
     }
 
-    return actions.toArray(new AnAction[actions.size()]);
+    return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
 

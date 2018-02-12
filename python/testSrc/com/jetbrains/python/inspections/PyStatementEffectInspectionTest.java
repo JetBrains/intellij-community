@@ -35,6 +35,11 @@ public class PyStatementEffectInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-23057
+  public void testFunctionWithEllipsis() {
+    doTest(LanguageLevel.PYTHON35);
+  }
+
   private void doTest(@NotNull LanguageLevel level) {
     runWithLanguageLevel(level, this::doTest);
   }

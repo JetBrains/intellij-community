@@ -50,18 +50,12 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
   @NotNull
   public abstract String getName();
 
-  public abstract void setName(@NotNull String name);
-
   @Nullable
   public abstract String getComment();
-
-  public abstract void setComment(@Nullable String comment);
 
   public abstract boolean isDefault();
 
   public abstract boolean isReadOnly();
-
-  public abstract void setReadOnly(boolean isReadOnly);
 
   /**
    * Get additional data associated with this changelist.
@@ -74,4 +68,23 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
   public boolean hasDefaultName() {
     return DEFAULT_NAME.equals(getName());
   }
+
+
+  /**
+   * Use {@link ChangeListManager#editName}
+   */
+  @Deprecated
+  public abstract void setName(@NotNull String name);
+
+  /**
+   * Use {@link ChangeListManager#editComment}
+   */
+  @Deprecated
+  public abstract void setComment(@Nullable String comment);
+
+  /**
+   * Use {@link ChangeListManager#setReadOnly}
+   */
+  @Deprecated
+  public abstract void setReadOnly(boolean isReadOnly);
 }

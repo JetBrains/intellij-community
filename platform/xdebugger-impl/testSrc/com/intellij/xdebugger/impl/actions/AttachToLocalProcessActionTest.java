@@ -15,7 +15,6 @@
  */
 package com.intellij.xdebugger.impl.actions;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -36,7 +35,7 @@ import java.util.List;
 import static com.intellij.xdebugger.impl.actions.AttachToLocalProcessAction.*;
 
 public class AttachToLocalProcessActionTest extends PlatformTestCase {
-  public void testCollectingAttachItems_Empty() throws Exception {
+  public void testCollectingAttachItems_Empty() {
     // no providers
     assertItems("");
 
@@ -44,14 +43,14 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
     assertItems("", new TestDebuggerProvider(), new TestDebuggerProvider());
   }
 
-  public void testCollectingAttachItems_OneDebugger() throws Exception {
+  public void testCollectingAttachItems_OneDebugger() {
     assertItems("--------\n" +
                 "1 exec1: dbg\n" +
                 "2 exec2: dbg\n",
                 new TestDebuggerProvider("dbg"));
   }
 
-  public void testCollectingAttachItems_DebuggerPerProcess() throws Exception {
+  public void testCollectingAttachItems_DebuggerPerProcess() {
     // from one provider
     assertItems("--------\n" +
                 "1 exec1: dbg1\n" +
@@ -60,7 +59,7 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 new TestDebuggerProvider(2, XLocalAttachGroup.DEFAULT, "dbg2"));
   }
 
-  public void testCollectingAttachItems_SeveralDebuggers() throws Exception {
+  public void testCollectingAttachItems_SeveralDebuggers() {
     // from one provider
     assertItems("--------\n" +
                 "1 exec1: dbg1\n" +
@@ -113,7 +112,7 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 new TestDebuggerProvider("dbg"));
   }
 
-  public void testCollectingAttachItems_Groups() throws Exception {
+  public void testCollectingAttachItems_Groups() {
     // one group
     assertItems("----group----\n" +
                 "1 exec1: dbg1\n" +
@@ -154,7 +153,7 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 new TestDebuggerProvider(new TestAttachGroup("", 1), "dbg1", "dbg2"));
   }
 
-  public void testCollectingAttachItems_Groups_SortingGroups() throws Exception {
+  public void testCollectingAttachItems_Groups_SortingGroups() {
     assertItems("----group1----\n" +
                 "1 exec1: dbg1\n" +
                 "    dbg1\n" +
@@ -215,7 +214,7 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 new TestDebuggerProvider(new TestAttachGroup("group2", -1), "dbg1", "dbg2"));
   }
 
-  public void testCollectingAttachItems_Groups_SortingItems() throws Exception {
+  public void testCollectingAttachItems_Groups_SortingItems() {
     assertItems("----group----\n" +
                 "1 exec1: dbg1\n" +
                 "2 exec2: dbg1\n",
@@ -236,7 +235,7 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 }, "dbg1"));
   }
 
-  public void testCollectingAttachItems_Groups_CustomItemTitles() throws Exception {
+  public void testCollectingAttachItems_Groups_CustomItemTitles() {
     assertItems("----group----\n" +
                 "1 custom: dbg1\n" +
                 "2 custom: dbg1\n",
@@ -249,7 +248,7 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
                 }, "dbg1"));
   }
 
-  public void testHistory() throws Exception {
+  public void testHistory() {
     ProcessInfo info1 = new ProcessInfo(1, "command line 1", "exec1", "args1");
     ProcessInfo info2 = new ProcessInfo(1, "command line 2", "exec1", "args1");
     ProcessInfo info3 = new ProcessInfo(1, "command line 3", "exec1", "args1");
@@ -294,7 +293,7 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
     assertOrderedEquals(getHistory(getProject()), historyItem4, historyItem5, historyItem3, historyItem2);
   }
 
-  public void testHistory_UpdatingPreviousItems() throws Exception {
+  public void testHistory_UpdatingPreviousItems() {
     TestAttachGroup group1 = new TestAttachGroup("group1", 1);
     TestAttachGroup group2 = new TestAttachGroup("group2", 2);
 
@@ -314,7 +313,7 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
     assertOrderedEquals(getHistory(getProject()), historyItem2);
   }
 
-  public void testHistoryGroup() throws Exception {
+  public void testHistoryGroup() {
     TestAttachGroup group1 = new TestAttachGroup("group1", 1);
     TestAttachGroup group2 = new TestAttachGroup("group2", 2);
     List<XLocalAttachDebugger> debuggers1 = createDebuggers("gdb1", "lldb1");
@@ -614,7 +613,7 @@ public class AttachToLocalProcessActionTest extends PlatformTestCase {
       }
 
       @Override
-      public void attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) throws ExecutionException {
+      public void attachDebugSession(@NotNull Project project, @NotNull ProcessInfo processInfo) {
       }
     });
   }

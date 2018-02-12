@@ -31,7 +31,12 @@ import java.util.Map;
 public class VisiblePack implements VcsLogDataPack {
   @NotNull
   public static final VisiblePack EMPTY =
-    new VisiblePack(DataPack.EMPTY, EmptyVisibleGraph.getInstance(), false, VcsLogFilterCollectionImpl.EMPTY);
+    new VisiblePack(DataPack.EMPTY, EmptyVisibleGraph.getInstance(), false, VcsLogFilterCollectionImpl.EMPTY) {
+      @Override
+      public String toString() {
+        return "EmptyVisiblePack";
+      }
+    };
 
   @NotNull private final DataPackBase myDataPack;
   @NotNull private final VisibleGraph<Integer> myVisibleGraph;
@@ -87,5 +92,15 @@ public class VisiblePack implements VcsLogDataPack {
   public VirtualFile getRoot(int row) {
     int head = myVisibleGraph.getRowInfo(row).getOneOfHeads();
     return myDataPack.getRefsModel().rootAtHead(head);
+  }
+
+  @Override
+  public String toString() {
+    return "VisiblePack{size=" +
+           myVisibleGraph.getVisibleCommitCount() +
+           ", filters=" +
+           myFilters +
+           ", canRequestMore=" +
+           myCanRequestMore + "}";
   }
 }

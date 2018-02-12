@@ -24,8 +24,8 @@ import org.jetbrains.annotations.NotNull;
  * Provides quick fixes for "Unused declaration" inspection
  * 
  * @author Dmitry Avdeev
- *         Date: 1/19/12
  */
+@FunctionalInterface
 public interface UnusedDeclarationFixProvider {
   ExtensionPointName<UnusedDeclarationFixProvider> EP_NAME = ExtensionPointName.create("com.intellij.unusedDeclarationFixProvider");
 

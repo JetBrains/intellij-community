@@ -22,11 +22,11 @@ import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.util.containers.HashSet;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -57,7 +57,7 @@ public class ActionsWithoutUpdateMethodTest extends PlatformTestCase {
     for (String id : ids) {
       AnAction action = mgr.getAction(id);
       if (action == null) {
-        System.out.println("Can't find action: " + id);
+        fail("Can't find action: " + id);
         continue;
       }
       Method updateMethod = action.getClass().getMethod("update", AnActionEvent.class);
@@ -66,7 +66,7 @@ public class ActionsWithoutUpdateMethodTest extends PlatformTestCase {
       }
     }
     for (AnAction action : failed) {
-      System.out.println(action + " ID: " + mgr.getId(action) + " Class: " + action.getClass());
+      System.err.println(action + " ID: " + mgr.getId(action) + " Class: " + action.getClass());
     }
 
     assertEmpty("The following actions have shortcuts, but don't have update() method redefined", failed);

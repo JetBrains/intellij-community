@@ -21,7 +21,7 @@ import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsLog.RlogCommand;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.command.Command;
 

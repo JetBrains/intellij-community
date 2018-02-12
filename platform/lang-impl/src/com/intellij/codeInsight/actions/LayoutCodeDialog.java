@@ -53,7 +53,7 @@ public class LayoutCodeDialog extends DialogWrapper {
   private JPanel myScopePanel;
   private JLabel myOptionalLabel;
 
-  private LayoutCodeOptions myRunOptions;
+  private final LayoutCodeOptions myRunOptions;
 
   public LayoutCodeDialog(@NotNull Project project,
                           @NotNull PsiFile file,

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 19-Dec-2006
- */
 package com.intellij.compiler.ant;
 
 import com.intellij.openapi.module.Module;
@@ -70,7 +66,7 @@ public abstract class BuildProperties extends CompositeGenerator {
         jdks.add(jdk);
       }
     }
-    return jdks.toArray(new Sdk[jdks.size()]);
+    return jdks.toArray(new Sdk[0]);
   }
 
   @NonNls

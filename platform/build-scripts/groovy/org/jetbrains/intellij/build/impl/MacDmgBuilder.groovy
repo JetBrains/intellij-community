@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.PathUtilRt
-import org.apache.tools.ant.types.Path
-import org.apache.tools.ant.util.SplitClassLoader
+import org.apache.tools.ant.BuildException
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.MacHostProperties
@@ -42,8 +41,7 @@ class MacDmgBuilder {
     this.remoteDir = remoteDir
   }
 
-  static void signBinaryFiles(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties,
-                                     String macDistPath) {
+  static void signBinaryFiles(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties, String macDistPath) {
     def dmgBuilder = createInstance(buildContext, customizer, macHostProperties)
     dmgBuilder.doSignBinaryFiles(macDistPath)
   }
@@ -55,7 +53,7 @@ class MacDmgBuilder {
       dmgBuilder.doSignAndBuildDmg(macZipPath, jreArchivePath)
     }
     else {
-      buildContext.messages.info("Skipping building Mac OS distribution with bundled JRE because JRE archive is missing")
+      buildContext.messages.info("Skipping building macOS distribution with bundled JRE because JRE archive is missing")
     }
     if (buildContext.options.buildDmgWithoutBundledJre) {
       dmgBuilder.doSignAndBuildDmg(macZipPath, null)
@@ -63,7 +61,8 @@ class MacDmgBuilder {
   }
 
   private static MacDmgBuilder createInstance(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties) {
-    defineTasks(buildContext.ant, "${buildContext.paths.communityHome}/lib")
+    BuildUtils.defineFtpTask(buildContext)
+    BuildUtils.defineSshTask(buildContext)
 
     String currentDateTimeString = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME).replace(':', '-')
     int randomSeed = new Random().nextInt(Integer.MAX_VALUE)
@@ -91,7 +90,7 @@ class MacDmgBuilder {
       ant.delete(file: fullPath)
       def fileName = PathUtilRt.getFileName(fullPath)
       sshExec("$remoteDir/signbin.sh \"$fileName\" ${macHostProperties.userName}" +
-              " ${macHostProperties.password} \"${this.macHostProperties.codesignString}\" 2>&1 | tee $remoteDir/signbin.log")
+              " ${macHostProperties.password} \"${this.macHostProperties.codesignString}\"", "signbin.log")
 
       ftpAction("get", true, null, 3) {
         ant.fileset(dir: signedFilesDir) {
@@ -139,7 +138,7 @@ class MacDmgBuilder {
       }
     }
 
-    sshExec("$remoteDir/makedmg.sh ${targetFileName} ${buildContext.fullBuildNumber} 2>&1 | tee $remoteDir/makedmg.log")
+    sshExec("$remoteDir/makedmg.sh ${targetFileName} ${buildContext.fullBuildNumber}", "makedmg.log")
     ftpAction("get", true, null, 3) {
       ant.fileset(dir: artifactsPath) {
         include(name: "${targetFileName}.dmg")
@@ -186,9 +185,10 @@ class MacDmgBuilder {
       }
     }
 
+    String helpFileName = customizer.helpId != null ? "${customizer.helpId}.help" : "no-help"
     String jreFileNameArgument = jreArchivePath != null ? " \"${PathUtilRt.getFileName(jreArchivePath)}\"" : ""
     sshExec("$remoteDir/signapp.sh ${targetFileName} ${buildContext.fullBuildNumber} ${this.macHostProperties.userName}"
-              + " ${this.macHostProperties.password} \"${this.macHostProperties.codesignString}\"$jreFileNameArgument 2>&1 | tee $remoteDir/signapp.log")
+              + " ${this.macHostProperties.password} \"${this.macHostProperties.codesignString}\" $helpFileName$jreFileNameArgument", "signapp.log")
     ftpAction("get", true, null, 3) {
       ant.fileset(dir: artifactsPath) {
         include(name: "${targetFileName}.sit")
@@ -199,41 +199,26 @@ class MacDmgBuilder {
     }
   }
 
-  static boolean tasksDefined
-  static private def defineTasks(AntBuilder ant, String communityLib) {
-    if (tasksDefined) return
-    tasksDefined = true
-
-    /*
-      We need this to ensure that FTP task class isn't loaded by the main Ant classloader, otherwise Ant will try to load FTPClient class
-      by the main Ant classloader as well and fail because 'commons-net-*.jar' isn't included to Ant classpath.
-      Probably we could call FTPClient directly to avoid this hack.
-     */
-    def ftpTaskLoaderRef = "FTP_TASK_CLASS_LOADER";
-    Path ftpPath = new Path(ant.project)
-    ftpPath.createPathElement().setLocation(new File("$communityLib/commons-net-3.3.jar"))
-    ftpPath.createPathElement().setLocation(new File("$communityLib/ant/lib/ant-commons-net.jar"))
-    ant.project.addReference(ftpTaskLoaderRef, new SplitClassLoader(ant.project.getClass().getClassLoader(), ftpPath, ant.project,
-                                                                    ["FTP", "FTPTaskConfig"] as String[]))
-    ant.taskdef(name: "ftp", classname: "org.apache.tools.ant.taskdefs.optional.net.FTP", loaderRef: ftpTaskLoaderRef)
-
-    def sshTaskLoaderRef = "SSH_TASK_CLASS_LOADER";
-    Path pathSsh = new Path(ant.project)
-    pathSsh.createPathElement().setLocation(new File("$communityLib/jsch-0.1.54.jar"))
-    pathSsh.createPathElement().setLocation(new File("$communityLib/ant/lib/ant-jsch.jar"))
-    ant.project.addReference(sshTaskLoaderRef, new SplitClassLoader(ant.project.getClass().getClassLoader(), pathSsh, ant.project,
-                                                                    ["SSHExec", "SSHBase", "LogListener", "SSHUserInfo"] as String[]))
-    ant.taskdef(name: "sshexec", classname: "org.apache.tools.ant.taskdefs.optional.ssh.SSHExec", loaderRef: sshTaskLoaderRef)
-  }
-
-  private void sshExec(String command) {
-    ant.sshexec(
-      host: this.macHostProperties.host,
-      username: this.macHostProperties.userName,
-      password: this.macHostProperties.password,
-      trust: "yes",
-      command: command
-    )
+  private void sshExec(String command, String logFileName) {
+    try {
+      ant.sshexec(
+        host: this.macHostProperties.host,
+        username: this.macHostProperties.userName,
+        password: this.macHostProperties.password,
+        trust: "yes",
+        command: "set -eo pipefail;$command 2>&1 | tee $remoteDir/$logFileName"
+      )
+    }
+    catch (BuildException e) {
+      buildContext.messages.info("SSH command failed, retrieving log file")
+      ftpAction("get", true, null, 3) {
+        ant.fileset(dir: artifactsPath) {
+          include(name: logFileName)
+        }
+      }
+      buildContext.notifyArtifactBuilt(new File(artifactsPath, logFileName).absolutePath)
+      buildContext.messages.error("SSH command failed, details are available in $logFileName: $e.message", e)
+    }
   }
 
   def ftpAction(String action, boolean binary = true, String chmod = null, int retriesAllowed = 0, String overrideRemoteDir = null, Closure filesets) {

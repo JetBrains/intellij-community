@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,25 +17,25 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.*;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Supplier;
 
 /**
  * @author max
  */
-public class InspectionToolRegistrar {
+public class InspectionToolRegistrar implements Supplier<List<InspectionToolWrapper>> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionToolRegistrar");
 
   private final List<Supplier<InspectionToolWrapper>> myInspectionToolFactories = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -55,7 +55,9 @@ public class InspectionToolRegistrar {
     List<Supplier<InspectionToolWrapper>> factories = new ArrayList<>();
     registerTools(providers, factories);
     boolean isInternal = ApplicationManager.getApplication().isInternal();
+    Map<String, InspectionEP> shortNames = new THashMap<>();
     for (LocalInspectionEP ep : LocalInspectionEP.LOCAL_INSPECTION.getExtensions()) {
+      checkForDuplicateShortName(ep, shortNames);
       if (!isInternal && ep.isInternal) {
         continue;
       }
@@ -63,6 +65,7 @@ public class InspectionToolRegistrar {
       factories.add(() -> new LocalInspectionToolWrapper(ep));
     }
     for (InspectionEP ep : InspectionEP.GLOBAL_INSPECTION.getExtensions()) {
+      checkForDuplicateShortName(ep, shortNames);
       if (!isInternal && ep.isInternal) {
         continue;
       }
@@ -70,6 +73,18 @@ public class InspectionToolRegistrar {
       factories.add(() -> new GlobalInspectionToolWrapper(ep));
     }
     myInspectionToolFactories.addAll(factories);
+  }
+
+  private static void checkForDuplicateShortName(InspectionEP ep, Map<String, InspectionEP> shortNames) {
+    final String shortName = ep.getShortName();
+    final InspectionEP duplicate = shortNames.put(shortName, ep);
+    if (duplicate != null) {
+      final PluginDescriptor descriptor = ep.getPluginDescriptor();
+      LOG.error(new PluginException(
+        "Short name '" + shortName + "' is not unique\nclass '" + ep.instantiateTool().getClass().getCanonicalName() + "' in " + descriptor +
+        "\nand\nclass'" + duplicate.instantiateTool().getClass().getCanonicalName() + "' in " + duplicate.getPluginDescriptor() + "\nconflict",
+        descriptor.getPluginId()));
+    }
   }
 
   @NotNull
@@ -99,6 +114,12 @@ public class InspectionToolRegistrar {
 
   public static InspectionToolRegistrar getInstance() {
     return ServiceManager.getService(InspectionToolRegistrar.class);
+  }
+
+  @Override
+  @NotNull
+  public List<InspectionToolWrapper> get() {
+    return createTools();
   }
 
   @NotNull

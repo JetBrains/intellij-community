@@ -29,6 +29,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PatternUtil;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
@@ -94,16 +95,21 @@ public abstract class PythonSdkFlavor {
       result.addAll(getPlatformIndependentFlavors());
     }
 
-    for (PythonFlavorProvider provider : Extensions.getExtensions(PythonFlavorProvider.EP_NAME)) {
-      PythonSdkFlavor flavor = provider.getFlavor(addPlatformIndependent);
-      if (flavor != null) {
-        result.add(flavor);
-      }
-    }
+    result.addAll(getPlatformFlavorsFromExtensions(addPlatformIndependent));
 
     return result;
   }
 
+  public static List<PythonSdkFlavor> getPlatformFlavorsFromExtensions(boolean isInpedendent) {
+    List<PythonSdkFlavor> result = new ArrayList<>();
+    for (PythonFlavorProvider provider : Extensions.getExtensions(PythonFlavorProvider.EP_NAME)) {
+      PythonSdkFlavor flavor = provider.getFlavor(isInpedendent);
+      if (flavor != null) {
+        result.add(flavor);
+      }
+    }
+    return result;
+  }
 
   public static List<PythonSdkFlavor> getPlatformIndependentFlavors() {
     List<PythonSdkFlavor> result = Lists.newArrayList();
@@ -111,13 +117,14 @@ public abstract class PythonSdkFlavor {
     result.add(IronPythonSdkFlavor.INSTANCE);
     result.add(PyPySdkFlavor.INSTANCE);
     result.add(VirtualEnvSdkFlavor.INSTANCE);
+    result.add(CondaEnvSdkFlavor.INSTANCE);
     result.add(PyRemoteSdkFlavor.INSTANCE);
 
     return result;
   }
 
   @Nullable
-  public static PythonSdkFlavor getFlavor(Sdk sdk) {
+  public static PythonSdkFlavor getFlavor(@NotNull final Sdk sdk) {
     final SdkAdditionalData data = sdk.getSdkAdditionalData();
     if (data instanceof PythonSdkAdditionalData) {
       PythonSdkFlavor flavor = ((PythonSdkAdditionalData)data).getFlavor();
@@ -149,6 +156,12 @@ public abstract class PythonSdkFlavor {
         return flavor;
       }
     }
+
+    for (PythonSdkFlavor flavor: getPlatformFlavorsFromExtensions(true)) {
+      if (flavor.isValidSdkHome(sdkPath)) {
+        return flavor;
+      }
+    }          
     return null;
   }
 
@@ -225,7 +238,16 @@ public abstract class PythonSdkFlavor {
 
   @NotNull
   public LanguageLevel getLanguageLevel(@NotNull Sdk sdk) {
-    final String version = sdk.getVersionString();
+    return getLanguageLevelFromVersionString(sdk.getVersionString());
+  }
+
+  @NotNull
+  public LanguageLevel getLanguageLevel(@NotNull String sdkHome) {
+    return getLanguageLevelFromVersionString(getVersionString(sdkHome));
+  }
+
+  @NotNull
+  private LanguageLevel getLanguageLevelFromVersionString(@Nullable String version) {
     final String prefix = getName() + " ";
     if (version != null && version.startsWith(prefix)) {
       return LanguageLevel.fromPythonVersion(version.substring(prefix.length()));
@@ -244,5 +266,10 @@ public abstract class PythonSdkFlavor {
 
   public VirtualFile getSdkPath(VirtualFile path) {
     return path;
+  }
+
+  @Nullable
+  public CommandLinePatcher commandLinePatcher() {
+    return null;
   }
 }

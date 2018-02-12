@@ -57,6 +57,7 @@ public class RunBuildAction extends MavenAction {
     MavenExplicitProfiles explicitProfiles = projectsManager.getExplicitProfiles();
     final MavenRunnerParameters params = new MavenRunnerParameters(true,
                                                                    mavenProject.getDirectory(),
+                                                                   mavenProject.getFile().getName(),
                                                                    goals,
                                                                    explicitProfiles.getEnabledProfiles(),
                                                                    explicitProfiles.getDisabledProfiles());

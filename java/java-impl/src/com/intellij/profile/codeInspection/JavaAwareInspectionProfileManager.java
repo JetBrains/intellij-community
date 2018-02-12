@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 21-Feb-2008
- */
 package com.intellij.profile.codeInspection;
 
 import com.intellij.codeInsight.daemon.InspectionProfileConvertor;

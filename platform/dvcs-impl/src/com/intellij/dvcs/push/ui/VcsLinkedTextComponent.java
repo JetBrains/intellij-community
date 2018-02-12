@@ -30,8 +30,8 @@ import java.util.regex.Pattern;
 public class VcsLinkedTextComponent extends JLabel {
   private static final Pattern HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>");
 
-  @NotNull private String myTextBefore;
-  @NotNull private String myTextAfter;
+  @NotNull private final String myTextBefore;
+  @NotNull private final String myTextAfter;
   @NotNull private String myHandledLink;
 
   @Nullable private final VcsLinkListener myLinkListener;

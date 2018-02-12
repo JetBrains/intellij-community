@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -79,8 +80,8 @@ public abstract class GroovyNamedArgumentProvider {
 
   @Nullable
   public static Map<String, NamedArgumentDescriptor> getNamedArgumentsFromAllProviders(@NotNull GrCall call,
-                                                                                  @Nullable String argumentName,
-                                                                                  boolean forCompletion) {
+                                                                                       @Nullable String argumentName,
+                                                                                       boolean forCompletion) {
     Map<String, NamedArgumentDescriptor> namedArguments = new HashMap<String, NamedArgumentDescriptor>() {
       @Override
       public NamedArgumentDescriptor put(String key, NamedArgumentDescriptor value) {
@@ -98,12 +99,15 @@ public abstract class GroovyNamedArgumentProvider {
 
     if (callVariants.length == 0 || PsiUtil.isSingleBindingVariant(callVariants)) {
       for (GroovyNamedArgumentProvider namedArgumentProvider : EP_NAME.getExtensions()) {
-        namedArgumentProvider.getNamedArguments(call, GroovyResolveResult.EMPTY_RESULT, argumentName, forCompletion, namedArguments);
+        namedArgumentProvider.getNamedArguments(call, EmptyGroovyResolveResult.INSTANCE, argumentName, forCompletion, namedArguments);
       }
     }
     else {
       boolean mapExpected = false;
       for (GroovyResolveResult result : callVariants) {
+        for (GroovyNamedArgumentProvider namedArgumentProvider : EP_NAME.getExtensions()) {
+          namedArgumentProvider.getNamedArguments(call, result, argumentName, forCompletion, namedArguments);
+        }
         PsiElement element = result.getElement();
         if (element instanceof GrAccessorMethod) continue;
 
@@ -127,10 +131,6 @@ public abstract class GroovyNamedArgumentProvider {
               }
             }
           }
-        }
-
-        for (GroovyNamedArgumentProvider namedArgumentProvider : EP_NAME.getExtensions()) {
-          namedArgumentProvider.getNamedArguments(call, result, argumentName, forCompletion, namedArguments);
         }
 
         if (element instanceof GrVariable &&

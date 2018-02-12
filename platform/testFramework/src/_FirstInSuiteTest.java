@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ import com.intellij.TestAll;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.testFramework.TestRunnerUtil;
+import com.intellij.testFramework.Timings;
 import junit.framework.TestCase;
 
 import javax.swing.*;
@@ -33,8 +34,12 @@ import java.util.prefs.Preferences;
  */
 @SuppressWarnings({"JUnitTestClassNamingConvention", "UseOfSystemOutOrSystemErr"})
 public class _FirstInSuiteTest extends TestCase {
-  public static long suiteStarted;
-  public static boolean nothingIsCalled;
+  private static long suiteStarted;
+  private static boolean nothingIsCalled;
+
+  static long getSuiteStartTime() {
+    return suiteStarted;
+  }
 
   public void testReportClassLoadingProblems() {
     List<Throwable> problems = TestAll.getLoadingClassProblems();
@@ -55,11 +60,8 @@ public class _FirstInSuiteTest extends TestCase {
 
     nothingIsCalled = true;
 
-    // some tests do not initialize Application but want to use parallel streams
-    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool();
-
     suiteStarted = System.nanoTime();
-
+    IdeaForkJoinWorkerThreadFactory.setupPoisonFactory();
     SwingUtilities.invokeAndWait(() -> System.out.println("EDT is " + Thread.currentThread()));
     // in tests EDT inexplicably shuts down sometimes during the first access,
     // which leads to nasty problems in ApplicationImpl which assumes there is only one EDT.
@@ -72,6 +74,7 @@ public class _FirstInSuiteTest extends TestCase {
 
     String tempDirectory = FileUtilRt.getTempDirectory();
     String[] list = new File(tempDirectory).list();
+    assert list != null;
     System.out.println("FileUtil.getTempDirectory() = " + tempDirectory + " (" + list.length + " files)");
 
     Preferences.userRoot(); // starts (anonymous!) timer deep in JDK bowels. helps against thread leaks
@@ -79,6 +82,7 @@ public class _FirstInSuiteTest extends TestCase {
 
   // performance tests
   public void testNothingPerformance() throws Exception {
+    Timings.getStatistics();
     testNothing();
   }
 

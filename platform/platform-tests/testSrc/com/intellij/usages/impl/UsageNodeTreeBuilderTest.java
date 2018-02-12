@@ -21,6 +21,9 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -34,11 +37,13 @@ import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.rules.FileGroupingRule;
+import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -48,7 +53,7 @@ import java.io.IOException;
  * @author max
  */
 public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
-  public void testNoGroupingRules() throws Exception {
+  public void testNoGroupingRules() {
     GroupNode groupNode = buildUsageTree(new int[]{2, 3, 0}, UsageGroupingRule.EMPTY_ARRAY);
 
     assertNotNull(groupNode);
@@ -58,17 +63,17 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     assertEquals("Root [0, 2, 3]", groupNode.toString());
   }
 
-  public void testOneGroupingRuleOnly() throws Exception {
+  public void testOneGroupingRuleOnly() {
     GroupNode groupNode = buildUsageTree(new int[]{0, 1, 0, 1 , 1}, new UsageGroupingRule[] {new OddEvenGroupingRule()});
     assertEquals("Root [Even[0, 0], Odd[1, 1, 1]]", groupNode.toString());
   }
 
-  public void testNotGroupedItemsComeToEnd() throws Exception {
+  public void testNotGroupedItemsComeToEnd() {
     GroupNode groupNode = buildUsageTree(new int[]{0, 1, 0, 1 , 1, 1003, 1002, 1001}, new UsageGroupingRule[] {new OddEvenGroupingRule()});
     assertEquals("Root [Even[0, 0], Odd[1, 1, 1], 1001, 1002, 1003]", groupNode.toString());
   }
 
-  public void test2Groupings() throws Exception {
+  public void test2Groupings() {
     GroupNode groupNode = buildUsageTree(new int[]{0, 1, 2, 3, 12, 13, 14, 15, 101, 103, 102, 105, 10001, 10002, 10003}, new UsageGroupingRule[] {
       new OddEvenGroupingRule(),
       new LogGroupingRule()});
@@ -76,7 +81,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     assertEquals("Root [Even[1[0, 2], 2[12, 14], 3[102]], Odd[1[1, 3], 2[13, 15], 3[101, 103, 105]], 5[10001, 10002, 10003]]", groupNode.toString());
   }
 
-  public void testDifferentRulesDontDependOnOrder() throws Exception {
+  public void testDifferentRulesDontDependOnOrder() {
     GroupNode groupNode = buildUsageTree(new int[]{10003, 0}, new UsageGroupingRule[] {
       new OddEvenGroupingRule(),
       new LogGroupingRule()});
@@ -84,7 +89,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     assertEquals("Root [Even[1[0]], 5[10003]]", groupNode.toString());
   }
 
-  public void testGroupsFromDifferentRulesAreCorrectlySorted() throws Exception {
+  public void testGroupsFromDifferentRulesAreCorrectlySorted() {
     GroupNode groupNode = buildUsageTree(new int[]{10003, 0, 1, 2, 3, 12, 13, 14, 15, 101, 103, 102, 105, 10001, 10002}, new UsageGroupingRule[] {
       new OddEvenGroupingRule(),
       new LogGroupingRule()});
@@ -110,13 +115,13 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     UsageGroupingRuleProvider provider = new UsageGroupingRuleProvider() {
       @NotNull
       @Override
-      public UsageGroupingRule[] getActiveRules(Project project) {
+      public UsageGroupingRule[] getActiveRules(@NotNull Project project) {
         return rules;
       }
 
       @NotNull
       @Override
-      public AnAction[] createGroupingActions(UsageView view) {
+      public AnAction[] createGroupingActions(@NotNull UsageView view) {
         return AnAction.EMPTY_ARRAY;
       }
     };
@@ -128,6 +133,13 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
         usageView.appendUsage(usage);
       }
       UIUtil.dispatchAllInvocationEvents();
+      ProgressManager.getInstance().run(new Task.Modal(getProject(), "waiting", false) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          usageView.waitForUpdateRequestsCompletion();
+        }
+      });
+      UIUtil.dispatchAllInvocationEvents();
 
       return usageView.getRoot();
     }
@@ -136,9 +148,10 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     }
   }
 
-  private static class LogGroupingRule implements UsageGroupingRule {
+  private static class LogGroupingRule extends SingleParentUsageGroupingRule {
+    @Nullable
     @Override
-    public UsageGroup groupUsage(@NotNull Usage usage) {
+    protected UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
       return new LogUsageGroup(usage.toString().length());
     }
   }
@@ -197,7 +210,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     }
   }
 
-  private static class OddEvenGroupingRule implements UsageGroupingRule {
+  private static class OddEvenGroupingRule extends SingleParentUsageGroupingRule {
     private static final UsageGroup EVEN = new UsageGroup() {
       @Override
       public Icon getIcon(boolean isOpen) { return null; }
@@ -271,8 +284,9 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
       public String toString() { return getText(null); }
     };
 
+    @Nullable
     @Override
-    public UsageGroup groupUsage(@NotNull Usage usage) {
+    protected UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
       MockUsage mockUsage = (MockUsage)usage;
 
       if (mockUsage.getId() > 1000) return null;
@@ -372,8 +386,8 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
       PsiElement class1 = ArrayUtil.getLastElement(f1.getChildren());
       PsiElement class2 = ArrayUtil.getLastElement(f2.getChildren());
       FileGroupingRule fileGroupingRule = new FileGroupingRule(getProject());
-      UsageGroup group1 = fileGroupingRule.groupUsage(new UsageInfo2UsageAdapter(new UsageInfo(class1)));
-      UsageGroup group2 = fileGroupingRule.groupUsage(new UsageInfo2UsageAdapter(new UsageInfo(class2)));
+      UsageGroup group1 = fileGroupingRule.getParentGroupFor(new UsageInfo2UsageAdapter(new UsageInfo(class1)), UsageTarget.EMPTY_ARRAY);
+      UsageGroup group2 = fileGroupingRule.getParentGroupFor(new UsageInfo2UsageAdapter(new UsageInfo(class2)), UsageTarget.EMPTY_ARRAY);
       int compareTo = group1.compareTo(group2);
       assertTrue(String.valueOf(compareTo), compareTo < 0);
     }

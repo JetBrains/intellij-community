@@ -15,21 +15,20 @@
  */
 package com.intellij.facet.impl.statistics;
 
-import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
+import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class ModuleTypeUsagesCollector extends AbstractApplicationUsagesCollector {
+public class ModuleTypeUsagesCollector extends AbstractProjectsUsagesCollector {
   public static final String GROUP_ID = "module type";
 
   @NotNull

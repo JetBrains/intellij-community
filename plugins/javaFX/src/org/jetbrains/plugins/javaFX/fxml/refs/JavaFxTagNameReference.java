@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
@@ -13,12 +14,8 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- * Date: 1/8/13
- */
 public class JavaFxTagNameReference extends TagNameReference{
-  private static final Logger LOGGER = Logger.getInstance("#" + JavaFxTagNameReference.class.getName());
+  private static final Logger LOGGER = Logger.getInstance(JavaFxTagNameReference.class);
 
   public JavaFxTagNameReference(ASTNode element, boolean startTagFlag) {
     super(element, startTagFlag);

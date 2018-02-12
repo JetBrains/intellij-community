@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiType
+import com.intellij.psi.impl.source.PsiImmediateClassType
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
@@ -25,7 +12,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType
 
 import static com.intellij.psi.CommonClassNames.*
 
@@ -100,7 +86,7 @@ class TypeInferenceTest extends TypeInferenceTestBase {
 
   void testClosure2() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closure2/A.groovy").element
-    assertTrue(ref.type.equalsToText("java.lang.Integer"))
+    assertTrue(ref.type.equalsToText("int"))
   }
 
   void testGrvy1209() {
@@ -110,7 +96,7 @@ class TypeInferenceTest extends TypeInferenceTestBase {
 
   void testLeastUpperBoundClosureType() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("leastUpperBoundClosureType/A.groovy").element
-    assertInstanceOf(ref.type, GrClosureType.class)
+    assertInstanceOf(ref.type, PsiImmediateClassType.class)
   }
 
   void testJavaLangClassType() {
@@ -140,7 +126,7 @@ class TypeInferenceTest extends TypeInferenceTestBase {
 
   void testParameterWithBuiltinType() {
     GrReferenceExpression refExpr = (GrReferenceExpression)configureByFile("parameterWithBuiltinType/A.groovy")
-    assertEquals("java.lang.Integer", refExpr.type.canonicalText)
+    assertEquals("int", refExpr.type.canonicalText)
   }
 
   void testRawTypeInReturnExpression() {
@@ -207,7 +193,9 @@ class TypeInferenceTest extends TypeInferenceTestBase {
   }
 
   void testSafeInvocationInClassQualifier() {
-    assertTypeEquals("java.lang.Class", "SafeInvocationInClassQualifier.groovy")
+    final PsiReference ref = configureByFile(getTestName(true) + "/SafeInvocationInClassQualifier.groovy")
+    assertInstanceOf(ref, GrReferenceExpression.class)
+    assertNull(((GrReferenceExpression)ref).type)
   }
 
   void testReturnTypeFromMethodClosure() {
@@ -709,6 +697,24 @@ def foo(List list) {
 ''', 'java.util.List<java.util.List>')
   }
 
+  void testReturnNullWithGeneric() {
+    doTest('''
+     import groovy.transform.CompileStatic
+
+    @CompileStatic
+    class SomeClass {
+      protected List foo(String text) {
+        return null
+      }
+
+      def bar() {
+        fo<caret>o("")
+      }
+    }
+  }
+''', 'java.util.List')
+  }
+
 
   void testClassExpressions() {
     doExprTest 'String[]', 'java.lang.Class<java.lang.String[]>'
@@ -736,6 +742,37 @@ def foo(List list) {
     doExprTest 'int[][1].class', 'java.lang.Class<java.lang.Object>'
   }
 
+
+  void testClassReference() {
+    doExprTest '[].class', "java.lang.Class<java.util.List>"
+    doExprTest '1.class', 'java.lang.Class<java.lang.Integer>'
+    doExprTest 'String.valueOf(1).class', 'java.lang.Class<java.lang.String>'
+
+    doCSExprTest '[].class', "java.lang.Class<java.util.List>"
+    doCSExprTest '1.class', 'java.lang.Class<java.lang.Integer>'
+    doCSExprTest 'String.valueOf(1).class', 'java.lang.Class<java.lang.String>'
+  }
+
+  void testMapClassReference() {
+    doExprTest '[:].class', null
+    doExprTest '[class : 1].class', 'java.lang.Integer'
+    doExprTest 'new HashMap<String, List<String>>().class', 'java.util.List<java.lang.String>'
+    doExprTest 'new HashMap().class', null
+
+    doCSExprTest '[:].class', null
+    doCSExprTest '[class : 1].class', 'java.lang.Integer'
+    doCSExprTest 'new HashMap<String, List<String>>().class', 'java.util.List<java.lang.String>'
+    doCSExprTest 'new HashMap().class', null
+  }
+
+  void testUnknownClass() {
+    doExprTest 'a.class', null
+    doCSExprTest 'a.class', 'java.lang.Class'
+
+    doExprTest 'a().class', null
+    doCSExprTest 'a().class', 'java.lang.Class'
+  }
+
   void 'test list literal type'() {
     doExprTest '[]', 'java.util.List'
     doExprTest '[null]', 'java.util.List'
@@ -759,5 +796,69 @@ def foo(List list) {
     doExprTest "1..10", "groovy.lang.IntRange"
     doExprTest "'a'..'z'", "groovy.lang.Range<java.lang.String>"
     doExprTest "'b'..1", "groovy.lang.Range<java.io.Serializable>"
+  }
+
+  void 'test list with spread'() {
+    doExprTest 'def l = [1, 2]; [*l]', 'java.util.List<java.lang.Integer>'
+    doExprTest 'def l = [1, 2]; [*[*[*l]]]', 'java.util.List<java.lang.Integer>'
+  }
+
+  void 'test map spread dot access'() {
+    doExprTest '[foo: 2, bar: 4]*.key', 'java.util.ArrayList<java.lang.String>'
+    doExprTest '[foo: 2, bar: 4]*.value', 'java.util.ArrayList<java.lang.Integer>'
+    doExprTest '[foo: 2, bar: 4]*.undefined', 'java.util.List'
+  }
+
+  void 'test instanceof does not interfere with outer if'() {
+    doTest '''\
+def bar(CharSequence xx) {
+  if (xx instanceof String) {
+    1 instanceof Object
+    <caret>xx
+  }  
+}
+''', 'java.lang.String'
+  }
+
+  void 'test generic tuple inference with type param'() {
+    doTest '''\
+
+def <T> T func(T arg){
+    return arg
+}
+
+def bar() {
+    def ll = func([[""]])
+    l<caret>l
+}
+''', 'java.util.List<java.util.List<java.lang.String>>'
+  }
+
+  void 'test generic tuple inference with type param 2'() {
+    doTest '''\
+
+def <T> T func(T arg){
+    return arg
+}
+
+def bar() {
+    def ll = func([["", 1]])
+    l<caret>l
+}
+''', 'java.util.List<java.util.List<java.io.Serializable>>'
+  }
+
+  void 'test enum values() type'() {
+    doExprTest 'enum E {}; E.values()', 'E[]'
+  }
+
+  void 'test closure owner type'() {
+    doTest '''\
+class W {
+  def c = {
+    <caret>owner
+  }
+}
+''', 'W'
   }
 }

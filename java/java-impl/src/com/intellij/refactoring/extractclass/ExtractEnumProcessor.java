@@ -1,23 +1,7 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 
-/*
- * User: anna
- * Date: 08-Jun-2010
- */
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
@@ -85,7 +69,7 @@ public class ExtractEnumProcessor {
           }
         }
         resolvableConflicts.addAll(0, usageInfos);
-        refUsages.set(resolvableConflicts.toArray(new UsageInfo[resolvableConflicts.size()]));
+        refUsages.set(resolvableConflicts.toArray(UsageInfo.EMPTY_ARRAY));
       }
     }
   }
@@ -145,13 +129,14 @@ public class ExtractEnumProcessor {
         }
       }
 
-      final TypeMigrationRules rules = new TypeMigrationRules();
+      final TypeMigrationRules rules = new TypeMigrationRules(myProject);
       rules.addConversionDescriptor(new EnumTypeConversionRule(myEnumConstants));
       rules.setBoundScope(GlobalSearchScope.projectScope(myProject));
       myTypeMigrationProcessor = new TypeMigrationProcessor(myProject,
                                                             PsiUtilCore.toPsiElementArray(myEnumConstants),
-                                                            Functions.<PsiElement, PsiType>constant(JavaPsiFacade.getElementFactory(myProject).createType(myClass)),
-                                                            rules);
+                                                            Functions.constant(JavaPsiFacade.getElementFactory(myProject).createType(myClass)),
+                                                            rules,
+                                                            true);
       for (UsageInfo usageInfo : myTypeMigrationProcessor.findUsages()) {
         final PsiElement migrateElement = usageInfo.getElement();
         if (migrateElement instanceof PsiField) {
@@ -177,7 +162,7 @@ public class ExtractEnumProcessor {
           migrationInfos.add(((EnumTypeMigrationUsageInfo)usageInfo).getUsageInfo());
         }
       }
-      myTypeMigrationProcessor.performRefactoring(migrationInfos.toArray(new UsageInfo[migrationInfos.size()]));
+      myTypeMigrationProcessor.performRefactoring(migrationInfos.toArray(UsageInfo.EMPTY_ARRAY));
     }
   }
 

@@ -30,7 +30,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/31/12
  */
 public class ModuleImportBuilder extends ProjectImportBuilder {
 

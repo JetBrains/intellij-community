@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,12 +30,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.io.File;
+
 /**
  * @author Konstantin Bulenkov
  */
 public class PsiUtil {
   private static final Key<Boolean> IDEA_PROJECT = Key.create("idea.internal.inspections.enabled");
   private static final String IDE_PROJECT_MARKER_CLASS = JBList.class.getName();
+  private static final String[] IDEA_PROJECT_MARKER_FILES = {
+    "idea.iml", "community-main.iml", "intellij.idea.community.main.iml", "intellij.idea.ultimate.main.iml"
+  };
 
   private PsiUtil() { }
 
@@ -49,7 +54,7 @@ public class PsiUtil {
     if (constructors.length == 0) return true;
 
     for (PsiMethod constructor : constructors) {
-      if (constructor.getParameterList().getParameters().length == 0
+      if (constructor.getParameterList().isEmpty()
           && constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
         return true;
       }
@@ -117,7 +122,7 @@ public class PsiUtil {
   public static PsiMethod findNearestMethod(String name, @Nullable PsiClass cls) {
     if (cls == null) return null;
     for (PsiMethod method : cls.getMethods()) {
-      if (method.getParameterList().getParametersCount() == 0 && method.getName().equals(name)) {
+      if (method.getParameterList().isEmpty() && method.getName().equals(name)) {
         return method.getModifierList().hasModifierProperty(PsiModifier.ABSTRACT) ? null : method;
       }
     }
@@ -160,12 +165,14 @@ public class PsiUtil {
       return false;
     }
 
-    for (VirtualFile dir : new VirtualFile[]{baseDir, baseDir.findChild("community")}) {
+    for (VirtualFile dir : new VirtualFile[]{baseDir, baseDir.findChild("community"), baseDir.findChild("ultimate")}) {
       if (dir == null || !dir.isDirectory()) {
         continue;
       }
-      if (dir.findChild("idea.iml") != null || dir.findChild("community-main.iml") != null) {
-        return true;
+      for (String fileName : IDEA_PROJECT_MARKER_FILES) {
+        if (dir.findChild(fileName) != null) {
+          return true;
+        }
       }
     }
 
@@ -183,15 +190,22 @@ public class PsiUtil {
     }
 
     GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project);
-    if (JavaPsiFacade.getInstance(project).findClass(IDE_PROJECT_MARKER_CLASS, scope) == null) {
-      return false;
-    }
-
-    return true;
+    return JavaPsiFacade.getInstance(project).findClass(IDE_PROJECT_MARKER_CLASS, scope) != null;
   }
 
   @NotNull
   public static <E extends PsiElement> SmartPsiElementPointer<E> createPointer(@NotNull E e) {
     return SmartPointerManager.getInstance(e.getProject()).createSmartPsiElementPointer(e);
+  }
+
+  public static boolean isPluginXmlPsiElement(@NotNull PsiElement element) {
+    return isPluginProject(element.getProject()) && DescriptorUtil.isPluginXml(element.getContainingFile());
+  }
+
+  public static boolean isPathToIntelliJIdeaSources(String path) {
+    for (String file : IDEA_PROJECT_MARKER_FILES) {
+      if (new File(path, file).isFile()) return true;
+    }
+    return false;
   }
 }

@@ -18,7 +18,6 @@ package org.zmlx.hg4idea.command.mq;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
@@ -45,12 +44,7 @@ public class HgQRenameCommand {
 
   public void execute(@NotNull final Hash patchHash) {
     final Project project = myRepository.getProject();
-    HgNameWithHashInfo patchInfo = ContainerUtil.find(myRepository.getMQAppliedPatches(), new Condition<HgNameWithHashInfo>() {
-      @Override
-      public boolean value(HgNameWithHashInfo info) {
-        return info.getHash().equals(patchHash);
-      }
-    });
+    HgNameWithHashInfo patchInfo = ContainerUtil.find(myRepository.getMQAppliedPatches(), info -> info.getHash().equals(patchHash));
     if (patchInfo == null) {
       LOG.error("Could not find patch " + patchHash.toString());
       return;

@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -68,7 +69,7 @@ public class ActionsTree {
   private final JScrollPane myComponent;
   private Keymap myKeymap;
   private Group myMainGroup = new Group("", null, null);
-  private boolean myShowBoundActions = Registry.is("keymap.show.alias.actions");
+  private final boolean myShowBoundActions = Registry.is("keymap.show.alias.actions");
 
   @NonNls
   private static final String ROOT = "ROOT";
@@ -244,6 +245,7 @@ public class ActionsTree {
     model.nodeStructureChanged(myRoot);
 
     pathsKeeper.restorePaths();
+    getComponent().repaint();
   }
 
   public void filterTree(Shortcut shortcut, QuickList[] currentQuickListIds) {
@@ -362,8 +364,12 @@ public class ActionsTree {
 
   public void selectAction(String actionId) {
     String path = myMainGroup.getActionQualifiedPath(actionId);
-    if (path == null) {
-      return;
+    String boundId = path == null ? KeymapManagerEx.getInstanceEx().getActionBinding(actionId) : null;
+    if (path == null && boundId != null) {
+      path = myMainGroup.getActionQualifiedPath(boundId);
+      if (path == null) {
+        return;
+      }
     }
 
     final DefaultMutableTreeNode node = getNodeForPath(path);
@@ -519,7 +525,7 @@ public class ActionsTree {
       myHaveLink = false;
       myLink.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
       final boolean showIcons = UISettings.getInstance().getShowIconsInMenus();
-      Keymap originalKeymap = myKeymap != null ? myKeymap.getParent() : null;
+      Keymap originalKeymap = myKeymap == null ? null : myKeymap.getParent();
       Icon icon = null;
       String text;
       String actionId = null;

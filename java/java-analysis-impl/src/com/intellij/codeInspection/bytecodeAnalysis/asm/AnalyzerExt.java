@@ -73,8 +73,7 @@ public class AnalyzerExt<V extends Value, Data, MyInterpreter extends Interprete
     top = 0;
 
     // computes exception handlers for each instruction
-    for (int i = 0; i < m.tryCatchBlocks.size(); ++i) {
-      TryCatchBlockNode tcb = m.tryCatchBlocks.get(i);
+    for (TryCatchBlockNode tcb : m.tryCatchBlocks) {
       int begin = insns.indexOf(tcb.start);
       int end = insns.indexOf(tcb.end);
       for (int j = begin; j < end; ++j) {
@@ -119,9 +118,9 @@ public class AnalyzerExt<V extends Value, Data, MyInterpreter extends Interprete
       Type ctype = Type.getObjectType(owner);
       current.setLocal(local++, interpreter.newValue(ctype));
     }
-    for (int i = 0; i < args.length; ++i) {
-      current.setLocal(local++, interpreter.newValue(args[i]));
-      if (args[i].getSize() == 2) {
+    for (Type arg : args) {
+      current.setLocal(local++, interpreter.newValue(arg));
+      if (arg.getSize() == 2) {
         current.setLocal(local++, interpreter.newValue(null));
       }
     }
@@ -178,8 +177,7 @@ public class AnalyzerExt<V extends Value, Data, MyInterpreter extends Interprete
             int jump = insns.indexOf(lsi.dflt);
             merge(jump, current, subroutine);
             newControlFlowEdge(insn, jump);
-            for (int j = 0; j < lsi.labels.size(); ++j) {
-              LabelNode label = lsi.labels.get(j);
+            for (LabelNode label : lsi.labels) {
               jump = insns.indexOf(label);
               merge(jump, current, subroutine);
               newControlFlowEdge(insn, jump);
@@ -189,8 +187,7 @@ public class AnalyzerExt<V extends Value, Data, MyInterpreter extends Interprete
             int jump = insns.indexOf(tsi.dflt);
             merge(jump, current, subroutine);
             newControlFlowEdge(insn, jump);
-            for (int j = 0; j < tsi.labels.size(); ++j) {
-              LabelNode label = tsi.labels.get(j);
+            for (LabelNode label : tsi.labels) {
               jump = insns.indexOf(label);
               merge(jump, current, subroutine);
               newControlFlowEdge(insn, jump);
@@ -231,8 +228,7 @@ public class AnalyzerExt<V extends Value, Data, MyInterpreter extends Interprete
 
         List<TryCatchBlockNode> insnHandlers = handlers[insn];
         if (insnHandlers != null) {
-          for (int i = 0; i < insnHandlers.size(); ++i) {
-            TryCatchBlockNode tcb = insnHandlers.get(i);
+          for (TryCatchBlockNode tcb : insnHandlers) {
             int jump = insns.indexOf(tcb.handler);
             if (newControlFlowExceptionEdge(insn, tcb)) {
               handler.init(f);

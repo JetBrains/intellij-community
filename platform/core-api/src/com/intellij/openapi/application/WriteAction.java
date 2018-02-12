@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings("deprecation")
 public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.WriteAction");
 
@@ -48,7 +47,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     }
 
     TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-      AccessToken token = start(WriteAction.this.getClass());
+      AccessToken token = start(getClass());
       try {
         result.run();
       }
@@ -81,7 +80,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
    */
   @Deprecated
   @NotNull
-  public static AccessToken start(@NotNull Class clazz) {
+  private static AccessToken start(@NotNull Class clazz) {
     return ApplicationManager.getApplication().acquireWriteActionLock(clazz);
   }
 

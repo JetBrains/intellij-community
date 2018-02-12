@@ -13,22 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.*;
 
 
 public class Simple {
 
   @Test
   public void test_first() throws Exception {
-    assertArrayEquals(new Object[] {}, null);
-    assertArrayEquals(new Object[] {}, null, "message");
+    Assertions.assertArrayEquals(new Object[] {}, null);
+    Assertions.assertArrayEquals(new Object[] {}, null, "message");
 
-    assertEquals("Expected", "actual");
-    assertEquals("Expected", "actual", "message");
+    Assertions.assertEquals("Expected", "actual");
+    Assertions.assertEquals("Expected", "actual", "message");
 
     fail();
-    fail("");
+    Assertions.fail("");
   }
 }

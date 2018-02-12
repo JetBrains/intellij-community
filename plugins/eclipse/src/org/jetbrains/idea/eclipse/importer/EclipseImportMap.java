@@ -16,19 +16,22 @@
 package org.jetbrains.idea.eclipse.importer;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.util.Properties;
 
 /**
  * @author Rustam Vishnyakov
  */
 public class EclipseImportMap {
-  private Properties myProperties;
+  private final Properties myProperties;
   private final static String MAP_PROPERTIES = "EclipseImportMap.properties";
-  private static final Logger LOG = Logger.getInstance("#" + EclipseImportMap.class.getName());
+  private static final Logger LOG = Logger.getInstance(EclipseImportMap.class);
 
   public EclipseImportMap() {
     myProperties = new Properties();    
@@ -71,13 +74,15 @@ public class EclipseImportMap {
   }
   
   public static class ImportDescriptor {
-    private String myLanguage;
-    private String myFieldName;
-    private boolean myIndentOptions;
+    private final String myLanguage;
+    private final String myFieldName;
+    private final boolean myIndentOptions;
+    private final boolean myIsCustomField;
 
     public ImportDescriptor(String language, String fieldName, boolean indentOptions) {
       myLanguage = language;
       myFieldName = fieldName;
+      myIsCustomField = isCustomField(fieldName);
       myIndentOptions = indentOptions;
     }
     
@@ -103,6 +108,23 @@ public class EclipseImportMap {
     
     public boolean isLanguageSpecific() {
       return myLanguage != null;
+    }
+
+    public boolean isCustomField() {
+      return myIsCustomField;
+    }
+
+    private static boolean isCustomField(@NotNull String fieldName) {
+      if (EclipseCodeStyleImportWorker.PROGRAMMATIC_IMPORT_KEY.equals(fieldName)) {
+        return false;
+      }
+      for (Field field : CommonCodeStyleSettings.class.getFields()) {
+        if (fieldName.equals(field.getName())) return false;
+      }
+      for (Field field : CommonCodeStyleSettings.IndentOptions.class.getFields()) {
+        if (fieldName.equals(field.getName())) return false;
+      }
+      return true;
     }
   }
 }

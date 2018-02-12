@@ -10,6 +10,7 @@ public class TypeMayBeWeakenedInspectionTest extends LightInspectionTestCase {
   public void testNumberAdderDemo() { doTest(); }
   public void testAutoClosableTest() { doTest(); }
   public void testLambda() { doTest(); }
+  public void testTryWithResources() { doTest(); }
 
   @Override
   protected String[] getEnvironmentClasses() {
@@ -53,6 +54,7 @@ public class TypeMayBeWeakenedInspectionTest extends LightInspectionTestCase {
   protected InspectionProfileEntry getInspection() {
     final TypeMayBeWeakenedInspection inspection = new TypeMayBeWeakenedInspection();
     inspection.doNotWeakenToJavaLangObject = false;
+    inspection.doNotWeakenReturnType = false;
     inspection.onlyWeakentoInterface = false;
     return inspection;
   }

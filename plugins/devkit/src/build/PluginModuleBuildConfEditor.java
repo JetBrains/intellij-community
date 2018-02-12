@@ -37,10 +37,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
-/**
- * User: anna
- * Date: Nov 24, 2004
- */
 public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
   private final JPanel myWholePanel = new JPanel(new GridBagLayout());
   @NonNls private final JLabel myPluginXMLLabel = new JLabel(DevKitBundle.message("deployment.view.meta-inf.label", "META-INF" + File.separator + "plugin.xml:"));
@@ -142,9 +138,4 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
   public String getHelpTopic() {
     return "plugin.configuring";
   }
-
-  @Override
-  public void moduleStateChanged() {
-  }
-
 }

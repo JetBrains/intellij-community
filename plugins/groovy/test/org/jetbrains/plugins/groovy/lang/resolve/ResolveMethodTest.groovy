@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package org.jetbrains.plugins.groovy.lang.resolve
@@ -19,6 +7,7 @@ package org.jetbrains.plugins.groovy.lang.resolve
 import com.intellij.psi.*
 import com.intellij.psi.util.PropertyUtil
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
@@ -29,11 +18,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResult
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResultImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.*
 import org.jetbrains.plugins.groovy.util.NotNullCachedComputableWrapper
 import org.jetbrains.plugins.groovy.util.TestUtils
 
@@ -261,7 +248,7 @@ class ResolveMethodTest extends GroovyResolveTestCase {
   void testWrongConstructor() {
     myFixture.addFileToProject('Classes.groovy', 'class Foo { int a; int b }')
     def ref = configureByText('new Fo<caret>o(2, 3)')
-    assert !((GrNewExpression) ref.element.parent).advancedResolve().element
+    assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof DefaultConstructor
   }
 
   void testLangImmutableConstructor() {
@@ -432,9 +419,7 @@ class ResolveMethodTest extends GroovyResolveTestCase {
   void testUnboxBigDecimal() {
     myFixture.addClass("package java.math; public class BigDecimal {}")
     PsiReference ref = configureByFile("unboxBigDecimal/A.groovy")
-    PsiElement resolved = ref.resolve()
-    assertTrue(resolved instanceof PsiMethod)
-    assertEquals(PsiType.DOUBLE, ((PsiMethod)resolved).returnType)
+    assertTrue(ref.resolve() instanceof PsiMethod)
   }
 
   void testGrvy1157() {
@@ -826,6 +811,8 @@ def test() {
     assertNotNull(ref.resolve())
   }
 
+
+
   void testStringInjectionDontOverrideItParameter() {
     def ref = configureByText("""
 [2, 3, 4].collect {"\${it.toBigDeci<caret>mal()}"}
@@ -1071,38 +1058,6 @@ def xx(){5}
 def aa = 5 + x<caret>x()
 ''')
     assertInstanceOf(ref.resolve(), GrMethod)
-  }
-
-  void testStaticallyImportedProperty1() {
-    myFixture.addFileToProject('Foo.groovy', '''\
-class Foo {
-  static def getFoo() {2}
-  static def setFoo(def foo){}
-}''')
-
-    def ref = configureByText('''\
-import static Foo.f<caret>oo
-''')
-    def resolved = ref.resolve()
-    assertInstanceOf(resolved, GrMethod)
-    assertEquals('getFoo', resolved.name)
-  }
-
-  void testStaticallyImportedProperty2() {
-    myFixture.addFileToProject('Foo.groovy', '''\
-class Foo {
-  static def getFoo() {2}
-  static def setFoo(def foo){}
-}''')
-
-    def ref = configureByText('''\
-import static Foo.foo
-
-setFo<caret>o(2)
-''')
-    def resolved = ref.resolve()
-    assertInstanceOf(resolved, GrMethod)
-    assertEquals('setFoo', resolved.name)
   }
 
   void testRuntimeMixin1() {
@@ -1425,7 +1380,7 @@ class _a {
   }
 
   void testRuntimeMixin22() {
-    assertNull resolveByText('''\
+    resolveByText '''\
 class ReentrantLock {}
 
 ReentrantLock.metaClass.withLock = { nestedCode -> }
@@ -1433,7 +1388,7 @@ ReentrantLock.metaClass.withLock = { nestedCode -> }
 new ReentrantLock().withLock {
     fo<caret>o(3)
 }
-''')
+''', null
   }
 
   void testRuntimeMixin23() {
@@ -2014,8 +1969,7 @@ def abc(String s) { print 'hjk' }
   }
 
 
-  //IDEA-125331
-  void _testScriptMethodVSStaticImportInsideClosure() {
+  void testScriptMethodVSStaticImportInsideClosure() {
     def method = resolveByText '''
 import static C.abc
 
@@ -2238,7 +2192,7 @@ SourceConcrete.someOtherStatic<caret>Method()
     def results = ref.multiResolve(false)
     assert results.length > 0
     results.each {
-      assert it instanceof GroovyMethodResult
+      assert it instanceof GroovyMethodResultImpl
       def computer = it.substitutorComputer
       assert computer instanceof NotNullCachedComputableWrapper
       assert !computer.computed
@@ -2291,5 +2245,50 @@ BigDecimal b = 1
     assert resolved instanceof GrGdkMethod
     fixture.enableInspections GroovyAssignabilityCheckInspection
     fixture.checkHighlighting()
+  }
+
+  void 'test resolve AutoImplement'() {
+    myFixture.addClass("package groovy.transform; public @interface AutoImplement {}")
+    def method = resolveByText '''
+import groovy.transform.AutoImplement
+
+@AutoImplement
+class SomeClass extends List<Integer> {
+}
+
+new SomeClass().si<caret>ze()
+''', GrLightMethodBuilder
+    assert (method as GrLightMethodBuilder).originInfo.contains("@AutoImplement")
+  }
+
+  void 'test resolve AutoImplement implemented'() {
+    myFixture.addClass("package groovy.transform; public @interface AutoImplement {}")
+    resolveByText '''
+import groovy.transform.AutoImplement
+
+@AutoImplement
+class SomeClass extends List<Integer> {
+  @Override
+  public int size() {return 0}
+}
+
+new SomeClass().si<caret>ze()
+''', GrMethodImpl
+
+  }
+
+  void 'test prefer varargs in no-arg call'() {
+    def file = fixture.configureByText('_.groovy', '''\
+class A {
+  A(String... a) { println "varargs" }
+  A(A a) { println "single" }
+}
+
+new A()
+''') as GroovyFile
+    def expression = file.statements.last() as GrNewExpression
+    def resolved = expression.resolveMethod()
+    assert resolved instanceof GrMethod
+    assert resolved.isVarArgs()
   }
 }

@@ -35,6 +35,10 @@ public class ReplaceExpressionUtil {
     if (!ElementType.EXPRESSION_BIT_SET.contains(oldParent.getElementType())) return false;
     int priority = getExpressionPriority(newExpr);
     int parentPriority = getExpressionPriority(oldParent);
+    if (priority == -1 || parentPriority == -1) {
+      // Unknown element types: enclose with parentheses just in case
+      return true;
+    }
     if (priority > parentPriority) return false;
     IElementType i = oldParent.getElementType();
     if (i == JavaElementType.ASSIGNMENT_EXPRESSION) {
@@ -55,35 +59,25 @@ public class ReplaceExpressionUtil {
              opType != JavaTokenType.ANDAND &&
              opType != JavaTokenType.OROR;
     }
-    else if (i == JavaElementType.INSTANCE_OF_EXPRESSION) {
-      return priority < parentPriority;
-    }
-    else if (i == JavaElementType.PREFIX_EXPRESSION || i == JavaElementType.TYPE_CAST_EXPRESSION) {
-      return priority < parentPriority;
-    }
     else if (i == JavaElementType.POSTFIX_EXPRESSION) {
       return priority <= parentPriority;
     }
-    else if (i == JavaElementType.REFERENCE_EXPRESSION || i == JavaElementType.METHOD_REF_EXPRESSION) {
+    else if (i == JavaElementType.INSTANCE_OF_EXPRESSION ||
+             i == JavaElementType.PREFIX_EXPRESSION ||
+             i == JavaElementType.TYPE_CAST_EXPRESSION ||
+             i == JavaElementType.REFERENCE_EXPRESSION ||
+             i == JavaElementType.METHOD_REF_EXPRESSION) {
       return priority < parentPriority;
-    }
-    else if (i == JavaElementType.METHOD_CALL_EXPRESSION) {
-      return false;
-    }
-    else if (i == JavaElementType.NEW_EXPRESSION) {
-      return false;
     }
     else if (i == JavaElementType.ARRAY_ACCESS_EXPRESSION) {
       int role = ((CompositeElement)oldParent).getChildRole(oldExpr);
       return role != ChildRole.ARRAY_DIMENSION && role != ChildRole.INDEX && priority < parentPriority;
     }
-    else if (i == JavaElementType.ARRAY_INITIALIZER_EXPRESSION) {
-      return false;
-    }
-    else if (i == JavaElementType.PARENTH_EXPRESSION) {
-      return false;
-    }
-    else if (i == JavaElementType.LITERAL_EXPRESSION ||
+    else if (i == JavaElementType.METHOD_CALL_EXPRESSION ||
+             i == JavaElementType.NEW_EXPRESSION ||
+             i == JavaElementType.ARRAY_INITIALIZER_EXPRESSION ||
+             i == JavaElementType.PARENTH_EXPRESSION ||
+             i == JavaElementType.LITERAL_EXPRESSION ||
              i == JavaElementType.THIS_EXPRESSION ||
              i == JavaElementType.SUPER_EXPRESSION ||
              i == JavaElementType.CLASS_OBJECT_ACCESS_EXPRESSION ||
@@ -164,7 +158,6 @@ public class ReplaceExpressionUtil {
       return 14;
     }
     else {
-      LOG.error("Unknown element type:" + i);
       return -1;
     }
   }

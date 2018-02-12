@@ -24,6 +24,10 @@ public abstract class DfaValue {
     myID = factory == null ? 0 : factory.registerValue(this);
   }
 
+  public DfaValueFactory getFactory() {
+    return myFactory;
+  }
+
   public int getID() {
     return myID;
   }

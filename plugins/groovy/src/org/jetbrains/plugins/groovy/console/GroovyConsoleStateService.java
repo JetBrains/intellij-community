@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.console;
 
 import com.intellij.openapi.components.*;
@@ -39,9 +25,9 @@ import java.util.Map;
 public class GroovyConsoleStateService implements PersistentStateComponent<GroovyConsoleStateService.MyState> {
 
   public static class Entry {
-    public String url;
-    public String moduleName;
-    public String title;
+    public @Nullable String url;
+    public @Nullable String moduleName;
+    public @Nullable String title;
   }
 
   public static class MyState {
@@ -50,8 +36,7 @@ public class GroovyConsoleStateService implements PersistentStateComponent<Groov
 
   private final ModuleManager myModuleManager;
   private final VirtualFileManager myFileManager;
-  private final Map<VirtualFile, Pair<Module, String>> myFileModuleMap =
-    Collections.synchronizedMap(ContainerUtil.<VirtualFile, Pair<Module, String>>newHashMap());
+  private final Map<VirtualFile, Pair<Module, String>> myFileModuleMap = Collections.synchronizedMap(ContainerUtil.newHashMap());
 
   public GroovyConsoleStateService(ModuleManager manager, VirtualFileManager fileManager) {
     myModuleManager = manager;
@@ -78,15 +63,16 @@ public class GroovyConsoleStateService implements PersistentStateComponent<Groov
   }
 
   @Override
-  public void loadState(MyState state) {
+  public void loadState(@NotNull MyState state) {
     synchronized (myFileModuleMap) {
       myFileModuleMap.clear();
       for (Entry entry : state.list) {
+        if (entry.url == null) continue;
         final VirtualFile file = myFileManager.findFileByUrl(entry.url);
-        final Module module = myModuleManager.findModuleByName(entry.moduleName);
-        if (file != null) {
-          myFileModuleMap.put(file, Pair.create(module, entry.title));
-        }
+        if (file == null) continue;
+        String moduleName = entry.moduleName;
+        final Module module = moduleName == null ? null : myModuleManager.findModuleByName(moduleName);
+        myFileModuleMap.put(file, Pair.create(module, entry.title));
       }
     }
   }

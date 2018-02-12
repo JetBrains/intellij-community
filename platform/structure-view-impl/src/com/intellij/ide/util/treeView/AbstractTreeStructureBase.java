@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util.treeView;
 
@@ -23,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.AbstractTreeStructureBase");
@@ -45,12 +31,14 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     LOG.assertTrue(element instanceof AbstractTreeNode, element != null ? element.getClass().getName() : null);
     AbstractTreeNode<?> treeNode = (AbstractTreeNode)element;
     Collection<? extends AbstractTreeNode> elements = treeNode.getChildren();
+    if (elements.stream().anyMatch(Objects::isNull)) LOG.error("node contains null child: " + treeNode);
      List<TreeStructureProvider> providers = getProvidersDumbAware();
     if (!providers.isEmpty()) {
       ViewSettings settings = treeNode instanceof SettingsProvider ? ((SettingsProvider)treeNode).getSettings() : ViewSettings.DEFAULT;
       for (TreeStructureProvider provider : providers) {
         try {
           elements = provider.modify(treeNode, (Collection<AbstractTreeNode>)elements, settings);
+          if (elements.stream().anyMatch(Objects::isNull)) LOG.error("provider creates null child: " + provider);
         }
         catch (ProcessCanceledException e) {
           throw e;
@@ -60,10 +48,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
         }
       }
     }
-    for (AbstractTreeNode node : elements) {
-      node.setParent(treeNode);
-    }
-
+    elements.forEach(node -> node.setParent(treeNode));
     return ArrayUtil.toObjectArray(elements);
   }
 
@@ -84,11 +69,6 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
   @NotNull
   public NodeDescriptor createDescriptor(final Object element, final NodeDescriptor parentDescriptor) {
     return (NodeDescriptor)element;
-  }
-
-  @Override
-  public AsyncResult<Object> revalidateElement(Object element) {
-    return super.revalidateElement(element);
   }
 
   @Nullable

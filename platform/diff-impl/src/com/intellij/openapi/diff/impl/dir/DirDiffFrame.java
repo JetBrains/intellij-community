@@ -28,13 +28,13 @@ import org.jetbrains.annotations.NonNls;
  * @author Konstantin Bulenkov
  */
 public class DirDiffFrame extends FrameWrapper {
-  private DirDiffPanel myPanel;
+  private final DirDiffPanel myPanel;
 
   public DirDiffFrame(Project project, DirDiffTableModel model) {
     super(project, "DirDiffDialog");
     setSize(JBUI.size(800, 600));
     setTitle(model.getTitle());
-    myPanel = new DirDiffPanel(model, new DirDiffWindow(this));
+    myPanel = new DirDiffPanel(model, new DirDiffWindow.Frame(this));
     Disposer.register(this, myPanel);
     setComponent(myPanel.getPanel());
     if (project != null) {

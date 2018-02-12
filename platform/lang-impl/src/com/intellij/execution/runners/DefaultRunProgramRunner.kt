@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,31 +15,32 @@
  */
 package com.intellij.execution.runners
 
-import com.intellij.execution.RunProfileStarter
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 
-private class DefaultRunProgramRunner : AsyncGenericProgramRunner<RunnerSettings>() {
+private class DefaultRunProgramRunner : AsyncProgramRunner<RunnerSettings>() {
   override fun getRunnerId() = "defaultRunRunner"
 
-  override fun prepare(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunProfileStarter> {
+  override fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?> {
     FileDocumentManager.getInstance().saveAllDocuments()
-
+    @Suppress("IfThenToElvis")
     if (state is DebuggableRunProfileState) {
       return state.execute(-1)
         .then {
           it?.let {
-            runProfileStarter { state, environment -> RunContentBuilder(it, environment).showRunContent(environment.contentToReuse) }
+            RunContentBuilder(it, environment).showRunContent(environment.contentToReuse)
           }
         }
     }
-
-    return resolvedPromise(runProfileStarter { state, environment -> showRunContent(state.execute(environment.executor, this), environment) })
+    else {
+      return resolvedPromise(showRunContent(state.execute(environment.executor, this@DefaultRunProgramRunner), environment))
+    }
   }
 
   override fun canRun(executorId: String, profile: RunProfile): Boolean {

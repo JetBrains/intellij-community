@@ -111,4 +111,9 @@ public enum RegExpCapability {
    * Allow \x9 in addition to \x09 (ruby)
    */
   ONE_HEX_CHAR_ESCAPE,
+
+  /**
+   * MySQL character classes [=c=] [.class.] [:<:] [:>:]
+   */
+  MYSQL_BRACKET_EXPRESSIONS,
 }

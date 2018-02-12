@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -140,11 +126,7 @@ public class Messages {
     UIUtil.FontSize fixedFontSize = fontSize == null ? UIUtil.FontSize.NORMAL : fontSize;
     messageComponent.setFont(UIUtil.getLabelFont(fixedFontSize));
     if (BasicHTML.isHTMLString(message)) {
-      HTMLEditorKit editorKit = new HTMLEditorKit();
-      Font font = UIUtil.getLabelFont(fixedFontSize);
-      editorKit.getStyleSheet().addRule(UIUtil.displayPropertiesToCSS(font, UIUtil.getLabelForeground()));
-      messageComponent.setEditorKit(editorKit);
-      messageComponent.setContentType(UIUtil.HTML_MIME);
+      messageComponent.setEditorKit(UIUtil.getHTMLEditorKit());
     }
     messageComponent.setText(message);
     messageComponent.setEditable(false);
@@ -152,14 +134,7 @@ public class Messages {
       messageComponent.setCaretPosition(0);
     }
 
-    if (UIUtil.isUnderNimbusLookAndFeel()) {
-      messageComponent.setOpaque(false);
-      messageComponent.setBackground(UIUtil.TRANSPARENT_COLOR);
-    }
-    else {
-      messageComponent.setBackground(UIUtil.getOptionPaneBackground());
-    }
-
+    messageComponent.setBackground(UIUtil.getOptionPaneBackground());
     messageComponent.setForeground(UIUtil.getLabelForeground());
     return messageComponent;
   }
@@ -1058,7 +1033,7 @@ public class Messages {
   }
 
   /**
-   * @return trimmed input string or <code>null</code> if user cancelled dialog.
+   * @return trimmed input string or {@code null} if user cancelled dialog.
    */
   @Nullable
   public static String showPasswordDialog(@Nls String message, @Nls(capitalization = Nls.Capitalization.Title) String title) {
@@ -1066,7 +1041,7 @@ public class Messages {
   }
 
   /**
-   * @return trimmed input string or <code>null</code> if user cancelled dialog.
+   * @return trimmed input string or {@code null} if user cancelled dialog.
    */
   @Nullable
   public static String showPasswordDialog(Project project,
@@ -1077,7 +1052,7 @@ public class Messages {
   }
 
   /**
-   * @return trimmed input string or <code>null</code> if user cancelled dialog.
+   * @return trimmed input string or {@code null} if user cancelled dialog.
    */
   @Nullable
   public static String showPasswordDialog(@Nullable Project project,
@@ -1093,7 +1068,7 @@ public class Messages {
   }
 
   /**
-   * @return trimmed input string or <code>null</code> if user cancelled dialog.
+   * @return trimmed input string or {@code null} if user cancelled dialog.
    */
   @Nullable
   public static String showInputDialog(@Nullable Project project,
@@ -1104,7 +1079,7 @@ public class Messages {
   }
 
   /**
-   * @return trimmed input string or <code>null</code> if user cancelled dialog.
+   * @return trimmed input string or {@code null} if user cancelled dialog.
    */
   @Nullable
   public static String showInputDialog(@NotNull Component parent,
@@ -1358,7 +1333,7 @@ public class Messages {
    * Shows dialog with text area to edit long strings that don't fit in text field.
    */
   public static void showTextAreaDialog(final JTextField textField,
-                                        final @Nls(capitalization = Nls.Capitalization.Title) String title,
+                                        @Nls(capitalization = Nls.Capitalization.Title) final String title,
                                         @NonNls final String dimensionServiceKey,
                                         final Function<String, List<String>> parser,
                                         final Function<List<String>, String> lineJoiner) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
   private static final TokenSet TYPES_OF_STATEMENTS_WITH_OPTIONAL_BRACES = TokenSet.create(
     JavaElementType.IF_STATEMENT, JavaElementType.WHILE_STATEMENT, JavaElementType.FOR_STATEMENT
   );
-  
+
   private static final int BEFORE_FIRST = 0;
   private static final int BEFORE_BLOCK = 1;
   private static final int AFTER_ELSE = 2;
@@ -107,7 +107,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
           Alignment simpleMethodBraceAlignment = myAlignmentStrategy.getAlignment(child.getElementType());
           Alignment toUse = childAlignment != null ? childAlignment : simpleMethodBraceAlignment;
           child = processChild(result, child, toUse, childWrap, indent);
-        }                
+        }
         for (int i = myIndentsBefore.size(); i < result.size(); i++) {
           myIndentsBefore.add(Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS));
         }
@@ -153,7 +153,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
       }
     }
     if (isSimpleStatement(child)){
-      return createNormalIndent(1);
+      return createNormalIndent();
     }
     if (child.getElementType() == JavaTokenType.ELSE_KEYWORD)
       return Indent.getNoneIndent();
@@ -167,7 +167,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
       else if (isSimpleStatement(child) || StdTokenSets.COMMENT_BIT_SET.contains(child.getElementType())){
         return getCodeBlockInternalIndent(1);
       }
-      else if (isNodeParentMethod(child) && 
+      else if (isNodeParentMethod(child) &&
                (child.getElementType() == JavaElementType.TYPE
                 || child.getElementType() == JavaTokenType.IDENTIFIER
                 || child.getElementType() == JavaElementType.THROWS_LIST
@@ -268,7 +268,7 @@ public class BlockContainingJavaBlock extends AbstractJavaBlock{
         }
       }
     }
-    
+
     if (useExternalIndent) {
       return new ChildAttributes(getCodeBlockChildExternalIndent(newChildIndex), null);
     }

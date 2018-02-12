@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.mvc;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -42,6 +43,7 @@ import java.util.Map;
 public class MvcProjectWithoutLibraryNotificator implements StartupActivity, DumbAware {
   @Override
   public void runActivity(@NotNull final Project project) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
     ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ReadTask() {
       @Override
       public void computeInReadAction(@NotNull ProgressIndicator indicator) {
@@ -83,7 +85,9 @@ public class MvcProjectWithoutLibraryNotificator implements StartupActivity, Dum
 
       @Override
       public void onCanceled(@NotNull ProgressIndicator indicator) {
-        ProgressIndicatorUtils.scheduleWithWriteActionPriority(this);
+        if (!project.isDisposed()) {
+          ProgressIndicatorUtils.scheduleWithWriteActionPriority(this);
+        }
       }
     });
   }

@@ -29,7 +29,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.NotNullPredicate;
@@ -137,7 +136,7 @@ public final class PyClassRefactoringUtil {
     for (final PsiElement e : methods) {
       rememberNamedReferences(e);
     }
-    final PyFunction[] elements = methods.toArray(new PyFunction[methods.size()]);
+    final PyFunction[] elements = methods.toArray(PyFunction.EMPTY_ARRAY);
     return addMethods(superClass, skipIfExist, elements);
   }
 
@@ -225,7 +224,7 @@ public final class PyClassRefactoringUtil {
       @Override
       public void visitPyReferenceExpression(PyReferenceExpression node) {
         super.visitPyReferenceExpression(node);
-        restoreReference(node, otherMovedElements);
+        restoreReference(node, node, otherMovedElements);
       }
 
       @Override
@@ -241,13 +240,15 @@ public final class PyClassRefactoringUtil {
   }
 
 
-  private static void restoreReference(@NotNull PyReferenceExpression node, @NotNull PsiElement[] otherMovedElements) {
+  public static void restoreReference(@NotNull PyReferenceExpression sourceNode,
+                                      @NotNull PyReferenceExpression targetNode,
+                                      @NotNull PsiElement[] otherMovedElements) {
     try {
-      PsiNamedElement target = node.getCopyableUserData(ENCODED_IMPORT);
-      final String asName = node.getCopyableUserData(ENCODED_IMPORT_AS);
-      final Boolean useFromImport = node.getCopyableUserData(ENCODED_USE_FROM_IMPORT);
+      PsiNamedElement target = sourceNode.getCopyableUserData(ENCODED_IMPORT);
+      final String asName = sourceNode.getCopyableUserData(ENCODED_IMPORT_AS);
+      final Boolean useFromImport = sourceNode.getCopyableUserData(ENCODED_USE_FROM_IMPORT);
       if (target instanceof PsiDirectory) {
-        target = (PsiNamedElement)PyUtil.getPackageElement((PsiDirectory)target, node);
+        target = (PsiNamedElement)PyUtil.getPackageElement((PsiDirectory)target, sourceNode);
       }
       if (target instanceof PyFunction) {
         final PyFunction f = (PyFunction)target;
@@ -257,19 +258,19 @@ public final class PyClassRefactoringUtil {
         }
       }
       if (target == null) return;
-      if (PsiTreeUtil.isAncestor(node.getContainingFile(), target, false)) return;
+      if (PsiTreeUtil.isAncestor(targetNode.getContainingFile(), target, false)) return;
       if (ArrayUtil.contains(target, otherMovedElements)) return;
       if (target instanceof PyFile || target instanceof PsiDirectory) {
-        insertImport(node, target, asName, useFromImport != null ? useFromImport : true);
+        insertImport(targetNode, target, asName, useFromImport != null ? useFromImport : true);
       }
       else {
-        insertImport(node, target, asName, true);
+        insertImport(targetNode, target, asName, true);
       }
     }
     finally {
-      node.putCopyableUserData(ENCODED_IMPORT, null);
-      node.putCopyableUserData(ENCODED_IMPORT_AS, null);
-      node.putCopyableUserData(ENCODED_USE_FROM_IMPORT, null);
+      sourceNode.putCopyableUserData(ENCODED_IMPORT, null);
+      sourceNode.putCopyableUserData(ENCODED_IMPORT_AS, null);
+      sourceNode.putCopyableUserData(ENCODED_USE_FROM_IMPORT, null);
     }
   }
 
@@ -345,7 +346,7 @@ public final class PyClassRefactoringUtil {
    * @param namesToSkip if reference inside of element has one of this names, it will not be saved.
    */
   public static void rememberNamedReferences(@NotNull final PsiElement element, @NotNull final String... namesToSkip) {
-    element.acceptChildren(new PyRecursiveElementVisitor() {
+    element.accept(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyReferenceExpression(PyReferenceExpression node) {
         super.visitPyReferenceExpression(node);
@@ -568,7 +569,7 @@ public final class PyClassRefactoringUtil {
    * @param file file to optimize imports
    */
   public static void optimizeImports(@NotNull final PsiFile file) {
-    new PyImportOptimizer().processFile(file).run();
+    PyImportOptimizer.onlyRemoveUnused().processFile(file).run();
   }
 
   /**

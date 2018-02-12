@@ -38,7 +38,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.util.PairProcessor
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.putValue
@@ -60,8 +59,7 @@ private class ExportSettingsAction : AnAction(), DumbAware {
 
     val dialog = ChooseComponentsToExportDialog(getExportableComponentsMap(true, true), true,
                                                 IdeBundle.message("title.select.components.to.export"),
-                                                IdeBundle.message(
-                                                                                    "prompt.please.check.all.components.to.export"))
+                                                IdeBundle.message("prompt.please.check.all.components.to.export"))
     if (!dialog.showAndGet()) {
       return
     }
@@ -149,7 +147,7 @@ private fun exportInstalledPlugins(zipOut: MyZipOutputStream) {
 // onlyPaths - include only specified paths (relative to config dir, ends with "/" if directory)
 fun getExportableComponentsMap(onlyExisting: Boolean,
                                computePresentableNames: Boolean,
-                               storageManager: StateStorageManager = ApplicationManager.getApplication().stateStore.stateStorageManager,
+                               storageManager: StateStorageManager = ApplicationManager.getApplication().stateStore.storageManager,
                                onlyPaths: Set<String>? = null): Map<Path, List<ExportableItem>> {
   val result = LinkedHashMap<Path, MutableList<ExportableItem>>()
   @Suppress("DEPRECATION")
@@ -187,16 +185,16 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
 
   val fileToContent = THashMap<Path, String>()
 
-  ServiceManagerImpl.processAllImplementationClasses(ApplicationManager.getApplication() as ApplicationImpl, PairProcessor<Class<*>, PluginDescriptor> { aClass, pluginDescriptor ->
+  ServiceManagerImpl.processAllImplementationClasses(ApplicationManager.getApplication() as ApplicationImpl, { aClass, pluginDescriptor ->
     val stateAnnotation = StoreUtil.getStateSpec(aClass)
     @Suppress("DEPRECATION")
-    if (stateAnnotation == null || stateAnnotation.name.isNullOrEmpty() || ExportableComponent::class.java.isAssignableFrom(aClass)) {
-      return@PairProcessor true
+    if (stateAnnotation == null || stateAnnotation.name.isEmpty() || ExportableComponent::class.java.isAssignableFrom(aClass)) {
+      return@processAllImplementationClasses true
     }
 
-    val storage = stateAnnotation.storages.sortByDeprecated().firstOrNull() ?: return@PairProcessor true
-    if (!(storage.roamingType != RoamingType.DISABLED && storage.storageClass == StateStorage::class && !storage.path.isNullOrEmpty())) {
-      return@PairProcessor true
+    val storage = stateAnnotation.storages.sortByDeprecated().firstOrNull() ?: return@processAllImplementationClasses true
+    if (!(storage.roamingType != RoamingType.DISABLED && storage.storageClass == StateStorage::class && !storage.path.isEmpty())) {
+      return@processAllImplementationClasses true
     }
 
     var additionalExportFile: Path? = null
@@ -220,7 +218,7 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
       if (computePresentableNames && onlyExisting && additionalExportFile == null && file.fileName.toString().endsWith(".xml")) {
         val content = fileToContent.getOrPut(file) { file.readText() }
         if (!content.contains("""<component name="${stateAnnotation.name}">""")) {
-          return@PairProcessor true
+          return@processAllImplementationClasses true
         }
       }
 
@@ -260,7 +258,12 @@ private fun getComponentPresentableName(state: State, aClass: Class<*>, pluginDe
 
   val defaultName = state.name
 
-  fun trimDefaultName() = defaultName.removeSuffix("Settings")
+  fun trimDefaultName(): String {
+    // Vcs.Log.App.Settings
+    return defaultName
+      .removeSuffix(".Settings")
+      .removeSuffix(".Settings")
+  }
 
   var resourceBundleName: String?
   if (pluginDescriptor is IdeaPluginDescriptor && "com.intellij" != pluginDescriptor.pluginId.idString) {

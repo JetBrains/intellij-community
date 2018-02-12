@@ -37,7 +37,7 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
  *  @author dsl
  */
 public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFolder, ClonableContentFolder {
-  private JpsModuleSourceRoot myJpsElement;
+  private final JpsModuleSourceRoot myJpsElement;
   @NonNls public static final String ELEMENT_NAME = JpsModuleRootModelSerializer.SOURCE_FOLDER_TAG;
   @NonNls public static final String TEST_SOURCE_ATTR = JpsModuleRootModelSerializer.IS_TEST_SOURCE_ATTRIBUTE;
   static final String DEFAULT_PACKAGE_PREFIX = "";
@@ -137,9 +137,9 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
     SourceFolderImpl sourceFolder = (SourceFolderImpl)folder;
     i = getPackagePrefix().compareTo(sourceFolder.getPackagePrefix());
     if (i!= 0) return i;
-    i = Boolean.valueOf(isTestSource()).compareTo(sourceFolder.isTestSource());
+    i = Boolean.compare(isTestSource(), sourceFolder.isTestSource());
     if (i != 0) return i;
-    i = Boolean.valueOf(isForGeneratedSources()).compareTo(sourceFolder.isForGeneratedSources());
+    i = Boolean.compare(isForGeneratedSources(), sourceFolder.isForGeneratedSources());
     if (i != 0) return i;
     //todo[nik] perhaps we should use LinkedSet instead of SortedSet and get rid of this method
     return myJpsElement.getRootType().getClass().getName().compareTo(sourceFolder.getRootType().getClass().getName());

@@ -32,7 +32,7 @@ public class XmlProductivityFeatureProvider extends ProductivityFeaturesProvider
                                                            XmlBundle.message("tag.name.completion.display.name"),
                                                            0,
                                                            1,
-                                                           Collections.<String>emptySet(),
+                                                           Collections.emptySet(),
                                                            3,
                                                            this)};
   }

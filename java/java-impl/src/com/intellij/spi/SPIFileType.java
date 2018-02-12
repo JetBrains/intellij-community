@@ -31,9 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * User: anna
- */
 public class SPIFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile {
   public static final SPIFileType INSTANCE = new SPIFileType();
 
@@ -79,11 +76,6 @@ public class SPIFileType extends LanguageFileType implements FileTypeIdentifiabl
   @Override
   public Icon getIcon() {
     return AllIcons.FileTypes.Text;
-  }
-
-  @Override
-  public boolean isReadOnly() {
-    return false;
   }
 
   @Nullable

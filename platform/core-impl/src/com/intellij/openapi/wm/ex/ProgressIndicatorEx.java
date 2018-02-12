@@ -21,10 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface ProgressIndicatorEx extends ProgressIndicatorStacked {
   void addStateDelegate(@NotNull ProgressIndicatorEx delegate);
-
   void removeStateDelegate(@NotNull ProgressIndicatorEx delegate);
-
-  boolean isModalityEntered();
 
   void finish(@NotNull TaskInfo task);
 

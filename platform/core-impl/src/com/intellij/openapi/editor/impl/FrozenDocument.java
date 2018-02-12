@@ -15,24 +15,18 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.EditReadOnlyListener;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Processor;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.beans.PropertyChangeListener;
 
 /**
  * @author peter
@@ -67,11 +61,6 @@ public class FrozenDocument implements DocumentEx {
     return new FrozenDocument(newText, newLineSet, newStamp, null);
   }
 
-  @Override
-  public void setStripTrailingSpacesEnabled(boolean isEnabled) {
-    throw new UnsupportedOperationException();
-  }
-
   @NotNull
   @Override
   public LineIterator createLineIterator() {
@@ -84,16 +73,6 @@ public class FrozenDocument implements DocumentEx {
   }
 
   @Override
-  public void addEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void removeEditReadOnlyListener(@NotNull EditReadOnlyListener listener) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void replaceText(@NotNull CharSequence chars, long newModificationStamp) {
     throw new UnsupportedOperationException();
   }
@@ -102,22 +81,7 @@ public class FrozenDocument implements DocumentEx {
   public void moveText(int srcStart, int srcEnd, int dstOffset) {
     throw new UnsupportedOperationException();
   }
-
-  @Override
-  public void suppressGuardedExceptions() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void unSuppressGuardedExceptions() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public boolean isInEventsHandling() {
-    return false;
-  }
-
+  
   @Override
   public void clearLineModificationFlags() {
     throw new UnsupportedOperationException();
@@ -135,16 +99,6 @@ public class FrozenDocument implements DocumentEx {
                                   boolean greedyToLeft,
                                   boolean greedyToRight,
                                   int layer) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public boolean isInBulkUpdate() {
-    return false;
-  }
-
-  @Override
-  public void setInBulkUpdate(boolean value) {
     throw new UnsupportedOperationException();
   }
 
@@ -184,17 +138,6 @@ public class FrozenDocument implements DocumentEx {
   @Override
   public CharSequence getImmutableCharSequence() {
     return myText;
-  }
-
-  @NotNull
-  @Override
-  public char[] getChars() {
-    return CharArrayUtil.fromSequence(myText);
-  }
-
-  @Override
-  public int getTextLength() {
-    return myText.length();
   }
 
   @Override
@@ -246,45 +189,9 @@ public class FrozenDocument implements DocumentEx {
     return myStamp;
   }
 
-  @Override
-  public void fireReadOnlyModificationAttempt() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void addDocumentListener(@NotNull DocumentListener listener) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void addDocumentListener(@NotNull DocumentListener listener, @NotNull Disposable parentDisposable) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void removeDocumentListener(@NotNull DocumentListener listener) {
-    throw new UnsupportedOperationException();
-  }
-
-  @NotNull
-  @Override
-  public RangeMarker createRangeMarker(int startOffset, int endOffset) {
-    throw new UnsupportedOperationException();
-  }
-
   @NotNull
   @Override
   public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
     throw new UnsupportedOperationException();
   }
 
@@ -327,18 +234,7 @@ public class FrozenDocument implements DocumentEx {
   }
 
   @Override
-  public void setCyclicBufferSize(int bufferSize) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void setText(@NotNull CharSequence text) {
-    throw new UnsupportedOperationException();
-  }
-
-  @NotNull
-  @Override
-  public RangeMarker createRangeMarker(@NotNull TextRange textRange) {
     throw new UnsupportedOperationException();
   }
 
@@ -356,10 +252,5 @@ public class FrozenDocument implements DocumentEx {
   @Override
   public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
     throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public int getModificationSequence() {
-    return 0;
   }
 }

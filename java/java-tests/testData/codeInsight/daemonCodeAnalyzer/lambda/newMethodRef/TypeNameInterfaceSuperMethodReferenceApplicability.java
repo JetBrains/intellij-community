@@ -81,3 +81,27 @@ class InsideThisRxpression {
   public interface Bar extends Foo {}
 }
 
+class SameDefaultMethodDifferentInheritors {
+  interface A { default void a() {} }
+  interface B extends A { default void a() {} }
+  interface B1 extends A { }
+  interface C extends A {}
+
+  class Clazz implements B, C {
+    {
+      <error descr="Bad type qualifier in default super call: method a is overridden in SameDefaultMethodDifferentInheritors.B">C</error>.super.a();
+    }
+  }
+  
+  class Clazz1 implements B1, C {
+    {
+      C.super.a();
+    }
+  }
+  
+  class Clazz2 implements C {
+    {
+      C.super.a();
+    }
+  }
+}

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.localCanBeFinal;
 
 import com.intellij.codeInsight.daemon.GroupNames;
@@ -35,11 +21,12 @@ import java.util.*;
 /**
  * @author max
  */
-public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
+public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool {
   public boolean REPORT_VARIABLES = true;
   public boolean REPORT_PARAMETERS = true;
   public boolean REPORT_CATCH_PARAMETERS = true;
   public boolean REPORT_FOREACH_PARAMETERS = true;
+  public boolean REPORT_IMPLICIT_FINALS = true;
 
   private final LocalQuickFix myQuickFix;
   @NonNls public static final String SHORT_NAME = "LocalCanBeFinal";
@@ -58,12 +45,15 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
     if (!REPORT_FOREACH_PARAMETERS) {
       node.addContent(new Element("option").setAttribute("name", "REPORT_FOREACH_PARAMETERS").setAttribute("value", "false"));
     }
+    if (!REPORT_IMPLICIT_FINALS) {
+      node.addContent(new Element("option").setAttribute("name", "REPORT_IMPLICIT_FINALS").setAttribute("value", "false"));
+    }
   }
 
   @Override
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     List<ProblemDescriptor> list = checkCodeBlock(method.getBody(), manager, isOnTheFly);
-    return list == null ? null : list.toArray(new ProblemDescriptor[list.size()]);
+    return list == null ? null : list.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   @Override
@@ -79,7 +69,7 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
         allProblems.addAll(problems);
       }
     }
-    return allProblems == null ? null : allProblems.toArray(new ProblemDescriptor[allProblems.size()]);
+    return allProblems == null ? null : allProblems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -151,6 +141,11 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
             result.add(psiVariable);
           }
         }
+      }
+
+      @Override
+      public void visitResourceVariable(PsiResourceVariable variable) {
+        result.add(variable);
       }
 
       @Override
@@ -281,7 +276,10 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
   }
 
   private boolean shouldBeIgnored(PsiVariable psiVariable) {
-    if (psiVariable.hasModifierProperty(PsiModifier.FINAL)) return true;
+    PsiModifierList modifierList = psiVariable.getModifierList();
+    if (modifierList == null) return true;
+    if (modifierList.hasExplicitModifier(PsiModifier.FINAL)) return true;
+    if (!REPORT_IMPLICIT_FINALS && modifierList.hasModifierProperty(PsiModifier.FINAL)) return true;
     if (psiVariable instanceof PsiLocalVariable) {
       return !REPORT_VARIABLES;
     }
@@ -342,11 +340,7 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
     panel.addCheckbox(InspectionsBundle.message("inspection.local.can.be.final.option1"), "REPORT_PARAMETERS");
     panel.addCheckbox(InspectionsBundle.message("inspection.local.can.be.final.option2"), "REPORT_CATCH_PARAMETERS");
     panel.addCheckbox(InspectionsBundle.message("inspection.local.can.be.final.option3"), "REPORT_FOREACH_PARAMETERS");
+    panel.addCheckbox(InspectionsBundle.message("inspection.local.can.be.final.option4"), "REPORT_IMPLICIT_FINALS");
     return panel;
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
   }
 }

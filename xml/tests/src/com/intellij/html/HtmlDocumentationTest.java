@@ -21,7 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
 public class HtmlDocumentationTest extends LightPlatformCodeInsightTestCase {
-  public void testQuickDocumentationHtml5Tag() throws Exception {
+  public void testQuickDocumentationHtml5Tag() {
     doTest("<!DOCTYPE html>\n" +
            "<html>\n" +
            "<bo<caret>dy onload=\"\">\n" +
@@ -29,7 +29,7 @@ public class HtmlDocumentationTest extends LightPlatformCodeInsightTestCase {
            "</html>");
   }
 
-  public void testQuickDocumentationHtml5TagDialog() throws Exception {
+  public void testQuickDocumentationHtml5TagDialog() {
     doTest("<!DOCTYPE html>\n" +
            "<html>\n" +
            "<body onload=\"\">\n" +
@@ -38,7 +38,7 @@ public class HtmlDocumentationTest extends LightPlatformCodeInsightTestCase {
            "</html>");
   }
 
-  public void testQuickDocumentationHtml5Attr() throws Exception {
+  public void testQuickDocumentationHtml5Attr() {
     doTest("<!DOCTYPE html>\n" +
            "<html>\n" +
            "<body on<caret>load=\"\">\n" +
@@ -46,7 +46,7 @@ public class HtmlDocumentationTest extends LightPlatformCodeInsightTestCase {
            "</html>");
   }
 
-  public void testQuickDocumentationHtml4Tag() throws Exception {
+  public void testQuickDocumentationHtml4Tag() {
     doTest("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n" +
            "   \"http://www.w3.org/TR/html4/loose.dtd\">\n" +
            "<html>\n" +
@@ -55,7 +55,7 @@ public class HtmlDocumentationTest extends LightPlatformCodeInsightTestCase {
            "</html>");
   }
 
-  public void testQuickDocumentationHtml4Attr() throws Exception {
+  public void testQuickDocumentationHtml4Attr() {
     doTest("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n" +
            "   \"http://www.w3.org/TR/html4/loose.dtd\">\n" +
            "<html>\n" +
@@ -64,7 +64,7 @@ public class HtmlDocumentationTest extends LightPlatformCodeInsightTestCase {
            "</html>");
   }
 
-  private static void doTest(String text) throws Exception {
+  private static void doTest(String text) {
     configureFromFileText("test.html", text);
     PsiElement originalElement = getFile().findElementAt(myEditor.getCaretModel().getOffset());
     PsiElement element = DocumentationManager.getInstance(getProject()).findTargetElement(getEditor(), getFile());

@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.unscramble;
 
@@ -26,6 +14,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAware;
@@ -46,14 +35,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import static com.intellij.icons.AllIcons.Debugger.ThreadStates.*;
@@ -135,7 +125,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     toolbarActions.add(new SortThreadsAction());
     toolbarActions.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EXPORT_TO_TEXT_FILE));
     toolbarActions.add(new MergeStacktracesAction());
-    add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false).getComponent(), BorderLayout.WEST);
+    add(ActionManager.getInstance().createActionToolbar("ThreadDump", toolbarActions, false).getComponent(), BorderLayout.WEST);
 
     JPanel leftPanel = new JPanel(new BorderLayout());
     leftPanel.add(myFilterPanel, BorderLayout.NORTH);
@@ -152,7 +142,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
 
     final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(consoleView.getPreferredFocusableComponent()));
     if (editor != null) {
-      editor.getDocument().addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+      editor.getDocument().addDocumentListener(new DocumentListener() {
         @Override
         public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
           String filter = myFilterField.getText();
@@ -412,17 +402,6 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
       myThreadStates = threadStates;
     }
 
-    @Override
-    public JComponent getSettingsEditor() {
-      return null;
-    }
-
-    @Override
-    public void addSettingsChangedListener(ChangeListener listener) throws TooManyListenersException {}
-
-    @Override
-    public void removeSettingsChangedListener(ChangeListener listener) {}
-
     @NotNull
     @Override
     public String getReportText() {
@@ -444,11 +423,6 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
         return baseDir.getPresentableUrl() + File.separator + DEFAULT_REPORT_FILE_NAME;
       }
       return "";
-    }
-
-    @Override
-    public void exportedTo(String filePath) {
-
     }
 
     @Override

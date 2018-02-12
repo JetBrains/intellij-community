@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,10 @@ package com.siyeh.ipp.conditional;
 
 import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class FlipConditionalPredicate implements PsiElementPredicate {
 
@@ -26,12 +28,10 @@ class FlipConditionalPredicate implements PsiElementPredicate {
     if (!(element instanceof PsiConditionalExpression)) {
       return false;
     }
-    final PsiConditionalExpression condition =
-      (PsiConditionalExpression)element;
-    if (condition.getThenExpression() == null ||
-        condition.getElseExpression() == null) {
-      return false;
-    }
-    return !ErrorUtil.containsError(element);
+    final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)element;
+    final PsiExpression condition = conditionalExpression.getCondition();
+    return !(PsiTreeUtil.getDeepestLast(condition) instanceof PsiErrorElement) &&
+           conditionalExpression.getThenExpression() != null &&
+           conditionalExpression.getElseExpression() != null;
   }
 }

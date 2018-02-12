@@ -42,6 +42,7 @@ import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.Splash;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -49,7 +50,7 @@ import java.awt.*;
 import java.io.File;
 import java.util.EnumSet;
 
-class IdeStarter extends ApplicationStarterEx {
+public class IdeStarter extends ApplicationStarterEx {
   private Splash mySplash;
   private boolean myPerformProjectLoad;
 
@@ -89,7 +90,7 @@ class IdeStarter extends ApplicationStarterEx {
     return null;
   }
 
-  private void updateSplashScreen(ApplicationInfoEx appInfo, SplashScreen splashScreen) {
+  private static void updateSplashScreen(ApplicationInfoEx appInfo, SplashScreen splashScreen) {
     final Graphics2D graphics = splashScreen.createGraphics();
     final Dimension size = splashScreen.getSize();
     if (Splash.showLicenseeInfo(graphics, 0, 0, size.height, appInfo.getSplashTextColor(), appInfo)) {
@@ -98,7 +99,7 @@ class IdeStarter extends ApplicationStarterEx {
   }
 
   @Nullable
-  private SplashScreen getSplashScreen() {
+  private static SplashScreen getSplashScreen() {
     try {
       return SplashScreen.getSplashScreen();
     }
@@ -114,7 +115,7 @@ class IdeStarter extends ApplicationStarterEx {
   }
 
   @Override
-  public void processExternalCommandLine(String[] args, @Nullable String currentDirectory) {
+  public void processExternalCommandLine(@NotNull String[] args, @Nullable String currentDirectory) {
     IdeaApplication.LOG.info("Request to open in " + currentDirectory + " with parameters: " + StringUtil.join(args, ","));
 
     if (args.length > 0) {
@@ -132,7 +133,7 @@ class IdeStarter extends ApplicationStarterEx {
               IdeaApplication.LOG.error("Wrong line number:" + args[2]);
             }
           }
-          EnumSet<PlatformProjectOpenProcessor.Option > options = EnumSet.noneOf(PlatformProjectOpenProcessor.Option.class);
+          EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.noneOf(PlatformProjectOpenProcessor.Option.class);
           PlatformProjectOpenProcessor.doOpenProject(virtualFile, null, line, null, options);
         }
       }
@@ -169,12 +170,12 @@ class IdeStarter extends ApplicationStarterEx {
         windowManager.showFrame();
       }
 
-      app.invokeLater(() -> {
-        if (mySplash != null) {
+      if (mySplash != null) {
+        app.invokeLater(() -> {
           mySplash.dispose();
           mySplash = null; // Allow GC collect the splash window
-        }
-      }, ModalityState.any());
+        }, ModalityState.any());
+      }
 
       TransactionGuard.submitTransaction(app, () -> {
         Project projectFromCommandLine = myPerformProjectLoad ? IdeaApplication.getInstance().loadProjectFromExternalCommandLine() : null;

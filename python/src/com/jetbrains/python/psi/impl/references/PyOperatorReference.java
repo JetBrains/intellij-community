@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.jetbrains.python.psi.impl.references;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -43,29 +44,25 @@ public class PyOperatorReference extends PyReferenceImpl {
   @NotNull
   @Override
   protected List<RatedResolveResult> resolveInner() {
-    List<RatedResolveResult> res = new ArrayList<>();
     if (myElement instanceof PyBinaryExpression) {
       final PyBinaryExpression expr = (PyBinaryExpression)myElement;
       final String name = expr.getReferencedName();
       if (PyNames.CONTAINS.equals(name)) {
-        res = resolveMember(expr.getRightExpression(), name);
+        return resolveMember(expr.getRightExpression(), name);
       }
       else {
-        if (PyNames.DIV.equals(name) && isTrueDivEnabled(myElement)) {
-          resolveLeftAndRightOperators(res, expr, PyNames.TRUEDIV);
-        }
-        resolveLeftAndRightOperators(res, expr, name);
+        return resolveLeftAndRightOperators(expr, name);
       }
     }
     else if (myElement instanceof PySubscriptionExpression) {
       final PySubscriptionExpression expr = (PySubscriptionExpression)myElement;
-      res = resolveMember(expr.getOperand(), expr.getReferencedName());
+      return resolveMember(expr.getOperand(), expr.getReferencedName());
     }
     else if (myElement instanceof PyPrefixExpression) {
       final PyPrefixExpression expr = (PyPrefixExpression)myElement;
-      res = resolveMember(expr.getOperand(), expr.getReferencedName());
+      return resolveMember(expr.getOperand(), expr.getReferencedName());
     }
-    return res;
+    return Collections.emptyList();
   }
 
   @Override
@@ -93,37 +90,21 @@ public class PyOperatorReference extends PyReferenceImpl {
 
   @Nullable
   public PyExpression getReceiver() {
-    if (myElement instanceof PyBinaryExpression) {
-      return ((PyBinaryExpression)myElement).getLeftExpression();
-    }
-    else if (myElement instanceof PySubscriptionExpression) {
-      return ((PySubscriptionExpression)myElement).getOperand();
-    }
-    else if (myElement instanceof PyPrefixExpression) {
-      return ((PyPrefixExpression)myElement).getOperand();
+    if (myElement instanceof PyCallSiteExpression) {
+      return ((PyCallSiteExpression)myElement).getReceiver(null);
     }
     return null;
   }
 
-  private static String leftToRightOperatorName(String name) {
-    return name.replaceFirst("__([a-z]+)__", "__r$1__");
-  }
+  @NotNull
+  private List<RatedResolveResult> resolveLeftAndRightOperators(@NotNull PyBinaryExpression expr, @Nullable String name) {
+    final List<RatedResolveResult> result = new ArrayList<>();
 
-  private static boolean isTrueDivEnabled(@NotNull PyElement anchor) {
-    final PsiFile file = anchor.getContainingFile();
-    if (file instanceof PyFile) {
-      final PyFile pyFile = (PyFile)file;
-      return FutureFeature.DIVISION.requiredAt(pyFile.getLanguageLevel()) || pyFile.hasImportFromFuture(FutureFeature.DIVISION);
-    }
-    return false;
-  }
-
-  private void resolveLeftAndRightOperators(List<RatedResolveResult> res, PyBinaryExpression expr, String name) {
     final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
     typeEvalContext.trace("Trying to resolve left operator");
     typeEvalContext.traceIndent();
     try {
-      res.addAll(resolveMember(expr.getLeftExpression(), name));
+      result.addAll(resolveMember(expr.getReceiver(null), name));
     }
     finally {
       typeEvalContext.traceUnindent();
@@ -131,11 +112,13 @@ public class PyOperatorReference extends PyReferenceImpl {
     typeEvalContext.trace("Trying to resolve right operator");
     typeEvalContext.traceIndent();
     try {
-      res.addAll(resolveMember(expr.getRightExpression(), leftToRightOperatorName(name)));
+      result.addAll(resolveMember(expr.getRightExpression(), PyNames.leftToRightOperatorName(name)));
     }
     finally {
       typeEvalContext.traceUnindent();
     }
+
+    return result;
   }
 
   @NotNull
@@ -143,16 +126,15 @@ public class PyOperatorReference extends PyReferenceImpl {
     final ArrayList<RatedResolveResult> results = new ArrayList<>();
     if (object != null && name != null) {
       final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
-      PyType type = typeEvalContext.getType(object);
+      final PyType type = typeEvalContext.getType(object);
       typeEvalContext.trace("Side text is %s, type is %s", object.getText(), type);
-      if (type instanceof PyClassLikeType) {
-        if (((PyClassLikeType)type).isDefinition()) {
-          type = ((PyClassLikeType)type).getMetaClassType(typeEvalContext, true);
-        }
-      }
       if (type != null) {
-        List<? extends RatedResolveResult> res = type.resolveMember(name, object, AccessDirection.of(myElement), myContext);
-        if (res != null && res.size() > 0) {
+        final List<? extends RatedResolveResult> res =
+          type instanceof PyClassLikeType && ((PyClassLikeType)type).isDefinition()
+          ? resolveDefinitionMember((PyClassLikeType)type, object, name)
+          : type.resolveMember(name, object, AccessDirection.of(myElement), myContext);
+
+        if (!ContainerUtil.isEmpty(res)) {
           results.addAll(res);
         }
         else if (typeEvalContext.tracing()) {
@@ -167,5 +149,22 @@ public class PyOperatorReference extends PyReferenceImpl {
       }
     }
     return results;
+  }
+
+  @Nullable
+  private List<? extends RatedResolveResult> resolveDefinitionMember(@NotNull PyClassLikeType classLikeType,
+                                                                     @NotNull PyExpression object,
+                                                                     @NotNull String name) {
+    final PyClassLikeType metaClassType = classLikeType.getMetaClassType(myContext.getTypeEvalContext(), true);
+    if (metaClassType != null) {
+      final List<? extends RatedResolveResult> results =
+        metaClassType.resolveMember(name, object, AccessDirection.of(myElement), myContext);
+
+      if (!ContainerUtil.isEmpty(results)) return results;
+    }
+
+    return name.equals(PyNames.GETITEM) && LanguageLevel.forElement(object).isAtLeast(LanguageLevel.PYTHON37)
+           ? classLikeType.resolveMember(PyNames.CLASS_GETITEM, object, AccessDirection.of(myElement), myContext)
+           : null;
   }
 }

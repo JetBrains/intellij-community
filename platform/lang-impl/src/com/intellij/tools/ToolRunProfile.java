@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +41,6 @@ import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 30, 2005
  */
 public class ToolRunProfile implements ModuleRunProfile{
   private static final Logger LOG = Logger.getInstance("#com.intellij.tools.ToolRunProfile");
@@ -83,12 +81,6 @@ public class ToolRunProfile implements ModuleRunProfile{
   }
 
   @Override
-  @NotNull
-  public Module[] getModules() {
-    return Module.EMPTY_ARRAY;
-  }
-
-  @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
     final Project project = env.getProject();
     if (myCommandLine == null) {
@@ -119,7 +111,7 @@ public class ToolRunProfile implements ModuleRunProfile{
           processHandler.addProcessListener(new ToolProcessAdapter(project, myTool.synchronizeAfterExecution(), getName()));
           processHandler.addProcessListener(new ProcessAdapter() {
             @Override
-            public void onTextAvailable(ProcessEvent event, Key outputType) {
+            public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
               if ((outputType == ProcessOutputTypes.STDOUT && myTool.isShowConsoleOnStdOut())
                 || (outputType == ProcessOutputTypes.STDERR && myTool.isShowConsoleOnStdErr())) {
                 ExecutionManager.getInstance(project).getContentManager().toFrontRunContent(executor, processHandler);

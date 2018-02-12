@@ -201,7 +201,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     }
   }
 
-  public void reportAppendableHistory(FilePath path, VcsAppendableHistorySessionPartner partner) throws VcsException {
+  public void reportAppendableHistory(FilePath path, VcsAppendableHistorySessionPartner partner) {
     final VcsHistorySession session;
     if (path instanceof CvsFilePath) {
       final CvsRepositoryLocation location = ((CvsFilePath)path).getRepositoryLocation();

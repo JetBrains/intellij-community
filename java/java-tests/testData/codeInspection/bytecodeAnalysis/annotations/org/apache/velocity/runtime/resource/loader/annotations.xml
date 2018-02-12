@@ -1,7 +1,12 @@
 <root>
+    <item name='org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader ClasspathResourceLoader()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader boolean isSourceModified(org.apache.velocity.runtime.resource.Resource)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null-&gt;false;null-&gt;false&quot;"/>
+            <val name="value" val="&quot;_-&gt;false&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -21,6 +26,11 @@
     </item>
     <item name='org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader void init(org.apache.commons.collections.ExtendedProperties) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.velocity.runtime.resource.loader.DataSourceResourceLoader DataSourceResourceLoader()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.velocity.runtime.resource.loader.DataSourceResourceLoader boolean isSourceModified(org.apache.velocity.runtime.resource.Resource) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -106,7 +116,7 @@
     </item>
     <item name='org.apache.velocity.runtime.resource.loader.JarResourceLoader boolean isSourceModified(org.apache.velocity.runtime.resource.Resource)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null-&gt;true;null-&gt;true&quot;"/>
+            <val name="value" val="&quot;_-&gt;true&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -129,6 +139,11 @@
     </item>
     <item name='org.apache.velocity.runtime.resource.loader.JarResourceLoader void loadJar(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.resource.loader.ResourceLoader ResourceLoader()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.velocity.runtime.resource.loader.ResourceLoader boolean isCachingOn()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -156,6 +171,11 @@
     <item name='org.apache.velocity.runtime.resource.loader.ResourceLoaderFactory org.apache.velocity.runtime.resource.loader.ResourceLoader getLoader(org.apache.velocity.runtime.RuntimeServices, java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.velocity.runtime.resource.loader.StringResourceLoader StringResourceLoader()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.runtime.resource.loader.StringResourceLoader boolean isSourceModified(org.apache.velocity.runtime.resource.Resource) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -178,6 +198,11 @@
     </item>
     <item name='org.apache.velocity.runtime.resource.loader.StringResourceLoader void init(org.apache.commons.collections.ExtendedProperties) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.resource.loader.URLResourceLoader URLResourceLoader()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.velocity.runtime.resource.loader.URLResourceLoader boolean isSourceModified(org.apache.velocity.runtime.resource.Resource)'>
         <annotation name='org.jetbrains.annotations.Contract'>

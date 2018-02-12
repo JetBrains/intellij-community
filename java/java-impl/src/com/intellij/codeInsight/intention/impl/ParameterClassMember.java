@@ -26,10 +26,6 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 
 import javax.swing.*;
 
-/**
-* User: anna
-* Date: 8/2/12
-*/
 public class ParameterClassMember implements ClassMember {
   public static final ParameterClassMember[] EMPTY_ARRAY = new ParameterClassMember[0];
   private final PsiParameter myParameter;

@@ -30,10 +30,6 @@ import java.util.Scanner;
 
 import static org.junit.Assert.assertTrue;
 
-/**
- * User: Andrey.Vokin
- * Date: 2/13/13
- */
 public class CompletionTester {
   enum CheckType {EQUALS, INCLUDES, EXCLUDES}
 

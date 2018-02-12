@@ -16,23 +16,25 @@
 package com.intellij.util;
 
  import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
+ import com.intellij.openapi.application.ModalityState;
+ import com.intellij.openapi.application.impl.LaterInvocator;
+ import com.intellij.testFramework.PlatformTestCase;
+ import com.intellij.util.ui.UIUtil;
+ import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
+ import java.util.Arrays;
+ import java.util.HashMap;
+ import java.util.List;
+ import java.util.Map;
+ import java.util.concurrent.ExecutionException;
+ import java.util.concurrent.Future;
+ import java.util.concurrent.TimeUnit;
+ import java.util.concurrent.TimeoutException;
+ import java.util.concurrent.atomic.AtomicInteger;
+ import java.util.stream.Collectors;
+ import java.util.stream.Stream;
 
-public class AlarmTest extends PlatformTestCase {
+ public class AlarmTest extends PlatformTestCase {
   public void testTwoAddsWithZeroDelayMustExecuteSequentially() throws Exception {
     Alarm alarm = new Alarm(getTestRootDisposable());
     assertRequestsExecuteSequentially(alarm);
@@ -53,7 +55,7 @@ public class AlarmTest extends PlatformTestCase {
     assertRequestsExecuteSequentially(alarm);
   }
 
-  private static void assertRequestsExecuteSequentially(@NotNull Alarm alarm) throws InterruptedException, ExecutionException, TimeoutException {
+  private static void assertRequestsExecuteSequentially(@NotNull Alarm alarm) throws InterruptedException, ExecutionException {
     int N = 10000;
     StringBuffer log = new StringBuffer(N*4);
     StringBuilder expected = new StringBuilder(N * 4);
@@ -81,34 +83,43 @@ public class AlarmTest extends PlatformTestCase {
     assertEquals(expected.toString(), log.toString());
   }
 
-  public void testOneAlarmDoesNotStartTooManyThreads() throws InterruptedException, ExecutionException, TimeoutException {
+  public void testOneAlarmDoesNotStartTooManyThreads() {
     Alarm alarm = new Alarm(getTestRootDisposable());
-    Map<Thread, StackTraceElement[]> before = Thread.getAllStackTraces();
     AtomicInteger executed = new AtomicInteger();
     int N = 100000;
-    for (int i = 0; i < N; i++) {
-      alarm.addRequest(executed::incrementAndGet, 10);
-    }
-    while (executed.get() != N) {
-      UIUtil.dispatchAllInvocationEvents();
-    }
-    Map<Thread, StackTraceElement[]> after = Thread.getAllStackTraces();
-    assertTrue("before: "+before.size()+"; after: "+after.size(), after.size() - before.size() < 10);
+    checkNotTooManyThreadsCreatedIn(()->{
+      for (int i = 0; i < N; i++) {
+        alarm.addRequest(executed::incrementAndGet, 10);
+      }
+      while (executed.get() != N) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+    });
   }
 
-  public void testManyAlarmsDoNotStartTooManyThreads() throws InterruptedException, ExecutionException, TimeoutException {
+  private static void checkNotTooManyThreadsCreatedIn(Runnable runnable) {
     Map<Thread, StackTraceElement[]> before = Thread.getAllStackTraces();
-    AtomicInteger executed = new AtomicInteger();
-    int N = 100000;
-    List<Alarm> alarms = Collections.nCopies(N, "").stream().map(__ -> new Alarm(getTestRootDisposable())).collect(Collectors.toList());
-    alarms.forEach(alarm -> alarm.addRequest(executed::incrementAndGet, 10));
-
-    while (executed.get() != N) {
-      UIUtil.dispatchAllInvocationEvents();
-    }
+    runnable.run();
     Map<Thread, StackTraceElement[]> after = Thread.getAllStackTraces();
-    System.out.println("before: "+before.size()+"; after: "+after.size());
-    assertTrue(after.size() - before.size() < 10);
+    Map<Thread, List<StackTraceElement>> diff = new HashMap<>();
+    after.forEach((key, value) -> diff.put(key, Arrays.asList(value)));
+    diff.keySet().removeAll(before.keySet());
+    if (!(after.size() - before.size() < 10)) {
+      fail("before: "+before.size()+"; after: "+after.size()+"; Diff:\n"+diff);
+    }
+  }
+
+  public void testManyAlarmsDoNotStartTooManyThreads() {
+    checkNotTooManyThreadsCreatedIn(()->{
+      AtomicInteger executed = new AtomicInteger();
+      int N = 100000;
+      List<Alarm> alarms = Stream.generate(() -> new Alarm(getTestRootDisposable())).limit(N).collect(Collectors.toList());
+      alarms.forEach(alarm -> alarm.addRequest(executed::incrementAndGet, 10));
+
+      while (executed.get() != N) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+    });
   }
 
   public void testOrderIsPreservedAfterModalitySwitching() {
@@ -163,7 +174,7 @@ public class AlarmTest extends PlatformTestCase {
     String s = sb.toString();
     long elapsed = System.currentTimeMillis() - start;
     if (elapsed > delay/2) {
-      System.out.println("No no no no this agent is so overloaded I quit");
+      System.err.println("No no no no this agent is so overloaded I quit");
       return;
     }
     assertEquals(2, alarm.getActiveRequestCount());

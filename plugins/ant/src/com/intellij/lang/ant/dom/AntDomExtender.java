@@ -40,7 +40,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 9, 2010
  */
 public class AntDomExtender extends DomExtender<AntDomElement>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.dom.AntDomExtender");
@@ -452,8 +451,8 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
 
     public ClassIntrospectorAdapter(AntIntrospector introspector, Map<String, Class> coreTaskDefs, Map<String, Class> coreTypeDefs) {
       myIntrospector = introspector;
-      myCoreTaskDefs = coreTaskDefs != null? coreTaskDefs : Collections.<String, Class>emptyMap();
-      myCoreTypeDefs = coreTypeDefs != null? coreTypeDefs : Collections.<String, Class>emptyMap();
+      myCoreTaskDefs = coreTaskDefs != null? coreTaskDefs : Collections.emptyMap();
+      myCoreTypeDefs = coreTypeDefs != null? coreTypeDefs : Collections.emptyMap();
     }
 
     @NotNull 
@@ -589,7 +588,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
           names.keySet().retainAll(set);
         }
       }
-      final Map<String, Class> result = names == null ? Collections.<String, Class>emptyMap() : names;
+      final Map<String, Class> result = names == null ? Collections.emptyMap() : names;
       return myChildrenMap = result;
     }
 

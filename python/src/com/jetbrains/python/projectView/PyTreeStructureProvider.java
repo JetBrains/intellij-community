@@ -128,7 +128,7 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
           continue;
         }
         if (dir.getFileSystem() instanceof JarFileSystem) {
-          dir = ((JarFileSystem)dir.getFileSystem()).getLocalVirtualFileFor(dir);
+          dir = ((JarFileSystem)dir.getFileSystem()).getLocalByEntry(dir);
         }
         if (dir == null) {
           continue;

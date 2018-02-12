@@ -5,9 +5,14 @@ import concurrent.futures
 from .events import AbstractEventLoop
 from .futures import Future
 
-__all__ = ...  # type: str
+__all__: List[str]
 
 _T = TypeVar('_T')
+_T1 = TypeVar('_T1')
+_T2 = TypeVar('_T2')
+_T3 = TypeVar('_T3')
+_T4 = TypeVar('_T4')
+_T5 = TypeVar('_T5')
 _FutureT = Union[Future[_T], Generator[Any, None, _T], Awaitable[_T]]
 
 FIRST_EXCEPTION = 'FIRST_EXCEPTION'
@@ -15,13 +20,32 @@ FIRST_COMPLETED = 'FIRST_COMPLETED'
 ALL_COMPLETED = 'ALL_COMPLETED'
 
 def as_completed(fs: Sequence[_FutureT[_T]], *, loop: AbstractEventLoop = ...,
-                 timeout=None) -> Iterator[Generator[Any, None, _T]]: ...
+                 timeout: Optional[float] = ...) -> Iterator[Generator[Any, None, _T]]: ...
 def ensure_future(coro_or_future: _FutureT[_T],
                   *, loop: AbstractEventLoop = ...) -> Future[_T]: ...
-# TODO: gather() should use variadic type vars instead of _TAny.
-_TAny = Any
-def gather(*coros_or_futures: _FutureT[_TAny],
-           loop: AbstractEventLoop = ..., return_exceptions: bool = False) -> Future[List[_TAny]]: ...
+async = ensure_future
+@overload
+def gather(coro_or_future1: _FutureT[_T1],
+           *, loop: AbstractEventLoop = ..., return_exceptions: bool = ...) -> Future[Tuple[_T1]]: ...
+@overload
+def gather(coro_or_future1: _FutureT[_T1], coro_or_future2: _FutureT[_T2],
+           *, loop: AbstractEventLoop = ..., return_exceptions: bool = ...) -> Future[Tuple[_T1, _T2]]: ...
+@overload
+def gather(coro_or_future1: _FutureT[_T1], coro_or_future2: _FutureT[_T2], coro_or_future3: _FutureT[_T3],
+           *, loop: AbstractEventLoop = ..., return_exceptions: bool = ...) -> Future[Tuple[_T1, _T2, _T3]]: ...
+@overload
+def gather(coro_or_future1: _FutureT[_T1], coro_or_future2: _FutureT[_T2], coro_or_future3: _FutureT[_T3],
+           coro_or_future4: _FutureT[_T4],
+           *, loop: AbstractEventLoop = ..., return_exceptions: bool = ...) -> Future[Tuple[_T1, _T2, _T3, _T4]]: ...
+@overload
+def gather(coro_or_future1: _FutureT[_T1], coro_or_future2: _FutureT[_T2], coro_or_future3: _FutureT[_T3],
+           coro_or_future4: _FutureT[_T4], coro_or_future5: _FutureT[_T5],
+           *, loop: AbstractEventLoop = ..., return_exceptions: bool = ...) -> Future[Tuple[_T1, _T2, _T3, _T4, _T5]]: ...
+@overload
+def gather(coro_or_future1: _FutureT[Any], coro_or_future2: _FutureT[Any], coro_or_future3: _FutureT[Any],
+           coro_or_future4: _FutureT[Any], coro_or_future5: _FutureT[Any], coro_or_future6: _FutureT[Any],
+           *coros_or_futures: _FutureT[Any],
+           loop: AbstractEventLoop = ..., return_exceptions: bool = ...) -> Future[Tuple[Any, ...]]: ...
 def run_coroutine_threadsafe(coro: _FutureT[_T],
                              loop: AbstractEventLoop) -> concurrent.futures.Future[_T]: ...
 def shield(arg: _FutureT[_T], *, loop: AbstractEventLoop = ...) -> Future[_T]: ...

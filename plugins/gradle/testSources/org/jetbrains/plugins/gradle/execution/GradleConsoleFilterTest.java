@@ -23,7 +23,7 @@ import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
  */
 public class GradleConsoleFilterTest extends CodeInsightFixtureTestCase {
 
-  public void testApplyFilter() throws Exception {
+  public void testApplyFilter() {
     doTest("Build file 'C:\\project\\build.gradle' line: 7", "C:\\project\\build.gradle", 7);
     doTest("Build file '/project/build.gradle' line: 7", "/project/build.gradle", 7);
     doTest("  build file 'C:\\project\\build.gradle': 49: unexpected token: 5 @ line 49, column 28.", "C:\\project\\build.gradle", 49);

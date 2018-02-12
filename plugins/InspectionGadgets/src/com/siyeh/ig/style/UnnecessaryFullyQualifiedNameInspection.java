@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -30,7 +30,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -106,21 +106,34 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
-      final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)descriptor.getPsiElement().getParent();
+    public void doFix(Project project, ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getPsiElement();
+      final PsiJavaCodeReferenceElement referenceElement;
+      if (descriptor.getHighlightType() == ProblemHighlightType.INFORMATION) {
+        referenceElement = (PsiJavaCodeReferenceElement)element;
+      }
+      else {
+        referenceElement = (PsiJavaCodeReferenceElement)element.getParent();
+      }
       final PsiFile file = referenceElement.getContainingFile();
       final PsiElement target = referenceElement.resolve();
       if (!(target instanceof PsiClass)) {
         return;
       }
       final PsiClass aClass = (PsiClass)target;
+      final String qualifiedName = aClass.getQualifiedName();
+      if (qualifiedName == null || !ImportUtils.nameCanBeImported(qualifiedName, referenceElement)) {
+        return;
+      }
       ImportUtils.addImportIfNeeded(aClass, referenceElement);
       final String fullyQualifiedText = referenceElement.getText();
       final QualificationRemover qualificationRemover = new QualificationRemover(fullyQualifiedText);
       file.accept(qualificationRemover);
       if (isOnTheFly()) {
         final Collection<PsiElement> shortenedElements = qualificationRemover.getShortenedElements();
-        HighlightUtils.highlightElements(shortenedElements);
+        if (isOnTheFly()) {
+          HighlightUtils.highlightElements(shortenedElements);
+        }
         showStatusMessage(file.getProject(), shortenedElements.size());
       }
     }
@@ -176,15 +189,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       if (qualifier == null) {
         return;
       }
-      try {
-        qualifier.delete();
-      }
-      catch (IncorrectOperationException e) {
-        final Class<? extends QualificationRemover> aClass = getClass();
-        final String className = aClass.getName();
-        final Logger logger = Logger.getInstance(className);
-        logger.error(e);
-      }
+      qualifier.delete();
       shortenedElements.add(reference);
     }
   }
@@ -233,20 +238,24 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       }
       final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(reference.getProject());
       final PsiDocComment containingComment = PsiTreeUtil.getParentOfType(reference, PsiDocComment.class);
-      if (containingComment != null && acceptFqnInJavadoc((PsiJavaFile)containingFile, reference.getQualifiedName(), styleSettings)) {
-        return;
+      boolean reportAsInformationInsideJavadoc = false;
+      if (containingComment != null) {
+        if (acceptFqnInJavadoc((PsiJavaFile)containingFile, styleSettings)) {
+          return;
+        }
+        JavaCodeStyleSettings javaSettings = styleSettings.getCustomSettings(JavaCodeStyleSettings.class);
+        if (javaSettings.CLASS_NAMES_IN_JAVADOC == JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED) {
+          reportAsInformationInsideJavadoc = !ImportHelper.isAlreadyImported((PsiJavaFile)containingFile, reference.getQualifiedName());
+        }
       }
       final PsiJavaCodeReferenceElement qualifierReference = (PsiJavaCodeReferenceElement)qualifier;
       final PsiElement qualifierTarget = qualifierReference.resolve();
       if (!(qualifierTarget instanceof PsiPackage)) {
         return;
       }
-      if (ignoreInModuleStatements && PsiTreeUtil.getParentOfType(reference, PsiUsesStatement.class, PsiProvidesStatement.class) != null) {
-        return;
-      }
-      final List<PsiJavaCodeReferenceElement> references = new ArrayList<>(2);
+      final List<PsiJavaCodeReferenceElement> references = new SmartList<>();
       references.add(reference);
-      if (styleSettings.INSERT_INNER_CLASS_IMPORTS) {
+      if (styleSettings.getCustomSettings(JavaCodeStyleSettings.class).INSERT_INNER_CLASS_IMPORTS) {
         collectInnerClassNames(reference, references);
       }
       Collections.reverse(references);
@@ -265,9 +274,22 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
         }
         final PsiElement qualifier1 = aReference.getQualifier();
         if (qualifier1 != null) {
+          PsiElement elementToHighlight = qualifier1;
+          final ProblemHighlightType highlightType;
+          if (reportAsInformationInsideJavadoc ||
+              ignoreInModuleStatements && PsiTreeUtil.getParentOfType(reference, PsiUsesStatement.class, PsiProvidesStatement.class) != null ||
+              InspectionProjectProfileManager.isInformationLevel(getShortName(), aReference) && isOnTheFly()) {
+            if (!isOnTheFly()) return;
+            highlightType = ProblemHighlightType.INFORMATION;
+            elementToHighlight = aReference;
+          }
+          else {
+            highlightType = ProblemHighlightType.LIKE_UNUSED_SYMBOL;
+          }
+
           final boolean inSameFile = aClass.getContainingFile() == containingFile ||
                                      ImportHelper.isAlreadyImported((PsiJavaFile)containingFile, qualifiedName);
-          registerError(qualifier1, ProblemHighlightType.LIKE_UNUSED_SYMBOL, inSameFile);
+          registerError(elementToHighlight, highlightType, inSameFile);
         }
         break;
       }
@@ -285,15 +307,11 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       }
     }
 
-    private boolean acceptFqnInJavadoc(PsiJavaFile javaFile, String fullyQualifiedName, CodeStyleSettings styleSettings) {
+    private boolean acceptFqnInJavadoc(PsiJavaFile javaFile, CodeStyleSettings styleSettings) {
       if ("package-info.java".equals(javaFile.getName())) {
         return true;
       }
-      final JavaCodeStyleSettings javaSettings = styleSettings.getCustomSettings(JavaCodeStyleSettings.class);
-      if (javaSettings.CLASS_NAMES_IN_JAVADOC == JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED) {
-        return !ImportHelper.isAlreadyImported(javaFile, fullyQualifiedName);
-      }
-      return javaSettings.useFqNamesInJavadocAlways();
+      return styleSettings.getCustomSettings(JavaCodeStyleSettings.class).useFqNamesInJavadocAlways();
     }
   }
 }

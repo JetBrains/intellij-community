@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,39 +16,23 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path;
 
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyPolyVariantReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-/**
- * @author ilyas
- */
-public interface GrIndexProperty extends GrExpression, GrCallExpression {
+public interface GrIndexProperty extends GrExpression {
+
   @NotNull
   GrExpression getInvokedExpression();
 
-  @Override
   @NotNull
   GrArgumentList getArgumentList();
 
-  /**
-   * infer type of getAt() applicable
-   */
   @Nullable
-  PsiType getGetterType();
+  GroovyPolyVariantReference getLValueReference();
 
-  /**
-   * infer type of putAt() applicable
-   */
   @Nullable
-  PsiType getSetterType();
-
-  @NotNull
-  GroovyResolveResult[] multiResolveGetter(boolean incomplete);
-
-  @NotNull
-  GroovyResolveResult[] multiResolveSetter(boolean incomplete);
+  GroovyPolyVariantReference getRValueReference();
 }

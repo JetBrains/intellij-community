@@ -56,10 +56,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 11/9/11
- */
 public class MemberInplaceRenamer extends VariableInplaceRenamer {
   private final PsiElement mySubstituted;
   private RangeMarker mySubstitutedRange;
@@ -75,6 +71,8 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
       final PsiFile containingFile = mySubstituted.getContainingFile();
       if (!notSameFile(containingFile.getVirtualFile(), containingFile)) {
         mySubstitutedRange = myEditor.getDocument().createRangeMarker(mySubstituted.getTextRange());
+        mySubstitutedRange.setGreedyToLeft(true);
+        mySubstitutedRange.setGreedyToRight(true);
       }
     }
     else {
@@ -93,7 +91,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   @Override
   protected boolean acceptReference(PsiReference reference) {
     final PsiElement element = reference.getElement();
-    final TextRange textRange = reference.getRangeInElement();
+    final TextRange textRange = getRangeToRename(reference);
     final String referenceText = element.getText().substring(textRange.getStartOffset(), textRange.getEndOffset());
     return Comparing.strEqual(referenceText, myElementToRename.getName());
   }
@@ -277,7 +275,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   }
 
   @Override
-  protected void collectAdditionalElementsToRename(List<Pair<PsiElement, TextRange>> stringUsages) {
+  protected void collectAdditionalElementsToRename(@NotNull List<Pair<PsiElement, TextRange>> stringUsages) {
     //do not highlight non-code usages in file
   }
 

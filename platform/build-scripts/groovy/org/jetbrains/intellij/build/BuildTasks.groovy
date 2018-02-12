@@ -20,9 +20,7 @@ import groovy.transform.CompileStatic
 import org.codehaus.gant.GantBinding
 import org.jetbrains.intellij.build.impl.BuildTasksImpl
 import org.jetbrains.intellij.build.impl.BuildUtils
-import org.jetbrains.jps.gant.JpsGantTool
 import org.jetbrains.jps.idea.IdeaProjectLoader
-
 /**
  * @author nik
  */
@@ -51,6 +49,11 @@ abstract class BuildTasks {
   abstract void compileModules(List<String> moduleNames, List<String> includingTestsInModules = [])
 
   abstract void buildUpdaterJar()
+
+  /**
+   * Builds updater-full.jar artifact which includes 'intellij.platform.updater' module with all its dependencies
+   */
+  abstract void buildFullUpdaterJar()
 
   abstract void buildUnpackedDistribution(String targetDirectory)
 
@@ -91,10 +94,9 @@ abstract class BuildTasks {
     groovyRootRelativePaths.each {
       BuildUtils.addToClassPath("$projectHome/$it", binding.ant)
     }
-    binding.includeTool << JpsGantTool
     ProductProperties productProperties = (ProductProperties) Class.forName(productPropertiesClassName).constructors[0].newInstance(projectHome)
-    BuildContext context = BuildContext.createContext(binding.ant, binding.projectBuilder, binding.project, binding.global,
-      "$projectHome/$communityHomeRelativePath", projectHome, productProperties, proprietaryBuildTools)
+    BuildContext context = BuildContext.createContext("$projectHome/$communityHomeRelativePath", projectHome,
+                                                      productProperties, proprietaryBuildTools)
     return context
   }
 }

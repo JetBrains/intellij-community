@@ -70,7 +70,7 @@ public class StaticSuiteInspection extends BaseInspection {
         return;
       }
       final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() != 0) {
+      if (!parameterList.isEmpty()) {
         return;
       }
       if (method.hasModifierProperty(PsiModifier.STATIC)) {

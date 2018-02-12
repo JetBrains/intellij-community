@@ -39,8 +39,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * All Git commands are cancellable when called via {@link GitHandler}. <br/>
- * To execute the command synchronously, call {@link GitHandler#runInCurrentThread(Runnable)}
- * or better {@link Git#runCommand(Computable)}.<br/>
+ * To execute the command synchronously, call {@link Git#runCommand(Computable)}.<br/>
  * To execute in the background or under a modal progress, use the standard {@link Task}. <br/>
  * To watch the progress, call {@link GitStandardProgressAnalyzer#createListener(ProgressIndicator)}.
  *
@@ -99,9 +98,9 @@ public class GitTask {
 
   /**
    * The most general execution method.
-   * @param sync  Set to <code>true</code> to make the calling thread wait for the task execution.
-   * @param modal If <code>true</code>, the task will be modal with a modal progress dialog. If false, the task will be executed in
-   * background. <code>modal</code> implies <code>sync</code>, i.e. if modal then sync doesn't matter: you'll wait anyway.
+   * @param sync  Set to {@code true} to make the calling thread wait for the task execution.
+   * @param modal If {@code true}, the task will be modal with a modal progress dialog. If false, the task will be executed in
+   * background. {@code modal} implies {@code sync}, i.e. if modal then sync doesn't matter: you'll wait anyway.
    * @param resultHandler Handle the result.
    * @see #execute(boolean)
    */
@@ -180,7 +179,7 @@ public class GitTask {
     final GitLineHandlerListener listener = new GitLineHandlerListener() {
       @Override
       public void processTerminated(int exitCode) {
-        if (exitCode != 0 && !myHandler.isIgnoredErrorCode(exitCode)) {
+        if (exitCode != 0) {
           if (myHandler.errors().isEmpty()) {
             myHandler.addError(new VcsException(myHandler.getLastOutput()));
           }
@@ -267,12 +266,7 @@ public class GitTask {
 
     public final void runAlone() {
       if (ApplicationManager.getApplication().isDispatchThread()) {
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            justRun();
-          }
-        });
+        ApplicationManager.getApplication().executeOnPooledThread(() -> justRun());
       } else {
         justRun();
       }

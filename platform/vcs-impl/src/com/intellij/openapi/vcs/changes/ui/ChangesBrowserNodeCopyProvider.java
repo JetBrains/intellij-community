@@ -19,7 +19,6 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -50,16 +49,13 @@ class ChangesBrowserNodeCopyProvider implements CopyProvider {
   public void performCopy(@NotNull DataContext dataContext) {
     List<TreePath> paths = ContainerUtil.sorted(Arrays.asList(ObjectUtils.assertNotNull(myTree.getSelectionPaths())),
                                                 TreeUtil.getDisplayOrderComparator(myTree));
-    CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(paths, new Function<TreePath, String>() {
-      @Override
-      public String fun(TreePath path) {
-        Object node = path.getLastPathComponent();
-        if (node instanceof ChangesBrowserNode) {
-          return ((ChangesBrowserNode)node).getTextPresentation();
-        }
-        else {
-          return node.toString();
-        }
+    CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(paths, path -> {
+      Object node = path.getLastPathComponent();
+      if (node instanceof ChangesBrowserNode) {
+        return ((ChangesBrowserNode)node).getTextPresentation();
+      }
+      else {
+        return node.toString();
       }
     }, "\n")));
   }

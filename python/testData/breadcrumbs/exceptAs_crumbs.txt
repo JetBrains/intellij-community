@@ -1,4 +1,4 @@
 Crumb:
-except KeyError…
+except KeyError as e
 Tooltip:
 except KeyError as e

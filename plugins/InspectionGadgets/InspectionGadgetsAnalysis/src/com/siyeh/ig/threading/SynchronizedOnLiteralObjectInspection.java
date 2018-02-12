@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2012 Bas Leijdekkers
+ * Copyright 2007-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,15 +21,27 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField") public boolean warnOnAllPossiblyLiterals = false;
+
+  private static final Set<String> LITERAL_TYPES = new HashSet<>(Arrays.asList(
+    CommonClassNames.JAVA_LANG_STRING,
+    CommonClassNames.JAVA_LANG_BOOLEAN,
+    CommonClassNames.JAVA_LANG_CHARACTER,
+    CommonClassNames.JAVA_LANG_BYTE,
+    CommonClassNames.JAVA_LANG_SHORT,
+    CommonClassNames.JAVA_LANG_INTEGER,
+    CommonClassNames.JAVA_LANG_LONG
+  ));
 
   @Override
   @NotNull
@@ -79,13 +91,8 @@ public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
       if (type == null) {
         return;
       }
-      if (!type.equalsToText(CommonClassNames.JAVA_LANG_STRING) &&
-          !type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN) &&
-          !type.equalsToText(CommonClassNames.JAVA_LANG_CHARACTER)) {
-        final PsiClassType javaLangNumberType = TypeUtils.getType(CommonClassNames.JAVA_LANG_NUMBER, statement);
-        if (!javaLangNumberType.isAssignableFrom(type)) {
+      if (!LITERAL_TYPES.contains(type.getCanonicalText())) {
           return;
-        }
       }
       if (!(lockExpression instanceof PsiReferenceExpression)) {
         if (ExpressionUtils.isLiteral(lockExpression)) {

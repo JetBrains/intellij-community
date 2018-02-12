@@ -32,18 +32,20 @@ public class XmlEditorTest extends LightCodeInsightTestCase {
     return "/xml/tests/testData/editor/" + getTestName(true) + (isOriginal ? ".xml" : "_after.xml") ;
   }
 
-  public void testEnterPerformance() throws Exception {
+  public void testEnterPerformance() {
     configureByFile(getTestFilePath(true));
-    EditorTestUtil.performTypingAction(myEditor, '\n');
-    PlatformTestUtil.startPerformanceTest("Xml editor enter", 7500, () -> {
+    for (int i = 0; i < 3; i++) {
+      EditorTestUtil.performTypingAction(myEditor, '\n');
+    }
+    PlatformTestUtil.startPerformanceTest("Xml editor enter", 5000, () -> {
       for (int i = 0; i < 3; i ++) {
         EditorTestUtil.performTypingAction(myEditor, '\n');
       }
-    }).cpuBound().assertTiming();
+    }).attempts(1).assertTiming();
     checkResultByFile(getTestFilePath(false));
   }
 
-  public void testHardWrap() throws Exception {
+  public void testHardWrap() {
     configureFromFileText("a.xml",
                           "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n" +
                           "<svg version=\"1.1\" id=\"Layer_1\" xmlns=\"http://www.w3.org/2000/svg\">\n" +
@@ -70,7 +72,7 @@ public class XmlEditorTest extends LightCodeInsightTestCase {
                       "</svg>");
   }
 
-  public void testHardWrapInComment() throws Exception {
+  public void testHardWrapInComment() {
     configureFromFileText("a.xml",
                           "<!-- Some very long and informative xml comment to trigger hard wrapping indeed. Too short? Dave, let me ask you something. Are hard wraps working? What do we live for? What ice-cream do you like? Who am I?????????????????????????????????????????????????????????????????????????????????????????????????<caret>-->");
 

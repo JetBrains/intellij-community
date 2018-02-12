@@ -29,9 +29,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created by Max Medvedev on 07/04/14
- */
 public class GrMapTypeImpl extends GrMapType {
   private final LinkedHashMap<String, PsiType> myStringEntries;
   private final List<Couple<PsiType>> myOtherEntries;
@@ -75,8 +72,7 @@ public class GrMapTypeImpl extends GrMapType {
   @Override
   @NotNull
   protected PsiType[] getAllValueTypes() {
-    Set<PsiType> result = new HashSet<>();
-    result.addAll(myStringEntries.values());
+    Set<PsiType> result = new HashSet<>(myStringEntries.values());
     for (Couple<PsiType> entry : myOtherEntries) {
       result.add(entry.second);
     }

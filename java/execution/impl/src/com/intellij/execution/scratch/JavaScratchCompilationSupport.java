@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.scratch;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.*;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -35,8 +21,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,11 +30,9 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 08-Sep-15
  */
-public class JavaScratchCompilationSupport implements ProjectComponent, CompileTask{
-
-  public JavaScratchCompilationSupport(Project project, CompilerManager compileManager) {
+public class JavaScratchCompilationSupport implements CompileTask {
+  public JavaScratchCompilationSupport(CompilerManager compileManager) {
     compileManager.addAfterTask(this);
   }
 
@@ -113,34 +97,31 @@ public class JavaScratchCompilationSupport implements ProjectComponent, CompileT
         }
         FileUtil.delete(srcDir); // perform cleanup
 
-        final String srcFileName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-          @Override
-          public String compute() {
-            final VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(scratchUrl);
-            if (vFile != null) {
-              final PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
-              if (psiFile instanceof PsiJavaFile) {
-                String name = null;
-                // take the name of the first found public top-level class, otherwise the name of any available top-level class
-                for (PsiClass aClass : ((PsiJavaFile)psiFile).getClasses()) {
-                  if (name == null) {
-                    name = aClass.getName();
-                    if (isPublic(aClass)) {
-                      break;
-                    }
-                  }
-                  else if (isPublic(aClass)){
-                    name = aClass.getName();
+        final String srcFileName = ReadAction.compute(() -> {
+          final VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(scratchUrl);
+          if (vFile != null) {
+            final PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
+            if (psiFile instanceof PsiJavaFile) {
+              String name = null;
+              // take the name of the first found public top-level class, otherwise the name of any available top-level class
+              for (PsiClass aClass : ((PsiJavaFile)psiFile).getClasses()) {
+                if (name == null) {
+                  name = aClass.getName();
+                  if (isPublic(aClass)) {
                     break;
                   }
                 }
-                if (name != null) {
-                  return name;
+                else if (isPublic(aClass)) {
+                  name = aClass.getName();
+                  break;
                 }
               }
+              if (name != null) {
+                return name;
+              }
             }
-            return FileUtil.getNameWithoutExtension(scratchFile);
           }
+          return FileUtil.getNameWithoutExtension(scratchFile);
         });
         srcFile = new File(srcDir, srcFileName + ".java");
         FileUtil.copy(scratchFile, srcFile);
@@ -151,8 +132,8 @@ public class JavaScratchCompilationSupport implements ProjectComponent, CompileT
       final Set<File> cp = new LinkedHashSet<>();
       final List<File> platformCp = new ArrayList<>();
 
-      final Computable<OrderEnumerator> orderEnumerator = module != null ? (Computable<OrderEnumerator>)() -> ModuleRootManager.getInstance(module).orderEntries()
-                                                                         : (Computable<OrderEnumerator>)() -> ProjectRootManager.getInstance(project).orderEntries();
+      final Computable<OrderEnumerator> orderEnumerator = module != null ? () -> ModuleRootManager.getInstance(module).orderEntries()
+                                                                         : () -> ProjectRootManager.getInstance(project).orderEntries();
 
       ApplicationManager.getApplication().runReadAction(() -> {
         for (String s : orderEnumerator.compute().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
@@ -167,7 +148,7 @@ public class JavaScratchCompilationSupport implements ProjectComponent, CompileT
       options.add("-g"); // always compile with debug info
       final JavaSdkVersion sdkVersion = JavaSdk.getInstance().getVersion(targetSdk);
       if (sdkVersion != null) {
-        final String langLevel = "1." + Integer.valueOf(3 + sdkVersion.getMaxLanguageLevel().ordinal());
+        final String langLevel = JpsJavaSdkType.complianceOption(sdkVersion.getMaxLanguageLevel().toJavaVersion());
         options.add("-source");
         options.add(langLevel);
         options.add("-target");
@@ -199,27 +180,5 @@ public class JavaScratchCompilationSupport implements ProjectComponent, CompileT
   private static boolean isPublic(PsiClass aClass) {
     final PsiModifierList modifiers = aClass.getModifierList();
     return modifiers != null && modifiers.hasModifierProperty(PsiModifier.PUBLIC);
-  }
-
-  @Override
-  public void projectOpened() {
-  }
-
-  @Override
-  public void projectClosed() {
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "JavaScratchCompilationSupport";
   }
 }

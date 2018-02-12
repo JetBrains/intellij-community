@@ -7,7 +7,7 @@ class Test {
       test = Optional.of("x");
     } else {
       test = Optional.empty();
-      if(<warning descr="Condition '!test.isPresent()' is always 'true'">!test.isPresent()</warning>) {
+      if(<warning descr="Condition '!test.isPresent()' is always 'true'">!<warning descr="Condition 'test.isPresent()' is always 'false'">test.isPresent()</warning></warning>) {
         System.out.println("Always");
       }
     }

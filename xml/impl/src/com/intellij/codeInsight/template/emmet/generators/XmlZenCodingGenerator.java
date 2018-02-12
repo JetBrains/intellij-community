@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.template.emmet.generators;
 
 import com.intellij.application.options.emmet.EmmetOptions;
+import com.intellij.codeInsight.editorActions.XmlEditUtil;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.emmet.ZenCodingTemplate;
 import com.intellij.codeInsight.template.emmet.ZenCodingUtil;
@@ -30,11 +31,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.util.DocumentUtil;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,10 +54,10 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
   }
 
   @Override
-  public TemplateImpl createTemplateByKey(@NotNull String key) {
+  public TemplateImpl createTemplateByKey(@NotNull String key, boolean forceSingleTag) {
     StringBuilder builder = new StringBuilder("<");
     builder.append(key).append('>');
-    if (!HtmlUtil.isSingleHtmlTag(key)) {
+    if (!forceSingleTag && !HtmlUtil.isSingleHtmlTag(key)) {
       builder.append("$END$</").append(key).append('>');
     }
     return new TemplateImpl("", builder.toString(), "");
@@ -64,18 +65,18 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
 
   @NotNull
   private String toString(@NotNull TemplateToken token, boolean hasChildren, @NotNull PsiElement context) {
-    CodeStyleSettings.QuoteStyle quoteStyle = quoteStyle(context.getContainingFile());
+    CodeStyleSettings.QuoteStyle quoteStyle = XmlEditUtil.quoteStyle(context.getContainingFile());
     XmlTag tag = token.getXmlTag();
     if (tag != null) {
       if (quoteStyle != CodeStyleSettings.QuoteStyle.None) {
-        new HtmlQuotesFormatPreprocessor.HtmlQuotesConverter(quoteStyle, tag, tag.getTextRange()).run();
+        DocumentUtil.writeInRunUndoTransparentAction(() -> HtmlQuotesFormatPreprocessor.HtmlQuotesConverter.runOnElement(quoteStyle, tag));
       }
       return replaceQuotesIfNeeded(toString(tag, token.getAttributes(), hasChildren, context), context.getContainingFile());
     }
 
     PsiFile file = token.getFile();
     if (quoteStyle != CodeStyleSettings.QuoteStyle.None) {
-      new HtmlQuotesFormatPreprocessor.HtmlQuotesConverter(quoteStyle, file, file.getTextRange()).run();
+      DocumentUtil.writeInRunUndoTransparentAction(() -> HtmlQuotesFormatPreprocessor.HtmlQuotesConverter.runOnElement(quoteStyle, file));
     }
     return replaceQuotesIfNeeded(file.getText(), context.getContainingFile());
   }
@@ -93,15 +94,6 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
     }
     return text;
   }
-  
-  private static CodeStyleSettings.QuoteStyle quoteStyle(@NotNull PsiFile file) {
-    PsiElement context = file.getContext();
-    CodeStyleSettings.QuoteStyle style = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings().HTML_QUOTE_STYLE;
-    if (context != null && !style.quote.isEmpty() && context.getText().startsWith(style.quote)) {
-      return style == CodeStyleSettings.QuoteStyle.Double ? CodeStyleSettings.QuoteStyle.Single : CodeStyleSettings.QuoteStyle.Double;   
-    }
-    return style;
-  }
 
   public abstract String toString(@NotNull XmlTag tag,
                                   @NotNull Map<String, String> attributes,
@@ -115,7 +107,7 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
                                                int totalIterations, @Nullable String surroundedText);
 
   @Override
-  public abstract boolean isMyContext(@NotNull PsiElement context, boolean wrapping);
+  public abstract boolean isMyContext(@NotNull CustomTemplateCallback callback, boolean wrapping);
 
   @Nullable
   @Override

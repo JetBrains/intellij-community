@@ -25,6 +25,8 @@ import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -157,8 +159,8 @@ public abstract class MergeRequestProcessor implements Disposable {
   protected DefaultActionGroup collectToolbarActions(@Nullable List<AnAction> viewerActions) {
     DefaultActionGroup group = new DefaultActionGroup();
 
-    List<AnAction> navigationActions = ContainerUtil.<AnAction>list(new MyPrevDifferenceAction(),
-                                                                    new MyNextDifferenceAction());
+    List<AnAction> navigationActions = ContainerUtil.list(new MyPrevDifferenceAction(),
+                                                          new MyNextDifferenceAction());
     DiffUtil.addActionBlock(group, navigationActions);
 
     DiffUtil.addActionBlock(group, viewerActions);
@@ -224,7 +226,8 @@ public abstract class MergeRequestProcessor implements Disposable {
       myRequest.applyResult(result);
     }
     catch (Exception e) {
-      LOG.error(e);
+      LOG.warn(e);
+      new Notification("Merge", "Can't Finish Merge Resolve", e.getMessage(), NotificationType.ERROR).notify(myProject);
     }
   }
 
@@ -249,15 +252,13 @@ public abstract class MergeRequestProcessor implements Disposable {
       return;
     }
 
-    boolean wasFocused = isFocused();
-
-    destroyViewer();
-    myViewer = newViewer;
-    updateBottomActions();
-    rebuildSouthPanel();
-    initViewer();
-
-    if (wasFocused) requestFocusInternal();
+    DiffUtil.runPreservingFocus(myContext, () -> {
+      destroyViewer();
+      myViewer = newViewer;
+      updateBottomActions();
+      rebuildSouthPanel();
+      initViewer();
+    });
   }
 
   //
@@ -328,15 +329,11 @@ public abstract class MergeRequestProcessor implements Disposable {
   // Misc
   //
 
-  public boolean isFocused() {
+  private boolean isFocused() {
     return DiffUtil.isFocusedComponent(myProject, myPanel);
   }
 
-  public void requestFocus() {
-    DiffUtil.requestFocus(myProject, getPreferredFocusedComponent());
-  }
-
-  protected void requestFocusInternal() {
+  private void requestFocusInternal() {
     JComponent component = getPreferredFocusedComponent();
     if (component != null) component.requestFocusInWindow();
   }

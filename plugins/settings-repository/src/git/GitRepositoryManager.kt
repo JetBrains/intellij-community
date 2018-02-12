@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.ShutDownTracker
@@ -45,13 +45,13 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
     get() {
       var r = _repository
       if (r == null) {
-        r = FileRepositoryBuilder().setWorkTree(dir.toFile()).build()
+        r = buildRepository(workTree = dir)
         _repository = r
         if (ApplicationManager.getApplication()?.isUnitTestMode != true) {
           ShutDownTracker.getInstance().registerShutdownTask { _repository?.close() }
         }
       }
-      return r!!
+      return r
     }
 
   // we must recreate repository if dir changed because repository stores old state and cannot be reinitialized (so, old instance cannot be reused and we must instantiate new one)
@@ -96,7 +96,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
   override fun isRepositoryExists(): Boolean {
     val repo = _repository
     if (repo == null) {
-      return dir.exists() && FileRepositoryBuilder().setWorkTree(dir.toFile()).setup().objectDirectory.exists()
+      return dir.exists() && FileRepositoryBuilder().setWorkTree(dir.toFile()).setUseSystemConfig(false).setup().objectDirectory.exists()
     }
     else {
       return repo.objectDatabase.exists()
@@ -239,7 +239,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
       old.directoryStreamIfExists {
         val new = if (newPath == null) dir else dir.resolve(newPath)
         for (file in it) {
-          LOG.catchAndLog {
+          LOG.runAndLogException {
             if (file.isHidden()) {
               file.delete()
             }
@@ -248,7 +248,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
                 file.move(new.resolve(file.fileName))
               }
               catch (ignored: FileAlreadyExistsException) {
-                return@catchAndLog
+                return@runAndLogException
               }
 
               if (addCommand == null) {
@@ -261,7 +261,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
         toDelete.add(DeleteDirectory(oldPath))
       }
 
-      LOG.catchAndLog {
+      LOG.runAndLogException {
         old.delete()
       }
     }
@@ -271,9 +271,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
     }
 
     repository.edit(toDelete)
-    if (addCommand != null) {
-      addCommand!!.call()
-    }
+    addCommand?.call()
 
     repository.commit(with(IdeaCommitMessageFormatter()) { StringBuilder().appendCommitOwnerInfo(true) }.append(commitMessage).toString())
     return true
@@ -315,7 +313,7 @@ class GitRepositoryService : RepositoryService {
 
     // existing bare repository
     try {
-      FileRepositoryBuilder().setGitDir(file.toFile()).setMustExist(true).build()
+      buildRepository(gitDir = file, mustExists = true)
     }
     catch (e: IOException) {
       return false

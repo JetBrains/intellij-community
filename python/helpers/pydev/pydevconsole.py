@@ -16,7 +16,7 @@ import os
 import sys
 
 from _pydev_imps._pydev_saved_modules import threading
-from _pydevd_bundle.pydevd_constants import INTERACTIVE_MODE_AVAILABLE
+from _pydevd_bundle.pydevd_constants import INTERACTIVE_MODE_AVAILABLE, dict_keys
 
 import traceback
 from _pydev_bundle import fix_getpass
@@ -31,30 +31,11 @@ try:
 except:
     import builtins as __builtin__  # @UnresolvedImport
 
-try:
-    False
-    True
-except NameError: # version < 2.3 -- didn't have the True/False builtins
-    import __builtin__
-
-    setattr(__builtin__, 'True', 1) #Python 3.0 does not accept __builtin__.True = 1 in its syntax
-    setattr(__builtin__, 'False', 0)
-
 from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface, BaseStdIn
 from _pydev_bundle.pydev_console_utils import CodeFragment
 
-IS_PYTHON_3K = False
-IS_PY24 = False
-
-try:
-    if sys.version_info[0] == 3:
-        IS_PYTHON_3K = True
-    elif sys.version_info[0] == 2 and sys.version_info[1] == 4:
-        IS_PY24 = True
-except:
-    #That's OK, not all versions of python have sys.version_info
-    pass
-
+IS_PYTHON_3_ONWARDS = sys.version_info[0] >= 3
+IS_PY24 = sys.version_info[0] == 2 and sys.version_info[1] == 4
 
 class Command:
     def __init__(self, interpreter, code_fragment):
@@ -93,13 +74,12 @@ except:
 
 # Pull in runfile, the interface to UMD that wraps execfile
 from _pydev_bundle.pydev_umd import runfile, _set_globals_function
-try:
+if sys.version_info[0] >= 3:
     import builtins  # @UnresolvedImport
     builtins.runfile = runfile
-except:
+else:
     import __builtin__
     __builtin__.runfile = runfile
-
 
 #=======================================================================================================================
 # InterpreterInterface
@@ -109,8 +89,8 @@ class InterpreterInterface(BaseInterpreterInterface):
         The methods in this class should be registered in the xml-rpc server.
     '''
 
-    def __init__(self, host, client_port, mainThread, show_banner=True):
-        BaseInterpreterInterface.__init__(self, mainThread)
+    def __init__(self, host, client_port, mainThread, connect_status_queue=None):
+        BaseInterpreterInterface.__init__(self, mainThread, connect_status_queue)
         self.client_port = client_port
         self.host = host
         self.namespace = {}
@@ -143,9 +123,6 @@ class InterpreterInterface(BaseInterpreterInterface):
     def close(self):
         sys.exit(0)
 
-    def get_greeting_msg(self):
-        return 'PyDev console: starting.\n'
-
 
 class _ProcessExecQueueHelper:
     _debug_hook = None
@@ -155,7 +132,15 @@ def set_debug_hook(debug_hook):
     _ProcessExecQueueHelper._debug_hook = debug_hook
 
 
-def init_mpl_in_console(interpreter):
+def activate_mpl_if_already_imported(interpreter):
+    if interpreter.mpl_modules_for_patching:
+        for module in dict_keys(interpreter.mpl_modules_for_patching):
+            if module in sys.modules:
+                activate_function = interpreter.mpl_modules_for_patching.pop(module)
+                activate_function()
+
+
+def init_set_return_control_back(interpreter):
     from pydev_ipython.inputhook import set_return_control_callback
 
     def return_control():
@@ -178,16 +163,17 @@ def init_mpl_in_console(interpreter):
 
     set_return_control_callback(return_control)
 
+
+def init_mpl_in_console(interpreter):
+    init_set_return_control_back(interpreter)
+
     if not INTERACTIVE_MODE_AVAILABLE:
         return
 
+    activate_mpl_if_already_imported(interpreter)
     from _pydev_bundle.pydev_import_hook import import_hook_manager
-    from pydev_ipython.matplotlibtools import activate_matplotlib, activate_pylab, activate_pyplot
-    import_hook_manager.add_module_name("matplotlib", lambda: activate_matplotlib(interpreter.enableGui))
-    # enable_gui_function in activate_matplotlib should be called in main thread. That's why we call
-    # interpreter.enableGui which put it into the interpreter's exec_queue and executes it in the main thread.
-    import_hook_manager.add_module_name("pylab", activate_pylab)
-    import_hook_manager.add_module_name("pyplot", activate_pyplot)
+    for mod in dict_keys(interpreter.mpl_modules_for_patching):
+        import_hook_manager.add_module_name(mod, interpreter.mpl_modules_for_patching.pop(mod))
 
 
 def process_exec_queue(interpreter):
@@ -275,88 +261,90 @@ def do_exit(*args):
             os._exit(0)
 
 
-def handshake():
-    return "PyCharm"
-
-
 #=======================================================================================================================
 # start_console_server
 #=======================================================================================================================
 def start_console_server(host, port, interpreter):
-    if port == 0:
-        host = ''
-
-    #I.e.: supporting the internal Jython version in PyDev to create a Jython interactive console inside Eclipse.
-    from _pydev_bundle.pydev_imports import SimpleXMLRPCServer as XMLRPCServer  #@Reimport
-
     try:
-        if IS_PY24:
-            server = XMLRPCServer((host, port), logRequests=False)
-        else:
-            server = XMLRPCServer((host, port), logRequests=False, allow_none=True)
+        if port == 0:
+            host = ''
 
-    except:
-        sys.stderr.write('Error starting server with host: "%s", port: "%s", client_port: "%s"\n' % (host, port, interpreter.client_port))
-        sys.stderr.flush()
-        raise
+        #I.e.: supporting the internal Jython version in PyDev to create a Jython interactive console inside Eclipse.
+        from _pydev_bundle.pydev_imports import SimpleXMLRPCServer as XMLRPCServer  #@Reimport
 
-    # Tell UMD the proper default namespace
-    _set_globals_function(interpreter.get_namespace)
-
-    server.register_function(interpreter.execLine)
-    server.register_function(interpreter.execMultipleLines)
-    server.register_function(interpreter.getCompletions)
-    server.register_function(interpreter.getFrame)
-    server.register_function(interpreter.getVariable)
-    server.register_function(interpreter.changeVariable)
-    server.register_function(interpreter.getDescription)
-    server.register_function(interpreter.close)
-    server.register_function(interpreter.interrupt)
-    server.register_function(handshake)
-    server.register_function(interpreter.connectToDebugger)
-    server.register_function(interpreter.hello)
-    server.register_function(interpreter.getArray)
-    server.register_function(interpreter.evaluate)
-    server.register_function(interpreter.ShowConsole)
-
-    # Functions for GUI main loop integration
-    server.register_function(interpreter.enableGui)
-
-    if port == 0:
-        (h, port) = server.socket.getsockname()
-
-        print(port)
-        print(interpreter.client_port)
-
-
-    sys.stderr.write(interpreter.get_greeting_msg())
-    sys.stderr.flush()
-
-    while True:
         try:
-            server.serve_forever()
+            if IS_PY24:
+                server = XMLRPCServer((host, port), logRequests=False)
+            else:
+                server = XMLRPCServer((host, port), logRequests=False, allow_none=True)
+
         except:
-            # Ugly code to be py2/3 compatible
-            # https://sw-brainwy.rhcloud.com/tracker/PyDev/534:
-            # Unhandled "interrupted system call" error in the pydevconsol.py
-            e = sys.exc_info()[1]
-            retry = False
+            sys.stderr.write('Error starting server with host: "%s", port: "%s", client_port: "%s"\n' % (host, port, interpreter.client_port))
+            sys.stderr.flush()
+            raise
+
+        # Tell UMD the proper default namespace
+        _set_globals_function(interpreter.get_namespace)
+
+        server.register_function(interpreter.execLine)
+        server.register_function(interpreter.execMultipleLines)
+        server.register_function(interpreter.getCompletions)
+        server.register_function(interpreter.getFrame)
+        server.register_function(interpreter.getVariable)
+        server.register_function(interpreter.changeVariable)
+        server.register_function(interpreter.getDescription)
+        server.register_function(interpreter.close)
+        server.register_function(interpreter.interrupt)
+        server.register_function(interpreter.handshake)
+        server.register_function(interpreter.connectToDebugger)
+        server.register_function(interpreter.hello)
+        server.register_function(interpreter.getArray)
+        server.register_function(interpreter.evaluate)
+        server.register_function(interpreter.ShowConsole)
+        server.register_function(interpreter.loadFullValue)
+
+        # Functions for GUI main loop integration
+        server.register_function(interpreter.enableGui)
+
+        if port == 0:
+            (h, port) = server.socket.getsockname()
+
+            print(port)
+            print(interpreter.client_port)
+
+        while True:
             try:
-                retry = e.args[0] == 4 #errno.EINTR
+                server.serve_forever()
             except:
-                pass
-            if not retry:
-                raise
-                # Otherwise, keep on going
-    return server
+                # Ugly code to be py2/3 compatible
+                # https://sw-brainwy.rhcloud.com/tracker/PyDev/534:
+                # Unhandled "interrupted system call" error in the pydevconsol.py
+                e = sys.exc_info()[1]
+                retry = False
+                try:
+                    retry = e.args[0] == 4 #errno.EINTR
+                except:
+                    pass
+                if not retry:
+                    raise
+                    # Otherwise, keep on going
+        return server
+    except:
+        traceback.print_exc()
+        # Notify about error to avoid long waiting
+        connection_queue = interpreter.get_connect_status_queue()
+        if connection_queue is not None:
+            connection_queue.put(False)
 
+def start_server(host, port, client_port, client_host = None):
+    if not client_host:
+        client_host = host
 
-def start_server(host, port, client_port):
     #replace exit (see comments on method)
     #note that this does not work in jython!!! (sys method can't be replaced).
     sys.exit = do_exit
 
-    interpreter = InterpreterInterface(host, client_port, threading.currentThread())
+    interpreter = InterpreterInterface(client_host, client_port, threading.currentThread())
 
     start_new_thread(start_console_server,(host, port, interpreter))
 
@@ -374,9 +362,8 @@ def get_interpreter():
         interpreterInterface = getattr(__builtin__, 'interpreter')
     except AttributeError:
         interpreterInterface = InterpreterInterface(None, None, threading.currentThread())
-        setattr(__builtin__, 'interpreter', interpreterInterface)
-        sys.stderr.write(interpreterInterface.get_greeting_msg())
-        sys.stderr.flush()
+        __builtin__.interpreter = interpreterInterface
+        print(interpreterInterface.get_greeting_msg())
 
     return interpreterInterface
 
@@ -530,4 +517,10 @@ if __name__ == '__main__':
 
         client_port = p
 
-    pydevconsole.start_server(pydev_localhost.get_localhost(), int(port), int(client_port))
+    if len(sys.argv) > 4:
+        host = sys.argv[3]
+        client_host = sys.argv[4]
+    else:
+        host = client_host = pydev_localhost.get_localhost()
+
+    pydevconsole.start_server(host, int(port), int(client_port), client_host)

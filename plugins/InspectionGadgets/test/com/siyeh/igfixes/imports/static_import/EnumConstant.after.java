@@ -27,6 +27,6 @@ class Main {
     }
   }
   static public void main() {
-    test(e.E.A);
+    test(E.A);
   }
 }

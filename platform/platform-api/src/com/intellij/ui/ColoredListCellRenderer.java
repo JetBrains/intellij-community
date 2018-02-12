@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,8 +42,7 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
   public ColoredListCellRenderer(@Nullable JComboBox comboBox) {
     myComboBox = comboBox;
     setFocusBorderAroundIcon(true);
-    getIpad().left = UIUtil.getListCellHPadding();
-    getIpad().right = UIUtil.getListCellHPadding();
+    getIpad().left = getIpad().right = UIUtil.isUnderWin10LookAndFeel() ? 0 : JBUI.scale(UIUtil.getListCellHPadding());
   }
 
   @Override
@@ -66,8 +66,9 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
         setOpaque(true);
         setBackground(selected ? list.getSelectionBackground() : null);
       }
-    }
-    else {
+    } else if (UIUtil.isUnderWin10LookAndFeel()) {
+      setBackground(selected ? list.getSelectionBackground() : list.getBackground());
+    } else {
       setBackground(selected ? list.getSelectionBackground() : null);
     }
 
@@ -99,6 +100,11 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
     else {
       super.append(fragment, attributes, isMainText);
     }
+  }
+
+  @Override
+  void revalidateAndRepaint() {
+    // no need for this in a renderer
   }
 
   @Override

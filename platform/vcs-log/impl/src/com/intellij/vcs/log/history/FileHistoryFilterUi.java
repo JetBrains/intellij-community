@@ -16,12 +16,15 @@
 package com.intellij.vcs.log.history;
 
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
 import com.intellij.vcs.log.data.VcsLogStructureFilterImpl;
+import com.intellij.vcs.log.impl.VcsLogRevisionFilterImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 
@@ -29,24 +32,32 @@ import static com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterC
 
 public class FileHistoryFilterUi implements VcsLogFilterUi {
   @NotNull private final FilePath myPath;
+  @Nullable private final CommitId myRevision;
   @NotNull private final FileHistoryUiProperties myProperties;
 
-  public FileHistoryFilterUi(@NotNull FilePath path, @NotNull FileHistoryUiProperties properties) {
+  public FileHistoryFilterUi(@NotNull FilePath path, @Nullable CommitId revision, @NotNull FileHistoryUiProperties properties) {
     myPath = path;
     myProperties = properties;
+    myRevision = revision;
   }
 
   @NotNull
   @Override
   public VcsLogFilterCollection getFilters() {
     VcsLogStructureFilterImpl fileFilter = new VcsLogStructureFilterImpl(Collections.singleton(myPath));
+
+    if (myRevision != null) {
+      VcsLogRevisionFilterImpl revisionFilter = VcsLogRevisionFilterImpl.fromCommit(myRevision);
+      return new VcsLogFilterCollectionBuilder(fileFilter, revisionFilter).build();
+    }
+
     VcsLogBranchFilterImpl branchFilter =
       myProperties.get(FileHistoryUiProperties.SHOW_ALL_BRANCHES) ? null : VcsLogBranchFilterImpl.fromBranch("HEAD");
-    return new VcsLogFilterCollectionBuilder().with(fileFilter).with(branchFilter).build();
+    return new VcsLogFilterCollectionBuilder(fileFilter, branchFilter).build();
   }
 
   @Override
-  public void setFilter(@NotNull VcsLogFilter filter) {
+  public void setFilter(@Nullable VcsLogFilter filter) {
     throw new UnsupportedOperationException();
   }
 }

@@ -19,11 +19,6 @@ package org.intellij.plugins.xsltDebugger.rt.engine;
 import java.io.Serializable;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 08.06.2007
- */
 public interface OutputEventQueue {
   int START_DOCUMENT = 0;
   int END_DOCUMENT = 99;

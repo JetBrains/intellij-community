@@ -118,7 +118,7 @@ class ReplaceIfWithConditionalPredicate implements PsiElementPredicate {
     if (thenType == null) {
       return false;
     }
-    final PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(ifStatement, PsiWhiteSpace.class);
+    final PsiElement nextStatement = PsiTreeUtil.skipWhitespacesForward(ifStatement);
     if (!(nextStatement instanceof PsiReturnStatement)) {
       return false;
     }

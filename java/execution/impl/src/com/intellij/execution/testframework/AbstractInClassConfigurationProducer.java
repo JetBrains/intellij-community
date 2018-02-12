@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 23-May-2007
- */
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.JavaTestConfigurationBase;
@@ -28,7 +24,9 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.junit.InheritorChooser;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -39,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public abstract class AbstractInClassConfigurationProducer<T extends JavaTestConfigurationBase> extends AbstractJavaTestConfigurationProducer<T> {
+  private static final Logger LOG = Logger.getInstance(AbstractInClassConfigurationProducer.class);
 
   protected AbstractInClassConfigurationProducer(ConfigurationType configurationType) {
     super(configurationType);
@@ -113,7 +112,9 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
       }
       else if (element instanceof PsiMember) {
         psiClass = contextLocation instanceof MethodLocation ? ((MethodLocation)contextLocation).getContainingClass()
-                                                             : ((PsiMember)element).getContainingClass();
+                                                             : contextLocation instanceof PsiMemberParameterizedLocation 
+                                                               ? ((PsiMemberParameterizedLocation)contextLocation).getContainingClass()
+                                                               : ((PsiMember)element).getContainingClass();
         if (isTestClass(psiClass)) {
           break;
         }
@@ -130,7 +131,6 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
     if (!isTestClass(psiClass)) return false;
 
     PsiElement psiElement = psiClass;
-    final Project project = context.getProject();
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(context);
     setupConfigurationModule(context, configuration);
     final Module originalModule = configuration.getConfigurationModule().getModule();
@@ -146,6 +146,7 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
     }
 
     configuration.restoreOriginalModule(originalModule);
+    LOG.assertTrue(configuration.getConfigurationModule().getModule() != null);
     settings.setName(configuration.getName());
     sourceElement.set(psiElement);
     return true;

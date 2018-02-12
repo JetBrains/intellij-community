@@ -2,5 +2,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <structuralsearch.profile implementation="com.intellij.structuralsearch.JavaStructuralSearchProfile"/>
     <structuralsearch.matchPredicateProvider implementation="com.intellij.structuralsearch.impl.matcher.JavaMatchPredicateProvider"/>
+    <java.elementFinder implementation="com.intellij.structuralsearch.IdeaOpenApiClassFinder"/>
   </extensions>
 </idea-plugin>

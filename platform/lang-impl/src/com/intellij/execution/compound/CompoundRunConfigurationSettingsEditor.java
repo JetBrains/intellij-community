@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.compound;
 
 import com.intellij.execution.BeforeRunTask;
+import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.execution.impl.RunConfigurationBeforeRunProvider;
 import com.intellij.execution.impl.RunConfigurationSelector;
 import com.intellij.execution.impl.RunManagerImpl;
@@ -29,48 +15,47 @@ import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListSeparator;
-import com.intellij.openapi.ui.popup.MultiSelectionListPopupStep;
-import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<CompoundRunConfiguration> {
+  private final Project myProject;
   private final JBList myList;
   private final RunManagerImpl myRunManager;
-  private final SortedListModel<RunConfiguration> myModel;
+  private final SortedListModel<Pair<RunConfiguration, ExecutionTarget>> myModel;
   private CompoundRunConfiguration mySnapshot;
 
-
   public CompoundRunConfigurationSettingsEditor(@NotNull Project project) {
+    myProject = project;
     myRunManager = RunManagerImpl.getInstanceImpl(project);
-    myModel = new SortedListModel<>(CompoundRunConfiguration.COMPARATOR);
+    myModel = new SortedListModel<>((o1, o2) -> CompoundRunConfiguration.COMPARATOR.compare(o1.first, o2.first));
     myList = new JBList(myModel);
     myList.setCellRenderer(new ColoredListCellRenderer() {
       @Override
       protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        RunConfiguration configuration = myModel.get(index);
+        RunConfiguration configuration = myModel.get(index).first;
+        ExecutionTarget target = myModel.get(index).second;
+        
         setIcon(configuration.getType().getIcon());
-        append(configuration.getType().getDisplayName() + " '" + configuration.getName() + "'");
+        append(ConfigurationSelectionUtil.getDisplayText(configuration, target));
       }
     });
     myList.setVisibleRowCount(15);
   }
-
+  
 
   private boolean canBeAdded(@NotNull RunConfiguration candidate, @NotNull final CompoundRunConfiguration root) {
     if (candidate.getType() == root.getType() && candidate.getName().equals(root.getName())) return false;
-    List<BeforeRunTask> tasks = myRunManager.getBeforeRunTasks(candidate);
+    List<BeforeRunTask<?>> tasks = myRunManager.getBeforeRunTasks(candidate);
     for (BeforeRunTask task : tasks) {
       if (task instanceof RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask) {
         RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask runTask
@@ -82,9 +67,10 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
       }
     }
     if (candidate instanceof CompoundRunConfiguration) {
-      Set<RunConfiguration> set = ((CompoundRunConfiguration)candidate).getSetToRun();
-      for (RunConfiguration configuration : set) {
-        if (!canBeAdded(configuration, root)) return false;
+      for (RunConfiguration configuration : ((CompoundRunConfiguration)candidate).getConfigurationsWithTargets().keySet()) {
+        if (!canBeAdded(configuration, root)) {
+          return false;
+        }
       }
     }
     return true;
@@ -93,23 +79,25 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
   @Override
   protected void resetEditorFrom(@NotNull CompoundRunConfiguration compoundRunConfiguration) {
     myModel.clear();
-    myModel.addAll(compoundRunConfiguration.getSetToRun());
+    myModel.addAll(ContainerUtil.map2List(compoundRunConfiguration.getConfigurationsWithTargets()));
     mySnapshot = compoundRunConfiguration;
   }
 
   @Override
-  protected void applyEditorTo(@NotNull CompoundRunConfiguration s) throws ConfigurationException {
-    Set<RunConfiguration> checked = new HashSet<>();
+  protected void applyEditorTo(@NotNull CompoundRunConfiguration compoundConfiguration) throws ConfigurationException {
+    Map<RunConfiguration, ExecutionTarget> checked = new THashMap<>();
     for (int i = 0; i < myModel.getSize(); i++) {
-      RunConfiguration configuration = myModel.get(i);
-        String message =
+      Pair<RunConfiguration, ExecutionTarget> configurationAndTarget = myModel.get(i);
+      RunConfiguration configuration = configurationAndTarget.first;
+      String message =
           LangBundle.message("compound.run.configuration.cycle", configuration.getType().getDisplayName(), configuration.getName());
-        if (!canBeAdded(configuration, s)) throw new ConfigurationException(message);
-        checked.add(configuration);
+        if (!canBeAdded(configuration, compoundConfiguration)) {
+          throw new ConfigurationException(message);
+        }
+
+        checked.put(configuration, configurationAndTarget.second);
     }
-    Set<RunConfiguration> toRun = s.getSetToRun();
-    toRun.clear();
-    toRun.addAll(checked);
+    compoundConfiguration.setConfigurationsWithTargets(checked);
   }
 
   @NotNull
@@ -119,51 +107,20 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
     return decorator.disableUpDownActions().setAddAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
-
         final List<RunConfiguration> all = new ArrayList<>();
-        for (ConfigurationType type : myRunManager.getConfigurationFactories()) {
-          if (!(type instanceof UnknownConfigurationType)) {
-            for (RunnerAndConfigurationSettings settings : myRunManager.getConfigurationSettingsList(type)) {
-              all.add(settings.getConfiguration());
-            }
+        for (ConfigurationType type : myRunManager.getConfigurationFactoriesWithoutUnknown()) {
+          for (RunnerAndConfigurationSettings settings : myRunManager.getConfigurationSettingsList(type)) {
+            all.add(settings.getConfiguration());
           }
         }
 
         final List<RunConfiguration> configurations = ContainerUtil.filter(all,
-                                                                           configuration -> !mySnapshot.getSetToRun().contains(configuration) && canBeAdded(configuration, mySnapshot));
-        JBPopupFactory.getInstance().createListPopup(new MultiSelectionListPopupStep<RunConfiguration>(null, configurations){
-          @Nullable
-          @Override
-          public ListSeparator getSeparatorAbove(RunConfiguration value) {
-            int i = configurations.indexOf(value);
-            if (i <1) return null;
-            RunConfiguration previous = configurations.get(i - 1);
-            return value.getType() != previous.getType() ? new ListSeparator() : null;
+                                                                           configuration -> !mySnapshot.getConfigurationsWithTargets().keySet().contains(configuration) && canBeAdded(configuration, mySnapshot));
+        
+        ConfigurationSelectionUtil.createPopup(myProject, myRunManager, configurations, (selectedConfigs, selectedTarget) -> {
+          for (RunConfiguration each : selectedConfigs) {
+            myModel.add(Pair.create(each, selectedTarget));
           }
-
-          @Override
-          public Icon getIconFor(RunConfiguration value) {
-            return value.getType().getIcon();
-          }
-
-          @Override
-          public boolean isSpeedSearchEnabled() {
-            return true;
-          }
-
-          @NotNull
-          @Override
-          public String getTextFor(RunConfiguration value) {
-            return value.getName();
-          }
-
-          @Override
-          public PopupStep<?> onChosen(List<RunConfiguration> selectedValues, boolean finalChoice) {
-            myList.clearSelection();
-            myModel.addAll(selectedValues);
-            return FINAL_CHOICE;
-          }
-
         }).showUnderneathOf(decorator.getActionsPanel());
       }
     }).setEditAction(new AnActionButtonRunnable() {
@@ -171,7 +128,7 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
       public void run(AnActionButton button) {
         int index = myList.getSelectedIndex();
         if (index == -1) return;
-        RunConfiguration configuration = myModel.get(index);
+        RunConfiguration configuration = myModel.get(index).first;
         RunConfigurationSelector selector =
           RunConfigurationSelector.KEY.getData(DataManager.getInstance().getDataContext(button.getContextComponent()));
         if (selector != null) {

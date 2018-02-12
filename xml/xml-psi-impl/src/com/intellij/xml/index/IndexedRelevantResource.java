@@ -47,13 +47,10 @@ public class IndexedRelevantResource<K, V extends Comparable> implements Compara
     if (project.isDefault()) return Collections.emptyList();
     final ArrayList<IndexedRelevantResource<K, V>> resources = new ArrayList<>();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    FileBasedIndex.getInstance().processValues(indexId, key, null, new FileBasedIndex.ValueProcessor<V>() {
-      @Override
-      public boolean process(VirtualFile file, V value) {
-        ResourceRelevance relevance = ResourceRelevance.getRelevance(file, module, fileIndex, additionalScope);
-        resources.add(new IndexedRelevantResource<>(file, key, value, relevance));
-        return true;
-      }
+    FileBasedIndex.getInstance().processValues(indexId, key, null, (file, value) -> {
+      ResourceRelevance relevance = ResourceRelevance.getRelevance(file, module, fileIndex, additionalScope);
+      resources.add(new IndexedRelevantResource<>(file, key, value, relevance));
+      return true;
     }, new AdditionalIndexedRootsScope(GlobalSearchScope.allScope(project)));
     return resources;
   }

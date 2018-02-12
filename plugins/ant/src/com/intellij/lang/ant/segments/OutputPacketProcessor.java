@@ -18,10 +18,6 @@ package com.intellij.lang.ant.segments;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.rt.ant.execution.PacketProcessor;
 
-/**
- * User: anna
- * Date: 12/6/10
- */
 public interface OutputPacketProcessor extends PacketProcessor{
   void processOutput(Printable printable);
 }

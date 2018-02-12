@@ -17,7 +17,6 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
@@ -25,7 +24,6 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakInterner;
@@ -122,7 +120,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
         new ChildrenDescriptionsHolder<>(myStaticGenericInfo.getCollections());
       for (final DomExtensionImpl extension : collections) {
         newCollections.addDescription(extension.addAnnotations(new CollectionChildDescriptionImpl(extension.getXmlName(), extension.getType(),
-                                                                                                  Collections.<JavaMethod>emptyList()
+                                                                                                  Collections.emptyList()
         )));
       }
       myCollections = internChildrenHolder(file, newCollections);

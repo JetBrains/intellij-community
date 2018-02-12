@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.console;
 
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Collections2;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -52,9 +51,6 @@ import java.util.Map;
 import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonIOEncoding;
 import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonUnbuffered;
 
-/**
- * Created by Yuli Fiterman on 9/13/2016.
- */
 public interface PydevConsoleRunner {
 
   Key<ConsoleCommunication> CONSOLE_KEY = new Key<>("PYDEV_CONSOLE_KEY");
@@ -66,22 +62,29 @@ public interface PydevConsoleRunner {
 
 
   @Nullable
-  static PyRemotePathMapper getPathMapper(@NotNull Project project, Sdk sdk, PyConsoleOptions.PyConsoleSettings consoleSettings) {
+  static PyRemotePathMapper getPathMapper(@NotNull Project project,
+                                          Sdk sdk,
+                                          PyConsoleOptions.PyConsoleSettings consoleSettings) {
     if (PySdkUtil.isRemote(sdk)) {
       PythonRemoteInterpreterManager instance = PythonRemoteInterpreterManager.getInstance();
       if (instance != null) {
-        //noinspection ConstantConditions
-        PyRemotePathMapper remotePathMapper =
-          instance.setupMappings(project, (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData(), null);
-
-        PathMappingSettings mappingSettings = consoleSettings.getMappingSettings();
-
-        remotePathMapper.addAll(mappingSettings.getPathMappings(), PyRemotePathMapper.PyPathMappingType.USER_DEFINED);
-
-        return remotePathMapper;
+        PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
+        return getPathMapper(project, consoleSettings, instance, remoteSdkAdditionalData);
       }
     }
     return null;
+  }
+
+  @NotNull
+  static PyRemotePathMapper getPathMapper(@NotNull Project project,
+                                          PyConsoleOptions.PyConsoleSettings consoleSettings,
+                                          PythonRemoteInterpreterManager instance,
+                                          PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData) {
+    //noinspection ConstantConditions
+    PyRemotePathMapper remotePathMapper = instance.setupMappings(project, remoteSdkAdditionalData, null);
+    PathMappingSettings mappingSettings = consoleSettings.getMappingSettings();
+    remotePathMapper.addAll(mappingSettings.getPathMappings(), PyRemotePathMapper.PyPathMappingType.USER_DEFINED);
+    return remotePathMapper;
   }
 
   @NotNull
@@ -142,14 +145,14 @@ public interface PydevConsoleRunner {
     return Pair.create(sdk, module);
   }
 
-  static String constructPyPathAndWorkingDirCommand(Collection<String> pythonPath, String workingDir, String command) {
-    pythonPath.add(workingDir);
-    final String path = Joiner.on(", ").join(Collections2.transform(pythonPath, new Function<String, String>() {
-      @Override
-      public String apply(String input) {
-        return "'" + input.replace("\\", "\\\\").replace("'", "\\'") + "'";
-      }
-    }));
+  static String constructPyPathAndWorkingDirCommand(@NotNull Collection<String> pythonPath,
+                                                    @Nullable String workingDir,
+                                                    @NotNull String command) {
+    if (workingDir != null) {
+      pythonPath.add(workingDir);
+    }
+    final String path = Joiner.on(", ").join(Collections2.transform(pythonPath,
+                                                                    input -> "'" + input.replace("\\", "\\\\").replace("'", "\\'") + "'"));
 
     return command.replace(PydevConsoleRunnerImpl.WORKING_DIR_AND_PYTHON_PATHS, path);
   }
@@ -230,7 +233,7 @@ public interface PydevConsoleRunner {
 
   void addConsoleListener(PydevConsoleRunnerImpl.ConsoleListener consoleListener);
 
-  PydevConsoleExecuteActionHandler getConsoleExecuteActionHandler();
+  PythonConsoleExecuteActionHandler getConsoleExecuteActionHandler();
 
   PyConsoleProcessHandler getProcessHandler();
 

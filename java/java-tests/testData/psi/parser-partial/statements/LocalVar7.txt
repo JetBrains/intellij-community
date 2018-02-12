@@ -1,0 +1,8 @@
+PsiJavaFile:LocalVar7.java
+  PsiDeclarationStatement
+    PsiModifierList:
+      <empty list>
+    PsiTypeElement:int
+      PsiKeyword:int('int')
+    PsiErrorElement:Identifier expected
+      <empty list>

@@ -36,10 +36,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
-* User: anna
-* Date: 1/11/12
-*/
 abstract class RenameChooser {
   @NonNls private static final String CODE_OCCURRENCES = "Rename code occurrences";
   @NonNls private static final String ALL_OCCURRENCES = "Rename all occurrences";

@@ -56,6 +56,6 @@ public class ComboboxSpeedSearch extends SpeedSearchBase<JComboBox> {
   }
 
   protected String getElementText(Object element) {
-    return element.toString();
+    return element == null ? null : element.toString();
   }
 }

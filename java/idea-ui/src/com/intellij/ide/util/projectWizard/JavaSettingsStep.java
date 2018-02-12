@@ -40,7 +40,6 @@ import java.util.Collections;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/23/12
  */
 public class JavaSettingsStep extends SdkSettingsStep {
 
@@ -98,7 +97,7 @@ public class JavaSettingsStep extends SdkSettingsStep {
         }
       }
       else {
-        ((JavaModuleBuilder)myModuleBuilder).setSourcePaths(Collections.<Pair<String,String>>emptyList());
+        ((JavaModuleBuilder)myModuleBuilder).setSourcePaths(Collections.emptyList());
       }
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.ide.TypePresentationService;
 import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PropertyMemberType;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,11 +67,11 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
           if (field != null) return field;
           break;
         case GETTER:
-          final PsiMethod getter = PropertyUtil.findPropertyGetter(psiClass, getPropertyName(s, context), false, isLookDeep());
+          final PsiMethod getter = PropertyUtilBase.findPropertyGetter(psiClass, getPropertyName(s, context), false, isLookDeep());
           if (getter != null) return getter;
           break;
         case SETTER:
-          final PsiMethod setter = PropertyUtil.findPropertySetter(psiClass, getPropertyName(s, context), false, isLookDeep());
+          final PsiMethod setter = PropertyUtilBase.findPropertySetter(psiClass, getPropertyName(s, context), false, isLookDeep());
           if (setter != null) return setter;
           break;
       }
@@ -110,7 +110,7 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
   }
 
   protected boolean methodSuits(final PsiMethod psiMethod) {
-    return !psiMethod.isConstructor() && !psiMethod.hasModifierProperty(PsiModifier.STATIC) && PropertyUtil.getPropertyName(psiMethod) != null;
+    return !psiMethod.isConstructor() && !psiMethod.hasModifierProperty(PsiModifier.STATIC) && PropertyUtilBase.getPropertyName(psiMethod) != null;
   }
 
   protected boolean fieldSuits(final PsiField psiField) {

@@ -63,7 +63,7 @@ public class PyAttachToProcessCommandLineState extends PythonScriptCommandLineSt
       myHandler = handler;
       myHandler.addProcessListener(new ProcessAdapter() {
         @Override
-        public void onTextAvailable(ProcessEvent event, Key outputType) {
+        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
           PyRemoteDebugProcessHandler.this.notifyTextAvailable(event.getText(), outputType);
         }
       });

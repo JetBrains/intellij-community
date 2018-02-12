@@ -25,7 +25,6 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiDocumentManager;
@@ -34,6 +33,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -63,9 +63,14 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
 
     // reinit syntax highlighter for Groovy. In power save mode keywords are highlighted by GroovySyntaxHighlighter insteadof
     // GrKeywordAndDeclarationHighlighter. So we need to drop caches for token types attributes in LayeredLexerEditorHighlighter
-    project.getMessageBus().connect().subscribe(PowerSaveMode.TOPIC, () -> {
-      for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
-        ((EditorEx)editor).reinitSettings();
+    project.getMessageBus().connect().subscribe(PowerSaveMode.TOPIC, new PowerSaveMode.Listener() {
+      @Override
+      public void powerSaveStateChanged() {
+        UIUtil.invokeLaterIfNeeded(() -> {
+          for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+            ((EditorEx)editor).reinitSettings();
+          }
+        });
       }
     });
   }
@@ -93,7 +98,7 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
       tooltipText.append(module.getName());
       tooltipText.append("] ");
     }
-    tooltipText.append(FileUtil.getLocationRelativeToUserHome(file.getPresentableUrl()));
+    tooltipText.append(super.getFileTooltipText(file));
     return tooltipText.toString();
   }
 

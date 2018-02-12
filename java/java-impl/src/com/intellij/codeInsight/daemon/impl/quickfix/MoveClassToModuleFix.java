@@ -25,6 +25,7 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -59,7 +60,7 @@ public class MoveClassToModuleFix implements IntentionAction {
   private final String myReferenceName;
   private final Module myCurrentModule;
   private final PsiDirectory mySourceRoot;
-  private static final Logger LOG = Logger.getInstance("#" + MoveClassToModuleFix.class.getName());
+  private static final Logger LOG = Logger.getInstance(MoveClassToModuleFix.class);
 
   public MoveClassToModuleFix(String referenceName, Module currentModule, PsiDirectory root, PsiElement psiElement) {
     myReferenceName = referenceName;
@@ -137,7 +138,7 @@ public class MoveClassToModuleFix implements IntentionAction {
         .setRequestFocus(true)
         .setItemChoosenCallback((value) -> {
           if (value != null) {
-            moveClass(project, editor, file, value);
+            TransactionGuard.getInstance().submitTransactionAndWait(() -> moveClass(project, editor, file, value));
           }
         })
         .createPopup()

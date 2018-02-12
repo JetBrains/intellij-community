@@ -59,12 +59,14 @@ public class PyExpressionCodeFragmentImpl extends PyFileImpl implements PyExpres
     return myContext != null && myContext.isValid() ? myContext : super.getContext();
   }
 
+  @Override
   @NotNull
   public FileViewProvider getViewProvider() {
     if(myViewProvider != null) return myViewProvider;
     return super.getViewProvider();
   }
 
+  @Override
   public boolean isPhysical() {
     return myPhysical;
   }

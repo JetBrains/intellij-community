@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.execution.startup;
 
 import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.notification.NotificationGroup;
@@ -37,18 +36,15 @@ public class ProjectStartupTaskManager {
   private final Project myProject;
   private final ProjectStartupSharedConfiguration myShared;
   private final ProjectStartupLocalConfiguration myLocal;
-  private final RunManagerEx myRunManager;
 
   public static ProjectStartupTaskManager getInstance(@NotNull final Project project) {
     return ServiceManager.getService(project, ProjectStartupTaskManager.class);
   }
 
-  public ProjectStartupTaskManager(Project project, ProjectStartupSharedConfiguration shared, ProjectStartupLocalConfiguration local,
-                                   @NotNull RunManager runManager) {
+  public ProjectStartupTaskManager(Project project, ProjectStartupSharedConfiguration shared, ProjectStartupLocalConfiguration local) {
     myProject = project;
     myShared = shared;
     myLocal = local;
-    myRunManager = (RunManagerEx)runManager;
     verifyState();
   }
 
@@ -59,7 +55,7 @@ public class ProjectStartupTaskManager {
       final Iterator<RunnerAndConfigurationSettings> iterator = sharedConfigurations.iterator();
       while (iterator.hasNext()) {
         final RunnerAndConfigurationSettings configuration = iterator.next();
-        if (! myRunManager.isConfigurationShared(configuration)) {
+        if (!configuration.isShared()) {
           iterator.remove();
           canNotBeShared.add(configuration);
         }
@@ -84,8 +80,9 @@ public class ProjectStartupTaskManager {
 
     final List<RunnerAndConfigurationSettings> result = new ArrayList<>();
     final List<ProjectStartupConfigurationBase.ConfigurationDescriptor> list = configuration.getList();
+    RunManagerImpl runManager = (RunManagerImpl)RunManager.getInstance(myProject);
     for (ProjectStartupConfigurationBase.ConfigurationDescriptor descriptor : list) {
-      final RunnerAndConfigurationSettings settings = ((RunManagerImpl) myRunManager).getConfigurationById(descriptor.getId());
+      final RunnerAndConfigurationSettings settings = runManager.getConfigurationById(descriptor.getId());
       if (settings != null && settings.getName().equals(descriptor.getName())) {
         result.add(settings);
       } else {
@@ -117,7 +114,7 @@ public class ProjectStartupTaskManager {
   }
 
   public void checkOnChange(RunnerAndConfigurationSettings settings) {
-    if (! myRunManager.isConfigurationShared(settings)) {
+    if (!settings.isShared()) {
       final Collection<RunnerAndConfigurationSettings> sharedConfigurations = getSharedConfigurations();
       if (sharedConfigurations.remove(settings)) {
         final List<RunnerAndConfigurationSettings> localConfigurations = new ArrayList<>(getLocalConfigurations());

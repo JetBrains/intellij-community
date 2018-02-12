@@ -31,6 +31,7 @@ public abstract class PropertyCodeGenerator {
   public boolean generateCustomSetValue(final LwComponent lwComponent,
                                         final InstrumentationClassFinder.PseudoClass componentClass, final LwIntrospectedProperty property,
                                         final GeneratorAdapter generator,
+                                        GetFontMethodProvider fontMethodProvider,
                                         final int componentLocal, final String formClassName) throws IOException, ClassNotFoundException {
     return false;
   }

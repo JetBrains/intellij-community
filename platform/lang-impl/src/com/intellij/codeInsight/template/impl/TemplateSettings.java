@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.AbstractBundle;
@@ -69,11 +55,13 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   public static final char ENTER_CHAR = '\n';
   public static final char DEFAULT_CHAR = 'D';
   public static final char CUSTOM_CHAR = 'C';
+  public static final char NONE_CHAR = 'N';
 
   @NonNls private static final String SPACE = "SPACE";
   @NonNls private static final String TAB = "TAB";
   @NonNls private static final String ENTER = "ENTER";
   @NonNls private static final String CUSTOM = "CUSTOM";
+  @NonNls private static final String NONE = "NONE";
 
   @NonNls private static final String NAME = "name";
   @NonNls private static final String VALUE = "value";
@@ -115,6 +103,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       return TAB.equals(shortcut) ? TAB_CHAR :
              ENTER.equals(shortcut) ? ENTER_CHAR :
              CUSTOM.equals(shortcut) ? CUSTOM_CHAR :
+             NONE.equals(shortcut) ? NONE_CHAR :
              SPACE_CHAR;
     }
 
@@ -124,6 +113,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       return shortcut == TAB_CHAR ? TAB :
              shortcut == ENTER_CHAR ? ENTER :
              shortcut == CUSTOM_CHAR ? CUSTOM :
+             shortcut == NONE_CHAR ? NONE :
              SPACE;
     }
   }
@@ -195,7 +185,30 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       @Nullable
       @Override
       public TemplateGroup readScheme(@NotNull Element element, boolean duringLoad) {
-        return readTemplateFile(element, element.getAttributeValue("group"), false, false, getClass().getClassLoader());
+        TemplateGroup group = readTemplateFile(element, element.getAttributeValue("group"), false, false, getClass().getClassLoader());
+        if (group != null) {
+          group.setModified(false);
+        }
+        return group;
+      }
+
+      @Override
+      public void beforeReloaded(@NotNull SchemeManager<TemplateGroup> schemeManager) {
+        for (TemplateGroup group : schemeManager.getAllSchemes()) {
+          schemeManager.removeScheme(group);
+        }
+        myTemplates.clear();
+        myDefaultTemplates.clear();
+      }
+
+      @Override
+      public void reloaded(@NotNull SchemeManager<TemplateGroup> schemeManager, @NotNull Collection<? extends TemplateGroup> groups) {
+        for (TemplateGroup group : groups) {
+          for (TemplateImpl template : group.getElements()) {
+            addTemplateImpl(template);
+          }
+        }
+        loadDefaultLiveTemplates();
       }
 
       @NotNull
@@ -291,7 +304,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   }
 
   @Override
-  public void loadState(State state) {
+  public void loadState(@NotNull State state) {
     myState = state;
 
     applyNewDeletedTemplates();
@@ -334,7 +347,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
   public TemplateImpl[] getTemplates() {
     final Collection<? extends TemplateImpl> all = myTemplates.values();
-    return all.toArray(new TemplateImpl[all.size()]);
+    return all.toArray(new TemplateImpl[0]);
   }
 
   public char getDefaultShortcutChar() {
@@ -441,6 +454,9 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     }
     else if (SPACE.equals(shortcut)) {
       template.setShortcutChar(SPACE_CHAR);
+    }
+    else if (NONE.equals(shortcut)) {
+      template.setShortcutChar(NONE_CHAR);
     }
     else {
       template.setShortcutChar(DEFAULT_CHAR);
@@ -549,7 +565,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     if (registerTemplate) {
       TemplateGroup existingScheme = mySchemeManager.findSchemeByName(result.getName());
       if (existingScheme == null && !result.isEmpty()) {
-        mySchemeManager.addNewScheme(result, false);
+        mySchemeManager.addScheme(result, false);
       }
     }
 
@@ -616,6 +632,9 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     }
     else if (template.getShortcutChar() == SPACE_CHAR) {
       element.setAttribute(SHORTCUT, SPACE);
+    }
+    else if (template.getShortcutChar() == NONE_CHAR) {
+      element.setAttribute(SHORTCUT, NONE);
     }
     if (template.getDescription() != null) {
       element.setAttribute(DESCRIPTION, template.getDescription());

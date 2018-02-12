@@ -49,13 +49,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-/**
- * User: anna
- */
 public class JavaFxAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull final PsiElement element, @NotNull AnnotationHolder holder) {
-    final PsiFile containingFile = element.getContainingFile();
+    final PsiFile containingFile = holder.getCurrentAnnotationSession().getFile();
     if (!JavaFxFileTypeFactory.isFxml(containingFile)) return;
     if (element instanceof XmlAttributeValue) {
       final String value = ((XmlAttributeValue)element).getValue();

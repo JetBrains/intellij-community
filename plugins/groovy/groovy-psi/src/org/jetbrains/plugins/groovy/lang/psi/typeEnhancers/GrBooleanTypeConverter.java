@@ -29,7 +29,7 @@ public class GrBooleanTypeConverter extends GrTypeConverter {
 
   @Override
   public boolean isApplicableTo(@NotNull ApplicableTo position) {
-    return position != ApplicableTo.EXPLICIT_CAST;
+    return position != ApplicableTo.EXPLICIT_CAST && position != ApplicableTo.GENERIC_PARAMETER;
   }
 
   @Nullable

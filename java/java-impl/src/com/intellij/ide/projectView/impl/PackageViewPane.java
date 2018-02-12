@@ -23,6 +23,7 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.impl.PackagesPaneSelectInTarget;
+import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
@@ -32,7 +33,6 @@ import com.intellij.ide.projectView.impl.nodes.PackageViewProjectNode;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
@@ -58,7 +58,9 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.*;
 
-public final class PackageViewPane extends AbstractProjectViewPSIPane {
+import static com.intellij.openapi.application.Experiments.isFeatureEnabled;
+
+public class PackageViewPane extends AbstractProjectViewPSIPane {
   @NonNls public static final String ID = "PackagesPane";
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
 
@@ -80,10 +82,6 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
   @NotNull
   public String getId() {
     return ID;
-  }
-
-  public AbstractTreeStructure getTreeStructure() {
-    return myTreeStructure;
   }
 
   @Override
@@ -163,7 +161,7 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
       }
     }
     if (!directories.isEmpty()) {
-      return directories.toArray(new PsiDirectory[directories.size()]);
+      return directories.toArray(PsiDirectory.EMPTY_ARRAY);
     }
 
     return super.getSelectedDirectories();
@@ -204,6 +202,7 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
         return PackageViewPane.this.getId();
       }
     }).setAsSecondary(true);
+    actionGroup.addAction(createFlattenModulesAction(() -> true)).setAsSecondary(true);
     actionGroup.addAction(new ShowLibraryContentsAction()).setAsSecondary(true);
   }
 
@@ -227,21 +226,16 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
 
       @Override
       public boolean isToBuildChildrenInBackground(Object element) {
-        return true;
+        return Registry.is("ide.projectView.PackageViewTreeStructure.BuildChildrenInBackground");
       }
     };
   }
 
   @Override
   protected ProjectViewTree createTree(DefaultTreeModel treeModel) {
-    return new ProjectViewTree(myProject, treeModel) {
+    return new ProjectViewTree(treeModel) {
       public String toString() {
         return getTitle() + " " + super.toString();
-      }
-
-      @Override
-      public DefaultMutableTreeNode getSelectedNode() {
-        return PackageViewPane.this.getSelectedNode();
       }
     };
   }
@@ -328,7 +322,7 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
           modules.add(entry.getOwnerModule());
         }
       }
-      return modules.toArray(new Module[modules.size()]);
+      return modules.toArray(Module.EMPTY_ARRAY);
     }
   }
 
@@ -358,5 +352,10 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
         a.finish();
       }
     }
+  }
+
+  @Override
+  protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel model) {
+    return isFeatureEnabled("package.view.async.tree.model") ? null : super.createBuilder(model);
   }
 }

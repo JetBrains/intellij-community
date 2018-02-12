@@ -20,23 +20,24 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.VcsLogCachesInvalidator;
+import com.intellij.vcs.log.impl.VcsLogSharedSettings;
 import com.intellij.vcs.log.util.PersistentUtil;
 import com.intellij.vcs.log.util.StopWatch;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +48,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import static com.intellij.vcs.log.util.VcsLogUtil.registerWithParentAndProject;
 
 public class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);
@@ -59,7 +66,6 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
   @NotNull private final Project myProject;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
-  @NotNull private final BackgroundTaskQueue myDataLoaderQueue;
   @NotNull private final MiniDetailsGetter myMiniDetailsGetter;
   @NotNull private final CommitDetailsGetter myDetailsGetter;
 
@@ -85,22 +91,31 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
   @NotNull private final VcsLogIndex myIndex;
 
+  @NotNull private final Object myLock = new Object();
+  private boolean myInitialized = false;
+  @Nullable private SingleTaskController.SingleTask myInitialization = null;
+
   public VcsLogData(@NotNull Project project,
                     @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
-                    @NotNull FatalErrorHandler fatalErrorsConsumer) {
+                    @NotNull FatalErrorHandler fatalErrorsConsumer,
+                    @NotNull Disposable parentDisposable) {
     myProject = project;
     myLogProviders = logProviders;
-    myDataLoaderQueue = new BackgroundTaskQueue(project, "Loading history...");
     myUserRegistry = (VcsUserRegistryImpl)ServiceManager.getService(project, VcsUserRegistry.class);
     myFatalErrorsConsumer = fatalErrorsConsumer;
 
-    VcsLogProgress progress = new VcsLogProgress();
-    Disposer.register(this, progress);
+    VcsLogProgress progress = new VcsLogProgress(project, this);
 
     VcsLogCachesInvalidator invalidator = CachesInvalidator.EP_NAME.findExtension(VcsLogCachesInvalidator.class);
     if (invalidator.isValid()) {
       myStorage = createStorage();
-      myIndex = new VcsLogPersistentIndex(myProject, myStorage, progress, logProviders, myFatalErrorsConsumer, this);
+      if (VcsLogSharedSettings.isIndexSwitchedOn(myProject)) {
+        myIndex = new VcsLogPersistentIndex(myProject, myStorage, progress, logProviders, myFatalErrorsConsumer, this);
+      }
+      else {
+        LOG.info("Vcs log index is turned off for project " + myProject.getName());
+        myIndex = new EmptyIndex();
+      }
     }
     else {
       // this is not recoverable
@@ -120,8 +135,18 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
     myRefresher = new VcsLogRefresherImpl(myProject, myStorage, myLogProviders, myUserRegistry, myIndex, progress, myTopCommitsDetailsCache,
                                           this::fireDataPackChangeEvent, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT);
+    Disposer.register(this, myRefresher);
 
     myContainingBranchesGetter = new ContainingBranchesGetter(this, this);
+
+    Disposer.register(parentDisposable, this);
+    registerWithParentAndProject(this, project, () -> {
+      synchronized (myLock) {
+        if (myInitialization != null) {
+          myInitialization.cancel();
+        }
+      }
+    });
   }
 
   @NotNull
@@ -135,6 +160,57 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
       LOG.error("Falling back to in-memory hashes", e);
     }
     return hashMap;
+  }
+
+  public void initialize() {
+    synchronized (myLock) {
+      if (!myInitialized) {
+        myInitialized = true;
+        StopWatch stopWatch = StopWatch.start("initialize");
+        Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Loading History...", false) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            indicator.setIndeterminate(true);
+            resetState();
+            readCurrentUser();
+            DataPack dataPack = myRefresher.readFirstBlock();
+            fireDataPackChangeEvent(dataPack);
+            stopWatch.report();
+          }
+
+          @Override
+          public void onFinished() {
+            synchronized (myLock) {
+              myInitialization = null;
+            }
+          }
+        };
+        CoreProgressManager manager = (CoreProgressManager)ProgressManager.getInstance();
+        ProgressIndicator indicator = myRefresher.getProgress().createProgressIndicator();
+        Future<?> future = manager.runProcessWithProgressAsynchronously(backgroundable, indicator, null);
+        myInitialization = new SingleTaskController.SingleTaskImpl(future, indicator);
+      }
+    }
+  }
+
+  private void readCurrentUser() {
+    StopWatch sw = StopWatch.start("readCurrentUser");
+    for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
+      VirtualFile root = entry.getKey();
+      try {
+        VcsUser me = entry.getValue().getCurrentUser(root);
+        if (me != null) {
+          myCurrentUser.put(root, me);
+        }
+        else {
+          LOG.info("Username not configured for root " + root);
+        }
+      }
+      catch (VcsException e) {
+        LOG.warn("Couldn't read the username from root " + root, e);
+      }
+    }
+    sw.report();
   }
 
   private void fireDataPackChangeEvent(@NotNull final DataPack dataPack) {
@@ -174,39 +250,6 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     return myStorage;
   }
 
-  public void initialize() {
-    final StopWatch initSw = StopWatch.start("initialize");
-    myDataLoaderQueue.clear();
-
-    runInBackground(indicator -> {
-      resetState();
-      readCurrentUser();
-      DataPack dataPack = myRefresher.readFirstBlock();
-      fireDataPackChangeEvent(dataPack);
-      initSw.report();
-    });
-  }
-
-  private void readCurrentUser() {
-    StopWatch sw = StopWatch.start("readCurrentUser");
-    for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
-      VirtualFile root = entry.getKey();
-      try {
-        VcsUser me = entry.getValue().getCurrentUser(root);
-        if (me != null) {
-          myCurrentUser.put(root, me);
-        }
-        else {
-          LOG.info("Username not configured for root " + root);
-        }
-      }
-      catch (VcsException e) {
-        LOG.warn("Couldn't read the username from root " + root, e);
-      }
-    }
-    sw.report();
-  }
-
   private void resetState() {
     myTopCommitsDetailsCache.clear();
   }
@@ -241,22 +284,6 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     return myContainingBranchesGetter;
   }
 
-  private void runInBackground(@NotNull ThrowableConsumer<ProgressIndicator, VcsException> task) {
-    Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Loading History...", false) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setIndeterminate(true);
-        try {
-          task.consume(indicator);
-        }
-        catch (VcsException e) {
-          throw new RuntimeException(e); // TODO
-        }
-      }
-    };
-    myDataLoaderQueue.run(backgroundable, null, myRefresher.getProgress().createProgressIndicator());
-  }
-
   /**
    * Refreshes specified roots.
    * Does not re-read all log but rather the most recent commits.
@@ -286,7 +313,23 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
   @Override
   public void dispose() {
-    myDataLoaderQueue.clear();
+    SingleTaskController.SingleTask initialization;
+
+    synchronized (myLock) {
+      initialization = myInitialization;
+      myInitialization = null;
+      myInitialized = true;
+    }
+
+    if (initialization != null) {
+      initialization.cancel();
+      try {
+        initialization.waitFor(1, TimeUnit.MINUTES);
+      }
+      catch (InterruptedException | ExecutionException | TimeoutException e) {
+        LOG.warn(e);
+      }
+    }
     resetState();
   }
 

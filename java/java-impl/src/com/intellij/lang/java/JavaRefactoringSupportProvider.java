@@ -33,6 +33,7 @@ import com.intellij.refactoring.extractclass.ExtractClassHandler;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
+import com.intellij.refactoring.introduceVariable.IntroduceFunctionalVariableHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.refactoring.memberPullUp.JavaPullUpHandler;
 import com.intellij.refactoring.memberPushDown.JavaPushDownHandler;
@@ -90,6 +91,11 @@ public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
   @Override
   public RefactoringActionHandler getIntroduceFunctionalParameterHandler() {
     return new IntroduceFunctionalParameterHandler();
+  }
+
+  @Override
+  public RefactoringActionHandler getIntroduceFunctionalVariableHandler() {
+    return new IntroduceFunctionalVariableHandler();
   }
 
   @Override

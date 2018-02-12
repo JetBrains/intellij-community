@@ -25,18 +25,18 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import java.util.*
-import kotlin.comparisons.compareBy
 
-class IconsClassGenerator(val projectHome: File, val util: JpsModule) {
+class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeChangesToDisk: Boolean = true) {
   private var processedClasses = 0
   private var processedIcons = 0
+  private var modifiedClasses = ArrayList<Pair<JpsModule, File>>()
 
   fun processModule(module: JpsModule) {
     val customLoad: Boolean
     val packageName: String
     val className: String
     val outFile: File
-    if ("icons" == module.name) {
+    if ("intellij.platform.icons" == module.name) {
       customLoad = false
       packageName = "com.intellij.icons"
       className = "AllIcons"
@@ -81,9 +81,13 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule) {
       processedClasses++
 
       if (!outFile.exists() || outFile.readText().lines() != text.lines()) {
-        outFile.parentFile.mkdirs()
-        outFile.writeText(text)
-        println("Updated icons class: ${outFile.name}")
+        modifiedClasses.add(Pair(module, outFile))
+
+        if (writeChangesToDisk) {
+          outFile.parentFile.mkdirs()
+          outFile.writeText(text)
+          println("Updated icons class: ${outFile.name}")
+        }
       }
     }
   }
@@ -92,6 +96,8 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule) {
     println()
     println("Generated classes: $processedClasses. Processed icons: $processedIcons")
   }
+
+  fun getModifiedClasses() = modifiedClasses
 
   private fun findIconClass(dir: File): String? {
     var className: String? = null
@@ -109,7 +115,7 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule) {
     val i = text.indexOf("package ")
     if (i == -1) return ""
     val comment = text.substring(0, i)
-    return if (comment.trim().endsWith("*/")) comment else ""
+    return if (comment.trim().endsWith("*/") || comment.trim().startsWith("//")) comment else ""
   }
 
   private fun generate(module: JpsModule, className: String, packageName: String, customLoad: Boolean, copyrightComment: String): String? {
@@ -125,7 +131,7 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule) {
     // please do corresponding changes in IconsGeneratedSourcesFilter as well
     append(answer, "/**", 0)
     append(answer, " * NOTE THIS FILE IS AUTO-GENERATED", 0)
-    append(answer, " * DO NOT EDIT IT BY HAND, run build/scripts/icons.gant instead", 0)
+    append(answer, " * DO NOT EDIT IT BY HAND, run \"Generate icon classes\" configuration instead", 0)
     append(answer, " */", 0)
 
     append(answer, "public class $className {", 0)
@@ -160,7 +166,6 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule) {
     sortedKeys.forEach { key ->
       val group = nodeMap[key]
       val image = leafMap[key]
-      assert(group == null || image == null)
 
       if (group != null) {
         val inners = StringBuilder()
@@ -180,12 +185,16 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule) {
           val name = file.name
           val used = image.used
           val deprecated = image.deprecated
+          val deprecationComment = image.deprecationComment
 
           if (isIcon(file)) {
             processedIcons++
 
             if (used || deprecated) {
               append(answer, "", level)
+              if (deprecationComment != null) {
+                append(answer, "/** @deprecated $deprecationComment */", level)
+              }
               append(answer, "@SuppressWarnings(\"unused\")", level)
             }
             if (deprecated) {
@@ -232,7 +241,7 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule) {
     val rootDir = File(JpsPathUtil.urlToPath(rootUrl))
     if (!rootDir.isDirectory) return null
 
-    val file = File(rootDir, "icon-robots.txt")
+    val file = File(rootDir, ImageCollector.ROBOTS_FILE_NAME)
     if (!file.exists()) return null
 
     val prefix = "name:"
@@ -252,7 +261,7 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule) {
 
   private fun className(name: String): String {
     val answer = StringBuilder()
-    name.split("-", "_").forEach {
+    name.removePrefix("intellij.").split("-", "_", ".").forEach {
       answer.append(capitalize(it))
     }
     return toJavaIdentifier(answer.toString())

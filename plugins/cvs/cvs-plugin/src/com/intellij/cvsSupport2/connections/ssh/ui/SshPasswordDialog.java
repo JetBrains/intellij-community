@@ -21,9 +21,6 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 
-/**
- * User: lesya
- */
 public class SshPasswordDialog extends DialogWrapper{
   private JPasswordField myPasswordField;
   private JCheckBox myStoreCheckbox;

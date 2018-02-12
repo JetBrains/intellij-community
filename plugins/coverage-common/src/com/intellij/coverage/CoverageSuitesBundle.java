@@ -27,20 +27,16 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
 
-/**
- * User: anna
- * Date: 12/14/10
- */
 public class CoverageSuitesBundle {
   private final CoverageSuite[] mySuites;
-  private CoverageEngine myEngine;
+  private final CoverageEngine myEngine;
 
   private Set<Module> myProcessedModules;
 
   private CachedValue<GlobalSearchScope> myCachedValue;
 
   private SoftReference<ProjectData> myData = new SoftReference<>(null);
-  private static final Logger LOG = Logger.getInstance("#" + CoverageSuitesBundle.class.getName());
+  private static final Logger LOG = Logger.getInstance(CoverageSuitesBundle.class);
 
   public CoverageSuitesBundle(CoverageSuite suite) {
     this(new CoverageSuite[]{suite});
@@ -64,6 +60,9 @@ public class CoverageSuitesBundle {
     return true;
   }
 
+  public Project getProject() {
+    return mySuites[0].getProject();
+  }
 
   public long getLastCoverageTimeStamp() {
     long max = 0;

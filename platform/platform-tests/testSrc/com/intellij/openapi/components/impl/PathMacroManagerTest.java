@@ -62,10 +62,10 @@ public class PathMacroManagerTest {
   private Mockery context;
 
   protected ApplicationEx myApplication;
-  private Disposable myRootDisposable = Disposer.newDisposable();
+  private final Disposable myRootDisposable = Disposer.newDisposable();
 
   @Before
-  public final void setupApplication() throws Exception {
+  public final void setupApplication() {
     context = new JUnit4Mockery();
     context.setImposteriser(ClassImposteriser.INSTANCE);
     myApplication = context.mock(ApplicationEx.class, "application");
@@ -87,7 +87,7 @@ public class PathMacroManagerTest {
 
           @Override
           @Nullable
-          public Object invoke(final Invocation invocation) throws Throwable {
+          public Object invoke(final Invocation invocation) {
             ((Runnable)invocation.getParameter(0)).run();
             return null;
           }

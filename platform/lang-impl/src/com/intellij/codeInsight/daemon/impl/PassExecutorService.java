@@ -57,10 +57,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -84,6 +81,8 @@ class PassExecutorService implements Disposable {
   @Override
   public void dispose() {
     cancelAll(true);
+    // some workers could, although idle, still retain some thread references for some time causing leak hunter to frown
+    ForkJoinPool.commonPool().awaitQuiescence(1, TimeUnit.SECONDS);
     isDisposed = true;
   }
 
@@ -523,9 +522,7 @@ class PassExecutorService implements Disposable {
         throw new RuntimeException(message, e);
       }
       if (threadsToStartCountdown.decrementAndGet() == 0) {
-        if (pass instanceof ProgressableTextEditorHighlightingPass) {
-          ((ProgressableTextEditorHighlightingPass)pass).waitForHighlightInfosApplied();
-        }
+        HighlightingSessionImpl.waitForAllSessionsHighlightInfosApplied(updateProgress);
         log(updateProgress, pass, "Stopping ");
         updateProgress.stopIfRunning();
       }

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.run;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -35,6 +36,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -46,6 +48,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -73,7 +76,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author traff, Leonid Shalupov
@@ -87,6 +89,18 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public static final String GROUP_DEBUGGER = "Debugger";
   public static final String GROUP_PROFILER = "Profiler";
   public static final String GROUP_COVERAGE = "Coverage";
+  /**
+   * This group is applied for Python module execution. In this case it
+   * contains two parameters: {@code -m} and the module name.
+   * <p>
+   * For Python script execution this group must be empty.
+   * <p>
+   * Note that this option <cite>terminates option list</cite> so this group
+   * must go <b>after</b> other Python interpreter options. At the same time it
+   * must go <b>before</b> <cite>arguments passed to program in
+   * sys.argv[1:]</cite>, which are stored in {@link #GROUP_SCRIPT}.
+   */
+  public static final String GROUP_MODULE = "Module";
   public static final String GROUP_SCRIPT = "Script";
   private final AbstractPythonRunConfiguration myConfig;
 
@@ -203,7 +217,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * Patches the command line parameters applying patchers from first to last, and then runs it.
    *
    * @param processStarter
-   * @param patchers any number of patchers; any patcher may be null, and the whole argument may be null.
+   * @param patchers       any number of patchers; any patcher may be null, and the whole argument may be null.
    * @return handler of the started process
    * @throws ExecutionException
    */
@@ -312,49 +326,56 @@ public abstract class PythonCommandLineState extends CommandLineState {
     params.addParamsGroup(GROUP_DEBUGGER);
     params.addParamsGroup(GROUP_PROFILER);
     params.addParamsGroup(GROUP_COVERAGE);
+    params.addParamsGroup(GROUP_MODULE);
     params.addParamsGroup(GROUP_SCRIPT);
   }
 
-  protected static void initEnvironment(Project project, GeneralCommandLine commandLine, PythonRunParams myConfig, boolean isDebug) {
+  protected static void initEnvironment(Project project, GeneralCommandLine commandLine, PythonRunParams runParams, boolean isDebug) {
     Map<String, String> env = Maps.newHashMap();
 
     setupEncodingEnvs(env, commandLine.getCharset());
 
-    if (myConfig.getEnvs() != null) {
-      env.putAll(myConfig.getEnvs());
+    if (runParams.getEnvs() != null) {
+      env.putAll(runParams.getEnvs());
     }
+    addCommonEnvironmentVariables(getInterpreterPath(project, runParams), env);
 
-    addCommonEnvironmentVariables(getInterpreterPath(project, myConfig), env);
-
-    setupVirtualEnvVariables(myConfig, env, myConfig.getSdkHome());
+    setupVirtualEnvVariables(runParams, env, runParams.getSdkHome());
 
     commandLine.getEnvironment().clear();
     commandLine.getEnvironment().putAll(env);
-    commandLine.withParentEnvironmentType(myConfig.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
+    commandLine.withParentEnvironmentType(runParams.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
 
+    buildPythonPath(project, commandLine, runParams, isDebug);
 
-    buildPythonPath(project, commandLine, myConfig, isDebug);
+    for (PythonCommandLineEnvironmentProvider envProvider : Extensions.getExtensions(PythonCommandLineEnvironmentProvider.EP_NAME)) {
+      envProvider.extendEnvironment(project, commandLine, runParams);
+    }
   }
 
   private static void setupVirtualEnvVariables(PythonRunParams myConfig, Map<String, String> env, String sdkHome) {
-    if (PythonSdkType.isVirtualEnv(sdkHome)) {
-      PyVirtualEnvReader reader = new PyVirtualEnvReader(sdkHome);
-      if (reader.getActivate() != null) {
-        try {
-          env.putAll(reader.readShellEnv().entrySet().stream().filter((entry) -> PyVirtualEnvReader.Companion.getVirtualEnvVars().contains(entry.getKey())
-          ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+    Sdk sdk = PythonSdkType.findSdkByPath(sdkHome);
+    if (Registry.is("python.activate.virtualenv.on.run") && sdk != null &&
+        (PythonSdkType.isVirtualEnv(sdkHome) || PythonSdkType.isCondaVirtualEnv(sdk))) {
 
-          for (Map.Entry<String, String> e : myConfig.getEnvs().entrySet()) {
-            if ("PATH".equals(e.getKey())) {
-              env.put(e.getKey(), PythonEnvUtil.appendToPathEnvVar(env.get("PATH"), e.getValue()));
-            }
-            else {
-              env.put(e.getKey(), e.getValue());
-            }
+      Map<String, String> environment = sdk.getUserData(PythonSdkType.ENVIRONMENT_KEY);
+
+      if (environment == null) {
+        environment = PythonSdkType.activateVirtualEnv(sdkHome);
+
+        sdk.putUserData(PythonSdkType.ENVIRONMENT_KEY, environment);
+      }
+
+      env.putAll(environment);
+
+      for (Map.Entry<String, String> e : myConfig.getEnvs().entrySet()) {
+        if (environment.containsKey(e.getKey())) {
+          if ("PATH".equals(e.getKey())) {
+            env.put(e.getKey(), PythonEnvUtil.appendToPathEnvVar(env.get("PATH"), e.getValue()));
           }
-        }
-        catch (Exception e) {
-          LOG.error("Couldn't read virtualenv variables", e);
+          else {
+            env.put(e.getKey(), e.getValue());
+          }
         }
       }
     }
@@ -378,7 +399,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
   private static void buildPythonPath(Project project, GeneralCommandLine commandLine, PythonRunParams config, boolean isDebug) {
     Sdk pythonSdk = PythonSdkType.findSdkByPath(config.getSdkHome());
     if (pythonSdk != null) {
-      List<String> pathList = Lists.newArrayList(getAddedPaths(pythonSdk));
+      List<String> pathList = Lists.newArrayList();
+      pathList.addAll(getAddedPaths(pythonSdk));
       pathList.addAll(collectPythonPath(project, config, isDebug));
       initPythonPath(commandLine, config.isPassParentEnvs(), pathList, config.getSdkHome());
     }
@@ -433,10 +455,11 @@ public abstract class PythonCommandLineState extends CommandLineState {
     }
   }
 
-  protected static Collection<String> collectPythonPath(Project project, PythonRunParams config, boolean isDebug) {
+  @VisibleForTesting
+  public static Collection<String> collectPythonPath(Project project, PythonRunParams config, boolean isDebug) {
     final Module module = getModule(project, config);
     final HashSet<String> pythonPath =
-      Sets.newHashSet(collectPythonPath(module, config.shouldAddContentRoots(), config.shouldAddSourceRoots()));
+      Sets.newLinkedHashSet(collectPythonPath(module, config.shouldAddContentRoots(), config.shouldAddSourceRoots()));
 
     if (isDebug && PythonSdkFlavor.getFlavor(config.getSdkHome()) instanceof JythonSdkFlavor) {
       //that fixes Jython problem changing sys.argv on execfile, see PY-8164

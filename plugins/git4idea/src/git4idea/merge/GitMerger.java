@@ -17,15 +17,14 @@ package git4idea.merge;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchUtil;
+import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitSimpleHandler;
-import git4idea.repo.GitRepository;
+import git4idea.commands.GitLineHandler;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,12 +47,8 @@ public class GitMerger {
 
   @NotNull
   public Collection<VirtualFile> getMergingRoots() {
-    return getRootsFromRepositories(filter(myRepositoryManager.getRepositories(), new Condition<GitRepository>() {
-      @Override
-      public boolean value(GitRepository repository) {
-        return repository.getState() == Repository.State.MERGING;
-      }
-    }));
+    return getRootsFromRepositories(filter(myRepositoryManager.getRepositories(),
+                                           repository -> repository.getState() == Repository.State.MERGING));
   }
 
   public void mergeCommit(@NotNull Collection<VirtualFile> roots) throws VcsException {
@@ -63,7 +58,7 @@ public class GitMerger {
   }
 
   public void mergeCommit(@NotNull VirtualFile root) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(myProject, root, GitCommand.COMMIT);
+    GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.COMMIT);
     handler.setStdoutSuppressed(false);
 
     File messageFile = assertNotNull(myRepositoryManager.getRepositoryForRoot(root)).getRepositoryFiles().getMergeMessageFile();
@@ -75,7 +70,7 @@ public class GitMerger {
       handler.addParameters("-F", messageFile.getAbsolutePath());
     }
     handler.endOptions();
-    handler.run();
+    Git.getInstance().runCommand(handler).getOutputOrThrow();
   }
 
 }

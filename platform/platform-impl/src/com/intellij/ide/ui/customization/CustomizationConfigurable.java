@@ -21,14 +21,9 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * User: anna
- * Date: Mar 17, 2005
- */
 public class CustomizationConfigurable extends BaseConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private CustomizableActionsPanel myPanel;
 
@@ -43,6 +38,7 @@ public class CustomizationConfigurable extends BaseConfigurable implements Searc
     return IdeBundle.message("title.customizations");
   }
 
+  @Override
   public String getHelpTopic() {
     return "preferences.customizations";
   }
@@ -57,9 +53,6 @@ public class CustomizationConfigurable extends BaseConfigurable implements Searc
 
   public boolean isModified() {
     return myPanel.isModified();
-  }
-
-  public void disposeUIResources() {
   }
 
   @NotNull

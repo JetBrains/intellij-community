@@ -44,10 +44,11 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.sun.jdi.*;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
@@ -70,13 +71,9 @@ public class SourceCodeChecker {
       return;
     }
     suspendContext.getDebugProcess().getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
-      @Override
-      public Priority getPriority() {
-        return Priority.LOW;
-      }
 
       @Override
-      public void contextAction() throws Exception {
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
         try {
           StackFrameProxyImpl frameProxy = debuggerContext.getFrameProxy();
           if (frameProxy == null) {
@@ -149,7 +146,7 @@ public class SourceCodeChecker {
                                                                                 DebuggerBundle.message("warning.source.code.not.match")));
           }
           else {
-            XDebugSessionImpl.NOTIFICATION_GROUP
+            XDebuggerManagerImpl.NOTIFICATION_GROUP
               .createNotification(DebuggerBundle.message("warning.source.code.not.match"), NotificationType.WARNING)
               .notify(project);
           }

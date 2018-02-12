@@ -27,10 +27,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
-* User: anna
-* Date: 11/8/11
-*/
 public class StartMarkAction extends BasicUndoableAction {
   private static final Map<Project, StartMarkAction> ourCurrentMarks = new HashMap<>();
   private String myCommandName;
@@ -105,7 +101,7 @@ public class StartMarkAction extends BasicUndoableAction {
 
   public static class AlreadyStartedException extends Exception {
     private final DocumentReference[] myAffectedDocuments;
-    private Document myDocument;
+    private final Document myDocument;
 
     public AlreadyStartedException(String commandName,
                                    Document document,

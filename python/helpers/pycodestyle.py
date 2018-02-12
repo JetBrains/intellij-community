@@ -48,33 +48,35 @@ W warnings
 """
 from __future__ import with_statement
 
-import os
-import sys
-import re
-import time
 import inspect
 import keyword
+import os
+import re
+import sys
+import time
 import tokenize
 import warnings
-from optparse import OptionParser
+
 from fnmatch import fnmatch
+from optparse import OptionParser
+
 try:
     from configparser import RawConfigParser
     from io import TextIOWrapper
 except ImportError:
     from ConfigParser import RawConfigParser
 
-__version__ = '2.0.0'
+__version__ = '2.3.1'
 
 DEFAULT_EXCLUDE = '.svn,CVS,.bzr,.hg,.git,__pycache__,.tox'
 DEFAULT_IGNORE = 'E121,E123,E126,E226,E24,E704,W503'
 try:
     if sys.platform == 'win32':
-        USER_CONFIG = os.path.expanduser(r'~\.pep8')
+        USER_CONFIG = os.path.expanduser(r'~\.pycodestyle')
     else:
         USER_CONFIG = os.path.join(
             os.getenv('XDG_CONFIG_HOME') or os.path.expanduser('~/.config'),
-            'pep8'
+            'pycodestyle'
         )
 except ImportError:
     USER_CONFIG = None
@@ -119,6 +121,20 @@ KEYWORD_REGEX = re.compile(r'(\s*)\b(?:%s)\b(\s*)' % r'|'.join(KEYWORDS))
 OPERATOR_REGEX = re.compile(r'(?:[^,\s])(\s*)(?:[-+*/|!<=>%&^]+)(\s*)')
 LAMBDA_REGEX = re.compile(r'\blambda\b')
 HUNK_REGEX = re.compile(r'^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@.*$')
+STARTSWITH_DEF_REGEX = re.compile(r'^(async\s+def|def)')
+STARTSWITH_TOP_LEVEL_REGEX = re.compile(r'^(async\s+def\s+|def\s+|class\s+|@)')
+STARTSWITH_INDENT_STATEMENT_REGEX = re.compile(
+    r'^\s*({0})'.format('|'.join(s.replace(' ', '\s+') for s in (
+        'def', 'async def',
+        'for', 'async for',
+        'if', 'elif', 'else',
+        'try', 'except', 'finally',
+        'with', 'async with',
+        'class',
+        'while',
+    )))
+)
+DUNDER_REGEX = re.compile(r'^__([^\s]+)__ = ')
 
 # Work around Python < 2.6 behaviour, which does not generate NL after
 # a comment which is on a line by itself.
@@ -197,7 +213,7 @@ def trailing_blank_lines(physical_line, lines, line_number, total_lines):
             return len(physical_line), "W292 no newline at end of file"
 
 
-def maximum_line_length(physical_line, max_line_length, multiline):
+def maximum_line_length(physical_line, max_line_length, multiline, noqa):
     r"""Limit all lines to a maximum of 79 characters.
 
     There are still many devices around that are limited to 80 character
@@ -211,7 +227,7 @@ def maximum_line_length(physical_line, max_line_length, multiline):
     """
     line = physical_line.rstrip()
     length = len(line)
-    if length > max_line_length and not noqa(line):
+    if length > max_line_length and not noqa:
         # Special case for long URLs in multi-line docstrings or comments,
         # but still report the error when the 72 first chars are whitespaces.
         chunks = line.split()
@@ -236,7 +252,9 @@ def maximum_line_length(physical_line, max_line_length, multiline):
 
 
 def blank_lines(logical_line, blank_lines, indent_level, line_number,
-                blank_before, previous_logical, previous_indent_level):
+                blank_before, previous_logical,
+                previous_unindented_logical_line, previous_indent_level,
+                lines):
     r"""Separate top-level function and class definitions with two blank lines.
 
     Method definitions inside a class are separated by a single blank line.
@@ -248,13 +266,19 @@ def blank_lines(logical_line, blank_lines, indent_level, line_number,
     Use blank lines in functions, sparingly, to indicate logical sections.
 
     Okay: def a():\n    pass\n\n\ndef b():\n    pass
+    Okay: def a():\n    pass\n\n\nasync def b():\n    pass
     Okay: def a():\n    pass\n\n\n# Foo\n# Bar\n\ndef b():\n    pass
+    Okay: default = 1\nfoo = 1
+    Okay: classify = 1\nfoo = 1
 
     E301: class Foo:\n    b = 0\n    def bar():\n        pass
     E302: def a():\n    pass\n\ndef b(n):\n    pass
+    E302: def a():\n    pass\n\nasync def b(n):\n    pass
     E303: def a():\n    pass\n\n\n\ndef b(n):\n    pass
     E303: def a():\n\n\n\n    pass
     E304: @decorator\n\ndef a():\n    pass
+    E305: def a():\n    pass\na()
+    E306: def a():\n    def b():\n        pass\n    def c():\n        pass
     """
     if line_number < 3 and not previous_logical:
         return  # Don't expect blank lines before the first line
@@ -263,13 +287,30 @@ def blank_lines(logical_line, blank_lines, indent_level, line_number,
             yield 0, "E304 blank lines found after function decorator"
     elif blank_lines > 2 or (indent_level and blank_lines == 2):
         yield 0, "E303 too many blank lines (%d)" % blank_lines
-    elif logical_line.startswith(('def ', 'class ', '@')):
+    elif STARTSWITH_TOP_LEVEL_REGEX.match(logical_line):
         if indent_level:
             if not (blank_before or previous_indent_level < indent_level or
                     DOCSTRING_REGEX.match(previous_logical)):
-                yield 0, "E301 expected 1 blank line, found 0"
+                ancestor_level = indent_level
+                nested = False
+                # Search backwards for a def ancestor or tree root (top level).
+                for line in lines[line_number - 2::-1]:
+                    if line.strip() and expand_indent(line) < ancestor_level:
+                        ancestor_level = expand_indent(line)
+                        nested = line.lstrip().startswith('def ')
+                        if nested or ancestor_level == 0:
+                            break
+                if nested:
+                    yield 0, "E306 expected 1 blank line before a " \
+                        "nested definition, found 0"
+                else:
+                    yield 0, "E301 expected 1 blank line, found 0"
         elif blank_before != 2:
             yield 0, "E302 expected 2 blank lines, found %d" % blank_before
+    elif (logical_line and not indent_level and blank_before != 2 and
+          previous_unindented_logical_line.startswith(('def ', 'class '))):
+        yield 0, "E305 expected 2 blank lines after " \
+            "class or function definition, found %d" % blank_before
 
 
 def extraneous_whitespace(logical_line):
@@ -787,7 +828,7 @@ def whitespace_around_named_parameter_equals(logical_line, tokens):
     no_space = False
     prev_end = None
     annotated_func_arg = False
-    in_def = logical_line.startswith(('def', 'async def'))
+    in_def = bool(STARTSWITH_DEF_REGEX.match(logical_line))
     message = "E251 unexpected spaces around keyword / parameter equals"
     for token_type, text, start, end, line in tokens:
         if token_type == tokenize.NL:
@@ -886,8 +927,10 @@ def module_imports_on_top_of_file(
     Okay: # this is a comment\nimport os
     Okay: '''this is a module docstring'''\nimport os
     Okay: r'''this is a module docstring'''\nimport os
-    Okay: try:\n    import x\nexcept:\n    pass\nelse:\n    pass\nimport y
-    Okay: try:\n    import x\nexcept:\n    pass\nfinally:\n    pass\nimport y
+    Okay:
+    try:\n\timport x\nexcept ImportError:\n\tpass\nelse:\n\tpass\nimport y
+    Okay:
+    try:\n\timport x\nexcept ImportError:\n\tpass\nfinally:\n\tpass\nimport y
     E402: a=1\nimport os
     E402: 'One string'\n"Two string"\nimport os
     E402: a=1\nfrom sys import x
@@ -913,6 +956,8 @@ def module_imports_on_top_of_file(
     if line.startswith('import ') or line.startswith('from '):
         if checker_state.get('seen_non_imports', False):
             yield 0, "E402 module level import not at top of file"
+    elif re.match(DUNDER_REGEX, line):
+        return
     elif any(line.startswith(kw) for kw in allowed_try_keywords):
         # Allow try, except, else, finally keywords intermixed with imports in
         # order to support conditional importing
@@ -958,22 +1003,25 @@ def compound_statements(logical_line):
     line = logical_line
     last_char = len(line) - 1
     found = line.find(':')
+    prev_found = 0
+    counts = dict((char, 0) for char in '{}[]()')
     while -1 < found < last_char:
-        before = line[:found]
-        if ((before.count('{') <= before.count('}') and   # {'a': 1} (dict)
-             before.count('[') <= before.count(']') and   # [1:2] (slice)
-             before.count('(') <= before.count(')'))):    # (annotation)
-            lambda_kw = LAMBDA_REGEX.search(before)
+        update_counts(line[prev_found:found], counts)
+        if ((counts['{'] <= counts['}'] and   # {'a': 1} (dict)
+             counts['['] <= counts[']'] and   # [1:2] (slice)
+             counts['('] <= counts[')'])):    # (annotation)
+            lambda_kw = LAMBDA_REGEX.search(line, 0, found)
             if lambda_kw:
                 before = line[:lambda_kw.start()].rstrip()
                 if before[-1:] == '=' and isidentifier(before[:-1].strip()):
                     yield 0, ("E731 do not assign a lambda expression, use a "
                               "def")
                 break
-            if before.startswith('def '):
+            if STARTSWITH_DEF_REGEX.match(line):
                 yield 0, "E704 multiple statements on one line (def)"
-            else:
+            elif STARTSWITH_INDENT_STATEMENT_REGEX.match(line):
                 yield found, "E701 multiple statements on one line (colon)"
+        prev_found = found
         found = line.find(':', found + 1)
     found = line.find(';')
     while -1 < found:
@@ -1150,6 +1198,74 @@ def comparison_type(logical_line, noqa):
         yield match.start(), "E721 do not compare types, use 'isinstance()'"
 
 
+def bare_except(logical_line, noqa):
+    r"""When catching exceptions, mention specific exceptions whenever possible.
+
+    Okay: except Exception:
+    Okay: except BaseException:
+    E722: except:
+    """
+    if noqa:
+        return
+
+    regex = re.compile(r"except\s*:")
+    match = regex.match(logical_line)
+    if match:
+        yield match.start(), "E722 do not use bare except'"
+
+
+def ambiguous_identifier(logical_line, tokens):
+    r"""Never use the characters 'l', 'O', or 'I' as variable names.
+
+    In some fonts, these characters are indistinguishable from the numerals
+    one and zero. When tempted to use 'l', use 'L' instead.
+
+    Okay: L = 0
+    Okay: o = 123
+    Okay: i = 42
+    E741: l = 0
+    E741: O = 123
+    E741: I = 42
+
+    Variables can be bound in several other contexts, including class and
+    function definitions, 'global' and 'nonlocal' statements, exception
+    handlers, and 'with' statements.
+
+    Okay: except AttributeError as o:
+    Okay: with lock as L:
+    E741: except AttributeError as O:
+    E741: with lock as l:
+    E741: global I
+    E741: nonlocal l
+    E742: class I(object):
+    E743: def l(x):
+    """
+    idents_to_avoid = ('l', 'O', 'I')
+    prev_type, prev_text, prev_start, prev_end, __ = tokens[0]
+    for token_type, text, start, end, line in tokens[1:]:
+        ident = pos = None
+        # identifiers on the lhs of an assignment operator
+        if token_type == tokenize.OP and '=' in text:
+            if prev_text in idents_to_avoid:
+                ident = prev_text
+                pos = prev_start
+        # identifiers bound to a value with 'as', 'global', or 'nonlocal'
+        if prev_text in ('as', 'global', 'nonlocal'):
+            if text in idents_to_avoid:
+                ident = text
+                pos = start
+        if prev_text == 'class':
+            if text in idents_to_avoid:
+                yield start, "E742 ambiguous class definition '%s'" % text
+        if prev_text == 'def':
+            if text in idents_to_avoid:
+                yield start, "E743 ambiguous function definition '%s'" % text
+        if ident:
+            yield pos, "E741 ambiguous variable name '%s'" % ident
+        prev_text = text
+        prev_start = start
+
+
 def python_3000_has_key(logical_line, noqa):
     r"""The {}.has_key() method is removed in Python 3: use the 'in' operator.
 
@@ -1219,7 +1335,7 @@ else:
             with open(filename, 'rb') as f:
                 (coding, lines) = tokenize.detect_encoding(f.readline)
                 f = TextIOWrapper(f, coding, line_buffering=True)
-                return [l.decode(coding) for l in lines] + f.readlines()
+                return [line.decode(coding) for line in lines] + f.readlines()
         except (LookupError, SyntaxError, UnicodeError):
             # Fall back if file encoding is improperly declared
             with open(filename, encoding='latin-1') as f:
@@ -1333,8 +1449,18 @@ def filename_match(filename, patterns, default=True):
     return any(fnmatch(filename, pattern) for pattern in patterns)
 
 
+def update_counts(s, counts):
+    r"""Adds one to the counts of each appearance of characters in s,
+        for characters in counts"""
+    for char in s:
+        if char in counts:
+            counts[char] += 1
+
+
 def _is_eol_token(token):
     return token[0] in NEWLINE or token[4][token[3][1]:].lstrip() == '\\\n'
+
+
 if COMMENT_WITH_NL:
     def _is_eol_token(token, _eol_token=_is_eol_token):
         return _eol_token(token) or (token[0] == tokenize.COMMENT and
@@ -1384,6 +1510,8 @@ def init_checks_registry():
     mod = inspect.getmodule(register_check)
     for (name, function) in inspect.getmembers(mod, inspect.isfunction):
         register_check(function)
+
+
 init_checks_registry()
 
 
@@ -1431,6 +1559,7 @@ class Checker(object):
                     self.lines[0] = self.lines[0][3:]
         self.report = report or options.report
         self.report_error = self.report.error
+        self.noqa = False
 
     def report_invalid_syntax(self):
         """Check if the syntax is valid."""
@@ -1541,6 +1670,8 @@ class Checker(object):
         if self.logical_line:
             self.previous_indent_level = self.indent_level
             self.previous_logical = self.logical_line
+            if not self.indent_level:
+                self.previous_unindented_logical_line = self.logical_line
         self.blank_lines = 0
         self.tokens = []
 
@@ -1565,6 +1696,7 @@ class Checker(object):
             for token in tokengen:
                 if token[2][0] > self.total_lines:
                     return
+                self.noqa = token[4] and noqa(token[4])
                 self.maybe_check_physical(token)
                 yield token
         except (SyntaxError, tokenize.TokenError):
@@ -1610,6 +1742,7 @@ class Checker(object):
         self.indent_char = None
         self.indent_level = self.previous_indent_level = 0
         self.previous_logical = ''
+        self.previous_unindented_logical_line = ''
         self.tokens = []
         self.blank_lines = self.blank_before = 0
         parens = 0
@@ -1952,7 +2085,7 @@ class StyleGuide(object):
         return sorted(checks)
 
 
-def get_parser(prog='pep8', version=__version__):
+def get_parser(prog='pycodestyle', version=__version__):
     """Create the parser for the program."""
     parser = OptionParser(prog=prog, version=version,
                           usage="%prog [options] input ...")
@@ -2020,7 +2153,7 @@ def read_config(options, args, arglist, parser):
     If a config file is specified on the command line with the "--config"
     option, then only it is used for configuration.
 
-    Otherwise, the user configuration (~/.config/pep8) and any local
+    Otherwise, the user configuration (~/.config/pycodestyle) and any local
     configurations in the current directory or above will be merged together
     (in that order) using the read method of ConfigParser.
     """
@@ -2049,8 +2182,14 @@ def read_config(options, args, arglist, parser):
             print('cli configuration: %s' % cli_conf)
         config.read(cli_conf)
 
-    pep8_section = parser.prog
-    if config.has_section(pep8_section):
+    pycodestyle_section = None
+    if config.has_section(parser.prog):
+        pycodestyle_section = parser.prog
+    elif config.has_section('pep8'):
+        pycodestyle_section = 'pep8'  # Deprecated
+        warnings.warn('[pep8] section is deprecated. Use [pycodestyle].')
+
+    if pycodestyle_section:
         option_list = dict([(o.dest, o.type or o.action)
                             for o in parser.option_list])
 
@@ -2058,23 +2197,23 @@ def read_config(options, args, arglist, parser):
         (new_options, __) = parser.parse_args([])
 
         # Second, parse the configuration
-        for opt in config.options(pep8_section):
+        for opt in config.options(pycodestyle_section):
             if opt.replace('_', '-') not in parser.config_options:
                 print("  unknown option '%s' ignored" % opt)
                 continue
             if options.verbose > 1:
-                print("  %s = %s" % (opt, config.get(pep8_section, opt)))
+                print("  %s = %s" % (opt,
+                                     config.get(pycodestyle_section, opt)))
             normalized_opt = opt.replace('-', '_')
             opt_type = option_list[normalized_opt]
             if opt_type in ('int', 'count'):
-                value = config.getint(pep8_section, opt)
-            elif opt_type == 'string':
-                value = config.get(pep8_section, opt)
+                value = config.getint(pycodestyle_section, opt)
+            elif opt_type in ('store_true', 'store_false'):
+                value = config.getboolean(pycodestyle_section, opt)
+            else:
+                value = config.get(pycodestyle_section, opt)
                 if normalized_opt == 'exclude':
                     value = normalize_paths(value, local_dir)
-            else:
-                assert opt_type in ('store_true', 'store_false')
-                value = config.getboolean(pep8_section, opt)
             setattr(new_options, normalized_opt, value)
 
         # Third, overwrite with the command-line options
@@ -2088,7 +2227,7 @@ def process_options(arglist=None, parse_argv=False, config_file=None,
     """Process options passed either via arglist or via command line args.
 
     Passing in the ``config_file`` parameter allows other tools, such as flake8
-    to specify their own options to be processed in pep8.
+    to specify their own options to be processed in pycodestyle.
     """
     if not parser:
         parser = get_parser()

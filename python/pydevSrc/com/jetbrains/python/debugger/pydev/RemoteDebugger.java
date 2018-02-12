@@ -7,11 +7,13 @@ package com.jetbrains.python.debugger.pydev;
 
 import com.google.common.collect.Maps;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
@@ -26,6 +28,8 @@ import java.net.ServerSocket;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static com.jetbrains.python.debugger.pydev.transport.BaseDebuggerTransport.logFrame;
 
@@ -48,7 +52,7 @@ public class RemoteDebugger implements ProcessDebugger {
   private final Map<Integer, ProtocolFrame> myResponseQueue = new HashMap<>();
   private final TempVarsHolder myTempVars = new TempVarsHolder();
 
-  private Map<Pair<String, Integer>, String> myTempBreakpoints = Maps.newHashMap();
+  private final Map<Pair<String, Integer>, String> myTempBreakpoints = Maps.newHashMap();
 
 
   private final List<RemoteDebuggerCloseListener> myCloseListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -201,6 +205,13 @@ public class RemoteDebugger implements ProcessDebugger {
     return command.getNewValue();
   }
 
+  public void loadFullVariableValues(@NotNull String threadId,
+                                     @NotNull String frameId,
+                                     @NotNull List<PyFrameAccessor.PyAsyncValue<String>> vars) throws PyDebuggerException {
+    final LoadFullValueCommand command = new LoadFullValueCommand(this, threadId, frameId, vars);
+    command.execute();
+  }
+
   @Override
   @Nullable
   public String loadSource(String path) {
@@ -259,8 +270,9 @@ public class RemoteDebugger implements ProcessDebugger {
       if (frameVars == null || frameVars.size() == 0) continue;
 
       final String expression = "del " + StringUtil.join(frameVars, ",");
+      final String wrappedExpression = String.format("try:\n    %s\nexcept:\n    pass", expression);
       try {
-        evaluate(threadId, entry.getKey(), expression, true);
+        evaluate(threadId, entry.getKey(), wrappedExpression, true);
       }
       catch (PyDebuggerException e) {
         LOG.error(e);
@@ -303,33 +315,60 @@ public class RemoteDebugger implements ProcessDebugger {
     long until = System.currentTimeMillis() + RESPONSE_TIMEOUT;
 
     synchronized (myResponseQueue) {
+      boolean interrupted = false;
       do {
         try {
           myResponseQueue.wait(1000);
         }
-        catch (InterruptedException ignore) {
+        catch (InterruptedException e) {
+          // restore interrupted flag
+          Thread.currentThread().interrupt();
+
+          interrupted = true;
         }
         response = myResponseQueue.get(sequence);
       }
-      while (response == null && isConnected() && System.currentTimeMillis() < until);
+      while (response == null && shouldWaitForResponse() && !interrupted && System.currentTimeMillis() < until);
       myResponseQueue.remove(sequence);
     }
 
     return response;
   }
 
+  private boolean shouldWaitForResponse() {
+    return myDebuggerTransport.isConnecting() || myDebuggerTransport.isConnected();
+  }
+
   @Override
   public void execute(@NotNull final AbstractCommand command) {
-    if (command instanceof ResumeOrStepCommand) {
-      final String threadId = ((ResumeOrStepCommand)command).getThreadId();
-      clearTempVariables(threadId);
-    }
+    CountDownLatch myLatch = new CountDownLatch(1);
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      if (command instanceof ResumeOrStepCommand) {
+        final String threadId = ((ResumeOrStepCommand)command).getThreadId();
+        clearTempVariables(threadId);
+      }
 
-    try {
-      command.execute();
-    }
-    catch (PyDebuggerException e) {
-      LOG.error(e);
+      try {
+        command.execute();
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+      finally {
+        myLatch.countDown();
+      }
+    });
+    if (command.isResponseExpected()) {
+      // Note: do not wait for result from UI thread
+      try {
+        myLatch.await(RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
+      }
+      catch (InterruptedException e) {
+        // restore interrupted flag
+        Thread.currentThread().interrupt();
+
+        LOG.error(e);
+      }
     }
   }
 
@@ -382,10 +421,33 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
+  public void setNextStatement(@NotNull String threadId,
+                               @NotNull XSourcePosition sourcePosition,
+                               @Nullable String functionName,
+                               @NotNull PyDebugCallback<Pair<Boolean, String>> callback) {
+    final SetNextStatementCommand command = new SetNextStatementCommand(this, threadId, sourcePosition, functionName, callback);
+    try {
+      command.execute();
+    }
+    catch (PyDebuggerException e) {
+      if (isConnected()) {
+        LOG.error(e);
+      }
+    }
+  }
+
+  @Override
   public void setTempBreakpoint(@NotNull String type, @NotNull String file, int line) {
     final SetBreakpointCommand command =
       new SetBreakpointCommand(this, type, file, line);
-    execute(command);  // set temp. breakpoint
+    try {
+      command.execute();
+    }
+    catch (PyDebuggerException e) {
+      if (isConnected()) {
+        LOG.error(e);
+      }
+    }
     myTempBreakpoints.put(Pair.create(file, line), type);
   }
 
@@ -397,7 +459,7 @@ public class RemoteDebugger implements ProcessDebugger {
       execute(command);  // remove temp. breakpoint
     }
     else {
-      LOG.error("Temp breakpoint not found for " + file + ":" + line);
+      LOG.warn("Temp breakpoint not found for " + file + ":" + line);
     }
   }
 
@@ -458,6 +520,9 @@ public class RemoteDebugger implements ProcessDebugger {
       }
       else if (ProcessCreatedCommand.isProcessCreatedCommand(frame.getCommand())) {
         onProcessCreatedEvent();
+      }
+      else if (AbstractCommand.isShowWarningCommand(frame.getCommand())) {
+        myDebugProcess.showCythonWarning();
       }
       else {
         placeResponse(frame.getSequence(), frame);
@@ -643,7 +708,7 @@ public class RemoteDebugger implements ProcessDebugger {
     }
   }
 
-  protected void onProcessCreatedEvent() throws PyDebuggerException {
+  protected void onProcessCreatedEvent() {
   }
 
   protected void fireCloseEvent() {

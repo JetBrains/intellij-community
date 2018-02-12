@@ -22,7 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
@@ -112,6 +112,10 @@ class PyTypeCheckerInspectionProblemRegistrar {
                                                                                         argumentResult.getExpectedTypeAfterSubstitution(),
                                                                                         context);
 
+    if (PyProtocolsKt.matchingProtocolDefinitions(expectedType, actualType, context)) {
+      return "Only concrete class can be used where " + expectedTypeRepresentation + " protocol is expected";
+    }
+
     return String.format("Expected type %s, got '%s' instead", expectedTypeRepresentation, actualTypeName);
   }
 
@@ -126,7 +130,7 @@ class PyTypeCheckerInspectionProblemRegistrar {
                                                                     @NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults,
                                                                     @NotNull TypeEvalContext context) {
     final Predicate<PyTypeCheckerInspection.AnalyzeCalleeResults> isRightOperatorResults =
-      calleeResults -> PyNames.isRightOperatorName(calleeResults.getCallable().getName());
+      calleeResults -> binaryExpression.isRightOperator(calleeResults.getCallable());
 
     final boolean allCalleesAreRightOperators = calleesResults.stream().allMatch(isRightOperatorResults);
 

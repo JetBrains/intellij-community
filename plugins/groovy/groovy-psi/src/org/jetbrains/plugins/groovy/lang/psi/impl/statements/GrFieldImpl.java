@@ -52,10 +52,6 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.Map;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 25.05.2007
- */
 public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrField, StubBasedPsiElement<GrFieldStub> {
 
   public GrFieldImpl(@NotNull ASTNode node) {

@@ -48,10 +48,6 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 3/15/11
- */
 public abstract class InplaceVariableIntroducer<E extends PsiElement> extends InplaceRefactoring {
  
 
@@ -155,7 +151,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
   }
 
   @Override
-  protected void collectAdditionalElementsToRename(List<Pair<PsiElement, TextRange>> stringUsages) {
+  protected void collectAdditionalElementsToRename(@NotNull List<Pair<PsiElement, TextRange>> stringUsages) {
   }
 
   @Override

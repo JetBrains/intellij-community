@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,13 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -87,20 +87,16 @@ public class ArrayHashCodeInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor){
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       final PsiElement grandParent = parent.getParent();
       if (!(grandParent instanceof PsiMethodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)grandParent;
-      final PsiReferenceExpression methodExpression =
-        methodCallExpression.getMethodExpression();
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier == null) {
         return;
       }
@@ -111,10 +107,10 @@ public class ArrayHashCodeInspection extends BaseInspection {
       else {
         newExpressionText.append("java.util.Arrays.hashCode(");
       }
-      newExpressionText.append(qualifier.getText());
+      CommentTracker commentTracker = new CommentTracker();
+      newExpressionText.append(commentTracker.text(qualifier));
       newExpressionText.append(')');
-      PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression,
-                                                     newExpressionText.toString());
+      PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, newExpressionText.toString(), commentTracker);
     }
   }
 
@@ -129,8 +125,7 @@ public class ArrayHashCodeInspection extends BaseInspection {
     public void visitMethodCallExpression(
       PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final String methodName = methodExpression.getReferenceName();
       if (!HardcodedMethodConstants.HASH_CODE.equals(methodName)) {
         return;
@@ -140,8 +135,7 @@ public class ArrayHashCodeInspection extends BaseInspection {
       if (arguments.length != 0) {
         return;
       }
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier == null) {
         return;
       }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.memory.component.InstancesTracker;
@@ -48,7 +34,12 @@ import javax.swing.border.Border;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ClassesTable extends JBTable implements DataProvider, Disposable {
@@ -59,6 +50,8 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     DataKey.create("ClassesTable.ReferenceCountProvider");
 
   private static final Border EMPTY_BORDER = BorderFactory.createEmptyBorder();
+  private static final JBColor CLICKABLE_COLOR = new JBColor(new Color(250, 251, 252), new Color(62, 66, 69));
+  private static final String DEFAULT_EMPTY_TEXT = "Nothing to show";
 
   private static final int CLASSES_COLUMN_PREFERRED_WIDTH = 250;
   private static final int COUNT_COLUMN_MIN_WIDTH = 80;
@@ -79,6 +72,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   private volatile List<ReferenceType> myItems = Collections.unmodifiableList(new ArrayList<>());
   private boolean myIsShowCounts = true;
+  private MouseListener myMouseListener = null;
 
   public ClassesTable(@NotNull InstancesTracker tracker, @NotNull ClassesFilteredView parent, boolean onlyWithDiff,
                       boolean onlyWithInstances,
@@ -184,6 +178,55 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     return null;
   }
 
+  boolean isInClickableMode() {
+    return myMouseListener != null;
+  }
+
+  void makeClickable(@NotNull String text, @NotNull Runnable onClick) {
+    releaseMouseListener();
+    getEmptyText().setText(text);
+
+    if (!ApplicationManager.getApplication().isUnitTestMode() && getMousePosition() != null) {
+      setBackground(CLICKABLE_COLOR);
+    }
+
+    myMouseListener = new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        onClick.run();
+        releaseMouseListener();
+      }
+
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        setBackground(CLICKABLE_COLOR);
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        setBackground(JBColor.background());
+      }
+    };
+
+    addMouseListener(myMouseListener);
+    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+  }
+
+  void exitClickableMode() {
+    releaseMouseListener();
+    getEmptyText().setText(DEFAULT_EMPTY_TEXT);
+  }
+
+  private void releaseMouseListener() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (isInClickableMode()) {
+      removeMouseListener(myMouseListener);
+      myMouseListener = null;
+      setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+      setBackground(JBColor.background());
+    }
+  }
+
   void setBusy(boolean value) {
     setPaintBusy(value);
   }
@@ -192,7 +235,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     if (!myFilteringPattern.equals(pattern)) {
       myFilteringPattern = pattern;
       myMatcher = NameUtil.buildMatcher("*" + pattern).build();
-      getRowSorter().allRowsChanged();
+      fireTableDataChanged();
       if (getSelectedClass() == null && getRowCount() > 0) {
         getSelectionModel().setSelectionInterval(0, 0);
       }
@@ -202,21 +245,21 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   void setFilteringByInstanceExists(boolean value) {
     if (value != myOnlyWithInstances) {
       myOnlyWithInstances = value;
-      getRowSorter().allRowsChanged();
+      fireTableDataChanged();
     }
   }
 
   void setFilteringByDiffNonZero(boolean value) {
     if (myOnlyWithDiff != value) {
       myOnlyWithDiff = value;
-      getRowSorter().allRowsChanged();
+      fireTableDataChanged();
     }
   }
 
   void setFilteringByTrackingState(boolean value) {
     if (myOnlyTracked != value) {
       myOnlyTracked = value;
-      getRowSorter().allRowsChanged();
+      fireTableDataChanged();
     }
   }
 
@@ -232,7 +275,10 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     updateCountsInternal(class2Count);
   }
 
-  void hideContent() {
+  void hideContent(@NotNull String emptyText) {
+    releaseMouseListener();
+    getEmptyText().setText(emptyText);
+
     myModel.hide();
   }
 
@@ -241,7 +287,10 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   }
 
   private void updateCountsInternal(@NotNull Map<ReferenceType, Long> class2Count) {
-    final ReferenceType selectedClass = myModel.getSelectedClassBeforeHided();
+    releaseMouseListener();
+    getEmptyText().setText(DEFAULT_EMPTY_TEXT);
+
+    final ReferenceType selectedClass = myModel.getSelectedClassBeforeHide();
     int newSelectedIndex = -1;
     final boolean isInitialized = !myItems.isEmpty();
     myItems = Collections.unmodifiableList(new ArrayList<>(class2Count.keySet()));
@@ -262,13 +311,13 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
     showContent();
 
-    if (newSelectedIndex != -1 && !myModel.isHided()) {
+    if (newSelectedIndex != -1 && !myModel.isHidden()) {
       final int ix = convertRowIndexToView(newSelectedIndex);
       changeSelection(ix,
                       DiffViewTableModel.CLASSNAME_COLUMN_INDEX, false, false);
     }
 
-    getRowSorter().allRowsChanged();
+    fireTableDataChanged();
   }
 
   @Nullable
@@ -295,18 +344,19 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     return null;
   }
 
-  public void clean() {
-    if (!myItems.isEmpty()) {
-      clearSelection();
-      myItems = Collections.emptyList();
-      myCounts.clear();
-      getRowSorter().allRowsChanged();
-    }
+  public void clean(@NotNull String emptyText) {
+    clearSelection();
+    releaseMouseListener();
+    getEmptyText().setText(emptyText);
+    myItems = Collections.emptyList();
+    myCounts.clear();
+    myModel.mySelectedClassWhenHidden = null;
+    fireTableDataChanged();
   }
 
   @Override
   public void dispose() {
-    ApplicationManager.getApplication().invokeLater(this::clean);
+    ApplicationManager.getApplication().invokeLater(() -> clean(""));
   }
 
   @Nullable
@@ -315,6 +365,9 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     return myInstancesTracker.getTrackingType(ref.name());
   }
 
+  private void fireTableDataChanged() {
+    myModel.fireTableDataChanged();
+  }
 
   class DiffViewTableModel extends AbstractTableModelWithColumns {
     final static int CLASSNAME_COLUMN_INDEX = 0;
@@ -322,7 +375,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     final static int DIFF_COLUMN_INDEX = 2;
 
     // Workaround: save selection after content of classes table has been hided
-    private ReferenceType mySelectedClassWhenHided = null;
+    private ReferenceType mySelectedClassWhenHidden = null;
     private boolean myIsWithContent = false;
 
     DiffViewTableModel() {
@@ -348,13 +401,13 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
       });
     }
 
-    ReferenceType getSelectedClassBeforeHided() {
-      return mySelectedClassWhenHided;
+    ReferenceType getSelectedClassBeforeHide() {
+      return mySelectedClassWhenHidden;
     }
 
     void hide() {
       if (myIsWithContent) {
-        mySelectedClassWhenHided = getSelectedClass();
+        mySelectedClassWhenHidden = getSelectedClass();
         myIsWithContent = false;
         clearSelection();
         fireTableDataChanged();
@@ -364,11 +417,11 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     void show() {
       if (!myIsWithContent) {
         myIsWithContent = true;
-        getRowSorter().allRowsChanged();
+        fireTableDataChanged();
       }
     }
 
-    boolean isHided() {
+    boolean isHidden() {
       return !myIsWithContent;
     }
 

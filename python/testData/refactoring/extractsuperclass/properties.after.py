@@ -20,6 +20,7 @@ class ToClass(object):
 
 
 class FromClass(ToClass):
+
     def __init__(self):
         pass
 

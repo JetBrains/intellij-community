@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class UnnecessaryConstantArrayCreationExpressionInspectionTest extends LightInspectionTestCase {
 
-  public void testUnnecessaryConstantArrayCreationExpression() throws Exception {
+  public void testUnnecessaryConstantArrayCreationExpression() {
     doTest();
   }
 

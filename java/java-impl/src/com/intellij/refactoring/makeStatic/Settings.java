@@ -14,20 +14,12 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 01.07.2002
- * Time: 15:48:33
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.makeStatic;
 
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.util.VariableData;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;

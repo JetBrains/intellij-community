@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.lang.formatter
+
+import com.intellij.application.options.CodeStyle
 import com.intellij.psi.codeStyle.CodeStyleSettings
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
@@ -26,6 +27,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 import java.lang.reflect.Field
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+
 /**
  * @author peter
  */
@@ -60,7 +62,7 @@ class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
   }
 
   private List findSettings(String name) {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project)
+    CodeStyleSettings settings = CodeStyle.getSettings(project)
     try {
       return [CommonCodeStyleSettings.getField(name), settings.getCommonSettings(GroovyLanguage.INSTANCE)]
     }
@@ -132,5 +134,15 @@ class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
 
   void testSpace_in_named_arg_false() throws Throwable { doTest() }
 
+  void testSpaceInNamedArgBeforeColon() { doTest() }
+
   void testAnonymousVsLBraceOnNewLine() { doTest() }
+
+  void testBracesNextLine() { doTest() }
+
+  void testBracesNextLineShifted() { doTest() }
+
+  void testBracesNextLineShifted2() { doTest() }
+
+  void testBracesEndLine() { doTest() }
 }

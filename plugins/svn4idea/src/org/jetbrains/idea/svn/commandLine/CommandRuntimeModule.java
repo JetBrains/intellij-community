@@ -22,5 +22,5 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface CommandRuntimeModule {
 
-  void onStart(@NotNull Command command) throws SvnBindException;
+  void onStart(@NotNull Command command);
 }

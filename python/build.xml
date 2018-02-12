@@ -38,7 +38,7 @@
   </target>
   <!--
   <target name="test" depends="init">
-    <call_gant script="${project.home}/build/scripts/tests.gant"/>
+    <call_gant script="${project.home}/build/scripts/tests_in_community.gant"/>
   </target>
   -->
 

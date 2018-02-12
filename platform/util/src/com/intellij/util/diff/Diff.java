@@ -38,9 +38,12 @@ public class Diff {
 
   @Nullable
   public static Change buildChanges(@NotNull CharSequence before, @NotNull CharSequence after) throws FilesTooBigForDiffException {
-    final String[] strings1 = LineTokenizer.tokenize(before, false);
-    final String[] strings2 = LineTokenizer.tokenize(after, false);
-    return buildChanges(strings1, strings2);
+    return buildChanges(splitLines(before), splitLines(after));
+  }
+
+  @NotNull
+  private static String[] splitLines(@NotNull CharSequence s) {
+    return s.length() == 0 ? new String[]{""} : LineTokenizer.tokenize(s, false, false);
   }
 
   @Nullable
@@ -108,8 +111,8 @@ public class Diff {
     }
     else {
       try {
-        IntLCS intLCS = new IntLCS(discarded[0], discarded[1]);
-        intLCS.execute();
+        MyersLCS intLCS = new MyersLCS(discarded[0], discarded[1]);
+        intLCS.executeWithThreshold();
         changes = intLCS.getChanges();
       }
       catch (FilesTooBigForDiffException e) {
@@ -164,18 +167,6 @@ public class Diff {
       ++idx;
     }
     return idx;
-  }
-
-  /**
-   * Tries to translate given line that pointed to the text before change to the line that points to the same text after the change.
-   *
-   * @param before    text before change
-   * @param after     text after change
-   * @param line      target line before change
-   * @return          translated line if the processing is ok; negative value otherwise
-   */
-  public static int translateLine(@NotNull CharSequence before, @NotNull CharSequence after, int line) throws FilesTooBigForDiffException {
-    return translateLine(before, after, line, false);
   }
 
   public static int translateLine(@NotNull CharSequence before, @NotNull CharSequence after, int line, boolean approximate)

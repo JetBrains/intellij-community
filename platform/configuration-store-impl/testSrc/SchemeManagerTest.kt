@@ -24,12 +24,10 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.util.SmartList
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
-import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.loadElement
 import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.annotations.Tag
@@ -83,10 +81,10 @@ internal class SchemeManagerTest {
 
     val scheme = manager.findSchemeByName("first")
     assertThat(scheme).isNotNull()
-    scheme!!.name = "renamed"
+    scheme!!.name = "Grünwald"
     manager.save()
 
-    checkSchemes("2->second;renamed->renamed")
+    checkSchemes("2->second;Grünwald->Grünwald")
   }
 
   @Test fun testRenameScheme2() {
@@ -139,13 +137,13 @@ internal class SchemeManagerTest {
   @Test fun testGenerateUniqueSchemeName() {
     val manager = createAndLoad("options1")
     val scheme = TestScheme("first")
-    manager.addNewScheme(scheme, false)
+    manager.addScheme(scheme, false)
 
     assertThat("first2").isEqualTo(scheme.name)
   }
 
   fun TestScheme.save(file: Path) {
-    file.write(serialize().toByteArray())
+    file.write(serialize()!!.toByteArray())
   }
 
   @Test fun `different extensions`() {
@@ -175,22 +173,23 @@ internal class SchemeManagerTest {
 
   @Test fun setSchemes() {
     val dir = tempDirManager.newPath()
-    val schemeManager = createSchemeManager(dir)
+    val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemesProcessor(), null, dir, schemeNameToFileName = MODERN_NAME_CONVERTER)
     schemeManager.loadSchemes()
     assertThat(schemeManager.allSchemes).isEmpty()
 
-    val scheme = TestScheme("s1")
+    val schemeName = "Grünwald и русский"
+    val scheme = TestScheme(schemeName)
     schemeManager.setSchemes(listOf(scheme))
 
     val schemes = schemeManager.allSchemes
     assertThat(schemes).containsOnly(scheme)
 
-    assertThat(dir.resolve("s1.xml")).doesNotExist()
+    assertThat(dir.resolve("$schemeName.xml")).doesNotExist()
 
     scheme.data = "newTrue"
     schemeManager.save()
 
-    assertThat(dir.resolve("s1.xml")).isRegularFile()
+    assertThat(dir.resolve("$schemeName.xml")).isRegularFile()
 
     schemeManager.setSchemes(emptyList())
 
@@ -431,7 +430,7 @@ data class TestScheme(@field:com.intellij.util.xmlb.annotations.Attribute @field
     name = value
   }
 
-  override fun writeScheme() = serialize()
+  override fun writeScheme() = serialize()!!
 }
 
 open class TestSchemesProcessor : LazySchemeProcessor<TestScheme, TestScheme>() {
@@ -443,10 +442,4 @@ open class TestSchemesProcessor : LazySchemeProcessor<TestScheme, TestScheme>() 
     dataHolder.updateDigest(scheme)
     return scheme
   }
-}
-
-fun SchemeManagerImpl<*, *>.save() {
-  val errors = SmartList<Throwable>()
-  save(errors)
-  CompoundRuntimeException.throwIfNotEmpty(errors)
 }

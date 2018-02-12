@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,7 +33,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentMostlySingularMultiMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
-import com.intellij.util.containers.WeakKeyWeakValueHashMap;
 import com.intellij.util.text.CharSequenceReader;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -59,12 +57,12 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   protected final PsiManager myPsiManager;
 
   private final ConcurrentMap<VirtualFile, List<PsiFile>> myExternalAnnotationsCache = ContainerUtil.createConcurrentWeakKeySoftValueMap();
-  private final Map<AnnotationData, AnnotationData> myAnnotationDataCache = new WeakKeyWeakValueHashMap<>(); // guarded by myAnnotationDataCache
+  private final Map<AnnotationData, AnnotationData> myAnnotationDataCache = ContainerUtil.createWeakKeyWeakValueMap(); // guarded by myAnnotationDataCache
   private final ConcurrentMap<PsiFile, Pair<MostlySingularMultiMap<String, AnnotationData>, Long>> myAnnotationFileToDataAndModStampCache = ContainerUtil.createConcurrentSoftMap();
 
   public BaseExternalAnnotationsManager(@NotNull PsiManager psiManager) {
     myPsiManager = psiManager;
-    LowMemoryWatcher.register(() -> dropCache(), psiManager.getProject());
+    LowMemoryWatcher.register(this::dropCache, psiManager.getProject());
   }
 
   @Nullable
@@ -73,6 +71,11 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
   protected abstract boolean hasAnyAnnotationsRoots();
+
+  @Override
+  public boolean hasAnnotationRootsForFile(@NotNull VirtualFile file) {
+    return hasAnyAnnotationsRoots();
+  }
 
   @Override
   public boolean isExternalAnnotation(@NotNull PsiAnnotation annotation) {
@@ -103,7 +106,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   public PsiAnnotation[] findExternalAnnotations(@NotNull final PsiModifierListOwner listOwner) {
     final List<AnnotationData> result = collectExternalAnnotations(listOwner);
     return result.isEmpty() ? null : ContainerUtil.map2Array(result, PsiAnnotation.EMPTY_ARRAY,
-                                                             data -> data.getAnnotation(BaseExternalAnnotationsManager.this));
+                                                             data -> data.getAnnotation(this));
   }
 
   private static final List<AnnotationData> NO_DATA = new ArrayList<>(1);
@@ -142,7 +145,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
   @NotNull
-  MostlySingularMultiMap<String, AnnotationData> getDataFromFile(@NotNull PsiFile file) {
+  public MostlySingularMultiMap<String, AnnotationData> getDataFromFile(@NotNull PsiFile file) {
     Pair<MostlySingularMultiMap<String, AnnotationData>, Long> cached = myAnnotationFileToDataAndModStampCache.get(file);
     long fileModificationStamp = file.getModificationStamp();
     if (cached != null && cached.getSecond() == fileModificationStamp) {
@@ -154,14 +157,8 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
       saxParser.parse(new InputSource(new CharSequenceReader(escapeAttributes(file.getViewProvider().getContents()))), handler);
     }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    catch (ParserConfigurationException e) {
-      LOG.error(e);
-    }
-    catch (SAXException e) {
-      LOG.error(e);
+    catch (IOException | ParserConfigurationException | SAXException e) {
+      LOG.error(file.getViewProvider().getVirtualFile().getPath(), e);
     }
 
     MostlySingularMultiMap<String, AnnotationData> result = handler.getResult();
@@ -182,11 +179,11 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
   @NotNull
   private List<AnnotationData> doCollect(@NotNull PsiModifierListOwner listOwner, boolean onlyWritable) {
-    String externalName = getExternalName(listOwner, false);
-    if (externalName == null) return NO_DATA;
-
     List<PsiFile> files = findExternalAnnotationsFiles(listOwner);
     if (files == null) return NO_DATA;
+
+    String externalName = getExternalName(listOwner, false);
+    if (externalName == null) return NO_DATA;
 
     SmartList<AnnotationData> result = new SmartList<>();
     for (PsiFile file : files) {
@@ -210,7 +207,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null) return null;
-    
+
     final List<PsiFile> files = myExternalAnnotationsCache.get(virtualFile);
     if (files == NULL_LIST) return null;
 
@@ -326,7 +323,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     }
   }
 
-  static class AnnotationData {
+  public static class AnnotationData {
     private final String annotationClassFqName;
     private final String annotationParameters;
 
@@ -338,7 +335,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     }
 
     @NotNull
-    PsiAnnotation getAnnotation(@NotNull BaseExternalAnnotationsManager context) {
+    public PsiAnnotation getAnnotation(@NotNull BaseExternalAnnotationsManager context) {
       PsiAnnotation a = myAnnotation;
       if (a == null) {
         String text = "@" + annotationClassFqName + (annotationParameters.isEmpty() ? "" : "(" + annotationParameters + ")");
@@ -389,12 +386,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     }
   }
 
-  private static final JavaParserUtil.ParserWrapper ANNOTATION = new JavaParserUtil.ParserWrapper() {
-    @Override
-    public void parse(final PsiBuilder builder) {
-      JavaParser.INSTANCE.getDeclarationParser().parseAnnotation(builder);
-    }
-  };
+  private static final JavaParserUtil.ParserWrapper ANNOTATION = JavaParser.INSTANCE.getDeclarationParser()::parseAnnotation;
 
   private class DataParsingSaxHandler extends DefaultHandler {
     private final MostlySingularMultiMap<String, AnnotationData> myData = new MostlySingularMultiMap<>();

@@ -27,9 +27,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- */
 public class SPIPackageOrClassReferenceElement extends ASTWrapperPsiElement implements PsiReference {
   public SPIPackageOrClassReferenceElement(@NotNull ASTNode node) {
     super(node);

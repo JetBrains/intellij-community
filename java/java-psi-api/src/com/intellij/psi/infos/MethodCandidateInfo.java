@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -49,6 +48,8 @@ public class MethodCandidateInfo extends CandidateInfo{
   private PsiSubstitutor myCalcedSubstitutor;
 
   private volatile String myInferenceError;
+  private final ThreadLocal<String> myApplicabilityError = new ThreadLocal<>();
+
   private final LanguageLevel myLanguageLevel;
 
   public MethodCandidateInfo(@NotNull PsiElement candidate,
@@ -79,6 +80,11 @@ public class MethodCandidateInfo extends CandidateInfo{
     myLanguageLevel = languageLevel;
   }
 
+  /**
+   * To use during overload resolution to choose if method can be applicable by strong/loose invocation.
+   * 
+   * @return true only for java 8+ varargs methods.
+   */
   public boolean isVarargs() {
     return false;
   }
@@ -113,7 +119,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   public int getPertinentApplicabilityLevel() {
     int result = myPertinentApplicabilityLevel;
     if (result == 0) {
-      myPertinentApplicabilityLevel = result = pullInferenceErrorMessagesFromSubexpressions(getPertinentApplicabilityLevelInner());
+      myPertinentApplicabilityLevel = result = getPertinentApplicabilityLevelInner();
     }
     return result;
   }
@@ -128,15 +134,15 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
 
     final PsiMethod method = getElement();
-    
+
     if (isToInferApplicability()) {
       if (!isOverloadCheck()) {
         //ensure applicability check is performed
         getSubstitutor(false);
       }
 
-      //already performed checks, so if inference failed, error message should be saved  
-      if (myInferenceError != null || isPotentiallyCompatible() != ThreeState.YES) {
+      //already performed checks, so if inference failed, error message should be saved
+      if (myApplicabilityError.get() != null || isPotentiallyCompatible() != ThreeState.YES) {
         return ApplicabilityLevel.NOT_APPLICABLE;
       }
       return isVarargs() ? ApplicabilityLevel.VARARGS : ApplicabilityLevel.FIXED_ARITY;
@@ -164,7 +170,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   }
 
   //If m is a generic method and the method invocation does not provide explicit type
-  //arguments, then the applicability of the method is inferred as specified in §18.5.1
+  //arguments, then the applicability of the method is inferred as specified in p18.5.1
   public boolean isToInferApplicability() {
     return myTypeArguments == null && getElement().hasTypeParameters() && !isRawSubstitution();
   }
@@ -288,7 +294,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
     return incompleteSubstitutor;
   }
-  
+
   @NotNull
   @Override
   public PsiSubstitutor getSubstitutor() {
@@ -305,18 +311,33 @@ public class MethodCandidateInfo extends CandidateInfo{
       if (myTypeArguments == null) {
         final RecursionGuard.StackStamp stackStamp = PsiDiamondType.ourDiamondGuard.markStack();
 
-        final PsiSubstitutor inferredSubstitutor = inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE, includeReturnConstraint);
+        myApplicabilityError.remove();
+        try {
+          final PsiSubstitutor inferredSubstitutor = inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE, includeReturnConstraint);
 
-         if (!stackStamp.mayCacheNow() ||
-             isOverloadCheck() ||
-             !includeReturnConstraint && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) ||
-             getMarkerList() != null && PsiResolveHelper.ourGraphGuard.currentStack().contains(getMarkerList().getParent()) ||
-             LambdaUtil.isLambdaParameterCheck()
-           ) {
-          return inferredSubstitutor;
+          if (!stackStamp.mayCacheNow() ||
+              isOverloadCheck() ||
+              !includeReturnConstraint && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) ||
+              getMarkerList() != null && PsiResolveHelper.ourGraphGuard.currentStack().contains(getMarkerList().getParent()) ||
+              LambdaUtil.isLambdaParameterCheck()
+            ) {
+            return inferredSubstitutor;
+          }
+
+          myInferenceError = myApplicabilityError.get();
+          myCalcedSubstitutor = substitutor = inferredSubstitutor;
         }
-
-        myCalcedSubstitutor = substitutor = inferredSubstitutor;
+        finally {
+          //includeReturnConstraint == true, means that it's not an applicability check and it won't be used
+          //Case when clear of error is required:
+          //for foo(bar()) where foo is overloaded but doesn't have type parameters, start from {bar()}.getSubstitutor()
+          //1. perform overload resolution for foo : evaluate {bar()}.getType() under overload lock -
+          //   at least one applicability error for {bar()} candidate, when the last overloaded method leads to error but first was ok:
+          //2. {bar()}.getSubstitutor() would preserve error from wrong {foo} candidate => when the error was cleared - everything ok
+          if (includeReturnConstraint) {
+            myApplicabilityError.remove();
+          }
+        }
       }
       else {
         PsiTypeParameter[] typeParams = method.getTypeParameters();
@@ -387,14 +408,14 @@ public class MethodCandidateInfo extends CandidateInfo{
                                            @NotNull final PsiExpression[] arguments,
                                            boolean includeReturnConstraint) {
     return computeForOverloadedCandidate(() -> {
-      final PsiMethod method = MethodCandidateInfo.this.getElement();
+      final PsiMethod method = this.getElement();
       PsiTypeParameter[] typeParameters = method.getTypeParameters();
 
-      if (MethodCandidateInfo.this.isRawSubstitution()) {
+      if (this.isRawSubstitution()) {
         return JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createRawSubstitutor(mySubstitutor, typeParameters);
       }
 
-      final PsiElement parent = MethodCandidateInfo.this.getParent();
+      final PsiElement parent = this.getParent();
       if (parent == null) return PsiSubstitutor.EMPTY;
       Project project = method.getProject();
       JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
@@ -414,7 +435,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
     return false;
   }
-  
+
   protected PsiElement getMarkerList() {
     return myArgumentList;
   }
@@ -451,79 +472,22 @@ public class MethodCandidateInfo extends CandidateInfo{
     return 31 * super.hashCode() + (isVarargs() ? 1 : 0);
   }
 
-  public void setInferenceError(String inferenceError) {
-    myInferenceError = inferenceError;
+  /**
+   * Should be invoked on the top level call expression candidate only
+   */
+  public void setApplicabilityError(String applicabilityError) {
+    myApplicabilityError.set(applicabilityError);
   }
 
   public String getInferenceErrorMessage() {
+    getSubstitutor();
     return myInferenceError;
   }
 
-  public String getParentInferenceErrorMessage(PsiExpressionList list) {
-    String errorMessage = getInferenceErrorMessage();
-    while (errorMessage == null) {
-      list = PsiTreeUtil.getParentOfType(list, PsiExpressionList.class, true, PsiCodeBlock.class);
-      if (list == null) {
-        break;
-      }
-      final PsiElement parent = list.getParent();
-      if (!(parent instanceof PsiCallExpression)) {
-        break;
-      }
-      final JavaResolveResult resolveResult = ((PsiCallExpression)parent).resolveMethodGenerics();
-      if (resolveResult instanceof MethodCandidateInfo) {
-        errorMessage = ((MethodCandidateInfo)resolveResult).getInferenceErrorMessage();
-      }
-    }
-    return errorMessage;
+  public String getInferenceErrorMessageAssumeAlreadyComputed() {
+    return myInferenceError;
   }
 
-  @ApplicabilityLevelConstant
-  private int pullInferenceErrorMessagesFromSubexpressions(@ApplicabilityLevelConstant int level) {
-    if (myArgumentList instanceof PsiExpressionList && level == ApplicabilityLevel.NOT_APPLICABLE) {
-      String errorMessage = null;
-      for (PsiExpression expression : ((PsiExpressionList)myArgumentList).getExpressions()) {
-        final String message = clearErrorMessageInSubexpressions(expression);
-        if (message != null) {
-          errorMessage = message;
-        }
-      }
-      if (errorMessage != null) {
-        setInferenceError(errorMessage);
-      }
-    }
-    return level;
-  }
-
-  private static String clearErrorMessageInSubexpressions(PsiExpression expression) {
-    expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (expression instanceof PsiConditionalExpression) {
-      String thenErrorMessage = clearErrorMessageInSubexpressions(((PsiConditionalExpression)expression).getThenExpression());
-      String elseErrorMessage = clearErrorMessageInSubexpressions(((PsiConditionalExpression)expression).getElseExpression());
-      if (thenErrorMessage != null) {
-        return thenErrorMessage;
-      }
-      return elseErrorMessage;
-    }
-    else if (expression instanceof PsiCallExpression) {
-      final JavaResolveResult result;
-      if (expression instanceof PsiNewExpression) {
-        PsiDiamondType diamondType = PsiDiamondType.getDiamondType((PsiNewExpression)expression);
-        result = diamondType != null ? diamondType.getStaticFactory()
-                                     : ((PsiCallExpression)expression).resolveMethodGenerics();
-      }
-      else {
-        result = ((PsiCallExpression)expression).resolveMethodGenerics();
-      }
-      if (result instanceof MethodCandidateInfo) {
-        final String message = ((MethodCandidateInfo)result).getInferenceErrorMessage();
-        ((MethodCandidateInfo)result).setInferenceError(null);
-        return message;
-      }
-    }
-    return null;
-  }
-  
   public CurrentCandidateProperties createProperties() {
     return new CurrentCandidateProperties(this, getSiteSubstitutor(), isVarargs(), false);
   }
@@ -573,7 +537,7 @@ public class MethodCandidateInfo extends CandidateInfo{
       myApplicabilityCheck = applicabilityCheck;
     }
   }
-  
+
   public static class ApplicabilityLevel {
     public static final int NOT_APPLICABLE = 1;
     public static final int VARARGS = 2;

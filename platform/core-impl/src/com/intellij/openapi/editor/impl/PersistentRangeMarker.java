@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,7 +115,7 @@ class PersistentRangeMarker extends RangeMarkerImpl {
     if (!isValid()) return;
 
     Pair<TextRange, LinesCols> pair =
-      applyChange(e, this, intervalStart(), intervalEnd(), isGreedyToLeft(), isGreedyToRight(), myLinesCols);
+      applyChange(e, this, intervalStart(), intervalEnd(), isGreedyToLeft(), isGreedyToRight(), isStickingToRight(), myLinesCols);
     if (pair == null) {
       invalidate(e);
       return;
@@ -127,14 +127,16 @@ class PersistentRangeMarker extends RangeMarkerImpl {
   }
 
   @Nullable
-  private static Pair<TextRange, LinesCols> applyChange(DocumentEvent event, Segment range, int intervalStart, int intervalEnd, boolean greedyLeft, boolean greedyRight, LinesCols linesCols) {
+  private static Pair<TextRange, LinesCols> applyChange(DocumentEvent event, Segment range, int intervalStart, int intervalEnd, 
+                                                        boolean greedyLeft, boolean greedyRight, boolean stickingToRight, 
+                                                        LinesCols linesCols) {
     final boolean shouldTranslateViaDiff = PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, range.getStartOffset(), range.getEndOffset());
     Pair<TextRange, LinesCols> translated = null;
     if (shouldTranslateViaDiff) {
       translated = translateViaDiff((DocumentEventImpl)event, linesCols);
     }
     if (translated == null) {
-      TextRange fallback = applyChange(event, intervalStart, intervalEnd, greedyLeft, greedyRight);
+      TextRange fallback = applyChange(event, intervalStart, intervalEnd, greedyLeft, greedyRight, stickingToRight);
       if (fallback == null) return null;
 
       LinesCols lc = storeLinesAndCols(event.getDocument(), fallback.getStartOffset(), fallback.getEndOffset());

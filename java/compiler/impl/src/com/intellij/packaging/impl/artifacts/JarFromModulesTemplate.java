@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,6 @@ import com.intellij.packaging.impl.elements.ManifestFileUtil;
 import com.intellij.packaging.impl.elements.ProductionModuleOutputElementType;
 import com.intellij.packaging.impl.elements.TestModuleOutputElementType;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.PathUtil;
-import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +48,7 @@ import java.util.*;
 public class JarFromModulesTemplate extends ArtifactTemplate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.packaging.impl.artifacts.JarFromModulesTemplate");
 
-  private PackagingElementResolvingContext myContext;
+  private final PackagingElementResolvingContext myContext;
 
   public JarFromModulesTemplate(PackagingElementResolvingContext context) {
     myContext = context;
@@ -153,7 +151,7 @@ public class JarFromModulesTemplate extends ArtifactTemplate {
             archive.addOrFindChild(factory.createDirectoryCopyWithParentDirectories(classesRoot.getPath(), "/"));
           }
           else {
-            final PackagingElement<?> child = factory.createFileCopyWithParentDirectories(PathUtil.getLocalFile(classesRoot).getPath(), "/");
+            final PackagingElement<?> child = factory.createFileCopyWithParentDirectories(VfsUtil.getLocalFile(classesRoot).getPath(), "/");
             root.addOrFindChild(child);
             classpath.addAll(ManifestFileUtil.getClasspathForElements(Collections.singletonList(child), myContext, PlainArtifactType.getInstance()));
           }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider {
-  public static final Logger LOG = Logger.getInstance("#" + FileUndoProvider.class.getName());
+public class FileUndoProvider implements UndoProvider, VirtualFileListener {
+  public static final Logger LOG = Logger.getInstance(FileUndoProvider.class);
 
   private final Key<DocumentReference> DELETION_WAS_UNDOABLE = new Key<>(FileUndoProvider.class.getName() + ".DeletionWasUndoable");
 

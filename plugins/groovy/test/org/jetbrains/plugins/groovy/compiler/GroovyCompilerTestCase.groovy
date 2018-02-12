@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.plugins.groovy.compiler
 
@@ -34,20 +22,19 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiFile
-import com.intellij.testFramework.CompilerTester
-import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.*
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.SystemProperties
+import com.intellij.util.io.PathKt
+import com.intellij.util.lang.JavaVersion
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
@@ -84,8 +71,9 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_6)
-    moduleBuilder.addJdk(IdeaTestUtil.getMockJdk17Path().getPath())
+    moduleBuilder.setLanguageLevel(JavaSdkVersion.fromJavaVersion(JavaVersion.current()).maxLanguageLevel)
+    def javaHome = FileUtil.toSystemIndependentName(SystemProperties.javaHome)
+    moduleBuilder.addJdk(StringUtil.trimEnd(StringUtil.trimEnd(javaHome, '/'), '/jre'))
     super.tuneFixture(moduleBuilder)
   }
 
@@ -103,9 +91,8 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
 
   @Override
   protected void tearDown() throws Exception {
-    final File systemRoot = BuildManager.getInstance().getBuildSystemDirectory()
     try {
-      UIUtil.invokeAndWaitIfNeeded {
+      EdtTestUtil.runInEdtAndWait {
         try {
           myCompilerTester.tearDown()
           myCompilerTester = null
@@ -119,7 +106,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
       }
     }
     finally {
-      FileUtil.delete(systemRoot)
+      PathKt.delete(BuildManager.getInstance().getBuildSystemDirectory())
     }
   }
 
@@ -218,14 +205,19 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
     final StringBuffer sb = new StringBuffer()
     ProcessHandler process = runProcess(className, module, DefaultRunExecutor.class, new ProcessAdapter() {
       @Override
-      void onTextAvailable(ProcessEvent event, Key outputType) {
+      void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         if (ProcessOutputTypes.SYSTEM != outputType) {
           sb.append(event.getText())
         }
       }
     }, ProgramRunner.PROGRAM_RUNNER_EP.findExtension(DefaultJavaProgramRunner.class))
     process.waitFor()
-    assertEquals(expected.trim(), StringUtil.convertLineSeparators(sb.toString().trim()))
+    def output = StringUtil.convertLineSeparators(sb.toString().trim()).readLines()
+    output = output.findAll { line ->
+      !StringUtil.containsIgnoreCase(line, "illegal") &&
+      !line.contains("consider reporting this to the maintainers of org.codehaus.groovy.reflection.CachedClass")
+    }
+    assertEquals(expected.trim(), output.join("\n"))
   }
 
   protected ProcessHandler runProcess(String className,

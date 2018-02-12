@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 
-import java.io.IOException;
 import java.util.Set;
 
 import static com.intellij.psi.search.GlobalSearchScopesCore.directoryScope;
@@ -74,7 +73,7 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
     container.registerComponentInstance(componentKey, manager);
   }
 
-  public void testReformatWithoutMask() throws IOException {
+  public void testReformatWithoutMask() {
     TestFileStructure fileTree = new TestFileStructure(getModule(), myWorkingDirectory);
 
     PsiFile java1 = fileTree.addTestFile("Test.java", "empty content");
@@ -88,7 +87,7 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
     assertWasFormatted(java1, java2, java3, php, js);
   }
 
-  public void testFormatByOnlyOneMask() throws IOException {
+  public void testFormatByOnlyOneMask() {
     TestFileStructure fileTree = new TestFileStructure(getModule(), myWorkingDirectory);
 
     PsiFile java1 = fileTree.addTestFile("Test.java", "empty content");
@@ -108,7 +107,7 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
 
   }
 
-  public void testFormatByMultiMask() throws IOException {
+  public void testFormatByMultiMask() {
     TestFileStructure fileTree = new TestFileStructure(getModule(), myWorkingDirectory);
 
     PsiFile java1 = fileTree.addTestFile("Test.java", "empty content");
@@ -145,7 +144,7 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
     assertWasNotFormatted(js1, js2, js3, php1, php2, java1, java2, java3, py1, py2, py3);
   }
 
-  public void testDirectoryScope() throws IOException {
+  public void testDirectoryScope() {
     TestFileStructure fileTree = new TestFileStructure(getModule(), myWorkingDirectory);
     PsiFile java1 = fileTree.addTestFile("Test1.java", "empty content");
     PsiFile php1 = fileTree.addTestFile("Pair1.php", "empty content");
@@ -181,7 +180,7 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
     assertWasNotFormatted(java2, php2, js2);
   }
 
-  public void testDirectoryScopeWithMask() throws IOException {
+  public void testDirectoryScopeWithMask() {
     TestFileStructure fileTree = new TestFileStructure(getModule(), myWorkingDirectory);
     PsiFile java1 = fileTree.addTestFile("Test1.java", "empty content");
     PsiFile php1 = fileTree.addTestFile("Pair1.php", "empty content");
@@ -211,7 +210,7 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
     assertWasNotFormatted(java2, php2, js1, js2, js3);
   }
 
-  public void testIDEA126830() throws IOException {
+  public void testIDEA126830() {
     TestFileStructure fileTree = new TestFileStructure(getModule(), myWorkingDirectory);
 
     fileTree.createDirectoryAndMakeItCurrent("src");

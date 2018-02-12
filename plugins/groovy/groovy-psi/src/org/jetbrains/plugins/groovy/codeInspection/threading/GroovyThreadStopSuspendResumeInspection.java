@@ -42,13 +42,6 @@ public class GroovyThreadStopSuspendResumeInspection extends BaseInspection {
   @Override
   @Nls
   @NotNull
-  public String getGroupDisplayName() {
-    return THREADING_ISSUES;
-  }
-
-  @Override
-  @Nls
-  @NotNull
   public String getDisplayName() {
     return "Call to Thread.stop(), Thread.suspend(), or Thread.resume()";
   }

@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
@@ -230,7 +231,7 @@ public class GithubCreatePullRequestWorker {
     }
   }
 
-  private void doLoadForksFromSettings(@NotNull ProgressIndicator indicator) throws IOException {
+  private void doLoadForksFromSettings(@NotNull ProgressIndicator indicator) {
     GithubFullPath savedRepo = GithubProjectSettings.getInstance(myProject).getCreatePullRequestDefaultRepo();
     if (savedRepo != null) {
       doAddFork(savedRepo, null, indicator);
@@ -287,21 +288,15 @@ public class GithubCreatePullRequestWorker {
     synchronized (fork.LOCK) {
       if (fork.getFetchTask() != null) return;
 
-      final MasterFutureTask<Void> task = new MasterFutureTask<>(new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
+      final MasterFutureTask<Void> task = new MasterFutureTask<>(() -> {
+        BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
           doFetchRemote(fork);
-          return null;
-        }
+        });
+        return null;
       });
       fork.setFetchTask(task);
 
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          task.run();
-        }
-      });
+      ApplicationManager.getApplication().executeOnPooledThread(task);
     }
   }
 
@@ -316,20 +311,10 @@ public class GithubCreatePullRequestWorker {
       MasterFutureTask<Void> masterTask = branch.getForkInfo().getFetchTask();
       assert masterTask != null;
 
-      final SlaveFutureTask<DiffInfo> task = new SlaveFutureTask<>(masterTask, new Callable<DiffInfo>() {
-        @Override
-        public DiffInfo call() throws VcsException {
-          return doLoadDiffInfo(branch);
-        }
-      });
+      final SlaveFutureTask<DiffInfo> task = new SlaveFutureTask<>(masterTask, () -> doLoadDiffInfo(branch));
       branch.setDiffInfoTask(task);
 
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          task.run();
-        }
-      });
+      ApplicationManager.getApplication().executeOnPooledThread(task);
     }
   }
 
@@ -368,7 +353,7 @@ public class GithubCreatePullRequestWorker {
 
   @NotNull
   private DiffInfo doLoadDiffInfo(@NotNull final BranchInfo branch) throws VcsException {
-    // TODO: make cancelable and abort old speculative requests (when git4idea will allow to do so)
+    // TODO: make cancelable and abort old speculative requests (when intellij.vcs.git will allow to do so)
     String currentBranch = myCurrentBranch;
     String targetBranch = branch.getForkInfo().getRemoteName() + "/" + branch.getRemoteName();
 
@@ -852,12 +837,7 @@ public class GithubCreatePullRequestWorker {
     }
 
     protected void runSlave(@NotNull final SlaveFutureTask slave) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          slave.run();
-        }
-      });
+      ApplicationManager.getApplication().executeOnPooledThread(slave);
     }
   }
 }

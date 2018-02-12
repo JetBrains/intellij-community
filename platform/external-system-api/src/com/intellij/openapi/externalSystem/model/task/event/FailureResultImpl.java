@@ -15,12 +15,23 @@
  */
 package com.intellij.openapi.externalSystem.model.task.event;
 
+import java.util.List;
+
 /**
  * @author Vladislav.Soroka
  * @since 12/2/2015
  */
-public class FailureResultImpl extends DefaultOperationResult implements FailureResult{
-  public FailureResultImpl(long startTime, long endTime) {
+public class FailureResultImpl extends DefaultOperationResult implements FailureResult {
+
+  private final List<? extends Failure> myFailures;
+
+  public FailureResultImpl(long startTime, long endTime, List<? extends Failure> failures) {
     super(startTime, endTime);
+    myFailures = failures;
+  }
+
+  @Override
+  public List<? extends Failure> getFailures() {
+    return myFailures;
   }
 }

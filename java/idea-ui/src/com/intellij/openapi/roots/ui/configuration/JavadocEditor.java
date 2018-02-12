@@ -39,8 +39,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Oct 4, 2003
- *         Time: 6:54:57 PM
  */
 public class JavadocEditor extends ModuleElementsEditor {
   private JTable myTable;
@@ -71,6 +69,7 @@ public class JavadocEditor extends ModuleElementsEditor {
       urls[row] = item.getUrl();
     }
     getModel().getModuleExtension(JavaModuleExternalPaths.class).setJavadocUrls(urls);
+    fireConfigurationChanged();
   }
 
   @Override

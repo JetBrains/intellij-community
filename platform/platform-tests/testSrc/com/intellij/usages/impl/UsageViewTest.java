@@ -1,29 +1,23 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.usages.impl;
 
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
-import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.ide.actions.exclusion.ExclusionHandler;
+import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -38,18 +32,20 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import javax.swing.tree.TreeNode;
+import java.util.HashSet;
 import java.util.Set;
 
-/**
- * User: cdr
- */
 public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
-  public void testUsageViewDoesNotHoldPsiFilesOrDocuments() throws Exception {
+  public void testUsageViewDoesNotHoldPsiFilesOrDocuments() {
     boolean[] foundLeaksBeforeTest = new boolean[1];
     LeakHunter.checkLeak(ApplicationManager.getApplication(), PsiFileImpl.class, file -> {
       if (!file.isPhysical()) return false;
-      System.err.println("Can't start the test: leaking PsiFiles found:");
+      System.err.println("DON'T BLAME ME, IT'S NOT MY FAULT! SOME SNEAKY TEST BEFORE ME HAS LEAKED PsiFiles!");
       foundLeaksBeforeTest[0] = true;
       return true;
     });
@@ -64,9 +60,7 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
       usages[i] = createUsage(psiFile,i);
     }
 
-    UsageView usageView = UsageViewManager.getInstance(getProject()).createUsageView(UsageTarget.EMPTY_ARRAY, usages, new UsageViewPresentation(), null);
-
-    Disposer.register(myFixture.getTestRootDisposable(), usageView);
+    UsageView usageView = createUsageView(usages);
 
     ((EncodingManagerImpl)EncodingManager.getInstance()).clearDocumentQueue();
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -76,12 +70,11 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
     LeakHunter.checkLeak(usageView, Document.class);
   }
 
-  public void testUsageViewHandlesDocumentChange() throws Exception {
+  public void testUsageViewHandlesDocumentChange() {
     PsiFile psiFile = myFixture.addFileToProject("X.java", "public class X{ int xxx; } //comment");
     Usage usage = createUsage(psiFile, psiFile.getText().indexOf("xxx"));
 
-    UsageView usageView = UsageViewManager.getInstance(getProject()).createUsageView(UsageTarget.EMPTY_ARRAY, new Usage[]{usage}, new UsageViewPresentation(), null);
-    Disposer.register(myFixture.getTestRootDisposable(), usageView);
+    UsageView usageView = createUsageView(new Usage[]{usage});
 
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
     Document document = documentManager.getDocument(psiFile);
@@ -90,12 +83,11 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
     int navigationOffset = ((UsageInfo2UsageAdapter)usage).getUsageInfo().getNavigationOffset();
     assertEquals(psiFile.getText().indexOf("xxx"), navigationOffset);
   }
-  public void testTextUsageInfoHandlesDocumentChange() throws Exception {
+  public void testTextUsageInfoHandlesDocumentChange() {
     PsiFile psiFile = myFixture.addFileToProject("X.java", "public class X{ int xxx; } //comment");
     Usage usage = new UsageInfo2UsageAdapter(new UsageInfo(psiFile, psiFile.getText().indexOf("xxx"), StringUtil.indexOfSubstringEnd(psiFile.getText(),"xxx")));
 
-    UsageView usageView = UsageViewManager.getInstance(getProject()).createUsageView(UsageTarget.EMPTY_ARRAY, new Usage[]{usage}, new UsageViewPresentation(), null);
-    Disposer.register(myFixture.getTestRootDisposable(), usageView);
+    UsageView usageView = createUsageView(new Usage[]{usage});
 
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
     Document document = documentManager.getDocument(psiFile);
@@ -111,7 +103,7 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
     return new UsageInfo2UsageAdapter(new UsageInfo(element));
   }
 
-  public void testUsageViewCanRerunAfterTargetWasInvalidatedAndRestored() throws Exception {
+  public void testUsageViewCanRerunAfterTargetWasInvalidatedAndRestored() {
     PsiFile psiFile = myFixture.addFileToProject("X.java", "public class X{" +
                                                            "    void foo() {\n" +
                                                            "        bar();\n" +
@@ -125,11 +117,17 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
     PsiNamedElement bar = (PsiNamedElement)members[members.length - 3];
     assertEquals("bar", bar.getName());
 
-    UsageTarget target = new PsiElement2UsageTargetAdapter(bar);
     FindUsagesManager usagesManager = ((FindManagerImpl)FindManager.getInstance(getProject())).getFindUsagesManager();
     FindUsagesHandler handler = usagesManager.getNewFindUsagesHandler(bar, false);
     UsageViewImpl usageView =
       (UsageViewImpl)usagesManager.doFindUsages(new PsiElement[]{bar}, PsiElement.EMPTY_ARRAY, handler, handler.getFindUsagesOptions(), false);
+    ProgressManager.getInstance().run(new Task.Modal(getProject(), "waiting", false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        usageView.waitForUpdateRequestsCompletion();
+        usageView.drainQueuedUsageNodes();
+      }
+    });
 
     Disposer.register(myFixture.getTestRootDisposable(), usageView);
 
@@ -154,8 +152,124 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
 
     assertTrue(usageView.canPerformReRun());
 
-    usageView.doReRun();
-    Set<Usage> usages = usageView.getUsages();
+    UsageView newView = usageView.doReRun();
+    Set<Usage> usages = newView.getUsages();
     assertEquals(2, usages.size());
+  }
+
+  public void testExcludeUsageMustExcludeChildrenAndParents() {
+    PsiFile psiFile = myFixture.addFileToProject("X.java", "public class X{ int xxx; } //comment");
+    Usage usage = new UsageInfo2UsageAdapter(new UsageInfo(psiFile, psiFile.getText().indexOf("xxx"), StringUtil.indexOfSubstringEnd(psiFile.getText(),"xxx")));
+
+    UsageViewImpl usageView = createUsageView(new Usage[]{usage});
+
+    usageView.excludeUsages(new Usage[]{usage});
+    UIUtil.dispatchAllInvocationEvents();
+
+    Set<Node> excluded = new HashSet<>();
+    Node[] usageNode = new Node[1];
+    TreeUtil.traverse(usageView.getRoot(), node -> {
+      if (((Node)node).isExcluded()) {
+        excluded.add((Node)node);
+      }
+      if (node instanceof UsageNode && ((UsageNode)node).getUsage() == usage) {
+        usageNode[0] = (UsageNode)node;
+      }
+      return true;
+    });
+
+    Set<Node> expectedExcluded = new HashSet<>();
+    for (TreeNode n = usageNode[0]; n != usageView.getRoot(); n = n.getParent()) {
+      expectedExcluded.add((Node)n);
+    }
+    assertEquals(expectedExcluded, excluded);
+
+
+    usageView.includeUsages(new Usage[]{usage});
+    UIUtil.dispatchAllInvocationEvents();
+
+    excluded.clear();
+    TreeUtil.traverse(usageView.getRoot(), node -> {
+      if (((Node)node).isExcluded()) {
+        excluded.add((Node)node);
+      }
+      return true;
+    });
+
+    assertEmpty(excluded);
+
+    String text = new ExporterToTextFile(usageView, UsageViewSettings.getInstance()).getReportText();
+    assertEquals("Found usages  (1 usage found)\n" +
+                 "    Unclassified usage  (1 usage found)\n" +
+                 "        light_idea_test_case  (1 usage found)\n" +
+                 "              (1 usage found)\n" +
+                 "                X.java  (1 usage found)\n" +
+                 "                    1 public class X{ int xxx; } //comment\n", StringUtil.convertLineSeparators(text));
+  }
+
+  @NotNull
+  private UsageViewImpl createUsageView(@NotNull Usage[] usages) {
+    UsageViewImpl usageView =
+      (UsageViewImpl)UsageViewManager.getInstance(getProject()).createUsageView(UsageTarget.EMPTY_ARRAY, usages, new UsageViewPresentation(), null);
+    Disposer.register(myFixture.getTestRootDisposable(), usageView);
+    ProgressManager.getInstance().run(new Task.Modal(getProject(), "Waiting For Usages", false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        usageView.drainQueuedUsageNodes();
+      }
+    });
+    UIUtil.dispatchAllInvocationEvents();
+
+    return usageView;
+  }
+
+  public void testExcludeNodeMustExcludeChildrenAndParents() {
+    PsiFile psiFile = myFixture.addFileToProject("X.java", "public class X{ int xxx; } //comment");
+    Usage usage = new UsageInfo2UsageAdapter(new UsageInfo(psiFile, psiFile.getText().indexOf("xxx"), StringUtil.indexOfSubstringEnd(psiFile.getText(),"xxx")));
+
+    UsageViewImpl usageView = createUsageView(new Usage[]{usage});
+
+    Node[] usageNode = new Node[1];
+    TreeUtil.traverse(usageView.getRoot(), node -> {
+      if (node instanceof UsageNode && ((UsageNode)node).getUsage() == usage) {
+        usageNode[0] = (UsageNode)node;
+      }
+      return true;
+    });
+    Node nodeToExclude = (Node)usageNode[0].getParent();
+
+    JComponent component = usageView.getComponent();
+    DataProvider provider = new TypeSafeDataProviderAdapter((TypeSafeDataProvider)component);
+    ExclusionHandler exclusionHandler = (ExclusionHandler)provider.getData(ExclusionHandler.EXCLUSION_HANDLER.getName());
+    exclusionHandler.excludeNode(nodeToExclude);
+    UIUtil.dispatchAllInvocationEvents();
+
+    Set<Node> excluded = new HashSet<>();
+    TreeUtil.traverse(usageView.getRoot(), node -> {
+      if (((Node)node).isExcluded()) {
+        excluded.add((Node)node);
+      }
+      return true;
+    });
+
+    Set<Node> expectedExcluded = new HashSet<>();
+    for (TreeNode n = usageNode[0]; n != usageView.getRoot(); n = n.getParent()) {
+      expectedExcluded.add((Node)n);
+    }
+    assertEquals(expectedExcluded, excluded);
+
+
+    exclusionHandler.includeNode(nodeToExclude);
+    UIUtil.dispatchAllInvocationEvents();
+
+    excluded.clear();
+    TreeUtil.traverse(usageView.getRoot(), node -> {
+      if (((Node)node).isExcluded()) {
+        excluded.add((Node)node);
+      }
+      return true;
+    });
+
+    assertEmpty(excluded);
   }
 }

@@ -24,6 +24,7 @@ import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlBundle;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,21 +32,22 @@ import java.util.Set;
 
 public class XmlEnclosingTagUnwrapper implements Unwrapper {
   @Override
-  public boolean isApplicableTo(PsiElement e) {
+  public boolean isApplicableTo(@NotNull PsiElement e) {
     return true;
   }
 
   @Override
-  public void collectElementsToIgnore(PsiElement element, Set<PsiElement> result) {
+  public void collectElementsToIgnore(@NotNull PsiElement element, @NotNull Set<PsiElement> result) {
   }
 
+  @NotNull
   @Override
-  public String getDescription(PsiElement e) {
+  public String getDescription(@NotNull PsiElement e) {
     return XmlBundle.message("unwrap.enclosing.tag.name.action.name", ((XmlTag)e).getName());
   }
 
   @Override
-  public PsiElement collectAffectedElements(PsiElement element, List<PsiElement> toExtract) {
+  public PsiElement collectAffectedElements(@NotNull PsiElement element, @NotNull List<PsiElement> toExtract) {
     final TextRange range = element.getTextRange();
     final ASTNode startTagNameEnd = XmlChildRole.START_TAG_END_FINDER.findChild(element.getNode());
     final ASTNode endTagNameStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(element.getNode());
@@ -62,8 +64,9 @@ public class XmlEnclosingTagUnwrapper implements Unwrapper {
     return element;
   }
 
+  @NotNull
   @Override
-  public List<PsiElement> unwrap(Editor editor, PsiElement element) throws IncorrectOperationException {
+  public List<PsiElement> unwrap(@NotNull Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     final TextRange range = element.getTextRange();
     final ASTNode startTagNameEnd = XmlChildRole.START_TAG_END_FINDER.findChild(element.getNode());
     final ASTNode endTagNameStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(element.getNode());

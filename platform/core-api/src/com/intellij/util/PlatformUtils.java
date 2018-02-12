@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,13 @@ package com.intellij.util;
 import com.intellij.openapi.application.ApplicationInfo;
 
 /**
- * @author Konstantin Bulenkov
+ * This class allows changing behavior of the platform in specific IDEs. But if its methods are used for something it means that third-party
+ * IDEs not listed here won't be able to get the desired behavior. So <strong>it's strongly not recommended to use methods from this class</strong>.
+ * If you need to customize behavior of the platform somewhere, you should create a special application service for that and override it in
+ * a specific IDE (look at {@link com.intellij.openapi.updateSettings.UpdateStrategyCustomization} for example).
+ *
+ * @author Konstantin Bulenkov, Nikolay Chashnikov
  */
-@SuppressWarnings({"deprecation", "UnusedDeclaration"})
 public class PlatformUtils {
   public static final String PLATFORM_PREFIX_KEY = "idea.platform.prefix";
 
@@ -37,7 +41,7 @@ public class PlatformUtils {
   public static final String WEB_PREFIX = "WebStorm";
   public static final String DBE_PREFIX = "DataGrip";
   public static final String RIDER_PREFIX = "Rider";
-  public static final String GOIDE_PREFIX = "Gogland";
+  public static final String GOIDE_PREFIX = "GoLand";
 
   public static String getPlatformPrefix() {
     return getPlatformPrefix(IDEA_PREFIX);

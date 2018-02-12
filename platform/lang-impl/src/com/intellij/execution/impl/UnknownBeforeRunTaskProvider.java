@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,12 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Sep 15, 2009
  */
 public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownBeforeRunTaskProvider.UnknownTask> {
   private final Key<UnknownTask> myId;
@@ -56,27 +56,17 @@ public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownB
   }
 
   @Override
-  public boolean configureTask(RunConfiguration runConfiguration, UnknownTask task) {
+  public boolean canExecuteTask(@NotNull RunConfiguration configuration, @NotNull UnknownTask task) {
     return false;
   }
 
   @Override
-  public boolean canExecuteTask(RunConfiguration configuration, UnknownTask task) {
-    return false;
-  }
-
-  @Override
-  public boolean executeTask(DataContext context, RunConfiguration configuration, ExecutionEnvironment env, UnknownTask task) {
+  public boolean executeTask(DataContext context, @NotNull RunConfiguration configuration, @NotNull ExecutionEnvironment env, @NotNull UnknownTask task) {
     return true;
   }
 
   @Override
-  public boolean isConfigurable() {
-    return false;
-  }
-
-  @Override
-  public UnknownTask createTask(RunConfiguration runConfiguration) {
+  public UnknownTask createTask(@NotNull RunConfiguration runConfiguration) {
     return new UnknownTask(getId());
   }
 
@@ -88,27 +78,22 @@ public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownB
     }
 
     @Override
-    public void readExternal(Element element) {
+    public void readExternal(@NotNull Element element) {
       myConfig = element;
     }
 
     @Override
-    public void writeExternal(Element element) {
+    public void writeExternal(@NotNull Element element) {
       if (myConfig != null) {
         element.removeContent();
         final List attributes = myConfig.getAttributes();
         for (Object attribute : attributes) {
-         element.setAttribute((Attribute)((Attribute)attribute).clone());
+         element.setAttribute(((Attribute)attribute).clone());
         }
         for (Object child : myConfig.getChildren()) {
-          element.addContent((Element)((Element)child).clone());
+          element.addContent(((Element)child).clone());
         }
       }
-    }
-
-    @Override
-    public BeforeRunTask clone() {
-      return super.clone();
     }
 
     public boolean equals(Object o) {

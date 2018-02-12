@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -97,6 +83,16 @@ public class VMOptions {
   }
 
   public static void writeOption(@NotNull MemoryKind option, int value) {
+    String optionValue = option.option + value + "m";
+    writeGeneralOption(option.pattern, optionValue);
+  }
+
+  public static void writeOption(@NotNull String option, @NotNull String separator, @NotNull String value) {
+    writeGeneralOption(Pattern.compile("-D" + option + separator + "(true|false)*([a-zA-Z0-9]*)"), "-D" + option + separator + value);
+  }
+
+
+  private static void writeGeneralOption(@NotNull Pattern pattern, @NotNull String value) {
     File file = getWriteFile();
     if (file == null) {
       LOG.warn("VM options file not configured");
@@ -106,22 +102,20 @@ public class VMOptions {
     try {
       String content = file.exists() ? FileUtil.loadFile(file) : read();
 
-      String optionValue = option.option + value + "m";
-
       if (!StringUtil.isEmptyOrSpaces(content)) {
-        Matcher m = option.pattern.matcher(content);
+        Matcher m = pattern.matcher(content);
         if (m.find()) {
           StringBuffer b = new StringBuffer();
-          m.appendReplacement(b, Matcher.quoteReplacement(optionValue));
+          m.appendReplacement(b, Matcher.quoteReplacement(value));
           m.appendTail(b);
           content = b.toString();
         }
         else {
-          content = StringUtil.trimTrailing(content) + SystemProperties.getLineSeparator() + optionValue;
+          content = StringUtil.trimTrailing(content) + SystemProperties.getLineSeparator() + value;
         }
       }
       else {
-        content = optionValue;
+        content = value;
       }
 
       if (file.exists()) {
@@ -166,7 +160,8 @@ public class VMOptions {
       return null;
     }
 
-    if (!FileUtil.isAncestor(PathManager.getHomePath(), vmOptionsFile, true)) {
+    vmOptionsFile = new File(vmOptionsFile).getAbsolutePath();
+    if (!PathManager.isUnderHomeDirectory(vmOptionsFile)) {
       // a file is located outside the IDE installation - meaning it is safe to overwrite
       return new File(vmOptionsFile);
     }

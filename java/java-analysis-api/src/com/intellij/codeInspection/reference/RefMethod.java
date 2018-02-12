@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.NotNull;
@@ -131,7 +132,11 @@ public interface RefMethod extends RefJavaElement {
 
   /**
    * Returns the list of exceptions which are included in the {@code throws} list
-   * of the method but cannot be actually thrown.
+   * of the method but cannot be actually thrown. 
+   * 
+   * To return valid results, requires com.intellij.codeInspection.unneededThrows.RedundantThrowsGraphAnnotator.
+   * (Dbl) Annotator registration is possible in {@link GlobalInspectionTool#initialize(com.intellij.codeInspection.GlobalInspectionContext)}
+   * or {@link GlobalInspectionTool#getAnnotator(RefManager)} 
    *
    * @return the list of exceptions declared but not thrown, or null if there are no
    * such exceptions.

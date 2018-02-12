@@ -48,12 +48,21 @@ class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
   public void push(@NotNull Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs,
                    @Nullable VcsPushOptionValue optionValue, boolean force) {
     expireExistingErrorsAndWarnings();
-    GitPushTagMode pushTagMode = (GitPushTagMode)optionValue;
-    GitPushResult result = new GitPushOperation(myProject, myPushSupport, pushSpecs, pushTagMode, force).execute();
+    GitPushTagMode pushTagMode;
+    boolean skipHook;
+    if (optionValue instanceof GitVcsPushOptionValue) {
+      pushTagMode = ((GitVcsPushOptionValue)optionValue).getPushTagMode();
+      skipHook = ((GitVcsPushOptionValue)optionValue).isSkipHook();
+    }
+    else {
+      pushTagMode = null;
+      skipHook = false;
+    }
+
+    GitPushResult result = new GitPushOperation(myProject, myPushSupport, pushSpecs, pushTagMode, force, skipHook).execute();
     GitPushResultNotification notification = GitPushResultNotification.create(myProject, result, myRepositoryManager.moreThanOneRoot());
     notification.notify(myProject);
     mySettings.setPushTagMode(pushTagMode);
-    rememberTargets(pushSpecs);
   }
 
   protected void expireExistingErrorsAndWarnings() {
@@ -62,19 +71,6 @@ class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
     for (GitPushResultNotification notification : existingNotifications) {
       if (notification.getType() != NotificationType.INFORMATION) {
         notification.expire();
-      }
-    }
-  }
-
-  private void rememberTargets(@NotNull Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs) {
-    for (Map.Entry<GitRepository, PushSpec<GitPushSource, GitPushTarget>> entry : pushSpecs.entrySet()) {
-      GitRepository repository = entry.getKey();
-      GitPushSource source = entry.getValue().getSource();
-      GitPushTarget target = entry.getValue().getTarget();
-      GitPushTarget defaultTarget = myPushSupport.getDefaultTarget(repository);
-      if (defaultTarget == null || !target.getBranch().equals(defaultTarget.getBranch())) {
-        mySettings.setPushTarget(repository, source.getBranch().getName(),
-                                 target.getBranch().getRemote().getName(), target.getBranch().getNameForRemoteOperations());
       }
     }
   }

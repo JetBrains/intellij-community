@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -38,7 +39,10 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.TimeUnit;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
 
 /**
  * @author cdr
@@ -105,6 +109,14 @@ public class ThreadTracker {
                                "ApplicationImpl pooled thread ",
                                ProcessIOExecutorService.POOLED_THREAD_PREFIX);
     }
+
+    try {
+      // init zillions of timers in e.g. MacOSXPreferencesFile
+      Preferences.userRoot().flush();
+    }
+    catch (BackingStoreException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   // marks Thread with this name as long-running, which should be ignored from the thread-leaking checks
@@ -151,12 +163,11 @@ public class ThreadTracker {
           continue;
         }
 
-        @SuppressWarnings("NonConstantStringShouldBeStringBuffer")
-        String trace = "Thread leaked: " + thread + "; " + thread.getState() + " (" + thread.isAlive() + ")\n--- its stacktrace:\n";
-        for (final StackTraceElement stackTraceElement : stackTrace) {
-          trace += " at "+stackTraceElement +"\n";
+        if (isIdleCommonPoolThread(thread, stackTrace)) {
+          continue;
         }
-        trace += "---\n";
+
+        String trace = PerformanceWatcher.printStacktrace("Thread leaked", thread, stackTrace);
         Assert.fail(trace);
       }
     }
@@ -171,7 +182,7 @@ public class ThreadTracker {
   }
 
   // true if somebody started new thread via "executeInPooledThread()" and then the thread is waiting for next task
-  private static boolean isIdleApplicationPoolThread(Thread thread, StackTraceElement[] stackTrace) {
+  private static boolean isIdleApplicationPoolThread(@NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {
     if (!isWellKnownOffender(thread)) return false;
     boolean insideTPEGetTask = Arrays.stream(stackTrace)
       .anyMatch(element -> element.getMethodName().equals("getTask")
@@ -180,7 +191,22 @@ public class ThreadTracker {
     return insideTPEGetTask;
   }
 
-  public static void awaitThreadTerminationWithParentParentGroup(@NotNull final String grandThreadGroup, int timeout, @NotNull TimeUnit unit) {
+  private static boolean isIdleCommonPoolThread(@NotNull Thread thread, @NotNull StackTraceElement[] stackTrace) {
+    if (!ForkJoinWorkerThread.class.isAssignableFrom(thread.getClass())) {
+      return false;
+    }
+    boolean insideAwaitWork = Arrays.stream(stackTrace)
+      .anyMatch(element -> element.getMethodName().equals("awaitWork")
+                           && element.getClassName().equals("java.util.concurrent.ForkJoinPool"));
+    return insideAwaitWork;
+  }
+
+  public static void awaitJDIThreadsTermination(int timeout, @NotNull TimeUnit unit) {
+    awaitThreadTerminationWithParentParentGroup("JDI main", timeout, unit);
+  }
+  private static void awaitThreadTerminationWithParentParentGroup(@NotNull final String grandThreadGroup,
+                                                                  int timeout,
+                                                                  @NotNull TimeUnit unit) {
     long start = System.currentTimeMillis();
     while (System.currentTimeMillis() < start + unit.toMillis(timeout)) {
       Thread jdiThread = ContainerUtil.find(getThreads(), thread -> {

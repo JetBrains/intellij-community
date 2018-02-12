@@ -24,9 +24,6 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.*;
 import java.awt.event.*;
 
-/**
- * User: anna
- */
 public class KeyboardComboSwitcher {
 
   public static void setupActions(final JComboBox comboBox, final Project project) {

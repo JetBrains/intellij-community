@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ import java.util.Map;
  * author: lesya
  */
 
-public class CvsEntriesManager extends VirtualFileAdapter {
+public class CvsEntriesManager implements VirtualFileListener {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.application.CvsEntriesManager");
 
@@ -101,14 +101,17 @@ public class CvsEntriesManager extends VirtualFileAdapter {
     }
   }
 
+  @Override
   public void beforePropertyChange(@NotNull VirtualFilePropertyEvent event) {
     processEvent(event);
   }
 
+  @Override
   public void beforeContentsChange(@NotNull VirtualFileEvent event) {
     processEvent(event);
   }
 
+  @Override
   public void contentsChanged(@NotNull VirtualFileEvent event) {
     fireStatusChanged(event.getFile());
   }
@@ -151,14 +154,17 @@ public class CvsEntriesManager extends VirtualFileAdapter {
     return getInfoFor(parent).getIgnoreFilter();
   }
 
+  @Override
   public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
     processEvent(event);
   }
 
+  @Override
   public void beforeFileMovement(@NotNull VirtualFileMoveEvent event) {
     processEvent(event);
   }
 
+  @Override
   public void fileCreated(@NotNull VirtualFileEvent event) {
     processEvent(event);
   }

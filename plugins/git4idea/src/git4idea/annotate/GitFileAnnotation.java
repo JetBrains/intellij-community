@@ -27,7 +27,6 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.text.DateFormatUtil;
@@ -57,7 +56,7 @@ public class GitFileAnnotation extends FileAnnotation {
   private final LineAnnotationAspect DATE_ASPECT = new GitAnnotationAspect(LineAnnotationAspect.DATE, true) {
     @Override
     public String doGetValue(LineInfo info) {
-      return DateFormatUtil.formatPrettyDate(info.getDate());
+      return DateFormatUtil.formatPrettyDate(info.getAuthorDate());
     }
   };
 
@@ -82,7 +81,7 @@ public class GitFileAnnotation extends FileAnnotation {
     super(project);
     myProject = project;
     myFile = file;
-    myVcs = ObjectUtils.assertNotNull(GitVcs.getInstance(myProject));
+    myVcs = GitVcs.getInstance(myProject);
     myBaseRevision = revision;
     myLines = lines;
   }
@@ -153,7 +152,7 @@ public class GitFileAnnotation extends FileAnnotation {
 
     String commitMessage = fileRevision != null ? fileRevision.getCommitMessage() : lineInfo.getSubject() + "\n...";
     return GitBundle.message("annotation.tool.tip", revisionNumber.asString(), lineInfo.getAuthor(),
-                             DateFormatUtil.formatDateTime(lineInfo.getDate()), commitMessage);
+                             DateFormatUtil.formatDateTime(lineInfo.getAuthorDate()), commitMessage);
   }
 
   @Nullable
@@ -167,7 +166,7 @@ public class GitFileAnnotation extends FileAnnotation {
   @Override
   public Date getLineDate(int lineNumber) {
     LineInfo lineInfo = getLineInfo(lineNumber);
-    return lineInfo != null ? lineInfo.getDate() : null;
+    return lineInfo != null ? lineInfo.getAuthorDate() : null;
   }
 
   private boolean lineNumberCheck(int lineNumber) {
@@ -214,14 +213,16 @@ public class GitFileAnnotation extends FileAnnotation {
     @NotNull private final FilePath myFilePath;
     @Nullable private final GitRevisionNumber myPreviousRevision;
     @Nullable private final FilePath myPreviousFilePath;
-    @NotNull private final Date myDate;
+    @NotNull private final Date myCommitterDate;
+    @NotNull private final Date myAuthorDate;
     @NotNull private final VcsUser myAuthor;
     @NotNull private final String mySubject;
 
     public LineInfo(@NotNull Project project,
                     @NotNull GitRevisionNumber revision,
                     @NotNull FilePath path,
-                    @NotNull Date date,
+                    @NotNull Date committerDate,
+                    @NotNull Date authorDate,
                     @NotNull VcsUser author,
                     @NotNull String subject,
                     @Nullable GitRevisionNumber previousRevision,
@@ -231,7 +232,8 @@ public class GitFileAnnotation extends FileAnnotation {
       myFilePath = path;
       myPreviousRevision = previousRevision;
       myPreviousFilePath = previousPath;
-      myDate = date;
+      myCommitterDate = committerDate;
+      myAuthorDate = authorDate;
       myAuthor = author;
       mySubject = subject;
     }
@@ -258,8 +260,13 @@ public class GitFileAnnotation extends FileAnnotation {
     }
 
     @NotNull
-    public Date getDate() {
-      return myDate;
+    public Date getCommitterDate() {
+      return myCommitterDate;
+    }
+
+    @NotNull
+    public Date getAuthorDate() {
+      return myAuthorDate;
     }
 
     @NotNull
@@ -370,7 +377,7 @@ public class GitFileAnnotation extends FileAnnotation {
       if (lineInfo == null) continue;
 
       VcsRevisionNumber number = lineInfo.getRevisionNumber();
-      Date date = lineInfo.getDate();
+      Date date = lineInfo.getCommitterDate();
 
       dates.putValue(date, number);
     }

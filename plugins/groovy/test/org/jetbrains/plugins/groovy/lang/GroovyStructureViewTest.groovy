@@ -69,7 +69,7 @@ class Bar extends Foo {
  -Foo
   Foo(int, int)
   foo(int, int): Object
-  getClass(): Class<? extends Object>
+  getClass(): Class<?>
   hashCode(): int
   equals(Object): boolean
   clone(): Object
@@ -84,7 +84,7 @@ class Bar extends Foo {
  -Bar
   bar(int): Object
   foo(int, int): Object
-  getClass(): Class<? extends Object>
+  getClass(): Class<?>
   hashCode(): int
   equals(Object): boolean
   clone(): Object

@@ -19,14 +19,10 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-
-import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode<LocallyDeletedChange>
   implements TreeLinkMouseListener.HaveTooltip {
@@ -53,30 +49,25 @@ public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode<Locally
     if (renderer.isShowFlatten()) {
       FilePath parentPath = filePath.getParentPath();
       if (parentPath != null) {
-        renderer.append(spaceAndThinSpace() + parentPath.getPresentableUrl(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        appendParentPath(renderer, parentPath);
       }
     }
-    else if (getFileCount() != 1 || getDirectoryCount() != 0) {
+
+    if (!renderer.isShowFlatten() && getFileCount() != 1 || getDirectoryCount() != 0) {
       appendCount(renderer);
     }
 
-    renderer.setIcon(getIcon());
+    Icon additionalIcon = getUserObject().getAddIcon();
+    if (additionalIcon != null) {
+      renderer.setIcon(additionalIcon);
+    }
+    else {
+      renderer.setIcon(filePath.getFileType(), filePath.isDirectory() || !isLeaf());
+    }
   }
 
   @Nullable
   public String getTooltip() {
     return getUserObject().getDescription();
-  }
-
-  @Nullable
-  private Icon getIcon() {
-    Icon result = getUserObject().getAddIcon();
-
-    if (result == null) {
-      FilePath filePath = getUserObject().getPath();
-      result = filePath.isDirectory() || !isLeaf() ? PlatformIcons.DIRECTORY_CLOSED_ICON : filePath.getFileType().getIcon();
-    }
-
-    return result;
   }
 }

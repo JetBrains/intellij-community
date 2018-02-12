@@ -64,7 +64,7 @@ public class XmlFileHighlighter extends SyntaxHighlighterBase {
     keys1.put(XmlTokenType.XML_TAG_CHARACTERS, XmlHighlighterColors.XML_TAG);
 
     keys2.put(XmlTokenType.XML_TAG_NAME, XmlHighlighterColors.XML_TAG_NAME);
-    keys2.put(XmlTokenType.XML_CONDITIONAL_INCLUDE, XmlHighlighterColors.XML_TAG_NAME);
+    keys2.put(XmlTokenType.XML_CONDITIONAL_IGNORE, XmlHighlighterColors.XML_TAG_NAME);
     keys2.put(XmlTokenType.XML_CONDITIONAL_INCLUDE, XmlHighlighterColors.XML_TAG_NAME);
     keys2.put(XmlTokenType.XML_NAME, XmlHighlighterColors.XML_ATTRIBUTE_NAME);
     keys2.put(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN, XmlHighlighterColors.XML_ATTRIBUTE_VALUE);

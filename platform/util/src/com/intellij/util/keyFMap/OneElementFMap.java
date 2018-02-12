@@ -18,11 +18,11 @@ package com.intellij.util.keyFMap;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
-public class OneElementFMap<V> implements KeyFMap {
+final class OneElementFMap implements KeyFMap {
   private final Key myKey;
-  private final V myValue;
+  private final Object myValue;
 
-  public OneElementFMap(@NotNull Key key, @NotNull V value) {
+  public <V> OneElementFMap(@NotNull Key<V> key, @NotNull V value) {
     myKey = key;
     myValue = value;
   }
@@ -30,7 +30,9 @@ public class OneElementFMap<V> implements KeyFMap {
   @NotNull
   @Override
   public <V> KeyFMap plus(@NotNull Key<V> key, @NotNull V value) {
-    if (myKey == key) return new OneElementFMap<V>(key, value);
+    if (myKey == key) {
+      return value == myValue ? this : new OneElementFMap(key, value);
+    }
     return new PairElementsFMap(myKey, myValue, key, value);
   }
 
@@ -46,6 +48,11 @@ public class OneElementFMap<V> implements KeyFMap {
     return myKey == key ? (V)myValue : null;
   }
 
+  @Override
+  public int size() {
+    return 1;
+  }
+
   @NotNull
   @Override
   public Key[] getKeys() {
@@ -54,7 +61,7 @@ public class OneElementFMap<V> implements KeyFMap {
 
   @Override
   public String toString() {
-    return "<" + myKey + " -> " + myValue+">";
+    return "{" + myKey + "=" + myValue + "}";
   }
 
   @Override
@@ -62,12 +69,9 @@ public class OneElementFMap<V> implements KeyFMap {
     return false;
   }
 
-  public Key getKey() {
-    return myKey;
-  }
-
-  public V getValue() {
-    return myValue;
+  @Override
+  public int getValueIdentityHashCode() {
+    return myKey.hashCode() * 31 + System.identityHashCode(myValue);
   }
 
   @Override
@@ -76,17 +80,20 @@ public class OneElementFMap<V> implements KeyFMap {
     if (!(o instanceof OneElementFMap)) return false;
 
     OneElementFMap map = (OneElementFMap)o;
+    return myKey == map.myKey && myValue.equals(map.myValue);
+  }
 
-    if (myKey != map.myKey) return false;
-    if (!myValue.equals(map.myValue)) return false;
+  @Override
+  public boolean equalsByReference(KeyFMap o) {
+    if (this == o) return true;
+    if (!(o instanceof OneElementFMap)) return false;
 
-    return true;
+    OneElementFMap map = (OneElementFMap)o;
+    return myKey == map.myKey && myValue == map.myValue;
   }
 
   @Override
   public int hashCode() {
-    int result = myKey.hashCode();
-    result = 31 * result + myValue.hashCode();
-    return result;
+    return myKey.hashCode() ^ myValue.hashCode();
   }
 }

@@ -275,9 +275,7 @@ public class GithubApiUtil {
   @NotNull
   public static List<GithubRepo> getAvailableRepos(@NotNull GithubConnection connection) throws IOException {
     try {
-      List<GithubRepo> repos = new ArrayList<>();
-
-      repos.addAll(getUserRepos(connection, true));
+      List<GithubRepo> repos = new ArrayList<>(getUserRepos(connection, true));
 
       // We already can return something useful from getUserRepos, so let's ignore errors.
       // One of this may not exist in GitHub enterprise
@@ -353,9 +351,9 @@ public class GithubApiUtil {
   public static GithubGist createGist(@NotNull GithubConnection connection,
                                       @NotNull List<GithubGistRequest.FileContent> contents,
                                       @NotNull String description,
-                                      boolean isPrivate) throws IOException {
+                                      boolean isPublic) throws IOException {
     try {
-      GithubGistRequest request = new GithubGistRequest(contents, description, !isPrivate);
+      GithubGistRequest request = new GithubGistRequest(contents, description, isPublic);
       return post(connection, "/gists", request, GithubGist.class, ACCEPT_V3_JSON);
     }
     catch (GithubConfusingException e) {

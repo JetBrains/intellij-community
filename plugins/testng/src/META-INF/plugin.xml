@@ -25,9 +25,6 @@
       <localInspection groupPath="Java" language="JAVA" shortName="ConvertJavadoc" displayName="Convert TestNG Javadoc to 1.5 annotations" groupName="TestNG"
                        enabledByDefault="false" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.ConvertJavadocInspection"/>
-      <localInspection groupPath="Java" language="JAVA" shortName="ConvertAnnotations" displayName="Convert TestNG annotations to javadocs" groupName="TestNG"
-                       enabledByDefault="false" level="WARNING"
-                       implementationClass="com.theoryinpractice.testng.inspection.ConvertAnnotationInspection"/>
       <localInspection groupPath="Java" language="JAVA" shortName="dependsOnMethodTestNG" displayName="dependsOnMethods problem" groupName="TestNG" enabledByDefault="true"
                        level="WARNING" implementationClass="com.theoryinpractice.testng.inspection.DependsOnMethodInspection"/>
       <localInspection groupPath="Java" language="JAVA" shortName="groupsTestNG" displayName="Groups problem" groupName="TestNG" enabledByDefault="true" level="WARNING"
@@ -46,9 +43,7 @@
       <localInspection groupPath="Java" language="JAVA" shortName="MisorderedAssertEqualsArgumentsTestNG" displayName="Misordered 'assertEquals()' arguments"
                        groupName="TestNG" enabledByDefault="false" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.MisorderedAssertEqualsArgumentsTestNGInspection"/>
-      <localInspection groupPath="Java" language="JAVA" shortName="TestNGMethodNamingConvention" displayName="TestNG test method naming convention"
-                       groupName="TestNG" enabledByDefault="false" level="WARNING"
-                       implementationClass="com.theoryinpractice.testng.inspection.TestNGMethodNamingConventionInspection"/>
+      <naming.convention.method implementation="com.theoryinpractice.testng.inspection.TestNGMethodNamingConvention" id="TestNGMethodNamingConvention" order="first"/>
       <localInspection groupPath="Java" language="JAVA" shortName="DuplicatedDataProviderNames" displayName="Duplicated data provider names"
                        groupName="TestNG" enabledByDefault="true" level="ERROR"
                        implementationClass="com.theoryinpractice.testng.inspection.DuplicatedDataProviderNamesInspection"/>
@@ -75,7 +70,7 @@
       <localInspection implementationClass="com.theoryinpractice.testng.inspection.SimplifiedTestNGAssertionInspection"
                        groupPath="Java" language="JAVA" shortName="SimplifiedTestNGAssertion" bundle="com.siyeh.InspectionGadgetsBundle"
                        key="simplifiable.testng.assertion.display.name" groupName="TestNG"
-                       enabledByDefault="false" level="WARNING"/>
+                       enabledByDefault="true" level="WARNING"/>
       <localInspection groupPath="Java" language="JAVA" shortName="ConstantTestNGAssertArgument" displayName="Constant TestNG assert argument"
                        groupName="TestNG" enabledByDefault="false" level="WARNING" implementationClass="com.theoryinpractice.testng.inspection.ConstantTestNGAssertArgumentInspection"/>
     </extensions>

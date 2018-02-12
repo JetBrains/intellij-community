@@ -1,21 +1,20 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.jetbrains.python.packaging.requirement;
 
 import com.intellij.openapi.util.text.StringUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +22,18 @@ import java.math.BigInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Normalizes requirement version.
+ * <p>
+ * Based on
+ * <a href="https://www.python.org/dev/peps/pep-0440/#normalization">https://www.python.org/dev/peps/pep-0440/#normalization</a>
+ * and
+ * <a href="https://www.python.org/dev/peps/pep-0440/#summary-of-permitted-suffixes-and-relative-ordering">https://www.python.org/dev/peps/pep-0440/#summary-of-permitted-suffixes-and-relative-ordering</a>.
+ *
+ * @deprecated Use {@link com.jetbrains.python.packaging.PyRequirement} instead.
+ * This class will be removed in 2018.2.
+ */
+@Deprecated
 public final class PyRequirementVersionNormalizer {
 
   @NotNull
@@ -56,7 +67,7 @@ public final class PyRequirementVersionNormalizer {
   private static final String LOCAL_VERSION_GROUP = "local";
 
   @NotNull
-  private static final String SEP_REGEXP = "(\\.|-|_)?";
+  private static final String SEP_REGEXP = "([\\.\\-_])?";
 
   @NotNull
   private static final String EPOCH_REGEXP = "(?<" + EPOCH_GROUP + ">\\d+!)?";
@@ -103,71 +114,88 @@ public final class PyRequirementVersionNormalizer {
     Pattern.CASE_INSENSITIVE);
 
   @Nullable
-  public static String normalize(@NotNull String version) {
+  public static PyRequirementVersion normalize(@NotNull String version) {
     final Matcher matcher = VERSION.matcher(version);
     if (matcher.matches()) {
-      final StringBuilder sb = new StringBuilder();
+      return new PyRequirementVersion(
+        normalizeEpoch(matcher),
+        normalizeRelease(matcher),
+        normalizePre(matcher),
+        normalizePost(matcher),
+        normalizeDev(matcher),
+        normalizeLocal(matcher)
+      );
+    }
 
-      final String epoch = matcher.group(EPOCH_GROUP);
-      if (epoch != null) {
-        final String normalizedEpoch = normalizeNumber(epoch.substring(0, epoch.length() - 1));
-        sb
-          .append(normalizedEpoch)
-          .append('!');
-      }
+    return null;
+  }
 
-      for (String releasePart : StringUtil.tokenize(matcher.group(RELEASE_GROUP), ".")) {
-        sb
-          .append(releasePart.equals("*") ? "*" : normalizeNumber(releasePart))
-          .append('.');
-      }
+  @Nullable
+  private static String normalizeEpoch(@NotNull Matcher matcher) {
+    final String epoch = matcher.group(EPOCH_GROUP);
+    if (epoch != null) {
+      return normalizeNumber(epoch.substring(0, epoch.length() - 1));
+    }
 
-      if (sb.charAt(sb.length() - 1) == '.') {
-        sb.setLength(sb.length() - 1);
-      }
+    return null;
+  }
 
-      final String preReleaseType = matcher.group(PRE_RELEASE_TYPE_GROUP);
-      if (preReleaseType != null) {
-        final String preReleaseNumber = matcher.group(PRE_RELEASE_NUMBER_GROUP);
-        final String normalizedPreReleaseNumber = preReleaseNumber == null ? "0" : normalizeNumber(preReleaseNumber);
+  @NotNull
+  private static String normalizeRelease(@NotNull Matcher matcher) {
+    return StreamEx
+      .of(StringUtil.tokenize(matcher.group(RELEASE_GROUP), ".").iterator())
+      .map(releasePart -> releasePart.equals("*") ? "*" : normalizeNumber(releasePart))
+      .joining(".");
+  }
 
-        sb
-          .append(normalizePreReleaseType(preReleaseType))
-          .append(normalizedPreReleaseNumber);
-      }
+  @Nullable
+  private static String normalizePre(@NotNull Matcher matcher) {
+    final String preReleaseType = matcher.group(PRE_RELEASE_TYPE_GROUP);
+    if (preReleaseType != null) {
+      final String preReleaseNumber = matcher.group(PRE_RELEASE_NUMBER_GROUP);
+      final String normalizedPreReleaseNumber = preReleaseNumber == null ? "0" : normalizeNumber(preReleaseNumber);
 
-      final String postReleaseType = matcher.group(POST_RELEASE_TYPE_GROUP);
-      if (postReleaseType != null) {
-        final String postReleaseNumber = matcher.group(POST_RELEASE_NUMBER_GROUP);
-        final String normalizedPostReleaseNumber = postReleaseNumber == null ? "0" : normalizeNumber(postReleaseNumber);
+      return normalizePreReleaseType(preReleaseType) + normalizedPreReleaseNumber;
+    }
 
-        sb
-          .append(".post")
-          .append(normalizeNumber(normalizedPostReleaseNumber));
-      }
+    return null;
+  }
 
-      final String implicitPostReleaseNumber = matcher.group(IMPLICIT_POST_RELEASE_NUMBER_GROUP);
-      if (implicitPostReleaseNumber != null) {
-        sb
-          .append(".post")
-          .append(normalizeNumber(implicitPostReleaseNumber));
-      }
+  @Nullable
+  private static String normalizePost(@NotNull Matcher matcher) {
+    final String postReleaseType = matcher.group(POST_RELEASE_TYPE_GROUP);
+    if (postReleaseType != null) {
+      final String postReleaseNumber = matcher.group(POST_RELEASE_NUMBER_GROUP);
+      final String normalizedPostReleaseNumber = postReleaseNumber == null ? "0" : normalizeNumber(postReleaseNumber);
 
-      if (matcher.group(DEV_RELEASE_TYPE_GROUP) != null) {
-        final String devReleaseNumber = matcher.group(DEV_RELEASE_NUMBER_GROUP);
-        final String normalizedDevReleaseNumber = devReleaseNumber == null ? "0" : normalizeNumber(devReleaseNumber);
+      return "post" + normalizeNumber(normalizedPostReleaseNumber);
+    }
 
-        sb
-          .append(".dev")
-          .append(normalizedDevReleaseNumber);
-      }
+    final String implicitPostReleaseNumber = matcher.group(IMPLICIT_POST_RELEASE_NUMBER_GROUP);
+    if (implicitPostReleaseNumber != null) {
+      return "post" + normalizeNumber(implicitPostReleaseNumber);
+    }
 
-      final String localVersion = matcher.group(LOCAL_VERSION_GROUP);
-      if (localVersion != null) {
-        sb.append(normalizeLocalVersion(localVersion));
-      }
+    return null;
+  }
 
-      return sb.toString();
+  @Nullable
+  private static String normalizeDev(@NotNull Matcher matcher) {
+    if (matcher.group(DEV_RELEASE_TYPE_GROUP) != null) {
+      final String devReleaseNumber = matcher.group(DEV_RELEASE_NUMBER_GROUP);
+      final String normalizedDevReleaseNumber = devReleaseNumber == null ? "0" : normalizeNumber(devReleaseNumber);
+
+      return "dev" + normalizedDevReleaseNumber;
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static String normalizeLocal(@NotNull Matcher matcher) {
+    final String localVersion = matcher.group(LOCAL_VERSION_GROUP);
+    if (localVersion != null) {
+      return localVersion.substring(1).replaceAll("[-_]", ".");
     }
 
     return null;
@@ -189,10 +217,5 @@ public final class PyRequirementVersionNormalizer {
     else {
       return "rc";
     }
-  }
-
-  @NotNull
-  private static String normalizeLocalVersion(@NotNull String localVersion) {
-    return localVersion.replaceAll("[-_]", ".");
   }
 }

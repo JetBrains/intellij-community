@@ -1,8 +1,0 @@
-Package: idea
-Version: @version@
-Section: Development
-Priority: optional
-Architecture: all
-Depends: wget, sun-java6-jdk
-Maintainer: JetBrains Inc. <www.jetbrains.com>
-Description: Intellij Idea IDE

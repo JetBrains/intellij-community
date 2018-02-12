@@ -22,11 +22,6 @@ import org.intellij.plugins.xsltDebugger.rt.engine.OutputEventQueue;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 08.06.2007
- */
 public class OutputEventQueueImpl implements OutputEventQueue {
   private final Debugger myDebugger;
 

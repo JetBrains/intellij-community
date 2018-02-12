@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -52,19 +51,20 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 import static java.util.Arrays.asList;
 
 /**
- * Handles <code>git pull</code> via merge.
+ * Handles {@code git pull} via merge.
  */
 public class GitMergeUpdater extends GitUpdater {
   private static final Logger LOG = Logger.getInstance(GitMergeUpdater.class);
 
-  private final ChangeListManager myChangeListManager;
+  @NotNull private final ChangeListManager myChangeListManager;
 
-  public GitMergeUpdater(Project project, @NotNull Git git,
-                         VirtualFile root,
-                         final Map<VirtualFile, GitBranchPair> trackedBranches,
-                         ProgressIndicator progressIndicator,
-                         UpdatedFiles updatedFiles) {
-    super(project, git, root, trackedBranches, progressIndicator, updatedFiles);
+  public GitMergeUpdater(@NotNull Project project,
+                         @NotNull Git git,
+                         @NotNull GitRepository repository,
+                         @NotNull GitBranchPair branchAndTracked,
+                         @NotNull ProgressIndicator progressIndicator,
+                         @NotNull UpdatedFiles updatedFiles) {
+    super(project, git, repository, branchAndTracked, progressIndicator, updatedFiles);
     myChangeListManager = ChangeListManager.getInstance(myProject);
   }
 
@@ -80,7 +80,7 @@ public class GitMergeUpdater extends GitUpdater {
     String originalText = myProgressIndicator.getText();
     myProgressIndicator.setText("Merging" + GitUtil.mention(myRepository) + "...");
     try {
-      GitCommandResult result = myGit.merge(myRepository, assertNotNull(myTrackedBranches.get(myRoot).getDest()).getName(),
+      GitCommandResult result = myGit.merge(myRepository, assertNotNull(myBranchPair.getDest()).getName(),
                                             asList("--no-stat", "-v"), mergeLineListener, untrackedFilesDetector,
                                             GitStandardProgressAnalyzer.createListener(myProgressIndicator));
       myProgressIndicator.setText(originalText);
@@ -111,17 +111,14 @@ public class GitMergeUpdater extends GitUpdater {
       LOG.info("Local changes would be overwritten by merge");
       final List<FilePath> paths = getFilesOverwrittenByMerge(mergeLineListener.getOutput());
       final Collection<Change> changes = getLocalChangesFilteredByFiles(paths);
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          ChangeListViewerDialog dialog = new ChangeListViewerDialog(myProject, changes, false) {
-            @Override protected String getDescription() {
-              return "Your local changes to the following files would be overwritten by merge.<br/>" +
-                                "Please, commit your changes or stash them before you can merge.";
-            }
-          };
-          dialog.show();
-        }
+      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+        ChangeListViewerDialog dialog = new ChangeListViewerDialog(myProject, changes, false) {
+          @Override protected String getDescription() {
+            return "Your local changes to the following files would be overwritten by merge.<br/>" +
+                              "Please, commit your changes or stash them before you can merge.";
+          }
+        };
+        dialog.show();
       });
       return GitUpdateResult.ERROR;
     }
@@ -152,9 +149,8 @@ public class GitMergeUpdater extends GitUpdater {
     }
 
     // git log --name-status master..origin/master
-    GitBranchPair gitBranchPair = myTrackedBranches.get(myRoot);
-    String currentBranch = gitBranchPair.getBranch().getName();
-    String remoteBranch = gitBranchPair.getDest().getName();
+    String currentBranch = myBranchPair.getBranch().getName();
+    String remoteBranch = myBranchPair.getDest().getName();
     try {
       GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(myRoot);
       if (repository == null) {
@@ -165,12 +161,7 @@ public class GitMergeUpdater extends GitUpdater {
                                                                                  currentBranch, remoteBranch);
       final List<File> locallyChanged = myChangeListManager.getAffectedPaths();
       for (final File localPath : locallyChanged) {
-        if (ContainerUtil.exists(remotelyChanged, new Condition<String>() {
-          @Override
-          public boolean value(String remotelyChangedPath) {
-            return FileUtil.pathsEqual(localPath.getPath(), remotelyChangedPath);
-          }
-        })) {
+        if (ContainerUtil.exists(remotelyChanged, remotelyChangedPath -> FileUtil.pathsEqual(localPath.getPath(), remotelyChangedPath))) {
           // found a file which was changed locally and remotely => need to save
           return true;
         }
@@ -183,13 +174,12 @@ public class GitMergeUpdater extends GitUpdater {
   }
 
   private void cancel() {
-    try {
-      GitSimpleHandler h = new GitSimpleHandler(myProject, myRoot, GitCommand.RESET);
-      h.addParameters("--merge");
-      h.run();
-    } catch (VcsException e) {
-      LOG.info("cancel git reset --merge", e);
-      GitUIUtil.notifyImportantError(myProject, "Couldn't reset merge", e.getLocalizedMessage());
+    GitLineHandler h = new GitLineHandler(myProject, myRoot, GitCommand.RESET);
+    h.addParameters("--merge");
+    GitCommandResult result = Git.getInstance().runCommand(h);
+    if (!result.success()) {
+      LOG.info("cancel git reset --merge: " + result.getErrorOutputAsJoinedString());
+      GitUIUtil.notifyImportantError(myProject, "Couldn't reset merge", result.getErrorOutputAsHtmlString());
     }
   }
 
@@ -245,7 +235,7 @@ public class GitMergeUpdater extends GitUpdater {
 
   private static class MergeLineListener extends GitLineHandlerAdapter {
     private MergeError myMergeError;
-    private List<String> myOutput = new ArrayList<>();
+    private final List<String> myOutput = new ArrayList<>();
     private boolean myLocalChangesError = false;
 
     @Override

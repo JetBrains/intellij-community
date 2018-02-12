@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,8 @@
  */
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WelcomeFrameProvider;
-import com.intellij.util.PlatformUtils;
 
 /**
  * @author Konstantin Bulenkov
@@ -26,10 +24,6 @@ import com.intellij.util.PlatformUtils;
 public class FlatWelcomeFrameProvider implements WelcomeFrameProvider {
   @Override
   public IdeFrame createFrame() {
-    return isAvailable() ? new FlatWelcomeFrame() : null;
-  }
-
-  public static boolean isAvailable() {
-    return Registry.is("ide.new.welcome.screen.force") || (PlatformUtils.isJetBrainsProduct() && !PlatformUtils.isDatabaseIDE());
+    return new FlatWelcomeFrame();
   }
 }

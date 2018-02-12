@@ -16,6 +16,7 @@
 package org.intellij.lang.regexp;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LightPsiParser;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 
-public class RegExpParser implements PsiParser {
+public class RegExpParser implements PsiParser, LightPsiParser {
   private static final TokenSet PROPERTY_TOKENS = TokenSet.create(RegExpTT.NUMBER, RegExpTT.COMMA, RegExpTT.NAME, RegExpTT.RBRACE);
   private final EnumSet<RegExpCapability> myCapabilities;
 
@@ -34,8 +35,7 @@ public class RegExpParser implements PsiParser {
   }
 
   @Override
-  @NotNull
-  public ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
+  public void parseLight(IElementType root, PsiBuilder builder) {
     final PsiBuilder.Marker rootMarker = builder.mark();
 
     parsePattern(builder);
@@ -46,6 +46,12 @@ public class RegExpParser implements PsiParser {
     }
 
     rootMarker.done(root);
+  }
+
+  @Override
+  @NotNull
+  public ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
+    parseLight(root, builder);
     return builder.getTreeBuilt();
   }
 
@@ -250,6 +256,12 @@ public class RegExpParser implements PsiParser {
       else if (token == RegExpTT.BRACKET_EXPRESSION_BEGIN) {
         parseBracketExpression(builder);
       }
+      else if (token == RegExpTT.MYSQL_CHAR_BEGIN) {
+        parseMysqlCharExpression(builder);
+      }
+      else if (token == RegExpTT.MYSQL_CHAR_EQ_BEGIN) {
+        parseMysqlCharEqExpression(builder);
+      }
       else if (RegExpTT.CHARACTERS.contains(token) || token == RegExpTT.NAMED_CHARACTER) {
         parseCharacterRange(builder);
       }
@@ -277,6 +289,27 @@ public class RegExpParser implements PsiParser {
     checkMatches(builder, RegExpTT.NAME, "POSIX character class name expected");
     checkMatches(builder, RegExpTT.BRACKET_EXPRESSION_END, "Unclosed POSIX bracket expression");
     marker.done(RegExpElementTypes.POSIX_BRACKET_EXPRESSION);
+  }
+
+  private static void parseMysqlCharExpression(PsiBuilder builder) {
+    final PsiBuilder.Marker marker = builder.mark();
+    builder.advanceLexer();
+    if (builder.getTokenType() == RegExpTT.NAME) {
+      builder.advanceLexer();
+    }
+    else {
+      checkMatches(builder, RegExpTT.CHARACTER, "Character or MySQL character name expected");
+    }
+    checkMatches(builder, RegExpTT.MYSQL_CHAR_END, "Unclosed MySQL character expression");
+    marker.done(RegExpElementTypes.MYSQL_CHAR_EXPRESSION);
+  }
+
+  private static void parseMysqlCharEqExpression(PsiBuilder builder) {
+    final PsiBuilder.Marker marker = builder.mark();
+    builder.advanceLexer();
+    checkMatches(builder, RegExpTT.CHARACTER, "Character expected");
+    checkMatches(builder, RegExpTT.MYSQL_CHAR_EQ_END, "Unclosed MySQL character equivalence class");
+    marker.done(RegExpElementTypes.MYSQL_CHAR_EQ_EXPRESSION);
   }
 
   private void parseCharacterRange(PsiBuilder builder) {

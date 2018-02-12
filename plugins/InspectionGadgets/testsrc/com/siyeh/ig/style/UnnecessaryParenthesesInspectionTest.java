@@ -7,7 +7,7 @@ import com.siyeh.ig.IGInspectionTestCase;
 
 public class UnnecessaryParenthesesInspectionTest extends IGInspectionTestCase {
 
-  public void test() throws Exception {
+  public void test() {
     final UnnecessaryParenthesesInspection inspection = new UnnecessaryParenthesesInspection();
     inspection.ignoreParenthesesOnConditionals = true;
     final LanguageLevelProjectExtension levelProjectExtension = LanguageLevelProjectExtension.getInstance(getProject());

@@ -17,20 +17,22 @@ package com.jetbrains.python.codeInsight.controlflow;
 
 import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.impl.InstructionImpl;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ReadWriteInstruction extends InstructionImpl {
   final InstructionTypeCallback EXPR_TYPE = new InstructionTypeCallback() {
     @Nullable
     @Override
-    public PyType getType(TypeEvalContext context, @Nullable PsiElement anchor) {
-      return myElement instanceof PyExpression ? context.getType((PyExpression)myElement) : null;
+    public Ref<PyType> getType(TypeEvalContext context, @Nullable PsiElement anchor) {
+      return Ref.create(myElement instanceof PyExpression ? context.getType((PyExpression)myElement) : null);
     }
   };
 
@@ -120,10 +122,11 @@ public class ReadWriteInstruction extends InstructionImpl {
   }
 
   @Nullable
-  public PyType getType(TypeEvalContext context, @Nullable PsiElement anchor) {
+  public Ref<PyType> getType(TypeEvalContext context, @Nullable PsiElement anchor) {
     return myGetType.getType(context, anchor);
   }
 
+  @NotNull
   @NonNls
   @Override
   public String getElementPresentation() {

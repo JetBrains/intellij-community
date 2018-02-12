@@ -58,17 +58,6 @@ public class PersistentUtil {
     return mapFile;
   }
 
-  public static void cleanupOldStorageFile(@NotNull String storageKind, @NotNull String logId) {
-    File subdir = new File(LOG_CACHE, storageKind);
-    String safeLogId = PathUtilRt.suggestFileName(logId, true, true);
-    IOUtil.deleteAllFilesStartingWith(new File(subdir, safeLogId));
-
-    File[] files = subdir.listFiles();
-    if (files != null && files.length == 0) {
-      subdir.delete();
-    }
-  }
-
   @NotNull
   public static <T> PersistentEnumeratorBase<T> createPersistentEnumerator(@NotNull KeyDescriptor<T> keyDescriptor,
                                                                            @NotNull String storageKind,
@@ -110,15 +99,21 @@ public class PersistentUtil {
   public static File getStorageFile(@NotNull String subdirName,
                                     @NotNull String kind,
                                     @NotNull String id,
-                                    int version,
-                                    boolean cleanupOldVersions) {
+                                    int version) {
     File subdir = new File(LOG_CACHE, subdirName);
     String safeLogId = PathUtilRt.suggestFileName(id, true, true);
-    File file = new File(subdir, safeLogId + "." + kind + "." + version);
-    if (cleanupOldVersions && !file.exists()) {
-      IOUtil.deleteAllFilesStartingWith(new File(subdir, safeLogId + "." + kind));
+    File file = getFileName(kind, subdir, safeLogId, version);
+    if (!file.exists()) {
+      for (int oldVersion = 0; oldVersion < version; oldVersion++) {
+        IOUtil.deleteAllFilesStartingWith(getFileName(kind, subdir, safeLogId, oldVersion));
+      }
     }
     return file;
+  }
+
+  @NotNull
+  private static File getFileName(@NotNull String kind, @NotNull File subdir, @NotNull String safeLogId, int version) {
+    return new File(subdir, safeLogId + "." + kind + "." + version);
   }
 
   @NotNull

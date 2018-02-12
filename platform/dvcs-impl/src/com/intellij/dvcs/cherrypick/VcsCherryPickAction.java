@@ -29,7 +29,7 @@ import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import icons.DvcsImplIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,11 +83,10 @@ public class VcsCherryPickAction extends DumbAwareAction {
 
     final Map<VirtualFile, List<Hash>> groupedByRoot = groupByRoot(commits);
     VcsCherryPicker activeCherryPicker = getActiveCherryPicker(cherryPickers, groupedByRoot.keySet());
-    String description = activeCherryPicker != null ? activeCherryPicker.getInfo(log, groupedByRoot) : SEVERAL_VCS_DESCRIPTION;
-    e.getPresentation().setEnabled(description == null);
+    e.getPresentation().setEnabled(activeCherryPicker != null);
     e.getPresentation()
       .setText(activeCherryPicker == null ? concatActionNamesForAllAvailable(cherryPickers) : activeCherryPicker.getActionTitle());
-    e.getPresentation().setDescription(description == null ? "" : description);
+    e.getPresentation().setDescription(activeCherryPicker != null ? "" : SEVERAL_VCS_DESCRIPTION);
   }
 
   @Nullable

@@ -36,9 +36,9 @@ public class RelativePoint extends UserDataHolderBase {
       init(event.getComponent(), event.getPoint());
     } else {
       myPointOnComponent = event.getPoint();
+      myOriginalComponent = event.getComponent();
+      myOriginalPoint = event.getPoint();
     }
-    myOriginalComponent = event.getComponent();
-    myOriginalPoint = event.getPoint();
   }
 
   public RelativePoint(@NotNull Component aComponent, Point aPointOnComponent) {
@@ -83,9 +83,8 @@ public class RelativePoint extends UserDataHolderBase {
       myComponent = aComponent;
       myPointOnComponent = aPointOnComponent;
     }
-
-    myOriginalComponent = myComponent;
-    myOriginalPoint = myPointOnComponent;
+    myOriginalComponent = aComponent;
+    myOriginalPoint = aPointOnComponent;
   }
 
   public Component getComponent() {
@@ -165,7 +164,7 @@ public class RelativePoint extends UserDataHolderBase {
     return new RelativePoint(component, point);
   }
 
-  @NotNull
+  @NotNull @SuppressWarnings("unused")
   public static RelativePoint getNorthEastOf(@NotNull JComponent component) {
     final Rectangle visibleRect = component.getVisibleRect();
     final Point point = new Point(visibleRect.x + visibleRect.width, visibleRect.y);
@@ -183,6 +182,7 @@ public class RelativePoint extends UserDataHolderBase {
     return myOriginalComponent;
   }
 
+  @SuppressWarnings("unused")
   public Point getOriginalPoint() {
     return myOriginalPoint;
   }

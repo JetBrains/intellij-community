@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>ObjectEquality.java</file>
-    <line>16</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Object comparison using '==', instead of 'equals()'</problem_class>
-    <description>Object values are compared using &lt;code&gt;==&lt;/code&gt;, not 'equals()' #loc</description>
-  </problem>
-</problems>

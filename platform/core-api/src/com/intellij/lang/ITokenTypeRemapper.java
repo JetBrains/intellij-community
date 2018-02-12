@@ -18,12 +18,6 @@ package com.intellij.lang;
 
 import com.intellij.psi.tree.IElementType;
 
-/**
- * Created by IntelliJ IDEA.
- * User: dmitry.cheryasov
- * Date: 06.04.2008
- * Time: 23:41:56
- */
 @FunctionalInterface
 public interface ITokenTypeRemapper {
   /**

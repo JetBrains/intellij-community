@@ -96,5 +96,136 @@ class ThreadDumpParserTest extends TestCase {
     assert threads[0].isAwaitedBy(threads[1])
   }
 
+  void "test YourKit format"() {
+    def text = """
+Stacks at 2017-05-03 01:07:25 PM (uptime 4h 21m 28s) Threads shown: 38 of 46
+
+ApplicationImpl pooled thread 228 [WAITING]
+java.lang.Thread.run() Thread.java:745
+
+ApplicationImpl pooled thread 234 [WAITING] [DAEMON]
+java.lang.Thread.run() Thread.java:745
+
+ApplicationImpl pooled thread 6 [RUNNABLE, IN_NATIVE]
+java.net.DatagramSocket.receive(DatagramPacket) DatagramSocket.java:812
+com.intellij.a.f.a.c.a() c.java:60
+com.intellij.a.f.a.d.run() d.java:20
+java.lang.Thread.run() Thread.java:745
+"""
+    def threads = ThreadDumpParser.parse(text)
+    assert threads.collect { it.name } == ['ApplicationImpl pooled thread 228', 'ApplicationImpl pooled thread 234', 'ApplicationImpl pooled thread 6']
+    assert threads.collect { it.state } == ['WAITING', 'WAITING', 'RUNNABLE, IN_NATIVE']
+    assert threads.collect { it.daemon } == [false, true, false]
+    assert threads.collect { it.stackTrace.readLines().size() } == [2, 2, 5] // thread name is included into stack trace
+  }
+  
+  void "test YourKit 2017 format"() {
+    def text = '''
+Stacks at 2017-06-08 12:56:31 PM. Uptime is 23m 47s 200ms.
+
+thread 23 State: RUNNABLE CPU usage on sample: 968ms
+com.intellij.openapi.util.io.win32.IdeaWin32.listChildren0(String) IdeaWin32.java (native)
+com.intellij.openapi.util.io.win32.IdeaWin32.listChildren(String) IdeaWin32.java:136
+com.intellij.openapi.vfs.impl.win32.Win32FsCache.list(VirtualFile) Win32FsCache.java:58
+com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem.list(VirtualFile) Win32LocalFileSystem.java:57
+com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker.partialDirRefresh(NewVirtualFileSystem, TObjectHashingStrategy, VirtualDirectoryImpl) RefreshWorker.java:272
+com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker.processQueue(NewVirtualFileSystem, PersistentFS) RefreshWorker.java:124
+com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker.scan() RefreshWorker.java:85
+com.intellij.openapi.vfs.newvfs.RefreshSessionImpl.scan() RefreshSessionImpl.java:147
+com.intellij.openapi.vfs.newvfs.RefreshQueueImpl.doScan(RefreshSessionImpl) RefreshQueueImpl.java:91
+com.intellij.openapi.vfs.newvfs.RefreshQueueImpl.lambda$queueSession$1(RefreshSessionImpl, TransactionId, ModalityState) RefreshQueueImpl.java:74
+com.intellij.openapi.vfs.newvfs.RefreshQueueImpl$$Lambda$242.run()
+java.util.concurrent.Executors$RunnableAdapter.call() Executors.java:511
+java.util.concurrent.FutureTask.run() FutureTask.java:266
+com.intellij.util.concurrency.BoundedTaskExecutor$2.run() BoundedTaskExecutor.java:212
+java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor$Worker) ThreadPoolExecutor.java:1142
+java.util.concurrent.ThreadPoolExecutor$Worker.run() ThreadPoolExecutor.java:617
+java.lang.Thread.run() Thread.java:745
+
+thread 24 State: WAITING CPU usage on sample: 0ms
+sun.misc.Unsafe.park(boolean, long) Unsafe.java (native)
+java.util.concurrent.locks.LockSupport.parkNanos(Object, long) LockSupport.java:215
+java.util.concurrent.SynchronousQueue$TransferStack.awaitFulfill(SynchronousQueue$TransferStack$SNode, boolean, long) SynchronousQueue.java:460
+java.util.concurrent.SynchronousQueue$TransferStack.transfer(Object, boolean, long) SynchronousQueue.java:362
+java.util.concurrent.SynchronousQueue.poll(long, TimeUnit) SynchronousQueue.java:941
+java.util.concurrent.ThreadPoolExecutor.getTask() ThreadPoolExecutor.java:1066
+java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor$Worker) ThreadPoolExecutor.java:1127
+java.util.concurrent.ThreadPoolExecutor$Worker.run() ThreadPoolExecutor.java:617
+java.lang.Thread.run() Thread.java:745
+
+thread 25 State: WAITING CPU usage on sample: 0ms
+sun.misc.Unsafe.park(boolean, long) Unsafe.java (native)
+java.util.concurrent.locks.LockSupport.parkNanos(Object, long) LockSupport.java:215
+java.util.concurrent.SynchronousQueue$TransferStack.awaitFulfill(SynchronousQueue$TransferStack$SNode, boolean, long) SynchronousQueue.java:460
+java.util.concurrent.SynchronousQueue$TransferStack.transfer(Object, boolean, long) SynchronousQueue.java:362
+java.util.concurrent.SynchronousQueue.poll(long, TimeUnit) SynchronousQueue.java:941
+
+Swing-Shell [DAEMON] State: WAITING CPU usage on sample: 0ms
+sun.misc.Unsafe.park(boolean, long) Unsafe.java (native)
+java.util.concurrent.locks.LockSupport.park(Object) LockSupport.java:175
+''' 
+    def threads = ThreadDumpParser.parse(text)
+    assert threads.collect { it.name } == ['thread 23', 'thread 24', 'thread 25', 'Swing-Shell']
+    assert threads.collect { it.daemon } == [false, false, false, true]
+  }
+
+  void "test log is not a thread dump"() {
+    def threads = ThreadDumpParser.parse("""\
+2017-05-11 15:37:22,031 [100664612]   INFO - krasa.visualvm.VisualVMContext - saving context: VisualVMContext{appId=322303893654749} 
+2017-05-11 15:53:08,057 [101610638]   INFO - krasa.visualvm.VisualVMContext - saving context: VisualVMContext{appId=323249981117880} 
+2017-05-11 16:37:01,448 [104244029]   INFO - krasa.visualvm.VisualVMContext - saving context: VisualVMContext{appId=325883542423831} 
+2017-05-11 16:45:50,763 [104773344]   INFO - ij.compiler.impl.CompileDriver - COMPILATION STARTED (BUILD PROCESS) 
+2017-05-11 16:45:50,769 [104773350]   INFO - j.compiler.server.BuildManager - Using preloaded build process to compile /Users/ycx622/git/ropeengine 
+""")
+    assert threads.size() <= 1
+  }
+
+  void "test trace with trailing jar names is not a thread dump"() {
+    def threads = ThreadDumpParser.parse('''
+Jun 27 02:58:45.222 WARN  [][Atomikos:2]  Error while retrieving xids from resource - will retry later... (com.atomikos.recovery.xa.XaResourceRecoveryManager:40) 
+javax.transaction.xa.XAException
+\tat oracle.jdbc.xa.OracleXAResource.recover(OracleXAResource.java:730) ~[ojdbc-12.1.0.2.jar.8754835619381084897.jar:12.1.0.2.0]
+\tat com.atomikos.datasource.xa.RecoveryScan.recoverXids(RecoveryScan.java:32) ~[transactions-jta-4.0.4.jar.3905881887605215235.jar:?]
+\tat com.atomikos.recovery.xa.XaResourceRecoveryManager.retrievePreparedXidsFromXaResource(XaResourceRecoveryManager.java:158) [transactions-jta-4.0.4.jar.3905881887605215235.jar:?]
+\tat com.atomikos.recovery.xa.XaResourceRecoveryManager.recover(XaResourceRecoveryManager.java:67) [transactions-jta-4.0.4.jar.3905881887605215235.jar:?]
+\tat com.atomikos.datasource.xa.XATransactionalResource.recover(XATransactionalResource.java:451) [transactions-jta-4.0.4.jar.3905881887605215235.jar:?]
+\tat com.atomikos.icatch.imp.TransactionServiceImp.performRecovery(TransactionServiceImp.java:490) [transactions-4.0.4.jar.3144743539643303549.jar:?]
+\tat com.atomikos.icatch.imp.TransactionServiceImp.access$000(TransactionServiceImp.java:56) [transactions-4.0.4.jar.3144743539643303549.jar:?]
+\tat com.atomikos.icatch.imp.TransactionServiceImp$1.alarm(TransactionServiceImp.java:471) [transactions-4.0.4.jar.3144743539643303549.jar:?]
+\tat com.atomikos.timing.PooledAlarmTimer.notifyListeners(PooledAlarmTimer.java:95) [atomikos-util-4.0.4.jar.3934559012129936607.jar:?]
+\tat com.atomikos.timing.PooledAlarmTimer.run(PooledAlarmTimer.java:82) [atomikos-util-4.0.4.jar.3934559012129936607.jar:?]
+\tat java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142) [?:1.8.0_131]
+\tat java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617) [?:1.8.0_131]
+\tat java.lang.Thread.run(Thread.java:748) [?:1.8.0_131]
+''')
+    assert threads.size() <= 1
+  }
+
+  void "test yourkit threads with indented names"() { 
+    String text = '''
+
+
+ Stacks at 2017-07-13 07:15:35 AM (uptime 1d 2h 59m 6 sec) Threads shown: 3 of 55
+
+
+ ApplicationImpl pooled thread 1007 [RUNNABLE] [DAEMON]
+org.iq80.snappy.SnappyDecompressor.decompressAllTags(byte[], int, int, byte[], int) SnappyDecompressor.java:182
+org.iq80.snappy.SnappyDecompressor.uncompress(byte[], int, int) SnappyDecompressor.java:47
+org.iq80.snappy.Snappy.uncompress(byte[], int, int) Snappy.java:85
+com.intellij.util.CompressionUtil.readCompressedWithoutOriginalBufferLength(DataInput) CompressionUtil.java:111
+
+
+ AWT-EventQueue-0 2017.3#IC-173.SNAPSHOT IDEA, eap:true, os:Linux 3.13.0-117-generic, java-version:JetBrains s.r.o 1.8.0_152-release-867-b1 [WAITING]
+java.util.concurrent.locks.LockSupport.parkNanos(Object, long) LockSupport.java:215
+com.intellij.openapi.application.impl.ReadMostlyRWLock.writeLock() ReadMostlyRWLock.java:192
+com.intellij.openapi.application.impl.ApplicationImpl.startWrite(Class) ApplicationImpl.java:1219
+com.intellij.openapi.application.impl.ApplicationImpl.runWriteAction(Runnable) ApplicationImpl.java:1027
+
+
+'''
+    def threads = ThreadDumpParser.parse(text)
+    assert threads.collect { it.name } == ['ApplicationImpl pooled thread 1007', 
+                                           'AWT-EventQueue-0 2017.3#IC-173.SNAPSHOT IDEA, eap:true, os:Linux 3.13.0-117-generic, java-version:JetBrains s.r.o 1.8.0_152-release-867-b1']
+  }
 
 }

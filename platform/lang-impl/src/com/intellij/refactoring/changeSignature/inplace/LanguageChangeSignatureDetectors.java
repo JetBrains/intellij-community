@@ -18,10 +18,6 @@ package com.intellij.refactoring.changeSignature.inplace;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.refactoring.changeSignature.ChangeInfo;
 
-/**
- * User: anna
- * Date: Sep 9, 2010
- */
 public class LanguageChangeSignatureDetectors extends LanguageExtension<LanguageChangeSignatureDetector<ChangeInfo>> {
   public static final LanguageChangeSignatureDetectors INSTANCE = new LanguageChangeSignatureDetectors();
 

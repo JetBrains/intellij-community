@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
@@ -55,8 +41,6 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.RoundRectangle2D;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -82,15 +66,15 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   private final DataManager myDataManager;
   private final ActionManagerEx myActionManager;
   private final Disposable myDisposable = Disposer.newDisposable();
-  private boolean myDisabled = false;
+  private boolean myDisabled;
 
   @Nullable private final ClockPanel myClockPanel;
   @Nullable private final MyExitFullScreenButton myButton;
   @Nullable private final Animator myAnimator;
   @Nullable private final Timer myActivationWatcher;
   @NotNull private State myState = State.EXPANDED;
-  private double myProgress = 0;
-  private boolean myActivated = false;
+  private double myProgress;
+  private boolean myActivated;
 
   public IdeMenuBar(ActionManagerEx actionManager, DataManager dataManager) {
     myActionManager = actionManager;
@@ -107,11 +91,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       myButton = new MyExitFullScreenButton();
       add(myClockPanel);
       add(myButton);
-      addPropertyChangeListener(WindowManagerImpl.FULL_SCREEN, new PropertyChangeListener() {
-        @Override public void propertyChange(PropertyChangeEvent evt) {
-          updateState();
-        }
-      });
+      addPropertyChangeListener(WindowManagerImpl.FULL_SCREEN, evt -> updateState());
       addMouseListener(new MyMouseListener());
     }
     else {
@@ -247,7 +227,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   public Dimension getPreferredSize() {
     Dimension dimension = super.getPreferredSize();
     if (getState().isInProgress()) {
-      dimension.height = COLLAPSED_HEIGHT + (int)((getState() == State.COLLAPSING ? (1 - myProgress) : myProgress) * (dimension.height - COLLAPSED_HEIGHT));
+      dimension.height = COLLAPSED_HEIGHT + (int)((getState() == State.COLLAPSING ? 1 - myProgress : myProgress) * (dimension.height - COLLAPSED_HEIGHT));
     }
     else if (getState() == State.COLLAPSED) {
       dimension.height = COLLAPSED_HEIGHT;
@@ -352,7 +332,6 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
         add(new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, true));
       }
 
-      fixMenuBackground();
       updateMnemonicsVisibility();
       if (myClockPanel != null) {
         add(myClockPanel);
@@ -368,12 +347,6 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
         }
       }
     }
-  }
-
-  @Override
-  public void updateUI() {
-    super.updateUI();
-    fixMenuBackground();
   }
 
   @Override
@@ -398,19 +371,6 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     }
     else if (getState() != State.COLLAPSED) {
       super.paintChildren(g);
-    }
-  }
-
-  /**
-   * Hacks a problem under Alloy LaF which draws menu bar in different background menu items are drawn in.
-   */
-  private void fixMenuBackground() {
-    if (UIUtil.isUnderAlloyLookAndFeel() && getMenuCount() > 0) {
-      final JMenu menu = getMenu(0);
-      if (menu != null) {  // hack for Substance LAF compatibility
-        menu.updateUI();
-        setBackground(menu.getBackground());
-      }
     }
   }
 
@@ -493,7 +453,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   }
 
   private class MyAnimator extends Animator {
-    public MyAnimator() {
+    MyAnimator() {
       super("MenuBarAnimator", 16, 300, false);
     }
 
@@ -577,13 +537,10 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   private static class MyExitFullScreenButton extends JButton {
     private MyExitFullScreenButton() {
       setFocusable(false);
-      addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          Window window = SwingUtilities.getWindowAncestor(MyExitFullScreenButton.this);
-          if (window instanceof IdeFrameEx) {
-            ((IdeFrameEx)window).toggleFullScreen(false);
-          }
+      addActionListener(e -> {
+        Window window = SwingUtilities.getWindowAncestor(this);
+        if (window instanceof IdeFrameEx) {
+          ((IdeFrameEx)window).toggleFullScreen(false);
         }
       });
       addMouseListener(new MouseAdapter() {

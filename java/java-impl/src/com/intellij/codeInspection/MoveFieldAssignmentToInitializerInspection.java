@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -25,8 +11,10 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ConstructionUtils;
@@ -35,16 +23,13 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author cdr
  * @author Tagir Valeev
  */
-public class MoveFieldAssignmentToInitializerInspection extends BaseJavaBatchLocalInspectionTool {
+public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -109,24 +94,43 @@ public class MoveFieldAssignmentToInitializerInspection extends BaseJavaBatchLoc
     if (initializer == null) return false;
     if (!ExceptionUtil.getThrownCheckedExceptions(initializer).isEmpty()) return false;
     final Ref<Boolean> result = new Ref<>(Boolean.TRUE);
+    PsiClass aClass = field.getContainingClass();
+    if (aClass == null) return false;
     initializer.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         PsiElement resolved = expression.resolve();
         if (resolved == null) return;
+        if (resolved == field) {
+          result.set(Boolean.FALSE);
+          return;
+        }
         if (PsiTreeUtil.isAncestor(ctrOrInitializer, resolved, false) && !PsiTreeUtil.isAncestor(initializer, resolved, false)) {
           // resolved somewhere inside constructor but outside initializer
           result.set(Boolean.FALSE);
+          return;
         }
-        if (resolved instanceof PsiMember &&
-            resolved != field &&
-            ((PsiMember)resolved).getContainingClass() == field.getContainingClass()) {
-          if (field.hasModifierProperty(PsiModifier.STATIC) ||
-            !((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC)) {
-            // refers to another field/method of the same class (except referring from non-static member to static)
-            result.set(Boolean.FALSE);
+        if (resolved instanceof PsiMethod) {
+          resolved = PropertyUtil.getFieldOfGetter((PsiMethod)resolved);
+        }
+        if (resolved instanceof PsiField && ((PsiField)resolved).getContainingClass() == aClass) {
+          // refers to another field/method of the same class (except referring from non-static member to static and
+          // referring to initialized field which is probably ok)
+          boolean nonStaticRefersToStatic =
+            !field.hasModifierProperty(PsiModifier.STATIC) && ((PsiField)resolved).hasModifierProperty(PsiModifier.STATIC);
+          if (nonStaticRefersToStatic) return;
+          boolean initializedField = ((PsiField)resolved).getInitializer() != null;
+          if (initializedField) {
+            PsiField[] fields = aClass.getFields();
+            int indexSource = ArrayUtil.indexOf(fields, field);
+            int indexTarget = ArrayUtil.indexOf(fields, resolved);
+            if (indexTarget >= 0 && indexSource > indexTarget) {
+              // we can refer to already initialized field if it's declared before our field
+              return;
+            }
           }
+          result.set(Boolean.FALSE);
         }
       }
     });
@@ -154,22 +158,7 @@ public class MoveFieldAssignmentToInitializerInspection extends BaseJavaBatchLoc
 
     final Ref<Boolean> result = new Ref<>(Boolean.TRUE);
     final List<PsiAssignmentExpression> totalUsages = new ArrayList<>();
-    containingClass.accept(new JavaRecursiveElementVisitor() {
-      private PsiCodeBlock currentInitializingBlock; //ctr or class initializer
-
-      @Override
-      public void visitCodeBlock(PsiCodeBlock block) {
-        PsiElement parent = block.getParent();
-        if (parent instanceof PsiClassInitializer || parent instanceof PsiMethod && ((PsiMethod)parent).isConstructor()) {
-          currentInitializingBlock = block;
-          super.visitCodeBlock(block);
-          currentInitializingBlock = null;
-        }
-        else {
-          super.visitCodeBlock(block);
-        }
-      }
-
+    containingClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression reference) {
         if (!result.get().booleanValue()) return;
@@ -180,7 +169,8 @@ public class MoveFieldAssignmentToInitializerInspection extends BaseJavaBatchLoc
         PsiAssignmentExpression assignmentExpression = PsiTreeUtil.getParentOfType(reference, PsiAssignmentExpression.class);
         if (assignmentExpression == null) return;
         PsiExpression rValue = assignmentExpression.getRExpression();
-        if (currentInitializingBlock != null) {
+        PsiMember member = PsiTreeUtil.getParentOfType(assignmentExpression, PsiMember.class);
+        if (member instanceof PsiClassInitializer || member instanceof PsiMethod && ((PsiMethod)member).isConstructor()) {
           // ignore usages other than initializing
           if (rValue == null || !PsiEquivalenceUtil.areElementsEquivalent(rValue, expression)) {
             result.set(Boolean.FALSE);
@@ -224,11 +214,13 @@ public class MoveFieldAssignmentToInitializerInspection extends BaseJavaBatchLoc
       List<PsiAssignmentExpression> assignments = new ArrayList<>();
       if (!isInitializedWithSameExpression(field, assignment, assignments)) return;
 
-      PsiElement prev = PsiTreeUtil.skipSiblingsBackward(assignment.getParent(), PsiComment.class, PsiWhiteSpace.class);
+      PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(assignment.getParent());
       String comments = prev == null ? null : CommentTracker.commentsBetween(prev, assignment);
 
-      PsiExpression initializer = assignment.getRExpression();
-      field.setInitializer(initializer);
+      CommentTracker ct = new CommentTracker();
+      // Should not reach here if getRExpression is null: isInitializedWithSameExpression would return false
+      PsiExpression initializer = Objects.requireNonNull(assignment.getRExpression());
+      field.setInitializer(ct.markUnchanged(initializer));
 
       PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
       if (comments != null) {
@@ -249,18 +241,19 @@ public class MoveFieldAssignmentToInitializerInspection extends BaseJavaBatchLoc
             parent instanceof PsiWhileStatement ||
             parent instanceof PsiForStatement ||
             parent instanceof PsiForeachStatement) {
-          PsiStatement emptyStatement = factory.createStatementFromText(";", statement);
-          statement.replace(emptyStatement);
+          ct.replaceAndRestoreComments(statement, ";");
         }
         else {
-          statement.delete();
+          ct.deleteAndRestoreComments(statement);
         }
+        // if we replace/delete several assignments we want to restore comments at each place separately
+        ct = new CommentTracker();
       }
 
       // Delete empty initializer left after fix
       if (owner instanceof PsiClassInitializer) {
         PsiCodeBlock body = ((PsiClassInitializer)owner).getBody();
-        if(body.getStatements().length == 0 && Arrays.stream(body.getChildren()).noneMatch(PsiComment.class::isInstance)) {
+        if(body.isEmpty() && Arrays.stream(body.getChildren()).noneMatch(PsiComment.class::isInstance)) {
           owner.delete();
         }
       }

@@ -2,7 +2,8 @@
 
 # Based on http://docs.python.org/3.2/library/shlex.html
 
-from typing import List, Tuple, Any, TextIO
+from typing import List, Tuple, Any, TextIO, Union, Optional, Iterator
+import sys
 
 def split(s: str, comments: bool = ...,
           posix: bool = ...) -> List[str]: ...
@@ -10,7 +11,7 @@ def split(s: str, comments: bool = ...,
 # Added in 3.3, use (undocumented) pipes.quote in previous versions.
 def quote(s: str) -> str: ...
 
-class shlex:
+class shlex(Iterator[str]):
     commenters = ...  # type: str
     wordchars = ...  # type: str
     whitespace = ...  # type: str
@@ -25,9 +26,15 @@ class shlex:
     lineno = 0
     token = ...  # type: str
     eof = ...  # type: str
+    if sys.version_info >= (3, 6):
+        punctuation_chars = ...  # type: str
 
-    def __init__(self, instream=..., infile=...,
-                 posix: bool = ...) -> None: ...
+    if sys.version_info >= (3, 6):
+        def __init__(self, instream: Union[str, TextIO] = ..., infile: Optional[str] = ...,
+                     posix: bool = ..., punctuation_chars: Union[bool, str] = ...) -> None: ...
+    else:
+        def __init__(self, instream: Union[str, TextIO] = ..., infile: Optional[str] = ...,
+                     posix: bool = ...) -> None: ...
     def get_token(self) -> str: ...
     def push_token(self, tok: str) -> None: ...
     def read_token(self) -> str: ...

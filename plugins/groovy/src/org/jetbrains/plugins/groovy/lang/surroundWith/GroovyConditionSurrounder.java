@@ -19,10 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import com.intellij.psi.*;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 30.07.2007
- */
 public abstract class GroovyConditionSurrounder extends GroovyExpressionSurrounder {
   @Override
   protected boolean isApplicable(@NotNull PsiElement element) {

@@ -27,8 +27,9 @@ import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
+import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.GitLineHandler;
 import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +39,7 @@ import java.util.*;
  * <p>
  *   Collects changes from the Git repository in the specified {@link com.intellij.openapi.vcs.changes.VcsDirtyScope}
  *   using the older technique that is replaced by {@link GitNewChangesCollector} for Git later than 1.7.0 inclusive.
- *   This class is used for Git older than 1.7.0 not inclusive, that don't have <code>'git status --porcelain'</code>.
+ *   This class is used for Git older than 1.7.0 not inclusive, that don't have {@code 'git status --porcelain'}.
  * </p>
  * <p>
  *   The method used by this class is less efficient and more error-prone than {@link GitNewChangesCollector} method.
@@ -49,7 +50,7 @@ import java.util.*;
  *   The following Git commands are called to get the changes, i.e. the state of the working tree combined with the state of index.
  *   <ul>
  *     <li>
- *       <b><code>'git update-index --refresh'</code></b> (called on the whole repository) - probably unnecessary (especially before 'git diff'),
+ *       <b>{@code 'git update-index --refresh'}</b> (called on the whole repository) - probably unnecessary (especially before 'git diff'),
  *       but is left not to break some older Gits occasionally. See the following links for some details:
  *       <a href="http://us.generation-nt.com/answer/bug-596126-git-status-does-not-refresh-index-fixed-since-1-7-1-1-please-consider-upgrading-1-7-1-2-squeeze-help-200234171.html">
  *       gitk doesn't refresh the index statinfo</a>;
@@ -58,32 +59,32 @@ import java.util.*;
  *       <a href="https://git.wiki.kernel.org/index.php/GitFaq#Can_I_import_from_tar_files_.28archives.29.3">update-index to import from tar files</a>.
  *     </li>
  *     <li>
- *       <b><code>'git ls-files --unmerged'</code></b> (called on the whole repository) - to get the list of unmerged files.
+ *       <b>{@code 'git ls-files --unmerged'}</b> (called on the whole repository) - to get the list of unmerged files.
  *       It is not clear why it should be called on the whole repository. The decision to call it on the whole repository was made in
  *       <code>45687fe "<a href="http://youtrack.jetbrains.net/issue/IDEA-50573">IDEADEV-40577</a>: The ignored unmerged files are now reported"</code>,
  *       but neither the rollback & test, nor the analysis didn't recover the need for that. It is left however, since it is a legacy code.
  *     </li>
  *     <li>
- *       <b><code>'git ls-files --others --exclude-standard'</code></b> (called on the dirty scope) - to get the list of unversioned files.
- *       Note that this command is the only way to get the list of unversioned files, besides <code>'git status'</code>.
+ *       <b>{@code 'git ls-files --others --exclude-standard'}</b> (called on the dirty scope) - to get the list of unversioned files.
+ *       Note that this command is the only way to get the list of unversioned files, besides {@code 'git status'}.
  *     </li>
  *     <li>
- *       <b><code>'git diff --name-status -M HEAD -- </code></b> (called on the dirty scope) - to get all other changes (except unversioned and
+ *       <b>{@code 'git diff --name-status -M HEAD -- }</b> (called on the dirty scope) - to get all other changes (except unversioned and
  *       unmerged).
- *       Note that there is also no way to get all tracked changes by a single command (except <code>'git status'</code>), since
- *       <code>'git diff'</code> returns either only not-staged changes, either (<code>'git diff HEAD'</code>) treats unmerged as modified.
+ *       Note that there is also no way to get all tracked changes by a single command (except {@code 'git status'}), since
+ *       {@code 'git diff'} returns either only not-staged changes, either ({@code 'git diff HEAD'}) treats unmerged as modified.
  *     </li>
  *   </ul>
  * </p>
  * <p>
  *   <b>Performance measurement</b>
- *   was performed on a large repository (like IntelliJ IDEA), on a single machine, after several "warm-ups" when <code>'git status'</code> duration
+ *   was performed on a large repository (like IntelliJ IDEA), on a single machine, after several "warm-ups" when {@code 'git status'} duration
  *   stabilizes.
  *   For the whole repository:
- *   <code>'git status'</code> takes ~ 1300 ms while these 4 commands take ~ 1870 ms
+ *   {@code 'git status'} takes ~ 1300 ms while these 4 commands take ~ 1870 ms
  *   ('update-index' ~ 270 ms, 'ls-files --unmerged' ~ 46 ms, 'ls files --others' ~ 820 ms, 'diff' ~ 650 ms)
  *   ; for a single file:
- *   <code>'git status'</code> takes ~ 375 ms, these 4 commands take ~ 750 ms.
+ *   {@code 'git status'} takes ~ 375 ms, these 4 commands take ~ 750 ms.
  * </p>
  * <p>
  * The class is immutable: collect changes and get the instance from where they can be retrieved by {@link #collect}.
@@ -131,12 +132,11 @@ class GitOldChangesCollector extends GitChangesCollector {
   }
 
   private void updateIndex() throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.UPDATE_INDEX);
+    GitLineHandler handler = new GitLineHandler(myProject, myVcsRoot, GitCommand.UPDATE_INDEX);
     handler.addParameters("--refresh", "--ignore-missing");
     handler.setSilent(true);
     handler.setStdoutSuppressed(true);
-    handler.ignoreErrorCode(1);
-    handler.run();
+    Git.getInstance().runCommand(handler).getOutputOrThrow(1);
   }
 
   /**
@@ -158,19 +158,19 @@ class GitOldChangesCollector extends GitChangesCollector {
       if (!GitChangeUtils.isHeadMissing(ex)) {
         throw ex;
       }
-      GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
+      GitLineHandler handler = new GitLineHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
       handler.addParameters("--cached");
       handler.setSilent(true);
       handler.setStdoutSuppressed(true);
       // During init diff does not works because HEAD
       // will appear only after the first commit.
       // In that case added files are cached in index.
-      String output = handler.run();
+      String output = Git.getInstance().runCommand(handler).getOutputOrThrow();
       if (output.length() > 0) {
         StringTokenizer tokenizer = new StringTokenizer(output, "\n\r");
         while (tokenizer.hasMoreTokens()) {
           final String s = tokenizer.nextToken();
-          Change ch = new Change(null, GitContentRevision.createRevision(myVcsRoot, s, null, myProject, false, false, true), FileStatus.ADDED);
+          Change ch = new Change(null, GitContentRevision.createRevision(myVcsRoot, s, null, myProject, false, true), FileStatus.ADDED);
           myChanges.add(ch);
         }
       }
@@ -188,28 +188,28 @@ class GitOldChangesCollector extends GitChangesCollector {
       return;
     }
     // prepare handler
-    GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
+    GitLineHandler handler = new GitLineHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
     handler.addParameters("-v", "--unmerged");
     handler.setSilent(true);
     handler.setStdoutSuppressed(true);
     // run handler and collect changes
-    parseFiles(handler.run());
+    parseFiles(Git.getInstance().runCommand(handler).getOutputOrThrow());
     // prepare handler
-    handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
+    handler = new GitLineHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
     handler.addParameters("-v", "--others", "--exclude-standard");
     handler.setSilent(true);
     handler.setStdoutSuppressed(true);
     handler.endOptions();
     handler.addRelativePaths(dirtyPaths);
     if(handler.isLargeCommandLine()) {
-      handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
+      handler = new GitLineHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
       handler.addParameters("-v", "--others", "--exclude-standard");
       handler.setSilent(true);
       handler.setStdoutSuppressed(true);
       handler.endOptions();
     }
     // run handler and collect changes
-    parseFiles(handler.run());
+    parseFiles(Git.getInstance().runCommand(handler).getOutputOrThrow());
   }
 
   private void parseFiles(String list) throws VcsException {
@@ -238,9 +238,9 @@ class GitOldChangesCollector extends GitChangesCollector {
             continue;
           }
           // assume modify-modify conflict
-          ContentRevision before = GitContentRevision.createRevision(myVcsRoot, file, new GitRevisionNumber("orig_head"), myProject, false, true,
+          ContentRevision before = GitContentRevision.createRevision(myVcsRoot, file, new GitRevisionNumber("orig_head"), myProject, true,
                                                                      true);
-          ContentRevision after = GitContentRevision.createRevision(myVcsRoot, file, null, myProject, false, false, true);
+          ContentRevision after = GitContentRevision.createRevision(myVcsRoot, file, null, myProject, false, true);
           myChanges.add(new Change(before, after, FileStatus.MERGED_WITH_CONFLICTS));
         }
         else {

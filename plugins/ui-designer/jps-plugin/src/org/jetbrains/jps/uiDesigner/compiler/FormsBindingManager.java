@@ -47,7 +47,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 11/20/12
  */
 public class FormsBindingManager extends FormsBuilder {
   private static final String JAVA_EXTENSION = ".java";
@@ -180,7 +179,7 @@ public class FormsBindingManager extends FormsBuilder {
               exitCode = ExitCode.OK;
               // now inform others about files just copied
               for (File file : generatedFiles) {
-                outputConsumer.registerOutputFile(target, file, Collections.<String>emptyList());
+                outputConsumer.registerOutputFile(target, file, Collections.emptyList());
               }
             }
           }

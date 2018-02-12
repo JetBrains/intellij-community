@@ -153,7 +153,7 @@ public abstract class AbstractImportFromExternalSystemControl<
    * project if it's already linked.
    * <p/>
    * This property helps us to achieve that - when an ide project is defined, that means that new modules are being imported
-   * to that ide project from external project; when this property is <code>null</code> that means that new ide project is being
+   * to that ide project from external project; when this property is {@code null} that means that new ide project is being
    * created on the target external project basis.
    * 
    * @param currentProject  current ide project (if any)
@@ -178,7 +178,7 @@ public abstract class AbstractImportFromExternalSystemControl<
    *
    * @param settings  target system settings
    * @return          a control for managing given system-level settings;
-   *                  <code>null</code> if current external system doesn't have system-level settings (only project-level settings)
+   *                  {@code null} if current external system doesn't have system-level settings (only project-level settings)
    */
   @Nullable
   protected abstract ExternalSystemSettingsControl<SystemSettings> createSystemSettingsControl(@NotNull SystemSettings settings);
@@ -218,12 +218,16 @@ public abstract class AbstractImportFromExternalSystemControl<
   }
 
   public void reset() {
+    reset(null);
+  }
+
+  public void reset(@Nullable WizardContext wizardContext) {
     myLinkedProjectPathField.setNameComponentVisible(false);
     myLinkedProjectPathField.setNameValue("untitled");
     myLinkedProjectPathField.setPath("");
-    myProjectSettingsControl.reset();
+    myProjectSettingsControl.reset(wizardContext);
     if (mySystemSettingsControl != null) {
-      mySystemSettingsControl.reset();
+      mySystemSettingsControl.reset(wizardContext);
     }
     if (hideableSystemSettingsPanel != null) {
       hideableSystemSettingsPanel.setOn(false);
@@ -250,9 +254,10 @@ public abstract class AbstractImportFromExternalSystemControl<
   }
 
   public boolean validate(WizardContext wizardContext, boolean defaultFormat) throws ConfigurationException {
-    if(!myProjectSettingsControl.validate(myProjectSettings)) return false;
-    if (mySystemSettingsControl != null && !mySystemSettingsControl.validate(mySystemSettings)) return false;
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return true;
 
+    if (!myProjectSettingsControl.validate(myProjectSettings)) return false;
+    if (mySystemSettingsControl != null && !mySystemSettingsControl.validate(mySystemSettings)) return false;
     String linkedProjectPath = myLinkedProjectPathField.getPath();
     if (StringUtil.isEmpty(linkedProjectPath)) {
       throw new ConfigurationException(ExternalSystemBundle.message("error.project.undefined"));
@@ -266,11 +271,6 @@ public abstract class AbstractImportFromExternalSystemControl<
       }
     }
 
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment() &&
-        wizardContext.isCreatingNewProject() &&
-        !myLinkedProjectPathField.validateNameAndPath(wizardContext, defaultFormat)) {
-      return false;
-    }
-    return true;
+    return !(wizardContext.isCreatingNewProject() && !myLinkedProjectPathField.validateNameAndPath(wizardContext, defaultFormat));
   }
 }

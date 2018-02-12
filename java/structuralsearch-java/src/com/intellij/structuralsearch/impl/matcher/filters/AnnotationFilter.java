@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,17 +24,16 @@ import com.intellij.psi.PsiElement;
  */
 public class AnnotationFilter implements NodeFilter {
 
-  private static class NodeFilterHolder {
-    private static final NodeFilter instance = new AnnotationFilter();
-  }
-
-  public static NodeFilter getInstance() {
-    return NodeFilterHolder.instance;
-  }
+  private static final NodeFilter INSTANCE = new AnnotationFilter();
 
   private AnnotationFilter() {}
 
+  @Override
   public boolean accepts(PsiElement element) {
     return element instanceof PsiAnnotation;
+  }
+
+  public static NodeFilter getInstance() {
+    return INSTANCE;
   }
 }

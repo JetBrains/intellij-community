@@ -22,7 +22,7 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.RunConfigurationNode;
@@ -108,6 +108,6 @@ public abstract class ToggleTaskActivationAction extends ExternalSystemToggleAct
 
 
   private ExternalSystemTaskActivator getTaskActivator(AnActionEvent e) {
-    return ExternalProjectsManager.getInstance(getProject(e)).getTaskActivator();
+    return ExternalProjectsManagerImpl.getInstance(getProject(e)).getTaskActivator();
   }
 }

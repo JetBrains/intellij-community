@@ -34,9 +34,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * User: catherine
- */
 public class PyTestCreator implements TestCreator {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.codeInsight.testIntegration.PyTestCreator");
 

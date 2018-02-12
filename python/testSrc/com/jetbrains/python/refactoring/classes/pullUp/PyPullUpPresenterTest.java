@@ -1,3 +1,4 @@
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.classes.pullUp;
 
 import com.google.common.collect.Collections2;
@@ -35,7 +36,7 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
   /**
    * Checks that parents are returned in MRO order and no parents outside of source root are included
    */
-  public void testParentsOrder() throws Exception {
+  public void testParentsOrder() {
     final PyPullUpPresenter sut = configureByClass("Child");
     configureParent();
     myMocksControl.replay();
@@ -50,20 +51,20 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
   /**
    * Checks that refactoring does not work for classes with out of allowed parents
    */
-  public void testNoParents() throws Exception {
+  public void testNoParents() {
     ensureNoMembers("NoParentsAllowed");
   }
 
   /**
    * Ensures that presenter displays conflicts if destination class already has that members
    */
-  public void testConflicts() throws Exception {
+  public void testConflicts() {
     final PyPullUpPresenterImpl sut = configureByClass("ChildWithConflicts");
     configureParent();
     final Collection<PyMemberInfo<PyElement>> infos = getMemberInfos(sut);
 
     final Capture<MultiMap<PyClass, PyMemberInfo<?>>> conflictCapture = new Capture<>();
-    EasyMock.expect(myView.showConflictsDialog(EasyMock.capture(conflictCapture), EasyMock.<Collection<PyMemberInfo<?>>>anyObject())).andReturn(false).anyTimes();
+    EasyMock.expect(myView.showConflictsDialog(EasyMock.capture(conflictCapture), EasyMock.anyObject())).andReturn(false).anyTimes();
     EasyMock.expect(myView.getSelectedMemberInfos()).andReturn(infos).anyTimes();
     final PyClass parent = getClassByName("ParentWithConflicts");
     EasyMock.expect(myView.getSelectedParent()).andReturn(parent).anyTimes();
@@ -87,21 +88,21 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
   /**
    * Checks that refactoring does not work for classes with out of members
    */
-  public void testNoMembers() throws Exception {
+  public void testNoMembers() {
     ensureNoMembers("NoMembers");
   }
 
   /**
    * Checks that refactoring does not work when C3 MRO can't be calculated
    */
-  public void testBadMro() throws Exception {
+  public void testBadMro() {
     ensureNoMembers("BadMro");
   }
 
   /**
    * Checks that parent can't be moved to itself
    */
-  public void testNoMoveParentToItSelf() throws Exception {
+  public void testNoMoveParentToItSelf() {
     final Collection<PyPresenterTestMemberEntry> memberNamesAndStatus = launchAndGetMembers("Foo", "Bar");
 
     compareMembers(memberNamesAndStatus, Matchers.containsInAnyOrder(new PyPresenterTestMemberEntry("__init__(self)", true, false, false),
@@ -112,16 +113,15 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
   /**
    * Checks that some members are not allowed (and may nto be abstract), while others are for Py2
    */
-  public void testMembersPy2() throws Exception {
+  public void testMembersPy2() {
     ensureCorrectMembersForHugeChild(false);
   }
 
   /**
    * Checks that some members are not allowed (and may nto be abstract), while others are for Py3
    */
-  public void testMembersPy3() throws Exception {
-    setLanguageLevel(LanguageLevel.PYTHON30);
-    ensureCorrectMembersForHugeChild(true);
+  public void testMembersPy3() {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> ensureCorrectMembersForHugeChild(true));
   }
 
   /**
@@ -174,7 +174,7 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
   /**
    * Checks that refactoring does not work for classes with out of members
    */
-  private void ensureNoMembers(@NotNull final String className) throws Exception {
+  private void ensureNoMembers(@NotNull final String className) {
     try {
       final PyPullUpPresenter sut = configureByClass(className);
 

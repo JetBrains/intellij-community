@@ -1,35 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.ContextUtil;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.Evaluator;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluatorImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.jdi.DecompiledLocalVariable;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.settings.CapturePoint;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -38,12 +20,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.WeakHashMap;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import one.util.streamex.StreamEx;
@@ -51,10 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -113,7 +92,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
             Map<Object, List<StackFrameItem>> stacks = process.getUserData(CAPTURED_STACKS);
             if (stacks == null) {
               stacks = new CapturedStacksMap();
-              process.putUserData(CAPTURED_STACKS, Collections.synchronizedMap(stacks));
+              putProcessUserData(CAPTURED_STACKS, Collections.synchronizedMap(stacks), process);
             }
             Value key = myCaptureEvaluator.evaluate(new EvaluationContextImpl(suspendContext, frameProxy));
             if (key instanceof ObjectReference) {
@@ -154,16 +133,22 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
       .limit(1);
   }
 
-  public static void recreateAll(DebugProcessImpl debugProcess) {
+  public static void deleteAll(DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     List<StackCapturingLineBreakpoint> bpts = debugProcess.getUserData(CAPTURE_BREAKPOINTS);
     if (!ContainerUtil.isEmpty(bpts)) {
       bpts.forEach(debugProcess.getRequestsManager()::deleteRequest);
       bpts.clear();
     }
-    if (Registry.is("debugger.capture.points")) {
-      DebuggerSettings.getInstance().getCapturePoints().stream().filter(c -> c.myEnabled).forEach(c -> track(debugProcess, c));
+  }
+
+  public static void createAll(DebugProcessImpl debugProcess) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    StreamEx<CapturePoint> points = StreamEx.of(DebuggerSettings.getInstance().getCapturePoints()).filter(c -> c.myEnabled);
+    if (isAgentEnabled()) {
+      points = points.append(debugProcess.getAgentInsertPoints());
     }
+    points.forEach(c -> track(debugProcess, c));
   }
 
   public static void clearCaches(DebugProcessImpl debugProcess) {
@@ -184,41 +169,72 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     }
   }
 
+  @Override
+  public void customizeRenderer(SimpleColoredComponent renderer) {
+    renderer.append("Capture point at " + myCapturePoint.myClassName + "." + myCapturePoint.myMethodName);
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return myCapturePoint.myEnabled;
+  }
+
+  @Override
+  public void setEnabled(boolean enabled) {
+    myCapturePoint.myEnabled = enabled;
+    DebuggerSettings.getInstance().setCapturePoints(DebuggerSettings.getInstance().getCapturePoints()); // to fire change event
+  }
+
   private static void track(DebugProcessImpl debugProcess, CapturePoint capturePoint) {
     StackCapturingLineBreakpoint breakpoint = new StackCapturingLineBreakpoint(debugProcess.getProject(), capturePoint);
     breakpoint.createRequest(debugProcess);
     List<StackCapturingLineBreakpoint> bpts = debugProcess.getUserData(CAPTURE_BREAKPOINTS);
     if (bpts == null) {
       bpts = new CopyOnWriteArrayList<>();
-      debugProcess.putUserData(CAPTURE_BREAKPOINTS, bpts);
+      putProcessUserData(CAPTURE_BREAKPOINTS, bpts, debugProcess);
     }
     bpts.add(breakpoint);
   }
 
+  public static <T> void putProcessUserData(@NotNull Key<T> key, @Nullable T value, DebugProcessImpl debugProcess) {
+    debugProcess.putUserData(key, value);
+    debugProcess.addDebugProcessListener(new DebugProcessListener() {
+      @Override
+      public void processDetached(DebugProcess process, boolean closedByUser) {
+        process.putUserData(key, null);
+      }
+    });
+  }
+
   @Nullable
   public static CapturePoint getMatchingDisabledInsertionPoint(@NotNull StackFrameProxyImpl frame) {
-    try {
-      Location location = frame.location();
-      String className = location.declaringType().name();
-      String methodName = location.method().name();
+    List<CapturePoint> capturePoints = DebuggerSettings.getInstance().getCapturePoints();
+    if (!capturePoints.isEmpty()) {
+      try {
+        Location location = frame.location();
+        String className = location.declaringType().name();
+        String methodName = location.method().name();
 
-      for (CapturePoint c : DebuggerSettings.getInstance().getCapturePoints()) {
-        if (!c.myEnabled && StringUtil.equals(c.myInsertClassName, className) && StringUtil.equals(c.myInsertMethodName, methodName)) {
-          return c;
+        for (CapturePoint c : capturePoints) {
+          if (!c.myEnabled && StringUtil.equals(c.myInsertClassName, className) && StringUtil.equals(c.myInsertMethodName, methodName)) {
+            return c;
+          }
         }
       }
-    }
-    catch (EvaluateException e) {
-      LOG.debug(e);
+      catch (EvaluateException | InternalException e) {
+        LOG.debug(e);
+      }
     }
     return null;
   }
 
   @Nullable
-  public static List<StackFrameItem> getRelatedStack(@NotNull StackFrameProxyImpl frame, @NotNull SuspendContextImpl suspendContext) {
+  public static List<StackFrameItem> getRelatedStack(@NotNull StackFrameProxyImpl frame,
+                                                     @NotNull SuspendContextImpl suspendContext,
+                                                     boolean checkInProcessData) {
     DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
     Map<Object, List<StackFrameItem>> capturedStacks = debugProcess.getUserData(CAPTURED_STACKS);
-    if (ContainerUtil.isEmpty(capturedStacks)) {
+    if (ContainerUtil.isEmpty(capturedStacks) && !isAgentEnabled()) {
       return null;
     }
     List<StackCapturingLineBreakpoint> captureBreakpoints = debugProcess.getUserData(CAPTURE_BREAKPOINTS);
@@ -235,14 +251,24 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
         if ((StringUtil.isEmpty(insertClassName) || StringUtil.equals(insertClassName, className)) &&
             StringUtil.equals(b.myCapturePoint.myInsertMethodName, methodName)) {
           try {
-            Value key = b.myInsertEvaluator.evaluate(new EvaluationContextImpl(suspendContext, frame));
+            EvaluationContextImpl evaluationContext = new EvaluationContextImpl(suspendContext, frame);
+            Value key = b.myInsertEvaluator.evaluate(evaluationContext);
+            List<StackFrameItem> items = null;
             if (key instanceof ObjectReference) {
-              return capturedStacks.get(getKey((ObjectReference)key));
+              if (capturedStacks != null) {
+                items = capturedStacks.get(getKey((ObjectReference)key));
+              }
+              if (items == null && checkInProcessData) {
+                items = getProcessCapturedStack(key, evaluationContext);
+              }
             }
+            return items;
           }
           catch (EvaluateException e) {
             LOG.debug(e);
-            debugProcess.printToConsole(DebuggerBundle.message("error.unable.to.evaluate.insert.expression", e.getMessage()) + "\n");
+            if (!(e.getCause() instanceof IncompatibleThreadStateException)) {
+              debugProcess.printToConsole(DebuggerBundle.message("error.unable.to.evaluate.insert.expression", e.getMessage()) + "\n");
+            }
           }
         }
       }
@@ -251,6 +277,113 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
       LOG.debug(e);
     }
     return null;
+  }
+
+  private static final Key<Pair<ClassType, Method>> CAPTURE_STORAGE_METHOD = Key.create("CAPTURE_STORAGE_METHOD");
+  public static final Pair<ClassType, Method> NO_CAPTURE_AGENT = Pair.empty();
+
+  private static List<StackFrameItem> getProcessCapturedStack(Value key, EvaluationContextImpl evaluationContext)
+    throws EvaluateException {
+    evaluationContext = evaluationContext.withAutoLoadClasses(false);
+
+    DebugProcessImpl process = evaluationContext.getDebugProcess();
+    Pair<ClassType, Method> methodPair = process.getUserData(CAPTURE_STORAGE_METHOD);
+
+    if (methodPair == null) {
+      try {
+        ClassType captureClass = (ClassType)process.findClass(evaluationContext, "com.intellij.rt.debugger.agent.CaptureStorage", null);
+        if (captureClass == null) {
+          methodPair = NO_CAPTURE_AGENT;
+          LOG.debug("Error loading debug agent", "agent class not found");
+        }
+        else {
+          methodPair = Pair.create(captureClass, captureClass.methodsByName("getRelatedStack").get(0));
+        }
+      }
+      catch (EvaluateException e) {
+        methodPair = NO_CAPTURE_AGENT;
+        LOG.debug("Error loading debug agent", e);
+      }
+      putProcessUserData(CAPTURE_STORAGE_METHOD, methodPair, process);
+    }
+
+    if (methodPair == NO_CAPTURE_AGENT) {
+      return null;
+    }
+
+    VirtualMachineProxyImpl virtualMachineProxy = process.getVirtualMachineProxy();
+    List<Value> args = Arrays.asList(key, virtualMachineProxy.mirrorOf(MAX_STACK_LENGTH));
+    Value resArray = process.invokeMethod(evaluationContext, methodPair.first, methodPair.second, args,
+                                          ObjectReference.INVOKE_SINGLE_THREADED, true);
+    DebuggerUtilsEx.keep(resArray, evaluationContext);
+    if (resArray instanceof ArrayReference) {
+      List<Value> values = ((ArrayReference)resArray).getValues();
+      List<StackFrameItem> res = new ArrayList<>(values.size());
+      ClassesByNameProvider classesByName = ClassesByNameProvider.createCache(virtualMachineProxy.allClasses());
+      for (Value value : values) {
+        if (value == null) {
+          res.add(null);
+        }
+        else {
+          List<Value> values1 = ((ArrayReference)value).getValues();
+          String className = getStringRefValue((StringReference)values1.get(0));
+          String methodName = getStringRefValue((StringReference)values1.get(2));
+          int line = Integer.parseInt(((StringReference)values1.get(3)).value());
+          Location location = findLocation(process, ContainerUtil.getFirstItem(classesByName.get(className)), methodName, line);
+          res.add(new ProcessStackFrameItem(location, className, methodName));
+        }
+      }
+      return res;
+    }
+    return null;
+  }
+
+  private static String getStringRefValue(StringReference ref) {
+    return ref != null ? ref.value() : null;
+  }
+
+  private static class ProcessStackFrameItem extends StackFrameItem {
+    final String myClass;
+    final String myMethod;
+
+    public ProcessStackFrameItem(Location location, String aClass, String method) {
+      super(location, null);
+      myClass = aClass;
+      myMethod = method;
+    }
+
+    @NotNull
+    @Override
+    public String path() {
+      return myClass;
+    }
+
+    @NotNull
+    @Override
+    public String method() {
+      return myMethod;
+    }
+
+    @Override
+    public String toString() {
+      return myClass + "." + myMethod + ":" + line();
+    }
+  }
+
+  private static Location findLocation(DebugProcessImpl debugProcess, ReferenceType type, String methodName, int line) {
+    if (type != null && line >= 0) {
+      try {
+        Location location = type.locationsOfLine(DebugProcess.JAVA_STRATUM, null, line).stream()
+          .filter(l -> l.method().name().equals(methodName))
+          .findFirst().orElse(null);
+        if (location != null) {
+          return location;
+        }
+      }
+      catch (AbsentInformationException ignored) {
+      }
+    }
+    return new GeneratedLocation(debugProcess, type, methodName, line);
   }
 
   @Nullable
@@ -271,7 +404,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   private static class MyEvaluator {
     private final String myExpression;
     private ExpressionEvaluator myEvaluator;
-    private final WeakHashMap<Location, ExpressionEvaluator> myEvaluatorCache = new WeakHashMap<>();
+    private final Map<Location, ExpressionEvaluator> myEvaluatorCache = ContainerUtil.createWeakMap();
 
     public MyEvaluator(String expression) {
       myExpression = expression;
@@ -319,5 +452,9 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
       DebuggerManagerThreadImpl.assertIsManagerThread();
       myEvaluatorCache.clear();
     }
+  }
+
+  public static boolean isAgentEnabled() {
+    return DebuggerSettings.getInstance().INSTRUMENTING_AGENT;
   }
 }

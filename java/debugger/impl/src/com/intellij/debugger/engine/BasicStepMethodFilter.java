@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -25,12 +26,12 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.Range;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/26/13
  */
 public class BasicStepMethodFilter implements NamedMethodFilter {
   private static final Logger LOG = Logger.getInstance(BasicStepMethodFilter.class);
@@ -65,7 +66,12 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
     return myTargetMethodName;
   }
 
-  public boolean locationMatches(final DebugProcessImpl process, final Location location) throws EvaluateException {
+  public boolean locationMatches(DebugProcessImpl process, Location location) throws EvaluateException {
+    return locationMatches(process, location, () -> null);
+  }
+
+  public boolean locationMatches(DebugProcessImpl process, Location location, @NotNull EvaluatingComputable<ObjectReference> thisProvider)
+    throws EvaluateException {
     Method method = location.method();
     String name = method.name();
     if (!myTargetMethodName.equals(name)) {
@@ -96,7 +102,15 @@ public class BasicStepMethodFilter implements NamedMethodFilter {
     if (method.isBridge()) { // skip bridge methods
       return false;
     }
-    return DebuggerUtilsEx.isAssignableFrom(myDeclaringClassName.getName(process), location.declaringType());
+    String declaringClassNameName = myDeclaringClassName.getName(process);
+    boolean res = DebuggerUtilsEx.isAssignableFrom(declaringClassNameName, location.declaringType());
+    if (!res && !method.isStatic()) {
+      ObjectReference thisObject = thisProvider.compute();
+      if (thisObject != null) {
+        res = DebuggerUtilsEx.isAssignableFrom(declaringClassNameName, thisObject.referenceType());
+      }
+    }
+    return res;
   }
 
   private static boolean signatureMatches(Method method, final String expectedSignature) throws EvaluateException {

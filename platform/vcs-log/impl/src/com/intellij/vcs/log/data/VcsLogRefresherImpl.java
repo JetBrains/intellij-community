@@ -15,19 +15,19 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.graph.GraphCommit;
@@ -39,9 +39,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
-public class VcsLogRefresherImpl implements VcsLogRefresher {
+public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
 
   private static final Logger LOG = Logger.getInstance(VcsLogRefresherImpl.class);
 
@@ -80,22 +81,24 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
     myRecentCommitCount = recentCommitsCount;
     myProgress = progress;
 
-    mySingleTaskController = new SingleTaskController<RefreshRequest, DataPack>(dataPack -> {
+    mySingleTaskController = new SingleTaskController<RefreshRequest, DataPack>(myProject, dataPack -> {
       myDataPack = dataPack;
       dataPackUpdateHandler.consume(dataPack);
-    }) {
+    }, false, this) {
+      @NotNull
       @Override
-      protected void startNewBackgroundTask() {
-        VcsLogRefresherImpl.this.startNewBackgroundTask(new MyRefreshTask(myDataPack));
+      protected SingleTask startNewBackgroundTask() {
+        return VcsLogRefresherImpl.this.startNewBackgroundTask(new MyRefreshTask(myDataPack));
       }
     };
   }
 
-  protected void startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
-    UIUtil.invokeLaterIfNeeded(() -> {
-      LOG.debug("Starting a background task...");
-      ProgressManager.getInstance().runProcessWithProgressAsynchronously(refreshTask, myProgress.createProgressIndicator());
-    });
+  protected SingleTaskController.SingleTask startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
+    LOG.debug("Starting a background task...");
+    ProgressIndicator indicator = myProgress.createProgressIndicator();
+    Future<?> future = ((CoreProgressManager)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(refreshTask, indicator,
+                                                                                                                 null);
+    return new SingleTaskController.SingleTaskImpl(future, indicator);
   }
 
   @NotNull
@@ -144,8 +147,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
 
   @NotNull
   private Map<VirtualFile, VcsLogProvider> getProvidersForRoots(@NotNull Set<VirtualFile> roots) {
-    return ContainerUtil.map2Map(roots,
-                                 root -> Pair.create(root, myProviders.get(root)));
+    return ContainerUtil.map2Map(roots, root -> Pair.create(root, myProviders.get(root)));
   }
 
   @Override
@@ -166,13 +168,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
   @NotNull
   private List<GraphCommit<Integer>> compactCommits(@NotNull List<? extends TimedVcsCommit> commits, @NotNull final VirtualFile root) {
     StopWatch sw = StopWatch.start("compacting commits");
-    List<GraphCommit<Integer>> map = ContainerUtil.map(commits, new Function<TimedVcsCommit, GraphCommit<Integer>>() {
-      @NotNull
-      @Override
-      public GraphCommit<Integer> fun(@NotNull TimedVcsCommit commit) {
-        return compactCommit(commit, root);
-      }
-    });
+    List<GraphCommit<Integer>> map = ContainerUtil.map(commits, commit -> compactCommit(commit, root));
     myStorage.flush();
     sw.report();
     return map;
@@ -198,6 +194,10 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
   @NotNull
   public VcsLogProgress getProgress() {
     return myProgress;
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private class MyRefreshTask extends Task.Backgroundable {
@@ -252,7 +252,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
             loadLogAndRefs(roots, currentRefs, commitCount);
             List<? extends GraphCommit<Integer>> compoundLog = multiRepoJoin(myLoadedInfo.getCommits());
             Map<VirtualFile, CompressedRefs> allNewRefs = getAllNewRefs(myLoadedInfo, currentRefs);
-            List<GraphCommit<Integer>> joinedFullLog = join(compoundLog, permanentGraph.getAllCommits(), currentRefs, allNewRefs);
+            List<? extends GraphCommit<Integer>> joinedFullLog = join(compoundLog, permanentGraph.getAllCommits(), currentRefs, allNewRefs);
             if (joinedFullLog == null) {
               commitCount *= 5;
             }
@@ -309,10 +309,12 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
     }
 
     @Nullable
-    private List<GraphCommit<Integer>> join(@NotNull List<? extends GraphCommit<Integer>> recentCommits,
-                                            @NotNull List<GraphCommit<Integer>> fullLog,
-                                            @NotNull Map<VirtualFile, CompressedRefs> previousRefs,
-                                            @NotNull Map<VirtualFile, CompressedRefs> newRefs) {
+    private List<? extends GraphCommit<Integer>> join(@NotNull List<? extends GraphCommit<Integer>> recentCommits,
+                                                      @NotNull List<GraphCommit<Integer>> fullLog,
+                                                      @NotNull Map<VirtualFile, CompressedRefs> previousRefs,
+                                                      @NotNull Map<VirtualFile, CompressedRefs> newRefs) {
+      if (fullLog.isEmpty()) return recentCommits;
+
       StopWatch sw = StopWatch.start("joining new commits");
       Collection<Integer> prevRefIndices =
         previousRefs.values().stream().flatMap(refs -> refs.getCommits().stream()).collect(Collectors.toSet());

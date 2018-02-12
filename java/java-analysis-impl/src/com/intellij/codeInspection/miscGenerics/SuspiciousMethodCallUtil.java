@@ -21,13 +21,23 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.IntArrayList;
+import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public class SuspiciousMethodCallUtil {
+
+  // List.of/Set.of are unnecessary here as they don't accept nulls
+  private static final CallMatcher.Simple SINGLETON_COLLECTION =
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singletonList", "singleton").parameterCount(1);
+
   static void setupPatternMethods(PsiManager manager,
                                   GlobalSearchScope searchScope,
                                   List<PsiMethod> patternMethods,
@@ -68,12 +78,30 @@ public class SuspiciousMethodCallUtil {
     if (mapClass != null) {
       PsiMethod remove = MethodSignatureUtil.findMethodBySignature(mapClass, removeSignature, false);
       addMethod(remove, 0, patternMethods, indices);
+
       MethodSignature getSignature = MethodSignatureUtil.createMethodSignature("get", javaLangObject, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
       PsiMethod get = MethodSignatureUtil.findMethodBySignature(mapClass, getSignature, false);
       addMethod(get, 0, patternMethods, indices);
+
+      PsiTypeParameter[] typeParameters = mapClass.getTypeParameters();
+      if (typeParameters.length > 0) {
+        MethodSignature getOrDefaultSignature = MethodSignatureUtil.createMethodSignature("getOrDefault",
+                                                                                          new PsiType[] {PsiType.getJavaLangObject(manager, searchScope),
+                                                                                            PsiSubstitutor.EMPTY.substitute(typeParameters[1])}, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
+        PsiMethod getOrDefault = MethodSignatureUtil.findMethodBySignature(mapClass, getOrDefaultSignature, false);
+        addMethod(getOrDefault, 0, patternMethods, indices);
+      }
+
+      MethodSignature removeWithDefaultSignature = MethodSignatureUtil.createMethodSignature("remove",
+                                                                                             new PsiType[] {PsiType.getJavaLangObject(manager, searchScope), PsiType.getJavaLangObject(manager, searchScope)},
+                                                                                             PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
+      PsiMethod removeWithDefault = MethodSignatureUtil.findMethodBySignature(mapClass, removeWithDefaultSignature, false);
+      addMethod(removeWithDefault, 0, patternMethods, indices);
+
       MethodSignature containsKeySignature = MethodSignatureUtil.createMethodSignature("containsKey", javaLangObject, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
       PsiMethod containsKey = MethodSignatureUtil.findMethodBySignature(mapClass, containsKeySignature, false);
       addMethod(containsKey, 0, patternMethods, indices);
+
       MethodSignature containsValueSignature = MethodSignatureUtil.createMethodSignature("containsValue", javaLangObject, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
       PsiMethod containsValue = MethodSignatureUtil.findMethodBySignature(mapClass, containsValueSignature, false);
       addMethod(containsValue, 1, patternMethods, indices);
@@ -136,8 +164,9 @@ public class SuspiciousMethodCallUtil {
     if (argType == null) return null;
 
     final JavaResolveResult resolveResult = methodExpression.advancedResolve(false);
-    PsiMethod calleeMethod = (PsiMethod)resolveResult.getElement();
-    if (calleeMethod == null) return null;
+    PsiElement element = resolveResult.getElement();
+    if (!(element instanceof PsiMethod)) return null;
+    PsiMethod calleeMethod = (PsiMethod)element;
     PsiMethod contextMethod = PsiTreeUtil.getParentOfType(methodExpression, PsiMethod.class);
 
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
@@ -180,6 +209,13 @@ public class SuspiciousMethodCallUtil {
             final PsiType itemType = JavaGenericsUtil.getCollectionItemType(argType, calleeMethod.getResolveScope());
             final PsiType qualifierItemType = JavaGenericsUtil.getCollectionItemType(qualifierType, calleeMethod.getResolveScope());
             if (qualifierItemType != null && itemType != null && !qualifierItemType.isAssignableFrom(itemType)) {
+              if (TypeUtils.isJavaLangObject(itemType) && hasNullCollectionArg(methodExpression)) {
+                // removeAll(Collections.singleton(null)) is a valid way to remove all nulls from collection
+                return null;
+              }
+              if (qualifierItemType.isConvertibleFrom(itemType) && !reportConvertibleMethodCalls) {
+                return null;
+              }
               return InspectionsBundle.message("inspection.suspicious.collections.method.calls.problem.descriptor",
                                                PsiFormatUtil.formatType(qualifierType, 0, PsiSubstitutor.EMPTY),
                                                PsiFormatUtil.formatType(itemType, 0, PsiSubstitutor.EMPTY));
@@ -215,5 +251,19 @@ public class SuspiciousMethodCallUtil {
       return message;
     }
     return null;
+  }
+
+  private static boolean hasNullCollectionArg(PsiReferenceExpression methodExpression) {
+    PsiMethodCallExpression call = ObjectUtils.tryCast(methodExpression.getParent(), PsiMethodCallExpression.class);
+    if (call != null) {
+      PsiExpression arg =
+        ExpressionUtils.resolveExpression(ArrayUtil.getFirstElement(call.getArgumentList().getExpressions()));
+      PsiMethodCallExpression argCall =
+        ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(arg), PsiMethodCallExpression.class);
+      if (SINGLETON_COLLECTION.test(argCall) && ExpressionUtils.isNullLiteral(argCall.getArgumentList().getExpressions()[0])) {
+        return true;
+      }
+    }
+    return false;
   }
 }

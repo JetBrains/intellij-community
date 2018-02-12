@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -39,7 +37,6 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
-import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.LazyUiDisposable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -103,6 +100,8 @@ public class JBTabsImpl extends JComponent
   private boolean myStealthTabMode = false;
 
   private boolean mySideComponentOnTabs = true;
+
+  private boolean mySideComponentBefore = true;
 
   private boolean mySizeBySelected;
 
@@ -464,7 +463,12 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public void removeNotify() {
-    super.removeNotify();
+    try {
+      super.removeNotify();
+    }
+    catch (Exception e) {
+      GuiUtils.printDebugInfo(this);
+    }
 
     setFocused(false);
 
@@ -504,13 +508,22 @@ public class JBTabsImpl extends JComponent
     JComponent vToolbar = data.vToolbar.get();
     if (hToolbar != null) {
       final int toolbarHeight = hToolbar.getPreferredSize().height;
-      final Rectangle compRect = layoutComp(deltaX, toolbarHeight + deltaY, data.comp.get(), deltaWidth, deltaHeight);
-      layout(hToolbar, compRect.x, compRect.y - toolbarHeight, compRect.width, toolbarHeight);
+      final int hSeparatorHeight = toolbarHeight > 0 ? 1 : 0;
+      final Rectangle compRect = layoutComp(deltaX, toolbarHeight + hSeparatorHeight + deltaY, data.comp.get(), deltaWidth, deltaHeight);
+      layout(hToolbar, compRect.x, compRect.y - toolbarHeight - hSeparatorHeight, compRect.width, toolbarHeight);
     }
     else if (vToolbar != null) {
       final int toolbarWidth = vToolbar.getPreferredSize().width;
-      final Rectangle compRect = layoutComp(toolbarWidth + deltaX, deltaY, data.comp.get(), deltaWidth, deltaHeight);
-      layout(vToolbar, compRect.x - toolbarWidth, compRect.y, toolbarWidth, compRect.height);
+      final int vSeparatorWidth = toolbarWidth > 0 ? 1 : 0;
+      if (mySideComponentBefore) {
+        final Rectangle compRect = layoutComp(toolbarWidth + vSeparatorWidth + deltaX, deltaY, data.comp.get(), deltaWidth, deltaHeight);
+        layout(vToolbar, compRect.x - toolbarWidth - vSeparatorWidth, compRect.y, toolbarWidth, compRect.height);
+      }
+      else {
+        final Rectangle compRect = layoutComp(new Rectangle(deltaX, deltaY, getWidth() - toolbarWidth - vSeparatorWidth, getHeight()),
+                                              data.comp.get(), deltaWidth, deltaHeight);
+        layout(vToolbar, compRect.x + compRect.width + vSeparatorWidth, compRect.y, toolbarWidth, compRect.height);
+      }
     }
     else {
       layoutComp(deltaX, deltaY, data.comp.get(), deltaWidth, deltaHeight);
@@ -978,25 +991,9 @@ public class JBTabsImpl extends JComponent
 
 
     if (isShowing()) {
-      return myFocusManager.requestFocus(new FocusCommand.ByComponent(toFocus, new Exception()), true);
-    }
-    else {
-      final ActionCallback result = new ActionCallback();
-      final FocusRequestor requestor = myFocusManager.getFurtherRequestor();
-      final Ref<Boolean> queued = new Ref<>(false);
-      Disposer.register(requestor, new Disposable() {
-        @Override
-        public void dispose() {
-          if (!queued.get()) {
-            result.setRejected();
-          }
-        }
-      });
-      myDeferredFocusRequest = () -> {
-        queued.set(true);
-        requestor.requestFocus(new FocusCommand.ByComponent(toFocus, toFocus, myProject, new Exception()), true).notify(result);
-      };
-      return result;
+      return myFocusManager.requestFocus(toFocus, true);
+    } else {
+      return ActionCallback.REJECTED;
     }
   }
 
@@ -1278,7 +1275,7 @@ public class JBTabsImpl extends JComponent
   }
 
   @Nullable
-  private TabInfo findEnabledForward(int from, boolean cycle) {
+  protected TabInfo findEnabledForward(int from, boolean cycle) {
     if (from < 0) return null;
     int index = from;
     List<TabInfo> infos = getVisibleInfos();
@@ -1301,7 +1298,7 @@ public class JBTabsImpl extends JComponent
   }
 
   @Nullable
-  private TabInfo findEnabledBackward(int from, boolean cycle) {
+  protected TabInfo findEnabledBackward(int from, boolean cycle) {
     if (from < 0) return null;
     int index = from;
     List<TabInfo> infos = getVisibleInfos();
@@ -1333,8 +1330,7 @@ public class JBTabsImpl extends JComponent
   public List<TabInfo> getTabs() {
     if (myAllTabs != null) return myAllTabs;
 
-    ArrayList<TabInfo> result = new ArrayList<>();
-    result.addAll(myVisibleInfos);
+    ArrayList<TabInfo> result = new ArrayList<>(myVisibleInfos);
 
     for (TabInfo each : myHiddenInfos.keySet()) {
       result.add(getIndexInVisibleArray(each), each);
@@ -1369,7 +1365,12 @@ public class JBTabsImpl extends JComponent
 
   private void resetPopup() {
 //todo [kirillk] dirty hack, should rely on ActionManager to understand that menu item was either chosen on or cancelled
-    SwingUtilities.invokeLater(() -> myPopupInfo = null);
+    SwingUtilities.invokeLater(() -> {
+      // No need to reset popup info if a new popup has been already opened and myPopupInfo refers to the corresponding info.
+      if (myActivePopup == null) {
+        myPopupInfo = null;
+      }
+    });
   }
 
   @Override
@@ -1435,7 +1436,7 @@ public class JBTabsImpl extends JComponent
       if (group != null) {
         final String place = info.getPlace();
         ActionToolbar toolbar =
-          myTabs.myActionManager.createActionToolbar(place != null ? place : ActionPlaces.UNKNOWN, group, myTabs.myHorizontalSide);
+          myTabs.myActionManager.createActionToolbar(place != null ? place : "JBTabs", group, myTabs.myHorizontalSide);
         toolbar.setTargetComponent(info.getActionsContextComponent());
         final JComponent actionToolbar = toolbar.getComponent();
         add(actionToolbar, BorderLayout.CENTER);
@@ -1467,8 +1468,7 @@ public class JBTabsImpl extends JComponent
       }
 
 
-      List<TabInfo> visible = new ArrayList<>();
-      visible.addAll(getVisibleInfos());
+      List<TabInfo> visible = new ArrayList<>(getVisibleInfos());
 
       if (myDropInfo != null && !visible.contains(myDropInfo) && myShowDropLocation) {
         if (getDropInfoIndex() >= 0 && getDropInfoIndex() < visible.size()) {
@@ -1541,6 +1541,10 @@ public class JBTabsImpl extends JComponent
   }
 
   public Rectangle layoutComp(int componentX, int componentY, final JComponent comp, int deltaWidth, int deltaHeight) {
+    return layoutComp(new Rectangle(componentX, componentY, getWidth(), getHeight()), comp, deltaWidth, deltaHeight);
+  }
+
+  public Rectangle layoutComp(final Rectangle bounds, final JComponent comp, int deltaWidth, int deltaHeight) {
     final Insets insets = getLayoutInsets();
 
     final Insets border = isHideTabs() ? new Insets(0, 0, 0, 0) : myBorder.getEffectiveBorder();
@@ -1553,10 +1557,10 @@ public class JBTabsImpl extends JComponent
     border.right += inner.right;
 
 
-    int x = insets.left + componentX + border.left;
-    int y = insets.top + componentY + border.top;
-    int width = getWidth() - insets.left - insets.right - componentX - border.left - border.right;
-    int height = getHeight() - insets.top - insets.bottom - componentY - border.top - border.bottom;
+    int x = insets.left + bounds.x + border.left;
+    int y = insets.top + bounds.y + border.top;
+    int width = bounds.width - insets.left - insets.right - bounds.x - border.left - border.right;
+    int height = bounds.height - insets.top - insets.bottom - bounds.y - border.top - border.bottom;
 
     if (!noTabsVisible) {
       width += deltaWidth;
@@ -2067,7 +2071,7 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public Color getBackground() {
-    return UIUtil.isUnderNimbusLookAndFeel() ? UIUtil.getPanelBackground() : UIUtil.getBgFillColor(getParent());
+    return UIUtil.getBgFillColor(getParent());
   }
 
   protected void doPaintInactive(Graphics2D g2d,
@@ -2990,6 +2994,15 @@ public class JBTabsImpl extends JComponent
   }
 
   @Override
+  public JBTabsPresentation setSideComponentBefore(boolean before) {
+    mySideComponentBefore = before;
+
+    relayout(true, false);
+
+    return this;
+  }
+
+  @Override
   public JBTabsPresentation setSingleRow(boolean singleRow) {
     myLayout = singleRow ? mySingleRowLayout : myTableLayout;
 
@@ -3042,6 +3055,10 @@ public class JBTabsImpl extends JComponent
 
   public boolean isSideComponentOnTabs() {
     return mySideComponentOnTabs;
+  }
+
+  public boolean isSideComponentBefore() {
+    return mySideComponentBefore;
   }
 
   public TabLayout getEffectiveLayout() {
@@ -3198,8 +3215,7 @@ public class JBTabsImpl extends JComponent
       final Component each = getComponent(i);
       if (each instanceof JComponent) {
         final JComponent jc = (JComponent)each;
-        final Object done = jc.getClientProperty(LAYOUT_DONE);
-        if (!Boolean.TRUE.equals(done)) {
+        if (!UIUtil.isClientPropertyTrue(jc, LAYOUT_DONE)) {
           layout(jc, new Rectangle(0, 0, 0, 0));
         }
       }
@@ -3264,7 +3280,7 @@ public class JBTabsImpl extends JComponent
     relayout(true, true);
   }
 
-  boolean isHorizontalTabs() {
+  public boolean isHorizontalTabs() {
     return getTabsPosition() == JBTabsPosition.top || getTabsPosition() == JBTabsPosition.bottom;
   }
 

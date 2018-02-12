@@ -2,30 +2,20 @@ Backward Hierarchy:
 java.lang.Object -> Main com.ru.Some com.ru.Some$I1 com.ru.Some$I1$I2 com.ru.Some$I1$I2$I3 com.ru.Some2 com.ru.Some2$I1 com.ru.Some2$I1$I2 com.ru.Some3
 
 Backward References:
-Main in Main
-Main.<init>(0) in Main
-Main.main(1) in Main
-com.ru.Some in Main Some
-com.ru.Some$I1 in Main Some
-com.ru.Some$I1$I2 in Main Some
-com.ru.Some$I1$I2$I3 in Main Some
-com.ru.Some$I1$I2$I3.<init>(0) in Some
-com.ru.Some$I1$I2.<init>(0) in Some
-com.ru.Some$I1.<init>(0) in Some
-com.ru.Some.<init>(0) in Some
-com.ru.Some2 in Main Some2
-com.ru.Some2$I1 in Main Some2
-com.ru.Some2$I1$I2 in Main Some2
-com.ru.Some2$I1$I2.<init>(0) in Some2
-com.ru.Some2$I1$I2.utilityMethod(0) in Main Some2
-com.ru.Some2$I1$I2.utilityMethod(1) in Main Some2
-com.ru.Some2$I1.<init>(0) in Some2
-com.ru.Some2.<init>(0) in Some2
-com.ru.Some3 in Main Some3
-com.ru.Some3.<init>(0) in Some3
-com.ru.Some3.CONST in Main Some3
-java.lang.Object.<init>(0) in Main Some Some2 Some3
-java.lang.String in Main
+Main in Main occurrences = 1
+Main.main(1) in Main occurrences = 1
+com.ru.Some in Main Some occurrences = 2
+com.ru.Some$I1 in Main Some occurrences = 2
+com.ru.Some$I1$I2 in Main Some occurrences = 2
+com.ru.Some$I1$I2$I3 in Main Some occurrences = 2
+com.ru.Some2 in Main Some2 occurrences = 2
+com.ru.Some2$I1 in Main Some2 occurrences = 2
+com.ru.Some2$I1$I2 in Main Some2 occurrences = 2
+com.ru.Some2$I1$I2.utilityMethod(0) in Main Some2 occurrences = 2
+com.ru.Some2$I1$I2.utilityMethod(1) in Main Some2 occurrences = 2
+com.ru.Some3 in Main Some3 occurrences = 2
+com.ru.Some3.CONST in Main Some3 occurrences = 2
+java.lang.String in Main occurrences = 1
 
 Class Definitions:
 Main in Main
@@ -37,3 +27,5 @@ com.ru.Some2 in Some2
 com.ru.Some2$I1 in Some2
 com.ru.Some2$I1$I2 in Some2
 com.ru.Some3 in Some3
+
+Members Signatures:

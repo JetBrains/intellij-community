@@ -18,10 +18,6 @@ package com.intellij.codeInsight.preview;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-/**
- * User: zolotov
- * Date: 6/5/13
- */
 public interface PreviewHintComponent {
   @TestOnly
   boolean isEqualTo(@Nullable PreviewHintComponent other);

@@ -6,7 +6,7 @@ class Test {
     abstract void call(String[] f) throws FileNotFoundException, IOException;
   }
 
-  void use(Target target) throws IOException {
+  void use(Target target) throws <warning descr="Exception 'java.io.IOException' is never thrown in the method">IOException</warning> {
     try {
       target.call("");
     } catch (FileNotFoundException e) {

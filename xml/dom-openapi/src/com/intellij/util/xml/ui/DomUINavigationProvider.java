@@ -22,9 +22,6 @@ import com.intellij.util.xml.DomElementNavigationProvider;
 import java.awt.*;
 import java.util.List;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class DomUINavigationProvider extends DomElementNavigationProvider {
   public static String DOM_UI_NAVIGATION_PROVIDER_NAME = "DOM_UI_NAVIGATION_PROVIDER_NAME";
 

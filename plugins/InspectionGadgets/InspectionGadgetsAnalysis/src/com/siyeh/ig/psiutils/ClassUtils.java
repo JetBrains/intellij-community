@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,23 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInspection.concurrencyAnnotations.JCiPUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.Processor;
+import com.intellij.util.Query;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ClassUtils {
 
@@ -112,11 +120,7 @@ public class ClassUtils {
     if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
       return true;
     }
-    if (!(type instanceof PsiClassType)) {
-      return false;
-    }
-    final PsiClassType classType = (PsiClassType)type;
-    final PsiClass aClass = classType.resolve();
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
     if (aClass == null) {
       return false;
     }
@@ -233,17 +237,161 @@ public class ClassUtils {
   @Nullable
   public static PsiClassInitializer getDoubleBraceInitializer(PsiAnonymousClass aClass) {
     final PsiClassInitializer[] initializers = aClass.getInitializers();
-    if (initializers.length != 1) return null;
+    if (initializers.length != 1) {
+      return null;
+    }
     final PsiClassInitializer initializer = initializers[0];
-    if (initializer.hasModifierProperty(PsiModifier.STATIC)) return null;
-    final PsiField[] fields = aClass.getFields();
-    if (fields.length != 0) return null;
-    final PsiMethod[] methods = aClass.getMethods();
-    if (methods.length != 0) return null;
-    final PsiClass[] innerClasses = aClass.getInnerClasses();
-    if (innerClasses.length != 0) return null;
-    final PsiJavaCodeReferenceElement reference = aClass.getBaseClassReference();
-    if (reference.resolve() == null) return null;
+    if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
+      return null;
+    }
+    if (aClass.getFields().length != 0 || aClass.getMethods().length != 0 || aClass.getInnerClasses().length != 0) {
+      return null;
+    }
+    if (aClass.getBaseClassReference().resolve() == null) {
+      return null;
+    }
     return initializer;
+  }
+
+  public static boolean isFinalClassWithDefaultEquals(@Nullable PsiClass aClass) {
+    if (aClass == null) {
+      return false;
+    }
+    if (!aClass.hasModifierProperty(PsiModifier.FINAL) && !hasOnlyPrivateConstructors(aClass)) {
+      return false;
+    }
+    final PsiMethod[] methods = aClass.findMethodsByName("equals", true);
+    for (PsiMethod method : methods) {
+      if (!MethodUtils.isEquals(method)) {
+        continue;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null || !CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public static boolean hasOnlyPrivateConstructors(PsiClass aClass) {
+    if (aClass == null) {
+      return false;
+    }
+    final PsiMethod[] constructors = aClass.getConstructors();
+    if (constructors.length == 0) {
+      return false;
+    }
+    for (PsiMethod constructor : constructors) {
+      if (!constructor.hasModifierProperty(PsiModifier.PRIVATE)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public static boolean isSingleton(@Nullable PsiClass aClass) {
+    if (aClass == null || aClass.isInterface() || aClass instanceof PsiTypeParameter || aClass instanceof PsiAnonymousClass) {
+      return false;
+    }
+    if (aClass.isEnum()) {
+      if (!ControlFlowUtils.hasChildrenOfTypeCount(aClass, 1, PsiEnumConstant.class)) {
+        return false;
+      }
+      // has at least on accessible instance method
+      return Arrays.stream(aClass.getMethods())
+        .anyMatch(m -> !m.isConstructor() && !m.hasModifierProperty(PsiModifier.PRIVATE) && !m.hasModifierProperty(PsiModifier.STATIC));
+    }
+    if (getIfOnlyInvisibleConstructors(aClass).length == 0) {
+      return false;
+    }
+    final PsiField selfInstance = getIfOneStaticSelfInstance(aClass);
+    return selfInstance != null && newOnlyAssignsToStaticSelfInstance(getIfOnlyInvisibleConstructors(aClass)[0], selfInstance);
+  }
+
+  private static PsiField getIfOneStaticSelfInstance(PsiClass aClass) {
+    final Stream<PsiField> fieldStream = Stream.concat(Arrays.stream(aClass.getFields()),
+                                                       Arrays.stream(aClass.getInnerClasses())
+                                                         .filter(innerClass -> innerClass.hasModifierProperty(PsiModifier.STATIC))
+                                                         .flatMap(innerClass -> Arrays.stream(innerClass.getFields())));
+    final List<PsiField> fields = fieldStream.filter(field -> resolveToSingletonField(aClass, field)).limit(2).collect(Collectors.toList());
+    return fields.size() == 1 ? fields.get(0) : null;
+  }
+
+  private static boolean resolveToSingletonField(PsiClass aClass, PsiField field) {
+    if (!field.hasModifierProperty(PsiModifier.STATIC)) {
+      return false;
+    }
+    final PsiClass targetClass = PsiUtil.resolveClassInClassTypeOnly(field.getType());
+    return aClass.equals(targetClass);
+  }
+
+  @NotNull
+  private static PsiMethod[] getIfOnlyInvisibleConstructors(PsiClass aClass) {
+    final PsiMethod[] constructors = aClass.getConstructors();
+    if (constructors.length == 0) {
+      return PsiMethod.EMPTY_ARRAY;
+    }
+    for (final PsiMethod constructor : constructors) {
+      if (constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
+        return PsiMethod.EMPTY_ARRAY;
+      }
+      if (!constructor.hasModifierProperty(PsiModifier.PRIVATE) &&
+          !constructor.hasModifierProperty(PsiModifier.PROTECTED)) {
+        return PsiMethod.EMPTY_ARRAY;
+      }
+    }
+    return constructors;
+  }
+
+  private static boolean newOnlyAssignsToStaticSelfInstance(PsiMethod method, final PsiField field) {
+    final Query<PsiReference> search = MethodReferencesSearch.search(method, field.getUseScope(), false);
+    final NewOnlyAssignedToFieldProcessor processor = new NewOnlyAssignedToFieldProcessor(field);
+    search.forEach(processor);
+    return processor.isNewOnlyAssignedToField();
+  }
+
+  private static class NewOnlyAssignedToFieldProcessor implements Processor<PsiReference> {
+
+    private boolean newOnlyAssignedToField = true;
+    private final PsiField field;
+
+    public NewOnlyAssignedToFieldProcessor(PsiField field) {
+      this.field = field;
+    }
+
+    @Override
+    public boolean process(PsiReference reference) {
+      final PsiElement element = reference.getElement();
+      final PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiNewExpression)) {
+        newOnlyAssignedToField = false;
+        return false;
+      }
+      final PsiElement grandParent = parent.getParent();
+      if (field.equals(grandParent)) {
+        return true;
+      }
+      if (!(grandParent instanceof PsiAssignmentExpression)) {
+        newOnlyAssignedToField = false;
+        return false;
+      }
+      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)grandParent;
+      final PsiExpression lhs = assignmentExpression.getLExpression();
+      if (!(lhs instanceof PsiReferenceExpression)) {
+        newOnlyAssignedToField = false;
+        return false;
+      }
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
+      final PsiElement target = referenceExpression.resolve();
+      if (!field.equals(target)) {
+        newOnlyAssignedToField = false;
+        return false;
+      }
+      return true;
+    }
+
+    public boolean isNewOnlyAssignedToField() {
+      return newOnlyAssignedToField;
+    }
   }
 }

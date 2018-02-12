@@ -27,7 +27,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -205,16 +205,16 @@ public class SvnDiffViewer implements DiffViewer {
   //
 
   private void updatePropertiesPanel() {
-    boolean wasFocused = myContext.isFocused();
-    if (!mySettings.isHideProperties()) {
-      mySplitter.setSecondComponent(myPropertiesViewer.getComponent());
-      myNotificationPanel.setContent(null);
-    }
-    else {
-      mySplitter.setSecondComponent(null);
-      myNotificationPanel.setContent(createNotification());
-    }
-    if (wasFocused) myContext.requestFocus();
+    DiffUtil.runPreservingFocus(myContext, () -> {
+      if (!mySettings.isHideProperties()) {
+        mySplitter.setSecondComponent(myPropertiesViewer.getComponent());
+        myNotificationPanel.setContent(null);
+      }
+      else {
+        mySplitter.setSecondComponent(null);
+        myNotificationPanel.setContent(createNotification());
+      }
+    });
   }
 
   @NotNull

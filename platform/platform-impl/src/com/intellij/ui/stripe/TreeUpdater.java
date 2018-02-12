@@ -15,17 +15,15 @@
  */
 package com.intellij.ui.stripe;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 
-import java.beans.EventHandler;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import javax.swing.JScrollPane;
-import javax.swing.JTree;
+import javax.swing.*;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
+import java.beans.EventHandler;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 /**
  * @author Sergey.Malenkov
@@ -50,18 +48,10 @@ public class TreeUpdater<Painter extends ErrorStripePainter> extends Updater<Pai
     myTree.addPropertyChangeListener(JTree.TREE_MODEL_PROPERTY, myPropertyChangeListener);
     TreeModel model = myTree.getModel();
     if (model != null) model.addTreeModelListener(myTreeModelListener);
-    new DumbAwareAction() {
-      @Override
-      public void actionPerformed(AnActionEvent event) {
-        selectNext(myTree.getMaxSelectionRow());
-      }
-    }.registerCustomShortcutSet(getNextErrorShortcut(), myTree, this);
-    new DumbAwareAction() {
-      @Override
-      public void actionPerformed(AnActionEvent event) {
-        selectPrevious(myTree.getMinSelectionRow());
-      }
-    }.registerCustomShortcutSet(getPreviousErrorShortcut(), myTree, this);
+    DumbAwareAction.create(e -> selectNext(myTree.getMaxSelectionRow()))
+      .registerCustomShortcutSet(getNextErrorShortcut(), myTree, this);
+    DumbAwareAction.create(e -> selectPrevious(myTree.getMinSelectionRow()))
+      .registerCustomShortcutSet(getPreviousErrorShortcut(), myTree, this);
   }
 
   @Override

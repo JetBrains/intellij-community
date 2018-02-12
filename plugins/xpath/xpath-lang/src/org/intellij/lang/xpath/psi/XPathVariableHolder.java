@@ -17,11 +17,6 @@ package org.intellij.lang.xpath.psi;
 
 import org.jetbrains.annotations.NotNull;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 28.04.11
-*/
 public interface XPathVariableHolder extends XPathElement {
   @NotNull
   XPathVariableDeclaration[] getVariables();

@@ -1,6 +1,6 @@
 class Test {
     @Deprecated
-    public final String string = "";
+    public final String fo = "";
 
     void foo() {
     }

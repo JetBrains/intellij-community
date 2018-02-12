@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,18 @@ package com.siyeh.ig.fixes.equality;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.siyeh.InspectionGadgetsBundle;
 
 /**
  * @author Pavel.Dolgov
  */
 public class EqualityOperatorComparesObjectsInspectionJdk6Test extends EqualityOperatorComparesObjectsInspectionTestBase {
 
-  public void testSimpleObjectOldSafeComparison() { doTest(true, true); }
-  public void testNegatedObjectOldSafeComparison() { doTest(false, true); }
+  public void testSimpleObjectOldSafeComparison() { doTest(InspectionGadgetsBundle.message("equality.to.safe.equals.quickfix")); }
+  public void testNegatedObjectOldSafeComparison() { doTest(InspectionGadgetsBundle.message("inequality.to.safe.not.equals.quickfix")); }
 
   @Override
-  protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
+  protected void tuneFixture(JavaModuleFixtureBuilder builder) {
     builder.addJdk(IdeaTestUtil.getMockJdk17Path().getPath())
       .setLanguageLevel(LanguageLevel.JDK_1_6);
   }

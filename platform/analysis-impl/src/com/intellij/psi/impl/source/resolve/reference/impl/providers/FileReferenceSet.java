@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -210,7 +210,7 @@ public class FileReferenceSet {
 
   protected void reparse() {
     List<FileReference> referencesList = reparse(myPathStringNonTrimmed, myStartInElement);
-    myReferences = referencesList.toArray(new FileReference[referencesList.size()]);
+    myReferences = referencesList.toArray(FileReference.EMPTY);
   }
 
   protected List<FileReference> reparse(String str, int startInElement) {
@@ -258,13 +258,12 @@ public class FileReferenceSet {
       int nextSep = findSeparatorOffset(decoded, curSep + sepLen);
       int start = curSep + sepLen;
       int endTrimmed = nextSep > 0 ? nextSep : Math.max(start, decoded.length() - wsTail);
-      int endInclusive = nextSep > 0 ? nextSep : Math.max(start, decoded.length() - 1 - wsTail);
       // todo move ${placeholder} support (the str usage below) to a reference implementation
       // todo reference-set should be bound to exact range & text in a file, consider: ${slash}path${slash}file&amp;.txt
       String refText = index == 0 && nextSep < 0 && !StringUtil.contains(decoded, str) ? str :
                                 decoded.subSequence(start, endTrimmed).toString();
       TextRange r = new TextRange(offset(start, escaper, valueRange),
-                                  offset(endInclusive, escaper, valueRange) + (nextSep < 0 && refText.length() > 0 ? 1 : 0));
+                                  offset(endTrimmed, escaper, valueRange));
       referencesList.add(createFileReference(r, index++, refText));
       curSep = nextSep;
       sepLen = curSep > 0 ? findSeparatorLength(decoded, curSep) : 0;
@@ -367,15 +366,23 @@ public class FileReferenceSet {
       final FileReferenceHelper[] helpers = FileReferenceHelperRegistrar.getHelpers();
       final ArrayList<PsiFileSystemItem> list = new ArrayList<>();
       final Project project = file.getProject();
+      boolean hasRealContexts = false;
       for (FileReferenceHelper helper : helpers) {
         if (helper.isMine(project, virtualFile)) {
           if (!list.isEmpty() && helper.isFallback()) {
             continue;
           }
-          list.addAll(helper.getContexts(project, virtualFile));
+          Collection<PsiFileSystemItem> contexts = helper.getContexts(project, virtualFile);
+          for (PsiFileSystemItem context : contexts) {
+            list.add(context);
+            hasRealContexts |= !(context instanceof FileReferenceResolver);
+          }
         }
       }
       if (!list.isEmpty()) {
+        if (!hasRealContexts) {
+          list.addAll(getParentDirectoryContext());
+        }
         return list;
       }
       return getParentDirectoryContext();

@@ -31,7 +31,6 @@ import java.io.File;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jul 17, 2007
  */
 public class ProjectNameStep extends ModuleWizardStep {
   private final JPanel myPanel;
@@ -62,6 +61,15 @@ public class ProjectNameStep extends ModuleWizardStep {
     myPanel = new JPanel(new GridBagLayout());
     myPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     myPanel.add(myNamePathComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, JBUI.insets(10, 0, 20, 0), 0, 0));
+
+    if (myWizardContext.isCreatingNewProject()) {
+      myNamePathComponent.add(new JLabel("Project format:"),
+                              new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST,
+                                                     GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
+      myNamePathComponent.add(myFormatPanel.getStorageFormatComboBox(),
+                              new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
+                                                     GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
+    }
 
     myNamePathComponent.setVisible(isStepVisible());
     myAdditionalContentPanel = new JPanel(new GridBagLayout());

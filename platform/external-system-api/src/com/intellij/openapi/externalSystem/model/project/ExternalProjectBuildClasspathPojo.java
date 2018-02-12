@@ -37,7 +37,7 @@ public class ExternalProjectBuildClasspathPojo {
   @SuppressWarnings("UnusedDeclaration")
   public ExternalProjectBuildClasspathPojo() {
     // Used by IJ serialization
-    this("___DUMMY___", ContainerUtil.<String>newArrayList(), ContainerUtil.<String, ExternalModuleBuildClasspathPojo>newHashMap());
+    this("___DUMMY___", ContainerUtil.newArrayList(), ContainerUtil.newHashMap());
   }
 
   public ExternalProjectBuildClasspathPojo(@NotNull String name,

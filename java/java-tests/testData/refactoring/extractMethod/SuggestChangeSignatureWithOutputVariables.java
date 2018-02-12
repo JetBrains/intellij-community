@@ -1,7 +1,7 @@
 
 class Test {
 
-  private BigDecimal getRevenue() {
+  private String getRevenue() {
     <selection>final String query = createNamedQuery("revenues");
     String revenues = "";
     final String revenue;
@@ -10,7 +10,7 @@ class Test {
     return revenue;
   }
 
-  public BigDecimal getExpense() {
+  public String getExpense() {
     final String query = createNamedQuery("expenses");
     String expenses = "";
     final String expense;

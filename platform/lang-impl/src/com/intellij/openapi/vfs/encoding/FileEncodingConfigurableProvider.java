@@ -30,11 +30,6 @@ public final class FileEncodingConfigurableProvider extends ConfigurableProvider
   }
 
   @Override
-  public boolean canCreateConfigurable() {
-    return true;
-  }
-
-  @Override
   public Configurable createConfigurable() {
     return new FileEncodingConfigurable(myProject);
   }

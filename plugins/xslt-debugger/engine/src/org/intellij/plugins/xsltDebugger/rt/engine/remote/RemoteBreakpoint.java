@@ -19,11 +19,6 @@ package org.intellij.plugins.xsltDebugger.rt.engine.remote;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 29.05.2007
- */
 public interface RemoteBreakpoint extends Remote {
   String getUri() throws RemoteException;
 

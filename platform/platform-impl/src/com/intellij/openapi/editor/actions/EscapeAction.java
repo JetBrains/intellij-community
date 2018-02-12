@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -34,7 +35,7 @@ public class EscapeAction extends EditorAction {
 
   private static class Handler extends EditorActionHandler {
     @Override
-    public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       if (editor instanceof EditorEx) {
         EditorEx editorEx = (EditorEx)editor;
         if (editorEx.isStickySelection()) {

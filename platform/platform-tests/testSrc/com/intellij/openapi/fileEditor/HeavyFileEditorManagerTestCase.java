@@ -23,11 +23,8 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.ui.docking.DockManager;
 
-import java.io.File;
-
 /**
  * @author Dmitry Avdeev
- *         Date: 4/30/13
  */
 public abstract class HeavyFileEditorManagerTestCase extends CodeInsightFixtureTestCase {
 
@@ -35,7 +32,7 @@ public abstract class HeavyFileEditorManagerTestCase extends CodeInsightFixtureT
 
   protected VirtualFile getFile(String path) {
     return LocalFileSystem.getInstance().refreshAndFindFileByPath(
-      PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/fileEditorManager" + path);
+      PlatformTestUtil.getPlatformTestDataPath() + "fileEditorManager" + path);
   }
 
   public void setUp() throws Exception {

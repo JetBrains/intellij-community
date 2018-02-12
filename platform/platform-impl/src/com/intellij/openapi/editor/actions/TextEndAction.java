@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -36,7 +37,7 @@ public class TextEndAction extends TextComponentEditorAction {
 
   private static class Handler extends EditorActionHandler {
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
+    public void execute(@NotNull Editor editor, DataContext dataContext) {
       editor.getCaretModel().removeSecondaryCarets();
       int offset = editor.getDocument().getTextLength();
       if (editor instanceof EditorImpl) {

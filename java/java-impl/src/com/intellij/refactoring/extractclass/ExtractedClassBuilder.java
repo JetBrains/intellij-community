@@ -499,16 +499,9 @@ class ExtractedClassBuilder {
     }
 
 
-    public void visitPostfixExpression(PsiPostfixExpression expression) {
-      outputUnaryExpression(expression, expression.getOperand(), expression.getOperationSign());
-    }
-
-    public void visitPrefixExpression(PsiPrefixExpression expression) {
-      outputUnaryExpression(expression, expression.getOperand(), expression.getOperationSign());
-    }
-
-    private void outputUnaryExpression(final PsiExpression expression, PsiExpression operand, final PsiJavaToken sign) {
-      final IElementType tokenType = sign.getTokenType();
+    public void visitUnaryExpression(PsiUnaryExpression expression) {
+      PsiExpression operand = expression.getOperand();
+      final IElementType tokenType = expression.getOperationSign().getTokenType();
       if (isBackpointerReference(operand) && (tokenType.equals(JavaTokenType.PLUSPLUS) || tokenType.equals(JavaTokenType.MINUSMINUS))) {
         while (operand instanceof PsiParenthesizedExpression) {
           operand = ((PsiParenthesizedExpression)operand).getExpression();

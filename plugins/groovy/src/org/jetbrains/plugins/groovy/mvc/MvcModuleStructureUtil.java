@@ -244,12 +244,8 @@ public class MvcModuleStructureUtil {
     // update facets
     if (!actions.second.isEmpty()) {
       final Application application = ApplicationManager.getApplication();
-      final ModifiableFacetModel model = application.runReadAction(new Computable<ModifiableFacetModel>() {
-        @Override
-        public ModifiableFacetModel compute() {
-          return FacetManager.getInstance(module).createModifiableModel();
-        }
-      });
+      final ModifiableFacetModel model = application.runReadAction(
+        (Computable<ModifiableFacetModel>)() -> FacetManager.getInstance(module).createModifiableModel());
       for (Consumer<ModifiableFacetModel> action : actions.second) {
         action.consume(model);
       }
@@ -535,7 +531,7 @@ public class MvcModuleStructureUtil {
 
     final ModifiableModuleModel moduleModel = moduleManager.getModifiableModel();
 
-    ModuleDeleteProvider.removeModule(toRemove, null, usingModels, moduleModel);
+    ModuleDeleteProvider.removeModule(toRemove, usingModels, moduleModel);
 
     ModifiableModelCommitter.multiCommit(usingModels, moduleModel);
   }

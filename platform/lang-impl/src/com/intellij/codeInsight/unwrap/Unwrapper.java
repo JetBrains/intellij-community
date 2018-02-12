@@ -19,22 +19,25 @@ package com.intellij.codeInsight.unwrap;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Set;
 
 public interface Unwrapper {
-  boolean isApplicableTo(PsiElement e);
+  boolean isApplicableTo(@NotNull PsiElement e);
 
-  void collectElementsToIgnore(PsiElement element, Set<PsiElement> result);
+  void collectElementsToIgnore(@NotNull PsiElement element, @NotNull Set<PsiElement> result);
 
-  String getDescription(PsiElement e);
+  @NotNull
+  String getDescription(@NotNull PsiElement e);
 
   /**
    * @param toExtract the elements that will be extracted
    * @return TextRange the whole affected code structure (the code that will be removed)
    */
-  PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract);
+  PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract);
 
-  List<PsiElement> unwrap(Editor editor, PsiElement element) throws IncorrectOperationException;
+  @NotNull
+  List<PsiElement> unwrap(@NotNull Editor editor, @NotNull PsiElement element) throws IncorrectOperationException;
 }

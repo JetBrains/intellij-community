@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,16 +71,17 @@ public class JpsPathUtil {
 
   //todo[nik] copied from VfsUtil
   @NotNull
-  public static String fixURLforIDEA(@NotNull String url ) {
+  public static String fixURLforIDEA(@NotNull String url) {
     int idx = url.indexOf(":/");
-    if( idx >= 0 && idx+2 < url.length() && url.charAt(idx+2) != '/' ) {
+    if (idx >= 0 && idx + 2 < url.length() && url.charAt(idx + 2) != '/') {
       String prefix = url.substring(0, idx);
-      String suffix = url.substring(idx+2);
+      String suffix = url.substring(idx + 2);
 
       if (SystemInfoRt.isWindows) {
-        url = prefix+"://"+suffix;
-      } else {
-        url = prefix+":///"+suffix;
+        url = prefix + "://" + suffix;
+      }
+      else {
+        url = prefix + ":///" + suffix;
       }
     }
     return url;
@@ -92,9 +93,10 @@ public class JpsPathUtil {
 
   public static String getLibraryRootUrl(File file) {
     String path = FileUtilRt.toSystemIndependentName(file.getAbsolutePath());
-    if (file.isDirectory()) {
-      return "file://" + path;
-    }
-    return "jar://" + path + "!/";
+    return file.isDirectory() ? "file://" + path : "jar://" + path + "!/";
+  }
+
+  public static boolean isJrtUrl(@NotNull String url) {
+    return url.startsWith("jrt://");
   }
 }

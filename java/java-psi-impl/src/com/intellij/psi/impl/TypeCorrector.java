@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -20,7 +6,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +32,7 @@ class TypeCorrector extends PsiTypeMapper {
     return super.visitType(type);
   }
 
+  @SuppressWarnings("unchecked")
   @Nullable
   public <T extends PsiType> T correctType(@NotNull T type) {
     if (type instanceof PsiClassType) {
@@ -65,7 +51,12 @@ class TypeCorrector extends PsiTypeMapper {
   }
 
   @Override
-  public PsiType visitClassType(final PsiClassType classType) {
+  public PsiType visitClassType(PsiClassType classType) {
+    if (classType instanceof PsiCorrectedClassType) {
+      return myResolveScope.equals(classType.getResolveScope()) ? classType :
+             visitClassType(((PsiCorrectedClassType)classType).myDelegate);
+    }
+    
     PsiClassType alreadyComputed = myResultMap.get(classType);
     if (alreadyComputed != null) {
       return alreadyComputed;
@@ -134,21 +125,17 @@ class TypeCorrector extends PsiTypeMapper {
     return mappedSubstitutor;
   }
 
-  public class PsiCorrectedClassType extends PsiClassType.Stub {
+  private class PsiCorrectedClassType extends PsiClassType.Stub {
     private final PsiClassType myDelegate;
     private final CorrectedResolveResult myResolveResult;
 
     private PsiCorrectedClassType(LanguageLevel languageLevel,
                                   PsiClassType delegate,
                                   CorrectedResolveResult resolveResult) {
-      this(languageLevel, delegate, resolveResult, delegate.getAnnotationProvider());
-    }
-
-    private PsiCorrectedClassType(LanguageLevel languageLevel,
-                                  PsiClassType delegate,
-                                  CorrectedResolveResult resolveResult,
-                                  TypeAnnotationProvider delegateAnnotationProvider) {
-      super(languageLevel, delegateAnnotationProvider);
+      super(languageLevel, delegate.getAnnotationProvider());
+      if (delegate instanceof PsiCorrectedClassType) {
+        throw new IllegalArgumentException();
+      }
       myDelegate = delegate;
       myResolveResult = resolveResult;
     }
@@ -233,7 +220,7 @@ class TypeCorrector extends PsiTypeMapper {
 
     @Override
     public boolean isValid() {
-      return myDelegate.isValid() && resolve().isValid();
+      return myDelegate.isValid() && myResolveResult.myMappedClass.isValid() && myResolveResult.mySubstitutor.isValid();
     }
 
     @Override

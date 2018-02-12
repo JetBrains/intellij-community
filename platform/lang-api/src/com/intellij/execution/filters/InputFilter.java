@@ -17,18 +17,19 @@ package com.intellij.execution.filters;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@FunctionalInterface
 public interface InputFilter {
 
   /**
    * @param text        the text to be filtered.
    * @param contentType the content type of filtered text
-   * @return            <tt>null</tt>, if there was no match, otherwise, a list of pairs like ('string to use', 'content type to use')
+   * @return            <tt>null</tt>, if there was no match, otherwise, a list of not null pairs, e.g. {@code ("my prompt", ConsoleViewContentType.SYSTEM_OUTPUT)}
    */
   @Nullable
-  List<Pair<String, ConsoleViewContentType>> applyFilter(String text, ConsoleViewContentType contentType);
-
+  List<Pair<String, ConsoleViewContentType>> applyFilter(@NotNull String text, @NotNull ConsoleViewContentType contentType);
 }

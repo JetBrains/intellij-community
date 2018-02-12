@@ -25,12 +25,6 @@ import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.ResourceBundle;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Sergey.Grigorchuk
- * Date: 01.09.2005
- * Time: 17:13:10
- */
 public class KeyMapBundle {
 
   public static String message(@NotNull @PropertyKey(resourceBundle = "messages.KeyMapBundle") String key, @NotNull Object... params) {

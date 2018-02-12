@@ -22,6 +22,7 @@ import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ShowModulesAction;
+import com.intellij.ide.scratch.ScratchesNamedScope;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -159,6 +160,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
     List<NamedScope> list = ContainerUtil.newArrayList();
     for (NamedScope scope : ContainerUtil.concat(dependencyValidationManager.getScopes(), namedScopeManager.getScopes())) {
       if (scope instanceof NonProjectFilesScope) continue;
+      if (scope instanceof ScratchesNamedScope) continue;
       if (scope == CustomScopesProviderEx.getAllScope()) continue;
       list.add(scope);
     }
@@ -181,6 +183,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
         return ScopeViewPane.this.getId();
       }
     }).setAsSecondary(true);
+    actionGroup.addAction(createFlattenModulesAction(() -> true)).setAsSecondary(true);
   }
 
   @NotNull

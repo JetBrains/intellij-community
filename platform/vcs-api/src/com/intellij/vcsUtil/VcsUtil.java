@@ -35,6 +35,8 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -298,8 +300,12 @@ public class VcsUtil {
     return VcsContextFactory.SERVICE.getInstance().createFilePathOn(file, isDirectory);
   }
 
+  /**
+   * @deprecated use {@link #getFilePath(String, boolean)}
+   */
+  @Deprecated
   public static FilePath getFilePathForDeletedFile(@NotNull String path, boolean isDirectory) {
-    return VcsContextFactory.SERVICE.getInstance().createFilePathOnDeleted(new File(path), isDirectory);
+    return VcsContextFactory.SERVICE.getInstance().createFilePathOn(new File(path), isDirectory);
   }
 
   @NotNull
@@ -524,6 +530,12 @@ public class VcsUtil {
       }
     }
     return sb.toString();
+  }
+
+  public static String getShortRevisionString(@NotNull VcsRevisionNumber revision) {
+    return revision instanceof ShortVcsRevisionNumber
+           ? ((ShortVcsRevisionNumber)revision).toShortString()
+           : revision.asString();
   }
 
   public static VirtualFile[] paths2VFiles(String[] paths) {

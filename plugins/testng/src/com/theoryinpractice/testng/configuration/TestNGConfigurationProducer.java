@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 15-Aug-2007
- */
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.configurations.ConfigurationType;

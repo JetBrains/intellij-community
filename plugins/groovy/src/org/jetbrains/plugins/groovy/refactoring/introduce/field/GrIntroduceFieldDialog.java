@@ -117,7 +117,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     for (JRadioButton init : inits) {
       initialization.add(init);
     }
-    new RadioUpDownListener(inits.toArray(new JRadioButton[inits.size()]));
+    new RadioUpDownListener(inits.toArray(new JRadioButton[0]));
 
     if (clazz instanceof GroovyScriptClass) {
       myClassConstructorSRadioButton.setEnabled(false);
@@ -149,12 +149,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
       myReplaceAllOccurrencesCheckBox.setVisible(false);
     }
 
-    myNameField.addDataChangedListener(new NameSuggestionsField.DataChanged() {
-      @Override
-      public void dataChanged() {
-        validateOKAction();
-      }
-    });
+    myNameField.addDataChangedListener(() -> validateOKAction());
 
     ItemListener l = new ItemListener() {
       @Override

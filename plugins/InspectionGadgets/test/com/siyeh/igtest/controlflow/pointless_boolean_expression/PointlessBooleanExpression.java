@@ -28,11 +28,85 @@ class PointlessBooleanExpression {
     boolean y = <warning descr="'false || c' can be simplified to 'c'">false || c</warning>;
     boolean z = <warning descr="'b != true' can be simplified to '!b'">b != true</warning>;
   }
+
+  boolean sideEffect() {
+    System.out.println("hello");
+    return Math.random() > 0.5;
+  }
+
+  class X {
+    X(boolean b) {}
+  }
+
+  class Y extends X {
+    Y(int i) {
+      // side-effect cannot be extracted from super call
+      super(sideEffect() && false);
+    }
+
+    Y(long l) {
+      // side-effect cannot be extracted from super call
+      super(false & sideEffect());
+    }
+
+    Y(double d) {
+      // no side-effect extraction necessary
+      super(<warning descr="'sideEffect() && true' can be simplified to 'sideEffect()'">sideEffect() && true</warning>);
+    }
+
+    Y(float f) {
+      // no side-effect extraction necessary
+      super(<warning descr="'false && sideEffect()' can be simplified to 'false'">false && sideEffect()</warning>);
+    }
+  }
+
+  void method() {
+    if(<warning descr="'sideEffect() && false' can be simplified to 'false'">sideEffect() && false</warning>) {
+      System.out.println("ok");
+    }
+    if(<warning descr="'sideEffect() && true' can be simplified to 'sideEffect()'">sideEffect() && true</warning>) {
+      System.out.println("ooh");
+    }
+    // Do not warn as we cannot simplify w/o reordering calls which could be undesired
+    // this code is warned by DFA inspection (w/o quick-fix)
+    if(Math.random() > 0.5 && (sideEffect() || true)) {
+      System.out.println("well");
+    }
+    // Here side-effect can be extracted before loop
+    if((<warning descr="'sideEffect() || true' can be simplified to 'true'">sideEffect() || true</warning>) && Math.random() > 0.5) {
+      System.out.println("well");
+    }
+  }
 }
 class Presley {
   void elvis(Object king) {
     if (<warning descr="'true && king != null && king.hashCode() > 1' can be simplified to 'king != null && king.hashCode() > 1'">true && king != null && king.hashCode() > 1</warning>) {
       // blah
     }
+  }
+}
+
+class LambdaInOverloadMethod {
+  Boolean myField;
+  void m(I<Boolean> i) {}
+  void m(IVoid i) {}
+
+  Boolean get() {return myField;}
+
+  {
+    m(() -> get() <caret>== true);
+  }
+}
+
+interface I<T> {
+  T f();
+}
+
+interface IVoid extends I<Void>{
+  void foo();
+
+  @Override
+  default Void f() {
+    return null;
   }
 }

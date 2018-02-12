@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
@@ -23,6 +10,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -56,17 +44,14 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
   private final Map<String, ProjectJdkImpl> myCachedProjectJdks = new HashMap<>();
   private final MessageBus myMessageBus;
 
+  // constructor is public because it is accessed from Upsource
   public ProjectJdkTableImpl() {
     myMessageBus = ApplicationManager.getApplication().getMessageBus();
     myListenerList = new MessageListenerList<>(myMessageBus, JDK_TABLE_TOPIC);
     // support external changes to jdk libraries (Endorsed Standards Override)
     final MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      private FileTypeManager myFileTypeManager = FileTypeManager.getInstance();
-
-      @Override
-      public void before(@NotNull List<? extends VFileEvent> events) {
-      }
+      private final FileTypeManager myFileTypeManager = FileTypeManager.getInstance();
 
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
@@ -85,15 +70,15 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
 
       private void addAffectedJavaSdk(VFileEvent event, Set<Sdk> affected) {
         final VirtualFile file = event.getFile();
-        String fileName = null;
+        CharSequence fileName = null;
         if (file != null && file.isValid()) {
           if (file.isDirectory()) {
             return;
           }
-          fileName = file.getName();
+          fileName = file.getNameSequence();
         }
-        final String eventPath = event.getPath();
         if (fileName == null) {
+          final String eventPath = event.getPath();
           fileName = VfsUtil.extractFileName(eventPath);
         }
         if (fileName != null) {
@@ -107,6 +92,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
         for (Sdk sdk : mySdks) {
           if (sdk.getSdkType() instanceof JavaSdkType && !affected.contains(sdk)) {
             final String homePath = sdk.getHomePath();
+            final String eventPath = event.getPath();
             if (!StringUtil.isEmpty(homePath) && FileUtil.isAncestor(homePath, eventPath, true)) {
               affected.add(sdk);
             }
@@ -177,13 +163,15 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
     return type;
   }
 
+  @NotNull
   @Override
   public Sdk[] getAllJdks() {
-    return mySdks.toArray(new Sdk[mySdks.size()]);
+    return mySdks.toArray(new Sdk[0]);
   }
 
+  @NotNull
   @Override
-  public List<Sdk> getSdksOfType(final SdkTypeId type) {
+  public List<Sdk> getSdksOfType(@NotNull final SdkTypeId type) {
     List<Sdk> result = new ArrayList<>();
     final Sdk[] sdks = getAllJdks();
     for (Sdk sdk : sdks) {
@@ -195,21 +183,24 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
   }
 
   @Override
-  public void addJdk(Sdk jdk) {
+  public void addJdk(@NotNull Sdk jdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     mySdks.add(jdk);
     myMessageBus.syncPublisher(JDK_TABLE_TOPIC).jdkAdded(jdk);
   }
 
   @Override
-  public void removeJdk(Sdk jdk) {
+  public void removeJdk(@NotNull Sdk jdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     myMessageBus.syncPublisher(JDK_TABLE_TOPIC).jdkRemoved(jdk);
     mySdks.remove(jdk);
+    if (jdk instanceof Disposable) {
+      Disposer.dispose((Disposable)jdk);
+    }
   }
 
   @Override
-  public void updateJdk(Sdk originalJdk, Sdk modifiedJdk) {
+  public void updateJdk(@NotNull Sdk originalJdk, @NotNull Sdk modifiedJdk) {
     final String previousName = originalJdk.getName();
     final String newName = modifiedJdk.getName();
 
@@ -222,26 +213,29 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
   }
 
   @Override
-  public void addListener(Listener listener) {
+  public void addListener(@NotNull Listener listener) {
     myListenerList.add(listener);
   }
 
   @Override
-  public void removeListener(Listener listener) {
+  public void removeListener(@NotNull Listener listener) {
     myListenerList.remove(listener);
   }
 
   @Override
+  @NotNull
   public SdkTypeId getDefaultSdkType() {
     return UnknownSdkType.getInstance("");
   }
 
   @Override
+  @NotNull
   public SdkTypeId getSdkTypeByName(@NotNull String sdkTypeName) {
     return findSdkTypeByName(sdkTypeName);
   }
 
-  public static SdkTypeId findSdkTypeByName(@NotNull String sdkTypeName) {
+  @NotNull
+  private static SdkTypeId findSdkTypeByName(@NotNull String sdkTypeName) {
     final SdkType[] allSdkTypes = SdkType.getAllTypes();
     for (final SdkType type : allSdkTypes) {
       if (type.getName().equals(sdkTypeName)) {
@@ -251,13 +245,14 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
     return UnknownSdkType.getInstance(sdkTypeName);
   }
 
+  @NotNull
   @Override
-  public Sdk createSdk(final String name, final SdkTypeId sdkType) {
+  public Sdk createSdk(@NotNull final String name, @NotNull final SdkTypeId sdkType) {
     return new ProjectJdkImpl(name, sdkType);
   }
 
   @Override
-  public void loadState(Element element) {
+  public void loadState(@NotNull Element element) {
     mySdks.clear();
 
     for (Element child : element.getChildren(ELEMENT_JDK)) {

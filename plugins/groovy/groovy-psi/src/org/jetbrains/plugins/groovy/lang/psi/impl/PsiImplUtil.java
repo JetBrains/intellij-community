@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -61,6 +62,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
@@ -183,6 +185,10 @@ public class PsiImplUtil {
       if (newExpr != addedParenth) {
         return oldExpr.replaceWithExpression(addedParenth, removeUnnecessaryParentheses);
       }
+    }
+
+    if (oldParent instanceof GrForInClause) {
+      return (GrExpression) oldExpr.replace(parenthesize(newExpr));
     }
 
     //if replace closure argument with expression
@@ -311,8 +317,7 @@ public class PsiImplUtil {
 
   @Nullable
   public static PsiElement realPrevious(PsiElement previousLeaf) {
-    while (previousLeaf != null &&
-        (previousLeaf instanceof PsiWhiteSpace ||
+    while ((previousLeaf instanceof PsiWhiteSpace ||
             previousLeaf instanceof PsiComment ||
             previousLeaf instanceof PsiErrorElement)) {
       previousLeaf = previousLeaf.getPrevSibling();
@@ -338,7 +343,7 @@ public class PsiImplUtil {
 
   @NotNull
   public static GroovyResolveResult extractUniqueResult(@NotNull GroovyResolveResult[] results) {
-    if (results.length != 1) return GroovyResolveResult.EMPTY_RESULT;
+    if (results.length != 1) return EmptyGroovyResolveResult.INSTANCE;
     return results[0];
   }
 
@@ -397,11 +402,13 @@ public class PsiImplUtil {
 
     for (GrParameter p : parameters) {
       final GrTypeElement declaredType = p.getTypeElementGroovy();
-      if ((declaredType == null || declaredType.getType().equalsToText(CommonClassNames.JAVA_LANG_STRING + "[]")) &&
-          p.getInitializerGroovy() == null) {
+      boolean optional = p.isOptional();
+      if (optional) {
+        optional_count++;
+      }
+      else if (declaredType == null || declaredType.getType().equalsToText(CommonClassNames.JAVA_LANG_STRING + "[]")) {
         args_count++;
       }
-      if (p.getInitializerGroovy() != null) optional_count++;
     }
 
     return optional_count == parameters.length - 1 && args_count == 1;
@@ -607,17 +614,15 @@ public class PsiImplUtil {
     else if (pparent instanceof GrListOrMap) {
       PsiElement ppparent = PsiUtil.skipParentheses(pparent.getParent(), true);
 
-      if (ppparent instanceof GrAssignmentExpression &&
-          PsiTreeUtil.isAncestor(((GrAssignmentExpression)ppparent).getRValue(), pparent, false)) {
+      if (ppparent instanceof GrTupleAssignmentExpression &&
+          PsiTreeUtil.isAncestor(((GrTupleAssignmentExpression)ppparent).getRValue(), pparent, false)) {
 
-        PsiElement lValue = PsiUtil.skipParentheses(((GrAssignmentExpression)ppparent).getLValue(), false);
-        if (lValue instanceof GrTupleExpression) {
-          GrExpression[] initializers = ((GrListOrMap)pparent).getInitializers();
-          int index = ArrayUtil.find(initializers, diamondNew);
-          GrExpression[] expressions = ((GrTupleExpression)lValue).getExpressions();
-          if (index < expressions.length) {
-            return expressions[index].getNominalType();
-          }
+        GrTuple lValue = ((GrTupleAssignmentExpression)ppparent).getLValue();
+        GrExpression[] initializers = ((GrListOrMap)pparent).getInitializers();
+        int index = ArrayUtil.find(initializers, diamondNew);
+        GrExpression[] expressions = lValue.getExpressions();
+        if (index < expressions.length) {
+          return expressions[index].getNominalType();
         }
       }
     }
@@ -708,6 +713,12 @@ public class PsiImplUtil {
     return false;
   }
 
+  public static boolean hasArguments(@NotNull GrCall call) {
+    if (hasClosureArguments(call)) return true;
+    GrArgumentList list = call.getArgumentList();
+    return hasExpressionArguments(list) || hasNamedArguments(list);
+  }
+
   public static PsiElement findTailingSemicolon(@NotNull GrStatement statement) {
     final PsiElement nextNonSpace = PsiUtil.skipWhitespaces(statement.getNextSibling(), true);
     if (nextNonSpace != null && nextNonSpace.getNode().getElementType() == GroovyTokenTypes.mSEMI) {
@@ -739,7 +750,7 @@ public class PsiImplUtil {
         result.add((GrStatement)cur);
       }
     }
-    return result.toArray(new GrStatement[result.size()]);
+    return result.toArray(GrStatement.EMPTY_ARRAY);
   }
 
   public static GrNamedArgument findNamedArgument(final GrNamedArgumentsOwner namedArgumentOwner,

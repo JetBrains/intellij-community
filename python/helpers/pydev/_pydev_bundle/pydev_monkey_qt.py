@@ -1,4 +1,5 @@
 from __future__ import nested_scopes
+import os
 
 def set_trace_in_qt():
     from _pydevd_bundle import pydevd_tracing
@@ -19,6 +20,9 @@ def patch_qt(qt_support_mode):
     if qt_support_mode is True or qt_support_mode == 'True':
         # do not break backward compatibility
         qt_support_mode = 'auto'
+
+    if qt_support_mode == 'auto':
+        qt_support_mode = os.getenv('PYDEVD_PYQT_MODE', 'auto')
 
     # Avoid patching more than once
     global _patched_qt
@@ -46,12 +50,18 @@ def patch_qt(qt_support_mode):
 
 
     if qt_support_mode == 'pyside':
-        import PySide.QtCore  # @UnresolvedImport
-        _internal_patch_qt(PySide.QtCore)
+        try:
+            import PySide.QtCore  # @UnresolvedImport
+            _internal_patch_qt(PySide.QtCore, qt_support_mode)
+        except:
+            return
 
     elif qt_support_mode == 'pyqt5':
-        import PyQt5.QtCore  # @UnresolvedImport
-        _internal_patch_qt(PyQt5.QtCore)
+        try:
+            import PyQt5.QtCore  # @UnresolvedImport
+            _internal_patch_qt(PyQt5.QtCore)
+        except:
+            return
 
     elif qt_support_mode == 'pyqt4':
         # Ok, we have an issue here:
@@ -91,17 +101,27 @@ def _patch_import_to_patch_pyqt_on_import(patch_qt_on_import, get_qt_core_module
             _internal_patch_qt(get_qt_core_module()) # Patch it only when the user would import the qt module
         return original_import(name, *args, **kwargs)
 
-    try:
-        import builtins
-    except ImportError:
+    import sys
+    if sys.version_info[0] >= 3:
+        import builtins # Py3
+    else:
         import __builtin__ as builtins
+
     builtins.__import__ = patched_import
 
 
-def _internal_patch_qt(QtCore):
+def _internal_patch_qt(QtCore, qt_support_mode='auto'):
     _original_thread_init = QtCore.QThread.__init__
     _original_runnable_init = QtCore.QRunnable.__init__
     _original_QThread = QtCore.QThread
+
+    class FuncWrapper:
+        def __init__(self, original):
+            self._original = original
+
+        def __call__(self, *args, **kwargs):
+            set_trace_in_qt()
+            return self._original(*args, **kwargs)
 
     class StartedSignalWrapper(QtCore.QObject):  # Wrapper for the QThread.started signal
 
@@ -114,11 +134,17 @@ def _internal_patch_qt(QtCore):
             QtCore.QObject.__init__(self)
             self.thread = thread
             self.original_started = original_started
-            self._signal.connect(self._on_call)
-            self.original_started.connect(self._signal)
+            if qt_support_mode == 'pyside':
+                self._signal = original_started
+            else:
+                self._signal.connect(self._on_call)
+                self.original_started.connect(self._signal)
 
-        def connect(self, *args, **kwargs):
-            return self._signal.connect(*args, **kwargs)
+        def connect(self, func, *args, **kwargs):
+            if qt_support_mode == 'pyside':
+                return self._signal.connect(FuncWrapper(func), *args, **kwargs)
+            else:
+                return self._signal.connect(func, *args, **kwargs)
 
         def disconnect(self, *args, **kwargs):
             return self._signal.disconnect(*args, **kwargs)

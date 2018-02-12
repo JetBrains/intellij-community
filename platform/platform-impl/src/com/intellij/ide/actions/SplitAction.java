@@ -62,6 +62,6 @@ public abstract class SplitAction extends AnAction implements DumbAware {
                             && window != null
                             && window.getTabCount() >= minimum
                             && !window.getOwner().isPreview();
-    event.getPresentation().setEnabled(enabled);
+    event.getPresentation().setEnabledAndVisible(enabled);
   }
 }

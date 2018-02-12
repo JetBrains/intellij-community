@@ -28,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -80,6 +82,14 @@ public abstract class GotoLineNumberDialog extends DialogWrapper {
     class MyTextField extends JTextField {
       public MyTextField() {
         super("");
+        addFocusListener(new FocusAdapter() {
+          @Override
+          public void focusGained(FocusEvent e) {
+            if (!e.isTemporary()) {
+              selectAll();
+            }
+          }
+        });
       }
 
       public Dimension getPreferredSize() {

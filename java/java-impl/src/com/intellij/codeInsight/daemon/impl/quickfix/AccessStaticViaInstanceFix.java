@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
@@ -35,6 +36,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -96,7 +98,7 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
         try {
           PsiElement newQualifier = qualifierExpression.replace(factory.createReferenceExpression(containingClass));
           PsiElement qualifiedWithClassName = myExpression.copy();
-          if (myExpression.getTypeParameters().length == 0) {
+          if (myExpression.getTypeParameters().length == 0 && !(containingClass.isInterface() && !containingClass.equals(PsiTreeUtil.getParentOfType(myExpression, PsiClass.class)))) {
             newQualifier.delete();
             if (myExpression.resolve() != myMember) {
               myExpression.replace(qualifiedWithClassName);
@@ -148,25 +150,13 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
         @Override
         protected String sideEffectsDescription() {
           if (canCopeWithSideEffects) {
-            return "<html><body>" +
-                   "  There are possible side effects found in expression '" +
-                   qualifierExpression.getText() +
-                   "'<br>" +
-                   "  You can:<ul><li><b>Remove</b> class reference along with whole expressions involved, or</li>" +
-                   "  <li><b>Transform</b> qualified expression into the statement on its own.<br>" +
-                   "  That is,<br>" +
-                   "  <table border=1><tr><td><code>" +
-                   myExpression.getText() +
-                   "</code></td></tr></table><br> becomes: <br>" +
-                   "  <table border=1><tr><td><code>" +
-                   qualifierExpression.getText() +
-                   ";<br>" +
-                   qualifiedWithClassName.getText() +
-                   "       </code></td></tr></table></li>" +
-                   "  </body></html>";
+            return MessageFormat.format(getFormatString(),
+                                        "expression '" + qualifierExpression.getText() + "'",
+                                        myExpression.getText(), //before text
+                                        qualifierExpression.getText() + ";<br>" + qualifiedWithClassName.getText());//after text
           }
           return "<html><body>  There are possible side effects found in expression '" + qualifierExpression.getText() + "'<br>" +
-                 "You can:<ul><li><b>Remove</b> class reference along with whole expressions involved, or</li></body></html>";
+                 "You can <b>Remove</b> class reference along with whole expressions involved</body></html>";
         }
       };
     dialog.show();
@@ -177,7 +167,8 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
       LOG.assertTrue(statement != null);
       WriteAction.run(() -> {
         try {
-          statement.getParent().addBefore(statementFromText, statement);
+          PsiElement parent = statement.getParent();
+          BlockUtils.addBefore(parent instanceof PsiForStatement ? (PsiStatement)parent : statement, statementFromText);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);

@@ -32,7 +32,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +41,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.Arrays;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class FileStatusMap implements Disposable {
@@ -49,7 +48,7 @@ public class FileStatusMap implements Disposable {
   public static final String CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING =
     "PSI/document/model changes are not allowed during highlighting";
   private final Project myProject;
-  private final Map<Document,FileStatus> myDocumentToStatusMap = new WeakHashMap<>(); // all dirty if absent
+  private final Map<Document,FileStatus> myDocumentToStatusMap = ContainerUtil.createWeakMap(); // all dirty if absent
   private volatile boolean myAllowDirt = true;
 
   // Don't reduce visibility rules here because this class is used in Upsource as well.
@@ -347,7 +346,7 @@ public class FileStatusMap implements Disposable {
   };
 
   // logging
-  private static final ConcurrentMap<Thread, Integer> threads = new ConcurrentHashMap<>();
+  private static final ConcurrentMap<Thread, Integer> threads = ContainerUtil.createConcurrentWeakMap();
   private static int getThreadNum() {
     return ConcurrencyUtil.cacheOrGet(threads, Thread.currentThread(), threads.size());
   }

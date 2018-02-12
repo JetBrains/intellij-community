@@ -17,50 +17,45 @@ package org.intellij.lang.xpath.xslt;
 
 import org.intellij.lang.xpath.TestBase;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 12.06.2008
-*/
 public class XsltCompletionTest extends TestBase {
 
-    public void testLocalVariable() throws Throwable {
+    public void testLocalVariable() {
         doXsltCompletion();
     }
 
-    public void testGlobalVariable() throws Throwable {
+    public void testGlobalVariable() {
         doXsltCompletion();
     }
 
-    public void testTemplates() throws Throwable {
+    public void testTemplates() {
         doXsltCompletion();
     }
 
-    public void testModes() throws Throwable {
+    public void testModes() {
         doXsltCompletion();
     }
 
-    public void testNamedTemplateParams() throws Throwable {
+    public void testNamedTemplateParams() {
         doXsltCompletion();
     }
 
-    public void testIncludedTemplateParam() throws Throwable {
+    public void testIncludedTemplateParam() {
         doXsltCompletion("included.xsl");
     }
 
-    public void testApplyTemplateParams() throws Throwable {
+    public void testApplyTemplateParams() {
         doXsltCompletion();
     }
 
-    public void testIncludedVariable() throws Throwable {
+    public void testIncludedVariable() {
         doXsltCompletion("included.xsl");
     }
 
-    public void testUsedNames() throws Throwable {
+    public void testUsedNames() {
         doXsltCompletion();
     }
 
-    private void doXsltCompletion(String... moreFiles) throws Throwable {
+    private void doXsltCompletion(String... moreFiles) {
         final String name = getTestFileName();
         myFixture.testCompletion(name + ".xsl", name + "_after.xsl", moreFiles);
     }

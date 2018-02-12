@@ -1,25 +1,13 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
-import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +16,7 @@ import java.util.Set;
 public class SwitchExprent extends Exprent {
 
   private Exprent value;
-  private List<List<ConstExprent>> caseValues = new ArrayList<>();
+  private List<List<Exprent>> caseValues = new ArrayList<>();
 
   public SwitchExprent(Exprent value, Set<Integer> bytecodeOffsets) {
     super(EXPRENT_SWITCH);
@@ -41,8 +29,8 @@ public class SwitchExprent extends Exprent {
   public Exprent copy() {
     SwitchExprent swExpr = new SwitchExprent(value.copy(), bytecode);
 
-    List<List<ConstExprent>> lstCaseValues = new ArrayList<>();
-    for (List<ConstExprent> lst : caseValues) {
+    List<List<Exprent>> lstCaseValues = new ArrayList<>();
+    for (List<Exprent> lst : caseValues) {
       lstCaseValues.add(new ArrayList<>(lst));
     }
     swExpr.setCaseValues(lstCaseValues);
@@ -63,8 +51,8 @@ public class SwitchExprent extends Exprent {
     result.addMaxTypeExprent(value, VarType.VARTYPE_INT);
 
     VarType valType = value.getExprType();
-    for (List<ConstExprent> lst : caseValues) {
-      for (ConstExprent expr : lst) {
+    for (List<Exprent> lst : caseValues) {
+      for (Exprent expr : lst) {
         if (expr != null) {
           VarType caseType = expr.getExprType();
           if (!caseType.equals(valType)) {
@@ -104,7 +92,7 @@ public class SwitchExprent extends Exprent {
       return true;
     }
 
-    if (o == null || !(o instanceof SwitchExprent)) {
+    if (!(o instanceof SwitchExprent)) {
       return false;
     }
 
@@ -116,7 +104,7 @@ public class SwitchExprent extends Exprent {
     return value;
   }
 
-  public void setCaseValues(List<List<ConstExprent>> caseValues) {
+  public void setCaseValues(List<List<Exprent>> caseValues) {
     this.caseValues = caseValues;
   }
 }

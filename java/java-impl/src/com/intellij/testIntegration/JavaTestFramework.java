@@ -158,6 +158,13 @@ public abstract class JavaTestFramework implements TestFramework {
     return false;
   }
 
+  /**
+   * @return true for junit 3 classes with suite method and for junit 4 tests with @Suite annotation
+   */
+  public boolean isSuiteClass(PsiClass psiClass) {
+    return false;
+  }
+
   public boolean isTestMethod(PsiMethod method, PsiClass myClass) {
     return isTestMethod(method);
   }
@@ -170,10 +177,6 @@ public abstract class JavaTestFramework implements TestFramework {
   @Override
   public boolean isTestMethod(PsiElement element) {
     return isTestMethod(element, true);
-  }
-
-  public boolean isTestMethod(PsiElement element, boolean checkAbstract) {
-    return isTestMethod(element);
   }
 
   public boolean isMyConfigurationType(ConfigurationType type) {

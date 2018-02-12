@@ -48,6 +48,7 @@ import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
@@ -176,9 +177,9 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
     myNewParametersInfo = getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor);
 
     final List<ParameterInfoImpl> parameterInfos =
-      performChange(project, editor, file, method, myMinUsagesNumberToShowDialog, myNewParametersInfo, myChangeAllUsages, false);
+      performChange(project, editor, file, method, myMinUsagesNumberToShowDialog, myNewParametersInfo, myChangeAllUsages, false, null);
     if (parameterInfos != null) {
-      myNewParametersInfo = parameterInfos.toArray(new ParameterInfoImpl[parameterInfos.size()]);
+      myNewParametersInfo = parameterInfos.toArray(new ParameterInfoImpl[0]);
     }
   }
 
@@ -189,7 +190,8 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
                                                       final int minUsagesNumber,
                                                       final ParameterInfoImpl[] newParametersInfo,
                                                       final boolean changeAllUsages,
-                                                      final boolean allowDelegation) {
+                                                      final boolean allowDelegation,
+                                                      @Nullable final Consumer<List<ParameterInfoImpl>> callback) {
     if (!FileModificationService.getInstance().prepareFileForWrite(method.getContainingFile())) return null;
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(method, false);
@@ -227,6 +229,9 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         protected void performRefactoring(@NotNull UsageInfo[] usages) {
           CommandProcessor.getInstance().setCurrentCommandName(getCommandName());
           super.performRefactoring(usages);
+          if (callback  != null) {
+            callback.consume(Arrays.asList(newParametersInfo));
+          }
         }
       };
       processor.run();
@@ -238,7 +243,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
                                                      ? new ArrayList<>(Arrays.asList(newParametersInfo))
                                                      : new ArrayList<>();
       final PsiReferenceExpression refExpr = JavaTargetElementEvaluator.findReferenceExpression(editor);
-      JavaChangeSignatureDialog dialog = JavaChangeSignatureDialog.createAndPreselectNew(project, method, parameterInfos, allowDelegation, refExpr);
+      JavaChangeSignatureDialog dialog = JavaChangeSignatureDialog.createAndPreselectNew(project, method, parameterInfos, allowDelegation, refExpr, callback);
       dialog.setParameterInfos(parameterInfos);
       dialog.show();
       return dialog.isOK() ? dialog.getParameters() : null;
@@ -316,7 +321,12 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         if (buf.length() > 0) buf.append(", ");
         PsiParameter parameter = parameters[i];
         PsiExpression expression = expressions[i];
-        PsiType paramType = substitutor.substitute(parameter.getType());
+        PsiType bareParamType = parameter.getType();
+        if (!bareParamType.isValid()) {
+          PsiUtil.ensureValidType(bareParamType, parameter.getClass() + "; valid=" + parameter.isValid() + "; method.valid=" + targetMethod.isValid());
+        }
+        PsiType paramType = substitutor.substitute(bareParamType);
+        PsiUtil.ensureValidType(paramType);
         final String presentableText = escapePresentableType(paramType);
         if (TypeConversionUtil.areTypesAssignmentCompatible(paramType, expression)) {
           result.add(new ParameterInfoImpl(i, parameter.getName(), paramType));
@@ -349,7 +359,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       }
       if (isSilly) return null;
     }
-    return result.toArray(new ParameterInfoImpl[result.size()]);
+    return result.toArray(new ParameterInfoImpl[0]);
   }
 
   protected static String escapePresentableType(PsiType exprType) {

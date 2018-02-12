@@ -26,7 +26,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
@@ -40,12 +40,7 @@ import java.util.List;
  * @author yole
  */
 public class VcsHandleType extends HandleType {
-  private static final Function<LocalChangeList,String> FUNCTION = new Function<LocalChangeList, String>() {
-    @Override
-    public String fun(LocalChangeList list) {
-      return list.getName();
-    }
-  };
+  private static final Function<LocalChangeList,String> FUNCTION = list -> list.getName();
   private final AbstractVcs myVcs;
   private final ChangeListManager myChangeListManager;
   private final Function<VirtualFile,Change> myChangeFunction;
@@ -54,40 +49,30 @@ public class VcsHandleType extends HandleType {
     super(VcsBundle.message("handle.ro.file.status.type.using.vcs", vcs.getDisplayName()), true);
     myVcs = vcs;
     myChangeListManager = ChangeListManager.getInstance(myVcs.getProject());
-    myChangeFunction = new NullableFunction<VirtualFile, Change>() {
-      @Override
-      public Change fun(VirtualFile file) {
-        return myChangeListManager.getChange(file);
-      }
-    };
+    myChangeFunction = (NullableFunction<VirtualFile, Change>)file -> myChangeListManager.getChange(file);
   }
 
   public void processFiles(final Collection<VirtualFile> files, @Nullable final String changelist) {
     try {
       EditFileProvider provider = myVcs.getEditFileProvider();
       assert provider != null;
-      provider.editFiles(VfsUtil.toVirtualFileArray(files));
+      provider.editFiles(VfsUtilCore.toVirtualFileArray(files));
     }
     catch (VcsException e) {
       Messages.showErrorDialog(VcsBundle.message("message.text.cannot.edit.file", e.getLocalizedMessage()),
                                VcsBundle.message("message.title.edit.files"));
     }
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        for (final VirtualFile file : files) {
-          file.refresh(false, false);
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      for (final VirtualFile file : files) {
+        file.refresh(false, false);
       }
     });
     if (changelist != null) {
-      myChangeListManager.invokeAfterUpdate(new Runnable() {
-        @Override
-        public void run() {
-          LocalChangeList list = myChangeListManager.findChangeList(changelist);
-          if (list != null) {
-            List<Change> changes = ContainerUtil.mapNotNull(files, myChangeFunction);
-            myChangeListManager.moveChangesTo(list, changes.toArray(new Change[changes.size()]));
-          }
+      myChangeListManager.invokeAfterUpdate(() -> {
+        LocalChangeList list = myChangeListManager.findChangeList(changelist);
+        if (list != null) {
+          List<Change> changes = ContainerUtil.mapNotNull(files, myChangeFunction);
+          myChangeListManager.moveChangesTo(list, changes.toArray(new Change[0]));
         }
       }, InvokeAfterUpdateMode.SILENT, "", ModalityState.NON_MODAL);
     }

@@ -2,16 +2,19 @@ package org.jetbrains.idea.eclipse;
 
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.psi.codeStyle.CodeStyleScheme;
-import com.intellij.psi.codeStyle.CodeStyleSchemes;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.openapi.options.SchemeImportException;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.testFramework.PlatformTestCase;
 import org.jetbrains.idea.eclipse.importer.EclipseCodeStyleImportWorker;
+import org.jetbrains.idea.eclipse.importer.EclipseCodeStylePropertiesImporter;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.util.Properties;
+
+import static org.jetbrains.idea.eclipse.importer.EclipseProjectCodeStyleData.CORE_PREFS_FILE_NAME;
 
 /**
  * @author Rustam Vishnyakov
@@ -30,6 +33,7 @@ public class EclipseSettingsImportTest extends PlatformTestCase {
     
     CommonCodeStyleSettings javaSettings = settings.getCommonSettings("Java");
     CommonCodeStyleSettings.IndentOptions indentOptions = javaSettings.getIndentOptions();
+    JavaCodeStyleSettings javaCustomSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
     assertNotNull(indentOptions);
     javaSettings.SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS = false;
     javaSettings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES = false;
@@ -65,7 +69,7 @@ public class EclipseSettingsImportTest extends PlatformTestCase {
     javaSettings.SPACE_WITHIN_TRY_PARENTHESES = true;
     javaSettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES = true;
     javaSettings.WHILE_ON_NEW_LINE = true;
-    settings.ENABLE_JAVADOC_FORMATTING = false;
+    javaCustomSettings.ENABLE_JAVADOC_FORMATTING = false;
     javaSettings.SPACE_BEFORE_SEMICOLON = true;
     javaSettings.BLANK_LINES_BEFORE_METHOD_BODY = -1;
     javaSettings.SPACE_BEFORE_COLON = false;
@@ -179,7 +183,7 @@ public class EclipseSettingsImportTest extends PlatformTestCase {
       assertFalse(javaSettings.SPACE_WITHIN_TRY_PARENTHESES);
       assertFalse(javaSettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES);
       assertFalse(javaSettings.WHILE_ON_NEW_LINE);
-      assertTrue(settings.ENABLE_JAVADOC_FORMATTING);
+      assertTrue(javaCustomSettings.ENABLE_JAVADOC_FORMATTING);
       assertFalse(javaSettings.SPACE_BEFORE_SEMICOLON);
       assertEquals(0, javaSettings.BLANK_LINES_BEFORE_METHOD_BODY);
       assertTrue(javaSettings.SPACE_BEFORE_COLON);
@@ -263,6 +267,26 @@ public class EclipseSettingsImportTest extends PlatformTestCase {
       inputStream.close();
       schemes.deleteScheme(scheme);
       editorSettings.setEnsureNewLineAtEOF(currAddLineFeed);
+    }
+  }
+
+  public void testImportCodeStyleProperties() throws IOException, SchemeImportException {
+    File input = new File(getTestDataPath() + CORE_PREFS_FILE_NAME);
+    CodeStyleSettings settings = new CodeStyleSettings();
+    CommonCodeStyleSettings javaSettings = settings.getCommonSettings("Java");
+    CommonCodeStyleSettings.IndentOptions indentOptions = javaSettings.getIndentOptions();
+    JavaCodeStyleSettings javaCustomSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+    javaSettings.BLANK_LINES_AFTER_IMPORTS = 0;
+    indentOptions.CONTINUATION_INDENT_SIZE = 2;
+    javaCustomSettings.ENABLE_JAVADOC_FORMATTING = false;
+
+    try (InputStream stream = new FileInputStream(input)) {
+      Properties eclipseProperties = new Properties();
+      eclipseProperties.load(stream);
+      new EclipseCodeStylePropertiesImporter().importProperties(eclipseProperties, settings);
+      assertEquals(1, javaSettings.BLANK_LINES_AFTER_IMPORTS);
+      assertEquals(8, indentOptions.CONTINUATION_INDENT_SIZE);
+      assertTrue(javaCustomSettings.ENABLE_JAVADOC_FORMATTING);
     }
   }
 }

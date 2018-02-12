@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.debugger.engine;
 
@@ -25,10 +13,7 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.jdi.DecompiledLocalVariable;
-import com.intellij.debugger.jdi.LocalVariableProxyImpl;
-import com.intellij.debugger.jdi.LocalVariablesUtil;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.settings.CapturePoint;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -37,11 +22,15 @@ import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -144,7 +133,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       }
 
       @Override
-      public void threadAction() {
+      public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         if (node.isObsolete()) return;
         if (myInsertCapturePoint != null) {
           node.setMessage("Async stacktrace from " +
@@ -246,7 +235,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       //notifyCancelled();
     }
     catch (InternalException e) {
-      if (e.errorCode() == 35) {
+      if (e.errorCode() == JvmtiError.INVALID_SLOT) {
         node.setErrorMessage(DebuggerBundle.message("error.corrupt.debug.info", e.getMessage()));
         //myChildren.add(
         //  myNodeManager.createMessageNode(new MessageDescriptor(DebuggerBundle.message("error.corrupt.debug.info", e.getMessage()))));
@@ -302,12 +291,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
 
         Pair<Set<String>, Set<TextWithImports>> usedVars = EMPTY_USED_VARS;
         if (sourcePosition != null) {
-          usedVars = ApplicationManager.getApplication().runReadAction(new Computable<Pair<Set<String>, Set<TextWithImports>>>() {
-            @Override
-            public Pair<Set<String>, Set<TextWithImports>> compute() {
-              return findReferencedVars(ContainerUtil.union(visibleVariables.keySet(), visibleLocals), sourcePosition);
-            }
-          });
+          usedVars = ReadAction.compute(() -> findReferencedVars(ContainerUtil.union(visibleVariables.keySet(), visibleLocals), sourcePosition));
         }
           // add locals
         if (myAutoWatchMode) {
@@ -321,8 +305,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
         else {
           superBuildVariables(evaluationContext, children);
         }
-        final EvaluationContextImpl evalContextCopy = evaluationContext.createEvaluationContext(evaluationContext.getThisObject());
-        evalContextCopy.setAutoLoadClasses(false);
+        final EvaluationContextImpl evalContextCopy = evaluationContext.withAutoLoadClasses(false);
 
         if (sourcePosition != null) {
           Set<TextWithImports> extraVars = computeExtraVars(usedVars, sourcePosition, evaluationContext);
@@ -584,8 +567,13 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
         }
 
         if (_elem instanceof PsiJavaCodeReferenceElement) {
-          final PsiElement resolved = ((PsiJavaCodeReferenceElement)_elem).resolve();
-          if (resolved instanceof PsiVariable) {
+          try {
+            final PsiElement resolved = ((PsiJavaCodeReferenceElement)_elem).resolve();
+            if (resolved instanceof PsiVariable) {
+              return false;
+            }
+          }
+          catch (IndexNotReadyException e) {
             return false;
           }
         }
@@ -701,5 +689,22 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   @Override
   public boolean isInLibraryContent() {
     return myDescriptor.isInLibraryContent();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    JavaStackFrame frame = (JavaStackFrame)o;
+
+    if (!myDescriptor.getFrameProxy().equals(frame.myDescriptor.getFrameProxy())) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myDescriptor.getFrameProxy().hashCode();
   }
 }

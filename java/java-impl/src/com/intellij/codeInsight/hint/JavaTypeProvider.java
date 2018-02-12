@@ -30,7 +30,7 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
   @Override
   public String getInformationHint(@NotNull PsiExpression element) {
     PsiType type = element.getType();
-    String text = type == null ? "<unknown>" : type.getCanonicalText();
+    String text = type == null ? "<unknown>" : type.getPresentableText();
     return StringUtil.escapeXml(text);
   }
 
@@ -51,8 +51,7 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
 
   private static boolean isLargestNonTrivialExpression(@NotNull PsiExpression e) {
     PsiElement p = e.getParent();
-    if (p instanceof PsiPostfixExpression) return false;
-    if (p instanceof PsiPrefixExpression) return false;
+    if (p instanceof PsiUnaryExpression) return false;
     if (p instanceof PsiMethodCallExpression && ((PsiMethodCallExpression)p).getMethodExpression() == e) {
       return false;
     }

@@ -82,15 +82,12 @@ public class ReformatBeforeCheckinHandler extends CheckinHandler implements Chec
     final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
     final Collection<VirtualFile> files = myPanel.getVirtualFiles();
 
-    final Runnable performCheckoutAction = new Runnable() {
-      @Override
-      public void run() {
-        FileDocumentManager.getInstance().saveAllDocuments();
-        finishAction.run();
-      }
+    final Runnable performCheckoutAction = () -> {
+      FileDocumentManager.getInstance().saveAllDocuments();
+      finishAction.run();
     };
 
-    if (reformat(configuration, true) && !DumbService.isDumb(myProject)) {
+    if (configuration.REFORMAT_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(myProject)) {
       new ReformatCodeProcessor(
         myProject, CheckinHandlerUtil.getPsiFiles(myProject, files), FormatterUtil.REFORMAT_BEFORE_COMMIT_COMMAND_NAME, performCheckoutAction, true
       ).run();
@@ -100,9 +97,4 @@ public class ReformatBeforeCheckinHandler extends CheckinHandler implements Chec
     }
 
   }
-
-  private static boolean reformat(final VcsConfiguration configuration, boolean checkinProject) {
-    return checkinProject ? configuration.REFORMAT_BEFORE_PROJECT_COMMIT : configuration.REFORMAT_BEFORE_FILE_COMMIT;
-  }
-
 }

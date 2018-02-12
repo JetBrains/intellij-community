@@ -20,12 +20,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 5/2/12
- * Time: 5:44 PM
- */
 public interface SvnClientRunner {
   ProcessOutput runSvn(final VirtualFile file, String... commandLine) throws IOException;
 

@@ -1,42 +1,40 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MethodUtils {
 
   private MethodUtils() {}
+
+  public static boolean isCopyConstructor(@Nullable PsiMethod constructor) {
+    if (constructor == null || !constructor.isConstructor()) {
+      return false;
+    }
+    final PsiParameter[] parameters = constructor.getParameterList().getParameters();
+    return parameters.length == 1 && constructor.getContainingClass() == PsiUtil.resolveClassInClassTypeOnly(parameters[0].getType());
+  }
 
   @Contract("null -> false")
   public static boolean isComparatorCompare(@Nullable PsiMethod method) {
@@ -159,6 +157,7 @@ public class MethodUtils {
       }
       final PsiParameter[] parameters = parameterList.getParameters();
       for (int i = 0; i < parameters.length; i++) {
+        ProgressManager.checkCanceled();
         final PsiParameter parameter = parameters[i];
         final PsiType type = parameter.getType();
         final PsiType parameterType = parameterTypes[i];
@@ -196,6 +195,7 @@ public class MethodUtils {
       if (parameterTypeStrings != null) {
         final PsiType[] parameterTypes = PsiType.createArray(parameterTypeStrings.length);
         for (int i = 0; i < parameterTypeStrings.length; i++) {
+          ProgressManager.checkCanceled();
           final String parameterTypeString = parameterTypeStrings[i];
           parameterTypes[i] = factory.createTypeFromText(parameterTypeString, method);
         }
@@ -241,16 +241,17 @@ public class MethodUtils {
     return SuperMethodsSearch.search(method, null, true, false).findFirst();
   }
 
-  public static boolean isOverridden(PsiMethod method) {
-    if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC) || method.hasModifierProperty(PsiModifier.PRIVATE)) {
-      return false;
-    }
-    final Query<PsiMethod> overridingMethodQuery = OverridingMethodsSearch.search(method);
-    final PsiMethod result = overridingMethodQuery.findFirst();
-    return result != null;
+  /**
+   * This method can get very slow and use a lot of memory when invoked on a method that is overridden many times,
+   * like for example any of the methods of the {@link Object} class.
+   * This is because the underlying api currently calculates all inheritors eagerly.
+   * Try to avoid calling it in such cases.
+   */
+  public static boolean isOverridden(@NotNull PsiMethod method) {
+    return OverridingMethodsSearch.search(method).findFirst() != null;
   }
 
-  public static boolean isOverriddenInHierarchy(PsiMethod method, PsiClass baseClass) {
+  public static boolean isOverriddenInHierarchy(@NotNull PsiMethod method, @NotNull PsiClass baseClass) {
     // previous implementation:
     // final Query<PsiMethod> search = OverridingMethodsSearch.search(method);
     //for (PsiMethod overridingMethod : search) {
@@ -260,6 +261,9 @@ public class MethodUtils {
     //    }
     //}
     // was extremely slow and used an enormous amount of memory for clone()
+    if (!PsiUtil.canBeOverridden(method) || baseClass instanceof PsiAnonymousClass || baseClass.hasModifierProperty(PsiModifier.FINAL)) {
+      return false;
+    }
     final Query<PsiClass> search = ClassInheritorsSearch.search(baseClass, baseClass.getUseScope(), true, true, true);
     for (PsiClass inheritor : search) {
       final PsiMethod overridingMethod = inheritor.findMethodBySignature(method, false);
@@ -298,10 +302,11 @@ public class MethodUtils {
       return true;
     }
     for (PsiStatement statement : statements) {
+      ProgressManager.checkCanceled();
       if (statement instanceof PsiEmptyStatement) {
         continue;
       }
-      else if (statement instanceof PsiReturnStatement) {
+      if (statement instanceof PsiReturnStatement) {
         final PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
         final PsiExpression returnValue = ParenthesesUtils.stripParentheses(returnStatement.getReturnValue());
         if (returnValue == null || returnValue instanceof PsiLiteralExpression) {
@@ -346,6 +351,7 @@ public class MethodUtils {
     final PsiReferenceList throwsList = method.getThrowsList();
     final PsiJavaCodeReferenceElement[] references = throwsList.getReferenceElements();
     for (PsiJavaCodeReferenceElement reference : references) {
+      ProgressManager.checkCanceled();
       final PsiElement target = reference.resolve();
       if (!(target instanceof PsiClass)) {
         continue;
@@ -382,10 +388,74 @@ public class MethodUtils {
     return returnValue instanceof PsiThisExpression;
   }
 
-  @Contract("null -> false")
-  public static boolean isStringLength(@Nullable PsiMethod method) {
-    if (method == null || !method.getName().equals("length") || method.getParameterList().getParametersCount() != 0) return false;
-    PsiClass aClass = method.getContainingClass();
-    return aClass != null && CommonClassNames.JAVA_LANG_STRING.equals(aClass.getQualifiedName());
+  public static boolean haveEquivalentModifierLists(PsiMethod method, PsiMethod superMethod) {
+    final PsiModifierList list1 = method.getModifierList();
+    final PsiModifierList list2 = superMethod.getModifierList();
+    if (list1.hasModifierProperty(PsiModifier.STRICTFP) != list2.hasModifierProperty(PsiModifier.STRICTFP) ||
+        list1.hasModifierProperty(PsiModifier.SYNCHRONIZED) != list2.hasModifierProperty(PsiModifier.SYNCHRONIZED) ||
+        list1.hasModifierProperty(PsiModifier.PUBLIC) != list2.hasModifierProperty(PsiModifier.PUBLIC) ||
+        list1.hasModifierProperty(PsiModifier.PROTECTED) != list2.hasModifierProperty(PsiModifier.PROTECTED) ||
+        list1.hasModifierProperty(PsiModifier.FINAL) != list2.hasModifierProperty(PsiModifier.FINAL) ||
+        list1.hasModifierProperty(PsiModifier.ABSTRACT) != list2.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      return false;
+    }
+    return AnnotationUtil.equal(list1.getAnnotations(), list2.getAnnotations());
+  }
+
+  public static PsiMethodCallExpression findSuperOrThisCall(PsiMethod constructor) {
+    if (constructor == null || !constructor.isConstructor()) {
+      return null;
+    }
+    final PsiStatement firstStatement = PsiTreeUtil.getChildOfType(constructor.getBody(), PsiStatement.class);
+    if (!(firstStatement instanceof PsiExpressionStatement)) {
+      return null;
+    }
+    final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)firstStatement;
+    final PsiExpression expression = expressionStatement.getExpression();
+    if (!RefactoringChangeUtil.isSuperOrThisMethodCall(expression)) {
+      return null;
+    }
+    return (PsiMethodCallExpression)expression;
+  }
+
+  /**
+   * Find a specific method by base class method and known specific type of the object
+   *
+   * @param method a base class method
+   * @param specificType a specific type (class type or intersection type)
+   * @return more specific method, or base class method if more specific method cannot be found
+   */
+  @NotNull
+  public static PsiMethod findSpecificMethod(@NotNull PsiMethod method, @Nullable PsiType specificType) {
+    PsiClass qualifierClass = method.getContainingClass();
+    if (qualifierClass == null) return method;
+    if (specificType == null || specificType instanceof PsiArrayType) return method;
+    StreamEx<PsiType> types;
+    if (specificType instanceof PsiIntersectionType) {
+      types = StreamEx.of(((PsiIntersectionType)specificType).getConjuncts());
+    } else {
+      types = StreamEx.of(specificType);
+    }
+    List<PsiMethod> methods = types.map(PsiUtil::resolveClassInClassTypeOnly)
+      .nonNull()
+      .without(qualifierClass)
+      .distinct()
+      .filter(specificClass -> InheritanceUtil.isInheritorOrSelf(specificClass, qualifierClass, true))
+      .map(specificClass -> MethodSignatureUtil.findMethodBySuperMethod(specificClass, method, true))
+      .nonNull()
+      .distinct()
+      .toList();
+    if (methods.isEmpty()) return method;
+    PsiMethod best = methods.get(0);
+    for (PsiMethod realMethod : methods) {
+      if (best.equals(realMethod)) continue;
+      if (MethodSignatureUtil.isSuperMethod(best, realMethod)) {
+        best = realMethod;
+      } else if (!MethodSignatureUtil.isSuperMethod(realMethod, best)) {
+        // Several real candidates: give up
+        return method;
+      }
+    }
+    return best;
   }
 }

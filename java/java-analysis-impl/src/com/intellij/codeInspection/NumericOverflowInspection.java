@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.GroupNames;
@@ -28,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author cdr
  */
-public class NumericOverflowInspection extends BaseJavaBatchLocalInspectionTool {
+public class NumericOverflowInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Key<String> HAS_OVERFLOW_IN_CHILD = Key.create("HAS_OVERFLOW_IN_CHILD");
 
   @Nls
@@ -75,25 +61,27 @@ public class NumericOverflowInspection extends BaseJavaBatchLocalInspectionTool 
       return false;
     }
 
-    boolean overflow = false;
+    boolean result = false;
+    boolean toStoreInParent = false;
     try {
       if (expr.getUserData(HAS_OVERFLOW_IN_CHILD) == null) {
         JavaPsiFacade.getInstance(project).getConstantEvaluationHelper().computeConstantExpression(expr, true);
       }
       else {
-        overflow = true;
+        toStoreInParent = true;
+        expr.putUserData(HAS_OVERFLOW_IN_CHILD, null);
       }
     }
     catch (ConstantEvaluationOverflowException e) {
-      overflow = true;
+      result = toStoreInParent = true;
     }
     finally {
       PsiElement parent = expr.getParent();
-      if (overflow && parent instanceof PsiExpression) {
+      if (toStoreInParent && parent instanceof PsiExpression) {
         parent.putUserData(HAS_OVERFLOW_IN_CHILD, "");
       }
     }
 
-    return overflow;
+    return result;
   }
 }

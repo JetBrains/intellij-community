@@ -15,11 +15,18 @@
  */
 package com.jetbrains.jython;
 
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.ResolveTestCase;
 import com.intellij.testFramework.TestDataPath;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.psi.PyFile;
 import junit.framework.Assert;
+
+import java.util.List;
 
 /**
  * @author yole
@@ -83,6 +90,23 @@ public class PyToJavaResolveTest extends ResolveTestCase {
     PsiElement target = resolve();
     Assert.assertTrue(target instanceof PsiMethod);
     Assert.assertEquals("println", ((PsiMethod) target).getName());
+  }
+
+  // PY-23265, PY-23857
+  public void testPurePythonSymbolsFirst() throws Exception {
+    final LocalFileSystem fs = LocalFileSystem.getInstance();
+    final VirtualFile tmpDir = fs.findFileByIoFile(createTempDirectory());
+    copyDirContentsTo(fs.findFileByPath(getTestDataPath() + getTestName(true)), tmpDir);
+    PsiTestUtil.addSourceRoot(getModule(), tmpDir.findChild("src"));
+
+    final PsiReference ref = configureByFile(getTestName(true) + "/src/main.py", tmpDir);
+    final PsiPolyVariantReference multiRef = (PsiPolyVariantReference)ref;
+    final ResolveResult[] results = multiRef.multiResolve(false);
+    final List<PsiElement> targets = ContainerUtil.map(results, ResolveResult::getElement);
+
+    assertSize(2, targets);
+    assertInstanceOf(targets.get(0), PyFile.class);
+    assertInstanceOf(targets.get(1), PsiPackage.class);
   }
 
   @Override

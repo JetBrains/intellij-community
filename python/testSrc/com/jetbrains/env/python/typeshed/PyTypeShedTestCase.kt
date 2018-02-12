@@ -37,7 +37,7 @@ import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdkTools.PyTestSdkTools
+import com.jetbrains.python.tools.sdkTools.PySdkTools
 import org.junit.After
 import org.junit.Before
 
@@ -66,7 +66,7 @@ abstract class PyTypeShedTestCase(protected val path: String, protected val sdkP
     sdkCache[sdkPath] = sdk
     val skeletonsDir = PySdkUtil.findSkeletonsDir(sdk)
     if (skeletonsDir == null || skeletonsDir.children?.isEmpty() ?: true) {
-      PyTestSdkTools.generateTempSkeletonsOrPackages(sdk, true, module)
+      PySdkTools.generateTempSkeletonsOrPackages(sdk, true, module)
     }
     EdtTestUtil.runInEdtAndWait(ThrowableRunnable {
       SdkConfigurationUtil.addSdk(sdk)

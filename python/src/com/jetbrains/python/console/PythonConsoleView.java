@@ -72,6 +72,7 @@ import com.jetbrains.python.debugger.PyStackFrameInfo;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.testing.PyTestsSharedKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,8 +86,9 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   private static final Logger LOG = Logger.getInstance(PythonConsoleView.class);
   private final ConsolePromptDecorator myPromptView;
+  private final boolean myTestMode;
 
-  private PydevConsoleExecuteActionHandler myExecuteActionHandler;
+  private PythonConsoleExecuteActionHandler myExecuteActionHandler;
   private PyConsoleSourceHighlighter mySourceHighlighter;
   private boolean myIsIPythonOutput;
   private final PyHighlighter myPyHighlighter;
@@ -94,11 +96,16 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private boolean myHyperlink;
 
   private XStandaloneVariablesView mySplitView;
-  private ActionCallback myInitialized = new ActionCallback();
+  private final ActionCallback myInitialized = new ActionCallback();
+  private boolean isShowVars;
 
-  public PythonConsoleView(final Project project, final String title, final Sdk sdk) {
+  /**
+   * @param testMode this console will be used to display test output and should support TC messages
+   */
+  public PythonConsoleView(final Project project, final String title, final Sdk sdk, final boolean testMode) {
     super(project, title, PythonLanguage.getInstance());
-
+    myTestMode = testMode;
+    isShowVars = PyConsoleOptions.getInstance(project).isShowVariableByDefault();
     getVirtualFile().putUserData(LanguageLevel.KEY, PythonSdkType.getLanguageLevelForSdk(sdk));
     // Mark editor as console one, to prevent autopopup completion
     getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
@@ -115,23 +122,34 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   public void setConsoleCommunication(final ConsoleCommunication communication) {
     getFile().putCopyableUserData(PydevConsoleRunner.CONSOLE_KEY, communication);
+
+    if (isShowVars && communication instanceof PydevConsoleCommunication) {
+      showVariables((PydevConsoleCommunication)communication);
+    }
   }
 
+  @Nullable
   private PyConsoleStartFolding createConsoleFolding() {
     PyConsoleStartFolding startFolding = new PyConsoleStartFolding(this);
     myExecuteActionHandler.getConsoleCommunication().addCommunicationListener(startFolding);
-    getEditor().getDocument().addDocumentListener(startFolding);
-    ((FoldingModelEx)getEditor().getFoldingModel()).addListener(startFolding, this);
+    Editor editor = getEditor();
+    if (editor == null) {
+      return null;
+    }
+    editor.getDocument().addDocumentListener(startFolding);
+    ((FoldingModelEx)editor.getFoldingModel()).addListener(startFolding, this);
     return startFolding;
   }
 
   public void addConsoleFolding(boolean isDebugConsole) {
     try {
-      if (isDebugConsole && myExecuteActionHandler != null) {
+      if (isDebugConsole && myExecuteActionHandler != null && getEditor() != null) {
         PyConsoleStartFolding folding = createConsoleFolding();
-        // in debug console we should add folding from the place where the folding was turned on
-        folding.setStartLineOffset(getEditor().getDocument().getTextLength());
-        folding.setNumberOfCommandToStop(2);
+        if (folding != null) {
+          // in debug console we should add folding from the place where the folding was turned on
+          folding.setStartLineOffset(getEditor().getDocument().getTextLength());
+          folding.setNumberOfCommandToStop(2);
+        }
       }
       else {
         myInitialized.doWhenDone(this::createConsoleFolding);
@@ -142,11 +160,11 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     }
   }
 
-  public void setExecutionHandler(@NotNull PydevConsoleExecuteActionHandler consoleExecuteActionHandler) {
+  public void setExecutionHandler(@NotNull PythonConsoleExecuteActionHandler consoleExecuteActionHandler) {
     myExecuteActionHandler = consoleExecuteActionHandler;
   }
 
-  public PydevConsoleExecuteActionHandler getExecuteActionHandler() {
+  public PythonConsoleExecuteActionHandler getExecuteActionHandler() {
     return myExecuteActionHandler;
   }
 
@@ -171,7 +189,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   public void inputReceived() {
     // If user's input was entered while debug console was turned off, we shouldn't wait for it anymore
     if (myExecuteActionHandler != null) {
-      myExecuteActionHandler.inputReceived();
+      myExecuteActionHandler.getConsoleCommunication().notifyInputReceived();
     }
   }
 
@@ -181,37 +199,43 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   }
 
   @Override
-  public void executeCode(final @NotNull String code, @Nullable final Editor editor) {
+  public void executeCode(final @Nullable String code, @Nullable final Editor editor) {
     myInitialized.doWhenDone(
-      () ->
-        ProgressManager.getInstance().run(new Task.Backgroundable(null, "Executing Code in Console...", false) {
-          @Override
-          public void run(@NotNull final ProgressIndicator indicator) {
-            long time = System.currentTimeMillis();
-            while (!myExecuteActionHandler.isEnabled() || !myExecuteActionHandler.canExecuteNow()) {
-              if (indicator.isCanceled()) {
-                break;
-              }
-              if (System.currentTimeMillis() - time > 1000) {
-                if (editor != null) {
-                  UIUtil.invokeLaterIfNeeded(
-                    () -> HintManager.getInstance()
-                      .showErrorHint(editor, myExecuteActionHandler.getCantExecuteMessage()));
+      () -> {
+        if (code != null) {
+          ProgressManager.getInstance().run(new Task.Backgroundable(null, "Executing Code in Console...", false) {
+            @Override
+            public void run(@NotNull final ProgressIndicator indicator) {
+              long time = System.currentTimeMillis();
+              while (!myExecuteActionHandler.isEnabled() || !myExecuteActionHandler.canExecuteNow()) {
+                if (indicator.isCanceled()) {
+                  break;
                 }
-                return;
+                if (System.currentTimeMillis() - time > 1000) {
+                  if (editor != null) {
+                    UIUtil.invokeLaterIfNeeded(
+                      () -> HintManager.getInstance()
+                                       .showErrorHint(editor, myExecuteActionHandler.getCantExecuteMessage()));
+                  }
+                  return;
+                }
+                TimeoutUtil.sleep(300);
               }
-              TimeoutUtil.sleep(300);
+              if (!indicator.isCanceled()) {
+                executeInConsole(code);
+              }
             }
-            if (!indicator.isCanceled()) {
-              executeInConsole(code);
-            }
-          }
-        })
+          });
+        }
+        else {
+          requestFocus();
+        }
+      }
     );
   }
 
 
-  public void executeInConsole(final String code) {
+  public void executeInConsole(@NotNull final String code) {
     TransactionGuard.submitTransaction(this, () -> {
       final String codeToExecute = code.endsWith("\n") || myExecuteActionHandler.checkSingleLine(code) ? code : code + "\n";
       DocumentEx document = getConsoleEditor().getDocument();
@@ -223,8 +247,9 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
         if (psiFile != null) {
           CommandProcessor.getInstance().runUndoTransparentAction(() ->
                                                                     CodeStyleManager.getInstance(getProject())
-                                                                      .adjustLineIndent(psiFile,
-                                                                                        new TextRange(0, psiFile.getTextLength())));
+                                                                                    .adjustLineIndent(psiFile,
+                                                                                                      new TextRange(0, psiFile
+                                                                                                        .getTextLength())));
         }
       });
       int oldOffset = getConsoleEditor().getCaretModel().getOffset();
@@ -253,6 +278,9 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   @Override
   public void print(@NotNull String text, @NotNull final ConsoleViewContentType outputType) {
+    if (myTestMode) {
+      text = PyTestsSharedKt.processTCMessage(text);
+    }
     detectIPython(text, outputType);
     if (PyConsoleUtil.detectIPythonEnd(text)) {
       myIsIPythonOutput = false;
@@ -290,6 +318,10 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     VirtualFile file = getVirtualFile();
     if (PyConsoleUtil.detectIPythonImported(text, outputType)) {
       PyConsoleUtil.markIPython(file);
+      PythonConsoleExecuteActionHandler handler = getExecuteActionHandler();
+      if (handler != null) {
+        handler.updateConsoleState();
+      }
     }
     if (PyConsoleUtil.detectIPythonAutomagicOn(text)) {
       PyConsoleUtil.setIPythonAutomagic(file, true);
@@ -360,7 +392,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     EditorEx viewer = getHistoryViewer();
     DocumentEx document = viewer.getDocument();
     RangeHighlighter highlighter = getHistoryViewer().getMarkupModel()
-      .addRangeHighlighter(document.getTextLength(), document.getTextLength(), 0, null, HighlighterTargetArea.EXACT_RANGE);
+                                                     .addRangeHighlighter(document.getTextLength(), document.getTextLength(), 0, null,
+                                                                          HighlighterTargetArea.EXACT_RANGE);
     final String prompt;
     if (isMainPrompt) {
       prompt = myPromptView.getMainPrompt();
@@ -439,15 +472,16 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   }
 
   public void restoreWindow() {
-    JBSplitter pane = (JBSplitter)getComponent(0);
-    removeAll();
-    if (mySplitView != null) {
+    Component component = getComponent(0);
+    if (mySplitView != null && component instanceof JBSplitter) {
+      JBSplitter pane = (JBSplitter)component;
+      removeAll();
       Disposer.dispose(mySplitView);
       mySplitView = null;
+      add(pane.getFirstComponent(), BorderLayout.CENTER);
+      validate();
+      repaint();
     }
-    add(pane.getFirstComponent(), BorderLayout.CENTER);
-    validate();
-    repaint();
   }
 
   @Nullable
@@ -479,7 +513,23 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     myPromptView.setPromptAttributes(textAttributes);
   }
 
+  public boolean isInitialized() {
+    return myInitialized.isDone();
+  }
+
   public void initialized() {
     myInitialized.setDone();
+  }
+
+  public void setShowVars(boolean showVars) {
+    isShowVars = showVars;
+  }
+
+  public boolean isShowVars() {
+    return isShowVars;
+  }
+
+  public void whenInitialized(Runnable runnable) {
+    myInitialized.doWhenDone(runnable);
   }
 }

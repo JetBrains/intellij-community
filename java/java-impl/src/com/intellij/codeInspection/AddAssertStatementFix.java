@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class AddAssertStatementFix implements LocalQuickFix {
     if (tempParent instanceof PsiForStatement && !PsiTreeUtil.isAncestor(((PsiForStatement)tempParent).getBody(), anchorElement, false)) {
       anchorElement = tempParent;
     }
-    PsiElement prev = PsiTreeUtil.skipSiblingsBackward(anchorElement, PsiWhiteSpace.class);
+    PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(anchorElement);
     if (prev instanceof PsiComment && JavaSuppressionUtil.getSuppressedInspectionIdsIn(prev) != null) {
       anchorElement = prev;
     }

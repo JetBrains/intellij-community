@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.TransactionGuardImpl;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
@@ -44,7 +41,6 @@ import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
 import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -170,12 +166,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   @Override
-  @NotNull
-  public char[] getChars() {
-    return CharArrayUtil.fromSequence(myText);
-  }
-
-  @Override
   public void setStripTrailingSpacesEnabled(boolean isEnabled) {
     isStripTrailingSpacesEnabled = isEnabled;
   }
@@ -188,6 +178,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @TestOnly
   public boolean stripTrailingSpaces(Project project, boolean inChangedLinesOnly) {
     return stripTrailingSpaces(project, inChangedLinesOnly, true, new int[0]);
+  }
+
+  @Override
+  public boolean isLineModified(int line) {
+    LineSet lineSet = myLineSet;
+    return lineSet != null && lineSet.isModified(line);
   }
 
   /**
@@ -342,7 +338,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
                                   boolean greedyToLeft,
                                   boolean greedyToRight,
                                   int layer) {
-    treeFor(rangeMarker).addInterval(rangeMarker, start, end, greedyToLeft, greedyToRight, layer);
+    treeFor(rangeMarker).addInterval(rangeMarker, start, end, greedyToLeft, greedyToRight, false, layer);
   }
 
   @TestOnly
@@ -376,8 +372,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   @Override
-  @SuppressWarnings("ForLoopReplaceableByForEach") // Way too many garbage is produced otherwise in AbstractList.iterator()
   public RangeMarker getOffsetGuard(int offset) {
+    // Way too many garbage is produced otherwise in AbstractList.iterator()
+    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < myGuardedBlocks.size(); i++) {
       RangeMarker block = myGuardedBlocks.get(i);
       if (offsetInRange(offset, block.getStartOffset(), block.getEndOffset())) return block;
@@ -421,12 +418,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
     if (end0 == start1) return start1Inclusive && end0Inclusive;
     return end0 > start1;
-  }
-
-  @Override
-  @NotNull
-  public RangeMarker createRangeMarker(int startOffset, int endOffset) {
-    return createRangeMarker(startOffset, endOffset, false);
   }
 
   @Override
@@ -695,9 +686,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       }
     }
     lineSet = lineSet.clearModificationFlags();
-    for (int i = 0; i < modifiedLines.size(); i++) {
-      lineSet = lineSet.setModified(modifiedLines.get(i));
-    }
+    lineSet = lineSet.setModified(modifiedLines);
     myLineSet = lineSet;
     myFrozen = null;
   }
@@ -710,19 +699,51 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
                           long newModificationStamp,
                           int initialStartOffset,
                           int initialOldLength) {
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("updating document " + this + ".\nNext string:'" + newString + "'\nOld string:'" + oldString + "'");
+    }
+
     assertNotNestedModification();
     myChangeInProgress = true;
+    DelayedExceptions exceptions = new DelayedExceptions();
     try {
       DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, wholeTextReplaced, initialStartOffset, initialOldLength);
-      beforeChangedUpdate(event);
+      beforeChangedUpdate(event, exceptions);
       myTextString = null;
       ImmutableCharSequence prevText = myText;
       myText = newText;
       sequence.incrementAndGet(); // increment sequence before firing events so that modification sequence on commit will match this sequence now
-      changedUpdate(event, newModificationStamp, prevText);
+      changedUpdate(event, newModificationStamp, prevText, exceptions);
     }
     finally {
       myChangeInProgress = false;
+      exceptions.rethrowPCE();
+    }
+  }
+  
+  private class DelayedExceptions {
+    Throwable myException = null;
+
+    void register(Throwable e) {
+      if (myException == null) {
+        myException = e;
+      } else {
+        myException.addSuppressed(e);
+      }
+      
+      if (!(e instanceof ProcessCanceledException)) {
+        LOG.error(e);
+      }
+      else if (myAssertThreading) {
+        LOG.error("ProcessCanceledException must not be thrown from document listeners for real document", new Throwable(e));
+      }
+    }
+
+    void rethrowPCE() {
+      if (myException instanceof ProcessCanceledException) {
+        // the case of some wise inspection modifying non-physical document during highlighting to be interrupted
+        throw (ProcessCanceledException)myException;
+      }
     }
   }
 
@@ -731,13 +752,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return sequence.get();
   }
 
-  private void beforeChangedUpdate(DocumentEvent event) {
+  private void beforeChangedUpdate(DocumentEvent event, DelayedExceptions exceptions) {
     Application app = ApplicationManager.getApplication();
     if (app != null) {
       FileDocumentManager manager = FileDocumentManager.getInstance();
       VirtualFile file = manager.getFile(this);
       if (file != null && !file.isValid()) {
-        LOG.error("File of this document has been deleted.");
+        LOG.error("File of this document has been deleted: "+file);
       }
     }
     assertInsideCommand();
@@ -751,7 +772,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
           listeners[i].beforeDocumentChange(event);
         }
         catch (Throwable e) {
-          LOG.error(e);
+          exceptions.register(e);
         }
       }
     }
@@ -768,7 +789,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
-  private void changedUpdate(@NotNull DocumentEvent event, long newModificationStamp, @NotNull CharSequence prevText) {
+  private void changedUpdate(@NotNull DocumentEvent event, long newModificationStamp, @NotNull CharSequence prevText, DelayedExceptions exceptions) {
     try {
       if (LOG.isDebugEnabled()) LOG.debug(event.toString());
 
@@ -788,16 +809,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
           try {
             listener.documentChanged(event);
           }
-          catch (ProcessCanceledException e) {
-            if (!myAssertThreading) {
-              throw e;
-            }
-            else {
-              LOG.error("ProcessCanceledException must not be thrown from document listeners for real document", new Throwable(e));
-            }
-          }
           catch (Throwable e) {
-            LOG.error(e);
+            exceptions.register(e);
           }
         }
       }
@@ -810,7 +823,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @NotNull
   @Override
   public String getText() {
-    return ApplicationManager.getApplication().runReadAction((Computable<String>)() -> doGetText());
+    return ReadAction.compute(this::doGetText);
   }
 
   @NotNull
@@ -825,8 +838,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   @NotNull
   @Override
   public String getText(@NotNull final TextRange range) {
-    return ApplicationManager.getApplication().runReadAction(
-      (Computable<String>)() -> myText.subSequence(range.getStartOffset(), range.getEndOffset()).toString());
+    return ReadAction
+      .compute(() -> myText.subSequence(range.getStartOffset(), range.getEndOffset()).toString());
   }
 
   @Override
@@ -984,12 +997,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   @Override
-  @NotNull
-  public RangeMarker createRangeMarker(@NotNull final TextRange textRange) {
-    return createRangeMarker(textRange.getStartOffset(), textRange.getEndOffset());
-  }
-
-  @Override
   public final boolean isInBulkUpdate() {
     return myDoingBulkUpdate;
   }
@@ -1066,7 +1073,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   @NotNull
-  public String dumpState() {
+  String dumpState() {
     @NonNls StringBuilder result = new StringBuilder();
     result.append(", intervals:\n");
     for (int line = 0; line < getLineCount(); line++) {

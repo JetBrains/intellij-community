@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 Bas Leijdekkers
+ * Copyright 2009-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -49,8 +48,7 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
   protected String buildErrorString(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
     final String className = aClass.getName();
-    final PsiClass adapterClass = (PsiClass)infos[1];
-    final String adapterName = adapterClass.getName();
+    final String adapterName = (String)infos[1];
     return InspectionGadgetsBundle.message(
       "listener.may.use.adapter.problem.descriptor", className,
       adapterName);
@@ -58,31 +56,28 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "listener.may.use.adapter.emtpy.methods.option"), this,
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("listener.may.use.adapter.emtpy.methods.option"), this,
                                           "checkForEmptyMethods");
   }
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final PsiClass adapterClass = (PsiClass)infos[1];
-    return new ListenerMayUseAdapterFix(adapterClass);
+    final String adapterName = (String)infos[1];
+    return new ListenerMayUseAdapterFix(adapterName);
   }
 
   private static class ListenerMayUseAdapterFix extends InspectionGadgetsFix {
 
-    private final PsiClass adapterClass;
+    private final String adapterName;
 
-    ListenerMayUseAdapterFix(@NotNull PsiClass adapterClass) {
-      this.adapterClass = adapterClass;
+    ListenerMayUseAdapterFix(@NotNull String adapterName) {
+      this.adapterName = adapterName;
     }
 
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "listener.may.use.adapter.quickfix",
-        adapterClass.getName());
+      return InspectionGadgetsBundle.message("listener.may.use.adapter.quickfix", adapterName);
     }
 
     @NotNull
@@ -92,12 +87,9 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiJavaCodeReferenceElement element =
-        (PsiJavaCodeReferenceElement)descriptor.getPsiElement();
-      final PsiClass aClass = PsiTreeUtil.getParentOfType(element,
-                                                          PsiClass.class);
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiJavaCodeReferenceElement element = (PsiJavaCodeReferenceElement)descriptor.getPsiElement();
+      final PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
       if (aClass == null) {
         return;
       }
@@ -124,10 +116,11 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
       }
       element.delete();
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-      final PsiElementFactory elementFactory =
-        psiFacade.getElementFactory();
-      final PsiJavaCodeReferenceElement referenceElement =
-        elementFactory.createClassReferenceElement(adapterClass);
+      final PsiClass adapterClass = psiFacade.findClass(adapterName, aClass.getResolveScope());
+      if (adapterClass == null) {
+        return;
+      }
+      final PsiJavaCodeReferenceElement referenceElement = psiFacade.getElementFactory().createClassReferenceElement(adapterClass);
       extendsList.add(referenceElement);
     }
   }
@@ -145,8 +138,7 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
       if (extendsList == null) {
         return;
       }
-      final PsiJavaCodeReferenceElement[] extendsReferences =
-        extendsList.getReferenceElements();
+      final PsiJavaCodeReferenceElement[] extendsReferences = extendsList.getReferenceElements();
       if (extendsReferences.length > 0) {
         return;
       }
@@ -154,17 +146,13 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
       if (implementsList == null) {
         return;
       }
-      final PsiJavaCodeReferenceElement[] implementsReferences =
-        implementsList.getReferenceElements();
-      for (PsiJavaCodeReferenceElement implementsReference :
-        implementsReferences) {
+      final PsiJavaCodeReferenceElement[] implementsReferences = implementsList.getReferenceElements();
+      for (PsiJavaCodeReferenceElement implementsReference : implementsReferences) {
         checkReference(aClass, implementsReference);
       }
     }
 
-    private void checkReference(
-      @NotNull PsiClass aClass,
-      @NotNull PsiJavaCodeReferenceElement implementsReference) {
+    private void checkReference(@NotNull PsiClass aClass, @NotNull PsiJavaCodeReferenceElement implementsReference) {
       final PsiElement target = implementsReference.resolve();
       if (!(target instanceof PsiClass)) {
         return;
@@ -174,33 +162,34 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
       if (className == null || !className.endsWith("Listener")) {
         return;
       }
-      final String adapterName = className.substring(0,
-                                                     className.length() - 8) + "Adapter";
-      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(
-        aClass.getProject());
-      final GlobalSearchScope scope =
-        implementsClass.getResolveScope();
-      final PsiClass adapterClass = psiFacade.findClass(adapterName,
-                                                        scope);
-      if (adapterClass == null) {
+      final PsiMethod[] interfaceMethods = implementsClass.getMethods();
+      if (interfaceMethods.length < 2) {
         return;
       }
-      if (aClass.equals(adapterClass)) {
+      boolean allDefault = true;
+      for (PsiMethod interfaceMethod : interfaceMethods) {
+        if (!interfaceMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
+          allDefault = false;
+          break;
+        }
+      }
+      if (allDefault) {
         return;
       }
-      if (!adapterClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      final String adapterName = className.substring(0, className.length() - 8) + "Adapter";
+      final GlobalSearchScope scope = implementsClass.getResolveScope();
+      final PsiClass adapterClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass(adapterName, scope);
+      if (adapterClass == null || adapterClass.equals(aClass) || !adapterClass.hasModifierProperty(PsiModifier.ABSTRACT) ||
+        adapterClass.isDeprecated()) {
         return;
       }
-      final PsiReferenceList implementsList =
-        adapterClass.getImplementsList();
+      final PsiReferenceList implementsList = adapterClass.getImplementsList();
       if (implementsList == null) {
         return;
       }
-      final PsiJavaCodeReferenceElement[] referenceElements =
-        implementsList.getReferenceElements();
+      final PsiJavaCodeReferenceElement[] referenceElements = implementsList.getReferenceElements();
       boolean adapterImplementsListener = false;
-      for (PsiJavaCodeReferenceElement referenceElement :
-        referenceElements) {
+      for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
         final PsiElement implementsTarget = referenceElement.resolve();
         if (!implementsClass.equals(implementsTarget)) {
           continue;
@@ -229,7 +218,7 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
           return;
         }
       }
-      registerError(implementsReference, aClass, adapterClass);
+      registerError(implementsReference, aClass, adapterName);
     }
   }
 }

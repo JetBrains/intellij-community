@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
@@ -34,7 +33,7 @@ import java.util.*;
  * @author yole
  */
 public class PyEvaluator {
-  private Set<PyExpression> myVisited = new HashSet<>();
+  private final Set<PyExpression> myVisited = new HashSet<>();
   private Map<String, Object> myNamespace;
   private boolean myEvaluateCollectionItems = true;
   private boolean myEvaluateKeys = true;
@@ -67,8 +66,9 @@ public class PyEvaluator {
     if (expr instanceof PySequenceExpression) {
       return evaluateSequenceExpression((PySequenceExpression)expr);
     }
-    if (expr instanceof PyBoolLiteralExpression) {
-      return ((PyBoolLiteralExpression)expr).getValue();
+    final Boolean booleanExpression = getBooleanExpression(expr);
+    if (booleanExpression != null) { // support bool
+      return booleanExpression;
     }
     if (expr instanceof PyCallExpression) {
       return evaluateCall((PyCallExpression)expr);
@@ -90,6 +90,32 @@ public class PyEvaluator {
         }
       }
     }
+    return null;
+  }
+
+  /**
+   * TODO: Move to PyExpression? PyUtil?
+   * True/False is bool literal in Py3K, but reference in Python2.
+   *
+   * @param expression expression to check
+   * @return true if expression is boolean
+   */
+  @Nullable
+  private static Boolean getBooleanExpression(@NotNull final PyExpression expression) {
+    final boolean py3K = LanguageLevel.forElement(expression).isPy3K();
+    if ((expression instanceof PyBoolLiteralExpression)) {
+      return ((PyBoolLiteralExpression)expression).getValue();
+    }
+    if ((!py3K && (expression instanceof PyReferenceExpression))) {
+      final String text = ((PyQualifiedExpression)expression).getReferencedName(); // Ref in Python2
+      if (PyNames.TRUE.equals(text)) {
+        return true;
+      }
+      if (PyNames.FALSE.equals(text)) {
+        return false;
+      }
+    }
+
     return null;
   }
 

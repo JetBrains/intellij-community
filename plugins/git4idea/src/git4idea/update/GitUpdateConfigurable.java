@@ -16,7 +16,6 @@
 package git4idea.update;
 
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.Nls;
@@ -51,6 +50,7 @@ public class GitUpdateConfigurable implements Configurable {
   /**
    * {@inheritDoc}
    */
+  @Override
   public String getHelpTopic() {
     return "reference.VersionControl.Git.UpdateProject";
   }
@@ -60,7 +60,7 @@ public class GitUpdateConfigurable implements Configurable {
    */
   public JComponent createComponent() {
     myPanel = new GitUpdateOptionsPanel();
-    return myPanel.getPanel();  //To change body of implemented methods use File | Settings | File Templates.
+    return myPanel.getPanel();
   }
 
   /**
@@ -73,7 +73,7 @@ public class GitUpdateConfigurable implements Configurable {
   /**
    * {@inheritDoc}
    */
-  public void apply() throws ConfigurationException {
+  public void apply() {
     myPanel.applyTo(mySettings);
   }
 

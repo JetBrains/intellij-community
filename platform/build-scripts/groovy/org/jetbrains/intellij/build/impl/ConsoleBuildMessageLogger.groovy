@@ -17,6 +17,7 @@ package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildMessageLogger
+import org.jetbrains.intellij.build.CompilationErrorsLogMessage
 import org.jetbrains.intellij.build.LogMessage
 
 import java.util.function.BiFunction
@@ -39,12 +40,6 @@ class ConsoleBuildMessageLogger extends BuildMessageLogger {
   @Override
   void processMessage(LogMessage message) {
     switch (message.kind) {
-      case LogMessage.Kind.ERROR:
-      case LogMessage.Kind.WARNING:
-      case LogMessage.Kind.INFO:
-      case LogMessage.Kind.PROGRESS:
-        printMessage(message.text)
-        break
       case LogMessage.Kind.BLOCK_STARTED:
         printMessage(message.text)
         indent++
@@ -54,6 +49,13 @@ class ConsoleBuildMessageLogger extends BuildMessageLogger {
         break
       case LogMessage.Kind.ARTIFACT_BUILT:
         printMessage("Artifact built: $message.text")
+        break
+      case LogMessage.Kind.COMPILATION_ERRORS:
+        String errorsString = (message as CompilationErrorsLogMessage).errorMessages.join("\n")
+        printMessage("Compilation errors (${(message as CompilationErrorsLogMessage).compilerName}):\n$errorsString")
+        break
+      default:
+        printMessage(message.text)
         break
     }
   }

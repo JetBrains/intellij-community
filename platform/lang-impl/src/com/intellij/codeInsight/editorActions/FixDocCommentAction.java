@@ -60,7 +60,7 @@ public class FixDocCommentAction extends EditorAction {
   private static final class MyHandler extends EditorActionHandler {
 
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
+    public void execute(@NotNull Editor editor, DataContext dataContext) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project == null) {
         return;

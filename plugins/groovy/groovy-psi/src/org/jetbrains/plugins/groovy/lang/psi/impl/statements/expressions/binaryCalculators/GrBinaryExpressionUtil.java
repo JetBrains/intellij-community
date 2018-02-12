@@ -23,9 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.*;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createTypeByFQClassName;
 
-/**
- * Created by Max Medvedev on 12/20/13
- */
 public class GrBinaryExpressionUtil {
 
   private static final int[] RANKS = new int[]{

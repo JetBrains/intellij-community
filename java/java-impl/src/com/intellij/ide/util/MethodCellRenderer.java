@@ -57,6 +57,7 @@ public class MethodCellRenderer extends PsiElementListCellRenderer<PsiMethod>{
     return PsiClassListCellRenderer.getContainerTextStatic(element);
   }
 
+  @Override
   public int getIconFlags() {
     return myClassListCellRenderer.getIconFlags();
   }

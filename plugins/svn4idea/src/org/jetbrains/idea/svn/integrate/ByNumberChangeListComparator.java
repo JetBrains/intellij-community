@@ -19,13 +19,6 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 
 import java.util.Comparator;
 
-/**
-* Created by IntelliJ IDEA.
-* User: Irina.Chernushina
-* Date: 02.07.2010
-* Time: 17:26:50
-* To change this template use File | Settings | File Templates.
-*/
 public class ByNumberChangeListComparator implements Comparator<CommittedChangeList> {
   private final static ByNumberChangeListComparator ourInstance = new ByNumberChangeListComparator();
 

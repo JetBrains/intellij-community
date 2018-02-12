@@ -1,0 +1,17 @@
+PsiJavaFileStub []
+  PsiClassStub[interface name=IParams fqn=IParams]
+    PsiModifierListStub[mask=1025]
+    PsiTypeParameterListStub
+    PsiRefListStub[EXTENDS_LIST:]
+    PsiRefListStub[IMPLEMENTS_LIST:]
+    PsiMethodStub[m:void]
+      PsiModifierListStub[mask=1025]
+      PsiTypeParameterListStub
+      PsiParameterListStub
+        PsiParameterStub[first:int]
+          PsiModifierListStub[mask=0]
+        PsiParameterStub[second:java.lang.String]
+          PsiModifierListStub[mask=0]
+        PsiParameterStub[last:java.lang.Boolean]
+          PsiModifierListStub[mask=0]
+      PsiRefListStub[THROWS_LIST:]

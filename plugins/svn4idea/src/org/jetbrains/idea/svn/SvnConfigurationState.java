@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.xmlb.annotations.*;
 import org.jetbrains.idea.svn.api.Depth;
@@ -24,7 +9,6 @@ import org.jetbrains.idea.svn.api.Depth;
  * @author Konstantin Kolosovsky.
  */
 public class SvnConfigurationState {
-
   @Property(surroundWithTag = false)
   public ConfigurationDirectory directory = new ConfigurationDirectory();
 
@@ -41,9 +25,6 @@ public class SvnConfigurationState {
   @Attribute("maxAnnotateRevisions")
   public int maxAnnotateRevisions = SvnConfiguration.ourMaxAnnotateRevisionsDefault;
 
-  @Attribute("myUseAcceleration")
-  public SvnConfiguration.UseAcceleration accelerationType = SvnConfiguration.UseAcceleration.commandLine;
-
   public boolean runUnderTerminal;
 
   @Attribute("myAutoUpdateAfterCommit")
@@ -56,8 +37,7 @@ public class SvnConfigurationState {
   public Boolean keepNewFilesAsIsForTreeConflictMerge;
 
   @Attribute("SSL_PROTOCOLS")
-  public SvnConfiguration.SSLProtocols sslProtocols =
-    SystemInfo.isJavaVersionAtLeast("1.7") ? SvnConfiguration.SSLProtocols.all : SvnConfiguration.SSLProtocols.sslv3;
+  public SvnConfiguration.SSLProtocols sslProtocols = SvnConfiguration.SSLProtocols.all;
 
   @OptionTag("mySSHConnectionTimeout")
   public long sshConnectionTimeout = 30 * 1000;
@@ -84,7 +64,6 @@ public class SvnConfigurationState {
 
   @Tag("configuration")
   public static class ConfigurationDirectory {
-
     @Text
     public String path = "";
 

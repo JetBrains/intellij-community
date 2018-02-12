@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,13 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.search.SearchScope;
@@ -40,9 +39,6 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: cdr
- */
 class StaticInheritanceFix extends InspectionGadgetsFix {
   private final boolean myReplaceInWholeProject;
 
@@ -70,14 +66,13 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
   }
 
   @Override
-  public void doFix(final Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+  public void doFix(final Project project, ProblemDescriptor descriptor) {
     final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)descriptor.getPsiElement();
     final PsiClass iface = (PsiClass)referenceElement.resolve();
     assert iface != null;
     final PsiField[] allFields = iface.getAllFields();
 
     final PsiClass implementingClass = ClassUtils.getContainingClass(referenceElement);
-    final PsiManager manager = referenceElement.getManager();
     assert implementingClass != null;
     final PsiFile file = implementingClass.getContainingFile();
 
@@ -86,12 +81,7 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         for (final PsiField field : allFields) {
-          SearchScope scope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
-                      @Override
-                      public SearchScope compute() {
-                        return implementingClass.getUseScope();
-                      }
-                    });
+          SearchScope scope = ReadAction.compute(() -> implementingClass.getUseScope());
           final Query<PsiReference> search = ReferencesSearch.search(field, scope, false);
           for (PsiReference reference : search) {
             if (!(reference instanceof PsiReferenceExpression)) {
@@ -100,36 +90,33 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
             final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)reference;
             if (!myReplaceInWholeProject) {
               boolean isInheritor =
-              ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-                @Override
-                public Boolean compute() {
-                  boolean isInheritor = false;
+                ReadAction.compute(() -> {
+                  boolean isInheritor1 = false;
                   PsiClass aClass = PsiTreeUtil.getParentOfType(referenceExpression, PsiClass.class);
                   while (aClass != null) {
-                    isInheritor = InheritanceUtil.isInheritorOrSelf(aClass, implementingClass, true);
-                    if (isInheritor) break;
+                    isInheritor1 = InheritanceUtil.isInheritorOrSelf(aClass, implementingClass, true);
+                    if (isInheritor1) break;
                     aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
                   }
-                  return isInheritor;
-                }
-              });
+                  return isInheritor1;
+                });
               if (!isInheritor) continue;
             }
             final Runnable runnable = () -> {
               if (!FileModificationService.getInstance().preparePsiElementsForWrite(referenceExpression)) {
                 return;
               }
-              final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-              final PsiReferenceExpression qualified =
-                (PsiReferenceExpression)elementFactory
-                  .createExpressionFromText("xxx." + referenceExpression.getText(), referenceExpression);
+              final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+              final PsiReferenceExpression qualified = (PsiReferenceExpression)
+                elementFactory.createExpressionFromText("xxx." + referenceExpression.getText(), referenceExpression);
               final PsiReferenceExpression newReference = (PsiReferenceExpression)referenceExpression.replace(qualified);
               final PsiReferenceExpression qualifier = (PsiReferenceExpression)newReference.getQualifierExpression();
               assert qualifier != null : DebugUtil.psiToString(newReference, false);
               final PsiClass containingClass = field.getContainingClass();
               qualifier.bindToElement(containingClass);
             };
-            invokeWriteAction(runnable, file);
+            TransactionGuard.submitTransaction(project,
+                                               () -> WriteCommandAction.runWriteCommandAction(project, null, null, runnable, file));
           }
         }
         final Runnable runnable = () -> {
@@ -137,13 +124,8 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
           IntentionAction fix = QuickFixFactory.getInstance().createExtendsListFix(implementingClass, classType, false);
           fix.invoke(project, null, file);
         };
-        invokeWriteAction(runnable, file);
+        TransactionGuard.submitTransaction(project, () -> WriteCommandAction.runWriteCommandAction(project, null, null, runnable, file));
       }
     });
-  }
-
-  private static void invokeWriteAction(final Runnable runnable, final PsiFile file) {
-    Project project = file.getProject();
-    TransactionGuard.submitTransaction(project, () -> WriteCommandAction.runWriteCommandAction(project, null, null, runnable, file));
   }
 }

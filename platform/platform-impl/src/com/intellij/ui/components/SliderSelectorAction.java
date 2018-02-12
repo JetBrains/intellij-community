@@ -109,7 +109,7 @@ public class SliderSelectorAction extends DumbAwareAction {
       .setMovable(true)
       .setCancelOnWindowDeactivation(true)
       .setCancelKeyEnabled(myConfiguration.isShowOk())
-      .setKeyboardActions(Collections.singletonList(Pair.<ActionListener, KeyStroke>create(new ActionListener() {
+      .setKeyboardActions(Collections.singletonList(Pair.create(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
           saveSelection.run();

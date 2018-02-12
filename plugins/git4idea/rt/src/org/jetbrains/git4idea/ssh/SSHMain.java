@@ -137,6 +137,8 @@ public class SSHMain implements GitExternalApp {
       app.start();
       System.exit(app.myExitCode);
     }
+    catch (CancelException ignore) {
+    }
     catch (Throwable t) {
       t.printStackTrace();
       System.exit(1);
@@ -279,7 +281,7 @@ public class SSHMain implements GitExternalApp {
         for (int i = 0; i < myHost.getNumberOfPasswordPrompts(); i++) {
           String password = myXmlRpcClient.askPassword(myHandlerNo, getUserHostString(), i != 0, myLastError);
           if (password == null) {
-            break;
+            throw new CancelException();
           }
           else {
             if (c.authenticateWithPassword(myHost.getUser(), password)) {
@@ -325,9 +327,8 @@ public class SSHMain implements GitExternalApp {
           int i;
           for (i = 0; i < myHost.getNumberOfPasswordPrompts(); i++) {
             passphrase = myXmlRpcClient.askPassphrase(myHandlerNo, getUserHostString(), keyPath, i != 0, myLastError);
-            if (passphrase == null) {
-              // if no passphrase was entered, just return false and try something other
-              return false;
+            if (passphrase == null) { // user pressed cancel in the dialog
+              throw new CancelException();
             }
             else {
               try {
@@ -365,6 +366,9 @@ public class SSHMain implements GitExternalApp {
         }
       }
       return false;
+    }
+    catch (CancelException rethrow) {
+      throw rethrow;
     }
     catch (Exception e) {
       myErrorCause = e;
@@ -409,38 +413,36 @@ public class SSHMain implements GitExternalApp {
    * @param releaseSemaphore if true the semaphore will be released
    */
   private void forward(@NonNls final String name, final OutputStream out, final InputStream in, final boolean releaseSemaphore) {
-    final Runnable action = new Runnable() {
-      public void run() {
-        byte[] buffer = new byte[BUFFER_SIZE];
-        int rc;
+    final Runnable action = () -> {
+      byte[] buffer = new byte[BUFFER_SIZE];
+      int rc;
+      try {
         try {
           try {
-            try {
-              while ((rc = in.read(buffer)) != -1) {
-                out.write(buffer, 0, rc);
-              }
-            }
-            finally {
-              out.close();
+            while ((rc = in.read(buffer)) != -1) {
+              out.write(buffer, 0, rc);
             }
           }
           finally {
-            in.close();
-          }
-        }
-        catch (IOException e) {
-          System.err.println(SSHMainBundle.message("sshmain.forwarding.failed", name, e.getMessage()));
-          e.printStackTrace();
-          myExitCode = 1;
-          if (releaseSemaphore) {
-            // in the case of error, release semaphore, so that application could exit
-            myForwardCompleted.release(1);
+            out.close();
           }
         }
         finally {
-          if (releaseSemaphore) {
-            myForwardCompleted.release(1);
-          }
+          in.close();
+        }
+      }
+      catch (IOException e) {
+        System.err.println(SSHMainBundle.message("sshmain.forwarding.failed", name, e.getMessage()));
+        e.printStackTrace();
+        myExitCode = 1;
+        if (releaseSemaphore) {
+          // in the case of error, release semaphore, so that application could exit
+          myForwardCompleted.release(1);
+        }
+      }
+      finally {
+        if (releaseSemaphore) {
+          myForwardCompleted.release(1);
         }
       }
     };
@@ -498,6 +500,7 @@ public class SSHMain implements GitExternalApp {
     return new SSHMain(host, user, port, command);
   }
 
+  private static class CancelException extends RuntimeException {}
 
   /**
    * Interactive callback support. The callback invokes Idea XML RPC server.
@@ -521,7 +524,7 @@ public class SSHMain implements GitExternalApp {
                                      final String instruction,
                                      final int numPrompts,
                                      final String[] prompt,
-                                     final boolean[] echo) throws Exception {
+                                     final boolean[] echo) {
       if (numPrompts == 0) {
         return ArrayUtilRt.EMPTY_STRING_ARRAY;
       }
@@ -553,7 +556,7 @@ public class SSHMain implements GitExternalApp {
     /**
      * {@inheritDoc}
      */
-    public boolean verifyServerHostKey(String hostname, int port, String serverHostKeyAlgorithm, byte[] serverHostKey) throws Exception {
+    public boolean verifyServerHostKey(String hostname, int port, String serverHostKeyAlgorithm, byte[] serverHostKey) {
       try {
         String s = System.getenv(GitSSHHandler.SSH_IGNORE_KNOWN_HOSTS_ENV);
         if (s != null && Boolean.parseBoolean(s)) {

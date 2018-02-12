@@ -17,37 +17,39 @@ package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.lang.ref.Reference;
 import java.net.URL;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 3/28/11
  */
 public class DefaultTemplate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.DefaultTemplate");
   
   private final String myName;
   private final String myExtension;
-  private final URL myTemplateURL;
-  @Nullable 
+
+  private final URL myTextURL;
+  private Reference<String> myText;
+  
+  @Nullable
   private final URL myDescriptionURL;
-  private final String myText;
-  private final String myDescriptionText;
+  private Reference<String> myDescriptionText;
 
   public DefaultTemplate(@NotNull String name, @NotNull String extension, @NotNull URL templateURL, @Nullable URL descriptionURL) {
     myName = name;
     myExtension = extension;
-    myTemplateURL = templateURL;
+    myTextURL = templateURL;
     myDescriptionURL = descriptionURL;
-    myText = loadText(templateURL);
-    myDescriptionText = descriptionURL != null? loadText(descriptionURL) : "";
   }
 
-  private static String loadText(URL url) {
+  @NotNull
+  private static String loadText(@NotNull URL url) {
     String text = "";
     try {
       text = StringUtil.convertLineSeparators(UrlUtil.loadText(url));
@@ -58,34 +60,44 @@ public class DefaultTemplate {
     return text;
   }
 
+  @NotNull
   public String getName() {
     return myName;
   }
 
+  @NotNull
   public String getQualifiedName() {
     return FileTemplateBase.getQualifiedName(getName(), getExtension());
   }
-  
+
+  @NotNull
   public String getExtension() {
     return myExtension;
   }
 
+  @NotNull
   public URL getTemplateURL() {
-    return myTemplateURL;
+    return myTextURL;
   }
 
-  @Nullable
-  public URL getDescriptionURL() {
-    return myDescriptionURL;
-  }
-  
   @NotNull
   public String getText() {
-    return myText;
+    String text = SoftReference.dereference(myText);
+    if (text == null) {
+      text = loadText(myTextURL);
+      myText = new java.lang.ref.SoftReference<>(text);
+    }
+    return text;
   }
 
   @NotNull
   public String getDescriptionText() {
-    return myDescriptionText;
+    if (myDescriptionURL == null) return "";
+    String text = SoftReference.dereference(myDescriptionText);
+    if (text == null) {
+      text = loadText(myDescriptionURL);
+      myDescriptionText = new java.lang.ref.SoftReference<>(text);
+    }
+    return text;
   }
 }

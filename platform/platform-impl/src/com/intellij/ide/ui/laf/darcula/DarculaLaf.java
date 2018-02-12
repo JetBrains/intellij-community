@@ -66,18 +66,17 @@ public class DarculaLaf extends BasicLookAndFeel {
   private static final Object SYSTEM = new Object();
   public static final String NAME = "Darcula";
   BasicLookAndFeel base;
-  private static Disposable myDisposable;
-  private static Alarm myMnemonicAlarm;
+
+  protected Disposable myDisposable;
+  private Alarm myMnemonicAlarm;
   private static boolean myAltPressed;
 
-  public DarculaLaf() {
-    base = createBaseLookAndFeel();
-  }
+  public DarculaLaf() {}
 
   private static void installMacOSXFonts(UIDefaults defaults) {
     final String face = "HelveticaNeue-Regular";
     final FontUIResource uiFont = getFont(face, 13, Font.PLAIN);
-    LafManagerImpl.initFontDefaults(defaults, 13, uiFont);
+    LafManagerImpl.initFontDefaults(defaults, uiFont);
     for (Object key : new HashSet<>(defaults.keySet())) {
       Object value = defaults.get(key);
       if (value instanceof FontUIResource) {
@@ -435,12 +434,10 @@ public class DarculaLaf extends BasicLookAndFeel {
   private static Color parseColor(String value) {
     if (value != null && value.length() == 8) {
       final Color color = ColorUtil.fromHex(value.substring(0, 6));
-      if (color != null) {
-        try {
-          int alpha = Integer.parseInt(value.substring(6, 8), 16);
-          return new ColorUIResource(new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha));
-        } catch (Exception ignore){}
-      }
+      try {
+        int alpha = Integer.parseInt(value.substring(6, 8), 16);
+        return new ColorUIResource(new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha));
+      } catch (Exception ignore){}
       return null;
     }
     return ColorUtil.fromHex(value, null);
@@ -495,12 +492,15 @@ public class DarculaLaf extends BasicLookAndFeel {
     callInit("initClassDefaults", defaults);
   }
 
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   @Override
   public void initialize() {
+    myDisposable = Disposer.newDisposable();
+    base = createBaseLookAndFeel();
+
     try {
       base.initialize();
     } catch (Exception ignore) {}
-    myDisposable = Disposer.newDisposable();
     Application application = ApplicationManager.getApplication();
     if (application != null) {
       Disposer.register(application, myDisposable);
@@ -570,9 +570,5 @@ public class DarculaLaf extends BasicLookAndFeel {
   @Override
   public boolean getSupportsWindowDecorations() {
     return true;
-  }
-
-  public static Icon loadIcon(String iconName) {
-    return IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/" + iconName, DarculaLaf.class, true);
   }
 }

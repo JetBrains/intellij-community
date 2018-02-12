@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
@@ -21,21 +7,24 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.RunInspectionAction;
-import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,13 +33,16 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Dmitry Batkovich
  */
 class OfflineDescriptorResolveResult {
-  private RefEntity myResolvedEntity;
-  private CommonProblemDescriptor myResolvedDescriptor;
+  private static final Logger LOG = Logger.getInstance(OfflineDescriptorResolveResult.class);
+  private final RefEntity myResolvedEntity;
+  private final CommonProblemDescriptor myResolvedDescriptor;
+  private volatile boolean myExcluded;
 
   public OfflineDescriptorResolveResult(RefEntity resolvedEntity, CommonProblemDescriptor resolvedDescriptor) {
     myResolvedEntity = resolvedEntity;
@@ -65,6 +57,14 @@ class OfflineDescriptorResolveResult {
   @Nullable
   public CommonProblemDescriptor getResolvedDescriptor() {
     return myResolvedDescriptor;
+  }
+
+  public boolean isExcluded() {
+    return myExcluded;
+  }
+
+  public void setExcluded(boolean excluded) {
+    myExcluded = excluded;
   }
 
   @NotNull
@@ -91,7 +91,7 @@ class OfflineDescriptorResolveResult {
           return descriptor;
         }
       }
-      return createRerunGlobalToolDescriptor((GlobalInspectionToolWrapper)toolWrapper, element);
+      return createRerunGlobalToolDescriptor((GlobalInspectionToolWrapper)toolWrapper, element, offlineDescriptor);
     }
     if (!(toolWrapper instanceof LocalInspectionToolWrapper)) return null;
     final InspectionManager inspectionManager = InspectionManager.getInstance(presentation.getContext().getProject());
@@ -100,7 +100,11 @@ class OfflineDescriptorResolveResult {
       final PsiElement psiElement = ((RefElement)element).getElement();
       if (psiElement != null) {
         ProblemDescriptor descriptor = ProgressManager.getInstance().runProcess(
-          () -> runLocalTool(psiElement, inspectionManager, offlineProblemDescriptor, (LocalInspectionToolWrapper)toolWrapper), new DaemonProgressIndicator());
+          () -> runLocalTool(psiElement,
+                             offlineProblemDescriptor,
+                             (LocalInspectionToolWrapper)toolWrapper,
+                             inspectionManager,
+                             presentation.getContext()), new DaemonProgressIndicator());
         if (descriptor != null) return descriptor;
       }
       return null;
@@ -116,19 +120,40 @@ class OfflineDescriptorResolveResult {
   }
 
   private static ProblemDescriptor runLocalTool(@NotNull PsiElement psiElement,
-                                                @NotNull InspectionManager inspectionManager,
                                                 @NotNull OfflineProblemDescriptor offlineProblemDescriptor,
-                                                @NotNull LocalInspectionToolWrapper toolWrapper) {
+                                                @NotNull LocalInspectionToolWrapper toolWrapper,
+                                                @NotNull InspectionManager inspectionManager,
+                                                @NotNull GlobalInspectionContextImpl context) {
     PsiFile containingFile = psiElement.getContainingFile();
     final ProblemsHolder holder = new ProblemsHolder(inspectionManager, containingFile, false);
     final LocalInspectionTool localTool = toolWrapper.getTool();
-    final int startOffset = psiElement.getTextRange().getStartOffset();
-    final int endOffset = psiElement.getTextRange().getEndOffset();
+    TextRange textRange = psiElement.getTextRange();
+    LOG.assertTrue(textRange != null,
+                   "text range muse be not null here; " +
+                   "isValid = " + psiElement.isValid() + ", " +
+                   "isPhysical = " + psiElement.isPhysical() + ", " +
+                   "containingFile = " + containingFile.getName() + ", " +
+                   "inspection = " + toolWrapper.getShortName());
+    final int startOffset = textRange.getStartOffset();
+    final int endOffset = textRange.getEndOffset();
     LocalInspectionToolSession session = new LocalInspectionToolSession(containingFile, startOffset, endOffset);
-    final PsiElementVisitor visitor = localTool.buildVisitor(holder, false, session);
+    final PsiElementVisitor visitor = localTool.buildVisitor(holder, true, session);
     localTool.inspectionStarted(session, false);
     final PsiElement[] elementsInRange = getElementsIntersectingRange(containingFile, startOffset, endOffset);
+    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(context.getProject());
     for (PsiElement element : elementsInRange) {
+      List<Pair<PsiElement, TextRange>> injectedPsiFiles = injectedLanguageManager.getInjectedPsiFiles(element);
+      if (injectedPsiFiles != null) {
+        for (Pair<PsiElement, TextRange> file : injectedPsiFiles) {
+          file.getFirst().accept(new PsiRecursiveElementWalkingVisitor() {
+            @Override
+            public void visitElement(PsiElement element) {
+              element.accept(visitor);
+              super.visitElement(element);
+            }
+          });
+        }
+      }
       element.accept(visitor);
     }
     localTool.inspectionFinished(session, holder);
@@ -137,7 +162,7 @@ class OfflineDescriptorResolveResult {
       final int idx = offlineProblemDescriptor.getProblemIndex();
       int curIdx = 0;
       for (ProblemDescriptor descriptor : list) {
-        final PsiNamedElement member = localTool.getProblemElement(descriptor.getPsiElement());
+        final PsiNamedElement member = BatchModeDescriptorsUtil.getContainerElement(descriptor.getPsiElement(), localTool, context);
         if (psiElement instanceof PsiFile || member != null && member.equals(psiElement)) {
           if (curIdx == idx) {
             return descriptor;
@@ -174,7 +199,7 @@ class OfflineDescriptorResolveResult {
         addFix(descriptor, fixes, hint, presentation);
       }
     }
-    return fixes.isEmpty() ? null : fixes.toArray(new LocalQuickFix[fixes.size()]);
+    return fixes.isEmpty() ? null : fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   private static void addFix(@NotNull CommonProblemDescriptor descriptor, final List<LocalQuickFix> fixes, String hint, InspectionToolPresentation presentation) {
@@ -185,8 +210,11 @@ class OfflineDescriptorResolveResult {
   }
 
   private static CommonProblemDescriptor createRerunGlobalToolDescriptor(@NotNull GlobalInspectionToolWrapper wrapper,
-                                                                         @Nullable RefEntity entity) {
-    return new CommonProblemDescriptorImpl(new QuickFix[]{new QuickFix() {
+                                                                         @Nullable RefEntity entity,
+                                                                         OfflineProblemDescriptor offlineDescriptor) {
+    
+
+    QuickFix rerunFix = new QuickFix() {
       @Nls
       @NotNull
       @Override
@@ -206,6 +234,18 @@ class OfflineDescriptorResolveResult {
         }
         RunInspectionAction.runInspection(project, wrapper.getShortName(), file, null, psiFile);
       }
-    }}, "Problem detected by global inspection \'" + wrapper.getDisplayName() + "\'");
+
+      @Override
+      public boolean startInWriteAction() {
+        return false;
+      }
+    };
+    List<String> hints = offlineDescriptor.getHints();
+    if (hints != null && entity instanceof RefModule) {
+      List<QuickFix> fixes =
+        hints.stream().map(hint -> wrapper.getTool().getQuickFix(hint)).filter(f -> f != null).collect(Collectors.toList());
+      return new ModuleProblemDescriptorImpl(ArrayUtil.append(fixes.toArray(QuickFix.EMPTY_ARRAY), rerunFix), offlineDescriptor.getDescription(), ((RefModule)entity).getModule());
+    }
+    return new CommonProblemDescriptorImpl(new QuickFix[]{rerunFix}, offlineDescriptor.getDescription());
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle.autodetect;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -43,7 +44,7 @@ import static com.intellij.psi.codeStyle.EditorNotificationInfo.ActionLabelData;
 public class DetectedIndentOptionsNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
   private static final Key<EditorNotificationPanel> KEY = Key.create("indent.options.notification.provider");
   private static final Key<Boolean> NOTIFIED_FLAG = Key.create("indent.options.notification.provider.status");
-  protected static final Key<Boolean> DETECT_INDENT_NOTIFICATION_SHOWN_KEY = Key.create("indent.options.notification.provider.status.test.notification.shown");
+  public static final Key<Boolean> DETECT_INDENT_NOTIFICATION_SHOWN_KEY = Key.create("indent.options.notification.provider.status.test.notification.shown");
 
   private static boolean myShowNotificationInTest = false;
 
@@ -66,9 +67,9 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
         PsiFile psiFile = documentManager.getPsiFile(document);
         final Ref<FileIndentOptionsProvider> indentOptionsProviderRef = new Ref<>();
         if (psiFile != null) {
-          CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+          CodeStyleSettings settings = CodeStyle.getSettings(psiFile);
           CommonCodeStyleSettings.IndentOptions userOptions = settings.getIndentOptions(psiFile.getFileType());
-          CommonCodeStyleSettings.IndentOptions detectedOptions = CodeStyleSettingsManager.getSettings(project).getIndentOptionsByFile(
+          CommonCodeStyleSettings.IndentOptions detectedOptions = CodeStyle.getSettings(psiFile).getIndentOptionsByFile(
             psiFile, null, false,
             provider -> {
               indentOptionsProviderRef.set(provider);
@@ -124,7 +125,7 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
   }
 
   @TestOnly
-  static void setShowNotificationInTest(boolean show) {
+  public static void setShowNotificationInTest(boolean show) {
     myShowNotificationInTest = show;
   }
 }

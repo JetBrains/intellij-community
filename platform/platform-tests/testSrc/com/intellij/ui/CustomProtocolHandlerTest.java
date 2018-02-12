@@ -2,7 +2,6 @@ package com.intellij.ui;
 
 import junit.framework.TestCase;
 
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -11,7 +10,7 @@ import java.util.List;
  * @author Dennis.Ushakov
  */
 public class CustomProtocolHandlerTest extends TestCase {
-  public void testOpenOurLink() throws URISyntaxException, MalformedURLException {
+  public void testOpenOurLink() throws URISyntaxException {
     final URI uri = new URI("x-mine://open?file=/Users/denofevil/RubymineProjects/JRubyRails/app/assets/javascripts/application.js.coffee&line=2");
     final List<String> args = new CustomProtocolHandler().getOpenArgs(uri);
     assertTrue(args.contains("--line"));

@@ -9,7 +9,7 @@ import com.intellij.tasks.mantis.model.IssueHeaderData;
 import com.intellij.tasks.mantis.model.IssueNoteData;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import icons.TasksIcons;
+import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,8 +23,8 @@ public class MantisTask extends Task {
   private final Date myUpdated;
   private final Date myCreated;
   private final boolean myClosed;
-  private String myProjectName;
-  private MantisRepository myRepository;
+  private final String myProjectName;
+  private final MantisRepository myRepository;
   private final Comment[] myComments;
 
   public MantisTask(@NotNull IssueData data, @NotNull MantisRepository repository) {
@@ -101,7 +101,7 @@ public class MantisTask extends Task {
   @NotNull
   @Override
   public Icon getIcon() {
-    return TasksIcons.Mantis;
+    return TasksCoreIcons.Mantis;
   }
 
   @NotNull

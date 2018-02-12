@@ -31,14 +31,14 @@ public class DeleteAction extends PatchAction {
   }
 
   @Override
-  public void doBuildPatchFile(File olderDir, File newerFile, ZipOutputStream patchOutput) throws IOException {
+  public void doBuildPatchFile(File olderDir, File newerFile, ZipOutputStream patchOutput) {
     // do nothing
   }
 
   @Override
   public ValidationResult validate(File toDir) throws IOException {
     File toFile = getFile(toDir);
-    ValidationResult result = doValidateAccess(toFile, ValidationResult.Action.DELETE);
+    ValidationResult result = doValidateAccess(toFile, ValidationResult.Action.DELETE, false);
     if (result != null) return result;
 
     if (myPatch.validateDeletion(getPath()) && toFile.exists() && isModified(toFile)) {
@@ -63,8 +63,8 @@ public class DeleteAction extends PatchAction {
   protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
     Runner.logger().info("Delete action. File: " + toFile.getAbsolutePath());
     //NOTE: a folder can be deleted only in case if it does not contain any user's files/folders.
-    File[] listFiles = toFile.listFiles();
-    if (!toFile.isDirectory() || (listFiles != null && listFiles.length == 0)) {
+    String[] children;
+    if (!toFile.isDirectory() || (children = toFile.list()) != null && children.length == 0) {
       Runner.logger().info("Delete: " + toFile.getAbsolutePath());
       Utils.delete(toFile);
     }

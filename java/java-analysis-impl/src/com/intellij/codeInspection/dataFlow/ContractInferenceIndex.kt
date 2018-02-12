@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,11 @@ package com.intellij.codeInspection.dataFlow
 import com.intellij.lang.LighterAST
 import com.intellij.lang.LighterASTNode
 import com.intellij.psi.impl.source.JavaLightStubBuilder
-import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.PsiMethodImpl
-import com.intellij.psi.impl.source.tree.JavaElementType
 import com.intellij.psi.impl.source.tree.JavaElementType.*
 import com.intellij.psi.impl.source.tree.LightTreeUtil
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
-import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.stub.JavaStubImplUtil
 import com.intellij.util.gist.GistManager
 import java.util.*
 
@@ -32,7 +30,7 @@ import java.util.*
  * @author peter
  */
 
-private val gist = GistManager.getInstance().newPsiFileGist("contractInference", 1, MethodDataExternalizer) { file ->
+private val gist = GistManager.getInstance().newPsiFileGist("contractInference", 6, MethodDataExternalizer) { file ->
   indexFile(file.node.lighterAST)
 }
 
@@ -68,15 +66,16 @@ private fun calcData(tree: LighterAST, method: LighterASTNode): MethodData? {
   for (statement in statements) {
     walkMethodBody(tree, statement) { nullityVisitor.visitNode(it); purityVisitor.visitNode(it) }
   }
+  val notNullParams = inferNotNullParameters(tree, method, statements)
 
-  return createData(body, contracts, nullityVisitor.result, purityVisitor.result)
+  return createData(body, contracts, nullityVisitor.result, purityVisitor.result, notNullParams)
 }
 
 private fun walkMethodBody(tree: LighterAST, root: LighterASTNode, processor: (LighterASTNode) -> Unit) {
   object : RecursiveLighterASTNodeWalkingVisitor(tree) {
     override fun visitNode(element: LighterASTNode) {
       val type = element.tokenType
-      if (type === CLASS || type === FIELD || type == METHOD || type == ANNOTATION_METHOD || type === LAMBDA_EXPRESSION) return
+      if (type === CLASS || type === FIELD || type === METHOD || type === ANNOTATION_METHOD || type === LAMBDA_EXPRESSION) return
 
       processor(element)
       super.visitNode(element)
@@ -87,20 +86,11 @@ private fun walkMethodBody(tree: LighterAST, root: LighterASTNode, processor: (L
 private fun createData(body: LighterASTNode,
                        contracts: List<PreContract>,
                        nullity: NullityInferenceResult?,
-                       purity: PurityInferenceResult?): MethodData? {
-  if (nullity == null && purity == null && !contracts.isNotEmpty()) return null
+                       purity: PurityInferenceResult?,
+                       notNullParams: BitSet): MethodData? {
+  if (nullity == null && purity == null && contracts.isEmpty() && notNullParams.isEmpty) return null
 
-  return MethodData(nullity, purity, contracts, body.startOffset, body.endOffset)
+  return MethodData(nullity, purity, contracts, notNullParams, body.startOffset, body.endOffset)
 }
 
-fun getIndexedData(method: PsiMethodImpl): MethodData? = gist.getFileData(method.containingFile)?.get(methodIndex(method))
-
-private fun methodIndex(method: PsiMethodImpl): Int {
-  val file = method.containingFile as PsiFileImpl
-  val stubTree = try {
-    file.stubTree ?: file.calcStubTree()
-  } catch (e: RuntimeException) {
-    throw RuntimeException("While inferring contract for " + PsiUtil.getMemberQualifiedName(method), e)
-  }
-  return stubTree.plainList.filter { it.stubType == JavaElementType.METHOD }.map { it.psi }.indexOf(method)
-}
+fun getIndexedData(method: PsiMethodImpl): MethodData? = gist.getFileData(method.containingFile)?.get(JavaStubImplUtil.getMethodStubIndex(method))

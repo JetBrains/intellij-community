@@ -43,13 +43,13 @@ public abstract class JpsSdkOrderEntryBase extends JpsOrderEntry<JpsSdkDependenc
 
   @NotNull
   @Override
-  public VirtualFile[] getFiles(OrderRootType type) {
+  public VirtualFile[] getFiles(@NotNull OrderRootType type) {
     return getRootFiles(type);
   }
 
   @NotNull
   @Override
-  public String[] getUrls(OrderRootType rootType) {
+  public String[] getUrls(@NotNull OrderRootType rootType) {
     return getRootUrls(rootType);
   }
 
@@ -66,15 +66,17 @@ public abstract class JpsSdkOrderEntryBase extends JpsOrderEntry<JpsSdkDependenc
     return "< " + getJdkName() + " >";
   }
 
+  @NotNull
   @Override
-  public VirtualFile[] getRootFiles(OrderRootType type) {
+  public VirtualFile[] getRootFiles(@NotNull OrderRootType type) {
     final Sdk sdk = getJdk();
     if (sdk == null) return VirtualFile.EMPTY_ARRAY;
     return sdk.getRootProvider().getFiles(type);
   }
 
+  @NotNull
   @Override
-  public String[] getRootUrls(OrderRootType type) {
+  public String[] getRootUrls(@NotNull OrderRootType type) {
     final Sdk jdk = getJdk();
     if (jdk == null) return ArrayUtil.EMPTY_STRING_ARRAY;
     return jdk.getRootProvider().getUrls(type);

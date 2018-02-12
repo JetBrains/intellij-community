@@ -25,7 +25,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -464,7 +464,7 @@ public class PsiAdapter {
             return false;
         }
         final PsiParameterList parameterList = method.getParameterList();
-        if (parameterList.getParametersCount() != 0) {
+        if (!parameterList.isEmpty()) {
             return false;
         }
         return true;
@@ -492,7 +492,7 @@ public class PsiAdapter {
         if (!isGetterMethod(method)) {
             return null;
         }
-        return PropertyUtil.getPropertyNameByGetter(method);
+        return PropertyUtilBase.getPropertyNameByGetter(method);
     }
 
     /**
@@ -598,7 +598,7 @@ public class PsiAdapter {
 
             // must not have a parameter
             PsiParameterList parameters = method.getParameterList();
-            if (parameters.getParametersCount() != 0) {
+            if (!parameters.isEmpty()) {
                 continue;
             }
 

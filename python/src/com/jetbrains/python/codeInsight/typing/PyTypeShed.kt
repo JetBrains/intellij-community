@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PythonHelpersLocator
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.TYPING
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.PyPackageManagers
 import com.jetbrains.python.packaging.PyPackageUtil
@@ -39,9 +40,9 @@ import java.io.File
  */
 object PyTypeShed {
   private val ONLY_SUPPORTED_PY2_MINOR = 7
-  private val SUPPORTED_PY3_MINORS = 2..6
-  // TODO: Warn about unresolved `import typing` but still resolve it internally for type inference
-  val WHITE_LIST = setOf("typing", "six", "__builtin__", "builtins", "exceptions", "types", "datetime")
+  private val SUPPORTED_PY3_MINORS = 2..7
+  val WHITE_LIST = setOf(TYPING, "six", "__builtin__", "builtins", "exceptions", "types", "datetime", "functools", "shutil", "re", "time",
+                         "argparse", "uuid", "threading", "signal", "collections")
   private val BLACK_LIST = setOf<String>()
 
   /**
@@ -56,15 +57,16 @@ object PyTypeShed {
       return false
     }
     if (isInStandardLibrary(root)) {
-      return true
+        return true
     }
     if (isInThirdPartyLibraries(root)) {
       if (ApplicationManager.getApplication().isUnitTestMode) {
         return true
       }
-      val pyPIPackage = PyPIPackageUtil.PACKAGES_TOPLEVEL[topLevelPackage] ?: topLevelPackage
+      val pyPIPackages = PyPIPackageUtil.PACKAGES_TOPLEVEL[topLevelPackage] ?: emptyList()
       val packages = PyPackageManagers.getInstance().forSdk(sdk).packages ?: return true
-      return PyPackageUtil.findPackage(packages, pyPIPackage) != null
+      return PyPackageUtil.findPackage(packages, topLevelPackage) != null ||
+             pyPIPackages.any { PyPackageUtil.findPackage(packages, it) != null }
     }
     return false
   }
@@ -86,13 +88,13 @@ object PyTypeShed {
    * Returns the list of roots in typeshed for the specified Python language [level].
    */
   fun findRootsForLanguageLevel(level: LanguageLevel): List<String> {
-    val minor = when (level.major) {
-      2 -> ONLY_SUPPORTED_PY2_MINOR
-      3 -> Math.min(Math.max(level.minor, SUPPORTED_PY3_MINORS.start), SUPPORTED_PY3_MINORS.endInclusive)
+    val minors = when (level.major) {
+      2 -> listOf(ONLY_SUPPORTED_PY2_MINOR)
+      3 -> SUPPORTED_PY3_MINORS.reversed().filter { it <= level.minor }
       else -> return emptyList()
     }
-    return listOf("stdlib/${level.major}.${minor}",
-                  "stdlib/${level.major}",
+    return minors.map { "stdlib/${level.major}.$it" } +
+           listOf("stdlib/${level.major}",
                   "stdlib/2and3",
                   "third_party/${level.major}",
                   "third_party/2and3")

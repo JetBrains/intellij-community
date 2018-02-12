@@ -1,11 +1,12 @@
 import java.util.List;
+
 class GetClassTest {
     interface GetCl {
-        Class<? extends List> _();
+        Class<? extends List> m();
     }
 
     interface GetClReturnTypeProblems {
-        Class<List<String>> _();
+        Class<List<String>> m();
     }
 
     void test(int[] iarr, List<String> ls) {

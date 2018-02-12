@@ -151,7 +151,7 @@ public class LineSeparatorPanel extends EditorBasedWidget implements StatusBarWi
     }
 
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
-      "Line separator",
+      "Line Separator",
       (ActionGroup)group,
       dataContext,
       JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,

@@ -1,30 +1,20 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +22,7 @@ import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter;
 import org.jetbrains.plugins.gradle.model.ExternalTask;
 import org.jetbrains.plugins.gradle.model.GradleExtensions;
 import org.jetbrains.plugins.gradle.model.GradleProperty;
+import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService;
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -43,7 +34,7 @@ import java.util.*;
  * @author Vladislav.Soroka
  * @since 11/16/2016
  */
-@State(name = "GradleExtensions", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
+@State(name = "GradleExtensions", storages = {@Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)})
 public class GradleExtensionsSettings implements PersistentStateComponent<GradleExtensionsSettings.Settings> {
 
   private static final Logger LOG = Logger.getInstance(GradleExtensionsSettings.class);
@@ -61,17 +52,13 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
   @Nullable
   @Override
   public Settings getState() {
-    return myState;
+    // cleanup GradleExtensions entries created by previous version from workspace file
+    // TODO remove PersistentStateComponent implementation in future version
+    return new Settings();
   }
 
   @Override
-  public void loadState(Settings state) {
-    XmlSerializerUtil.copyBean(state, myState);
-    for (GradleProject gradleProject : myState.projects.values()) {
-      for (GradleExtensionsData extensionsData : gradleProject.extensions.values()) {
-        extensionsData.myGradleProject = gradleProject;
-      }
-    }
+  public void loadState(@NotNull Settings state) {
   }
 
   @NotNull
@@ -79,11 +66,40 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
     return ServiceManager.getService(project, GradleExtensionsSettings.class).myState;
   }
 
+  public static void load(Project project) {
+    final Collection<ExternalProjectInfo> projectsData =
+      ProjectDataManager.getInstance().getExternalProjectsData(project, GradleConstants.SYSTEM_ID);
+    for (ExternalProjectInfo projectInfo : projectsData) {
+      DataNode<ProjectData> projectDataNode = projectInfo.getExternalProjectStructure();
+      if (projectDataNode == null) continue;
+
+      Collection<DataNode<GradleExtensions>> nodes = new SmartList<>();
+      for (DataNode<ModuleData> moduleNode : ExternalSystemApiUtil.findAll(projectDataNode, ProjectKeys.MODULE)) {
+        ContainerUtil.addIfNotNull(nodes, ExternalSystemApiUtil.find(moduleNode, GradleExtensionsDataService.KEY));
+      }
+      getInstance(project).add(projectInfo.getExternalProjectPath(), nodes);
+    }
+  }
+
   public static class Settings {
     @Property(surroundWithTag = false)
     @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false, entryTagName = "project", keyAttributeName = "path")
     @NotNull
     public Map<String, GradleProject> projects = new HashMap<>();
+
+    public void add(@NotNull String rootPath,
+                    @NotNull Collection<DataNode<GradleExtensions>> extensionsData) {
+      Map<String, GradleExtensions> extensionMap = ContainerUtil.newHashMap();
+      for (DataNode<GradleExtensions> node : extensionsData) {
+        DataNode<?> parent = node.getParent();
+        if (parent == null) continue;
+        if (!(parent.getData() instanceof ModuleData)) continue;
+        String projectPath = ((ModuleData)parent.getData()).getLinkedExternalProjectPath();
+        extensionMap.put(projectPath, node.getData());
+      }
+
+      add(rootPath, extensionMap);
+    }
 
     public void add(@NotNull String rootPath, @NotNull Map<String, GradleExtensions> extensions) {
       GradleProject gradleProject = new GradleProject();
@@ -195,16 +211,16 @@ public class GradleExtensionsSettings implements PersistentStateComponent<Gradle
     @Attribute("parent")
     public String parent;
     @Property(surroundWithTag = false)
-    @AbstractCollection(surroundWithTag = false)
+    @XCollection
     public List<GradleExtension> extensions = new SmartList<>();
     @Property(surroundWithTag = false)
-    @AbstractCollection(surroundWithTag = false)
+    @XCollection
     public List<GradleProp> properties = new SmartList<>();
     @Property(surroundWithTag = false)
-    @AbstractCollection(surroundWithTag = false)
+    @XCollection
     public List<GradleTask> tasks = new SmartList<>();
     @Property(surroundWithTag = false)
-    @AbstractCollection(surroundWithTag = false)
+    @XCollection
     public List<GradleConfiguration> configurations = new SmartList<>();
 
     @Transient

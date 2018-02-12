@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local
 
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
@@ -70,6 +57,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   private lateinit var watcher: FileWatcher
   private lateinit var alarm: Alarm
 
+  private val watchedPaths = mutableListOf<String>()
   private val watcherEvents = Semaphore()
   private val resetHappened = AtomicBoolean()
 
@@ -85,10 +73,13 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     watcher = (fs as LocalFileSystemImpl).fileWatcher
     assertFalse(watcher.isOperational)
-    watcher.startup { reset ->
-      alarm.cancelAllRequests()
-      alarm.addRequest({ watcherEvents.up() }, INTER_RESPONSE_DELAY)
-      if (reset) resetHappened.set(true)
+    watchedPaths += tempDir.root.path
+    watcher.startup { path ->
+      if (path == FileWatcher.RESET || path != FileWatcher.OTHER && watchedPaths.any { path.startsWith(it) }) {
+        alarm.cancelAllRequests()
+        alarm.addRequest({ watcherEvents.up() }, INTER_RESPONSE_DELAY)
+        if (path == FileWatcher.RESET) resetHappened.set(true)
+      }
     }
     wait { !watcher.isOperational }
 
@@ -96,7 +87,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @After fun tearDown() {
-    LOG.debug("================== tearing down up " + getTestName(false) + " ==================")
+    LOG.debug("================== tearing down " + getTestName(false) + " ==================")
 
     watcher.shutdown()
     wait { watcher.isOperational }
@@ -106,7 +97,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
       (fs as LocalFileSystemImpl).cleanupForNextTest()
     }
 
-    LOG.debug("================== tearing down up " + getTestName(false) + " ==================")
+    LOG.debug("================== tearing down " + getTestName(false) + " ==================")
   }
 
   //</editor-fold>
@@ -187,8 +178,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     watch(top, false)
     watch(sub, true)
     assertEvents(
-        { arrayOf(watchedFile1, watchedFile2, unwatchedFile).forEach { it.writeText("new content") } },
-        mapOf(watchedFile1 to 'U', watchedFile2 to 'U'))
+      { arrayOf(watchedFile1, watchedFile2, unwatchedFile).forEach { it.writeText("new content") } },
+      mapOf(watchedFile1 to 'U', watchedFile2 to 'U'))
   }
 
   @Test fun testIncorrectPath() {
@@ -214,26 +205,26 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     watch(sub)
     watch(side)
     assertEvents(
-        { arrayOf(subFile, sideFile).forEach { it.writeText("first content") } },
-        mapOf(subFile to 'U', sideFile to 'U'))
+      { arrayOf(subFile, sideFile).forEach { it.writeText("first content") } },
+      mapOf(subFile to 'U', sideFile to 'U'))
 
     assertEvents(
-        { arrayOf(topFile, subFile, sideFile).forEach { it.writeText("new content") } },
-        mapOf(subFile to 'U', sideFile to 'U'))
+      { arrayOf(topFile, subFile, sideFile).forEach { it.writeText("new content") } },
+      mapOf(subFile to 'U', sideFile to 'U'))
 
     val requestForTopDir = watch(top)
     assertEvents(
-        { arrayOf(topFile, subFile, sideFile).forEach { it.writeText("newer content") } },
-        mapOf(topFile to 'U', subFile to 'U', sideFile to 'U'))
+      { arrayOf(topFile, subFile, sideFile).forEach { it.writeText("newer content") } },
+      mapOf(topFile to 'U', subFile to 'U', sideFile to 'U'))
     unwatch(requestForTopDir)
 
     assertEvents(
-        { arrayOf(topFile, subFile, sideFile).forEach { it.writeText("newest content") } },
-        mapOf(subFile to 'U', sideFile to 'U'))
+      { arrayOf(topFile, subFile, sideFile).forEach { it.writeText("newest content") } },
+      mapOf(subFile to 'U', sideFile to 'U'))
 
     assertEvents(
-        { arrayOf(topFile, subFile, sideFile).forEach { it.delete() } },
-        mapOf(topFile to 'D', subFile to 'D', sideFile to 'D'))
+      { arrayOf(topFile, subFile, sideFile).forEach { it.delete() } },
+      mapOf(topFile to 'D', subFile to 'D', sideFile to 'D'))
   }
 
   // ensure that flat roots set via symbolic paths behave correctly and do not report dirty files returned from other recursive roots
@@ -322,6 +313,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val substRoot = IoTestUtil.createSubst(target.path)
     VfsRootAccess.allowRootAccess(testRootDisposable, substRoot.path)
     val vfsRoot = fs.findFileByIoFile(substRoot)!!
+    watchedPaths += substRoot.path
 
     val substFile = File(substRoot, "sub/test.txt")
     refresh(target)
@@ -354,8 +346,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     watch(root)
     assertEvents(
-        { dir.deleteRecursively(); dir.mkdir(); arrayOf(file1, file2).forEach { it.writeText("text") } },
-        mapOf(file1 to 'U', file2 to 'U'))
+      { dir.deleteRecursively(); dir.mkdir(); arrayOf(file1, file2).forEach { it.writeText("text") } },
+      mapOf(file1 to 'U', file2 to 'U'))
   }
 
   @Test fun testWatchRootRecreation() {
@@ -366,12 +358,12 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     watch(root)
     assertEvents(
-        {
-          root.deleteRecursively(); root.mkdir()
-          if (SystemInfo.isLinux) TimeoutUtil.sleep(1500)  // implementation specific
-          arrayOf(file1, file2).forEach { it.writeText("text") }
-        },
-        mapOf(file1 to 'U', file2 to 'U'))
+      {
+        root.deleteRecursively(); root.mkdir()
+        if (SystemInfo.isLinux) TimeoutUtil.sleep(1500)  // implementation specific
+        arrayOf(file1, file2).forEach { it.writeText("text") }
+      },
+      mapOf(file1 to 'U', file2 to 'U'))
   }
 
   @Test fun testWatchNonExistingRoot() {
@@ -562,13 +554,17 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     watcherEvents.down()
     alarm.cancelAllRequests()
     resetHappened.set(false)
+
+    if (SystemInfo.isWindows || SystemInfo.isMac) TimeoutUtil.sleep(250)
     action()
+    LOG.debug("** action performed")
+
     watcherEvents.waitFor(timeout)
     watcherEvents.up()
     assumeFalse("reset happened", resetHappened.get())
     LOG.debug("** done waiting")
 
-    val events = VfsTestUtil.getEvents { fs.refresh(false) }
+    val events = VfsTestUtil.getEvents { fs.refresh(false) }.filter { !FileUtil.startsWith(it.path, PathManager.getSystemPath()) }
 
     val expected = expectedOps.entries.map { "${it.value} : ${FileUtil.toSystemIndependentName(it.key.path)}" }.sorted()
     val actual = VfsTestUtil.print(events).sorted()

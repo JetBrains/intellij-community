@@ -47,10 +47,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 11/8/10
- */
 public class ReassignVariableUtil {
   static final Key<SmartPsiElementPointer<PsiDeclarationStatement>> DECLARATION_KEY = Key.create("var.type");
   static final Key<RangeMarker[]> OCCURRENCES_KEY = Key.create("occurrences");

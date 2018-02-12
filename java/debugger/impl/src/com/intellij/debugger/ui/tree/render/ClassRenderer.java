@@ -39,7 +39,6 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.sun.jdi.*;
 import org.jdom.Element;
@@ -48,14 +47,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * User: lex
- * Date: Sep 17, 2003
- * Time: 2:04:00 PM
- */
 public class ClassRenderer extends NodeRendererImpl{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.ClassRenderer");
   
@@ -207,7 +202,10 @@ public class ClassRenderer extends NodeRendererImpl{
         final StackFrameProxy frameProxy = context.getFrameProxy();
         if (frameProxy != null) {
           final Location location = frameProxy.location();
-          if (location != null && objInstance.equals(context.getThisObject()) && Comparing.equal(objInstance.referenceType(), location.declaringType()) && StringUtil.startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
+          if (location != null &&
+              objInstance.equals(context.computeThisObject()) &&
+              Comparing.equal(objInstance.referenceType(), location.declaringType()) &&
+              StringUtil.startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
             return false;
           }
         }

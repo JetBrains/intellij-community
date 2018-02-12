@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,9 @@ import com.siyeh.ig.LightInspectionTestCase;
 public class CachedNumberConstructorCallInspectionTest extends LightInspectionTestCase {
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new CachedNumberConstructorCallInspection();
+    final CachedNumberConstructorCallInspection inspection = new CachedNumberConstructorCallInspection();
+    inspection.reportOnlyWhenDeprecated = false;
+    return inspection;
   }
 
   public void testSimple() { doStatementTest("new /*Number constructor call with primitive argument*/Integer/**/(1);"); }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
-/**
- * Created by Max Medvedev on 8/24/13
- */
 public class GrRemoveExplicitTypeDeclarationIntention extends Intention {
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
@@ -53,7 +50,7 @@ public class GrRemoveExplicitTypeDeclarationIntention extends Intention {
   protected PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
-      public boolean satisfiedBy(PsiElement element) {
+      public boolean satisfiedBy(@NotNull PsiElement element) {
         PsiElement parent = element.getParent();
         if (element instanceof GrTypeElement || element instanceof GrModifierList) {
           return parent instanceof GrVariableDeclaration && ((GrVariableDeclaration)parent).getTypeElementGroovy() != null ||

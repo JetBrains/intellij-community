@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,10 @@ import org.jetbrains.annotations.Nullable;
  * @author ven
  */
 public interface GroovyResolveResult extends ResolveResult {
+
+  @Deprecated
+  GroovyResolveResult EMPTY_RESULT = EmptyGroovyResolveResult.INSTANCE;
+
   GroovyResolveResult[] EMPTY_ARRAY = new GroovyResolveResult[0];
 
   boolean isAccessible();
@@ -43,53 +47,4 @@ public interface GroovyResolveResult extends ResolveResult {
 
   @Nullable
   SpreadState getSpreadState();
-
-  GroovyResolveResult EMPTY_RESULT = new GroovyResolveResult() {
-    @Override
-    public boolean isAccessible() {
-      return false;
-    }
-
-    @Override
-    public PsiElement getCurrentFileResolveContext() {
-      return null;
-    }
-
-    @Override
-    public boolean isStaticsOK() {
-      return true;
-    }
-
-    @Override
-    public boolean isApplicable() {
-      return false;
-    }
-
-    @Override
-    @NotNull
-    public PsiSubstitutor getSubstitutor() {
-      return PsiSubstitutor.EMPTY;
-    }
-
-    @Override
-    @Nullable
-    public PsiElement getElement() {
-      return null;
-    }
-
-    @Override
-    public boolean isValidResult() {
-      return false;
-    }
-
-    @Override
-    public boolean isInvokedOnProperty() {
-      return false;
-    }
-
-    @Override
-    public SpreadState getSpreadState() {
-      return null;
-    }
-  };
 }

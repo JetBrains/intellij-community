@@ -26,7 +26,7 @@ public class StringConcatenationInLoopsInspectionFixTest extends LightQuickFixPa
     return new LocalInspectionTool[]{new StringConcatenationInLoopsInspection()};
   }
 
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {

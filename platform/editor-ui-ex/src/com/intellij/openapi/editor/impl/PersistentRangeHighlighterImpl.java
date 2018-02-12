@@ -17,7 +17,6 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -31,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
  * Implementation of the markup element for the editor and document.
  * @author max
  */
-class PersistentRangeHighlighterImpl extends RangeHighlighterImpl implements RangeHighlighterEx {
+class PersistentRangeHighlighterImpl extends RangeHighlighterImpl {
   private int myLine; // for PersistentRangeHighlighterImpl only
   static PersistentRangeHighlighterImpl create(@NotNull MarkupModel model,
                                                int offset,

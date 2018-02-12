@@ -58,7 +58,7 @@ public interface PreviewManager {
   }
 
   /**
-   * @return <code>null</code> if provider is not available / not active or if it forces to use standard view instead of preview at the moment
+   * @return {@code null} if provider is not available / not active or if it forces to use standard view instead of preview at the moment
    */
   @Nullable
   <V, C> C preview(@NotNull PreviewProviderId<V, C> id, V data, boolean requestFocus);

@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInspection;
 
@@ -26,13 +14,17 @@ import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.lang.Language;
+import com.intellij.lang.MetaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiRecursiveVisitor;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -48,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class InspectionEngine {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.InspectionEngine");
+  private static final Set<Class<? extends LocalInspectionTool>> RECURSIVE_VISITOR_TOOL_CLASSES = ContainerUtil.newConcurrentSet();
 
   @NotNull
   public static PsiElementVisitor createVisitorAndAcceptElements(@NotNull LocalInspectionTool tool,
@@ -59,11 +52,12 @@ public class InspectionEngine {
                                                                  @Nullable("null means all accepted") Set<String> dialectIdsSpecifiedForTool) {
     PsiElementVisitor visitor = tool.buildVisitor(holder, isOnTheFly, session);
     //noinspection ConstantConditions
-    if(visitor == null) {
+    if (visitor == null) {
       LOG.error("Tool " + tool + " (" + tool.getClass()+ ") must not return null from the buildVisitor() method");
     }
-    assert !(visitor instanceof PsiRecursiveElementVisitor || visitor instanceof PsiRecursiveElementWalkingVisitor)
-      : "The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive. "+tool;
+    else if (visitor instanceof PsiRecursiveVisitor && RECURSIVE_VISITOR_TOOL_CLASSES.add(tool.getClass())) {
+      LOG.error("The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive: " + tool);
+    }
 
     tool.inspectionStarted(session, isOnTheFly);
     acceptElements(elements, visitor, elementDialectIds, dialectIdsSpecifiedForTool);
@@ -191,12 +185,17 @@ public class InspectionEngine {
             @Nullable
             @Override
             public CommonProblemDescriptor[] getDescriptions(@NotNull RefEntity refEntity) {
-              return descriptors.toArray(new CommonProblemDescriptor[descriptors.size()]);
+              return descriptors.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
             }
 
             @Override
             public void ignoreElement(@NotNull RefEntity refEntity) {
-              throw new RuntimeException();
+              throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public void resolveProblem(@NotNull CommonProblemDescriptor descriptor) {
+              throw new UnsupportedOperationException();
             }
 
             @Override
@@ -281,15 +280,28 @@ public class InspectionEngine {
       // unknown language in plugin.xml, ignore
       result = Collections.singleton(langId);
     }
+    else if (language instanceof MetaLanguage) {
+      Collection<Language> matchingLanguages = ((MetaLanguage) language).getMatchingLanguages();
+      result = new THashSet<>();
+      for (Language matchingLanguage : matchingLanguages) {
+        result.addAll(getLanguageWithDialects(wrapper, matchingLanguage));
+      }
+    }
     else {
-      List<Language> dialects = language.getDialects();
-      boolean applyToDialects = wrapper.applyToDialects();
-      result = applyToDialects && !dialects.isEmpty() ? new THashSet<>(1 + dialects.size()) : new SmartHashSet<>();
-      result.add(langId);
-      if (applyToDialects) {
-        for (Language dialect : dialects) {
-          result.add(dialect.getID());
-        }
+      result = getLanguageWithDialects(wrapper, language);
+    }
+    return result;
+  }
+
+  @NotNull
+  private static Set<String> getLanguageWithDialects(@NotNull LocalInspectionToolWrapper wrapper, Language language) {
+    List<Language> dialects = language.getDialects();
+    boolean applyToDialects = wrapper.applyToDialects();
+    Set<String> result = applyToDialects && !dialects.isEmpty() ? new THashSet<>(1 + dialects.size()) : new SmartHashSet<>();
+    result.add(language.getID());
+    if (applyToDialects) {
+      for (Language dialect : dialects) {
+        result.add(dialect.getID());
       }
     }
     return result;

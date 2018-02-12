@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,55 +26,74 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrSpreadArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
   private AnnotationHolder myHolder;
 
   @Override
-  protected void processTupleAssignment(@NotNull GrTupleExpression tupleExpression, @NotNull GrExpression initializer) {
-    if (initializer instanceof GrListOrMap && !((GrListOrMap)initializer).isMap()) {
-      final GrListOrMap initializerList = (GrListOrMap)initializer;
-      final GrExpression[] vars = tupleExpression.getExpressions();
-      final GrExpression[] expressions = initializerList.getInitializers();
-      if (vars.length > expressions.length) {
-        registerError(
-          initializer,
-          GroovyBundle.message("incorrect.number.of.values", vars.length, expressions.length),
-          LocalQuickFix.EMPTY_ARRAY,
-          ProblemHighlightType.GENERIC_ERROR
-        );
-      }
-      else {
-        for (int i = 0; i < vars.length; i++) {
-          processAssignmentWithinMultipleAssignment(vars[i], expressions[i], tupleExpression);
-        }
-      }
-    }
-    else {
-      registerError(
-        initializer,
-        GroovyBundle.message("multiple.assignments.without.list.expr"),
-        LocalQuickFix.EMPTY_ARRAY,
-        ProblemHighlightType.GENERIC_ERROR
-      );
+  public void visitTupleAssignmentExpression(@NotNull GrTupleAssignmentExpression expression) {
+    super.visitTupleAssignmentExpression(expression);
+    final GrExpression initializer = expression.getRValue();
+    if (initializer!= null) {
+      PsiType[] types = Arrays.stream(expression.getLValue().getExpressions()).map(it -> it.getType()).toArray(PsiType[]::new);
+      checkTupleAssignment(initializer, types);
     }
   }
 
   @Override
-  public void visitAssignmentExpression(@NotNull GrAssignmentExpression assignment) {
-    super.visitAssignmentExpression(assignment);
+  public void visitVariableDeclaration(@NotNull GrVariableDeclaration variableDeclaration) {
+    if (variableDeclaration.isTuple()) {
+      GrExpression initializer = variableDeclaration.getTupleInitializer();
+      if (initializer != null ) {
+        PsiType[] types = Arrays.stream(variableDeclaration.getVariables()).map(it -> it.getType()).toArray(PsiType[]::new);
+        checkTupleAssignment(initializer, types);
+      }
+    }
+    super.visitVariableDeclaration(variableDeclaration);
+  }
+
+  void checkTupleAssignment(@NotNull GrExpression initializer, @NotNull final PsiType[] types) {
+    if (initializer instanceof GrListOrMap && !((GrListOrMap)initializer).isMap()) {
+
+      final GrListOrMap initializerList = (GrListOrMap)initializer;
+
+      final GrExpression[] expressions = initializerList.getInitializers();
+      if (types.length > expressions.length) {
+        registerError(
+          initializer,
+          GroovyBundle.message("incorrect.number.of.values", types.length, expressions.length),
+          LocalQuickFix.EMPTY_ARRAY,
+          ProblemHighlightType.GENERIC_ERROR
+        );
+      }
+      return;
+    }
+
+    registerError(
+      initializer,
+      GroovyBundle.message("multiple.assignments.without.list.expr"),
+      new LocalQuickFix[]{GroovyQuickFixFactory.getInstance().createMultipleAssignmentFix(types.length)},
+      ProblemHighlightType.GENERIC_ERROR
+    );
   }
 
   @Override
@@ -119,7 +138,7 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
         });
       }
     }
-    registerError(location, description, intentions.toArray(new IntentionAction[intentions.size()]), highlightType);
+    registerError(location, description, intentions.toArray(IntentionAction.EMPTY_ARRAY), highlightType);
   }
 
   protected void registerError(@NotNull final PsiElement location,
@@ -147,5 +166,25 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
     finally {
       myHolder = null;
     }
+  }
+
+  @Override
+  public void visitSpreadArgument(@NotNull GrSpreadArgument spreadArgument) {
+    registerError(
+      spreadArgument,
+      GroovyBundle.message("spread.operator.is.not.available"),
+      buildSpreadArgumentFix(spreadArgument),
+      ProblemHighlightType.GENERIC_ERROR
+    );
+  }
+
+  private static LocalQuickFix[] buildSpreadArgumentFix(GrSpreadArgument spreadArgument) {
+    GrCallExpression parent = PsiTreeUtil.getParentOfType(spreadArgument, GrCallExpression.class);
+    if (parent == null) return LocalQuickFix.EMPTY_ARRAY;
+    PsiMethod resolveMethod = parent.resolveMethod();
+
+    if (resolveMethod == null) return LocalQuickFix.EMPTY_ARRAY;
+
+    return new LocalQuickFix[]{ GroovyQuickFixFactory.getInstance().createSpreadArgumentFix(resolveMethod.getParameters().length)};
   }
 }

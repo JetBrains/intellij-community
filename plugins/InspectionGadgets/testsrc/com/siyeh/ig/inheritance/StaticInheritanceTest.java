@@ -20,9 +20,6 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.PluginPathManager;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: cdr
- */
 public class StaticInheritanceTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
@@ -30,7 +27,7 @@ public class StaticInheritanceTest extends LightQuickFixParameterizedTestCase {
     return new LocalInspectionTool[]{new StaticInheritanceInspection()};
   }
 
-  public void test() throws Exception {
+  public void test() {
     doAllTests();
   }
 

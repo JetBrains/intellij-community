@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,35 +15,46 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiExpressionStatement;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.EqualsToEqualityFix;
+import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ObjectEqualsNullInspection extends BaseInspection {
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "object.equals.null.display.name");
+    return InspectionGadgetsBundle.message("object.equals.null.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "object.equals.null.problem.descriptor");
+    return InspectionGadgetsBundle.message("object.equals.null.problem.descriptor");
   }
 
   @Override
   public boolean isEnabledByDefault() {
     return true;
+  }
+
+  @Nullable
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final Boolean negated = (Boolean)infos[0];
+    return negated == null ? null : new EqualsToEqualityFix(negated.booleanValue());
   }
 
   @Override
@@ -54,18 +65,23 @@ public class ObjectEqualsNullInspection extends BaseInspection {
   private static class ObjectEqualsNullVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       super.visitMethodCallExpression(call);
       if (!MethodCallUtils.isEqualsCall(call)) {
         return;
       }
-      final PsiExpressionList argumentList = call.getArgumentList();
-      final PsiExpression[] args = argumentList.getExpressions();
-      if (args.length == 0 || !ExpressionUtils.isNullLiteral(args[0])) {
+      PsiExpression[] args = call.getArgumentList().getExpressions();
+      final PsiExpression argument = args.length > 0 ? args[0] : null;
+      if (!ExpressionUtils.isNullLiteral(argument)) {
         return;
       }
-      registerError(args[0]);
+      PsiElement parent = ParenthesesUtils.getParentSkipParentheses(call);
+      final boolean negated = parent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)parent);
+      if (negated) {
+        parent = parent.getParent();
+      }
+      final boolean quickFix = !(parent instanceof PsiExpressionStatement);
+      registerError(argument, quickFix ? Boolean.valueOf(negated) : null);
     }
   }
 }

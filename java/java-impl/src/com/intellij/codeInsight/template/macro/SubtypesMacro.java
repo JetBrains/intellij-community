@@ -24,7 +24,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
@@ -71,7 +70,7 @@ public class SubtypesMacro extends Macro {
       JavaTemplateUtil.addTypeLookupItem(set, type);
       CodeInsightUtil.processSubTypes(type, element, false, PrefixMatcher.ALWAYS_TRUE,
                                       psiType -> JavaTemplateUtil.addTypeLookupItem(set, psiType));
-      return set.toArray(new LookupElement[set.size()]);
+      return set.toArray(LookupElement.EMPTY_ARRAY);
     }
     return LookupElement.EMPTY_ARRAY;
   }

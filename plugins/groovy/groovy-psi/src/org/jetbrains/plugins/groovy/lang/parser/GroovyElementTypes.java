@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.parser;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.stubs.*;
+import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -192,6 +179,8 @@ public interface GroovyElementTypes {
     }
   };
   GrImportStatementElementType IMPORT_STATEMENT = new GrImportStatementElementType("Import statement");
+  GroovyElementType IMPORT_ALIAS = new GroovyElementType("IMPORT_ALIAS");
+
   //Branch statements
   GroovyElementType BREAK_STATEMENT = new GroovyElementType("Break statement");
   GroovyElementType CONTINUE_STATEMENT = new GroovyElementType("Continue statement");
@@ -206,6 +195,7 @@ public interface GroovyElementTypes {
   GroovyElementType CONDITIONAL_EXPRESSION = new GroovyElementType("Conditional expression");
   GroovyElementType ELVIS_EXPRESSION = new GroovyElementType("Elvis expression");
   GroovyElementType ASSIGNMENT_EXPRESSION = new GroovyElementType("Assignment expression");
+  GroovyElementType TUPLE_ASSIGNMENT_EXPRESSION = new GroovyElementType("Tuple assignment expression");
   GroovyElementType LOGICAL_OR_EXPRESSION = new GroovyElementType("Logical OR expression");
   GroovyElementType LOGICAL_AND_EXPRESSION = new GroovyElementType("Logical AND expression");
   GroovyElementType INCLUSIVE_OR_EXPRESSION = new GroovyElementType("Inclusive OR expression");
@@ -415,7 +405,7 @@ public interface GroovyElementTypes {
   };
   GrVariableDeclarationElementType VARIABLE_DEFINITION = new GrVariableDeclarationElementType();
   GroovyElementType TUPLE_DECLARATION = new GroovyElementType("tuple declaration");
-  GroovyElementType TUPLE_EXPRESSION = new GroovyElementType("tuple expression");
+  GroovyElementType TUPLE = new GroovyElementType("tuple");
 
   GrVariableElementType VARIABLE = new GrVariableElementType();
 
@@ -424,4 +414,6 @@ public interface GroovyElementTypes {
 
   //types
   GroovyElementType CLASS_TYPE_ELEMENT = new GroovyElementType("class type element"); //node
+
+  IStubFileElementType GROOVY_FILE = new GrStubFileElementType(GroovyLanguage.INSTANCE);
 }

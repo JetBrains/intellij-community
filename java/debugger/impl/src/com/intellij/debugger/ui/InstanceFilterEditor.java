@@ -27,11 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * User: lex
- * Date: Aug 29, 2003
- * Time: 2:38:30 PM
- */
 public class InstanceFilterEditor extends ClassFilterEditor {
   public InstanceFilterEditor(Project project) {
     super(project);

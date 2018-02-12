@@ -63,12 +63,13 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
         if (!isResourceBundleAlphaSortedExceptOneFile(resourceBundle, propertiesFile)) {
           final List<PropertiesFile> allFiles = resourceBundle.getPropertiesFiles();
           holder.registerProblem(file, String.format(MESSAGE_TEMPLATE_WHOLE_RESOURCE_BUNDLE, resourceBundleBaseName),
-                                 ProblemHighlightType.INFO,
-                                 new PropertiesSorterQuickFix(true, allFiles.toArray(new PropertiesFile[allFiles.size()])));
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                 new PropertiesSorterQuickFix(allFiles.toArray(new PropertiesFile[0])));
           return;
         }
         if (!propertiesFile.isAlphaSorted()) {
-          holder.registerProblem(file, "Properties file is alphabetically unsorted", ProblemHighlightType.INFO, new PropertiesSorterQuickFix(true, propertiesFile));
+          holder.registerProblem(file, "Properties file is alphabetically unsorted", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new PropertiesSorterQuickFix(
+            propertiesFile));
         }
       }
     };
@@ -88,18 +89,16 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
   }
 
   private static class PropertiesSorterQuickFix implements LocalQuickFix {
-    private final boolean myWholeResourceBundle;
     private final PropertiesFile[] myFilesToSort;
 
-    private PropertiesSorterQuickFix(final boolean wholeResourceBundle, PropertiesFile... toSort) {
-      myWholeResourceBundle = wholeResourceBundle;
+    private PropertiesSorterQuickFix(PropertiesFile... toSort) {
       myFilesToSort = toSort;
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return myWholeResourceBundle ? "Sort resource bundle files" : "Sort properties file";
+      return "Sort resource bundle files";
     }
 
     @Override

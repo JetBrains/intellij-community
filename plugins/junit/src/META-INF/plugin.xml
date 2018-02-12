@@ -35,6 +35,7 @@
     <runConfigurationProducer implementation="com.intellij.execution.junit.AllInPackageConfigurationProducer"/>
     <runConfigurationProducer implementation="com.intellij.execution.junit.PatternConfigurationProducer"/>
     <runConfigurationProducer implementation="com.intellij.execution.junit.TestInClassConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.intellij.execution.junit.UniqueIdConfigurationProducer"/>
     <deadCode implementation="com.intellij.execution.junit2.inspection.JUnitEntryPoint"/>
     <cantBeStatic implementation="com.intellij.execution.junit2.inspection.JUnitCantBeStaticExtension" />
     <testFramework implementation="com.intellij.execution.junit.JUnit3Framework"/>
@@ -42,10 +43,12 @@
     <testFramework implementation="com.intellij.execution.junit.JUnit4Framework" id="junit4"/>
     <configurationType implementation="com.intellij.execution.junit.JUnitConfigurationType"/>
     <library.dependencyScopeSuggester implementation="com.intellij.execution.junit.JUnitDependencyScopeSuggester"/>
+    <externalSystem.runConfigurationImporter implementation="com.intellij.execution.junit.JUnitRunConfigurationImporter"/>
 
     <stacktrace.fold substring="at org.junit.internal.runners."/>
     <stacktrace.fold substring="at org.junit.runners."/>
     <stacktrace.fold substring="at org.junit.runner.JUnitCore."/>
+    <stacktrace.fold substring="at org.junit.rules."/>
     <stacktrace.fold substring="at org.junit.Assert.fail("/>
     <stacktrace.fold substring="at org.junit.Assert.failNotSame("/>
     <stacktrace.fold substring="at org.junit.Assert.failSame("/>
@@ -76,6 +79,18 @@
     <runConfigurationProducer implementation="com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfigurationProducer"/>
     <implicitUsageProvider implementation="com.intellij.execution.junit2.inspection.JUnitImplicitUsageProvider"/>
     <predefinedMigrationMapProvider implementation="com.intellij.execution.junit2.refactoring.JUnit5Migration"/>
+    <psi.referenceContributor implementation="com.intellij.execution.junit.codeInsight.references.JUnitReferenceContributor"/>
+
+    <localInspection groupPath="Java" language="JAVA" shortName="JUnit5MalformedParameterized" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="junit5.valid.parameterized.configuration.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedParameterizedInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="JUnit5MalformedRepeated" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="junit5.malformed.repeated.test.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedRepeatedTestInspection"/>
+
+    <runDashboardContributor implementation="com.intellij.execution.junit.JUnitRunDashboardContributor"/>
   </extensions>
 
   <extensionPoints>
@@ -89,7 +104,7 @@
       <add-to-group relative-to-action="openAssertEqualsDiff" anchor="after" group-id="TestTreePopupMenu"/>
     </group>
     <group>
-      <action class="com.intellij.execution.junit.JUnitAddToTestsPatternAction" id="AddToISuite" text="Add to pattern suite"/>
+      <action class="com.intellij.execution.junit.JUnitAddToTestsPatternAction" id="AddToISuite" text="Add to JUnit pattern suite"/>
       <add-to-group anchor="last" group-id="RunContextGroup"/>
     </group>
   </actions>

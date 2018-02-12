@@ -25,11 +25,10 @@ import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 3/23/12
  */
 public class TaskUiTest extends CodeInsightFixtureTestCase {
 
-  public void testTaskComboVisible() throws Exception {
+  public void testTaskComboVisible() {
 
     SwitchTaskAction combo = null;
     ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR);

@@ -266,7 +266,7 @@ public abstract class JBPopupFactory {
                                                    @Nullable String actionPlace);
 
   /**
-   * @deprecated use {@link #createListPopup(ListPopupStep)} instead (<code>step</code> must be a ListPopupStep in any case)
+   * @deprecated use {@link #createListPopup(ListPopupStep)} instead ({@code step} must be a ListPopupStep in any case)
    */
   @NotNull
   public abstract ListPopup createWizardStep(@NotNull PopupStep step);

@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -33,7 +34,6 @@ import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Nov 13, 2004
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public abstract class TestErrorViewAction extends AnAction{
@@ -75,7 +75,7 @@ public abstract class TestErrorViewAction extends AnAction{
           }
         }
         System.out.println("Expected " + (MESSAGE_COUNT + 1) + " messages;");
-        view.dispose();
+        Disposer.dispose(view);
       }
     }.start();
   }

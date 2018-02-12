@@ -30,9 +30,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.project.ProjectTypeService;
 import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.JdomKt;
@@ -64,7 +66,7 @@ import java.util.Set;
  */
 public class GradleResourceCompilerConfigurationGenerator {
 
-  private static Logger LOG = Logger.getInstance(GradleResourceCompilerConfigurationGenerator.class);
+  private static final Logger LOG = Logger.getInstance(GradleResourceCompilerConfigurationGenerator.class);
 
   @NotNull
   private final Project myProject;
@@ -85,7 +87,9 @@ public class GradleResourceCompilerConfigurationGenerator {
       }
 
       @Override
-      public void modulesRenamed(@NotNull Project project, @NotNull List<Module> modules, @NotNull Function<Module, String> oldNameProvider) {
+      public void modulesRenamed(@NotNull Project project,
+                                 @NotNull List<Module> modules,
+                                 @NotNull Function<Module, String> oldNameProvider) {
         for (Module module : modules) {
           moduleRemoved(project, module);
         }
@@ -123,8 +127,6 @@ public class GradleResourceCompilerConfigurationGenerator {
     }
 
     final GradleProjectConfiguration projectConfig = loadLastConfiguration(gradleConfigFile);
-
-    // update with newly generated configuration
     projectConfig.moduleConfigurations.putAll(affectedGradleModuleConfigurations);
 
     final Element element = new Element("gradle-project-configuration");
@@ -155,7 +157,7 @@ public class GradleResourceCompilerConfigurationGenerator {
         // filter orphan modules
         final Set<String> actualModules = myModulesConfigurationHash.keySet();
         for (Iterator<Map.Entry<String, GradleModuleResourceConfiguration>> iterator =
-               projectConfig.moduleConfigurations.entrySet().iterator(); iterator.hasNext(); ) {
+             projectConfig.moduleConfigurations.entrySet().iterator(); iterator.hasNext(); ) {
           Map.Entry<String, GradleModuleResourceConfiguration> configurationEntry = iterator.next();
           if (!actualModules.contains(configurationEntry.getKey())) {
             iterator.remove();
@@ -175,13 +177,8 @@ public class GradleResourceCompilerConfigurationGenerator {
     final Map<String, GradleModuleResourceConfiguration> affectedGradleModuleConfigurations = ContainerUtil.newTroveMap();
 
     //noinspection MismatchedQueryAndUpdateOfCollection
-    final Map<String, ExternalProject> lazyExternalProjectMap = new FactoryMap<String, ExternalProject>() {
-      @Nullable
-      @Override
-      protected ExternalProject create(String gradleProjectPath) {
-        return externalProjectDataCache.getRootExternalProject(GradleConstants.SYSTEM_ID, new File(gradleProjectPath));
-      }
-    };
+    final Map<String, ExternalProject> lazyExternalProjectMap = FactoryMap.create(
+      gradleProjectPath1 -> externalProjectDataCache.getRootExternalProject(GradleConstants.SYSTEM_ID, new File(gradleProjectPath1)));
 
     for (Module module : context.getCompileScope().getAffectedModules()) {
       if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) continue;
@@ -193,7 +190,7 @@ public class GradleResourceCompilerConfigurationGenerator {
 
       final ExternalProject externalRootProject = lazyExternalProjectMap.get(gradleProjectPath);
       if (externalRootProject == null) {
-        context.addMessage(CompilerMessageCategory.ERROR,
+        context.addMessage(CompilerMessageCategory.WARNING,
                            String.format("Unable to make the module: %s, related gradle configuration was not found. " +
                                          "Please, re-import the Gradle project and try again.",
                                          module.getName()), VfsUtilCore.pathToUrl(gradleProjectPath), -1, -1);
@@ -205,6 +202,9 @@ public class GradleResourceCompilerConfigurationGenerator {
         LOG.debug("Unable to find source sets config for module: " + module.getName());
         continue;
       }
+
+      VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(true);
+      if (sourceRoots.length == 0) continue;
 
       GradleModuleResourceConfiguration resourceConfig = new GradleModuleResourceConfiguration();
       resourceConfig.id = new ModuleVersion(
@@ -280,7 +280,7 @@ public class GradleResourceCompilerConfigurationGenerator {
       for (String exclude : directorySet.getExcludes()) {
         rootConfiguration.excludes.add(exclude.trim());
       }
-      if(sourcesDirectorySet != null && sourcesDirectorySet.getSrcDirs().contains(file)) {
+      if (sourcesDirectorySet != null && sourcesDirectorySet.getSrcDirs().contains(file)) {
         rootConfiguration.excludes.add("**/*.java");
         rootConfiguration.excludes.add("**/*.scala");
         rootConfiguration.excludes.add("**/*.groovy");

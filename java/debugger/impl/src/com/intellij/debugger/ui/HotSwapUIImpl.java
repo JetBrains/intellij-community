@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.debugger.ui;
 
@@ -19,7 +7,7 @@ import com.intellij.CommonBundle;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.impl.DebuggerManagerAdapter;
+import com.intellij.debugger.impl.DebuggerManagerListener;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.HotSwapFile;
 import com.intellij.debugger.impl.HotSwapManager;
@@ -34,7 +22,6 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerTopics;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -58,12 +45,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-/**
- * User: lex
- * Date: Oct 2, 2003
- * Time: 6:00:55 PM
- */
-public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
+public class HotSwapUIImpl extends HotSwapUI {
   private final List<HotSwapVetoableListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myAskBeforeHotswap = true;
   private final Project myProject;
@@ -72,7 +54,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
   public HotSwapUIImpl(final Project project, final MessageBus bus, DebuggerManager debugManager) {
     myProject = project;
 
-    ((DebuggerManagerEx)debugManager).addDebuggerManagerListener(new DebuggerManagerAdapter() {
+    ((DebuggerManagerEx)debugManager).addDebuggerManagerListener(new DebuggerManagerListener() {
       private MessageBusConnection myConn = null;
 
       @Override
@@ -95,29 +77,13 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
       }
     });
   }
-
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "HotSwapUI";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-
-  }
-
+  
+  @Override
   public void addListener(HotSwapVetoableListener listener) {
     myListeners.add(listener);
   }
 
+  @Override
   public void removeListener(HotSwapVetoableListener listener) {
     myListeners.remove(listener);
   }
@@ -127,12 +93,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
       return false;
     }
     // todo: return false if yourkit agent is inactive
-    for (DebuggerSession session : sessions) {
-      if (session.isPaused()) {
-        return true;
-      }
-    }
-    return false;
+    return sessions.stream().anyMatch(DebuggerSession::isPaused);
   }
 
   private void hotSwapSessions(final List<DebuggerSession> sessions, @Nullable final Map<String, List<String>> generatedPaths) {
@@ -154,13 +115,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
       findClassesProgress = new HotSwapProgressImpl(myProject);
     }
     else {
-      boolean createProgress = false;
-      for (DebuggerSession session : sessions) {
-        if (session.isModifiedClassesScanRequired()) {
-          createProgress = true;
-          break;
-        }
-      }
+      boolean createProgress = sessions.stream().anyMatch(DebuggerSession::isModifiedClassesScanRequired);
       findClassesProgress = createProgress ? new HotSwapProgressImpl(myProject) : null;
     }
 
@@ -265,6 +220,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
     }, progress.getProgressIndicator());
   }
 
+  @Override
   public void reloadChangedClasses(final DebuggerSession session, boolean compileBeforeHotswap) {
     dontAskHotswapAfterThisCompilation();
     if (compileBeforeHotswap) {
@@ -277,6 +233,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
     }
   }
 
+  @Override
   public void dontPerformHotswapAfterThisCompilation() {
     myPerformHotswapAfterThisCompilation = false;
   }
@@ -297,6 +254,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
       }
     }
 
+    @Override
     public void fileGenerated(String outputRoot, String relativePath) {
       if (StringUtil.endsWith(relativePath, ".class") && JpsPathUtil.isUnder(myOutputRoots, new File(outputRoot))) {
         // collect only classes
@@ -304,6 +262,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
       }
     }
 
+    @Override
     public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
       final Map<String, List<String>> generated = myGeneratedPaths.getAndSet(new HashMap<>());
       if (myProject.isDisposed()) {

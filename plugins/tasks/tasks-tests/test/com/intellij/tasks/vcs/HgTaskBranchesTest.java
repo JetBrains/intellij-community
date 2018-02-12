@@ -18,10 +18,8 @@ package com.intellij.tasks.vcs;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import hg4idea.test.HgExecutor;
 import hg4idea.test.HgPlatformTest;
@@ -31,11 +29,11 @@ import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
-import java.io.IOException;
 
 import static com.intellij.openapi.vcs.Executor.cd;
 import static com.intellij.openapi.vcs.Executor.touch;
 import static hg4idea.test.HgExecutor.hg;
+import static org.zmlx.hg4idea.util.HgUtil.DOT_HG;
 
 public class HgTaskBranchesTest extends TaskBranchesTest {
 
@@ -43,6 +41,7 @@ public class HgTaskBranchesTest extends TaskBranchesTest {
   protected void setUp() throws Exception {
     super.setUp();
     HgVcs hgVcs = ObjectUtils.assertNotNull(HgVcs.getInstance(myProject));
+    hgVcs.getProjectSettings().setCheckIncomingOutgoing(false);
     hgVcs.getGlobalSettings().setHgExecutable(HgExecutor.getHgExecutable());
   }
 
@@ -60,16 +59,17 @@ public class HgTaskBranchesTest extends TaskBranchesTest {
     ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
     HgVcs hgVcs = HgVcs.getInstance(myProject);
     assert hgVcs != null;
-    hgVcs.getProjectSettings().setCheckIncomingOutgoing(false);
     vcsManager.setDirectoryMapping(root, HgVcs.VCS_NAME);
-    VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(root));
-    HgRepository repository = HgUtil.getRepositoryManager(myProject).getRepositoryForRoot(file);
+    assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(root, DOT_HG)));
+
+    HgRepository repository =
+      HgUtil.getRepositoryManager(myProject).getRepositoryForRoot(LocalFileSystem.getInstance().findFileByIoFile(new File(root)));
     assertNotNull("Couldn't find repository for root " + root, repository);
     return repository;
   }
 
   @Override
-  protected void createAndCommitChanges(@NotNull Repository repository) throws IOException, VcsException {
+  protected void createAndCommitChanges(@NotNull Repository repository) {
     cd(repository.getRoot());
     touch("foo.txt");
     hg("add foo.txt");

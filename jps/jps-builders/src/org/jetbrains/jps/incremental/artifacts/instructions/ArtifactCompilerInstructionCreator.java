@@ -60,4 +60,11 @@ public interface ArtifactCompilerInstructionCreator {
   ArtifactCompilerInstructionCreator subFolderByRelativePath(@NotNull String relativeDirectoryPath);
 
   ArtifactInstructionsBuilder getInstructionsBuilder();
+
+  /**
+   * @return target directory for instructions created by this instance or {@code null} if there is no such directory (e.g. because it corresponds
+   * to an entry in a JAR file)
+   */
+  @Nullable
+  File getTargetDirectory();
 }

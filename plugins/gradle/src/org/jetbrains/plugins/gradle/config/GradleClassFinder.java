@@ -43,17 +43,12 @@ import java.util.Map;
 public class GradleClassFinder extends NonClasspathClassFinder {
 
   @NotNull private final GradleBuildClasspathManager myBuildClasspathManager;
-  private final Map<String, PackageDirectoryCache> myCaches = new ConcurrentFactoryMap<String, PackageDirectoryCache>() {
-    @Nullable
-    @Override
-    protected PackageDirectoryCache create(String path) {
-      return createCache(myBuildClasspathManager.getModuleClasspathEntries(path));
-    }
-  };
+  private final Map<String, PackageDirectoryCache> myCaches;
 
   public GradleClassFinder(@NotNull Project project, @NotNull GradleBuildClasspathManager buildClasspathManager) {
     super(project, JavaFileType.DEFAULT_EXTENSION, GroovyFileType.DEFAULT_EXTENSION);
     myBuildClasspathManager = buildClasspathManager;
+    myCaches = ConcurrentFactoryMap.createMap(path -> createCache(myBuildClasspathManager.getModuleClasspathEntries(path)));
   }
 
   @Override

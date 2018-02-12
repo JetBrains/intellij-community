@@ -98,9 +98,9 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     MODIFIERS_BY_TYPE.put(METHOD, concat(commonModifiers, SYNCHRONIZED, ABSTRACT));
     MODIFIERS_BY_TYPE.put(CONSTRUCTOR, concat(commonModifiers, SYNCHRONIZED));
     MODIFIERS_BY_TYPE.put(FIELD, concat(commonModifiers, TRANSIENT, VOLATILE));
-    MODIFIERS_BY_TYPE.put(GETTER, ContainerUtilRt.<ArrangementSettingsToken>newHashSet());
-    MODIFIERS_BY_TYPE.put(SETTER, ContainerUtilRt.<ArrangementSettingsToken>newHashSet());
-    MODIFIERS_BY_TYPE.put(OVERRIDDEN, ContainerUtilRt.<ArrangementSettingsToken>newHashSet());
+    MODIFIERS_BY_TYPE.put(GETTER, ContainerUtilRt.newHashSet());
+    MODIFIERS_BY_TYPE.put(SETTER, ContainerUtilRt.newHashSet());
+    MODIFIERS_BY_TYPE.put(OVERRIDDEN, ContainerUtilRt.newHashSet());
     MODIFIERS_BY_TYPE.put(INIT_BLOCK, ContainerUtilRt.newHashSet(STATIC));
 
     TYPES_WITH_DISABLED_ORDER.add(INIT_BLOCK);
@@ -111,7 +111,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
   private static final Map<ArrangementSettingsToken, List<ArrangementSettingsToken>> GROUPING_RULES = ContainerUtilRt.newLinkedHashMap();
 
   static {
-    GROUPING_RULES.put(GETTERS_AND_SETTERS, Collections.<ArrangementSettingsToken>emptyList());
+    GROUPING_RULES.put(GETTERS_AND_SETTERS, Collections.emptyList());
     GROUPING_RULES.put(OVERRIDDEN_METHODS, ContainerUtilRt.newArrayList(BY_NAME, KEEP));
     GROUPING_RULES.put(DEPENDENT_METHODS, ContainerUtilRt.newArrayList(BREADTH_FIRST, DEPTH_FIRST));
   }

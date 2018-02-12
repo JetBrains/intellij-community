@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
@@ -30,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 9/3/12
  */
 public class XmlPathReferenceInspection extends XmlSuppressableInspectionTool {
   @NotNull
@@ -73,7 +73,8 @@ public class XmlPathReferenceInspection extends XmlSuppressableInspectionTool {
       if (!isHtml && XmlHighlightVisitor.skipValidation(element)) {
         continue;
       }
-      if (XmlHighlightVisitor.hasBadResolve(reference, false)) {
+      final TextRange range = reference.getElement() == null ? null : reference.getElement().getTextRange();
+      if (range != null && !range.isEmpty() && XmlHighlightVisitor.hasBadResolve(reference, false)) {
         holder.registerProblem(reference, ProblemsHolder.unresolvedReferenceMessage(reference),
                                isHtml ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING : ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
       }

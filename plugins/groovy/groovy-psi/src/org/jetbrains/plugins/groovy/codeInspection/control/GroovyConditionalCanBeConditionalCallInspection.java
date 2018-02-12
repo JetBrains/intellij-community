@@ -44,12 +44,6 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return CONTROL_FLOW;
-  }
-
-  @Override
   public String buildErrorString(Object... args) {
     return "Conditional expression can be call #loc";
   }

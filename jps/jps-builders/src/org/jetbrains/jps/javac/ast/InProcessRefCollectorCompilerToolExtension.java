@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,14 +71,14 @@ public class InProcessRefCollectorCompilerToolExtension extends AbstractRefColle
           registrars.add(registrar);
         }
       }
-      myRegistrars = registrars.toArray(new JavacFileReferencesRegistrar[registrars.size()]);
+      myRegistrars = registrars.toArray(new JavacFileReferencesRegistrar[0]);
     }
 
     @Override
     public void consume(JavacFileData data) {
       for (JavacFileReferencesRegistrar registrar : myRegistrars) {
         if (registrar.isEnabled()) {
-          registrar.registerFile(data.getFilePath(), registrar.onlyImports() ? data.getImportRefs() : data.getRefs(), data.getDefs());
+          registrar.registerFile(data.getFilePath(), registrar.onlyImports() ? data.getImportRefs() : data.getRefs(), data.getDefs(), data.getCasts());
         }
       }
     }

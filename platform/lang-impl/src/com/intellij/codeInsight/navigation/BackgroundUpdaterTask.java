@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,36 +17,32 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
-/**
- * User: anna
- */
 public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   protected JBPopup myPopup;
   protected T myComponent;
   private Ref<UsageView> myUsageView;
-  private final List<PsiElement> myData = new ArrayList<>();
+  private final Collection<PsiElement> myData;
 
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Object lock = new Object();
@@ -55,19 +51,17 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   private volatile boolean myFinished;
   private volatile ProgressIndicator myIndicator;
 
-  public BackgroundUpdaterTask(Project project, String title, boolean canBeCancelled) {
-    super(project, title, canBeCancelled);
+  /**
+   * @deprecated Use {@link #BackgroundUpdaterTask(Project, String, Comparator)} instead
+   */
+  @Deprecated
+  public BackgroundUpdaterTask(Project project, @NotNull String title) {
+    this(project, title, null);
   }
-
-  public BackgroundUpdaterTask(Project project, String title) {
+  
+  public BackgroundUpdaterTask(@Nullable Project project, @NotNull String title, @Nullable Comparator<PsiElement> comparator) {
     super(project, title);
-  }
-
-  public BackgroundUpdaterTask(Project project,
-                               String title,
-                               boolean canBeCancelled,
-                               PerformInBackgroundOption backgroundOption) {
-    super(project, title, canBeCancelled, backgroundOption);
+    myData = comparator == null ? ContainerUtil.newSmartList() : new TreeSet<>(comparator);
   }
 
   public void init(@NotNull JBPopup popup, @NotNull T component, @NotNull Ref<UsageView> usageView) {
@@ -78,9 +72,20 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
 
   public abstract String getCaption(int size);
   protected abstract void replaceModel(@NotNull List<PsiElement> data);
+
+  protected static Comparator<PsiElement> createComparatorWrapper(@NotNull Comparator comparator) {
+    return (o1, o2) -> {
+      int diff = comparator.compare(o1, o2);
+      if (diff == 0) {
+        return ReadAction.compute(() -> PsiUtilCore.compareElementsByPosition(o1, o2));
+      }
+      return diff;
+    };
+  }
+
   protected abstract void paintBusy(boolean paintBusy);
 
-  public boolean setCanceled() {
+  private boolean setCanceled() {
     boolean canceled = myCanceled;
     myCanceled = true;
     return canceled;
@@ -90,7 +95,10 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
     return myCanceled;
   }
 
-  public boolean updateComponent(final PsiElement element, @Nullable final Comparator comparator) {
+  /**
+   * @deprecated Use {@link #BackgroundUpdaterTask(Project, String, Comparator)} and {@link #updateComponent(PsiElement)} instead
+   */
+  public boolean updateComponent(@NotNull PsiElement element, @Nullable Comparator comparator) {
     final UsageView view = myUsageView.get();
     if (view != null && !((UsageViewImpl)view).isDisposed()) {
       ApplicationManager.getApplication().runReadAction(() -> view.appendUsage(new UsageInfo2UsageAdapter(new UsageInfo(element))));
@@ -106,8 +114,8 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
     synchronized (lock) {
       if (myData.contains(element)) return true;
       myData.add(element);
-      if (comparator != null) {
-        Collections.sort(myData, comparator);
+      if (comparator != null && myData instanceof List) {
+        Collections.sort((List)myData, comparator);
       }
     }
 
@@ -115,6 +123,28 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
       myAlarm.cancelAllRequests();
       refreshModelImmediately();
     }, 200, modalityState);
+    return true;
+  }
+  
+  public boolean updateComponent(@NotNull PsiElement element) {
+    final UsageView view = myUsageView.get();
+    if (view != null && !((UsageViewImpl)view).isDisposed()) {
+      ApplicationManager.getApplication().runReadAction(() -> view.appendUsage(new UsageInfo2UsageAdapter(new UsageInfo(element))));
+      return true;
+    }
+
+    if (myCanceled) return false;
+    final JComponent content = myPopup.getContent();
+    if (content == null || myPopup.isDisposed()) return false;
+
+    synchronized (lock) {
+      if (!myData.add(element)) return true;
+    }
+
+    myAlarm.addRequest(() -> {
+      myAlarm.cancelAllRequests();
+      refreshModelImmediately();
+    }, 200, ModalityState.stateForComponent(content));
     return true;
   }
 
@@ -145,6 +175,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
 
   @Override
   public void onSuccess() {
+    myFinished = true;
     refreshModelImmediately();
     paintBusy(false);
   }
@@ -159,7 +190,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   protected PsiElement getTheOnlyOneElement() {
     synchronized (lock) {
       if (myData.size() == 1) {
-        return myData.get(0);
+        return myData.iterator().next();
       }
     }
     return null;

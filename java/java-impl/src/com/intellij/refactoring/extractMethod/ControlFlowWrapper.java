@@ -25,14 +25,13 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 public class ControlFlowWrapper {
-  private static final Logger LOG = Logger.getInstance("#" + ControlFlowWrapper.class.getName());
+  private static final Logger LOG = Logger.getInstance(ControlFlowWrapper.class);
 
   private final ControlFlow myControlFlow;
   private final int myFlowStart;
@@ -147,6 +146,10 @@ public class ControlFlowWrapper {
     return myExitStatements;
   }
 
+  public boolean needVariableValueAfterEnd(PsiVariable variable) {
+    return ControlFlowUtil.needVariableValueAt(variable, myControlFlow, myFlowEnd);
+  }
+
   public static class ExitStatementsNotSameException extends Exception {}
 
 
@@ -190,7 +193,7 @@ public class ControlFlowWrapper {
         });
       }
 
-      myOutputVariables = outputVariables.toArray(new PsiVariable[outputVariables.size()]);
+      myOutputVariables = outputVariables.toArray(new PsiVariable[0]);
     }
     Arrays.sort(myOutputVariables, PsiUtil.BY_POSITION);
     return myOutputVariables;

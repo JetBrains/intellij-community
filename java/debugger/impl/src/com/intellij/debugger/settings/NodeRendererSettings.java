@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -41,7 +27,6 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.InternalIterator;
 import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -73,18 +58,18 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     createCompoundReferenceRenderer(
       "Map", CommonClassNames.JAVA_UTIL_MAP,
       createLabelRenderer(" size = ", "size()", null),
-      createExpressionChildrenRenderer("entrySet().toArray()", "!isEmpty()")
+      createExpressionArrayChildrenRenderer("entrySet().toArray()", "!isEmpty()", myArrayRenderer)
     ),
     createCompoundReferenceRenderer(
       "Map.Entry", "java.util.Map$Entry",
       new MapEntryLabelRenderer()/*createLabelRenderer(null, "\" \" + getKey() + \" -> \" + getValue()", null)*/,
       createEnumerationChildrenRenderer(new String[][]{{"key", "getKey()"}, {"value", "getValue()"}})
     ),
-    new ListObjectRenderer(this),
+    new ListObjectRenderer(this, myArrayRenderer),
     createCompoundReferenceRenderer(
       "Collection", "java.util.Collection",
       createLabelRenderer(" size = ", "size()", null),
-      createExpressionChildrenRenderer("toArray()", "!isEmpty()")
+      createExpressionArrayChildrenRenderer("toArray()", "!isEmpty()", myArrayRenderer)
     )
   };
   @NonNls private static final String HEX_VIEW_ENABLED = "HEX_VIEW_ENABLED";
@@ -135,7 +120,6 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
 
     try {
-      element.addContent(writeRenderer(myArrayRenderer));
       element.addContent(writeRenderer(myToStringRenderer));
       element.addContent(writeRenderer(myClassRenderer));
       element.addContent(writeRenderer(myPrimitiveRenderer));
@@ -153,15 +137,15 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
 
   @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public void loadState(final Element root) {
+  public void loadState(@NotNull final Element root) {
     final String hexEnabled = JDOMExternalizerUtil.readField(root, HEX_VIEW_ENABLED);
     if (hexEnabled != null) {
-      myHexRenderer.setEnabled("true".equalsIgnoreCase(hexEnabled));
+      myHexRenderer.setEnabled(Boolean.parseBoolean(hexEnabled));
     }
 
     final String alternativeEnabled = JDOMExternalizerUtil.readField(root, ALTERNATIVE_COLLECTION_VIEW_ENABLED);
     if (alternativeEnabled != null) {
-      setAlternateCollectionViewsEnabled("true".equalsIgnoreCase(alternativeEnabled));
+      setAlternateCollectionViewsEnabled(Boolean.parseBoolean(alternativeEnabled));
     }
 
     for (final Element elem : root.getChildren(RENDERER_TAG)) {
@@ -170,11 +154,12 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
         continue;
       }
       try {
-        if (ArrayRenderer.UNIQUE_ID.equals(id)) {
-          myArrayRenderer.readExternal(elem);
-        }
-        else if (ToStringRenderer.UNIQUE_ID.equals(id)) {
+        if (ToStringRenderer.UNIQUE_ID.equals(id)) {
           myToStringRenderer.readExternal(elem);
+          if (!myToStringRenderer.isEnabled()) {
+            myToStringRenderer.setEnabled(true);
+            myToStringRenderer.setOnDemand(true);
+          }
         }
         else if (ClassRenderer.UNIQUE_ID.equals(id)) {
           myClassRenderer.readExternal(elem);
@@ -240,12 +225,9 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     final List<NodeRenderer> allRenderers = new ArrayList<>();
 
     // user defined renderers must come first
-    myCustomRenderers.iterateRenderers(new InternalIterator<NodeRenderer>() {
-      @Override
-      public boolean visit(final NodeRenderer renderer) {
-        allRenderers.add(renderer);
-        return true;
-      }
+    myCustomRenderers.iterateRenderers(renderer -> {
+      allRenderers.add(renderer);
+      return true;
     });
 
     // plugins registered renderers come after that
@@ -344,6 +326,14 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     return renderer;
   }
 
+  private static ExpressionChildrenRenderer createExpressionArrayChildrenRenderer(String expressionText,
+                                                                                  String childrenExpandableText,
+                                                                                  ArrayRenderer arrayRenderer) {
+    ExpressionChildrenRenderer renderer = createExpressionChildrenRenderer(expressionText, childrenExpandableText);
+    renderer.setPredictedRenderer(arrayRenderer);
+    return renderer;
+  }
+
   public static ExpressionChildrenRenderer createExpressionChildrenRenderer(@NonNls String expressionText,
                                                                              @NonNls String childrenExpandableText) {
     final ExpressionChildrenRenderer childrenRenderer = new ExpressionChildrenRenderer();
@@ -355,12 +345,12 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   }
 
   public static EnumerationChildrenRenderer createEnumerationChildrenRenderer(@NonNls String[][] expressions) {
-    final EnumerationChildrenRenderer childrenRenderer = new EnumerationChildrenRenderer();
+    EnumerationChildrenRenderer childrenRenderer = new EnumerationChildrenRenderer();
     if (expressions != null && expressions.length > 0) {
-      final ArrayList<Pair<String, TextWithImports>> childrenList = new ArrayList<>(expressions.length);
-      for (final String[] expression : expressions) {
-        childrenList.add(
-          new Pair<>(expression[0], new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression[1], "", StdFileTypes.JAVA)));
+      ArrayList<EnumerationChildrenRenderer.ChildInfo> childrenList = new ArrayList<>(expressions.length);
+      for (String[] expression : expressions) {
+        childrenList.add(new EnumerationChildrenRenderer.ChildInfo(
+          expression[0], new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expression[1], "", StdFileTypes.JAVA), false));
       }
       childrenRenderer.setChildren(childrenList);
     }
@@ -473,11 +463,11 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   }
 
   private static class ListObjectRenderer extends CompoundReferenceRenderer {
-    public ListObjectRenderer(NodeRendererSettings rendererSettings) {
+    public ListObjectRenderer(NodeRendererSettings rendererSettings, ArrayRenderer arrayRenderer) {
       super(rendererSettings,
             "List",
             createLabelRenderer(" size = ", "size()", null),
-            createExpressionChildrenRenderer("toArray()", "!isEmpty()"));
+            createExpressionArrayChildrenRenderer("toArray()", "!isEmpty()", arrayRenderer));
       setClassName(CommonClassNames.JAVA_UTIL_LIST);
     }
 

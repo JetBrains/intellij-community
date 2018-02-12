@@ -43,7 +43,6 @@ import java.util.*;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 7/26/11
  */
 public class XmlPropertiesFileImpl extends XmlPropertiesFile {
   public static final String ENTRY_TAG_NAME = "entry";
@@ -152,8 +151,7 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
     final XmlTag rootTag = myFile.getRootTag();
     final XmlTag entry = createPropertyTag(key, value);
     final XmlTag addedEntry = (XmlTag) (anchorTag == null ? myFile.getRootTag().addSubTag(entry, !addToEnd) : rootTag.addAfter(entry, anchorTag));
-    final XmlProperty property = new XmlProperty(addedEntry, this);
-    return property;
+    return new XmlProperty(addedEntry, this);
   }
 
   @NotNull
@@ -197,7 +195,7 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
     return entry;
   }
 
-  public static PropertiesFile getPropertiesFile(final PsiFile file) {
+  public static PropertiesFile getPropertiesFile(@NotNull PsiFile file) {
     CachedValuesManager manager = CachedValuesManager.getManager(file.getProject());
     if (file instanceof XmlFile) {
       return manager.getCachedValue(file, KEY,

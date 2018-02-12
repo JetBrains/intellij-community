@@ -29,12 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Aug 12, 2009
- * Time: 7:03:13 PM
- */
 public class PySubTypesHierarchyTreeStructure extends HierarchyTreeStructure {
   protected PySubTypesHierarchyTreeStructure(final Project project, final HierarchyNodeDescriptor baseDescriptor) {
     super(project, baseDescriptor);

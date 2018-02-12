@@ -21,13 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Kirill.Safonov
- * Date: 26.10.11
- * Time: 16:50
- * To change this template use File | Settings | File Templates.
- */
 public interface XmlBasedSettings {
   @NotNull
   Element getRootElement();

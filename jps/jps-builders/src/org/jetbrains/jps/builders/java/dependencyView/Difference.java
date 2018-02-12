@@ -22,14 +22,13 @@ import java.util.*;
 
 /**
  * @author: db
- * Date: 01.03.11
  */
 public abstract class Difference {
 
-  public static boolean weakerAccess(final int me, final int then) {
-    return ((me & Opcodes.ACC_PRIVATE) > 0 && (then & Opcodes.ACC_PRIVATE) == 0) ||
-           ((me & Opcodes.ACC_PROTECTED) > 0 && (then & Opcodes.ACC_PUBLIC) > 0) ||
-           (isPackageLocal(me) && (then & Opcodes.ACC_PROTECTED) > 0);
+  public static boolean weakerAccess(final int me, final int than) {
+    return ((me & Opcodes.ACC_PRIVATE) > 0 && (than & Opcodes.ACC_PRIVATE) == 0) ||
+           ((me & Opcodes.ACC_PROTECTED) > 0 && (than & Opcodes.ACC_PUBLIC) > 0) ||
+           (isPackageLocal(me) && (than & (Opcodes.ACC_PROTECTED | Opcodes.ACC_PUBLIC)) > 0);
   }
 
   private static boolean isPackageLocal(final int access) {
@@ -56,6 +55,26 @@ public abstract class Difference {
   }
 
   public static <T, D extends Difference> Specifier<T, D> make(final Set<T> past, final Set<T> now) {
+    if ((past == null || past.isEmpty()) && (now == null || now.isEmpty())) {
+      return new Specifier<T, D>() {
+        public Collection<T> added() {
+          return Collections.emptySet();
+        }
+
+        public Collection<T> removed() {
+          return Collections.emptySet();
+        }
+
+        public Collection<Pair<T, D>> changed() {
+          return Collections.emptySet();
+        }
+
+        public boolean unchanged() {
+          return true;
+        }
+      };
+    }
+    
     if (past == null) {
       final Collection<T> _now = Collections.unmodifiableCollection(now);
       return new Specifier<T, D>() {
@@ -78,11 +97,9 @@ public abstract class Difference {
     }
 
     final Set<T> added = new HashSet<>(now);
-
     added.removeAll(past);
 
     final Set<T> removed = new HashSet<>(past);
-
     removed.removeAll(now);
 
     final Set<Pair<T, D>> changed;
@@ -133,7 +150,7 @@ public abstract class Difference {
     };
   }
 
-  private static <T> boolean canContainChangedElements(final Set<T> past, final Set<T> now) {
+  private static <T> boolean canContainChangedElements(final Collection<T> past, final Collection<T> now) {
     if (past != null && now != null && !past.isEmpty() && !now.isEmpty()) {
       return past.iterator().next() instanceof Proto;
     }
@@ -144,7 +161,7 @@ public abstract class Difference {
 
   public abstract boolean no();
 
-  public abstract boolean weakedAccess();
+  public abstract boolean accessRestricted();
 
   public abstract int addedModifiers();
 

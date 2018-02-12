@@ -23,6 +23,7 @@ import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.PropertyOwner;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiElement;
@@ -34,7 +35,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public class JavaLambdaNodeProvider implements FileStructureNodeProvider<JavaLambdaTreeElement>, PropertyOwner {
+public class JavaLambdaNodeProvider
+  implements FileStructureNodeProvider<JavaLambdaTreeElement>, PropertyOwner, DumbAware {
   public static final String ID = "SHOW_LAMBDA";
   public static final String JAVA_LAMBDA_PROPERTY_NAME = "java.lambda.provider";
 

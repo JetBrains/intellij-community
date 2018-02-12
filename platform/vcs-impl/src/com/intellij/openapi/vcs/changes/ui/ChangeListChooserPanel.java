@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,14 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListCompletionContributor;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;
 import com.intellij.ui.*;
 import com.intellij.util.NullableConsumer;
@@ -51,6 +48,7 @@ public class ChangeListChooserPanel extends JPanel {
   private final Project myProject;
   private String myLastTypedDescription;
   private boolean myNewNameSuggested = false;
+  @Nullable private ChangeListData myData;
 
   public ChangeListChooserPanel(final Project project, @NotNull final NullableConsumer<String> okEnabledListener) {
     super(new BorderLayout());
@@ -135,10 +133,14 @@ public class ChangeListChooserPanel extends JPanel {
   }
 
   public void setChangeLists(Collection<? extends ChangeList> changeLists) {
-    myExistingListsCombo.setModel(new DefaultComboBoxModel<>(changeLists.toArray(new ChangeList[changeLists.size()])));
+    myExistingListsCombo.setModel(new DefaultComboBoxModel<>(changeLists.toArray(new ChangeList[0])));
   }
 
   public void setSuggestedName(@NotNull String name) {
+    setSuggestedName(name, null);
+  }
+
+  public void setSuggestedName(@NotNull String name, @Nullable String comment) {
     if (StringUtil.isEmptyOrSpaces(name)) return;
     LocalChangeList changelistByName = getExistingChangelistByName(name);
     if (changelistByName != null) {
@@ -146,8 +148,11 @@ public class ChangeListChooserPanel extends JPanel {
     }
     else {
       myNewNameSuggested = true;
+      myExistingListsCombo.insertItemAt(LocalChangeList.createEmptyChangeList(myProject, name), 0);
+      if (StringUtil.isEmptyOrSpaces(myLastTypedDescription)) {
+        myLastTypedDescription = comment;
+      }
       if (VcsConfiguration.getInstance(myProject).PRESELECT_EXISTING_CHANGELIST) {
-        myExistingListsCombo.insertItemAt(LocalChangeList.createEmptyChangeList(myProject, name), 0);
         selectActiveChangeListIfExist();
       }
       else {
@@ -159,6 +164,10 @@ public class ChangeListChooserPanel extends JPanel {
 
   private void selectActiveChangeListIfExist() {
     myExistingListsCombo.setSelectedItem(ChangeListManager.getInstance(myProject).getDefaultChangeList());
+  }
+
+  public void setData(@Nullable ChangeListData data) {
+    myData = data;
   }
 
   public void updateEnabled() {
@@ -177,12 +186,12 @@ public class ChangeListChooserPanel extends JPanel {
     LocalChangeList localChangeList = manager.findChangeList(changeListName);
 
     if (localChangeList == null) {
-      localChangeList = manager.addChangeList(changeListName, myListPanel.getDescription());
+      localChangeList = ((ChangeListManagerEx)manager).addChangeList(changeListName, myListPanel.getDescription(), myData);
       myListPanel.changelistCreatedOrChanged(localChangeList);
     }
     else {
       //update description if changed
-      localChangeList.setComment(myListPanel.getDescription());
+      manager.editComment(changeListName, myListPanel.getDescription());
     }
     rememberSettings(project, localChangeList.isDefault(), myListPanel.getMakeActiveCheckBox().isSelected());
     if (myListPanel.getMakeActiveCheckBox().isSelected()) {
@@ -244,7 +253,7 @@ public class ChangeListChooserPanel extends JPanel {
       panel.setBorder(JBUI.Borders.empty(1, 1, 1, 4));
       panel.add(label, BorderLayout.CENTER);
       myEditorTextField = new LanguageTextField(PlainTextLanguage.INSTANCE, myProject, "");
-      myEditorTextField.addDocumentListener(new DocumentAdapter() {
+      myEditorTextField.addDocumentListener(new DocumentListener() {
         @Override
         public void documentChanged(DocumentEvent e) {
           String changeListName = e.getDocument().getText();

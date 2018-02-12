@@ -21,7 +21,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
@@ -36,7 +36,7 @@ import java.util.List;
 /**
  * @author vlan
  */
-public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
+public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   private static final String TEST_DIRECTORY = "inspections/PyUnresolvedReferencesInspection3K/";
 
   @Override
@@ -44,30 +44,40 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
     return ourPy3Descriptor;
   }
 
-  private void doTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
-      myFixture.configureByFile(TEST_DIRECTORY + getTestName(true) + ".py");
-      myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
-      myFixture.checkHighlighting(true, false, false);
-    });
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyUnresolvedReferencesInspection.class;
   }
 
-  private void doMultiFileTest(@NotNull final String filename) {
-    doMultiFileTest(filename, Collections.emptyList());
+  @Override
+  protected String getTestCaseDirectory() {
+    return TEST_DIRECTORY;
   }
 
-  private void doMultiFileTest(@NotNull final String filename, @NotNull List<String> sourceRoots) {
+  @Override
+  protected void doTest() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> super.doTest());
+  }
+
+  @Override
+  protected void doMultiFileTest(@NotNull final String filename) {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> super.doMultiFileTest(filename));
+  }
+
+  protected void doMultiFileTest(@NotNull String filename, @NotNull List<String> sourceRoots) {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
-      final String testName = getTestName(false);
-      myFixture.copyDirectoryToProject(TEST_DIRECTORY + testName, "");
+      myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
       final Module module = myFixture.getModule();
       for (String root : sourceRoots) {
         PsiTestUtil.addSourceRoot(module, myFixture.findFileInTempDir(root));
       }
       try {
-        myFixture.configureFromTempProjectFile(filename);
-        myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
-        myFixture.checkHighlighting(true, false, false);
+        final PsiFile currentFile = myFixture.configureFromTempProjectFile(filename);
+        myFixture.enableInspections(getInspectionClass());
+        myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
+        assertProjectFilesNotParsed(currentFile);
+        assertSdkRootsNotParsed(currentFile);
       }
       finally {
         for (String root : sourceRoots) {
@@ -112,14 +122,14 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
     for (PyClass cls : classes) {
       final PsiFile file = cls.getContainingFile();
       if (file instanceof PyFile) {
-        assertNotParsed((PyFile)file);
+        assertNotParsed(file);
       }
     }
   }
 
   // PY-9011
   public void testDatetimeDateAttributesOutsideClass() {
-    doMultiFileTest("a.py");
+    doTest();
   }
 
   public void testObjectNewAttributes() {
@@ -147,7 +157,6 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
 
   // PY-17841
   public void testTypingParameterizedTypeIndexing() {
-    myFixture.copyDirectoryToProject("typing", "");
     doTest();
   }
 
@@ -203,6 +212,41 @@ public class Py3UnresolvedReferencesInspectionTest extends PyTestCase {
 
   // PY-22642
   public void testTypingGenericDunderGetItem() {
+    doTest();
+  }
+
+  // PY-27102
+  public void testTypingGenericIndirectInheritorGetItem() {
+    doTest();
+  }
+
+  // PY-28177
+  public void testTypingOpaqueNameDunderGetItem() {
+    doTest();
+  }
+
+  // PY-21655
+  public void testUsageOfFunctionDecoratedWithAsyncioCoroutine() {
+    doMultiFileTest("a.py");
+  }
+
+  // PY-21655
+  public void testUsageOfFunctionDecoratedWithTypesCoroutine() {
+    doMultiFileTest("a.py");
+  }
+
+  // PY-22899, PY-22937
+  public void testCallTypeGetAttributeAndSetAttrInInheritor() {
+    doTest();
+  }
+
+  // PY-8936
+  public void testDescriptorAttribute() {
+    doTest();
+  }
+
+  // PY-13273
+  public void testComprehensionInDecorator() {
     doTest();
   }
 }

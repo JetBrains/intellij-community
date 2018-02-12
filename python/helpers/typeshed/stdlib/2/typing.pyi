@@ -1,23 +1,36 @@
 # Stubs for typing (Python 2.7)
 
 from abc import abstractmethod, ABCMeta
+from types import CodeType, FrameType, TracebackType
+import collections  # Needed by aliases like DefaultDict, see mypy issue 2986
 
-# Definitions of special type checking related constructs.  Their definition
+# Definitions of special type checking related constructs.  Their definitions
 # are not used, so their value does not matter.
 
 overload = object()
 Any = object()
 TypeVar = object()
-Generic = object()
-Tuple = object()
-Callable = object()
-Type = object()
 _promote = object()
-ClassVar = object()
+no_type_check = object()
+
+class _SpecialForm(object):
+    def __getitem__(self, typeargs: Any) -> object: ...
+
+Tuple: _SpecialForm = ...
+Generic: _SpecialForm = ...
+Protocol: _SpecialForm = ...
+Callable: _SpecialForm = ...
+Type: _SpecialForm = ...
+ClassVar: _SpecialForm = ...
 
 class GenericMeta(type): ...
 
-# Type aliases
+# Return type that indicates a function does not return.
+# This type is equivalent to the None type, but the no-op Union is necessary to
+# distinguish the None type from the None value.
+NoReturn = Union[None]
+
+# Type aliases and type constructors
 
 class TypeAlias:
     # Class for defining generic aliases for library types.
@@ -30,6 +43,7 @@ List = TypeAlias(object)
 Dict = TypeAlias(object)
 DefaultDict = TypeAlias(object)
 Set = TypeAlias(object)
+FrozenSet = TypeAlias(object)
 Counter = TypeAlias(object)
 Deque = TypeAlias(object)
 
@@ -48,36 +62,60 @@ _V_co = TypeVar('_V_co', covariant=True)  # Any type covariant containers.
 _KT_co = TypeVar('_KT_co', covariant=True)  # Key type covariant containers.
 _VT_co = TypeVar('_VT_co', covariant=True)  # Value type covariant containers.
 _T_contra = TypeVar('_T_contra', contravariant=True)  # Ditto contravariant.
+_TC = TypeVar('_TC', bound=Type[object])
 
-class SupportsInt(metaclass=ABCMeta):
+def runtime(cls: _TC) -> _TC: ...
+
+@runtime
+class SupportsInt(Protocol, metaclass=ABCMeta):
     @abstractmethod
     def __int__(self) -> int: ...
 
-class SupportsFloat(metaclass=ABCMeta):
+@runtime
+class SupportsFloat(Protocol, metaclass=ABCMeta):
     @abstractmethod
     def __float__(self) -> float: ...
 
-class SupportsAbs(Generic[_T]):
+@runtime
+class SupportsComplex(Protocol, metaclass=ABCMeta):
     @abstractmethod
-    def __abs__(self) -> _T: ...
+    def __complex__(self) -> complex: ...
 
-class SupportsRound(Generic[_T]):
+@runtime
+class SupportsAbs(Protocol[_T_co]):
     @abstractmethod
-    def __round__(self, ndigits: int = ...) -> _T: ...
+    def __abs__(self) -> _T_co: ...
 
-class Reversible(Generic[_T_co]):
+@runtime
+class SupportsRound(Protocol[_T_co]):
+    @abstractmethod
+    def __round__(self, ndigits: int = ...) -> _T_co: ...
+
+@runtime
+class Reversible(Protocol[_T_co]):
     @abstractmethod
     def __reversed__(self) -> Iterator[_T_co]: ...
 
-class Sized(metaclass=ABCMeta):
+@runtime
+class Sized(Protocol, metaclass=ABCMeta):
     @abstractmethod
     def __len__(self) -> int: ...
 
-class Iterable(Generic[_T_co]):
+@runtime
+class Hashable(Protocol, metaclass=ABCMeta):
+    # TODO: This is special, in that a subclass of a hashable class may not be hashable
+    #   (for example, list vs. object). It's not obvious how to represent this. This class
+    #   is currently mostly useless for static checking.
+    @abstractmethod
+    def __hash__(self) -> int: ...
+
+@runtime
+class Iterable(Protocol[_T_co]):
     @abstractmethod
     def __iter__(self) -> Iterator[_T_co]: ...
 
-class Iterator(Iterable[_T_co], Generic[_T_co]):
+@runtime
+class Iterator(Iterable[_T_co], Protocol[_T_co]):
     @abstractmethod
     def next(self) -> _T_co: ...
 
@@ -89,12 +127,19 @@ class Generator(Iterator[_T_co], Generic[_T_co, _T_contra, _V_co]):
     def send(self, value: _T_contra) -> _T_co: ...
 
     @abstractmethod
-    def throw(self, typ: BaseException, val: Any = None, tb: Any = None) -> None: ...
+    def throw(self, typ: Type[BaseException], val: Optional[BaseException] = ...,
+              # TODO: tb should be TracebackType but that's defined in types
+              tb: Any = ...) -> _T_co: ...
 
     @abstractmethod
     def close(self) -> None: ...
 
-class Container(Generic[_T_co]):
+    gi_code = ...  # type: CodeType
+    gi_frame = ...  # type: FrameType
+    gi_running = ...  # type: bool
+
+@runtime
+class Container(Protocol[_T_co]):
     @abstractmethod
     def __contains__(self, x: object) -> bool: ...
 
@@ -121,8 +166,12 @@ class MutableSequence(Sequence[_T], Generic[_T]):
     @overload
     @abstractmethod
     def __setitem__(self, s: slice, o: Iterable[_T]) -> None: ...
+    @overload
     @abstractmethod
-    def __delitem__(self, i: Union[int, slice]) -> None: ...
+    def __delitem__(self, i: int) -> None: ...
+    @overload
+    @abstractmethod
+    def __delitem__(self, i: slice) -> None: ...
     # Mixin methods
     def append(self, object: _T) -> None: ...
     def extend(self, iterable: Iterable[_T]) -> None: ...
@@ -145,8 +194,6 @@ class AbstractSet(Sized, Iterable[_T_co], Container[_T_co], Generic[_T_co]):
     def __xor__(self, s: AbstractSet[_T]) -> AbstractSet[Union[_T_co, _T]]: ...
     # TODO: argument can be any container?
     def isdisjoint(self, s: AbstractSet[Any]) -> bool: ...
-
-class FrozenSet(AbstractSet[_T_co], Generic[_T_co]): ...
 
 class MutableSet(AbstractSet[_T], Generic[_T]):
     @abstractmethod
@@ -177,6 +224,13 @@ class ValuesView(MappingView, Iterable[_VT_co], Generic[_VT_co]):
     def __contains__(self, o: object) -> bool: ...
     def __iter__(self) -> Iterator[_VT_co]: ...
 
+@runtime
+class ContextManager(Protocol[_T_co]):
+    def __enter__(self) -> _T_co: ...
+    def __exit__(self, exc_type: Optional[Type[BaseException]],
+                 exc_value: Optional[BaseException],
+                 traceback: Optional[TracebackType]) -> Optional[bool]: ...
+
 class Mapping(Iterable[_KT], Container[_KT], Sized, Generic[_KT, _VT_co]):
     # TODO: We wish the key type could also be covariant, but that doesn't work,
     # see discussion in https: //github.com/python/typing/pull/273.
@@ -184,9 +238,9 @@ class Mapping(Iterable[_KT], Container[_KT], Sized, Generic[_KT, _VT_co]):
     def __getitem__(self, k: _KT) -> _VT_co:
         ...
     # Mixin methods
-    @overload  # type: ignore
+    @overload
     def get(self, k: _KT) -> Optional[_VT_co]: ...
-    @overload  # type: ignore
+    @overload
     def get(self, k: _KT, default: Union[_VT_co, _T]) -> Union[_VT_co, _T]: ...
     def keys(self) -> list[_KT]: ...
     def values(self) -> list[_VT_co]: ...
@@ -203,13 +257,18 @@ class MutableMapping(Mapping[_KT, _VT], Generic[_KT, _VT]):
     def __delitem__(self, v: _KT) -> None: ...
 
     def clear(self) -> None: ...
-    def pop(self, k: _KT, default: _VT = ...) -> _VT: ...
+    @overload
+    def pop(self, k: _KT) -> _VT: ...
+    @overload
+    def pop(self, k: _KT, default: Union[_VT, _T] = ...) -> Union[_VT, _T]: ...
     def popitem(self) -> Tuple[_KT, _VT]: ...
     def setdefault(self, k: _KT, default: _VT = ...) -> _VT: ...
     @overload
-    def update(self, m: Mapping[_KT, _VT], **kwargs: _VT) -> None: ...
+    def update(self, __m: Mapping[_KT, _VT], **kwargs: _VT) -> None: ...
     @overload
-    def update(self, m: Iterable[Tuple[_KT, _VT]], **kwargs: _VT) -> None: ...
+    def update(self, __m: Iterable[Tuple[_KT, _VT]], **kwargs: _VT) -> None: ...
+    @overload
+    def update(self, **kwargs: _VT) -> None: ...
 
 Text = unicode
 
@@ -242,18 +301,18 @@ class IO(Iterator[AnyStr], Generic[AnyStr]):
     @abstractmethod
     def readlines(self, hint: int = ...) -> list[AnyStr]: ...
     @abstractmethod
-    def seek(self, offset: int, whence: int = ...) -> None: ...
+    def seek(self, offset: int, whence: int = ...) -> int: ...
     @abstractmethod
     def seekable(self) -> bool: ...
     @abstractmethod
     def tell(self) -> int: ...
     @abstractmethod
-    def truncate(self, size: int = ...) -> Optional[int]: ...
+    def truncate(self, size: Optional[int] = ...) -> int: ...
     @abstractmethod
     def writable(self) -> bool: ...
     # TODO buffer objects
     @abstractmethod
-    def write(self, s: AnyStr) -> None: ...
+    def write(self, s: AnyStr) -> int: ...
     @abstractmethod
     def writelines(self, lines: Iterable[AnyStr]) -> None: ...
 
@@ -289,6 +348,8 @@ class TextIO(IO[unicode]):
     def newlines(self) -> Any: ...  # None, str or tuple
     @abstractmethod
     def __enter__(self) -> TextIO: ...
+
+class ByteString(Sequence[int]): ...
 
 class Match(Generic[AnyStr]):
     pos = 0
@@ -352,7 +413,8 @@ class Pattern(Generic[AnyStr]):
 
 # Functions
 
-def get_type_hints(obj: Callable) -> dict[str, Any]: ...
+def get_type_hints(obj: Callable, globalns: Optional[dict[Text, Any]] = ...,
+                   localns: Optional[dict[Text, Any]] = ...) -> None: ...
 
 def cast(tp: Type[_T], obj: Any) -> _T: ...
 
@@ -362,8 +424,8 @@ def cast(tp: Type[_T], obj: Any) -> _T: ...
 class NamedTuple(tuple):
     _fields = ...  # type: Tuple[str, ...]
 
-    def __init__(self, typename: str, fields: Iterable[Tuple[str, Any]], *,
-                 verbose: bool = ..., rename: bool = ...) -> None: ...
+    def __init__(self, typename: str, fields: Iterable[Tuple[str, Any]] = ..., *,
+                 verbose: bool = ..., rename: bool = ..., **kwargs: Any) -> None: ...
 
     @classmethod
     def _make(cls, iterable: Iterable[Any]) -> NamedTuple: ...

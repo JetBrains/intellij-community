@@ -21,11 +21,6 @@ import com.intellij.psi.PsiElement;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 13.08.2007
- */
 public class EscapeUtil {
   @SuppressWarnings({ "SSBasedInspection" })
   public static String unescapeText(@NotNull PsiElement element) {

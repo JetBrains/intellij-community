@@ -16,8 +16,10 @@
 package com.jetbrains.env;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.jetbrains.python.sdkTools.SdkCreationType;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -28,7 +30,7 @@ import org.junit.Test;
  */
 public final class PyCaseSensitiveResolveTest extends PyEnvTestCase {
   @Test
-  public void testCaseSensitive() throws Exception {
+  public void testCaseSensitive() {
     runTest(new PyExecutionFixtureTestTask(null) {
       @NotNull
       @Override
@@ -37,7 +39,7 @@ public final class PyCaseSensitiveResolveTest extends PyEnvTestCase {
       }
 
       @Override
-      public void runTestOn(@NotNull  final String sdkHome) throws Exception {
+      public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws Exception {
         createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_AND_SKELETONS);
         ApplicationManager.getApplication().invokeAndWait(() -> {
           myFixture.copyDirectoryToProject("", "");

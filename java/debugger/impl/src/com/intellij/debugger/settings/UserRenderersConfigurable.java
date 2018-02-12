@@ -29,7 +29,6 @@ import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.InternalIterator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -172,16 +171,13 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
     myRendererChooser.removeAllElements();
     final RendererConfiguration rendererConfiguration = settings.getCustomRenderers();
     final ArrayList<NodeRenderer> elementsToSelect = new ArrayList<>(1);
-    rendererConfiguration.iterateRenderers(new InternalIterator<NodeRenderer>() {
-      @Override
-      public boolean visit(final NodeRenderer renderer) {
-        final NodeRenderer clonedRenderer = (NodeRenderer)renderer.clone();
-      myRendererChooser.addElement(clonedRenderer, clonedRenderer.isEnabled());
-      if (elementsToSelect.size() == 0) {
-        elementsToSelect.add(clonedRenderer);
-      }
-      return true;
-      }
+    rendererConfiguration.iterateRenderers(renderer -> {
+      final NodeRenderer clonedRenderer = (NodeRenderer)renderer.clone();
+    myRendererChooser.addElement(clonedRenderer, clonedRenderer.isEnabled());
+    if (elementsToSelect.size() == 0) {
+      elementsToSelect.add(clonedRenderer);
+    }
+    return true;
     });
     myRendererChooser.selectElements(elementsToSelect);
     updateCurrentRenderer(elementsToSelect);

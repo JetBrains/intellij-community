@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -27,11 +15,10 @@ import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.WindowStateService;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.FlatSpeedSearchPopup;
-import com.intellij.ui.ErrorLabel;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScrollingUtil;
-import com.intellij.ui.SeparatorWithText;
+import com.intellij.ui.*;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.KeepingPopupOpenAction;
 import com.intellij.ui.popup.PopupFactoryImpl;
@@ -40,7 +27,7 @@ import com.intellij.ui.popup.list.IconListPopupRenderer;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.ListPopupModel;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.FontUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -48,23 +35,33 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicButtonUI;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.List;
 
+import static com.intellij.icons.AllIcons.General.CollapseComponent;
+import static com.intellij.icons.AllIcons.General.CollapseComponentHover;
+import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 
 public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   private static final DataKey<ListPopupModel> POPUP_MODEL = DataKey.create("VcsPopupModel");
+  static final String BRANCH_POPUP = "BranchWidget";
+  private Project myProject;
   private MyPopupListElementRenderer myListElementRenderer;
   private boolean myShown;
-  @NotNull private Dimension myPrevSize = JBUI.emptySize();
   private boolean myUserSizeChanged;
-  private Project myProject;
+  private boolean myInternalSizeChanged;
+  private int myMeanRowHeight;
+  @Nullable private final String myKey;
+  @NotNull private Dimension myPrevSize = JBUI.emptySize();
+  //these toolbar buttons can be null for child popup components
+  @Nullable private MyToolbarButton myRestoreSizeButton;
+  @Nullable private MyToolbarButton mySettingsButton;
+
+  private final List<AnAction> mySettingsActions = ContainerUtil.newArrayList();
 
   public BranchActionGroupPopup(@NotNull String title,
                                 @NotNull Project project,
@@ -75,50 +72,92 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
           preselectActionCondition, true);
     myProject = project;
     DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
-    installOnHoverIconsSupport(getListElementRenderer());
-    if (dimensionKey != null) {
-      Dimension storedSize = WindowStateService.getInstance(myProject).getSizeFor(myProject, dimensionKey);
+    myKey = dimensionKey;
+    if (myKey != null) {
+      Dimension storedSize = WindowStateService.getInstance(myProject).getSizeFor(myProject, myKey);
       if (storedSize != null) {
         //set forced size before component is shown
         setSize(storedSize);
+        myUserSizeChanged = true;
       }
+      createTitlePanelToolbar(myKey);
     }
-    trackDimensions(dimensionKey);
+    myMeanRowHeight = getList().getCellBounds(0, 0).height + UIUtil.getListCellVPadding() * 2;
+  }
+
+  private void createTitlePanelToolbar(@NotNull String dimensionKey) {
+    JPanel panel = new NonOpaquePanel();
+    panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
+    myRestoreSizeButton = new MyToolbarButton("Restore Size", CollapseComponent, CollapseComponentHover, e -> {
+      WindowStateService.getInstance(myProject).putSizeFor(myProject, dimensionKey, null);
+      myInternalSizeChanged = true;
+      pack(true, true);
+    }) {
+      @Override
+      protected boolean isButtonEnabled() {
+        return myUserSizeChanged;
+      }
+    };
+    mySettingsButton = new MyToolbarButton("Settings", AllIcons.General.Gear, AllIcons.General.GearHover, e -> {
+      final ActionPopupMenu popupMenu =
+        ((ActionManagerImpl)ActionManager.getInstance()).createActionPopupMenu(BRANCH_POPUP, new DefaultActionGroup(mySettingsActions));
+      popupMenu.getComponent().show(mySettingsButton, 0, assertNotNull(mySettingsButton).getHeight());
+    }) {
+      @Override
+      protected boolean isButtonEnabled() {
+        return !mySettingsActions.isEmpty();
+      }
+    };
+    mySettingsButton.setBorder(JBUI.Borders.emptyLeft(4));
+
+    panel.add(myRestoreSizeButton);
+    panel.add(mySettingsButton);
+    getTitle().setButtonComponent(new ActiveComponent.Adapter() {
+      @Override
+      public JComponent getComponent() {
+        return panel;
+      }
+    }, JBUI.Borders.emptyRight(2));
   }
 
   //for child popups only
   private BranchActionGroupPopup(@Nullable WizardPopup aParent, @NotNull ListPopupStep aStep, @Nullable Object parentValue) {
     super(aParent, aStep, DataContext.EMPTY_CONTEXT, parentValue);
-    DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
-    installOnHoverIconsSupport(getListElementRenderer());
     // don't store children popup userSize;
-    trackDimensions(null);
+    myKey = null;
+    DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
   }
 
   private void trackDimensions(@Nullable String dimensionKey) {
-    getComponent().addComponentListener(new ComponentAdapter() {
+    Window popupWindow = getPopupWindow();
+    if (popupWindow == null) return;
+    ComponentListener windowListener = new ComponentAdapter() {
       @Override
       public void componentResized(ComponentEvent e) {
         if (myShown) {
           processOnSizeChanged();
         }
       }
-    });
-    if (dimensionKey != null) {
-      addPopupListener(new JBPopupAdapter() {
-        @Override
-        public void onClosed(LightweightWindowEvent event) {
-          if (myUserSizeChanged) {
-            WindowStateService.getInstance(myProject).putSizeFor(myProject, dimensionKey, myPrevSize);
-          }
+    };
+    popupWindow.addComponentListener(windowListener);
+    addPopupListener(new JBPopupAdapter() {
+      @Override
+      public void onClosed(LightweightWindowEvent event) {
+        popupWindow.removeComponentListener(windowListener);
+        if (dimensionKey != null && myUserSizeChanged) {
+          WindowStateService.getInstance(myProject).putSizeFor(myProject, dimensionKey, myPrevSize);
         }
-      });
-    }
+      }
+    });
   }
 
   private void processOnSizeChanged() {
-    Dimension newSize = ObjectUtils.assertNotNull(getSize());
-    if (myPrevSize.height < newSize.height) {
+    Dimension newSize = assertNotNull(getSize());
+    int preferredHeight = getComponent().getPreferredSize().height;
+    int realHeight = getComponent().getHeight();
+    boolean shouldExpand = preferredHeight + myMeanRowHeight < realHeight;
+    boolean sizeWasIncreased = myPrevSize.height < newSize.height;
+    if (!myInternalSizeChanged && sizeWasIncreased && shouldExpand) {
       List<MoreAction> mores = getMoreActions();
       for (MoreAction more : mores) {
         if (!getList().getScrollableTracksViewportHeight()) break;
@@ -129,7 +168,12 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       }
     }
     myPrevSize = newSize;
-    myUserSizeChanged = true;
+    //ugly properties to distinguish user size changed from pack method call after Restore Size action performed
+    myUserSizeChanged = !myInternalSizeChanged;
+    myInternalSizeChanged = false;
+    if (myRestoreSizeButton != null) {
+      myRestoreSizeButton.update();
+    }
   }
 
   @NotNull
@@ -145,11 +189,16 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     return result;
   }
 
+  public void addSettingAction(@NotNull AnAction action) {
+    if (mySettingsButton != null) {
+      mySettingsActions.add(action);
+      mySettingsButton.update();
+    }
+  }
+
   @NotNull
-  public static ActionGroup createBranchSpeedSearchActionGroup(@NotNull ActionGroup actionGroup) {
-    DefaultActionGroup speedSearchActions = new DefaultActionGroup();
-    createSpeedSearchActions(actionGroup, speedSearchActions, true);
-    return speedSearchActions;
+  private static ActionGroup createBranchSpeedSearchActionGroup(@NotNull ActionGroup actionGroup) {
+    return new DefaultActionGroup(null, createSpeedSearchActions(actionGroup, true), false);
   }
 
   @Override
@@ -165,18 +214,18 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     if (size != null) {
       myPrevSize = size;
     }
+    trackDimensions(myKey);
   }
 
-  private static void createSpeedSearchActions(@NotNull ActionGroup actionGroup,
-                                               @NotNull DefaultActionGroup speedSearchActions,
-                                               boolean isFirstLevel) {
+  private static List<AnAction> createSpeedSearchActions(@NotNull ActionGroup parentActionGroup, boolean isFirstLevel) {
     // add per repository branches into the model as Speed Search elements and show them only if regular items were not found by mask;
-    if (!isFirstLevel) speedSearchActions.addSeparator(actionGroup.getTemplatePresentation().getText());
-    for (AnAction child : actionGroup.getChildren(null)) {
+    @NotNull List<AnAction> speedSearchActions = ContainerUtil.newArrayList();
+    if (!isFirstLevel) speedSearchActions.add(new Separator(parentActionGroup.getTemplatePresentation().getText()));
+    for (AnAction child : parentActionGroup.getChildren(null)) {
       if (child instanceof ActionGroup) {
         ActionGroup childGroup = (ActionGroup)child;
         if (isFirstLevel) {
-          createSpeedSearchActions(childGroup, speedSearchActions, false);
+          speedSearchActions.addAll(createSpeedSearchActions(childGroup, false));
         }
         else if (childGroup instanceof BranchActionGroup) {
           speedSearchActions.add(createSpeedSearchActionGroupWrapper(childGroup));
@@ -186,6 +235,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
         }
       }
     }
+    return speedSearchActions;
   }
 
   @Override
@@ -246,12 +296,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
   @Override
   protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
-    WizardPopup popup = createListPopupStep(parent, step, parentValue);
-    RootAction rootAction = getRootAction(parentValue);
-    if (rootAction != null) {
-      popup.setAdText((rootAction).getCaption());
-    }
-    return popup;
+    return createListPopupStep(parent, step, parentValue);
   }
 
   private WizardPopup createListPopupStep(WizardPopup parent, PopupStep step, Object parentValue) {
@@ -259,11 +304,6 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       return new BranchActionGroupPopup(parent, (ListPopupStep)step, parentValue);
     }
     return super.createPopup(parent, step, parentValue);
-  }
-
-  @Nullable
-  private static RootAction getRootAction(Object value) {
-    return getSpecificAction(value, RootAction.class);
   }
 
   private static <T> T getSpecificAction(Object value, @NotNull Class<T> clazz) {
@@ -323,26 +363,26 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       super.customizeComponent(list, value, isSelected);
       myTextLabel.setIcon(null);
       myTextLabel.setDisabledIcon(null);
-      if (value instanceof PopupFactoryImpl.ActionItem) {
-        ((PopupFactoryImpl.ActionItem)value).setIconHovered(isSelected);
-      }
-      myIconLabel.setIcon(myDescriptor.getIconFor(value));
+      myIconLabel.setIcon(isSelected ? myDescriptor.getSelectedIconFor(value) : myDescriptor.getIconFor(value));
       PopupElementWithAdditionalInfo additionalInfoAction = getSpecificAction(value, PopupElementWithAdditionalInfo.class);
-      String infoText = additionalInfoAction != null ? additionalInfoAction.getInfoText() : null;
+      updateInfoComponent(myInfoLabel, additionalInfoAction != null ? additionalInfoAction.getInfoText() : null, isSelected);
+    }
+
+    private void updateInfoComponent(@NotNull ErrorLabel infoLabel, @Nullable String infoText, boolean isSelected) {
       if (infoText != null) {
-        myInfoLabel.setVisible(true);
-        myInfoLabel.setText(infoText);
+        infoLabel.setVisible(true);
+        infoLabel.setText(infoText);
 
         if (isSelected) {
-          setSelected(myInfoLabel);
+          setSelected(infoLabel);
         }
         else {
-          myInfoLabel.setBackground(getBackground());
-          myInfoLabel.setForeground(JBColor.GRAY);    // different foreground than for other elements
+          infoLabel.setBackground(getBackground());
+          infoLabel.setForeground(JBColor.GRAY);    // different foreground than for other elements
         }
       }
       else {
-        myInfoLabel.setVisible(false);
+        infoLabel.setVisible(false);
       }
     }
 
@@ -355,15 +395,18 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       myInfoLabel = new ErrorLabel();
       myInfoLabel.setOpaque(true);
       myInfoLabel.setBorder(JBUI.Borders.empty(1, DEFAULT_HGAP, 1, 1));
+      myInfoLabel.setFont(FontUtil.minusOne(myInfoLabel.getFont()));
 
       JPanel compoundPanel = new OpaquePanel(new BorderLayout(), JBColor.WHITE);
       myIconLabel = new IconComponent();
       myInfoLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+      JPanel compoundTextPanel = new OpaquePanel(new BorderLayout(), compoundPanel.getBackground());
       JPanel textPanel = new OpaquePanel(new BorderLayout(), compoundPanel.getBackground());
       compoundPanel.add(myIconLabel, BorderLayout.WEST);
       textPanel.add(myTextLabel, BorderLayout.WEST);
       textPanel.add(myInfoLabel, BorderLayout.CENTER);
-      compoundPanel.add(textPanel, BorderLayout.CENTER);
+      compoundTextPanel.add(textPanel, BorderLayout.CENTER);
+      compoundPanel.add(compoundTextPanel, BorderLayout.CENTER);
       return layoutComponent(compoundPanel);
     }
 
@@ -382,6 +425,9 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
     @Override
     protected void paintLine(Graphics g, int x, int y, int width) {
+      if (StringUtil.isEmptyOrSpaces(getCaption())) {
+        super.paintLine(g, x, y, width);
+      }
     }
   }
 
@@ -417,7 +463,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       if (event != null && event.getSource() instanceof JComponent) {
         DataProvider dataProvider = DataManager.getDataProvider((JComponent)event.getSource());
         if (dataProvider != null) {
-          ObjectUtils.assertNotNull(POPUP_MODEL.getData(dataProvider)).refilter();
+          assertNotNull(POPUP_MODEL.getData(dataProvider)).refilter();
         }
       }
     }
@@ -482,5 +528,29 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     else {
       parentGroup.addAll(actionList);
     }
+  }
+
+  private static abstract class MyToolbarButton extends JButton {
+    public MyToolbarButton(@NotNull String text, @NotNull Icon icon, @NotNull Icon rolloverIcon, @NotNull ActionListener buttonListener) {
+      super(icon);
+      setToolTipText(text);
+      setBorder(JBUI.Borders.empty());
+      setBorderPainted(false);
+      setContentAreaFilled(false);
+      setOpaque(false);
+      setRolloverEnabled(true);
+      setRolloverIcon(rolloverIcon);
+      addActionListener(buttonListener);
+      update();
+      setUI(new BasicButtonUI());
+    }
+
+    public void update() {
+      boolean enabled = isButtonEnabled();
+      setEnabled(enabled);
+      setVisible(enabled);
+    }
+
+    protected abstract boolean isButtonEnabled();
   }
 }

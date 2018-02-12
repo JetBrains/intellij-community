@@ -35,6 +35,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.jetbrains.python.newProject.PythonProjectGenerator.NO_SETTINGS;
+
 /**
  * @author yole
  */
@@ -106,7 +108,7 @@ public class PythonModuleBuilderBase extends ModuleBuilder {
       if (contentRoots.length > 0 && contentRoots[0] != null) {
         dir = contentRoots[0];
       }
-      myGenerator.generateProject(project, dir, null, module);
+      myGenerator.generateProject(project, dir, NO_SETTINGS, module);
     }
     return module;
   }

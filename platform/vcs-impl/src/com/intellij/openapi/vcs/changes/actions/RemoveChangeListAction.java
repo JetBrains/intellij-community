@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 02.11.2006
- * Time: 21:57:44
- */
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.idea.ActionsBundle;
@@ -39,40 +33,43 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class RemoveChangeListAction extends AnAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
-    ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
-    boolean visible = canRemoveChangeLists(e.getProject(), changeLists);
+    ChangeList[] changeListsArray = e.getData(VcsDataKeys.CHANGE_LISTS);
+    List<ChangeList> changeLists = changeListsArray != null ? Arrays.asList(changeListsArray) : Collections.emptyList();
+
+    boolean hasChanges = !ArrayUtil.isEmpty(e.getData(VcsDataKeys.CHANGES));
+    boolean enabled = canRemoveChangeLists(e.getProject(), changeLists);
 
     Presentation presentation = e.getPresentation();
-    presentation.setEnabled(visible);
+    presentation.setEnabled(enabled);
     if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP)) {
-      presentation.setVisible(visible);
+      presentation.setVisible(enabled);
     }
-    presentation.setDescription(ArrayUtil.isEmpty(e.getData(VcsDataKeys.CHANGES)) ? presentation.getText() : getDescription(changeLists));
+
+    presentation.setText(ActionsBundle.message("action.ChangesView.RemoveChangeList.text.template", changeLists.size()));
+    if (hasChanges) {
+      boolean containsActiveChangelist = ContainerUtil.exists(changeLists, l -> l instanceof LocalChangeList && ((LocalChangeList)l).isDefault());
+      presentation.setDescription(ActionsBundle.message("action.ChangesView.RemoveChangeList.description.template",
+                                                        changeLists.size(), containsActiveChangelist ? "another" : "default"));
+    }
+    else {
+      presentation.setDescription(null);
+    }
   }
 
-  private static String getDescription(@Nullable ChangeList[] changeLists) {
-    return ActionsBundle.message("action.ChangesView.RemoveChangeList.description",
-                                 containsActiveChangelist(changeLists) ? "another changelist" : "active one");
-  }
-
-  private static boolean containsActiveChangelist(@Nullable ChangeList[] changeLists) {
-    if (changeLists == null) return false;
-    return ContainerUtil.exists(changeLists, l -> l instanceof LocalChangeList && ((LocalChangeList)l).isDefault());
-  }
-
-  private static boolean canRemoveChangeLists(@Nullable Project project, @Nullable ChangeList[] lists) {
-    if (project == null || lists == null || lists.length == 0) return false;
+  private static boolean canRemoveChangeLists(@Nullable Project project, @NotNull List<ChangeList> lists) {
+    if (project == null || lists.size() == 0) return false;
 
     int allChangeListsCount = ChangeListManager.getInstance(project).getChangeListsNumber();
     for(ChangeList changeList: lists) {
       if (!(changeList instanceof LocalChangeList)) return false;
       LocalChangeList localChangeList = (LocalChangeList) changeList;
       if (localChangeList.isReadOnly()) return false;
-      if (localChangeList.isDefault() && allChangeListsCount <= lists.length) return false;
+      if (localChangeList.isDefault() && allChangeListsCount <= lists.size()) return false;
     }
     return true;
   }
@@ -91,13 +88,13 @@ public class RemoveChangeListAction extends AnAction implements DumbAware {
   }
 
   private static boolean askIfShouldRemoveChangeLists(@NotNull List<? extends LocalChangeList> lists, Project project) {
-    for (LocalChangeList list : lists) {
-      if (list.isDefault()) {
-        return confirmActiveChangeListRemoval(project, lists, list.getChanges().isEmpty());
-      }
+    boolean activeChangelistSelected = lists.stream().anyMatch(LocalChangeList::isDefault);
+    boolean haveNoChanges = lists.stream().allMatch(l -> l.getChanges().isEmpty());
+
+    if (activeChangelistSelected) {
+      return confirmActiveChangeListRemoval(project, lists, haveNoChanges);
     }
 
-    boolean haveNoChanges = lists.stream().noneMatch(list -> !list.getChanges().isEmpty());
     String message = lists.size() == 1
                      ? VcsBundle.message("changes.removechangelist.warning.text", lists.get(0).getName())
                      : VcsBundle.message("changes.removechangelist.multiple.warning.text", lists.size());
@@ -111,6 +108,18 @@ public class RemoveChangeListAction extends AnAction implements DumbAware {
   static boolean confirmActiveChangeListRemoval(@NotNull Project project, @NotNull List<? extends LocalChangeList> lists, boolean empty) {
     List<LocalChangeList> remainingLists = ChangeListManager.getInstance(project).getChangeListsCopy();
     remainingLists.removeAll(lists);
+
+    // Can't remove last changelist
+    if (remainingLists.isEmpty()) {
+      return false;
+    }
+
+    // don't ask "Which changelist to make active" if there is only one option anyway
+    // unless there are some changes to be moved - give user a chance to cancel deletion
+    if (remainingLists.size() == 1 && empty) {
+      ChangeListManager.getInstance(project).setDefaultChangeList(remainingLists.get(0));
+      return true;
+    }
 
     String[] remainingListsNames = remainingLists.stream().map(ChangeList::getName).toArray(String[]::new);
     int nameIndex = Messages.showChooseDialog(project, empty

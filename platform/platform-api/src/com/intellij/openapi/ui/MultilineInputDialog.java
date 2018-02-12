@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,5 +39,10 @@ class MultilineInputDialog extends InputDialog {
   @Override
   protected JTextComponent createTextFieldComponent() {
     return new JTextArea(7, 50);
+  }
+
+  @Override
+  protected JComponent createScrollableTextComponent() {
+    return new JBScrollPane(myField);
   }
 }

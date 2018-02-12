@@ -15,10 +15,13 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMapper;
@@ -29,7 +32,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.psi.CommonClassNames.*;
-import static com.intellij.psi.JavaTokenType.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
 
 /**
@@ -37,116 +39,106 @@ import static com.siyeh.ig.callMatcher.CallMatcher.*;
  */
 public class CustomMethodHandlers {
   interface CustomMethodHandler {
-    List<DfaMemoryState> handle(DfaValue qualifier, DfaValue[] args, DfaMemoryState memState, DfaValueFactory factory);
+    List<DfaMemoryState> handle(DfaCallArguments callArguments, DfaMemoryState memState, DfaValueFactory factory);
   }
 
   private static final CallMapper<CustomMethodHandler> CUSTOM_METHOD_HANDLERS = new CallMapper<CustomMethodHandler>()
-    .register(instanceCall(JAVA_LANG_STRING, "isEmpty").parameterCount(0),
-              (qualifier, args, memState, factory) -> stringIsEmpty(qualifier, memState, factory))
     .register(instanceCall(JAVA_LANG_STRING, "indexOf", "lastIndexOf"),
-              (qualifier, args, memState, factory) -> stringIndexOf(qualifier, memState, factory))
+              (args, memState, factory) -> indexOf(args.myQualifier, memState, factory, SpecialField.STRING_LENGTH))
+    .register(instanceCall(JAVA_UTIL_LIST, "indexOf", "lastIndexOf"),
+              (args, memState, factory) -> indexOf(args.myQualifier, memState, factory, SpecialField.COLLECTION_SIZE))
     .register(instanceCall(JAVA_LANG_STRING, "equals").parameterCount(1),
-              (qualifier, args, memState, factory) -> stringEquals(qualifier, args, memState, factory, false))
+              (args, memState, factory) -> stringEquals(args, memState, factory, false))
     .register(instanceCall(JAVA_LANG_STRING, "equalsIgnoreCase").parameterCount(1),
-              (qualifier, args, memState, factory) -> stringEquals(qualifier, args, memState, factory, true))
+              (args, memState, factory) -> stringEquals(args, memState, factory, true))
     .register(instanceCall(JAVA_LANG_STRING, "startsWith").parameterCount(1),
-              (qualifier, args, memState, factory) -> stringStartsEnds(qualifier, args, memState, factory, false))
+              (args, memState, factory) -> stringStartsEnds(args, memState, factory, false))
     .register(instanceCall(JAVA_LANG_STRING, "endsWith").parameterCount(1),
-              (qualifier, args, memState, factory) -> stringStartsEnds(qualifier, args, memState, factory, true))
+              (args, memState, factory) -> stringStartsEnds(args, memState, factory, true))
     .register(anyOf(staticCall(JAVA_LANG_MATH, "max").parameterTypes("int", "int"),
                     staticCall(JAVA_LANG_MATH, "max").parameterTypes("long", "long"),
                     staticCall(JAVA_LANG_INTEGER, "max").parameterTypes("int", "int"),
                     staticCall(JAVA_LANG_LONG, "max").parameterTypes("long", "long")),
-              (qualifier, args, memState, factory) -> mathMinMax(args, memState, factory, true))
+              (args, memState, factory) -> mathMinMax(args.myArguments, memState, factory, true))
     .register(anyOf(staticCall(JAVA_LANG_MATH, "min").parameterTypes("int", "int"),
                     staticCall(JAVA_LANG_MATH, "min").parameterTypes("long", "long"),
                     staticCall(JAVA_LANG_INTEGER, "min").parameterTypes("int", "int"),
                     staticCall(JAVA_LANG_LONG, "min").parameterTypes("long", "long")),
-              (qualifier, args, memState, factory) -> mathMinMax(args, memState, factory, false))
+              (args, memState, factory) -> mathMinMax(args.myArguments, memState, factory, false))
     .register(staticCall(JAVA_LANG_MATH, "abs").parameterTypes("int"),
-              (qualifier, args, memState, factory) -> mathAbs(args, memState, factory, false))
+              (args, memState, factory) -> mathAbs(args.myArguments, memState, factory, false))
     .register(staticCall(JAVA_LANG_MATH, "abs").parameterTypes("long"),
-              (qualifier, args, memState, factory) -> mathAbs(args, memState, factory, true));
+              (args, memState, factory) -> mathAbs(args.myArguments, memState, factory, true));
 
-  public static CustomMethodHandler find(PsiMethodCallExpression call) {
-    return CUSTOM_METHOD_HANDLERS.mapFirst(call);
+  public static CustomMethodHandler find(MethodCallInstruction instruction) {
+    PsiElement context = instruction.getContext();
+    if(context instanceof PsiMethodCallExpression) {
+      return CUSTOM_METHOD_HANDLERS.mapFirst((PsiMethodCallExpression)context);
+    } else if(context instanceof PsiMethodReferenceExpression) {
+      return CUSTOM_METHOD_HANDLERS.mapFirst((PsiMethodReferenceExpression)context);
+    }
+    return null;
   }
 
-  private static List<DfaMemoryState> stringStartsEnds(DfaValue qualifier,
-                                                       DfaValue[] args,
+  private static List<DfaMemoryState> stringStartsEnds(DfaCallArguments args,
                                                        DfaMemoryState memState,
                                                        DfaValueFactory factory,
                                                        boolean ends) {
-    DfaValue arg = ArrayUtil.getFirstElement(args);
+    DfaValue arg = ArrayUtil.getFirstElement(args.myArguments);
     if (arg == null) return Collections.emptyList();
-    String leftConst = ObjectUtils.tryCast(getConstantValue(memState, qualifier), String.class);
+    String leftConst = ObjectUtils.tryCast(getConstantValue(memState, args.myQualifier), String.class);
     String rightConst = ObjectUtils.tryCast(getConstantValue(memState, arg), String.class);
     if (leftConst != null && rightConst != null) {
       return singleResult(memState, factory.getBoolean(ends ? leftConst.endsWith(rightConst) : leftConst.startsWith(rightConst)));
     }
-    DfaValue leftLength = memState.getStringLength(qualifier);
-    DfaValue rightLength = memState.getStringLength(arg);
-    DfaRelationValue trueRelation = factory.getRelationFactory().createRelation(leftLength, rightLength, GE, false);
-    DfaRelationValue falseRelation = factory.getRelationFactory().createRelation(leftLength, rightLength, LT, false);
+    DfaValue leftLength = SpecialField.STRING_LENGTH.createValue(factory, args.myQualifier);
+    DfaValue rightLength = SpecialField.STRING_LENGTH.createValue(factory, arg);
+    DfaValue trueRelation = factory.createCondition(leftLength, RelationType.GE, rightLength);
+    DfaValue falseRelation = factory.createCondition(leftLength, RelationType.LT, rightLength);
     return applyCondition(memState, trueRelation, DfaUnknownValue.getInstance(), falseRelation, factory.getBoolean(false));
   }
 
-  private static List<DfaMemoryState> stringEquals(DfaValue qualifier,
-                                                   DfaValue[] args,
+  private static List<DfaMemoryState> stringEquals(DfaCallArguments args,
                                                    DfaMemoryState memState,
                                                    DfaValueFactory factory,
                                                    boolean ignoreCase) {
-    DfaValue arg = ArrayUtil.getFirstElement(args);
+    DfaValue arg = ArrayUtil.getFirstElement(args.myArguments);
     if (arg == null) return Collections.emptyList();
-    String leftConst = ObjectUtils.tryCast(getConstantValue(memState, qualifier), String.class);
+    String leftConst = ObjectUtils.tryCast(getConstantValue(memState, args.myQualifier), String.class);
     String rightConst = ObjectUtils.tryCast(getConstantValue(memState, arg), String.class);
     if (leftConst != null && rightConst != null) {
       return singleResult(memState, factory.getBoolean(ignoreCase ? leftConst.equalsIgnoreCase(rightConst) : leftConst.equals(rightConst)));
     }
-    DfaValue leftLength = memState.getStringLength(qualifier);
-    DfaValue rightLength = memState.getStringLength(arg);
-    DfaRelationValue trueRelation = factory.getRelationFactory().createRelation(leftLength, rightLength, EQ, false);
-    DfaRelationValue falseRelation = factory.getRelationFactory().createRelation(leftLength, rightLength, NE, false);
-    return applyCondition(memState, trueRelation, DfaUnknownValue.getInstance(), falseRelation, factory.getBoolean(false));
+    return Collections.emptyList();
   }
 
-  private static List<DfaMemoryState> stringIndexOf(DfaValue qualifier,
-                                                    DfaMemoryState memState,
-                                                    DfaValueFactory factory) {
-    DfaValue length = memState.getStringLength(qualifier);
-    LongRangeSet range = memState.getRange(length);
+  private static List<DfaMemoryState> indexOf(DfaValue qualifier,
+                                              DfaMemoryState memState,
+                                              DfaValueFactory factory,
+                                              SpecialField specialField) {
+    DfaValue length = specialField.createValue(factory, qualifier);
+    LongRangeSet range = memState.getValueFact(length, DfaFactType.RANGE);
     long maxLen = range == null || range.isEmpty() ? Integer.MAX_VALUE : range.max();
-    return singleResult(memState, factory.getRangeFactory().create(LongRangeSet.range(-1, maxLen - 1)));
-  }
-
-  private static List<DfaMemoryState> stringIsEmpty(DfaValue qualifier, DfaMemoryState memState, DfaValueFactory factory) {
-    DfaValue length = memState.getStringLength(qualifier);
-    if (length == DfaUnknownValue.getInstance()) {
-      return singleResult(memState, DfaUnknownValue.getInstance());
-    }
-    DfaConstValue zero = factory.getConstFactory().createFromValue(0, PsiType.INT, null);
-    DfaRelationValue trueRelation = factory.getRelationFactory().createRelation(length, zero, EQEQ, false);
-    DfaRelationValue falseRelation = factory.getRelationFactory().createRelation(length, zero, NE, false);
-    return applyCondition(memState, trueRelation, factory.getBoolean(true), falseRelation, factory.getBoolean(false));
+    return singleResult(memState, factory.getFactValue(DfaFactType.RANGE, LongRangeSet.range(-1, maxLen - 1)));
   }
 
   private static List<DfaMemoryState> mathMinMax(DfaValue[] args, DfaMemoryState memState, DfaValueFactory factory, boolean max) {
     if(args == null || args.length != 2) return Collections.emptyList();
-    LongRangeSet first = memState.getRange(args[0]);
-    LongRangeSet second = memState.getRange(args[1]);
+    LongRangeSet first = memState.getValueFact(args[0], DfaFactType.RANGE);
+    LongRangeSet second = memState.getValueFact(args[1], DfaFactType.RANGE);
     if (first == null || second == null || first.isEmpty() || second.isEmpty()) return Collections.emptyList();
     LongRangeSet domain = max ? LongRangeSet.range(Math.max(first.min(), second.min()), Long.MAX_VALUE)
                           : LongRangeSet.range(Long.MIN_VALUE, Math.min(first.max(), second.max()));
     LongRangeSet result = first.union(second).intersect(domain);
-    return singleResult(memState, factory.getRangeFactory().create(result));
+    return singleResult(memState, factory.getFactValue(DfaFactType.RANGE, result));
   }
 
   private static List<DfaMemoryState> mathAbs(DfaValue[] args, DfaMemoryState memState, DfaValueFactory factory, boolean isLong) {
     DfaValue arg = ArrayUtil.getFirstElement(args);
     if(arg == null) return Collections.emptyList();
-    LongRangeSet range = memState.getRange(arg);
+    LongRangeSet range = memState.getValueFact(arg, DfaFactType.RANGE);
     if (range == null) return Collections.emptyList();
-    return singleResult(memState, factory.getRangeFactory().create(range.abs(isLong)));
+    return singleResult(memState, factory.getFactValue(DfaFactType.RANGE, range.abs(isLong)));
   }
 
   private static List<DfaMemoryState> singleResult(DfaMemoryState state, DfaValue value) {
@@ -156,17 +148,17 @@ public class CustomMethodHandlers {
 
   @NotNull
   private static List<DfaMemoryState> applyCondition(DfaMemoryState memState,
-                                                     DfaRelationValue trueRelation,
+                                                     DfaValue trueCondition,
                                                      DfaValue trueResult,
-                                                     DfaRelationValue falseRelation,
+                                                     DfaValue falseCondition,
                                                      DfaValue falseResult) {
     DfaMemoryState falseState = memState.createCopy();
     List<DfaMemoryState> result = new ArrayList<>(2);
-    if (memState.applyCondition(trueRelation)) {
+    if (memState.applyCondition(trueCondition)) {
       memState.push(trueResult);
       result.add(memState);
     }
-    if (falseState.applyCondition(falseRelation)) {
+    if (falseState.applyCondition(falseCondition)) {
       falseState.push(falseResult);
       result.add(falseState);
     }

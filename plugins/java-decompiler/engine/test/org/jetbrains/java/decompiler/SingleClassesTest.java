@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.java.decompiler;
 
@@ -46,6 +34,7 @@ public class SingleClassesTest {
     fixture = null;
   }
 
+  @Test public void testPrimitiveNarrowing() { doTest("pkg/TestPrimitiveNarrowing"); }
   @Test public void testClassFields() { doTest("pkg/TestClassFields"); }
   @Test public void testInterfaceFields() { doTest("pkg/TestInterfaceFields"); }
   @Test public void testClassLambda() { doTest("pkg/TestClassLambda"); }
@@ -58,6 +47,7 @@ public class SingleClassesTest {
   @Test public void testDeprecations() { doTest("pkg/TestDeprecations"); }
   @Test public void testExtendsList() { doTest("pkg/TestExtendsList"); }
   @Test public void testMethodParameters() { doTest("pkg/TestMethodParameters"); }
+  @Test public void testMethodParametersAttr() { doTest("pkg/TestMethodParametersAttr"); }
   @Test public void testCodeConstructs() { doTest("pkg/TestCodeConstructs"); }
   @Test public void testConstants() { doTest("pkg/TestConstants"); }
   @Test public void testEnum() { doTest("pkg/TestEnum"); }
@@ -86,6 +76,7 @@ public class SingleClassesTest {
   @Test public void testJava9StringConcat() { doTest("java9/TestJava9StringConcat"); }
   @Test public void testMethodReferenceSameName() { doTest("pkg/TestMethodReferenceSameName"); }
   @Test public void testMethodReferenceLetterClass() { doTest("pkg/TestMethodReferenceLetterClass"); }
+  @Test public void testConstructorReference() { doTest("pkg/TestConstructorReference"); }
   @Test public void testMemberAnnotations() { doTest("pkg/TestMemberAnnotations"); }
   @Test public void testMoreAnnotations() { doTest("pkg/MoreAnnotations"); }
   @Test public void testTypeAnnotations() { doTest("pkg/TypeAnnotations"); }
@@ -93,6 +84,7 @@ public class SingleClassesTest {
   @Test public void testExtendingSubclass() { doTest("pkg/TestExtendingSubclass"); }
   @Test public void testSyntheticAccess() { doTest("pkg/TestSyntheticAccess"); }
   @Test public void testIllegalVarName() { doTest("pkg/TestIllegalVarName"); }
+  @Test public void testIffSimplification() { doTest("pkg/TestIffSimplification"); }
   @Test public void testKotlinConstructor() { doTest("pkg/TestKotlinConstructorKt"); }
   @Test public void testAsserts() { doTest("pkg/TestAsserts"); }
   @Test public void testLocalsNames() { doTest("pkg/TestLocalsNames"); }
@@ -100,6 +92,32 @@ public class SingleClassesTest {
   @Test public void testAnonymousParams() { doTest("pkg/TestAnonymousParams"); }
   @Test public void testAccessReplace() { doTest("pkg/TestAccessReplace"); }
   @Test public void testStringLiterals() { doTest("pkg/TestStringLiterals"); }
+  @Test public void testPrimitives() { doTest("pkg/TestPrimitives"); }
+  @Test public void testClashName() { doTest("pkg/TestClashName", "pkg/SharedName1",
+          "pkg/SharedName2", "pkg/SharedName3", "pkg/SharedName4", "pkg/NonSharedName",
+          "pkg/TestClashNameParent", "ext/TestClashNameParent","pkg/TestClashNameIface", "ext/TestClashNameIface"); }
+  @Test public void testSwitchOnEnum() { doTest("pkg/TestSwitchOnEnum");}
+  @Test public void testVarArgCalls() { doTest("pkg/TestVarArgCalls"); }
+  @Test public void testLambdaParams() { doTest("pkg/TestLambdaParams"); }
+  @Test public void testInterfaceMethods() { doTest("pkg/TestInterfaceMethods"); }
+  @Test public void testConstType() { doTest("pkg/TestConstType"); }
+  @Test public void testPop2OneDoublePop2() { doTest("pkg/TestPop2OneDoublePop2"); }
+  @Test public void testPop2OneLongPop2() { doTest("pkg/TestPop2OneLongPop2"); }
+  @Test public void testPop2TwoIntPop2() { doTest("pkg/TestPop2TwoIntPop2"); }
+  @Test public void testPop2TwoIntTwoPop() { doTest("pkg/TestPop2TwoIntTwoPop"); }
+  @Test public void testSuperInner() { doTest("pkg/TestSuperInner", "pkg/TestSuperInnerBase"); }
+
+  // TODO: fix all below
+  //@Test public void testPackageInfo() { doTest("pkg/package-info"); }
+  //@Test public void testSwitchOnStrings() { doTest("pkg/TestSwitchOnStrings");}
+  //@Test public void testUnionType() { doTest("pkg/TestUnionType"); }
+  //@Test public void testInnerClassConstructor2() { doTest("pkg/TestInner2"); }
+  //@Test public void testInUse() { doTest("pkg/TestInUse"); }
+  //@Test public void testInterfaceSuper() { doTest("pkg/TestInterfaceSuper"); }
+
+  @Test public void testGroovyClass() { doTest("pkg/TestGroovyClass"); }
+  @Test public void testGroovyTrait() { doTest("pkg/TestGroovyTrait"); }
+  @Test public void testPrivateClasses() { doTest("pkg/PrivateClasses"); }
 
   private void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();

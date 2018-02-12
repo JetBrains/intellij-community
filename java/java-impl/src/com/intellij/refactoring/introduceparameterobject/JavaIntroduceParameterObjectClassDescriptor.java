@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,14 +26,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +44,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParameterObjectClassDescriptor<PsiMethod, ParameterInfoImpl> {
-  private static final Logger LOG = Logger.getInstance("#" + JavaIntroduceParameterObjectClassDescriptor.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaIntroduceParameterObjectClassDescriptor.class);
   private final Set<PsiTypeParameter> myTypeParameters = new LinkedHashSet<>();
   private final Map<ParameterInfoImpl, ParameterBean> myExistingClassProperties = new HashMap<>();
   private final MoveDestination myMoveDestination;
@@ -59,23 +60,11 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     super(className, calcPackageName(packageName, createInnerClass, method), useExistingClass, createInnerClass,
           newVisibility, generateAccessors, paramsToMerge);
     myMoveDestination = moveDestination;
-    final PsiTypeVisitor<Object> typeParametersVisitor = new PsiTypeVisitor<Object>() {
-      @Override
-      public Object visitClassType(PsiClassType classType) {
-        final PsiClass referent = classType.resolve();
-        if (referent instanceof PsiTypeParameter) {
-          myTypeParameters.add((PsiTypeParameter)referent);
-        }
-        for (PsiType type : classType.getParameters()) {
-          type.accept(this);
-        }
-
-        return super.visitClassType(classType);
-      }
-    };
+    PsiTypesUtil.TypeParameterSearcher searcher = new PsiTypesUtil.TypeParameterSearcher();
     for (ParameterInfoImpl parameterInfo : paramsToMerge) {
-      parameterInfo.getTypeWrapper().getType(method).accept(typeParametersVisitor);
+      parameterInfo.getTypeWrapper().getType(method).accept(searcher);
     }
+    myTypeParameters.addAll(searcher.getTypeParameters());
   }
 
   private static String calcPackageName(String packageName, boolean createInnerClass, PsiMethod method) {
@@ -218,12 +207,12 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
 
       bean.setField(field);
 
-      final PsiMethod getterForField = PropertyUtil.findGetterForField(field);
+      final PsiMethod getterForField = PropertyUtilBase.findGetterForField(field);
       if (getterForField != null) {
         bean.setGetter(getterForField.getName());
       }
 
-      final PsiMethod setterForField = PropertyUtil.findSetterForField(field);
+      final PsiMethod setterForField = PropertyUtilBase.findSetterForField(field);
       if (setterForField != null) {
         bean.setSetter(setterForField.getName());
       }
@@ -351,7 +340,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
         return;
       }
       final PsiElement assigned = ((PsiReference)lhs).resolve();
-      if (assigned == null || !(assigned instanceof PsiField)) {
+      if (!(assigned instanceof PsiField)) {
         return;
       }
       fieldAssigned = (PsiField)assigned;

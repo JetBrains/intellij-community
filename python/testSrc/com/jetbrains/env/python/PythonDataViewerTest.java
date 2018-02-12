@@ -20,6 +20,7 @@ import com.intellij.util.Consumer;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.Staging;
 import com.jetbrains.env.python.debug.PyDebuggerTask;
 import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.PyDebugValue;
@@ -28,20 +29,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Set;
 
 import static com.intellij.testFramework.UsefulTestCase.assertSameElements;
 import static org.junit.Assert.assertEquals;
 
-/**
- * Created by Yuli Fiterman on 5/10/2016.
- */
 public class PythonDataViewerTest extends PyEnvTestCase {
 
   @Test
-  public void testDataFrameChunkRetrieval() throws Exception {
+  public void testDataFrameChunkRetrieval() {
     runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe.py", ImmutableSet.of(7, 15, 22)) {
       @Override
       public void testing() throws Exception {
@@ -64,7 +61,7 @@ public class PythonDataViewerTest extends PyEnvTestCase {
   }
 
   @Test
-  public void testMultiIndexDataFrame() throws Exception {
+  public void testMultiIndexDataFrame() {
     runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe_multiindex.py", ImmutableSet.of(5, 10)) {
       @Override
       public void testing() throws Exception {
@@ -78,9 +75,23 @@ public class PythonDataViewerTest extends PyEnvTestCase {
     });
   }
 
+  @Test
+  @Staging
+  public void testSeries() {
+    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_series.py", ImmutableSet.of(7)) {
+      @Override
+      public void testing() throws Exception {
+        doTest("series", 4, 1, arrayChunk -> {
+          List<String> labels = arrayChunk.getRowLabels();
+          assertSameElements(labels, "s/2", "s/3", "d/2", "d/3");
+        });
+      }
+    });
+  }
+
   private static class PyDataFrameDebuggerTask extends PyDebuggerTask {
 
-    private Set<Integer> myLines;
+    private final Set<Integer> myLines;
 
     public PyDataFrameDebuggerTask(@Nullable String relativeTestDataPath, String scriptName, Set<Integer> lines) {
       super(relativeTestDataPath, scriptName);
@@ -93,7 +104,7 @@ public class PythonDataViewerTest extends PyEnvTestCase {
     }
 
     protected void doTest(String name, int expectedRows, int expectedColumns, @Nullable Consumer<ArrayChunk> test)
-      throws InvocationTargetException, InterruptedException, PyDebuggerException {
+      throws InterruptedException, PyDebuggerException {
       waitForPause();
       ArrayChunk arrayChunk = getDefaultChunk(name, mySession);
       testShape(arrayChunk, expectedRows, expectedColumns);
@@ -104,7 +115,7 @@ public class PythonDataViewerTest extends PyEnvTestCase {
     }
 
     @Override
-    public void before() throws Exception {
+    public void before() {
       for (Integer line : myLines) {
         toggleBreakpoint(getScriptName(), line);
       }

@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -76,7 +75,7 @@ public class EditInjectionSettingsAction implements IntentionAction, LowPriority
       }
     }
     finally {
-      FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
+      FileContentUtil.reparseFiles(project, Collections.emptyList(), true);
     }
   }
 

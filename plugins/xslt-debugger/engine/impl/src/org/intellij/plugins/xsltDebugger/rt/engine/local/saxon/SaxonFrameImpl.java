@@ -42,11 +42,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 23.05.2007
- */
 class SaxonFrameImpl extends AbstractSaxonFrame<Debugger.StyleFrame, StyleElement> implements Debugger.StyleFrame {
 
   private static Field fGeneralUseAllowed;

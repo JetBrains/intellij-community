@@ -1,33 +1,19 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.options;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
@@ -40,27 +26,23 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 5/9/12
  */
 public class TargetOptionsComponent extends JPanel {
   private static final String[] KNOWN_TARGETS;
   private static final String COMPILER_DEFAULT = "Same as language level";
 
-  private ComboBox myCbProjectTargetLevel;
-  private JBTable myTable;
+  private final ComboBox myCbProjectTargetLevel;
+  private final JBTable myTable;
   private final Project myProject;
-  
+
   static {
     List<String> targets = new ArrayList<>();
     targets.add("1.1");
     targets.add("1.2");
     for (LanguageLevel level : LanguageLevel.values()) {
-      final String target = level.getCompilerComplianceDefaultOption();
-      if (!StringUtil.isEmptyOrSpaces(target)) {
-        targets.add(target);
-      }
+      targets.add(JpsJavaSdkType.complianceOption(level.toJavaVersion()));
     }
-    KNOWN_TARGETS = targets.toArray(new String[targets.size()]);
+    KNOWN_TARGETS = ArrayUtil.toStringArray(targets);
   }
   public TargetOptionsComponent(Project project) {
     super(new GridBagLayout());
@@ -74,7 +56,7 @@ public class TargetOptionsComponent extends JPanel {
 
     final TableColumn moduleColumn = myTable.getColumnModel().getColumn(0);
     moduleColumn.setHeaderValue("Module");
-    moduleColumn.setCellRenderer(new ModuleCellRenderer());
+    moduleColumn.setCellRenderer(new ModuleTableCellRenderer());
 
     final TableColumn targetLevelColumn = myTable.getColumnModel().getColumn(1);
     final String columnTitle = "Target bytecode version";
@@ -166,12 +148,18 @@ public class TargetOptionsComponent extends JPanel {
   }
 
   public void setModuleTargetLevels(Map<String, String> moduleLevels) {
-    final Map<Module, String> map = new HashMap<>();
-    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-      final String target = moduleLevels.get(module.getName());
-      if (target != null) {
-        map.put(module, target);
+    final Map<Module, String> map;
+    if (!moduleLevels.isEmpty()) {
+      map = new HashMap<>();
+      for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+        final String target = moduleLevels.get(module.getName());
+        if (target != null) {
+          map.put(module, target);
+        }
       }
+    }
+    else {
+      map = Collections.emptyMap();
     }
     ((TargetLevelTableModel)myTable.getModel()).setItems(map);
   }
@@ -339,26 +327,6 @@ public class TargetOptionsComponent extends JPanel {
       }
     });
     return combo;
-  }
-
-  private static class ModuleCellRenderer extends DefaultTableCellRenderer {
-    @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      try {
-        return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      }
-      finally {
-        final Module module = (Module)value;
-        if (module != null) {
-          setText(module.getName());
-          setIcon(ModuleType.get(module).getIcon());
-        }
-        else {
-          setText("");
-          setIcon(null);
-        }
-      }
-    }
   }
 
   private static class TargetLevelCellEditor extends DefaultCellEditor {

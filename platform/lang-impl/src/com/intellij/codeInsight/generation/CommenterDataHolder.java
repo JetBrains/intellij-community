@@ -17,9 +17,4 @@ package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.util.UserDataHolderBase;
 
-/**
-* Created by IntelliJ IDEA.
-* User: Maxim.Mossienko
-* Date: 18.06.2010
-*/
 public abstract class CommenterDataHolder extends UserDataHolderBase {}

@@ -41,7 +41,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
-import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.ui.JBInsets;
@@ -59,14 +58,14 @@ import java.lang.ref.WeakReference;
 /**
  * @author spleaner
  */
-public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements FocusTrackbackProvider {
+public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer");
 
-  private DialogWrapper myWrapper;
+  private final DialogWrapper myWrapper;
   private WindowManagerEx myWindowManager;
   private Project myProject;
   private MyDialog myDialog;
-  private boolean myCanBeParent;
+  private final boolean myCanBeParent;
   private String myTitle;
 
   public GlassPaneDialogWrapperPeer(DialogWrapper wrapper, Project project, boolean canBeParent) throws GlasspanePeerUnavailableException {
@@ -154,14 +153,6 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
     } else {
       throw new GlasspanePeerUnavailableException();
     }
-  }
-
-  @Override
-  public FocusTrackback getFocusTrackback() {
-    if (myDialog != null) {
-      return myDialog.getFocusTrackback();
-    }
-     return null;
   }
 
   @Override
@@ -367,17 +358,18 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
   private void hidePopupsIfNeeded() {
     if (!SystemInfo.isMac) return;
 
-    StackingPopupDispatcher.getInstance().hidePersistentPopups();
+    final StackingPopupDispatcher stackingPopupDispatcher = StackingPopupDispatcher.getInstance();
+    stackingPopupDispatcher.hidePersistentPopups();
 
     Disposer.register(myDialog, new Disposable() {
       @Override
       public void dispose() {
-        StackingPopupDispatcher.getInstance().restorePersistentPopups();
+        stackingPopupDispatcher.restorePersistentPopups();
       }
     });
   }
 
-  private static class MyDialog extends JPanel implements Disposable, DialogWrapperDialog, DataProvider, FocusTrackback.Provider {
+  private static class MyDialog extends JPanel implements Disposable, DialogWrapperDialog, DataProvider {
     private final WeakReference<DialogWrapper> myDialogWrapper;
     private final IdeGlassPaneEx myPane;
     private JComponent myContentPane;
@@ -581,8 +573,8 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
 
     @Override
     public void dispose() {
-      setVisible(false);
       remove(getContentPane());
+      setVisible(false);
       DialogWrapper.unregisterKeyboardActions(myWrapperPane);
       myRootPane = null;
     }
@@ -634,11 +626,6 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
       }
 
       super.setSize(rect.width, rect.height);
-    }
-
-    @Override
-    public FocusTrackback getFocusTrackback() {
-      return null;
     }
 
     @Nullable

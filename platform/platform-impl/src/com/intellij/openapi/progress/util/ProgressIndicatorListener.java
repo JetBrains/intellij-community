@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.progress.util;
 
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+
 /**
  * @author lex
  */
@@ -22,4 +24,20 @@ public interface ProgressIndicatorListener {
   void cancelled();
 
   void stopped();
+
+  default void installToProgress(ProgressIndicatorEx progress) {
+    progress.addStateDelegate(new AbstractProgressIndicatorExBase(){
+      @Override
+      public void cancel() {
+        super.cancel();
+        cancelled();
+      }
+
+      @Override
+      public void stop() {
+        super.stop();
+        stopped();
+      }
+    });
+  }
 }

@@ -22,18 +22,19 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
- * Date:   17.03.2010
- * Time:   19:41:07
  */
 public class SimplifyBooleanCheckQuickFix implements LocalQuickFix {
-  private String myReplacementText;
+  private final String myReplacementText;
 
   public SimplifyBooleanCheckQuickFix(PyBinaryExpression binaryExpression) {
     myReplacementText = createReplacementText(binaryExpression);

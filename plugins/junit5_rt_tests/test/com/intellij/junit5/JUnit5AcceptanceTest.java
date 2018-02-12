@@ -38,7 +38,7 @@ class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
   @Test
   void testFactoryMethods() {
     doTest(() -> {
-      PsiClass aClass = myFixture.addClass("class MyTest {@org.junit.jupiter.api.TestFactory java.util.List<org.junit.jupiter.api.DynamicTest> tests() {return null;}}");
+      PsiClass aClass = myFixture.addClass("/** @noinspection ALL*/ class MyTest {@org.junit.jupiter.api.TestFactory java.util.List<org.junit.jupiter.api.DynamicTest> tests() {return null;}}");
       PsiMethod factoryMethod = aClass.getMethods()[0];
       assertNotNull(factoryMethod);
       assertTrue(JUnitUtil.isTestAnnotated(factoryMethod));
@@ -56,7 +56,7 @@ class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
   @Test
   void recognizedInnerClassesWithTestMethods() {
     doTest(() -> {
-      PsiClass aClass = myFixture.addClass("import org.junit.jupiter.api.*; class MyTest {@Nested class NTest { @Test void method() {}}}");
+      PsiClass aClass = myFixture.addClass("import org.junit.jupiter.api.*; /** @noinspection ALL*/ class MyTest {@Nested class NTest { @Test void method() {}}}");
       assertTrue(JUnitUtil.isTestClass(aClass, false, false));
       PsiClass innerClass = aClass.getInnerClasses()[0];
       assertTrue(JUnitUtil.isTestClass(innerClass));
@@ -65,9 +65,18 @@ class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
   }
 
   @Test
+  void rejectStaticMethods() {
+    doTest(() -> {
+      PsiClass aClass = myFixture.addClass("import org.junit.jupiter.api.*; /** @noinspection ALL*/ class MyTest { @Test static void method() {}}");
+      assertTrue(JUnitUtil.isTestClass(aClass, false, false));
+      assertFalse(JUnitUtil.isTestMethod(MethodLocation.elementInClass(aClass.getMethods()[0], aClass)));
+    });
+  }
+
+  @Test
   void testFrameworkDetection() {
     doTest(() -> {
-      PsiClass aClass = myFixture.addClass("class MyTest {@org.junit.jupiter.api.Test void method() {}}");
+      PsiClass aClass = myFixture.addClass("/** @noinspection ALL*/ class MyTest {@org.junit.jupiter.api.Test void method() {}}");
       assertNotNull(aClass);
       TestFramework framework = TestFrameworks.detectFramework(aClass);
       assertTrue(framework instanceof JUnit5Framework, framework.getName());
@@ -77,15 +86,17 @@ class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
   @Test
   void methodPresentations() {
     doTest(() -> {
-      PsiClass aClass = myFixture.addClass("class MyTest {" +
+      myFixture.addClass("package a; public class TestInfo {}");
+      PsiClass aClass = myFixture.addClass("/** @noinspection ALL*/ class MyTest<T extends a.TestInfo> {" +
                                            "  @org.junit.jupiter.api.Test void method() {}" +
                                            "  @org.junit.jupiter.api.Test void method(a.TestInfo info) {}" +
+                                           "  @org.junit.jupiter.api.Test void method(T info) {}" +
                                            "  @org.junit.Test void method1() {}" +
                                            "  @org.junit.Test void method1(a.TestInfo info) {}" +
                                            "}");
       assertNotNull(aClass);
 
-      Stream<String> expectedData = Arrays.stream(new String[]{"method", "method(a.TestInfo)", "method1", "method1"});
+      Stream<String> expectedData = Arrays.stream(new String[]{"method", "method(a.TestInfo)", "method(a.TestInfo)", "method1", "method1"});
       StreamEx.of(aClass.getMethods())
         .zipWith(expectedData)
         .forEach(e -> assertEquals(e.getValue(), JUnitConfiguration.Data.getMethodPresentation(e.getKey())));
@@ -101,7 +112,7 @@ class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
         .map(action -> action.getText())
         .filter(name -> name.startsWith("Add")).collect(Collectors.toSet());
       assertAll("Detected frameworks: " + frameworks.toString(),
-                () -> assertTrue(frameworks.contains("Add 'JUnit5' to classpath")));
+                () -> assertTrue(frameworks.contains("Add 'JUnit5.0' to classpath")));
 
       myFixture.configureByText("MyTest.java", "class MyTest {@<error descr=\"Cannot resolve symbol 'DisplayName'\">DisplayName</error> void method() {}}");
       myFixture.testHighlighting(false, false, false);
@@ -110,7 +121,7 @@ class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
         .map(action -> action.getText())
         .filter(name -> name.startsWith("Add")).collect(Collectors.toSet());
       assertAll("Detected frameworks: " + displayNameFrameworks.toString(),
-                () -> assertTrue (displayNameFrameworks.contains("Add 'JUnit5' to classpath")));
+                () -> assertTrue (displayNameFrameworks.contains("Add 'JUnit5.0' to classpath")));
 
     });
   }

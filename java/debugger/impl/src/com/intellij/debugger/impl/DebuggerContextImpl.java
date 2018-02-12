@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,17 +126,8 @@ public final class DebuggerContextImpl implements DebuggerContext {
   @Nullable
   public EvaluationContextImpl createEvaluationContext() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    StackFrameProxyImpl frameProxy = getFrameProxy();
-    ObjectReference objectReference;
-    try {
-      objectReference = frameProxy != null ? frameProxy.thisObject() : null;
-    }
-    catch (EvaluateException e) {
-      LOG.info(e);
-      objectReference = null;
-    }
     SuspendContextImpl context = getSuspendContext();
-    return context != null ? new EvaluationContextImpl(context, frameProxy, objectReference) : null;
+    return context != null ? new EvaluationContextImpl(context, getFrameProxy()) : null;
   }
 
   @NotNull

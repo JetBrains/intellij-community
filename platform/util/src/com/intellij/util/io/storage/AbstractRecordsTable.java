@@ -52,6 +52,7 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
 
   private TIntArrayList myFreeRecordsList = null;
   private boolean myIsDirty = false;
+  protected static final int SPECIAL_NEGATIVE_SIZE_FOR_REMOVED_RECORD = -1;
 
   public AbstractRecordsTable(final File storageFilePath, final PagePool pool) throws IOException {
     myStorage = new RandomAccessDataFile(storageFilePath, pool);
@@ -93,7 +94,7 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
     }
     else {
       final int result = myFreeRecordsList.remove(myFreeRecordsList.size() - 1);
-      assert getSize(result) == -1;
+      assert isSizeOfRemovedRecord(getSize(result));
       setSize(result, 0);
       return result;
     }
@@ -127,7 +128,7 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
       @Override
       public boolean validId() {
         assert hasNextId();
-        return getSize(recordId) != -1;
+        return isSizeOfLiveRecord(getSize(recordId));
       }
     };
   }
@@ -147,7 +148,7 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
   private TIntArrayList scanForFreeRecords() throws IOException {
     final TIntArrayList result = new TIntArrayList();
     for (int i = 1; i <= getRecordsCount(); i++) {
-      if (getSize(i) == -1) {
+      if (isSizeOfRemovedRecord(getSize(i))) {
         result.add(i);
       }
     }
@@ -194,7 +195,7 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
     markDirty();
     ensureFreeRecordsScanned();
     doCleanRecord(record);
-    setSize(record, -1);
+    setSize(record, SPECIAL_NEGATIVE_SIZE_FOR_REMOVED_RECORD);
     myFreeRecordsList.add(record);
   }
 
@@ -247,5 +248,13 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
       myIsDirty = false;
       myStorage.putInt(HEADER_MAGIC_OFFSET, getSafelyClosedMagic());
     }
+  }
+
+  protected static boolean isSizeOfRemovedRecord(int length) {
+    return length == SPECIAL_NEGATIVE_SIZE_FOR_REMOVED_RECORD;
+  }
+
+  protected static boolean isSizeOfLiveRecord(int length) {
+    return length != SPECIAL_NEGATIVE_SIZE_FOR_REMOVED_RECORD;
   }
 }

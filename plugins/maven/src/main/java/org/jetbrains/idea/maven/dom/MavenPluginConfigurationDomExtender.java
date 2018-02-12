@@ -110,8 +110,6 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
 
       if (selectedGoals == null || selectedGoals.contains(goal)) {
         for (MavenDomParameter eachParameter : eachMojo.getParameters().getParameters()) {
-          if (eachParameter.getEditable().getValue() == Boolean.FALSE) continue;
-
           String name = eachParameter.getName().getStringValue();
           if (name == null) continue;
 

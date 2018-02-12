@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -40,6 +41,7 @@ import java.util.List;
 public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
   @Override
   public void highlightsInsideVisiblePartAreProduced(@NotNull final HighlightingSession session,
+                                                     @Nullable Editor editor,
                                                      @NotNull final List<HighlightInfo> infos,
                                                      @NotNull TextRange priorityRange,
                                                      @NotNull TextRange restrictRange,
@@ -51,7 +53,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
     final long modificationStamp = document.getModificationStamp();
     final TextRange priorityIntersection = priorityRange.intersection(restrictRange);
 
-    final Editor editor = session.getEditor();
+    ShowAutoImportPassFactory autoImportPassFactory = project.getComponent(ShowAutoImportPassFactory.class);
     ((HighlightingSessionImpl)session).applyInEDT(() -> {
       if (modificationStamp != document.getModificationStamp()) return;
       if (priorityIntersection != null) {
@@ -64,7 +66,9 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
       if (editor != null && !editor.isDisposed()) {
         // usability: show auto import popup as soon as possible
         if (!DumbService.isDumb(project)) {
-          new ShowAutoImportPass(project, psiFile, editor).doApplyInformationToEditor();
+          TextEditorHighlightingPass highlightingPass = autoImportPassFactory.createHighlightingPass(psiFile, editor);
+          if (highlightingPass != null)
+            highlightingPass.doApplyInformationToEditor();
         }
 
         DaemonListeners.repaintErrorStripeRenderer(editor, project);
@@ -74,6 +78,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
 
   @Override
   public void highlightsOutsideVisiblePartAreProduced(@NotNull final HighlightingSession session,
+                                                      @Nullable Editor editor,
                                                       @NotNull final List<HighlightInfo> infos,
                                                       @NotNull final TextRange priorityRange,
                                                       @NotNull final TextRange restrictedRange, final int groupId) {
@@ -91,7 +96,6 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
                                                          restrictedRange.getStartOffset(), restrictedRange.getEndOffset(),
                                                          ProperTextRange.create(priorityRange),
                                                          groupId);
-      Editor editor = session.getEditor();
       if (editor != null) {
         DaemonListeners.repaintErrorStripeRenderer(editor, project);
       }
@@ -142,14 +146,15 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
   }
 
   @Override
-  public void progressIsAdvanced(@NotNull HighlightingSession highlightingSession, double progress) {
+  public void progressIsAdvanced(@NotNull HighlightingSession highlightingSession,
+                                 @Nullable Editor editor,
+                                 double progress) {
     PsiFile file = highlightingSession.getPsiFile();
-    Editor editor = highlightingSession.getEditor();
     repaintTrafficIcon(file, editor, progress);
   }
 
   private final Alarm repaintIconAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private void repaintTrafficIcon(@NotNull final PsiFile file, final Editor editor, double progress) {
+  private void repaintTrafficIcon(@NotNull final PsiFile file, @Nullable Editor editor, double progress) {
     if (ApplicationManager.getApplication().isCommandLine()) return;
 
     if (repaintIconAlarm.isEmpty() || progress >= 1) {

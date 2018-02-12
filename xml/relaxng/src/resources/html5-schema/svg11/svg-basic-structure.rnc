@@ -175,6 +175,7 @@ grammar {
         SVG.DocumentEvents.attrib,
         SVG.GraphicalEvents.attrib,
         SVG.External.attrib,
+        common.attrs.aria?,
         attribute x { Coordinate.datatype }?,
         attribute y { Coordinate.datatype }?,
         attribute width { Length.datatype }?,
@@ -223,6 +224,7 @@ grammar {
         SVG.Presentation.attrib,
         SVG.GraphicalEvents.attrib,
         SVG.External.attrib,
+        (common.attrs.aria.implicit.group | common.attrs.aria)?,
         attribute transform { TransformList.datatype }?
     a:documentation [
         "\x{a}" ~
@@ -264,7 +266,8 @@ grammar {
         "    desc: Description Element\x{a}" ~
         "  "
     ]
-    SVG.desc.content = text
+    any_element = element * { (attribute * { text } | any_element * | text)* }
+    SVG.desc.content = any_element* & text
     desc = element desc { attlist.desc, SVG.desc.content }
     attlist.desc &= SVG.Core.attrib, SVG.Style.attrib
     a:documentation [ "\x{a}" ~ "    title: Title Element\x{a}" ~ "  " ]
@@ -291,6 +294,7 @@ grammar {
         SVG.GraphicalEvents.attrib,
         SVG.XLinkEmbed.attrib,
         SVG.External.attrib,
+        common.attrs.aria?,
         attribute x { Coordinate.datatype }?,
         attribute y { Coordinate.datatype }?,
         attribute width { Length.datatype }?,

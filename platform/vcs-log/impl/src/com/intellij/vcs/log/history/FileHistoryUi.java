@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.history;
 
+import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
@@ -30,30 +31,32 @@ import com.intellij.openapi.vcs.vfs.VcsVirtualFolder;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.VcsLogFilterUi;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.impl.CommonUiProperties;
+import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter;
 import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
+import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -64,6 +67,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull private final FileHistoryUiProperties myUiProperties;
   @NotNull private final FileHistoryFilterUi myFilterUi;
   @NotNull private final FilePath myPath;
+  @Nullable private final Hash myRevision;
   @NotNull private final FileHistoryPanel myFileHistoryPanel;
   @NotNull private final IndexDataGetter myIndexDataGetter;
   @NotNull private final MyPropertiesChangeListener myPropertiesChangeListener;
@@ -73,12 +77,15 @@ public class FileHistoryUi extends AbstractVcsLogUi {
                        @NotNull VcsLogColorManager manager,
                        @NotNull FileHistoryUiProperties uiProperties,
                        @NotNull VisiblePackRefresher refresher,
-                       @NotNull FilePath path) {
+                       @NotNull FilePath path,
+                       @Nullable Hash revision) {
     super(logData, project, manager, refresher);
     myUiProperties = uiProperties;
 
     myIndexDataGetter = ObjectUtils.assertNotNull(logData.getIndex().getDataGetter());
-    myFilterUi = new FileHistoryFilterUi(path, uiProperties);
+    myRevision = revision;
+    CommitId commitId = revision == null ? null : new CommitId(revision, ObjectUtils.assertNotNull(VcsUtil.getVcsRootFor(myProject, path)));
+    myFilterUi = new FileHistoryFilterUi(path, commitId, uiProperties);
     myPath = path;
     myFileHistoryPanel = new FileHistoryPanel(this, logData, myVisiblePack, path);
 
@@ -130,6 +137,21 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     return null;
   }
 
+  @Nullable
+  public FilePath getPath(@NotNull VcsFullCommitDetails details) {
+    if (myPath.isDirectory()) return myPath;
+
+    List<Change> changes = collectRelevantChanges(details);
+    for (Change change : changes) {
+      ContentRevision revision = change.getAfterRevision();
+      if (revision != null) {
+        return revision.getFile();
+      }
+    }
+
+    return null;// file was deleted
+  }
+
   @NotNull
   public List<Change> collectRelevantChanges(@NotNull VcsFullCommitDetails details) {
     Set<FilePath> fileNames = getFileNames(details);
@@ -146,8 +168,8 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     int commitIndex = myLogData.getStorage().getCommitIndex(details.getId(), details.getRoot());
     Set<FilePath> names;
     if (myVisiblePack instanceof FileHistoryVisiblePack) {
-      IndexDataGetter.FileNamesData namesData = ((FileHistoryVisiblePack)myVisiblePack).getNamesData();
-      names = namesData.getAffectedPaths(commitIndex);
+      Map<Integer, FilePath> namesData = ((FileHistoryVisiblePack)myVisiblePack).getNamesData();
+      names = Collections.singleton(namesData.get(commitIndex));
     }
     else {
       names = myIndexDataGetter.getFileNames(myPath, commitIndex);
@@ -177,9 +199,45 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     return CommittedChangesTreeBrowser.zipChanges(changes);
   }
 
+  @Override
+  protected <T> void handleCommitNotFound(@NotNull T commitId, @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
+    String mainText = "Commit " + commitId.toString() + " does not exist in history for " + myPath.getName();
+    if (getFilters().get(VcsLogFilterCollection.BRANCH_FILTER) != null) {
+      showWarningWithLink(mainText + " in current branch.", "Show all branches and search again.", () -> {
+        myUiProperties.set(FileHistoryUiProperties.SHOW_ALL_BRANCHES, true);
+        invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create()));
+      });
+    }
+    else {
+      VcsLogUiImpl mainLogUi = VcsProjectLog.getInstance(myProject).getMainLogUi();
+      if (mainLogUi != null) {
+        showWarningWithLink(mainText + ".", "Search in Log.", () -> {
+          if (VcsLogContentUtil.selectLogUi(myProject, mainLogUi)) {
+            if (commitId instanceof Hash) {
+              mainLogUi.jumpToCommit((Hash)commitId,
+                                     notNull(VcsUtil.getVcsRootFor(myProject, myPath)),
+                                     SettableFuture.create());
+            }
+            else if (commitId instanceof String) {
+              mainLogUi.jumpToCommitByPartOfHash((String)commitId, SettableFuture.create());
+            }
+          }
+        });
+      }
+      else {
+        super.handleCommitNotFound(commitId, rowGetter);
+      }
+    }
+  }
+
   @NotNull
   public FilePath getPath() {
     return myPath;
+  }
+
+  @Nullable
+  public Hash getRevision() {
+    return myRevision;
   }
 
   @NotNull

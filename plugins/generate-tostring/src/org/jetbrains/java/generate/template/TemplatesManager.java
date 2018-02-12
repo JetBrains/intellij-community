@@ -1,42 +1,31 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
  */
 package org.jetbrains.java.generate.template;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.generate.element.FieldElement;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.reflect.Method;
 import java.util.*;
 
 public abstract class TemplatesManager implements PersistentStateComponent<TemplatesState> {
@@ -63,7 +52,7 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
         return myState;
     }
 
-    public void loadState(TemplatesState state) {
+    public void loadState(@NotNull TemplatesState state) {
         myState = state;
     }
 
@@ -93,14 +82,28 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
   }
 
   public TemplateResource getDefaultTemplate() {
-        for (TemplateResource template : getAllTemplates()) {
-            if (Comparing.equal(template.getFileName(), myState.defaultTempalteName)) {
-                return template;
-            }
-        }
+    TemplateResource resource = findTemplateByName(myState.defaultTempalteName);
+    if (resource != null) return resource;
 
-        return getAllTemplates().iterator().next();
+    String initialTemplateName = getInitialTemplateName();
+    resource = initialTemplateName != null ? findTemplateByName(initialTemplateName) : null;
+    return ObjectUtils.notNull(resource, getAllTemplates().iterator().next());
+  }
+
+  protected String getInitialTemplateName () {
+    return null;
+  }
+
+  @Nullable
+  public TemplateResource findTemplateByName(String templateName) {
+    for (TemplateResource template : getAllTemplates()) {
+      if (Comparing.equal(template.getFileName(), templateName)) {
+        return template;
+      }
     }
+
+    return null;
+  }
 
 
     public void setDefaultTemplate(TemplateResource res) {
@@ -119,8 +122,14 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
     @NotNull
     public static PsiType createFieldListElementType(Project project) {
       final PsiType classType = createElementType(project, FieldElement.class);
-      final PsiClass listClass = JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_UTIL_LIST, GlobalSearchScope.allScope(project));
-      return listClass != null ? JavaPsiFacade.getElementFactory(project).createType(listClass, classType) : PsiType.NULL;
+      PsiClass[] classes = JavaPsiFacade.getInstance(project).findClasses(CommonClassNames.JAVA_UTIL_LIST, 
+                                                                          GlobalSearchScope.allScope(project));
+      for (PsiClass listClass : classes) {
+        if (listClass.getTypeParameters().length == 1) {
+          return JavaPsiFacade.getElementFactory(project).createType(listClass, classType);
+        }
+      }
+      return PsiType.NULL;
     }
 
     @NotNull
@@ -129,11 +138,16 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
         ContainerUtil.mapNotNull(elementClass.getMethods(),
                                  method -> {
                                    final String methodName = method.getName();
-                                   if (methodName.startsWith("set")) {
+                                   if (methodName.startsWith("set") || method.isSynthetic() || method.isBridge()) {
                                      //hide setters from completion list
                                      return null;
                                    }
-                                   return method.getGenericReturnType().toString() + " " + methodName + "();";
+                                   String parametersString = StringUtil.join(method.getParameters(),
+                                                                             param -> param.getParameterizedType().getTypeName() +
+                                                                                      " " +
+                                                                                      param.getName(), 
+                                                                             ", ");
+                                   return method.getGenericReturnType().getTypeName() + " " + methodName + "(" + parametersString + ");";
                                  });
       final String text = "interface " + elementClass.getSimpleName() + " {\n" + StringUtil.join(methodNames, "\n") + "}";
       final PsiClass aClass = JavaPsiFacade.getElementFactory(project).createClassFromText(text, null).getInnerClasses()[0];

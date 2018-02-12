@@ -53,7 +53,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   protected final JPanel myPanel = new JPanel(new GridBagLayout());
 
   private boolean myShowAllStandardOptions = false;
-  private Set<String> myAllowedOptions = new HashSet<>();
+  private final Set<String> myAllowedOptions = new HashSet<>();
   protected MultiMap<String, CustomBooleanOptionInfo> myCustomOptions = new MultiMap<>();
   protected boolean isFirstUpdate = true;
   private final Map<String, String> myRenamedFields = new THashMap<>();
@@ -374,7 +374,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
 
   private void doInitBooleanField(@NonNls String fieldName, String title, String groupName) {
     try {
-      Class styleSettingsClass = CodeStyleSettings.class;
+      Class styleSettingsClass = CommonCodeStyleSettings.class;
       Field field = styleSettingsClass.getField(fieldName);
       String actualGroupName = getRemappedGroup(fieldName, groupName);
 
@@ -416,7 +416,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     public MyTreeCellRenderer() {
       myLabel = new JLabel();
       myCheckBox = new JCheckBox();
-      myCheckBox.setMargin(new Insets(0, 0, 0, 0));
+      myCheckBox.setMargin(JBUI.emptyInsets());
     }
 
     @Override
@@ -518,9 +518,9 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     private CustomBooleanOptionInfo(@NotNull Class<? extends CustomCodeStyleSettings> settingClass,
                                     @NotNull String fieldName,
                                     @NotNull String title,
-                                    String groupName,
-                                    OptionAnchor anchor,
-                                    String anchorFieldName) {
+                                    @Nullable String groupName,
+                                    @Nullable OptionAnchor anchor,
+                                    @Nullable String anchorFieldName) {
       this.settingClass = settingClass;
       this.fieldName = fieldName;
       this.title = title;

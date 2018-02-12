@@ -8,7 +8,7 @@ ZDOTDIR=$_OLD_ZDOTDIR
 
 if [ -n "$JEDITERM_USER_RCFILE" ]
 then
-  source $JEDITERM_USER_RCFILE
+  source "$JEDITERM_USER_RCFILE"
   unset JEDITERM_USER_RCFILE
 fi
 
@@ -39,10 +39,8 @@ if [ -n $LOGIN_SHELL ]; then
   fi
 fi
 
-
-
 if [ -n "$JEDITERM_SOURCE" ]
 then
-  source $JEDITERM_SOURCE
+  source "$(echo $JEDITERM_SOURCE)"
   unset JEDITERM_SOURCE
 fi

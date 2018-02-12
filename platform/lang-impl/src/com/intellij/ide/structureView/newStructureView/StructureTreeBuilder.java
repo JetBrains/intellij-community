@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.ide.structureView.newStructureView;
@@ -31,7 +19,6 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.project.Project;
@@ -49,7 +36,7 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
   private final StructureViewModel myStructureModel;
 
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
-  
+
   public StructureTreeBuilder(Project project,
                               JTree tree,
                               DefaultTreeModel treeModel,
@@ -64,24 +51,10 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
     myProject = project;
     myStructureModel = structureModel;
 
-    final ModelListener myModelListener = new ModelListener() {
-      @Override
-      public void onModelChanged() {
-        addRootToUpdate();
-      }
-    };
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(new MyPsiTreeChangeListener(), this);
 
-    CopyPasteUtil.DefaultCopyPasteListener copyPasteListener = new CopyPasteUtil.DefaultCopyPasteListener(getUpdater());
-    CopyPasteManager.getInstance().addContentChangedListener(copyPasteListener, this);
+    CopyPasteUtil.addDefaultListener(this, this::addSubtreeToUpdateByElement);
     initRootNode();
-    myStructureModel.addModelListener(myModelListener);
-    Disposer.register(this, new Disposable() {
-      @Override
-      public void dispose() {
-        myStructureModel.removeModelListener(myModelListener);
-      }
-    });
 
     setCanYieldUpdate(!ApplicationManager.getApplication().isUnitTestMode());
   }
@@ -95,20 +68,16 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
   protected final boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
     StructureViewModel model = myStructureModel;
     if (model instanceof TreeModelWrapper) {
-      model = ((TreeModelWrapper) model).getModel();
+      model = ((TreeModelWrapper)model).getModel();
     }
     if (model instanceof StructureViewModel.ExpandInfoProvider) {
       StructureViewModel.ExpandInfoProvider provider = (StructureViewModel.ExpandInfoProvider)model;
       Object element = nodeDescriptor.getElement();
-      if (element instanceof StructureViewComponent.StructureViewTreeElementWrapper) {
-        StructureViewComponent.StructureViewTreeElementWrapper wrapper = (StructureViewComponent.StructureViewTreeElementWrapper)element;
-        if (wrapper.getValue() instanceof StructureViewTreeElement) {
-          final StructureViewTreeElement value = (StructureViewTreeElement)wrapper.getValue();
-          if (value != null) {
-            return provider.isAutoExpand(value);
-          }
-        }
-      } else if (element instanceof GroupWrapper) {
+      Object value = StructureViewComponent.unwrapValue(element);
+      if (value instanceof StructureViewTreeElement) {
+        return provider.isAutoExpand((StructureViewTreeElement)value);
+      }
+      else if (element instanceof GroupWrapper) {
         final Group group = ((GroupWrapper)element).getValue();
         for (TreeElement treeElement : group.getChildren()) {
           if (treeElement instanceof StructureViewTreeElement && !provider.isAutoExpand((StructureViewTreeElement)treeElement)) {
@@ -126,7 +95,7 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
   protected final boolean isSmartExpand() {
     StructureViewModel model = myStructureModel;
     if (model instanceof TreeModelWrapper) {
-      model = ((TreeModelWrapper) model).getModel();
+      model = ((TreeModelWrapper)model).getModel();
     }
     if (model instanceof StructureViewModel.ExpandInfoProvider) {
       return ((StructureViewModel.ExpandInfoProvider)model).isSmartExpand();
@@ -206,6 +175,7 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
 
   final void addRootToUpdate() {
     final AbstractTreeStructure structure = getTreeStructure();
+    if (structure == null) return; // disposed
     structure.asyncCommit().doWhenDone(() -> {
       ((SmartTreeStructure)structure).rebuildTree();
       if (!isDisposed()) {
@@ -217,6 +187,6 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
   @Override
   @NotNull
   protected final AbstractTreeNode createSearchingTreeNodeWrapper() {
-    return new StructureViewComponent.StructureViewTreeElementWrapper(null,null, null);
+    return StructureViewComponent.createWrapper(null, null, null);
   }
 }

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 25-Jan-2008
- */
 package com.intellij.codeEditor.printing;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -90,9 +86,6 @@ public class HyperlinksToClassesOption extends PrintOption {
 
     public void reset() {
       myCbGenerateHyperlinksToClasses.setSelected(isGenerateHyperlinksToClasses);
-    }
-
-    public void disposeUIResources() {
     }
   }
 }

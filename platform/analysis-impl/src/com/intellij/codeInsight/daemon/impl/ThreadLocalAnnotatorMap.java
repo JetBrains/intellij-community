@@ -25,9 +25,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * User: cdr
- */
 abstract class ThreadLocalAnnotatorMap<K, V> {
   private volatile int version;
   @NotNull

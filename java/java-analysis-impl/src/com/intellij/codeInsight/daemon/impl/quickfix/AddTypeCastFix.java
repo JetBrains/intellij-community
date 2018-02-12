@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Jul 26, 2002
- * Time: 2:16:32 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -51,7 +43,7 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
   @Override
   @NotNull
   public String getText() {
-    return QuickFixBundle.message("add.typecast.text", myType.getCanonicalText());
+    return QuickFixBundle.message("add.typecast.text", myType.isValid() ? myType.getCanonicalText() : "");
   }
 
   @Override
@@ -67,7 +59,7 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
                              @NotNull PsiElement endElement) {
     return myType.isValid() &&
            PsiTypesUtil.isDenotableType(myType) &&
-           startElement.isValid() && 
+           PsiTypesUtil.allTypeParametersResolved(startElement, myType) &&
            startElement.getManager().isInProject(startElement);
   }
 
@@ -125,10 +117,5 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
     assertNotNull(typeCast.getOperand()).replace(expression);
 
     return typeCast;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 }

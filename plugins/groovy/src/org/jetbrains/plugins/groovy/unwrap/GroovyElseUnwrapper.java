@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.unwrap;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
@@ -29,7 +30,7 @@ public class GroovyElseUnwrapper extends GroovyElseUnwrapperBase {
   }
 
   @Override
-  public PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract) {
+  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract) {
     super.collectAffectedElements(e, toExtract);
     return findTopmostIfStatement(e);
   }

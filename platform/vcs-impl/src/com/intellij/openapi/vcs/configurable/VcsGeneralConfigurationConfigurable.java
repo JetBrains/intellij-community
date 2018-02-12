@@ -30,8 +30,8 @@ import java.util.Collection;
 
 public class VcsGeneralConfigurationConfigurable implements SearchableConfigurable {
   private VcsGeneralConfigurationPanel myPanel;
-  private Project myProject;
-  private VcsManagerConfigurable myMainConfigurable;
+  private final Project myProject;
+  private final VcsManagerConfigurable myMainConfigurable;
 
   public VcsGeneralConfigurationConfigurable(Project project, VcsManagerConfigurable configurable) {
     myProject = project;
@@ -94,6 +94,7 @@ public class VcsGeneralConfigurationConfigurable implements SearchableConfigurab
     return "Confirmation";
   }
 
+  @Override
   @NotNull
   public String getHelpTopic() {
     return "project.propVCSSupport.Confirmation";

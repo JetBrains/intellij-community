@@ -17,22 +17,15 @@
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 02.04.2003
- * Time: 12:22:03
- * To change this template use Options | File Templates.
- */
 
 public class PsiMultiReference implements PsiPolyVariantReference {
   public static final Comparator<PsiReference> COMPARATOR = (ref1, ref2) -> {
@@ -208,11 +201,11 @@ public class PsiMultiReference implements PsiPolyVariantReference {
       result.add(selfReference); // if i the only one starring at the sun
     }
 
-    return result.toArray(new ResolveResult[result.size()]);
+    return result.toArray(ResolveResult.EMPTY_ARRAY);
   }
 
   @Override
   public String toString() {
-    return "PsiMultiReference{myReferences=" + Arrays.toString(myReferences) + '}';
+    return "PsiMultiReference{" + StringUtil.join(myReferences, r -> r.getClass().getName(), ",") + '}';
   }
 }

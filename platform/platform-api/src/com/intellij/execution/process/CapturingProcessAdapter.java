@@ -33,7 +33,7 @@ public class CapturingProcessAdapter extends ProcessAdapter {
   }
 
   @Override
-  public void onTextAvailable(ProcessEvent event, Key outputType) {
+  public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
     addToOutput(event.getText(), outputType);
   }
 

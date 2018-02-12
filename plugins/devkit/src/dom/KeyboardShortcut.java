@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 
 package org.jetbrains.idea.devkit.dom;
 
+import com.intellij.spellchecker.xml.NoSpellchecking;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.Required;
@@ -36,6 +37,7 @@ public interface KeyboardShortcut extends DomElement {
 	 */
 	@NotNull
 	@Required
+        @NoSpellchecking
 	GenericAttributeValue<String> getFirstKeystroke();
 
 	/**
@@ -61,6 +63,7 @@ public interface KeyboardShortcut extends DomElement {
 	 * @return the value of the second-keystroke child.
 	 */
 	@NotNull
+	@NoSpellchecking
 	GenericAttributeValue<String> getSecondKeystroke();
 
         /**
@@ -69,7 +72,7 @@ public interface KeyboardShortcut extends DomElement {
          * @return the value of the should current shortcut be removed or not.
          */
         @NotNull
-        GenericAttributeValue<String> getRemove();
+        GenericAttributeValue<Boolean> getRemove();
 
         /**
          * Returns the value of the should all previous shortcuts be removed by that one or not.
@@ -77,5 +80,5 @@ public interface KeyboardShortcut extends DomElement {
          * @return the value of the should all previous shortcuts be removed by that one or not.
          */
         @NotNull
-        GenericAttributeValue<String> getReplaceAll();
+        GenericAttributeValue<Boolean> getReplaceAll();
 }

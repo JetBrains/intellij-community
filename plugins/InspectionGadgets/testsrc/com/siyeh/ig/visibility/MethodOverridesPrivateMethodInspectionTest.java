@@ -66,7 +66,7 @@ public class MethodOverridesPrivateMethodInspectionTest extends LightInspectionT
            "}");
   }
 
-  public void testGenericSuperClass() throws Exception {
+  public void testGenericSuperClass() {
     doTest("import test.Parent;" +
            "class Child extends Parent<String> {" +
            "  void /*Method 'bar()' overrides a package-private method of a superclass located in another package*/bar/**/(String s) {}" +

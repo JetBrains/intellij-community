@@ -20,7 +20,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyStatementList;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,13 +33,14 @@ import java.util.List;
  * @author yole
  */
 public class PyStatementSelectionHandler extends ExtendWordSelectionHandlerBase {
-  public boolean canSelect(final PsiElement e) {
+  @Override
+  public boolean canSelect(@NotNull final PsiElement e) {
     return e instanceof PyStringLiteralExpression || e instanceof PyCallExpression || e instanceof PyStatement ||
            e instanceof PyStatementList;
   }
 
-  public List<TextRange> select(final PsiElement e, final CharSequence editorText, final int cursorOffset, final Editor editor) {
-    List<TextRange> result = new ArrayList<>();
+  @Override
+  public List<TextRange> select(@NotNull final PsiElement e, @NotNull final CharSequence editorText, final int cursorOffset, @NotNull final Editor editor) {
     PsiElement endElement = e;
     while(endElement.getLastChild() != null) {
       endElement = endElement.getLastChild();
@@ -46,9 +51,8 @@ public class PyStatementSelectionHandler extends ExtendWordSelectionHandlerBase 
         endElement = prevSibling;
       }
     }
-    result.addAll(expandToWholeLine(editorText, new TextRange(e.getTextRange().getStartOffset(),
-                                                              endElement.getTextRange().getEndOffset())));
 
-    return result;
+    return new ArrayList<>(expandToWholeLine(editorText, new TextRange(e.getTextRange().getStartOffset(),
+                                                                       endElement.getTextRange().getEndOffset())));
   }
 }

@@ -16,13 +16,16 @@
 package com.intellij.ui;
 
 import com.intellij.util.ui.AbstractLayoutManager;
+import com.intellij.util.ui.accessibility.AbstractAccessibleContextDelegate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 
 public class ExpandedItemRendererComponentWrapper extends JComponent {
   JComponent owner;
@@ -56,32 +59,103 @@ public class ExpandedItemRendererComponentWrapper extends JComponent {
 
   public static ExpandedItemRendererComponentWrapper wrap(@NotNull Component rendererComponent) {
     if (rendererComponent instanceof Accessible) {
-      return new MyAccessibleComponent(rendererComponent, (Accessible)rendererComponent);
+      return new MyComponent(rendererComponent, (Accessible)rendererComponent);
     }
     return new ExpandedItemRendererComponentWrapper(rendererComponent);
   }
 
-  private static class MyAccessibleComponent extends ExpandedItemRendererComponentWrapper implements Accessible {
-    private Accessible myAccessible;
-    MyAccessibleComponent(@NotNull Component comp, @NotNull Accessible accessible) {
+  private static class MyComponent extends ExpandedItemRendererComponentWrapper implements Accessible {
+    private final Accessible myAccessible;
+    private AccessibleContext myDefaultAccessibleContext;
+
+    MyComponent(@NotNull Component comp, @NotNull Accessible accessible) {
       super(comp);
       myAccessible = accessible;
     }
+
     @Override
     public AccessibleContext getAccessibleContext() {
-      return accessibleContext = myAccessible.getAccessibleContext();
+      if (accessibleContext == null) {
+        accessibleContext = new AccessibleMyComponent();
+      }
+      return accessibleContext;
+    }
+
+    public AccessibleContext getDefaultAccessibleContext() {
+      if (myDefaultAccessibleContext == null) {
+        myDefaultAccessibleContext = new AccessibleJComponent() {};
+      }
+      return myDefaultAccessibleContext;
+    }
+
+    /**
+     * Wraps the accessible context of {@link #myAccessible}, except for parent, which
+     * needs to come from the default implementation to avoid infinite parent/child cycle.
+     */
+    protected class AccessibleMyComponent extends AbstractAccessibleContextDelegate {
+      @NotNull
+      @Override
+      protected AccessibleContext getDelegate() {
+        return myAccessible.getAccessibleContext();
+      }
+
+      @Override
+      public Accessible getAccessibleParent() {
+        return getDefaultAccessibleContext().getAccessibleParent();
+      }
+
+      @Override
+      public int getAccessibleIndexInParent() {
+        return getDefaultAccessibleContext().getAccessibleIndexInParent();
+      }
     }
   }
 
   @Override
   public void setBorder(Border border) {
+    JComponent rendererComponent = getRendererComponent();
+    if (rendererComponent != null) {
+      rendererComponent.setBorder(border);
+      return;
+    }
+    super.setBorder(border);
+  }
+
+  @Override
+  public String getToolTipText() {
+    JComponent rendererComponent = getRendererComponent();
+    if (rendererComponent != null) {
+      return rendererComponent.getToolTipText();
+    }
+    return super.getToolTipText();
+  }
+
+  @Override
+  public String getToolTipText(MouseEvent event) {
+    JComponent rendererComponent = getRendererComponent();
+    if (rendererComponent != null) {
+      return rendererComponent.getToolTipText(event);
+    }
+    return super.getToolTipText(event);
+  }
+
+  @Override
+  public Point getToolTipLocation(MouseEvent event) {
+    JComponent rendererComponent = getRendererComponent();
+    if (rendererComponent != null) {
+      return rendererComponent.getToolTipLocation(event);
+    }
+    return super.getToolTipLocation(event);
+  }
+
+  @Nullable
+  private JComponent getRendererComponent() {
     if (getComponentCount() == 1) {
       Component component = getComponent(0);
       if (component instanceof JComponent) {
-        ((JComponent)component).setBorder(border);
-        return;
+        return ((JComponent)component);
       }
     }
-    super.setBorder(border);
+    return null;
   }
 }

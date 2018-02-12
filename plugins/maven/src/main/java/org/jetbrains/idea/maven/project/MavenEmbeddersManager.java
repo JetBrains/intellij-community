@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.util.Function;
-import com.intellij.util.containers.SoftValueHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -45,7 +45,7 @@ public class MavenEmbeddersManager {
 
   private final Project myProject;
 
-  private final Map<Trinity<Key, String, String>, MavenEmbedderWrapper> myPool = new SoftValueHashMap<>();
+  private final Map<Trinity<Key, String, String>, MavenEmbedderWrapper> myPool = ContainerUtil.createSoftValueMap();
   private final Set<MavenEmbedderWrapper> myEmbeddersInUse = new THashSet<>();
   private final Set<MavenEmbedderWrapper> myEmbeddersToClear = new THashSet<>();
 

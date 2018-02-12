@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 06.08.2002
- * Time: 17:17:27
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.inheritanceToDelegation;
 
 import com.intellij.lang.ContextAwareActionHandler;
@@ -130,7 +122,7 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler,
 
     final Set<PsiClass> baseClasses = basesToMemberInfos.keySet();
     new InheritanceToDelegationDialog(project, aClass,
-                                      baseClasses.toArray(new PsiClass[baseClasses.size()]), basesToMemberInfos).show();
+                                      baseClasses.toArray(PsiClass.EMPTY_ARRAY), basesToMemberInfos).show();
   }
 
   private static List<MemberInfo> createBaseClassMemberInfos(PsiClass baseClass) {

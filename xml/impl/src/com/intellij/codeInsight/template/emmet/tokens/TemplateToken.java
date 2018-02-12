@@ -40,15 +40,21 @@ public class TemplateToken extends ZenCodingToken {
   @NotNull private final String myKey;
   private TemplateImpl myTemplate;
   @NotNull private final Map<String, String> myAttributes;
-  private PsiFile myFile;
+  private final boolean myForceSingleTag;
 
+  private PsiFile myFile;
   public TemplateToken(@NotNull String key) {
     this(key, Collections.emptyMap());
   }
 
   public TemplateToken(@NotNull String key, @NotNull Map<String, String> attribute2value) {
+    this(key, attribute2value, false);
+  }
+
+  public TemplateToken(@NotNull String key, @NotNull Map<String, String> attribute2value, boolean forceSingleTag) {
     myKey = key;
     myAttributes = attribute2value;
+    myForceSingleTag = forceSingleTag;
   }
 
   @NotNull
@@ -59,7 +65,7 @@ public class TemplateToken extends ZenCodingToken {
   public PsiFile getFile() {
     return myFile;
   }
-  
+
   public String getTemplateText() {
     return myFile.getText();
   }
@@ -67,7 +73,11 @@ public class TemplateToken extends ZenCodingToken {
   private void setFile(PsiFile file) {
     myFile = file;
   }
-  
+
+  public boolean isForceSingleTag() {
+    return myForceSingleTag;
+  }
+
   @Nullable
   public XmlTag getXmlTag() {
     return PsiTreeUtil.findChildOfType(myFile, XmlTag.class);

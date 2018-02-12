@@ -16,7 +16,7 @@ import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
-import com.jetbrains.python.sdkTools.SdkCreationType;
+import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
@@ -48,7 +48,7 @@ public class PyPackagingTest extends PyEnvTestCase {
   public void testGetPackages() {
     runPythonTest(new PyPackagingTestTask() {
       @Override
-      public void runTestOn(String sdkHome) throws Exception {
+      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
         final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
         List<PyPackage> packages = null;
         try {
@@ -71,7 +71,7 @@ public class PyPackagingTest extends PyEnvTestCase {
   public void testCreateVirtualEnv() {
     runPythonTest(new PyPackagingTestTask() {
       @Override
-      public void runTestOn(String sdkHome) throws Exception {
+      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
         final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
         try {
           final File tempDir = FileUtil.createTempDirectory(getTestName(false), null);
@@ -100,12 +100,13 @@ public class PyPackagingTest extends PyEnvTestCase {
     });
   }
 
+  @Staging
   @Test
   public void testInstallPackage() {
     runPythonTest(new PyPackagingTestTask() {
 
       @Override
-      public void runTestOn(String sdkHome) throws Exception {
+      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
         final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
         try {
           final File tempDir = FileUtil.createTempDirectory(getTestName(false), null);
@@ -117,7 +118,7 @@ public class PyPackagingTest extends PyEnvTestCase {
           final List<PyPackage> packages1 = manager.refreshAndGetPackages(false);
           // TODO: Install Markdown from a local file
           manager.install(list(PyRequirement.fromLine("Markdown<2.2"),
-                               new PyRequirement("httplib2")), Collections.<String>emptyList());
+                               new PyRequirement("httplib2")), Collections.emptyList());
           final List<PyPackage> packages2 = manager.refreshAndGetPackages(false);
           final PyPackage markdown2 = findPackage("Markdown", packages2);
           assertNotNull(markdown2);

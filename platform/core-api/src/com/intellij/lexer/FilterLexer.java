@@ -77,7 +77,7 @@ public class FilterLexer extends DelegateLexer {
   @NotNull
   @Override
   public LexerPosition getCurrentPosition() {
-    return getDelegate().getCurrentPosition();    //To change body of overridden methods use File | Settings | File Templates.
+    return getDelegate().getCurrentPosition();
   }
 
   @Override

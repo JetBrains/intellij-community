@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.impl.ConsoleBuffer;
@@ -20,6 +6,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.messages.serviceMessages.*;
@@ -48,8 +35,10 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   private final String myTestFrameworkName;
   private final OutputLineSplitter mySplitter;
 
-  private GeneralTestEventsProcessor myProcessor;
+  private volatile GeneralTestEventsProcessor myProcessor;
   private boolean myPendingLineBreakFlag;
+  private Runnable myTestingStartedHandler;
+  private boolean myFirstTestingStartedEvent = true;
 
   public OutputToGeneralTestEventsConverter(@NotNull String testFrameworkName, @NotNull TestConsoleProperties consoleProperties) {
     this(testFrameworkName, consoleProperties.isEditable());
@@ -85,7 +74,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   /**
    * Flashes the rest of stdout text buffer after output has been stopped
    */
-  public void flushBufferBeforeTerminating() {
+  public void flushBufferOnProcessTermination(int exitCode) {
     mySplitter.flush();
     if (myPendingLineBreakFlag) {
       fireOnUncapturedLineBreak();
@@ -233,10 +222,10 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-  private void fireOnSuiteTreeNodeAdded(String testName, String locationHint) {
+  private void fireOnSuiteTreeNodeAdded(String testName, String locationHint, String metaInfo, String id, String parentNodeId) {
     final GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
-      processor.onSuiteTreeNodeAdded(testName, locationHint);
+      processor.onSuiteTreeNodeAdded(testName, locationHint, metaInfo, id, parentNodeId);
     }
   }
 
@@ -248,11 +237,11 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-  private void fireOnSuiteTreeStarted(String suiteName, String locationHint) {
+  private void fireOnSuiteTreeStarted(String suiteName, String locationHint, String metainfo, String id, String parentNodeId) {
 
     final GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
-      processor.onSuiteTreeStarted(suiteName, locationHint);
+      processor.onSuiteTreeStarted(suiteName, locationHint, metainfo, id, parentNodeId);
     }
   }
 
@@ -334,10 +323,33 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
+  public void setTestingStartedHandler(@NotNull Runnable testingStartedHandler) {
+    myTestingStartedHandler = testingStartedHandler;
+  }
+
   public void onStartTesting() {}
 
+  public synchronized void startTesting() {
+    myTestingStartedHandler.run();
+    onStartTesting();
+    GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
+      processor.onStartTesting();
+    }
+  }
+
+  public synchronized void finishTesting() {
+    GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
+      processor.onFinishTesting();
+      Disposer.dispose(processor);
+    }
+  }
+
   private class MyServiceMessageVisitor extends DefaultServiceMessageVisitor {
-    @NonNls public static final String KEY_TESTS_COUNT = "testCount";
+    @NonNls private static final String TESTING_STARTED = "testingStarted";
+    @NonNls private static final String TESTING_FINISHED = "testingFinished";
+    @NonNls private static final String KEY_TESTS_COUNT = "testCount";
     @NonNls private static final String ATTR_KEY_TEST_ERROR = "error";
     @NonNls private static final String ATTR_KEY_TEST_COUNT = "count";
     @NonNls private static final String ATTR_KEY_TEST_DURATION = "duration";
@@ -515,7 +527,22 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     public void visitServiceMessage(@NotNull final ServiceMessage msg) {
       final String name = msg.getMessageName();
 
-      if (KEY_TESTS_COUNT.equals(name)) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(msg.asString());
+      }
+
+      if (TESTING_STARTED.equals(name)) {
+        // Since a test reporter may not emit "testingStarted"/"testingFinished" events,
+        // startTesting() is already invoked before starting processing messages.
+        if (!myFirstTestingStartedEvent) {
+          startTesting();
+        }
+        myFirstTestingStartedEvent = false;
+      }
+      else if (TESTING_FINISHED.equals(name)) {
+        finishTesting();
+      }
+      else if (KEY_TESTS_COUNT.equals(name)) {
         processTestCountInSuite(msg);
       }
       else if (CUSTOM_STATUS.equals(name)) {
@@ -537,13 +564,21 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
         fireOnTestFrameworkAttached();
       }
       else if (SUITE_TREE_STARTED.equals(name)) {
-        fireOnSuiteTreeStarted(msg.getAttributes().get("name"), msg.getAttributes().get(ATTR_KEY_LOCATION_URL));
+        fireOnSuiteTreeStarted(msg.getAttributes().get("name"), 
+                               msg.getAttributes().get(ATTR_KEY_LOCATION_URL), 
+                               BaseStartedNodeEvent.getMetainfo(msg),
+                               TreeNodeEvent.getNodeId(msg), 
+                               msg.getAttributes().get("parentNodeId"));
       }
       else if (SUITE_TREE_ENDED.equals(name)) {
         fireOnSuiteTreeEnded(msg.getAttributes().get("name"));
       }
       else if (SUITE_TREE_NODE.equals(name)) {
-        fireOnSuiteTreeNodeAdded(msg.getAttributes().get("name"), msg.getAttributes().get(ATTR_KEY_LOCATION_URL));
+        fireOnSuiteTreeNodeAdded(msg.getAttributes().get("name"), 
+                                 msg.getAttributes().get(ATTR_KEY_LOCATION_URL),
+                                 BaseStartedNodeEvent.getMetainfo(msg),
+                                 TreeNodeEvent.getNodeId(msg), 
+                                 msg.getAttributes().get("parentNodeId"));
       }
       else if (BUILD_TREE_ENDED_NODE.equals(name)) {
         fireOnBuildTreeEnded();

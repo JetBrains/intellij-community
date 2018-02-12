@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,13 +33,13 @@ public class CaseBlockMover extends StatementUpDownMover {
     PsiElement endElement = firstNonWhiteElement(editor.getSelectionModel().getSelectionEnd(), file, false);
     if (endElement == null) return false;
 
-    PsiSwitchLabelStatement caseStatement = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(startElement, endElement), 
+    PsiSwitchLabelStatement caseStatement = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(startElement, endElement),
                                                                         PsiSwitchLabelStatement.class, false);
     if (caseStatement == null) return false;
 
-    PsiElement firstToMove = getThisCaseBlockStart(caseStatement);    
+    PsiElement firstToMove = getThisCaseBlockStart(caseStatement);
     PsiElement nextCaseBlockStart = getNextCaseBlockStart(caseStatement);
-    PsiElement lastToMove = PsiTreeUtil.skipSiblingsBackward(nextCaseBlockStart, PsiWhiteSpace.class);
+    PsiElement lastToMove = PsiTreeUtil.skipWhitespacesBackward(nextCaseBlockStart);
     assert lastToMove != null;
 
     LineRange range = createRange(editor.getDocument(), firstToMove, lastToMove);
@@ -52,11 +52,11 @@ public class CaseBlockMover extends StatementUpDownMover {
       if (!(nextCaseBlockStart instanceof PsiSwitchLabelStatement) || nextCaseBlockStart == caseStatement) return info.prohibitMove();
       firstToMove2 = nextCaseBlockStart;
       nextCaseBlockStart = getNextCaseBlockStart((PsiSwitchLabelStatement)firstToMove2);
-      lastToMove2 = PsiTreeUtil.skipSiblingsBackward(nextCaseBlockStart, PsiWhiteSpace.class);
-      assert lastToMove2 != null;      
+      lastToMove2 = PsiTreeUtil.skipWhitespacesBackward(nextCaseBlockStart);
+      assert lastToMove2 != null;
     }
     else {
-      lastToMove2 = PsiTreeUtil.skipSiblingsBackward(firstToMove, PsiWhiteSpace.class);
+      lastToMove2 = PsiTreeUtil.skipWhitespacesBackward(firstToMove);
       if (lastToMove2 == null) return info.prohibitMove();
       firstToMove2 = PsiTreeUtil.getPrevSiblingOfType(lastToMove2, PsiSwitchLabelStatement.class);
       if (firstToMove2 == null) return info.prohibitMove();
@@ -67,12 +67,12 @@ public class CaseBlockMover extends StatementUpDownMover {
     info.toMove2 = range2;
     return true;
   }
-  
+
   // returns PsiSwitchLabelStatement starting this case block
   @NotNull
   private static PsiSwitchLabelStatement getThisCaseBlockStart(PsiSwitchLabelStatement element) {
     PsiElement tmp;
-    while ((tmp = PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class)) instanceof PsiSwitchLabelStatement) {
+    while ((tmp = PsiTreeUtil.skipWhitespacesBackward(element)) instanceof PsiSwitchLabelStatement) {
       element = (PsiSwitchLabelStatement)tmp;
     }
     return element;
@@ -83,7 +83,7 @@ public class CaseBlockMover extends StatementUpDownMover {
   private static PsiElement getNextCaseBlockStart(PsiSwitchLabelStatement element) {
     PsiElement result = element;
     PsiElement tmp;
-    while ((tmp = PsiTreeUtil.skipSiblingsForward(result, PsiWhiteSpace.class)) instanceof PsiSwitchLabelStatement) {
+    while ((tmp = PsiTreeUtil.skipWhitespacesForward(result)) instanceof PsiSwitchLabelStatement) {
       result = tmp;
     }
     tmp = PsiTreeUtil.getNextSiblingOfType(result, PsiSwitchLabelStatement.class);

@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings("RegExpRedundantEscape")
 public class SingleCharAlternationInspectionTest extends RegExpInspectionTestCase {
 
   public void testSimple() {
@@ -35,8 +36,17 @@ public class SingleCharAlternationInspectionTest extends RegExpInspectionTestCas
     quickfixTest("<warning descr=\"Single character alternation in RegExp\">x|y|z</warning>", "[xyz]", "Replace with '[xyz]'");
   }
 
+  public void testRemoveNonCapturingGroup() {
+    quickfixTest("(?:<warning descr=\"Single character alternation in RegExp\">k<caret>|l|m</warning>)", "[klm]", "Replace with '[klm]'");
+  }
+
   public void testRemoveEscaping() {
-    quickfixTest("<warning descr=\"Single character alternation in RegExp\">\\^|<weak_warning descr=\"Redundant character escape\">\\å</weak_warning>|\\{|\\\\|\\[</warning>", "[\\^å{\\\\\\[]", "Replace with '[\\^å{\\\\\\[]'");
+    quickfixTest("<warning descr=\"Single character alternation in RegExp\">\\^|\\å|\\{|\\\\|\\[</warning>", "[\\^å{\\\\\\[]", "Replace with '[\\^å{\\\\\\[]'");
+  }
+
+  public void testEscapes() {
+    quickfixTest("(<warning descr=\"Single character alternation in RegExp\">\\.|<caret>\\[|]|\\(|\\)|\\{|}|\\^|\\?|\\*|\\||\\+|-|\\$</warning>)ab",
+                 "([.\\[\\](){}^?*|+\\-$])ab", "Replace with '[.\\[\\](){}^?*|+\\-$]'");
   }
 
   @NotNull

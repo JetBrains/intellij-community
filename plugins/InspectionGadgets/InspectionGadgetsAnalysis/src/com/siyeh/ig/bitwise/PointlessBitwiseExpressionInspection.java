@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -43,7 +42,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
   /**
    * @noinspection PublicField
    */
-  public boolean m_ignoreExpressionsContainingConstants = false;
+  public boolean m_ignoreExpressionsContainingConstants = true;
 
   static final Set<IElementType> bitwiseTokens =
     new HashSet<>(6);
@@ -182,12 +181,9 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiPolyadicExpression expression = (PsiPolyadicExpression)
-        descriptor.getPsiElement();
-      final String newExpression =
-        calculateReplacementExpression(expression);
+    public void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiPolyadicExpression expression = (PsiPolyadicExpression)descriptor.getPsiElement();
+      final String newExpression = calculateReplacementExpression(expression);
       PsiReplacementUtil.replaceExpression(expression, newExpression);
     }
   }

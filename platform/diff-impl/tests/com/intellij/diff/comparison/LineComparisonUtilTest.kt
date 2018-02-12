@@ -484,7 +484,7 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
   }
 
   fun `test regression - second step correction should search for matchings in its prefix`() {
-    lines() {
+    lines {
       ("Z_X_Z_X __Y" - "X__Y")
       ("-_ _-_--__ " - " __ ").default()
       ("-_-_-_  __ " - " __ ").trim()
@@ -492,10 +492,29 @@ class LineComparisonUtilTest : ComparisonUtilTestBase() {
     }
 
     // do not break other IW-matchings during second step
-    lines() {
+    lines {
       ("Z_X_K_Z_X __Y" - "K _X__Y")
       ("-_-_-_-_--__ " - "--_-__ ").default()
       ("-_-_ _-_  __ " - "  _ __ ").trim()
+      testAll()
+    }
+  }
+
+  fun `test regression - multiple similar braces nearby`() {
+    // IDEA-111712
+    lines {
+      ("function fn() {_  return {_    a: 1_  }_}_" -
+       "function fn() {_  return {_    a: 1_  };_}_")
+      ("               _          _        _---_ _" -
+       "               _          _        _----_ _").default()
+      testAll()
+    }
+
+    lines {
+      ("function fn() {_  return {_    a: 1_  }_}_" -
+       "function fn() {_  return {_    a: 1_  }_};_")
+      ("               _          _        _   _-_" -
+       "               _          _        _   _--_").default()
       testAll()
     }
   }

@@ -23,7 +23,7 @@ import org.jetbrains.jps.model.JpsModel;
  * @author nik
  */
 public class IgnoredFileIndexImpl implements IgnoredFileIndex {
-  private IgnoredPatternSet myIgnoredPatterns = new IgnoredPatternSet();
+  private final IgnoredPatternSet myIgnoredPatterns = new IgnoredPatternSet();
 
   public IgnoredFileIndexImpl(JpsModel model) {
     myIgnoredPatterns.setIgnoreMasks(model.getGlobal().getFileTypesConfiguration().getIgnoredPatternString());

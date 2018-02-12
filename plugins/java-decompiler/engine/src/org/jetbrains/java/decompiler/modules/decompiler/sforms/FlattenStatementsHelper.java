@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.sforms;
 
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
@@ -412,21 +398,19 @@ public class FlattenStatementsHelper {
     }
 
     if (finallyShortRangeSource != null) {
-
       boolean isContinueEdge = (edgetype == StatEdge.TYPE_CONTINUE);
 
-      List<String[]> lst = mapShortRangeFinallyPathIds.get(sourcenode.id);
-      if (lst == null) {
-        mapShortRangeFinallyPathIds.put(sourcenode.id, lst = new ArrayList<>());
-      }
-      lst.add(new String[]{finallyShortRangeSource.id, destination.id.toString(), finallyShortRangeEntry.id.toString(),
-        isFinallyMonitorExceptionPath ? "1" : null, isContinueEdge ? "1" : null});
+      mapShortRangeFinallyPathIds.computeIfAbsent(sourcenode.id, k -> new ArrayList<>()).add(new String[]{
+        finallyShortRangeSource.id,
+        destination.id.toString(),
+        finallyShortRangeEntry.id.toString(),
+        isFinallyMonitorExceptionPath ? "1" : null,
+        isContinueEdge ? "1" : null});
 
-      lst = mapLongRangeFinallyPathIds.get(sourcenode.id);
-      if (lst == null) {
-        mapLongRangeFinallyPathIds.put(sourcenode.id, lst = new ArrayList<>());
-      }
-      lst.add(new String[]{finallyLongRangeSource.id, destination.id.toString(), finallyLongRangeEntry.id.toString(),
+      mapLongRangeFinallyPathIds.computeIfAbsent(sourcenode.id, k -> new ArrayList<>()).add(new String[]{
+        finallyLongRangeSource.id,
+        destination.id.toString(),
+        finallyLongRangeEntry.id.toString(),
         isContinueEdge ? "1" : null});
     }
   }
@@ -502,7 +486,7 @@ public class FlattenStatementsHelper {
     @Override
     public boolean equals(Object o) {
       if (o == this) return true;
-      if (o == null || !(o instanceof FinallyPathWrapper)) return false;
+      if (!(o instanceof FinallyPathWrapper)) return false;
 
       FinallyPathWrapper fpw = (FinallyPathWrapper)o;
       return (source + ":" + destination + ":" + entry).equals(fpw.source + ":" + fpw.destination + ":" + fpw.entry);

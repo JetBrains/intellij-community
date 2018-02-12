@@ -15,14 +15,10 @@
  */
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
-import com.intellij.debugger.ui.tree.DebuggerTreeNode;
-import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiExpression;
 import com.sun.jdi.*;
 
 /**
@@ -42,40 +38,38 @@ public class BinaryRenderer extends NodeRendererImpl {
 
     StringBuilder buf = new StringBuilder("0b");
     int prefixLength = buf.length();
+    String valueStr = "";
     if (value instanceof ByteValue) {
-      buf.append(Integer.toBinaryString(0xff & ((ByteValue)value).byteValue()));
+      valueStr = Integer.toBinaryString(0xff & ((ByteValue)value).byteValue());
     }
     else if (value instanceof ShortValue) {
-      buf.append(Integer.toBinaryString(0xffff & ((ShortValue)value).shortValue()));
+      valueStr = Integer.toBinaryString(0xffff & ((ShortValue)value).shortValue());
     }
     else if (value instanceof IntegerValue) {
-      buf.append(Integer.toBinaryString(((PrimitiveValue)value).intValue()));
+      valueStr = Integer.toBinaryString(((PrimitiveValue)value).intValue());
     }
     else if (value instanceof LongValue) {
-      buf.append(Long.toBinaryString(((LongValue)value).longValue()));
+      valueStr = Long.toBinaryString(((LongValue)value).longValue());
     }
     else {
       LOG.error("Unsupported value " + value);
     }
+
+    // add leading zeros
+    int remainder = valueStr.length() % 8;
+    if (remainder != 0) {
+      for (int i = 0; i < 8 - remainder; i++) {
+        buf.append('0');
+      }
+    }
+
+    buf.append(valueStr);
 
     // group by 8
     for (int i = buf.length() - 8; i > prefixLength; i -= 8) {
       buf.insert(i, '_');
     }
     return buf.toString();
-  }
-
-  @Override
-  public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {}
-
-  @Override
-  public PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
-    return null;
-  }
-
-  @Override
-  public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
-    return false;
   }
 
   @Override

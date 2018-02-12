@@ -19,7 +19,6 @@ import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.config.ui.SelectCvsConfigurationDialog;
-import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsBrowser.ui.BrowserPanel;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.FileSetToBeUpdated;
@@ -117,7 +116,7 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
 
   private boolean loginImpl(final Project project, final Consumer<VcsException> exceptionConsumer) {
     final LoginPerformer performer =
-      new LoginPerformer(project, Collections.<CvsEnvironment>singletonList(mySelectedConfiguration), exceptionConsumer);
+      new LoginPerformer(project, Collections.singletonList(mySelectedConfiguration), exceptionConsumer);
     try {
       return performer.loginAll(false);
     } catch (Exception e) {

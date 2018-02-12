@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 public class XmlStructureViewBuilderFactory implements PsiStructureViewFactory {
   @Override
   @Nullable
-  public StructureViewBuilder getStructureViewBuilder(final PsiFile psiFile) {
+  public StructureViewBuilder getStructureViewBuilder(@NotNull final PsiFile psiFile) {
     if (!(psiFile instanceof XmlFile)) {
       return null;
     }
@@ -67,7 +67,7 @@ public class XmlStructureViewBuilderFactory implements PsiStructureViewFactory {
   }
 
   @Nullable
-  private static StructureViewBuilder getStructureViewBuilderForExtensions(final PsiFile psiFile) {
+  private static StructureViewBuilder getStructureViewBuilderForExtensions(@NotNull PsiFile psiFile) {
     for (Language language : XMLLanguage.INSTANCE.getLanguageExtensionsForFile(psiFile)) {
       PsiStructureViewFactory factory = LanguageStructureViewBuilder.INSTANCE.forLanguage(language);
       if (factory == null) continue;

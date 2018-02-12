@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,20 +19,21 @@ import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
-import com.jetbrains.python.debugger.PySignatureUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.documentation.docstrings.PlainDocString;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.StructuredDocString;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeChecker;
-import com.jetbrains.python.psi.types.PyTypeParser;
+import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.Substring;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,7 +95,7 @@ public class PyDocstringTypesInspection extends PyInspection {
         if (type != null) {
           String dynamicType = signature.getArgTypeQualifiedName(param);
           if (dynamicType != null) {
-            String dynamicTypeShortName = PySignatureUtil.getShortestImportableName(function, dynamicType);
+            String dynamicTypeShortName = getShortestImportableName(function, dynamicType);
             if (!match(function, dynamicType, type.getValue())) {
               registerProblem(node, "Dynamically inferred type '" +
                                     dynamicTypeShortName +
@@ -109,9 +110,40 @@ public class PyDocstringTypesInspection extends PyInspection {
       }
     }
 
+    @Nullable
+    private String getShortestImportableName(@Nullable PsiElement anchor, @NotNull String type) {
+      final PyType pyType = PyTypeParser.getTypeByName(anchor, type, myTypeEvalContext);
+      if (pyType instanceof PyClassType) {
+        return ((PyClassType)pyType).getPyClass().getQualifiedName();
+      }
+
+      if (pyType != null) {
+        return getPrintableName(pyType);
+      }
+      else {
+        return type;
+      }
+    }
+
+    @Nullable
+    private static String getPrintableName(@Nullable PyType type) {
+      if (type instanceof PyUnionType) {
+        return StreamEx
+          .of(((PyUnionType)type).getMembers())
+          .map(Visitor::getPrintableName)
+          .joining(" or ");
+      }
+      else if (type != null) {
+        return type.getName();
+      }
+      else {
+        return PyNames.UNKNOWN_TYPE;
+      }
+    }
+
     private boolean match(PsiElement anchor, String dynamicTypeName, String specifiedTypeName) {
-      final PyType dynamicType = PyTypeParser.getTypeByName(anchor, dynamicTypeName);
-      final PyType specifiedType = PyTypeParser.getTypeByName(anchor, specifiedTypeName);
+      final PyType dynamicType = PyTypeParser.getTypeByName(anchor, dynamicTypeName, myTypeEvalContext);
+      final PyType specifiedType = PyTypeParser.getTypeByName(anchor, specifiedTypeName, myTypeEvalContext);
       return PyTypeChecker.match(specifiedType, dynamicType, myTypeEvalContext);
     }
   }
@@ -121,13 +153,13 @@ public class PyDocstringTypesInspection extends PyInspection {
     private final String myParamName;
     private final Substring myTypeSubstring;
     private final String myNewType;
-    private final PyStringLiteralExpression myStringLiteralExpression;
+    private final SmartPsiElementPointer<PyStringLiteralExpression> myStringLiteralExpression;
 
     private ChangeTypeQuickFix(String name, Substring substring, String type, PyStringLiteralExpression expression) {
       myParamName = name;
       myTypeSubstring = substring;
       myNewType = type;
-      myStringLiteralExpression = expression;
+      myStringLiteralExpression = SmartPointerManager.createPointer(expression);
     }
 
     @NotNull
@@ -148,7 +180,10 @@ public class PyDocstringTypesInspection extends PyInspection {
 
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
-      myStringLiteralExpression.replace(elementGenerator.createDocstring(newValue).getExpression());
+      final PyStringLiteralExpression stringLiteralExpression = myStringLiteralExpression.getElement();
+      if (stringLiteralExpression != null) {
+        stringLiteralExpression.replace(elementGenerator.createDocstring(newValue).getExpression());
+      }
     }
   }
 }

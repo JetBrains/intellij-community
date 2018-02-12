@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 01-Feb-2008
- */
 package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,7 +25,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaImplementationTextSelectioner implements ImplementationTextSelectioner {
-  private static final Logger LOG = Logger.getInstance("#" + JavaImplementationTextSelectioner.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaImplementationTextSelectioner.class);
 
   @Override
   public int getTextStartOffset(@NotNull final PsiElement parent) {

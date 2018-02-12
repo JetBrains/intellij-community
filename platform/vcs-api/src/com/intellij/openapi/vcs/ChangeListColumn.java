@@ -56,8 +56,8 @@ public abstract class ChangeListColumn<T extends ChangeList> {
     @Override
     @NotNull
     public Comparator<CommittedChangeList> getComparator() {
-      // TODO: CommittedChangeListByDateComparator could be utilized here. But currently it is placed in vcs-impl.
-      // TODO: Think of either moving these ChangeListColumn instances to vcs-impl or move comparator to vcs-api.
+      // TODO: CommittedChangeListByDateComparator could be utilized here. But currently it is placed in intellij.platform.vcs.impl.
+      // TODO: Think of either moving these ChangeListColumn instances to intellij.platform.vcs.impl or move comparator to intellij.platform.vcs.
       return comparing(CommittedChangeList::getCommitDate);
     }
   };

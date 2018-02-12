@@ -57,7 +57,7 @@ public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
     final CommitContext commitContext = new CommitContext();
     applyAdditionalInfoBefore(myProject, additionalInfo, commitContext);
     final Collection<PatchApplier> appliers = getPatchAppliers(patchGroupsToApply, localList, commitContext);
-    final ApplyPatchStatus patchStatus = executeAndApplyAdditionalInfo(localList, additionalInfo, commitContext, appliers);
+    final ApplyPatchStatus patchStatus = PatchApplier.executePatchGroup(appliers, localList);
     if (patchStatus != ApplyPatchStatus.ABORT && patchStatus != ApplyPatchStatus.FAILURE) {
       removeAppliedAndSaveRemainedIfNeeded(remaining, appliers, commitContext); // remove only if partly applied or successful
     }

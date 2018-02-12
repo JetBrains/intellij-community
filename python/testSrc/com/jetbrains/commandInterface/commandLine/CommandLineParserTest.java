@@ -17,6 +17,9 @@ package com.jetbrains.commandInterface.commandLine;
 
 
 import com.intellij.testFramework.ParsingTestCase;
+import com.jetbrains.commandInterface.commandLine.psi.CommandLineArgument;
+import com.jetbrains.commandInterface.commandLine.psi.CommandLineFile;
+import org.junit.Assert;
 
 
 /**
@@ -34,25 +37,33 @@ public final class CommandLineParserTest extends ParsingTestCase {
     return CommandTestTools.TEST_PATH;
   }
 
+  public void testSpaces() {
+    doTest(true);
+    final CommandLineFile commandLineFile = (CommandLineFile)myFile;
+    Assert.assertEquals("Bad argument value", "spam and eggs", commandLineFile.getArguments().iterator().next().getValueNoQuotes());
+    final CommandLineArgument optionArgument = commandLineFile.getOptions().iterator().next().findArgument();
+    Assert.assertNotNull("No option argument found", optionArgument);
+    Assert.assertEquals("Bad option argument value", "ketchup", optionArgument.getValueNoQuotes());
+  }
 
   /**
    * Should be ok
    */
-  public void testCommandLine() throws Exception {
+  public void testCommandLine() {
     doTest(true);
   }
 
   /**
    * Should have a lot of errors
    */
-  public void testJunk() throws Exception {
+  public void testJunk() {
     doTest(true);
   }
 
   /**
    * Should have error because option ends with "="
    */
-  public void testOptionNoValueJunk() throws Exception {
+  public void testOptionNoValueJunk() {
     doTest(true);
   }
 }

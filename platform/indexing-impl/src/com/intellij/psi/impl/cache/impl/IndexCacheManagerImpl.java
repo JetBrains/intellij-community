@@ -16,7 +16,7 @@
 
 package com.intellij.psi.impl.cache.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -42,7 +41,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 16, 2008
  */
 public class IndexCacheManagerImpl implements CacheManager{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.cache.impl.IndexCacheManagerImpl");
@@ -77,7 +75,7 @@ public class IndexCacheManagerImpl implements CacheManager{
     final List<VirtualFile> result = new ArrayList<>(5);
     Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(result);
     collectVirtualFilesWithWord(word, occurenceMask, scope, caseSensitively, processor);
-    return result.isEmpty() ? VirtualFile.EMPTY_ARRAY : result.toArray(new VirtualFile[result.size()]);
+    return result.isEmpty() ? VirtualFile.EMPTY_ARRAY : result.toArray(VirtualFile.EMPTY_ARRAY);
   }
 
   // IMPORTANT!!!
@@ -94,23 +92,20 @@ public class IndexCacheManagerImpl implements CacheManager{
     }
 
     try {
-      return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          return FileBasedIndex.getInstance().processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, new FileBasedIndex.ValueProcessor<Integer>() {
-            final FileIndexFacade index = FileIndexFacade.getInstance(myProject);
-            @Override
-            public boolean process(final VirtualFile file, final Integer value) {
-              ProgressIndicatorProvider.checkCanceled();
-              final int mask = value.intValue();
-              if ((mask & occurrenceMask) != 0 && index.shouldBeFound(scope, file)) {
-                if (!fileProcessor.process(file)) return false;
-              }
-              return true;
+      return ReadAction.compute(() -> FileBasedIndex.getInstance()
+        .processValues(IdIndex.NAME, new IdIndexEntry(word, caseSensitively), null, new FileBasedIndex.ValueProcessor<Integer>() {
+          final FileIndexFacade index = FileIndexFacade.getInstance(myProject);
+
+          @Override
+          public boolean process(@NotNull final VirtualFile file, final Integer value) {
+            ProgressIndicatorProvider.checkCanceled();
+            final int mask = value.intValue();
+            if ((mask & occurrenceMask) != 0 && index.shouldBeFound(scope, file)) {
+              if (!fileProcessor.process(file)) return false;
             }
-          }, scope);
-        }
-      });
+            return true;
+          }
+        }, scope));
     }
     catch (IndexNotReadyException e) {
       throw new ProcessCanceledException();

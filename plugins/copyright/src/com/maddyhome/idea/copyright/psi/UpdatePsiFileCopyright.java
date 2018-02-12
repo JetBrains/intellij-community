@@ -46,7 +46,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
-  private static final Logger LOG = Logger.getInstance("#" + UpdatePsiFileCopyright.class.getName());
+  private static final Logger LOG = Logger.getInstance(UpdatePsiFileCopyright.class);
   private final CopyrightProfile myOptions;
 
   protected UpdatePsiFileCopyright(Project project, Module module, VirtualFile root, CopyrightProfile options) {

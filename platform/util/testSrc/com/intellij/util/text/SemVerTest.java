@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,58 +15,67 @@
  */
 package com.intellij.util.text;
 
-import junit.framework.TestCase;
-import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
+import org.junit.Test;
 
-public class SemVerTest extends TestCase {
-  public void testParsing() throws Exception {
-    checkParsed("0.9.2", 0, 9, 2);
+import static org.assertj.core.api.Assertions.assertThat;
+
+public class SemVerTest {
+  @Test
+  public void parsing() {
+    assertParsed("0.9.2", 0, 9, 2);
+    assertParsed("0.9.2-", 0, 9, 2);
+    assertParsed("0.9.2-dart", 0, 9, 2);
+    assertParsed("4.0.0-alpha.1", 4, 0, 0);
+    assertParsed("0.10.0-rc-1", 0, 10, 0);
+    assertParsed("1.0.0-rc-1", 1, 0, 0);
+    assertParsed("1.0.0-alpha", 1, 0, 0);
+    assertParsed("1.0.0-0.3.7", 1, 0, 0);
+    assertParsed("1.0.0-x.7.z.92", 1, 0, 0);
+
+    assertNotParsed(null);
+    assertNotParsed("");
+    assertNotParsed("1.0.a");
+    assertNotParsed("1.0");
+    assertNotParsed("1..a");
   }
 
-  public void testExtendedVersion() throws Exception {
-    checkParsed("0.9.2-dart", 0, 9, 2);
+  @Test
+  public void comparing() {
+    assertThat(parse("1.0.0")).isGreaterThan(parse("0.10.0"));
+    assertThat(parse("1.0.0")).isLessThan(parse("2.10.0"));
+
+    assertThat(parse("0.30.0")).isGreaterThan(parse("0.5.1000"));
+    assertThat(parse("0.30.10")).isLessThan(parse("0.100.0"));
+
+    assertThat(parse("2.9.123-test")).isGreaterThan(parse("2.9.100"));
+    assertThat(parse("2.9.123-test")).isLessThan(parse("2.9.124"));
+
+    assertThat(parse("11.123.0")).isEqualTo(parse("11.123.0"));
+    assertThat(parse("11.123.0")).isEqualByComparingTo(parse("11.123.0"));
+
+    Assert.assertTrue(parse("4.12.5").isGreaterOrEqualThan(4, 12, 5));
+    Assert.assertTrue(parse("4.12.5").isGreaterOrEqualThan(4, 12, 4));
+    Assert.assertTrue(parse("4.12.5").isGreaterOrEqualThan(4, 11, 0));
+    Assert.assertTrue(parse("4.12.5").isGreaterOrEqualThan(4, 11, 9));
+    Assert.assertTrue(parse("4.12.5").isGreaterOrEqualThan(3, 100, 100));
+
+    Assert.assertFalse(parse("4.12.5").isGreaterOrEqualThan(4, 12, 6));
+    Assert.assertFalse(parse("4.12.5").isGreaterOrEqualThan(4, 13, 0));
+    Assert.assertFalse(parse("4.12.5").isGreaterOrEqualThan(5, 1, 0));
   }
 
-  public void testGulp4Alpha() throws Exception {
-    checkParsed("4.0.0-alpha.1", 4, 0, 0);
+  private static void assertParsed(String version, int expectedMajor, int expectedMinor, int expectedPatch) {
+    assertThat(parse(version)).isEqualTo(new SemVer(version, expectedMajor, expectedMinor, expectedPatch));
   }
 
-  public void testMisc() throws Exception {
-    checkParsed("0.10.0-rc-1", 0, 10, 0);
-    checkParsed("1.0.0-rc-1", 1, 0, 0);
-    checkParsed("1.0.0-alpha", 1, 0, 0);
-    checkParsed("1.0.0-0.3.7", 1, 0, 0);
-    checkParsed("1.0.0-x.7.z.92", 1, 0, 0);
-    checkNotParsed("1.0.a");
-    checkNotParsed("1.0");
-    checkNotParsed("1..a");
+  private static void assertNotParsed(String version) {
+    assertThat(SemVer.parseFromText(version)).isNull();
   }
 
-  private static void checkParsed(@NotNull String version, int expectedMajor, int expectedMinor, int expectedPatch) {
-    assertEquals(new SemVer(version, expectedMajor, expectedMinor, expectedPatch), parseNotNull(version));
-  }
-
-  private static void checkNotParsed(@NotNull String version) {
-    assertNull(SemVer.parseFromText(version));
-  }
-
-  public void testCompare() throws Exception {
-    assertTrue(parseNotNull("1.0.0").compareTo(parseNotNull("0.10.0")) > 0);
-    assertTrue(parseNotNull("1.0.0").compareTo(parseNotNull("2.10.0")) < 0);
-
-    assertTrue(parseNotNull("0.30.0").compareTo(parseNotNull("0.5.1000")) > 0);
-    assertTrue(parseNotNull("0.30.10").compareTo(parseNotNull("0.100.0")) < 0);
-
-    assertTrue(parseNotNull("2.9.123-test").compareTo(parseNotNull("2.9.100")) > 0);
-    assertTrue(parseNotNull("2.9.123-test").compareTo(parseNotNull("2.9.124")) < 0);
-
-    assertTrue(parseNotNull("11.123.0").compareTo(parseNotNull("11.123.0")) == 0);
-  }
-
-  @NotNull
-  private static SemVer parseNotNull(@NotNull String text) {
+  private static SemVer parse(String text) {
     SemVer semVer = SemVer.parseFromText(text);
-    assertNotNull(semVer);
+    assertThat(semVer).describedAs(text).isNotNull();
     return semVer;
   }
 }

@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.FilePathByPathComparator;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -112,18 +111,15 @@ public class TriggerAdditionOrDeletion {
         askUserIfNeeded(vcsRoot.getVcs(), (List<FilePath>)filePaths, VcsConfiguration.StandardConfirmation.ADD);
         myAffected.addAll(filePaths);
         final List<VirtualFile> virtualFiles = new ArrayList<>();
-        ContainerUtil.process(filePaths, new Processor<FilePath>() {
-          @Override
-          public boolean process(FilePath path) {
-            VirtualFile vf = path.getVirtualFile();
-            if (vf == null) {
-              incorrectFilePath.add(path);
-            }
-            else {
-              virtualFiles.add(vf);
-            }
-            return true;
+        ContainerUtil.process(filePaths, path -> {
+          VirtualFile vf = path.getVirtualFile();
+          if (vf == null) {
+            incorrectFilePath.add(path);
           }
+          else {
+            virtualFiles.add(vf);
+          }
+          return true;
         });
         //virtual files collection shouldn't contain 'null' vf
         localChangesProvider.scheduleUnversionedFilesForAddition(virtualFiles);

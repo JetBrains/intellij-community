@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.ide.actions;
 
@@ -47,6 +35,9 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.EmptyIcon;
+import com.sun.jna.Native;
+import com.sun.jna.platform.win32.Kernel32;
+import com.sun.jna.platform.win32.WinDef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -66,7 +57,7 @@ import java.util.stream.Stream;
 import static com.intellij.openapi.util.text.StringUtil.defaultIfEmpty;
 
 public class ShowFilePathAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ShowFilePathAction");
+  private static final Logger LOG = Logger.getInstance(ShowFilePathAction.class);
 
   public static final NotificationListener FILE_SELECTING_LISTENER = new NotificationListener.Adapter() {
     @Override
@@ -105,7 +96,7 @@ public class ShowFilePathAction extends AnAction {
           .map(dir -> new File(dir, "applications/" + appName))
           .filter(File::exists)
           .findFirst()
-          .map(file -> readDesktopEntryKey(file, key + '='));
+          .map(file -> readDesktopEntryKey(file, key));
       }
     }
 
@@ -119,8 +110,10 @@ public class ShowFilePathAction extends AnAction {
   }
 
   private static String readDesktopEntryKey(File file, String key) {
+    LOG.debug("looking for '" + key + "' in " + file);
+    String prefix = key + '=';
     try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-      return reader.lines().filter(l -> l.startsWith(key)).map(l -> l.substring(key.length())).findFirst().orElse(null);
+      return reader.lines().filter(l -> l.startsWith(prefix)).map(l -> l.substring(prefix.length())).findFirst().orElse(null);
     }
     catch (IOException | UncheckedIOException e) {
       LOG.info("Cannot read: " + file, e);
@@ -128,7 +121,7 @@ public class ShowFilePathAction extends AnAction {
     }
   }
 
-@Override
+  @Override
   public void update(@NotNull AnActionEvent e) {
     boolean visible = !SystemInfo.isMac && isSupported();
     e.getPresentation().setVisible(visible);
@@ -281,12 +274,14 @@ public class ShowFilePathAction extends AnAction {
     String toSelect = _toSelect != null ? FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(_toSelect.getPath())) : null;
 
     if (SystemInfo.isWindows) {
-      String cmd = toSelect != null ? "explorer /select," + toSelect : "explorer /root," + dir;
-      Process process = Runtime.getRuntime().exec(cmd);  // no quoting/escaping is needed
+      String cmd = toSelect != null ? "explorer /select,\"" + shortPath(toSelect) + '"' : "explorer /root,\"" + shortPath(dir) + '"';
+      LOG.debug(cmd);
+      Process process = Runtime.getRuntime().exec(cmd);  // no advanced quoting/escaping is needed
       new CapturingProcessHandler(process, null, cmd).runProcess().checkSuccess(LOG);
     }
     else if (SystemInfo.isMac) {
       GeneralCommandLine cmd = toSelect != null ? new GeneralCommandLine("open", "-R", toSelect) : new GeneralCommandLine("open", dir);
+      LOG.debug(cmd.toString());
       ExecUtil.execAndGetOutput(cmd).checkSuccess(LOG);
     }
     else if (fileManagerApp.getValue() != null) {
@@ -296,6 +291,7 @@ public class ShowFilePathAction extends AnAction {
       schedule(new GeneralCommandLine("xdg-open", dir));
     }
     else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+      LOG.debug("opening " + dir + " via desktop API");
       Desktop.getDesktop().open(new File(dir));
     }
     else {
@@ -303,9 +299,24 @@ public class ShowFilePathAction extends AnAction {
     }
   }
 
+  private static String shortPath(String path) {
+    if (path.contains("  ")) {
+      // On the way from Runtime.exec() to CreateProcess(), a command line goes through couple rounds of merging and splitting
+      // which breaks paths containing a sequence of two or more spaces.
+      // Conversion to a short format is an ugly hack allowing to open such paths in Explorer.
+      char[] result = new char[WinDef.MAX_PATH];
+      if (Kernel32.INSTANCE.GetShortPathName(path, result, result.length) <= result.length) {
+        return Native.toString(result);
+      }
+    }
+
+    return path;
+  }
+
   private static void schedule(GeneralCommandLine cmd) {
     PooledThreadExecutor.INSTANCE.submit(() -> {
       try {
+        LOG.debug(cmd.toString());
         ExecUtil.execAndGetOutput(cmd).checkSuccess(LOG);
       }
       catch (Exception e) {

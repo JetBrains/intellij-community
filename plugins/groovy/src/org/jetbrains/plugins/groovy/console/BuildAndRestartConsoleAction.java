@@ -30,16 +30,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by Max Medvedev on 21/03/14
- */
 public class BuildAndRestartConsoleAction extends AnAction {
 
-  private Module myModule;
-  private Project myProject;
-  private Executor myExecutor;
-  private RunContentDescriptor myContentDescriptor;
-  private Consumer<Module> myRestarter;
+  private final Module myModule;
+  private final Project myProject;
+  private final Executor myExecutor;
+  private final RunContentDescriptor myContentDescriptor;
+  private final Consumer<Module> myRestarter;
 
   public BuildAndRestartConsoleAction(@NotNull Module module,
                                       @NotNull Project project,

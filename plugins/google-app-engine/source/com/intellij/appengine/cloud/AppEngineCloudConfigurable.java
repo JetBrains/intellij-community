@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,16 +104,11 @@ public class AppEngineCloudConfigurable extends RemoteServerConfigurable impleme
 
   @Nullable
   @Override
-  public String getHelpTopic() {
-    return null;
-  }
-
-  @Nullable
-  @Override
   public JComponent createComponent() {
     return myMainPanel;
   }
 
+  @Override
   public void reset() {
     String email = myConfiguration.getEmail();
     if (email == null) {
@@ -151,6 +146,7 @@ public class AppEngineCloudConfigurable extends RemoteServerConfigurable impleme
     }
   }
 
+  @Override
   public void apply() {
     String email = getEmail();
     if (email != null) {
@@ -176,6 +172,7 @@ public class AppEngineCloudConfigurable extends RemoteServerConfigurable impleme
     return new String(myPasswordField.getPassword());
   }
 
+  @Override
   public boolean isModified() {
     return !Comparing.strEqual(getEmail(), myConfiguration.getEmail()) || myConfiguration.isOAuth2() != isOAuth2()
            || myRememberPasswordCheckBox.isSelected() != myConfiguration.isPasswordStored()

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public class InferenceFromSourceUtil {
   private static boolean calcShouldInferFromSource(@NotNull PsiMethod method) {
     if (isLibraryCode(method) ||
         method.hasModifierProperty(PsiModifier.ABSTRACT) ||
-        PsiUtil.canBeOverriden(method)) {
+        PsiUtil.canBeOverridden(method)) {
       return false;
     }
 
@@ -88,9 +88,9 @@ public class InferenceFromSourceUtil {
   }
 
   static boolean suppressNullable(PsiMethod method) {
-    if (method.getParameterList().getParametersCount() == 0) return false;
+    if (method.getParameterList().isEmpty()) return false;
 
-    for (MethodContract contract : ControlFlowAnalyzer.getMethodContracts(method)) {
+    for (StandardMethodContract contract : ControlFlowAnalyzer.getMethodContracts(method)) {
       if (contract.returnValue == MethodContract.ValueConstraint.NULL_VALUE) {
         return true;
       }

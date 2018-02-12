@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.builtInWebServer
 
 import com.google.common.cache.CacheBuilder
@@ -24,7 +10,7 @@ import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -71,7 +57,10 @@ private val notificationManager by lazy {
 }
 
 class BuiltInWebServer : HttpRequestHandler() {
-  override fun isAccessible(request: HttpRequest) = request.isLocalOrigin(onlyAnyOrLoopback = false, hostsOnly = true)
+  override fun isAccessible(request: HttpRequest): Boolean {
+    return BuiltInServerOptions.getInstance().builtInServerAvailableExternally ||
+           request.isLocalOrigin(onlyAnyOrLoopback = false, hostsOnly = true)
+  }
 
   override fun isSupported(request: FullHttpRequest) = super.isSupported(request) || request.method() == HttpMethod.POST
 
@@ -96,7 +85,7 @@ class BuiltInWebServer : HttpRequestHandler() {
       if (urlDecoder.path().length < 2) {
         return false
       }
-      
+
       projectName = null
     }
     else {
@@ -113,7 +102,7 @@ class BuiltInWebServer : HttpRequestHandler() {
 
 internal fun isActivatable() = Registry.`is`("ide.built.in.web.server.activatable", false)
 
-internal const val TOKEN_PARAM_NAME = "_ijt"
+const val TOKEN_PARAM_NAME = "_ijt"
 const val TOKEN_HEADER_NAME = "x-ijt"
 
 private val STANDARD_COOKIE by lazy {
@@ -235,7 +224,7 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
   }
 
   for (pathHandler in WebServerPathHandler.EP_NAME.extensions) {
-    LOG.catchAndLog {
+    LOG.runAndLogException {
       if (pathHandler.process(path, project, request, context, projectName, decodedPath, isCustomHost)) {
         return true
       }
@@ -254,7 +243,7 @@ fun HttpRequest.isSignedRequest(): Boolean {
       ?: QueryStringDecoder(uri()).parameters().get(TOKEN_PARAM_NAME)?.firstOrNull()
       ?: referrer?.let { QueryStringDecoder(it).parameters().get(TOKEN_PARAM_NAME)?.firstOrNull() }
 
-  // we don't invalidate token — allow to make subsequent requests using it (it is required for our javadoc DocumentationComponent)
+  // we don't invalidate token - allow to make subsequent requests using it (it is required for our javadoc DocumentationComponent)
   return token != null && tokens.getIfPresent(token) != null
 }
 

@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
 
-/**
- * Created by Max Medvedev on 8/19/13
- */
 public class AnnotationArgConverter {
   @Nullable
   public GrAnnotationMemberValue convert(PsiAnnotationMemberValue value) {

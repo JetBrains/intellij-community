@@ -28,25 +28,26 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.env.PyTestTask;
+import com.jetbrains.env.Staging;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
-import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker;
-import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.toolbox.Maybe;
+import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
 import java.io.File;
 import java.util.Set;
 
+import static com.jetbrains.python.fixtures.PyTestCase.assertType;
 import static org.junit.Assert.*;
 
 /**
@@ -113,16 +114,12 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
 
   // PY-4349
   @Test
+  @Staging
   public void testFakeNamedTuple() {
     runTest(new SkeletonsTask() {
       @Override
       protected void runTestOn(@NotNull Sdk sdk) {
         final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
-        // Named tuples have been introduced in Python 2.6
-        if (languageLevel.isOlderThan(LanguageLevel.PYTHON26)) {
-          return;
-        }
-
         // XXX: A workaround for invalidating VFS cache with the test file copied to our temp directory
         LocalFileSystem.getInstance().refresh(false);
 
@@ -145,10 +142,7 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
         ApplicationManager.getApplication().runReadAction(() -> {
           final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
           final PsiFile file = myFixture.getFile();
-          final TypeEvalContext context = TypeEvalContext.codeAnalysis(file.getProject(), file);
-          final PyType type = context.getType(expr);
-          final String actualType = PythonDocumentationProvider.getTypeName(type, context);
-          assertEquals("int", actualType);
+          assertType("int", expr, TypeEvalContext.codeAnalysis(file.getProject(), file));
         });
       }
     });
@@ -161,10 +155,6 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
       @Override
       protected void runTestOn(@NotNull Sdk sdk) {
         final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
-        // We rely on int.real property that is not explicitly annotated in the skeletons generator
-        if (languageLevel.isOlderThan(LanguageLevel.PYTHON26)) {
-          return;
-        }
         final Project project = myFixture.getProject();
         ApplicationManager.getApplication().runReadAction(() -> {
           final PyFile builtins = PyBuiltinCache.getBuiltinsForSdk(project, sdk);
@@ -214,7 +204,7 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
 
 
     @Override
-    public void runTestOn(String sdkHome) throws Exception {
+    public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
       final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_AND_SKELETONS);
       runTestOn(sdk);
     }

@@ -19,13 +19,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.SettingsSavingComponent
+import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.options.SchemeProcessor
 import com.intellij.openapi.project.Project
-import com.intellij.project.isDirectoryBased
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.lang.CompoundRuntimeException
@@ -36,28 +36,31 @@ import java.nio.file.Paths
 const val ROOT_CONFIG = "\$ROOT_CONFIG$"
 
 sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingComponent {
-  private val managers = ContainerUtil.createLockFreeCopyOnWriteList<SchemeManagerImpl<Scheme, out Scheme>>()
+  private val managers = ContainerUtil.createLockFreeCopyOnWriteList<SchemeManagerImpl<Scheme, Scheme>>()
 
   protected open val componentManager: ComponentManager? = null
 
-  override final fun <T : Scheme, MutableT : T> create(directoryName: String,
-                                                       processor: SchemeProcessor<T, MutableT>,
-                                                       presentableName: String?,
-                                                       roamingType: RoamingType,
-                                                       isUseOldFileNameSanitize: Boolean,
-                                                       streamProvider: StreamProvider?,
-                                                       directoryPath: Path?): SchemeManager<T> {
+  override final fun <T : Any, MutableT : T> create(directoryName: String,
+                                                    processor: SchemeProcessor<T, MutableT>,
+                                                    presentableName: String?,
+                                                    roamingType: RoamingType,
+                                                    schemeNameToFileName: SchemeNameToFileName,
+                                                    streamProvider: StreamProvider?,
+                                                    directoryPath: Path?,
+                                                    autoSave: Boolean): SchemeManager<T> {
     val path = checkPath(directoryName)
     val manager = SchemeManagerImpl(path,
                                     processor,
-                                    streamProvider ?: (componentManager?.stateStore?.stateStorageManager as? StateStorageManagerImpl)?.streamProvider,
+                                    streamProvider ?: (componentManager?.stateStore?.storageManager as? StateStorageManagerImpl)?.compoundStreamProvider,
                                     directoryPath ?: pathToFile(path),
                                     roamingType,
                                     presentableName,
-                                    isUseOldFileNameSanitize,
+                                    schemeNameToFileName,
                                     componentManager?.messageBus)
-    @Suppress("UNCHECKED_CAST")
-    managers.add(manager as SchemeManagerImpl<Scheme, out Scheme>)
+    if (autoSave) {
+      @Suppress("UNCHECKED_CAST")
+      managers.add(manager as SchemeManagerImpl<Scheme, Scheme>)
+    }
     return manager
   }
 
@@ -80,7 +83,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   abstract fun pathToFile(path: String): Path
 
-  fun process(processor: (SchemeManagerImpl<Scheme, out Scheme>) -> Unit) {
+  fun process(processor: (SchemeManagerImpl<Scheme, Scheme>) -> Unit) {
     for (manager in managers) {
       try {
         processor(manager)
@@ -119,14 +122,22 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
       return path
     }
 
-    override fun pathToFile(path: String) = Paths.get(ApplicationManager.getApplication().stateStore.stateStorageManager.expandMacros(ROOT_CONFIG), path)!!
+    override fun pathToFile(path: String) = Paths.get(ApplicationManager.getApplication().stateStore.storageManager.expandMacros(ROOT_CONFIG), path)!!
   }
 
   @Suppress("unused")
   private class ProjectSchemeManagerFactory(private val project: Project) : SchemeManagerFactoryBase() {
     override val componentManager = project
 
-    override fun pathToFile(path: String) = Paths.get(project.basePath, if (project.isDirectoryBased) "${Project.DIRECTORY_STORE_FOLDER}/$path" else ".$path")!!
+    override fun pathToFile(path: String): Path {
+      val projectFileDir = (project.stateStore as? IProjectStore)?.projectConfigDir
+      if (projectFileDir == null) {
+        return Paths.get(project.basePath, ".$path")
+      }
+      else {
+        return Paths.get(projectFileDir, path)
+      }
+    }
   }
 
   @TestOnly

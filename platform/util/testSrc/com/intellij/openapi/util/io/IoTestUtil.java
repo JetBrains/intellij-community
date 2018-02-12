@@ -207,7 +207,7 @@ public class IoTestUtil {
     try (ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jarFile))) {
       for (int i = 0; i < namesAndTexts.length; i += 2) {
         stream.putNextEntry(new ZipEntry(namesAndTexts[i]));
-        stream.write(namesAndTexts[i + 1].getBytes(CharsetToolkit.UTF8_CHARSET));
+        if (namesAndTexts[i + 1] != null) stream.write(namesAndTexts[i + 1].getBytes(CharsetToolkit.UTF8_CHARSET));
         stream.closeEntry();
       }
       return jarFile;

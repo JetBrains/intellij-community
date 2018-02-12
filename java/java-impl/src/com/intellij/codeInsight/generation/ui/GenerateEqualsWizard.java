@@ -107,7 +107,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
         myHashCodePanel = null;
         myFieldsToHashCode = null;
       }
-      myNonNullPanel = new MemberSelectionPanel(CodeInsightBundle.message("generate.equals.hashcode.non.null.fields.chooser.title"), Collections.<MemberInfo>emptyList(), null);
+      myNonNullPanel = new MemberSelectionPanel(CodeInsightBundle.message("generate.equals.hashcode.non.null.fields.chooser.title"), Collections.emptyList(), null);
       myFieldsToNonNull = createFieldToMemberInfoMap(false);
       for (final Map.Entry<PsiMember, MemberInfo> entry : myFieldsToNonNull.entrySet()) {
         entry.getValue().setChecked(NullableNotNullManager.isNotNull(entry.getKey()));
@@ -217,12 +217,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     for (MemberInfo info : infos) {
       list.add((PsiField)info.getMember());
     }
-    return list.toArray(new PsiField[list.size()]);
-  }
-
-  @Override
-  protected String getHelpID() {
-    return "editing.altInsert.equals";
+    return list.toArray(PsiField.EMPTY_ARRAY);
   }
 
   private void equalsFieldsSelected() {
@@ -364,7 +359,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       templateChooserPanel.add(templateChooserLabel, BorderLayout.WEST);
 
     
-      final ComboBox comboBox = new ComboBox();
+      final ComboBox<String> comboBox = new ComboBox<>();
       final ComponentWithBrowseButton<ComboBox> comboBoxWithBrowseButton =
         new ComponentWithBrowseButton<>(comboBox, new MyEditTemplatesListener(psiClass, myPanel, comboBox));
       templateChooserLabel.setLabelFor(comboBox);
@@ -406,7 +401,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     }
 
     private static void setupCombobox(EqualsHashCodeTemplatesManager templatesManager, 
-                                      ComboBox comboBox,
+                                      ComboBox<String> comboBox,
                                       PsiClass psiClass) {
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(psiClass.getProject());
       final GlobalSearchScope resolveScope = psiClass.getResolveScope();
@@ -431,16 +426,20 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
           }
         }
       });
-      comboBox.setModel(new DefaultComboBoxModel(ArrayUtil.toStringArray(names)));
-      comboBox.setSelectedItem(templatesManager.getDefaultTemplateBaseName());
+      comboBox.setModel(new DefaultComboBoxModel<>(ArrayUtil.toStringArray(names)));
+      String baseName = templatesManager.getDefaultTemplateBaseName();
+      if (invalid.contains(baseName)) { //preselect default template but do not remember as default
+        baseName = EqualsHashCodeTemplatesManager.getTemplateBaseName(templatesManager.getAllTemplates().iterator().next());
+      }
+      comboBox.setSelectedItem(baseName);
     }
 
     private static class MyEditTemplatesListener implements ActionListener {
       private final PsiClass myPsiClass;
       private final JComponent myParent;
-      private final ComboBox myComboBox;
+      private final ComboBox<String> myComboBox;
 
-      public MyEditTemplatesListener(PsiClass psiClass, JComponent panel, ComboBox comboBox) {
+      public MyEditTemplatesListener(PsiClass psiClass, JComponent panel, ComboBox<String> comboBox) {
         myPsiClass = psiClass;
         myParent = panel;
         myComboBox = comboBox;

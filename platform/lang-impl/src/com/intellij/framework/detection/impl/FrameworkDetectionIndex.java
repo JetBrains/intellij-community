@@ -82,7 +82,7 @@ public class FrameworkDetectionIndex extends ScalarIndexExtension<Integer> {
             result.put(pair.getSecond(), null);
           }
         }
-        return result != null ? result : Collections.<Integer, Void>emptyMap();
+        return result != null ? result : Collections.emptyMap();
       }
     };
   }
@@ -100,7 +100,7 @@ public class FrameworkDetectionIndex extends ScalarIndexExtension<Integer> {
     for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensions()) {
       acceptedTypes.add(detector.getFileType());
     }
-    return new DefaultFileTypeSpecificInputFilter(acceptedTypes.toArray(new FileType[acceptedTypes.size()]));
+    return new DefaultFileTypeSpecificInputFilter(acceptedTypes.toArray(FileType.EMPTY_ARRAY));
   }
 
   @Override

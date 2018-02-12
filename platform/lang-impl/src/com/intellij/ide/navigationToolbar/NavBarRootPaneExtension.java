@@ -1,23 +1,5 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-/*
- * User: anna
- * Date: 12-Nov-2007
- */
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
@@ -127,7 +109,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
       Insets insets = container.getInsets();
       Dimension d = c.getPreferredSize();
       Rectangle r = container.getBounds();
-      c.setBounds(insets.left, (r.height - d.height) / 2, r.width - insets.left - insets.right, d.height);
+      c.setBounds(insets.left, (r.height - d.height - insets.top - insets.bottom) / 2 + insets.top, r.width - insets.left - insets.right, d.height);
     }
   }
 
@@ -135,7 +117,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     if (show && myRunPanel == null && runToolbarExists()) {
       final ActionManager manager = ActionManager.getInstance();
       AnAction toolbarRunGroup = CustomActionsSchema.getInstance().getCorrectedAction("NavBarToolBar");
-      if (toolbarRunGroup instanceof ActionGroup) {
+      if (toolbarRunGroup instanceof ActionGroup && myWrapperPanel != null) {
         final boolean needGap = isNeedGap(toolbarRunGroup);
         final ActionToolbar actionToolbar = manager.createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, (ActionGroup)toolbarRunGroup, true);
         final JComponent component = actionToolbar.getComponent();
@@ -147,8 +129,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         };
         myRunPanel.setOpaque(false);
         myRunPanel.add(component, BorderLayout.CENTER);
-
-        myRunPanel.setBorder(JBUI.Borders.empty(0, needGap ? 5 : 1, 1, 0));
+        myRunPanel.setBorder(JBUI.Borders.empty(0, needGap ? 5 : 1, 0, 0));
         myWrapperPanel.add(myRunPanel, BorderLayout.EAST);
       }
     }

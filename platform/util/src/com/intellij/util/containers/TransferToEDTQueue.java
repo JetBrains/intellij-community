@@ -35,6 +35,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Usage: {@link TransferToEDTQueue#offer(Object)} } : schedules element for processing in EDT (via invokeLater)
  */
 public class TransferToEDTQueue<T> {
+  /**
+   * This is a default threshold used to join units of work.
+   * It allows to generate more that 30 frames per second.
+   * It is not recommended to block EDT longer,
+   * because people feel that UI is laggy.
+   *
+   * @see #TransferToEDTQueue(String, Processor, Condition, int)
+   * @see #createRunnableMerger(String, int)
+   */
+  public static final int DEFAULT_THRESHOLD = 30;
   @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
   private final String myName;
   private final Processor<T> myProcessor;
@@ -54,9 +64,7 @@ public class TransferToEDTQueue<T> {
         return;
       }
       long start = System.currentTimeMillis();
-      int processed = 0;
       while (processNext()) {
-        processed++;
         long finish = System.currentTimeMillis();
         if (myMaxUnitOfWorkThresholdMs != -1 && finish - start > myMaxUnitOfWorkThresholdMs) break;
       }
@@ -64,7 +72,16 @@ public class TransferToEDTQueue<T> {
         scheduleUpdate();
       }
     }
+
+    @Override
+    public String toString() {
+      return TransferToEDTQueue.this.getClass().getSimpleName() + "[" + myName + "]";
+    }
   };
+
+  public TransferToEDTQueue(@NotNull @NonNls String name, @NotNull Processor<T> processor, @NotNull Condition<?> shutUpCondition) {
+    this(name, processor, shutUpCondition, DEFAULT_THRESHOLD);
+  }
 
   public TransferToEDTQueue(@NotNull @NonNls String name,
                             @NotNull Processor<T> processor,
@@ -75,7 +92,11 @@ public class TransferToEDTQueue<T> {
     myShutUpCondition = shutUpCondition;
     myMaxUnitOfWorkThresholdMs = maxUnitOfWorkThresholdMs;
   }
-  
+
+  public static TransferToEDTQueue<Runnable> createRunnableMerger(@NotNull @NonNls String name) {
+    return createRunnableMerger(name, DEFAULT_THRESHOLD);
+  }
+
   public static TransferToEDTQueue<Runnable> createRunnableMerger(@NotNull @NonNls String name, int maxUnitOfWorkThresholdMs) {
     return new TransferToEDTQueue<Runnable>(name, new Processor<Runnable>() {
       @Override

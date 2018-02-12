@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.startup.impl;
 
+import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -52,15 +53,16 @@ import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.FileNotFoundException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class StartupManagerImpl extends StartupManagerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.impl.StartupManagerImpl");
 
-  private final List<Runnable> myPreStartupActivities = Collections.synchronizedList(new LinkedList<Runnable>());
-  private final List<Runnable> myStartupActivities = Collections.synchronizedList(new LinkedList<Runnable>());
+  private final List<Runnable> myPreStartupActivities = Collections.synchronizedList(new LinkedList<>());
+  private final List<Runnable> myStartupActivities = Collections.synchronizedList(new LinkedList<>());
 
-  private final List<Runnable> myDumbAwarePostStartupActivities = Collections.synchronizedList(new LinkedList<Runnable>());
-  private final List<Runnable> myNotDumbAwarePostStartupActivities = Collections.synchronizedList(new LinkedList<Runnable>());
+  private final List<Runnable> myDumbAwarePostStartupActivities = Collections.synchronizedList(new LinkedList<>());
+  private final List<Runnable> myNotDumbAwarePostStartupActivities = Collections.synchronizedList(new LinkedList<>());
   private boolean myPostStartupActivitiesPassed; // guarded by this
 
   private volatile boolean myPreStartupActivitiesPassed;
@@ -142,18 +144,10 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   public void runPostStartupActivitiesFromExtensions() {
-    StartupActivity[] extensions = Extensions.getExtensions(StartupActivity.POST_STARTUP_ACTIVITY);
-    for (final StartupActivity extension : extensions) {
-      final Runnable runnable = () -> {
-        if (!myProject.isDisposed()) {
-          long start = System.currentTimeMillis();
-          extension.runActivity(myProject);
-          long duration = System.currentTimeMillis() - start;
-          if (duration > 200) {
-            LOG.info(extension.getClass().getSimpleName() + " run in " + duration);
-          }
-        }
-      };
+    PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
+    AtomicBoolean uiFreezeWarned = new AtomicBoolean();
+    for (StartupActivity extension : Extensions.getExtensions(StartupActivity.POST_STARTUP_ACTIVITY)) {
+      Runnable runnable = () -> logActivityDuration(uiFreezeWarned, extension);
       if (extension instanceof DumbAware) {
         runActivity(runnable);
       }
@@ -161,6 +155,26 @@ public class StartupManagerImpl extends StartupManagerEx {
         queueSmartModeActivity(runnable);
       }
     }
+    snapshot.logResponsivenessSinceCreation("Post-startup activities under progress");
+  }
+
+  private void logActivityDuration(AtomicBoolean uiFreezeWarned, StartupActivity extension) {
+    long duration = runAndMeasure(extension);
+    
+    Application app = ApplicationManager.getApplication();
+    if (duration > 100 && !app.isUnitTestMode()) {
+      boolean edt = app.isDispatchThread();
+      if (edt && uiFreezeWarned.compareAndSet(false, true)) {
+        LOG.info("Some post-startup activities freeze UI for noticeable time. Please consider making them DumbAware to do them in background under modal progress, or just making them faster to speed up project opening.");
+      }
+      LOG.info(extension.getClass().getSimpleName() + " run in " + duration + "ms " + (edt ? "on UI thread" : "under project opening modal progress"));
+    }
+  }
+
+  private long runAndMeasure(StartupActivity extension) {
+    long start = System.currentTimeMillis();
+    extension.runActivity(myProject);
+    return System.currentTimeMillis() - start;
   }
 
   // queue each activity in smart mode separately so that if one of them starts dumb mode, the next ones just wait for it to finish
@@ -203,7 +217,10 @@ public class StartupManagerImpl extends StartupManagerEx {
           dumbService.runWhenSmart(this);
         }
         else {
-          myPostStartupActivitiesPassed = true;
+          //noinspection SynchronizeOnThis
+          synchronized (this) {
+            myPostStartupActivitiesPassed = true;
+          }
         }
       }
     });
@@ -252,7 +269,8 @@ public class StartupManagerImpl extends StartupManagerEx {
         path = PathUtil.getParentPath(path);
       }
 
-      boolean expected = SystemInfo.isFileSystemCaseSensitive, actual = FileUtil.isFileSystemCaseSensitive(path);
+      boolean expected = SystemInfo.isFileSystemCaseSensitive;
+      boolean actual = FileUtil.isFileSystemCaseSensitive(path);
       LOG.info(path + " case-sensitivity: expected=" + expected + " actual=" + actual);
       if (actual != expected) {
         int prefix = expected ? 1 : 0;  // IDE=true -> FS=false -> prefix='in'
@@ -362,28 +380,23 @@ public class StartupManagerImpl extends StartupManagerEx {
     final Application application = ApplicationManager.getApplication();
     if (application == null) return;
 
-    //noinspection SynchronizeOnThis
-    synchronized (this) {
-      // in tests which simulate project opening, post-startup activities could have been run already.
-      // Then we should act as if the project was initialized
-      boolean initialized = myProject.isInitialized() || myProject.isDefault() || application.isUnitTestMode() && myPostStartupActivitiesPassed;
-      if (!initialized) {
-        registerPostStartupActivity(action);
-        return;
-      }
-    }
-
     Runnable runnable = () -> {
-      if (!myProject.isDisposed()) {
-        action.run();
+      if (myProject.isDisposed()) return;
+      
+      //noinspection SynchronizeOnThis
+      synchronized (this) {
+        // in tests which simulate project opening, post-startup activities could have been run already.
+        // Then we should act as if the project was initialized
+        boolean initialized = myProject.isInitialized() || myProject.isDefault() || application.isUnitTestMode() && myPostStartupActivitiesPassed;
+        if (!initialized) {
+          registerPostStartupActivity(action);
+          return;
+        }
       }
+
+      action.run();
     };
-    if (application.isDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      application.invokeLater(runnable, ModalityState.NON_MODAL);
-    }
+    GuiUtils.invokeLaterIfNeeded(runnable, ModalityState.defaultModalityState());
   }
 
   @TestOnly

@@ -32,7 +32,7 @@ public class MergeTask extends BaseMergeTask {
   }
 
   @Override
-  public void run() throws VcsException {
+  public void run() {
     boolean needRefresh = setupDefaultEmptyChangeListForMerge();
 
     if (needRefresh) {

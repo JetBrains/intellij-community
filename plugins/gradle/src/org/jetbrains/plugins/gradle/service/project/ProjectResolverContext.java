@@ -59,6 +59,8 @@ public interface ProjectResolverContext extends UserDataHolderEx {
 
   boolean isResolveModulePerSourceSet();
 
+  boolean isUseQualifiedModuleNames();
+
   @NotNull
   ProjectImportAction.AllModels getModels();
 

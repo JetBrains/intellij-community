@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,22 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ControlFlowStatementWithoutBracesInspection
-  extends BaseInspection {
+public class ControlFlowStatementWithoutBracesInspection extends BaseInspection {
 
   @Override
   @NotNull
@@ -58,7 +57,7 @@ public class ControlFlowStatementWithoutBracesInspection
   private static class ControlFlowStatementFix extends InspectionGadgetsFix {
     private final String myKeywordText;
 
-    private ControlFlowStatementFix(String keywordText) {
+    ControlFlowStatementFix(String keywordText) {
       myKeywordText = keywordText;
     }
 
@@ -77,8 +76,7 @@ public class ControlFlowStatementWithoutBracesInspection
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getStartElement();
       final PsiElement parent = element.getParent();
       final PsiStatement statement;
@@ -93,27 +91,12 @@ public class ControlFlowStatementWithoutBracesInspection
       }
       final PsiStatement statementWithoutBraces;
       if (statement instanceof PsiLoopStatement) {
-        final PsiLoopStatement loopStatement =
-          (PsiLoopStatement)statement;
+        final PsiLoopStatement loopStatement = (PsiLoopStatement)statement;
         statementWithoutBraces = loopStatement.getBody();
       }
       else if (statement instanceof PsiIfStatement) {
         final PsiIfStatement ifStatement = (PsiIfStatement)statement;
-        if (element == ifStatement.getElseElement()) {
-          statementWithoutBraces = ifStatement.getElseBranch();
-        }
-        else {
-          statementWithoutBraces = ifStatement.getThenBranch();
-          if (statementWithoutBraces == null) {
-            return;
-          }
-          final PsiElement nextSibling =
-            statementWithoutBraces.getNextSibling();
-          if (nextSibling instanceof PsiWhiteSpace) {
-            // to avoid "else" on new line
-            nextSibling.delete();
-          }
-        }
+        statementWithoutBraces = (element == ifStatement.getElseElement()) ? ifStatement.getElseBranch() : ifStatement.getThenBranch();
       }
       else {
         return;
@@ -121,9 +104,7 @@ public class ControlFlowStatementWithoutBracesInspection
       if (statementWithoutBraces == null) {
         return;
       }
-      final String newStatementText =
-        "{\n" + statementWithoutBraces.getText() + "\n}";
-      PsiReplacementUtil.replaceStatement(statementWithoutBraces, newStatementText);
+      BlockUtils.expandSingleStatementToBlockStatement(statementWithoutBraces);
     }
   }
 
@@ -154,10 +135,8 @@ public class ControlFlowStatementWithoutBracesInspection
     protected Pair<PsiElement, PsiElement> getOmittedBodyBounds(PsiStatement body) {
       if (body instanceof PsiLoopStatement || body instanceof PsiIfStatement) {
         final PsiElement lastChild = body.getLastChild();
-        return Pair.create(PsiTreeUtil.skipSiblingsBackward(body, PsiWhiteSpace.class, PsiComment.class),
-                           lastChild instanceof PsiJavaToken && ((PsiJavaToken)lastChild).getTokenType() == JavaTokenType.SEMICOLON
-                           ? lastChild
-                           : null);
+        return Pair.create(PsiTreeUtil.skipWhitespacesAndCommentsBackward(body),
+                           PsiUtil.isJavaToken(lastChild, JavaTokenType.SEMICOLON) ? lastChild : null);
       }
       return null;
     }

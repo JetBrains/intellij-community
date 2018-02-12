@@ -19,15 +19,13 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.util.TestNGUtil;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -40,14 +38,8 @@ public class TestNGTestPackage extends TestNGTestObject {
   @Override
   public void fillTestObjects(Map<PsiClass, Map<PsiMethod, List<String>>> classes) throws CantRunException {
     final String packageName = myConfig.getPersistantData().getPackageName();
-    PsiPackage psiPackage = ApplicationManager.getApplication().runReadAction(
-      new Computable<PsiPackage>() {
-        @Nullable
-        public PsiPackage compute() {
-          return JavaPsiFacade.getInstance(myConfig.getProject()).findPackage(packageName);
-        }
-      }
-    );
+    PsiPackage psiPackage =
+      ReadAction.compute(() -> JavaPsiFacade.getInstance(myConfig.getProject()).findPackage(packageName));
     if (psiPackage == null) {
       throw CantRunException.packageNotFound(packageName);
     }

@@ -28,9 +28,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * User: catherine
- */
 public class ReplaceListComprehensionWithForIntention extends PyBaseIntentionAction {
   @NotNull
   public String getText() {

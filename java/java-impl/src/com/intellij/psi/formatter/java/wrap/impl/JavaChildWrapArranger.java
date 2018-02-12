@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.formatter.java.wrap.impl;
 
 import com.intellij.formatting.Wrap;
@@ -26,7 +12,6 @@ import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.java.AbstractJavaBlock;
 import com.intellij.psi.formatter.java.JavaFormatterUtil;
 import com.intellij.psi.formatter.java.wrap.JavaWrapManager;
-import com.intellij.psi.formatter.java.wrap.ReservedWrapsProvider;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -41,7 +26,7 @@ import static com.intellij.psi.impl.PsiImplUtil.isTypeAnnotation;
 
 /**
  * Encapsulates the implementation of
- * {@link JavaWrapManager#arrangeChildWrap(ASTNode, ASTNode, CommonCodeStyleSettings, Wrap, ReservedWrapsProvider)}.
+ * {@link JavaWrapManager#arrangeChildWrap(ASTNode, ASTNode, CommonCodeStyleSettings, JavaCodeStyleSettings, Wrap, AbstractJavaBlock)}.
  * <p/>
  * Thread-safe.
  *
@@ -96,22 +81,10 @@ public class JavaChildWrapArranger {
       return Wrap.createWrap(settings.THROWS_KEYWORD_WRAP, true);
     }
 
-    else if (nodeType == JavaElementType.EXTENDS_LIST || nodeType == JavaElementType.IMPLEMENTS_LIST) {
-      if (role == ChildRole.REFERENCE_IN_LIST) {
-        return suggestedWrap;
-      }
-      else {
-        return null;
-      }
-    }
-
-    else if (nodeType == JavaElementType.THROWS_LIST) {
-      if (role == ChildRole.REFERENCE_IN_LIST) {
-        return suggestedWrap;
-      }
-      else {
-        return null;
-      }
+    else if (nodeType == JavaElementType.EXTENDS_LIST ||
+             nodeType == JavaElementType.IMPLEMENTS_LIST ||
+             nodeType == JavaElementType.THROWS_LIST) {
+      return role == ChildRole.REFERENCE_IN_LIST ? suggestedWrap : null;
     }
 
     else if (nodeType == JavaElementType.CONDITIONAL_EXPRESSION) {
@@ -177,7 +150,7 @@ public class JavaChildWrapArranger {
         if (prev instanceof PsiKeyword) {
           return null;
         }
-        
+
         if (isTypeAnnotationOrFalseIfDumb(child)) {
           if (prev == null || prev.getElementType() != JavaElementType.ANNOTATION || isTypeAnnotationOrFalseIfDumb(prev)) {
             return Wrap.createWrap(WrapType.NONE, false);
@@ -251,10 +224,7 @@ public class JavaChildWrapArranger {
     }
 
     else if (nodeType == JavaElementType.DO_WHILE_STATEMENT) {
-      if (role == ChildRole.LOOP_BODY) {
-        return Wrap.createWrap(WrapType.NORMAL, true);
-      }
-      else if (role == ChildRole.WHILE_KEYWORD) {
+      if (role == ChildRole.LOOP_BODY || role == ChildRole.WHILE_KEYWORD) {
         return Wrap.createWrap(WrapType.NORMAL, true);
       }
     }
@@ -340,6 +310,10 @@ public class JavaChildWrapArranger {
 
     if (nodeType == JavaElementType.LOCAL_VARIABLE) {
       return settings.VARIABLE_ANNOTATION_WRAP;
+    }
+
+    if (nodeType == JavaElementType.MODULE) {
+      return settings.CLASS_ANNOTATION_WRAP;
     }
 
     return CommonCodeStyleSettings.DO_NOT_WRAP;

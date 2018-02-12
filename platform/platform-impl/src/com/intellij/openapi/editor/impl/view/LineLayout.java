@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.lang.CodeDocumentationAwareCommenter;
@@ -23,9 +9,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.bidi.BidiRegionsSeparator;
 import com.intellij.openapi.editor.bidi.LanguageBidiRegionsSeparator;
-import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
+import com.intellij.openapi.editor.impl.FontFallbackIterator;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.StringEscapesTokenTypes;
@@ -39,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.awt.font.FontRenderContext;
 import java.text.Bidi;
 import java.util.*;
 import java.util.List;
@@ -127,14 +111,18 @@ abstract class LineLayout {
   private static List<BidiRun> createFragments(@NotNull EditorView view, @NotNull CharSequence text, 
                                                 @JdkConstants.FontStyle int fontStyle) {
     if (text.length() == 0) return Collections.emptyList();
-    FontRenderContext fontRenderContext = view.getFontRenderContext();
-    FontPreferences fontPreferences = view.getEditor().getColorsScheme().getFontPreferences();
+
+    FontFallbackIterator ffi = new FontFallbackIterator()
+      .setPreferredFonts(view.getEditor().getColorsScheme().getFontPreferences())
+      .setFontStyle(fontStyle)
+      .setFontRenderContext(view.getFontRenderContext());
+    
     char[] chars = CharArrayUtil.fromSequence(text);
     List<BidiRun> runs = createRuns(view, chars, -1);
     for (BidiRun run : runs) {
       for (Chunk chunk : run.getChunks(text, 0)) {
         chunk.fragments = new ArrayList<>();
-        addFragments(run, chunk, chars, chunk.startOffset, chunk.endOffset, fontStyle, fontPreferences, fontRenderContext, null);
+        addFragments(run, chunk, chars, chunk.startOffset, chunk.endOffset, null, ffi);
       }
     }
     return runs;
@@ -148,18 +136,21 @@ abstract class LineLayout {
     List<BidiRun> runs = new ArrayList<>();
     int flags = view.getBidiFlags();
     if (startOffsetInEditor >= 0) {
-      // running bidi algorithm separately for text fragments corresponding to different lexer tokens
+      // skipping indent
       int relLastOffset = 0;
+      while (relLastOffset < text.length && text[relLastOffset] == ' ' || text[relLastOffset] == '\t') relLastOffset++;
+      addRuns(runs, text, 0, relLastOffset, flags);
+      // running bidi algorithm separately for text fragments corresponding to different lexer tokens
       IElementType lastToken = null;
-      HighlighterIterator iterator = view.getEditor().getHighlighter().createIterator(startOffsetInEditor);
-      while (!iterator.atEnd() && (iterator.getStart() - startOffsetInEditor) < textLength) {
+      HighlighterIterator iterator = view.getEditor().getHighlighter().createIterator(startOffsetInEditor + relLastOffset);
+      while (!iterator.atEnd() && iterator.getStart() - startOffsetInEditor < textLength) {
         int iteratorRelStart = alignToCodePointBoundary(text, iterator.getStart() - startOffsetInEditor);
         int iteratorRelEnd = alignToCodePointBoundary(text, iterator.getEnd() - startOffsetInEditor);
         IElementType currentToken = iterator.getTokenType();
-        int relStartOffset = Math.max(0, iteratorRelStart);
+        int relStartOffset = Math.max(relLastOffset, iteratorRelStart);
         String lcPrefix = getLineCommentPrefix(currentToken);
         // for line comments we process prefix and following text separately
-        if (!StringUtil.isEmpty(lcPrefix) && lcPrefix.length() <= (iteratorRelEnd - iteratorRelStart) &&
+        if (!StringUtil.isEmpty(lcPrefix) && lcPrefix.length() <= iteratorRelEnd - iteratorRelStart &&
             CharArrayUtil.regionMatches(text, relStartOffset, relStartOffset + lcPrefix.length(), lcPrefix) &&
             !isInsideSurrogatePair(text, relStartOffset + lcPrefix.length())) {
           addRuns(runs, text, relLastOffset, relStartOffset, flags);
@@ -205,7 +196,7 @@ abstract class LineLayout {
   private static String getLineCommentPrefix(IElementType token) {
     if (token == null) return null;
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(token.getLanguage());
-    return (commenter instanceof CodeDocumentationAwareCommenter) &&
+    return commenter instanceof CodeDocumentationAwareCommenter &&
            token.equals(((CodeDocumentationAwareCommenter)commenter).getLineCommentTokenType()) ?
            commenter.getLineCommentPrefix() : null;
   }
@@ -260,44 +251,37 @@ abstract class LineLayout {
   }
   
   @SuppressWarnings("AssignmentToForLoopParameter")
-  private static void addFragments(BidiRun run, Chunk chunk, char[] text, int start, int end, int fontStyle,
-                                   FontPreferences fontPreferences, FontRenderContext fontRenderContext,
-                                   @Nullable TabFragment tabFragment) {
+  private static void addFragments(BidiRun run, Chunk chunk, char[] text, int start, int end, @Nullable TabFragment tabFragment, 
+                                   FontFallbackIterator it) {
     assert start < end;
-    FontInfo currentFontInfo = null;
-    int currentIndex = start;
-    for(int i = start; i < end; i++) {
-      char c = text[i];
-      if (c == '\t' && tabFragment != null) {
-        assert run.level == 0;
-        addTextFragmentIfNeeded(chunk, text, currentIndex, i, currentFontInfo, false);
-        chunk.fragments.add(tabFragment);
-        currentFontInfo = null;
-        currentIndex = i + 1;
-      }
-      else {
-        boolean surrogatePair = false;
-        int codePoint = c;
-        if (Character.isHighSurrogate(c) && (i + 1 < end)) {
-          char nextChar = text[i + 1];
-          if (Character.isLowSurrogate(nextChar)) {
-            codePoint = Character.toCodePoint(c, nextChar);
-            surrogatePair = true;
-          }
-        }
-        FontInfo fontInfo = ComplementaryFontsRegistry.getFontAbleToDisplay(codePoint, fontStyle, fontPreferences, fontRenderContext);
-        if (!fontInfo.equals(currentFontInfo)) {
-          addTextFragmentIfNeeded(chunk, text, currentIndex, i, currentFontInfo, run.isRtl());
-          currentFontInfo = fontInfo;
-          currentIndex = i;
-        }
-        if (surrogatePair) i++;
-      }
+    if (tabFragment == null) {
+      addFragmentsNoTabs(run, chunk, text, start, end, it);
     }
-    addTextFragmentIfNeeded(chunk, text, currentIndex, end, currentFontInfo, run.isRtl());
+    else {
+      int last = start;
+      for (int i = start; i < end; i++) {
+        if (text[i] == '\t') {
+          assert run.level == 0;
+          addFragmentsNoTabs(run, chunk, text, last, i, it);
+          chunk.fragments.add(tabFragment);
+          last = i + 1;
+        }
+      }
+      addFragmentsNoTabs(run, chunk, text, last, end, it);
+    }
     assert !chunk.fragments.isEmpty();
   }
   
+  private static void addFragmentsNoTabs(BidiRun run, Chunk chunk, char[] text, int start, int end, FontFallbackIterator it) {
+    if (start < end) {
+      it.start(text, start, end);
+      while (!it.atEnd()) {
+        addTextFragmentIfNeeded(chunk, text, it.getStart(), it.getEnd(), it.getFontInfo(), run.isRtl());
+        it.advance();
+      }
+    }
+  }
+
   private static void addTextFragmentIfNeeded(Chunk chunk, char[] chars, int from, int to, FontInfo fontInfo, boolean isRtl) {
     if (to > from) {
       assert fontInfo != null;
@@ -306,16 +290,11 @@ abstract class LineLayout {
   }
   
   Iterable<VisualFragment> getFragmentsInVisualOrder(final float startX) {
-    return new Iterable<VisualFragment>() {
-      @Override
-      public Iterator<VisualFragment> iterator() {
-        return new VisualOrderIterator(null, 0, startX, 0, 0, getRunsInVisualOrder());
-      }
-    };
+    return () -> new VisualOrderIterator(null, 0, startX, 0, 0, getRunsInVisualOrder());
   }
 
   /**
-   * If <code>quickEvaluationListener</code> is provided, quick approximate iteration becomes enabled, listener will be invoked
+   * If {@code quickEvaluationListener} is provided, quick approximate iteration becomes enabled, listener will be invoked
    * if approximation will in fact be used during width calculation.
    */
   Iterator<VisualFragment> getFragmentsInVisualOrder(@NotNull final EditorView view,
@@ -342,7 +321,7 @@ abstract class LineLayout {
         if (run.startOffset >= endOffset) break;
         runList.add(run.subRun(view, line, startOffset, endOffset, quickEvaluationListener));
       }
-      runs = runList.toArray(new BidiRun[runList.size()]);
+      runs = runList.toArray(BidiRun.EMPTY_ARRAY);
       if (runs.length > 1) {
         reorderRunsVisually(runs);
       }
@@ -569,7 +548,7 @@ abstract class LineLayout {
         chunks = new Chunk[chunkCount];
         for (int i = 0; i < chunkCount; i++) {
           int from = startOffset + i * CHUNK_CHARACTERS;
-          int to = (i == chunkCount - 1) ? endOffset : from + CHUNK_CHARACTERS;
+          int to = i == chunkCount - 1 ? endOffset : from + CHUNK_CHARACTERS;
           Chunk chunk = new Chunk(alignToCodePointBoundary(text, from + startOffsetInText) - startOffsetInText,
                                   alignToCodePointBoundary(text, to + startOffsetInText) - startOffsetInText);
           chunks[i] = chunk;
@@ -596,7 +575,7 @@ abstract class LineLayout {
         if (chunk.startOffset >= end) break;
         subChunks.add(chunk.subChunk(view, this, line, start, end, quickEvaluationListener));
       }
-      subRun.chunks = subChunks.toArray(new Chunk[subChunks.size()]);
+      subRun.chunks = subChunks.toArray(new Chunk[0]);
       subRun.visualStartLogicalColumn = (subRun.isRtl() ? end == endOffset : start == startOffset) ? visualStartLogicalColumn :
                                         view.getLogicalPositionCache().offsetToLogicalColumn(line, subRun.isRtl() ? end : start);
       return subRun;
@@ -605,8 +584,8 @@ abstract class LineLayout {
   
   static class Chunk {
     List<LineFragment> fragments; // in logical order
-    private int startOffset;
-    private int endOffset;
+    private final int startOffset;
+    private final int endOffset;
 
     private Chunk(int startOffset, int endOffset) {
       this.startOffset = startOffset;
@@ -625,7 +604,11 @@ abstract class LineLayout {
       int end = lineStartOffset + endOffset;
       if (LOG.isDebugEnabled()) LOG.debug("Text layout for " + view.getEditor().getVirtualFile() + " (" + start + "-" + end + ")");
       IterationState it = new IterationState(view.getEditor(), start, end, null, false, true, false, false);
-      FontPreferences fontPreferences = view.getEditor().getColorsScheme().getFontPreferences();
+      
+      FontFallbackIterator ffi = new FontFallbackIterator()
+        .setPreferredFonts(view.getEditor().getColorsScheme().getFontPreferences())
+        .setFontRenderContext(view.getFontRenderContext());
+      
       char[] chars = CharArrayUtil.fromSequence(view.getEditor().getDocument().getImmutableCharSequence(), start, end);
       int currentFontType = 0;
       Color currentColor = null;
@@ -636,18 +619,16 @@ abstract class LineLayout {
         if (fontType != currentFontType || !color.equals(currentColor)) {
           int tokenStart = it.getStartOffset();
           if (tokenStart > currentStart) {
-            addFragments(run, this, chars, currentStart - start, tokenStart - start,
-                         currentFontType, fontPreferences, view.getFontRenderContext(), view.getTabFragment());
+            addFragments(run, this, chars, currentStart - start, tokenStart - start, view.getTabFragment(), ffi);
           }
           currentStart = tokenStart;
-          currentFontType = fontType;
           currentColor = color;
+          ffi.setFontStyle(currentFontType = fontType);
         }
         it.advance();
       }
       if (end > currentStart) {
-        addFragments(run, this, chars, currentStart - start, end - start,
-                     currentFontType, fontPreferences, view.getFontRenderContext(), view.getTabFragment());
+        addFragments(run, this, chars, currentStart - start, end - start, view.getTabFragment(), ffi);
       }
       view.getSizeManager().textLayoutPerformed(start, end);
       assert !fragments.isEmpty();
@@ -669,7 +650,7 @@ abstract class LineLayout {
                                                                               view.getMaxCharWidth()));
         return chunk;
       }
-      if (start == startOffset && end == this.endOffset) {
+      if (start == startOffset && end == endOffset) {
         return this;
       }
       ensureLayout(view, run, line);
@@ -713,11 +694,11 @@ abstract class LineLayout {
     private final int myLine;
     private final int myLineStartOffset;
     private final BidiRun[] myRuns;
-    private int myRunIndex = 0;
-    private int myChunkIndex = 0;
-    private int myFragmentIndex = 0;
-    private int myOffsetInsideRun = 0;
-    private VisualFragment myFragment = new VisualFragment();
+    private int myRunIndex;
+    private int myChunkIndex;
+    private int myFragmentIndex;
+    private int myOffsetInsideRun;
+    private final VisualFragment myFragment = new VisualFragment();
 
     private VisualOrderIterator(EditorView view, int line, 
                                 float startX, int startVisualColumn, int startOffset, BidiRun[] runsInVisualOrder) {
@@ -755,12 +736,9 @@ abstract class LineLayout {
         myFragment.startLogicalColumn = run.visualStartLogicalColumn;
       }
       else {
-        if (myChunkIndex == 0 && myFragmentIndex == 0) {
-          myFragment.startLogicalColumn = run.visualStartLogicalColumn;
-        }
-        else {
-          myFragment.startLogicalColumn = myFragment.getEndLogicalColumn();
-        }
+        myFragment.startLogicalColumn = myChunkIndex == 0 && myFragmentIndex == 0 ?
+                                        run.visualStartLogicalColumn :
+                                        myFragment.getEndLogicalColumn();
         myFragment.startVisualColumn = myFragment.getEndVisualColumn();
         myFragment.startX = myFragment.getEndX();
       }
@@ -881,6 +859,11 @@ abstract class LineLayout {
       return isRtl ? startLogicalColumn - relativeLogicalColumn : startLogicalColumn + relativeLogicalColumn;
     }
 
+    // returned offset is visual and relative (counted from fragment's start)
+    int visualColumnToOffset(int relativeVisualColumn) {
+      return delegate.visualColumnToOffset(startX, relativeVisualColumn);
+    }
+
     // offset is expected to be between minOffset and maxOffset for this fragment
     float offsetToX(int offset) {
       return delegate.offsetToX(startX, 0, getRelativeOffset(offset));
@@ -910,9 +893,9 @@ abstract class LineLayout {
       delegate.draw(g, x, y, 0, getLength());
     }
 
-    // columns are visual (relative to fragment's start)
-    void draw(Graphics2D g, float x, float y, int startRelativeColumn, int endRelativeColumn) {
-      delegate.draw(g, x, y, startRelativeColumn, endRelativeColumn);
+    // offsets are visual (relative to fragment's start)
+    void draw(Graphics2D g, float x, float y, int startRelativeOffset, int endRelativeOffset) {
+      delegate.draw(g, x, y, startRelativeOffset, endRelativeOffset);
     }
 
     private int getRelativeOffset(int offset) {

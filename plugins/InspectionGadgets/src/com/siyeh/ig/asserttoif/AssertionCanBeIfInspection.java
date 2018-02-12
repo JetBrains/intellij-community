@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,16 @@ package com.siyeh.ig.asserttoif;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiAssertStatement;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,24 +57,22 @@ public class AssertionCanBeIfInspection extends BaseInspection {
     return new AssertToIfFix();
   }
 
-  private static void doFixImpl(@NotNull PsiElement element) {
-    final PsiAssertStatement assertStatement = (PsiAssertStatement)element;
-    @NonNls final StringBuilder newStatement = new StringBuilder();
-    final PsiExpression condition = assertStatement.getAssertCondition();
-    newStatement.append("if(").append(BoolUtils.getNegatedExpressionText(condition)).append(") throw new java.lang.AssertionError(");
-    final PsiExpression description = assertStatement.getAssertDescription();
-    if (description != null) {
-      newStatement.append(description.getText());
-    }
-    newStatement.append(");");
-    PsiReplacementUtil.replaceStatement(assertStatement, newStatement.toString());
-  }
-
   private static class AssertToIfVisitor extends BaseInspectionVisitor {
     @Override
     public void visitAssertStatement(PsiAssertStatement assertStatement) {
       super.visitAssertStatement(assertStatement);
-      if (assertStatement.getAssertCondition() != null) {
+      if (assertStatement.getAssertCondition() == null) {
+        return;
+      }
+      final PsiElement lastLeaf = PsiTreeUtil.getDeepestLast(assertStatement);
+      if (lastLeaf instanceof PsiErrorElement ||
+          PsiUtil.isJavaToken(lastLeaf, JavaTokenType.SEMICOLON) && PsiTreeUtil.prevLeaf(lastLeaf) instanceof PsiErrorElement) {
+        return;
+      }
+      if (isVisibleHighlight(assertStatement)) {
+        registerStatementError(assertStatement);
+      }
+      else {
         registerError(assertStatement);
       }
     }
@@ -89,7 +88,20 @@ public class AssertionCanBeIfInspection extends BaseInspection {
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
-      doFixImpl(descriptor.getPsiElement());
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiAssertStatement assertStatement =
+        element instanceof PsiKeyword ? (PsiAssertStatement)element.getParent() : (PsiAssertStatement)element;
+      final PsiExpression condition = assertStatement.getAssertCondition();
+      CommentTracker tracker = new CommentTracker();
+      final StringBuilder newStatement = new StringBuilder("if(");
+      newStatement.append(BoolUtils.getNegatedExpressionText(condition, tracker));
+      newStatement.append(") throw new java.lang.AssertionError(");
+      final PsiExpression description = assertStatement.getAssertDescription();
+      if (description != null) {
+        newStatement.append(tracker.text(description));
+      }
+      newStatement.append(");");
+      PsiReplacementUtil.replaceStatement(assertStatement, newStatement.toString(), tracker);
     }
   }
 }

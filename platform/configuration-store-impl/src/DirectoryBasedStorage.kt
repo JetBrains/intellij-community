@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
+import com.intellij.configurationStore.schemeManager.createDir
+import com.intellij.configurationStore.schemeManager.getOrCreateChild
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.StateSplitter
 import com.intellij.openapi.components.StateSplitterEx
@@ -22,12 +10,11 @@ import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.DirectoryStorageUtil
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
-import com.intellij.util.SystemProperties
+import com.intellij.util.attribute
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.isEmpty
@@ -44,7 +31,7 @@ abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val 
 
   protected abstract val virtualFile: VirtualFile?
 
-  override fun loadData() = StateMap.fromMap(DirectoryStorageUtil.loadFrom(virtualFile, pathMacroSubstitutor))
+  override public fun loadData() = StateMap.fromMap(DirectoryStorageUtil.loadFrom(virtualFile, pathMacroSubstitutor))
 
   override fun startExternalization(): StateStorage.ExternalizationSession? = null
 
@@ -64,18 +51,19 @@ abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val 
       return null
     }
 
-    val state = Element(FileStorageCoreUtil.COMPONENT)
+    // FileStorageCoreUtil on load check both component and name attributes (critical important for external store case, where we have only in-project artifacts, but not external)
+    val state = Element(FileStorageCoreUtil.COMPONENT).attribute(FileStorageCoreUtil.NAME, componentName)
     if (splitter is StateSplitterEx) {
       for (fileName in storageData.keys()) {
         val subState = storageData.getState(fileName, archive) ?: return null
-        splitter.mergeStateInto(state, subState)
+        splitter.mergeStateInto(state, subState.clone())
       }
     }
     else {
       val subElements = SmartList<Element>()
       for (fileName in storageData.keys()) {
         val subState = storageData.getState(fileName, archive) ?: return null
-        subElements.add(subState)
+        subElements.add(subState.clone())
       }
 
       if (!subElements.isEmpty()) {
@@ -118,33 +106,33 @@ open class DirectoryBasedStorage(private val dir: Path,
     override fun setSerializedState(componentName: String, element: Element?) {
       storage.componentName = componentName
 
-      if (element.isEmpty()) {
+      val stateAndFileNameList = if (element.isEmpty()) emptyList() else storage.splitter.splitState(element!!)
+      if (stateAndFileNameList.isEmpty()) {
         if (copiedStorageData != null) {
           copiedStorageData!!.clear()
         }
         else if (!originalStates.isEmpty()) {
-          copiedStorageData = THashMap<String, Any>()
+          copiedStorageData = THashMap()
         }
+        return
       }
-      else {
-        val stateAndFileNameList = storage.splitter.splitState(element!!)
-        val existingFiles = THashSet<String>(stateAndFileNameList.size)
-        for (pair in stateAndFileNameList) {
-          doSetState(pair.second, pair.first)
-          existingFiles.add(pair.second)
+
+      val existingFiles = THashSet<String>(stateAndFileNameList.size)
+      for (pair in stateAndFileNameList) {
+        doSetState(pair.second, pair.first)
+        existingFiles.add(pair.second)
+      }
+
+      for (key in originalStates.keys()) {
+        if (existingFiles.contains(key)) {
+          continue
         }
 
-        for (key in originalStates.keys()) {
-          if (existingFiles.contains(key)) {
-            continue
-          }
-
-          if (copiedStorageData == null) {
-            copiedStorageData = originalStates.toMutableMap()
-          }
-          someFileRemoved = true
-          copiedStorageData!!.remove(key)
+        if (copiedStorageData == null) {
+          copiedStorageData = originalStates.toMutableMap()
         }
+        someFileRemoved = true
+        copiedStorageData!!.remove(key)
       }
     }
 
@@ -206,7 +194,7 @@ open class DirectoryBasedStorage(private val dir: Path,
 
           val file = dir.getOrCreateChild(fileName, this)
           // we don't write xml prolog due to historical reasons (and should not in any case)
-          writeFile(null, this, file, storeElement, LineSeparator.fromString(if (file.exists()) loadFile(file).second else SystemProperties.getLineSeparator()), false)
+          writeFile(null, this, file, storeElement, getOrDetectLineSeparator(file) ?: LineSeparator.getSystemLineSeparator(), false)
         }
         catch (e: IOException) {
           LOG.error(e)
@@ -241,17 +229,15 @@ open class DirectoryBasedStorage(private val dir: Path,
   }
 }
 
-private val NON_EXISTENT_FILE_DATA = Pair.create<ByteArray, String>(null, SystemProperties.getLineSeparator())
-
-/**
- * @return pair.first - file contents (null if file does not exist), pair.second - file line separators
- */
-private fun loadFile(file: VirtualFile?): Pair<ByteArray, String> {
-  if (file == null || !file.exists()) {
-    return NON_EXISTENT_FILE_DATA
+private fun getOrDetectLineSeparator(file: VirtualFile): LineSeparator? {
+  if (!file.exists()) {
+    return null
   }
 
-  val bytes = file.contentsToByteArray()
-  val lineSeparator = file.detectedLineSeparator ?: detectLineSeparators(Charsets.UTF_8.decode(ByteBuffer.wrap(bytes)), null).separatorString
-  return Pair.create<ByteArray, String>(bytes, lineSeparator)
+  file.detectedLineSeparator?.let {
+    return LineSeparator.fromString(it)
+  }
+  val lineSeparator = detectLineSeparators(Charsets.UTF_8.decode(ByteBuffer.wrap(file.contentsToByteArray())))
+  file.detectedLineSeparator = lineSeparator.separatorString
+  return lineSeparator
 }

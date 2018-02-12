@@ -33,7 +33,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -150,8 +150,7 @@ class ExportToHTMLManager {
       for (PrintOption printOption : Extensions.getExtensions(PrintOption.EP_NAME)) {
         final TreeMap<Integer, PsiReference> map = printOption.collectReferences(psiFile, filesMap);
         if (map != null) {
-          refMap = new TreeMap<>();
-          refMap.putAll(map);
+          refMap = new TreeMap<>(map);
         }
       }
 

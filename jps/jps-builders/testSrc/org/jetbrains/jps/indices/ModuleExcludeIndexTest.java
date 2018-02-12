@@ -25,7 +25,6 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 
 /**
@@ -40,7 +39,7 @@ public class ModuleExcludeIndexTest extends JpsJavaModelTestCase {
     myRoot = FileUtil.createTempDirectory("excludes", null);
   }
 
-  public void testProjectOutput() throws IOException {
+  public void testProjectOutput() {
     File out = new File(myRoot, "out");
     getJavaService().getOrCreateProjectExtension(myProject).setOutputUrl(JpsPathUtil.pathToUrl(out.getAbsolutePath()));
     JpsModule module1 = addModule();
@@ -151,6 +150,23 @@ public class ModuleExcludeIndexTest extends JpsJavaModelTestCase {
 
     addExcludedRoot(module, src);
     assertExcluded(src);
+  }
+
+  public void testExcludeByPattern() {
+    File root1 = new File(myRoot, "root1");
+    File root2 = new File(myRoot, "root2");
+    JpsModule module = addModule();
+    addContentRoot(module, root1);
+    addContentRoot(module, root2);
+    module.addExcludePattern(JpsPathUtil.pathToUrl(root1.getAbsolutePath()), "*.txt");
+    module.addExcludePattern(JpsPathUtil.pathToUrl(root2.getAbsolutePath()), "out");
+    assertExcluded(new File(root1, "a.txt"));
+    assertExcluded(new File(root1, "dir/a.txt"));
+    assertNotExcluded(new File(root1, "A.java"));
+    assertNotExcluded(new File(root2, "a.txt"));
+    assertExcluded(new File(root2, "out"));
+    assertExcluded(new File(root2, "out/A.java"));
+    assertExcluded(new File(root2, "dir/out/A.java"));
   }
 
   private static void addSourceRoot(JpsModule module, File src) {

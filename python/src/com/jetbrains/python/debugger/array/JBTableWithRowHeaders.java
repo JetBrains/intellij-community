@@ -17,6 +17,7 @@ package com.jetbrains.python.debugger.array;
 
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,27 +28,62 @@ import java.awt.*;
 import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Set;
 
 /**
  * @author amarch
  */
 public class JBTableWithRowHeaders extends JBTable {
-  private RowHeaderTable myRowHeaderTable;
+  private final JBScrollPane myScrollPane;
+  private boolean myAutoResize;
+  private final RowHeaderTable myRowHeaderTable;
+  private final Set<Integer> myNotAdjustableColumns = ContainerUtil.newHashSet();
 
-  public JBTableWithRowHeaders() {
-    setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
+  public JBTableWithRowHeaders(boolean autoResize) {
+    myAutoResize = autoResize;
+    setAutoResizeMode(myAutoResize ? AUTO_RESIZE_OFF : AUTO_RESIZE_SUBSEQUENT_COLUMNS);
     setRowSelectionAllowed(false);
     setMaxItemsForSizeCalculation(50);
     setTableHeader(new CustomTableHeader(this));
     getTableHeader().setDefaultRenderer(new ColumnHeaderRenderer());
     getTableHeader().setReorderingAllowed(false);
 
-    JBScrollPane scrollPane = new JBScrollPane(this);
+    myScrollPane = new JBScrollPane(this);
     myRowHeaderTable = new JBTableWithRowHeaders.RowHeaderTable(this);
     myRowHeaderTable.getEmptyText().setText("");
-    scrollPane.setRowHeaderView(myRowHeaderTable);
-    scrollPane.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER,
+    myScrollPane.setRowHeaderView(myRowHeaderTable);
+    myScrollPane.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER,
                          myRowHeaderTable.getTableHeader());
+  }
+
+  @NotNull
+  @Override
+  public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
+    Component component = super.prepareRenderer(renderer, row, column);
+    JTableHeader header = getTableHeader();
+    TableColumn resizingColumn = header.getResizingColumn();
+    if (myAutoResize && resizingColumn == null && !myNotAdjustableColumns.contains(column)) {
+      updateColumnWidth(column, component.getPreferredSize().width, this);
+    }
+    return component;
+  }
+
+  public void setAutoResize(boolean autoResize) {
+    myNotAdjustableColumns.clear();
+    myAutoResize = autoResize;
+    setAutoResizeMode(myAutoResize ? AUTO_RESIZE_OFF : AUTO_RESIZE_SUBSEQUENT_COLUMNS);
+  }
+
+  private static int updateColumnWidth(int column, int width, @NotNull JTable table) {
+    TableColumn tableColumn = table.getColumnModel().getColumn(column);
+    int headerWidth = new ColumnHeaderRenderer().getTableCellRendererComponent(table, tableColumn.getHeaderValue(), false, false, -1, column).getPreferredSize().width + 4;
+    int newWidth = Math.max(width, headerWidth) + 2 * table.getIntercellSpacing().width;
+    tableColumn.setPreferredWidth(Math.max(newWidth, tableColumn.getPreferredWidth()));
+    return newWidth;
+  }
+
+  public JBScrollPane getScrollPane() {
+    return myScrollPane;
   }
 
   public boolean getScrollableTracksViewportWidth() {
@@ -64,8 +100,8 @@ public class JBTableWithRowHeaders extends JBTable {
     }
   }
 
-  public static class RowHeaderTable extends JBTable implements PropertyChangeListener, TableModelListener {
-    private JTable myMainTable;
+  public class RowHeaderTable extends JBTable implements PropertyChangeListener, TableModelListener {
+    private final JTable myMainTable;
 
     public RowHeaderTable(JTable table) {
       myMainTable = table;
@@ -78,17 +114,29 @@ public class JBTableWithRowHeaders extends JBTable {
         removeMouseListener(l);
       }
       setModel(new DefaultTableModel(0, 1));
+      setPreferredScrollableViewportSize(getPreferredSize());
     }
 
+    @NotNull
+    @Override
+    public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
+      Component component = super.prepareRenderer(renderer, row, column);
+      if (myAutoResize) {
+        getPreferredSize().width = updateColumnWidth(column, component.getPreferredSize().width, this);
+      }
+      else {
+        getColumnModel().getColumn(0).setPreferredWidth(50);
+      }
+      setPreferredScrollableViewportSize(getPreferredSize());
+      return component;
+    }
 
     @Override
     public void setModel(@NotNull TableModel model) {
       setAutoCreateColumnsFromModel(true);
       super.setModel(model);
       if (getColumnModel().getColumnCount() > 0) {
-        getColumnModel().getColumn(0).setPreferredWidth(50);
         getColumnModel().getColumn(0).setCellRenderer(new RowNumberRenderer());
-        setPreferredScrollableViewportSize(getPreferredSize());
       }
     }
 
@@ -123,7 +171,7 @@ public class JBTableWithRowHeaders extends JBTable {
     }
 
 
-    private static class RowNumberRenderer extends DefaultTableCellRenderer {
+    private class RowNumberRenderer extends DefaultTableCellRenderer {
       public RowNumberRenderer() {
         setHorizontalAlignment(SwingConstants.CENTER);
       }
@@ -152,7 +200,7 @@ public class JBTableWithRowHeaders extends JBTable {
     }
   }
 
-  public static class CustomTableHeader extends JTableHeader {
+  public class CustomTableHeader extends JBTableHeader {
 
     public CustomTableHeader(JTable table) {
       super();
@@ -163,6 +211,14 @@ public class JBTableWithRowHeaders extends JBTable {
     @Override
     public void columnSelectionChanged(ListSelectionEvent e) {
       repaint();
+    }
+
+    @Override
+    public void setResizingColumn(TableColumn column) {
+      super.setResizingColumn(column);
+      if (column != null) {
+        JBTableWithRowHeaders.this.myNotAdjustableColumns.add(column.getModelIndex());
+      }
     }
   }
 

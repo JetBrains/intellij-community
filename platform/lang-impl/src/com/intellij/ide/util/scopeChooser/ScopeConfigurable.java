@@ -28,6 +28,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,10 +37,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * User: anna
- * Date: 01-Jul-2006
- */
 public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
   private final Disposable myDisposable = Disposer.newDisposable();
   private NamedScope myScope;
@@ -113,6 +110,7 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
     final JPanel wholePanel = new JPanel(new BorderLayout());
     wholePanel.add(myPanel.getPanel(), BorderLayout.CENTER);
     wholePanel.add(mySharedCheckbox, BorderLayout.SOUTH);
+    wholePanel.setBorder(JBUI.Borders.empty(0, 10, 10, 10));
     return wholePanel;
   }
 

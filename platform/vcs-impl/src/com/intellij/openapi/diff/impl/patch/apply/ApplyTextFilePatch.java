@@ -38,7 +38,7 @@ public class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> {
   }
 
   @Nullable
-  protected Result applyChange(final Project project, final VirtualFile fileToPatch, final FilePath pathBeforeRename, final Getter<CharSequence> baseContents) throws IOException {
+  protected Result applyChange(final Project project, final VirtualFile fileToPatch, final FilePath pathBeforeRename, @Nullable final Getter<CharSequence> baseContents) throws IOException {
     byte[] fileContents = fileToPatch.contentsToByteArray();
     CharSequence text = LoadTextUtil.getTextByBinaryPresentation(fileContents, fileToPatch);
     final GenericPatchApplier applier = new GenericPatchApplier(text, myPatch.getHunks());
@@ -49,18 +49,14 @@ public class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> {
       }
       document.setText(applier.getAfter());
       FileDocumentManager.getInstance().saveDocument(document);
-      return new Result(applier.getStatus()) {
-        @Override
-        public ApplyPatchForBaseRevisionTexts getMergeData() {
-          return null;
-        }
-      };
+      return new Result(applier.getStatus());
     }
     applier.trySolveSomehow();
     return new Result(ApplyPatchStatus.FAILURE) {
       @Override
       public ApplyPatchForBaseRevisionTexts getMergeData() {
-        return ApplyPatchForBaseRevisionTexts.create(project, fileToPatch, pathBeforeRename, myPatch, baseContents);
+        return ApplyPatchForBaseRevisionTexts
+          .create(project, fileToPatch, pathBeforeRename, myPatch, baseContents != null ? baseContents.get() : null);
       }
     };
   }
@@ -79,7 +75,7 @@ public class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> {
         //
       }
     }
-    document.setText(myPatch.getNewFileText());
+    document.setText(myPatch.getSingleHunkPatchText());
     FileDocumentManager.getInstance().saveDocument(document);
   }
 }

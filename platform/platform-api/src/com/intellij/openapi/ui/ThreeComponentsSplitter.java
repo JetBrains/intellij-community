@@ -35,7 +35,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -113,7 +113,13 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     }
 
     Component findChildToFocus (Component component) {
-
+      final Window ancestor = SwingUtilities.getWindowAncestor(ThreeComponentsSplitter.this);
+      if (ancestor != null) {
+        final Component mostRecentFocusOwner = ancestor.getMostRecentFocusOwner();
+        if (mostRecentFocusOwner != null && mostRecentFocusOwner.isShowing()) {
+          return mostRecentFocusOwner;
+        }
+      }
       if (component instanceof JPanel) {
         JPanel container = (JPanel)component;
         final FocusTraversalPolicy policy = container.getFocusTraversalPolicy();
@@ -162,7 +168,6 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     }
     setFocusCycleRoot(true);
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());
-    setFocusable(false);
     setOpaque(false);
     add(myFirstDivider);
     add(myLastDivider);
@@ -373,14 +378,14 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
   }
 
   /**
-   * @return <code>true</code> if splitter has vertical orientation, <code>false</code> otherwise
+   * @return {@code true} if splitter has vertical orientation, {@code false} otherwise
    */
   public boolean getOrientation() {
     return myVerticalSplit;
   }
 
   /**
-   * @param verticalSplit <code>true</code> means that splitter will have vertical split
+   * @param verticalSplit {@code true} means that splitter will have vertical split
    */
   public void setOrientation(boolean verticalSplit) {
     myVerticalSplit = verticalSplit;
@@ -468,13 +473,13 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
 
   public void setFirstSize(final int size) {
-    myFirstSize = size;
+    myFirstSize = Math.max(getMinSize(true), size);
     doLayout();
     repaint();
   }
 
   public void setLastSize(final int size) {
-    myLastSize = size;
+    myLastSize = Math.max(getMinSize(false), size);
     doLayout();
     repaint();
   }
@@ -527,11 +532,6 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     protected boolean myDragging;
     protected Point myPoint;
     private final boolean myIsFirst;
-
-    @Override
-    public void paint(Graphics g) {
-      super.paint(g);
-    }
 
     private IdeGlassPane myGlassPane;
 

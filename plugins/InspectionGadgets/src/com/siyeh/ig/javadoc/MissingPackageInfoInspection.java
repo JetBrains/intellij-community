@@ -63,12 +63,9 @@ public class MissingPackageInfoInspection extends MissingPackageInfoInspectionBa
 
         @Override
         protected void doFix(Project project, ProblemDescriptor descriptor) {
-          DataManager.getInstance().getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {
-            @Override
-            public void consume(DataContext context) {
-              final AnActionEvent event = new AnActionEvent(null, context, "", new Presentation(), ActionManager.getInstance(), 0);
-              new CreatePackageInfoAction().actionPerformed(event);
-            }
+          DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)context -> {
+            final AnActionEvent event = new AnActionEvent(null, context, "", new Presentation(), ActionManager.getInstance(), 0);
+            new CreatePackageInfoAction().actionPerformed(event);
           });
         }
       };

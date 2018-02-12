@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,6 +158,10 @@ public abstract class GroovyElementVisitor {
   }
 
   public void visitAssignmentExpression(@NotNull GrAssignmentExpression expression) {
+    visitExpression(expression);
+  }
+
+  public void visitTupleAssignmentExpression(@NotNull GrTupleAssignmentExpression expression) {
     visitExpression(expression);
   }
 
@@ -461,8 +465,8 @@ public abstract class GroovyElementVisitor {
     visitTypeDefinition(typeParameter);
   }
 
-  public void visitTupleExpression(@NotNull GrTupleExpression tupleExpression) {
-    visitExpression(tupleExpression);
+  public void visitTuple(@NotNull GrTuple tuple) {
+    visitElement(tuple);
   }
 
   public void visitSpreadArgument(@NotNull GrSpreadArgument spreadArgument) {

@@ -38,7 +38,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.ContainerUtil;
@@ -73,6 +72,10 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
     myEditableEditors = TextDiffViewerUtil.getEditableEditors(getEditors());
 
     TextDiffViewerUtil.checkDifferentDocuments(myRequest);
+
+    for (ThreeSide side : ThreeSide.values()) {
+      DiffUtil.installLineConvertor(getEditor(side), getContent(side));
+    }
   }
 
   @Override
@@ -100,7 +103,6 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
     }
 
     ThreeSide.LEFT.select(holders).getEditor().setVerticalScrollbarOrientation(EditorEx.VERTICAL_SCROLLBAR_LEFT);
-    ((EditorMarkupModel)ThreeSide.BASE.select(holders).getEditor().getMarkupModel()).setErrorStripeVisible(false);
 
     for (TextEditorHolder holder : holders) {
       DiffUtil.disableBlitting(holder.getEditor());
@@ -364,8 +366,8 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   }
 
   protected class TextShowPartialDiffAction extends ShowPartialDiffAction {
-    public TextShowPartialDiffAction(@NotNull PartialDiffMode mode) {
-      super(mode);
+    public TextShowPartialDiffAction(@NotNull PartialDiffMode mode, boolean hasFourSides) {
+      super(mode, hasFourSides);
     }
 
     @NotNull

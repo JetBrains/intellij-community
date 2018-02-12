@@ -22,12 +22,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.javadoc.PsiDocComment;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class FieldSelectioner extends WordSelectioner {
   @Override
-  public boolean canSelect(PsiElement e) {
+  public boolean canSelect(@NotNull PsiElement e) {
     return e instanceof PsiField && e.getLanguage() == JavaLanguage.INSTANCE;
   }
 
@@ -42,25 +43,24 @@ public class FieldSelectioner extends WordSelectioner {
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
-    final PsiField field = (PsiField)e;
-    final TextRange range = field.getTextRange();
-    final PsiIdentifier first = field.getNameIdentifier();
-    final TextRange firstRange = first.getTextRange();
-    final PsiElement last = field.getInitializer();
-    final int end = last == null ? firstRange.getEndOffset() : last.getTextRange().getEndOffset();
+    PsiField field = (PsiField)e;
+    TextRange fieldRange = field.getTextRange();
+    PsiIdentifier nameId = field.getNameIdentifier();
+    TextRange nameRange = nameId.getTextRange();
+    PsiElement last = field.getInitializer();
+    int end = last == null ? nameRange.getEndOffset() : last.getTextRange().getEndOffset();
 
     PsiDocComment comment = field.getDocComment();
     if (comment != null) {
       TextRange commentTextRange = comment.getTextRange();
       addRangeElem(result, editorText, comment, commentTextRange.getEndOffset());
     }
-    addRangeElem(result, editorText, first, end);
-    //addRangeElem (result, editorText, field, textLength, field.getTypeElement(), end);
-    addRangeElem(result, editorText, field.getModifierList(), range.getEndOffset());
-    //addRangeElem (result, editorText, field, textLength, field.getDocComment(), end);
-    result.addAll(expandToWholeLine(editorText, range));
+    addRangeElem(result, editorText, nameId, end);
+    addRangeElem(result, editorText, field.getTypeElement(), nameRange.getEndOffset());
+    addRangeElem(result, editorText, field.getModifierList(), fieldRange.getEndOffset());
+    result.addAll(expandToWholeLine(editorText, fieldRange));
     return result;
   }
 }

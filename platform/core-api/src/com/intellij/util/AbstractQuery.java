@@ -42,6 +42,7 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
     return result;
   }
 
+  @NotNull
   @Override
   public Iterator<Result> iterator() {
     assertNotProcessing();

@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings("RegExpRepeatedSpace")
 public class RepeatedSpaceInspectionTest extends RegExpInspectionTestCase {
 
   public void testSimple() {

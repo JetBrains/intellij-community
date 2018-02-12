@@ -112,11 +112,6 @@ public class GroovyMapParameterDialog extends DialogWrapper {
   }
 
   @Override
-  public void doCancelAction() {
-    super.doCancelAction();
-  }
-
-  @Override
   protected JComponent createCenterPanel() {
     return contentPane;
   }
@@ -154,10 +149,6 @@ public class GroovyMapParameterDialog extends DialogWrapper {
     });
 
     ((EditorTextField)myNameComboBox.getEditor().getEditorComponent()).addDocumentListener(new DocumentListener() {
-      @Override
-      public void beforeDocumentChange(DocumentEvent event) {
-      }
-
       @Override
       public void documentChanged(DocumentEvent event) {
         fireNameDataChanged();

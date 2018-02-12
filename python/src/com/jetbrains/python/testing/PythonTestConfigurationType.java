@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.jetbrains.python.testing;
 
@@ -20,18 +8,14 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.impl.ProjectLifecycleListener;
-import com.intellij.openapi.startup.StartupManager;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.PythonConfigurationFactoryBase;
 import com.jetbrains.python.testing.doctest.PythonDocTestRunConfiguration;
-import com.jetbrains.python.testing.nosetest.PythonNoseTestRunConfiguration;
-import com.jetbrains.python.testing.pytest.PyTestRunConfiguration;
-import com.jetbrains.python.testing.unittest.PythonUnitTestRunConfiguration;
-import com.jetbrains.python.testing.universalTests.PyUniversalTestLegacyInteropKt;
-import com.jetbrains.python.testing.universalTests.PyUniversalTestsKt;
+import com.jetbrains.python.testing.nosetestLegacy.PythonNoseTestRunConfiguration;
+import com.jetbrains.python.testing.pytestLegacy.PyTestRunConfiguration;
+import com.jetbrains.python.testing.unittestLegacy.PythonUnitTestRunConfiguration;
+import com.jetbrains.python.testing.PyTestLegacyInteropKt;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +25,7 @@ import javax.swing.*;
  * User : catherine
  * <p>
  * This type is used both with Legacy and New test runners.
- * {@link PyUniversalTestLegacyInteropKt} is used to support legacy. To drop legacy support, remove all code that depends on it.
+ * {@link PyTestLegacyInteropKt} is used to support legacy. To drop legacy support, remove all code that depends on it.
  */
 public final class PythonTestConfigurationType implements ConfigurationType {
   public static final String ID = "tests";
@@ -79,6 +63,7 @@ public final class PythonTestConfigurationType implements ConfigurationType {
       super(configurationType);
     }
 
+    @NotNull
     @Override
     public RunConfiguration createTemplateConfiguration(Project project) {
       return new PythonUnitTestRunConfiguration(project, this);
@@ -95,6 +80,7 @@ public final class PythonTestConfigurationType implements ConfigurationType {
       super(configurationType);
     }
 
+    @NotNull
     @Override
     public RunConfiguration createTemplateConfiguration(Project project) {
       return new PythonDocTestRunConfiguration(project, this);
@@ -111,6 +97,7 @@ public final class PythonTestConfigurationType implements ConfigurationType {
       super(configurationType);
     }
 
+    @NotNull
     @Override
     public RunConfiguration createTemplateConfiguration(Project project) {
       return new PyTestRunConfiguration(project, this);
@@ -127,6 +114,7 @@ public final class PythonTestConfigurationType implements ConfigurationType {
       super(configurationType);
     }
 
+    @NotNull
     @Override
     public RunConfiguration createTemplateConfiguration(Project project) {
       return new PythonNoseTestRunConfiguration(project, this);
@@ -147,8 +135,8 @@ public final class PythonTestConfigurationType implements ConfigurationType {
   @Override
   public ConfigurationFactory[] getConfigurationFactories() {
     // Use new or legacy factories depending to new config
-    final ConfigurationFactory[] factories = PyUniversalTestLegacyInteropKt.isNewTestsModeEnabled()
-                                             ? PyUniversalTestsKt.getFactories()
+    final ConfigurationFactory[] factories = PyTestLegacyInteropKt.isNewTestsModeEnabled()
+                                             ? PyTestsSharedKt.getFactories()
                                              : new ConfigurationFactory[]
                                                {LEGACY_UNITTEST_FACTORY, LEGACY_NOSETEST_FACTORY, LEGACY_PYTEST_FACTORY};
     return ObjectArrays.concat(factories, PY_DOCTEST_FACTORY);

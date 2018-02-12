@@ -15,12 +15,5 @@
  */
 package com.intellij.openapi.keymap.impl;
 
-/**
- * Created by IntelliJ IDEA.
- * User: kirillk
- * Date: 5/5/11
- * Time: 1:25 PM
- * To change this template use File | Settings | File Templates.
- */
 public interface MnemonicContainer {
 }

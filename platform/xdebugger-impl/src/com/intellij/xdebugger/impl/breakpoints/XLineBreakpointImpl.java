@@ -1,24 +1,11 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -49,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
 import java.io.File;
 import java.util.List;
@@ -141,14 +129,14 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   }
 
   @Nullable
-  public Document getDocument() {
+  private Document getDocument() {
     VirtualFile file = getFile();
     if (file == null) return null;
     return FileDocumentManager.getInstance().getDocument(file);
   }
 
   @Nullable
-  private VirtualFile getFile() {
+  public VirtualFile getFile() {
     return VirtualFileManager.getInstance().findFileByUrl(getFileUrl());
   }
 
@@ -191,13 +179,12 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
 
   @Override
   public XSourcePosition getSourcePosition() {
+    if (mySourcePosition != null) {
+      return mySourcePosition;
+    }
+    mySourcePosition = super.getSourcePosition();
     if (mySourcePosition == null) {
-      new ReadAction() {
-        @Override
-        protected void run(@NotNull Result result) {
-          mySourcePosition = XDebuggerUtil.getInstance().createPosition(getFile(), getLine());
-        }
-      }.execute();
+      mySourcePosition = XDebuggerUtil.getInstance().createPosition(getFile(), getLine());
     }
     return mySourcePosition;
   }
@@ -223,23 +210,38 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   protected GutterDraggableObject createBreakpointDraggableObject() {
     return new GutterDraggableObject() {
       @Override
-      public boolean copy(int line, VirtualFile file) {
+      public boolean copy(int line, VirtualFile file, int actionId) {
         if (canMoveTo(line, file)) {
-          setFileUrl(file.getUrl());
-          setLine(line, true);
+          final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(getProject()).getBreakpointManager();
+          if (isCopyAction(actionId)) {
+            WriteAction
+              .run(() -> ((XBreakpointManagerImpl)breakpointManager).copyLineBreakpoint(XLineBreakpointImpl.this, file.getUrl(), line));
+          }
+          else {
+            setFileUrl(file.getUrl());
+            setLine(line, true);
+          }
           return true;
         }
         return false;
       }
 
-      public void remove () {
-        final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(getProject()).getBreakpointManager();
-        ApplicationManager.getApplication().runWriteAction(() -> breakpointManager.removeBreakpoint(XLineBreakpointImpl.this));
+      public void remove() {
+        XBreakpointManager breakpointManager = XDebuggerManager.getInstance(getProject()).getBreakpointManager();
+        WriteAction.run(() -> breakpointManager.removeBreakpoint(XLineBreakpointImpl.this));
       }
 
       @Override
-      public Cursor getCursor(int line) {
-        return canMoveTo(line, getFile()) ? DragSource.DefaultMoveDrop : DragSource.DefaultMoveNoDrop;
+      public Cursor getCursor(int line, int actionId) {
+        if (canMoveTo(line, getFile())) {
+          return isCopyAction(actionId) ? DragSource.DefaultCopyDrop : DragSource.DefaultMoveDrop;
+        }
+
+        return DragSource.DefaultMoveNoDrop;
+      }
+
+      private boolean isCopyAction(int actionId) {
+        return (actionId & DnDConstants.ACTION_COPY) == DnDConstants.ACTION_COPY;
       }
     };
   }

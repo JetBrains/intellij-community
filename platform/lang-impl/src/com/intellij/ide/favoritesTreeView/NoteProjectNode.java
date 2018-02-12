@@ -22,12 +22,6 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 6/7/12
- * Time: 12:15 PM
- */
 public class NoteProjectNode extends ProjectViewNodeWithChildrenList<NoteNode> {
   public NoteProjectNode(Project project, NoteNode node, ViewSettings viewSettings) {
     super(project, node, viewSettings);

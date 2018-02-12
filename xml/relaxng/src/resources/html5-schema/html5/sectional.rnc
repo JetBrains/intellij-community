@@ -15,6 +15,7 @@
 			|	common.attrs.aria.role.heading
 			|	common.attrs.aria.role.tab
 			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.doc-subtitle
 			)?
 		)
 	h1.inner =
@@ -32,6 +33,7 @@
 			|	common.attrs.aria.role.heading
 			|	common.attrs.aria.role.tab
 			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.doc-subtitle
 			)?
 		)
 	h2.inner =
@@ -49,6 +51,7 @@
 			|	common.attrs.aria.role.heading
 			|	common.attrs.aria.role.tab
 			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.doc-subtitle
 			)?
 		)
 	h3.inner =
@@ -66,6 +69,7 @@
 			|	common.attrs.aria.role.heading
 			|	common.attrs.aria.role.tab
 			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.doc-subtitle
 			)?
 		)
 	h4.inner =
@@ -83,6 +87,7 @@
 			|	common.attrs.aria.role.heading
 			|	common.attrs.aria.role.tab
 			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.doc-subtitle
 			)?
 		)
 	h5.inner =
@@ -100,12 +105,38 @@
 			|	common.attrs.aria.role.heading
 			|	common.attrs.aria.role.tab
 			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.doc-subtitle
 			)?
 		)
 	h6.inner =
 		( common.inner.phrasing )
 
 	common.elem.flow |= h6.elem
+
+## Heading Group: <hgroup>
+
+	hgroup.elem =
+		element hgroup { hgroup.inner & hgroup.attrs } & nonW3C
+	hgroup.attrs =
+		(	common.attrs
+		&	(	common.attrs.aria.implicit.heading
+			|	common.attrs.aria.role.heading
+			|	common.attrs.aria.role.tab
+			|	common.attrs.aria.role.presentation
+			)?
+		)
+	hgroup.inner =
+		(	(	h1.elem
+			|	h2.elem
+			|	h3.elem
+			|	h4.elem
+			|	h5.elem
+			|	h6.elem
+			)
+			&	common.elem.script-supporting*
+		)+
+
+	common.elem.flow |= hgroup.elem
 
 # #####################################################################
 ## Section Meta

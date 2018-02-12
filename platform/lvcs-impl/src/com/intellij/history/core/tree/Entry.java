@@ -215,11 +215,11 @@ public abstract class Entry {
     return result;
   }
 
-  protected abstract void collectDifferencesWith(Entry e, List<Difference> result);
+  protected abstract void collectDifferencesWith(@NotNull Entry e, @NotNull List<Difference> result);
 
-  protected abstract void collectCreatedDifferences(List<Difference> result);
+  protected abstract void collectCreatedDifferences(@NotNull List<Difference> result);
 
-  protected abstract void collectDeletedDifferences(List<Difference> result);
+  protected abstract void collectDeletedDifferences(@NotNull List<Difference> result);
 
   @Override
   public String toString() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,6 @@ import com.intellij.refactoring.introduceParameter.AbstractJavaInplaceIntroducer
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 
-/**
- * User: anna
- */
 public abstract class AbstractInplaceIntroduceFieldPopup extends AbstractJavaInplaceIntroducer {
   private final SmartPsiElementPointer<PsiClass> myParentClass;
   protected final OccurrenceManager myOccurrenceManager;
@@ -114,12 +111,12 @@ public abstract class AbstractInplaceIntroduceFieldPopup extends AbstractJavaInp
     if (parentClass == null || !parentClass.isValid()) return null;
     PsiElement element = parentClass.getContainingFile().findElementAt(myFieldRangeStart.getStartOffset());
     if (element instanceof PsiWhiteSpace) {
-      element = PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class);
+      element = PsiTreeUtil.skipWhitespacesForward(element);
     }
     if (element instanceof PsiField) return (PsiVariable)element;
     final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false);
     if (field != null) return field;
-    element = PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class);
+    element = PsiTreeUtil.skipWhitespacesBackward(element);
     return PsiTreeUtil.getParentOfType(element, PsiField.class, false);
   }
 

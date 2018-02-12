@@ -16,8 +16,6 @@
 package com.intellij.formatting.templateLanguages;
 
 import com.intellij.formatting.*;
-import static com.intellij.formatting.templateLanguages.BlockUtil.buildChildWrappers;
-import static com.intellij.formatting.templateLanguages.BlockUtil.filterBlocksByRange;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
@@ -34,10 +32,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.formatting.templateLanguages.BlockUtil.buildChildWrappers;
+import static com.intellij.formatting.templateLanguages.BlockUtil.filterBlocksByRange;
+
 /**
  * @author Alexey Chmutov
- *         Date: Jun 26, 2009
- *         Time: 4:07:09 PM
  */
 public abstract class TemplateLanguageFormattingModelBuilder implements DelegatingFormattingModelBuilder, TemplateLanguageBlockFactory {
 
@@ -70,7 +69,7 @@ public abstract class TemplateLanguageFormattingModelBuilder implements Delegati
                                            filterBlocksByRange(childWrappers, node.getTextRange()), settings);
       }
     }
-    return createTemplateLanguageBlock(node,  Wrap.createWrap(WrapType.NONE, false), null, Collections.<DataLanguageBlockWrapper>emptyList(), settings);
+    return createTemplateLanguageBlock(node, Wrap.createWrap(WrapType.NONE, false), null, Collections.emptyList(), settings);
   }
 
   protected AbstractBlock createDummyBlock(final ASTNode node) {

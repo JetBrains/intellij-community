@@ -37,7 +37,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
@@ -53,7 +52,7 @@ public class JavaDocReferenceInspection extends JavaDocReferenceInspectionBase {
   @Override
   protected LocalQuickFix createAddQualifierFix(PsiJavaCodeReferenceElement reference) {
     List<PsiClass> classesToImport = new ImportClassFix(reference).getClassesToImport();
-    return classesToImport.isEmpty() ? null : new JavaDocReferenceInspection.AddQualifierFix(classesToImport);
+    return classesToImport.isEmpty() ? null : new AddQualifierFix(classesToImport);
   }
 
   @Override
@@ -77,30 +76,27 @@ public class JavaDocReferenceInspection extends JavaDocReferenceInspectionBase {
     @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
-      asyncResult.doWhenDone(new Consumer<DataContext>() {
-        @Override
-        public void consume(DataContext dataContext) {
-          final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-          assert editor != null;
-          final TextRange textRange = ((ProblemDescriptorBase)descriptor).getTextRange();
-          editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());
+      asyncResult.doWhenDone((Consumer<DataContext>)dataContext -> {
+        final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+        assert editor != null;
+        final TextRange textRange = ((ProblemDescriptorBase)descriptor).getTextRange();
+        editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());
 
-          final String word = editor.getSelectionModel().getSelectedText();
+        final String word = editor.getSelectionModel().getSelectedText();
 
-          if (word == null || StringUtil.isEmptyOrSpaces(word)) {
-            return;
-          }
-          final List<LookupElement> items = new ArrayList<>();
-          for (String variant : myUnboundParams) {
-            items.add(LookupElementBuilder.create(variant));
-          }
-          LookupManager.getInstance(project).showLookup(editor, items.toArray(new LookupElement[items.size()]));
+        if (word == null || StringUtil.isEmptyOrSpaces(word)) {
+          return;
         }
+        final List<LookupElement> items = new ArrayList<>();
+        for (String variant : myUnboundParams) {
+          items.add(LookupElementBuilder.create(variant));
+        }
+        LookupManager.getInstance(project).showLookup(editor, items.toArray(LookupElement.EMPTY_ARRAY));
       });
     }
   }
 
-  private class AddQualifierFix implements LocalQuickFix {
+  private static class AddQualifierFix implements LocalQuickFix {
     private final List<PsiClass> originalClasses;
 
     public AddQualifierFix(final List<PsiClass> originalClasses) {
@@ -114,11 +110,15 @@ public class JavaDocReferenceInspection extends JavaDocReferenceInspectionBase {
     }
 
     @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-      final PsiElement element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiJavaCodeReferenceElement.class);
+      PsiJavaCodeReferenceElement element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiJavaCodeReferenceElement.class);
       if (element != null) {
-        final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)element;
-        Collections.sort(originalClasses, new PsiProximityComparator(referenceElement.getElement()));
+        Collections.sort(originalClasses, new PsiProximityComparator(element.getElement()));
         final AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
         asyncResult.doWhenDone((Consumer<DataContext>)dataContext ->
           JBPopupFactory.getInstance()
@@ -131,7 +131,7 @@ public class JavaDocReferenceInspection extends JavaDocReferenceInspectionBase {
                 protected void run(@NotNull final Result result) throws Throwable {
                   if (psiClass.isValid()) {
                     PsiDocumentManager.getInstance(project).commitAllDocuments();
-                    referenceElement.bindToElement(psiClass);
+                    element.bindToElement(psiClass);
                   }
                 }
               }.execute();

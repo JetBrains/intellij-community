@@ -38,21 +38,21 @@ public final class CommandLineInspectionTest extends PyTestCase {
   /**
    * Everything should be ok
    */
-  public void testGoodCommandLine() throws Exception {
+  public void testGoodCommandLine() {
     doTest();
   }
 
   /**
    * No command provided in file
    */
-  public void testBadCommandLineNoCommand() throws Exception {
+  public void testBadCommandLineNoCommand() {
     doTest();
   }
 
   /**
    * Command provided, but args and opts have errors
    */
-  public void testBadCommandLineWithCommand() throws Exception {
+  public void testBadCommandLineWithCommand() {
     doTest();
   }
 

@@ -1,8 +1,13 @@
 class Test {
-    ThreadLocal<String> myS = "";
+    ThreadLocal<String> myS = new ThreadLocal<String>() {
+        @Override
+        protected String initialValue() {
+            return "";
+        }
+    };
 
     void foo() {
-        if (myS == null) {
+        if (myS.get() == null) {
             System.out.println(myS.get());
         }
     }

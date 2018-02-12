@@ -17,12 +17,13 @@ package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -72,12 +73,15 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
     .register(UNMODIFIABLE_LIST, call -> PrepopulatedCollectionModel.fromList(call.getArgumentList().getExpressions()[0]));
 
   public boolean IGNORE_NON_CONSTANT = false;
+  public boolean SUGGEST_MAP_OF_ENTRIES = true;
 
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.collection.factories.option.ignore.non.constant"), this,
-                                          "IGNORE_NON_CONSTANT");
+    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionsBundle.message("inspection.collection.factories.option.ignore.non.constant"), "IGNORE_NON_CONSTANT");
+    panel.addCheckbox(InspectionsBundle.message("inspection.collection.factories.option.suggest.ofentries"), "SUGGEST_MAP_OF_ENTRIES");
+    return panel;
   }
 
   @NotNull
@@ -90,7 +94,7 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression call) {
         PrepopulatedCollectionModel model = MAPPER.mapFirst(call);
-        if (model != null && model.isValid()) {
+        if (model != null && model.isValid(SUGGEST_MAP_OF_ENTRIES)) {
           ProblemHighlightType type = model.myConstantContent || !IGNORE_NON_CONSTANT
                                       ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING
                                       : ProblemHighlightType.INFORMATION;
@@ -100,8 +104,11 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
                                     InspectionProjectProfileManager.isInformationLevel(getShortName(), call));
           PsiElement element = wholeStatement ? call : call.getMethodExpression().getReferenceNameElement();
           if(element != null) {
-            holder.registerProblem(element, InspectionsBundle.message("inspection.collection.factories.message", model.myType), type,
-                                   new ReplaceWithCollectionFactoryFix(model.myType));
+            String replacementMethod = model.hasTooManyMapEntries() ? "ofEntries" : "of";
+            String fixMessage = InspectionsBundle.message("inspection.collection.factories.fix.name", model.myType, replacementMethod);
+            String inspectionMessage =
+              InspectionsBundle.message("inspection.collection.factories.message", model.myType, replacementMethod);
+            holder.registerProblem(element, inspectionMessage, type, new ReplaceWithCollectionFactoryFix(fixMessage));
           }
         }
       }
@@ -121,15 +128,18 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
       myElementsToDelete = delete;
       myType = type;
       Map<PsiExpression, List<Object>> constants = StreamEx.of(myContent)
-        .cross(ExpressionUtils::possibleValues).mapValues(ExpressionUtils::computeConstantExpression).distinct().grouping();
+        .cross(ExpressionUtils::nonStructuralChildren).mapValues(ExpressionUtils::computeConstantExpression).distinct().grouping();
       myConstantContent = StreamEx.ofValues(constants).flatCollection(Function.identity()).allMatch(Objects::nonNull);
       myRepeatingKeys = keyExpressions().flatCollection(constants::get).nonNull().distinct(2).findAny().isPresent();
-      myHasNulls = StreamEx.of(myContent).flatMap(ExpressionUtils::possibleValues).map(PsiExpression::getType).has(PsiType.NULL);
+      myHasNulls = StreamEx.of(myContent).flatMap(ExpressionUtils::nonStructuralChildren).map(PsiExpression::getType).has(PsiType.NULL);
     }
 
-    public boolean isValid() {
-      boolean mapOfTooManyParameters = myType.equals("Map") && myContent.size() > 20;
-      return !myHasNulls && !myRepeatingKeys && !mapOfTooManyParameters;
+    boolean isValid(boolean suggestMapOfEntries) {
+      return !myHasNulls && !myRepeatingKeys && (suggestMapOfEntries || !hasTooManyMapEntries());
+    }
+
+    private boolean hasTooManyMapEntries() {
+      return myType.equals("Map") && myContent.size() > 20;
     }
 
     private StreamEx<PsiExpression> keyExpressions() {
@@ -180,6 +190,16 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
       if (mapDefinition instanceof PsiReferenceExpression) {
         return fromVariable((PsiReferenceExpression)mapDefinition, "Map", CommonClassNames.JAVA_UTIL_HASH_MAP, MAP_PUT);
       }
+      if (mapDefinition instanceof PsiNewExpression) {
+        PsiAnonymousClass anonymousClass = ((PsiNewExpression)mapDefinition).getAnonymousClass();
+        PsiExpressionList argumentList = ((PsiNewExpression)mapDefinition).getArgumentList();
+        if (anonymousClass != null && argumentList != null && argumentList.isEmpty()) {
+          PsiJavaCodeReferenceElement baseClassReference = anonymousClass.getBaseClassReference();
+          if (CommonClassNames.JAVA_UTIL_HASH_MAP.equals(baseClassReference.getQualifiedName())) {
+            return fromInitializer(anonymousClass, "Map", MAP_PUT);
+          }
+        }
+      }
       return null;
     }
 
@@ -216,7 +236,7 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
         List<PsiElement> elementsToRemove = new ArrayList<>();
         elementsToRemove.add(initializer);
         while (true) {
-          cur = tryCast(PsiTreeUtil.skipSiblingsForward(cur, PsiComment.class, PsiWhiteSpace.class), PsiStatement.class);
+          cur = tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(cur), PsiStatement.class);
           if (PsiTreeUtil.isAncestor(cur, expression, false)) break;
           if (!(cur instanceof PsiExpressionStatement)) return null;
           PsiMethodCallExpression call = tryCast(((PsiExpressionStatement)cur).getExpression(), PsiMethodCallExpression.class);
@@ -244,7 +264,7 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
         if (anonymousClass != null && args.length == 0) {
           PsiJavaCodeReferenceElement baseClassReference = anonymousClass.getBaseClassReference();
           if (className.equals(baseClassReference.getQualifiedName())) {
-            return fromInitializer(anonymousClass, type);
+            return fromInitializer(anonymousClass, type, COLLECTION_ADD);
           }
         }
       }
@@ -263,17 +283,17 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
     }
 
     @Nullable
-    private static PrepopulatedCollectionModel fromInitializer(PsiAnonymousClass anonymousClass, String type) {
+    private static PrepopulatedCollectionModel fromInitializer(PsiAnonymousClass anonymousClass, String type, CallMatcher addMethod) {
       PsiClassInitializer initializer = ClassUtils.getDoubleBraceInitializer(anonymousClass);
       if(initializer != null) {
         List<PsiExpression> contents = new ArrayList<>();
         for(PsiStatement statement : initializer.getBody().getStatements()) {
           if(!(statement instanceof PsiExpressionStatement)) return null;
           PsiMethodCallExpression call = tryCast(((PsiExpressionStatement)statement).getExpression(), PsiMethodCallExpression.class);
-          if(!COLLECTION_ADD.test(call)) return null;
+          if(!addMethod.test(call)) return null;
           PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
           if(qualifier != null && !qualifier.getText().equals("this")) return null;
-          contents.add(call.getArgumentList().getExpressions()[0]);
+          contents.addAll(Arrays.asList(call.getArgumentList().getExpressions()));
         }
         return new PrepopulatedCollectionModel(contents, Collections.emptyList(), type);
       }
@@ -282,15 +302,17 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
   }
 
   private static class ReplaceWithCollectionFactoryFix implements LocalQuickFix {
-    private String myType;
+    private final String myMessage;
 
-    public ReplaceWithCollectionFactoryFix(String type) {myType = type;}
+    public ReplaceWithCollectionFactoryFix(String message) {
+      myMessage = message;
+    }
 
     @Nls
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("inspection.collection.factories.fix.name", myType);
+      return myMessage;
     }
 
     @Nls
@@ -308,12 +330,28 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
       if(model == null) return;
       String typeArgument = getTypeArguments(call.getType(), model.myType);
       CommentTracker ct = new CommentTracker();
-      String replacementText = StreamEx.of(model.myContent)
-        .prepend((PsiExpression)null)
-        .pairMap((prev, next) -> (prev == null ? "" : CommentTracker.commentsBetween(prev, next)) + ct.text(next))
-        .joining(",", "java.util." + model.myType + "." + typeArgument + "of(", ")");
+      String replacementText;
+      if (model.hasTooManyMapEntries()) {
+        replacementText = StreamEx.ofSubLists(model.myContent, 2)
+          .prepend(Collections.<PsiExpression>emptyList())
+          .pairMap((prev, next) -> {
+            String prevComment = prev.isEmpty() ? "" : CommentTracker.commentsBetween(prev.get(1), next.get(0));
+            String midComment = CommentTracker.commentsBetween(next.get(0), next.get(1));
+            return prevComment + "java.util.Map.entry(" + ct.text(next.get(0)) + "," + midComment + ct.text(next.get(1)) + ")";
+          })
+          .joining(",", "java.util.Map." + typeArgument + "ofEntries(", ")");
+      }
+      else {
+        replacementText = StreamEx.of(model.myContent)
+          .prepend((PsiExpression)null)
+          .pairMap((prev, next) -> (prev == null ? "" : CommentTracker.commentsBetween(prev, next)) + ct.text(next))
+          .joining(",", "java.util." + model.myType + "." + typeArgument + "of(", ")");
+      }
+      List<PsiLocalVariable> vars =
+        StreamEx.of(model.myElementsToDelete).map(PsiElement::getParent).select(PsiLocalVariable.class).toList();
       model.myElementsToDelete.forEach(ct::delete);
       PsiElement replacement = ct.replaceAndRestoreComments(call, replacementText);
+      vars.stream().filter(var -> ReferencesSearch.search(var).findFirst() == null).forEach(PsiElement::delete);
       PsiDiamondTypeUtil.removeRedundantTypeArguments(replacement);
     }
 

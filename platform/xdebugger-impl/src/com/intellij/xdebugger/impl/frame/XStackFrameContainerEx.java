@@ -29,7 +29,7 @@ public interface XStackFrameContainerEx extends XExecutionStack.XStackFrameConta
    * 
    * @param stackFrames stack frames to add
    * @param toSelect stack frame to select in the frames list automatically.
-   * @param last <code>true</code> if all frames are added
+   * @param last {@code true} if all frames are added
    */
   void addStackFrames(@NotNull List<? extends XStackFrame> stackFrames, @Nullable XStackFrame toSelect, boolean last);
 }

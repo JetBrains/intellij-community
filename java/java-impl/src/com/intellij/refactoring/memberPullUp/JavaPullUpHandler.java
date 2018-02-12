@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 18.06.2002
- * Time: 12:45:30
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.lang.ContextAwareActionHandler;
@@ -43,6 +35,7 @@ import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
@@ -142,7 +135,7 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
   @Override
   public boolean checkConflicts(final PullUpDialog dialog) {
     final List<MemberInfo> infos = dialog.getSelectedMemberInfos();
-    final MemberInfo[] memberInfos = infos.toArray(new MemberInfo[infos.size()]);
+    final MemberInfo[] memberInfos = infos.toArray(new MemberInfo[0]);
     final PsiClass superClass = dialog.getSuperClass();
     if (superClass == null || !checkWritable(superClass, memberInfos)) return false;
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
@@ -154,7 +147,8 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
       }
     }), RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) return false;
     if (!conflicts.isEmpty()) {
-      ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
+      ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts, () ->
+        new PullUpProcessor(mySubclass, superClass, infos.toArray(new MemberInfo[0]), new DocCommentPolicy(dialog.getJavaDocPolicy())).run());
       boolean ok = conflictsDialog.showAndGet();
       if (!ok && conflictsDialog.isShowConflicts()) dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
       return ok;

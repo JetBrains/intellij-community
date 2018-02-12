@@ -19,7 +19,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.debugger.UiDebuggerExtension;
 
@@ -28,13 +27,8 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import java.awt.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: kirillk
- * Date: 8/4/11
- * Time: 7:52 PM
- * To change this template use File | Settings | File Templates.
- */
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+
 public class ActionTracer implements UiDebuggerExtension, AnActionListener {
 
   private final Logger LOG = Logger.getInstance("ActionTracer");
@@ -56,7 +50,7 @@ public class ActionTracer implements UiDebuggerExtension, AnActionListener {
       myComponent = new JPanel(new BorderLayout());
       final DefaultActionGroup group = new DefaultActionGroup();
       group.add(clear);
-      myComponent.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(), BorderLayout.NORTH);
+      myComponent.add(ActionManager.getInstance().createActionToolbar("ActionTracer", group, true).getComponent(), BorderLayout.NORTH);
       myComponent.add(log);
 
       ActionManager.getInstance().addAnActionListener(this);
@@ -82,7 +76,7 @@ public class ActionTracer implements UiDebuggerExtension, AnActionListener {
     out.append("id=").append(id);
     if (id != null) {
       out.append("; shortcuts:");
-      final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(id);
+      final Shortcut[] shortcuts = getActiveKeymapShortcuts(id).getShortcuts();
       for (int i = 0; i < shortcuts.length; i++) {
         Shortcut shortcut = shortcuts[i];
         out.append(shortcut);
@@ -104,10 +98,6 @@ public class ActionTracer implements UiDebuggerExtension, AnActionListener {
     catch (BadLocationException e) {
       LOG.error(e);
     }
-  }
-
-  @Override
-  public void beforeEditorTyping(char c, DataContext dataContext) {
   }
 
   @Override

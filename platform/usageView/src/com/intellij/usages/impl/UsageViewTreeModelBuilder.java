@@ -74,6 +74,7 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
       return false;
     }
 
+    @NotNull
     @Override
     protected String getText(@NotNull UsageView view) {
       return getUserObject().toString();

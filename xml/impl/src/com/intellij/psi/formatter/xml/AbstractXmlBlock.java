@@ -23,6 +23,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategy;
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategyFactory;
 import com.intellij.psi.formatter.common.AbstractBlock;
@@ -136,7 +137,13 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       }
       return null;
     }
-    if (elementType == XmlElementType.XML_TEXT || elementType == XmlTokenType.XML_DATA_CHARACTERS) return textWrap;
+    if (elementType == XmlElementType.XML_TEXT || elementType == XmlTokenType.XML_DATA_CHARACTERS) {
+      ASTNode previous = FormatterUtil.getPreviousNonWhitespaceSibling(child);
+      if (previous == null || previous.getElementType() != XmlElementType.XML_TEXT) {
+        return myXmlFormattingPolicy.allowWrapBeforeText() ? textWrap : null;
+      }
+      return textWrap;
+    }
     return null;
   }
 
@@ -248,7 +255,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
         return true;
       }
     }, node);
-    return result.toArray(new XmlTag[result.size()]);
+    return result.toArray(XmlTag.EMPTY);
   }
 
   protected boolean containsTag(final PsiElement tag) {

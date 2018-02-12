@@ -17,6 +17,7 @@ package com.intellij.execution.testframework.sm.runner.events;
 
 import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.messages.serviceMessages.MessageWithAttributes;
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,7 @@ public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
 
   private final String myParentId;
   private final String myLocationUrl;
+  private final String myMetainfo;
   private final String myNodeType;
   private final String myNodeArgs;
   private final boolean myRunning;
@@ -32,12 +34,14 @@ public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
                                  @Nullable String id,
                                  @Nullable String parentId,
                                  @Nullable final String locationUrl,
+                                 @Nullable final String metainfo,
                                  @Nullable String nodeType,
                                  @Nullable String nodeArgs,
                                  boolean running) {
     super(name, id);
     myParentId = parentId;
     myLocationUrl = locationUrl;
+    myMetainfo =  metainfo;
     myNodeType = nodeType;
     myNodeArgs = nodeArgs;
     myRunning = running;
@@ -54,6 +58,11 @@ public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
   @Nullable
   public String getLocationUrl() {
     return myLocationUrl;
+  }
+
+  @Nullable
+  public String getMetainfo() {
+    return myMetainfo;
   }
 
   @Nullable
@@ -74,6 +83,7 @@ public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
   protected void appendToStringInfo(@NotNull StringBuilder buf) {
     append(buf, "parentId", myParentId);
     append(buf, "locationUrl", myLocationUrl);
+    append(buf, "metainfo", myMetainfo);
     append(buf, "running", myRunning);
   }
 
@@ -85,6 +95,11 @@ public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
   @Nullable
   public static String getNodeType(@NotNull MessageWithAttributes message) {
     return message.getAttributes().get("nodeType");
+  }
+
+  @Nullable
+  public static String getMetainfo(@NotNull ServiceMessage message) {
+    return message.getAttributes().get("metainfo");
   }
 
   @Nullable

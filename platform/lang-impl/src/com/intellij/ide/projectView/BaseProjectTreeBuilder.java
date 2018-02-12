@@ -19,13 +19,8 @@ package com.intellij.ide.projectView;
 import com.intellij.ide.UiActivity;
 import com.intellij.ide.UiActivityMonitor;
 import com.intellij.ide.favoritesTreeView.FavoritesTreeNodeDescriptor;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeStructure;
-import com.intellij.ide.util.treeView.AbstractTreeUpdater;
-import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -48,7 +43,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -75,14 +69,10 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
       final Object value = node.getValue();
       final ActionCallback callback = new ActionCallback();
       final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(ObjectUtils.tryCast(value, PsiElement.class));
-      final FocusRequestor focusRequestor = IdeFocusManager.getInstance(myProject).getFurtherRequestor();
-      batch(new Progressive() {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          final Ref<Object> target = new Ref<>();
-          _select(value, virtualFile, false, Conditions.<AbstractTreeNode>alwaysTrue(), callback, indicator, target, focusRequestor, false);
-          callback.doWhenDone(() -> result.setDone(target.get())).doWhenRejected(() -> result.setRejected());
-        }
+      batch(indicator -> {
+        final Ref<Object> target = new Ref<>();
+        _select(element, virtualFile, true, Conditions.alwaysTrue());
+        callback.doWhenDone(() -> result.setDone(target.get())).doWhenRejected(() -> result.setRejected());
       });
     }
     else {
@@ -94,12 +84,13 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
   @Override
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
-    return ((AbstractTreeNode)nodeDescriptor).isAlwaysShowPlus();
+    return nodeDescriptor instanceof AbstractTreeNode && ((AbstractTreeNode)nodeDescriptor).isAlwaysShowPlus();
   }
 
   @Override
   protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
-    return nodeDescriptor.getParentDescriptor() == null || ((AbstractTreeNode)nodeDescriptor).isAlwaysExpand();
+    return nodeDescriptor.getParentDescriptor() == null ||
+           nodeDescriptor instanceof AbstractTreeNode && ((AbstractTreeNode)nodeDescriptor).isAlwaysExpand();
   }
 
   @Override
@@ -119,7 +110,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     if (element instanceof AbstractTreeNode) {
       object = ((AbstractTreeNode)element).getValue();
     }
-    
+
     return object instanceof PsiDirectory
            ? ((PsiDirectory)object).getVirtualFile()
            : object instanceof PsiFile ? ((PsiFile)object).getVirtualFile() : null;
@@ -146,7 +137,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
   @NotNull
   public ActionCallback select(Object element, VirtualFile file, final boolean requestFocus) {
-    return _select(element, file, requestFocus, Conditions.<AbstractTreeNode>alwaysTrue());
+    return _select(element, file, requestFocus, Conditions.alwaysTrue());
   }
 
   public ActionCallback selectInWidth(final Object element,
@@ -166,11 +157,9 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
     final ActionCallback result = new ActionCallback();
 
-    final FocusRequestor requestor = IdeFocusManager.getInstance(myProject).getFurtherRequestor();
-
     UiActivityMonitor.getInstance().addActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"), updater.getModalityState());
     batch(indicator -> {
-      _select(element, file, requestFocus, nonStopCondition, result, indicator, null, requestor, false);
+      _select(element, file, requestFocus, nonStopCondition, result, indicator, null, null, false);
       UiActivityMonitor.getInstance().removeActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"));
     });
 
@@ -191,8 +180,9 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     final AbstractTreeNode alreadySelected = alreadySelectedNode(element);
 
     final Runnable onDone = () -> {
-      if (requestFocus && virtualSelectTarget == null && getUi().isReady()) {
-        focusRequestor.requestFocus(getTree(), true);
+      JTree tree = getTree();
+      if (tree != null && requestFocus && virtualSelectTarget == null && getUi().isReady()) {
+        tree.requestFocus();
       }
 
       result.setDone();
@@ -202,15 +192,12 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
     if (alreadySelected == null) {
       expandPathTo(file, (AbstractTreeNode)getTreeStructure().getRootElement(), element, condition, indicator, virtualSelectTarget)
-        .doWhenDone(new Consumer<AbstractTreeNode>() {
-          @Override
-          public void consume(AbstractTreeNode node) {
-            if (virtualSelectTarget == null) {
-              select(node, onDone);
-            }
-            else {
-              onDone.run();
-            }
+        .doWhenDone((Consumer<AbstractTreeNode>)node -> {
+          if (virtualSelectTarget == null) {
+            select(node, onDone);
+          }
+          else {
+            onDone.run();
           }
         }).doWhenRejected(() -> {
           if (isSecondAttempt) {
@@ -235,8 +222,9 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     }
     for (TreePath selectionPath : selectionPaths) {
       Object selected = selectionPath.getLastPathComponent();
-      if (elementIsEqualTo(selected, element)) {
-        return ((AbstractTreeNode)((DefaultMutableTreeNode)selected).getUserObject());
+      if (selected instanceof DefaultMutableTreeNode && elementIsEqualTo(selected, element)) {
+        Object userObject = ((DefaultMutableTreeNode)selected).getUserObject();
+        if (userObject instanceof AbstractTreeNode) return (AbstractTreeNode)userObject;
       }
     }
     return null;
@@ -315,8 +303,8 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
           kids.addAll(collectChildren(rootNode));
         }
         else {
-          List<Object> list = Arrays.asList(getTreeStructure().getChildElements(root));
-          for (Object each : list) {
+          Object[] childElements = getTreeStructure().getChildElements(root);
+          for (Object each : childElements) {
             kids.add((AbstractTreeNode)each);
           }
         }
@@ -349,12 +337,9 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
       if (nonStopCondition.value(eachKid)) {
         final AsyncResult<AbstractTreeNode> result = expandPathTo(file, eachKid, element, nonStopCondition, indicator, virtualSelectTarget);
-        result.doWhenDone(new Consumer<AbstractTreeNode>() {
-          @Override
-          public void consume(AbstractTreeNode abstractTreeNode) {
-            indicator.checkCanceled();
-            async.setDone(abstractTreeNode);
-          }
+        result.doWhenDone((Consumer<AbstractTreeNode>)abstractTreeNode -> {
+          indicator.checkCanceled();
+          async.setDone(abstractTreeNode);
         });
 
         if (!result.isProcessed()) {

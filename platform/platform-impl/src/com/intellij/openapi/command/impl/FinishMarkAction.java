@@ -25,15 +25,11 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: 11/8/11
- */
 public class FinishMarkAction extends BasicUndoableAction {
   private @NotNull final StartMarkAction myStartAction;
   private boolean myGlobal = false;
   private String myCommandName;
-  private DocumentReference myReference;
+  private final DocumentReference myReference;
 
   private FinishMarkAction(DocumentReference reference, @NotNull StartMarkAction action) {
     super(reference);

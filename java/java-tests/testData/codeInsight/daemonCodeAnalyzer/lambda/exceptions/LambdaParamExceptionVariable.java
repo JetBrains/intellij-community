@@ -1,6 +1,6 @@
 class Test {
     interface F<T extends Throwable> {
-        void _(T t) throws T;
+        void m(T t) throws T;
     }
     <K extends Throwable> void foo(F<K> f) throws K { }
 

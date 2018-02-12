@@ -20,7 +20,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -29,7 +29,6 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ReflectionUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.Accessible;
@@ -38,17 +37,13 @@ import javax.swing.*;
 import javax.swing.event.CaretListener;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentListener;
-import javax.swing.plaf.basic.BasicPopupMenuUI;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.dnd.DragGestureRecognizer;
 import java.awt.event.HierarchyEvent;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.EventListener;
-import java.util.LinkedList;
 
 /**
  * This class listens event from ProjectManager and cleanup some
@@ -59,9 +54,9 @@ import java.util.LinkedList;
 public final class SwingCleanuper {
   private final Alarm myAlarm;
 
-  public SwingCleanuper(@NotNull Application application, ProjectManager projectManager) {
+  public SwingCleanuper(@NotNull Application application) {
     myAlarm = new Alarm(application);
-    projectManager.addProjectManagerListener(new ProjectManagerAdapter(){
+    application.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
         @Override
         public void projectOpened(final Project project) {
           myAlarm.cancelAllRequests();
@@ -90,9 +85,6 @@ public final class SwingCleanuper {
                   }
                 }
               }
-
-              //noinspection SSBasedInspection
-              SwingUtilities.invokeLater(SwingCleanuper::cleanup);
             },
             2500
           );
@@ -184,70 +176,6 @@ public final class SwingCleanuper {
     }
   }
 
-  public static void cleanup() {
-    // KeyboardFocusManager.newFocusOwner
-    ReflectionUtil.resetStaticField(KeyboardFocusManager.class, "newFocusOwner");
-
-    // Clear "realOppositeComponent", "realOppositeWindow"
-    final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    resetField(focusManager, Component.class, "realOppositeComponent");
-    resetField(focusManager, Window.class, "realOppositeWindow");
-
-
-    // Memory leak on static field in BasicPopupMenuUI
-
-    try {
-      Object helperObject = ReflectionUtil.getStaticFieldValue(BasicPopupMenuUI.class, Object.class, "menuKeyboardHelper");
-      if (helperObject != null) {
-        resetField(helperObject, Component.class, "lastFocused");
-      }
-    }
-    catch (Exception e) {
-      // Ignore
-    }
-
-    // Memory leak on javax.swing.TransferHandler$SwingDragGestureRecognizer.component
-
-    try{
-      DragGestureRecognizer recognizer = ReflectionUtil.getStaticFieldValue(TransferHandler.class, DragGestureRecognizer.class, "recognizer");
-
-      if (recognizer != null) { // that is memory leak
-        recognizer.setComponent(null);
-      }
-    }
-    catch (Exception e){
-      // Ignore
-    }
-    try {
-      fixJTextComponentMemoryLeak();
-    }
-    catch(Exception e) {
-      // Ignore
-    }
-
-    focusManager.setGlobalCurrentFocusCycleRoot(null); //Remove focus leaks
-
-    try {
-      final Method m = ReflectionUtil.getDeclaredMethod(KeyboardFocusManager.class, "setGlobalFocusOwner", Component.class);
-      m.invoke(focusManager, new Object[]{null});
-    }
-    catch (Exception e) {
-      // Ignore
-    }
-
-    ReflectionUtil.resetStaticField(KeyboardFocusManager.class, "newFocusOwner");
-    ReflectionUtil.resetStaticField(KeyboardFocusManager.class, "permanentFocusOwner");
-    ReflectionUtil.resetStaticField(KeyboardFocusManager.class, "currentFocusCycleRoot");
-
-    assert Patches.USE_REFLECTION_TO_ACCESS_JDK8; // not anymore in JDK 9
-    LinkedList heavyweightRequests = ReflectionUtil.getField(KeyboardFocusManager.class, null, LinkedList.class, "heavyweightRequests");
-    if (heavyweightRequests != null) {
-      synchronized (heavyweightRequests) {
-        heavyweightRequests.clear();
-      }
-    }
-  }
-
   private static boolean isCAccessible(Object resource) {
     final String name = resource.getClass().getName();
     return isCAccessible(name);
@@ -259,22 +187,6 @@ public final class SwingCleanuper {
 
   private static boolean isCAccessibleListener(EventListener listener) {
     return listener != null && listener.toString().contains("AXTextChangeNotifier");
-  }
-
-  private static void resetField(Object object, Class type, @NonNls String name) {
-    try {
-      ReflectionUtil.resetField(object, ReflectionUtil.findField(object.getClass(), type, name));
-    }
-    catch (Exception e) {
-      // Ignore
-    }
-  }
-
-  private static void fixJTextComponentMemoryLeak() {
-    final JTextComponent component = ReflectionUtil.getStaticFieldValue(JTextComponent.class, JTextComponent.class, "focusedComponent");
-    if (component != null && !component.isDisplayable()){
-      ReflectionUtil.resetField(JTextComponent.class, JTextComponent.class, "focusedComponent");
-    }
   }
 
 }

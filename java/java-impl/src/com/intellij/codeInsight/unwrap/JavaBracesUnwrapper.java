@@ -18,6 +18,7 @@ package com.intellij.codeInsight.unwrap;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaBracesUnwrapper extends JavaUnwrapper {
   public JavaBracesUnwrapper() {
@@ -25,7 +26,7 @@ public class JavaBracesUnwrapper extends JavaUnwrapper {
   }
 
   @Override
-  public boolean isApplicableTo(PsiElement e) {
+  public boolean isApplicableTo(@NotNull PsiElement e) {
     return e instanceof PsiBlockStatement && !belongsToControlStructures(e);
   }
 

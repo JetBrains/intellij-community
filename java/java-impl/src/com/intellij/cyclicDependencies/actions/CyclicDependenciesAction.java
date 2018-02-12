@@ -34,10 +34,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * User: anna
- * Date: Jan 31, 2005
- */
 public class CyclicDependenciesAction extends AnAction{
   private final String myAnalysisVerb;
   private final String myAnalysisNoun;

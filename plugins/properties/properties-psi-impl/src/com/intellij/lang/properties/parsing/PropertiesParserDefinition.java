@@ -22,7 +22,6 @@ import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.lang.properties.psi.impl.PropertiesListImpl;
 import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;

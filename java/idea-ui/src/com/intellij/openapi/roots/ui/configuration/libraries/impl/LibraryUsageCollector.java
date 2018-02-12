@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraries.impl;
 
-import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
+import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.module.Module;
@@ -34,7 +34,7 @@ import java.util.Set;
 /**
  * @author nik
  */
-public class LibraryUsageCollector extends AbstractApplicationUsagesCollector {
+public class LibraryUsageCollector extends AbstractProjectsUsagesCollector {
 
   @NonNls private static final String GROUP_ID = "libraries";
 

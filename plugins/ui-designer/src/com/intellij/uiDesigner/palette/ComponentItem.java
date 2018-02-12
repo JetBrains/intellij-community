@@ -151,7 +151,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
 
   /**
    * @return string that represents path in the JAR file system that was used to load
-   * icon returned by {@link #getIcon()} method. This method can returns <code>null</code>.
+   * icon returned by {@link #getIcon()} method. This method can returns {@code null}.
    * It means that palette item has some "unknown" item.
    */
   @Nullable String getIconPath() {
@@ -159,8 +159,8 @@ public final class ComponentItem implements Cloneable, PaletteItem {
   }
 
   /**
-   * @param iconPath new path inside JAR file system. <code>null</code> means that
-   * <code>iconPath</code> is not specified and some "unknown" icon should be used
+   * @param iconPath new path inside JAR file system. {@code null} means that
+   * {@code iconPath} is not specified and some "unknown" icon should be used
    * to represent the {@link ComponentItem} in UI.
    */
   void setIconPath(@Nullable final String iconPath){
@@ -172,7 +172,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
 
   /**
    * @return item's icon. This icon is used to represent item at the toolbar.
-   * Note, that the method never returns <code>null</code>. It returns some
+   * Note, that the method never returns {@code null}. It returns some
    * default "unknown" icon for the items that has no specified icon in the XML.
    */
   @NotNull public Icon getIcon() {
@@ -205,7 +205,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
 
   /**
    * @return small item's icon. This icon represents component in the
-   * component tree. The method never returns <code>null</code>. It returns some
+   * component tree. The method never returns {@code null}. It returns some
    * default "unknown" icon for the items that has no specified icon in the XML.
    */
   @NotNull public Icon getSmallIcon() {
@@ -247,7 +247,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
 
   /**
    * @param className name of the class that will be instanteated when user drop
-   * item on the form. Cannot be <code>null</code>. If the class does not exist or
+   * item on the form. Cannot be {@code null}. If the class does not exist or
    * could not be instanteated (for example, class has no default constructor,
    * it's not a subclass of JComponent, etc) then placeholder component will be
    * added to the form.
@@ -268,12 +268,12 @@ public final class ComponentItem implements Cloneable, PaletteItem {
    * The method returns initial value of the property. Term
    * "initial" means that just after creation of RadComponent
    * all its properties are set into initial values.
-   * The method returns <code>null</code> if the
+   * The method returns {@code null} if the
    * initial property is not defined. Unfortunately we cannot
-   * put this method into the constuctor of <code>RadComponent</code>.
-   * The problem is that <code>RadComponent</code> is used in the
+   * put this method into the constuctor of {@code RadComponent}.
+   * The problem is that {@code RadComponent} is used in the
    * code genaration and code generation doesn't depend on any
-   * <code>ComponentItem</code>, so we need to initialize <code>RadComponent</code>
+   * {@code ComponentItem}, so we need to initialize {@code RadComponent}
    * in all places where it's needed explicitly.
    */
   public Object getInitialValue(final IntrospectedProperty property){
@@ -282,7 +282,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
 
   /**
    * Internal method. It should be used only to externalize initial item's values.
-   * This method never returns <code>null</code>.
+   * This method never returns {@code null}.
    */
   HashMap<String, StringDescriptor> getInitialValues(){
     return myPropertyName2initialValue;

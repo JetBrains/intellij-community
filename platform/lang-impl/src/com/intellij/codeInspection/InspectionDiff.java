@@ -14,19 +14,11 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jun 21, 2002
- * Time: 7:36:28 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -148,7 +140,7 @@ public class InspectionDiff {
     String fileName = problem.getChildText(FILE_ELEMENT);
     ArrayList<Element> problemList = ourFileToProblem.get(fileName);
     if (problemList != null) {
-      Element[] problems = problemList.toArray(new Element[problemList.size()]);
+      Element[] problems = problemList.toArray(new Element[0]);
       for (Element toCheck : problems) {
         if (equals(problem, toCheck)) return problemList.remove(toCheck);
       }

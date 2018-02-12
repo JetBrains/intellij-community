@@ -21,12 +21,15 @@ import com.intellij.ui.EngravedTextGraphics;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.content.Content;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WatermarkIcon;
-import sun.swing.SwingUtilities2;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 
 public class BaseLabel extends JLabel {
   protected ToolWindowContentUi myUi;
@@ -39,6 +42,16 @@ public class BaseLabel extends JLabel {
     myUi = ui;
     setOpaque(false);
     myBold = bold;
+    addFocusListener(new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        repaint();
+      }
+      @Override
+      public void focusLost(FocusEvent e) {
+        repaint();
+      }
+    });
   }
 
   @Override
@@ -75,8 +88,12 @@ public class BaseLabel extends JLabel {
   protected void paintComponent(final Graphics g) {
     final Color fore = myUi.myWindow.isActive() ? myActiveFg : myPassiveFg;
     setForeground(fore);
-    putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, AntialiasingType.getAAHintForSwingComponent());
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
     super.paintComponent(_getGraphics((Graphics2D)g));
+
+    if (isFocusOwner()) {
+      UIUtil.drawLabelDottedRectangle(this, g);
+    }
   }
 
   protected Graphics _getGraphics(Graphics2D g) {
@@ -115,6 +132,10 @@ public class BaseLabel extends JLabel {
 
       final boolean show = Boolean.TRUE.equals(content.getUserData(ToolWindow.SHOW_CONTENT_ICON));
       if (show) {
+        ComponentOrientation componentOrientation = content.getUserData(Content.TAB_LABEL_ORIENTATION_KEY);
+        if(componentOrientation != null) {
+          setComponentOrientation(componentOrientation);
+        }
         if (isSelected) {
           setIcon(content.getIcon());
         }
@@ -132,5 +153,16 @@ public class BaseLabel extends JLabel {
 
   public Content getContent() {
     return null;
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleBaseLabel();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleBaseLabel extends AccessibleJLabel {
   }
 }

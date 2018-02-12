@@ -1,0 +1,9 @@
+[
+  {
+    "consentId": "rsch.send.usage.stat",
+    "version": "1.0",
+    "text": "I consent to submit anonymous usage statistics to help JetBrains improve their products. I agree that the following information will be sent to JetBrains and processed in accordance with <a href=\"https://www.jetbrains.com/company/privacy.html\">JetBrains Privacy Policy</a>\n  * Information about which product features are used\n  * General statistics (number of files, file types) of the projects I am working on\n  * General information about my hardware configuration (for example, amount of RAM, CPU speed and number of cores)\n  * General information about my software configuration (for example, OS version)\n\nI can revoke my consent at any time in this Data Sharing Options dialog available at Help | Data Sharing Options",
+    "printableName": "Send anonymous usage statistics to JetBrains",
+    "accepted": "false"
+  }
+]

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -56,7 +56,7 @@ public class GotoRelatedSymbolAction extends AnAction {
     List<GotoRelatedItem> items = NavigationUtil.collectRelatedItems(element, dataContext);
     if (items.isEmpty()) {
       final JComponent label = HintUtil.createErrorLabel("No related symbols");
-      label.setBorder(IdeBorderFactory.createEmptyBorder(2, 7, 2, 7));
+      label.setBorder(JBUI.Borders.empty(2, 7));
       JBPopupFactory.getInstance().createBalloonBuilder(label)
         .setFadeoutTime(3000)
         .setFillColor(HintUtil.getErrorColor())

@@ -47,15 +47,15 @@ class RepoBuilder(val repo: GitRepository) {
   private fun createOrCheckout(branch: String) {
     if (isFresh()) {
       if (branch != "master") {
-        git("checkout -b $branch")
+        repo.git("checkout -b $branch")
       }
     }
     else {
-      if (git("branch").split("\n").map({ it.replace("*", "") }).contains(branch)) {
-        git("checkout $branch")
+      if (repo.git("branch").split("\n").map({ it.replace("*", "") }).contains(branch)) {
+        repo.git("checkout $branch")
       }
       else {
-        git("checkout -b $branch")
+        repo.git("checkout -b $branch")
       }
     }
   }
@@ -63,7 +63,7 @@ class RepoBuilder(val repo: GitRepository) {
   private fun isFresh(): Boolean = myCommitIndices.isEmpty()
 
   operator fun String.invoke(fromCommit: Int, commands: RepoBuilder.() -> Unit) {
-    git("checkout -b $this ${myCommitIndices[fromCommit]}")
+    repo.git("checkout -b $this ${myCommitIndices[fromCommit]}")
     myCurrentBranch = this
     commands()
   }
@@ -79,14 +79,14 @@ class RepoBuilder(val repo: GitRepository) {
   }
 
   private fun modifyAndCommit(id: Int, file: String, content: String, commitMessage: String) {
-    val hash: String
     if (File(repo.root.path, file).exists()) {
       append(file, content)
     }
     else {
       touch(file, content)
     }
-    hash = addCommit(commitMessage)
+    repo.git("add --verbose .")
+    val hash = repo.commit(commitMessage)
     assert(!myCommitIndices.containsKey(id)) { "commit $id is already in the map!" }
     myCommitIndices.put(id, hash)
   }

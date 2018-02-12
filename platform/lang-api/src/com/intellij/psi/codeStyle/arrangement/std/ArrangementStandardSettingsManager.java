@@ -71,7 +71,7 @@ public class ArrangementStandardSettingsManager {
 
   public ArrangementStandardSettingsManager(@NotNull ArrangementStandardSettingsAware delegate,
                                             @NotNull ArrangementColorsProvider colorsProvider) {
-    this(delegate, colorsProvider, ContainerUtil.<StdArrangementRuleAliasToken>emptyList());
+    this(delegate, colorsProvider, ContainerUtil.emptyList());
   }
 
   public ArrangementStandardSettingsManager(@NotNull ArrangementStandardSettingsAware delegate,

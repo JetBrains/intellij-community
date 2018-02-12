@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,16 +27,16 @@ import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
+import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -67,7 +67,7 @@ import java.util.Set;
 /**
  * @author Dennis.Ushakov
  */
-public class XmlTagNameSynchronizer extends CommandAdapter implements NamedComponent {
+public class XmlTagNameSynchronizer implements NamedComponent, CommandListener {
   private static final Logger LOG = Logger.getInstance(XmlTagNameSynchronizer.class);
   private static final Set<Language> SUPPORTED_LANGUAGES = ContainerUtil.set(HTMLLanguage.INSTANCE,
                                                                              XMLLanguage.INSTANCE,
@@ -132,7 +132,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
     }
   }
 
-  private static class TagNameSynchronizer extends DocumentAdapter {
+  private static class TagNameSynchronizer implements DocumentListener {
     public static final TagNameSynchronizer[] EMPTY = new TagNameSynchronizer[0];
     private final PsiDocumentManagerBase myDocumentManager;
     private final Language myLanguage;
@@ -284,7 +284,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
         }
         seenColon |= c == ':';
       }
-      if (end < 0 || start >= end) return null;
+      if (end < 0 || start > end) return null;
       return document.createRangeMarker(start, end, true);
     }
 
@@ -299,7 +299,8 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
           final RangeMarker leader = couple.first;
           final RangeMarker support = couple.second;
           final String name = document.getText(new TextRange(leader.getStartOffset(), leader.getEndOffset()));
-          if (!name.equals(document.getText(new TextRange(support.getStartOffset(), support.getEndOffset())))) {
+          if (document.getTextLength() >= support.getEndOffset() &&
+              !name.equals(document.getText(new TextRange(support.getStartOffset(), support.getEndOffset())))) {
             document.replaceString(support.getStartOffset(), support.getEndOffset(), name);
           }
         }
@@ -326,11 +327,34 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
         support = findSupportElement(element);
       }
 
-      if (support == null) return null;
+      if (support == null) return findSupportForTagList(leader, element, document);
 
       final TextRange range = support.getTextRange();
       TextRange realRange = InjectedLanguageManager.getInstance(file.getProject()).injectedToHost(element.getContainingFile(), range);
       return document.createRangeMarker(realRange.getStartOffset(), realRange.getEndOffset(), true);
+    }
+
+    private static RangeMarker findSupportForTagList(RangeMarker leader, PsiElement element, Document document) {
+      if (leader.getStartOffset() != leader.getEndOffset() || element == null) return null;
+
+      PsiElement support = null;
+      if ("<>".equals(element.getText())) {
+        PsiElement last = element.getParent().getLastChild();
+        if ("</>".equals(last.getText())) {
+          support = last;
+        }
+      }
+      if ("</>".equals(element.getText())) {
+        PsiElement first = element.getParent().getFirstChild();
+        if ("<>".equals(first.getText())) {
+          support = first;
+        }
+      }
+      if (support != null) {
+        TextRange range = support.getTextRange();
+        return document.createRangeMarker(range.getEndOffset() - 1, range.getEndOffset() - 1, true);
+      }
+      return null;
     }
 
     private static PsiElement findSupportElement(PsiElement element) {

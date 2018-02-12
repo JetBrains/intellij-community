@@ -74,8 +74,8 @@ public class ExternalSystemProcessingManager implements ExternalSystemTaskNotifi
    * Allows to check if any task of the given type is being executed at the moment.  
    *
    * @param type  target task type
-   * @return      <code>true</code> if any task of the given type is being executed at the moment;
-   *              <code>false</code> otherwise
+   * @return      {@code true} if any task of the given type is being executed at the moment;
+   *              {@code false} otherwise
    */
   public boolean hasTaskOfTypeInProgress(@NotNull ExternalSystemTaskType type, @NotNull Project project) {
     String projectId = ExternalSystemTaskId.getProjectId(project);

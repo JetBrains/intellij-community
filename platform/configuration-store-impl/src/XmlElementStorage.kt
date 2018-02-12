@@ -1,41 +1,28 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
-import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.isEmpty
 import com.intellij.util.loadElement
+import com.intellij.util.toBufferExposingByteArray
 import gnu.trove.THashMap
 import org.jdom.Attribute
 import org.jdom.Element
+import java.io.FileNotFoundException
 
 abstract class XmlElementStorage protected constructor(val fileSpec: String,
                                                        protected val rootElementName: String?,
-                                                       protected val pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null,
+                                                       private val pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null,
                                                        roamingType: RoamingType? = RoamingType.DEFAULT,
-                                                       provider: StreamProvider? = null) : StorageBaseEx<StateMap>() {
-  val roamingType: RoamingType = roamingType ?: RoamingType.DEFAULT
-  private val provider: StreamProvider? = if (provider == null || roamingType == RoamingType.DISABLED) null else provider
+                                                       private val provider: StreamProvider? = null) : StorageBaseEx<StateMap>() {
+  val roamingType = roamingType ?: RoamingType.DEFAULT
 
   protected abstract fun loadLocalData(): Element?
 
@@ -51,24 +38,31 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
 
   private fun loadElement(useStreamProvider: Boolean = true): Element? {
     var element: Element? = null
-    LOG.catchAndLog {
-      if (!useStreamProvider || !(provider?.read(fileSpec, roamingType) {
+    try {
+      if (!useStreamProvider || provider?.read(fileSpec, roamingType) {
         it?.let {
           element = loadElement(it)
+          providerDataStateChanged(element, DataStateChanged.LOADED)
         }
-      } ?: false)) {
+      } != true) {
         element = loadLocalData()
       }
+    }
+    catch (e: FileNotFoundException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
     }
     return element
   }
 
-  protected open fun dataLoadedFromProvider(element: Element?) {
+  protected open fun providerDataStateChanged(element: Element?, type: DataStateChanged) {
   }
 
   private fun loadState(element: Element): StateMap {
     beforeElementLoaded(element)
-    return StateMap.fromMap(FileStorageCoreUtil.load(element, pathMacroSubstitutor, true))
+    return StateMap.fromMap(FileStorageCoreUtil.load(element, pathMacroSubstitutor))
   }
 
   fun setDefaultState(element: Element) {
@@ -110,12 +104,12 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
     override fun createSaveSession() = if (copiedStates == null || storage.checkIsSavingDisabled()) null else this
 
     override fun setSerializedState(componentName: String, element: Element?) {
-      element?.normalizeRootName()
+      val normalized = element?.normalizeRootName()
       if (copiedStates == null) {
-        copiedStates = setStateAndCloneIfNeed(componentName, element, originalStates, newLiveStates)
+        copiedStates = setStateAndCloneIfNeed(componentName, normalized, originalStates, newLiveStates)
       }
       else {
-        updateState(copiedStates!!, componentName, element, newLiveStates)
+        updateState(copiedStates!!, componentName, normalized, newLiveStates)
       }
     }
 
@@ -126,9 +120,11 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
         storage.beforeElementSaved(element)
       }
 
+      var isSavedLocally = false
       val provider = storage.provider
       if (element == null) {
         if (provider == null || !provider.delete(storage.fileSpec, storage.roamingType)) {
+          isSavedLocally = true
           saveLocally(null)
         }
       }
@@ -137,8 +133,14 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
         provider.write(storage.fileSpec, element.toBufferExposingByteArray(), storage.roamingType)
       }
       else {
+        isSavedLocally = true
         saveLocally(element)
       }
+
+      if (!isSavedLocally) {
+        storage.providerDataStateChanged(element, DataStateChanged.SAVED)
+      }
+
       storage.setStates(originalStates, stateMap)
     }
 
@@ -169,7 +171,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
       return
     }
 
-    LOG.catchAndLog {
+    LOG.runAndLogException {
       val newElement = if (deleted) null else loadElement(useStreamProvider)
       val states = storageDataRef.get()
       if (newElement == null) {
@@ -197,7 +199,7 @@ private fun save(states: StateMap, rootElementName: String?, newLiveStates: Map<
   for (componentName in states.keys()) {
     val element: Element
     try {
-      element = states.getElement(componentName, newLiveStates) ?: continue
+      element = states.getElement(componentName, newLiveStates)?.clone() ?: continue
     }
     catch (e: Exception) {
       LOG.error("Cannot save \"$componentName\" data", e)
@@ -206,11 +208,12 @@ private fun save(states: StateMap, rootElementName: String?, newLiveStates: Map<
 
     // name attribute should be first
     val elementAttributes = element.attributes
-    if (elementAttributes.isEmpty()) {
-      element.setAttribute(FileStorageCoreUtil.NAME, componentName)
+    var nameAttribute = element.getAttribute(FileStorageCoreUtil.NAME)
+    @Suppress("SuspiciousEqualsCombination")
+    if (nameAttribute != null && nameAttribute === elementAttributes.get(0) && componentName == nameAttribute.value) {
+      // all is OK
     }
     else {
-      var nameAttribute = element.getAttribute(FileStorageCoreUtil.NAME)
       if (nameAttribute == null) {
         nameAttribute = Attribute(FileStorageCoreUtil.NAME, componentName)
         elementAttributes.add(0, nameAttribute)
@@ -234,12 +237,24 @@ private fun save(states: StateMap, rootElementName: String?, newLiveStates: Map<
 }
 
 internal fun Element.normalizeRootName(): Element {
-  if (parent != null) {
-    LOG.warn("State element must not have parent ${JDOMUtil.writeElement(this)}")
-    detach()
+  if (org.jdom.JDOMInterner.isInterned(this)) {
+    if (FileStorageCoreUtil.COMPONENT == name) {
+      return this
+    }
+    else {
+      val clone = clone()
+      clone.name = FileStorageCoreUtil.COMPONENT
+      return clone
+    }
   }
-  name = FileStorageCoreUtil.COMPONENT
-  return this
+  else {
+    if (parent != null) {
+      LOG.warn("State element must not have parent ${JDOMUtil.writeElement(this)}")
+      detach()
+    }
+    name = FileStorageCoreUtil.COMPONENT
+    return this
+  }
 }
 
 // newStorageData - myStates contains only live (unarchived) states
@@ -256,4 +271,8 @@ private fun StateMap.getChangedComponentNames(newStates: StateMap): Set<String> 
     compare(componentName, newStates, diffs)
   }
   return diffs
+}
+
+enum class DataStateChanged {
+  LOADED, SAVED
 }

@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -31,7 +32,7 @@ public class UIDesignerImplicitUsageProvider implements ImplicitUsageProvider {
       PsiMethod method = (PsiMethod) element;
       if ((AsmCodeGenerator.CREATE_COMPONENTS_METHOD_NAME.equals(method.getName()) ||
            AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME.equals(method.getName()) ||
-           AsmCodeGenerator.SETUP_METHOD_NAME.equals(method.getName())) && method.getParameterList().getParametersCount() == 0) {
+           AsmCodeGenerator.SETUP_METHOD_NAME.equals(method.getName())) && method.getParameterList().isEmpty()) {
         return true;
       }
     }
@@ -44,5 +45,10 @@ public class UIDesignerImplicitUsageProvider implements ImplicitUsageProvider {
 
   public boolean isImplicitWrite(PsiElement element) {
     return element instanceof PsiField && FormReferenceProvider.getFormFile((PsiField)element) != null;
+  }
+
+  @Override
+  public boolean isImplicitlyNotNullInitialized(@NotNull PsiElement element) {
+    return isImplicitWrite(element);
   }
 }

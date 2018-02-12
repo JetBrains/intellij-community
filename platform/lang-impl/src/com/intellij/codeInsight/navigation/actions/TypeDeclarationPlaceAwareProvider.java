@@ -20,10 +20,6 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: 4/25/12
- */
 public interface TypeDeclarationPlaceAwareProvider extends TypeDeclarationProvider {
   @Nullable
   PsiElement[] getSymbolTypeDeclarations(@NotNull PsiElement symbol, Editor editor, int offset);

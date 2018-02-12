@@ -18,7 +18,7 @@ package com.intellij.util.containers;
 import com.intellij.openapi.util.Condition;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
-import gnu.trove.TIntArrayList;
+import one.util.streamex.IntStreamEx;
 import org.junit.Test;
 
 import java.util.*;
@@ -75,7 +75,7 @@ public class ContainerUtilTest {
   }
 
   @Test
-  public void testIterateWithCondition() throws Exception {
+  public void testIterateWithCondition() {
     Condition<Integer> cond = integer -> integer > 2;
 
     assertIterating(Arrays.asList(1, 4, 2, 5), cond, 4, 5);
@@ -90,7 +90,7 @@ public class ContainerUtilTest {
   }
 
   @Test
-  public void testIteratingBackward() throws Exception {
+  public void testIteratingBackward() {
     List<String> ss = new ArrayList<>();
     ss.add("a");
     ss.add("b");
@@ -106,28 +106,6 @@ public class ContainerUtilTest {
     }
 
     assertEquals("abc" + "cba", log);
-  }
-
-  @Test
-  public void testMergeSortedArrays() {
-    TIntArrayList x1 = new TIntArrayList(new int[]{0, 2, 4, 6});
-    TIntArrayList y1 = new TIntArrayList(new int[]{0, 2, 4, 6});
-    TIntArrayList x2 = new TIntArrayList(new int[]{1, 2, 2});
-    TIntArrayList y2 = new TIntArrayList(new int[]{1, 2, 3});
-    ContainerUtil.mergeSortedArrays(x1, y1, x2, y2);
-    assertEquals(new TIntArrayList(new int[]{0, 1, 2, 2, 4, 6}), x1);
-    assertEquals(new TIntArrayList(new int[]{0, 1, 2, 3, 4, 6}), y1);
-    x2 = new TIntArrayList(new int[]{1, 2, 2});
-    y2 = new TIntArrayList(new int[]{1, 2, 3});
-    ContainerUtil.mergeSortedArrays(x1, y1, x2, y2);
-    assertEquals(new TIntArrayList(new int[]{0, 1, 2, 2, 4, 6}), x1);
-    assertEquals(new TIntArrayList(new int[]{0, 1, 2, 3, 4, 6}), y1);
-
-    x2 = new TIntArrayList(new int[]{-1, -1, -2});
-    y2 = new TIntArrayList(new int[]{-1, -2, -3});
-    ContainerUtil.mergeSortedArrays(x1, y1, x2, y2);
-    assertEquals(new TIntArrayList(new int[]{-1, -1, -2, 0, 1, 2, 2, 4, 6}), x1);
-    assertEquals(new TIntArrayList(new int[]{-1, -2, -3, 0, 1, 2, 3, 4, 6}), y1);
   }
 
   @Test
@@ -184,14 +162,16 @@ public class ContainerUtilTest {
   @Test
   public void testCOWListPerformanceAdd() {
     List<Object> list = ContainerUtil.createLockFreeCopyOnWriteList();
-    PlatformTestUtil.startPerformanceTest("COWList add", 15000, () -> {
+    int count = 15000;
+    List<Integer> ints = IntStreamEx.range(0, count).boxed().toList();
+    PlatformTestUtil.startPerformanceTest("COWList add", 3500, () -> {
       for (int it = 0; it < 10; it++) {
         list.clear();
-        for (int i = 0; i < 15000; i++) {
-          list.add(i);
+        for (int i = 0; i < count; i++) {
+          list.add(ints.get(i));
         }
       }
-    }).cpuBound().assertTiming();
+    }).attempts(10).assertTiming();
     for (int i = 0; i < list.size(); i++) {
       assertEquals(i, list.get(i));
     }

@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ref;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
@@ -77,7 +78,7 @@ public class DebugReflectionUtil {
             }
           }
         }
-        cached = fields.isEmpty() ? EMPTY_FIELD_ARRAY : fields.toArray(new Field[fields.size()]);
+        cached = fields.isEmpty() ? EMPTY_FIELD_ARRAY : fields.toArray(new Field[0]);
       }
       catch (IncompatibleClassChangeError e) {
         //this exception may be thrown because there are two different versions of org.objectweb.asm.tree.ClassNode from different plugins
@@ -89,6 +90,15 @@ public class DebugReflectionUtil {
       }
       catch (NoClassDefFoundError e) {
         cached = EMPTY_FIELD_ARRAY;
+      }
+      catch (@ReviseWhenPortedToJDK("9") RuntimeException e) {
+        // field.setAccessible() can now throw this exception when accessing unexported module 
+        if (e.getClass().getName().equals("java.lang.reflect.InaccessibleObjectException")) {
+          cached = EMPTY_FIELD_ARRAY;
+        }
+        else {
+          throw e;
+        }
       }
 
       allFields.put(aClass, cached);
@@ -115,15 +125,23 @@ public class DebugReflectionUtil {
   private static final Key<Boolean> REPORTED_LEAKED = Key.create("REPORTED_LEAKED");
 
   public static boolean walkObjects(int maxDepth,
-                                    @NotNull Collection<Object> startRoots,
+                                    @NotNull Map<Object, String> startRoots,
                                     @NotNull final Class<?> lookFor,
                                     @NotNull Condition<Object> shouldExamineValue,
                                     @NotNull final PairProcessor<Object, BackLink> leakProcessor) {
     TIntHashSet visited = new TIntHashSet((int)(10000000 * 0.8));
-    final Queue<BackLink> toVisit = new Queue<BackLink>(1000000);
+    Queue<BackLink> toVisit = new Queue<BackLink>(1000000);
 
-    for (Object startRoot : startRoots) {
-      toVisit.addLast(new BackLink(startRoot, null, null));
+    for (Map.Entry<Object, String> entry : startRoots.entrySet()) {
+      Object startRoot = entry.getKey();
+      final String description = entry.getValue();
+      toVisit.addLast(new BackLink(startRoot, null, null){
+        @NotNull
+        @Override
+        String print() {
+          return super.print() +" (from "+description+")";
+        }
+      });
     }
 
     while (true) {
@@ -138,15 +156,15 @@ public class DebugReflectionUtil {
       }
     }
   }
-  
-  private static void queueStronglyReferencedValues(Queue<BackLink> queue,
+
+  private static void queueStronglyReferencedValues(@NotNull Queue<BackLink> queue,
                                                     @NotNull Object root,
                                                     @NotNull Condition<Object> shouldExamineValue,
                                                     @NotNull BackLink backLink) {
     Class rootClass = root.getClass();
     for (Field field : getAllFields(rootClass)) {
       String fieldName = field.getName();
-      if (root instanceof Reference && "referent".equals(fieldName)) continue; // do not follow weak/soft refs
+      if (root instanceof Reference && ("referent".equals(fieldName) || "discovered".equals(fieldName))) continue; // do not follow weak/soft refs
       Object value;
       try {
         value = field.get(root);
@@ -184,7 +202,7 @@ public class DebugReflectionUtil {
     }
   }
 
-  private static void queue(Object value, Field field, @NotNull BackLink backLink, Queue<BackLink> queue,
+  private static void queue(Object value, Field field, @NotNull BackLink backLink, @NotNull Queue<BackLink> queue,
                             @NotNull Condition<Object> shouldExamineValue) {
     if (value == null || isTrivial(value.getClass())) return;
     if (shouldExamineValue.value(value)) {
@@ -213,26 +231,32 @@ public class DebugReflectionUtil {
     @Override
     public String toString() {
       String result = "";
-      BackLink backLink = BackLink.this;
+      BackLink backLink = this;
       while (backLink != null) {
-        String valueStr;
-        Object value = backLink.value;
-        try {
-          valueStr = value instanceof FList
-                     ? "FList (size=" + ((FList)value).size() + ")" :
-                     value instanceof Collection ? "Collection (size=" + ((Collection)value).size() + ")" :
-                     String.valueOf(value);
-          valueStr = StringUtil.first(StringUtil.convertLineSeparators(valueStr, "\\n"), 200, true);
-        }
-        catch (Throwable e) {
-          valueStr = "(" + e.getMessage() + " while computing .toString())";
-        }
-        Field field = backLink.field;
-        String fieldName = field == null ? "?" : field.getDeclaringClass().getName() + "." + field.getName();
-        result += "via '" + fieldName + "'; Value: '" + valueStr + "' of " + value.getClass() + "\n";
+        String s = backLink.print();
+        result += s;
         backLink = backLink.backLink;
       }
       return result;
+    }
+
+    @NotNull
+    String print() {
+      String valueStr;
+      Object value = this.value;
+      try {
+        valueStr = value instanceof FList
+                   ? "FList (size=" + ((FList)value).size() + ")" :
+                   value instanceof Collection ? "Collection (size=" + ((Collection)value).size() + ")" :
+                   String.valueOf(value);
+        valueStr = StringUtil.first(StringUtil.convertLineSeparators(valueStr, "\\n"), 200, true);
+      }
+      catch (Throwable e) {
+        valueStr = "(" + e.getMessage() + " while computing .toString())";
+      }
+      Field field = this.field;
+      String fieldName = field == null ? "?" : field.getDeclaringClass().getName() + "." + field.getName();
+      return "via '" + fieldName + "'; Value: '" + valueStr + "' of " + value.getClass() + "\n";
     }
   }
 }

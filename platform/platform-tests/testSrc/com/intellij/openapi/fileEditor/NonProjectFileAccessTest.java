@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -44,6 +30,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.EditorNotificationsImpl;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.PathUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -122,9 +109,9 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(nonProjectFile, false); // original is still locked 
   }
 
-  public void testAccessToProjectSystemFiles() throws Exception {
-    PlatformTestUtil.saveProject(getProject());
-    VirtualFile fileUnderProjectDir = createFileExternally(new File(getProject().getBaseDir().getPath()));
+  public void testAccessToProjectSystemFiles() {
+    PlatformTestUtil.saveProject(getProject(), true);
+    VirtualFile fileUnderProjectDir = createFileExternally(new File(getProject().getBasePath()));
     
     assertFalse(ProjectFileIndex.SERVICE.getInstance(getProject()).isInContent(fileUnderProjectDir));
 
@@ -133,7 +120,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(fileUnderProjectDir, false);
   }
 
-  public void testAccessToModuleSystemFiles() throws Exception {
+  public void testAccessToModuleSystemFiles() {
     final Module moduleWithoutContentRoot = new WriteCommandAction<Module>(getProject()) {
       @Override
       protected void run(@NotNull Result<Module> result) throws Throwable {
@@ -154,8 +141,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     }.execute().getResultObject();
     PlatformTestUtil.saveProject(getProject());
 
-    VirtualFile fileUnderNonProjectModuleDir 
-      = createFileExternally(new File(moduleWithoutContentRoot.getModuleFile().getParent().getPath()));
+    VirtualFile fileUnderNonProjectModuleDir = createFileExternally(new File(PathUtil.getParentPath(moduleWithoutContentRoot.getModuleFilePath())));
     
     assertFalse(ProjectFileIndex.SERVICE.getInstance(getProject()).isInContent(fileUnderNonProjectModuleDir));
 
@@ -276,7 +262,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(nonProjectFile2, false);
   }
   
-  public void testCheckingExtensionsForNonWritableFiles() throws Exception {
+  public void testCheckingExtensionsForNonWritableFiles() {
     VirtualFile nonProjectFile1 = createProjectFile();
     VirtualFile nonProjectFile2 = createProjectFile();
 

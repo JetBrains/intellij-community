@@ -217,6 +217,19 @@ public class FormatterUtil {
     return nextNode.getElementType() == expectedType;
   }
 
+  public static boolean isFollowedBy(@Nullable ASTNode node, @NotNull TokenSet expectedTypes, TokenSet skipTypes) {
+    return isFollowedBy(node, expectedTypes, skipTypes.getTypes());
+  }
+
+  public static boolean isFollowedBy(@Nullable ASTNode node, @NotNull TokenSet expectedTypes, IElementType... skipTypes) {
+    ASTNode nextNode = node == null ? null : node.getTreeNext();
+    while (nextNode != null && (isWhitespaceOrEmpty(nextNode) || isOneOf(nextNode, skipTypes))) {
+      nextNode = nextNode.getTreeNext();
+    }
+    if (nextNode == null) return false;
+    return expectedTypes.contains(nextNode.getElementType());
+  }
+
   public static boolean isIncomplete(@Nullable ASTNode node) {
     ASTNode lastChild = node == null ? null : node.getLastChildNode();
     while (lastChild != null && lastChild.getElementType() == TokenType.WHITE_SPACE) {
@@ -271,7 +284,7 @@ public class FormatterUtil {
    * This method allows such 'inner element modifications', i.e. it receives information on what new text should be used
    * at the target inner element range and performs corresponding replacement by generating new leaf with adjusted text
    * and replacing the old one by it.
-   * 
+   *
    * @param newWhiteSpaceText  new text to use at the target inner element range
    * @param holder             target range holder
    * @param whiteSpaceRange    target range which text should be replaced by the given one
@@ -287,12 +300,18 @@ public class FormatterUtil {
 
     holder.getTreeParent().replaceChild(holder, newElement);
   }
-  
+
   public static void replaceWhiteSpace(final String whiteSpace,
                                        final ASTNode leafElement,
                                        final IElementType whiteSpaceToken,
                                        @Nullable final TextRange textRange) {
     final CharTable charTable = SharedImplUtil.findCharTableByTree(leafElement);
+
+    if (textRange != null && textRange.getStartOffset() > leafElement.getTextRange().getStartOffset() &&
+        textRange.getEndOffset() < leafElement.getTextRange().getEndOffset()) {
+      replaceInnerWhiteSpace(whiteSpace, leafElement, textRange);
+      return;
+    }
 
     ASTNode treePrev = findPreviousWhiteSpace(leafElement, whiteSpaceToken);
     if (treePrev == null) {

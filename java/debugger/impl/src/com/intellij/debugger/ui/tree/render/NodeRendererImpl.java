@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,19 @@
  */
 package com.intellij.debugger.ui.tree.render;
 
+import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
+import com.intellij.debugger.ui.overhead.OverheadProducer;
+import com.intellij.debugger.ui.tree.DebuggerTreeNode;
+import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiElement;
+import com.intellij.ui.SimpleColoredComponent;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import org.jdom.Element;
@@ -31,7 +38,6 @@ import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Feb 9, 2005
  */
 public abstract class NodeRendererImpl implements NodeRenderer{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.NodeRendererImpl");
@@ -85,6 +91,20 @@ public abstract class NodeRendererImpl implements NodeRenderer{
   }
 
   @Override
+  public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
+  }
+
+  @Override
+  public PsiElement getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
+    return null;
+  }
+
+  @Override
+  public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
+    return false;
+  }
+
+  @Override
   public NodeRendererImpl clone() {
     try {
       final NodeRendererImpl cloned = (NodeRendererImpl)super.clone();
@@ -92,9 +112,8 @@ public abstract class NodeRendererImpl implements NodeRenderer{
       return cloned;
     }
     catch (CloneNotSupportedException e) {
-      LOG.error(e);
+      throw new RuntimeException(e); 
     }
-    return null;
   }
 
   @Override
@@ -114,5 +133,43 @@ public abstract class NodeRendererImpl implements NodeRenderer{
   @Nullable
   public String getIdLabel(Value value, DebugProcess process) {
     return value instanceof ObjectReference && isShowType() ? ValueDescriptorImpl.getIdLabel((ObjectReference)value) : null;
+  }
+
+  public boolean hasOverhead() {
+    return false;
+  }
+
+  public static class Overhead implements OverheadProducer {
+    private final NodeRendererImpl myRenderer;
+
+    public Overhead(@NotNull NodeRendererImpl renderer) {
+      myRenderer = renderer;
+    }
+
+    @Override
+    public boolean isEnabled() {
+      return myRenderer.isEnabled();
+    }
+
+    @Override
+    public void setEnabled(boolean enabled) {
+      myRenderer.setEnabled(enabled);
+      NodeRendererSettings.getInstance().fireRenderersChanged();
+    }
+
+    @Override
+    public void customizeRenderer(SimpleColoredComponent renderer) {
+      renderer.append(myRenderer.getName() + " renderer");
+    }
+
+    @Override
+    public int hashCode() {
+      return myRenderer.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof CompoundTypeRenderer.Overhead && myRenderer.equals(((CompoundTypeRenderer.Overhead)obj).myRenderer);
+    }
   }
 }

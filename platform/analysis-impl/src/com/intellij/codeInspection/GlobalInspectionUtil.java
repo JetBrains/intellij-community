@@ -30,11 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: Maxim.Mossienko
- * Date: 16.09.2009
- * Time: 20:35:06
- */
 public class GlobalInspectionUtil {
   private static final String LOC_MARKER = " #loc";
 
@@ -62,7 +57,7 @@ public class GlobalInspectionUtil {
     }
     ProblemDescriptor descriptor = manager.createProblemDescriptor(elt, range, createInspectionMessage(StringUtil.notNullize(info.getDescription())),
                                                                    HighlightInfo.convertType(info.type), false,
-                                                                   fixes.isEmpty() ? null : fixes.toArray(new LocalQuickFix[fixes.size()]));
+                                                                   fixes.isEmpty() ? null : fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     descriptor.setProblemGroup(problemGroup);
     problemDescriptionsProcessor.addProblemElement(
       GlobalInspectionContextUtil.retrieveRefElement(elt, globalContext),

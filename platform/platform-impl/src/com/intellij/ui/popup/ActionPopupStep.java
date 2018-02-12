@@ -113,7 +113,12 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
 
   @Override
   public Icon getIconFor(final PopupFactoryImpl.ActionItem aValue) {
-    return aValue.getIcon();
+    return aValue.getIcon(false);
+  }
+
+  @Override
+  public Icon getSelectedIconFor(PopupFactoryImpl.ActionItem value) {
+    return value.getIcon(true);
   }
 
   @Override

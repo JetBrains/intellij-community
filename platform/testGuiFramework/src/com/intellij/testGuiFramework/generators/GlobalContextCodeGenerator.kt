@@ -16,8 +16,6 @@
 package com.intellij.testGuiFramework.generators
 
 import java.awt.Component
-import java.awt.Point
-import java.awt.event.MouseEvent
 import javax.swing.JComponent
 
 /**
@@ -28,11 +26,12 @@ import javax.swing.JComponent
 abstract class GlobalContextCodeGenerator<C : Component> : ContextCodeGenerator<C>{
 
   override fun priority(): Int = 0 // prioritize component code generators 0 - for common, (n) - for the most specific
-  fun generateCode(cmp: Component, me: MouseEvent, cp: Point): String {
-    return generate(typeSafeCast(cmp), me, cp)
+  fun generateCode(cmp: Component): String {
+    return generate(typeSafeCast(cmp))
   }
 
-  override fun buildContext(component: Component, mouseEvent: MouseEvent, convertedPoint: Point) = Context(originalGenerator = this, component = (component as JComponent).rootPane.parent, code = generate(typeSafeCast(component.rootPane.parent), mouseEvent, convertedPoint))
+  override fun buildContext(component: Component) = Context(originalGenerator = this, component = (component as JComponent).rootPane.parent, code = generate(
+    typeSafeCast(component.rootPane.parent)))
 
 }
 

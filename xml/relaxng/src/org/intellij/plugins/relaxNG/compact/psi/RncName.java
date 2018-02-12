@@ -19,11 +19,6 @@ package org.intellij.plugins.relaxNG.compact.psi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 14.08.2007
- */
 public interface RncName extends RncElement {
   @Nullable
   String getPrefix();

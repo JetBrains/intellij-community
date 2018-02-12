@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-// todo: move to lang-impl ?
+// todo: move to intellij.platform.lang.impl ?
 public class CompositeAppearance implements ModifiableCellAppearanceEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.util.CompositeAppearance");
 

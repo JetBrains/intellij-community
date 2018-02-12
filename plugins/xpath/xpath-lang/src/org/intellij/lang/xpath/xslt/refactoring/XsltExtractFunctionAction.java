@@ -41,7 +41,6 @@ import javax.xml.namespace.QName;
 import java.util.List;
 import java.util.Set;
 
-@SuppressWarnings({"ComponentNotRegistered"})
 public class XsltExtractFunctionAction extends BaseIntroduceAction<RefactoringOptions> {
 
   public String getRefactoringName() {

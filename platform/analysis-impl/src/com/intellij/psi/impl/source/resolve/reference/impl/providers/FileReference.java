@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
@@ -41,6 +29,7 @@ import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.refactoring.rename.BindablePsiReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -156,9 +145,18 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
                                        final Collection<ResolveResult> result,
                                        final boolean caseSensitive) {
     if (isAllowedEmptyPath(text) || ".".equals(text) || "/".equals(text)) {
+      if (context instanceof FileReferenceResolver) {
+        ContainerUtil.addIfNotNull(result, resolveFileReferenceResolver((FileReferenceResolver)context, text));
+        return;
+      }
       result.add(new PsiElementResolveResult(context));
     }
     else if ("..".equals(text)) {
+      if (context instanceof FileReferenceResolver) {
+        ContainerUtil.addIfNotNull(result, resolveFileReferenceResolver((FileReferenceResolver)context, text));
+        return;
+      }
+
       final PsiFileSystemItem resolved = context.getParent();
       if (resolved != null) {
         result.add(new PsiElementResolveResult(resolved));
@@ -189,9 +187,9 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
           context = ((PackagePrefixFileSystemItem)context).getDirectory();
         }
         else if (context instanceof FileReferenceResolver) {
-          PsiFileSystemItem child = ((FileReferenceResolver)context).resolveFileReference(this, decoded);
+          ResolveResult child = resolveFileReferenceResolver((FileReferenceResolver)context, decoded);
           if (child != null) {
-            result.add(new PsiElementResolveResult(getOriginalFile(child)));
+            result.add(child);
             return;
           }
         }
@@ -239,6 +237,12 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
       return fileType.getName() + " File." + fileType.getDefaultExtension();
     }
     return null;
+  }
+
+  @Nullable
+  private ResolveResult resolveFileReferenceResolver(@NotNull FileReferenceResolver fileReferenceResolver, @NotNull String text) {
+    PsiFileSystemItem resolve = fileReferenceResolver.resolveFileReference(this, text);
+    return resolve != null ? new PsiElementResolveResult(getOriginalFile(resolve)) : null;
   }
 
   private static boolean caseSensitivityApplies(PsiDirectory context, boolean caseSensitive) {
@@ -445,7 +449,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
         }
       }
 
-      final String relativePath = PsiFileSystemItemUtil.getRelativePath(root, dstItem);
+      String relativePath = PsiFileSystemItemUtil.findRelativePath(root, dstItem);
       if (relativePath == null) {
         return getElement();
       }
@@ -483,7 +487,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
         }
         return fixRefText(file.getName());
       }
-      newName = PsiFileSystemItemUtil.getRelativePath(curItem, dstItem);
+      newName = PsiFileSystemItemUtil.findRelativePath(curItem, dstItem);
       if (newName == null) {
         return getElement();
       }
@@ -558,7 +562,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
     for (final FileReferenceHelper helper : getHelpers()) {
       result.addAll(helper.registerFixes(this));
     }
-    return result.toArray(new LocalQuickFix[result.size()]);
+    return result.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Override

@@ -9,7 +9,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.io.socketConnection.*;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
-import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -149,11 +148,9 @@ public class ResponseProcessor<R extends AbstractResponse> {
     final Ref<Long> nextTime = Ref.create(Long.MAX_VALUE);
     synchronized (myLock) {
       if (myTimeoutHandlers.isEmpty()) return;
-      myTimeoutHandlers.forEachValue(new TObjectProcedure<TimeoutHandler>() {
-        public boolean execute(TimeoutHandler handler) {
-          nextTime.set(Math.min(nextTime.get(), handler.myLastTime));
-          return true;
-        }
+      myTimeoutHandlers.forEachValue(handler -> {
+        nextTime.set(Math.min(nextTime.get(), handler.myLastTime));
+        return true;
       });
     }
     final int delay = (int)(nextTime.get() - System.currentTimeMillis() + 100);

@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.ByteBuffer;
 
-/**
- * Created by Maxim.Mossienko on 1/9/14.
- */
 public class AppendableStorageBackedByResizableMappedFile extends ResizeableMappedFile {
   private final MyDataIS myReadStream;
   private byte[] myAppendBuffer;
@@ -117,10 +114,11 @@ public class AppendableStorageBackedByResizableMappedFile extends ResizeableMapp
       }
     }
 
+    if (myFileLength == 0) return true;
     DataInputStream keysStream = new DataInputStream(new BufferedInputStream(new LimitedInputStream(new FileInputStream(getPagedFileStorage().getFile()),
                                                                                                     myFileLength) {
       @Override
-      public int available() throws IOException {
+      public int available() {
         return remainingLimit();
       }
     }, 32768));

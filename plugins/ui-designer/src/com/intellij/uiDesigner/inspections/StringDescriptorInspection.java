@@ -39,7 +39,7 @@ public abstract class StringDescriptorInspection extends BaseFormInspection {
   }
 
   @Override
-  protected void checkComponentProperties(Module module, IComponent component, FormErrorCollector collector) {
+  protected void checkComponentProperties(Module module, @NotNull IComponent component, FormErrorCollector collector) {
     for(IProperty prop: component.getModifiedProperties()) {
       Object propValue = prop.getPropertyValue(component);
       if (propValue instanceof StringDescriptor) {

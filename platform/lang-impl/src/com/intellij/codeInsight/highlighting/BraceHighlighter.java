@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,10 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
-import com.intellij.openapi.editor.ex.FocusChangeListener;
-import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.TextRange;
@@ -43,7 +42,7 @@ public class BraceHighlighter implements StartupActivity {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return; // sorry, upsource
     final EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
 
-    CaretListener myCaretListener = new CaretAdapter() {
+    eventMulticaster.addCaretListener(new CaretListener() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         myAlarm.cancelAllRequests();
@@ -61,8 +60,7 @@ public class BraceHighlighter implements StartupActivity {
         }
         updateBraces(editor, myAlarm);
       }
-    };
-    eventMulticaster.addCaretListener(myCaretListener, project);
+    }, project);
 
     final SelectionListener mySelectionListener = new SelectionListener() {
       @Override
@@ -84,7 +82,7 @@ public class BraceHighlighter implements StartupActivity {
     };
     eventMulticaster.addSelectionListener(mySelectionListener, project);
 
-    DocumentListener documentListener = new DocumentAdapter() {
+    DocumentListener documentListener = new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         myAlarm.cancelAllRequests();
@@ -96,27 +94,20 @@ public class BraceHighlighter implements StartupActivity {
     };
     eventMulticaster.addDocumentListener(documentListener, project);
 
-    final FocusChangeListener myFocusChangeListener = new FocusChangeListener() {
-      @Override
-      public void focusLost(Editor editor) {
-        clearBraces(editor);
-      }
-
-      @Override
-      public void focusGained(Editor editor) {
-        updateBraces(editor, myAlarm);
-      }
-    };
-    ((EditorEventMulticasterEx)eventMulticaster).addFocusChangeListner(myFocusChangeListener, project);
-
-    final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-
-    fileEditorManager.addFileEditorManagerListener(new FileEditorManagerListener() {
+    project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent e) {
         myAlarm.cancelAllRequests();
+        FileEditor oldEditor = e.getOldEditor();
+        if (oldEditor instanceof TextEditor) {
+          clearBraces(((TextEditor)oldEditor).getEditor());
+        }
+        FileEditor newEditor = e.getNewEditor();
+        if (newEditor instanceof TextEditor) {
+          updateBraces(((TextEditor)newEditor).getEditor(), myAlarm);
+        }
       }
-    }, project);
+    });
   }
 
   static void updateBraces(@NotNull final Editor editor, @NotNull final Alarm alarm) {

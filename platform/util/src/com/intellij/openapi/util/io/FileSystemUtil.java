@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.Patches;
@@ -39,7 +25,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Locale;
-import java.util.Map;
 
 import static com.intellij.util.BitUtil.isSet;
 
@@ -93,7 +78,7 @@ public class FileSystemUtil {
       }
     }
 
-    if (!forceFallback && SystemInfo.isJavaVersionAtLeast("1.7") && !"1.7.0-ea".equals(SystemInfo.JAVA_VERSION)) {
+    if (!forceFallback && SystemInfo.isJavaVersionAtLeast(7, 0, 0) && !"1.7.0-ea".equals(SystemInfo.JAVA_VERSION)) {
       try {
         return check(new Nio2MediatorImpl());
       }
@@ -220,6 +205,7 @@ public class FileSystemUtil {
     private final Method myLastModifiedTime;
     private final Method myIsHidden;
     private final Method myIsReadOnly;
+    private final Method myPermissions;
 
     private Nio2MediatorImpl() throws Exception {
       assert Patches.USE_REFLECTION_TO_ACCESS_JDK7;
@@ -246,9 +232,11 @@ public class FileSystemUtil {
       if (SystemInfo.isWindows) {
         myIsHidden = accessible(mySchema.getMethod("isHidden"));
         myIsReadOnly = accessible(mySchema.getMethod("isReadOnly"));
+        myPermissions = null;
       }
       else {
         myIsHidden = myIsReadOnly = null;
+        myPermissions = accessible(mySchema.getMethod("permissions"));
       }
     }
 
@@ -347,25 +335,23 @@ public class FileSystemUtil {
     }
 
     private Collection getPermissions(Object sourcePath) throws IllegalAccessException, InvocationTargetException {
-      Map attributes = (Map)myReadAttributes.invoke(null, sourcePath, "posix:permissions", myLinkOptions);
-      if (attributes == null) return null;
-      Object permissions = attributes.get("permissions");
-      return permissions instanceof Collection ? (Collection)permissions : null;
+      Object attributes = myReadAttributes.invoke(null, sourcePath, mySchema, myLinkOptions);
+      return attributes != null ? (Collection)myPermissions.invoke(attributes) : null;
     }
   }
 
 
   private static class IdeaWin32MediatorImpl extends Mediator {
-    private IdeaWin32 myInstance = IdeaWin32.getInstance();
+    private final IdeaWin32 myInstance = IdeaWin32.getInstance();
 
     @Override
-    protected FileAttributes getAttributes(@NotNull final String path) throws Exception {
+    protected FileAttributes getAttributes(@NotNull final String path) {
       final FileInfo fileInfo = myInstance.getInfo(path);
       return fileInfo != null ? fileInfo.toFileAttributes() : null;
     }
 
     @Override
-    protected String resolveSymLink(@NotNull final String path) throws Exception {
+    protected String resolveSymLink(@NotNull final String path) {
       return myInstance.resolveSymLink(path);
     }
   }
@@ -410,6 +396,8 @@ public class FileSystemUtil {
     private static final int[] LNX_ARM32 = LNX_PPC32;
     private static final int[] BSD_32 =    { 8, 48, 32, 12, 16};
     private static final int[] BSD_64 =    { 8, 72, 40, 12, 16};
+    private static final int[] BSD_32_12 = {24, 96, 64, 28, 32};
+    private static final int[] BSD_64_12 = {24,112, 64, 28, 32};
     private static final int[] SUN_OS_32 = {20, 48, 64, 28, 32};
     private static final int[] SUN_OS_64 = {16, 40, 64, 24, 28};
 
@@ -425,15 +413,15 @@ public class FileSystemUtil {
     private final int myGid;
     private final boolean myCoarseTs = SystemProperties.getBooleanProperty(COARSE_TIMESTAMP_KEY, false);
 
-    private JnaUnixMediatorImpl() throws Exception {
+    private JnaUnixMediatorImpl() {
            if ("linux-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_32;
       else if ("linux-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_64;
       else if ("linux-arm".equals(Platform.RESOURCE_PREFIX)) myOffsets = LNX_ARM32;
       else if ("linux-ppc".equals(Platform.RESOURCE_PREFIX)) myOffsets = LNX_PPC32;
       else if ("linux-ppc64le".equals(Platform.RESOURCE_PREFIX)) myOffsets = LNX_PPC64;
-      else if ("freebsd-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = BSD_32;
-      else if ("darwin".equals(Platform.RESOURCE_PREFIX) ||
-               "freebsd-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = BSD_64;
+      else if ("darwin".equals(Platform.RESOURCE_PREFIX)) myOffsets = BSD_64;
+      else if ("freebsd-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = SystemInfo.isOsVersionAtLeast("12") ? BSD_32_12 : BSD_32;
+      else if ("freebsd-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = SystemInfo.isOsVersionAtLeast("12") ? BSD_64_12 : BSD_64;
       else if ("sunos-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = SUN_OS_32;
       else if ("sunos-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = SUN_OS_64;
       else throw new IllegalStateException("Unsupported OS/arch: " + SystemInfo.OS_NAME + "/" + SystemInfo.OS_ARCH);
@@ -446,7 +434,7 @@ public class FileSystemUtil {
     }
 
     @Override
-    protected FileAttributes getAttributes(@NotNull String path) throws Exception {
+    protected FileAttributes getAttributes(@NotNull String path) {
       Memory buffer = new Memory(256);
       int res = SystemInfo.isLinux ? LinuxLibC.__lxstat64(STAT_VER, path, buffer) : UnixLibC.lstat(path, buffer);
       if (res != 0) return null;
@@ -492,7 +480,7 @@ public class FileSystemUtil {
     }
 
     @Override
-    protected boolean clonePermissions(@NotNull String source, @NotNull String target, boolean onlyPermissionsToExecute) throws Exception {
+    protected boolean clonePermissions(@NotNull String source, @NotNull String target, boolean onlyPermissionsToExecute) {
       Memory buffer = new Memory(256);
       if (!loadFileStatus(source, buffer)) return false;
 
@@ -580,7 +568,7 @@ public class FileSystemUtil {
     }
 
     @Override
-    protected boolean clonePermissions(@NotNull String source, @NotNull String target, boolean onlyPermissionsToExecute) throws Exception {
+    protected boolean clonePermissions(@NotNull String source, @NotNull String target, boolean onlyPermissionsToExecute) {
       if (SystemInfo.isUnix) {
         File srcFile = new File(source);
         File dstFile = new File(target);

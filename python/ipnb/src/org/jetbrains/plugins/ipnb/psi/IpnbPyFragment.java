@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.indexing.IndexingDataKeys;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -48,12 +49,14 @@ public class IpnbPyFragment extends PyFileImpl {
     return clone;
   }
 
+  @Override
   @NotNull
   public FileViewProvider getViewProvider() {
     if (myViewProvider != null) return myViewProvider;
     return super.getViewProvider();
   }
 
+  @Override
   public boolean isPhysical() {
     return myPhysical;
   }
@@ -104,5 +107,11 @@ public class IpnbPyFragment extends PyFileImpl {
       virtualFile = getViewProvider().getVirtualFile();
     }
     return PyUtil.getLanguageLevelForVirtualFile(getProject(), virtualFile);
+  }
+
+  @Nullable
+  @Override
+  public StubElement getStub() {
+    return null;
   }
 }

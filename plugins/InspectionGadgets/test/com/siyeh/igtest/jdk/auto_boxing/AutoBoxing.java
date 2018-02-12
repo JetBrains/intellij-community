@@ -1,6 +1,6 @@
 package com.siyeh.igtest.jdk.auto_boxing;
 
-
+import java.util.Arrays;
 
 
 public class AutoBoxing {
@@ -9,9 +9,9 @@ public class AutoBoxing {
         Long someNumber = <warning descr="Auto-boxing '0L'">0L</warning>;
         Long aLong = <warning descr="Auto-boxing 'someNumber << 2'">someNumber << 2</warning>;
         Long other = <warning descr="Auto-boxing 'someNumber'">someNumber</warning>++;
-        someNumber = <warning descr="Auto-boxing '~someNumber'">~<warning descr="Auto-boxing 'someNumber'">someNumber</warning></warning>;
-        someNumber = <warning descr="Auto-boxing '-someNumber'">-<warning descr="Auto-boxing 'someNumber'">someNumber</warning></warning>;
-        someNumber = <warning descr="Auto-boxing '+someNumber'">+<warning descr="Auto-boxing 'someNumber'">someNumber</warning></warning>;
+        someNumber = <warning descr="Auto-boxing '~someNumber'">~someNumber</warning>;
+        someNumber = <warning descr="Auto-boxing '-someNumber'">-someNumber</warning>;
+        someNumber = <warning descr="Auto-boxing '+someNumber'">+someNumber</warning>;
     }
 
     public void foo() {
@@ -86,5 +86,9 @@ public class AutoBoxing {
     A(<warning descr="Auto-boxing '3'">3</warning>);
     NumberedLetter(Integer i) {
     }
+  }
+
+  void varargs() {
+      Arrays.asList(<warning descr="Auto-boxing ''a''">'a'</warning>, <warning descr="Auto-boxing ''b''">'b'</warning>, <warning descr="Auto-boxing ''c''">'c'</warning>);
   }
 }

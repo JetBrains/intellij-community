@@ -36,7 +36,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 12/20/12 9:37 PM
  */
-public class FontPreferencesImpl implements ModifiableFontPreferences {
+public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   @NotNull private final TObjectIntHashMap<String> myFontSizes    = new TObjectIntHashMap<>();
   @NotNull private final List<String> myEffectiveFontFamilies = ContainerUtilRt.newArrayList();
@@ -63,18 +63,15 @@ public class FontPreferencesImpl implements ModifiableFontPreferences {
 
   @Override
   public void clear() {
-    myEffectiveFontFamilies.clear();
-    myRealFontFamilies.clear();
     myFontSizes.clear();
-    if (myChangeListener != null) {
-      myChangeListener.run();
-    }
+    clearFonts();
   }
 
   @Override
   public void clearFonts() {
     myEffectiveFontFamilies.clear();
     myRealFontFamilies.clear();
+    myUseLigatures = false;
     if (myChangeListener != null) {
       myChangeListener.run();
     }

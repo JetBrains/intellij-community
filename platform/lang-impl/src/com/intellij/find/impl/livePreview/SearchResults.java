@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl.livePreview;
 
 
@@ -29,13 +15,14 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -44,10 +31,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.PatternSyntaxException;
 
@@ -62,33 +47,30 @@ public class SearchResults implements DocumentListener {
     myCursorPositions.clear();
   }
 
-  @Override
-  public void documentChanged(DocumentEvent event) {
-  }
-
   public enum Direction {UP, DOWN}
 
 
   private final List<SearchResultsListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private @Nullable FindResult myCursor;
+  @Nullable private FindResult myCursor;
 
   @NotNull
   private List<FindResult> myOccurrences = new ArrayList<>();
 
   private final Set<RangeMarker> myExcluded = new HashSet<>();
 
-  private Editor myEditor;
+  @NotNull
+  private final Editor myEditor;
   private final Project myProject;
   private FindModel myFindModel;
 
   private int myMatchesLimit = 100;
 
-  private boolean myNotFoundState = false;
+  private boolean myNotFoundState;
 
-  private boolean myDisposed = false;
+  private boolean myDisposed;
 
-  private int myStamp = 0;
+  private int myStamp;
 
   private int myLastUpdatedStamp = -1;
   private long myDocumentTimestamp;
@@ -97,7 +79,7 @@ public class SearchResults implements DocumentListener {
 
   private final SelectionManager mySelectionManager;
 
-  public SearchResults(Editor editor, Project project) {
+  public SearchResults(@NotNull Editor editor, Project project) {
     myEditor = editor;
     myProject = project;
     myEditor.getDocument().addDocumentListener(this);
@@ -191,6 +173,7 @@ public class SearchResults implements DocumentListener {
     return myProject;
   }
 
+  @NotNull
   public Editor getEditor() {
     return myEditor;
   }
@@ -199,52 +182,62 @@ public class SearchResults implements DocumentListener {
     searchCompleted(new ArrayList<>(), getEditor(), null, false, null, getStamp());
   }
 
-  public void updateThreadSafe(final FindModel findModel, final boolean toChangeSelection, @Nullable final TextRange next, final int stamp) {
-    if (myDisposed) return;
+  ActionCallback updateThreadSafe(@NotNull FindModel findModel, final boolean toChangeSelection, 
+                                  @Nullable final TextRange next, final int stamp) {
+    if (myDisposed) return ActionCallback.DONE;
 
+    ActionCallback result = new ActionCallback();
     final Editor editor = getEditor();
 
-    final ArrayList<FindResult> results = new ArrayList<>();
-    if (findModel != null) {
-      updatePreviousFindModel(findModel);
-      final FutureResult<int[]> startsRef = new FutureResult<>();
-      final FutureResult<int[]> endsRef = new FutureResult<>();
-      getSelection(editor, startsRef, endsRef);
+    updatePreviousFindModel(findModel);
+    final FutureResult<int[]> startsRef = new FutureResult<>();
+    final FutureResult<int[]> endsRef = new FutureResult<>();
+    getSelection(editor, startsRef, endsRef);
 
-      ApplicationManager.getApplication().runReadAction(() -> {
-        Project project = getProject();
-        if (myDisposed || project != null && project.isDisposed()) return;
-        int[] starts = new int[0];
-        int[] ends = new int[0];
-        try {
-          starts = startsRef.get();
-          ends = endsRef.get();
-        }
-        catch (InterruptedException | ExecutionException ignore) {
-        }
+    List<FindResult> results = new ArrayList<>();
+    ApplicationManager.getApplication().runReadAction(() -> {
+      Project project = getProject();
+      if (myDisposed || project != null && project.isDisposed()) return;
+      int[] starts = new int[0];
+      int[] ends = new int[0];
+      try {
+        starts = startsRef.get();
+        ends = endsRef.get();
+      }
+      catch (InterruptedException | ExecutionException ignore) {
+      }
 
-        if (starts.length == 0 || findModel.isGlobal()) {
-          findInRange(new TextRange(0, Integer.MAX_VALUE), editor, findModel, results);
+      if (starts.length == 0 || findModel.isGlobal()) {
+        findInRange(new TextRange(0, Integer.MAX_VALUE), editor, findModel, results);
+      }
+      else {
+        for (int i = 0; i < starts.length; ++i) {
+          findInRange(new TextRange(starts[i], ends[i]), editor, findModel, results);
+        }
+      }
+
+      long documentTimeStamp = editor.getDocument().getModificationStamp();
+      final Runnable searchCompletedRunnable = () -> {
+        if (editor.getDocument().getModificationStamp() == documentTimeStamp) {
+          searchCompleted(results, editor, findModel, toChangeSelection, next, stamp);
+          result.setDone();
         }
         else {
-          for (int i = 0; i < starts.length; ++i) {
-            findInRange(new TextRange(starts[i], ends[i]), editor, findModel, results);
-          }
+          result.setRejected();
         }
+      };
 
-        final Runnable searchCompletedRunnable = () -> searchCompleted(results, editor, findModel, toChangeSelection, next, stamp);
-
-        if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          UIUtil.invokeLaterIfNeeded(searchCompletedRunnable);
-        }
-        else {
-          searchCompletedRunnable.run();
-        }
-      });
-    }
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        searchCompletedRunnable.run();
+      }
+      else {
+        UIUtil.invokeLaterIfNeeded(searchCompletedRunnable);
+      }
+    });
+    return result;
   }
 
-  private void updatePreviousFindModel(FindModel model) {
+  private void updatePreviousFindModel(@NotNull FindModel model) {
     FindModel prev = FindManager.getInstance(getProject()).getPreviousFindModel();
     if (prev == null) {
       prev = new FindModel();
@@ -260,7 +253,8 @@ public class SearchResults implements DocumentListener {
       SelectionModel selection = editor.getSelectionModel();
       starts.set(selection.getBlockSelectionStarts());
       ends.set(selection.getBlockSelectionEnds());
-    } else {
+    }
+    else {
       try {
         SwingUtilities.invokeAndWait(() -> {
           SelectionModel selection = editor.getSelectionModel();
@@ -273,13 +267,13 @@ public class SearchResults implements DocumentListener {
     }
   }
 
-  private void findInRange(TextRange r, Editor editor, FindModel findModel, ArrayList<FindResult> results) {
+  private void findInRange(@NotNull TextRange range, @NotNull Editor editor, @NotNull FindModel findModel, @NotNull List<FindResult> results) {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
 
     CharSequence charSequence = editor.getDocument().getCharsSequence();
 
-    int offset = r.getStartOffset();
-    int maxOffset = Math.min(r.getEndOffset(), charSequence.length());
+    int offset = range.getStartOffset();
+    int maxOffset = Math.min(range.getEndOffset(), charSequence.length());
     FindManager findManager = FindManager.getInstance(getProject());
 
     while (true) {
@@ -287,7 +281,8 @@ public class SearchResults implements DocumentListener {
       try {
         CharSequence bombedCharSequence = StringUtil.newBombedCharSequence(charSequence, 3000);
         result = findManager.findString(bombedCharSequence, offset, findModel, virtualFile);
-      } catch(PatternSyntaxException | ProcessCanceledException e) {
+      }
+      catch(PatternSyntaxException | ProcessCanceledException e) {
         result = null;
       }
       if (result == null || !result.isStringFound()) break;
@@ -296,11 +291,13 @@ public class SearchResults implements DocumentListener {
       if (offset == newOffset) {
         if (offset < maxOffset - 1) {
           offset++;
-        } else {
+        }
+        else {
           results.add(result);
           break;
         }
-      } else {
+      }
+      else {
         offset = newOffset;
       }
       results.add(result);
@@ -312,7 +309,7 @@ public class SearchResults implements DocumentListener {
     myEditor.getDocument().removeDocumentListener(this);
   }
 
-  private void searchCompleted(@NotNull List<FindResult> occurrences, Editor editor, @Nullable FindModel findModel,
+  private void searchCompleted(@NotNull List<FindResult> occurrences, @NotNull Editor editor, @Nullable FindModel findModel,
                                boolean toChangeSelection, @Nullable TextRange next, int stamp) {
     if (stamp < myLastUpdatedStamp){
       return;
@@ -323,7 +320,7 @@ public class SearchResults implements DocumentListener {
     }
     myOccurrences = occurrences;
     final TextRange oldCursorRange = myCursor;
-    Collections.sort(myOccurrences, (findResult, findResult1) -> findResult.getStartOffset() - findResult1.getStartOffset());
+    Collections.sort(myOccurrences, Comparator.comparingInt(TextRange::getStartOffset));
 
     myFindModel = findModel;
     myDocumentTimestamp = myEditor.getDocument().getModificationStamp();
@@ -364,19 +361,17 @@ public class SearchResults implements DocumentListener {
         if (myFindModel != null) {
           if(oldCursorRange != null && !myFindModel.isGlobal()) {
             myCursor = firstOccurrenceAfterOffset(oldCursorRange.getEndOffset());
-          } else {
+          }
+          else {
             if (justReplaced) {
               nextOccurrence(false, next, false, true, false);
-            } else {
-              FindResult afterCaret = oldCursorRange == null ? firstOccurrenceAtOrAfterCaret() : firstOccurrenceAfterCaret();
-              if (afterCaret != null) {
-                myCursor = afterCaret;
-              } else {
-                myCursor = null;
-              }
+            }
+            else {
+              myCursor = oldCursorRange == null ? firstOccurrenceAtOrAfterCaret() : firstOccurrenceAfterCaret();
             }
           }
-        } else {
+        }
+        else {
           myCursor = null;
         }
       }
@@ -532,13 +527,13 @@ public class SearchResults implements DocumentListener {
       notifyCursorMoved();
     }
     else {
-      FindResult next = null;
       if (myFindModel == null) return;
       boolean processFromTheBeginning = false;
       if (myNotFoundState) {
         myNotFoundState = false;
         processFromTheBeginning = true;
       }
+      FindResult next = null;
       if (!myFindModel.isGlobal()) {
         if (myCursor != null) {
           next = prevOccurrence(myCursor);
@@ -573,15 +568,20 @@ public class SearchResults implements DocumentListener {
     push();
   }
 
-  private void nextOccurrence(boolean processFromTheBeginning, TextRange cursor, boolean toNotify, boolean justReplaced, boolean retainOldSelection) {
-    FindResult next;
+  private void nextOccurrence(boolean processFromTheBeginning,
+                              TextRange cursor,
+                              boolean toNotify,
+                              boolean justReplaced,
+                              boolean retainOldSelection) {
     if (myNotFoundState) {
       myNotFoundState = false;
       processFromTheBeginning = true;
     }
+    FindResult next;
     if ((!myFindModel.isGlobal() || justReplaced) && cursor != null) {
       next = nextOccurrence(cursor);
-    } else {
+    }
+    else {
       next = firstOccurrenceAfterCaret();
     }
     if (next == null) {
@@ -589,20 +589,22 @@ public class SearchResults implements DocumentListener {
         if (hasMatches()) {
           next = getOccurrences().get(0);
         }
-      } else {
+      }
+      else {
         setNotFoundState(true);
       }
     }
     if (toNotify) {
       moveCursorTo(next, retainOldSelection);
-    } else {
+    }
+    else {
       myCursor = next;
     }
   }
 
   public void moveCursorTo(FindResult next, boolean retainOldSelection) {
     if (next != null && !mySelectionManager.isSelected(next)) {
-      retainOldSelection &= (myCursor != null && mySelectionManager.isSelected(myCursor));
+      retainOldSelection &= myCursor != null && mySelectionManager.isSelected(myCursor);
       myCursor = next;
       mySelectionManager.updateSelection(!retainOldSelection, false);
       notifyCursorMoved();

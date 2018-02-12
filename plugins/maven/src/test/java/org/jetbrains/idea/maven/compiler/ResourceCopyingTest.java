@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
@@ -588,7 +587,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     assertNotCopied("target/classes/file.txt");
   }
 
-  public void testOverridingWebResourceFilters() throws Exception {
+  public void testOverridingWebResourceFilters() {
     if (ignore()) return;
 
     createProjectPom("<groupId>test</groupId>" +

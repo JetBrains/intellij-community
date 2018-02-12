@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class MvnDependencyPasteTest extends LightCodeInsightTestCase {
 
-  public void testPastedGradleDependency() throws Exception {
+  public void testPastedGradleDependency() {
     configureFromFileText("pom.xml", getDependency("group", "artifact", "1.0", "runtime", null));
     selectWholeFile();
     performCut();
@@ -37,8 +37,20 @@ public class MvnDependencyPasteTest extends LightCodeInsightTestCase {
                       "    runtime 'group:artifact:1.0'\n" +
                       "}");
   }
+
+  public void testDependencyWithClassifier() {
+    configureFromFileText("pom.xml", getDependency("group", "artifact", "1.0", "runtime", "jdk14"));
+    selectWholeFile();
+    performCut();
+
+    configureGradleFile();
+    performPaste();
+    checkResultByText("dependencies {\n" +
+                      "    runtime 'group:artifact:1.0:jdk14'\n" +
+                      "}");
+  }
   
-  public void test_DoNotConvertIfCoordinatesNotClear() throws Exception {
+  public void test_DoNotConvertIfCoordinatesNotClear() {
     String noArtifact = getDependency("group", null, "1.0", "runtime", null);
     configureFromFileText("pom.xml", noArtifact);
 
@@ -69,15 +81,26 @@ public class MvnDependencyPasteTest extends LightCodeInsightTestCase {
                       "    compile 'group:artifact:1.0'\n" +
                       "}");
   }
-  
-  
+
+  public void test_AddProvided() {
+    configureFromFileText("pom.xml", getDependency("group", "artifact", "1.0", "provided", null));
+    selectWholeFile();
+    performCut();
+
+    configureGradleFile();
+    performPaste();
+    checkResultByText("dependencies {\n" +
+                      "    compileOnly 'group:artifact:1.0'\n" +
+                      "}");
+  }
+
 
   @NotNull
   private static String getDependency(@Nullable String groupId,
                                       @Nullable String artifactId,
                                       @Nullable String version,
                                       @Nullable String scope,
-                                      @Nullable String type) {
+                                      @Nullable String classifier) {
     
     String dependency = "<dependency>\n";
     if (groupId != null) {
@@ -92,8 +115,8 @@ public class MvnDependencyPasteTest extends LightCodeInsightTestCase {
     if (scope != null) {
       dependency +=     "  <scope>" + scope + "</scope>\n";
     }
-    if (type != null) {
-      dependency +=     "  <type>" + type + "</type>\n";
+    if (classifier != null) {
+      dependency +=     "  <classifier>" + classifier + "</classifier>\n";
     }
     dependency += "</dependency>";
     return dependency;

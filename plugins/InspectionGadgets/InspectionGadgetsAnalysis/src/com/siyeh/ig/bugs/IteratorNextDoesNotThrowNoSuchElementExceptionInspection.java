@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,15 +21,26 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.IteratorUtils;
+import com.siyeh.ig.psiutils.MethodMatcher;
 import com.siyeh.ig.psiutils.MethodUtils;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
-  extends BaseInspection {
+public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection extends BaseInspection {
 
+  static final MethodMatcher methodMatcher = new MethodMatcher()
+    .add("java.util.Scanner", "next")
+    .add("java.util.StringTokenizer", "next(Element|Token)")
+    .add("java.util.Iterator", "next")
+    .add("java.util.ListIterator", "previous")
+    .add("java.util.Enumeration", "nextElement")
+    .add("java.util.PrimitiveIterator.OfInt", "nextInt")
+    .add("java.util.PrimitiveIterator.OfLong", "nextLong")
+    .add("java.util.PrimitiveIterator.OfDouble", "nextDouble");
+
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
@@ -39,15 +50,13 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "iterator.next.does.not.throw.nosuchelementexception.display.name");
+    return InspectionGadgetsBundle.message("iterator.next.does.not.throw.nosuchelementexception.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "iterator.next.does.not.throw.nosuchelementexception.problem.descriptor");
+    return InspectionGadgetsBundle.message("iterator.next.does.not.throw.nosuchelementexception.problem.descriptor");
   }
 
   @Override
@@ -55,24 +64,18 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
     return new IteratorNextDoesNotThrowNoSuchElementExceptionVisitor();
   }
 
-  private static class IteratorNextDoesNotThrowNoSuchElementExceptionVisitor
-    extends BaseInspectionVisitor {
+  private static class IteratorNextDoesNotThrowNoSuchElementExceptionVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
       // note: no call to super
-      if (!MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_ITERATOR, null,
-                                     HardcodedMethodConstants.NEXT)) {
+      if (!MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_ITERATOR, null, HardcodedMethodConstants.NEXT)) {
         return;
       }
       for (final PsiType exception : ExceptionUtil.getThrownExceptions(method)) {
-        if (exception.equalsToText(
-          "java.util.NoSuchElementException")) {
+        if (exception.equalsToText("java.util.NoSuchElementException")) {
           return;
         }
-      }
-      if (IteratorUtils.containsCallToIteratorNext(method, null, false)) {
-        return;
       }
       final CalledMethodsVisitor visitor = new CalledMethodsVisitor();
       method.accept(visitor);
@@ -83,28 +86,27 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
     }
   }
 
-  private static class CalledMethodsVisitor
-    extends JavaRecursiveElementWalkingVisitor {
+  private static class CalledMethodsVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private boolean noSuchElementExceptionThrown;
 
     @Override
-    public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       if (noSuchElementExceptionThrown) {
         return;
       }
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      final PsiElement method = methodExpression.resolve();
-      if (method == null) {
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null || methodMatcher.matches(method)) {
+        noSuchElementExceptionThrown = true;
+        return;
+      }
+      if (method instanceof PsiCompiledElement) {
         return;
       }
       final List<PsiClassType> exceptions = ExceptionUtil.getThrownExceptions(method);
       for (final PsiType exception : exceptions) {
-        if (exception.equalsToText(
-          "java.util.NoSuchElementException")) {
+        if (exception.equalsToText("java.util.NoSuchElementException")) {
           noSuchElementExceptionThrown = true;
         }
       }

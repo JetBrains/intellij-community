@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,9 @@ import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.ContainerUtil;
+import java.util.HashMap;
+import java.util.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -163,7 +164,8 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     stmt = (PsiStatement)CodeStyleManager.getInstance(psiManager.getProject()).reformat(stmt);
     method.getBody().add(stmt);
 
-    GenerateMembersUtil.copyAnnotations(methodCandidate.getElement().getModifierList(), method.getModifierList(), SuppressWarnings.class.getName());
+    GenerateMembersUtil.copyAnnotations(methodCandidate.getElement().getModifierList(), method.getModifierList(), 
+                                        SuppressWarnings.class.getName(), Override.class.getName());
 
     if (isMethodStatic || modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC)) {
       PsiUtil.setModifierProperty(method, PsiModifier.STATIC, true);
@@ -233,9 +235,9 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     if (targetClass instanceof PsiTypeParameter) {
       LinkedHashSet<PsiMethod> meths = new LinkedHashSet<>();
       for (PsiClass superClass : targetClass.getSupers()) {
-        meths.addAll(Arrays.asList(superClass.getAllMethods()));
+        ContainerUtil.addAll(meths, superClass.getAllMethods());
       }
-      allMethods = meths.toArray(new PsiMethod[meths.size()]);
+      allMethods = meths.toArray(PsiMethod.EMPTY_ARRAY);
     }
     else {
       allMethods = targetClass.getAllMethods();
@@ -282,11 +284,11 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     PsiMethodMember[] result;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       MemberChooser<PsiElementClassMember> chooser =
-        new MemberChooser<>(methodInstances.toArray(new PsiMethodMember[methodInstances.size()]), false, true, project);
+        new MemberChooser<>(methodInstances.toArray(new PsiMethodMember[0]), false, true, project);
       chooser.setTitle(CodeInsightBundle.message("generate.delegate.method.chooser.title"));
       chooser.setCopyJavadocVisible(true);
       if (!selection.isEmpty()) {
-        chooser.selectElements(selection.toArray(new ClassMember[selection.size()]));
+        chooser.selectElements(selection.toArray(ClassMember.EMPTY_ARRAY));
       }
       chooser.show();
 
@@ -294,7 +296,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
 
       myToCopyJavaDoc = chooser.isCopyJavadoc();
       final List<PsiElementClassMember> list = chooser.getSelectedElements();
-      result = list.toArray(new PsiMethodMember[list.size()]);
+      result = list.toArray(new PsiMethodMember[0]);
     }
     else {
       result = methodInstances.isEmpty() ? new PsiMethodMember[0] : new PsiMethodMember[] {methodInstances.get(0)};
@@ -351,7 +353,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
       aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
     }
 
-    return result.toArray(new PsiElementClassMember[result.size()]);
+    return result.toArray(new PsiElementClassMember[0]);
   }
 
   private static void collectTargetsInClass(PsiElement element,
@@ -376,7 +378,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null || CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) continue;
       final PsiType returnType = method.getReturnType();
-      if (returnType != null && PropertyUtil.isSimplePropertyGetter(method) && helper.isAccessible(method, aClass, aClass) &&
+      if (PropertyUtilBase.isSimplePropertyGetter(method) && helper.isAccessible(method, aClass, aClass) &&
           returnType instanceof PsiClassType && !(PsiTreeUtil.isAncestor(method, element, false) && targetClass != aClass)) {
         result.add(new PsiMethodMember(method, TypeConversionUtil.getSuperClassSubstitutor( containingClass, aClass,PsiSubstitutor.EMPTY)));
       }

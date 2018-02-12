@@ -15,7 +15,7 @@ def f2(p: B):
     return p
 
 
-f2(<warning descr="Expected type 'TypeVar('B', str)', got 'Type[str]' instead">str</warning>)
+f2(<warning descr="Expected type 'B', got 'Type[str]' instead">str</warning>)
 
 
 def g1(p):
@@ -33,6 +33,6 @@ def g2(p):
     """
 
 
-g2(<warning descr="Expected type 'TypeVar('T', str)', got 'Type[str]' instead">str</warning>)
+g2(<warning descr="Expected type 'T', got 'Type[str]' instead">str</warning>)
 
 xs = list([str])

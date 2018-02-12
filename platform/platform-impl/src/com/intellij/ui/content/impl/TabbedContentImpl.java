@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,8 +95,8 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
     setDisplayName(tab.first);
     setComponent(tab.second);
   }
-  
-  public int getSelectedContent() {
+
+  public int getSelectedIndex() {
     JComponent selected = getComponent();
     for (int i = 0; i < myTabs.size(); i++) {
       if (myTabs.get(i).second == selected) return i;

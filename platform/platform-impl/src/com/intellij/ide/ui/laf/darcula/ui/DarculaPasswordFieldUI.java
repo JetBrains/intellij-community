@@ -15,72 +15,93 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MacUIUtil;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicPasswordFieldUI;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.geom.Rectangle2D;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
-
-  public DarculaPasswordFieldUI(final JPasswordField passwordField) {
-    passwordField.addFocusListener(new FocusAdapter() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        passwordField.repaint();
-      }
-
-      @Override
-      public void focusLost(FocusEvent e) {
-        passwordField.repaint();
-      }
-    });
-  }
+  private FocusListener focusListener;
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(final JComponent c) {
-    return new DarculaPasswordFieldUI((JPasswordField) c);
+    return new DarculaPasswordFieldUI();
   }
 
   @Override
-  protected void paintBackground(Graphics graphics) {
-    Graphics2D g = (Graphics2D)graphics;
-    final JTextComponent c = getComponent();
-    final Container parent = c.getParent();
-    if (c.isOpaque() && parent != null) {
-      g.setColor(parent.getBackground());
-      g.fillRect(0, 0, c.getWidth(), c.getHeight());
-    }
-    final Border border = c.getBorder();
-    if (border instanceof DarculaTextBorder) {
-      if (c.isEnabled() && c.isEditable()) {
-        g.setColor(c.getBackground());
+  public void installListeners() {
+    super.installListeners();
+    JTextComponent passwordField = getComponent();
+    focusListener = new FocusListener() {
+      @Override public void focusGained(FocusEvent e) {
+        passwordField.repaint();
       }
-      final int width = c.getWidth();
-      final int height = c.getHeight();
-      final Insets i = border.getBorderInsets(c);
-      if (c.hasFocus()) {
-        final GraphicsConfig config = new GraphicsConfig(g);
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
-        g.fillRoundRect(i.left - JBUI.scale(5), i.top - JBUI.scale(2), width - i.left - i.right + JBUI.scale(10), height - i.top - i.bottom + JBUI.scale(6), JBUI.scale(5), JBUI.scale(5));
-        config.restore();
+      @Override public void focusLost(FocusEvent e) {
+        passwordField.repaint();
       }
-      else {
-        g.fillRect(i.left - JBUI.scale(5), i.top - JBUI.scale(2), width - i.left - i.right + JBUI.scale(12), height - i.top - i.bottom + JBUI.scale(6));
+    };
+
+    passwordField.addFocusListener(focusListener);
+  }
+
+  @Override
+  public void uninstallListeners() {
+    super.uninstallListeners();
+    if (focusListener != null) {
+      getComponent().removeFocusListener(focusListener);
+    }
+  }
+
+  @Override
+  public Dimension getPreferredSize(JComponent c) {
+    Dimension size = super.getPreferredSize(c);
+    Insets i = getComponent().getInsets();
+    return new Dimension(size.width, Math.max(size.height, JBUI.scale(20) + i.top + i.bottom));
+  }
+
+  @Override
+  protected void paintBackground(Graphics g) {
+    JTextComponent component = getComponent();
+    if (component != null) {
+      Container parent = component.getParent();
+      if (parent != null && component.isOpaque()) {
+        g.setColor(parent.getBackground());
+        g.fillRect(0, 0, component.getWidth(), component.getHeight());
       }
-    } else {
-      super.paintBackground(g);
+
+      Graphics2D g2 = (Graphics2D)g.create();
+      Rectangle r = new Rectangle(component.getSize());
+      JBInsets.removeFrom(r, JBUI.insets(1));
+
+      try {
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+                            MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+        g2.translate(r.x, r.y);
+
+        float bw = DarculaUIUtil.bw();
+
+        if (component.isEnabled() && component.isEditable()) {
+          g2.setColor(component.getBackground());
+        }
+
+        g2.fill(new Rectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2));
+      } finally {
+        g2.dispose();
+      }
     }
   }
 }

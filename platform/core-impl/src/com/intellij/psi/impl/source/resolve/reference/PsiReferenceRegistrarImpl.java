@@ -28,12 +28,12 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Dmitry Avdeev
@@ -43,14 +43,20 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   private final Map<Class<?>, SimpleProviderBinding> myBindingsMap = ContainerUtil.newTroveMap();
   private final Map<Class<?>, NamedObjectProviderBinding> myNamedBindingsMap = ContainerUtil.newTroveMap();
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private final ConcurrentFactoryMap<Class, ProviderBinding[]> myBindingCache;
+  private final ConcurrentMap<Class, ProviderBinding[]> myBindingCache;
   private boolean myInitialized;
 
+  /**
+   * @deprecated To be removed in 2018.2
+   */
+  @Deprecated
+  @SuppressWarnings("unused")
   public PsiReferenceRegistrarImpl(final Language language) {
-    myBindingCache = new ConcurrentFactoryMap<Class, ProviderBinding[]>() {
-      @Nullable
-      @Override
-      protected ProviderBinding[] create(Class key) {
+    this();
+  }
+
+  PsiReferenceRegistrarImpl() {
+    myBindingCache = ConcurrentFactoryMap.createMap(key-> {
         List<ProviderBinding> result = ContainerUtil.newSmartList();
         for (Class<?> bindingClass : myBindingsMap.keySet()) {
           if (bindingClass.isAssignableFrom(key)) {
@@ -62,14 +68,10 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
             result.add(myNamedBindingsMap.get(bindingClass));
           }
         }
-        if (language != Language.ANY) {
-          final PsiReferenceRegistrar anyRegistrar = ReferenceProvidersRegistry.getInstance().getRegistrar(Language.ANY);
-          Collections.addAll(result, ((PsiReferenceRegistrarImpl)anyRegistrar).myBindingCache.get(key));
-        }
         //noinspection unchecked
-        return result.toArray(new ProviderBinding[result.size()]);
+        return result.toArray(new ProviderBinding[0]);
       }
-    };
+    );
   }
 
   public void markInitialized() {

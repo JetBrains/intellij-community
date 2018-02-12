@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,9 @@ package com.intellij.ide.projectView;
 
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,8 +29,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 public abstract class ProjectView {
+  /**
+   * Use this key to get unloaded modules which content roots are selected in Project View
+   */
+  public static final DataKey<List<UnloadedModuleDescription>> UNLOADED_MODULES_CONTEXT_KEY = DataKey.create("context.unloaded.modules.list");
+
   public static ProjectView getInstance(Project project) {
     return ServiceManager.getService(project, ProjectView.class);
   }
@@ -38,15 +46,33 @@ public abstract class ProjectView {
   @NotNull
   public abstract ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus);
 
+  /**
+   * Changes currently selected view and subview (if any).
+   * <p>
+   * When default subview is requested:<br/>
+   * - if the view had never been selected then the first subview is selected <br/>
+   * - otherwise subview won't be changed
+   * <p>
+   * It's an error when a view has no subviews and {@code subId} is not null.
+   *
+   * @param viewId id of view to be selected
+   * @param subId  id of subview to be selected
+   * @return callback which will be set to {@link ActionCallback#setDone done} if new content was selected
+   * or to {@link ActionCallback#setRejected rejected} if content didn't change.
+   */
   @NotNull
-  public abstract ActionCallback changeViewCB(@NotNull String viewId, String subId);
+  public abstract ActionCallback changeViewCB(@NotNull String viewId, @Nullable("default subview") String subId);
 
   @Nullable
   public abstract PsiElement getParentOfCurrentSelection();
 
   // show pane identified by id using default(or currently selected) subId
   public abstract void changeView(@NotNull String viewId);
-  public abstract void changeView(@NotNull String viewId, String subId);
+
+  /**
+   * @see #changeViewCB(String, String)
+   */
+  public abstract void changeView(@NotNull String viewId, @Nullable String subId);
 
   public abstract void changeView();
 
@@ -70,6 +96,12 @@ public abstract class ProjectView {
 
   public abstract void setShowModules(boolean showModules, @NotNull String paneId);
 
+  public abstract boolean isFlattenModules(String paneId);
+
+  public abstract void setFlattenModules(boolean flattenModules, @NotNull String paneId);
+
+  public abstract boolean isShowURL(String paneId);
+
   public abstract void addProjectPane(@NotNull AbstractProjectViewPane pane);
 
   public abstract void removeProjectPane(@NotNull AbstractProjectViewPane pane);
@@ -92,7 +124,7 @@ public abstract class ProjectView {
 
   public abstract boolean isManualOrder(String paneId);
   public abstract void setManualOrder(@NotNull String paneId, final boolean enabled);
-  
+
   public abstract boolean isSortByType(String paneId);
   public abstract void setSortByType(@NotNull String paneId, final boolean sortByType);
 

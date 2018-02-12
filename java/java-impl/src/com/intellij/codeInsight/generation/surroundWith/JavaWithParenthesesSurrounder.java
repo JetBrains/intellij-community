@@ -25,10 +25,10 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.IncorrectOperationException;
 
-class JavaWithParenthesesSurrounder extends JavaExpressionSurrounder{
+public class JavaWithParenthesesSurrounder extends JavaExpressionSurrounder{
   @Override
   public boolean isApplicable(PsiExpression expr) {
-    return true;
+    return !PsiType.VOID.equals(expr.getType());
   }
 
   @Override

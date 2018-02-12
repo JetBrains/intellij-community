@@ -35,80 +35,80 @@ import static com.intellij.psi.xml.XmlElementType.*;
 
 public class XmlASTFactory extends ASTFactory {
   @Override
-  public CompositeElement createComposite(final IElementType type) {
+  public CompositeElement createComposite(@NotNull final IElementType type) {
     if (type == XML_TAG) {
       return new XmlTagImpl();
     }
-    else if (type == XML_CONDITIONAL_SECTION) {
+    if (type == XML_CONDITIONAL_SECTION) {
       return new XmlConditionalSectionImpl();
     }
-    else if (type == HTML_TAG) {
+    if (type == HTML_TAG) {
       return new HtmlTagImpl();
     }
-    else if (type == XML_TEXT) {
+    if (type == XML_TEXT) {
       return new XmlTextImpl();
     }
-    else if (type == XML_PROCESSING_INSTRUCTION) {
+    if (type == XML_PROCESSING_INSTRUCTION) {
       return new XmlProcessingInstructionImpl();
     }
-    else if (type == XML_DOCUMENT) {
+    if (type == XML_DOCUMENT) {
       return new XmlDocumentImpl();
     }
-    else if (type == HTML_DOCUMENT) {
+    if (type == HTML_DOCUMENT) {
       return new HtmlDocumentImpl();
     }
-    else if (type == XML_PROLOG) {
+    if (type == XML_PROLOG) {
       return new XmlPrologImpl();
     }
-    else if (type == XML_DECL) {
+    if (type == XML_DECL) {
       return new XmlDeclImpl();
     }
-    else if (type == XML_ATTRIBUTE) {
+    if (type == XML_ATTRIBUTE) {
       return new XmlAttributeImpl();
     }
-    else if (type == XML_ATTRIBUTE_VALUE) {
+    if (type == XML_ATTRIBUTE_VALUE) {
       return new XmlAttributeValueImpl();
     }
-    else if (type == XML_COMMENT) {
+    if (type == XML_COMMENT) {
       return new XmlCommentImpl();
     }
-    else if (type == XML_DOCTYPE) {
+    if (type == XML_DOCTYPE) {
       return new XmlDoctypeImpl();
     }
-    else if (type == XML_MARKUP_DECL) {
+    if (type == XML_MARKUP_DECL) {
       return new XmlMarkupDeclImpl();
     }
-    else if (type == XML_ELEMENT_DECL) {
+    if (type == XML_ELEMENT_DECL) {
       return new XmlElementDeclImpl();
     }
-    else if (type == XML_ENTITY_DECL) {
+    if (type == XML_ENTITY_DECL) {
       return new XmlEntityDeclImpl();
     }
-    else if (type == XML_ATTLIST_DECL) {
+    if (type == XML_ATTLIST_DECL) {
       return new XmlAttlistDeclImpl();
     }
-    else if (type == XML_ATTRIBUTE_DECL) {
+    if (type == XML_ATTRIBUTE_DECL) {
       return new XmlAttributeDeclImpl();
     }
-    else if (type == XML_NOTATION_DECL) {
+    if (type == XML_NOTATION_DECL) {
       return new XmlNotationDeclImpl();
     }
-    else if (type == XML_ELEMENT_CONTENT_SPEC) {
+    if (type == XML_ELEMENT_CONTENT_SPEC) {
       return new XmlElementContentSpecImpl();
     }
-    else if (type == XML_ELEMENT_CONTENT_GROUP) {
+    if (type == XML_ELEMENT_CONTENT_GROUP) {
       return new XmlElementContentGroupImpl();
     }
-    else if (type == XML_ENTITY_REF) {
+    if (type == XML_ENTITY_REF) {
       return new XmlEntityRefImpl();
     }
-    else if (type == XML_ENUMERATED_TYPE) {
+    if (type == XML_ENUMERATED_TYPE) {
       return new XmlEnumeratedTypeImpl();
     }
-    else if (type == XML_CDATA) {
+    if (type == XML_CDATA) {
       return new CompositePsiElement(XML_CDATA) {};
     }
-    else if (type instanceof ITemplateDataElementType) {
+    if (type instanceof ITemplateDataElementType) {
       return new XmlFileElement(type, null);
     }
 
@@ -116,20 +116,20 @@ public class XmlASTFactory extends ASTFactory {
   }
 
   @Override
-  public LazyParseableElement createLazy(ILazyParseableElementType type, CharSequence text) {
+  public LazyParseableElement createLazy(@NotNull ILazyParseableElementType type, CharSequence text) {
     if (type == XML_FILE) {
       return new XmlFileElement(type, text);
     }
-    else if (type == DTD_FILE) {
+    if (type == DTD_FILE) {
       return new XmlFileElement(type, text);
     }
-    else if (type == XHTML_FILE) {
+    if (type == XHTML_FILE) {
       return new XmlFileElement(type, text);
     }
-    else if (type == HTML_FILE) {
+    if (type == HTML_FILE) {
       return new HtmlFileElement(text);
     }
-    else if (type instanceof ITemplateDataElementType) {
+    if (type instanceof ITemplateDataElementType) {
       return new XmlFileElement(type, text);
     }
     return null;

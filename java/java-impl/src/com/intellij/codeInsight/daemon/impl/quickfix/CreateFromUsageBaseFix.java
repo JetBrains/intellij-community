@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -141,7 +142,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
   }
 
   @Nullable("null means unable to open the editor")
-  protected static Editor positionCursor(@NotNull Project project, @NotNull PsiFile targetFile, @NotNull PsiElement element) {
+  public static Editor positionCursor(@NotNull Project project, @NotNull PsiFile targetFile, @NotNull PsiElement element) {
     TextRange range = element.getTextRange();
     LOG.assertTrue(range != null, element.getClass());
     int textOffset = range.getStartOffset();
@@ -177,11 +178,11 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     if (parentClass != null && (parentClass.equals(targetClass) || PsiTreeUtil.isAncestor(targetClass, parentClass, true))) {
       return PsiModifier.PRIVATE;
     } else {
-      return CodeStyleSettingsManager.getSettings(targetClass.getProject()).VISIBILITY;
+      return CodeStyleSettingsManager.getSettings(targetClass.getProject()).getCustomSettings(JavaCodeStyleSettings.class).VISIBILITY;
     }
   }
 
-  protected static boolean shouldCreateStaticMember(PsiReferenceExpression ref, PsiClass targetClass) {
+  public static boolean shouldCreateStaticMember(PsiReferenceExpression ref, PsiClass targetClass) {
 
     PsiExpression qualifierExpression = ref.getQualifierExpression();
     while (qualifierExpression instanceof PsiParenthesizedExpression) {
@@ -241,11 +242,12 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     return null;
   }
 
-  protected static PsiSubstitutor getTargetSubstitutor (PsiElement element) {
+  @NotNull
+  public static PsiSubstitutor getTargetSubstitutor(@Nullable PsiElement element) {
     if (element instanceof PsiNewExpression) {
-      JavaResolveResult result = ((PsiNewExpression)element).getClassOrAnonymousClassReference().advancedResolve(false);
-      PsiSubstitutor substitutor = result.getSubstitutor();
-      return substitutor == null ? PsiSubstitutor.EMPTY : substitutor;
+      PsiJavaCodeReferenceElement reference = ((PsiNewExpression)element).getClassOrAnonymousClassReference();
+      JavaResolveResult result = reference == null ? JavaResolveResult.EMPTY : reference.advancedResolve(false);
+      return result.getSubstitutor();
     }
 
     PsiExpression qualifier = getQualifier(element);
@@ -396,7 +398,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     return psiClass.getManager().isInProject(psiClass);
   }
 
-  protected static void startTemplate (@NotNull Editor editor, final Template template, @NotNull final Project project) {
+  public static void startTemplate (@NotNull Editor editor, final Template template, @NotNull final Project project) {
     startTemplate(editor, template, project, null);
   }
 

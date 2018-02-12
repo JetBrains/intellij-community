@@ -29,6 +29,7 @@ import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
 import org.fest.swing.exception.ComponentLookupException;
+import org.fest.swing.exception.WaitTimedOutError;
 import org.fest.swing.timing.Condition;
 import org.fest.swing.timing.Timeout;
 import org.fest.swing.util.TextMatcher;
@@ -70,19 +71,23 @@ public abstract class ToolWindowFixture {
   protected Content getContent(@NotNull final String displayName) {
     activateAndWaitUntilIsVisible();
     final Ref<Content> contentRef = new Ref<>();
-    pause(new Condition("finding content '" + displayName + "'") {
-      @Override
-      public boolean test() {
-        Content[] contents = getContents();
-        for (Content content : contents) {
-          if (displayName.equals(content.getDisplayName())) {
-            contentRef.set(content);
-            return true;
+    try {
+      pause(new Condition("finding content '" + displayName + "'") {
+        @Override
+        public boolean test() {
+          Content[] contents = getContents();
+          for (Content content : contents) {
+            if (displayName.equals(content.getDisplayName())) {
+              contentRef.set(content);
+              return true;
+            }
           }
+          return false;
         }
-        return false;
-      }
-    }, GuiTestUtil.SHORT_TIMEOUT);
+      }, GuiTestUtil.SHORT_TIMEOUT);
+    } catch (WaitTimedOutError e) {
+      throw new ComponentLookupException("Cannot find content with " + displayName);
+    }
     return contentRef.get();
   }
 

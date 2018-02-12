@@ -21,9 +21,9 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleGrouperKt;
+import com.intellij.openapi.module.ModuleGrouper;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -43,11 +43,13 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.Collection;
 
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
+
 /**
  * @author Vladislav.Soroka
  * @since 2/4/2016
  */
-public class GradleTreeStructureProvider implements TreeStructureProvider {
+public class GradleTreeStructureProvider implements TreeStructureProvider, DumbAware {
   @NotNull
   @Override
   public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent,
@@ -82,7 +84,7 @@ public class GradleTreeStructureProvider implements TreeStructureProvider {
 
     if (parent instanceof GradleProjectViewModuleNode) {
       Module module = ((GradleProjectViewModuleNode)parent).getValue();
-      String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
+      String projectPath = getExternalProjectPath(module);
       Collection<AbstractTreeNode> modifiedChildren = ContainerUtil.newSmartList();
       for (AbstractTreeNode child : children) {
         if (child instanceof PsiDirectoryNode) {
@@ -114,8 +116,8 @@ public class GradleTreeStructureProvider implements TreeStructureProvider {
   }
 
   private static boolean showUnderModuleGroup(Module module) {
-    if (ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
-      String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
+    if (isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
+      String projectPath = getExternalProjectPath(module);
       for (VirtualFile root : ModuleRootManager.getInstance(module).getContentRoots()) {
         if (projectPath != null && !FileUtil.isAncestor(projectPath, root.getPath(), true)) {
           return true;
@@ -147,7 +149,7 @@ public class GradleTreeStructureProvider implements TreeStructureProvider {
 
             final VirtualFile virtualFile = psiDirectory.getVirtualFile();
             final Module module = fileIndex.getModuleForFile(virtualFile);
-            if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
+            if (!isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
               parentNodePair = null;
               break;
             }
@@ -163,6 +165,17 @@ public class GradleTreeStructureProvider implements TreeStructureProvider {
           else {
             parentNodePair = null;
             break;
+          }
+        }
+      }
+      else if (child instanceof PsiDirectoryNode && child.getParent() == null) {
+        PsiDirectory psiDirectory = ((PsiDirectoryNode)child).getValue();
+        if (psiDirectory != null) {
+          VirtualFile directoryFile = psiDirectory.getVirtualFile();
+          GradleModuleDirectoryNode gradleModuleNode = getGradleModuleNode(project, (PsiDirectoryNode)child,
+                                                                           ((PsiDirectoryNode)child).getSettings());
+          if (gradleModuleNode != null) {
+            parentNodePair = Pair.pair(directoryFile, gradleModuleNode);
           }
         }
       }
@@ -202,21 +215,27 @@ public class GradleTreeStructureProvider implements TreeStructureProvider {
 
   @Nullable
   private static String getGradleModuleShortName(Module module) {
-    final String moduleShortName;
-    if (ModuleGrouperKt.isQualifiedModuleNamesEnabled()) {
-      if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return null;
-      moduleShortName = StringUtil.getShortName(module.getName());
+    if (!isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return null;
+
+    String moduleShortName;
+    if (GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(getExternalModuleType(module))) {
+      return GradleProjectResolverUtil.getSourceSetName(module);
     }
     else {
-      moduleShortName = GradleProjectResolverUtil.getSourceSetName(module);
+      moduleShortName = getExternalProjectId(module);
     }
-    return moduleShortName;
+
+    boolean isRootModule = StringUtil.equals(getExternalProjectPath(module), getExternalRootProjectPath(module));
+    if(isRootModule || moduleShortName == null) return moduleShortName;
+
+    moduleShortName = ModuleGrouper.instanceFor(module.getProject()).getShortenedNameByFullModuleName(moduleShortName);
+    return StringUtil.getShortName(moduleShortName, ':');
   }
 
 
   private static class GradleModuleDirectoryNode extends PsiDirectoryNode {
-    private String myModuleShortName;
-    private Module myModule;
+    private final String myModuleShortName;
+    private final Module myModule;
 
     public GradleModuleDirectoryNode(Project project,
                                      PsiDirectory psiDirectory,

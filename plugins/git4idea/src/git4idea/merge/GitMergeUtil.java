@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
+import com.intellij.vcs.ViewUpdateInfoNotification;
 import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
@@ -137,18 +138,18 @@ public class GitMergeUtil {
     GuiUtils.invokeLaterIfNeeded(() -> {
       ProjectLevelVcsManagerEx manager = (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
       UpdateInfoTree tree = manager.showUpdateProjectInfo(files, actionName, actionInfo, false);
-      tree.setBefore(beforeLabel);
-      tree.setAfter(LocalHistory.getInstance().putSystemLabel(project, "After update"));
+      if (tree != null) {
+        tree.setBefore(beforeLabel);
+        tree.setAfter(LocalHistory.getInstance().putSystemLabel(project, "After update"));
+        ViewUpdateInfoNotification.focusUpdateInfoTree(project, tree);
+      }
     }, ModalityState.defaultModalityState());
 
     Collection<String> unmergedNames = files.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).getFiles();
     if (!unmergedNames.isEmpty()) {
       List<VirtualFile> unmerged = mapNotNull(unmergedNames, name -> LocalFileSystem.getInstance().findFileByPath(name));
       GuiUtils.invokeLaterIfNeeded(() -> {
-        GitVcs vcs = GitVcs.getInstance(project);
-        if (vcs != null) {
-          AbstractVcsHelper.getInstance(project).showMergeDialog(unmerged, vcs.getMergeProvider());
-        }
+        AbstractVcsHelper.getInstance(project).showMergeDialog(unmerged, GitVcs.getInstance(project).getMergeProvider());
       }, ModalityState.defaultModalityState());
     }
   }

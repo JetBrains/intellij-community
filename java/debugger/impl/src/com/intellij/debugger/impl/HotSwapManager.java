@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -42,7 +42,7 @@ public class HotSwapManager extends AbstractProjectComponent {
 
   public HotSwapManager(Project project, DebuggerManagerEx manager) {
     super(project);
-    manager.addDebuggerManagerListener(new DebuggerManagerAdapter() {
+    manager.addDebuggerManagerListener(new DebuggerManagerListener() {
       public void sessionCreated(DebuggerSession session) {
         myTimeStamps.put(session, Long.valueOf(System.currentTimeMillis()));
       }
@@ -129,7 +129,7 @@ public class HotSwapManager extends AbstractProjectComponent {
   }
 
   public static Map<DebuggerSession, Map<String, HotSwapFile>> findModifiedClasses(List<DebuggerSession> sessions, Map<String, List<String>> generatedPaths) {
-    final Map<DebuggerSession, Map<String, HotSwapFile>> result = new java.util.HashMap<>();
+    final Map<DebuggerSession, Map<String, HotSwapFile>> result = new HashMap<>();
     List<Pair<DebuggerSession, Long>> sessionWithStamps = new ArrayList<>();
     for (DebuggerSession session : sessions) {
       sessionWithStamps.add(new Pair<>(session, getInstance(session.getProject()).getTimeStamp(session)));
@@ -145,7 +145,7 @@ public class HotSwapManager extends AbstractProjectComponent {
           for (Pair<DebuggerSession, Long> pair : sessionWithStamps) {
             final DebuggerSession session = pair.first;
             if (fileStamp > pair.second) {
-              result.computeIfAbsent(session, k -> new java.util.HashMap<>()).put(qualifiedName, hotswapFile);
+              result.computeIfAbsent(session, k -> new HashMap<>()).put(qualifiedName, hotswapFile);
             }
           }
         }

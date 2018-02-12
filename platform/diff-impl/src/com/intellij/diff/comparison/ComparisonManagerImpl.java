@@ -207,15 +207,6 @@ public class ComparisonManagerImpl extends ComparisonManager {
     return convertIntoDiffFragments(ByChar.compareTwoStep(text1, text2, indicator));
   }
 
-  @NotNull
-  public List<Range> compareLines(@NotNull List<? extends CharSequence> lines1,
-                                  @NotNull List<? extends CharSequence> lines2,
-                                  @NotNull ComparisonPolicy policy,
-                                  @NotNull ProgressIndicator indicator) throws DiffTooBigException {
-    FairDiffIterable iterable = ByLine.compare(lines1, lines2, policy, indicator);
-    return ContainerUtil.newArrayList(iterable.iterateChanges());
-  }
-
   @Override
   public boolean isEquals(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull ComparisonPolicy policy) {
     return ComparisonUtil.isEquals(text1, text2, policy);
@@ -479,7 +470,7 @@ public class ComparisonManagerImpl extends ComparisonManager {
   }
 
   @NotNull
-  private static BitSet collectIgnoredRanges(@NotNull List<TextRange> ignoredRanges) {
+  public static BitSet collectIgnoredRanges(@NotNull List<TextRange> ignoredRanges) {
     BitSet set = new BitSet();
     for (TextRange range : ignoredRanges) {
       set.set(range.getStartOffset(), range.getEndOffset());

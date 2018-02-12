@@ -4,7 +4,7 @@ import java.io.File;
 
 public class TestLocalsNames {
    private static void rename(File file, boolean recursively) {
-      if(file.isDirectory()) {// 22
+      if (file.isDirectory()) {// 22
          long start = System.currentTimeMillis();// 23
          File[] files = file.listFiles();// 25
          File[] var5 = files;

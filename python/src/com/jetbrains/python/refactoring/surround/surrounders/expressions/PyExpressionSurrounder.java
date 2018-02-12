@@ -25,12 +25,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.psi.PyExpression;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Aug 27, 2009
- * Time: 6:06:34 PM
- */
 public abstract class PyExpressionSurrounder implements Surrounder {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.refactoring.surround.surrounders.expressions.PyExpressionSurrounder");
 

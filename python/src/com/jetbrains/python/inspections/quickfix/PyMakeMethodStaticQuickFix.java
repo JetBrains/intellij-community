@@ -22,18 +22,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: ktisha
- */
 public class PyMakeMethodStaticQuickFix implements LocalQuickFix {
   public PyMakeMethodStaticQuickFix() {
   }
@@ -64,7 +61,7 @@ public class PyMakeMethodStaticQuickFix implements LocalQuickFix {
     }
 
     PyElementGenerator generator = PyElementGenerator.getInstance(project);
-    final PyDecoratorList decoratorList = generator.createDecoratorList(decoTexts.toArray(new String[decoTexts.size()]));
+    final PyDecoratorList decoratorList = generator.createDecoratorList(decoTexts.toArray(ArrayUtil.EMPTY_STRING_ARRAY));
 
     if (problemDecoratorList != null) {
       problemDecoratorList.replace(decoratorList);

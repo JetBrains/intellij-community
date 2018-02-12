@@ -99,7 +99,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   }
 
   @Override
-  protected void collectAdditionalElementsToRename(final List<Pair<PsiElement, TextRange>> stringUsages) {
+  protected void collectAdditionalElementsToRename(@NotNull final List<Pair<PsiElement, TextRange>> stringUsages) {
     final String stringToSearch = myElementToRename.getName();
     final PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     if (!StringUtil.isEmptyOrSpaces(stringToSearch)) {
@@ -276,13 +276,13 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
             if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, PsiUtilCore.toPsiElementArray(renamer.getElements()))) return;
             final Runnable performAutomaticRename = () -> {
               CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
-              final UsageInfo[] usageInfos = usages.toArray(new UsageInfo[usages.size()]);
+              final UsageInfo[] usageInfos = usages.toArray(UsageInfo.EMPTY_ARRAY);
               final MultiMap<PsiElement, UsageInfo> classified = RenameProcessor.classifyUsages(renamer.getElements(), usageInfos);
               for (final PsiNamedElement element : renamer.getElements()) {
                 final String newElementName = renamer.getNewName(element);
                 if (newElementName != null) {
                   final Collection<UsageInfo> infos = classified.get(element);
-                  RenameUtil.doRename(element, newElementName, infos.toArray(new UsageInfo[infos.size()]), myProject, RefactoringElementListener.DEAF);
+                  RenameUtil.doRename(element, newElementName, infos.toArray(UsageInfo.EMPTY_ARRAY), myProject, RefactoringElementListener.DEAF);
                 }
               }
             };

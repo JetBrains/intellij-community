@@ -1,7 +1,7 @@
 (a,b,c)=[1,2,4]
 -----
 Groovy script
-  Assignment expression
+  Tuple assignment
     Tuple Assignment Expression
       PsiElement(()('(')
       Reference expression

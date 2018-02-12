@@ -33,6 +33,9 @@ import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.compiler.options.ExcludesConfiguration
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.projectRoots.JavaSdkVersion
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
@@ -40,14 +43,12 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.groovy.config.GroovyFacetUtil
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
-
 /**
  * @author peter
  */
@@ -884,7 +885,7 @@ class AppTest {
     final Ref<Boolean> exceptionFound = Ref.create(Boolean.FALSE)
     ProcessHandler process = runProcess("Bar", myModule, DefaultRunExecutor.class, new ProcessAdapter() {
       @Override
-       void onTextAvailable(ProcessEvent event, Key outputType) {
+       void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         println "stdout: " + event.text
         if (ProcessOutputTypes.SYSTEM != outputType) {
           if (!exceptionFound.get()) {
@@ -902,11 +903,9 @@ class AppTest {
     def anotherModule = addModule("another", true)
     addGroovyLibrary(anotherModule)
 
-    PsiTestUtil.addLibrary(myModule, "junit", GroovyFacetUtil.libDirectory, "junit.jar")
-
-    def cliPath = FileUtil.toCanonicalPath(PluginPathManager.getPluginHomePath("groovy") + "/../../build/lib")
-    PsiTestUtil.addLibrary(myModule, "cli", cliPath, "commons-cli-1.2.jar")
-    PsiTestUtil.addLibrary(anotherModule, "cli", cliPath, "commons-cli-1.2.jar")
+    PsiTestUtil.addProjectLibrary(myModule, "junit", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit3"))
+    PsiTestUtil.addProjectLibrary(myModule, "cli", IntelliJProjectConfiguration.getModuleLibrary("intellij.idea.community.build", "commons-cli").classesPaths)
+    PsiTestUtil.addProjectLibrary(anotherModule, "cli", IntelliJProjectConfiguration.getModuleLibrary("intellij.idea.community.build", "commons-cli").classesPaths)
 
     myFixture.addFileToProject("a.groovy", "class Foo extends GroovyTestCase {}")
     myFixture.addFileToProject("b.groovy", "class Bar extends CliBuilder {}")
@@ -952,8 +951,8 @@ class AppTest {
 
   static class GroovycTest extends GroovyCompilerTest {
     void "test navigate from stub to source"() {
-      GroovyFile groovyFile = (GroovyFile) myFixture.addFileToProject("a.groovy", "class Groovy3 { InvalidType type }")
-      myFixture.addClass("class Java4 extends Groovy3 {}").containingFile
+      myFixture.addFileToProject("a.groovy", "class Groovy3 { InvalidType type }").virtualFile
+      myFixture.addClass("class Java4 extends Groovy3 {}")
 
       def msg = make().find { it.message.contains('InvalidType') }
       assert msg?.virtualFile
@@ -963,7 +962,7 @@ class AppTest {
       assert messages
       def error = messages.find { it.message.contains('InvalidType') }
       assert error?.virtualFile
-      assert groovyFile.classes[0] == GroovyStubNotificationProvider.findClassByStub(project, error.virtualFile)
+      assert myFixture.findClass("Groovy3") == GroovyStubNotificationProvider.findClassByStub(project, error.virtualFile)
     }
 
     void "test config script"() {
@@ -998,6 +997,16 @@ class Bar {}'''
       def jarPath = FileUtil.toCanonicalPath(PluginPathManager.getPluginHomePath("groovy") + "/lib/" + jarName)
 
       GreclipseIdeaCompilerSettings.getSettings(project).greclipsePath = jarPath
+    }
+
+    @Override
+    void runTest() {
+      if (JavaSdkVersionUtil.getJavaSdkVersion(ModuleRootManager.getInstance(myModule).sdk)?.isAtLeast(JavaSdkVersion.JDK_1_9)) {
+        println "Groovy-Eclipse doesn't support JDK9 yet"
+        return
+      }
+
+      super.runTest()
     }
   }
 }

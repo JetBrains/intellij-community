@@ -16,6 +16,7 @@
 package com.intellij.diff.tools.dir;
 
 import com.intellij.diff.DiffContext;
+import com.intellij.diff.DiffContextEx;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DirectoryContent;
@@ -29,62 +30,54 @@ import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.ide.diff.JarFileDiffElement;
 import com.intellij.ide.diff.VirtualFileDiffElement;
 import com.intellij.ide.highlighter.ArchiveFileType;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.diff.impl.dir.DirDiffFrame;
 import com.intellij.openapi.diff.impl.dir.DirDiffPanel;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.diff.impl.dir.DirDiffWindow;
-import com.intellij.openapi.project.DefaultProjectFactory;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 
 class DirDiffViewer implements FrameDiffTool.DiffViewer {
-  @NotNull private final DiffContext myContext;
-  @NotNull private final ContentDiffRequest myRequest;
 
-  @NotNull private final DirDiffPanel myDirDiffPanel;
-  @NotNull private final JPanel myPanel;
+  private final DirDiffPanel myDirDiffPanel;
+  private final JPanel myPanel;
+  private final String myHelpID;
 
-  public DirDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
-    UsageTrigger.trigger("diff.DirDiffViewer");
+  DirDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
+    this(context,
+         createDiffElement(request.getContents().get(0)),
+         createDiffElement(request.getContents().get(1)),
+         ObjectUtils.notNull(context.getUserData(DirDiffSettings.KEY), new DirDiffSettings()),
+         "reference.dialogs.diff.folder");
+  }
 
-    myContext = context;
-    myRequest = request;
+  DirDiffViewer(@NotNull DiffContext context,
+                @NotNull DiffElement element1,
+                @NotNull DiffElement element2,
+                @NotNull DirDiffSettings settings,
+                @Nullable String helpID) {
+    myHelpID = helpID;
 
-    List<DiffContent> contents = request.getContents();
-    DiffElement element1 = createDiffElement(contents.get(0));
-    DiffElement element2 = createDiffElement(contents.get(1));
+    DirDiffTableModel model = new DirDiffTableModel(context.getProject(), element1, element2, settings);
 
-    Project project = context.getProject();
-    if (project == null) project = DefaultProjectFactory.getInstance().getDefaultProject();
-
-    DirDiffTableModel model = new DirDiffTableModel(project, element1, element2, new DirDiffSettings());
-
-    myDirDiffPanel = new DirDiffPanel(model, new DirDiffWindow((DirDiffFrame)null) {
-      @Override
-      public Window getWindow() {
-        return null;
-      }
-
+    myDirDiffPanel = new DirDiffPanel(model, new DirDiffWindow() {
+      @NotNull
       @Override
       public Disposable getDisposable() {
         return DirDiffViewer.this;
       }
 
       @Override
-      public void setTitle(String title) {
+      public void setTitle(@NotNull String title) {
+        if (context instanceof DiffContextEx) ((DiffContextEx)context).setWindowTitle(title);
       }
     });
 
@@ -92,7 +85,7 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
     myPanel.add(myDirDiffPanel.getPanel(), BorderLayout.CENTER);
     DataManager.registerDataProvider(myPanel, dataId -> {
       if (PlatformDataKeys.HELP_ID.is(dataId)) {
-        return "reference.dialogs.diff.folder";
+        return myHelpID;
       }
       return myDirDiffPanel.getData(dataId);
     });
@@ -104,10 +97,7 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
     myDirDiffPanel.setupSplitter();
 
     FrameDiffTool.ToolbarComponents components = new FrameDiffTool.ToolbarComponents();
-    // we return ActionGroup to avoid registering of actions shortcuts
-    // * they are already registered inside DirDiffPanel
-    // * this fixes conflict between FilterPanel and SynchronizeDiff action for the 'Enter' shortcut
-    components.toolbarActions =  Collections.<AnAction>singletonList(new DefaultActionGroup(myDirDiffPanel.getActions()));
+    components.toolbarActions = Arrays.asList(myDirDiffPanel.getActions());
     components.statusPanel = myDirDiffPanel.extractFilterPanel();
     return components;
   }
@@ -190,12 +180,12 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
         }
 
         @Override
-        public DiffElement[] getChildren() throws IOException {
+        public DiffElement[] getChildren() {
           return EMPTY_ARRAY;
         }
 
         @Override
-        public byte[] getContent() throws IOException {
+        public byte[] getContent() {
           return null;
         }
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -37,29 +38,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ExecutorService;
 
-
-class TimeStampedIndentOptions extends IndentOptions {
-  private long myTimeStamp;
-  private int myOriginalIndentOptionsHash;
-
-  public TimeStampedIndentOptions(IndentOptions toCopyFrom, long timeStamp) {
-    copyFrom(toCopyFrom);
-    myTimeStamp = timeStamp;
-  }
-  
-  void setTimeStamp(long timeStamp) {
-    myTimeStamp = timeStamp;
-  }
-
-  public void setOriginalIndentOptionsHash(int originalIndentOptionsHash) {
-    myOriginalIndentOptionsHash = originalIndentOptionsHash;
-  }
-
-  public boolean isOutdated(@NotNull Document document, @NotNull IndentOptions defaultForFile) {
-    return document.getModificationStamp() != myTimeStamp 
-           || defaultForFile.hashCode() != myOriginalIndentOptionsHash;
-  }
-}
 
 class DetectAndAdjustIndentOptionsTask extends ReadTask {
   private static final Logger LOG = Logger.getInstance(DetectAndAdjustIndentOptionsTask.class);
@@ -138,7 +116,7 @@ class DetectAndAdjustIndentOptionsTask extends ReadTask {
   private void logTooLongComputation() {
     PsiFile file = getFile();
     String fileName = file != null ? file.getName() : "";
-    LOG.warn("Indent detection is too long for: " + fileName);
+    LOG.debug("Indent detection is too long for: " + fileName);
   }
 
   private boolean isComputingForTooLong() {
@@ -163,10 +141,9 @@ class DetectAndAdjustIndentOptionsTask extends ReadTask {
 
   @NotNull
   public static TimeStampedIndentOptions getDefaultIndentOptions(@NotNull PsiFile file, @NotNull Document document) {
-    Project project = file.getProject();
     FileType fileType = file.getFileType();
-    CodeStyleSettings manager = CodeStyleSettingsManager.getSettings(project);
-    return new TimeStampedIndentOptions(manager.getIndentOptions(fileType), document.getModificationStamp());
+    CodeStyleSettings settings = CodeStyle.getSettings(file);
+    return new TimeStampedIndentOptions(settings.getIndentOptions(fileType), document.getModificationStamp());
   }
 
   

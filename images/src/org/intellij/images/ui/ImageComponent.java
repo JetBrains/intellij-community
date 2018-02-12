@@ -39,6 +39,8 @@ import java.util.List;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public class ImageComponent extends JComponent {
+    public static final int IMAGE_INSETS = 2;
+
     @NonNls
     public static final String TRANSPARENCY_CHESSBOARD_CELL_SIZE_PROP = "TransparencyChessboard.cellSize";
     @NonNls
@@ -76,6 +78,7 @@ public class ImageComponent extends JComponent {
     private final Chessboard chessboard = new Chessboard();
     private boolean myFileSizeVisible = true;
     private boolean myFileNameVisible = true;
+    private double zoomFactor = 1d;
 
     public ImageComponent() {
         updateUI();
@@ -83,6 +86,14 @@ public class ImageComponent extends JComponent {
 
     public ImageDocument getDocument() {
         return document;
+    }
+
+    public double getZoomFactor() {
+        return zoomFactor;
+    }
+
+    public void setZoomFactor(double zoomFactor) {
+        this.zoomFactor = zoomFactor;
     }
 
     public void setTransparencyChessboardCellSize(int cellSize) {
@@ -211,7 +222,7 @@ public class ImageComponent extends JComponent {
     }
 
     public void setCanvasSize(int width, int height) {
-        setSize(width + 4, height + 4);
+        setSize(width + IMAGE_INSETS * 2, height + IMAGE_INSETS * 2);
     }
 
     public void setCanvasSize(Dimension dimension) {
@@ -220,7 +231,7 @@ public class ImageComponent extends JComponent {
 
     public Dimension getCanvasSize() {
         Dimension size = getSize();
-        return new Dimension(size.width - 4, size.height - 4);
+        return new Dimension(size.width - IMAGE_INSETS * 2, size.height - IMAGE_INSETS * 2);
     }
 
     public String getUIClassID() {
@@ -231,9 +242,9 @@ public class ImageComponent extends JComponent {
         setUI(UIManager.getUI(this));
     }
 
-    private static final class ImageDocumentImpl implements ImageDocument {
+    private static class ImageDocumentImpl implements ImageDocument {
         private final List<ChangeListener> listeners = ContainerUtil.createLockFreeCopyOnWriteList();
-        private BufferedImage image;
+        private ScaledImageProvider imageProvider;
         private String format;
         private Image renderer;
 
@@ -241,13 +252,28 @@ public class ImageComponent extends JComponent {
             return renderer;
         }
 
+        @Override
+        public Image getRenderer(double scale) {
+            return getValue(scale);
+        }
+
         public BufferedImage getValue() {
-            return image;
+            return getValue(1d);
+        }
+
+        @Override
+        public BufferedImage getValue(double scale) {
+            return imageProvider != null ? imageProvider.apply(scale) : null;
         }
 
         public void setValue(BufferedImage image) {
-            this.image = image;
             this.renderer = image != null ? Toolkit.getDefaultToolkit().createImage(image.getSource()) : null;
+            setValue(image != null ? ignore -> image : null);
+        }
+
+        @Override
+        public void setValue(ScaledImageProvider imageProvider) {
+            this.imageProvider = imageProvider;
             fireChangeEvent(new ChangeEvent(this));
         }
 

@@ -2,4 +2,4 @@
 class A    {}
 -----
 class A
-{}
+  {}

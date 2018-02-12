@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,6 +19,7 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.update.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.ViewUpdateInfoNotification;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,15 +27,17 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnChangeProvider;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
-import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.openapi.vcs.update.ActionInfo.INTEGRATE;
 
 public class SvnIntegrateChangesTask extends Task.Backgroundable {
   private final ProjectLevelVcsManagerEx myProjectLevelVcsManager;
@@ -60,15 +49,15 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
   private final List<VcsException> myExceptions;
 
-  private UpdateEventHandler myHandler;
-  private IMerger myMerger;
+  private final UpdateEventHandler myHandler;
+  private final IMerger myMerger;
   private ResolveWorker myResolveWorker;
   private FilePath myMergeTarget;
   private final String myTitle;
-  private boolean myDryRun;
+  private final boolean myDryRun;
 
   public SvnIntegrateChangesTask(final SvnVcs vcs, @NotNull WorkingCopyInfo info, final MergerFactory mergerFactory,
-                                 final SVNURL currentBranchUrl, final String title, final boolean dryRun, String branchName) {
+                                 final Url currentBranchUrl, final String title, final boolean dryRun, String branchName) {
     super(vcs.getProject(), title, true, VcsConfiguration.getInstance(vcs.getProject()).getUpdateOption());
     myDryRun = dryRun;
     myTitle = title;
@@ -154,6 +143,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     }
   }
 
+  @Override
   public void onCancel() {
     onTaskFinished(true);
   }
@@ -237,12 +227,13 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   private void showUpdateTree() {
     RestoreUpdateTree restoreUpdateTree = RestoreUpdateTree.getInstance(myProject);
     // action info is actually NOT used
-    restoreUpdateTree.registerUpdateInformation(myAccumulatedFiles.getUpdatedFiles(), ActionInfo.INTEGRATE);
-    myProjectLevelVcsManager.showUpdateProjectInfo(myAccumulatedFiles.getUpdatedFiles(), myTitle, ActionInfo.INTEGRATE, false);
+    restoreUpdateTree.registerUpdateInformation(myAccumulatedFiles.getUpdatedFiles(), INTEGRATE);
+    UpdateInfoTree tree = myProjectLevelVcsManager.showUpdateProjectInfo(myAccumulatedFiles.getUpdatedFiles(), myTitle, INTEGRATE, false);
+    if (tree != null) ViewUpdateInfoNotification.focusUpdateInfoTree(myProject, tree);
   }
 
   private void stepToNextChangeList() {
-    ApplicationManager.getApplication().invokeLater(() -> ProgressManager.getInstance().run(SvnIntegrateChangesTask.this));
+    ApplicationManager.getApplication().invokeLater(() -> ProgressManager.getInstance().run(this));
   }
 
   /**
@@ -263,6 +254,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
     // for changes to be detected, we need switch to background change list manager update thread and back to dispatch thread
     // so callback is used; ok to be called after VCS update markup closed: no remote operations
+    VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(files, null);
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     changeListManager.invokeAfterUpdate(
       () -> {
@@ -273,8 +265,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
         CommitChangeListDialog.commitChanges(myProject, changes, null, null, myMerger.getComment());
         prepareAndShowResults();
-      }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, myTitle, vcsDirtyScopeManager -> vcsDirtyScopeManager.filePathsDirty(files, null),
-      null);
+      }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, myTitle, null);
   }
 
   @NotNull
@@ -336,6 +327,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   }
 
   private static class FakeGate implements ChangeListManagerGate {
+    @NotNull
     @Override
     public List<LocalChangeList> getListsCopy() {
       throw new UnsupportedOperationException();
@@ -347,33 +339,35 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
       throw new UnsupportedOperationException();
     }
 
+    @NotNull
     @Override
-    public LocalChangeList addChangeList(String name, String comment) {
+    public LocalChangeList addChangeList(@NotNull String name, String comment) {
+      throw new UnsupportedOperationException();
+    }
+
+    @NotNull
+    @Override
+    public LocalChangeList findOrCreateList(@NotNull String name, String comment) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public LocalChangeList findOrCreateList(String name, String comment) {
+    public void editComment(@NotNull String name, String comment) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public void editComment(String name, String comment) {
+    public void editName(@NotNull String oldName, @NotNull String newName) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public void editName(String oldName, String newName) {
+    public void setListsToDisappear(@NotNull Collection<String> names) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public void setListsToDisappear(Collection<String> names) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public FileStatus getStatus(VirtualFile file) {
+    public FileStatus getStatus(@NotNull VirtualFile file) {
       throw new UnsupportedOperationException();
     }
 
@@ -384,7 +378,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     }
 
     @Override
-    public FileStatus getStatus(File file) {
+    public FileStatus getStatus(@NotNull File file) {
       throw new UnsupportedOperationException();
     }
 

@@ -45,7 +45,7 @@ public class SoftWrapHelper {
    * This method allows to answer if caret offset of the given editor points to soft wrap and visual caret position
    * belongs to the visual line where soft wrap end is located.
    *
-   * @return          <code>true</code> if caret offset of the given editor points to visual position that belongs to
+   * @return          {@code true} if caret offset of the given editor points to visual position that belongs to
    *                  visual line where soft wrap end is located
    */
   public static boolean isCaretAfterSoftWrap(CaretImpl caret) {

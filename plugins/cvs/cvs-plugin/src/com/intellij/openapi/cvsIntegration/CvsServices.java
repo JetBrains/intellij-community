@@ -31,7 +31,6 @@ public abstract class CvsServices {
                                             boolean allowFilesSelection, String title, String selectModulePageTitle);
 
   public abstract CvsRepository[] getConfiguredRepositories();
-  public abstract void showDifferencesForFiles(CvsModule first, CvsModule second, Project project) throws Exception;
   public abstract String getScrambledPasswordForPServerCvsRoot(String cvsRoot);
   public abstract boolean saveRepository(CvsRepository repository);
   public abstract void openInEditor(Project project, CvsModule cvsFile);

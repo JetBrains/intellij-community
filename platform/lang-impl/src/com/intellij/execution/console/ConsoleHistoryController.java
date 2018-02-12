@@ -17,6 +17,7 @@ package com.intellij.execution.console;
 
 import com.intellij.AppTopics;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.execution.console.ConsoleHistoryModel.Entry;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
@@ -36,14 +37,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
@@ -55,16 +54,15 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.io.SafeFileOutputStream;
 import com.intellij.xml.util.XmlStringUtil;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.xml.XppReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmlpull.v1.XmlSerializer;
 
@@ -79,30 +77,18 @@ import java.util.*;
  */
 public class ConsoleHistoryController {
 
-  private static final Key<ConsoleHistoryController> CONTROLLER_KEY = Key.create("CONTROLLER_KEY");
-
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.console.ConsoleHistoryController");
 
-  /** @noinspection MismatchedQueryAndUpdateOfCollection*/
-  private final static FactoryMap<String, ConsoleHistoryModel> ourModels = new FactoryMap<String, ConsoleHistoryModel>() {
-    @Override
-    protected Map<String, ConsoleHistoryModel> createMap() {
-      return ContainerUtil.createConcurrentWeakValueMap();
-    }
 
-    @Nullable
-    @Override
-    protected ConsoleHistoryModel create(String key) {
-      return new ConsoleHistoryModel(null);
-    }
-  };
+  private final static Map<LanguageConsoleView, ConsoleHistoryController> ourControllers =
+    ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
 
   private final LanguageConsoleView myConsole;
   private final AnAction myHistoryNext = new MyAction(true, getKeystrokesUpDown(true));
   private final AnAction myHistoryPrev = new MyAction(false, getKeystrokesUpDown(false));
   private final AnAction myBrowseHistory = new MyBrowseAction();
   private boolean myMultiline;
-  private final ModelHelper myHelper;
+  private ModelHelper myHelper;
   private long myLastSaveStamp;
 
   @Deprecated
@@ -111,17 +97,24 @@ public class ConsoleHistoryController {
   }
 
   public ConsoleHistoryController(@NotNull ConsoleRootType rootType, @Nullable String persistenceId, @NotNull LanguageConsoleView console) {
-    this(rootType, persistenceId, console, ourModels.get(getHistoryName(rootType, fixNullPersistenceId(persistenceId, console))));
+    this(rootType, fixNullPersistenceId(persistenceId, console), console,
+         ConsoleHistoryModelProvider.findModelForConsole(fixNullPersistenceId(persistenceId, console), console));
   }
 
-  private ConsoleHistoryController(@NotNull ConsoleRootType rootType, @Nullable String persistenceId,
-                                  @NotNull LanguageConsoleView console, @NotNull ConsoleHistoryModel model) {
-    myHelper = new ModelHelper(rootType, fixNullPersistenceId(persistenceId, console), model.copy());
+  private ConsoleHistoryController(@NotNull ConsoleRootType rootType, @NotNull String persistenceId,
+                                   @NotNull LanguageConsoleView console, @NotNull ConsoleHistoryModel model) {
+    myHelper = new ModelHelper(rootType, persistenceId, model);
     myConsole = console;
   }
 
-  public static ConsoleHistoryController getController(LanguageConsoleView console) {
-    return console.getVirtualFile().getUserData(CONTROLLER_KEY);
+  @TestOnly
+  public void setModel(@NotNull ConsoleHistoryModel model){
+    myHelper = new ModelHelper(myHelper.myRootType, myHelper.myId, model);
+  }
+
+  //@Nullable
+  public static ConsoleHistoryController getController(@NotNull LanguageConsoleView console) {
+    return ourControllers.get(console);
   }
 
   public static void addToHistory(@NotNull LanguageConsoleView consoleView, @Nullable String command) {
@@ -177,11 +170,16 @@ public class ConsoleHistoryController {
     ApplicationManager.getApplication().getMessageBus().connect(myConsole).subscribe(ProjectEx.ProjectSaved.TOPIC, listener);
     myConsole.getProject().getMessageBus().connect(myConsole).subscribe(AppTopics.FILE_DOCUMENT_SYNC, listener);
 
-    myConsole.getVirtualFile().putUserData(CONTROLLER_KEY, this);
+    ConsoleHistoryController original = ourControllers.put(myConsole, this);
+    LOG.assertTrue(original == null,
+                   "History controller already installed for: " + myConsole.getTitle());
     Disposer.register(myConsole, new Disposable() {
       @Override
       public void dispose() {
-        myConsole.getVirtualFile().putUserData(CONTROLLER_KEY, null);
+        ConsoleHistoryController controller = getController(myConsole);
+        if (controller == ConsoleHistoryController.this) {
+          ourControllers.remove(myConsole);
+        }
         saveHistory();
       }
     });
@@ -219,7 +217,7 @@ public class ConsoleHistoryController {
     boolean result = myHelper.loadHistory(id, myConsole.getVirtualFile());
     String userValue = myHelper.getContent();
     if (prev != userValue && userValue != null) {
-      setConsoleText(userValue, false, false);
+      setConsoleText(new Entry(userValue, -1), false, false);
     }
     return result;
   }
@@ -243,8 +241,8 @@ public class ConsoleHistoryController {
     return myBrowseHistory;
   }
 
-  protected void setConsoleText(final String command, final boolean storeUserText, final boolean regularMode) {
-    if (regularMode && myMultiline && StringUtil.isEmptyOrSpaces(command)) return;
+  protected void setConsoleText(final Entry command, final boolean storeUserText, final boolean regularMode) {
+    if (regularMode && myMultiline && StringUtil.isEmptyOrSpaces(command.getText())) return;
     final Editor editor = myConsole.getCurrentEditor();
     final Document document = editor.getDocument();
     new WriteCommandAction.Simple(myConsole.getProject()) {
@@ -252,10 +250,11 @@ public class ConsoleHistoryController {
       public void run() {
         if (storeUserText) {
           String text = document.getText();
-          if (Comparing.equal(command, text) && myHelper.getContent() != null) return;
+          if (Comparing.equal(command.getText(), text) && myHelper.getContent() != null) return;
           myHelper.setContent(text);
+          myHelper.getModel().setContent(text);
         }
-        String text = StringUtil.notNullize(command);
+        String text = StringUtil.notNullize(command.getText());
         int offset;
         if (regularMode) {
           if (myMultiline) {
@@ -263,7 +262,7 @@ public class ConsoleHistoryController {
           }
           else {
             document.setText(text);
-            offset = document.getTextLength();
+            offset = command.getOffset() == -1 ? document.getTextLength() : command.getOffset();
           }
         }
         else {
@@ -307,15 +306,10 @@ public class ConsoleHistoryController {
 
     @Override
     public void actionPerformed(final AnActionEvent e) {
-      String command;
-      if (myNext) {
-        command = getModel().getHistoryNext();
-        if (!myMultiline && command == null) return;
-      }
-      else {
-        command = ObjectUtils.chooseNotNull(getModel().getHistoryPrev(), myMultiline ? "" : StringUtil.notNullize(myHelper.getContent()));
-      }
-      setConsoleText(command, myNext && !getModel().hasHistory(false), true);
+      boolean hasHistory = getModel().hasHistory(); // need to check before next line's side effect
+      Entry command = myNext ? getModel().getHistoryNext() : getModel().getHistoryPrev();
+      if (!myMultiline && command == null) return;
+      setConsoleText(command, myNext && !hasHistory, true);
     }
 
     @Override
@@ -349,7 +343,7 @@ public class ConsoleHistoryController {
     else {
       final int lineCount = document.getLineCount();
       return (lineCount == 0 || document.getLineNumber(caretModel.getOffset()) == lineCount - 1) &&
-             StringUtil.isEmptyOrSpaces(document.getText().substring(caretModel.getOffset()));
+             (StringUtil.isEmptyOrSpaces(document.getText().substring(caretModel.getOffset())) || myHelper.getModel().prevOnLastLine());
     }
   }
 
@@ -365,10 +359,7 @@ public class ConsoleHistoryController {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      String s1 = KeymapUtil.getFirstKeyboardShortcutText(myHistoryNext);
-      String s2 = KeymapUtil.getFirstKeyboardShortcutText(myHistoryPrev);
-      String title = myConsole.getTitle() + " History" +
-                     (StringUtil.isNotEmpty(s1) && StringUtil.isNotEmpty(s2) ? " (" + s1 + " and " + s2 + " while in editor)" : "");
+      String title = myConsole.getTitle() + " History";
       final ContentChooser<String> chooser = new ContentChooser<String>(myConsole.getProject(), title, true, true) {
 
         @Override
@@ -381,6 +372,7 @@ public class ConsoleHistoryController {
           return content;
         }
 
+        @NotNull
         @Override
         protected List<String> getContents() {
           List<String> entries = getModel().getEntries();
@@ -397,7 +389,7 @@ public class ConsoleHistoryController {
           PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(
             "a." + consoleFile.getFileType().getDefaultExtension(),
             language,
-            StringUtil.convertLineSeparators(new String(text)), false, true);
+            StringUtil.convertLineSeparators(text), false, true);
           VirtualFile virtualFile = psiFile.getViewProvider().getVirtualFile();
           if (virtualFile instanceof LightVirtualFile) ((LightVirtualFile)virtualFile).setWritable(false);
           Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
@@ -417,7 +409,7 @@ public class ConsoleHistoryController {
       chooser.setSplitterOrientation(false);
       chooser.setSelectedIndex(Math.max(0, getModel().getHistorySize() - getModel().getCurrentIndex() - 1));
       if (chooser.showAndGet() && myConsole.getCurrentEditor().getComponent().isShowing()) {
-        setConsoleText(chooser.getSelectedText(), false, true);
+        setConsoleText(new Entry(chooser.getSelectedText(), -1), false, true);
       }
     }
   }

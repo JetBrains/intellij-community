@@ -16,14 +16,10 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.actionSystem.impl.PresentationFactory;
-import com.intellij.openapi.actionSystem.impl.Utils;
-import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,21 +27,17 @@ import java.util.List;
 
 public class UnversionedViewDialog extends SpecificFilesViewDialog {
 
-  private AnAction myDeleteActionWithCustomShortcut;
-
   public UnversionedViewDialog(@NotNull Project project) {
     super(project, "Unversioned Files", ChangesListView.UNVERSIONED_FILES_DATA_KEY,
           ChangeListManagerImpl.getInstanceImpl(project).getUnversionedFiles());
   }
 
   @Override
-  protected void addCustomActions(@NotNull DefaultActionGroup group, @NotNull ActionToolbar actionToolbar) {
-    List<AnAction> actions = registerUnversionedActionsShortcuts(actionToolbar.getToolbarDataContext(), myView);
-    // special shortcut for deleting a file
-    actions.add(myDeleteActionWithCustomShortcut =
-                  EmptyAction.registerWithShortcutSet("ChangesView.DeleteUnversioned.From.Dialog", CommonShortcuts.getDelete(), myView));
+  protected void addCustomActions(@NotNull DefaultActionGroup group) {
+    registerUnversionedActionsShortcuts(myView);
 
-    refreshViewAfterActionPerformed(actions);
+    EmptyAction.registerWithShortcutSet("ChangesView.DeleteUnversioned.From.Dialog", CommonShortcuts.getDelete(), myView);
+
     group.add(getUnversionedActionGroup());
     final DefaultActionGroup secondGroup = new DefaultActionGroup();
     secondGroup.addAll(getUnversionedActionGroup());
@@ -53,38 +45,13 @@ public class UnversionedViewDialog extends SpecificFilesViewDialog {
     myView.setMenuActions(secondGroup);
   }
 
-  private void refreshViewAfterActionPerformed(@NotNull final List<AnAction> actions) {
-    ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
-      @Override
-      public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-        if (actions.contains(action)) {
-          refreshView();
-          if (myDeleteActionWithCustomShortcut.equals(action)) {
-            // We can not utilize passed "dataContext" here as it results in
-            // "cannot share data context between Swing events" assertion.
-            refreshChanges(myProject, getBrowserBase(myView));
-          }
-        }
-      }
-    }, myDisposable);
-  }
-
   @NotNull
   public static ActionGroup getUnversionedActionGroup() {
     return (ActionGroup)ActionManager.getInstance().getAction("Unversioned.Files.Dialog");
   }
 
-  @NotNull
-  public static List<AnAction> registerUnversionedActionsShortcuts(@NotNull DataContext dataContext, @NotNull JComponent component) {
-    ActionManager manager = ActionManager.getInstance();
-    List<AnAction> actions = ContainerUtil.newArrayList();
-
-    Utils.expandActionGroup(LaterInvocator.isInModalContext(), getUnversionedActionGroup(), actions, new PresentationFactory(), dataContext, "", manager);
-    for (AnAction action : actions) {
-      action.registerCustomShortcutSet(action.getShortcutSet(), component);
-    }
-
-    return actions;
+  public static void registerUnversionedActionsShortcuts(@NotNull JComponent component) {
+    ActionUtil.recursiveRegisterShortcutSet(getUnversionedActionGroup(), component, null);
   }
 
   @NotNull

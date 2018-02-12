@@ -1,20 +1,9 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.actions.ResizeToolWindowAction;
 import com.intellij.ide.actions.ToggleToolbarAction;
 import com.intellij.idea.ActionsBundle;
@@ -41,6 +30,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
@@ -73,7 +63,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   /**
    * Catches all event from tool window and modifies decorator's appearance.
    */
-  @NonNls private static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
+  @NonNls static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
   @NonNls public static final String TOGGLE_PINNED_MODE_ACTION_ID = "TogglePinnedMode";
   @NonNls public static final String TOGGLE_DOCK_MODE_ACTION_ID = "ToggleDockMode";
   @NonNls public static final String TOGGLE_FLOATING_MODE_ACTION_ID = "ToggleFloatingMode";
@@ -82,7 +72,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   @NonNls private static final String TOGGLE_CONTENT_UI_TYPE_ACTION_ID = "ToggleContentUiTypeMode";
 
   private ToolWindowHeader myHeader;
-  private ActionGroup myToggleToolbarGroup;
+  private final ActionGroup myToggleToolbarGroup;
 
   InternalDecorator(final Project project, @NotNull WindowInfoImpl info, final ToolWindowImpl toolWindow, boolean dumbAware) {
     super(new BorderLayout());
@@ -130,6 +120,11 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     init(dumbAware);
 
     apply(info);
+  }
+
+  @Override
+  public String toString() {
+    return myToolWindow.getId();
   }
 
   public boolean isFocused() {
@@ -348,26 +343,36 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       ToolWindowManager toolWindowManager =  ToolWindowManager.getInstance(myProject);
       if (!(toolWindowManager instanceof ToolWindowManagerImpl)
           || !((ToolWindowManagerImpl)toolWindowManager).isToolWindowRegistered(myInfo.getId())
-          || myWindow.getType() == ToolWindowType.FLOATING) {
+          || myWindow.getType() == ToolWindowType.FLOATING
+          || myWindow.getType() == ToolWindowType.WINDOWED) {
         return new Insets(0, 0, 0, 0);
       }
       ToolWindowAnchor anchor = myWindow.getAnchor();
       Component component = myWindow.getComponent();
       Container parent = component.getParent();
+      boolean isSplitter = false;
+      boolean isFirstInSplitter = false;
+      boolean isVerticalSplitter = false;
       while(parent != null) {
         if (parent instanceof Splitter) {
           Splitter splitter = (Splitter)parent;
-          boolean isFirst = splitter.getFirstComponent() == component;
-          boolean isVertical = splitter.isVertical();
-          return new Insets(0,
-                            anchor == ToolWindowAnchor.RIGHT || (!isVertical && !isFirst) ? 1 : 0,
-                            (isVertical && isFirst) ? 1 : 0,
-                            anchor == ToolWindowAnchor.LEFT || (!isVertical && isFirst) ? 1 : 0);
+          isSplitter = true;
+          isFirstInSplitter = splitter.getFirstComponent() == component;
+          isVerticalSplitter = splitter.isVertical();
+          break;
         }
         component = parent;
         parent = component.getParent();
       }
-      return new Insets(0, anchor == ToolWindowAnchor.RIGHT ? 1 : 0, anchor == ToolWindowAnchor.TOP ? 1 : 0, anchor == ToolWindowAnchor.LEFT ? 1 : 0);
+
+      int top =
+        isSplitter && (anchor == ToolWindowAnchor.RIGHT || anchor == ToolWindowAnchor.LEFT) && myInfo.isSplit() && isVerticalSplitter
+        ? -1
+        : 0;
+      int left = anchor == ToolWindowAnchor.RIGHT && (!isSplitter || isVerticalSplitter || isFirstInSplitter) ? 1 : 0;
+      int bottom = 0;
+      int right = anchor == ToolWindowAnchor.LEFT && (!isSplitter || isVerticalSplitter || !isFirstInSplitter) ? 1 : 0;
+      return new Insets(top, left, bottom, right);
     }
 
     @Override
@@ -421,6 +426,28 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       group.addSeparator();
       group.add(new HideAction());
     }
+
+    group.addSeparator();
+    group.add(new ContextHelpAction() {
+      @Nullable
+      @Override
+      protected String getHelpId(DataContext dataContext) {
+        Content content = myToolWindow.getContentManager().getSelectedContent();
+        if (content != null) {
+          String helpId = content.getHelpId();
+          if (helpId != null) {
+            return helpId;
+          }
+        }
+        return myToolWindow.getHelpId();
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        super.update(e);
+        e.getPresentation().setEnabledAndVisible(getHelpId(e.getDataContext()) != null);
+      }
+    });
     return group;
   }
 
@@ -612,14 +639,6 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
         fireTypeChanged(ToolWindowType.WINDOWED);
       }
     }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      if (SystemInfo.isMac) {
-        e.getPresentation().setEnabledAndVisible(false);
-      }
-    }
   }
 
   private final class ToggleSideModeAction extends ToggleAction implements DumbAware {
@@ -635,11 +654,6 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     @Override
     public final void setSelected(final AnActionEvent event, final boolean flag) {
       fireSideStatusChanged(flag);
-    }
-
-    @Override
-    public void update(@NotNull final AnActionEvent e) {
-      super.update(e);
     }
   }
 
@@ -821,5 +835,26 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
   public void setAdditionalGearActions(@Nullable ActionGroup additionalGearActions) {
     myAdditionalGearActions = additionalGearActions;
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleInternalDecorator();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleInternalDecorator extends AccessibleJPanel {
+    @Override
+    public String getAccessibleName() {
+      String name = super.getAccessibleName();
+      if (name == null) {
+        String title = StringUtil.defaultIfEmpty(myToolWindow.getTitle(), myToolWindow.getStripeTitle());
+        title = StringUtil.defaultIfEmpty(title, myToolWindow.getId());
+        name = StringUtil.notNullize(title) + " Tool Window";
+      }
+      return name;
+    }
   }
 }

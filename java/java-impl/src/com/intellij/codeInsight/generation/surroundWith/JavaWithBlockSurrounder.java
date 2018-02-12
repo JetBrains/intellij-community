@@ -23,7 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 
-class JavaWithBlockSurrounder extends JavaStatementsSurrounder{
+public class JavaWithBlockSurrounder extends JavaStatementsSurrounder{
   @Override
   public String getTemplateDescription() {
     return "{ }";

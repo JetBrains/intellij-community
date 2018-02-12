@@ -126,7 +126,7 @@ public class TraceableDisposable {
       KILL_TRACE.printStackTrace(out);
     }
     out.println("-------------Own trace:");
-    new DisposalException("").printStackTrace(out);
+    new DisposalException(""+System.identityHashCode(this)).printStackTrace(out);
     out.flush();
     return s.toString();
   }

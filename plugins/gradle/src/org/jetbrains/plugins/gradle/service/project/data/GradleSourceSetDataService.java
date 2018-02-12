@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.service.project.data;
 
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
@@ -76,6 +77,6 @@ public class GradleSourceSetDataService extends AbstractModuleDataService<Gradle
   @Override
   protected void setModuleOptions(Module module, DataNode<GradleSourceSetData> moduleDataNode) {
     super.setModuleOptions(module, moduleDataNode);
-    module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_TYPE_KEY, GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY);
+    ExternalSystemModulePropertyManager.getInstance(module).setExternalModuleType(GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY);
   }
 }

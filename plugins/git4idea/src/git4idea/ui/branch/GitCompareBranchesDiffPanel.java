@@ -17,7 +17,7 @@ package git4idea.ui.branch;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
+import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.components.JBLabel;
@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
+import java.util.Collection;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
@@ -98,16 +99,17 @@ class GitCompareBranchesDiffPanel extends JPanel {
     return ContainerUtil.map(changes, change -> new Change(change.getAfterRevision(), change.getBeforeRevision()));
   }
 
-  private static class MyChangesBrowser extends ChangesBrowser {
+  private static class MyChangesBrowser extends SimpleChangesBrowser {
     public MyChangesBrowser(@NotNull Project project, @NotNull List<Change> changes) {
-      super(project, null, changes, null, false, true, null, ChangesBrowser.MyUseCase.COMMITTED_CHANGES, null);
+      super(project, false, true);
+      setChangesToDisplay(changes);
     }
 
     @Override
-    public void setChangesToDisplay(final List<Change> changes) {
-      List<Change> oldSelection = myViewer.getSelectedChanges();
+    public void setChangesToDisplay(@NotNull Collection<? extends Change> changes) {
+      List<Change> oldSelection = getSelectedChanges();
       super.setChangesToDisplay(changes);
-      myViewer.select(swapRevisions(oldSelection));
+      myViewer.setSelectedChanges(swapRevisions(oldSelection));
     }
   }
 }

@@ -56,7 +56,7 @@ class FooClass {
     <warning descr="Cannot assign 'Closure<Integer>' to 'Class'">c</warning> = { int a, int b -> a + b }
     <warning descr="Cannot assign 'Object' to 'Class'">c</warning> = o
     <warning descr="Cannot assign 'Matcher' to 'Class'">c</warning> = "aaa" =~ /aaa/
-    c = []
+    <warning descr="Cannot assign 'List' to 'Class'">c</warning> = []
     c = "java.util.List"
     c = List
   }
@@ -82,7 +82,7 @@ class FooClass {
     Class <warning descr="Cannot assign 'Closure<Integer>' to 'Class'">c17</warning> = { int a, int b -> a + b }
     Class <warning descr="Cannot assign 'Object' to 'Class'">c18</warning> = o
     Class <warning descr="Cannot assign 'Matcher' to 'Class'">c19</warning> = "aaa" =~ /aaa/
-    Class c20 = []
+    Class <warning descr="Cannot assign 'List' to 'Class'">c20</warning> = []
     Class c21 = "java.util.List"
     Class c22 = List
   }

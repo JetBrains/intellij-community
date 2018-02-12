@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.xdebugger.impl.actions;
 
@@ -30,7 +18,10 @@ import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopupStepEx;
+import com.intellij.openapi.ui.popup.ListSeparator;
+import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -92,8 +83,8 @@ public class AttachToLocalProcessAction extends AnAction {
           }
           ProcessListStep step = new ProcessListStep(items, project);
 
-          final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
-          final JList mainList = ((ListPopupImpl) popup).getList();
+          final ListPopupImpl popup = (ListPopupImpl) JBPopupFactory.getInstance().createListPopup(step);
+          final JList mainList = popup.getList();
 
           ListSelectionListener listener = event -> {
             if (event.getValueIsAdjusting()) return;
@@ -106,9 +97,12 @@ public class AttachToLocalProcessAction extends AnAction {
             }
 
             if (item instanceof AttachItem) {
-              String debuggerName = ((AttachItem)item).getSelectedDebugger().getDebuggerDisplayName();
+              AttachItem attachItem = (AttachItem)item;
+              String debuggerName = attachItem.getSelectedDebugger().getDebuggerDisplayName();
               debuggerName = StringUtil.shortenTextWithEllipsis(debuggerName, 50, 0);
-              ((ListPopupImpl)popup).setCaption(XDebuggerBundle.message("xdebugger.attach.toLocal.popup.title", debuggerName));
+              popup.setCaption(XDebuggerBundle.message("xdebugger.attach.toLocal.popup.title", debuggerName));
+              String description = attachItem.getTooltipText(project);
+              popup.setAdText(description != null ? description : " ");
             }
           };
           popup.addListSelectionListener(listener);
@@ -261,10 +255,7 @@ public class AttachToLocalProcessAction extends AnAction {
 
     @Override
     public int hashCode() {
-      int result = myProcessInfo.hashCode();
-      result = 31 * result + myGroup.hashCode();
-      result = 31 * result + myDebuggerName.hashCode();
-      return result;
+      return Objects.hash(myProcessInfo, myGroup, myDebuggerName);
     }
   }
 
@@ -272,7 +263,7 @@ public class AttachToLocalProcessAction extends AnAction {
     @NotNull private final XLocalAttachGroup myGroup;
     private final boolean myIsFirstInGroup;
     @NotNull private final String myGroupName;
-    @NotNull private UserDataHolder myDataHolder;
+    @NotNull private final UserDataHolder myDataHolder;
     @NotNull private final ProcessInfo myProcessInfo;
     @NotNull private final List<XLocalAttachDebugger> myDebuggers;
     private final int mySelectedDebugger;
@@ -336,6 +327,11 @@ public class AttachToLocalProcessAction extends AnAction {
     public String getText(@NotNull Project project) {
       String shortenedText = StringUtil.shortenTextWithEllipsis(myGroup.getProcessDisplayText(project, myProcessInfo, myDataHolder), 200, 0);
       return myProcessInfo.getPid() + " " + shortenedText;
+    }
+
+    @Nullable
+    public String getTooltipText(@NotNull Project project)  {
+      return myGroup.getProcessDescription(project, myProcessInfo, myDataHolder);
     }
 
     @NotNull
@@ -425,6 +421,10 @@ public class AttachToLocalProcessAction extends AnAction {
     @Nullable
     @Override
     public String getTooltipTextFor(AttachItem value) {
+      String tooltipText = value.getTooltipText(myProject);
+      if (tooltipText != null) {
+        return tooltipText;
+      }
       return value.getText(myProject);
     }
 

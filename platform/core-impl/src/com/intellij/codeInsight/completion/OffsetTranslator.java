@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -38,14 +38,15 @@ class OffsetTranslator implements Disposable {
   private final Document myCopyDocument;
   private final LinkedList<DocumentEvent> myTranslation = new LinkedList<>();
 
-  OffsetTranslator(final Document originalDocument, final PsiFile originalFile, Document copyDocument) {
+  OffsetTranslator(Document originalDocument, PsiFile originalFile, Document copyDocument, int start, int end, String replacement) {
     myOriginalFile = originalFile;
     myCopyDocument = copyDocument;
     myCopyDocument.putUserData(RANGE_TRANSLATION, this);
+    myTranslation.addFirst(new DocumentEventImpl(copyDocument, start, originalDocument.getImmutableCharSequence().subSequence(start, end), replacement, 0, false));
     Disposer.register(originalFile.getProject(), this);
 
     final LinkedList<DocumentEvent> sinceCommit = new LinkedList<>();
-    originalDocument.addDocumentListener(new DocumentAdapter() {
+    originalDocument.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         if (isUpToDate()) {
@@ -56,15 +57,6 @@ class OffsetTranslator implements Disposable {
       }
     }, this);
     
-    myCopyDocument.addDocumentListener(new DocumentAdapter() {
-      @Override
-      public void documentChanged(DocumentEvent e) {
-        if (isUpToDate()) {
-          myTranslation.addFirst(e);
-        }
-      }
-    }, this);
-
     originalFile.getProject().getMessageBus().connect(this).subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
       long lastModCount = originalFile.getViewProvider().getModificationStamp();
       @Override

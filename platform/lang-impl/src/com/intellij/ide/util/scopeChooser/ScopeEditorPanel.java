@@ -17,6 +17,7 @@ package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.impl.FlattenModulesToggleAction;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -58,6 +59,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -209,6 +211,11 @@ public class ScopeEditorPanel {
     else if (!invalidScopeInside(myCurrentScope)){
       myErrorMessage = null;
     }
+  }
+
+  private void createUIComponents() {
+    myPatternField = new RawCommandLineEditor(text -> Arrays.asList(text.split("\\|\\|")),
+                                              strings -> StringUtil.join(strings, "||")); 
   }
 
   private static boolean invalidScopeInside(PackageSet currentScope) {
@@ -412,7 +419,10 @@ public class ScopeEditorPanel {
     final Module[] modules = ModuleManager.getInstance(myProject).getModules();
     if (modules.length > 1) {
       group.add(new ShowModulesAction(update));
-      group.add(new ShowModuleGroupsAction(update));
+      if (ModuleManager.getInstance(myProject).hasModuleGroups()) {
+        group.add(new ShowModuleGroupsAction(update));
+      }
+      group.add(createFlattenModulesAction(update));
     }
     group.add(new FilterLegalsAction(update));
 
@@ -420,8 +430,17 @@ public class ScopeEditorPanel {
       group.add(new ChooseScopeTypeAction(update));
     }
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ScopeEditor", group, true);
     return toolbar.getComponent();
+  }
+
+  @NotNull
+  private FlattenModulesToggleAction createFlattenModulesAction(Runnable update) {
+    return new FlattenModulesToggleAction(myProject, () -> DependencyUISettings.getInstance().UI_SHOW_MODULES,
+                                          () -> !DependencyUISettings.getInstance().UI_SHOW_MODULE_GROUPS, value -> {
+      DependencyUISettings.getInstance().UI_SHOW_MODULE_GROUPS = !value;
+      update.run();
+    });
   }
 
   private void rebuild(final boolean updateText, @Nullable final Runnable runnable, final boolean requestFocus, final int delayMillis){

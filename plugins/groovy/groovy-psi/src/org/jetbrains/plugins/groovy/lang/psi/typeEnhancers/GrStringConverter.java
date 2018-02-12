@@ -24,9 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.Convers
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
-/**
- * Created by Max Medvedev on 8/15/13
- */
 public class GrStringConverter extends GrTypeConverter {
 
   @Override

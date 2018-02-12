@@ -28,9 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrAnnotationCollector;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-/**
- * Created by Max Medvedev on 25/03/14
- */
 public class AnnotationChecker {
   private final AnnotationHolder myHolder;
 

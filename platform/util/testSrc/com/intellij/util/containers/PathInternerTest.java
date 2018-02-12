@@ -17,7 +17,6 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import junit.framework.TestCase;
 
@@ -25,6 +24,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.HashSet;
 
 /**
  * @author peter
@@ -60,15 +60,15 @@ public class PathInternerTest extends TestCase {
   }
 
   public void testContains() {
-    String path = "/home/peter/work/idea/community/out/production/vcs-impl/com/intellij/openapi/vcs/changes/committed/CommittedChangesViewManager$1.class";
+    String path = "/home/peter/work/idea/community/out/production/intellij.platform.vcs.impl/com/intellij/openapi/vcs/changes/committed/CommittedChangesViewManager$1.class";
     interner.addPath(path);
     assertTrue(interner.containsPath(path));
     assertFalse(interner.containsPath("/foo/foo"));
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  public static void main(String[] args) throws InterruptedException, IOException {
-    final HashSet<String> hs = new HashSet<>();
+  public static void main(String[] args) throws IOException {
+    final java.util.HashSet<String> hs = new java.util.HashSet<>();
     FileUtil.processFilesRecursively(new File(PathManager.getHomePath()), file -> {
       hs.add(file.getPath());
       return true;
@@ -116,7 +116,7 @@ public class PathInternerTest extends TestCase {
     }
   }
 
-  private static void checkTrove(HashSet<String> hs, THashSet<String> thm) {
+  private static void checkTrove(java.util.HashSet<String> hs, THashSet<String> thm) {
     for (String s : hs) {
       if (!thm.contains(new String(s))) {
         throw new AssertionError();

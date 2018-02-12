@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.completion.CompletionUtilCore;
@@ -63,10 +49,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.XmlCharsetDetector;
 import com.intellij.xml.*;
-import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
-import com.intellij.xml.impl.schema.TypeDescriptor;
-import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
-import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
+import com.intellij.xml.impl.schema.*;
 import com.intellij.xml.index.IndexedRelevantResource;
 import com.intellij.xml.index.XmlNamespaceIndex;
 import com.intellij.xml.index.XsdNamespaceBuilder;
@@ -171,6 +154,7 @@ public class XmlUtil {
     XHTML4_SCHEMA_LOCATION = VfsUtilCore.urlToPath(VfsUtilCore.toIdeaUrl(FileUtil.unquote(xhtml4SchemaLocationUrl.toExternalForm()), false));
   }
 
+  @NotNull
   public static String getSchemaLocation(XmlTag tag, final String namespace) {
     while (tag != null) {
       String schemaLocation = tag.getAttributeValue(SCHEMA_LOCATION_ATT, XML_SCHEMA_INSTANCE_URI);
@@ -366,6 +350,10 @@ public class XmlUtil {
       return (char)code;
     }
     catch (NumberFormatException e) {
+      return 0;
+    }
+    catch (NullPointerException e) {
+      LOG.error("Cannot parse ref: '" + text + "'", e);
       return 0;
     }
   }
@@ -813,7 +801,7 @@ public class XmlUtil {
       }
     }
     else {
-      final XmlAttribute[] attributes = tag.getAttributes();
+      final XmlAttribute[] attributes = tag.getAttributes().clone();
       ContainerUtil.sort(list);
       Arrays.sort(attributes, Comparator.comparing(XmlAttribute::getName));
 
@@ -1417,6 +1405,12 @@ public class XmlUtil {
       descriptorFile = containingFile;
     }
     return descriptorFile;
+  }
+
+  public static boolean isTagDefinedByNamespace(@NotNull final XmlTag xmlTag) {
+    final XmlNSDescriptor nsDescriptor = xmlTag.getNSDescriptor(xmlTag.getNamespace(), false);
+    final XmlElementDescriptor descriptor = nsDescriptor != null ? nsDescriptor.getElementDescriptor(xmlTag) : null;
+    return descriptor != null && !(descriptor instanceof AnyXmlElementDescriptor);
   }
 
   public interface DuplicationInfoProvider<T extends PsiElement> {

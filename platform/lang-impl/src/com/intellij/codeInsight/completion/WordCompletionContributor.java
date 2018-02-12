@@ -23,7 +23,6 @@ import com.intellij.lang.LanguageWordCompletion;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
@@ -48,7 +47,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
   @Override
   public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
     if (parameters.getCompletionType() == CompletionType.BASIC && shouldPerformWordCompletion(parameters)) {
-      addWordCompletionVariants(result, parameters, Collections.<String>emptySet());
+      addWordCompletionVariants(result, parameters, Collections.emptySet());
     }
   }
 

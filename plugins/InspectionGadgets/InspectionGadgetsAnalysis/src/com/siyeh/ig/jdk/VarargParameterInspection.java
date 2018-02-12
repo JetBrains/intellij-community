@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -115,9 +116,8 @@ public class VarargParameterInspection extends BaseInspection {
           modifyCall(reference, typeText, parameters.length - 1);
         }
         final PsiType arrayType = type.toArrayType();
-        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(lastParameter.getProject());
-        final PsiTypeElement newTypeElement = factory.createTypeElement(arrayType);
-        final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, "java.lang.SafeVarargs");
+        final PsiTypeElement newTypeElement = JavaPsiFacade.getElementFactory(lastParameter.getProject()).createTypeElement(arrayType);
+        final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, CommonClassNames.JAVA_LANG_SAFE_VARARGS);
         if (annotation != null) {
           annotation.delete();
         }
@@ -126,33 +126,33 @@ public class VarargParameterInspection extends BaseInspection {
     }
 
     public static void modifyCall(PsiReference reference, String arrayTypeText, int indexOfFirstVarargArgument) {
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)reference.getElement();
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)referenceExpression.getParent();
-      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+      final PsiElement element = reference.getElement();
+      final PsiCall call = (PsiCall)(element instanceof PsiCall ? element : element.getParent());
+      JavaResolveResult result = call.resolveMethodGenerics();
+      if (result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).getPertinentApplicabilityLevel() != MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
+        return;
+      }
+      final PsiExpressionList argumentList = call.getArgumentList();
+      if (argumentList == null) {
+        return;
+      }
       final PsiExpression[] arguments = argumentList.getExpressions();
-      @NonNls final StringBuilder builder = new StringBuilder("new ");
-      builder.append(arrayTypeText);
-      builder.append("[]{");
+      @NonNls final StringBuilder builder = new StringBuilder("new ").append(arrayTypeText).append("[]{");
       if (arguments.length > indexOfFirstVarargArgument) {
         final PsiExpression firstArgument = arguments[indexOfFirstVarargArgument];
-        final String firstArgumentText = firstArgument.getText();
-        builder.append(firstArgumentText);
+        builder.append(firstArgument.getText());
         for (int i = indexOfFirstVarargArgument + 1; i < arguments.length; i++) {
           builder.append(',').append(arguments[i].getText());
         }
       }
       builder.append('}');
-      final Project project = referenceExpression.getProject();
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final PsiExpression arrayExpression = factory.createExpressionFromText(builder.toString(), referenceExpression);
+      final Project project = element.getProject();
+      final PsiExpression arrayExpression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(builder.toString(), element);
       if (arguments.length > indexOfFirstVarargArgument) {
         final PsiExpression firstArgument = arguments[indexOfFirstVarargArgument];
         argumentList.deleteChildRange(firstArgument, arguments[arguments.length - 1]);
-        argumentList.add(arrayExpression);
       }
-      else {
-        argumentList.add(arrayExpression);
-      }
+      argumentList.add(arrayExpression);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(argumentList);
       CodeStyleManager.getInstance(project).reformat(argumentList);
     }

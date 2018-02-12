@@ -1,23 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
 import com.google.common.net.InetAddresses
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.SystemProperties
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.net.NetUtils
@@ -26,8 +15,11 @@ import io.netty.bootstrap.BootstrapUtil
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.buffer.ByteBuf
 import io.netty.channel.*
+import io.netty.channel.kqueue.KQueueEventLoopGroup
+import io.netty.channel.kqueue.KQueueServerSocketChannel
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.oio.OioEventLoopGroup
+import io.netty.channel.socket.ServerSocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.channel.socket.oio.OioServerSocketChannel
 import io.netty.channel.socket.oio.OioSocketChannel
@@ -37,16 +29,17 @@ import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.ssl.SslHandler
 import io.netty.resolver.ResolvedAddressTypes
 import io.netty.util.concurrent.GenericFutureListener
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.Promise
 import org.jetbrains.ide.PooledThreadExecutor
+import org.jetbrains.io.BuiltInServer
 import org.jetbrains.io.NettyUtil
 import java.io.IOException
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.NetworkInterface
 import java.net.Socket
+import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
+import java.util.function.Consumer
 
 // used in Go
 fun oioClientBootstrap(): Bootstrap {
@@ -67,9 +60,16 @@ inline fun Bootstrap.handler(crossinline task: (Channel) -> Unit): Bootstrap {
 fun serverBootstrap(group: EventLoopGroup): ServerBootstrap {
   val bootstrap = ServerBootstrap()
     .group(group)
-    .channel(if (group is NioEventLoopGroup) NioServerSocketChannel::class.java else OioServerSocketChannel::class.java)
+    .channel(group.serverSocketChannelClass())
   bootstrap.childOption(ChannelOption.TCP_NODELAY, true).childOption(ChannelOption.SO_KEEPALIVE, true)
   return bootstrap
+}
+
+private fun EventLoopGroup.serverSocketChannelClass(): Class<out ServerSocketChannel> = when {
+  this is NioEventLoopGroup -> NioServerSocketChannel::class.java
+  this is OioEventLoopGroup -> OioServerSocketChannel::class.java
+  SystemInfo.isMacOSSierra && this is KQueueEventLoopGroup -> KQueueServerSocketChannel::class.java
+  else -> throw Exception("Unknown event loop group type: ${this.javaClass.name}")
 }
 
 inline fun ChannelFuture.addChannelListener(crossinline listener: (future: ChannelFuture) -> Unit) {
@@ -95,25 +95,28 @@ fun Channel.closeAndShutdownEventLoop() {
   }
 }
 
+/**
+ * Synchronously connects to remote address.
+ */
 @JvmOverloads
-fun Bootstrap.connect(remoteAddress: InetSocketAddress, promise: AsyncPromise<*>? = null, maxAttemptCount: Int = NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT, stopCondition: Condition<Void>? = null): Channel? {
+fun Bootstrap.connectRetrying(remoteAddress: InetSocketAddress,
+                              maxAttemptCount: Int = NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT,
+                              stopCondition: Condition<Void>? = null): ConnectToChannelResult {
   try {
-    return doConnect(this, remoteAddress, promise, maxAttemptCount, stopCondition ?: Conditions.alwaysFalse<Void>())
+    return doConnect(this, remoteAddress, maxAttemptCount, stopCondition ?: Conditions.alwaysFalse<Void>())
   }
   catch (e: Throwable) {
-    promise?.setError(e)
-    return null
+    return ConnectToChannelResult(e)
   }
 }
 
 private fun doConnect(bootstrap: Bootstrap,
                        remoteAddress: InetSocketAddress,
-                       promise: AsyncPromise<*>?,
                        maxAttemptCount: Int,
-                       stopCondition: Condition<Void>): Channel? {
+                       stopCondition: Condition<Void>): ConnectToChannelResult {
   var attemptCount = 0
-  if (bootstrap.config().group() is NioEventLoopGroup) {
-    return connectNio(bootstrap, remoteAddress, promise, maxAttemptCount, stopCondition, attemptCount)
+  if (bootstrap.config().group() !is OioEventLoopGroup) {
+    return connectNio(bootstrap, remoteAddress, maxAttemptCount, stopCondition, attemptCount)
   }
 
   bootstrap.validate()
@@ -122,26 +125,25 @@ private fun doConnect(bootstrap: Bootstrap,
     try {
       val channel = OioSocketChannel(Socket(remoteAddress.address, remoteAddress.port))
       BootstrapUtil.initAndRegister(channel, bootstrap).sync()
-      return channel
+      return ConnectToChannelResult(channel)
     }
     catch (e: IOException) {
-      if (stopCondition.value(null) || promise != null && promise.state != Promise.State.PENDING) {
-        return null
+      if (stopCondition.value(null)) {
+        return ConnectToChannelResult()
       }
       else if (maxAttemptCount == -1) {
-        if (sleep(promise, 300)) {
-          return null
+        sleep(300)?.let {
+          return ConnectToChannelResult(it)
         }
         attemptCount++
       }
       else if (++attemptCount < maxAttemptCount) {
-        if (sleep(promise, attemptCount * NettyUtil.MIN_START_TIME)) {
-          return null
+        sleep(attemptCount * NettyUtil.MIN_START_TIME)?.let {
+          return ConnectToChannelResult(it)
         }
       }
       else {
-        promise?.setError(e)
-        return null
+        return ConnectToChannelResult(e)
       }
     }
   }
@@ -149,10 +151,9 @@ private fun doConnect(bootstrap: Bootstrap,
 
 private fun connectNio(bootstrap: Bootstrap,
                        remoteAddress: InetSocketAddress,
-                       promise: AsyncPromise<*>?,
                        maxAttemptCount: Int,
                        stopCondition: Condition<Void>,
-                       _attemptCount: Int): Channel? {
+                       _attemptCount: Int): ConnectToChannelResult {
   var attemptCount = _attemptCount
   while (true) {
     val future = bootstrap.connect(remoteAddress).awaitUninterruptibly()
@@ -160,49 +161,45 @@ private fun connectNio(bootstrap: Bootstrap,
       if (!future.channel().isOpen) {
         continue
       }
-      return future.channel()
+      return ConnectToChannelResult(future.channel())
     }
-    else if (stopCondition.value(null) || promise != null && promise.state == Promise.State.REJECTED) {
-      return null
+    else if (stopCondition.value(null)) {
+      return ConnectToChannelResult()
     }
     else if (maxAttemptCount == -1) {
-      if (sleep(promise, 300)) {
-        return null
+      sleep(300)?.let {
+        return ConnectToChannelResult(it)
       }
       attemptCount++
     }
     else if (++attemptCount < maxAttemptCount) {
-      if (sleep(promise, attemptCount * NettyUtil.MIN_START_TIME)) {
-        return null
+      sleep(attemptCount * NettyUtil.MIN_START_TIME)?.let {
+        return ConnectToChannelResult(it)
       }
     }
     else {
       @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
       val cause = future.cause()
-      if (promise != null) {
-        if (cause == null) {
-          promise.setError("Cannot connect: unknown error")
-        }
-        else {
-          promise.setError(cause)
-        }
+      if (cause == null) {
+        return ConnectToChannelResult("Cannot connect: unknown error")
       }
-      return null
+      else {
+        return ConnectToChannelResult(cause)
+      }
     }
   }
 }
 
-fun sleep(promise: AsyncPromise<*>?, time: Int): Boolean {
+private fun sleep(time: Int): String? {
   try {
     //noinspection BusyWait
     Thread.sleep(time.toLong())
   }
   catch (ignored: InterruptedException) {
-    promise?.setError("Interrupted")
-    return true
+    return "Interrupted"
   }
 
-  return false
+  return null
 }
 
 val Channel.uriScheme: String
@@ -266,7 +263,9 @@ fun isLocalHost(host: String, onlyAnyOrLoopback: Boolean, hostsOnly: Boolean = f
 }
 
 @JvmOverloads
-fun HttpRequest.isLocalOrigin(onlyAnyOrLoopback: Boolean = true, hostsOnly: Boolean = false) = parseAndCheckIsLocalHost(origin, onlyAnyOrLoopback, hostsOnly) && parseAndCheckIsLocalHost(referrer, onlyAnyOrLoopback, hostsOnly)
+fun HttpRequest.isLocalOrigin(onlyAnyOrLoopback: Boolean = true, hostsOnly: Boolean = false): Boolean {
+  return parseAndCheckIsLocalHost(origin, onlyAnyOrLoopback, hostsOnly) && parseAndCheckIsLocalHost(referrer, onlyAnyOrLoopback, hostsOnly)
+}
 
 private fun isTrustedChromeExtension(url: Url): Boolean {
   return url.scheme == "chrome-extension" && (url.authority == "hmhgeddbohgjknpmjagkdomcpobmllji" || url.authority == "offnedcbhjldheanlbojaefbfbllddna")
@@ -302,6 +301,65 @@ fun HttpRequest.isWriteFromBrowserWithoutOrigin(): Boolean {
   return origin.isNullOrEmpty() && isRegularBrowser() && (method == HttpMethod.POST || method == HttpMethod.PATCH || method == HttpMethod.PUT || method == HttpMethod.DELETE)
 }
 
-fun ByteBuf.readUtf8() = toString(Charsets.UTF_8)
+fun ByteBuf.readUtf8(): String = toString(Charsets.UTF_8)
 
 fun ByteBuf.writeUtf8(data: CharSequence) = writeCharSequence(data, Charsets.UTF_8)
+
+fun MultiThreadEventLoopGroup(workerCount: Int, threadFactory: ThreadFactory): MultithreadEventLoopGroup {
+  if (SystemInfo.isMacOSSierra && SystemProperties.getBooleanProperty("native.net.io", false)) {
+    try {
+      return KQueueEventLoopGroup(workerCount, threadFactory)
+    }
+    catch (e: Throwable) {
+      logger<BuiltInServer>().warn("Cannot use native event loop group", e)
+    }
+  }
+
+  return NioEventLoopGroup(workerCount, threadFactory)
+}
+
+fun MultiThreadEventLoopGroup(workerCount: Int): MultithreadEventLoopGroup {
+  if (SystemInfo.isMacOSSierra && SystemProperties.getBooleanProperty("native.net.io", false)) {
+    try {
+      return KQueueEventLoopGroup(workerCount, PooledThreadExecutor.INSTANCE)
+    }
+    catch (e: Throwable) {
+      // error instead of warn to easy spot it
+      logger<BuiltInServer>().error("Cannot use native event loop group", e)
+    }
+  }
+
+  return NioEventLoopGroup(workerCount, PooledThreadExecutor.INSTANCE)
+}
+
+class ConnectToChannelResult {
+  val channel: Channel?
+  private val message: String?
+  private val throwable: Throwable?
+
+  constructor(channel: Channel? = null) : this(channel, null, null)
+
+  constructor(message: String): this(null, message, null)
+
+  constructor(error: Throwable) : this(null, null, error)
+
+  private constructor(channel: Channel?,  message: String?, throwable: Throwable?) {
+    this.channel = channel
+    this.message = message
+    this.throwable = throwable
+  }
+
+  fun handleError(consumer: Consumer<String>) : ConnectToChannelResult {
+    if (message != null) {
+      consumer.accept(message)
+    }
+    return this
+  }
+
+  fun handleThrowable(consumer: Consumer<Throwable>) : ConnectToChannelResult {
+    if (throwable != null) {
+      consumer.accept(throwable)
+    }
+    return this
+  }
+}

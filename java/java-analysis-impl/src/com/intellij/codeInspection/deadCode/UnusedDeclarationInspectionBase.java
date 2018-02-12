@@ -37,16 +37,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +58,7 @@ import java.util.*;
  * @since Oct 12, 2001
  */
 public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#" + UnusedDeclarationInspectionBase.class.getName());
+  private static final Logger LOG = Logger.getInstance(UnusedDeclarationInspectionBase.class);
 
   public boolean ADD_MAINS_TO_ENTRIES = true;
   public boolean ADD_APPLET_TO_ENTRIES = true;
@@ -186,7 +185,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     if (!method.isConstructor()) return false;
     if (!method.hasModifierProperty(PsiModifier.PUBLIC)) return false;
     final PsiParameterList parameterList = method.getParameterList();
-    if (parameterList.getParametersCount() != 0) return false;
+    if (!parameterList.isEmpty()) return false;
     final PsiClass aClass = method.getContainingClass();
     return aClass == null || isExternalizable(aClass, refClass);
   }
@@ -333,16 +332,13 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
                   }
                 };
 
-                if (helper.processUsagesInNonJavaFiles(qualifiedName, processor, globalSearchScope)) {
-                  final PsiReference reference = ReferencesSearch.search(psiClass, globalSearchScope).findFirst();
-                  if (reference != null) {
+                helper.processUsagesInNonJavaFiles(qualifiedName, processor, globalSearchScope);
+
+                //references from java-like are already in graph or
+                //they would be checked during GlobalJavaInspectionContextImpl.performPostRunActivities
+                for (RefElement element : refElement.getInReferences()) {
+                  if (!(element instanceof RefJavaElement)) {
                     getEntryPointsManager(globalContext).addEntryPoint(refElement, false);
-                    for (PsiMethod method : psiClass.getMethods()) {
-                      final RefElement refMethod = refManager.getReference(method);
-                      if (refMethod != null) {
-                        getEntryPointsManager(globalContext).addEntryPoint(refMethod, false);
-                      }
-                    }
                   }
                 }
               }
@@ -358,7 +354,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
   public boolean isEntryPoint(@NotNull RefElement owner) {
     final PsiElement element = owner.getElement();
-    if (isImplicitUsage(element)) return true;
+    if (RefUtil.isImplicitUsage(element)) return true;
     if (element instanceof PsiModifierListOwner) {
       final EntryPointsManager entryPointsManager = EntryPointsManager.getInstance(element.getProject());
       if (entryPointsManager.isEntryPoint(element)) {
@@ -386,11 +382,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     return false;
   }
 
-  private static boolean isImplicitUsage(PsiElement element) {
-    return element instanceof PsiField ? RefUtil.isImplicitRead(element)
-                                       : RefUtil.isImplicitUsage(element);
-  }
-
   public boolean isEntryPoint(@NotNull PsiElement element) {
     final Project project = element.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
@@ -408,7 +399,9 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       if (isAddServletEnabled() && servlet != null && aClass.isInheritor(servlet, true)) {
         return true;
       }
-      if (isAddMainsEnabled() && PsiMethodUtil.hasMainMethod(aClass)) return true;
+      if (isAddMainsEnabled()) {
+        if (hasMainMethodDeep(aClass)) return true;
+      }
     }
     if (element instanceof PsiModifierListOwner) {
       final EntryPointsManager entryPointsManager = EntryPointsManager.getInstance(project);
@@ -419,11 +412,32 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         return true;
       }
     }
-    return isImplicitUsage(element);
+    return RefUtil.isImplicitUsage(element);
+  }
+
+  private static boolean hasMainMethodDeep(PsiClass aClass) {
+    if (PsiMethodUtil.hasMainMethod(aClass)) return true;
+    for (PsiClass innerClass : aClass.getInnerClasses()) {
+      if (innerClass.hasModifierProperty(PsiModifier.STATIC) && PsiMethodUtil.hasMainMethod(innerClass)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public boolean isGlobalEnabledInEditor() {
     return myEnabledInEditor;
+  }
+
+  @NotNull
+  public static UnusedDeclarationInspectionBase findUnusedDeclarationInspection(@NotNull PsiElement element) {
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
+    UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(SHORT_NAME, element);
+    return tool == null ? new UnusedDeclarationInspectionBase() : tool;
+  }
+
+  public static boolean isDeclaredAsEntryPoint(@NotNull PsiElement method) {
+    return findUnusedDeclarationInspection(method).isEntryPoint(method);
   }
 
   private static class StrictUnreferencedFilter extends UnreferencedFilter {
@@ -691,12 +705,12 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
 
     private void processDelayedMethods() {
-      RefClass[] instClasses = myInstantiatedClasses.toArray(new RefClass[myInstantiatedClasses.size()]);
+      RefClass[] instClasses = myInstantiatedClasses.toArray(new RefClass[0]);
       for (RefClass refClass : instClasses) {
         if (isClassInstantiated(refClass)) {
           Set<RefMethod> methods = myClassIDtoMethods.get(refClass);
           if (methods != null) {
-            RefMethod[] arMethods = methods.toArray(new RefMethod[methods.size()]);
+            RefMethod[] arMethods = methods.toArray(new RefMethod[0]);
             for (RefMethod arMethod : arMethods) {
               arMethod.accept(this);
             }

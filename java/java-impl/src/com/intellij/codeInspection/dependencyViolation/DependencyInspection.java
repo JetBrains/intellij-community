@@ -32,10 +32,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * User: anna
- * Date: Feb 6, 2005
- */
 public class DependencyInspection extends DependencyInspectionBase {
 
   @Override

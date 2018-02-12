@@ -17,6 +17,6 @@ def get_opt_type(opt):
     if opt.type in ["int", "long"]:
         return "int"
     elif opt.choices:
-        assert isinstance(opt.choices, list), "Choices should be list"
+        assert isinstance(opt.choices,  (list, tuple)), "Choices should be list or tuple"
         return opt.choices
     return "str"

@@ -26,6 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -187,7 +188,8 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
         return modifiableModel;
       }
     }
-    throw new AssertionError();
+    throw new AssertionError("profile " + profile.getName() + " is not present among profile panels" +
+                             Arrays.toString(myProfilePanels.stream().map(p -> p.getProfile().getName()).toArray(String[]::new)));
   }
 
   public static List<InspectionProfileImpl> getSortedProfiles(InspectionProfileManager appManager,

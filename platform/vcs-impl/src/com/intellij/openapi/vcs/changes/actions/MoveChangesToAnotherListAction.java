@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -138,7 +137,7 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
     List<VirtualFile> unversionedFiles = ContainerUtil.newArrayList();
     final List<VirtualFile> changedFiles = ContainerUtil.newArrayList();
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-    if (files != null) {
+    if (files != null && changesList.isEmpty()) {
       changesList.addAll(getChangesForSelectedFiles(project, files, unversionedFiles, changedFiles));
     }
 
@@ -157,11 +156,7 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
     ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
 
     if (!window.isVisible()) {
-      window.activate(new Runnable() {
-        public void run() {
-          ChangesViewManager.getInstance(project).selectFile(file);
-        }
-      });
+      window.activate(() -> ChangesViewManager.getInstance(project).selectFile(file));
     }
   }
 
@@ -187,10 +182,13 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
   @Nullable
   private static LocalChangeList askTargetList(@NotNull Project project, @NotNull Collection<Change> changes) {
     ChangeListManagerImpl listManager = ChangeListManagerImpl.getInstanceImpl(project);
-    List<LocalChangeList> preferredLists = getPreferredLists(listManager.getChangeListsCopy(), changes);
-    List<LocalChangeList> listsForChooser =
-      preferredLists.isEmpty() ? Collections.singletonList(listManager.getDefaultChangeList()) : preferredLists;
-    ChangeListChooser chooser = new ChangeListChooser(project, listsForChooser, guessPreferredList(preferredLists),
+    List<LocalChangeList> nonAffectedLists = getNonAffectedLists(listManager.getChangeListsCopy(), changes);
+    List<LocalChangeList> suggestedLists = nonAffectedLists.isEmpty()
+                                           ? Collections.singletonList(listManager.getDefaultChangeList())
+                                           : nonAffectedLists;
+    ChangeList defaultSelection = guessPreferredList(nonAffectedLists);
+
+    ChangeListChooser chooser = new ChangeListChooser(project, suggestedLists, defaultSelection,
                                                       ActionsBundle.message("action.ChangesView.Move.text"), null);
     chooser.show();
 
@@ -198,7 +196,7 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
   }
 
   @Nullable
-  private static ChangeList guessPreferredList(@NotNull List<LocalChangeList> lists) {
+  public static ChangeList guessPreferredList(@NotNull List<LocalChangeList> lists) {
     LocalChangeList activeChangeList = ContainerUtil.find(lists, LocalChangeList::isDefault);
     if (activeChangeList != null) return activeChangeList;
 
@@ -208,14 +206,9 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
   }
 
   @NotNull
-  private static List<LocalChangeList> getPreferredLists(@NotNull List<LocalChangeList> lists, @NotNull Collection<Change> changes) {
+  private static List<LocalChangeList> getNonAffectedLists(@NotNull List<LocalChangeList> lists, @NotNull Collection<Change> changes) {
     final Set<Change> changesSet = ContainerUtil.newHashSet(changes);
 
-    return ContainerUtil.findAll(lists, new Condition<LocalChangeList>() {
-      @Override
-      public boolean value(@NotNull LocalChangeList list) {
-        return !ContainerUtil.intersects(changesSet, list.getChanges());
-      }
-    });
+    return ContainerUtil.findAll(lists, list -> !ContainerUtil.intersects(changesSet, list.getChanges()));
   }
 }

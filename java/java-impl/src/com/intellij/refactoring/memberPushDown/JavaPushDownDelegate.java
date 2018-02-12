@@ -43,7 +43,7 @@ import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +54,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
   public static final Key<Boolean> REMOVE_QUALIFIER_KEY = Key.create("REMOVE_QUALIFIER_KEY");
   public static final Key<PsiClass> REPLACE_QUALIFIER_KEY = Key.create("REPLACE_QUALIFIER_KEY");
 
-  private static final Logger LOG = Logger.getInstance("#" + JavaPushDownDelegate.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaPushDownDelegate.class);
 
   @Override
   public boolean isApplicableForSource(@NotNull PsiElement sourceClass) {
@@ -192,23 +192,27 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
       final List<PsiReference> refsToRebind = new ArrayList<>();
       final PsiModifierList list = member.getModifierList();
       LOG.assertTrue(list != null);
-      if (list.hasModifierProperty(PsiModifier.STATIC)) {
+      if (list.hasModifierProperty(PsiModifier.STATIC) && !PsiUtil.isLocalOrAnonymousClass(targetClass)) {
         for (final PsiReference reference : ReferencesSearch.search(member)) {
           final PsiElement element = reference.getElement();
           if (element instanceof PsiReferenceExpression) {
             final PsiExpression qualifierExpression = ((PsiReferenceExpression)element).getQualifierExpression();
-            if (qualifierExpression instanceof PsiReferenceExpression && !(((PsiReferenceExpression)qualifierExpression).resolve() instanceof PsiClass)) {
+            if (qualifierExpression instanceof PsiReferenceExpression && !(((PsiReferenceExpression)qualifierExpression).resolve() instanceof PsiClass) || qualifierExpression == null) {
               continue;
             }
           }
           refsToRebind.add(reference);
         }
       }
+      if (member instanceof PsiField) {
+        ((PsiField)member).normalizeDeclaration();
+      }
+
       member = (PsiMember)member.copy();
+      RefactoringUtil.renameConflictingTypeParameters(member, targetClass);
       RefactoringUtil.replaceMovedMemberTypeParameters(member, PsiUtil.typeParametersIterable(sourceClass), substitutor, factory);
       PsiMember newMember = null;
       if (member instanceof PsiField) {
-        ((PsiField)member).normalizeDeclaration();
         if (sourceClass.isInterface() && !targetClass.isInterface()) {
           PsiUtil.setModifierProperty(member, PsiModifier.PUBLIC, true);
           PsiUtil.setModifierProperty(member, PsiModifier.STATIC, true);
@@ -340,7 +344,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
 
   @Override
   public PsiElement createSubClass(PsiElement aClass, NewSubClassData subClassData) {
-    return CreateSubclassAction.createSubclass((PsiClass)aClass, (PsiDirectory)subClassData.getContext(), subClassData.getNewClassName());
+    return CreateSubclassAction.createSubclass((PsiClass)aClass, (PsiDirectory)subClassData.getContext(), subClassData.getNewClassName(), false);
   }
 
   private static boolean leaveOverrideAnnotation(PsiClass aClass, PsiSubstitutor substitutor, PsiMethod method) {

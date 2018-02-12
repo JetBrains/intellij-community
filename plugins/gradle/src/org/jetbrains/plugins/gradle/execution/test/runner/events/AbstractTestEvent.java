@@ -15,18 +15,21 @@
  */
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
+import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleConsoleProperties;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+
+import static com.intellij.util.io.URLUtil.SCHEME_SEPARATOR;
 
 /**
  * @author Vladislav.Soroka
@@ -57,7 +60,9 @@ public abstract class AbstractTestEvent implements TestEvent {
 
   @NotNull
   protected String findLocationUrl(@Nullable String name, @NotNull String fqClassName) {
-    return GradleRunnerUtil.getTestLocationUrl(name, fqClassName);
+    return name == null
+           ? JavaTestLocator.TEST_PROTOCOL + SCHEME_SEPARATOR + fqClassName
+           : JavaTestLocator.TEST_PROTOCOL + SCHEME_SEPARATOR + StringUtil.getQualifiedName(fqClassName, name);
   }
 
   protected void addToInvokeLater(final Runnable runnable) {

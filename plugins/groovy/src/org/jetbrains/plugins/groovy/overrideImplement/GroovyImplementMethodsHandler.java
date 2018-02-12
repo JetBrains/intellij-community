@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,9 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.util.GroovyOverrideImplementExploreUtil;
+import org.jetbrains.plugins.groovy.util.GroovyOverrideImplementUtil;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 14.09.2007
- */
 public class GroovyImplementMethodsHandler implements LanguageCodeInsightActionHandler {
   @Override
   public boolean isValidFor(Editor editor, PsiFile psiFile) {

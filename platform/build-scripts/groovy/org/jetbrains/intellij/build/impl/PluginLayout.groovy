@@ -16,9 +16,13 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.MultiValuesMap
+import com.intellij.openapi.util.Pair
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.ResourcesGenerator
 
+import java.util.function.Function
 /**
- * Described layout of a plugin in the product distribution
+ * Describes layout of a plugin in the product distribution
  *
  * @author nik
  */
@@ -27,7 +31,8 @@ class PluginLayout extends BaseLayout {
   String directoryName
   final Set<String> optionalModules = new LinkedHashSet<>()
   private boolean doNotCreateSeparateJarForLocalizableResources
-  String version
+  Function<BuildContext, String> versionEvaluator = { BuildContext context -> context.buildNumber } as Function<BuildContext, String>
+  boolean directoryNameSetExplicitly
 
   private PluginLayout(String mainModule) {
     this.mainModule = mainModule
@@ -49,8 +54,17 @@ class PluginLayout extends BaseLayout {
     body.delegate = spec
     body()
     layout.directoryName = spec.directoryName
-    layout.version = spec.version
+    if (spec.version != null) {
+      layout.versionEvaluator = { BuildContext context -> spec.version } as Function<BuildContext, String>
+    }
     spec.withModule(mainModuleName, spec.mainJarName)
+    if (spec.mainJarNameSetExplicitly) {
+      layout.explicitlySetJarPaths.add(spec.mainJarName)
+    }
+    else {
+      layout.explicitlySetJarPaths.remove(spec.mainJarName)
+    }
+    layout.directoryNameSetExplicitly = spec.directoryNameSetExplicitly
     if (layout.doNotCreateSeparateJarForLocalizableResources) {
       layout.modulesWithLocalizableResourcesInCommonJar.clear()
     }
@@ -72,26 +86,52 @@ class PluginLayout extends BaseLayout {
     return result
   }
 
+
   static class PluginLayoutSpec extends BaseLayoutSpec {
     private final PluginLayout layout
+    private String directoryName
+    private String mainJarName
+    private boolean mainJarNameSetExplicitly
+    private boolean directoryNameSetExplicitly
+
     /**
-     * Name of the directory (under 'plugins' directory) where the plugin should be placed
-     */
-    String directoryName
-    /**
-     * Name of the main plugin JAR file
-     */
-    String mainJarName
-    /**
-     * Version of the plugin if it differs from the global build number
+     * @deprecated use {@link #withCustomVersion(java.util.function.Function)} instead
      */
     String version
 
     PluginLayoutSpec(PluginLayout layout) {
       super(layout)
       this.layout = layout
-      directoryName = layout.mainModule
-      mainJarName = "${layout.mainModule}.jar"
+      directoryName = convertModuleNameToFileName(layout.mainModule)
+      mainJarName = "${convertModuleNameToFileName(layout.mainModule)}.jar"
+    }
+
+    /**
+     * Custom name of the directory (under 'plugins' directory) where the plugin should be placed. By default the main module name is used
+     * (with stripped {@code intellij} prefix and dots replaced by dashes).
+     * <strong>Don't set this property for new plugins</strong>; it is temporary added to keep layout of old plugins unchanged.
+     */
+    void setDirectoryName(String directoryName) {
+      this.directoryName = directoryName
+      directoryNameSetExplicitly = true
+    }
+
+    String getDirectoryName() {
+      return directoryName
+    }
+
+    /**
+     * Custom name of the main plugin JAR file. By default the main module name with 'jar' extension is used (with stripped {@code intellij}
+     * prefix and dots replaced by dashes).
+     * <strong>Don't set this property for new plugins</strong>; it is temporary added to keep layout of old plugins unchanged.
+     */
+    void setMainJarName(String mainJarName) {
+      this.mainJarName = mainJarName
+      mainJarNameSetExplicitly = true
+    }
+
+    String getMainJarName() {
+      return mainJarName
     }
 
     /**
@@ -119,16 +159,42 @@ class PluginLayout extends BaseLayout {
     }
 
     /**
+     * Copy output produced by {@code generator} to the directory specified by {@code relativeOutputPath} under the plugin directory.
+     */
+    void withGeneratedResources(ResourcesGenerator generator, String relativeOutputPath) {
+      layout.resourceGenerators << Pair.create(generator, relativeOutputPath)
+    }
+
+    /**
      * Register an optional module which may be excluded from the plugin distribution in some products. These modules are included in plugin
      * distribution only if they are added to {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledPluginModules} list.
+     * @param relativeJarPath target JAR path relative to 'lib' directory of the plugin; different modules may be packed into the same JAR,
+     * but <strong>don't use this for new plugins</strong>; this parameter is temporary added to keep layout of old plugins.
      */
-    void withOptionalModule(String moduleName, String relativeJarPath = "${moduleName}.jar") {
+    void withOptionalModule(String moduleName, String relativeJarPath) {
       layout.optionalModules << moduleName
       withModule(moduleName, relativeJarPath)
     }
 
+    /**
+     * Register an optional module which may be excluded from the plugin distribution in some products. These modules are included in plugin
+     * distribution only if they are added to {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledPluginModules} list.
+     */
+    void withOptionalModule(String moduleName) {
+      layout.optionalModules << moduleName
+      withModule(moduleName)
+    }
+
     void withJpsModule(String moduleName) {
       withModule(moduleName, "jps/${moduleName}.jar")
+    }
+
+    /**
+     * By default version of a plugin is equal to the version of the IDE it's built with. This method allows to specify custom version evaluator.
+     * <strong>Don't use this for new plugins</strong>; it is temporary added to keep versioning scheme for some old plugins.
+     */
+    void withCustomVersion(Function<BuildContext, String> versionEvaluator) {
+      layout.versionEvaluator = versionEvaluator
     }
 
     /**

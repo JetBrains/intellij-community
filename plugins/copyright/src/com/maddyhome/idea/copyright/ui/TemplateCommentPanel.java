@@ -356,6 +356,7 @@ public class TemplateCommentPanel implements SearchableConfigurable {
            : fileType.getName();
   }
 
+  @Override
   public String getHelpTopic() {
     return "copyright.filetypes";
   }
@@ -417,10 +418,6 @@ public class TemplateCommentPanel implements SearchableConfigurable {
     }
 
     updateOverride();
-  }
-
-  public void disposeUIResources() {
-
   }
 
   public void addOptionChangeListener(TemplateOptionsPanelListener listener) {

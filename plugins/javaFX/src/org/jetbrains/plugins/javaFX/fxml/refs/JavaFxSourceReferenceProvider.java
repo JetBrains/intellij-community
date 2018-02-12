@@ -23,9 +23,6 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- */
 class JavaFxSourceReferenceProvider extends PsiReferenceProvider {
   @NotNull
   @Override

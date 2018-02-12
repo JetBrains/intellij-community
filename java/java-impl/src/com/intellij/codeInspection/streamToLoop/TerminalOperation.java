@@ -297,24 +297,28 @@ abstract class TerminalOperation extends Operation {
    * Eliminates &lt;? extends&gt; wildcards from type parameters which directly map to the supplied superclass
    * type parameters and performs downstream correction steps if necessary.
    *
-   * @param type type to process
-   * @param superClass superclass which type parameters should be corrected
+   * @param resultType type to process
+   * @param superClassName superclass which type parameters should be corrected
    * @param downstreamCorrectors Map which keys are superclass type parameter names and values are functions to perform additional
    *                             superclass type parameter correction if necessary
    * @return the corrected type.
    */
   @NotNull
-  static PsiType correctTypeParameters(PsiType type, String superClass, Map<String, Function<PsiType, PsiType>> downstreamCorrectors) {
-    PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
-    if(aClass == null) return type;
+  static PsiType correctTypeParameters(PsiType resultType, String superClassName, Map<String, Function<PsiType, PsiType>> downstreamCorrectors) {
+    PsiClass resultClass = PsiUtil.resolveClassInClassTypeOnly(resultType);
+    if(resultClass == null) return resultType;
 
-    PsiSubstitutor origSubstitutor = ((PsiClassType)type).resolveGenerics().getSubstitutor();
+    PsiSubstitutor origSubstitutor = ((PsiClassType)resultType).resolveGenerics().getSubstitutor();
     PsiSubstitutor substitutor = origSubstitutor;
-    Project project = aClass.getProject();
-    PsiClass baseClass = JavaPsiFacade.getInstance(project).findClass(superClass, aClass.getResolveScope());
-    if(baseClass == null) return type;
-    PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, aClass, PsiSubstitutor.EMPTY);
-    for (PsiTypeParameter baseParameter : baseClass.getTypeParameters()) {
+    Project project = resultClass.getProject();
+    PsiClass superClass = JavaPsiFacade.getInstance(project).findClass(superClassName, resultClass.getResolveScope());
+    if(superClass == null) return resultType;
+    PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(superClass, resultClass, PsiSubstitutor.EMPTY, null);
+    if(superClassSubstitutor == null) {
+      // inconsistent class hierarchy: probably something is not resolved
+      return resultType;
+    }
+    for (PsiTypeParameter baseParameter : superClass.getTypeParameters()) {
       PsiClass substitution = PsiUtil.resolveClassInClassTypeOnly(superClassSubstitutor.substitute(baseParameter));
       if(substitution instanceof PsiTypeParameter) {
         PsiTypeParameter subClassParameter = (PsiTypeParameter)substitution;
@@ -326,7 +330,7 @@ abstract class TerminalOperation extends Operation {
         }
       }
     }
-    return substitutor == origSubstitutor ? type : JavaPsiFacade.getElementFactory(project).createType(aClass, substitutor);
+    return substitutor == origSubstitutor ? resultType : JavaPsiFacade.getElementFactory(project).createType(resultClass, substitutor);
   }
 
   abstract static class AccumulatedOperation extends TerminalOperation {
@@ -340,9 +344,9 @@ abstract class TerminalOperation extends Operation {
   }
 
   static class ReduceTerminalOperation extends TerminalOperation {
-    private PsiExpression myIdentity;
-    private PsiType myType;
-    private FunctionHelper myUpdater;
+    private final PsiExpression myIdentity;
+    private final PsiType myType;
+    private final FunctionHelper myUpdater;
 
     public ReduceTerminalOperation(PsiExpression identity, FunctionHelper updater, PsiType type) {
       myIdentity = identity;
@@ -365,8 +369,8 @@ abstract class TerminalOperation extends Operation {
   }
 
   static class ReduceToOptionalTerminalOperation extends TerminalOperation {
-    private PsiType myType;
-    private FunctionHelper myUpdater;
+    private final PsiType myType;
+    private final FunctionHelper myUpdater;
 
     public ReduceToOptionalTerminalOperation(FunctionHelper updater, PsiType type) {
       myType = type;
@@ -459,7 +463,7 @@ abstract class TerminalOperation extends Operation {
   }
 
   static class ToPrimitiveArrayTerminalOperation extends TerminalOperation {
-    private PsiType myType;
+    private final PsiType myType;
 
     ToPrimitiveArrayTerminalOperation(PsiType type) {
       myType = type;
@@ -506,7 +510,7 @@ abstract class TerminalOperation extends Operation {
   }
 
   static class FindTerminalOperation extends TerminalOperation {
-    private PsiType myType;
+    private final PsiType myType;
 
     public FindTerminalOperation(PsiType type) {
       myType = type;
@@ -587,10 +591,14 @@ abstract class TerminalOperation extends Operation {
     final PsiType myType;
     final Function<StreamToLoopReplacementContext, String> myAccNameSupplier;
     final FunctionHelper mySupplier;
+    final String myMostAbstractAllowedType;
 
-    CollectorBasedTerminalOperation(PsiType type, Function<StreamToLoopReplacementContext, String> accNameSupplier,
+    CollectorBasedTerminalOperation(PsiType type,
+                                    String mostAbstractAllowedType,
+                                    Function<StreamToLoopReplacementContext, String> accNameSupplier,
                                     FunctionHelper accSupplier) {
       myType = type;
+      myMostAbstractAllowedType = mostAbstractAllowedType;
       myAccNameSupplier = accNameSupplier;
       mySupplier = accSupplier;
     }
@@ -599,7 +607,8 @@ abstract class TerminalOperation extends Operation {
     String initAccumulator(StreamVariable inVar, StreamToLoopReplacementContext context) {
       transform(context, inVar.getName());
       PsiType resultType = correctReturnType(myType);
-      return context.declareResult(myAccNameSupplier.apply(context), resultType, getSupplier(), ResultKind.FINAL);
+      return context
+        .declareResult(myAccNameSupplier.apply(context), resultType, myMostAbstractAllowedType, getSupplier(), ResultKind.FINAL);
     }
 
     @Override
@@ -624,11 +633,11 @@ abstract class TerminalOperation extends Operation {
   }
 
   static class TemplateBasedOperation extends AccumulatedOperation implements CollectorOperation {
-    private String myAccName;
-    private PsiType myAccType;
-    private String myAccInitializer;
-    private String myUpdateTemplate;
-    private String myFinisherTemplate;
+    private final String myAccName;
+    private final PsiType myAccType;
+    private final String myAccInitializer;
+    private final String myUpdateTemplate;
+    private final String myFinisherTemplate;
 
     /**
      * @param accName desired name for accumulator variable
@@ -706,7 +715,8 @@ abstract class TerminalOperation extends Operation {
     private final boolean myList;
 
     public ToCollectionTerminalOperation(PsiType resultType, FunctionHelper fn, String desiredName) {
-      super(resultType, context -> fn.suggestFinalOutputNames(context, desiredName, "collection").get(0), fn);
+      super(resultType, CommonClassNames.JAVA_UTIL_COLLECTION,
+            context -> fn.suggestFinalOutputNames(context, desiredName, "collection").get(0), fn);
       myList = InheritanceUtil.isInheritor(resultType, CommonClassNames.JAVA_UTIL_LIST);
     }
 
@@ -738,9 +748,9 @@ abstract class TerminalOperation extends Operation {
   }
 
   static class MinMaxTerminalOperation extends TerminalOperation {
-    private PsiType myType;
-    private String myTemplate;
-    private @Nullable FunctionHelper myComparator;
+    private final PsiType myType;
+    private final String myTemplate;
+    private @Nullable final FunctionHelper myComparator;
 
     public MinMaxTerminalOperation(PsiType type, String template, @Nullable FunctionHelper comparator) {
       myType = type;
@@ -805,7 +815,7 @@ abstract class TerminalOperation extends Operation {
                            PsiExpression merger,
                            FunctionHelper supplier,
                            PsiType resultType) {
-      super(resultType, context -> "map", supplier);
+      super(resultType, CommonClassNames.JAVA_UTIL_MAP, context -> "map", supplier);
       myKeyExtractor = keyExtractor;
       myValueExtractor = valueExtractor;
       myMerger = merger;
@@ -870,11 +880,11 @@ abstract class TerminalOperation extends Operation {
 
   static class GroupByTerminalOperation extends CollectorBasedTerminalOperation {
     private final CollectorOperation myCollector;
-    private FunctionHelper myKeyExtractor;
+    private final FunctionHelper myKeyExtractor;
     private String myKeyVar;
 
     public GroupByTerminalOperation(FunctionHelper keyExtractor, FunctionHelper supplier, PsiType resultType, CollectorOperation collector) {
-      super(resultType, context -> "map", supplier);
+      super(resultType, CommonClassNames.JAVA_UTIL_MAP, context -> "map", supplier);
       myKeyExtractor = keyExtractor;
       myCollector = collector;
     }
@@ -918,7 +928,7 @@ abstract class TerminalOperation extends Operation {
   static class PartitionByTerminalOperation extends TerminalOperation {
     private final String myResultType;
     private final CollectorOperation myCollector;
-    private FunctionHelper myPredicate;
+    private final FunctionHelper myPredicate;
 
     public PartitionByTerminalOperation(FunctionHelper predicate, PsiType resultType, CollectorOperation collector) {
       myPredicate = predicate;
@@ -943,7 +953,7 @@ abstract class TerminalOperation extends Operation {
       PsiType resultType = context.createType(myResultType);
       resultType = correctTypeParameters(resultType, CommonClassNames.JAVA_UTIL_MAP,
                                          Collections.singletonMap("V", myCollector::correctReturnType));
-      String map = context.declareResult("map", resultType, "new java.util.HashMap<>()", ResultKind.FINAL);
+      String map = context.declareResult("map", resultType, CommonClassNames.JAVA_UTIL_MAP, "new java.util.HashMap<>()", ResultKind.FINAL);
       myPredicate.transform(context, inVar.getName());
       myCollector.transform(context, inVar.getName());
       context.addBeforeStep(map + ".put(false, " + myCollector.getSupplier() + ");");
@@ -1062,7 +1072,7 @@ abstract class TerminalOperation extends Operation {
   }
 
   static class ForEachTerminalOperation extends TerminalOperation {
-    private FunctionHelper myFn;
+    private final FunctionHelper myFn;
 
     public ForEachTerminalOperation(FunctionHelper fn) {
       myFn = fn;

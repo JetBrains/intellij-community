@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 public class MavenProjectTest extends MavenImportingTestCase {
-  public void testCollectingPlugins() throws Exception {
+  public void testCollectingPlugins() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -59,7 +59,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertDeclaredPlugins(p("group1", "id1"), p("group1", "id2"), p("group2", "id1"));
   }
             
-  public void testPluginsContainDefaultPlugins() throws Exception {
+  public void testPluginsContainDefaultPlugins() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -78,7 +78,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertContain(p(getMavenProject().getPlugins()), p("group1", "id1"), p("org.apache.maven.plugins", "maven-compiler-plugin"));
   }
 
-  public void testDefaultPluginsAsDeclared() throws Exception {
+  public void testDefaultPluginsAsDeclared() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -96,7 +96,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertDeclaredPlugins(p("org.apache.maven.plugins", "maven-compiler-plugin"));
   }
 
-  public void testDoNotDuplicatePluginsFromBuildAndManagement() throws Exception {
+  public void testDoNotDuplicatePluginsFromBuildAndManagement() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -122,7 +122,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertDeclaredPlugins(p("org.apache.maven.plugins", "maven-compiler-plugin"));
   }
 
-  public void testCollectingPluginsFromProfilesAlso() throws Exception {
+  public void testCollectingPluginsFromProfilesAlso() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -176,7 +176,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertDeclaredPlugins(p("group", "id"), p("group1", "id1"), p("group2", "id2"));
   }
 
-  public void testFindingPlugin() throws Exception {
+  public void testFindingPlugin() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -226,7 +226,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertNull(findPlugin("group2", "id2"));
   }
 
-  public void testFindingDefaultPlugin() throws Exception {
+  public void testFindingDefaultPlugin() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -247,7 +247,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertNotNull(findPlugin("org.apache.maven.plugins", "maven-compiler-plugin"));
   }
 
-  public void testFindingMavenGroupPluginWithDefaultPluginGroup() throws Exception {
+  public void testFindingMavenGroupPluginWithDefaultPluginGroup() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -266,7 +266,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertNull(findPlugin("some.other.group.id", "some.plugin.id"));
   }
 
-  public void testPluginConfiguration() throws Exception {
+  public void testPluginConfiguration() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -304,7 +304,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertNull(findPluginConfig("group", "id3", "one.two.three"));
   }
 
-  public void testPluginGoalConfiguration() throws Exception {
+  public void testPluginGoalConfiguration() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -348,7 +348,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertEquals("b", findPluginGoalConfig("group", "id", "testCompile", "one.two"));
   }
 
-  public void testPluginConfigurationHasResolvedVariables() throws Exception {
+  public void testPluginConfigurationHasResolvedVariables() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -373,7 +373,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertEquals("somePath", findPluginConfig("group", "id", "one"));
   }
 
-  public void testPluginConfigurationWithStandardVariable() throws Exception {
+  public void testPluginConfigurationWithStandardVariable() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -395,7 +395,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
                  FileUtil.toSystemIndependentName(findPluginConfig("group", "id", "one")));
   }
 
-  public void testPluginConfigurationWithColons() throws Exception {
+  public void testPluginConfigurationWithColons() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -415,7 +415,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertNull(findPluginConfig("group", "id", "two:three"));
   }
 
-  public void testMergingPluginConfigurationFromBuildAndProfiles() throws Exception {
+  public void testMergingPluginConfigurationFromBuildAndProfiles() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -470,7 +470,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertEquals("true", plugin.getConfigurationElement().getChildText("debug"));
   }
 
-  public void testCompilerPluginConfigurationFromProperties() throws Exception {
+  public void testCompilerPluginConfigurationFromProperties() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -487,7 +487,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertEquals("1.7", getMavenProject().getTargetLevel());
   }
 
-  public void testCompilerPluginConfigurationFromPropertiesOverride() throws Exception {
+  public void testCompilerPluginConfigurationFromPropertiesOverride() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -517,7 +517,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertEquals("1.4", getMavenProject().getTargetLevel());
   }
 
-  public void testMergingPluginConfigurationFromBuildProfilesAndPluginsManagement() throws Exception {
+  public void testMergingPluginConfigurationFromBuildProfilesAndPluginsManagement() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -569,7 +569,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertEquals("true", plugin.getConfigurationElement().getChildText("debug"));
   }
 
-  public void testDoesNotCollectProfilesWithoutId() throws Exception {
+  public void testDoesNotCollectProfilesWithoutId() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -585,7 +585,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertOrderedElementsAreEqual(getMavenProject().getProfilesIds(), "one");
   }
 
-  public void testCollectingRepositories() throws Exception {
+  public void testCollectingRepositories() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -608,7 +608,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertEquals("central", result.get(2).getId());
   }
 
-  public void testOverridingCentralRepository() throws Exception {
+  public void testOverridingCentralRepository() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -626,7 +626,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertEquals("http://my.repository.com", result.get(0).getUrl());
   }
 
-  public void testCollectingRepositoriesFromParent() throws Exception {
+  public void testCollectingRepositoriesFromParent() {
     VirtualFile m1 = createModulePom("p1",
                                      "<groupId>test</groupId>" +
                                      "<artifactId>p1</artifactId>" +
@@ -670,7 +670,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertEquals("central", result.get(2).getId());
   }
 
-  public void testMavenModelMap() throws Exception {
+  public void testMavenModelMap() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -695,7 +695,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertEquals(null, map.get("build.pluginMap"));
   }
 
-  public void testDependenciesTree() throws Exception {
+  public void testDependenciesTree() {
     VirtualFile m1 = createModulePom("p1",
                                      "<groupId>test</groupId>" +
                                      "<artifactId>m1</artifactId>" +
@@ -739,7 +739,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
                             "test:m2:jar:1->(junit:junit:jar:4.0->(),test:lib2:jar:1->()),test:lib1:jar:1->()");
   }
 
-  public void testDependenciesTreeWithTypesAndClassifiers() throws Exception {
+  public void testDependenciesTreeWithTypesAndClassifiers() {
     VirtualFile m1 = createModulePom("p1",
                                      "<groupId>test</groupId>" +
                                      "<artifactId>m1</artifactId>" +
@@ -775,7 +775,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
                             "test:m2:pom:test:1->(test:lib:jar:1->())");
   }
 
-  public void testDependenciesTreeWithConflict() throws Exception {
+  public void testDependenciesTreeWithConflict() {
     VirtualFile m1 = createModulePom("p1",
                                      "<groupId>test</groupId>" +
                                      "<artifactId>m1</artifactId>" +
@@ -818,7 +818,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
                nodes.get(1).getArtifact());
   }
 
-  public void testDependencyTreeDuplicates() throws Exception {
+  public void testDependencyTreeDuplicates() {
     VirtualFile m1 = createModulePom("p1",
                                      "<groupId>test</groupId>" +
                                      "<artifactId>m1</artifactId>" +

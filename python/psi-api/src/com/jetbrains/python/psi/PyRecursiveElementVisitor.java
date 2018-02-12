@@ -16,11 +16,12 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiRecursiveVisitor;
 
 /**
  * @author yole
  */
-public class PyRecursiveElementVisitor extends PyElementVisitor {
+public class PyRecursiveElementVisitor extends PyElementVisitor implements PsiRecursiveVisitor {
   public void visitElement(final PsiElement element) {
     element.acceptChildren(this);
   }

@@ -14,33 +14,31 @@
  * limitations under the License.
  */
 package org.jetbrains.intellij.build
-
-import org.codehaus.gant.GantBinding
 /**
  * @author nik
  */
 class IdeaCommunityBuilder {
-  private final GantBinding binding
   private final BuildContext buildContext
 
-  IdeaCommunityBuilder(String home, GantBinding binding, BuildOptions options = new BuildOptions(), String projectHome = home) {
-    this.binding = binding
-    buildContext = BuildContext.createContext(binding.ant, binding.projectBuilder, binding.project, binding.global, home, projectHome,
-                                              new IdeaCommunityProperties(home), ProprietaryBuildTools.DUMMY,
-                                              options)
+  IdeaCommunityBuilder(String home, BuildOptions options = new BuildOptions(), String projectHome = home) {
+    buildContext = BuildContext.createContext(home, projectHome, new IdeaCommunityProperties(home), ProprietaryBuildTools.DUMMY, options)
   }
 
-  IdeaCommunityBuilder(GantBinding binding, BuildContext buildContext) {
-    this.binding = binding
+  IdeaCommunityBuilder(BuildContext buildContext) {
     this.buildContext = buildContext
   }
 
   void compileModules() {
-    BuildTasks.create(buildContext).compileProjectAndTests(["jps-builders"])
+    BuildTasks.create(buildContext).compileProjectAndTests(["intellij.platform.jps.build"])
+  }
+
+  void buildFullUpdater() {
+    def tasks = BuildTasks.create(buildContext)
+    tasks.compileModules(["updater"])
+    tasks.buildFullUpdaterJar()
   }
 
   void buildIntelliJCore() {
-    buildContext.projectBuilder.targetFolder = buildContext.options.outputRootPath
     def builder = new IntelliJCoreArtifactsBuilder(buildContext)
     builder.compileModules()
     builder.layoutIntelliJCore()

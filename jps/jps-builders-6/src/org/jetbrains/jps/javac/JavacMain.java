@@ -34,18 +34,21 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 1/21/12
  */
 public class JavacMain {
   private static final String JAVA_VERSION = System.getProperty("java.version", "");
   
   //private static final boolean ECLIPSE_COMPILER_SINGLE_THREADED_MODE = Boolean.parseBoolean(System.getProperty("jdt.compiler.useSingleThread", "false"));
-  private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.<String>asList(
+  private static final Set<String> FILTERED_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
     "-d", "-classpath", "-cp", "-bootclasspath"
-  ));
-  private static final Set<String> FILTERED_SINGLE_OPTIONS = new HashSet<String>(Arrays.<String>asList(
+  )));
+  private static final Set<String> FILTERED_SINGLE_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
     /*javac options*/  "-verbose", "-proc:only", "-implicit:class", "-implicit:none", "-Xprefer:newer", "-Xprefer:source"
-  ));
+  )));
+  private static final Set<String> FILE_MANAGER_EARLY_INIT_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
+    "-encoding", "-extdirs", "-endorseddirs", "-processorpath", "-s", "-d", "-h"
+  )));
+
   public static final String JAVA_RUNTIME_VERSION = System.getProperty("java.runtime.version");
 
   public static boolean compile(Collection<String> options,
@@ -72,17 +75,18 @@ public class JavacMain {
     }
 
     final boolean usingJavac = compilingTool instanceof JavacCompilerTool;
+    final boolean javacBefore9 = isJavacBefore9(compilingTool);
     final JavacFileManager fileManager = new JavacFileManager(
-      new ContextImpl(compiler, diagnosticConsumer, outputSink, canceledStatus, canUseOptimizedFileManager(compilingTool)), JavaSourceTransformer.getTransformers()
+      new ContextImpl(compiler, diagnosticConsumer, outputSink, canceledStatus, javacBefore9), JavaSourceTransformer.getTransformers()
     );
 
     if (!platformClasspath.isEmpty()) {
       // for javac6 this will prevent lazy initialization of Paths.bootClassPathRtJar 
       // and thus usage of symbol file for resolution, when this file is not expected to be used
       fileManager.handleOption("-bootclasspath", Collections.singleton("").iterator());
+      fileManager.handleOption("-extdirs", Collections.singleton("").iterator()); // this will clear cached stuff
+      fileManager.handleOption("-endorseddirs", Collections.singleton("").iterator()); // this will clear cached stuff
     }
-    fileManager.handleOption("-extdirs", Collections.singleton("").iterator()); // this will clear cached stuff
-    fileManager.handleOption("-endorseddirs", Collections.singleton("").iterator()); // this will clear cached stuff
     final Collection<String> _options = prepareOptions(options, compilingTool);
 
     try {
@@ -90,8 +94,13 @@ public class JavacMain {
       // i.e. getJavaFileObjectsFromFiles()
       // This way the manager will be properly initialized. Namely, the encoding will be set correctly
       // Note that due to lazy initialization in various components inside javac, handleOption() should be called before setLocation() and others
+      // update: for some options their repetitive initialization would be considered as error: e.g. '--patch-module',
+      //  therefore we do the trick only for those options that may influence FileManager's state initialization before passing it to getTask() method
       for (Iterator<String> iterator = _options.iterator(); iterator.hasNext(); ) {
-        fileManager.handleOption(iterator.next(), iterator);
+        final String option = iterator.next();
+        if (FILE_MANAGER_EARLY_INIT_OPTIONS.contains(option)) {
+          fileManager.handleOption(option, iterator);
+        }
       }
 
       try {
@@ -140,15 +149,19 @@ public class JavacMain {
         }
       }
 
-      try {
-        // ensure the source path is set;
-        // otherwise, if not set, javac attempts to search both classes and sources in classpath;
-        // so if some classpath jars contain sources, it will attempt to compile them
-        fileManager.setLocation(StandardLocation.SOURCE_PATH, sourcePath);
-      }
-      catch (IOException e) {
-        fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
-        return false;
+      if (javacBefore9 || !sourcePath.isEmpty() || modulePath.isEmpty()) {
+        try {
+          // ensure the source path is set;
+          // otherwise, if not set, javac attempts to search both classes and sources in classpath;
+          // so if some classpath jars contain sources, it will attempt to compile them
+          // starting from javac9 it seems that setting empty source path may affect module compilation logic, so starting from javac9
+          // we avoid forcing empty sourcepath
+          fileManager.setLocation(StandardLocation.SOURCE_PATH, sourcePath);
+        }
+        catch (IOException e) {
+          fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
+          return false;
+        }
       }
 
       //noinspection IOResourceOpenedButNotSafelyClosed
@@ -227,7 +240,7 @@ public class JavacMain {
     });
   }
 
-  private static boolean canUseOptimizedFileManager(JavaCompilingTool compilingTool) {
+  private static boolean isJavacBefore9(JavaCompilingTool compilingTool) {
     // since java 9 internal API's used by the optimizedFileManager have changed
     return compilingTool instanceof JavacCompilerTool && (JAVA_RUNTIME_VERSION.startsWith("1.8.") || JAVA_RUNTIME_VERSION.startsWith("1.7.") || JAVA_RUNTIME_VERSION.startsWith("1.6."));
   }
@@ -255,8 +268,7 @@ public class JavacMain {
   }
 
   private static Collection<String> prepareOptions(final Collection<String> options, @NotNull JavaCompilingTool compilingTool) {
-    final List<String> result = new ArrayList<String>();
-    result.addAll(compilingTool.getDefaultCompilerOptions());
+    final List<String> result = new ArrayList<String>(compilingTool.getDefaultCompilerOptions());
     boolean skip = false;
     for (String option : options) {
       if (FILTERED_OPTIONS.contains(option)) {

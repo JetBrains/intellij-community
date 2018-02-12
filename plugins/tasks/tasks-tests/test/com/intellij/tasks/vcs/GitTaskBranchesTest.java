@@ -17,7 +17,6 @@ package com.intellij.tasks.vcs;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.VcsException;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
@@ -26,9 +25,9 @@ import git4idea.test.GitTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.IOException;
 
 import static com.intellij.openapi.vcs.Executor.touch;
+import static git4idea.test.GitExecutor.cd;
 import static git4idea.test.GitExecutor.git;
 
 public class GitTaskBranchesTest extends TaskBranchesTest {
@@ -61,10 +60,11 @@ public class GitTaskBranchesTest extends TaskBranchesTest {
   }
 
   @Override
-  protected void createAndCommitChanges(@NotNull Repository repository) throws IOException, VcsException {
+  protected void createAndCommitChanges(@NotNull Repository repository) {
+    cd((GitRepository)repository);
     touch("foo.txt");
-    git("add foo.txt");
-    git("commit -m commit");
+    git((GitRepository)repository, "add foo.txt");
+    git((GitRepository)repository, "commit -m commit");
     repository.update();
   }
 

@@ -34,8 +34,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -100,11 +100,15 @@ public class JrePathEditor extends JPanel implements PanelWithAnchor {
         myComboBoxModel.add(new CustomJreItem(homePath));
       }
     }
-    ComboBox comboBox = new ComboBox(myComboBoxModel, 100);
+    ComboBox<JreComboBoxItem> comboBox = new ComboBox<>(myComboBoxModel, 100);
     comboBox.setEditable(true);
-    comboBox.setRenderer(new ColoredListCellRendererWrapper<JreComboBoxItem>() {
+    comboBox.setRenderer(new ColoredListCellRenderer<JreComboBoxItem>() {
       @Override
-      protected void doCustomize(JList list, JreComboBoxItem value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList<? extends JreComboBoxItem> list,
+                                           JreComboBoxItem value,
+                                           int index,
+                                           boolean selected,
+                                           boolean hasFocus) {
         if (value != null) {
           value.render(this, selected);
         }
@@ -193,6 +197,10 @@ public class JrePathEditor extends JPanel implements PanelWithAnchor {
   public void setAnchor(JComponent anchor) {
     myAnchor = anchor;
     myLabel.setAnchor(anchor);
+  }
+
+  public void addActionListener(ActionListener listener) {
+    myPathField.getComboBox().addActionListener(listener);
   }
 
   interface JreComboBoxItem {

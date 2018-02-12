@@ -32,7 +32,7 @@ import java.lang.reflect.InvocationTargetException;
  * @since 9/27/11 2:52 PM
  */
 public class SequentialModalProgressTask extends Task.Modal {
-  private static final Logger LOG = Logger.getInstance("#" + SequentialModalProgressTask.class.getName());
+  private static final Logger LOG = Logger.getInstance(SequentialModalProgressTask.class);
   
   private static final long DEFAULT_MIN_ITERATION_MIN_TIME = 500;
 
@@ -90,7 +90,7 @@ public class SequentialModalProgressTask extends Task.Modal {
         long start = System.currentTimeMillis();
         try {
           while (!task.isDone() && System.currentTimeMillis() - start < myMinIterationTime) {
-            task.iteration();
+            task.iteration(indicator);
           }
         }
         catch (RuntimeException e) {

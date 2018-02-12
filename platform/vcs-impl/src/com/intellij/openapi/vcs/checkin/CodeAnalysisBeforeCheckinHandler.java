@@ -52,7 +52,7 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
 
   private final Project myProject;
   private final CheckinProjectPanel myCheckinPanel;
-  private static final Logger LOG = Logger.getInstance("#" + CodeAnalysisBeforeCheckinHandler.class.getName());
+  private static final Logger LOG = Logger.getInstance(CodeAnalysisBeforeCheckinHandler.class);
 
   public CodeAnalysisBeforeCheckinHandler(final Project project, CheckinProjectPanel panel) {
     myProject = project;
@@ -108,12 +108,10 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
       CodeSmellDetector.getInstance(myProject).showCodeSmellErrors(codeSmells);
       return ReturnResult.CLOSE_WINDOW;
     }
-    else if (answer == Messages.CANCEL) {
+    if (answer == Messages.CANCEL) {
       return ReturnResult.CANCEL;
     }
-    else {
-      return ReturnResult.COMMIT;
-    }
+    return ReturnResult.COMMIT;
   }
 
   private static int collectErrors(final List<CodeSmellInfo> codeSmells) {

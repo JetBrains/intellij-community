@@ -133,7 +133,9 @@ public class ConflictsDialog extends DialogWrapper{
       buf.append(description);
       buf.append("<br><br>");
     }
-    JEditorPane messagePane = new JEditorPane(UIUtil.HTML_MIME, buf.toString());
+    JEditorPane messagePane = new JEditorPane();
+    messagePane.setEditorKit(UIUtil.getHTMLEditorKit());
+    messagePane.setText(buf.toString());
     messagePane.setEditable(false);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(messagePane,
                                                                 ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
@@ -218,7 +220,7 @@ public class ConflictsDialog extends DialogWrapper{
         }
       }
       final UsageView usageView = UsageViewManager.getInstance(myProject)
-        .showUsages(UsageTarget.EMPTY_ARRAY, usages.toArray(new Usage[usages.size()]), presentation);
+        .showUsages(UsageTarget.EMPTY_ARRAY, usages.toArray(Usage.EMPTY_ARRAY), presentation);
       Runnable doRefactoringRunnable = getDoRefactoringRunnable(usageView);
       if (doRefactoringRunnable != null) {
         usageView.addPerformOperationAction(
@@ -230,7 +232,7 @@ public class ConflictsDialog extends DialogWrapper{
     }
 
     private class DescriptionOnlyUsage implements Usage {
-      private String myConflictDescription;
+      private final String myConflictDescription;
 
       public DescriptionOnlyUsage(String conflictDescription) {
         myConflictDescription = StringUtil.unescapeXml(conflictDescription)

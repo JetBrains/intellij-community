@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public class SkippingHandler extends MatchingHandler implements DelegatingHandle
     /*if (patternNode != null && matchedNode != null && patternNode.getClass() == matchedNode.getClass()) {
       //return myDelegate.match(patternNode, matchedNode, matchContext);
     }*/
-    PsiElement newPatternNode = skipNodeIfNeccessary(patternNode);
+    final PsiElement newPatternNode = skipNodeIfNeccessary(patternNode);
     matchedNode = skipNodeIfNeccessary(matchedNode);
 
     if (newPatternNode != patternNode) {
@@ -70,33 +70,8 @@ public class SkippingHandler extends MatchingHandler implements DelegatingHandle
   }
 
   @Override
-  public boolean match(PsiElement patternNode,
-                       PsiElement matchedNode,
-                       final int start,
-                       final int end,
-                       final MatchContext context) {
-    if (patternNode == null || matchedNode == null || patternNode.getClass() == matchedNode.getClass()) {
-      return myDelegate.match(patternNode, matchedNode, start, end, context);
-    }
-
-    PsiElement newPatternNode = skipNodeIfNeccessary(patternNode);
-    matchedNode = skipNodeIfNeccessary(matchedNode);
-
-    if (newPatternNode != patternNode) {
-      return context.getPattern().getHandler(newPatternNode).match(newPatternNode, matchedNode, start, end, context);
-    }
-
-    return myDelegate.match(patternNode, matchedNode, start, end, context);
-  }
-
-  @Override
   protected boolean isMatchSequentiallySucceeded(final NodeIterator nodes2) {
     return myDelegate.isMatchSequentiallySucceeded(nodes2);
-  }
-
-  @Override
-  public boolean shouldAdvanceTheMatchFor(PsiElement patternElement, PsiElement matchedElement) {
-    return true;
   }
 
   @Override

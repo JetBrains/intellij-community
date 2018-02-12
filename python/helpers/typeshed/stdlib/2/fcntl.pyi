@@ -1,4 +1,4 @@
-from typing import Any, Union
+from typing import Any, Union, IO
 import io
 
 FASYNC = ...  # type: int
@@ -72,7 +72,7 @@ LOCK_SH = ...  # type: int
 LOCK_UN = ...  # type: int
 LOCK_WRITE = ...  # type: int
 
-_ANYFILE = Union[int, io.IOBase]
+_ANYFILE = Union[int, IO]
 
 # TODO All these return either int or bytes depending on the value of
 # cmd (not on the type of arg).

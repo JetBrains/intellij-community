@@ -16,7 +16,7 @@
 package com.intellij.tasks.jira.jql;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import icons.TasksIcons;
+import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +54,6 @@ public class JqlFileType extends LanguageFileType {
   @Nullable
   @Override
   public Icon getIcon() {
-    return TasksIcons.Jira;
+    return TasksCoreIcons.Jira;
   }
 }

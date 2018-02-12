@@ -17,10 +17,10 @@
 package com.intellij.ide.util.frameworkSupport;
 
 import com.intellij.facet.ui.libraries.LibraryInfo;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.ui.ListCellRendererWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +43,7 @@ public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurab
   private JLabel myDescriptionLabel;
 
   public FrameworkSupportConfigurableBase(FrameworkSupportProviderBase frameworkSupportProvider, FrameworkSupportModel model) {
-    this(frameworkSupportProvider, model, Collections.<FrameworkVersion>emptyList(), null);
+    this(frameworkSupportProvider, model, Collections.emptyList(), null);
   }
 
   public FrameworkSupportConfigurableBase(FrameworkSupportProviderBase frameworkSupportProvider, FrameworkSupportModel model,

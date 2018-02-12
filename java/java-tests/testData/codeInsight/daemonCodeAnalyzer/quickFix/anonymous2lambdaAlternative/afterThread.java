@@ -1,4 +1,4 @@
-// "Replace with constructor accepting lambda" "true"
+// "Replace with new Thread(() -> {…})" "true"
 public class Main {
   public void testThread() {
       // Comment outside

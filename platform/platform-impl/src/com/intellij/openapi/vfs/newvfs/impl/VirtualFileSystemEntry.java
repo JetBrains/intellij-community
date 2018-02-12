@@ -18,8 +18,8 @@ package com.intellij.openapi.vfs.newvfs.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
@@ -63,14 +62,14 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   final VfsData.Segment mySegment;
   private final VirtualDirectoryImpl myParent;
-  protected final int myId;
+  final int myId;
 
   static {
     //noinspection ConstantConditions
     assert (~ALL_FLAGS_MASK) == LocalTimeCounter.TIME_MASK;
   }
 
-  public VirtualFileSystemEntry(int id, @NotNull VfsData.Segment segment, @Nullable VirtualDirectoryImpl parent) {
+  VirtualFileSystemEntry(int id, @NotNull VfsData.Segment segment, @Nullable VirtualDirectoryImpl parent) {
     mySegment = segment;
     myId = id;
     myParent = parent;
@@ -243,6 +242,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return ourPersistence.getLength(this);
   }
 
+  @NotNull
   @Override
   public VirtualFile copy(final Object requestor, @NotNull final VirtualFile newParent, @NotNull final String copyName) throws IOException {
     if (getFileSystem() != newParent.getFileSystem()) {
@@ -320,8 +320,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     VirtualDirectoryImpl parent = getParent();
     parent.removeChild(this);
     mySegment.setNameId(myId, FileNameCache.storeName(newName));
-    ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
     parent.addChild(this);
+    ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
   }
 
   public void setParent(@NotNull VirtualFile newParent) {
@@ -334,6 +334,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     VfsData.changeParent(myId, directory);
     directory.addChild(this);
     updateLinkStatus();
+    ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
   }
 
   @Override
@@ -360,22 +361,17 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       setCharset(charset);
     }
     else {
-      try {
-        final byte[] content;
-        try {
-          content = VfsUtilCore.loadBytes(this);
-        }
-        catch (FileNotFoundException e) {
-          // file has already been deleted on disk
-          return super.getCharset();
-        }
-        charset = LoadTextUtil.detectCharsetAndSetBOM(this, content);
-      }
-      catch (FileTooBigException e) {
+      FileType fileType = getFileType();
+      if (isCharsetSet()) {
+        // file type detection may have cached the charset, no need to re-detect
         return super.getCharset();
       }
+      try {
+        final byte[] content = VfsUtilCore.loadBytes(this);
+        charset = LoadTextUtil.detectCharsetAndSetBOM(this, content, fileType);
+      }
       catch (IOException e) {
-        throw new RuntimeException(getPath(), e);
+        return super.getCharset();
       }
     }
     return charset;
@@ -383,7 +379,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public String getPresentableName() {
-    if (UISettings.getInstance().getHdeKnownExtensionInTabs() && !isDirectory()) {
+    if (UISettings.getInstance().getHideKnownExtensionInTabs() && !isDirectory()) {
       final String nameWithoutExtension = getNameWithoutExtension();
       return nameWithoutExtension.isEmpty() ? getName() : nameWithoutExtension;
     }

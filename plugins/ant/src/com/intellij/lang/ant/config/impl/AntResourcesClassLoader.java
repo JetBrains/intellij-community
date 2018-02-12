@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.util.Set;
  * @since Oct 21, 2008
 */
 public class AntResourcesClassLoader extends UrlClassLoader {
-  static { registerAsParallelCapable(); }
+  static { if (registerAsParallelCapable()) markParallelCapable(AntResourcesClassLoader.class); }
 
   private final Set<String> myMisses = new THashSet<>();
 
@@ -36,6 +36,7 @@ public class AntResourcesClassLoader extends UrlClassLoader {
     super(build().urls(urls).parent(parentLoader).allowLock(canLockJars).useCache(canUseCache).noPreload());
   }
 
+  @Override
   protected Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
     synchronized (getClassLoadingLock(name)) {
       if (myMisses.contains(name)) {
@@ -50,6 +51,7 @@ public class AntResourcesClassLoader extends UrlClassLoader {
     }
   }
 
+  @Override
   protected Class findClass(final String name) throws ClassNotFoundException {
     ProgressManager.checkCanceled();
     try {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,13 +39,14 @@ public class ClassReferenceParser extends StandardHeaderParser {
   public static final String MAIN_CLASS = "Main-Class";
   public static final String PREMAIN_CLASS = "Premain-Class";
   public static final String AGENT_CLASS = "Agent-Class";
+  public static final String LAUNCHER_AGENT_CLASS = "Launcher-Agent-Class";
 
   public static final HeaderParser INSTANCE = new ClassReferenceParser();
 
   @NotNull
   @Override
   public PsiReference[] getReferences(@NotNull HeaderValuePart headerValuePart) {
-    final Module module = ModuleUtilCore.findModuleForPsiElement(headerValuePart);
+    Module module = ModuleUtilCore.findModuleForPsiElement(headerValuePart);
     JavaClassReferenceProvider provider;
     if (module != null) {
       provider = new JavaClassReferenceProvider() {
@@ -90,17 +91,17 @@ public class ClassReferenceParser extends StandardHeaderParser {
   protected boolean checkClass(@NotNull HeaderValuePart valuePart, @NotNull PsiClass aClass, @NotNull AnnotationHolder holder) {
     String header = ((Header)valuePart.getParent()).getName();
 
-    if (header.equals(MAIN_CLASS) && !PsiMethodUtil.hasMainMethod(aClass)) {
+    if (MAIN_CLASS.equals(header) && !PsiMethodUtil.hasMainMethod(aClass)) {
       holder.createErrorAnnotation(valuePart.getHighlightingRange(), ManifestBundle.message("header.main.class.invalid"));
       return true;
     }
 
-    if (header.equals(PREMAIN_CLASS) && !hasInstrumenterMethod(aClass, "premain")) {
+    if (PREMAIN_CLASS.equals(header) && !hasInstrumenterMethod(aClass, "premain")) {
       holder.createErrorAnnotation(valuePart.getHighlightingRange(), ManifestBundle.message("header.pre-main.class.invalid"));
       return true;
     }
 
-    if (header.equals(AGENT_CLASS) && !hasInstrumenterMethod(aClass, "agentmain")) {
+    if ((AGENT_CLASS.equals(header) || LAUNCHER_AGENT_CLASS.equals(header)) && !hasInstrumenterMethod(aClass, "agentmain")) {
       holder.createErrorAnnotation(valuePart.getHighlightingRange(), ManifestBundle.message("header.agent.class.invalid"));
       return true;
     }

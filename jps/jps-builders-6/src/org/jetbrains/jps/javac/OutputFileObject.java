@@ -27,7 +27,6 @@ import java.net.URI;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/24/11
  */
 public final class OutputFileObject extends SimpleJavaFileObject {
   @Nullable
@@ -141,6 +140,12 @@ public final class OutputFileObject extends SimpleJavaFileObject {
              new String(content.getBuffer(), content.getOffset(), content.getLength(), encoding);
     }
     return FileUtilRt.loadFile(myFile, encoding, false);
+  }
+
+  @Override
+  public Writer openWriter() throws IOException {
+    final String encoding = myEncodingName;
+    return encoding != null? new OutputStreamWriter(openOutputStream(), encoding) : super.openWriter();
   }
 
   @Nullable

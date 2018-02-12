@@ -7,13 +7,13 @@
 
 from abc import ABCMeta
 import sys
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
 
 if sys.version_info >= (3, 4):
     class ModuleSpec:
         def __init__(self, name: str, loader: Optional['Loader'], *,
-                     origin: str = None, loader_state: Any = None,
-                     is_package: bool = None) -> None: ...
+                     origin: Optional[str] = ..., loader_state: Any = ...,
+                     is_package: Optional[bool] = ...) -> None: ...
         name = ...  # type: str
         loader = ...  # type: Optional[Loader]
         origin = ...  # type: Optional[str]
@@ -26,6 +26,7 @@ if sys.version_info >= (3, 4):
 class ModuleType:
     __name__ = ...  # type: str
     __file__ = ...  # type: str
+    __dict__ = ...  # type: Dict[str, Any]
     if sys.version_info >= (3, 4):
         __loader__ = ...  # type: Optional[Loader]
         __package__ = ...  # type: Optional[str]

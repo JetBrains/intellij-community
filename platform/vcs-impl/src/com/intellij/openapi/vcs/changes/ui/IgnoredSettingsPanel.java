@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 20.12.2006
- * Time: 19:39:53
- */
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.options.Configurable;
@@ -42,7 +36,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class IgnoredSettingsPanel implements SearchableConfigurable, Configurable.NoScroll {
-  private JBList myList;
+  private final JBList myList;
   private JPanel myPanel;
   private final Project myProject;
   private DefaultListModel myModel;
@@ -152,14 +146,12 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
     return myPanel;
   }
 
-  public void disposeUIResources() {
-  }
-
   @Nls
   public String getDisplayName() {
     return "Ignored Files";
   }
 
+  @Override
   public String getHelpTopic() {
     return "project.propVCSSupport.Ignored.Files";
   }

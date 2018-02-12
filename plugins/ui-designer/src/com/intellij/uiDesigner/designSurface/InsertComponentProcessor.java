@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.ide.palette.impl.PaletteToolWindowManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -27,7 +28,6 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -171,7 +171,6 @@ public final class InsertComponentProcessor extends EventProcessor {
 
   public static String getUniqueBinding(RadRootContainer root, final String baseName) {
     // Generate member name based on current code style
-    //noinspection ForLoopThatDoesntUseLoopVariable
     for (int i = 0; true; i++) {
       final String nameCandidate = baseName + (i + 1);
       final String binding = JavaCodeStyleManager.getInstance(root.getProject()).propertyNameToVariableName(
@@ -519,12 +518,8 @@ public final class InsertComponentProcessor extends EventProcessor {
 
   @Nullable
   public static RadComponentFactory getRadComponentFactory(final Project project, final String className) {
-    ClassLoader loader = ApplicationManager.getApplication().runReadAction(new Computable<ClassLoader>() {
-      @Override
-      public ClassLoader compute() {
-        return LoaderFactory.getInstance(project).getProjectClassLoader();
-      }
-    });
+    ClassLoader loader =
+      ReadAction.compute(() -> LoaderFactory.getInstance(project).getProjectClassLoader());
     return getRadComponentFactory(className, loader);
   }
 

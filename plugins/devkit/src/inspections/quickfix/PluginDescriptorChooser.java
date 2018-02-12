@@ -17,9 +17,9 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -53,15 +53,15 @@ public class PluginDescriptorChooser {
 
   private static final Map<String, String> INTELLIJ_MODULES =
     ContainerUtil.<String, String>immutableMapBuilder()
-      .put("platform-api", "PlatformExtensions.xml")
-      .put("platform-impl", "PlatformExtensions.xml")
-      .put("lang-api", "LangExtensions.xml")
-      .put("lang-impl", "LangExtensions.xml")
-      .put("vcs-api", "VcsExtensions.xml")
-      .put("vcs-impl", "VcsExtensions.xml")
-      .put("openapi", "IdeaPlugin.xml")
-      .put("java-impl", "IdeaPlugin.xml")
-      .put("java-analysis-impl", "IdeaPlugin.xml")
+      .put("intellij.platform.ide", "PlatformExtensions.xml")
+      .put("intellij.platform.ide.impl", "PlatformExtensions.xml")
+      .put("intellij.platform.lang", "LangExtensions.xml")
+      .put("intellij.platform.lang.impl", "LangExtensions.xml")
+      .put("intellij.platform.vcs", "VcsExtensions.xml")
+      .put("intellij.platform.vcs.impl", "VcsExtensions.xml")
+      .put("intellij.java", "IdeaPlugin.xml")
+      .put("intellij.java.impl", "IdeaPlugin.xml")
+      .put("intellij.java.analysis.impl", "IdeaPlugin.xml")
       .build();
 
   public static void show(final Project project,
@@ -158,8 +158,10 @@ public class PluginDescriptorChooser {
       final Module module1 = o1.getModule();
       final Module module2 = o2.getModule();
 
-      if (currentModule.equals(module1)) return -1;
-      if (currentModule.equals(module2)) return 1;
+      if (!Comparing.equal(module1, module2)) {
+        if (currentModule.equals(module1)) return -1;
+        if (currentModule.equals(module2)) return 1;
+      }
 
       if (module1 != null && module2 != null) {
         int groupComparison = Comparing.compare(groupMatchLevel(groupPath, grouper.getGroupPath(module2)),

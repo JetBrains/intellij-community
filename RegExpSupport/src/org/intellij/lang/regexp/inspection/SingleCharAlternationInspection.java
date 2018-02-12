@@ -28,6 +28,8 @@ import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.stream.Stream;
+
 /**
  * @author Bas Leijdekkers
  */
@@ -60,15 +62,17 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
       if (branches.length < 2) {
         return;
       }
-      for (RegExpBranch branch : branches) {
-        final RegExpAtom[] atoms = branch.getAtoms();
-        if (atoms.length != 1 || !(atoms[0] instanceof RegExpChar)) {
-          return;
-        }
+      if (!Stream.of(branches).allMatch(SingleCharAlternationVisitor::isSingleChar)) {
+        return;
       }
       final String text = buildReplacementText(pattern);
       //noinspection DialogTitleCapitalization
       myHolder.registerProblem(pattern, "Single character alternation in RegExp", new SingleCharAlternationFix(text));
+    }
+
+    private static boolean isSingleChar(RegExpBranch branch) {
+      final RegExpAtom[] atoms = branch.getAtoms();
+      return atoms.length == 1 && atoms[0] instanceof RegExpChar;
     }
 
     private static class SingleCharAlternationFix implements LocalQuickFix {
@@ -102,7 +106,13 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
         final RegExpPattern pattern = (RegExpPattern)element;
         final String text = buildReplacementText(pattern);
         final RegExpBranch branch = RegExpFactory.createBranchFromText(text, element);
-        pattern.replace(branch.getAtoms()[0]);
+        final PsiElement parent = pattern.getParent();
+        if (parent instanceof RegExpGroup && ((RegExpGroup)parent).getType() == RegExpGroup.Type.NON_CAPTURING) {
+          parent.replace(branch.getAtoms()[0]);
+        }
+        else {
+          pattern.replace(branch.getAtoms()[0]);
+        }
       }
     }
   }
@@ -132,22 +142,35 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
               break;
             case '^':
               if (text.length() == 1) {
-                text.append(ch.getText());
+                text.append(ch.getUnescapedText());
               }
               else {
                 text.append((char)value);
               }
               break;
             default:
-              text.append(ch.getText());
+              text.append(ch.getUnescapedText());
           }
         }
         else {
-          text.append(ch.getText());
+          final int value = ch.getValue();
+          switch (value) {
+            case ']':
+              text.append("\\]");
+              break;
+            case '-':
+            case '^':
+              if (text.length() != 1) {
+                text.append("\\-");
+                break;
+              }
+            default:
+              text.append(ch.getUnescapedText());
+          }
         }
       }
     }
     text.append("]");
-    return text.toString();
+    return RegExpReplacementUtil.escapeForContext(text.toString(), pattern);
   }
 }

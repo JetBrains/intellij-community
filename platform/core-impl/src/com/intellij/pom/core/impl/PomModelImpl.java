@@ -19,7 +19,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -66,7 +65,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class PomModelImpl extends UserDataHolderBase implements PomModel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.pom.core.impl.PomModelImpl");
   private final Project myProject;
   private final Map<Class<? extends PomModelAspect>, PomModelAspect> myAspects = new HashMap<>();
   private final Map<PomModelAspect, List<PomModelAspect>> myIncidence = new HashMap<>();
@@ -109,12 +107,12 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   //private final Pair<PomModelAspect, PomModelAspect> myHolderPair = new Pair<PomModelAspect, PomModelAspect>(null, null);
   private List<PomModelAspect> getAllDependencies(PomModelAspect aspect){
     List<PomModelAspect> pomModelAspects = myIncidence.get(aspect);
-    return pomModelAspects != null ? pomModelAspects : Collections.<PomModelAspect>emptyList();
+    return pomModelAspects != null ? pomModelAspects : Collections.emptyList();
   }
 
   private List<PomModelAspect> getAllDependants(PomModelAspect aspect){
     List<PomModelAspect> pomModelAspects = myInvertedIncidence.get(aspect);
-    return pomModelAspects != null ? pomModelAspects : Collections.<PomModelAspect>emptyList();
+    return pomModelAspects != null ? pomModelAspects : Collections.emptyList();
   }
 
   @Override
@@ -125,12 +123,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   @Override
   public void addModelListener(@NotNull final PomModelListener listener, @NotNull Disposable parentDisposable) {
     addModelListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeModelListener(listener);
-      }
-    });
+    Disposer.register(parentDisposable, () -> removeModelListener(listener));
   }
 
   @Override
@@ -138,64 +131,79 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     myListeners.remove(listener);
   }
 
-  private final Stack<Pair<PomModelAspect, PomTransaction>> myBlockedAspects = new Stack<>();
+  @SuppressWarnings("SSBasedInspection")
+  private final ThreadLocal<Stack<Pair<PomModelAspect, PomTransaction>>> myBlockedAspects = ThreadLocal.withInitial(Stack::new);
 
   @Override
   public void runTransaction(@NotNull PomTransaction transaction) throws IncorrectOperationException{
     if (!isAllowPsiModification()) {
       throw new IncorrectOperationException("Must not modify PSI inside save listener");
     }
-    synchronized(PsiLock.LOCK){
-      List<Throwable> throwables = new ArrayList<>(0);
-      final PomModelAspect aspect = transaction.getTransactionAspect();
-      startTransaction(transaction);
+    final PomModelAspect aspect = transaction.getTransactionAspect();
+    startTransaction(transaction);
+
+    Pair<PomModelAspect,PomTransaction> block = getBlockingTransaction(aspect, transaction);
+    if (block != null) {
+      block.getSecond().getAccumulatedEvent().beforeNestedTransaction();
+    }
+
+    List<Throwable> throwables = new ArrayList<>(0);
+    try{
+      DebugUtil.startPsiModification(null);
+      Stack<Pair<PomModelAspect, PomTransaction>> blockedAspects = myBlockedAspects.get();
+      blockedAspects.push(Pair.create(aspect, transaction));
+
+      final PomModelEvent event;
       try{
-        DebugUtil.startPsiModification(null);
-        myBlockedAspects.push(Pair.create(aspect, transaction));
+        transaction.run();
+        event = transaction.getAccumulatedEvent();
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch(Exception e){
+        throwables.add(e);
+        return;
+      }
+      finally{
+        blockedAspects.pop();
+      }
+      if(block != null){
+        block.getSecond().getAccumulatedEvent().merge(event);
+        return;
+      }
 
-        final PomModelEvent event;
-        try{
-          transaction.run();
-          event = transaction.getAccumulatedEvent();
+      { // update
+        final Set<PomModelAspect> changedAspects = event.getChangedAspects();
+        final Collection<PomModelAspect> dependants = new LinkedHashSet<>();
+        for (final PomModelAspect pomModelAspect : changedAspects) {
+          dependants.addAll(getAllDependants(pomModelAspect));
         }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch(Exception e){
-          LOG.error(e);
-          return;
-        }
-        finally{
-          myBlockedAspects.pop();
-        }
-        final Pair<PomModelAspect,PomTransaction> block = getBlockingTransaction(aspect, transaction);
-        if(block != null){
-          final PomModelEvent currentEvent = block.getSecond().getAccumulatedEvent();
-          currentEvent.merge(event);
-          return;
-        }
-
-        { // update
-          final Set<PomModelAspect> changedAspects = event.getChangedAspects();
-          final Collection<PomModelAspect> dependants = new LinkedHashSet<>();
-          for (final PomModelAspect pomModelAspect : changedAspects) {
-            dependants.addAll(getAllDependants(pomModelAspect));
-          }
-          for (final PomModelAspect modelAspect : dependants) {
-            if (!changedAspects.contains(modelAspect)) {
-              modelAspect.update(event);
-            }
+        for (final PomModelAspect modelAspect : dependants) {
+          if (!changedAspects.contains(modelAspect)) {
+            modelAspect.update(event);
           }
         }
-        for (final PomModelListener listener : myListeners) {
-          final Set<PomModelAspect> changedAspects = event.getChangedAspects();
-          for (PomModelAspect modelAspect : changedAspects) {
-            if (listener.isAspectChangeInteresting(modelAspect)) {
-              listener.modelChanged(event);
-              break;
-            }
+      }
+      for (final PomModelListener listener : myListeners) {
+        final Set<PomModelAspect> changedAspects = event.getChangedAspects();
+        for (PomModelAspect modelAspect : changedAspects) {
+          if (listener.isAspectChangeInteresting(modelAspect)) {
+            listener.modelChanged(event);
+            break;
           }
         }
+      }
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable t) {
+      throwables.add(t);
+    }
+    finally {
+      try {
+        commitTransaction(transaction);
       }
       catch (ProcessCanceledException e) {
         throw e;
@@ -204,20 +212,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         throwables.add(t);
       }
       finally {
-        try {
-          commitTransaction(transaction);
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Throwable t) {
-          throwables.add(t);
-        }
-        finally {
-          DebugUtil.finishPsiModification();
-        }
-        if (!throwables.isEmpty()) CompoundRuntimeException.throwIfNotEmpty(throwables);
+        DebugUtil.finishPsiModification();
       }
+      if (!throwables.isEmpty()) CompoundRuntimeException.throwIfNotEmpty(throwables);
     }
   }
 
@@ -225,13 +222,12 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   private Pair<PomModelAspect,PomTransaction> getBlockingTransaction(final PomModelAspect aspect, PomTransaction transaction) {
     final List<PomModelAspect> allDependants = getAllDependants(aspect);
     for (final PomModelAspect pomModelAspect : allDependants) {
-      final ListIterator<Pair<PomModelAspect, PomTransaction>> blocksIterator = myBlockedAspects.listIterator(myBlockedAspects.size());
+      Stack<Pair<PomModelAspect, PomTransaction>> blockedAspects = myBlockedAspects.get();
+      ListIterator<Pair<PomModelAspect, PomTransaction>> blocksIterator = blockedAspects.listIterator(blockedAspects.size());
       while (blocksIterator.hasPrevious()) {
         final Pair<PomModelAspect, PomTransaction> pair = blocksIterator.previous();
         if (pomModelAspect == pair.getFirst() && // aspect dependence
-            PsiTreeUtil.isAncestor(pair.getSecond().getChangeScope(), transaction.getChangeScope(), false) &&
-            // target scope contain current
-            getContainingFileByTree(pair.getSecond().getChangeScope()) != null  // target scope physical
+            PsiTreeUtil.isAncestor(getContainingFileByTree(pair.getSecond().getChangeScope()), transaction.getChangeScope(), false) // same file
           ) {
           return pair;
         }
@@ -246,6 +242,14 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
     final PsiFile containingFileByTree = getContainingFileByTree(transaction.getChangeScope());
     Document document = containingFileByTree != null ? manager.getCachedDocument(containingFileByTree) : null;
+
+    boolean isFromCommit = ApplicationManager.getApplication().isDispatchThread() &&
+                           ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).isCommitInProgress();
+    boolean isPhysicalPsiChange = containingFileByTree != null && !isFromCommit && !synchronizer.isIgnorePsiEvents();
+    if (isPhysicalPsiChange) {
+      reparseParallelTrees(containingFileByTree, synchronizer);
+    }
+
     boolean docSynced = false;
     if (document != null) {
       final int oldLength = containingFileByTree.getTextLength();
@@ -254,15 +258,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         BlockSupportImpl.sendAfterChildrenChangedEvent((PsiManagerImpl)PsiManager.getInstance(myProject), containingFileByTree, oldLength, true);
       }
     }
-    if (containingFileByTree != null) {
-      boolean isFromCommit = ApplicationManager.getApplication().isDispatchThread() &&
-                             ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).isCommitInProgress();
-      if (!isFromCommit && !synchronizer.isIgnorePsiEvents()) {
-        reparseParallelTrees(containingFileByTree, synchronizer);
-        if (docSynced) {
-          containingFileByTree.getViewProvider().contentsSynchronized();
-        }
-      }
+
+    if (isPhysicalPsiChange && docSynced) {
+      containingFileByTree.getViewProvider().contentsSynchronized();
     }
 
     if (progressIndicator != null) progressIndicator.finishNonCancelableSection();
@@ -292,7 +290,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
   @Nullable
   private Runnable reparseFile(@NotNull final PsiFile file, @NotNull FileElement treeElement, @NotNull CharSequence newText) {
-    TextRange changedPsiRange = DocumentCommitThread.getChangedPsiRange(file, treeElement, newText);
+    TextRange changedPsiRange = ChangedPsiRangeUtil.getChangedPsiRange(file, treeElement, newText);
     if (changedPsiRange == null) return null;
 
     Runnable reparseLeaf = tryReparseOneLeaf(treeElement, newText, changedPsiRange);
@@ -301,7 +299,6 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     final DiffLog log = BlockSupport.getInstance(myProject).reparseRange(file, treeElement, changedPsiRange, newText, new EmptyProgressIndicator(),
                                                                          treeElement.getText());
     return () -> runTransaction(new PomTransactionBase(file, getModelAspect(TreeAspect.class)) {
-      @Nullable
       @Override
       public PomModelEvent runInner() throws IncorrectOperationException {
         return new TreeAspectEvent(PomModelImpl.this, log.performActualPsiChange(file));
@@ -345,7 +342,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     }
 
     boolean physical = changeScope.isPhysical();
-    if (physical && synchronizer.toProcessPsiEvent()) {
+    if (synchronizer.toProcessPsiEvent()) {
       // fail-fast to prevent any psi modifications that would cause psi/document text mismatch
       // PsiToDocumentSynchronizer assertions happen inside event processing and are logged by PsiManagerImpl.fireEvent instead of being rethrown
       // so it's important to throw something outside event processing
@@ -353,7 +350,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         throw new IllegalStateException("Attempt to modify PSI for non-committed Document!");
       }
       CommandProcessor commandProcessor = CommandProcessor.getInstance();
-      if (!commandProcessor.isUndoTransparentActionInProgress() && commandProcessor.getCurrentCommand() == null) {
+      if (physical && !commandProcessor.isUndoTransparentActionInProgress() && commandProcessor.getCurrentCommand() == null) {
         throw new IncorrectOperationException("Must not change PSI outside command or undo-transparent action. See com.intellij.openapi.command.WriteCommandAction or com.intellij.openapi.command.CommandProcessor");
       }
     }

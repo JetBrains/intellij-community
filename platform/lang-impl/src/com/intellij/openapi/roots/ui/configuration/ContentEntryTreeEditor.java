@@ -41,18 +41,26 @@ import com.intellij.openapi.roots.ui.configuration.actions.ToggleExcludedStateAc
 import com.intellij.openapi.roots.ui.configuration.actions.ToggleSourcesStateAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -62,8 +70,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- * Date: Oct 9, 2003
- * Time: 1:19:47 PM
  */
 public class ContentEntryTreeEditor {
   private final Project myProject;
@@ -76,6 +82,7 @@ public class ContentEntryTreeEditor {
   private ContentEntryEditor myContentEntryEditor;
   private final MyContentEntryEditorListener myContentEntryEditorListener = new MyContentEntryEditorListener();
   private final FileChooserDescriptor myDescriptor;
+  private final JTextField myExcludePatternsField;
 
   public ContentEntryTreeEditor(Project project, List<ModuleSourceRootEditHandler<?>> editHandlers) {
     myProject = project;
@@ -89,9 +96,33 @@ public class ContentEntryTreeEditor {
     TreeUtil.installActions(myTree);
     new TreeSpeedSearch(myTree);
 
+    JPanel excludePatternsPanel = new JPanel(new GridBagLayout());
+    excludePatternsPanel.setBorder(JBUI.Borders.empty(5));
+    GridBag gridBag = new GridBag().setDefaultWeightX(1, 1.0).setDefaultPaddingX(JBUI.scale(5));
+    excludePatternsPanel.add(new JLabel(ProjectBundle.message("module.paths.exclude.patterns")), gridBag.nextLine().next());
+    myExcludePatternsField = new JTextField();
+    myExcludePatternsField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        if (myContentEntryEditor != null) {
+          ContentEntry entry = myContentEntryEditor.getContentEntry();
+          if (entry != null) {
+            List<String> patterns = StringUtil.split(myExcludePatternsField.getText().trim(), ";");
+            if (!patterns.equals(entry.getExcludePatterns())) {
+              entry.setExcludePatterns(patterns);
+            }
+          }
+        }
+      }
+    });
+    excludePatternsPanel.add(myExcludePatternsField, gridBag.next().fillCellHorizontally());
+    JBLabel excludePatternsLegendLabel = new JBLabel(XmlStringUtil.wrapInHtml("Use <b>;</b> to separate name patterns, <b>*</b> for any number of symbols, <b>?</b> for one."));
+    excludePatternsLegendLabel.setForeground(JBColor.GRAY);
+    excludePatternsPanel.add(excludePatternsLegendLabel, gridBag.nextLine().next().next().fillCellHorizontally());
     myTreePanel = new MyPanel(new BorderLayout());
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree, true);
     myTreePanel.add(scrollPane, BorderLayout.CENTER);
+    myTreePanel.add(excludePatternsPanel, BorderLayout.SOUTH);
 
     myTreePanel.setVisible(false);
     myDescriptor = FileChooserDescriptorFactory.createMultipleFoldersDescriptor();
@@ -156,6 +187,7 @@ public class ContentEntryTreeEditor {
       String path = VfsUtilCore.urlToPath(entry.getUrl());
       myDescriptor.setTitle(FileUtil.toSystemDependentName(path));
     }
+    myExcludePatternsField.setText(StringUtil.join(entry.getExcludePatterns(), ";"));
 
     final Runnable init = () -> {
       //noinspection ConstantConditions

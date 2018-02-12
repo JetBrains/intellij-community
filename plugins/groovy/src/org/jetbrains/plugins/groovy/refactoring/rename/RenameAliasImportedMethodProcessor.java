@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.rename;
 
 import com.intellij.openapi.editor.Document;
@@ -51,22 +37,22 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
 
   @NotNull
   @Override
-  public Collection<PsiReference> findReferences(PsiElement element) {
+  public Collection<PsiReference> findReferences(@NotNull PsiElement element) {
     return RenameAliasedUsagesUtil.filterAliasedRefs(super.findReferences(element), element);
   }
 
-
+  @NotNull
   @Override
-  public RenameDialog2 createRenameDialog2(Project project, PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
+  public RenameDialog2 createRenameDialog2(@NotNull Project project, @NotNull PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
     RenameDialog2 d = super.createRenameDialog2(project, element, nameSuggestionContext, editor);
     d.setValidate(s -> new ValidationResult(true, null));
     return d;
   }
 
   @Override
-  public void renameElement(PsiElement psiElement,
-                            String newName,
-                            UsageInfo[] usages,
+  public void renameElement(@NotNull PsiElement psiElement,
+                            @NotNull String newName,
+                            @NotNull UsageInfo[] usages,
                             @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     boolean isGetter = GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)psiElement);
     boolean isSetter = GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)psiElement);
@@ -84,7 +70,7 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
       }
     }
 
-    super.renameElement(psiElement, newName, methodAccess.toArray(new UsageInfo[methodAccess.size()]), listener);
+    super.renameElement(psiElement, newName, methodAccess.toArray(UsageInfo.EMPTY_ARRAY), listener);
 
     final String propertyName;
     if (isGetter) {
@@ -132,10 +118,10 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
   }
 
   @Override
-  public void findCollisions(PsiElement element,
-                             final String newName,
-                             final Map<? extends PsiElement, String> allRenames,
-                             final List<UsageInfo> result) {
+  public void findCollisions(@NotNull PsiElement element,
+                             @NotNull final String newName,
+                             @NotNull final Map<? extends PsiElement, String> allRenames,
+                             @NotNull final List<UsageInfo> result) {
     if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;
       OverridingMethodsSearch.search(method).forEach(overrider -> {

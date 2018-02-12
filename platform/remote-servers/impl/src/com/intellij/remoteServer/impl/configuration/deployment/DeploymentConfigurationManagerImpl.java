@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -26,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationManager;
+import com.intellij.remoteServer.configuration.deployment.DeploymentSourceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,16 +30,25 @@ public class DeploymentConfigurationManagerImpl extends DeploymentConfigurationM
   @NotNull
   @Override
   public List<RunnerAndConfigurationSettings> getDeploymentConfigurations(@NotNull ServerType<?> serverType) {
-    final DeployToServerConfigurationType configurationType = DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(serverType);
+    final DeployToServerConfigurationType configurationType =
+      DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(serverType);
     return RunManager.getInstance(myProject).getConfigurationSettingsList(configurationType);
   }
 
+  @Override
+  @Deprecated
+  public void createAndRunConfiguration(@NotNull ServerType<?> serverType,
+                                        @Nullable RemoteServer<?> remoteServer) {
+    createAndRunConfiguration(serverType, remoteServer, null);
+  }
 
   @Override
-  public void createAndRunConfiguration(@NotNull ServerType<?> serverType, @Nullable RemoteServer<?> remoteServer) {
+  public void createAndRunConfiguration(@NotNull ServerType<?> serverType,
+                                        @Nullable RemoteServer<?> remoteServer,
+                                        @Nullable DeploymentSourceType sourceType) {
     DeployToServerConfigurationType configurationType = DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(serverType);
-    RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
-    ConfigurationFactoryEx factory = configurationType.getFactory();
+    RunManager runManager = RunManager.getInstance(myProject);
+    ConfigurationFactoryEx factory = configurationType.getFactoryForType(sourceType);
     RunnerAndConfigurationSettings settings = runManager.createRunConfiguration(configurationType.getDisplayName(), factory);
     factory.onNewConfigurationCreated(settings.getConfiguration());
     DeployToServerRunConfiguration<?, ?> runConfiguration = (DeployToServerRunConfiguration<?, ?>)settings.getConfiguration();
@@ -62,10 +57,9 @@ public class DeploymentConfigurationManagerImpl extends DeploymentConfigurationM
     }
     if (RunDialog.editConfiguration(myProject, settings, "Create Deployment Configuration",
                                     DefaultRunExecutor.getRunExecutorInstance())) {
-      runManager.addConfiguration(settings, runManager.isConfigurationShared(settings), runManager.getBeforeRunTasks(runConfiguration),
-                                  false);
+      runManager.addConfiguration(settings);
       runManager.setSelectedConfiguration(settings);
-      ProgramRunnerUtil.executeConfiguration(myProject, settings, DefaultRunExecutor.getRunExecutorInstance());
+      ProgramRunnerUtil.executeConfiguration(settings, DefaultRunExecutor.getRunExecutorInstance());
     }
   }
 }

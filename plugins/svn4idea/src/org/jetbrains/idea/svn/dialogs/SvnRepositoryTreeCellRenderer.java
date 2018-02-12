@@ -34,7 +34,7 @@ public class SvnRepositoryTreeCellRenderer extends ColoredTreeCellRenderer {
     if (value instanceof RepositoryTreeNode) {
       RepositoryTreeNode node = (RepositoryTreeNode) value;
       if (node.getSVNDirEntry() == null) {
-        append(node.getURL().toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        append(node.getURL().toDecodedString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
       } else {
         String name = node.getSVNDirEntry().getName();

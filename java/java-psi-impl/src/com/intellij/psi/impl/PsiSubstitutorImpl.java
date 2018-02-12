@@ -16,7 +16,6 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
@@ -24,7 +23,6 @@ import com.intellij.psi.impl.light.LightTypeParameter;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
@@ -32,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -144,7 +143,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     return mySubstitutionMap != null ? mySubstitutionMap.hashCode() : 0;
   }
 
-  private static RecursionGuard ourGuard = RecursionManager.createGuard("substituteGuard");
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("substituteGuard");
   private PsiType rawTypeForTypeParameter(final PsiTypeParameter typeParameter) {
     final PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
     if (extendsTypes.length > 0) {
@@ -156,10 +155,6 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   }
 
   private class SubstitutionVisitor extends PsiTypeMapper {
-    @Override
-    public PsiType visitCapturedWildcardType(PsiCapturedWildcardType type) {
-      return type;
-    }
 
     @Override
     public PsiType visitType(PsiType type) {

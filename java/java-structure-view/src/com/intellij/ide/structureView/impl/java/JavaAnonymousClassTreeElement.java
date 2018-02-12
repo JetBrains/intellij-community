@@ -21,7 +21,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
-import java.util.Set;
 
 /**
  * @author Konstantin Bulenkov
@@ -32,9 +31,8 @@ public class JavaAnonymousClassTreeElement extends JavaClassTreeElement {
   private String myName;
   private String myBaseName;
   
-  public JavaAnonymousClassTreeElement(PsiAnonymousClass aClass, Set<PsiClass> parents) {
-    super(aClass, false, parents);
-    //parents.add(aClass.getSuperClass());
+  public JavaAnonymousClassTreeElement(PsiAnonymousClass aClass) {
+    super(aClass, false);
   }
 
   @Override

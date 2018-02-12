@@ -38,6 +38,6 @@ public class DefaultModuleEditorsProvider implements ModuleConfigurationEditorPr
     editors.add(new ContentEntriesEditor(moduleName, state));
     editors.add(new OutputEditor(state));
     editors.add(new ClasspathEditor(state));
-    return editors.toArray(new ModuleConfigurationEditor[editors.size()]);
+    return editors.toArray(ModuleConfigurationEditor.EMPTY);
   }
 }

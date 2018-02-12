@@ -29,11 +29,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 09.06.2007
- */
 public class SmartStructureTracker extends TreeModelAdapter {
   private final JTree myEventTree;
   private final Alarm myAlarm;

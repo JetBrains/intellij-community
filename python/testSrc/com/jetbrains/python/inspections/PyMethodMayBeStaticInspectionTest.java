@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,11 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.python.PythonTestUtil;
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-
-/**
- * User: ktisha
- */
-@TestDataPath("$CONTENT_ROOT/../testData/inspections/PyMethodMayBeStaticInspection/")
-public class PyMethodMayBeStaticInspectionTest extends PyTestCase {
+public class PyMethodMayBeStaticInspectionTest extends PyInspectionTestCase {
 
   public void testTruePositive() {
     doTest();
@@ -81,11 +74,13 @@ public class PyMethodMayBeStaticInspectionTest extends PyTestCase {
   }
 
   public void testAbstractProperty() {
-    doMultiFileTest("abc.py");
+    myFixture.configureByFile(getTestCaseDirectory() + "abc.py");
+    doTest();
   }
 
   public void testPropertyWithAlias() {
-    doMultiFileTest("abc.py");
+    myFixture.configureByFile(getTestCaseDirectory() + "abc.py");
+    doTest();
   }
 
   //PY-17671
@@ -98,32 +93,34 @@ public class PyMethodMayBeStaticInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-22091
+  public void testFString() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
   // PY-18866
   public void testSuperSamePy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTest());
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest());
   }
 
   // PY-18866
   public void testSuperNotSamePy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTest());
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest());
   }
 
-  private void doTest() {
-    myFixture.configureByFile(getTestName(true) + ".py");
-    myFixture.enableInspections(PyMethodMayBeStaticInspection.class);
-    myFixture.checkHighlighting(false, false, true);
+  // PY-24817
+  public void testDocumentedEmpty() {
+    doTest();
   }
 
-  private void doMultiFileTest(String ... files) {
-    String [] filenames = Arrays.copyOf(files, files.length + 1);
-    filenames[files.length] = getTestName(true) + ".py";
-    myFixture.configureByFiles(filenames);
-    myFixture.enableInspections(PyMethodMayBeStaticInspection.class);
-    myFixture.checkHighlighting(false, false, true);
+  // PY-25076
+  public void testAttributeNamedSelf() {
+    doTest();
   }
 
+  @NotNull
   @Override
-  protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath() + "/inspections/PyMethodMayBeStaticInspection/";
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyMethodMayBeStaticInspection.class;
   }
 }

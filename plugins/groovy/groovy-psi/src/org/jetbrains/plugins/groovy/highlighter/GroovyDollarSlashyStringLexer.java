@@ -17,9 +17,6 @@ package org.jetbrains.plugins.groovy.highlighter;
 
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
-/**
- * Created by Max Medvedev on 10/22/13
- */
 public class GroovyDollarSlashyStringLexer extends GroovyStringLexerBase {
   public GroovyDollarSlashyStringLexer() {
     super(GroovyTokenTypes.mDOLLAR_SLASH_REGEX_CONTENT);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,9 +34,9 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
   @Override
   public String getEffectiveName() {
     if (DomUtil.hasXml(getName())) {
-      return getName().getRawText();
+      return StringUtil.notNullize(getName().getRawText());
     }
-    return getQualifiedName().getRawText();
+    return StringUtil.notNullize(getQualifiedName().getRawText());
   }
 
   @Nullable
@@ -56,10 +56,10 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
   @Override
   public String getEffectiveQualifiedName() {
     if (DomUtil.hasXml(getQualifiedName())) {
-      return getQualifiedName().getRawText();
+      return StringUtil.notNullize(getQualifiedName().getRawText());
     }
 
-    return getNamePrefix() + "." + getName().getRawText();
+    return getNamePrefix() + "." + StringUtil.notNullize(getName().getRawText());
   }
 
   @Override

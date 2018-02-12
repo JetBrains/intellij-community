@@ -28,7 +28,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.semantic.SemElement;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.stubs.FileStub;
@@ -106,7 +106,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
     if (sb != null) {
       sb.append("last " + oldValue + "\n");
     }
-    final List<DomEvent> events = fireEvents ? new SmartList<>() : Collections.<DomEvent>emptyList();
+    final List<DomEvent> events = fireEvents ? new SmartList<>() : Collections.emptyList();
     if (oldValue != null) {
       if (fireEvents) {
         events.add(new DomEvent(oldValue, false));

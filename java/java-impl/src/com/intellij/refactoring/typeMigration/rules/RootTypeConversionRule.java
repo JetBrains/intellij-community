@@ -27,9 +27,10 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.style.UnnecessarilyQualifiedStaticUsageInspection;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 /**
  * @author anna
- *         Date: 08-Aug-2008
  */
 public class RootTypeConversionRule extends TypeConversionRule {
   public TypeConversionDescriptorBase findConversion(final PsiType from,
@@ -143,13 +144,28 @@ public class RootTypeConversionRule extends TypeConversionRule {
 
   private static boolean areParametersAssignable(PsiType migrationType, int paramId, PsiExpression[] actualParams) {
     if (migrationType instanceof PsiEllipsisType) {
-      for (int i = paramId; i < actualParams.length; i++) {
-        if (!TypeConversionUtil.areTypesAssignmentCompatible(migrationType, actualParams[i])) {
-          return false;
-        }
+      if (actualParams.length == paramId) {
+        // no arguments for ellipsis
+        return true;
       }
-      return true;
+      else if (actualParams.length == paramId + 1) {
+        // only one argument for ellipsis
+        return TypeConversionUtil.areTypesAssignmentCompatible(migrationType, actualParams[paramId]) ||
+               TypeConversionUtil.areTypesAssignmentCompatible(((PsiEllipsisType)migrationType).getComponentType(), actualParams[paramId]);
+      }
+      else if (actualParams.length > paramId + 1) {
+        // few arguments
+        PsiType componentType = ((PsiEllipsisType)migrationType).getComponentType();
+        for (int i = paramId; i < actualParams.length; i++) {
+          if (!TypeConversionUtil.areTypesAssignmentCompatible(componentType, actualParams[i])) {
+            return false;
+          }
+        }
+        return true;
+      }
+      throw new AssertionError(" migrationType: " + migrationType + ", paramId: " + paramId + ", actualParameters: " + Arrays.toString(actualParams));
     } else {
+      if (paramId >= actualParams.length) return true;
       return TypeConversionUtil.areTypesAssignmentCompatible(migrationType, actualParams[paramId]);
     }
   }

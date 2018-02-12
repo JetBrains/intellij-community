@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import java.io.IOException;
 public class PyNamedParameterElementType extends PyStubElementType<PyNamedParameterStub, PyNamedParameter> {
   private static final int POSITIONAL_CONTAINER = 1;
   private static final int KEYWORD_CONTAINER = 2;
-  private static final int HAS_DEFAULT_VALUE = 4;
 
   public PyNamedParameterElementType() {
     this("NAMED_PARAMETER");
@@ -49,21 +48,26 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
     super(debugName);
   }
 
+  @Override
+  @NotNull
   public PyNamedParameter createPsi(@NotNull final PyNamedParameterStub stub) {
     return new PyNamedParameterImpl(stub);
   }
 
+  @Override
   @NotNull
   public PyNamedParameterStub createStub(@NotNull final PyNamedParameter psi, final StubElement parentStub) {
-    return new PyNamedParameterStubImpl(psi.getName(), psi.isPositionalContainer(), psi.isKeywordContainer(), psi.hasDefaultValue(),
-                                        psi.getTypeCommentAnnotation(), parentStub, getStubElementType());
+    return new PyNamedParameterStubImpl(psi.getName(), psi.isPositionalContainer(), psi.isKeywordContainer(), psi.getDefaultValueText(),
+                                        psi.getTypeCommentAnnotation(), psi.getAnnotationValue(), parentStub, getStubElementType());
   }
 
+  @Override
   @NotNull
   public PsiElement createElement(@NotNull final ASTNode node) {
     return new PyNamedParameterImpl(node);
   }
 
+  @Override
   public void serialize(@NotNull final PyNamedParameterStub stub, @NotNull final StubOutputStream dataStream)
       throws IOException {
     dataStream.writeName(stub.getName());
@@ -71,23 +75,27 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
     byte flags = 0;
     if (stub.isPositionalContainer()) flags |= POSITIONAL_CONTAINER;
     if (stub.isKeywordContainer()) flags |= KEYWORD_CONTAINER;
-    if (stub.hasDefaultValue()) flags |= HAS_DEFAULT_VALUE;
     dataStream.writeByte(flags);
+    dataStream.writeName(stub.getDefaultValueText());
     dataStream.writeName(stub.getTypeComment());
+    dataStream.writeName(stub.getAnnotation());
   }
 
+  @Override
   @NotNull
   public PyNamedParameterStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     String name = StringRef.toString(dataStream.readName());
     byte flags = dataStream.readByte();
+    final StringRef defaultValueText = dataStream.readName();
     final StringRef typeComment = dataStream.readName();
+    final StringRef annotation = dataStream.readName();
     return new PyNamedParameterStubImpl(name,
                                         (flags & POSITIONAL_CONTAINER) != 0,
                                         (flags & KEYWORD_CONTAINER) != 0,
-                                        (flags & HAS_DEFAULT_VALUE) != 0,
-                                        typeComment == null ? null : typeComment.getString(), 
-                                        parentStub,
-                                        getStubElementType());
+                                        defaultValueText == null ? null : defaultValueText.getString(),
+                                        typeComment == null ? null : typeComment.getString(),
+                                        annotation == null ? null : annotation.getString(),
+                                        parentStub, getStubElementType());
   }
 
   @Override
@@ -102,6 +110,7 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
     return super.shouldCreateStub(node);
   }
 
+  @NotNull
   protected IStubElementType getStubElementType() {
     return PyElementTypes.NAMED_PARAMETER;
   }

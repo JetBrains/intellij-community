@@ -47,18 +47,20 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
 
   /**
    * Runs given process synchronously (in calling thread).
+   *
+   * @param progress an indicator to use, {@code null} means reuse current progress
    */
-  public abstract void runProcess(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException;
+  public abstract void runProcess(@NotNull Runnable process, @Nullable ProgressIndicator progress) throws ProcessCanceledException;
 
   /**
    * Runs given process synchronously (in calling thread).
+   *
+   * @param progress an indicator to use, {@code null} means reuse current progress
    */
-  public abstract <T> T runProcess(@NotNull Computable<T> process, ProgressIndicator progress) throws ProcessCanceledException;
+  public abstract <T> T runProcess(@NotNull Computable<T> process, @Nullable ProgressIndicator progress) throws ProcessCanceledException;
 
   @Override
-  public ProgressIndicator getProgressIndicator() {
-    return null;
-  }
+  public abstract ProgressIndicator getProgressIndicator();
 
   public static void progress(@NotNull String text) throws ProcessCanceledException {
     progress(text, "");
@@ -201,7 +203,10 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static void checkCanceled() throws ProcessCanceledException {
-    getInstance().doCheckCanceled();
+    ProgressManager instance = ourInstance;
+    if (instance != null) {
+      instance.doCheckCanceled();
+    }
   }
 
   /**
@@ -231,11 +236,11 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * <li>action started to execute, but was aborted using {@link ProcessCanceledException} when some other thread initiated
    * write action</li>
    * </ul>
-   * If unable to run read action because of interfering write action, this method waits for that write action to complete.
-   * So under no circumstances must you call this method from read action or under critical locks.
+   * @param action the code to execute under read action
+   * @param indicator progress indicator that should be cancelled if a write action is about to start. Can be null.
    * @since 171.*
    */
-  public abstract boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action);
+  public abstract boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action, @Nullable ProgressIndicator indicator);
 
   public abstract boolean isInNonCancelableSection();
 }

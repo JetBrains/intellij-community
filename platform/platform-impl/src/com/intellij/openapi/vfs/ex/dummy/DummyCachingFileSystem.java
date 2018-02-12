@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,47 +20,37 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 /**
  * @author gregsh
  */
 public abstract class DummyCachingFileSystem<T extends VirtualFile> extends DummyFileSystem {
   private final String myProtocol;
-  private final FactoryMap<String, T> myCachedFiles = new ConcurrentFactoryMap<String, T>() {
-    @Override
-    protected T create(String key) {
-      return findFileByPathInner(key);
-    }
-
-    @Override
-    public T get(Object key) {
-      T file = super.get(key);
-      if (file != null && !file.isValid()) {
-        remove(key);
-        return super.get(key);
-      }
-      return file;
-    }
-  };
+  private final ConcurrentMap<String, T> myCachedFiles = ConcurrentFactoryMap.createMap(
+    this::findFileByPathInner, ContainerUtil::createConcurrentWeakValueMap);
 
   public DummyCachingFileSystem(String protocol) {
     myProtocol = protocol;
 
     final Application application = ApplicationManager.getApplication();
-    application.getMessageBus().connect(application).subscribe(ProjectManager.TOPIC, new ProjectManagerAdapter() {
+    application.getMessageBus().connect(application).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(final Project project) {
         onProjectOpened(project);
@@ -88,7 +78,12 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
 
   @Override
   public final T findFileByPath(@NotNull String path) {
-    return myCachedFiles.get(path);
+    T file = myCachedFiles.get(path);
+    if (file != null && !file.isValid()) {
+      myCachedFiles.remove(path);
+      file = myCachedFiles.get(path);
+    }
+    return file;
   }
 
   @Override
@@ -130,10 +125,13 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
 
   @NotNull
   public Collection<T> getCachedFiles() {
-    return myCachedFiles.notNullValues();
+    return myCachedFiles.values().stream()
+      .filter(Objects::nonNull)
+      .filter(VirtualFile::isValid)
+      .collect(Collectors.toList());
   }
 
-  public void onProjectClosed(@NotNull Project project) {
+  public void onProjectClosed() {
     clearCache();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       cleanup();
@@ -144,7 +142,6 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     clearCache();
   }
 
-
   private static final Key<Boolean> DISPOSE_CALLBACK = Key.create("DISPOSE_CALLBACK");
 
   private void registerDisposeCallback(Project project) {
@@ -154,7 +151,7 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     Disposer.register(project, new Disposable() {
       @Override
       public void dispose() {
-        onProjectClosed(project);
+        onProjectClosed();
       }
     });
   }
@@ -170,11 +167,12 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
   }
 
   protected void clearInvalidFiles() {
-    for (T t : myCachedFiles.notNullValues()) {
-      if (!t.isValid()) myCachedFiles.removeValue(t);
+    for (Map.Entry<String, T> entry : myCachedFiles.entrySet()) {
+      T t = entry.getValue();
+      if (t == null || !t.isValid()) {
+        myCachedFiles.remove(entry.getKey());
+      }
     }
-    //noinspection StatementWithEmptyBody
-    while (myCachedFiles.removeValue(null)) ;
   }
 
   private void cleanup() {

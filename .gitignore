@@ -1,3 +1,5 @@
+build/dependencies/.gradle
+build/dependencies/build
 /android
 /config
 /system
@@ -8,3 +10,7 @@
 /test-config
 .jps-build-data
 *.pyc
+.idea/libraries/Gradle__*.xml
+.idea/gradle_extensions.xml
+python/educational-python/build/dependencies/build
+python/educational-python/build/dependencies/.gradle

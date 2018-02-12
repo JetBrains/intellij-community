@@ -17,9 +17,6 @@ package com.intellij.openapi.wm;
 
 import javax.swing.*;
 
-/**
- * User: spLeaner
- */
 public interface CustomStatusBarWidget extends StatusBarWidget {
 
   JComponent getComponent();

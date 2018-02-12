@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.AbstractProjectComponent;
@@ -53,7 +52,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   private final ProjectLevelVcsManager myVcsManager;
 
   public static ChangesViewContentI getInstance(Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangesViewContentI.class);
+    return project.getComponent(ChangesViewContentI.class);
   }
 
   private ContentManager myContentManager;
@@ -158,6 +157,11 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   }
 
   public void projectClosed() {
+    for (Content content : myAddedContents) {
+      Disposer.dispose(content);
+    }
+    myAddedContents.clear();
+
     myVcsChangeAlarm.cancelAllRequests();
   }
 
@@ -182,6 +186,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   }
 
   public void setSelectedContent(final Content content) {
+    if (myContentManager == null) return;
     myContentManager.setSelectedContent(content);
   }
 
@@ -197,6 +202,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   }
   
   public boolean isContentSelected(@NotNull String contentName) {
+    if (myContentManager == null) return false;
     Content selectedContent = myContentManager.getSelectedContent();
     if (selectedContent == null) return false;
     return Comparing.equal(contentName, selectedContent.getTabName());
@@ -207,6 +213,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   }
 
   public void selectContent(@NotNull String tabName, boolean requestFocus) {
+    if (myContentManager == null) return;
     for(Content content: myContentManager.getContents()) {
       if (content.getDisplayName().equals(tabName)) {
         myContentManager.setSelectedContent(content, requestFocus);
@@ -218,13 +225,11 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   private class MyVcsListener implements VcsListener {
     public void directoryMappingChanged() {
       myVcsChangeAlarm.cancelAllRequests();
-      myVcsChangeAlarm.addRequest(new Runnable() {
-        public void run() {
-          if (myProject.isDisposed()) return;
-          updateToolWindowAvailability();
-          if (myContentManager != null) {
-            updateExtensionTabs();
-          }
+      myVcsChangeAlarm.addRequest(() -> {
+        if (myProject.isDisposed()) return;
+        updateToolWindowAvailability();
+        if (myContentManager != null) {
+          updateExtensionTabs();
         }
       }, 100, ModalityState.NON_MODAL);
     }

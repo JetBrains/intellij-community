@@ -1,70 +1,92 @@
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.psi.PsiFile;
+import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 /**
  * @author Maxim.Mossienko
  */
-public class TestModeOptimizingSearchHelper extends OptimizingSearchHelperBase {
-  private static String lastString;
+class TestModeOptimizingSearchHelper extends OptimizingSearchHelperBase {
   private final StringBuilder builder = new StringBuilder();
-  private int lastLength;
+  private String plan;
+  private boolean myTransactionStarted = false;
 
-  TestModeOptimizingSearchHelper(CompileContext _context) {
-    super(_context);
-  }
+  private final List<String> myWords = new SmartList<>();
 
+  @Override
   public boolean doOptimizing() {
     return true;
   }
 
+  @Override
   public void clear() {
-    lastString = builder.toString();
+    assert !myTransactionStarted;
+    plan = builder.toString();
     builder.setLength(0);
-    lastLength = 0;
   }
 
-  protected void doAddSearchWordInCode(final String refname) {
-    append(refname, "in code:");
+  private void append(final String word, final String prefix) {
+    myWords.add(prefix + word);
+    myTransactionStarted = true;
   }
 
   @Override
-  protected void doAddSearchWordInText(String refname) {
-    append(refname, "in text:");
+  protected void doAddSearchWordInCode(@NotNull String word) {
+    append(word, "in code:");
   }
 
-  private void append(final String refname, final String str) {
-    if (builder.length() == lastLength) builder.append("[");
-    else builder.append("|");
-    builder.append(str).append(refname);
+  @Override
+  protected void doAddSearchWordInText(@NotNull String word) {
+    append(word, "in text:");
   }
 
-  protected void doAddSearchWordInComments(final String refname) {
-    append(refname, "in comments:");
+  @Override
+  protected void doAddSearchWordInComments(@NotNull String word) {
+    append(word, "in comments:");
   }
 
-  protected void doAddSearchWordInLiterals(final String refname) {
-    append(refname, "in literals:");
+  @Override
+  protected void doAddSearchWordInLiterals(@NotNull String word) {
+    append(word, "in literals:");
   }
 
+  @Override
   public void endTransaction() {
+    if (!myTransactionStarted) return;
+    myTransactionStarted = false;
     super.endTransaction();
-    builder.append("]");
-    lastLength = builder.length();
+    Collections.sort(myWords); // to ensure stable ordering
+    builder.append('[');
+    boolean bar = false;
+    for (String word : myWords) {
+      if (bar) builder.append('|');
+      else bar = true;
+      builder.append(word);
+    }
+    this.builder.append(']');
+    myWords.clear();
   }
 
+  @Override
   public boolean isScannedSomething() {
     return false;
   }
 
+  @NotNull
+  @Override
   public Set<PsiFile> getFilesSetToScan() {
+    assert !myTransactionStarted;
     return Collections.emptySet();
   }
 
   public String getSearchPlan() {
-    return lastString;
+    assert !myTransactionStarted;
+    return plan;
   }
 }

@@ -15,20 +15,20 @@
  */
 package com.intellij.openapi.vcs.statistics;
 
-import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
+import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-import static com.intellij.internal.statistic.StatisticsUtilKt.getBooleanUsage;
-import static com.intellij.internal.statistic.StatisticsUtilKt.getEnumUsage;
+import static com.intellij.internal.statistic.utils.StatisticsUtilKt.getBooleanUsage;
+import static com.intellij.internal.statistic.utils.StatisticsUtilKt.getEnumUsage;
 
-public class VcsOptionsUsagesCollector extends AbstractApplicationUsagesCollector {
+public class VcsOptionsUsagesCollector extends AbstractProjectsUsagesCollector {
   private static final String GROUP_ID = "vcs-options";
 
   @NotNull
@@ -60,9 +60,7 @@ public class VcsOptionsUsagesCollector extends AbstractApplicationUsagesCollecto
     usages.add(getBooleanUsage("commit.before.check.todo", configuration.CHECK_NEW_TODO));
     usages.add(getBooleanUsage("commit.before.check.non.empty.comment", configuration.FORCE_NON_EMPTY_COMMENT));
     usages.add(getBooleanUsage("commit.before.optimize.imports", configuration.OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT));
-    usages.add(getBooleanUsage("commit.before.check.files.up.to.date", configuration.CHECK_FILES_UP_TO_DATE_BEFORE_COMMIT));
     usages.add(getBooleanUsage("commit.before.reformat.project", configuration.REFORMAT_BEFORE_PROJECT_COMMIT));
-    usages.add(getBooleanUsage("commit.before.reformat.file", configuration.REFORMAT_BEFORE_FILE_COMMIT));
     usages.add(getBooleanUsage("commit.before.rearrange", configuration.REARRANGE_BEFORE_PROJECT_COMMIT));
 
     usages.add(getBooleanUsage("commit.clear.initial.comment", configuration.CLEAR_INITIAL_COMMIT_MESSAGE));

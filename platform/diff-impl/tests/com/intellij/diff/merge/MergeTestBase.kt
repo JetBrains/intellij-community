@@ -16,7 +16,7 @@
 package com.intellij.diff.merge
 
 import com.intellij.diff.DiffContentFactoryImpl
-import com.intellij.diff.DiffTestCase
+import com.intellij.diff.HeavyDiffTestCase
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.merge.MergeTestBase.SidesState.*
 import com.intellij.diff.merge.TextMergeViewer.MyThreesideViewer
@@ -38,27 +38,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.util.ui.UIUtil
 
-abstract class MergeTestBase : DiffTestCase() {
-  private var projectFixture: IdeaProjectTestFixture? = null
-  private var project: Project? = null
-
-  override fun setUp() {
-    super.setUp()
-    projectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getTestName(true)).fixture
-    projectFixture!!.setUp()
-    project = projectFixture!!.project
-  }
-
-  override fun tearDown() {
-    projectFixture?.tearDown()
-    project = null
-    super.tearDown()
-  }
-
+abstract class MergeTestBase : HeavyDiffTestCase() {
   fun test1(left: String, base: String, right: String, f: TestBuilder.() -> Unit) {
     test(left, base, right, 1, f)
   }
@@ -164,14 +146,14 @@ abstract class MergeTestBase : DiffTestCase() {
     fun Int.resolve() {
       val change = change(this)
       command(change) {
-        assertTrue(change.isConflict && viewer.canApplyNonConflictedChange(change, ThreeSide.BASE))
-        viewer.applyNonConflictedChange(change, ThreeSide.BASE)
+        assertTrue(change.isConflict && viewer.canResolveChangeAutomatically(change, ThreeSide.BASE))
+        viewer.resolveChangeAutomatically(change, ThreeSide.BASE)
       }
     }
 
     fun Int.canResolveConflict(): Boolean {
       val change = change(this)
-      return viewer.canApplyNonConflictedChange(change, ThreeSide.BASE)
+      return viewer.canResolveChangeAutomatically(change, ThreeSide.BASE)
     }
 
     //

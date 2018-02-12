@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2009 Bas Leijdekkers
+ * Copyright 2005-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,8 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import org.jetbrains.annotations.NonNls;
+import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class SuspiciousSystemArraycopyInspection extends BaseInspection {
@@ -28,8 +29,7 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "suspicious.system.arraycopy.display.name");
+    return InspectionGadgetsBundle.message("suspicious.system.arraycopy.display.name");
   }
 
   @Override
@@ -48,68 +48,49 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
     return new SuspiciousSystemArraycopyVisitor();
   }
 
-  private static class SuspiciousSystemArraycopyVisitor
-    extends BaseInspectionVisitor {
+  private static class SuspiciousSystemArraycopyVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      @NonNls final String name = methodExpression.getReferenceName();
-      if (!"arraycopy".equals(name)) {
+      final PsiClassType objectType = TypeUtils.getObjectType(expression);
+      if (!MethodCallUtils.isCallToMethod(expression, "java.lang.System", PsiType.VOID, "arraycopy",
+                                          objectType, PsiType.INT, objectType, PsiType.INT, PsiType.INT)) {
         return;
       }
-      final PsiExpression qualifierExpression =
-        methodExpression.getQualifierExpression();
-      if (!(qualifierExpression instanceof PsiReferenceExpression)) {
-        return;
-      }
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)qualifierExpression;
-      final String canonicalText = referenceExpression.getCanonicalText();
-      if (!canonicalText.equals("java.lang.System")) {
-        return;
-      }
-      final PsiExpressionList argumentList = expression.getArgumentList();
-      final PsiExpression[] arguments = argumentList.getExpressions();
+      final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
       if (arguments.length != 5) {
         return;
       }
-      final PsiExpression src = arguments[0];
-      final PsiType srcType = src.getType();
       final PsiExpression srcPos = arguments[1];
       if (isNegativeArgument(srcPos)) {
-        final String errorString = InspectionGadgetsBundle.message(
-          "suspicious.system.arraycopy.problem.descriptor1");
-        registerError(srcPos, errorString);
+        registerError(srcPos, InspectionGadgetsBundle.message("suspicious.system.arraycopy.problem.descriptor1"));
       }
       final PsiExpression destPos = arguments[3];
       if (isNegativeArgument(destPos)) {
-        final String errorString = InspectionGadgetsBundle.message(
-          "suspicious.system.arraycopy.problem.descriptor2");
-        registerError(destPos, errorString);
+        registerError(destPos, InspectionGadgetsBundle.message("suspicious.system.arraycopy.problem.descriptor2"));
       }
       final PsiExpression length = arguments[4];
       if (isNegativeArgument(length)) {
-        final String errorString = InspectionGadgetsBundle.message(
-          "suspicious.system.arraycopy.problem.descriptor3");
-        registerError(length, errorString);
+        registerError(length, InspectionGadgetsBundle.message("suspicious.system.arraycopy.problem.descriptor3"));
+      }
+      final PsiExpression src = arguments[0];
+      final PsiType srcType = src.getType();
+      if (srcType == null) {
+        return;
       }
       boolean notArrayReported = false;
       if (!(srcType instanceof PsiArrayType)) {
-        final String errorString = InspectionGadgetsBundle.message(
-          "suspicious.system.arraycopy.problem.descriptor4");
-        registerError(src, errorString);
+        registerError(src, InspectionGadgetsBundle.message("suspicious.system.arraycopy.problem.descriptor4"));
         notArrayReported = true;
       }
       final PsiExpression dest = arguments[2];
       final PsiType destType = dest.getType();
+      if (destType == null) {
+        return;
+      }
       if (!(destType instanceof PsiArrayType)) {
-        final String errorString = InspectionGadgetsBundle.message(
-          "suspicious.system.arraycopy.problem.descriptor5");
-        registerError(dest, errorString);
+        registerError(dest, InspectionGadgetsBundle.message("suspicious.system.arraycopy.problem.descriptor5"));
         notArrayReported = true;
       }
       if (notArrayReported) {
@@ -121,26 +102,20 @@ public class SuspiciousSystemArraycopyInspection extends BaseInspection {
       final PsiType destComponentType = destArrayType.getComponentType();
       if (!(srcComponentType instanceof PsiPrimitiveType)) {
         if (!destComponentType.isAssignableFrom(srcComponentType)) {
-          final String errorString = InspectionGadgetsBundle.message(
-            "suspicious.system.arraycopy.problem.descriptor6",
-            srcType.getCanonicalText(),
-            destType.getCanonicalText());
-          registerError(dest, errorString);
+          registerError(dest, InspectionGadgetsBundle.message("suspicious.system.arraycopy.problem.descriptor6",
+                                                              srcType.getCanonicalText(),
+                                                              destType.getCanonicalText()));
         }
       }
       else if (!destComponentType.equals(srcComponentType)) {
-        final String errorString = InspectionGadgetsBundle.message(
-          "suspicious.system.arraycopy.problem.descriptor6",
-          srcType.getCanonicalText(),
-          destType.getCanonicalText());
-        registerError(dest, errorString);
+        registerError(dest, InspectionGadgetsBundle.message("suspicious.system.arraycopy.problem.descriptor6",
+                                                            srcType.getCanonicalText(),
+                                                            destType.getCanonicalText()));
       }
     }
 
-    private static boolean isNegativeArgument(
-      @NotNull PsiExpression argument) {
-      final Object constant =
-        ExpressionUtils.computeConstantExpression(argument);
+    private static boolean isNegativeArgument(@NotNull PsiExpression argument) {
+      final Object constant = ExpressionUtils.computeConstantExpression(argument);
       if (!(constant instanceof Integer)) {
         return false;
       }

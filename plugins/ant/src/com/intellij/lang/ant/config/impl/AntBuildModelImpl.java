@@ -18,10 +18,9 @@ package com.intellij.lang.ant.config.impl;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.dom.*;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -72,7 +71,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
 
   public AntBuildTarget[] getTargets() {
     final List<AntBuildTargetBase> list = getTargetsList();
-    return list.toArray(new AntBuildTargetBase[list.size()]);
+    return list.toArray(AntBuildTargetBase.EMPTY_ARRAY);
   }
 
   public AntBuildTarget[] getFilteredTargets() {
@@ -82,7 +81,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
         filtered.add(buildTarget);
       }
     }
-    return (filtered.size() == 0) ? AntBuildTargetBase.EMPTY_ARRAY : filtered.toArray(new AntBuildTargetBase[filtered.size()]);
+    return (filtered.size() == 0) ? AntBuildTargetBase.EMPTY_ARRAY : filtered.toArray(AntBuildTargetBase.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -104,12 +103,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
 
   @Nullable
   public AntBuildTargetBase findTarget(final String name) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<AntBuildTargetBase>() {
-      @Nullable
-      public AntBuildTargetBase compute() {
-        return findTargetImpl(name, AntBuildModelImpl.this);
-      }
-    });
+    return ReadAction.compute(() -> findTargetImpl(name, AntBuildModelImpl.this));
   }
 
   @Nullable
@@ -127,11 +121,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
   }
 
   private List<AntBuildTargetBase> getTargetsList() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<List<AntBuildTargetBase>>() {
-      public List<AntBuildTargetBase> compute() {
-        return myTargets.getValue();
-      }
-    });
+    return ReadAction.compute(() -> myTargets.getValue());
   }
 
   @Nullable

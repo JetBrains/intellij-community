@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
@@ -25,12 +11,14 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.ui.*;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
-import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,13 +35,19 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.event.UndoableEditListener;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ComboBoxUI;
+import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
+import javax.swing.plaf.basic.BasicTextUI;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.*;
+import javax.swing.text.html.CSS;
+import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import javax.swing.undo.UndoManager;
@@ -61,12 +55,14 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.im.InputContext;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
 import java.awt.image.PixelGrabber;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -102,6 +98,15 @@ public class UIUtil {
     DEFAULT_HTML_KIT_CSS = kit.getStyleSheet();
     // .. erase global ref to this CSS so no one can alter it
     kit.setStyleSheet(null);
+
+    // Applied to all JLabel instances, including subclasses. Supported in JBSDK only.
+    UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", UIUtil.JBHtmlEditorKit.createStyleSheet());
+  }
+
+  public static void decorateFrame(@NotNull JRootPane pane) {
+    if (Registry.is("ide.mac.allowDarkWindowDecorations")) {
+      pane.putClientProperty("jetbrains.awt.windowDarkAppearance", isUnderDarcula());
+    }
   }
 
   private static void blockATKWrapper() {
@@ -195,15 +200,14 @@ public class UIUtil {
     return isUnderDarcula() ? DARCULA_GRAY_FILTER : DEFAULT_GRAY_FILTER;
   }
 
+  /** @deprecated Apple JRE is no longer supported (to be removed in IDEA 2019) */
   public static boolean isAppleRetina() {
-    return isRetina() && SystemInfo.isAppleJvm;
+    return false;
   }
 
   public static Couple<Color> getCellColors(JTable table, boolean isSel, int row, int column) {
     return Couple.of(isSel ? table.getSelectionForeground() : table.getForeground(),
-                                 isSel
-                                 ? table.getSelectionBackground()
-                                 : isUnderNimbusLookAndFeel() && row % 2 == 1 ? TRANSPARENT_COLOR : table.getBackground());
+                     isSel ? table.getSelectionBackground() : table.getBackground());
   }
 
   public static void fixOSXEditorBackground(@NotNull JTable table) {
@@ -225,6 +229,13 @@ public class UIUtil {
     return Font.DIALOG.equals(font.getFamily(Locale.US));
   }
 
+  public static boolean isScrolledToTheBottom(JComponent c) {
+    JScrollPane scrollPane = c != null ? getParentOfType(JScrollPane.class, c) : null;
+    if (scrollPane == null) return true;
+    Rectangle viewRect = scrollPane.getViewport().getViewRect();
+    return (c.getHeight() == viewRect.y + viewRect.height);
+  }
+
   public enum FontSize {NORMAL, SMALL, MINI}
 
   public enum ComponentStyle {LARGE, REGULAR, SMALL, MINI}
@@ -239,12 +250,12 @@ public class UIUtil {
   @NonNls public static final String CENTER_TOOLTIP_DEFAULT = "ToCenterTooltip";
   @NonNls public static final String CENTER_TOOLTIP_STRICT = "ToCenterTooltip.default";
 
-  public static final Pattern CLOSE_TAG_PATTERN = Pattern.compile("<\\s*([^<>/ ]+)([^<>]*)/\\s*>", Pattern.CASE_INSENSITIVE);
+  private static final Pattern CLOSE_TAG_PATTERN = Pattern.compile("<\\s*([^<>/ ]+)([^<>]*)/\\s*>", Pattern.CASE_INSENSITIVE);
 
-  @NonNls public static final String FOCUS_PROXY_KEY = "isFocusProxy";
+  @NonNls private static final String FOCUS_PROXY_KEY = "isFocusProxy";
 
-  public static Key<Integer> KEEP_BORDER_SIDES = Key.create("keepBorderSides");
-  private static Key<UndoManager> UNDO_MANAGER = Key.create("undoManager");
+  public static final Key<Integer> KEEP_BORDER_SIDES = Key.create("keepBorderSides");
+  private static final Key<UndoManager> UNDO_MANAGER = Key.create("undoManager");
   private static final AbstractAction REDO_ACTION = new AbstractAction() {
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -270,7 +281,7 @@ public class UIUtil {
   private static final Color BORDER_COLOR = Color.LIGHT_GRAY;
 
   public static final Color CONTRAST_BORDER_COLOR = new JBColor(new NotNullProducer<Color>() {
-    final Color color = new JBColor(0x9b9b9b, 0x282828);
+    final Color color = new JBColor(0x9b9b9b, 0x4b4b4b);
     @NotNull
     @Override
     public Color produce() {
@@ -329,7 +340,7 @@ public class UIUtil {
 
   private static volatile Pair<String, Integer> ourSystemFontData;
 
-  public static final float DEF_SYSTEM_FONT_SIZE = 12f; // TODO: consider 12 * 1.33 to compensate JDK's 72dpi font scale
+  public static float DEF_SYSTEM_FONT_SIZE = 12f;
 
   @NonNls private static final String ROOT_PANE = "JRootPane.future";
 
@@ -369,6 +380,14 @@ public class UIUtil {
     return isJreHiDPI(comp != null ? comp.getGraphicsConfiguration() : null);
   }
 
+  /**
+   * Returns whether the JRE-managed HiDPI mode is enabled and the provided system scale context is HiDPI.
+   */
+  public static boolean isJreHiDPI(@Nullable ScaleContext ctx) {
+    return isJreHiDPIEnabled() && JBUI.isHiDPI(JBUI.sysScale(ctx));
+  }
+
+  // accessed from com.intellij.util.ui.paint.AbstractPainter2D via reflect
   private static Boolean jreHiDPI;
   private static boolean jreHiDPI_earlierVersion;
 
@@ -387,17 +406,20 @@ public class UIUtil {
     if (SystemInfo.isLinux) {
       return false; // pending support
     }
-    try {
-      GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-      if (ge instanceof SunGraphicsEnvironment) {
-        Method m = ReflectionUtil.getDeclaredMethod(SunGraphicsEnvironment.class, "isUIScaleOn");
-        jreHiDPI = (Boolean)m.invoke(ge);
-        jreHiDPI_earlierVersion = false;
+    if (SystemInfo.isJetBrainsJvm) {
+      try {
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        if (ge instanceof SunGraphicsEnvironment) {
+          Method m = ReflectionUtil.getDeclaredMethod(SunGraphicsEnvironment.class, "isUIScaleOn");
+          jreHiDPI = (Boolean)m.invoke(ge);
+          jreHiDPI_earlierVersion = false;
+        }
       }
-    } catch (Throwable ignore) {
+      catch (Throwable ignore) {
+      }
     }
     if (SystemInfo.isMac) {
-      return jreHiDPI = (SystemInfo.isAppleJvm ? false : true);
+      jreHiDPI = true;
     }
     return jreHiDPI;
   }
@@ -415,9 +437,9 @@ public class UIUtil {
   /**
    * Utility class for retina routine
    */
-  final static class DetectRetinaKit {
+  static final class DetectRetinaKit {
 
-    private final static WeakHashMap<GraphicsDevice, Boolean> devicesToRetinaSupportCacheMap = new WeakHashMap<GraphicsDevice, Boolean>();
+    private static final Map<GraphicsDevice, Boolean> devicesToRetinaSupportCacheMap = ContainerUtil.createWeakMap();
 
     /**
      * The best way to understand whether we are on a retina device is [NSScreen backingScaleFactor]
@@ -426,12 +448,9 @@ public class UIUtil {
      * value that has been got on AppKit previously.
      */
     static boolean isOracleMacRetinaDevice (GraphicsDevice device) {
-
-      if (SystemInfo.isAppleJvm) return false;
-
       Boolean isRetina  = devicesToRetinaSupportCacheMap.get(device);
 
-      if (isRetina != null){
+      if (isRetina != null) {
         return isRetina;
       }
 
@@ -466,28 +485,8 @@ public class UIUtil {
       return isRetina;
     }
 
-    /*
-      Could be quite easily implemented with [NSScreen backingScaleFactor]
-      and JNA
-     */
-    //private static boolean isAppleRetina (Graphics2D g2d) {
-    //  return false;
-    //}
-
-    /**
-     * For JDK6 we have a dedicated property which does not allow to understand anything
-     * per device but could be useful for image creation. We will get true in case
-     * if at least one retina device is present.
-     */
-    private static boolean hasAppleRetinaDevice() {
-      return (Float)Toolkit.getDefaultToolkit()
-        .getDesktopProperty(
-          "apple.awt.contentScaleFactor") != 1.0f;
-    }
-
     /**
      * This method perfectly detects retina Graphics2D for jdk7+
-     * For Apple JDK6 it returns false.
      * @param g graphics to be tested
      * @return false if the device of the Graphics2D is not a retina device,
      * jdk is an Apple JDK or Oracle API has been changed.
@@ -505,10 +504,6 @@ public class UIUtil {
      * @return true if at least one device is a retina device
      */
     private static boolean isRetina() {
-      if (SystemInfo.isAppleJvm) {
-        return hasAppleRetinaDevice();
-      }
-
       // Oracle JDK
 
       if (SystemInfo.isMac) {
@@ -529,12 +524,8 @@ public class UIUtil {
     }
   }
 
-  public static boolean isRetina (Graphics2D graphics) {
-    if (SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast("1.7")) {
-      return DetectRetinaKit.isMacRetina(graphics);
-    } else {
-      return isRetina();
-    }
+  public static boolean isRetina(Graphics2D graphics) {
+    return SystemInfo.isMac ? DetectRetinaKit.isMacRetina(graphics) : isRetina();
   }
 
   //public static boolean isMacRetina(Graphics2D g) {
@@ -551,32 +542,23 @@ public class UIUtil {
 
     if (Registry.is("new.retina.detection")) {
       return DetectRetinaKit.isRetina();
-    } else {
+    }
+    else {
       synchronized (ourRetina) {
         if (ourRetina.isNull()) {
           ourRetina.set(false); // in case HiDPIScaledImage.drawIntoImage is not called for some reason
 
-          if (SystemInfo.isJavaVersionAtLeast("1.6.0_33") && SystemInfo.isAppleJvm) {
-            if (!"false".equals(System.getProperty("ide.mac.retina"))) {
-              ourRetina.set(IsRetina.isRetina());
-              return ourRetina.get();
+          try {
+            GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            final GraphicsDevice device = env.getDefaultScreenDevice();
+            Integer scale = ReflectionUtil.getField(device.getClass(), device, int.class, "scale");
+            if (scale != null && scale.intValue() == 2) {
+              ourRetina.set(true);
+              return true;
             }
           }
-          else if (SystemInfo.isJavaVersionAtLeast("1.7.0_40") /*&& !SystemInfo.isOracleJvm*/) {
-            try {
-              GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-              final GraphicsDevice device = env.getDefaultScreenDevice();
-              Integer scale = ReflectionUtil.getField(device.getClass(), device, int.class, "scale");
-              if (scale != null && scale.intValue() == 2) {
-                ourRetina.set(true);
-                return true;
-              }
-            }
-            catch (AWTError ignore) {
-            }
-            catch (Exception ignore) {
-            }
-          }
+          catch (AWTError ignore) { }
+          catch (Exception ignore) { }
           ourRetina.set(false);
         }
 
@@ -633,7 +615,6 @@ public class UIUtil {
 
   /**
    * @param component a Swing component that may hold a client property value
-   * @param key       the client property key that specifies a return type
    * @return the property value from the specified component or {@code null}
    */
   public static <T> T getClientProperty(Object component, @NotNull Class<T> type) {
@@ -683,12 +664,12 @@ public class UIUtil {
     if (x == x1) {
       int minY = Math.min(y, y1);
       int maxY = Math.max(y, y1);
-      graphics.drawLine(x, minY + 1, x1, maxY - 1);
+      drawLine(graphics, x, minY + 1, x1, maxY - 1);
     }
     else if (y == y1) {
       int minX = Math.min(x, x1);
       int maxX = Math.max(x, x1);
-      graphics.drawLine(minX + 1, y, maxX - 1, y1);
+      drawLine(graphics, minX + 1, y, maxX - 1, y1);
     }
     else {
       drawLine(graphics, x, y, x1, y1);
@@ -698,6 +679,9 @@ public class UIUtil {
   public static boolean isReallyTypedEvent(KeyEvent e) {
     char c = e.getKeyChar();
     if (c < 0x20 || c == 0x7F) return false;
+
+    // Allow input of special characters on Windows in Persian keyboard layout using Ctrl+Shift+1..4
+    if (SystemInfo.isWindows && c >= 0x200C && c <= 0x200F) return true;
 
     if (SystemInfo.isMac) {
       return !e.isMetaDown() && !e.isControlDown();
@@ -713,6 +697,41 @@ public class UIUtil {
     final Rectangle stringBounds = font.getStringBounds(string, frc).getBounds();
 
     return (int)(centerY - stringBounds.height / 2.0 - stringBounds.y);
+  }
+
+  public static void drawLabelDottedRectangle(@NotNull final JLabel label, @NotNull final Graphics g) {
+    drawLabelDottedRectangle(label, g, null);
+  }
+
+  public static void drawLabelDottedRectangle(@NotNull final JLabel label, @NotNull final Graphics g, @Nullable Rectangle bounds) {
+    if (bounds == null) {
+      bounds = getLabelTextBounds(label);
+    }
+    // JLabel draws the text relative to the baseline. So, we must ensure
+    // we draw the dotted rectangle relative to that same baseline.
+    FontMetrics fm = label.getFontMetrics(label.getFont());
+    int baseLine = label.getUI().getBaseline(label, label.getWidth(), label.getHeight());
+    int textY = baseLine - fm.getLeading() - fm.getAscent();
+    int textHeight = fm.getHeight();
+    drawDottedRectangle(g, bounds.x, textY, bounds.x + bounds.width - 1, textY + textHeight - 1);
+  }
+
+  public static Rectangle getLabelTextBounds(@NotNull final JLabel label) {
+    final Dimension size = label.getPreferredSize();
+    Icon icon = label.getIcon();
+    final Point point = new Point(0, 0);
+    final Insets insets = label.getInsets();
+    if (icon != null) {
+      point.x += label.getIconTextGap();
+      point.x += icon.getIconWidth();
+    }
+    point.x += insets.left;
+    point.y += insets.top;
+    size.width -= point.x;
+    size.width -= insets.right;
+    size.height -= insets.bottom;
+
+    return new Rectangle(point, size);
   }
 
   /**
@@ -752,8 +771,12 @@ public class UIUtil {
     }
   }
 
+  /**
+   * @deprecated Use {@link LinePainter2D#paint(Graphics, double, double, double, double)} instead.
+   */
+  @Deprecated
   public static void drawLine(Graphics g, int x1, int y1, int x2, int y2) {
-    g.drawLine(x1, y1, x2, y2);
+    LinePainter2D.paint((Graphics2D)g, x1, y1, x2, y2);
   }
 
   public static void drawLine(Graphics2D g, int x1, int y1, int x2, int y2, @Nullable Color bgColor, @Nullable Color fgColor) {
@@ -765,7 +788,7 @@ public class UIUtil {
     if (bgColor != null) {
       g.setBackground(bgColor);
     }
-    drawLine(g, x1, y1, x2, y2);
+    LinePainter2D.paint(g, x1, y1, x2, y2);
     if (fgColor != null) {
       g.setColor(oldFg);
     }
@@ -793,7 +816,7 @@ public class UIUtil {
         currentAtom.setLength(0);
       }
 
-      String s = currentLine + currentAtom.toString();
+      String s = currentLine + currentAtom;
       int width = fontMetrics.stringWidth(s);
 
       if (width >= widthLimit - fontMetrics.charWidth('w')) {
@@ -808,7 +831,7 @@ public class UIUtil {
       }
     }
 
-    String s = currentLine + currentAtom.toString();
+    String s = currentLine + currentAtom;
     if (!s.isEmpty()) {
       lines.add(s);
     }
@@ -982,12 +1005,6 @@ public class UIUtil {
   }
 
   public static Color getTreeSelectionBackground() {
-    if (isUnderNimbusLookAndFeel()) {
-      Color color = UIManager.getColor("Tree.selectionBackground");
-      if (color != null) return color;
-      color = UIManager.getColor("nimbusSelectionBackground");
-      if (color != null) return color;
-    }
     return UIManager.getColor("Tree.selectionBackground");
   }
 
@@ -1008,12 +1025,6 @@ public class UIUtil {
   }
 
   public static Color getTableSelectionBackground() {
-    if (isUnderNimbusLookAndFeel()) {
-      Color color = UIManager.getColor("Table[Enabled+Selected].textBackground");
-      if (color != null) return color;
-      color = UIManager.getColor("nimbusSelectionBackground");
-      if (color != null) return color;
-    }
     return UIManager.getColor("Table.selectionBackground");
   }
 
@@ -1141,9 +1152,6 @@ public class UIUtil {
   }
 
   public static Color getTableSelectionForeground() {
-    if (isUnderNimbusLookAndFeel()) {
-      return UIManager.getColor("Table[Enabled+Selected].textForeground");
-    }
     return UIManager.getColor("Table.selectionForeground");
   }
 
@@ -1160,11 +1168,6 @@ public class UIUtil {
   }
 
   public static Color getListBackground() {
-    if (isUnderNimbusLookAndFeel()) {
-      final Color color = UIManager.getColor("List.background");
-      //noinspection UseJBColor
-      return new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
-    }
     // Under GTK+ L&F "Table.background" often has main panel color, which looks ugly
     return isUnderGTKLookAndFeel() ? getTreeTextBackground() : UIManager.getColor("List.background");
   }
@@ -1202,9 +1205,6 @@ public class UIUtil {
   }
 
   public static Color getListSelectionBackground() {
-    if (isUnderNimbusLookAndFeel()) {
-      return UIManager.getColor("List[Selected].textBackground");  // Nimbus
-    }
     return UIManager.getColor("List.selectionBackground");
   }
 
@@ -1221,12 +1221,16 @@ public class UIUtil {
     return ColorUtil.isDark(background) ? new JBColor(Gray._30, new Color(13, 41, 62)) : UNFOCUSED_SELECTION_COLOR;
   }
 
+  public static Color getTableUnfocusedSelectionBackground() {
+    return getListUnfocusedSelectionBackground();
+  }
+
   public static Color getTextFieldForeground() {
     return UIManager.getColor("TextField.foreground");
   }
 
   public static Color getTextFieldBackground() {
-    return isUnderGTKLookAndFeel() ? UIManager.getColor("EditorPane.background") : UIManager.getColor("TextField.background");
+    return UIManager.getColor(isUnderGTKLookAndFeel() ? "EditorPane.background" : "TextField.background");
   }
 
   public static Font getButtonFont() {
@@ -1283,11 +1287,8 @@ public class UIUtil {
 
   public static Color getSeparatorColor() {
     Color separatorColor = getSeparatorForeground();
-    if (isUnderAlloyLookAndFeel()) {
+    if (false) {
       separatorColor = getSeparatorShadow();
-    }
-    if (isUnderNimbusLookAndFeel()) {
-      separatorColor = getSeparatorColorUnderNimbus();
     }
     //under GTK+ L&F colors set hard
     if (isUnderGTKLookAndFeel()) {
@@ -1364,7 +1365,7 @@ public class UIUtil {
   }
 
   public static Icon getTreeNodeIcon(boolean expanded, boolean selected, boolean focused) {
-    boolean white = (selected && focused) || isUnderDarcula();
+    boolean white = selected && focused || isUnderDarcula();
 
     Icon selectedIcon = getTreeSelectedExpandedIcon();
     Icon notSelectedIcon = getTreeExpandedIcon();
@@ -1391,10 +1392,10 @@ public class UIUtil {
 
   public static Icon getTreeSelectedCollapsedIcon() {
     if (isUnderAquaBasedLookAndFeel() ||
-        isUnderNimbusLookAndFeel() ||
         isUnderGTKLookAndFeel() ||
         isUnderDarcula() ||
-        (isUnderIntelliJLaF() && !(SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui")))) {
+        isUnderIntelliJLaF() &&
+        !isUnderWin10LookAndFeel()) {
       return AllIcons.Mac.Tree_white_right_arrow;
     }
     return getTreeCollapsedIcon();
@@ -1402,10 +1403,10 @@ public class UIUtil {
 
   public static Icon getTreeSelectedExpandedIcon() {
     if (isUnderAquaBasedLookAndFeel() ||
-        isUnderNimbusLookAndFeel() ||
         isUnderGTKLookAndFeel() ||
         isUnderDarcula() ||
-        (isUnderIntelliJLaF() && !(SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui")))) {
+        isUnderIntelliJLaF() &&
+        !isUnderWin10LookAndFeel()) {
       return AllIcons.Mac.Tree_white_down_arrow;
     }
     return getTreeExpandedIcon();
@@ -1427,47 +1428,68 @@ public class UIUtil {
     return UIManager.getColor("OptionPane.background");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  /**
+   * Alloy Look-n-Feel is deprecated and does not supported by IntelliJ Platform
+   * @return false
+   * @deprecated
+   */
+  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAlloyLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().contains("Alloy");
+    return false;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  /**
+   * Alloy Look-n-Feel is deprecated and does not supported by IntelliJ Platform
+   * @return false
+   * @deprecated
+   */
+  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAlloyIDEALookAndFeel() {
-    return isUnderAlloyLookAndFeel() && UIManager.getLookAndFeel().getName().contains("IDEA");
+    return false;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderWindowsLookAndFeel() {
     return SystemInfo.isWindows && UIManager.getLookAndFeel().getName().equals("Windows");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderWindowsClassicLookAndFeel() {
     return UIManager.getLookAndFeel().getName().equals("Windows Classic");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static boolean isUnderNimbusLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().contains("Nimbus");
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAquaLookAndFeel() {
     return SystemInfo.isMac && UIManager.getLookAndFeel().getName().contains("Mac OS X");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static boolean isUnderJGoodiesLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().contains("JGoodies");
+
+  /**
+   * Nimbus Look-n-Feel is deprecated and does not supported by IntelliJ Platform
+   * @return false
+   * @deprecated
+   */
+  @SuppressWarnings("HardCodedStringLiteral")
+  public static boolean isUnderNimbusLookAndFeel() {
+    return false;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  /**
+   * JGoodies Look-n-Feel is deprecated and does not supported by IntelliJ Platform
+   * @return false
+   * @deprecated
+   */
+  @SuppressWarnings("HardCodedStringLiteral")
+  public static boolean isUnderJGoodiesLookAndFeel() {
+    return false;
+  }
+
+  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAquaBasedLookAndFeel() {
     return SystemInfo.isMac && (isUnderAquaLookAndFeel() || isUnderDarcula() || isUnderIntelliJLaF());
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderDarcula() {
     return UIManager.getLookAndFeel().getName().contains("Darcula");
   }
@@ -1480,12 +1502,12 @@ public class UIUtil {
     return SystemInfo.isWindows && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.win10.ui");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderIntelliJLaF() {
     return UIManager.getLookAndFeel().getName().contains("IntelliJ");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderGTKLookAndFeel() {
     return SystemInfo.isXWindow && UIManager.getLookAndFeel().getName().contains("GTK");
   }
@@ -1493,7 +1515,7 @@ public class UIUtil {
   public static final Color GTK_AMBIANCE_TEXT_COLOR = new Color(223, 219, 210);
   public static final Color GTK_AMBIANCE_BACKGROUND_COLOR = new Color(67, 66, 63);
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   @Nullable
   public static String getGtkThemeName() {
     final LookAndFeel laf = UIManager.getLookAndFeel();
@@ -1512,7 +1534,7 @@ public class UIUtil {
     return null;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isMurrineBasedTheme() {
     final String gtkTheme = getGtkThemeName();
     return "Ambiance".equalsIgnoreCase(gtkTheme) ||
@@ -1552,7 +1574,9 @@ public class UIUtil {
   }
 
   public static int getListCellHPadding() {
-    return isUnderNativeMacLookAndFeel() ? 7 : 2;
+    return isUnderDefaultMacTheme() ? 8 :
+           isUnderWin10LookAndFeel() ? 2 :
+           7;
   }
 
   public static int getListCellVPadding() {
@@ -1560,11 +1584,12 @@ public class UIUtil {
   }
 
   public static Insets getListCellPadding() {
-    return new Insets(getListCellVPadding(), getListCellHPadding(), getListCellVPadding(), getListCellHPadding());
+    return JBUI.insets(getListCellVPadding(), getListCellHPadding());
   }
 
   public static Insets getListViewportPadding() {
-    return isUnderNativeMacLookAndFeel() ? new Insets(1, 0, 1, 0) : new Insets(5, 5, 5, 5);
+    return isUnderNativeMacLookAndFeel() ? JBUI.insets(1, 0) :
+           isUnderWin10LookAndFeel() ? JBUI.emptyInsets() : JBUI.insets(5);
   }
 
   public static boolean isToUseDottedCellBorder() {
@@ -1679,15 +1704,15 @@ public class UIUtil {
       drawLine(g, i1, y, i1, y);
     }
 
-    for (i1 = i1 != x1 + 1 ? y + 2 : y + 1; i1 <= y1; i1 += 2) {
+    for (i1 = y + (i1 != x1 + 1 ? 2 : 1); i1 <= y1; i1 += 2) {
       drawLine(g, x1, i1, x1, i1);
     }
 
-    for (i1 = i1 != y1 + 1 ? x1 - 2 : x1 - 1; i1 >= x; i1 -= 2) {
+    for (i1 = x1 - (i1 != y1 + 1 ? 2 : 1); i1 >= x; i1 -= 2) {
       drawLine(g, i1, y1, i1, y1);
     }
 
-    for (i1 = i1 != x - 1 ? y1 - 2 : y1 - 1; i1 >= y; i1 -= 2) {
+    for (i1 = y1 - (i1 != x - 1 ? 2 : 1); i1 >= y; i1 -= 2) {
       drawLine(g, x, i1, x, i1);
     }
   }
@@ -1710,7 +1735,7 @@ public class UIUtil {
                                         final Color bgColor,
                                         final Color fgColor,
                                         final boolean opaque) {
-    if ((SystemInfo.isMac && !isRetina()) || SystemInfo.isLinux) {
+    if (SystemInfo.isMac && !isRetina() || SystemInfo.isLinux) {
       drawAppleDottedLine(g, startX, endX, lineY, bgColor, fgColor, opaque);
     }
     else {
@@ -1748,25 +1773,25 @@ public class UIUtil {
     g.fillRect(startX, 3, endX - startX, height - 5);
 
     if (drawRound) {
-      g.drawLine(startX - 1, 4, startX - 1, height - 4);
-      g.drawLine(endX, 4, endX, height - 4);
+      drawLine(g ,startX - 1, 4, startX - 1, height - 4);
+      drawLine(g ,endX, 4, endX, height - 4);
 
       g.setColor(new Color(100, 100, 100, 50));
-      g.drawLine(startX - 1, 4, startX - 1, height - 4);
-      g.drawLine(endX, 4, endX, height - 4);
+      drawLine(g ,startX - 1, 4, startX - 1, height - 4);
+      drawLine(g ,endX, 4, endX, height - 4);
 
-      g.drawLine(startX, 3, endX - 1, 3);
-      g.drawLine(startX, height - 3, endX - 1, height - 3);
+      drawLine(g ,startX, 3, endX - 1, 3);
+      drawLine(g ,startX, height - 3, endX - 1, height - 3);
     }
 
     config.restore();
   }
 
   public static void drawRectPickedOut(Graphics2D g, int x, int y, int w, int h) {
-    g.drawLine(x + 1, y, x + w - 1, y);
-    g.drawLine(x + w, y + 1, x + w, y + h - 1);
-    g.drawLine(x + w - 1, y + h, x + 1, y + h);
-    g.drawLine(x, y + 1, x, y + h - 1);
+    drawLine(g ,x + 1, y, x + w - 1, y);
+    drawLine(g ,x + w, y + 1, x + w, y + h - 1);
+    drawLine(g ,x + w - 1, y + h, x + 1, y + h);
+    drawLine(g ,x, y + 1, x, y + h - 1);
   }
 
   private static void drawBoringDottedLine(final Graphics2D g,
@@ -1799,8 +1824,8 @@ public class UIUtil {
     g.setColor(fgColor != null ? fgColor : oldColor);
     // Now draw bold line segments
     for (int dotXi = (startX / step + startPosCorrection) * step; dotXi < endX; dotXi += step) {
-      g.drawLine(dotXi, lineY, dotXi + 1, lineY);
-      g.drawLine(dotXi, lineY + 1, dotXi + 1, lineY + 1);
+      drawLine(g ,dotXi, lineY, dotXi + 1, lineY);
+      drawLine(g ,dotXi, lineY + 1, dotXi + 1, lineY + 1);
     }
 
     // restore color
@@ -1825,16 +1850,11 @@ public class UIUtil {
                                 boolean toolWindow,
                                 boolean drawTopLine,
                                 boolean drawBottomLine) {
-    height++;
     GraphicsConfig config = GraphicsUtil.disableAAPainting(g);
     try {
       g.setColor(getPanelBackground());
       g.fillRect(x, 0, width, height);
 
-      boolean jmHiDPI = isJreHiDPI((Graphics2D)g);
-      if (jmHiDPI) {
-        ((Graphics2D)g).setStroke(new BasicStroke(2f));
-      }
       ((Graphics2D)g).setPaint(getGradientPaint(0, 0, Gray.x00.withAlpha(5), 0, height, Gray.x00.withAlpha(20)));
       g.fillRect(x, 0, width, height);
 
@@ -1843,16 +1863,16 @@ public class UIUtil {
         g.fillRect(x, 0, width, height);
       }
       g.setColor(SystemInfo.isMac && isUnderIntelliJLaF() ? Gray.xC9 : Gray.x00.withAlpha(toolWindow ? 90 : 50));
-      if (drawTopLine) g.drawLine(x, 0, width, 0);
-      if (drawBottomLine) g.drawLine(x, height - (jmHiDPI ? 1 : 2), width, height - (jmHiDPI ? 1 : 2));
+      if (drawTopLine) drawLine(g ,x, 0, width, 0);
+      if (drawBottomLine) drawLine(g ,x, height - 1, width, height - 1);
 
       if (SystemInfo.isMac && isUnderIntelliJLaF()) {
         g.setColor(Gray.xC9);
       } else {
-        g.setColor(isUnderDarcula() ? Gray._255.withAlpha(30) : Gray.xFF.withAlpha(100));
+        g.setColor(isUnderDarcula() ? CONTRAST_BORDER_COLOR : Gray.xFF.withAlpha(100));
       }
 
-      g.drawLine(x, 0, width, 0);
+      drawLine(g ,x, 0, width, 0);
     } finally {
       config.restore();
     }
@@ -1868,10 +1888,10 @@ public class UIUtil {
     g.setColor(fgColor);
     for (int dot = start; dot < end; dot += 3) {
       if (horizontal) {
-        g.drawLine(dot, xOrY, dot, xOrY);
+        drawLine(g ,dot, xOrY, dot, xOrY);
       }
       else {
-        g.drawLine(xOrY, dot, xOrY, dot);
+        drawLine(g ,xOrY, dot, xOrY, dot);
       }
     }
   }
@@ -1900,7 +1920,6 @@ public class UIUtil {
 
   /** This method is intended to use when user settings are not accessible yet.
    *  Use it to set up default RenderingHints.
-   *  @param g
    */
   public static void applyRenderingHints(final Graphics g) {
     Graphics2D g2d = (Graphics2D)g;
@@ -1984,63 +2003,147 @@ public class UIUtil {
   @NotNull
   public static BufferedImage createImage(Component comp, int width, int height, int type) {
     return comp != null ?
-           createImage(comp != null ? comp.getGraphicsConfiguration() : null, width, height, type) :
+           createImage(comp.getGraphicsConfiguration(), width, height, type) :
            createImage(width, height, type);
   }
 
   /**
-   * @deprecated use {@link #createImage(Graphics2D, int, int, int)}
+   * @deprecated use {@link #createImage(Graphics, int, int, int)}
    */
   @NotNull
   public static BufferedImage createImageForGraphics(Graphics2D g, int width, int height, int type) {
     return createImage(g, width, height, type);
   }
 
+  /**
+   * A hidpi-aware wrapper over {@link Graphics#drawImage(Image, int, int, ImageObserver)}
+   */
   public static void drawImage(Graphics g, Image image, int x, int y, ImageObserver observer) {
     drawImage(g, image, x, y, -1, -1, observer);
   }
 
-  public static void drawImage(Graphics g, Image image, int x, int y, int width, int height, ImageObserver observer) {
+
+  /**
+   * A hidpi-aware wrapper over {@link Graphics#drawImage(Image, int, int, int, int, ImageObserver)}
+   * When {@code dstBounds} is null, the image bounds are used instead.
+   */
+  public static void drawImage(Graphics g, Image image, @Nullable Rectangle dstBounds, ImageObserver observer) {
+      drawImage(g, image, dstBounds, null, observer);
+  }
+
+  /**
+   * A hidpi-aware wrapper over {@link Graphics#drawImage(Image, int, int, int, int, int, int, int, int, ImageObserver)}
+   * When {@code dstBounds} or {@code srcBounds} is null, the image bounds are used instead.
+   */
+  public static void drawImage(Graphics g, Image image, @Nullable Rectangle dstBounds, @Nullable Rectangle srcBounds, ImageObserver observer) {
+    Image drawImage = image;
     if (image instanceof JBHiDPIScaledImage) {
-      Image img = ((JBHiDPIScaledImage)image).getDelegate();
-      if (img == null) {
-        img = image;
+      drawImage = ((JBHiDPIScaledImage)image).getDelegate();
+      if (drawImage == null) {
+        drawImage = image;
       }
-      int dstw = width;
-      int dsth = height;
-      if (width == -1 && height == -1) {
-        dstw = ImageUtil.getUserWidth(image);
-        dsth = ImageUtil.getUserHeight(image);
-      }
-      int srcw = ImageUtil.getRealWidth(image);
-      int srch = ImageUtil.getRealHeight(image);
-      g.drawImage(img, x, y, x + dstw, y + dsth, 0, 0, srcw, srch, observer);
     }
-    else if (width == -1 && height == -1) {
-      g.drawImage(image, x, y, observer);
+    int dx = 0;
+    int dy = 0;
+    int dw = -1;
+    int dh = -1;
+    if (dstBounds != null) {
+      dx = dstBounds.x;
+      dy = dstBounds.y;
+      dw = dstBounds.width;
+      dh = dstBounds.height;
+    }
+    boolean dstSizeUndefined = (dw == -1 && dh == -1);
+
+    int sx = 0;
+    int sy = 0;
+    int sw = -1;
+    int sh = -1;
+    if (srcBounds != null) {
+      sx = srcBounds.x;
+      sy = srcBounds.y;
+      sw = srcBounds.width;
+      sh = srcBounds.height;
+    }
+    boolean srcSizeUndefined = (sw == -1 && sh == -1);
+
+    if (dstSizeUndefined && srcSizeUndefined) {
+      drawImage(g, image, null, dx, dy, -1, -1, observer);
+    } else {
+      if (dstSizeUndefined) {
+        dw = ImageUtil.getUserWidth(image);
+        dh = ImageUtil.getUserHeight(image);
+      }
+      if (srcSizeUndefined) {
+        sw = ImageUtil.getRealWidth(image);
+        sh = ImageUtil.getRealHeight(image);
+      }
+      g.drawImage(drawImage, dx, dy, dx + dw, dy + dh, sx, sy, sx + sw, sy + sh, observer);
+    }
+  }
+
+  /**
+   * Note, the method interprets [x,y,width,height] as the destination and source bounds for hidpi-unaware images
+   * which doesn't conform to the {@link Graphics#drawImage(Image, int, int, int, int, ImageObserver)} method contract.
+   *
+   * @deprecated use {@link #drawImage(Graphics, Image, Rectangle, Rectangle, ImageObserver)}
+   */
+  @Deprecated
+  public static void drawImage(Graphics g, Image image, int x, int y, int width, int height, ImageObserver observer) {
+    drawImage(g, image, null, x, y, width, height, observer);
+  }
+
+  private static void drawImage(Graphics g, Image image, @Nullable BufferedImageOp op, int x, int y, int width, int height, ImageObserver observer) {
+    double scale = 1d;
+    Graphics2D invG = null;
+    boolean srcSizeUndefined = (width == -1 && height == -1);
+    int dstw = ImageUtil.getUserWidth(image);
+    int dsth = ImageUtil.getUserHeight(image);
+
+    if (image instanceof JBHiDPIScaledImage) {
+      JBHiDPIScaledImage hidpiImage = (JBHiDPIScaledImage)image;
+      Image delegate = hidpiImage.getDelegate();
+      if (delegate != null) image = delegate;
+      scale = hidpiImage.getScale();
+
+      if (srcSizeUndefined) {
+        AffineTransform tx = ((Graphics2D)g).getTransform();
+        if (scale == tx.getScaleX()) {
+          // The image has the same original scale as the graphics scale. However, the real image
+          // scale - userSize/realSize - can suffer from inaccuracy due to the image user size
+          // rounding to int (userSize = (int)realSize/originalImageScale). This may case quality
+          // loss if the image is drawn via Graphics.drawImage(image, <srcRect>, <dstRect>)
+          // due to scaling in Graphics. To avoid that, the image should be drawn directly via
+          // Graphics.drawImage(image, 0, 0) on the unscaled Graphics.
+          double gScaleX = tx.getScaleX();
+          double gScaleY = tx.getScaleY();
+          tx.scale(1 / gScaleX, 1 / gScaleY);     // inverse the scale
+          tx.translate(x * gScaleX, y * gScaleY); // scale x/y with double precision
+          invG = (Graphics2D)g.create();
+          invG.setTransform(tx);
+        }
+      }
+    }
+    if (op != null && image instanceof BufferedImage) {
+      image = op.filter((BufferedImage)image, null);
+    }
+    if (invG != null) {
+      invG.drawImage(image, 0, 0, observer);
+      invG.dispose();
+    }
+    else if (srcSizeUndefined) {
+      g.drawImage(image, x, y, dstw, dsth, observer);
     }
     else {
-      g.drawImage(image, x, y, x + width, y + height, 0, 0, width, height, observer);
+      int srcw = (int)Math.ceil(width * scale);
+      int srch = (int)Math.ceil(height * scale);
+      g.drawImage(image, x, y, x + width, y + height, 0, 0, srcw, srch, observer);
     }
   }
 
   public static void drawImage(Graphics g, BufferedImage image, BufferedImageOp op, int x, int y) {
-    if (image instanceof JBHiDPIScaledImage) {
-      Image img = ((JBHiDPIScaledImage)image).getDelegate();
-      if (img == null) {
-        img = image;
-      }
-      if (op != null && img instanceof BufferedImage) img = op.filter((BufferedImage)img, null);
-      int dstw = ImageUtil.getUserWidth(image);
-      int dsth = ImageUtil.getUserHeight(image);
-      int srcw = ImageUtil.getRealWidth(image);
-      int srch = ImageUtil.getRealHeight(image);
-      g.drawImage(img, x, y, x + dstw, y + dsth, 0, 0, srcw, srch, null);
-    } else {
-      ((Graphics2D)g).drawImage(image, op, x, y);
-    }
+    drawImage(g, image, op, x, y, -1, -1, null);
   }
-
 
   public static void paintWithXorOnRetina(@NotNull Dimension size, @NotNull Graphics g, Consumer<Graphics2D> paintRoutine) {
     paintWithXorOnRetina(size, g, true, paintRoutine);
@@ -2136,6 +2239,7 @@ public class UIUtil {
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
+        //noinspection CollectionAddedToSelf
         queue.offer(queue);
       }
     });
@@ -2355,7 +2459,6 @@ public class UIUtil {
 
   public static boolean isStandardMenuLAF() {
     return isWinLafOnVista() ||
-           isUnderNimbusLookAndFeel() ||
            isUnderGTKLookAndFeel();
   }
 
@@ -2514,25 +2617,124 @@ public class UIUtil {
   }
 
   public static HTMLEditorKit getHTMLEditorKit(boolean noGapsBetweenParagraphs) {
-    Font font = getLabelFont();
-    @NonNls String family = !SystemInfo.isWindows && font != null ? font.getFamily() : "Tahoma";
-    final int size = font != null ? font.getSize() : JBUI.scale(11);
+    return new JBHtmlEditorKit(noGapsBetweenParagraphs);
+  }
 
-    String customCss = String.format("body, div, p { font-family: %s; font-size: %s; }", family, size);
-    if (noGapsBetweenParagraphs) {
-      customCss += " p { margin-top: 0; }";
+  public static class JBHtmlEditorKit extends HTMLEditorKit {
+    private static final Method MODEL_CHANGED = ReflectionUtil.getDeclaredMethod(BasicTextUI.class, "modelChanged");
+    private final StyleSheet style;
+    private final HyperlinkListener myHyperlinkListener;
+
+    public JBHtmlEditorKit() {
+      this(true);
     }
 
-    final StyleSheet style = new StyleSheet();
-    style.addStyleSheet(isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : DEFAULT_HTML_KIT_CSS);
-    style.addRule(customCss);
+    public JBHtmlEditorKit(boolean noGapsBetweenParagraphs) {
+      style = createStyleSheet();
+      if (noGapsBetweenParagraphs) style.addRule("p { margin-top: 0; }");
+      myHyperlinkListener = new HyperlinkListener() {
+        @Override
+        public void hyperlinkUpdate(HyperlinkEvent e) {
+          if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
+            setUnderlined(true, e.getSourceElement());
+          } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
+            setUnderlined(false, e.getSourceElement());
+          }
+          if (MODEL_CHANGED == null) {
+            LOG.error("modelChanged missing from BasicTextUI, hyperlinks underline on hover will not work");
+            return;
+          }
+          try {
+            MODEL_CHANGED.invoke(((JEditorPane)e.getSource()).getUI());
+          }
+          catch (IllegalAccessException exception) {
+            LOG.error(exception);
+          }
+          catch (InvocationTargetException exception) {
+            LOG.error(exception);
+          }
+        }
 
-    return new HTMLEditorKit() {
-      @Override
-      public StyleSheet getStyleSheet() {
-        return style;
+        private void setUnderlined(boolean underlined, Element element) {
+          if (element == null) return;
+          AttributeSet attributes = element.getAttributes();
+          Object attribute = attributes.getAttribute(HTML.Tag.A);
+          if (attribute instanceof MutableAttributeSet) {
+            MutableAttributeSet a = (MutableAttributeSet)attribute;
+            if (underlined) {
+              a.addAttribute(CSS.Attribute.TEXT_DECORATION, "underline");
+            } else {
+              a.removeAttribute(CSS.Attribute.TEXT_DECORATION);
+            }
+          }
+        }
+      };
+    }
+
+    @Override
+    public StyleSheet getStyleSheet() {
+      return style;
+    }
+
+    public static StyleSheet createStyleSheet() {
+      StyleSheet style = new StyleSheet();
+      style.addStyleSheet(isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : DEFAULT_HTML_KIT_CSS);
+      style.addRule("code { font-size: 100%; }"); // small by Swing's default
+      style.addRule("small { font-size: small; }"); // x-small by Swing's default
+      style.addRule("a { text-decoration: none;}");
+
+      return style;
+    }
+
+    @Override
+    public void install(final JEditorPane pane) {
+      super.install(pane);
+      if (pane != null) {
+        // JEditorPane.HONOR_DISPLAY_PROPERTIES must be set after HTMLEditorKit is completely installed
+        pane.addPropertyChangeListener("editorKit", new PropertyChangeListener() {
+          @Override
+          public void propertyChange(PropertyChangeEvent e) {
+            Font font = getLabelFont();
+            assert font instanceof FontUIResource;
+            if (SystemInfo.isWindows) {
+              font = getFontWithFallback("Tahoma", font.getStyle(), font.getSize());
+            }
+            // In case JBUI user scale factor changes, the font will be auto-updated by BasicTextUI.installUI()
+            // with a font of the properly scaled size. And is then propagated to CSS, making HTML text scale dynamically.
+            pane.setFont(font);
+
+            // let CSS font properties inherit from the pane's font
+            pane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
+            pane.removePropertyChangeListener(this);
+          }
+        });
+        pane.addHyperlinkListener(myHyperlinkListener);
       }
-    };
+    }
+
+    @Override
+    public void deinstall(JEditorPane c) {
+      c.removeHyperlinkListener(myHyperlinkListener);
+      super.deinstall(c);
+    }
+  }
+
+  public static FontUIResource getFontWithFallback(@NotNull Font font) {
+    return getFontWithFallback(font.getFamily(), font.getStyle(), font.getSize());
+  }
+
+  public static FontUIResource getFontWithFallback(@Nullable String familyName, @JdkConstants.FontStyle int style, int size) {
+    Font fontWithFallback = new StyleContext().getFont(familyName, style, size);
+    return fontWithFallback instanceof FontUIResource ? (FontUIResource)fontWithFallback : new FontUIResource(fontWithFallback);
+  }
+
+  //Escape error-prone HTML data (if any) when we use it in renderers, see IDEA-170768
+  public static <T> T htmlInjectionGuard(T toRender) {
+    if (toRender instanceof String && ((String)toRender).toLowerCase(Locale.US).startsWith("<html>")) {
+      //noinspection unchecked
+      return (T) ("<html>" + StringUtil.escapeXml((String)toRender));
+    }
+    return toRender;
   }
 
   public static void removeScrollBorder(final Component c) {
@@ -2745,7 +2947,7 @@ public class UIUtil {
     if (systemLaFClassName != null) {
       return systemLaFClassName;
     }
-    else if (SystemInfo.isLinux) {
+    if (SystemInfo.isLinux) {
       // Normally, GTK LaF is considered "system" when:
       // 1) Gnome session is run
       // 2) gtk lib is available
@@ -2784,17 +2986,20 @@ public class UIUtil {
     if (Registry.is("ide.ui.scale.override")) {
       forcedScale = Float.valueOf((float)Registry.get("ide.ui.scale").asDouble());
     }
-    else if (SystemInfo.isLinux && !SystemInfo.isJetbrainsJvm) {
-      // With Oracle JDK: derive scale from X server DPI
-      float scale = getScreenScale();
-      if (scale > 1f) {
-        forcedScale = Float.valueOf(scale);
+    else if (SystemInfo.isLinux) {
+      Object value = Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI");
+      if (value instanceof Integer) {
+        // If the property is defined, then:
+        // 1) it provides correct system scale
+        // 2) the label font size is scaled
+        int dpi = ((Integer)value).intValue() / 1024;
+        if (dpi < 50) dpi = 50;
+        float scale = JBUI.discreteScale(dpi / 96f);
+        DEF_SYSTEM_FONT_SIZE = font.getSize() / scale; // derive actual system base font size
       }
-      // Or otherwise leave the detected font. It's undetermined if it's scaled or not.
-      // If it is (likely with GTK DE), then the UI scale will be derived from it,
-      // if it's not, then IDEA will start unscaled. This lets the users of GTK DEs
-      // not to bother about X server DPI settings. Users of other DEs (like KDE)
-      // will have to set X server DPI to meet their display.
+      else {
+        forcedScale = Float.valueOf(getScreenScale());
+      }
     }
     else if (SystemInfo.isWindows) {
       //noinspection HardCodedStringLiteral
@@ -2820,16 +3025,10 @@ public class UIUtil {
     int dpi = 96;
     try {
       dpi = Toolkit.getDefaultToolkit().getScreenResolution();
-    } catch (HeadlessException e) {
     }
-    float scale = 1f;
-    if (dpi < 120) scale = 1f;
-    else if (dpi < 144) scale = 1.25f;
-    else if (dpi < 168) scale = 1.5f;
-    else if (dpi < 192) scale = 1.75f;
-    else scale = 2f;
-
-    return scale;
+    catch (HeadlessException ignored) {
+    }
+    return JBUI.discreteScale(dpi / 96f);
   }
 
   public static void addKeyboardShortcut(final JComponent target, final AbstractButton button, final KeyStroke keyStroke) {
@@ -2901,7 +3100,7 @@ public class UIUtil {
     return null;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public static void fixFormattedField(JFormattedTextField field) {
     if (SystemInfo.isMac) {
       final Toolkit toolkit = Toolkit.getDefaultToolkit();
@@ -2943,8 +3142,12 @@ public class UIUtil {
     }
   }
 
-  public static boolean isSelectionButtonDown(MouseEvent e) {
+  public static boolean isSelectionButtonDown(@NotNull MouseEvent e) {
     return e.isShiftDown() || e.isControlDown() || e.isMetaDown();
+  }
+
+  public static boolean isToggleListSelectionEvent(@NotNull MouseEvent e) {
+    return SwingUtilities.isLeftMouseButton(e) && (SystemInfo.isMac ? e.isMetaDown() : e.isControlDown()) && !e.isPopupTrigger();
   }
 
   @SuppressWarnings("deprecation")
@@ -3017,12 +3220,12 @@ public class UIUtil {
 
   @NotNull
   public static JBTreeTraverser<Component> uiTraverser(@Nullable Component component) {
-    return new JBTreeTraverser<Component>(COMPONENT_CHILDREN).withRoot(component);
+    return UI_TRAVERSER.withRoot(component);
   }
 
   public static final Key<Iterable<? extends Component>> NOT_IN_HIERARCHY_COMPONENTS = Key.create("NOT_IN_HIERARCHY_COMPONENTS");
 
-  private static final Function<Component, JBIterable<Component>> COMPONENT_CHILDREN = new Function<Component, JBIterable<Component>>() {
+  private static final JBTreeTraverser<Component> UI_TRAVERSER = JBTreeTraverser.from(new Function<Component, JBIterable<Component>>() {
     @Override
     public JBIterable<Component> fun(@NotNull Component c) {
       JBIterable<Component> result;
@@ -3050,7 +3253,7 @@ public class UIUtil {
       }
       return result;
     }
-  };
+  });
 
   private static final Function.Mono<Component> COMPONENT_PARENT = new Function.Mono<Component>() {
     @Override
@@ -3079,7 +3282,7 @@ public class UIUtil {
   @Nullable
   public static <T extends JComponent> T findComponentOfType(JComponent parent, Class<T> cls) {
     if (parent == null || cls.isAssignableFrom(parent.getClass())) {
-      @SuppressWarnings({"unchecked"}) final T t = (T)parent;
+      @SuppressWarnings("unchecked") final T t = (T)parent;
       return t;
     }
     for (Component component : parent.getComponents()) {
@@ -3100,7 +3303,7 @@ public class UIUtil {
   private static <T extends JComponent> void findComponentsOfType(JComponent parent, Class<T> cls, ArrayList<T> result) {
     if (parent == null) return;
     if (cls.isAssignableFrom(parent.getClass())) {
-      @SuppressWarnings({"unchecked"}) final T t = (T)parent;
+      @SuppressWarnings("unchecked") final T t = (T)parent;
       result.add(t);
     }
     for (Component c : parent.getComponents()) {
@@ -3115,6 +3318,8 @@ public class UIUtil {
     private boolean myDrawShadow;
     private Color myShadowColor;
     private float myLineSpacing;
+    private Font myFont;
+    private Color myColor;
 
     public TextPainter() {
       myDrawShadow = /*isUnderAquaLookAndFeel() ||*/ isUnderDarcula();
@@ -3122,31 +3327,41 @@ public class UIUtil {
       myLineSpacing = 1.0f;
     }
 
-    public TextPainter withShadow(final boolean drawShadow) {
+    public TextPainter withShadow(boolean drawShadow) {
       myDrawShadow = drawShadow;
       return this;
     }
 
-    public TextPainter withShadow(final boolean drawShadow, final Color shadowColor) {
+    public TextPainter withShadow(boolean drawShadow, Color shadowColor) {
       myDrawShadow = drawShadow;
       myShadowColor = shadowColor;
       return this;
     }
 
-    public TextPainter withLineSpacing(final float lineSpacing) {
+    public TextPainter withLineSpacing(float lineSpacing) {
       myLineSpacing = lineSpacing;
       return this;
     }
 
-    public TextPainter appendLine(final String text) {
+    public TextPainter withColor(Color color) {
+      myColor = color;
+      return this;
+    }
+
+    public TextPainter withFont(Font font) {
+      myFont = font;
+      return this;
+    }
+
+    public TextPainter appendLine(String text) {
       if (text == null || text.isEmpty()) return this;
       myLines.add(Pair.create(text, new LineInfo()));
       return this;
     }
 
-    public TextPainter underlined(@Nullable final Color color) {
+    public TextPainter underlined(@Nullable Color color) {
       if (!myLines.isEmpty()) {
-        final LineInfo info = myLines.get(myLines.size() - 1).getSecond();
+        LineInfo info = myLines.get(myLines.size() - 1).getSecond();
         info.underlined = true;
         info.underlineColor = color;
       }
@@ -3154,9 +3369,9 @@ public class UIUtil {
       return this;
     }
 
-    public TextPainter withBullet(final char c) {
+    public TextPainter withBullet(char c) {
       if (!myLines.isEmpty()) {
-        final LineInfo info = myLines.get(myLines.size() - 1).getSecond();
+        LineInfo info = myLines.get(myLines.size() - 1).getSecond();
         info.withBullet = true;
         info.bulletChar = c;
       }
@@ -3192,123 +3407,138 @@ public class UIUtil {
      * _position(block width, block height) => (x, y) of the block
      */
     public void draw(@NotNull final Graphics g, final PairFunction<Integer, Integer, Couple<Integer>> _position) {
+      GraphicsUtil.setupAntialiasing(g, true, true);
       final int[] maxWidth = {0};
       final int[] height = {0};
       final int[] maxBulletWidth = {0};
-      GraphicsUtil.setupAntialiasing(g, true, true);
-      ContainerUtil.process(myLines, new Processor<Pair<String, LineInfo>>() {
-        @Override
-        public boolean process(final Pair<String, LineInfo> pair) {
-          final LineInfo info = pair.getSecond();
-          Font old = null;
-          if (info.smaller) {
-            old = g.getFont();
-            g.setFont(old.deriveFont(old.getSize() * 0.70f));
-          }
-
-          final FontMetrics fm = g.getFontMetrics();
-
-          final int bulletWidth = info.withBullet ? fm.stringWidth(" " + info.bulletChar) : 0;
-          maxBulletWidth[0] = Math.max(maxBulletWidth[0], bulletWidth);
-
-          maxWidth[0] = Math.max(fm.stringWidth(pair.getFirst().replace("<shortcut>", "").replace("</shortcut>", "") + bulletWidth), maxWidth[0]);
-          height[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
-
-          if (old != null) {
-            g.setFont(old);
-          }
-
-          return true;
-        }
-      });
-
-      final Couple<Integer> position = _position.fun(maxWidth[0] + 20, height[0]);
-      assert position != null;
-
-      final int[] yOffset = {position.getSecond()};
-      ContainerUtil.process(myLines, new Processor<Pair<String, LineInfo>>() {
-        @Override
-        public boolean process(final Pair<String, LineInfo> pair) {
-          final LineInfo info = pair.getSecond();
-          String text = pair.first;
-          String shortcut = "";
-          if (pair.first.contains("<shortcut>")) {
-            shortcut = text.substring(text.indexOf("<shortcut>") + "<shortcut>".length(), text.indexOf("</shortcut>"));
-            text = text.substring(0, text.indexOf("<shortcut>"));
-          }
-
-          Font old = null;
-          if (info.smaller) {
-            old = g.getFont();
-            g.setFont(old.deriveFont(old.getSize() * 0.70f));
-          }
-
-          final int x = position.getFirst() + maxBulletWidth[0] + 10;
-
-          final FontMetrics fm = g.getFontMetrics();
-          int xOffset = x;
-          if (info.center) {
-            xOffset = x + (maxWidth[0] - fm.stringWidth(text)) / 2;
-          }
-
-          if (myDrawShadow) {
-            int xOff = isUnderDarcula() ? 1 : 0;
-            int yOff = 1;
-            Color oldColor = g.getColor();
-            g.setColor(myShadowColor);
-
-            if (info.withBullet) {
-              g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar) + xOff, yOffset[0] + yOff);
+      Font oldFont = null;
+      Color oldColor = null;
+      if (myFont != null) {
+        oldFont = g.getFont();
+        g.setFont(myFont);
+      }
+      if (myColor != null) {
+        oldColor = g.getColor();
+        g.setColor(myColor);
+      }
+      try {
+        ContainerUtil.process(myLines, new Processor<Pair<String, LineInfo>>() {
+          @Override
+          public boolean process(final Pair<String, LineInfo> pair) {
+            final LineInfo info = pair.getSecond();
+            Font old = null;
+            if (info.smaller) {
+              old = g.getFont();
+              g.setFont(old.deriveFont(old.getSize() * 0.70f));
             }
 
-            g.drawString(text, xOffset + xOff, yOffset[0] + yOff);
-            g.setColor(oldColor);
-          }
+            final FontMetrics fm = g.getFontMetrics();
 
-          if (info.withBullet) {
-            g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar), yOffset[0]);
-          }
+            final int bulletWidth = info.withBullet ? fm.stringWidth(" " + info.bulletChar) : 0;
+            maxBulletWidth[0] = Math.max(maxBulletWidth[0], bulletWidth);
 
-          g.drawString(text, xOffset, yOffset[0]);
-          if (!StringUtil.isEmpty(shortcut)) {
-            Color oldColor = g.getColor();
-            g.setColor(new JBColor(new Color(82, 99, 155),
-                                   new Color(88, 157, 246)));
-            g.drawString(shortcut, xOffset + fm.stringWidth(text + (isUnderDarcula() ? " " : "")), yOffset[0]);
-            g.setColor(oldColor);
-          }
+            maxWidth[0] = Math.max(fm.stringWidth(pair.getFirst().replace("<shortcut>", "").replace("</shortcut>", "") + bulletWidth), maxWidth[0]);
+            height[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
 
-          if (info.underlined) {
-            Color c = null;
-            if (info.underlineColor != null) {
-              c = g.getColor();
-              g.setColor(info.underlineColor);
+            if (old != null) {
+              g.setFont(old);
             }
 
-            g.drawLine(x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent(), x + maxWidth[0] + 10, yOffset[0] + fm.getDescent());
-            if (c != null) {
-              g.setColor(c);
+            return true;
+          }
+        });
 
+        final Couple<Integer> position = _position.fun(maxWidth[0] + 20, height[0]);
+        assert position != null;
+
+        final int[] yOffset = {position.getSecond()};
+        ContainerUtil.process(myLines, new Processor<Pair<String, LineInfo>>() {
+          @Override
+          public boolean process(final Pair<String, LineInfo> pair) {
+            final LineInfo info = pair.getSecond();
+            String text = pair.first;
+            String shortcut = "";
+            if (pair.first.contains("<shortcut>")) {
+              shortcut = text.substring(text.indexOf("<shortcut>") + "<shortcut>".length(), text.indexOf("</shortcut>"));
+              text = text.substring(0, text.indexOf("<shortcut>"));
+            }
+
+            Font old = null;
+            if (info.smaller) {
+              old = g.getFont();
+              g.setFont(old.deriveFont(old.getSize() * 0.70f));
+            }
+
+            final int x = position.getFirst() + maxBulletWidth[0] + 10;
+
+            final FontMetrics fm = g.getFontMetrics();
+            int xOffset = x;
+            if (info.center) {
+              xOffset = x + (maxWidth[0] - fm.stringWidth(text)) / 2;
             }
 
             if (myDrawShadow) {
-              c = g.getColor();
+              int xOff = isUnderDarcula() ? 1 : 0;
+              int yOff = 1;
+              Color oldColor = g.getColor();
               g.setColor(myShadowColor);
-              g.drawLine(x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent() + 1, x + maxWidth[0] + 10,
-                         yOffset[0] + fm.getDescent() + 1);
-              g.setColor(c);
+
+              if (info.withBullet) {
+                g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar) + xOff, yOffset[0] + yOff);
+              }
+
+              g.drawString(text, xOffset + xOff, yOffset[0] + yOff);
+              g.setColor(oldColor);
             }
+
+            if (info.withBullet) {
+              g.drawString(info.bulletChar + " ", x - fm.stringWidth(" " + info.bulletChar), yOffset[0]);
+            }
+
+            g.drawString(text, xOffset, yOffset[0]);
+            if (!StringUtil.isEmpty(shortcut)) {
+              Color oldColor = g.getColor();
+              g.setColor(new JBColor(new Color(82, 99, 155),
+                                     new Color(88, 157, 246)));
+              g.drawString(shortcut, xOffset + fm.stringWidth(text + (isUnderDarcula() ? " " : "")), yOffset[0]);
+              g.setColor(oldColor);
+            }
+
+            if (info.underlined) {
+              Color c = null;
+              if (info.underlineColor != null) {
+                c = g.getColor();
+                g.setColor(info.underlineColor);
+              }
+
+              drawLine(g ,x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent(), x + maxWidth[0] + 10, yOffset[0] + fm.getDescent());
+              if (c != null) {
+                g.setColor(c);
+              }
+
+              if (myDrawShadow) {
+                c = g.getColor();
+                g.setColor(myShadowColor);
+                drawLine(g ,x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent() + 1, x + maxWidth[0] + 10,
+                           yOffset[0] + fm.getDescent() + 1);
+                g.setColor(c);
+              }
+            }
+
+            yOffset[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
+
+            if (old != null) {
+              g.setFont(old);
+            }
+
+            return true;
           }
-
-          yOffset[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
-
-          if (old != null) {
-            g.setFont(old);
-          }
-
-          return true;
-        }
-      });
+        });
+      }
+      finally {
+        if (oldFont != null) g.setFont(oldFont);
+        if (oldColor != null) g.setColor(oldColor);
+      }
     }
 
     private static class LineInfo {
@@ -3328,7 +3558,7 @@ public class UIUtil {
     Component eachParent = c;
     while (eachParent != null) {
       if (eachParent instanceof JComponent) {
-        @SuppressWarnings({"unchecked"}) WeakReference<JRootPane> pane =
+        @SuppressWarnings("unchecked") WeakReference<JRootPane> pane =
           (WeakReference<JRootPane>)((JComponent)eachParent).getClientProperty(ROOT_PANE);
         if (pane != null) return pane.get();
       }
@@ -3506,7 +3736,7 @@ public class UIUtil {
           lcdContrastValue = 140;
         } else {
           Object o = map.get(RenderingHints.KEY_TEXT_LCD_CONTRAST);
-          lcdContrastValue = (o == null) ? 140 : ((Integer)o);
+          lcdContrastValue = o == null ? 140 : (Integer)o;
         }
       }
     }
@@ -3545,7 +3775,7 @@ public class UIUtil {
 
   @NotNull
   public static Paint getGradientPaint(float x1, float y1, @NotNull Color c1, float x2, float y2, @NotNull Color c2) {
-    return (Registry.is("ui.no.bangs.and.whistles")) ? ColorUtil.mix(c1, c2, .5) : new GradientPaint(x1, y1, c1, x2, y2, c2);
+    return Registry.is("ui.no.bangs.and.whistles") ? ColorUtil.mix(c1, c2, .5) : new GradientPaint(x1, y1, c1, x2, y2, c2);
   }
 
   @Nullable
@@ -3584,12 +3814,10 @@ public class UIUtil {
     }
   }
 
-  public static void setAutoRequestFocus (final Window onWindow, final boolean set){
-    if (SystemInfo.isMac) return;
-    if (SystemInfo.isJavaVersionAtLeast("1.7")) {
+  public static void setAutoRequestFocus(final Window onWindow, final boolean set) {
+    if (!SystemInfo.isMac) {
       try {
-        Method setAutoRequestFocusMethod  = onWindow.getClass().getMethod("setAutoRequestFocus", boolean.class);
-        setAutoRequestFocusMethod.invoke(onWindow, set);
+        onWindow.getClass().getMethod("setAutoRequestFocus", boolean.class).invoke(onWindow, set);
       }
       catch (NoSuchMethodException e) { LOG.debug(e); }
       catch (InvocationTargetException e) { LOG.debug(e); }
@@ -3651,6 +3879,7 @@ public class UIUtil {
           for (final UndoableEditListener listener : undoableEditListeners) {
             if (listener instanceof UndoManager) {
               Runnable runnable = new Runnable() {
+                @Override
                 public void run() {
                   ((UndoManager)listener).discardAllEdits();
                 }
@@ -3677,6 +3906,15 @@ public class UIUtil {
     textComponent.getActionMap().put("undoKeystroke", UNDO_ACTION);
     textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, (SystemInfo.isMac? InputEvent.META_MASK : InputEvent.CTRL_MASK) | InputEvent.SHIFT_MASK), "redoKeystroke");
     textComponent.getActionMap().put("redoKeystroke", REDO_ACTION);
+  }
+
+  @Nullable
+  public static UndoManager getUndoManager(Component component) {
+    if (component instanceof JTextComponent) {
+      Object o = ((JTextComponent)component).getClientProperty(UNDO_MANAGER);
+      if (o instanceof UndoManager) return (UndoManager)o;
+    }
+    return null;
   }
 
   public static void playSoundFromResource(final String resourceName) {
@@ -3963,5 +4201,72 @@ public class UIUtil {
         source.removeKeyListener(keyAdapter);
       }
     });
+  }
+
+  public static final String CHECKBOX_ROLLOVER_PROPERTY = "JCheckBox.rollOver.rectangle";
+  public static final String CHECKBOX_PRESSED_PROPERTY = "JCheckBox.pressed.rectangle";
+
+  public static void repaintViewport(@NotNull JComponent c) {
+    if (!c.isDisplayable() || !c.isVisible()) return;
+
+    Container p = c.getParent();
+    if (p instanceof JViewport) {
+      p.repaint();
+    }
+  }
+
+  public static void setCursor(Component component, Cursor cursor) {
+    // cursor is updated by native code even if component has the same cursor, causing performance problems (IDEA-167733)
+    if(component.isCursorSet() && component.getCursor() == cursor) return;
+    component.setCursor(cursor);
+  }
+
+  public static boolean haveCommonOwner(Component c1, Component c2) {
+    if (c1 == null || c2 == null) return false;
+    Window c1Ancestor = findWindowAncestor(c1);
+    Window c2Ancestor = findWindowAncestor(c2);
+
+    Set <Window> ownerSet = new HashSet<Window>();
+
+    Window owner = c1Ancestor;
+
+    while (owner != null && !(owner instanceof JDialog || owner instanceof JFrame)) {
+      ownerSet.add(owner);
+      owner = owner.getOwner();
+    }
+
+    owner = c2Ancestor;
+
+    while (owner != null && !(owner instanceof JDialog || owner instanceof JFrame)) {
+      if (ownerSet.contains(owner)) return true;
+      owner = owner.getOwner();
+    }
+
+    return false;
+  }
+
+  private static Window findWindowAncestor(@NotNull Component c) {
+    return c instanceof Window ? (Window)c : SwingUtilities.getWindowAncestor(c);
+  }
+
+  public static boolean isHelpButton(Component button) {
+    return button instanceof JButton && "help".equals(((JComponent)button).getClientProperty("JButton.buttonType"));
+  }
+
+  public static void typeAheadUntilFocused(InputEvent event, Component component) {
+    LOG.assertTrue(component.isFocusable());
+    Method enqueueKeyEventsMethod = ReflectionUtil.getDeclaredMethod(KeyboardFocusManager.class, "enqueueKeyEvents", long.class, Component.class);
+    try {
+      if (enqueueKeyEventsMethod != null) {
+        enqueueKeyEventsMethod.invoke(KeyboardFocusManager.getCurrentKeyboardFocusManager(),
+                                      event != null ? event.getWhen() : System.currentTimeMillis(), component);
+      }
+    }
+    catch (IllegalAccessException e) {
+      LOG.debug(e);
+    }
+    catch (InvocationTargetException e) {
+      LOG.debug(e);
+    }
   }
 }

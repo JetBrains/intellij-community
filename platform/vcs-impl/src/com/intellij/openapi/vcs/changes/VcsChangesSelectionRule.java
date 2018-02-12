@@ -16,14 +16,11 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.impl.dataRules.GetDataRule;
+import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
-import java.util.Collections;
 
 public class VcsChangesSelectionRule implements GetDataRule {
   @Nullable
@@ -33,23 +30,21 @@ public class VcsChangesSelectionRule implements GetDataRule {
   }
 
   @Nullable
-  public ChangesSelection getChangesSelection(@NotNull DataProvider dataProvider) {
+  public ListSelection<Change> getChangesSelection(@NotNull DataProvider dataProvider) {
     Change currentChange = VcsDataKeys.CURRENT_CHANGE.getData(dataProvider);
 
     Change[] selectedChanges = VcsDataKeys.SELECTED_CHANGES.getData(dataProvider);
     if (selectedChanges != null) {
-      int index = Math.max(ArrayUtil.indexOf(selectedChanges, currentChange), 0);
-      return new ChangesSelection(Arrays.asList(selectedChanges), index);
+      return ListSelection.create(selectedChanges, currentChange);
     }
 
     Change[] changes = VcsDataKeys.CHANGES.getData(dataProvider);
     if (changes != null) {
-      int index = Math.max(ArrayUtil.indexOf(changes, currentChange), 0);
-      return new ChangesSelection(Arrays.asList(changes), index);
+      return ListSelection.create(changes, currentChange);
     }
 
     if (currentChange != null) {
-      return new ChangesSelection(Collections.singletonList(currentChange), 0);
+      return ListSelection.createSingleton(currentChange);
     }
     return null;
   }

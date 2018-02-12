@@ -181,7 +181,7 @@ public class AntUIUtil {
       Sdk jdk = GlobalAntConfiguration.findJdk(jdkName);
       if (jdk == null) {
         if (myProjectJdkName.length() > 0) {
-          setIcon(AllIcons.General.Jdk);
+          setIcon(AllIcons.Nodes.PpJdk);
           append(AntBundle.message("project.jdk.project.jdk.name.list.column.value", myProjectJdkName),
                  selected && !(SystemInfo.isWinVistaOrNewer && UIManager.getLookAndFeel().getName().contains("Windows"))
                  ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES

@@ -15,51 +15,88 @@
  */
 package git4idea.ui;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
+import com.intellij.openapi.vcs.changes.ui.RemoteStatusChangeNodeDecorator;
+import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.util.containers.ContainerUtil;
+import java.util.HashSet;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.tree.DefaultTreeModel;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * {@link ChangesBrowser} extension with Rollback/Revert action added to the toolbar.
  * After the revert completes, the changes list is automatically refreshed according to the actual changes
  * retrieved from the {@link ChangeListManager}.
  */
-public class ChangesBrowserWithRollback extends ChangesBrowser {
-  private final List<Change> myOriginalChanges;
+public class ChangesBrowserWithRollback extends ChangesBrowserBase implements Disposable {
+  private final Set<Change> myOriginalChanges;
 
   public ChangesBrowserWithRollback(@NotNull Project project, @NotNull List<Change> changes) {
-    super(project, null, changes, null, false, true, null, MyUseCase.LOCAL_CHANGES, null);
-    myOriginalChanges = changes;
-    RollbackDialogAction rollback = new RollbackDialogAction();
-    rollback.registerCustomShortcutSet(this, null);
-    addToolbarAction(rollback);
-    setChangesToDisplay(changes);
+    super(project, false, true);
+    myOriginalChanges = new HashSet<>(changes);
+
+    new RollbackDialogAction().registerCustomShortcutSet(this, null);
+
+    ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), this);
+    init();
+
+    myViewer.rebuildTree();
   }
 
   @Override
-  public void rebuildList() {
-    if (myOriginalChanges != null) { // null is possible because rebuildList is called during initialization
-      myChangesToDisplay = filterActualChanges(myProject, myOriginalChanges);
-    }
-    super.rebuildList();
+  public void dispose() {
   }
 
   @NotNull
-  private static List<Change> filterActualChanges(@NotNull Project project, @NotNull List<Change> originalChanges) {
-    final Collection<Change> allChanges = ChangeListManager.getInstance(project).getAllChanges();
-    return ContainerUtil.filter(originalChanges, new Condition<Change>() {
-      @Override
-      public boolean value(Change change) {
-        return allChanges.contains(change);
-      }
-    });
+  @Override
+  protected List<AnAction> createToolbarActions() {
+    return ContainerUtil.append(
+      super.createToolbarActions(),
+      new RollbackDialogAction()
+    );
+  }
+
+
+  @NotNull
+  @Override
+  protected DefaultTreeModel buildTreeModel(boolean showFlatten) {
+    Collection<Change> allChanges = ChangeListManager.getInstance(myProject).getAllChanges();
+    List<Change> newChanges = ContainerUtil.filter(allChanges, myOriginalChanges::contains);
+
+    RemoteStatusChangeNodeDecorator decorator = RemoteRevisionsCache.getInstance(myProject).getChangesNodeDecorator();
+    return TreeModelBuilder.buildFromChanges(myProject, showFlatten, newChanges, decorator);
+  }
+
+
+  private class MyChangeListListener extends ChangeListAdapter {
+    @NotNull private final MergingUpdateQueue myUpdateQueue =
+      new MergingUpdateQueue("ChangesBrowserWithRollback", 300, true,
+                             ChangesBrowserWithRollback.this, ChangesBrowserWithRollback.this);
+
+    private void doUpdate() {
+      myUpdateQueue.queue(new Update("update") {
+        @Override
+        public void run() {
+          myViewer.rebuildTree();
+        }
+      });
+    }
+
+    @Override
+    public void changeListsChanged() {
+      doUpdate();
+    }
   }
 }
+

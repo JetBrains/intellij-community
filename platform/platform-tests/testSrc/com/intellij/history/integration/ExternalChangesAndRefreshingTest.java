@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,7 +106,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   public void testCommandDuringRefresh() throws Exception {
     createFileExternally("f.txt");
 
-    VirtualFileListener l = new VirtualFileAdapter() {
+    VirtualFileListener l = new VirtualFileListener() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent e) {
         executeSomeCommand();
@@ -127,7 +127,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     setContentExternally(path, "content");
 
     final String[] content = new String[1];
-    VirtualFileListener l = new VirtualFileAdapter() {
+    VirtualFileListener l = new VirtualFileListener() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent e) {
         try {
@@ -144,7 +144,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     assertEquals("content", content[0]);
   }
 
-  public void testDeletionOfFilteredDirectoryExternallyDoesNotThrowExceptionDuringRefresh() throws Exception {
+  public void testDeletionOfFilteredDirectoryExternallyDoesNotThrowExceptionDuringRefresh() {
     int before = getRevisionsFor(myRoot).size();
 
     createChildDirectory(myRoot, FILTERED_DIR_NAME);

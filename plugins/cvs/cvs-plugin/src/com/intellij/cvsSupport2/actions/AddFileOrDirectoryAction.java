@@ -39,7 +39,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.OptionsDialog;
 
 import java.util.*;

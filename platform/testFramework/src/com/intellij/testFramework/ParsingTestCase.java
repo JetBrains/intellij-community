@@ -19,7 +19,6 @@ import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
 import com.intellij.mock.*;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -37,6 +36,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.core.impl.PomModelImpl;
@@ -51,6 +51,7 @@ import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.impl.source.text.DiffLog;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.CachedValuesManagerImpl;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -60,6 +61,9 @@ import org.picocontainer.defaults.AbstractComponentAdapter;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 
 /** @noinspection JUnitTestCaseWithNonTrivialConstructors*/
@@ -148,33 +152,18 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
 
   protected <T> void addExplicitExtension(final LanguageExtension<T> instance, final Language language, final T object) {
     instance.addExplicitExtension(language, object);
-    Disposer.register(myProject, new Disposable() {
-      @Override
-      public void dispose() {
-        instance.removeExplicitExtension(language, object);
-      }
-    });
+    Disposer.register(getTestRootDisposable(), () -> instance.removeExplicitExtension(language, object));
   }
 
   @Override
   protected <T> void registerExtensionPoint(final ExtensionPointName<T> extensionPointName, Class<T> aClass) {
     super.registerExtensionPoint(extensionPointName, aClass);
-    Disposer.register(myProject, new Disposable() {
-      @Override
-      public void dispose() {
-        Extensions.getRootArea().unregisterExtensionPoint(extensionPointName.getName());
-      }
-    });
+    Disposer.register(getTestRootDisposable(), () -> Extensions.getRootArea().unregisterExtensionPoint(extensionPointName.getName()));
   }
 
   protected <T> void registerApplicationService(final Class<T> aClass, T object) {
     getApplication().registerService(aClass, object);
-    Disposer.register(myProject, new Disposable() {
-      @Override
-      public void dispose() {
-        getApplication().getPicoContainer().unregisterComponent(aClass.getName());
-      }
-    });
+    Disposer.register(getTestRootDisposable(), () -> getApplication().getPicoContainer().unregisterComponent(aClass.getName()));
   }
 
   @NotNull
@@ -271,7 +260,11 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   }
 
   protected void checkResult(@NonNls @TestDataFile String targetDataName, final PsiFile file) throws IOException {
-    doCheckResult(myFullDataPath, file, checkAllPsiRoots(), targetDataName, skipSpaces(), includeRanges());
+    doCheckResult(myFullDataPath, file, checkAllPsiRoots(), targetDataName, skipSpaces(), includeRanges(), allTreesInSingleFile());
+  }
+
+  protected boolean allTreesInSingleFile() {
+    return false;
   }
 
   public static void doCheckResult(String testDataDir,
@@ -279,7 +272,17 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
                                    boolean checkAllPsiRoots,
                                    String targetDataName,
                                    boolean skipSpaces,
-                                   boolean printRanges) throws IOException {
+                                   boolean printRanges) {
+    doCheckResult(testDataDir, file, checkAllPsiRoots, targetDataName, skipSpaces, printRanges, false);
+  }
+
+  public static void doCheckResult(String testDataDir,
+                                   PsiFile file,
+                                   boolean checkAllPsiRoots,
+                                   String targetDataName,
+                                   boolean skipSpaces,
+                                   boolean printRanges,
+                                   boolean allTreesInSingleFile) {
     FileViewProvider provider = file.getViewProvider();
     Set<Language> languages = provider.getLanguages();
 
@@ -288,23 +291,37 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
       return;
     }
 
-    for (Language language : languages) {
-      PsiFile root = provider.getPsi(language);
-      String expectedName = targetDataName + "." + language.getID() + ".txt";
-      doCheckResult(testDataDir, expectedName, toParseTreeText(root, skipSpaces, printRanges).trim());
+    if (allTreesInSingleFile) {
+      String expectedName = targetDataName + ".txt";
+      StringBuilder sb = new StringBuilder();
+      List<Language> languagesList = new ArrayList<>(languages);
+      ContainerUtil.sort(languagesList, Comparator.comparing(Language::getID));
+      for (Language language : languagesList) {
+        sb.append("Subtree: ").append(language.getDisplayName()).append(" (").append(language.getID()).append(")").append("\n")
+          .append(toParseTreeText(provider.getPsi(language), skipSpaces, printRanges).trim())
+          .append("\n").append(StringUtil.repeat("-", 80)).append("\n");
+      }
+      doCheckResult(testDataDir, expectedName, sb.toString());
+    }
+    else {
+      for (Language language : languages) {
+        PsiFile root = provider.getPsi(language);
+        String expectedName = targetDataName + "." + language.getID() + ".txt";
+        doCheckResult(testDataDir, expectedName, toParseTreeText(root, skipSpaces, printRanges).trim());
+      }
     }
   }
 
-  protected void checkResult(String actual) throws IOException {
+  protected void checkResult(String actual) {
     String name = getTestName();
     doCheckResult(myFullDataPath, myFilePrefix + name + ".txt", actual);
   }
 
-  protected void checkResult(@TestDataFile @NonNls String targetDataName, String actual) throws IOException {
+  protected void checkResult(@TestDataFile @NonNls String targetDataName, String actual) {
     doCheckResult(myFullDataPath, targetDataName, actual);
   }
 
-  public static void doCheckResult(String fullPath, String targetDataName, String actual) throws IOException {
+  public static void doCheckResult(String fullPath, String targetDataName, String actual) {
     String expectedFileName = fullPath + File.separatorChar + targetDataName;
     UsefulTestCase.assertSameLinesWithFile(expectedFileName, actual);
   }

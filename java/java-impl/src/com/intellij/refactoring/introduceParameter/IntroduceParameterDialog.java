@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 06.05.2002
- * Time: 16:54:19
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
@@ -32,6 +24,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
@@ -216,7 +209,8 @@ public class IntroduceParameterDialog extends RefactoringDialog {
 
     final Boolean settingsFinals = settings.INTRODUCE_PARAMETER_CREATE_FINALS;
     myCbDeclareFinal.setSelected(settingsFinals == null ?
-                                 CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS :
+                                 CodeStyleSettingsManager.getSettings(myProject)
+                                   .getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS :
                                  settingsFinals.booleanValue());
     panel.add(myCbDeclareFinal, gbConstraints);
     if (myMustBeFinal) {
@@ -233,7 +227,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     myCbCollapseToLambda = new NonFocusableCheckBox(RefactoringBundle.message("introduce.parameter.convert.lambda"));
     final PsiAnonymousClass anonymClass = myExpression instanceof PsiNewExpression ? ((PsiNewExpression)myExpression).getAnonymousClass() 
                                                                                    : null;
-    myCbCollapseToLambda.setVisible(anonymClass != null && AnonymousCanBeLambdaInspection.canBeConvertedToLambda(anonymClass, false, Collections.emptySet()));
+    myCbCollapseToLambda.setVisible(anonymClass != null && AnonymousCanBeLambdaInspection.isLambdaForm(anonymClass, false, Collections.emptySet()));
     myCbCollapseToLambda.setSelected(PropertiesComponent.getInstance(myProject).getBoolean(INTRODUCE_PARAMETER_LAMBDA));
     gbConstraints.gridy++;
     panel.add(myCbCollapseToLambda, gbConstraints);

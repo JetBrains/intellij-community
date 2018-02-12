@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public abstract class FileEditorManager {
 
   /**
    * @param file file to open. Parameter cannot be null. File should be valid.
-   *
+   * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
    * @return array of opened editors
    */
   @NotNull
@@ -45,8 +45,8 @@ public abstract class FileEditorManager {
 
 
   /**
-   * Opens a file
-   *
+   * Opens a file.
+   * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
    *
    * @param file file to open
    * @param focusEditor {@code true} if need to focus
@@ -59,6 +59,7 @@ public abstract class FileEditorManager {
 
   /**
    * Closes all editors opened for the file.
+   * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
    *
    * @param file file to be closed. Cannot be null.
    */
@@ -67,6 +68,7 @@ public abstract class FileEditorManager {
   /**
    * Works as {@link #openFile(VirtualFile, boolean)} but forces opening of text editor.
    * This method ignores {@link FileEditorPolicy#HIDE_DEFAULT_EDITOR} policy.
+   * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
    *
    * @return opened text editor. The method returns {@code null} in case if text editor wasn't opened.
    */
@@ -74,8 +76,18 @@ public abstract class FileEditorManager {
   public abstract Editor openTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor);
 
   /**
+   * Same as {@link #openTextEditor(OpenFileDescriptor, boolean)}
+   * but potentially can be faster thanks to not checking for injected editor at the specified offset.
+   * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
+   */
+  public void navigateToTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
+    openTextEditor(descriptor, focusEditor);
+  }
+
+  /**
    * @return currently selected text editor. The method returns {@code null} in case
    * there is no selected editor at all or selected editor is not a text one.
+   * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
    */
   @Nullable
   public abstract Editor getSelectedTextEditor();
@@ -144,11 +156,36 @@ public abstract class FileEditorManager {
    */
   public abstract void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent);
 
+  /**
+   * Adds the specified component above the editor and paints a separator line below it.
+   * If a separator line is not needed, set the client property to {@code true}:
+   * <pre>    component.putClientProperty(SEPARATOR_DISABLED, true);    </pre>
+   * Otherwise, a separator line will be painted by a
+   * {@link com.intellij.openapi.editor.colors.EditorColors#SEPARATOR_ABOVE_COLOR SEPARATOR_ABOVE_COLOR} or
+   * {@link com.intellij.openapi.editor.colors.EditorColors#TEARLINE_COLOR TEARLINE_COLOR} if it is not set.
+   * <p>
+   * This method allows to add several components above the editor.
+   * To change an order of components the specified component may implement the
+   * {@link com.intellij.openapi.util.Weighted Weighted} interface.
+   */
   public abstract void addTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component);
   public abstract void removeTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component);
+  /**
+   * Adds the specified component below the editor and paints a separator line above it.
+   * If a separator line is not needed, set the client property to {@code true}:
+   * <pre>    component.putClientProperty(SEPARATOR_DISABLED, true);    </pre>
+   * Otherwise, a separator line will be painted by a
+   * {@link com.intellij.openapi.editor.colors.EditorColors#SEPARATOR_BELOW_COLOR SEPARATOR_BELOW_COLOR} or
+   * {@link com.intellij.openapi.editor.colors.EditorColors#TEARLINE_COLOR TEARLINE_COLOR} if it is not set.
+   * <p>
+   * This method allows to add several components below the editor.
+   * To change an order of components the specified component may implement the
+   * {@link com.intellij.openapi.util.Weighted Weighted} interface.
+   */
   public abstract void addBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component);
   public abstract void removeBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component);
 
+  public static final Key<Boolean> SEPARATOR_DISABLED = Key.create("FileEditorSeparatorDisabled");
 
   /**
    * Adds specified {@code listener}
@@ -170,6 +207,10 @@ public abstract class FileEditorManager {
    */
   public abstract void removeFileEditorManagerListener(@NotNull FileEditorManagerListener listener);
 
+  /**
+   * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
+   * @return opened file editors
+   */
   @NotNull
   public abstract List<FileEditor> openEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor);
 
@@ -199,5 +240,10 @@ public abstract class FileEditorManager {
    */
   public abstract void setSelectedEditor(@NotNull VirtualFile file, @NotNull String fileEditorProviderId);
 
-  public abstract boolean canNavigateInEditor(OpenFileDescriptor openFileDescriptor, Editor e);
+  /**
+   * {@link FileEditorManager} supports asynchronous opening of text editors, i.e. when one of 'openFile' methods returns, returned
+   * editor might not be fully initialized yet. This method allows to delay (if needed) execution of given runnable until editor is
+   * fully loaded.
+   */
+  public abstract void runWhenLoaded(@NotNull Editor editor, @NotNull Runnable runnable);
 }

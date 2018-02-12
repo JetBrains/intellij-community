@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class TooBroadCatchInspectionTest extends LightInspectionTestCase {
 
-  public void testTooBroadCatchBlock() throws Exception {
+  public void testTooBroadCatchBlock() {
     doTest();
   }
 

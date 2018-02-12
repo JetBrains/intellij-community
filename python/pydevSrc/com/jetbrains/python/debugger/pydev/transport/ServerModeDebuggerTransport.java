@@ -22,7 +22,7 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
 
   private volatile boolean myConnected = false;
   private volatile Socket mySocket;
-  private int myConnectionTimeout;
+  private final int myConnectionTimeout;
 
   public ServerModeDebuggerTransport(RemoteDebugger debugger, @NotNull ServerSocket socket, int connectionTimeout) {
     super(debugger);
@@ -73,6 +73,16 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
         }
       }
     }
+  }
+
+  /**
+   * Server mode does not have this intermediate phase.
+   *
+   * @return {@code false}
+   */
+  @Override
+  public boolean isConnecting() {
+    return false;
   }
 
   @Override

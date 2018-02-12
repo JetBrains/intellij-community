@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers;
 
@@ -23,7 +11,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectIntHashMap;
@@ -57,7 +44,6 @@ import java.util.Map;
 public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> implements GrModifierList, StubBasedPsiElement<GrModifierListStub> {
   public static final TObjectIntHashMap<String> NAME_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<>();
   public static final Map<String, IElementType> NAME_TO_MODIFIER_ELEMENT_TYPE = ContainerUtil.newHashMap();
-  private static final ArrayFactory<GrAnnotation> ARRAY_FACTORY = GrAnnotation[]::new;
 
   private static final TObjectIntHashMap<String> PRIORITY = new TObjectIntHashMap<>(16);
 
@@ -93,7 +79,6 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
 
     NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.PUBLIC, GroovyTokenTypes.kPUBLIC);
     NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.ABSTRACT, GroovyTokenTypes.kABSTRACT);
-    NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.NATIVE, GroovyTokenTypes.kNATIVE);
     NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.PRIVATE, GroovyTokenTypes.kPRIVATE);
     NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.PROTECTED, GroovyTokenTypes.kPROTECTED);
     NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.SYNCHRONIZED, GroovyTokenTypes.kSYNCHRONIZED);
@@ -154,7 +139,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
       }
     }
 
-    return result.toArray(new PsiElement[result.size()]);
+    return result.toArray(PsiElement.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -208,7 +193,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
   @NotNull
   @Override
   public GrAnnotation[] getRawAnnotations() {
-    return getStubOrPsiChildren(GroovyElementTypes.ANNOTATION, ARRAY_FACTORY);
+    return getStubOrPsiChildren(GroovyElementTypes.ANNOTATION, GrAnnotation.ARRAY_FACTORY);
   }
 
   private void setModifierPropertyInternal(String name, boolean doSet) {
@@ -310,7 +295,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     final PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName, getResolveScope());
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
     GrAnnotation annotation;
-    if (psiClass != null && psiClass.isAnnotationType()) {
+    if (psiClass != null) {
       annotation = (GrAnnotation)addAfter(factory.createModifierFromText("@xxx"), null);
       annotation.getClassReference().bindToElement(psiClass);
     }

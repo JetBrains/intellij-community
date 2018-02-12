@@ -39,9 +39,6 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: Sergey.Vasiliev
- */
 public abstract class AddDomElementAction extends AnAction {
 
   public AddDomElementAction() {
@@ -143,7 +140,7 @@ public abstract class AddDomElementAction extends AnAction {
         @Override
         @NotNull
         public AnAction[] getChildren(@Nullable AnActionEvent e) {
-          return actions.toArray(new AnAction[actions.size()]);
+          return actions.toArray(AnAction.EMPTY_ARRAY);
         }
       };
       return new AnAction[]{new ShowPopupAction(group)};
@@ -155,7 +152,7 @@ public abstract class AddDomElementAction extends AnAction {
 
       }
     }
-    return actions.toArray(new AnAction[actions.size()]);
+    return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
   protected abstract AnAction createAddingAction(final AnActionEvent e,

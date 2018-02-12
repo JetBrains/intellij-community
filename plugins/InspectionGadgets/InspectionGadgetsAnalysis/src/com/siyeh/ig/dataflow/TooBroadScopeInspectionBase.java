@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,11 @@ package com.siyeh.ig.dataflow;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -33,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
+import java.util.List;
 
 public class TooBroadScopeInspectionBase extends BaseInspection {
 
@@ -212,11 +210,7 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
     if (ClassUtils.isImmutable(type)) {
       return true;
     }
-    if (!(type instanceof PsiClassType)) {
-      return false;
-    }
-    final PsiClassType classType = (PsiClassType)type;
-    final PsiClass aClass = classType.resolve();
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
     return isAllowedClass(aClass);
   }
 
@@ -249,23 +243,11 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
         return;
       }
       final PsiElement variableScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, PsiForStatement.class);
-      if (variableScope == null) {
+      final List<PsiReferenceExpression> references = VariableAccessUtils.findReferences(variable, variableScope);
+      if (references.isEmpty() || variableScope == null) {
         return;
       }
-      final Query<PsiReference> query = ReferencesSearch.search(variable);
-      final Collection<PsiReference> referencesCollection = query.findAll();
-      final int size = referencesCollection.size();
-      if (size == 0) {
-        return;
-      }
-      final PsiElement[] referenceElements = new PsiElement[referencesCollection.size()];
-      int index = 0;
-      for (PsiReference reference : referencesCollection) {
-        final PsiElement referenceElement = reference.getElement();
-        referenceElements[index] = referenceElement;
-        index++;
-      }
-      PsiElement commonParent = ScopeUtils.getCommonParent(referenceElements);
+      PsiElement commonParent = ScopeUtils.getCommonParent(references);
       if (commonParent == null) {
         return;
       }
@@ -288,7 +270,7 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
       if (commonParent instanceof PsiForStatement) {
         return;
       }
-      final PsiElement referenceElement = referenceElements[0];
+      final PsiElement referenceElement = references.get(0);
       final PsiElement blockChild = ScopeUtils.getChildWhichContainsElement(variableScope, referenceElement);
       if (blockChild == null) {
         return;
@@ -319,7 +301,7 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
       }
       if (insertionPoint != null && FileTypeUtils.isInServerPageFile(insertionPoint)) {
         PsiElement elementBefore = insertionPoint.getPrevSibling();
-        elementBefore = PsiTreeUtil.skipSiblingsBackward(elementBefore, PsiWhiteSpace.class);
+        elementBefore = PsiTreeUtil.skipWhitespacesBackward(elementBefore);
         if (elementBefore instanceof PsiDeclarationStatement) {
           final PsiElement variableParent = variable.getParent();
           if (elementBefore.equals(variableParent)) {

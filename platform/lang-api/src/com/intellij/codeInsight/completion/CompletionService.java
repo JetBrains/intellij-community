@@ -17,6 +17,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.Weigher;
 import com.intellij.util.Consumer;
@@ -75,10 +76,15 @@ public abstract class CompletionService {
     final List<CompletionContributor> contributors = CompletionContributor.forParameters(parameters);
 
     for (int i = contributors.indexOf(from) + 1; i < contributors.size(); i++) {
-      final CompletionContributor contributor = contributors.get(i);
+      ProgressManager.checkCanceled();
+      CompletionContributor contributor = contributors.get(i);
 
-      final CompletionResultSet result = createResultSet(parameters, consumer, contributor);
-      contributor.fillCompletionVariants(parameters, result);
+      CompletionResultSet result = createResultSet(parameters, consumer, contributor);
+      try {
+        contributor.fillCompletionVariants(parameters, result);
+      }
+      catch (CompletionWithoutEditorException ignore) {
+      }
       if (result.isStopped()) {
         return;
       }

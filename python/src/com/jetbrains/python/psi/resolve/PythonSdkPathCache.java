@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,10 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -44,7 +43,7 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
     synchronized (KEY) {
       Map<Project, PythonSdkPathCache> cacheMap = sdk.getUserData(KEY);
       if (cacheMap == null) {
-        cacheMap = new WeakHashMap<>();
+        cacheMap = ContainerUtil.createWeakMap();
         sdk.putUserData(KEY, cacheMap);
       }
       PythonSdkPathCache cache = cacheMap.get(project);
@@ -70,7 +69,7 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
     final MessageBusConnection connection = project.getMessageBus().connect(this);
     connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, new ProjectJdkTable.Adapter() {
       @Override
-      public void jdkRemoved(Sdk jdk) {
+      public void jdkRemoved(@NotNull Sdk jdk) {
         if (jdk == sdk) {
           Disposer.dispose(PythonSdkPathCache.this);
         }
@@ -81,20 +80,17 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
         clearCache();
       }
     });
-    sdk.getRootProvider().addRootSetChangedListener(new RootProvider.RootSetChangedListener() {
-      @Override
-      public void rootSetChanged(RootProvider wrapper) {
-        clearCache();
-        if (!project.isDisposed()) {
-          final Module[] modules = ModuleManager.getInstance(project).getModules();
-          for (Module module : modules) {
-            PythonModulePathCache.getInstance(module).clearCache();
-          }
+    sdk.getRootProvider().addRootSetChangedListener(wrapper -> {
+      clearCache();
+      if (!project.isDisposed()) {
+        final Module[] modules = ModuleManager.getInstance(project).getModules();
+        for (Module module : modules) {
+          PythonModulePathCache.getInstance(module).clearCache();
         }
-        myBuiltins.set(null);
       }
+      myBuiltins.set(null);
     }, this);
-    VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileAdapter(), this);
+    VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), this);
   }
 
   @Override

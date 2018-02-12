@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public class SharedPsiElementImplUtil {
 
     if (referencesList.isEmpty()) return null;
     if (referencesList.size() == 1) return referencesList.get(0);
-    return new PsiMultiReference(referencesList.toArray(new PsiReference[referencesList.size()]),
+    return new PsiMultiReference(referencesList.toArray(PsiReference.EMPTY_ARRAY),
                                  referencesList.get(referencesList.size() - 1).getElement());
   }
 

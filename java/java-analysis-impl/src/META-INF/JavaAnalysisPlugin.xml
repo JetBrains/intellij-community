@@ -1,0 +1,246 @@
+<!--
+  ~ Copyright 2000-2017 JetBrains s.r.o.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ http://www.apache.org/licenses/LICENSE-2.01
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<idea-plugin>
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.JavaSoftKeywordHighlightingPassFactory</implementation-class>
+      <skipForDefaultProject/>
+    </component>
+  </project-components>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.deadCode"
+                    interface="com.intellij.codeInspection.reference.EntryPoint"/>
+
+    <!-- PsiMember -->
+    <extensionPoint qualifiedName="com.intellij.javaDocNotNecessary"
+                    interface="com.intellij.openapi.util.Condition"/>
+
+    <extensionPoint qualifiedName="com.intellij.visibility"
+                    interface="com.intellij.codeInspection.visibility.VisibilityExtension"/>
+
+    <extensionPoint qualifiedName="com.intellij.java.error.fix" beanClass="com.intellij.codeInsight.daemon.impl.analysis.ErrorFixExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.intention.IntentionAction"/>
+    </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.lang.jvm.actions.jvmElementActionsFactory" interface="com.intellij.lang.jvm.actions.JvmElementActionsFactory"/>
+
+    <extensionPoint qualifiedName="com.intellij.allowedApiFilter" interface="com.intellij.psi.impl.AllowedApiFilterExtension"/>
+
+    <extensionPoint qualifiedName="com.intellij.canBeFinal"
+                    interface="com.intellij.codeInspection.canBeFinal.CanBeFinalHandler"/>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.implicitSubclassProvider"
+                    interface="com.intellij.codeInspection.inheritance.ImplicitSubclassProvider"/>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.changeVariableTypeQuickFixProvider"
+                    interface="com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider"/>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.intention.jvmCommonIntentionActionsFactory" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory"/>
+    </extensionPoint>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <deadCode implementation="com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint"/>
+    <smartPointer.anchorProvider implementation="com.intellij.uast.UastElementAnchorProvider"/>
+    <metaLanguage implementation="com.intellij.uast.UastMetaLanguage"/>
+    <lang.inspectionSuppressor language="JAVA" implementationClass="com.intellij.codeInspection.SuppressManagerImpl"/>
+    <projectService serviceInterface="com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis"
+                    serviceImplementation="com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis"/>
+    <generatedSourcesFilter implementation="com.intellij.openapi.roots.JavaGeneratedSourcesFilter"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="FieldNotUsedInToString" displayName="Field not used in 'toString()' method" groupKey="group.names.toString.issues" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="false" level="WARNING" runForWholeFile="true"
+                     implementationClass="org.jetbrains.java.generate.inspection.FieldNotUsedInToStringInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ClassHasNoToStringMethod" displayName="Class does not override 'toString()' method"
+                     groupKey="group.names.toString.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.java.generate.inspection.ClassHasNoToStringMethodInspection"/>
+    <applicationService serviceInterface="org.jetbrains.java.generate.GenerateToStringContext"
+                        serviceImplementation="org.jetbrains.java.generate.GenerateToStringContext"/>
+    <applicationService serviceInterface="org.jetbrains.java.generate.GenerateToStringActionHandler"
+                        serviceImplementation="org.jetbrains.java.generate.GenerateToStringActionHandlerImpl"/>
+    <filePropertyPusher implementation="com.intellij.openapi.roots.impl.JavaLanguageLevelPusher"/>
+    <fileBasedIndex implementation="com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisIndex"/>
+    <daemon.changeLocalityDetector implementation="com.intellij.codeInsight.daemon.impl.JavaChangeLocalityDetector"/>
+    <customScopesProvider implementation="com.intellij.analysis.PackagesScopesProvider"/>
+    <applicationService serviceInterface="com.intellij.codeInspection.BatchSuppressManager"
+                        serviceImplementation="com.intellij.codeInspection.BatchSuppressManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.codeInspection.SuppressManager"
+                        serviceImplementation="com.intellij.codeInspection.SuppressManagerImpl"/>
+    <annotator language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaDocAnnotator"/>
+    <localInspection language="JAVA" shortName="JavaModuleNaming" enabledByDefault="true" level="WARNING"
+                     groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions"
+                     bundle="messages.InspectionsBundle" key="inspection.java.module.naming"
+                     implementationClass="com.intellij.codeInspection.java19modules.JavaModuleNamingInspection"/>
+    <localInspection language="JAVA" shortName="JavaRequiresAutoModule" enabledByDefault="true" level="WARNING"
+                     groupPath="Java,Java language level migration aids"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids9"
+                     bundle="messages.InspectionsBundle" key="inspection.requires.auto.module"
+                     implementationClass="com.intellij.codeInspection.java19modules.JavaRequiresAutoModuleInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="Java9ModuleExportsPackageToItself"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues"
+                     enabledByDefault="true" level="WARNING"
+                     key="inspection.module.exports.package.to.itself" bundle="messages.InspectionsBundle"
+                     implementationClass="com.intellij.codeInspection.java19modules.Java9ModuleExportsPackageToItselfInspection"/>
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Java8ListSort"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.java18api.Java8ListSortInspection"
+                     displayName="Collections.sort() can be replaced with List.sort()"/>
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="AnonymousHasLambdaAlternative" displayName="Anonymous type has shorter lambda alternative"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.AnonymousHasLambdaAlternativeInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="StringTokenizerDelimiter"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.StringTokenizerDelimiterInspection"
+                     displayName="Duplicated delimiters in java.util.StringTokenizer"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="BlockMarkerComments"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.BlockMarkerCommentsInspection"
+                     displayName="Block marker comment"/>
+    <localInspection language="UAST" shortName="ImplicitSubclassInspection"
+                     bundle="messages.InspectionsBundle" key="inspection.implicit.subclass.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.inheritance.issues"
+                     groupPath="Java"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="com.intellij.codeInspection.inheritance.ImplicitSubclassInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="JavacQuirks" bundle="messages.InspectionsBundle" key="inspection.compiler.javac.quirks.name"
+                     groupKey="group.names.compiler.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.compiler.JavacQuirksInspection" />
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" suppressId="unchecked" shortName="SafeVarargsDetector"
+                     displayName="Possible heap pollution from parameterized vararg type" groupKey="group.names.language.level.specific.issues.and.migration.aids7" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.PossibleHeapPollutionVarargsInspection" />
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="CodeBlock2Expr" displayName="Statement lambda can be replaced with expression lambda"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.RedundantLambdaCodeBlockInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="InvalidComparatorMethodReference" displayName="Invalid method reference used for Comparator"
+                     groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.InvalidComparatorMethodReferenceInspection"/>
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Convert2Lambda" displayName="Anonymous type can be replaced with lambda"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.AnonymousCanBeLambdaInspection" />
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Convert2Diamond" displayName="Explicit type can be replaced with &lt;&gt;"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids7" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.ExplicitTypeCanBeDiamondInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="UseCompareMethod" displayName="'compare()' method can be used to compare primitives"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.UseCompareMethodInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="UnknownGuard" displayName="Unknown @GuardedBy field" groupKey="group.names.concurrency.annotation.issues" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.concurrencyAnnotations.UnknownGuardInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="StaticGuardedByInstance" displayName="Static member guarded by instance field or this"
+                     groupKey="group.names.concurrency.annotation.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.concurrencyAnnotations.StaticGuardedByInstanceInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="NonFinalGuard" displayName="Non-final @GuardedBy field" groupKey="group.names.concurrency.annotation.issues" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.concurrencyAnnotations.NonFinalGuardInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="NonFinalFieldInImmutable" displayName="Non-final field in @Immutable class"
+                     groupKey="group.names.concurrency.annotation.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.concurrencyAnnotations.NonFinalFieldInImmutableInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="InstanceGuardedByStatic" displayName="Instance member guarded by static field"
+                     groupKey="group.names.concurrency.annotation.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.concurrencyAnnotations.InstanceGuardedByStaticInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="FieldAccessNotGuarded" displayName="Unguarded field access" groupKey="group.names.concurrency.annotation.issues" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.concurrencyAnnotations.FieldAccessNotGuardedInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="DuplicateThrows" bundle="messages.InspectionsBundle" key="inspection.duplicate.throws.display.name"
+                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING" cleanupTool="true"
+                     implementationClass="com.intellij.codeInspection.duplicateThrows.DuplicateThrowsInspection" />
+    <globalInspection shortName="RedundantSuppression" bundle="messages.InspectionsBundle" key="inspection.redundant.suppression.name"
+                      groupKey="inspection.general.tools.group.name" enabledByDefault="false" level="WARNING"
+                      implementationClass="com.intellij.codeInspection.RedundantSuppressInspection"/>
+    <globalInspection groupPath="Java" shortName="UnnecessaryModuleDependencyInspection" bundle="messages.InspectionsBundle"
+                      key="unnecessary.module.dependency.display.name" groupKey="group.names.declaration.redundancy" enabledByDefault="true"
+                      level="WARNING"
+                      implementationClass="com.intellij.codeInspection.unnecessaryModuleDependency.UnnecessaryModuleDependencyInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="TestOnlyProblems" bundle="messages.InspectionsBundle" key="inspection.test.only.problems.display.name"
+                     groupKey="inspection.general.tools.group.name" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.testOnly.TestOnlyInspection" />
+    <localInspection language="XML" shortName="DeprecatedClassUsageInspection" displayName="Deprecated API usage in XML" groupKey="group.names.xml" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING" implementationClass="com.intellij.codeInspection.xml.DeprecatedClassUsageInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="DeprecatedIsStillUsed" displayName="Deprecated member is still used"
+                     groupKey="group.names.code.maturity.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.DeprecatedIsStillUsedInspection" />
+    <localInspection groupPath="Java" language="JAVA" suppressId="removal" shortName="MarkedForRemoval"
+                     key="inspection.marked.for.removal.display.name" bundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.maturity.issues" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="ERROR" implementationClass="com.intellij.codeInspection.deprecation.MarkedForRemovalInspection"/>
+    <localInspection groupPath="Java" language="JAVA" suppressId="deprecation" shortName="Deprecation"
+                     key="inspection.deprecated.display.name" bundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.maturity.issues" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.deprecation.DeprecationInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="LocalCanBeFinal" bundle="messages.InspectionsBundle" key="inspection.local.can.be.final.display.name"
+                     groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SuspiciousArrayMethodCall" bundle="messages.InspectionsBundle"
+                     key="inspection.suspicious.array.method.call.display.name" groupKey="group.names.probable.bugs" enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="com.intellij.codeInspection.SuspiciousArrayMethodCallInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SuspiciousMethodCalls" bundle="messages.InspectionsBundle"
+                     key="inspection.suspicious.collections.method.calls.display.name" groupKey="group.names.probable.bugs" enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantTypeArguments" bundle="messages.InspectionsBundle" key="inspection.redundant.type.display.name"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING" cleanupTool="true"
+                     implementationClass="com.intellij.codeInspection.miscGenerics.RedundantTypeArgsInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantCast" displayName="Redundant type cast" groupKey="group.names.verbose.or.redundant.code.constructs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING" cleanupTool="true"
+                     implementationClass="com.intellij.codeInspection.redundantCast.RedundantCastInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="NumericOverflow" displayName="Numeric overflow" groupKey="group.names.numeric.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true"
+                     level="WARNING" implementationClass="com.intellij.codeInspection.NumericOverflowInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="Contract" bundle="messages.InspectionsBundle" key="inspection.contract.display.name"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.dataFlow.ContractInspection"/>
+    <globalInspection groupPath="Java" language="JAVA" shortName="Java9RedundantRequiresStatement"
+                      groupBundle="messages.InspectionsBundle" groupKey="group.names.declaration.redundancy"
+                      enabledByDefault="true" level="WARNING" displayName="Redundant 'requires' statement in module-info"
+                      implementationClass="com.intellij.codeInspection.java19modules.Java9RedundantRequiresStatementInspection"/>
+    <globalInspection groupPath="Java" language="JAVA" shortName="UNUSED_IMPORT" bundle="messages.InspectionsBundle" key="unused.import.display.name"
+                      groupBundle="messages.InspectionsBundle" groupKey="group.names.imports" enabledByDefault="true" level="WARNING"
+                      implementationClass="com.intellij.codeInspection.unusedImport.UnusedImportInspection"/>
+    <globalInspection groupPath="Java" language="JAVA" shortName="RedundantThrows" cleanupTool="true" displayName="Redundant throws clause" groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
+                      enabledByDefault="true" level="WARNING"
+                      implementationClass="com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationInspection"/>
+    <globalInspection groupPath="Java" language="JAVA" shortName="SameReturnValue" bundle="messages.InspectionsBundle" key="inspection.same.return.value.display.name"
+                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
+                      implementationClass="com.intellij.codeInspection.sameReturnValue.SameReturnValueInspection"/>
+    <globalInspection groupPath="Java" language="JAVA" shortName="CanBeFinal" displayName="Declaration can have final modifier" groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
+                      enabledByDefault="true" level="WARNING"
+                      implementationClass="com.intellij.codeInspection.canBeFinal.CanBeFinalInspection"/>
+    <globalInspection groupPath="Java" language="JAVA" shortName="WeakerAccess" displayName="Declaration access can be weaker" groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
+                      enabledByDefault="true" level="WARNING"
+                      implementationClass="com.intellij.codeInspection.visibility.VisibilityInspection"/>
+    <globalInspection groupPath="Java" shortName="InconsistentLanguageLevel" displayName="Inconsistent language level settings"
+                      groupKey="group.names.modularization.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="false" level="WARNING"
+                      implementationClass="com.intellij.codeInspection.inconsistentLanguageLevel.InconsistentLanguageLevelInspection"/>
+    <globalInspection groupPath="Java" shortName="UnusedLibrary" bundle="messages.InspectionsBundle" key="unused.library.display.name"
+                      groupKey="group.names.declaration.redundancy" enabledByDefault="false" level="WARNING"
+                      implementationClass="com.intellij.codeInspection.unusedLibraries.UnusedLibrariesInspection"/>
+    <inspectionElementsMerger implementation="com.intellij.codeInspection.unneededThrows.RedundantThrowsInspectionMerger"/>
+    <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.actions.SuppressWarningsFoldingBuilder" />
+    <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl"/>
+    <lang.psiTypeAnnotationModifier implementation="com.intellij.codeInsight.NullityAnnotationModifier"/>
+    <projectService serviceInterface="com.intellij.codeInsight.guess.GuessManager"
+                    serviceImplementation="com.intellij.codeInsight.guess.impl.GuessManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.intention.QuickFixFactory"
+                        serviceImplementation="com.intellij.codeInsight.intention.impl.config.QuickFixFactoryImpl"/>
+    <applicationService serviceInterface="com.intellij.codeInspection.reference.RefJavaUtil"
+                        serviceImplementation="com.intellij.codeInspection.reference.RefJavaUtilImpl"/>
+    <syntaxHighlighter id="java.class" key="CLASS" factoryClass="com.intellij.lang.java.JavaSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory language="JAVA" implementationClass="com.intellij.lang.java.JavaSyntaxHighlighterFactory"/>
+  </extensions>
+</idea-plugin>

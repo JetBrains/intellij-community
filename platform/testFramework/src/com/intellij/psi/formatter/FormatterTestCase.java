@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.formatter;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -82,7 +83,6 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     assertFalse(CodeStyleSettingsManager.getInstance(getProject()).USE_PER_PROJECT_SETTINGS);
-    assertNull(CodeStyleSettingsManager.getInstance(getProject()).PER_PROJECT_SETTINGS);
   }
 
   protected void doTest(String resultNumber) throws Exception {
@@ -280,26 +280,6 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
 
   protected abstract String getFileExtension();
 
-  protected void defaultSettings() {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-
-    settings.ALIGN_MULTILINE_PARAMETERS = true;
-    settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false;
-    settings.ALIGN_MULTILINE_FOR = true;
-
-    settings.ALIGN_MULTILINE_BINARY_OPERATION = false;
-    settings.ALIGN_MULTILINE_TERNARY_OPERATION = false;
-    settings.ALIGN_MULTILINE_THROWS_LIST = false;
-    settings.ALIGN_MULTILINE_EXTENDS_LIST = false;
-    settings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION = false;
-    settings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = false;
-
-    getSettings().SPACE_BEFORE_ANOTATION_PARAMETER_LIST = false;
-    getSettings().SPACE_AROUND_ASSIGNMENT_OPERATORS = true;
-    getSettings().SPACE_WITHIN_ANNOTATION_PARENTHESES = false;
-    getSettings().SPACE_AROUND_ASSIGNMENT_OPERATORS = true;
-  }
-
   /**
    * Returns common (spacing, blank lines etc.) settings for the given language.
    * @param language The language to search settings for.
@@ -307,11 +287,11 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
    *         settings of its own.
    */
   protected static CommonCodeStyleSettings getSettings(Language language) {
-    return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(language);
+    return CodeStyle.getSettings(getProject()).getCommonSettings(language);
   }
 
   protected CodeStyleSettings getSettings() {
-    return CodeStyleSettingsManager.getSettings(getProject());
+    return CodeStyle.getSettings(getProject());
   }
 
   protected void doSanityTestForDirectory(File directory, final boolean formatWithPsi) throws IOException, IncorrectOperationException {
