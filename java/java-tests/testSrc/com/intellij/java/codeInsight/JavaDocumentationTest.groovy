@@ -87,10 +87,7 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
     def doc = new JavaDocumentationProvider().generateDoc(exprList, null)
 
     def expected =
-      "<html><head>" + STYLE_BLOCK + "</head><body>" +
-      "<small><b><a href=\"psi_element://Foo\"><code>Foo</code></a></b></small>" +
-      "<PRE>void&nbsp;<b>doFoo</b>()</PRE>" +
-      "</body></html>"
+      "<div class='definition'><pre><a href=\"psi_element://Foo\"><code>Foo</code></a><br>void&nbsp;<b>doFoo</b>()</pre></div><table class='sections'><p></table>"
 
     assert doc == expected
   }
@@ -160,12 +157,9 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
     def doc = new JavaDocumentationProvider().generateDoc(method, null)
 
     def expected =
-      "<html><head>" + STYLE_BLOCK + "</head><body>" +
-      "<small><b><a href=\"psi_element://C\"><code>C</code></a></b></small>" +
-      "<PRE>public&nbsp;void&nbsp;<b>m</b>()</PRE>\n     " +
-      "For example, <a href=\"psi_element://java.lang.String#String(byte[], int, int, java.lang.String)\">" +
-      "<code>String.String(byte[], int, int, String)</code>" +
-      "</a>.</body></html>"
+      "<div class='definition'><pre><a href=\"psi_element://C\"><code>C</code></a><br>public&nbsp;void&nbsp;<b>m</b>()</pre></div><div class='content'>\n" +
+      "     For example, <a href=\"psi_element://java.lang.String#String(byte[], int, int, java.lang.String)\"><code>String.String(byte[], int, int, String)</code></a>.\n" +
+      "   <p></div><table class='sections'><p></table>"
 
     assert doc == expected
   }
@@ -181,11 +175,7 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
     def doc = new JavaDocumentationProvider().generateDoc(method, null)
 
     def expected =
-      "<html><head>" + STYLE_BLOCK + "</head><body>" +
-      "<small><b><a href=\"psi_element://C\"><code>C</code></a></b></small>" +
-      "<PRE>public&nbsp;void&nbsp;<b>m</b>()</PRE>" +
-      " Visit the \"<code>/login</code>\" URL." +
-      "</body></html>"
+      "<div class='definition'><pre><a href=\"psi_element://C\"><code>C</code></a><br>public&nbsp;void&nbsp;<b>m</b>()</pre></div><div class='content'> Visit the \"<code>/login</code>\" URL. <p></div><table class='sections'><p></table>"
 
     assert doc == expected
   }
@@ -213,14 +203,9 @@ class Bar {
     def method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod.class)
     def doc = new JavaDocumentationProvider().generateDoc(method, null)
 
-    String expected = "<html><head>$STYLE_BLOCK</head><body>" +
-                      "<small><b><a href=\"psi_element://Bar\"><code>Bar</code></a></b></small>" +
-                      "<PRE>void&nbsp;<b>foo</b>()</PRE>" +
-                      "<DD><DL><DT>" +
-                      "<b>Description copied from class:</b>&nbsp;<a href=\"psi_element://Foo\"><code>Foo</code></a><br>" +
-                      "\n    Some doc\n  " +
-                      "</DD></DL></DD>" +
-                      "</body></html>"
+    String expected = "<div class='definition'><pre><a href=\"psi_element://Bar\"><code>Bar</code></a><br>void&nbsp;<b>foo</b>()</pre></div><table class='sections'><p><tr><td valign='top' class='section'><p>Description copied from class:</td><td><p><a href=\"psi_element://Foo\"><code>Foo</code></a><br>\n" +
+                      "    Some doc\n" +
+                      "  </td></table>"
 
     assert doc == expected
   }

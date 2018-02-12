@@ -44,7 +44,7 @@ public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDes
     PsiModifierListOwner owner = (PsiModifierListOwner)nameIdentifier.getParent();
 
     return XmlStringUtil.wrapInHtml(NonCodeAnnotationGenerator.getNonCodeHeader(NonCodeAnnotationGenerator.getSignatureNonCodeAnnotations(owner).values()) +
-                                    ". Full signature:<p>\n" + JavaDocInfoGenerator.generateSignature(owner));
+                                    " available. Full signature:<p>\n" + JavaDocInfoGenerator.generateSignature(owner));
   };
 
   @Nullable
