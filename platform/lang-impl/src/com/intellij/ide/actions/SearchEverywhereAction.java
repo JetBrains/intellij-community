@@ -2223,8 +2223,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           myPopup = null;
           myHistoryIndex = 0;
           myPopupActualWidth = 0;
-          myCurrentWorker = ActionCallback.DONE;
           showAll.set(false);
+          myCurrentWorker = myCalcThread.cancel();
           myCalcThread = null;
           myEditor = null;
           myFileEditor = null;
