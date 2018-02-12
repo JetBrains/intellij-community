@@ -74,6 +74,8 @@ public class PostponableLogRefresher implements VcsLogRefresher {
   }
 
   public void filtererActivated(@NotNull VisiblePackRefresher refresher, boolean firstTime) {
+    myLogData.initialize();
+    
     if (!myRootsToRefresh.isEmpty()) {
       refreshPostponedRoots();
     }

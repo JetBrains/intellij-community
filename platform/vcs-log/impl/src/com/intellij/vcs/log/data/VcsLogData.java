@@ -92,7 +92,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   @NotNull private final VcsLogIndex myIndex;
 
   @NotNull private final Object myLock = new Object();
-  private boolean myInitialized = false;
+  @NotNull private State myState = State.CREATED;
   @Nullable private SingleTaskController.SingleTask myInitialization = null;
 
   public VcsLogData(@NotNull Project project,
@@ -164,8 +164,8 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
   public void initialize() {
     synchronized (myLock) {
-      if (!myInitialized) {
-        myInitialized = true;
+      if (myState.equals(State.CREATED)) {
+        myState = State.INITIALIZED;
         StopWatch stopWatch = StopWatch.start("initialize");
         Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Loading History...", false) {
           @Override
@@ -179,9 +179,38 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
           }
 
           @Override
-          public void onFinished() {
+          public void onCancel() {
             synchronized (myLock) {
-              myInitialization = null;
+              // Here be dragons:
+              // VcsLogProgressManager can cancel us when it's getting disposed,
+              // and we can also get cancelled by invalid git executable.
+              // Since we do not know what's up, we just restore the state
+              // and it is entirely possible to start another initialization after that.
+              // Eventually, everything gets cancelled for good in VcsLogData.dispose.
+              // But still.
+              if (myState.equals(State.INITIALIZED)) {
+                myState = State.CREATED;
+                myInitialization = null;
+              }
+            }
+          }
+
+          @Override
+          public void onThrowable(@NotNull Throwable error) {
+            synchronized (myLock) {
+              if (myState.equals(State.INITIALIZED)) {
+                myState = State.CREATED;
+                myInitialization = null;
+              }
+            }
+          }
+
+          @Override
+          public void onSuccess() {
+            synchronized (myLock) {
+              if (myState.equals(State.INITIALIZED)) {
+                myInitialization = null;
+              }
             }
           }
         };
@@ -291,6 +320,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
    * @param roots roots to refresh
    */
   public void refreshSoftly(@NotNull Set<VirtualFile> roots) {
+    initialize();
     myRefresher.refresh(roots);
   }
 
@@ -299,6 +329,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
    * This refresh can be optimized, i. e. it can query VCS just for the part of the log.
    */
   public void refresh(@NotNull Collection<VirtualFile> roots) {
+    initialize();
     myRefresher.refresh(roots);
   }
 
@@ -318,7 +349,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     synchronized (myLock) {
       initialization = myInitialization;
       myInitialization = null;
-      myInitialized = true;
+      myState = State.DISPOSED;
     }
 
     if (initialization != null) {
@@ -356,5 +387,9 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   @NotNull
   public VcsLogIndex getIndex() {
     return myIndex;
+  }
+
+  private enum State {
+    CREATED, INITIALIZED, DISPOSED
   }
 }
