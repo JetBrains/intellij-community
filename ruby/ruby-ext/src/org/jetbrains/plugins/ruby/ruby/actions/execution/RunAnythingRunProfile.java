@@ -1,27 +1,18 @@
 package org.jetbrains.plugins.ruby.ruby.actions.execution;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.CommandLineState;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.process.KillableColoredProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.ui.ConsoleView;
-import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
-import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.net.NetUtils;
 import com.intellij.xdebugger.XDebugProcess;
@@ -30,10 +21,8 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ruby.RBundle;
 import org.jetbrains.plugins.ruby.ruby.RModuleUtil;
 import org.jetbrains.plugins.ruby.ruby.RubyUtil;
-import org.jetbrains.plugins.ruby.ruby.actions.handlers.RunAnythingCommandHandler;
 import org.jetbrains.plugins.ruby.ruby.debugger.*;
 import org.jetbrains.plugins.ruby.ruby.debugger.impl.LocalPositionConverter;
 import org.jetbrains.plugins.ruby.ruby.debugger.impl.RubyDebugProcess;
@@ -50,27 +39,16 @@ import org.rubyforge.debugcommons.RubyDebuggerProxy;
 
 import javax.swing.*;
 import java.util.Map;
-import java.util.Objects;
 
 import static org.jetbrains.plugins.ruby.ruby.actions.RunAnythingCommandItem.UNDEFINED_COMMAND_ICON;
-import static org.jetbrains.plugins.ruby.ruby.actions.RunAnythingUtil.getOrCreateWrappedCommands;
 
 public class RunAnythingRunProfile implements DebuggableRunProfile {
-  @NotNull private final Project myProject;
   @NotNull private final String myOriginalCommand;
-  @NotNull private final Executor myExecutor;
   @NotNull private final GeneralCommandLine myCommandLine;
 
-  @Nullable
-  private ProcessHandler myProcessHandler;
-
-  public RunAnythingRunProfile(@NotNull Project project,
-                               @NotNull Executor executor,
-                               @NotNull GeneralCommandLine commandLine,
+  public RunAnythingRunProfile(@NotNull GeneralCommandLine commandLine,
                                @NotNull String originalCommand) {
-    myExecutor = executor;
     myCommandLine = commandLine;
-    myProject = project;
     myOriginalCommand = originalCommand;
   }
 
@@ -107,7 +85,11 @@ public class RunAnythingRunProfile implements DebuggableRunProfile {
     boolean supportsNonSuspendedFramesReading = RubyDebugRunner.supportsNonSuspendedFramesReading(debugGemHelper, sdk);
     boolean supportsCatchpointRemoval = debugGemHelper.supportsCatchpointRemoval();
     final String localHostString = NetUtils.getLocalHostString();
-    final ProcessHandler serverProcessHandler = getProcessHandler();
+    ExecutionResult executionResult = runProfileState.execute(environment.getExecutor(), environment.getRunner());
+    if (executionResult == null) {
+      throw new ExecutionException("Unable to start process");
+    }
+    final ProcessHandler serverProcessHandler = executionResult.getProcessHandler();
 
     final RubyDebuggerProxy rubyDebuggerProxy =
       new RubyDebuggerProxy(timeout, supportsNonSuspendedFramesReading, false, supportsCatchpointRemoval);
@@ -118,8 +100,8 @@ public class RunAnythingRunProfile implements DebuggableRunProfile {
     rubyDebuggerProxy.setDebugTarget(
       RubyDebugRunner.getDebugTarget(null, serverProcessHandler, debuggerPort, rubyDebuggerProxy, localHostString));
 
-    boolean myEnableFileFiltering = debugGemHelper.supportFileFiltering()
-                                    && RubyDebuggerSettings.getInstance().getState().isStepIntoProjectOnly();
+    boolean enableFileFiltering = debugGemHelper.supportFileFiltering()
+                                  && RubyDebuggerSettings.getInstance().getState().isStepIntoProjectOnly();
     final SourcePositionConverter converter = new LocalPositionConverter(project, !RubySdkUtil.isRuby18(sdk));
 
     final XDebugProcessStarter processStarter = new XDebugProcessStarter() {
@@ -128,14 +110,12 @@ public class RunAnythingRunProfile implements DebuggableRunProfile {
         return new RubyDebugProcess(session, runProfileState, serverProcessHandler, rubyDebuggerProxy, timeout, converter,
                                     environment.getExecutor(), acceptor, debugGemHelper.pauseActionSupported(),
                                     false,
-                                    myEnableFileFiltering, debugGemHelper.getSourceRoots(project),
+                                    enableFileFiltering, debugGemHelper.getSourceRoots(project),
                                     debugGemHelper.getExcludedDirs(project)) {
           @NotNull
           @Override
           public ExecutionConsole createConsole() {
-            ConsoleView console = (ConsoleView)super.createConsole();
-            console.attachToProcess(serverProcessHandler);
-            return console;
+            return executionResult.getExecutionConsole();
           }
         };
       }
@@ -147,18 +127,22 @@ public class RunAnythingRunProfile implements DebuggableRunProfile {
   @Nullable
   @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) {
-    return new CommandLineState(environment) {
-      @NotNull
-      @Override
-      protected ProcessHandler startProcess() throws ExecutionException {
-        return getProcessHandler();
-      }
-    };
+    return new RunAnythingRunProfileState(environment);
   }
 
   @Override
   public String getName() {
     return myOriginalCommand;
+  }
+
+  @NotNull
+  public String getOriginalCommand() {
+    return myOriginalCommand;
+  }
+
+  @NotNull
+  public GeneralCommandLine getCommandLine() {
+    return myCommandLine;
   }
 
   @Nullable
@@ -192,79 +176,5 @@ public class RunAnythingRunProfile implements DebuggableRunProfile {
     );
 
     OSUtil.appendToEnvVariable(RubyUtil.RUBYOPT, "-rrubymine_debug_anything.rb", env, " ");
-  }
-
-  @NotNull
-  private ProcessHandler getProcessHandler() throws ExecutionException {
-    if (myProcessHandler != null) {
-      return myProcessHandler;
-    }
-    myProcessHandler = new KillableColoredProcessHandler(myCommandLine) {
-      @Override
-      protected void notifyProcessTerminated(int exitCode) {
-        print(RBundle.message("run.anything.console.process.finished", exitCode), ConsoleViewContentType.SYSTEM_OUTPUT);
-        super.notifyProcessTerminated(exitCode);
-      }
-
-      @Override
-      protected void destroyProcessImpl() {
-        super.destroyProcessImpl();
-        if (!isProcessTerminated()) {
-          print("exit\n", ConsoleViewContentType.USER_INPUT);
-        }
-      }
-
-      @Override
-      public boolean isSilentlyDestroyOnClose() {
-        try {
-          return RunAnythingCommandHandler.isSilentlyDestroyOnClose(myOriginalCommand);
-        }
-        catch (RuntimeException e) {
-          return super.isSilentlyDestroyOnClose();
-        }
-      }
-
-      @Override
-      public final boolean shouldKillProcessSoftly() {
-        try {
-          return RunAnythingCommandHandler.shouldKillProcessSoftly(myOriginalCommand);
-        }
-        catch (RuntimeException e) {
-          return super.shouldKillProcessSoftly();
-        }
-      }
-    };
-
-    myProcessHandler.addProcessListener(new ProcessAdapter() {
-      boolean myIsFirstLineAdded;
-
-      @Override
-      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-        if (!myIsFirstLineAdded) {
-          Objects.requireNonNull(getOrCreateWrappedCommands(myProject))
-                 .add(Pair.create(StringUtil.trim(event.getText()), myOriginalCommand));
-          myIsFirstLineAdded = true;
-        }
-      }
-    });
-    ((KillableColoredProcessHandler)myProcessHandler).setHasPty(true);
-    return myProcessHandler;
-  }
-
-  private void print(@NotNull String message, @NotNull ConsoleViewContentType consoleViewContentType) {
-    ConsoleView console = getConsoleView();
-    if (console != null) console.print(message, consoleViewContentType);
-  }
-
-  @Nullable
-  private ConsoleView getConsoleView() {
-    RunContentDescriptor contentDescriptor =
-      ExecutionManager.getInstance(myProject).getContentManager().findContentDescriptor(myExecutor, myProcessHandler);
-
-    ConsoleView console = null;
-    if (contentDescriptor != null && contentDescriptor.getExecutionConsole() instanceof ConsoleView) {
-      console = (ConsoleView)contentDescriptor.getExecutionConsole();
-    }
-    return console;
   }
 }
