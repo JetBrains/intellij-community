@@ -62,7 +62,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     final String text = schemas.stream().filter(schema -> !StringUtil.isEmptyOrSpaces(schema.getDocumentation(preferShort)))
       .findFirst().map(schema -> schema.getDocumentation(preferShort)).orElse(null);
     // replace already-escaped back slash (\\n) instead of just \n
-    return text == null ? null : StringUtil.replaceUnicodeEscapeSequences(StringUtil.escapeXml(text)).replace("\\n", "<br/>");
+    return text == null ? null : StringUtil.escapeXml(StringUtil.replaceUnicodeEscapeSequences(text)).replace("\\n", "<br/>");
   }
 
   @Nullable
