@@ -99,28 +99,6 @@ internal class CreatePropertyAction(target: PsiClass, request: CreateMethodReque
 
     val (getter, setter) = insertPrototypes()
 
-    val getterBody = requireNotNull(getter.body) { getter.text }
-    val getterFieldRefElement = run {
-      val getterReturnStatement = getterBody.statements.single() as PsiReturnStatement
-      val getterReference = getterReturnStatement.returnValue as PsiReferenceExpression
-      requireNotNull(getterReference.referenceNameElement) { getter.text }
-    }
-    val getterTypeElement = requireNotNull(getter.returnTypeElement) { getter.text }
-
-    val setterBody = requireNotNull(setter.body) { setter.text }
-    val setterAssignment = run {
-      val setterAssignmentStatement = setterBody.statements.singleOrNull() as? PsiExpressionStatement
-      requireNotNull(setterAssignmentStatement?.expression as? PsiAssignmentExpression) { setter.text }
-    }
-    val setterFieldRefElement = run {
-      val setterReference = setterAssignment.lExpression as PsiReferenceExpression
-      requireNotNull(setterReference.referenceNameElement) { setter.text }
-    }
-    val setterTypeElement = requireNotNull(setter.parameterList.parameters.single().typeElement) { setter.text }
-
-    val setterParamNameElement = requireNotNull(setter.parameterList.parameters.single().nameIdentifier) { setter.text }
-    val setterParamRefElement = requireNotNull(setterAssignment.rExpression) { setter.text }
-
     val expectedTypes: List<ExpectedTypeInfo> = when (propertyKind) {
       PropertyKind.GETTER -> extractExpectedTypes(project, request.returnType)
       PropertyKind.BOOLEAN_GETTER -> listOf(PsiType.BOOLEAN.toExpectedType())
@@ -152,50 +130,36 @@ internal class CreatePropertyAction(target: PsiClass, request: CreateMethodReque
      *
      * 3. Setter parameter name template is added in any case.
      */
-    fun TemplateBuilderImpl.setupTemplate(
-      inputTypeElement: PsiTypeElement,
-      inputNameElement: PsiElement,
-      mirrorTypeElement: PsiTypeElement,
-      mirrorNameElement: PsiElement,
-      endElement: PsiElement?
-    ): RangeExpression {
-      val templateTypeElement = createTemplateContext().setupTypeElement(inputTypeElement, expectedTypes)
+    fun TemplateBuilderImpl.setupTemplate(input: AccessorTemplateData, mirror: AccessorTemplateData): RangeExpression {
+      val templateTypeElement = createTemplateContext().setupTypeElement(input.typeElement, expectedTypes)
       val typeExpression = RangeExpression(targetDocument, templateTypeElement.textRange)
-      replaceElement(mirrorTypeElement, typeExpression, false) // copy type text to mirror
+      replaceElement(mirror.typeElement, typeExpression, false) // copy type text to mirror
 
       val fieldExpression = FieldExpression(project, target, suggestedFieldName) { typeExpression.text }
-      replaceElement(inputNameElement, FIELD_VARIABLE, fieldExpression, true)
-      replaceElement(mirrorNameElement, VariableNode(FIELD_VARIABLE, null), false) // copy field name to mirror
+      replaceElement(input.fieldRef, FIELD_VARIABLE, fieldExpression, true)
+      replaceElement(mirror.fieldRef, VariableNode(FIELD_VARIABLE, null), false) // copy field name to mirror
 
-      val setterParameterExpression = ParameterNameExpression(
-        codeStyleManager.suggestVariableName(VariableKind.PARAMETER, propertyName, null, null).names
-      )
-      replaceElement(setterParamNameElement, SETTER_PARAM_NAME, setterParameterExpression, true)
-      replaceElement(setterParamRefElement, VariableNode(SETTER_PARAM_NAME, null), false) // copy setter parameter name to mirror
-
-      endElement?.let(::setEndVariableAfter)
+      input.endElement?.let(::setEndVariableAfter)
       return typeExpression
     }
 
+    fun TemplateBuilderImpl.setupSetterParameter(data: SetterTemplateData) {
+      val suggestedNameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, propertyName, null, null)
+      val setterParameterExpression = ParameterNameExpression(suggestedNameInfo.names)
+      replaceElement(data.parameterName, SETTER_PARAM_NAME, setterParameterExpression, true)
+      replaceElement(data.parameterRef, VariableNode(SETTER_PARAM_NAME, null), false) // copy setter parameter name to mirror
+    }
+
+    val getterData = getter.extractGetterTemplateData()
+    val setterData = setter.extractSetterTemplateData()
     val builder = TemplateBuilderImpl(target)
     val typeExpression = if (propertyKind == SETTER) {
-      builder.setupTemplate(
-        inputTypeElement = setterTypeElement,
-        inputNameElement = setterFieldRefElement,
-        mirrorTypeElement = getterTypeElement,
-        mirrorNameElement = getterFieldRefElement,
-        endElement = setterBody.lBrace
-      )
+      builder.setupTemplate(setterData, getterData)
     }
     else {
-      builder.setupTemplate(
-        inputTypeElement = getterTypeElement,
-        inputNameElement = getterFieldRefElement,
-        mirrorTypeElement = setterTypeElement,
-        mirrorNameElement = setterFieldRefElement,
-        endElement = getterBody.lBrace
-      )
+      builder.setupTemplate(getterData, setterData)
     }
+    builder.setupSetterParameter(setterData)
 
     val template = builder.buildInlineTemplate().apply {
       isToShortenLongNames = true
