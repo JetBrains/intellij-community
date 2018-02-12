@@ -461,6 +461,7 @@ public class EditorFixture {
     Point pointToClick = execute(new GuiQuery<Point>() {
       @Override
       protected Point executeInEDT() {
+        editor.getScrollingModel().scrollTo(editor.offsetToLogicalPosition(offset),ScrollType.CENTER);
         VisualPosition visualPosition = editor.offsetToVisualPosition(offset);
         return editor.visualPositionToXY(visualPosition);
       }
