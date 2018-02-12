@@ -59,6 +59,7 @@ private class PrefixHistoryModel constructor(private val masterModel: MasterMode
   }
 
   private var currentIndex: Int? = null
+  private var currentEntries: List<String>? = null
   private var prevEntries: TIntStack = TIntStack()
   private var historyPrefix: String = ""
 
@@ -91,31 +92,36 @@ private class PrefixHistoryModel constructor(private val masterModel: MasterMode
 
   private fun resetIndex() {
     currentIndex = null
+    currentEntries = null
     prevEntries.clear()
     historyPrefix = ""
   }
 
   override fun getHistoryNext(): Entry? {
-    val offset = currentIndex ?: masterModel.entries.size
+    val entries = currentEntries ?: masterModel.entries
+    val offset = currentIndex ?: entries.size
     if (offset <= 0) {
       return null
     }
     if (currentIndex == null) {
       historyPrefix = getPrefixFn()
     }
-    val res = masterModel.entries.withIndex().findLast { it.index < offset && it.value.startsWith(historyPrefix) } ?: return null
+    val res = entries.withIndex().findLast { it.index < offset && it.value.startsWith(historyPrefix) } ?: return null
 
+    if (currentEntries == null) {
+      currentEntries = entries
+    }
     currentIndex?.let { prevEntries.push(it) }
     currentIndex = res.index
     return createEntry(res.value)
   }
 
   override fun getHistoryPrev(): Entry? {
-    if (currentIndex == null) return null
+    val entries = currentEntries ?: return null
     return if (prevEntries.size() > 0) {
       val index = prevEntries.pop()
       currentIndex = index
-      createEntry(masterModel.entries[index])
+      createEntry(entries[index])
     }
     else {
       resetIndex()
@@ -129,7 +135,7 @@ private class PrefixHistoryModel constructor(private val masterModel: MasterMode
 
   override fun prevOnLastLine(): Boolean = true
 
-  override fun hasHistory(): Boolean = currentIndex != null
+  override fun hasHistory(): Boolean = currentEntries != null
 }
 
 private class MasterModel(private val modTracker: SimpleModificationTracker = SimpleModificationTracker()) : ConsoleHistoryBaseModel, ModificationTracker by modTracker {
