@@ -18,7 +18,7 @@ public interface Async {
    * Indicates that the marked method schedules async computation.
    * Scheduled object is either {@code this}, or the annotated parameter value.
    */
-  @Retention(RetentionPolicy.SOURCE)
+  @Retention(RetentionPolicy.CLASS)
   @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.PARAMETER})
   @interface Schedule {}
 
@@ -27,7 +27,7 @@ public interface Async {
    * Executed object is either {@code this}, or the annotated parameter value.
    * This object needs to match with the one annotated with {@link Schedule}
    */
-  @Retention(RetentionPolicy.SOURCE)
+  @Retention(RetentionPolicy.CLASS)
   @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.PARAMETER})
   @interface Execute {}
 }
