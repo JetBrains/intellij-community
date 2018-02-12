@@ -49,7 +49,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.ui.navigation.Place;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
@@ -634,7 +633,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
     @NotNull
     private String getFullModuleName() {
-      return ObjectUtils.notNull(myContext.myModulesConfigurator.getModuleModel().getNewName(getModule()), getModule().getName());
+      return myContext.myModulesConfigurator.getModuleModel().getActualName(getModule());
     }
 
     private ModuleGrouper getModuleGrouper() {
