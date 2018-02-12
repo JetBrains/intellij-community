@@ -84,7 +84,7 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
           int index1 = projectGoals.indexOf(goal1);
           int index2 = projectGoals.indexOf(goal2);
           if (index1 == index2) return goal1.compareToIgnoreCase(goal2);
-          return (index1 < index2 ? -1 : 1);
+          return index1 < index2 ? -1 : 1;
         });
         projectToActionsMapping.put(mavenProject, actions);
       }
