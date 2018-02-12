@@ -322,14 +322,6 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
       getNode().addLeaf(TokenType.WHITE_SPACE, " ", null);
       getNode().addLeaf(GroovyTokenTypes.mASSIGN, "=", null);
       addAfter(initializer, getLastChild());
-//      CompositeElement node = (CompositeElement)getNode();
-//      final CharTable charTable = SharedImplUtil.findCharTableByTree(node);
-//      ASTNode eq = Factory.createSingleLeafElement(JavaTokenType.EQ, "=", 0, 1, charTable, this.getManager());
-//
-//      this.addInternal(eq, eq, node, Boolean.FALSE);
-//      //eq = node.findChildByRole(ChildRole.INITIALIZER_EQ);
-////      assert eq != null : this;
-//      this.addAfter(initializer, eq.getPsi());
     }
   }
 }

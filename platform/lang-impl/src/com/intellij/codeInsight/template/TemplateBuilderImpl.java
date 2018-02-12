@@ -60,7 +60,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     replaceElement(key, expression);
   }
 
-  private RangeMarker  wrapElement(final PsiElement element) {
+  private RangeMarker wrapElement(final PsiElement element) {
     TextRange range = InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, element.getTextRange());
     return myDocument.createRangeMarker(range);
   }
