@@ -27,19 +27,29 @@ import static junit.framework.TestCase.assertTrue;
  * @author tav
  */
 public abstract class AbstractPainter2DTest {
-  private float originalUserScale;
-  private boolean originalJreHiDPIEnabled;
+  public static class ScaleState {
+    private static float originalUserScale;
+    private static boolean originalJreHiDPIEnabled;
+
+    public static void set() {
+      originalUserScale = scale(1f);
+      originalJreHiDPIEnabled = UIUtil.isJreHiDPIEnabled();
+    }
+
+    public static void restore() {
+      JBUI.setUserScaleFactor(originalUserScale);
+      PaintUtilTest.overrideJreHiDPIEnabled(originalJreHiDPIEnabled);
+    }
+  }
 
   @Before
   public void setState() {
-    originalUserScale = scale(1f);
-    originalJreHiDPIEnabled = UIUtil.isJreHiDPIEnabled();
+    ScaleState.set();
   }
 
   @After
   public void restoreState() {
-    JBUI.setUserScaleFactor(originalUserScale);
-    PaintUtilTest.overrideJreHiDPIEnabled(originalJreHiDPIEnabled);
+    ScaleState.restore();
   }
 
   public void testGoldenImages() {

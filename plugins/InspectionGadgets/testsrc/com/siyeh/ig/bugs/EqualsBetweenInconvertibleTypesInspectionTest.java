@@ -167,6 +167,26 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightInspecti
            "}");
   }
 
+  public void testFBounds() {
+    doTest("class U<T extends U<T>> {\n" +
+           "  void m(U<?> u1, U<?> u2) {\n" +
+           "    if (u1 == u2) {\n" +
+           "      System.out.println();\n" +
+           "    }\n" +
+           "  }\n" +
+           "}");
+  }
+
+  public void testFBoundsWrong() {
+    doTest("class U<T extends U<T, Q>, Q> {\n" +
+           "  void m(U<?, Integer> u1, U<?, String> u2) {\n" +
+           "    if (u1./*'equals()' between objects of inconvertible types 'U<capture of ?, Integer>' and 'U<capture of ?, String>'*/equals/**/(u2)) {\n" +
+           "      System.out.println();\n" +
+           "    }\n" +
+           "  }\n" +
+           "}");
+  }
+
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {

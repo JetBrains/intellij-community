@@ -723,6 +723,12 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       return myModuleToNewName.get(module);
     }
 
+    @NotNull
+    @Override
+    public String getActualName(@NotNull Module module) {
+      return ObjectUtils.notNull(getNewName(module), module.getName());
+    }
+
     @Override
     @NotNull
     public Module newModule(@NotNull String filePath, @NotNull final String moduleTypeId) {

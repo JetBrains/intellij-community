@@ -128,7 +128,7 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
             continue;
           }
           if (getOrderEntryType().isInstance(entry)) {
-            final String moduleName = ObjectUtils.chooseNotNull(modifiableModuleModel.getNewName(entry.getOwnerModule()), entry.getOwnerModule().getName()) ;
+            final String moduleName = modifiableModuleModel.getActualName(entry.getOwnerModule()); ;
             //noinspection unchecked
             if (!byModuleName.get(moduleName).contains(getOrderEntryName(modelsProvider, (I)entry))) {
               //noinspection unchecked

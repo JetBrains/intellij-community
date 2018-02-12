@@ -84,7 +84,8 @@ public class UnnecessarySuperConstructorInspection extends BaseInspection implem
     public void visitMethodCallExpression(
       @NotNull PsiMethodCallExpression call) {
       super.visitMethodCallExpression(call);
-      if (!PsiKeyword.SUPER.equals(call.getMethodExpression().getReferenceName())) {
+      PsiReferenceExpression methodExpression = call.getMethodExpression();
+      if (methodExpression.isQualified() || !PsiKeyword.SUPER.equals(methodExpression.getReferenceName())) {
         return;
       }
       PsiExpression[] args = call.getArgumentList().getExpressions();

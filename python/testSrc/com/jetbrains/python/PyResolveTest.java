@@ -1264,4 +1264,20 @@ public class PyResolveTest extends PyResolveTestCase {
     assertProjectFilesNotParsed(file);
     assertSdkRootsNotParsed(file);
   }
+
+  // PY-28228
+  public void testReturnAnnotationForwardReference() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> assertResolvesTo(PyClass.class, "A")
+    );
+  }
+
+  // PY-28228
+  public void testParameterAnnotationForwardReference() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> assertResolvesTo(PyClass.class, "A")
+    );
+  }
 }

@@ -434,7 +434,6 @@ class PartialLocalLineStatusTracker(project: Project,
         group.add(Separator("Changelists"))
         val comparator = compareBy<LocalChangeList> { if (it.isDefault) 0 else 1 }.thenBy { it.name }
         for (changeList in changeLists.sortedWith(comparator)) {
-          if (changeList == rangeList) continue
           group.add(MoveToChangeListAction(editor, range, mousePosition, changeList))
         }
         group.add(Separator.getInstance())

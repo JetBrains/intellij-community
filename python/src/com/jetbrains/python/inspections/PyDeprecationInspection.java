@@ -22,14 +22,11 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
 
 /**
  * @author yole
@@ -87,23 +84,34 @@ public class PyDeprecationInspection extends PyInspection {
 
       final PyDecoratorList decoratorList = node.getDecoratorList();
       if (!LanguageLevel.forElement(node).isPython2() && decoratorList != null) {
-        Arrays
-          .stream(decoratorList.getDecorators())
-          .filter(
-            decorator -> PyKnownDecoratorUtil.asKnownDecorators(decorator, myTypeEvalContext).contains(KnownDecorator.ABC_ABSTRACTPROPERTY)
-          )
-          .forEach(
-            decorator -> {
-              final QualifiedName abcAbsPropertyQName = KnownDecorator.ABC_ABSTRACTPROPERTY.getQualifiedName();
-              final QualifiedName propertyQName = KnownDecorator.PROPERTY.getQualifiedName();
-              final QualifiedName abcAbsMethodQName = KnownDecorator.ABC_ABSTRACTMETHOD.getQualifiedName();
+        for (PyDecorator decorator : decoratorList.getDecorators()) {
+          for (KnownDecorator knownDecorator : PyKnownDecoratorUtil.asKnownDecorators(decorator, myTypeEvalContext)) {
+            final KnownDecorator deprecated;
+            final KnownDecorator builtin;
 
-              final String message = "'" + abcAbsPropertyQName + "' is deprecated since Python 3.3. " +
-                                     "Use '" + propertyQName + "' with '" + abcAbsMethodQName + "' instead.";
-
-              registerProblem(decorator, message, ProblemHighlightType.LIKE_DEPRECATED);
+            if (knownDecorator == KnownDecorator.ABC_ABSTRACTPROPERTY) {
+              deprecated = KnownDecorator.ABC_ABSTRACTPROPERTY;
+              builtin = KnownDecorator.PROPERTY;
             }
-          );
+            else if (knownDecorator == KnownDecorator.ABC_ABSTRACTCLASSMETHOD) {
+              deprecated = KnownDecorator.ABC_ABSTRACTCLASSMETHOD;
+              builtin = KnownDecorator.CLASSMETHOD;
+            }
+            else if (knownDecorator == KnownDecorator.ABC_ABSTRACTSTATICMETHOD) {
+              deprecated = KnownDecorator.ABC_ABSTRACTSTATICMETHOD;
+              builtin = KnownDecorator.STATICMETHOD;
+            }
+            else {
+              continue;
+            }
+
+            final KnownDecorator abcAbsMethod = KnownDecorator.ABC_ABSTRACTMETHOD;
+            final String message = "'" + deprecated.getQualifiedName() + "' is deprecated since Python 3.3. " +
+                                   "Use '" + builtin.getQualifiedName() + "' with '" + abcAbsMethod.getQualifiedName() + "' instead.";
+
+            registerProblem(decorator, message, ProblemHighlightType.LIKE_DEPRECATED);
+          }
+        }
       }
     }
   }

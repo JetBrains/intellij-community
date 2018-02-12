@@ -16,10 +16,13 @@
 package com.jetbrains.python.psi.resolve;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.extenstions.PsiElementExtKt;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
@@ -30,6 +33,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -220,5 +224,24 @@ public class PyResolveUtil {
     }
 
     return null;
+  }
+
+  /**
+   * Check whether forward references are allowed for the given element.
+   */
+  public static boolean allowForwardReferences(@NotNull PyQualifiedExpression element) {
+    // Allow forward references in Pyi annotations
+    if (PyiUtil.isInsideStubAnnotation(element)) {
+      return true;
+    }
+    // Forward references are allowed in annotations according to PEP 563
+    PsiFile file = element.getContainingFile();
+    if (file instanceof PyFile) {
+      final PyFile pyFile = (PyFile)file;
+      return pyFile.getLanguageLevel().isAtLeast(LanguageLevel.PYTHON37) &&
+             pyFile.hasImportFromFuture(FutureFeature.ANNOTATIONS) &&
+             PsiTreeUtil.getParentOfType(element, PyAnnotation.class) != null;
+    }
+    return false;
   }
 }

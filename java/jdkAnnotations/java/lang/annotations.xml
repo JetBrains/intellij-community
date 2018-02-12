@@ -491,9 +491,6 @@
   <item name="java.lang.String java.lang.String copyValueOf(char[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
-  <item name='java.lang.String java.lang.String format(java.lang.String, java.lang.Object...)'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
   <item name="java.lang.String java.lang.String format(java.lang.String, java.lang.Object...) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>

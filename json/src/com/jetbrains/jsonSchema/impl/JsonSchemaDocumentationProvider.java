@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.lang.documentation.DocumentationProvider;
@@ -55,13 +56,13 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     final PsiElement checkable = walker.goUpToCheckable(element);
     if (checkable == null) return null;
     final List<JsonSchemaVariantsTreeBuilder.Step> position = walker.findPosition(checkable, true, true);
-
+    if (position == null) return null;
     final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(rootSchema, true, position).resolve();
 
     final String text = schemas.stream().filter(schema -> !StringUtil.isEmptyOrSpaces(schema.getDocumentation(preferShort)))
       .findFirst().map(schema -> schema.getDocumentation(preferShort)).orElse(null);
     // replace already-escaped back slash (\\n) instead of just \n
-    return text == null ? null : StringUtil.escapeXml(text).replace("\\n", "<br/>");
+    return text == null ? null : StringUtil.escapeXml(StringUtil.replaceUnicodeEscapeSequences(text)).replace("\\n", "<br/>");
   }
 
   @Nullable

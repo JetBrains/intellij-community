@@ -16,7 +16,6 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
@@ -86,9 +85,7 @@ public class StructureConfigurableContext implements Disposable, LibraryEditorLi
   }
 
   public String getRealName(final Module module) {
-    final ModifiableModuleModel moduleModel = myModulesConfigurator.getModuleModel();
-    String newName = moduleModel.getNewName(module);
-    return newName != null ? newName : module.getName();
+    return myModulesConfigurator.getModuleModel().getActualName(module);
   }
 
   public void resetLibraries() {

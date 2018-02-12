@@ -11,7 +11,7 @@ class Test extends Base {
   }
 
   protected void bar() {
-    string = <warning descr="Assigning 'null' argument to non-annotated field">null</warning>;
+    string = <warning descr="Assigning 'null' value to non-annotated field">null</warning>;
     super.bar();
 
     if (string != null)

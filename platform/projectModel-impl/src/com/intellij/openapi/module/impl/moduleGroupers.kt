@@ -20,7 +20,7 @@ internal fun createGrouper(project: Project, moduleModel: ModifiableModuleModel?
 private abstract class ModuleGrouperBase(protected val project: Project, protected val model: ModifiableModuleModel?) : ModuleGrouper() {
   override fun getAllModules(): Array<Module> = model?.modules ?: ModuleManager.getInstance(project).modules
 
-  protected fun getModuleName(module: Module) = model?.getNewName(module) ?: module.name
+  protected fun getModuleName(module: Module) = model?.getActualName(module) ?: module.name
 
   override fun getShortenedName(module: Module) = getShortenedNameByFullModuleName(getModuleName(module))
 }

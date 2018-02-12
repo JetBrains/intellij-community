@@ -61,6 +61,8 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public boolean SIGN_OFF_COMMIT = false;
     public boolean SET_USER_NAME_GLOBALLY = true;
     public boolean SWAP_SIDES_IN_COMPARE_BRANCHES = false;
+    public boolean UPDATE_BRANCHES_INFO = false;
+    public int BRANCH_INFO_UPDATE_TIME = 10;
 
     @Property(surroundWithTag = false, flat = true)
     public DvcsBranchSettings FAVORITE_BRANCH_SETTINGS = new DvcsBranchSettings();
@@ -238,6 +240,22 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   public void setSignOffCommit(boolean state) {
     myState.SIGN_OFF_COMMIT = state;
+  }
+
+  public boolean shouldUpdateBranchInfo() {
+    return false;
+  }
+
+  public void setUpdateBranchInfo(boolean state) {
+    myState.UPDATE_BRANCHES_INFO = state;
+  }
+
+  public int getBranchInfoUpdateTime() {
+    return myState.BRANCH_INFO_UPDATE_TIME;
+  }
+
+  public void setBranchInfoUpdateTime(int time) {
+    myState.BRANCH_INFO_UPDATE_TIME = time;
   }
 
   /**

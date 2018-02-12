@@ -666,7 +666,7 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  private JPanel createButtonsPanel(@NotNull List<JButton> buttons) {
+  protected JPanel createButtonsPanel(@NotNull List<JButton> buttons) {
     int hgap = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? 8 : 0 : 5;
     JPanel buttonsPanel = new NonOpaquePanel(new DialogWrapperButtonLayout(buttons.size(), hgap));
     for (final JButton button : buttons) {

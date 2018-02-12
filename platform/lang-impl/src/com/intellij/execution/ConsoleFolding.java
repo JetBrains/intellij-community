@@ -23,7 +23,7 @@ public abstract class ConsoleFolding {
   }
 
   /**
-   * Deprecated since 2018.1. Use {@link ConsoleFolding#shouldFoldLine(Project, String)} instead.
+   * Deprecated since 2018.1. Use {@link #shouldFoldLine(Project, String)} instead.
    *
    * @param line to check if should be folded
    * @return true is line should be folded, false if not
@@ -32,7 +32,7 @@ public abstract class ConsoleFolding {
   public boolean shouldFoldLine(@NotNull String line) { return false; }
 
   /**
-   * Deprecated since 2018.1. Use {@link ConsoleFolding#getPlaceholderText(Project, List<String>)} instead.
+   * Deprecated since 2018.1. Use {@link #getPlaceholderText(Project, List)} instead.
    *
    * @param lines to fold
    * @return placeholder for lines

@@ -75,7 +75,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
 
 public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.impl.ApplicationImpl");
@@ -345,16 +344,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         return action.toString();
       }
     });
-  }
-
-  /**
-   * Can be called from inside {@link #executeSuspendingWriteAction}.
-   * The returned access token allows to start read action on another thread.
-   */
-  @ApiStatus.Experimental
-  public Supplier<AccessToken> transferReadPrivilege() {
-    ReadMostlyRWLock.SuspensionId suspensionId = myLock.currentReadPrivilege();
-    return () -> myLock.applyReadPrivilege(suspensionId);
   }
 
   @Override

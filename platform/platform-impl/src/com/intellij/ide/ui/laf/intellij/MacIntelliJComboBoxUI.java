@@ -134,7 +134,7 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
         Icon icon = IconCache.getIcon("comboRight", comboBox.isEditable(), false, false, comboBox.isEnabled());
         if (getWidth() > icon.getIconWidth() || getHeight() > icon.getIconHeight()) {
           Image image = IconUtil.toImage(icon);
-          UIUtil.drawImage(g, image, new Rectangle(0, 0, getWidth(), getHeight()), null, null);
+          UIUtil.drawImage(g, image, new Rectangle(0, 0, getWidth(), getHeight()), null);
         } else {
           icon.paintIcon(this, g, 0, 0);
         }

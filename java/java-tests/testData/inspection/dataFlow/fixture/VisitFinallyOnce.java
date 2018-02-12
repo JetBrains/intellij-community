@@ -10,7 +10,7 @@ class TestIDEAWarn {
           _connection.commit();
         } finally {
           _connection.close();
-          _connection = <warning descr="Assigning 'null' argument to non-annotated field">null</warning>;
+          _connection = <warning descr="Assigning 'null' value to non-annotated field">null</warning>;
         }
       }
     } catch (IOException e) {
@@ -25,7 +25,7 @@ class TestIDEAWarn {
         _connection.commit();
       } finally {
         _connection.close();
-        _connection = <warning descr="Assigning 'null' argument to non-annotated field">null</warning>;
+        _connection = <warning descr="Assigning 'null' value to non-annotated field">null</warning>;
       }
     } catch (IOException e) {
       throw new RuntimeException(e);

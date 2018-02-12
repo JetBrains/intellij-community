@@ -6,8 +6,8 @@ import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.util.containers.isNullOrEmpty
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.typing.InspectingProtocolSubclassCallback
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.inspectProtocolSubclass
 import com.jetbrains.python.codeInsight.typing.isProtocol
@@ -33,13 +33,11 @@ class PyProtocolInspection : PyInspection() {
     override fun visitPyClass(node: PyClass?) {
       super.visitPyClass(node)
 
-      val type = node?.let { myTypeEvalContext.getType(it) }
-      if (type is PyClassType) {
-        val superClassTypes = type.getSuperClassTypes(myTypeEvalContext)
+      val type = node?.let { myTypeEvalContext.getType(it) } as? PyClassType ?: return
+      val superClassTypes = type.getSuperClassTypes(myTypeEvalContext)
 
-        checkCompatibility(type, superClassTypes)
-        checkProtocolBases(type, superClassTypes)
-      }
+      checkCompatibility(type, superClassTypes)
+      checkProtocolBases(type, superClassTypes)
     }
 
     override fun visitPyCallExpression(node: PyCallExpression?) {
@@ -47,33 +45,8 @@ class PyProtocolInspection : PyInspection() {
 
       if (node == null) return
 
-      if (node.isCalleeText(PyNames.ISINSTANCE, PyNames.ISSUBCLASS)) {
-        val base = node.arguments.getOrNull(1)
-        if (base != null) {
-          val type = myTypeEvalContext.getType(base)
-          if (type is PyClassType &&
-              isProtocol(type, myTypeEvalContext) &&
-              !PyKnownDecoratorUtil.getKnownDecorators(type.pyClass, myTypeEvalContext).contains(TYPING_RUNTIME)) {
-            registerProblem(base, "Only @runtime protocols can be used with instance and class checks", GENERIC_ERROR)
-          }
-        }
-      }
-      else {
-        val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext)
-
-        node
-          .multiResolveCalleeFunction(resolveContext)
-          .firstOrNull { it.qualifiedName == PyTypingTypeProvider.NEW_TYPE }
-          ?.let {
-            val base = node.arguments.getOrNull(1)
-            if (base != null) {
-              val type = myTypeEvalContext.getType(base)
-              if (type is PyClassLikeType && isProtocol(type, myTypeEvalContext)) {
-                registerProblem(base, "NewType cannot be used with protocol classes")
-              }
-            }
-          }
-      }
+      checkRuntimeProtocolInIsInstance(node)
+      checkNewTypeWithProtocols(node)
     }
 
     private fun checkCompatibility(type: PyClassType, superClassTypes: List<PyClassLikeType?>) {
@@ -82,33 +55,12 @@ class PyProtocolInspection : PyInspection() {
         .filterIsInstance<PyClassType>()
         .filter { isProtocol(it, myTypeEvalContext) }
         .forEach { protocol ->
-          inspectProtocolSubclass(
-            protocol,
-            type,
-            myTypeEvalContext,
-            object : InspectingProtocolSubclassCallback {
-              override fun onUnresolved(protocolElement: PyTypedElement): Boolean {
-                return true
-              }
-
-              override fun onResolved(protocolElement: PyTypedElement, subclassElements: List<RatedResolveResult>): Boolean {
-                val expectedMemberType = myTypeEvalContext.getType(protocolElement)
-
-                subclassElements
-                  .asSequence()
-                  .map { it.element }
-                  .filterIsInstance<PyTypedElement>()
-                  .filter { it.containingFile == type.pyClass.containingFile }
-                  .filterNot { PyTypeChecker.match(expectedMemberType, myTypeEvalContext.getType(it), myTypeEvalContext) }
-                  .forEach {
-                    val place = if (it is PsiNameIdentifierOwner) it.nameIdentifier else it
-                    registerProblem(place, "Type of '${it.name}' is incompatible with '${protocol.name}'")
-                  }
-
-                return true
-              }
+          inspectProtocolSubclass(protocol, type, myTypeEvalContext).forEach {
+            val subclassElements = it.second
+            if (!subclassElements.isNullOrEmpty()) {
+              checkMemberCompatibility(it.first, subclassElements!!, type, protocol)
             }
-          )
+          }
         }
     }
 
@@ -129,6 +81,55 @@ class PyProtocolInspection : PyInspection() {
       if (!superClassTypes.all(correctBase)) {
         registerProblem(type.pyClass.nameIdentifier, "All bases of a protocol must be protocols")
       }
+    }
+
+    private fun checkRuntimeProtocolInIsInstance(node: PyCallExpression) {
+      if (node.isCalleeText(PyNames.ISINSTANCE, PyNames.ISSUBCLASS)) {
+        val base = node.arguments.getOrNull(1)
+        if (base != null) {
+          val type = myTypeEvalContext.getType(base)
+          if (type is PyClassType &&
+              isProtocol(type, myTypeEvalContext) &&
+              !PyKnownDecoratorUtil.getKnownDecorators(type.pyClass, myTypeEvalContext).contains(TYPING_RUNTIME)) {
+            registerProblem(base, "Only @runtime protocols can be used with instance and class checks", GENERIC_ERROR)
+          }
+        }
+      }
+    }
+
+    private fun checkNewTypeWithProtocols(node: PyCallExpression) {
+      val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext)
+
+      node
+        .multiResolveCalleeFunction(resolveContext)
+        .firstOrNull { it.qualifiedName == PyTypingTypeProvider.NEW_TYPE }
+        ?.let {
+          val base = node.arguments.getOrNull(1)
+          if (base != null) {
+            val type = myTypeEvalContext.getType(base)
+            if (type is PyClassLikeType && isProtocol(type, myTypeEvalContext)) {
+              registerProblem(base, "NewType cannot be used with protocol classes")
+            }
+          }
+        }
+    }
+
+    private fun checkMemberCompatibility(protocolElement: PyTypedElement,
+                                         subclassElements: List<RatedResolveResult>,
+                                         type: PyClassType,
+                                         protocol: PyClassType) {
+      val expectedMemberType = myTypeEvalContext.getType(protocolElement)
+
+      subclassElements
+        .asSequence()
+        .map { it.element }
+        .filterIsInstance<PyTypedElement>()
+        .filter { it.containingFile == type.pyClass.containingFile }
+        .filterNot { PyTypeChecker.match(expectedMemberType, myTypeEvalContext.getType(it), myTypeEvalContext) }
+        .forEach {
+          val place = if (it is PsiNameIdentifierOwner) it.nameIdentifier else it
+          registerProblem(place, "Type of '${it.name}' is incompatible with '${protocol.name}'")
+        }
     }
   }
 }

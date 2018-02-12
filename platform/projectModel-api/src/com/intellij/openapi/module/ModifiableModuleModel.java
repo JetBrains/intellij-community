@@ -134,6 +134,12 @@ public interface ModifiableModuleModel {
   @Nullable
   String getNewName(@NotNull Module module);
 
+  /**
+   * @return the new name of {@code module} if it has been renamed or its old name it hasn't.
+   */
+  @NotNull
+  String getActualName(@NotNull Module module);
+
   @Nullable
   String[] getModuleGroupPath(@NotNull Module module);
 

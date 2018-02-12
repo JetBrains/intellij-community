@@ -164,6 +164,12 @@ public class CommitPresentationUtil {
   }
 
   @NotNull
+  private static String formatCommitHashAndAuthor(@NotNull VcsFullCommitDetails commit) {
+    Font font = FontUtil.getCommitMetadataFont();
+    return FontUtil.getHtmlWithFonts(commit.getId().toShortString() + " " + getAuthorText(commit), font.getStyle(), font);
+  }
+
+  @NotNull
   static String getBranchesText(@Nullable List<String> branches, boolean expanded, int availableWidth, @NotNull FontMetrics metrics) {
     if (branches == null) {
       return "In branches: loading...";
@@ -215,15 +221,15 @@ public class CommitPresentationUtil {
   public static CommitPresentation buildPresentation(@NotNull Project project,
                                                      @NotNull VcsFullCommitDetails commit,
                                                      @NotNull Set<String> unresolvedHashes) {
-    Font font = FontUtil.getCommitMetadataFont();
-    String hashAndAuthor = FontUtil.getHtmlWithFonts(commit.getId().toShortString() + " " + getAuthorText(commit), font.getStyle(), font);
     String fullMessage = commit.getFullMessage();
     int separator = fullMessage.indexOf("\n\n");
     String subject = separator > 0 ? fullMessage.substring(0, separator) : fullMessage;
     String description = fullMessage.substring(subject.length());
 
-    Set<String> unresolvedHashesForCommit = findHashes(project, subject, description);
     String text = formatCommitText(project, subject, description, Collections.emptySet());
+    String hashAndAuthor = formatCommitHashAndAuthor(commit);
+
+    Set<String> unresolvedHashesForCommit = findHashes(project, subject, description);
     if (unresolvedHashesForCommit.isEmpty()) {
       return new CommitPresentation(text, hashAndAuthor, commit.getRoot(), MultiMap.empty());
     }
