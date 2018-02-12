@@ -179,7 +179,7 @@ class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: L
     val visibleElementsInNextRow = getSortedVisibleElementsInRow(visibleRowIndex)
 
     val toPosition = HashMap<GraphElement, Int>(visibleElementsInNextRow.size)
-    visibleElementsInNextRow.forEachIndexed { position, element -> toPosition.put(element, position) }
+    visibleElementsInNextRow.forEachIndexed { position, element -> toPosition[element] = position }
 
     return { edge ->
       toPosition[edge] ?: run {
