@@ -133,7 +133,9 @@ public class IdeEventQueue extends EventQueue {
   public void executeWhenAllFocusEventsLeftTheQueue(Runnable runnable) {
     ifFocusEventsInTheQueue(e -> {
       if (myRunnablesWaitingFocusChange.containsKey(e)) {
-        FOCUS_AWARE_RUNNABLES_LOG.debug("We have already had a runnable for the event: " + e);
+        if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
+          FOCUS_AWARE_RUNNABLES_LOG.debug("We have already had a runnable for the event: " + e);
+        }
         myRunnablesWaitingFocusChange.get(e).add(runnable);
       }
       else {
@@ -153,7 +155,9 @@ public class IdeEventQueue extends EventQueue {
   private void ifFocusEventsInTheQueue(Consumer<AWTEvent> yes, Runnable no) {
     if (!focusEventsList.isEmpty()) {
 
-      FOCUS_AWARE_RUNNABLES_LOG.debug(runnablesWaitingForFocusChangeState());
+      if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
+        FOCUS_AWARE_RUNNABLES_LOG.debug(runnablesWaitingForFocusChangeState());
+      }
 
       // find the latest focus gained
       Optional<AWTEvent> first = focusEventsList.stream().
@@ -162,16 +166,22 @@ public class IdeEventQueue extends EventQueue {
         findFirst();
 
       if (first.isPresent()) {
-        FOCUS_AWARE_RUNNABLES_LOG.debug("    runnable saved for : [" + first.get().getID() + "; " + first.get().getSource() + "] -> " + no.getClass().getName());
+        if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
+          FOCUS_AWARE_RUNNABLES_LOG.debug("    runnable saved for : [" + first.get().getID() + "; " + first.get().getSource() + "] -> " + no.getClass().getName());
+        }
         yes.accept(first.get());
       }
       else {
-        FOCUS_AWARE_RUNNABLES_LOG.debug("    runnable is run on EDT if needed : " + no.getClass().getName());
+        if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
+          FOCUS_AWARE_RUNNABLES_LOG.debug("    runnable is run on EDT if needed : " + no.getClass().getName());
+        }
         UIUtil.invokeLaterIfNeeded(no);
       }
     }
     else {
-      FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list is empty: runnable is run right away : " + no.getClass().getName());
+      if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
+        FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list is empty: runnable is run right away : " + no.getClass().getName());
+      }
       UIUtil.invokeLaterIfNeeded(no);
     }
   }
@@ -446,8 +456,10 @@ public class IdeEventQueue extends EventQueue {
 
     if (isFocusEvent(e)) {
       AWTEvent finalEvent = e;
-      FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list (execute on focus event): " + focusEventsList.stream().
-        collect(StringBuilder::new, (builder, event) -> builder.append(", [" + event.getID() + "; " + event.getSource().getClass().getName() + "]"), StringBuilder::append));
+      if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
+        FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list (execute on focus event): " + focusEventsList.stream().
+          collect(StringBuilder::new, (builder, event) -> builder.append(", [" + event.getID() + "; " + event.getSource().getClass().getName() + "]"), StringBuilder::append));
+      }
       StreamEx.of(focusEventsList).
         takeWhileInclusive(entry -> !entry.equals(finalEvent)).
         collect(Collectors.toList()).stream().map(entry -> {
@@ -461,7 +473,8 @@ public class IdeEventQueue extends EventQueue {
         forEach(runnable -> {
           try {
             runnable.run();
-          } catch (Exception exc) {
+          }
+          catch (Exception exc) {
             LOG.info(exc);
           }
         });
