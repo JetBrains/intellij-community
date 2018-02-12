@@ -40,7 +40,7 @@ class GrIntroduceParameterInClosureTest extends LightCodeInsightFixtureTestCase 
                           final boolean generateDelegate,
                           String before,
                           String after) {
-    myFixture.configureByText('Before.groovy', before)
+    myFixture.configureByText('before.groovy', before)
 
     GrIntroduceParameterTest.execute(replaceFieldsWithGetters, removeUnusedParameters, declareFinal, conflicts, generateDelegate,
                                      getProject(), myFixture.getEditor(), myFixture.getFile())

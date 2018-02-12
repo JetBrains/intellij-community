@@ -81,7 +81,7 @@ class GrIntroduceParameterTest extends LightGroovyTestCase {
                          final boolean declareFinal,
                          @Nullable final String conflicts,
                          final boolean generateDelegate, String before, String after) {
-    myFixture.configureByText('Before.groovy', before)
+    myFixture.configureByText('before.groovy', before)
 
     execute(replaceFieldsWithGetters, removeUnusedParameters, declareFinal, conflicts, generateDelegate, getProject(),
             myFixture.getEditor(), myFixture.getFile())
