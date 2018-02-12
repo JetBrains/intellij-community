@@ -9,8 +9,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
@@ -216,8 +214,8 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
           UpdateInstaller.installPluginUpdates(myUpdatedPlugins, indicator);
         }
 
-        ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-        if (ApplicationManager.getApplication().isRestartCapable()) {
+        Application app = ApplicationManager.getApplication();
+        if (app.isRestartCapable()) {
           if (indicator.isShowing()) {
             app.invokeLater(() -> ((ApplicationImpl)app).exit(true, true, true, command));
           }
