@@ -1235,6 +1235,16 @@ public class PythonCompletionTest extends PyTestCase {
     );
   }
 
+  // PY-23632
+  public void testMockPatchObject1Py2() {
+    doMultiFileTest();
+  }
+
+  // PY-23632
+  public void testMockPatchObject2Py2() {
+    doMultiFileTest();
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion";
