@@ -7,18 +7,27 @@ package com.intellij.internal.statistic.eventLog
 
 import com.intellij.util.containers.ContainerUtil
 
-open class LogEvent(@Transient var recorderId: String, @Transient var userUid: String, sessionId: String, type: String) {
-    @Transient val timestamp = System.currentTimeMillis()
-    @Transient val sessionUid: String = sessionId
-    @Transient val actionType: String = type
-    @Transient val data: MutableMap<String, Any> = ContainerUtil.newHashMap()
+open class LogEvent(val session: String, val bucket: String,
+                    recorderId: String,
+                    recorderVersion: String,
+                    type: String) {
+  val time = System.currentTimeMillis()
+  val recorder: LogEventRecorder = LogEventRecorder(recorderId, recorderVersion)
+  val action: LogEventAction = LogEventAction(type)
 
-    fun shouldMerge(next: LogEvent): Boolean {
-        if (actionType != next.actionType) return false
-        if (recorderId != next.recorderId) return false
-        if (userUid != next.userUid) return false
-        if (sessionUid != next.sessionUid) return false
-        if (data != next.data) return false
-        return true
-    }
+  fun shouldMerge(next: LogEvent): Boolean {
+    if (session != next.session) return false
+    if (bucket != next.bucket) return false
+    if (recorder.id != next.recorder.id) return false
+    if (recorder.version != next.recorder.version) return false
+    if (action.id != next.action.id) return false
+    if (action.data != next.action.data) return false
+    return true
+  }
+}
+
+class LogEventRecorder(val id: String, val version: String)
+
+class LogEventAction(val id: String) {
+  val data: MutableMap<String, Any> = ContainerUtil.newHashMap()
 }
