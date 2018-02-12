@@ -85,6 +85,9 @@ class JavaElementActionsFactory(private val renderer: JavaElementRenderer) : Jvm
     if (!staticMethodRequested && javaClass.hasModifierProperty(PsiModifier.ABSTRACT) && !javaClass.isInterface) {
       result += CreateMethodAction(javaClass, request, true)
     }
+    if (!javaClass.isInterface) {
+      result += CreatePropertyAction(javaClass, request)
+    }
     return result
   }
 
