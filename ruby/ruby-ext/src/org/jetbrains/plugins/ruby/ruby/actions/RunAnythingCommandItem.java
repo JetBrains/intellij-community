@@ -47,7 +47,7 @@ import org.jetbrains.plugins.ruby.RBundle;
 import org.jetbrains.plugins.ruby.gem.GemsDataKeys;
 import org.jetbrains.plugins.ruby.remote.RubyRemoteInterpreterManager;
 import org.jetbrains.plugins.ruby.ruby.RModuleUtil;
-import org.jetbrains.plugins.ruby.ruby.actions.execution.AnythingRunProfile;
+import org.jetbrains.plugins.ruby.ruby.actions.execution.RunAnythingRunProfile;
 import org.jetbrains.plugins.ruby.ruby.run.RubyAbstractRunner;
 import org.jetbrains.plugins.ruby.ruby.run.RubyLocalRunner;
 import org.jetbrains.plugins.ruby.ruby.run.configuration.DebugGemHelper;
@@ -140,7 +140,7 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
                                    @NotNull Executor executor,
                                    @NotNull DataContext dataContext) {
     try {
-      ExecutionEnvironmentBuilder.create(project, executor, new AnythingRunProfile(project, executor, commandLine, originalCommand))
+      ExecutionEnvironmentBuilder.create(project, executor, new RunAnythingRunProfile(project, executor, commandLine, originalCommand))
                                  .dataContext(dataContext)
                                  .buildAndExecute();
     }

@@ -55,7 +55,7 @@ import java.util.Objects;
 import static org.jetbrains.plugins.ruby.ruby.actions.RunAnythingCommandItem.UNDEFINED_COMMAND_ICON;
 import static org.jetbrains.plugins.ruby.ruby.actions.RunAnythingUtil.getOrCreateWrappedCommands;
 
-public class AnythingRunProfile implements DebuggableRunProfile {
+public class RunAnythingRunProfile implements DebuggableRunProfile {
   @NotNull private final Project myProject;
   @NotNull private final String myOriginalCommand;
   @NotNull private final Executor myExecutor;
@@ -64,10 +64,10 @@ public class AnythingRunProfile implements DebuggableRunProfile {
   @Nullable
   private ProcessHandler myProcessHandler;
 
-  public AnythingRunProfile(@NotNull Project project,
-                            @NotNull Executor executor,
-                            @NotNull GeneralCommandLine commandLine,
-                            @NotNull String originalCommand) {
+  public RunAnythingRunProfile(@NotNull Project project,
+                               @NotNull Executor executor,
+                               @NotNull GeneralCommandLine commandLine,
+                               @NotNull String originalCommand) {
     myExecutor = executor;
     myCommandLine = commandLine;
     myProject = project;
