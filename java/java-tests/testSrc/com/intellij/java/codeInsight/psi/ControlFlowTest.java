@@ -7,12 +7,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.containers.IntArrayList;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -84,13 +85,5 @@ public class ControlFlowTest extends LightCodeInsightTestCase {
     IntArrayList exitPoints = new IntArrayList();
     ControlFlowUtil.findExitPointsAndStatements(flow, 0, flow.getSize() -1 , exitPoints, ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
     assertEquals(1, exitPoints.size());
-  }
-
-  public void testHugeMethodChainControlFlow() throws Exception {
-    int size = 2500;
-    String source = StreamEx.constant(".toString()", size).joining("", "\"\"", "");
-    PsiExpression expression = JavaPsiFacade.getElementFactory(getProject()).createExpressionFromText(source, null);
-    ControlFlow flow = ControlFlowFactory.getInstance(getProject()).getControlFlow(expression, new LocalsControlFlowPolicy(expression), false);
-    assertEquals(size, flow.getSize());
   }
 }
