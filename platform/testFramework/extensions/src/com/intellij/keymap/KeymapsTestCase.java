@@ -97,7 +97,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "meta L",                   "Vcs.Log.FocusTextFilter", "GotoLine"},
     { "meta R",                   "Refresh", "Rerun", "Replace", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
     { "control O",                "ExportToTextFile", "OverrideMethods", },
-    { "control ENTER",            "Generate", "NewElement"},
+    { "control ENTER",            "Generate", "NewElement", "PyExecuteCellAction"},
     { "ctrl meta R",              "Android.HotswapChanges", "RerunTests"},
     { "meta 1",                   "ActivateProjectToolWindow", "FileChooser.GotoHome", "DuplicatesForm.SendToLeft"},
     { "meta 2",                   "ActivateFavoritesToolWindow", "FileChooser.GotoProject", "DuplicatesForm.SendToRight"},
