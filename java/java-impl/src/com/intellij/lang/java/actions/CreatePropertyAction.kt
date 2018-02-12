@@ -189,14 +189,13 @@ internal class CreatePropertyAction(
       inputNameElement: PsiElement,
       mirrorTypeElement: PsiTypeElement,
       mirrorNameElement: PsiElement,
-      endElement: PsiElement?,
-      context: PsiMethod
+      endElement: PsiElement?
     ): RangeExpression {
       val templateTypeElement = createTemplateContext().setupTypeElement(inputTypeElement, expectedTypes)
       val typeExpression = RangeExpression(targetDocument, templateTypeElement.textRange)
       replaceElement(mirrorTypeElement, typeExpression, false) // copy type text to mirror
 
-      val fieldExpression = FieldExpression(project, target, context, suggestedFieldName) { typeExpression.text }
+      val fieldExpression = FieldExpression(project, target, suggestedFieldName) { typeExpression.text }
       replaceElement(inputNameElement, FIELD_VARIABLE, fieldExpression, true)
       replaceElement(mirrorNameElement, VariableNode(FIELD_VARIABLE, null), false) // copy field name to mirror
 
@@ -217,8 +216,7 @@ internal class CreatePropertyAction(
         inputNameElement = setterFieldRefElement,
         mirrorTypeElement = getterTypeElement,
         mirrorNameElement = getterFieldRefElement,
-        endElement = setterBody.lBrace,
-        context = setter
+        endElement = setterBody.lBrace
       )
     }
     else {
@@ -227,8 +225,7 @@ internal class CreatePropertyAction(
         inputNameElement = getterFieldRefElement,
         mirrorTypeElement = setterTypeElement,
         mirrorNameElement = setterFieldRefElement,
-        endElement = getterBody.lBrace,
-        context = getter
+        endElement = getterBody.lBrace
       )
     }
 
