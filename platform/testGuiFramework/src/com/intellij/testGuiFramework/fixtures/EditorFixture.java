@@ -18,7 +18,6 @@ package com.intellij.testGuiFramework.fixtures;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.Pair;
@@ -72,8 +71,6 @@ public class EditorFixture {
    * Performs simulation of user events on <code>{@link #target}</code>
    */
   public final Robot robot;
-  private final IdeFrameFixture myFrame;
-  private final EditorTabsFixture tabs;
   private Editor myEditor;
 
   /**
@@ -82,8 +79,6 @@ public class EditorFixture {
   public EditorFixture(Robot robot, Editor editor) {
     this.robot = robot;
     myEditor = editor;
-    myFrame = null;
-    tabs = null;
   }
 
   /**
@@ -439,8 +434,7 @@ public class EditorFixture {
     Integer offset = execute(new GuiQuery<Integer>() {
       @Override
       protected Integer executeInEDT() throws Throwable {
-        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-        Editor editor = manager.getSelectedTextEditor();
+        Editor editor = getEditor();
         if (editor != null) {
           Document document = editor.getDocument();
           return document.getLineStartOffset(lineNumber - 1);
@@ -631,27 +625,6 @@ public class EditorFixture {
     }
     assertTrue("The text segment should have more text than just the caret position", prefix != null || suffix != null);
     return findOffset(prefix, suffix, true);
-  }
-
-
-  /**
-   * Selects the editor with a given tab name.
-   */
-  public EditorFixture selectTab(@NotNull final String tabName) {
-    tabs.waitTab(tabName, 30).selectTab(tabName);
-    return this;
-  }
-
-  /**
-   * Closes the editor with a given tab name.
-   */
-  public EditorFixture closeTab(@NotNull final String tabName) {
-    tabs.closeTab(tabName);
-    return this;
-  }
-
-  public Boolean hasTab(@NotNull final String tabName) {
-    return tabs.hasTab(tabName);
   }
 
 

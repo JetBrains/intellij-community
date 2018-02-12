@@ -578,7 +578,7 @@ open class GuiTestCase {
    * Context function for IdeFrame: get the tab with specific opened file and create EditorFixture instance as a receiver object. Code block after
    * it call methods on the receiver object (EditorFixture instance).
    */
-  fun IdeFrameFixture.editor(tabName: String, func: EditorFixture.() -> Unit) {
+  fun IdeFrameFixture.editor(tabName: String, func: FileEditorFixture.() -> Unit) {
     val editorFixture = this.editor.selectTab(tabName)
     func(editorFixture)
   }
