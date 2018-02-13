@@ -69,12 +69,13 @@ class StructureNode extends StructureElement {
   ShrinkStep shrink() {
     if (shrinkProhibited) return null;
 
-    return isList() ? new RemoveListRange(this) : shrinkChild(0);
+    return isList() ? new RemoveListRange(this) : shrinkChild(children.size() - 1);
   }
 
   @Nullable
   ShrinkStep shrinkChild(int index) {
-    for (; index < children.size(); index++) {
+    int minIndex = isList() ? 1 : 0;
+    for (; index >= minIndex; index--) {
       ShrinkStep childShrink = children.get(index).shrink();
       if (childShrink != null) return wrapChildShrink(index, childShrink);
     }
@@ -84,7 +85,7 @@ class StructureNode extends StructureElement {
 
   @Nullable
   private ShrinkStep wrapChildShrink(int index, @Nullable ShrinkStep step) {
-    if (step == null) return shrinkChild(index + 1);
+    if (step == null) return shrinkChild(index - 1);
 
     NodeId oldChild = children.get(index).id;
 
@@ -248,7 +249,7 @@ class IntData extends StructureElement {
   private ShrinkStep divisionLoop(int value) {
     if (value == 0) return null;
     int divided = value / 2;
-    return tryInt(divided, () -> divisionLoop(divided / 2), null);
+    return tryInt(divided, () -> divisionLoop(divided), null);
   }
 
   private ShrinkStep tryInt(int value, @NotNull Supplier<ShrinkStep> success, @Nullable Supplier<ShrinkStep> fail) {

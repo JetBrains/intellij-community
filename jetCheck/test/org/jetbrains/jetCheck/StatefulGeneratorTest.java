@@ -56,7 +56,7 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
       };
 
       env.executeCommands(withRecursion(insertStringCmd(sb), replace, deleteStringCmd(sb), checkDoesNotContain(sb, "A")));
-    }), Scenario::ensureSuccessful, 56).getMinimalCounterexample().getExampleValue();
+    }), Scenario::ensureSuccessful, 55).getMinimalCounterexample().getExampleValue();
 
     assertEquals("commands:\n" +
                  "  insert A at 0\n" +
