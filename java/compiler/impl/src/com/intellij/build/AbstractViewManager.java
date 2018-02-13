@@ -174,6 +174,10 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
       return getIcon(result);
     }
 
+    public boolean isRunning() {
+      return endTime == -1;
+    }
+
     private static Icon getIcon(EventResult result) {
       if (result == null) {
         return ExecutionNodeProgressAnimator.getCurrentFrame();
