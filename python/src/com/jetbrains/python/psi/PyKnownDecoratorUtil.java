@@ -219,6 +219,21 @@ public class PyKnownDecoratorUtil {
     return !allDecoratorsAreKnown(decoratable, decorators) || decorators.contains(UNITTEST_MOCK_PATCH);
   }
 
+  public static boolean hasUnknownOrUpdatingAttributesDecorator(@NotNull PyDecoratable decoratable, @NotNull TypeEvalContext context) {
+    final List<KnownDecorator> decorators = getKnownDecorators(decoratable, context);
+
+    if (!allDecoratorsAreKnown(decoratable, decorators)) {
+      return true;
+    }
+
+    return ContainerUtil.exists(
+      decorators,
+      d ->
+        d == FUNCTOOLS_LRU_CACHE || // cache_clear, cache_info
+        d == FUNCTOOLS_SINGLEDISPATCH // dispatch, register, registry
+    );
+  }
+
   private static boolean allDecoratorsAreKnown(@NotNull PyDecoratable element, @NotNull List<KnownDecorator> decorators) {
     final PyDecoratorList decoratorList = element.getDecoratorList();
     return decoratorList == null ? decorators.isEmpty() : decoratorList.getDecorators().length == decorators.size();
