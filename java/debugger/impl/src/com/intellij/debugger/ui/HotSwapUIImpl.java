@@ -35,6 +35,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.MessageCategory;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,7 +97,8 @@ public class HotSwapUIImpl extends HotSwapUI {
     return sessions.stream().anyMatch(DebuggerSession::isPaused);
   }
 
-  private void hotSwapSessions(final List<DebuggerSession> sessions, @Nullable final Map<String, List<String>> generatedPaths) {
+  private void hotSwapSessions(final List<DebuggerSession> sessions, @Nullable final Map<String, List<String>> generatedPaths,
+                               @Nullable final HotSwapStatusListener callback) {
     final boolean shouldAskBeforeHotswap = myAskBeforeHotswap;
     myAskBeforeHotswap = true;
 
@@ -104,7 +106,14 @@ public class HotSwapUIImpl extends HotSwapUI {
     final String runHotswap = settings.RUN_HOTSWAP_AFTER_COMPILE;
     final boolean shouldDisplayHangWarning = shouldDisplayHangWarning(settings, sessions);
 
+    HotSwapStatusListener callbackWrapper = (aborted, errors, warnings, hotSwappedSessions) -> {
+      if (callback != null) {
+        callback.hotSwapFinished(aborted, errors, warnings, hotSwappedSessions);
+      }
+    };
+
     if (shouldAskBeforeHotswap && DebuggerSettings.RUN_HOTSWAP_NEVER.equals(runHotswap)) {
+      callbackWrapper.hotSwapFinished(true, 0, 0, sessions);
       return;
     }
 
@@ -117,6 +126,14 @@ public class HotSwapUIImpl extends HotSwapUI {
     else {
       boolean createProgress = sessions.stream().anyMatch(DebuggerSession::isModifiedClassesScanRequired);
       findClassesProgress = createProgress ? new HotSwapProgressImpl(myProject) : null;
+    }
+    if (findClassesProgress != null) {
+      findClassesProgress.addProgressListener(new HotSwapProgressImpl.HotSwapProgressListener() {
+        @Override
+        public void onCancel() {
+          callbackWrapper.hotSwapFinished(true, 0, 0, sessions);
+        }
+      });
     }
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -144,6 +161,7 @@ public class HotSwapUIImpl extends HotSwapUI {
       if (modifiedClasses.isEmpty()) {
         final String message = DebuggerBundle.message("status.hotswap.uptodate");
         HotSwapProgressImpl.NOTIFICATION_GROUP.createNotification(message, NotificationType.INFORMATION).notify(myProject);
+        callbackWrapper.hotSwapFinished(false, 0, 0, sessions);
         return;
       }
 
@@ -154,6 +172,7 @@ public class HotSwapUIImpl extends HotSwapUI {
             for (DebuggerSession session : modifiedClasses.keySet()) {
               session.setModifiedClassesScanRequired(true);
             }
+            callbackWrapper.hotSwapFinished(true, 0, 0, sessions);
             return;
           }
           final Set<DebuggerSession> toReload = new HashSet<>(dialog.getSessionsToReload());
@@ -181,6 +200,7 @@ public class HotSwapUIImpl extends HotSwapUI {
               for (DebuggerSession session : modifiedClasses.keySet()) {
                 session.setModifiedClassesScanRequired(true);
               }
+              callbackWrapper.hotSwapFinished(true, 0, 0, sessions);
               return;
             }
           }
@@ -192,6 +212,17 @@ public class HotSwapUIImpl extends HotSwapUI {
             //noinspection ConstantConditions
             progress.setSessionForActions(ContainerUtil.getFirstItem(modifiedClasses.keySet()));
           }
+          progress.addProgressListener(new HotSwapProgressImpl.HotSwapProgressListener() {
+            @Override
+            public void onCancel() {
+              notifyStatusListener(callbackWrapper, progress, sessions, true);
+            }
+
+            @Override
+            public void onFinish() {
+              notifyStatusListener(callbackWrapper, progress, sessions, false);
+            }
+          });
           application.executeOnPooledThread(() -> reloadModifiedClasses(modifiedClasses, progress));
         }
       }, ModalityState.NON_MODAL);
@@ -212,7 +243,8 @@ public class HotSwapUIImpl extends HotSwapUI {
     return result.get();
   }
 
-  private static void reloadModifiedClasses(final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses, final HotSwapProgressImpl progress) {
+  private static void reloadModifiedClasses(final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses,
+                                            final HotSwapProgressImpl progress) {
     UsageTrigger.trigger("debugger.reload.classes");
     ProgressManager.getInstance().runProcess(() -> {
       HotSwapManager.reloadModifiedClasses(modifiedClasses, progress);
@@ -221,14 +253,25 @@ public class HotSwapUIImpl extends HotSwapUI {
   }
 
   @Override
-  public void reloadChangedClasses(final DebuggerSession session, boolean compileBeforeHotswap) {
+  public void reloadChangedClasses(@NotNull DebuggerSession session, boolean compileBeforeHotswap) {
+    reloadChangedClasses(session, null, compileBeforeHotswap);
+  }
+
+  @Override
+  public void reloadChangedClasses(@NotNull DebuggerSession session, @Nullable HotSwapStatusListener callback) {
+    reloadChangedClasses(session, callback, false);
+  }
+
+  private void reloadChangedClasses(@NotNull DebuggerSession session,
+                                    @Nullable HotSwapStatusListener callback,
+                                    boolean compileBeforeHotswap) {
     dontAskHotswapAfterThisCompilation();
     if (compileBeforeHotswap) {
       CompilerManager.getInstance(session.getProject()).make(null);
     }
     else {
       if (session.isAttached()) {
-        hotSwapSessions(Collections.singletonList(session), null);
+        hotSwapSessions(Collections.singletonList(session), null, callback);
       }
     }
   }
@@ -278,7 +321,7 @@ public class HotSwapUIImpl extends HotSwapUI {
 
         List<DebuggerSession> sessions = getHotSwappableDebugSessions();
         if (!sessions.isEmpty()) {
-          hotSwapSessions(sessions, generated);
+          hotSwapSessions(sessions, generated, null);
         }
       }
       myPerformHotswapAfterThisCompilation = true;
@@ -294,5 +337,15 @@ public class HotSwapUIImpl extends HotSwapUI {
     return DebuggerManagerEx.getInstanceEx(myProject).getSessions().stream()
       .filter(HotSwapUIImpl::canHotSwap)
       .collect(Collectors.toCollection(SmartList::new));
+  }
+
+  private static void notifyStatusListener(HotSwapStatusListener listener,
+                                           HotSwapProgressImpl progress,
+                                           List<DebuggerSession> sessions,
+                                           boolean aborted) {
+    listener.hotSwapFinished(aborted,
+                             progress.getMessages(MessageCategory.ERROR).size(),
+                             progress.getMessages(MessageCategory.WARNING).size(),
+                             sessions);
   }
 }
