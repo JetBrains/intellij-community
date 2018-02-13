@@ -3,9 +3,11 @@ package com.intellij.spellchecker.dictionary.location;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Consumer;
+
 public interface DictionaryLocation {
   @NotNull
   String getName();
 
-  void findAndAddNewDictionary();
+  void findAndAddNewDictionary(@NotNull Consumer<String> consumer);
 }

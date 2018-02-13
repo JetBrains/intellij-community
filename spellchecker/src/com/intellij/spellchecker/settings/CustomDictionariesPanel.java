@@ -67,8 +67,7 @@ public class CustomDictionariesPanel extends JPanel {
           if (isPluginInstalled(hunspellId) && ideaPluginDescriptor != null && ideaPluginDescriptor.isEnabled()) {
             JBList<DictionaryLocation> locationList = new JBList<>();
             locationList.setListData(new DictionaryLocation[]{
-              new RepositoryDictionaryLocation(project, myCustomDictionariesTableView),
-              new LocalDictionaryLocation(project, myCustomDictionariesTableView)
+              new RepositoryDictionaryLocation(project), new LocalDictionaryLocation(project)
             });
             locationList.getSelectionModel().setSelectionMode(SINGLE_SELECTION);
             locationList.setCellRenderer(new ColoredListCellRenderer<DictionaryLocation>() {
@@ -83,14 +82,20 @@ public class CustomDictionariesPanel extends JPanel {
             });
             JBPopupFactory.getInstance().createListPopupBuilder(locationList)
                           .setTitle(SpellCheckerBundle.message("dictionary.location.choose"))
-                          .setItemChoosenCallback(() -> locationList.getSelectedValue().findAndAddNewDictionary())
+                          .setItemChoosenCallback(() -> locationList.getSelectedValue().findAndAddNewDictionary(this::accept))
                           .setMovable(false)
                           .setResizable(false)
                           .createPopup()
                           .show(button.getPreferredPopupPoint());
           }
           else {
-            new LocalDictionaryLocation(project, myCustomDictionariesTableView).findAndAddNewDictionary();
+            new LocalDictionaryLocation(project).findAndAddNewDictionary(this::accept);
+          }
+        }
+
+        private void accept(String dictionary) {
+          if (!myCustomDictionariesTableView.getItems().contains(dictionary)) {
+            myCustomDictionariesTableView.getListTableModel().addRow(dictionary);
           }
         }
       })

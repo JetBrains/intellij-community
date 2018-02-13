@@ -6,19 +6,18 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
-import com.intellij.ui.table.TableView;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Consumer;
 
 import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
 
 public class LocalDictionaryLocation implements DictionaryLocation {
   private final Project myProject;
-  private final TableView<String> myTableView;
 
-  public LocalDictionaryLocation(@NotNull Project project, @NotNull TableView<String> tableView) {
+  public LocalDictionaryLocation(@NotNull Project project) {
     myProject = project;
-    myTableView = tableView;
   }
 
   @NotNull
@@ -28,7 +27,7 @@ public class LocalDictionaryLocation implements DictionaryLocation {
   }
 
   @Override
-  public void findAndAddNewDictionary() {
+  public void findAndAddNewDictionary(@NotNull Consumer<String> consumer) {
     final FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, true) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
@@ -40,7 +39,6 @@ public class LocalDictionaryLocation implements DictionaryLocation {
                             files -> files.stream()
                                           .map(VirtualFile::getPath)
                                           .map(PathUtil::toSystemDependentName)
-                                          .filter(path -> !myTableView.getItems().contains(path))
-                                          .forEach(path -> myTableView.getListTableModel().addRow(path)));
+                                          .forEach(consumer));
   }
 }

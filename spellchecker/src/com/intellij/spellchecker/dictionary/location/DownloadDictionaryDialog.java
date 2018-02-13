@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.ui.SortedComboBoxModel;
-import com.intellij.ui.table.TableView;
 import com.intellij.util.download.DownloadableFileService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import static com.intellij.openapi.ui.TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT;
 import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
@@ -34,16 +34,16 @@ public class DownloadDictionaryDialog extends DialogWrapper {
   private TextFieldWithBrowseButton myDirectoryTextField;
   private JPanel myMainPanel;
   private final Project myProject;
-  private final TableView<String> myTableView;
+  @NotNull private final Consumer<String> myConsumer;
   private static final String DIC = ".dic";
   private static final String AFF = ".aff";
   private static final String PATH = "https://raw.githubusercontent.com/bzixilu/dictionaries/master/";
 
 
-  protected DownloadDictionaryDialog(@NotNull Project project, @NotNull TableView<String> tableView) {
+  protected DownloadDictionaryDialog(@NotNull Project project, @NotNull Consumer<String> consumer) {
     super(project, true);
     myProject = project;
-    myTableView = tableView;
+    myConsumer = consumer;
     setTitle(SpellCheckerBundle.message("choose.dictionary.to.add"));
     init();
   }
@@ -99,9 +99,10 @@ public class DownloadDictionaryDialog extends DialogWrapper {
                                                                 name)
                                               .downloadFilesWithProgress((dir).getPath(), myProject, null);
     if (files != null && files.size() == 2) {
-      files.stream().map(file -> toSystemDependentName(file.getPath()))
-           .filter(path -> extensionEquals(path, "dic") && !myTableView.getItems().contains(path))
-           .forEach(path -> myTableView.getListTableModel().addRow(path));
+      files.stream()
+           .map(file -> toSystemDependentName(file.getPath()))
+           .filter(path -> extensionEquals(path, "dic"))
+           .forEach(myConsumer);
     }
   }
 

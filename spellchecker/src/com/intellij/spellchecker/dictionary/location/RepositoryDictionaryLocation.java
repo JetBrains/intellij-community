@@ -3,17 +3,16 @@ package com.intellij.spellchecker.dictionary.location;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
-import com.intellij.ui.table.TableView;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Consumer;
 
 public class RepositoryDictionaryLocation implements DictionaryLocation {
 
   private final Project myProject;
-  private final TableView<String> myTableView;
 
-  public RepositoryDictionaryLocation(@NotNull Project project, TableView<String> tableView){
+  public RepositoryDictionaryLocation(@NotNull Project project){
     myProject = project;
-    myTableView = tableView;
   }
 
   @NotNull
@@ -23,7 +22,7 @@ public class RepositoryDictionaryLocation implements DictionaryLocation {
   }
 
   @Override
-  public void findAndAddNewDictionary() {
-    new DownloadDictionaryDialog(myProject, myTableView).showAndGet();
+  public void findAndAddNewDictionary(@NotNull Consumer<String> consumer) {
+    new DownloadDictionaryDialog(myProject, consumer).showAndGet();
   }
 }
