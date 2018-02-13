@@ -7,7 +7,6 @@ package com.intellij.internal.statistic.eventLog
 import com.intellij.openapi.application.ApplicationAdapter
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.util.registry.Registry
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.apache.log4j.PatternLayout
@@ -17,12 +16,12 @@ import java.io.IOException
 import java.nio.file.Paths
 import java.util.*
 
-object FeatureUsageEventLogger {
+class FeatureUsageFileEventLogger : FeatureUsageEventLogger {
   private val sessionId = UUID.randomUUID().toString().shortedUUID()
   private val bucket = "-1"
   private val recorderVersion = "1"
 
-  private val eventLogger = if (Registry.`is`("feature.usage.event.log.collect.and.upload")) createLogger() else null
+  private val eventLogger = createLogger()
 
   private var lastEvent: LogEvent? = null
   private var lastEventTime: Long = 0
@@ -31,9 +30,7 @@ object FeatureUsageEventLogger {
   init {
     ApplicationManager.getApplication().addApplicationListener(object : ApplicationAdapter() {
       override fun applicationExiting() {
-        if (eventLogger != null) {
-          dispose(eventLogger)
-        }
+        dispose(eventLogger)
       }
     })
   }
@@ -46,10 +43,8 @@ object FeatureUsageEventLogger {
     return this
   }
 
-  fun log(recorderId: String, action: String) {
-    if (eventLogger != null) {
-      log(eventLogger, LogEvent(sessionId, bucket, recorderId, recorderVersion, action))
-    }
+  override fun log(recorderId: String, action: String) {
+    log(eventLogger, LogEvent(sessionId, bucket, recorderId, recorderVersion, action))
   }
 
   private fun log(logger: Logger, event: LogEvent) {
@@ -80,7 +75,7 @@ object FeatureUsageEventLogger {
     count = 1
   }
 
-  private fun createLogger(): Logger? {
+  private fun createLogger(): Logger {
     val path = Paths.get(PathManager.getSystemPath()).resolve("event-log").resolve("feature-usage-event.log")
     val file = File(path.toUri())
 
