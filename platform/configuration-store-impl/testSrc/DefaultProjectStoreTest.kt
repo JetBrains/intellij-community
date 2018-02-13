@@ -24,24 +24,24 @@ import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Paths
 
+private const val TEST_COMPONENT_NAME = "DefaultProjectStoreTestComponent"
+
+@State(name = TEST_COMPONENT_NAME, storages = [(Storage(value = "testSchemes", stateSplitter = TestStateSplitter::class))])
+private class TestComponent : PersistentStateComponent<Element> {
+  private var element = Element("state")
+
+  override fun getState() = element.clone()
+
+  override fun loadState(state: Element) {
+    element = state.clone()
+  }
+}
+
 internal class DefaultProjectStoreTest {
   companion object {
     @JvmField
     @ClassRule
     val projectRule = ProjectRule()
-
-    internal const val TEST_COMPONENT_NAME = "Foo"
-
-    @State(name = TEST_COMPONENT_NAME, storages = [(Storage(value = "testSchemes", stateSplitter = TestStateSplitter::class))])
-    private class TestComponent: PersistentStateComponent<Element> {
-      private var element = Element("state")
-
-      override fun getState() = element.clone()
-
-      override fun loadState(state: Element) {
-        element = state.clone()
-      }
-    }
   }
 
   @JvmField
