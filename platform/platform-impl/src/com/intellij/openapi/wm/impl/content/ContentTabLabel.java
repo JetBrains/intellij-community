@@ -61,7 +61,7 @@ class ContentTabLabel extends BaseLabel {
       String text =
         KeymapUtil.getShortcutsText(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_CLOSE_ACTIVE_TAB));
 
-      return text.isEmpty() ? ACTION_NAME : ACTION_NAME + " ( " + text + " )";
+      return text.isEmpty() ? ACTION_NAME : ACTION_NAME + " (" + text + ")";
     }
   };
 
