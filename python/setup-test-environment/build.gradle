@@ -115,11 +115,16 @@ envs {
  * Works on Win7+.
  */
 task killPythonWindows(type: Exec) {
+  onlyIf { Os.isFamily(Os.FAMILY_WINDOWS) }
+
   commandLine 'powershell', '"Get-Process | where {$_.Name -ieq \\"python\\"} | Stop-Process"'
 }
-killPythonWindows.onlyIf { Os.isFamily(Os.FAMILY_WINDOWS)}
 
 task prepare(type: Delete) {
+  // Python leaked from previous test may prevent this script from
+  // deleting folder because you can't delete file opened by process on Windows
+  dependsOn killPythonWindows
+
   doFirst {
     new File(envs.bootstrapDirectory, "django_latest").with { djangoLatestFolder ->
       if (djangoLatestFolder.exists() && djangoLatestFolder.lastModified() < System.currentTimeMillis() - 24 * 60 * 60 * 1000) {
@@ -138,10 +143,6 @@ task prepare(type: Delete) {
       delete envs.bootstrapDirectory
     }
   }
-
-  // Python leaked from previous test may prevent this script from
-  // deleting folder because you can't delete file opened by process on Windows
-  dependsOn killPythonWindows
 }
 
 task build {
