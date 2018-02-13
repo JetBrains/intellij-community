@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
+import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
 import static com.intellij.util.containers.ContainerUtil.set;
 
 abstract class SpecificFilesViewDialog extends DialogWrapper {
@@ -105,7 +106,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     final CommonActionsManager cam = CommonActionsManager.getInstance();
     final Expander expander = new Expander();
     group.addSeparator();
-    group.add(ActionManager.getInstance().getAction("ChangesView.GroupBy"));
+    group.add(ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP));
     group.add(cam.createExpandAllAction(expander, myView));
     group.add(cam.createCollapseAllAction(expander, myView));
 

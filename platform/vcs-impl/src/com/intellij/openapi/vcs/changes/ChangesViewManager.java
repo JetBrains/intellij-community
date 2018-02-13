@@ -62,6 +62,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.unshelveSilentlyWithDnd;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
+import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
 import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static com.intellij.util.containers.ContainerUtil.set;
 import static java.util.stream.Collectors.toList;
@@ -181,7 +182,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     visualActionsGroup.add(CommonActionsManager.getInstance().createExpandAllAction(expander, panel));
     visualActionsGroup.add(CommonActionsManager.getInstance().createCollapseAllAction(expander, panel));
 
-    visualActionsGroup.add(ActionManager.getInstance().getAction("ChangesView.GroupBy"));
+    visualActionsGroup.add(ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP));
     visualActionsGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
     visualActionsGroup.add(new ToggleShowIgnoredAction());
     visualActionsGroup.add(new IgnoredSettingsAction());
