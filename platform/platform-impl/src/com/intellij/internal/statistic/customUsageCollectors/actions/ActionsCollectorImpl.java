@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
-import com.intellij.internal.statistic.eventLog.FeatureUsageEventLogger;
+import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsDifferenceSender;
@@ -38,7 +38,7 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
     if (state == null) return;
 
     String key = ConvertUsagesUtil.escapeDescriptorName(actionId);
-    FeatureUsageEventLogger.INSTANCE.log("action-stats", key);
+    FeatureUsageLogger.INSTANCE.log("action-stats", key);
     final Integer count = state.myValues.get(key);
     int value = count == null ? 1 : count + 1;
     state.myValues.put(key, value);
