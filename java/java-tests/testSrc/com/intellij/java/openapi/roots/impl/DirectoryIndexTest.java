@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.openapi.roots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -60,6 +46,8 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
   private VirtualFile myLibAdditionalOutsideDir, myLibAdditionalOutsideSrcDir, myLibAdditionalOutsideExcludedDir, myLibAdditionalOutsideClsDir;
   private VirtualFile myLibDir, myLibSrcDir, myLibClsDir;
   private VirtualFile myLibAdditionalDir, myLibAdditionalSrcDir, myLibAdditionalSrcFile, myLibAdditionalExcludedDir, myLibAdditionalClsDir, myLibAdditionalClsFile;
+  private final Collection<VirtualFile> myLibAdditionalSrcDirs = ContainerUtil.newArrayList();
+  private final Collection<VirtualFile> myLibAdditionalClsDirs = ContainerUtil.newArrayList();
   private VirtualFile myCvsDir;
   private VirtualFile myExcludeDir;
   private VirtualFile myOutputDir;
@@ -178,6 +166,13 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
                                                     Collections.singletonList(myLibClsDir.getUrl()), Collections.singletonList(myLibSrcDir.getUrl()),
                                                     Arrays.asList(myExcludedLibClsDir.getUrl(), myExcludedLibSrcDir.getUrl()), DependencyScope.COMPILE, true);
       }
+
+      for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensions()) {
+        for (SyntheticLibrary library : provider.getAdditionalProjectLibraries(getProject())) {
+          myLibAdditionalSrcDirs.addAll(library.getSourceRoots());
+          myLibAdditionalClsDirs.addAll(library.getBinaryRoots());
+        }
+      }
       PlatformTestUtil.registerExtension(AdditionalLibraryRootsProvider.EP_NAME, new AdditionalLibraryRootsProvider() {
         @NotNull
         @Override
@@ -261,10 +256,17 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
   }
 
   public void testDirsByPackageName() {
-    checkPackage("", true, mySrcDir1, myTestSrc1, myResDir, myTestResDir, mySrcDir2, myLibSrcDir, myLibClsDir,
-                 myLibAdditionalSrcDir, myLibAdditionalOutsideSrcDir, myLibAdditionalClsDir, myLibAdditionalOutsideClsDir);
-    checkPackage("", false, mySrcDir1, myTestSrc1, myResDir, myTestResDir, mySrcDir2, myLibClsDir,
-                 myLibAdditionalClsDir, myLibAdditionalOutsideClsDir);
+    Collection<VirtualFile> sources = ContainerUtil.newArrayList();
+    sources.addAll(Arrays.asList(mySrcDir1, myTestSrc1, myResDir, myTestResDir, mySrcDir2, myLibSrcDir, myLibClsDir, myLibAdditionalSrcDir,
+                                 myLibAdditionalOutsideSrcDir, myLibAdditionalClsDir, myLibAdditionalOutsideClsDir));
+    sources.addAll(myLibAdditionalSrcDirs);
+    sources.addAll(myLibAdditionalClsDirs);
+    checkPackage("", true, sources.toArray(VirtualFile.EMPTY_ARRAY));
+    Collection<VirtualFile> classes = ContainerUtil.newArrayList();
+    classes.addAll(Arrays.asList(mySrcDir1, myTestSrc1, myResDir, myTestResDir, mySrcDir2, myLibClsDir, myLibAdditionalClsDir,
+                                 myLibAdditionalOutsideClsDir));
+    classes.addAll(myLibAdditionalClsDirs);
+    checkPackage("", false, classes.toArray(VirtualFile.EMPTY_ARRAY));
 
     checkPackage("pack1", true, myPack1Dir);
     checkPackage("pack1", false, myPack1Dir);
@@ -997,6 +999,8 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
   private void checkPackage(String packageName, boolean includeLibrarySources, VirtualFile... expectedDirs) {
     VirtualFile[] actualDirs = myIndex.getDirectoriesByPackageName(packageName, includeLibrarySources).toArray(VirtualFile.EMPTY_ARRAY);
     assertNotNull(actualDirs);
+    Arrays.sort(actualDirs, Comparator.comparing(VirtualFile::getPath));
+    Arrays.sort(expectedDirs, Comparator.comparing(VirtualFile::getPath));
     assertOrderedEquals(actualDirs, expectedDirs);
 
     for (VirtualFile dir : expectedDirs) {
