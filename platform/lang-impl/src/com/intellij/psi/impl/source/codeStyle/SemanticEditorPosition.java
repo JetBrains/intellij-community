@@ -21,12 +21,12 @@ import com.intellij.openapi.editor.ex.util.HighlighterIteratorWrapper;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -40,15 +40,15 @@ public class SemanticEditorPosition {
   private final HighlighterIterator myIterator;
   private final CharSequence myChars;
   private final Function<IElementType, SyntaxElement> myTypeMapper;
-  private final Function<Pair<EditorEx, Integer>, HighlighterIterator> myCreateHighlighterIteratorAtOffset;
+  private final BiFunction<EditorEx, Integer, HighlighterIterator> myCreateHighlighterIteratorAtOffset;
 
-  private SemanticEditorPosition(@NotNull Pair<EditorEx, Integer> offsetInEditor,
-                                 @NotNull Function<Pair<EditorEx, Integer>, HighlighterIterator> createHighlighterIteratorAtOffset,
+  private SemanticEditorPosition(@NotNull EditorEx editor, int offset,
+                                 @NotNull BiFunction<EditorEx, Integer, HighlighterIterator> createHighlighterIteratorAtOffset,
                                  @NotNull Function<IElementType, SyntaxElement> typeMapper) {
     myCreateHighlighterIteratorAtOffset = createHighlighterIteratorAtOffset;
-    myEditor = offsetInEditor.first;
+    myEditor = editor;
     myChars = myEditor.getDocument().getCharsSequence();
-    myIterator = createHighlighterIteratorAtOffset.apply(offsetInEditor);
+    myIterator = createHighlighterIteratorAtOffset.apply(editor, offset);
     myTypeMapper = typeMapper;
   }
 
@@ -282,9 +282,10 @@ public class SemanticEditorPosition {
   }
 
   public SemanticEditorPosition copy() {
-      return createEditorPosition(Pair.create(myEditor, isAtEnd() ? -1 : myIterator.getStart()),
-                                  offsetInEditor -> !isAtEnd() 
-                                  ? myCreateHighlighterIteratorAtOffset.apply(offsetInEditor)
+      return createEditorPosition(myEditor, 
+                                  isAtEnd() ? -1 : myIterator.getStart(),
+                                  (editor, offset) -> !isAtEnd() 
+                                  ? myCreateHighlighterIteratorAtOffset.apply(editor, offset)
                                   : new HighlighterIteratorWrapper(myIterator) { // A wrapper around current iterator to make it immutable.
                                     @Override
                                     public void advance() {
@@ -305,9 +306,9 @@ public class SemanticEditorPosition {
   }
   
   @NotNull
-  public static SemanticEditorPosition createEditorPosition(@NotNull Pair<EditorEx, Integer> offsetInEditor,
-                                                            @NotNull Function<Pair<EditorEx, Integer>, HighlighterIterator> createHighlighterIteratorAtOffset,
+  public static SemanticEditorPosition createEditorPosition(@NotNull EditorEx editor, int offset,
+                                                            @NotNull BiFunction<EditorEx, Integer, HighlighterIterator> createHighlighterIteratorAtOffset,
                                                             @NotNull Function<IElementType, SyntaxElement> typeMapper) {
-    return new SemanticEditorPosition(offsetInEditor, createHighlighterIteratorAtOffset, typeMapper);
+    return new SemanticEditorPosition(editor, offset, createHighlighterIteratorAtOffset, typeMapper);
   }
 }

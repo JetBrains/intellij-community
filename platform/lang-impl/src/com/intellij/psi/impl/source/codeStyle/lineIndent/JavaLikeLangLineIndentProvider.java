@@ -312,8 +312,8 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
   }
 
   protected SemanticEditorPosition getPosition(@NotNull Editor editor, int offset) {
-    return SemanticEditorPosition.createEditorPosition(Pair.create((EditorEx)editor, offset),
-                                                       offsetInEditor -> getIteratorAtPosition(offsetInEditor.first, offsetInEditor.second),
+    return SemanticEditorPosition.createEditorPosition((EditorEx)editor, offset,
+                                                       (_editor, _offset) -> getIteratorAtPosition(_editor, _offset),
                                                        tokenType -> mapType(tokenType));
   }
 
