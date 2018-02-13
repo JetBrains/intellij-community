@@ -62,6 +62,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
@@ -1413,7 +1414,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     private void runReadAction(Runnable action, boolean checkDumb) {
       if (!checkDumb || !DumbService.getInstance(project).isDumb()) {
-        ApplicationManager.getApplication().runReadAction(action);
+        ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(action, myProgressIndicator);
         updatePopup();
       }
     }
@@ -2121,54 +2122,56 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     public ActionCallback insert(final int index, final WidgetID id) {
-       ApplicationManager.getApplication().executeOnPooledThread(() -> runReadAction(() -> {
+       ApplicationManager.getApplication().executeOnPooledThread(() -> {
          try {
-           final SearchResult result
-             = id == WidgetID.CLASSES ? getClasses(pattern, showAll.get(), DEFAULT_MORE_STEP_COUNT, myClassChooseByName)
-             : id == WidgetID.FILES ? getFiles(pattern, showAll.get(), DEFAULT_MORE_STEP_COUNT, myFileChooseByName)
-             : id == WidgetID.RUN_CONFIGURATIONS ? getConfigurations(pattern, DEFAULT_MORE_STEP_COUNT)
-             : id == WidgetID.SYMBOLS ? getSymbols(pattern, DEFAULT_MORE_STEP_COUNT, showAll.get(), mySymbolsChooseByName)
-             : id == WidgetID.ACTIONS ? getActionsOrSettings(pattern, DEFAULT_MORE_STEP_COUNT, true)
-             : id == WidgetID.SETTINGS ? getActionsOrSettings(pattern, DEFAULT_MORE_STEP_COUNT, false)
-             : new SearchResult();
+           runReadAction(() -> {
+             final SearchResult result
+               = id == WidgetID.CLASSES ? getClasses(pattern, showAll.get(), DEFAULT_MORE_STEP_COUNT, myClassChooseByName)
+               : id == WidgetID.FILES ? getFiles(pattern, showAll.get(), DEFAULT_MORE_STEP_COUNT, myFileChooseByName)
+               : id == WidgetID.RUN_CONFIGURATIONS ? getConfigurations(pattern, DEFAULT_MORE_STEP_COUNT)
+               : id == WidgetID.SYMBOLS ? getSymbols(pattern, DEFAULT_MORE_STEP_COUNT, showAll.get(), mySymbolsChooseByName)
+               : id == WidgetID.ACTIONS ? getActionsOrSettings(pattern, DEFAULT_MORE_STEP_COUNT, true)
+               : id == WidgetID.SETTINGS ? getActionsOrSettings(pattern, DEFAULT_MORE_STEP_COUNT, false)
+               : new SearchResult();
 
-           check();
-           SwingUtilities.invokeLater(() -> {
-             try {
-               int shift = 0;
-               int i = index+1;
-               for (Object o : result) {
-                 //noinspection unchecked
-                 myListModel.insertElementAt(o, i);
-                 shift++;
-                 i++;
-               }
-               MoreIndex moreIndex = myListModel.moreIndex;
-               myListModel.titleIndex.shift(index, shift);
-               moreIndex.shift(index, shift);
-
-               if (!result.needMore) {
-                 switch (id) {
-                   case CLASSES: moreIndex.classes = -1; break;
-                   case FILES: moreIndex.files = -1; break;
-                   case ACTIONS: moreIndex.actions = -1; break;
-                   case SETTINGS: moreIndex.settings = -1; break;
-                   case SYMBOLS: moreIndex.symbols = -1; break;
-                   case RUN_CONFIGURATIONS: moreIndex.runConfigurations = -1; break;
+             check();
+             SwingUtilities.invokeLater(() -> {
+               try {
+                 int shift = 0;
+                 int i = index+1;
+                 for (Object o : result) {
+                   //noinspection unchecked
+                   myListModel.insertElementAt(o, i);
+                   shift++;
+                   i++;
                  }
+                 MoreIndex moreIndex = myListModel.moreIndex;
+                 myListModel.titleIndex.shift(index, shift);
+                 moreIndex.shift(index, shift);
+
+                 if (!result.needMore) {
+                   switch (id) {
+                     case CLASSES: moreIndex.classes = -1; break;
+                     case FILES: moreIndex.files = -1; break;
+                     case ACTIONS: moreIndex.actions = -1; break;
+                     case SETTINGS: moreIndex.settings = -1; break;
+                     case SYMBOLS: moreIndex.symbols = -1; break;
+                     case RUN_CONFIGURATIONS: moreIndex.runConfigurations = -1; break;
+                   }
+                 }
+                 ScrollingUtil.selectItem(myList, index);
+                 myDone.setDone();
                }
-               ScrollingUtil.selectItem(myList, index);
-               myDone.setDone();
-             }
-             catch (Exception e) {
-               myDone.setRejected();
-             }
-           });
+               catch (Exception e) {
+                 myDone.setRejected();
+               }
+             });
+           }, true);
          }
          catch (Exception e) {
            myDone.setRejected();
          }
-       }, true));
+       });
       return myDone;
     }
 
