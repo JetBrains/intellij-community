@@ -66,21 +66,30 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     };
     getSelectionModel().addTreeSelectionListener(selectionListener);
     Disposer.register(this, () -> getSelectionModel().removeTreeSelectionListener(selectionListener));
-
     DoubleClickListener doubleClickListener = new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent event) {
-        if (canEditSelectedTemplate()) {
-          editSelectedTemplate();
-          return true;
-        }
-        return false;
+        TreePath location = getClosestPathForLocation(event.getX(), event.getY());
+        return location != null && doubleClick(location.getLastPathComponent());
       }
     };
     doubleClickListener.installOn(this);
     Disposer.register(this, () -> doubleClickListener.uninstall(this));
     setRootVisible(false);
     setShowsRootHandles(true);
+  }
+
+  @Override
+  protected void onDoubleClick(CheckedTreeNode node) {
+    doubleClick(node);
+  }
+
+  private boolean doubleClick(@Nullable Object node) {
+    if (node instanceof PostfixTemplateCheckedTreeNode && isEditable(((PostfixTemplateCheckedTreeNode)node).getTemplate())) {
+      editTemplate((PostfixTemplateCheckedTreeNode)node);
+      return true;
+    }
+    return false;
   }
 
   @Override
@@ -271,8 +280,13 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
 
   public void editSelectedTemplate() {
     TreePath path = getSelectionModel().getSelectionPath();
-    if (!(path.getLastPathComponent() instanceof PostfixTemplateCheckedTreeNode)) return;
-    PostfixTemplateCheckedTreeNode lastPathComponent = (PostfixTemplateCheckedTreeNode)path.getLastPathComponent();
+    Object lastPathComponent = path.getLastPathComponent();
+    if (lastPathComponent instanceof PostfixTemplateCheckedTreeNode) {
+      editTemplate((PostfixTemplateCheckedTreeNode)lastPathComponent);
+    }
+  }
+
+  private void editTemplate(@NotNull PostfixTemplateCheckedTreeNode lastPathComponent) {
     PostfixTemplate template = lastPathComponent.getTemplate();
     PostfixTemplateProvider provider = lastPathComponent.getTemplateProvider();
     if (isEditable(template)) {
