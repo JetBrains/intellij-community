@@ -262,7 +262,12 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
               int lastSize = myThreeComponentsSplitter.getLastSize();
               if (firstSize == 0 && lastSize == 0) {
                 EdtInvocationManager.getInstance().invokeLater(() -> {
-                  int width = Math.round(myThreeComponentsSplitter.getWidth() / 4f);
+                  Container container = myThreeComponentsSplitter;
+                  int containerWidth = 0;
+                  while (container != null && (containerWidth = container.getWidth()) == 0) {
+                    container = container.getParent();
+                  }
+                  int width = Math.round(containerWidth / 4f);
                   myThreeComponentsSplitter.setFirstSize(width);
                 });
               }
