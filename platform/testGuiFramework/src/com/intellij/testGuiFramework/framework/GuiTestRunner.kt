@@ -146,7 +146,7 @@ class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
 
     val runListener: RunListener = object : RunListener() {
       override fun testFailure(failure: Failure?) {
-        LOG.error("Test failed: '$testName'")
+        LOG.info("Test failed: '$testName'")
         notifier.removeListener(this)
         super.testFailure(failure)
       }
