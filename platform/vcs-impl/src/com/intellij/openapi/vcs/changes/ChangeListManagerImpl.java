@@ -133,9 +133,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         final LocalChangeList oldList = (LocalChangeList)oldDefaultList;
         if (oldDefaultList == null || oldList.hasDefaultName() || oldDefaultList.equals(newDefaultList)) return;
 
-        if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          scheduleAutomaticEmptyChangeListDeletion(oldList);
-        }
+        scheduleAutomaticEmptyChangeListDeletion(oldList);
       }
     });
 
@@ -152,6 +150,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList oldList) {
+    if (ApplicationManager.getApplication().isUnitTestMode() &&
+        myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS == VcsShowConfirmationOption.Value.SHOW_CONFIRMATION) {
+      return;
+    }
+
     invokeAfterUpdate(() -> {
       LocalChangeList actualList = getChangeList(oldList.getId());
       if (actualList == null || actualList.isDefault() || !actualList.getChanges().isEmpty()) {
