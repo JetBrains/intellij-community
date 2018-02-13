@@ -73,7 +73,9 @@ public class Generator<T> {
 
   /**
    * Turns off automatic minimization for the data produced by this generator (and its components, if any).
-   * This can be useful to speed up minimization by not wasting time on shrinking objects where it makes no sense. 
+   * This can be useful to speed up minimization by not wasting time on shrinking objects where it makes no sense.
+   * It's especially useful when using stateful generators (e.g. {@link ImperativeCommand}), because 
+   * shrinkable values there can lead to doubling of the shrinking time.
    */
   public Generator<T> noShrink() {
     return from(data -> data.generateNonShrinkable(this));

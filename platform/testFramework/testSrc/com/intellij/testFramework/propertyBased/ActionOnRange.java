@@ -29,6 +29,7 @@ import com.intellij.psi.SmartPsiFileRange;
 import com.intellij.psi.impl.DebugUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jetCheck.Generator;
 
 /**
  * @author peter
@@ -98,4 +99,14 @@ abstract class ActionOnRange implements MadTestingAction {
     }
     return myFinalRange;
   }
+  
+  @SuppressWarnings("SameParameterValue")
+  protected int generatePsiOffset(@NotNull Environment env, @Nullable String logMessage) {
+    return env.generateValue(Generator.integers(0, getFile().getTextLength()).noShrink(), logMessage);
+  }
+
+  protected int generateDocOffset(@NotNull Environment env, @Nullable String logMessage) {
+    return env.generateValue(Generator.integers(0, getDocument().getTextLength()).noShrink(), logMessage);
+  }
+    
 }

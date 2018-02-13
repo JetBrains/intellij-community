@@ -41,7 +41,6 @@ import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.UIUtil;
@@ -236,7 +235,6 @@ public class MadTestingUtil {
     return () -> env -> new RunAll()
       .append(() -> {
         File ioFile = env.generateValue(randomFiles, "Working with %s");
-        System.out.println(ioFile);
         VirtualFile vFile = copyFileToProject(ioFile, fixture, rootPath);
         PsiFile psiFile = fixture.getPsiManager().findFile(vFile);
         if (psiFile instanceof PsiBinaryFile || psiFile instanceof PsiPlainTextFile) {

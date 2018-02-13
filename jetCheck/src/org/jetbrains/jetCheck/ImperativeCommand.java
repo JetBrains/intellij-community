@@ -82,7 +82,10 @@ public interface ImperativeCommand {
      * The message is a Java format string, so you can use it to include the generated value, e.g.
      * {@code String s = generateValue(stringsOf(asciiLetters(), "Generated %s")}.<p/>
      * If you don't want to generate message, or would like to show the generated value in a custom way, pass {@code null}.
-     * You can use {@link #logMessage} later to still leave a trace of this value generation in the log.
+     * You can use {@link #logMessage} later to still leave a trace of this value generation in the log.<p/>
+     * 
+     * Consider making generators non-shrinkable (by invoking {@link Generator#noShrink()}) where possible
+     * because it can speed up overall failing scenario minimization significantly.
      */
     <T> T generateValue(@NotNull Generator<T> generator, @Nullable String logMessage);
 
