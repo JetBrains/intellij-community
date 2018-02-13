@@ -41,5 +41,15 @@ public class RedundantStreamOptionalCall {
 
     IntStream.range(0, 100).unordered().filter(x -> x > 50).<warning descr="Redundant 'unordered' call: there already was an 'unordered' call in the chain">unordered()</warning>.forEach(System.out::println);
     IntStream.range(0, 100).unordered().filter(x -> x > 50).sorted().unordered().forEach(System.out::println);
+
+    Collection<String> collection = Arrays.asList("foo", "foo", "bar");
+    Set<String> set1 = collection.stream().<warning descr="Redundant 'distinct' call: elements will be distinct anyways when collected to the Set">distinct()</warning>.collect(Collectors.toSet());
+    Set<String> set2 = collection.stream().<warning descr="Redundant 'sorted' call: subsequent 'toSet' call makes sorting useless">sorted()</warning>.collect(Collectors.toSet());
+    Set<String> set3 = collection.stream().<warning descr="Redundant 'sorted' call: subsequent 'toSet' call makes sorting useless">sorted()</warning>.<warning descr="Redundant 'distinct' call: elements will be distinct anyways when collected to the Set">distinct()</warning>.collect(Collectors.toSet());
+    Set<String> set4 = collection.stream().<warning descr="Redundant 'distinct' call: elements will be distinct anyways when collected to the Set">distinct()</warning>.<warning descr="Redundant 'sorted' call: subsequent 'toSet' call makes sorting useless">sorted()</warning>.collect(Collectors.toSet());
+    List<String> list1 = collection.stream().distinct().collect(Collectors.toList());
+    List<String> list2 = collection.stream().sorted().collect(Collectors.toList());
+    Map<Integer, String> map1 = collection.stream().<warning descr="Redundant 'sorted' call: subsequent 'toMap' call makes sorting useless">sorted()</warning>.collect(Collectors.toMap(Integer::valueOf, x -> x));
+    Map<Integer, String> map2 = collection.stream().sorted().collect(Collectors.toMap(Integer::valueOf, x -> x, (a,b) ->a, LinkedHashMap::new));
   }
 }
