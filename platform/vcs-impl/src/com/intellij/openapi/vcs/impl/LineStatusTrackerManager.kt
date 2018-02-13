@@ -622,6 +622,7 @@ class LineStatusTrackerManager(
 
       val virtualFile = fileDocumentManager.getFile(document) ?: return
       if (getLineStatusTracker(document) != null) return
+      if (!canGetBaseRevisionFor(virtualFile)) return
       if (!canCreatePartialTrackerFor(virtualFile)) return
 
       val changeList = changeListManager.getChangeList(virtualFile)
