@@ -688,12 +688,12 @@ public class NotificationsManagerImpl extends NotificationsManager {
               ui = new DarculaButtonUI() {
                 @Override
                 protected Color getButtonColor1() {
-                  return new ColorUIResource(0x464b4c);
+                  return new ColorUIResource(0x5a5f61);
                 }
 
                 @Override
                 protected Color getButtonColor2() {
-                  return new ColorUIResource(0x383c3d);
+                  return new ColorUIResource(0x5a5f61);
                 }
               };
             }
@@ -702,7 +702,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
               setBorder(new DarculaButtonPainter() {
                 @Override
                 public Color getBorderColor(Component button) {
-                  return new ColorUIResource(0x616263);
+                  return new ColorUIResource(0x717777);
                 }
               });
             }
