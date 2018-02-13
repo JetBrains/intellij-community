@@ -80,14 +80,19 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
 
       final boolean caretInParameterList = PsiTreeUtil.isAncestor(function.getParameterList(), element, true);
 
+      final Set<PyReferenceExpression> references = new HashSet<>(findKeywordContainerUsages(function));
+      boolean available = false;
+
       for (PyCallExpression call : findKeywordContainerCalls(function)) {
         final PyExpression firstArgument = ArrayUtil.getFirstElement(call.getArguments());
         final String firstArgumentValue = PyStringLiteralUtil.getStringValue(firstArgument);
         if (firstArgumentValue != null &&
             PyNames.isIdentifier(firstArgumentValue) &&
             (caretInParameterList || PsiTreeUtil.isAncestor(call, element, true))) {
-          return true;
+          available = true;
         }
+        //noinspection SuspiciousMethodCalls
+        references.remove(call.getReceiver(null));
       }
 
       for (PySubscriptionExpression subscription : findKeywordContainerSubscriptions(function)) {
@@ -96,9 +101,13 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
         if (indexValue != null &&
             PyNames.isIdentifier(indexValue) &&
             (caretInParameterList || PsiTreeUtil.isAncestor(subscription, element, true))) {
-          return true;
+          available = true;
         }
+        //noinspection SuspiciousMethodCalls
+        references.remove(subscription.getOperand());
       }
+
+      return available && references.isEmpty();
     }
 
     return false;
@@ -122,6 +131,14 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
       replaceKeywordContainerSubscriptions(function, project);
       replaceKeywordContainerCalls(function, project);
     }
+  }
+
+  @NotNull
+  private static List<PyReferenceExpression> findKeywordContainerUsages(@NotNull PyFunction function) {
+    final BiPredicate<PsiElement, PyParameter> referenceToKeywordContainer =
+      (e, container) -> e instanceof PyReferenceExpression && ((PyReferenceExpression)e).getReference().isReferenceTo(container);
+
+    return findKeywordContainerUsages(function, referenceToKeywordContainer);
   }
 
   @NotNull
