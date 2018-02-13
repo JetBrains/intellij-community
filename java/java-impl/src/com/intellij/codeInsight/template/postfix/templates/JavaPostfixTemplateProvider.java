@@ -52,6 +52,7 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     new ThrowExceptionPostfixTemplate(this),
     new FormatPostfixTemplate(this),
     new ObjectsRequireNonNullPostfixTemplate(this),
+    new ArgumentPostfixTemplate(this),
 
     new CastExpressionPostfixTemplate(),
     new ElseStatementPostfixTemplate(),
@@ -137,6 +138,7 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
         templateToEdit instanceof JavaEditablePostfixTemplate &&
         // cannot be editable until there is no UI for editing template variables    
         !(templateToEdit instanceof ForIndexedPostfixTemplate) &&
+        !(templateToEdit instanceof ArgumentPostfixTemplate) &&
         !(templateToEdit instanceof OptionalPostfixTemplate)) {
       return new JavaPostfixTemplateEditor(this, templateToEdit);
     }
