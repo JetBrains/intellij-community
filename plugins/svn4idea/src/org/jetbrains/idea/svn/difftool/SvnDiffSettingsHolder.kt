@@ -12,11 +12,7 @@ import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.XMap
 import java.util.*
 
-
-@State(
-  name = "SvnDiffSettings",
-  storages = arrayOf(Storage(value = DiffUtil.DIFF_CONFIG))
-)
+@State(name = "SvnDiffSettings", storages = [(Storage(value = DiffUtil.DIFF_CONFIG))])
 class SvnDiffSettingsHolder : PersistentStateComponent<SvnDiffSettingsHolder.State> {
   class SharedSettings(
   )

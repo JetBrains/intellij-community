@@ -32,7 +32,7 @@ internal class DefaultProjectStoreTest {
 
     internal const val TEST_COMPONENT_NAME = "Foo"
 
-    @State(name = TEST_COMPONENT_NAME, storages = arrayOf(Storage(value = "testSchemes", stateSplitter = TestStateSplitter::class)))
+    @State(name = TEST_COMPONENT_NAME, storages = [(Storage(value = "testSchemes", stateSplitter = TestStateSplitter::class))])
     private class TestComponent: PersistentStateComponent<Element> {
       private var element = Element("state")
 

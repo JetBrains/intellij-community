@@ -47,7 +47,7 @@ private const val MODULE = "module"
 
 private val LOG = Logger.getInstance(CopyrightManager::class.java)
 
-@State(name = "CopyrightManager", storages = arrayOf(Storage(value = "copyright/profiles_settings.xml", exclusive = true)))
+@State(name = "CopyrightManager", storages = [(Storage(value = "copyright/profiles_settings.xml", exclusive = true))])
 class CopyrightManager @JvmOverloads constructor(private val project: Project, schemeManagerFactory: SchemeManagerFactory, isSupportIprProjects: Boolean = true) : PersistentStateComponent<Element> {
   companion object {
     @JvmStatic
