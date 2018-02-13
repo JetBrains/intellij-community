@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.copyright
 
 import com.intellij.configurationStore.*
@@ -83,6 +81,10 @@ class CopyrightManager @JvmOverloads constructor(private val project: Project, s
     }
 
     override fun isSchemeFile(name: CharSequence) = !StringUtil.equals(name, "profiles_settings.xml")
+
+    override fun getSchemeKey(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String): String? {
+      return super.getSchemeKey(attributeProvider, fileNameWithoutExtension) ?: fileNameWithoutExtension
+    }
   }, schemeNameToFileName = OLD_NAME_CONVERTER, streamProvider = schemeManagerIprProvider)
 
   init {
@@ -258,6 +260,9 @@ private class CopyrightLazySchemeWrapper(name: String,
     }
 
     element.deserializeInto(scheme)
+    // use effective name instead of probably missed from the serialized
+    // https://youtrack.jetbrains.com/v2/issue/IDEA-186546
+    scheme.profileName = name
 
     @Suppress("DEPRECATION")
     val allowReplaceKeyword = scheme.allowReplaceKeyword
