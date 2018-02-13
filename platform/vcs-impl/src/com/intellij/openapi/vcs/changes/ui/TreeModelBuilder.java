@@ -39,7 +39,7 @@ public class TreeModelBuilder {
   public static final Key<Function<StaticFilePath, ChangesBrowserNode<?>>> PATH_NODE_BUILDER = Key.create("ChangesTree.PathNodeBuilder");
   public static final NotNullLazyKey<Map<String, ChangesBrowserNode<?>>, ChangesBrowserNode<?>> DIRECTORY_CACHE =
     NotNullLazyKey.create("ChangesTree.DirectoryCache", node -> newHashMap());
-  public static final Key<ChangesGroupingPolicy> GROUPING_POLICY = Key.create("ChangesTree.GroupingPolicy");
+  private static final Key<ChangesGroupingPolicy> GROUPING_POLICY = Key.create("ChangesTree.GroupingPolicy");
   // This is used in particular for the case when module contains files from different repositories. So there could be several nodes for
   // the same module in one subtree (for change list), but under different repository nodes. And we should perform node caching not just
   // in subtree root, but further down the tree.
