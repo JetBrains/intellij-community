@@ -882,7 +882,6 @@ public class AbstractPopup implements JBPopup {
             glass.setCursor(cursor, this);
             myCursor = cursor;
           }
-          super.setCursor(content, cursor);
         }
       };
       glass.addMousePreprocessor(resizeListener, this);
