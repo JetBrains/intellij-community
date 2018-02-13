@@ -27,7 +27,6 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,10 +56,6 @@ public class PluginManager extends PluginManagerCore {
     startupStart = System.nanoTime();
 
     Main.setFlags(args);
-
-    if (!Main.isHeadless()) {
-      UIUtil.initDefaultLAF();
-    }
 
     ThreadGroup threadGroup = new ThreadGroup("Idea Thread Group") {
       @Override
