@@ -21,7 +21,7 @@ public class ShrinkTest extends PropertyCheckerTestCase {
                      String s = l.toString();
                      return !"abcdefghijklmnopqrstuvwxyz()[]#!".chars().allMatch(c -> s.indexOf((char)c) >= 0);
                    },
-                   254);
+                   356);
   }
 
   public void testShrinkingNonEmptyList() {

@@ -35,7 +35,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testStringContains() {
     assertEquals("a", checkGeneratesExample(stringsOf(asciiPrintableChars()),
                                             s -> s.contains("a"),
-                                            8));
+                                            10));
   }
 
   public void testLetterStringContains() {
@@ -171,6 +171,11 @@ public class GeneratorTest extends PropertyCheckerTestCase {
     PropertyFailure.CounterExample<List<Integer>> min2 = min.replay();
     assertEquals(goldMin, min2.getExampleValue());
     assertEquals(log, Collections.singletonList(goldMin));
+  }
+
+  public void testShrinkToRangeStart() {
+    PropertyFailure<String> failure = checkFalsified(stringsOf(asciiUppercaseChars()), s -> s.length() < 5, 11);
+    assertEquals("AAAAA", failure.getMinimalCounterexample().getExampleValue());
   }
 
 }

@@ -229,7 +229,13 @@ class IntData extends StructureElement {
   @Nullable
   @Override
   ShrinkStep shrink() {
-    return value == 0 ? null : tryInt(0, () -> null, this::tryNegation);
+    if (value == 0) return null;
+
+    int minValue = 0;
+    if (distribution instanceof BoundedIntDistribution) {
+      minValue = Math.max(minValue, ((BoundedIntDistribution)distribution).getMin());
+    }
+    return tryInt(minValue, () -> null, this::tryNegation);
   }
 
   private ShrinkStep tryNegation() {

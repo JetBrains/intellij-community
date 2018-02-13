@@ -176,7 +176,7 @@ public class Generator<T> {
 
   /** Generates characters in the given range (both ends inclusive) */
   public static Generator<Character> charsInRange(char min, char max) {
-    return integers(min, max).map(i -> (char)i.intValue()).noShrink();
+    return integers(min, max).map(i -> (char)i.intValue());
   }
 
   /** Generates ASCII characters excluding the system ones (lower than 32) */
