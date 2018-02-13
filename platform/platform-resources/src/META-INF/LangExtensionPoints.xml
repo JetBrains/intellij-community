@@ -925,6 +925,9 @@
                     beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.stubs.PrebuiltStubsProvider"/>
     </extensionPoint>
+
+    <extensionPoint name="runningApplicationUpdaterProvider"
+                    interface="com.intellij.execution.update.RunningApplicationUpdaterProvider"/>
   </extensionPoints>
 </idea-plugin>
 
