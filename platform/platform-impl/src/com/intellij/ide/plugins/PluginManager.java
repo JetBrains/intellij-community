@@ -107,24 +107,24 @@ public class PluginManager extends PluginManagerCore {
         System.exit(Main.INSTALLATION_CORRUPTED);
       }
 
-      @SuppressWarnings("ThrowableResultOfMethodCallIgnored") StartupAbortedException se = findCause(t, StartupAbortedException.class);
-      if (se == null) se = new StartupAbortedException(t);
-      @SuppressWarnings("ThrowableResultOfMethodCallIgnored") PluginException pe = findCause(t, PluginException.class);
-      PluginId pluginId = pe != null ? pe.getPluginId() : null;
+      StartupAbortedException startupException = findCause(t, StartupAbortedException.class);
+      if (startupException == null) startupException = new StartupAbortedException(t);
+      PluginException pluginException = findCause(t, PluginException.class);
+      PluginId pluginId = pluginException != null ? pluginException.getPluginId() : null;
 
       if (Logger.isInitialized() && !(t instanceof ProcessCanceledException)) {
         try {
           getLogger().error(t);
         }
         catch (Throwable ignore) { }
+
+        // workaround for SOE on parsing PAC file (JRE-247)
         if (t instanceof StackOverflowError && "Nashorn AST Serializer".equals(Thread.currentThread().getName())) {
-          // workaround for startup's SOE parsing PAC file (JRE-247)
-          // jdk8u_nashorn/blob/master/src/jdk/nashorn/internal/runtime/RecompilableScriptFunctionData.java#createAstSerializerExecutorService
           return;
         }
       }
 
-      final ImplementationConflictException conflictException = findCause(t, ImplementationConflictException.class);
+      ImplementationConflictException conflictException = findCause(t, ImplementationConflictException.class);
       if (conflictException != null) {
         PluginConflictReporter.INSTANCE.reportConflictByClasses(conflictException.getConflictingClasses());
       }
@@ -136,14 +136,14 @@ public class PluginManager extends PluginManagerCore {
         message.append("Plugin '").append(pluginId.getIdString()).append("' failed to initialize and will be disabled. ");
         message.append(" Please restart ").append(getProductNameSafe()).append('.');
         message.append("\n\n");
-        pe.getCause().printStackTrace(new PrintWriter(message));
+        pluginException.getCause().printStackTrace(new PrintWriter(message));
 
         Main.showMessage("Plugin Error", message.toString(), false);
         System.exit(Main.PLUGIN_ERROR);
       }
       else {
         Main.showMessage("Start Failed", t);
-        System.exit(se.exitCode());
+        System.exit(startupException.exitCode());
       }
     }
     else if (!(t instanceof ProcessCanceledException)) {
