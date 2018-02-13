@@ -310,19 +310,20 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
   private void clearOldBuilds(List<Runnable> runOnEdt, StartBuildEvent startBuildEvent) {
     long currentTime = System.currentTimeMillis();
     DefaultListModel<AbstractViewManager.BuildInfo> listModel = (DefaultListModel<AbstractViewManager.BuildInfo>)myBuildsList.getModel();
-    boolean shouldBeCleared = !listModel.isEmpty();
+    boolean clearAll = !listModel.isEmpty();
     List<AbstractViewManager.BuildInfo> sameBuildsToClear = new SmartList<>();
     for (int i = 0; i < listModel.getSize(); i++) {
-      AbstractViewManager.BuildInfo info = listModel.getElementAt(i);
-      boolean sameBuild = info.getWorkingDir().equals(startBuildEvent.getWorkingDir());
-      if (info.endTime != -1 && sameBuild) {
-        sameBuildsToClear.add(info);
+      AbstractViewManager.BuildInfo build = listModel.getElementAt(i);
+      boolean sameBuild = build.getWorkingDir().equals(startBuildEvent.getWorkingDir());
+      if (!build.isRunning() && sameBuild) {
+        sameBuildsToClear.add(build);
       }
-      if (shouldBeCleared && info.endTime == -1 || !sameBuild && currentTime - info.endTime < TimeUnit.SECONDS.toMillis(1)) {
-        shouldBeCleared = false;
+      boolean buildFinishedRecently = currentTime - build.endTime < TimeUnit.SECONDS.toMillis(1);
+      if (build.isRunning() || !sameBuild && buildFinishedRecently) {
+        clearAll = false;
       }
     }
-    if (shouldBeCleared) {
+    if (clearAll) {
       myBuildsMap.clear();
       SmartList<BuildView> viewsToDispose = new SmartList<>(myViewMap.values());
       runOnEdt.add(() -> viewsToDispose.forEach(Disposer::dispose));
@@ -337,15 +338,13 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
       myToolbarActions.removeAll();
     }
     else {
-      for (AbstractViewManager.BuildInfo info : sameBuildsToClear) {
-        runOnEdt.add(() -> {
-          BuildView buildView = myViewMap.remove(info);
-          if (buildView != null) {
-            Disposer.dispose(buildView);
-          }
-        });
+      sameBuildsToClear.forEach(info -> {
+        BuildView buildView = myViewMap.remove(info);
+        if (buildView != null) {
+          runOnEdt.add(() -> Disposer.dispose(buildView));
+        }
         listModel.removeElement(info);
-      }
+      });
     }
   }
 
