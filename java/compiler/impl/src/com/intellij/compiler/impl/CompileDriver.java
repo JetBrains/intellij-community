@@ -396,7 +396,7 @@ public class CompileDriver {
     // ensure the project model seen by build process is up-to-date
     myProject.save();
     if (!isUnitTestMode) {
-      ApplicationManager.getApplication().saveSettings(true);
+      ApplicationManager.getApplication().saveSettings();
     }
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();
