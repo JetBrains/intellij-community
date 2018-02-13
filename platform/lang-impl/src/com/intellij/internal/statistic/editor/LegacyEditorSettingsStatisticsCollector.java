@@ -3,9 +3,11 @@ package com.intellij.internal.statistic.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
+import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
+import com.intellij.internal.statistic.CollectUsagesException;
+import com.intellij.internal.statistic.UsagesCollector;
+import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
-import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
-import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.richcopy.settings.RichCopySettings;
@@ -19,13 +21,16 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
 
-class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
-  private static final String GROUP_ID = "statistics.editor.settings";
+/**
+ * @deprecated To be removed in 2018.3 (replaced by EditorSettingsStatisticsCollector)
+ */
+class LegacyEditorSettingsStatisticsCollector extends UsagesCollector {
+  private static final GroupDescriptor GROUP_DESCRIPTOR = GroupDescriptor.create("Editor");
 
   @NotNull
   @Override
-  public String getGroupId() {
-    return GROUP_ID;
+  public GroupDescriptor getGroupId() {
+    return GROUP_DESCRIPTOR;
   }
 
   @NotNull
@@ -130,16 +135,16 @@ class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
     }
   }
 
-  public static class ProjectUsages extends ProjectUsagesCollector {
+  public static class ProjectUsages extends AbstractProjectsUsagesCollector {
     @NotNull
     @Override
-    public String getGroupId() {
-      return GROUP_ID;
+    public GroupDescriptor getGroupId() {
+      return GROUP_DESCRIPTOR;
     }
 
     @NotNull
     @Override
-    public Set<UsageDescriptor> getUsages(@NotNull Project project) {
+    public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) throws CollectUsagesException {
       Set<UsageDescriptor> set = new HashSet<>();
       CodeInsightWorkspaceSettings ciws = CodeInsightWorkspaceSettings.getInstance(project);
       CodeInsightWorkspaceSettings ciwsDefault = new CodeInsightWorkspaceSettings();
