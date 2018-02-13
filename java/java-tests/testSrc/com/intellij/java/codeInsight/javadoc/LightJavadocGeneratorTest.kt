@@ -25,32 +25,15 @@ import com.intellij.util.loadElement
 class LightJavadocGeneratorTest : LightCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_9
 
-  fun testPlainModule() = doTestModule("module M.N { }", """
-      <body>
-        <pre>
-          module
-          <b>M.N</b>
-        </pre>
-      </body>""".trimIndent())
+  fun testPlainModule() = doTestModule("module M.N { }", """<div class='definition'><pre>module <b>M.N</b></pre></div>""".trimIndent())
 
-  fun testDocumentedModule() = doTestModule("/** One humble module. */\n@Deprecated\nmodule M.N { }", """
-      <body>
-        @
-        <a href="psi_element://java.lang.Deprecated">
-          <code>Deprecated</code>
-        </a>
-        <pre>
-          module
-          <b>M.N</b>
-        </pre>
-        One humble module.
-      </body>""".trimIndent())
+  fun testDocumentedModule() = doTestModule("/** One humble module. */\n@Deprecated\nmodule M.N { }", """<div class='definition'><pre>@<a href="psi_element://java.lang.Deprecated"><code>Deprecated</code></a> 
+module <b>M.N</b></pre></div><div class='content'> One humble module. </div><table class='sections'><p></table>""".trimIndent())
 
   private fun doTestModule(text: String, expected: String) {
     val file = myFixture.configureByText("module-info.java", text)
     val module = (file as PsiJavaFile).moduleDeclaration!!
     val docInfo = JavaDocInfoGeneratorFactory.create(project, module).generateDocInfo(null)!!.replace("&nbsp;", " ")
-    val body = loadElement(docInfo).getChild("body")
-    assertThat(body).isEqualTo(expected)
+    assertThat(docInfo).isEqualTo(expected)
   }
 }

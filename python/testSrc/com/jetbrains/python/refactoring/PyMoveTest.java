@@ -76,7 +76,7 @@ public class PyMoveTest extends PyTestCase {
 
   // PY-11923
   public void testMovableTopLevelAssignmentDetection() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       myFixture.configureByFile("/refactoring/move/" + getTestName(true) + ".py");
       assertFalse(isMovableModuleMember(findFirstNamedElement("X1")));
       assertFalse(isMovableModuleMember(findFirstNamedElement("X3")));
@@ -211,22 +211,22 @@ public class PyMoveTest extends PyTestCase {
 
   // PY-7378
   public void testMoveNamespacePackage1() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doMoveFileTest("nspkg/nssubpkg", ""));
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doMoveFileTest("nspkg/nssubpkg", ""));
   }
 
   // PY-7378
   public void testMoveNamespacePackage2() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doMoveFileTest("nspkg/nssubpkg/a.py", ""));
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doMoveFileTest("nspkg/nssubpkg/a.py", ""));
   }
 
   // PY-7378
   public void testMoveNamespacePackage3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doMoveFileTest("nspkg/nssubpkg/a.py", "nspkg"));
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doMoveFileTest("nspkg/nssubpkg/a.py", "nspkg"));
   }
 
   // PY-14384
   public void testRelativeImportInsideNamespacePackage() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doMoveFileTest("nspkg/nssubpkg", ""));
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doMoveFileTest("nspkg/nssubpkg", ""));
   }
 
   // PY-14384
@@ -247,7 +247,7 @@ public class PyMoveTest extends PyTestCase {
 
   // PY-14595
   public void testNamespacePackageUsedInMovedFunction() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doMoveSymbolTest("func", "b.py"));
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doMoveSymbolTest("func", "b.py"));
   }
 
   // PY-14599

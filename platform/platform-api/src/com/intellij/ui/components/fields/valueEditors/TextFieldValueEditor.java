@@ -25,7 +25,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 
 public abstract class TextFieldValueEditor<T> extends AbstractValueEditor<T> {
-  private JTextField myField;
+  private final JTextField myField;
 
   public TextFieldValueEditor(@NotNull JTextField field,
                               @Nullable String valueName,

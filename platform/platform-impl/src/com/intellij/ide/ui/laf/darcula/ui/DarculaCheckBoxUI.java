@@ -15,10 +15,8 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
-import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.ide.ui.laf.IconCache;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.Gray;
 import com.intellij.util.ui.*;
 import sun.swing.SwingUtilities2;
 
@@ -33,7 +31,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class DarculaCheckBoxUI extends MetalCheckBoxUI {
-  private static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(20)).asUIResource();
+  private static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(19)).asUIResource();
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static ComponentUI createUI(JComponent c) {
@@ -81,91 +79,9 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   }
 
   protected void drawCheckIcon(JComponent c, Graphics2D g, AbstractButton b, Rectangle iconRect, boolean selected, boolean enabled) {
-    if (selected && b.getSelectedIcon() != null) {
-      b.getSelectedIcon().paintIcon(b, g, iconRect.x + JBUI.scale(4), iconRect.y + JBUI.scale(2));
-    } else if (!selected && b.getIcon() != null) {
-      b.getIcon().paintIcon(b, g, iconRect.x + JBUI.scale(4), iconRect.y + JBUI.scale(2));
-    } else {
-      g = (Graphics2D)g.create();
-      try {
-        int off = JBUI.scale(3);
-        int x = iconRect.x + off;
-        int y = iconRect.y + off;
-        int w = iconRect.width - 2 * off;
-        int h = iconRect.height - 2 * off;
-
-        g.translate(x, y);
-
-        //setup AA for lines
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_DEFAULT);
-
-        if (c.isEnabled() || !UIUtil.isUnderDarcula()) {
-          Paint paint = UIUtil.getGradientPaint(w / 2, 0, b.getBackground().brighter(),
-                                                w / 2, h, b.getBackground());
-          g.setPaint(paint);
-
-          int fillOffset = JBUI.scale(1);
-          g.fillRect(fillOffset, fillOffset, w - 2 * fillOffset, h - 2 * fillOffset);
-        }
-
-        boolean armed = b.getModel().isArmed();
-
-        int R = JBUI.scale(4);
-        int offset = 1;
-        boolean overrideBg = isIndeterminate(b) && fillBackgroundForIndeterminateSameAsForSelected();
-
-        if (c.hasFocus()) {
-          g.setPaint(UIUtil.getGradientPaint(w/2, offset, getFocusedBackgroundColor1(armed, selected || overrideBg),
-                                             w/2, h, getFocusedBackgroundColor2(armed, selected || overrideBg)));
-          g.fillRoundRect(0, 0, w, h, R, R);
-
-          float bw = DarculaUIUtil.bw();
-          g.translate(-bw, -bw);
-          DarculaUIUtil.paintFocusBorder(g, (int)(iconRect.width - bw), (int)(iconRect.height - bw), DarculaUIUtil.arc(), true);
-          g.translate(bw, bw);
-        } else {
-          if (c.isEnabled() || !UIUtil.isUnderDarcula()) {
-            g.setPaint(UIUtil.getGradientPaint(w / 2, offset, getBackgroundColor1(enabled, selected || overrideBg),
-                                               w / 2, h, getBackgroundColor2(enabled, selected || overrideBg)));
-            g.fillRoundRect(0, 0, w, h , R, R);
-
-            Color borderColor1 = getBorderColor1(enabled, selected || overrideBg);
-            Color borderColor2 = getBorderColor2(enabled, selected || overrideBg);
-            g.setPaint(UIUtil.getGradientPaint(w / 2, offset, borderColor1, w / 2, h, borderColor2));
-            g.drawRoundRect(0, (UIUtil.isUnderDarcula() ? offset : 0), w, h - offset, R, R);
-
-            g.setPaint(getInactiveFillColor());
-            g.drawRoundRect(0, 0, w, h - offset, R, R);
-          } else {
-            g.setColor(Gray.x58);
-            g.drawRoundRect(0, 0, w, h - offset, R, R);
-          }
-        }
-
-        if (isIndeterminate(b)) {
-          paintIndeterminateSign(g, enabled, w, h);
-        } else if (b.getModel().isSelected()) {
-          paintCheckSign(g, enabled, w, h);
-        }
-      } finally {
-        g.dispose();
-      }
-    }
-  }
-
-  protected void paintIndeterminateSign(Graphics2D g, boolean enabled, int w, int h) {
-    g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-    g.setStroke(new BasicStroke(1 * JBUI.scale(2.0f), BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND));
-
-    int off = JBUI.scale(4);
-    int y1 = h / 2;
-    g.setColor(getShadowColor(enabled, true));
-    GraphicsConfig c = new GraphicsConfig(g).paintWithAlpha(.8f);
-    g.drawLine(off, y1 + JBUI.scale(1), w - off + JBUI.scale(1), y1 + JBUI.scale(1));
-    c.restore();
-    g.setColor(getCheckSignColor(enabled, true));
-    g.drawLine(off, y1, w - off + JBUI.scale(1), y1);
+    String iconName = isIndeterminate(b) ? "checkBoxIndeterminate" : "checkBox";
+    Icon icon = IconCache.getIcon(iconName, selected || isIndeterminate(b), c.hasFocus(), b.isEnabled());
+    icon.paintIcon(c, g, iconRect.x, iconRect.y);
   }
 
   protected void drawText(JComponent c, Graphics2D g, AbstractButton b, FontMetrics fm, Rectangle textRect, String text) {
@@ -183,90 +99,6 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
                                                   textRect.y + fm.getAscent());
       }
     }
-  }
-
-  protected boolean fillBackgroundForIndeterminateSameAsForSelected() {
-    return false;
-  }
-
-  protected void paintCheckSign(Graphics2D g, boolean enabled, int w, int h) {
-    g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-    g.setStroke(new BasicStroke(1 * JBUI.scale(2.0f), BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND));
-
-    int x1 = JBUI.scale(4);
-    int y1 = JBUI.scale(7);
-    int x2 = JBUI.scale(7);
-    int y2 = JBUI.scale(11);
-    int y3 = JBUI.scale(2);
-
-    if (enabled) {
-      g.setPaint(getShadowColor(true, true));
-      g.drawLine(x1, y1, x2, y2);
-      g.drawLine(x2, y2, w, y3);
-    }
-
-    g.setPaint(getCheckSignColor(enabled, true));
-    g.translate(0, -2);
-    g.drawLine(x1, y1, x2, y2);
-    g.drawLine(x2, y2, w, y3);
-    g.translate(0, 2);
-  }
-
-  protected Color getInactiveFillColor() {
-    return getColor("inactiveFillColor", Gray._40.withAlpha(180));
-  }
-
-  protected Color getBorderColor1(boolean enabled, boolean selected) {
-    return enabled ? getColor("borderColor1", Gray._120.withAlpha(0x5a), selected)
-                   : getColor("disabledBorderColor1", Gray._120.withAlpha(90), selected);
-  }
-
-  protected Color getBorderColor2(boolean enabled, boolean selected) {
-    return enabled ? getColor("borderColor2", Gray._105.withAlpha(90), selected)
-                   : getColor("disabledBorderColor2", Gray._105.withAlpha(90), selected);
-  }
-
-  protected Color getBackgroundColor1(boolean enabled, boolean selected) {
-    return getColor("backgroundColor1", Gray._110, selected);
-  }
-
-  protected Color getBackgroundColor2(boolean enabled, boolean selected) {
-    return getColor("backgroundColor2", Gray._95, selected);
-  }
-
-  protected Color getCheckSignColor(boolean enabled, boolean selected) {
-    return enabled ? getColor("checkSignColor", Gray._170, selected)
-                   : getColor("checkSignColorDisabled", Gray._120, selected);
-  }
-
-  protected Color getShadowColor(boolean enabled, boolean selected) {
-    return enabled ? getColor("shadowColor", Gray._30, selected)
-                   : getColor("shadowColorDisabled", Gray._60, selected);
-  }
-
-  protected Color getFocusedBackgroundColor1(boolean armed, boolean selected) {
-    return armed ? getColor("focusedArmed.backgroundColor1", Gray._100, selected)
-                 : getColor("focused.backgroundColor1", Gray._120, selected);
-  }
-
-  protected Color getFocusedBackgroundColor2(boolean armed, boolean selected) {
-    return armed ? getColor("focusedArmed.backgroundColor2", Gray._55, selected)
-                 : getColor("focused.backgroundColor2", Gray._75, selected);
-  }
-
-  protected static Color getColor(String shortPropertyName, Color defaultValue) {
-    final Color color = UIManager.getColor("CheckBox.darcula." + shortPropertyName);
-    return color == null ? defaultValue : color;
-  }
-
-  protected static Color getColor(String shortPropertyName, Color defaultValue, boolean selected) {
-    if (selected) {
-      final Color color = getColor(shortPropertyName + ".selected", null);
-      if (color != null) {
-        return color;
-      }
-    }
-    return getColor(shortPropertyName, defaultValue);
   }
 
   @Override

@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.ide.ui.laf.IconCache;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.ui.Gray;
 import com.intellij.util.IconUtil;
@@ -60,7 +61,7 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
   public void installUI(JComponent c) {
     super.installUI(c);
 
-    DEFAULT_ICON = EmptyIcon.create(MacIntelliJIconCache.getIcon("comboRight", comboBox.isEditable(), false, false, true));
+    DEFAULT_ICON = EmptyIcon.create(IconCache.getIcon("comboRight", comboBox.isEditable(), false, false, true));
     comboBox.setOpaque(false);
     comboBox.setBorder(new MacComboBoxBorder());
 
@@ -101,7 +102,7 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
 
     myEditableChangeListener = (evt) -> {
       Boolean editable = (Boolean)evt.getNewValue();
-      DEFAULT_ICON = EmptyIcon.create(MacIntelliJIconCache.getIcon("comboRight", editable, false, false, false));
+      DEFAULT_ICON = EmptyIcon.create(IconCache.getIcon("comboRight", editable, false, false, false));
       comboBox.invalidate();
     };
     c.addPropertyChangeListener("editable", myEditableChangeListener);
@@ -128,10 +129,12 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
     JButton button = new BasicArrowButton(SwingConstants.SOUTH, bg, fg, fg, fg) {
       @Override
       public void paint(Graphics g) {
-        Icon icon = MacIntelliJIconCache.getIcon("comboRight", comboBox.isEditable(), false, false, comboBox.isEnabled());
+        if (!UIUtil.isUnderDefaultMacTheme()) return; // Paint events may still arrive after UI switch until entire UI is updated.
+
+        Icon icon = IconCache.getIcon("comboRight", comboBox.isEditable(), false, false, comboBox.isEnabled());
         if (getWidth() > icon.getIconWidth() || getHeight() > icon.getIconHeight()) {
           Image image = IconUtil.toImage(icon);
-          UIUtil.drawImage(g, image, new Rectangle(0, 0, getWidth(), getHeight()), null, null);
+          UIUtil.drawImage(g, image, new Rectangle(0, 0, getWidth(), getHeight()), null);
         } else {
           icon.paintIcon(this, g, 0, 0);
         }

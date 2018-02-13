@@ -54,10 +54,10 @@ public class GitRebaser {
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
-  @NotNull private GitVcs myVcs;
-  @NotNull private ProgressIndicator myProgressIndicator;
+  @NotNull private final GitVcs myVcs;
+  @NotNull private final ProgressIndicator myProgressIndicator;
 
-  @NotNull private List<GitRebaseUtils.CommitInfo> mySkippedCommits;
+  @NotNull private final List<GitRebaseUtils.CommitInfo> mySkippedCommits;
 
   public GitRebaser(@NotNull Project project, @NotNull Git git, @NotNull ProgressIndicator progressIndicator) {
     myProject = project;
@@ -86,8 +86,7 @@ public class GitRebaser {
     rebaseHandler.addLineListener(localChangesDetector);
     rebaseHandler.addLineListener(GitStandardProgressAnalyzer.createListener(myProgressIndicator));
 
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
-    try {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, "Rebase")) {
       String oldText = myProgressIndicator.getText();
       myProgressIndicator.setText("Rebasing...");
       GitCommandResult result = myGit.runCommand(rebaseHandler);
@@ -101,9 +100,6 @@ public class GitRebaser {
         onCancel.run();
       }
       return GitUpdateResult.CANCEL;
-    }
-    finally {
-      token.finish();
     }
   }
 
@@ -130,16 +126,12 @@ public class GitRebaser {
    * @return true if rebase successfully finished.
    */
   public boolean continueRebase(@NotNull Collection<VirtualFile> rebasingRoots) {
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
-    try {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, "Rebase")) {
       boolean success = true;
       for (VirtualFile root : rebasingRoots) {
         success &= continueRebase(root);
       }
       return success;
-    }
-    finally {
-      token.finish();
     }
   }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
@@ -164,7 +150,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       final PsiExpressionList parentArgList;
       if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
         parentArgList = callParent instanceof PsiConditionalExpression && !PsiPolyExpressionUtil.isPolyExpression((PsiExpression)callParent)
-                        ? null : PsiTreeUtil.getParentOfType(call, PsiExpressionList.class);
+                        ? null : PsiTreeUtil.getParentOfType(call, PsiExpressionList.class, true, PsiReferenceExpression.class);
       }
       else {
         parentArgList = null;
@@ -208,7 +194,10 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
 
       boolean is15OrHigher = languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0;
       final PsiType getClassReturnType = PsiTypesUtil.patchMethodGetClassReturnType(call, methodExpression, method,
-                                                                                    type -> type != JavaElementType.CLASS, languageLevel);
+                                                                                    type -> type != JavaElementType.CLASS && 
+                                                                                             //enum can be created inside enum only, no need to mention it here
+                                                                                            type != JavaElementType.ANONYMOUS_CLASS
+                                                                                    , languageLevel);
 
       if (getClassReturnType != null) {
         return getClassReturnType;

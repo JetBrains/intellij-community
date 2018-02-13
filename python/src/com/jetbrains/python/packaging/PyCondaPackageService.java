@@ -21,6 +21,7 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemDependent;
 
 import java.io.File;
 import java.util.HashMap;
@@ -33,6 +34,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   private static final Logger LOG = Logger.getInstance(PyCondaPackageService.class);
   public Set<String> CONDA_CHANNELS = ContainerUtil.newConcurrentSet();
   public long LAST_TIME_CHECKED = 0;
+  @Nullable @SystemDependent public String PREFERRED_CONDA_PATH = null;
 
   @Override
   public PyCondaPackageService getState() {

@@ -119,7 +119,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       for (PsiClass aClass : classes) {
         if (includeSelf) {
           final String name = aClass.getName();
-          if (name != null) result.add(name);;
+          if (name != null) result.add(name);
         }
         ClassInheritorsSearch.search(aClass, projectAndLibraries, true).forEach(c -> {
           final String name = c.getName();
@@ -175,10 +175,6 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       SubstitutionHandler handler = (SubstitutionHandler)myCompilingVisitor.getContext().getPattern().getHandler(str);
       if (handler == null) {
         throw new MalformedPatternException();
-      }
-
-      if (handler.getPredicate() != null) {
-        ((RegExpPredicate)handler.getPredicate()).setMultiline(true);
       }
 
       RegExpPredicate predicate = handler.findRegExpPredicate();

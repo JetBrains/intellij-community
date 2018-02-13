@@ -153,8 +153,8 @@ public class GitChangeProvider implements ChangeProvider {
     private final Project myProject;
     private final Set<FilePath> myProcessedPaths;
     private final ChangeListManagerGate myAddGate;
-    private FileDocumentManager myFileDocumentManager;
-    private ProjectLevelVcsManager myVcsManager;
+    private final FileDocumentManager myFileDocumentManager;
+    private final ProjectLevelVcsManager myVcsManager;
 
     private MyNonChangedHolder(final Project project,
                                final ChangeListManagerGate addGate,

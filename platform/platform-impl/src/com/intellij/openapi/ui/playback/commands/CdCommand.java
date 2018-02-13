@@ -24,7 +24,7 @@ import java.io.IOException;
 public class CdCommand extends AbstractCommand {
 
   public static final String PREFIX = CMD_PREFIX + "cd";
-  private String myDir;
+  private final String myDir;
 
   public CdCommand(String text, int line) {
     super(text, line);

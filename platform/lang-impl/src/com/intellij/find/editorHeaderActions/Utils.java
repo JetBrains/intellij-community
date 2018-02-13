@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +32,7 @@ public class Utils {
       String selectedValue = (String)list.getSelectedValue();
       if (selectedValue != null) {
         textField.setText(selectedValue);
+        IdeFocusManager.getGlobalInstance().requestFocus(textField, false);
       }
     };
 

@@ -123,7 +123,7 @@ public class ArtifactsModelTest extends ArtifactsTestCase {
   }
 
   private static class MyArtifactListener extends ArtifactAdapter {
-    private StringBuilder myMessages = new StringBuilder();
+    private final StringBuilder myMessages = new StringBuilder();
 
     @Override
     public void artifactAdded(@NotNull Artifact artifact) {

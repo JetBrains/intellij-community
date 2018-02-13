@@ -45,14 +45,14 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
   private JBLabel myLStop3;
   private JBLabel myLStop4;
   private JBLabel myLStop5;
-  private JBLabel[] myLStops = new JBLabel[]{myLStop1, myLStop2, myLStop3, myLStop4, myLStop5};
+  private final JBLabel[] myLStops = new JBLabel[]{myLStop1, myLStop2, myLStop3, myLStop4, myLStop5};
 
   protected ColorPanel myStop1;
   protected ColorPanel myStop2;
   protected ColorPanel myStop3;
   protected ColorPanel myStop4;
   protected ColorPanel myStop5;
-  private ColorPanel[] myStops = new ColorPanel[]{myStop1, myStop2, myStop3, myStop4, myStop5};
+  private final ColorPanel[] myStops = new ColorPanel[]{myStop1, myStop2, myStop3, myStop4, myStop5};
 
   private JBCheckBox myRainbow;
   private JTextPane myInheritanceLabel;

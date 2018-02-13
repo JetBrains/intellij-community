@@ -1,24 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
+import com.intellij.util.ui.tree.TreeUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+
+import static com.intellij.ui.tree.TreeTestUtil.node;
 
 public class TreePathUtilTest {
   @Test
@@ -157,5 +148,59 @@ public class TreePathUtilTest {
     catch (StackOverflowError error) {
       System.out.println("StackOverflow - new TreePath: " + count);
     }
+  }
+
+  @Test
+  public void pathToCustomNodeDeep() {
+    pathToCustomNodeDeep(1);
+    pathToCustomNodeDeep(10);
+    pathToCustomNodeDeep(100);
+    pathToCustomNodeDeep(1000);
+    pathToCustomNodeDeep(10000);
+    pathToCustomNodeDeep(100000);
+    pathToCustomNodeDeep(1000000);
+  }
+
+  private static void pathToCustomNodeDeep(int count) {
+    TreePath path = TreePathUtil.pathToCustomNode(count, value -> value > 1 ? value - 1 : null);
+    Object[] array = TreePathUtil.convertTreePathToArray(path);
+    assertUserObjectPath(count, array);
+  }
+
+  private static void assertUserObjectPath(int count, Object... array) {
+    Assert.assertEquals(count, array.length);
+    int expected = 0;
+    for (Object value : array) {
+      Assert.assertEquals(Integer.valueOf(++expected), value);
+    }
+  }
+
+  @Test
+  public void pathToTreeNodeDeep() {
+    pathToTreeNodeDeep(1);
+    pathToTreeNodeDeep(10);
+    pathToTreeNodeDeep(100);
+    pathToTreeNodeDeep(1000);
+    pathToTreeNodeDeep(10000);
+    pathToTreeNodeDeep(100000);
+    pathToTreeNodeDeep(1000000);
+  }
+
+  private static void pathToTreeNodeDeep(int count) {
+    DefaultMutableTreeNode node = node(count);
+    makeDeepTreeFromNode(node, count);
+    TreePath path = TreePathUtil.pathToTreeNode(node, TreeUtil::getUserObject);
+    Object[] array = TreePathUtil.convertTreePathToArray(path);
+    assertUserObjectPath(count, array);
+    try {
+      Assert.assertArrayEquals(array, node.getUserObjectPath());
+    }
+    catch (StackOverflowError error) {
+      System.out.println("StackOverflow - DefaultMutableTreeNode.getUserObjectPath: " + count);
+    }
+  }
+
+  private static void makeDeepTreeFromNode(TreeNode node, int count) {
+    while (1 < count) node = node(--count, node);
   }
 }

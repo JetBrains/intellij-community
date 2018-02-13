@@ -454,12 +454,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       assert !isInUncommittedSet(document) : "Document :" + document;
     };
 
-    if (AbstractFileViewProvider.isFreeThreaded(psiFile.getViewProvider())) {
-      runnable.run();
-    }
-    else {
-      ApplicationManager.getApplication().runWriteAction(runnable);
-    }
+    ApplicationManager.getApplication().runWriteAction(runnable);
   }
 
   // true if the PSI is being modified and events being sent

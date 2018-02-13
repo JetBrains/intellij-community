@@ -17,6 +17,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -84,6 +85,12 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @Override
   public void installManagement() throws ExecutionException {
+    final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(getSdk());
+    if (languageLevel.isOlderThan(LanguageLevel.PYTHON26)) {
+      throw new ExecutionException("Package management for Python " + languageLevel + " is not supported. " +
+                                   "Upgrade your project interpreter to Python " + LanguageLevel.PYTHON26 + " or newer");
+    }
+
     if (!refreshAndCheckForSetuptools()) {
       installManagement(PyPackageUtil.SETUPTOOLS + "-" + SETUPTOOLS_VERSION);
     }
@@ -152,6 +159,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         }
       }
     });
+    Disposer.register(app, connection);
   }
 
   @NotNull
@@ -161,12 +169,12 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @Override
   public void install(@NotNull String requirementString) throws ExecutionException {
-    installManagement();
     install(Collections.singletonList(PyRequirement.fromLine(requirementString)), Collections.emptyList());
   }
 
   @Override
   public void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws ExecutionException {
+    installManagement();
     final List<String> args = new ArrayList<>();
     args.add(INSTALL);
     final File buildDir;
@@ -292,6 +300,12 @@ public class PyPackageManagerImpl extends PyPackageManager {
     final List<String> args = new ArrayList<>();
     final Sdk sdk = getSdk();
     final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
+
+    if (languageLevel.isOlderThan(LanguageLevel.PYTHON26)) {
+      throw new ExecutionException("Creating virtual environment for Python " + languageLevel + " is not supported. " +
+                                   "Upgrade your project interpreter to Python " + LanguageLevel.PYTHON26 + " or newer");
+    }
+
     final boolean usePyVenv = languageLevel.isAtLeast(LanguageLevel.PYTHON33);
     if (usePyVenv) {
       args.add("pyvenv");

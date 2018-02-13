@@ -12,6 +12,7 @@ import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.panel.PanelGridBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -131,7 +132,7 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
 
   private PsiClass createClassInRoot(@NotNull PsiDirectory psiRootDir, boolean isSubclass, @NotNull PsiElement contextElement) {
     Project project = psiRootDir.getProject();
-    PsiClass psiImplClass = createClassInRoot(myImplementationClassName, true,
+    PsiClass psiImplClass = createClassInRoot(myImplementationClassName, CreateClassKind.CLASS,
                                               psiRootDir, contextElement, isSubclass ? mySuperClassName : null);
     if (psiImplClass != null && !isSubclass) {
       String text = "public static " + mySuperClassName + " provider() { return null;}";
@@ -194,15 +195,19 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
     @Nullable
     @Override
     protected JComponent createNorthPanel() {
-      JPanel radioButtons = UI.PanelFactory.grid()
-        .add(UI.PanelFactory.panel(mySubclassButton))
-        .add(UI.PanelFactory.panel(myProviderButton))
-        .createPanel();
+      PanelGridBuilder builder = UI.PanelFactory.grid();
+      builder.add(UI.PanelFactory.panel(mySubclassButton).withLabel("Implementation:"))
+             .add(UI.PanelFactory.panel(myProviderButton));
+      if (myRootDirCombo.getModel().getSize() > 1) {
+        builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel("Source root:"));
+      }
+      return builder.createPanel();
+    }
 
-      return UI.PanelFactory.grid()
-        .add(UI.PanelFactory.panel(radioButtons).withLabel("Implementation:"))
-        .add(UI.PanelFactory.panel(myRootDirCombo).withLabel("Source root:"))
-        .createPanel();
+    @Nullable
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return mySubclassButton;
     }
 
     @Nullable

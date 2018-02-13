@@ -205,7 +205,7 @@ class StructureNode extends StructureElement {
 
   @Override
   public int hashCode() {
-    return children.hashCode();
+    return children.hashCode() * 3;
   }
 
   @Override

@@ -42,6 +42,7 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.intellij.vcsUtil.VcsUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -893,7 +894,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   public Collection<VirtualFile> getRoots() {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
 
-    return map2SetNotNull(myBrowser.getDisplayedChanges(), change -> vcsManager.getVcsRootFor(ChangesUtil.getFilePath(change)));
+    return map2SetNotNull(getDisplayedPaths(), filePath -> vcsManager.getVcsRootFor(filePath));
   }
 
   @NotNull
@@ -910,7 +911,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull
   @Override
   public Collection<VirtualFile> getVirtualFiles() {
-    return mapNotNull(getIncludedChanges(), change -> ChangesUtil.getFilePath(change).getVirtualFile());
+    return mapNotNull(getIncludedPaths(), filePath -> filePath.getVirtualFile());
   }
 
   @NotNull
@@ -922,7 +923,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull
   @Override
   public Collection<File> getFiles() {
-    return map(getIncludedChanges(), change -> ChangesUtil.getFilePath(change).getIOFile());
+    return map(getIncludedPaths(), filePath -> filePath.getIOFile());
   }
 
   @NotNull
@@ -997,6 +998,30 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull
   private List<Change> getIncludedChanges() {
     return myBrowser.getIncludedChanges();
+  }
+
+  @NotNull
+  private List<FilePath> getIncludedPaths() {
+    List<FilePath> paths = new ArrayList<>();
+    for (Change change : myBrowser.getIncludedChanges()) {
+      paths.add(ChangesUtil.getFilePath(change));
+    }
+    for (VirtualFile file : myBrowser.getIncludedUnversionedFiles()) {
+      paths.add(VcsUtil.getFilePath(file));
+    }
+    return paths;
+  }
+
+  @NotNull
+  private List<FilePath> getDisplayedPaths() {
+    List<FilePath> paths = new ArrayList<>();
+    for (Change change : myBrowser.getDisplayedChanges()) {
+      paths.add(ChangesUtil.getFilePath(change));
+    }
+    for (VirtualFile file : myBrowser.getDisplayedUnversionedFiles()) {
+      paths.add(VcsUtil.getFilePath(file));
+    }
+    return paths;
   }
 
   @Override

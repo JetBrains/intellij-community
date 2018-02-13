@@ -51,7 +51,7 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
 
   private JPanel myRoot;
   private JTextField myNameTextField;
-  private PatternCompiler<PsiElement> myHelper;
+  private final PatternCompiler<PsiElement> myHelper;
 
   public BaseInjectionPanel(BaseInjection injection, Project project) {
     super(injection, project);

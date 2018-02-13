@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.formatter.java
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.WriteCommandAction
@@ -11,7 +12,6 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.JavaCodeFragmentFactory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.testFramework.LightIdeaTestCase
 import com.intellij.testFramework.LightPlatformTestCase
@@ -1953,7 +1953,7 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testWrapParamsOnEveryItem() {
-    val codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject())
+    val codeStyleSettings = CodeStyle.getSettings(getProject())
 
     val javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE)
     val oldMargin = javaSettings.RIGHT_MARGIN
@@ -1994,7 +1994,7 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testCommentAfterDeclaration() {
-    val codeStyleSettings = CodeStyleSettingsManager.getSettings(LightPlatformTestCase.getProject())
+    val codeStyleSettings = CodeStyle.getSettings(LightPlatformTestCase.getProject())
     val javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE)
 
     val oldMargin = codeStyleSettings.defaultRightMargin

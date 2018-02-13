@@ -723,6 +723,12 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       return myModuleToNewName.get(module);
     }
 
+    @NotNull
+    @Override
+    public String getActualName(@NotNull Module module) {
+      return ObjectUtils.notNull(getNewName(module), module.getName());
+    }
+
     @Override
     @NotNull
     public Module newModule(@NotNull String filePath, @NotNull final String moduleTypeId) {
@@ -897,7 +903,9 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       if (!myIsWritable) {
         return false;
       }
-      return !myModules.equals(myManager.myModuleModel.myModules) || !Comparing.equal(myManager.myModuleModel.myModuleGroupPath, myModuleGroupPath);
+      return !myModules.equals(myManager.myModuleModel.myModules)
+             || !Comparing.equal(myManager.myModuleModel.myModuleGroupPath, myModuleGroupPath)
+             || !myModuleToNewName.isEmpty();
     }
 
     private void disposeModel() {
@@ -1056,9 +1064,16 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     return myUnloadedModules.get(moduleName);
   }
 
+  @NotNull
+  @Override
+  public ModuleGrouper getModuleGrouper(@Nullable ModifiableModuleModel model) {
+    return ModuleGroupersKt.createGrouper(myProject, model);
+  }
+
   @Override
   public void setUnloadedModules(@NotNull List<String> unloadedModuleNames) {
-    if (myUnloadedModules.keySet().equals(unloadedModuleNames)) {
+    if (myUnloadedModules.keySet().equals(new HashSet<>(unloadedModuleNames))) {
+      //optimization
       return;
     }
 

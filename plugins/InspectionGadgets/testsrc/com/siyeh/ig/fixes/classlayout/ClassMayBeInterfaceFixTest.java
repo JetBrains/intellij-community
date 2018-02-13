@@ -35,8 +35,6 @@ public class ClassMayBeInterfaceFixTest extends IGQuickFixesTestCase {
   }
 
   public void testConvertMe() { doTest(); }
-
-  public void testDefaultConstructor() {
-    doTest();
-  }
+  public void testObjectMethods() { doTest(); }
+  public void testDefaultConstructor() { doTest(); }
 }

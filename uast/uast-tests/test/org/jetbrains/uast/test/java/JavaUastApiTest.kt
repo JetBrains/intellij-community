@@ -165,4 +165,10 @@ class JavaUastApiTest : AbstractJavaUastTest() {
     }
   }
 
+  @Test
+  fun testCanFindAWayFromBrokenSwitch() = doTest("BrokenCode/Switch.java") { name, file ->
+    val testClass = file.findElementByTextFromPsi<UElement>("""return;""")
+    TestCase.assertEquals(7, testClass.withContainingElements.count())
+  }
+
 }

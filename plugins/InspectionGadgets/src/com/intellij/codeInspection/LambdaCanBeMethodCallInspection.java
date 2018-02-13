@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.project.Project;
@@ -41,13 +41,7 @@ public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspec
         if (parameters.length == 1) {
           PsiParameter parameter = parameters[0];
           if (ExpressionUtils.isReferenceTo(expression, parameter)) {
-            PsiClass aClass = ((PsiClassType)type).resolve();
-            if (aClass != null && CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION.equals(aClass.getQualifiedName())) {
-              PsiType[] typeParameters = ((PsiClassType)type).getParameters();
-              if (typeParameters.length == 2 && typeParameters[1].isAssignableFrom(typeParameters[0])) {
-                registerProblem(lambda, "Function.identity()", CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION + ".identity()");
-              }
-            }
+            processFunctionIdentity(lambda, (PsiClassType)type);
           }
           if (expression instanceof PsiMethodCallExpression) {
             PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
@@ -58,6 +52,16 @@ public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspec
             }
           }
         }
+      }
+
+      private void processFunctionIdentity(PsiLambdaExpression lambda, PsiClassType type) {
+        PsiClass aClass = type.resolve();
+        if (aClass == null || !CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION.equals(aClass.getQualifiedName())) return;
+        PsiType[] typeParameters = type.getParameters();
+        if (typeParameters.length != 2 || !typeParameters[1].isAssignableFrom(typeParameters[0])) return;
+        String replacement = CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION + ".identity()";
+        if (!LambdaUtil.isSafeLambdaReplacement(lambda, replacement)) return;
+        registerProblem(lambda, "Function.identity()", replacement);
       }
 
       private void handlePatternAsPredicate(PsiLambdaExpression lambda, PsiParameter parameter, PsiMethodCallExpression call) {

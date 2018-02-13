@@ -77,7 +77,7 @@ public class ParametrizedDuplicates {
 
   private static PsiElement[] copyElements(@NotNull PsiElement[] pattern) {
     Project project = pattern[0].getProject();
-    return IntroduceParameterHandler.getElementsInCopy(project, pattern[0].getContainingFile(), pattern);
+    return IntroduceParameterHandler.getElementsInCopy(project, pattern[0].getContainingFile(), pattern, false);
   }
 
   @Nullable

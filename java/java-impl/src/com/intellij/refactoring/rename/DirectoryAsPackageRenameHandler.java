@@ -46,7 +46,7 @@ public class DirectoryAsPackageRenameHandler extends DirectoryAsPackageRenameHan
 
   @Override
   protected PsiPackage getPackage(PsiDirectory psiDirectory) {
-    return JavaDirectoryService.getInstance().getPackage(psiDirectory);
+    return JavaDirectoryService.getInstance().getPackageInSources(psiDirectory);
   }
 
   @Override

@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.progress;
 
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public interface TaskInfo {
@@ -27,7 +26,4 @@ public interface TaskInfo {
   String getCancelTooltipText();
 
   boolean isCancellable();
-  
-  @NonNls
-  String getProcessId();
 }

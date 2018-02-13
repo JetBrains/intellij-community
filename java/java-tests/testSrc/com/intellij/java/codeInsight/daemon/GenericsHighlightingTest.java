@@ -429,4 +429,6 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testClassInWrongPackage() { doTest6(false); }
   public void testRecursiveParamBoundsWhenSuperSubstitution() { doTest6(false); }
   public void testCaptureForBoundCheck() { doTest6(false); }
+  public void testGetClassInAnonymous() { doTest6(false); }
+  public void testInheritFromDifferentParameterizations() { doTest6(false); }
 }

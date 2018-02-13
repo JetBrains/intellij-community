@@ -38,9 +38,9 @@ public class ApplicationActivationStateManager {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ApplicationActivationStateManager");
 
-  private static AtomicLong requestToDeactivateTime = new AtomicLong(System.currentTimeMillis());
+  private static final AtomicLong requestToDeactivateTime = new AtomicLong(System.currentTimeMillis());
 
-  private static ApplicationActivationStateManager instance = new ApplicationActivationStateManager();
+  private static final ApplicationActivationStateManager instance = new ApplicationActivationStateManager();
 
   public static ApplicationActivationStateManager get () {
     return instance;

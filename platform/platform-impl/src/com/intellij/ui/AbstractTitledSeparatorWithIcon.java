@@ -28,7 +28,7 @@ import java.awt.event.MouseEvent;
 public abstract class AbstractTitledSeparatorWithIcon extends JPanel {
   protected RefreshablePanel myDetailsComponent;
   protected final JLabel myLabel;
-  private String originalText;
+  private final String originalText;
   protected final JPanel myWrapper;
   protected boolean myOn;
   protected final Icon myIcon;

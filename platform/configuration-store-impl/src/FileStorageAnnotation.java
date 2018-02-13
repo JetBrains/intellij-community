@@ -11,7 +11,7 @@ import java.lang.annotation.Annotation;
 public class FileStorageAnnotation implements Storage {
   protected final String path;
 
-  private boolean deprecated;
+  private final boolean deprecated;
 
   public FileStorageAnnotation(@NotNull String path, boolean deprecated) {
     this.path = path;

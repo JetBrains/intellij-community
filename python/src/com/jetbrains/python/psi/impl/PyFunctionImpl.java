@@ -655,15 +655,30 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
     final String funcName = getName();
 
-    // implicit staticmethod __new__
     final PyClass cls = getContainingClass();
-    if (cls != null && PyNames.NEW.equals(funcName) && cls.isNewStyleClass(null)) {
-      return STATICMETHOD;
-    }
+    if (cls != null) {
+      // implicit staticmethod __new__
+      if (PyNames.NEW.equals(funcName) && cls.isNewStyleClass(null)) {
+        return STATICMETHOD;
+      }
 
-    // implicit classmethod __init_subclass__
-    if (cls != null && PyNames.INIT_SUBCLASS.equals(funcName) && LanguageLevel.forElement(this).isAtLeast(LanguageLevel.PYTHON36)) {
-      return CLASSMETHOD;
+      final LanguageLevel level = LanguageLevel.forElement(this);
+
+      // implicit classmethod __init_subclass__
+      if (PyNames.INIT_SUBCLASS.equals(funcName) && level.isAtLeast(LanguageLevel.PYTHON36)) {
+        return CLASSMETHOD;
+      }
+
+      // implicit classmethod __class_getitem__
+      if (PyNames.CLASS_GETITEM.equals(funcName) && level.isAtLeast(LanguageLevel.PYTHON37)) {
+        return CLASSMETHOD;
+      }
+
+      final TypeEvalContext context = TypeEvalContext.codeInsightFallback(getProject());
+      for (PyKnownDecoratorUtil.KnownDecorator knownDecorator : PyKnownDecoratorUtil.getKnownDecorators(this, context)) {
+        if (knownDecorator == PyKnownDecoratorUtil.KnownDecorator.ABC_ABSTRACTCLASSMETHOD) return CLASSMETHOD;
+        if (knownDecorator == PyKnownDecoratorUtil.KnownDecorator.ABC_ABSTRACTSTATICMETHOD) return STATICMETHOD;
+      }
     }
 
     final PyFunctionStub stub = getStub();

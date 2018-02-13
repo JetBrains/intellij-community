@@ -17,7 +17,7 @@ import java.lang.reflect.Proxy;
  * @param <T>
  */
 public class FSTSerializer<T> implements DataNodeSerializer<T> {
-  private static DataNodeSerializer ourInstance = new FSTSerializer();
+  private static final DataNodeSerializer ourInstance = new FSTSerializer();
   private final FSTConfiguration myConf = FSTConfiguration.createDefaultConfiguration();
 
   public FSTSerializer() {
@@ -61,7 +61,7 @@ public class FSTSerializer<T> implements DataNodeSerializer<T> {
 }
 
 class MultiLoaderWrapper extends ClassLoader {
-  private ClassLoader[] myDelegates;
+  private final ClassLoader[] myDelegates;
   public MultiLoaderWrapper(ClassLoader parentCl, ClassLoader[] delegates) {
     super(parentCl);
     myDelegates = delegates;

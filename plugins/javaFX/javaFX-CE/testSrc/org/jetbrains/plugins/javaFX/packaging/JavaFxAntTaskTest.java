@@ -443,7 +443,7 @@ public class JavaFxAntTaskTest extends TestCase {
 
   private static class MockJavaFxPackager extends AbstractJavaFxPackager {
 
-    private String myOutputPath;
+    private final String myOutputPath;
     private String myTitle;
     private String myVendor;
     private String myDescription;

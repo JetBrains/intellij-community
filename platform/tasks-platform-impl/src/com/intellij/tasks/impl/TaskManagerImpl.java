@@ -119,7 +119,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   private final List<TaskRepository> myRepositories = new ArrayList<>();
   private final EventDispatcher<TaskListener> myDispatcher = EventDispatcher.create(TaskListener.class);
-  private Set<TaskRepository> myBadRepositories = ContainerUtil.newConcurrentSet();
+  private final Set<TaskRepository> myBadRepositories = ContainerUtil.newConcurrentSet();
 
   public TaskManagerImpl(Project project, WorkingContextManager contextManager, ChangeListManager changeListManager) {
 

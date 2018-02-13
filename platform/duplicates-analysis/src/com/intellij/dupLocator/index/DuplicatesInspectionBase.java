@@ -183,7 +183,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
   }
 
   private class LightDuplicatedCodeProcessor extends DuplicatedCodeProcessor<LighterASTNode> {
-    private TreeBackedLighterAST myAst;
+    private final TreeBackedLighterAST myAst;
 
     private LightDuplicatedCodeProcessor(@NotNull TreeBackedLighterAST ast, VirtualFile file, Project project) {
       super(file, project, myFilterOutGeneratedCode);

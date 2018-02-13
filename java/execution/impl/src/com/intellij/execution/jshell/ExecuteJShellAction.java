@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
  */
 class ExecuteJShellAction extends AnAction{
   private static final AnAction ourInstance = new ExecuteJShellAction();
-  private boolean myIsExecuteContextElement = false;
+  private final boolean myIsExecuteContextElement = false;
 
   private ExecuteJShellAction() {
     super(AllIcons.Toolwindows.ToolWindowRun);

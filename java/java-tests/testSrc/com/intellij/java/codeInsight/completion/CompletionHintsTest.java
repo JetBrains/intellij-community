@@ -6,19 +6,14 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider;
 import com.intellij.codeInsight.hints.Option;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.java.codeInsight.AbstractParameterInfoTestCase;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.psi.PsiExpressionCodeFragment;
 import com.intellij.testFramework.EditorTestUtil;
-
-import java.util.stream.Stream;
 
 public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   private boolean myStoredSettingValue;
@@ -778,8 +773,6 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   }
 
   public void testBasicScenarioForConstructor() throws Exception {
-    enableConstructorVariantsCompletion();
-
     // check hints appearance on completion
     configureJava("class C { C(int a, int b) {} void m() { new C<caret> } }");
     complete("C(int a, int b)");
@@ -901,13 +894,11 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     }
   }
 
-  private void enableConstructorVariantsCompletion() {
-    Registry.get("java.completion.show.constructors").setValue(true);
-    Disposer.register(myFixture.getTestRootDisposable(), () -> Registry.get("java.completion.show.constructors").setValue(false));
-  }
-
-  private void checkResult(String text) {
-    myFixture.checkResult(text);
+  public void testOverloadWithNoParameters() throws Exception {
+    configureJava("class C { void m() { System.out.pr<caret> } }");
+    complete("println(long x)");
+    waitForAllAsyncStuff();
+    checkHintContents("<html><b>long</b>&nbsp;&nbsp;<i>a The <code>long</code> to be printed.</i></html>");
   }
 
   private void checkResultWithInlays(String text) {
@@ -956,15 +947,5 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
 
   private void escape() {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
-  }
-
-  private void complete(String partOfItemText) {
-    LookupElement[] elements = myFixture.completeBasic();
-    LookupElement element = Stream.of(elements).filter(e -> {
-      LookupElementPresentation p = new LookupElementPresentation();
-      e.renderElement(p);
-      return (p.getItemText() + p.getTailText()).contains(partOfItemText);
-    }).findAny().get();
-    selectItem(element);
   }
 }

@@ -1,14 +1,16 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.quickfixes;
 
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.Anchor;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.AsyncResult;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
@@ -24,7 +26,7 @@ import java.util.List;
 import static com.intellij.codeInspection.ProblemDescriptorUtil.extractHighlightedText;
 import static com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel.getLevelByName;
 
-public class SaveTo implements SpellCheckerQuickFix {
+public class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
   private static final SaveTo SAVE_TO_APP_FIX = new SaveTo(DictionaryLevel.APP);
   private static final SaveTo SAVE_TO_PROJECT_FIX = new SaveTo(DictionaryLevel.PROJECT);
   private static final String DICTIONARY = " dictionary";
@@ -74,21 +76,21 @@ public class SaveTo implements SpellCheckerQuickFix {
     final AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
     asyncResult.doWhenDone((Consumer<DataContext>)context -> {
       final SpellCheckerManager spellCheckerManager = SpellCheckerManager.getInstance(project);
-      final boolean notify = myWord != null; // no notification in batch mode
       final String wordToSave = myWord != null ? myWord : extractHighlightedText(descriptor, descriptor.getPsiElement());
+      final VirtualFile file = descriptor.getPsiElement().getContainingFile().getVirtualFile();
       if (myLevel == DictionaryLevel.NOT_SPECIFIED) {
         final List<String> dictionaryList = Arrays.asList(DictionaryLevel.PROJECT.getName(), DictionaryLevel.APP.getName());
         final JBList<String> dictList = new JBList<>(dictionaryList);
         JBPopupFactory.getInstance()
           .createListPopupBuilder(dictList)
-          .setTitle(SpellCheckerBundle.message("select.dictionary.title"))
-          .setItemChoosenCallback(
-            () -> spellCheckerManager.acceptWordAsCorrect(wordToSave, project, getLevelByName(dictList.getSelectedValue()), notify))
-          .createPopup()
-          .showInBestPositionFor(context);
+                      .setTitle(SpellCheckerBundle.message("select.dictionary.title"))
+                      .setItemChoosenCallback(() -> CommandProcessor.getInstance().executeCommand(project, () -> spellCheckerManager
+                        .acceptWordAsCorrect(wordToSave, file, project, getLevelByName(dictList.getSelectedValue())), getName(), null))
+                      .createPopup()
+                      .showInBestPositionFor(context);
       }
       else {
-        spellCheckerManager.acceptWordAsCorrect(wordToSave, project, myLevel, notify);
+        spellCheckerManager.acceptWordAsCorrect(wordToSave, file, project, myLevel);
       }
     });
   }

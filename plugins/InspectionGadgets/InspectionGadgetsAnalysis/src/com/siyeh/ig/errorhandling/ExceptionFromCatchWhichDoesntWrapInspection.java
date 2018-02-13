@@ -177,10 +177,7 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
         }
         return;
       }
-      if (ignoreGetMessage) {
-        argumentsContainCatchParameter = true;
-      }
-      else {
+      if (!ignoreGetMessage) {
         final PsiElement parent = expression.getParent();
         if (parent instanceof PsiReferenceExpression) {
           final PsiElement grandParent = parent.getParent();
@@ -188,8 +185,8 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
             return;
           }
         }
-        argumentsContainCatchParameter = true;
       }
+      argumentsContainCatchParameter = true;
     }
 
     boolean usesParameter() {

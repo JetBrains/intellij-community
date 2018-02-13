@@ -3,7 +3,7 @@
  */
 package com.intellij.ide.ui.laf.intellij
 
-import com.intellij.ide.ui.laf.darcula.DarculaOptionButtonUI
+import com.intellij.ide.ui.laf.darcula.ui.DarculaOptionButtonUI
 import com.intellij.util.ui.JBUI.scale
 import java.awt.Dimension
 import java.awt.Graphics2D

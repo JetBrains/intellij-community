@@ -16,10 +16,10 @@
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.EditorActionTestCase;
 import com.intellij.testFramework.TestDataPath;
@@ -47,7 +47,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    mySettings = CodeStyleSettingsManager.getSettings(getProject());
+    mySettings = CodeStyle.getSettings(getProject());
     myJavaSettings = mySettings.getCommonSettings(JavaLanguage.INSTANCE);
   }
 

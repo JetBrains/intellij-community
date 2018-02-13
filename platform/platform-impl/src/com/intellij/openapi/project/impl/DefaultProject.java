@@ -23,12 +23,17 @@ import org.jetbrains.annotations.NotNull;
 class DefaultProject extends ProjectImpl {
   private static final String TEMPLATE_PROJECT_NAME = "Default (Template) Project";
 
-  protected DefaultProject(@NotNull String filePath) {
+  DefaultProject(@NotNull String filePath) {
     super(filePath, TEMPLATE_PROJECT_NAME);
   }
 
   @Override
   public boolean isDefault() {
     return true;
+  }
+
+  @Override
+  public boolean isInitialized() {
+    return true; // no startup activities, never opened
   }
 }

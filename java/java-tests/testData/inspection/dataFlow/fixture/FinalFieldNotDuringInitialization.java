@@ -110,3 +110,20 @@ class Test7 extends BadSuper {
     something.<warning descr="Method invocation 'length' may produce 'java.lang.NullPointerException'">length</warning>();
   }
 }
+
+class Test8 {
+  // IDEA-186075
+  private final Object s = new Object();
+  private final Object s2;
+
+  Test8() {
+    System.out.println(s.hashCode());
+    other();
+    s2 = new Object();
+  }
+
+  void other() {
+    System.out.println(s.hashCode());
+    System.out.println(s2.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
+  }
+}

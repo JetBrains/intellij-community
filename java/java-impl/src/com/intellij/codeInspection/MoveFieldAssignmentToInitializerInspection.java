@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -85,7 +85,7 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
     }
     // Or allow simple initializers
     PsiExpression value = assignment.getRExpression();
-    return ExpressionUtils.isSimpleExpression(value) || ConstructionUtils.isEmptyCollectionInitializer(value);
+    return ExpressionUtils.isSafelyRecomputableExpression(value) || ConstructionUtils.isEmptyCollectionInitializer(value);
   }
 
   private static boolean isValidAsFieldInitializer(final PsiExpression initializer,

@@ -26,10 +26,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public class MavenIndicesTestFixture {
-  private Path myDir;
-  private Project myProject;
-  private String myLocalRepoDir;
-  private String[] myExtraRepoDirs;
+  private final Path myDir;
+  private final Project myProject;
+  private final String myLocalRepoDir;
+  private final String[] myExtraRepoDirs;
 
   private MavenCustomRepositoryHelper myRepositoryHelper;
   private MavenProjectIndicesManager myIndicesManager;

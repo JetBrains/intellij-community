@@ -86,7 +86,8 @@ public class IDEACoverageRunner extends JavaCoverageRunner {
              fileName.startsWith("asm-all") ||
              fileName.startsWith("trove4j");
     });
-    argument.append(parentPath).append(File.separator).append(new File(agentPath).getName());
+    //todo
+    argument.append(parentPath).append(File.separator).append(new File("coverage-agent.jar").getName());
     argument.append("=");
     try {
       final File tempFile = createTempFile();

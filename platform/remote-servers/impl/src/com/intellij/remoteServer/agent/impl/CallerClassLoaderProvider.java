@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class CallerClassLoaderProvider {
 
-  private ClassLoader myCallerClassLoader;
+  private final ClassLoader myCallerClassLoader;
 
   public CallerClassLoaderProvider(@Nullable ClassLoader callerClassLoader) {
     myCallerClassLoader = callerClassLoader;

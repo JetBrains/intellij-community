@@ -5,11 +5,11 @@ class OptionalTooComplex {
   // Should not be too complex
   public Long fetch() {
     final PreparedStatement ps = builder
-      .setInteger(<warning descr="Argument 'opt().orElse(null)' might be null but passed to non annotated parameter">opt().orElse(null)</warning>)
-      .setInteger(<warning descr="Argument 'opt().orElse(null)' might be null but passed to non annotated parameter">opt().orElse(null)</warning>)
-      .setInteger(<warning descr="Argument 'opt().orElse(null)' might be null but passed to non annotated parameter">opt().orElse(null)</warning>)
-      .setInteger(<warning descr="Argument 'opt().orElse(null)' might be null but passed to non annotated parameter">opt().orElse(null)</warning>)
-      .setInteger(<warning descr="Argument 'opt().orElse(null)' might be null but passed to non annotated parameter">opt().orElse(null)</warning>)
+      .setInteger(<warning descr="Argument 'opt().orElse(null)' might be null but passed to non-annotated parameter">opt().orElse(null)</warning>)
+      .setInteger(<warning descr="Argument 'opt().orElse(null)' might be null but passed to non-annotated parameter">opt().orElse(null)</warning>)
+      .setInteger(<warning descr="Argument 'opt().orElse(null)' might be null but passed to non-annotated parameter">opt().orElse(null)</warning>)
+      .setInteger(<warning descr="Argument 'opt().orElse(null)' might be null but passed to non-annotated parameter">opt().orElse(null)</warning>)
+      .setInteger(<warning descr="Argument 'opt().orElse(null)' might be null but passed to non-annotated parameter">opt().orElse(null)</warning>)
       .build();
 
     ResultSet rs = null;

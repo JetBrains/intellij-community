@@ -289,10 +289,10 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
   }
 
   static class JdkComboBoxItem {
-    private String jdkName;
-    private String label;
-    private String comment;
-    private boolean valid;
+    private final String jdkName;
+    private final String label;
+    private final String comment;
+    private final boolean valid;
 
     public JdkComboBoxItem(String jdkName, String label, String comment, boolean valid) {
       this.jdkName = jdkName;

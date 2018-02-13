@@ -16,6 +16,7 @@
 package com.intellij.java.propertyBased;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -23,6 +24,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.propertyBased.CompletionPolicy;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -30,6 +32,18 @@ import java.util.Arrays;
  * @author peter
  */
 class JavaCompletionPolicy extends CompletionPolicy {
+  @Nullable
+  @Override
+  protected String getExpectedVariant(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement leaf, @Nullable PsiReference ref) {
+    if (isBuggyInjection(file)) return null;
+
+    return super.getExpectedVariant(editor, file, leaf, ref);
+  }
+
+  // a language where there are bugs in completion which maintainers of this Java-specific tests can't or don't want to fix
+  private static boolean isBuggyInjection(@NotNull PsiFile file) {
+    return Arrays.asList("XML", "HTML", "PointcutExpression").contains(file.getLanguage().getID());
+  }
 
   @Override
   protected boolean isAfterError(@NotNull PsiFile file, @NotNull PsiElement leaf) {

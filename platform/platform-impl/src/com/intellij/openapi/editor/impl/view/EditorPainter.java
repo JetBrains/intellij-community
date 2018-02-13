@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.*;
@@ -14,6 +12,7 @@ import com.intellij.openapi.editor.impl.*;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -49,7 +48,7 @@ class EditorPainter implements TextDrawingCallback {
   private static final int CARET_DIRECTION_MARK_SIZE = 5;
   private static final char IDEOGRAPHIC_SPACE = '\u3000'; // http://www.marathon-studios.com/unicode/U3000/Ideographic_Space
   private static final String WHITESPACE_CHARS = " \t" + IDEOGRAPHIC_SPACE;
-
+  private static final Key<TextAttributes> INNER_HIGHLIGHTING = Key.create("inner.highlighting");
 
   private final EditorView myView;
   private final EditorImpl myEditor;
@@ -218,7 +217,13 @@ class EditorPainter implements TextDrawingCallback {
         public void paint(Graphics2D g, VisualLineFragmentsIterator.Fragment fragment, int start, int end, 
                           TextAttributes attributes, float xStart, float xEnd, int y) {
           if (dryRun) return;
-          paintBackground(g, attributes, xStart, y, xEnd - xStart);
+          FoldRegion foldRegion = fragment.getCurrentFoldRegion();
+          if (foldRegion != null && Registry.is("editor.highlight.foldings")) {
+            paintFoldingBackground(g, attributes, xStart, y, xEnd - xStart, foldRegion);
+          }
+          else {
+            paintBackground(g, attributes, xStart, y, xEnd - xStart);
+          }
         }
 
         @Override
@@ -242,6 +247,26 @@ class EditorPainter implements TextDrawingCallback {
       visLinesIterator.advance();
     }
     return marginShifts.get();
+  }
+
+  private void paintFoldingBackground(Graphics2D g, TextAttributes attributes, float x, int y, float width, FoldRegion foldRegion) {
+    TextAttributes innerAttributes = getInnerHighlighterAttributes(foldRegion);
+    if (innerAttributes != null) {
+      foldRegion.putUserData(INNER_HIGHLIGHTING, innerAttributes);
+      if (innerAttributes.getBackgroundColor() != null && !isSelected(foldRegion)) {
+        paintBackground(g, innerAttributes, x, y, width);
+        Color borderColor = myEditor.getColorsScheme().getColor(EditorColors.FOLDED_TEXT_BORDER_COLOR);
+        if (borderColor != null) {
+          Shape border = getBorderShape(x, y, width, myView.getLineHeight(), 2, false);
+          if (border != null) {
+            g.setColor(borderColor);
+            g.fill(border);
+          }
+        }
+        return;
+      }
+    }
+    paintBackground(g, attributes, x, y, width);
   }
 
   private Map<Integer, Couple<Integer>> createVirtualSelectionMap(int startVisualLine, int endVisualLine) {
@@ -423,15 +448,18 @@ class EditorPainter implements TextDrawingCallback {
                                       attributes);
             return;
           }
-          boolean allowBorder = fragment.getCurrentFoldRegion() != null;
-          if (attributes != null && hasTextEffect(attributes.getEffectColor(), attributes.getEffectType(), allowBorder)) {
-            paintTextEffect(g, xStart, xEnd, y, attributes.getEffectColor(), attributes.getEffectType(), allowBorder);
+          FoldRegion foldRegion = fragment.getCurrentFoldRegion();
+          if (foldRegion != null && Registry.is("editor.highlight.foldings")) {
+            attributes = getFoldingInnerAttributes(attributes, foldRegion);
+          }
+          if (attributes != null && hasTextEffect(attributes.getEffectColor(), attributes.getEffectType(), foldRegion != null)) {
+            paintTextEffect(g, xStart, xEnd, y, attributes.getEffectColor(), attributes.getEffectType(), foldRegion != null);
           }
           if (attributes != null && attributes.getForegroundColor() != null) {
             g.setColor(attributes.getForegroundColor());
             fragment.draw(g, xStart, y, start, end);
           }
-          if (fragment.getCurrentFoldRegion() == null) {
+          if (foldRegion == null) {
             int logicalLine = fragment.getStartLogicalLine();
             if (logicalLine != currentLogicalLine[0]) {
               whitespacePaintingStrategy.update(text, myDocument.getLineStartOffset(logicalLine), myDocument.getLineEndOffset(logicalLine));
@@ -458,6 +486,55 @@ class EditorPainter implements TextDrawingCallback {
       visLinesIterator.advance();
     }
     ComplexTextFragment.flushDrawingCache(g);
+  }
+
+  private static TextAttributes getFoldingInnerAttributes(TextAttributes basicAttributes, FoldRegion foldRegion) {
+    TextAttributes innerAttributes = foldRegion.getUserData(INNER_HIGHLIGHTING);
+    if (innerAttributes != null) {
+      basicAttributes = TextAttributes.merge(basicAttributes, innerAttributes);
+      foldRegion.putUserData(INNER_HIGHLIGHTING, null);
+    }
+    return basicAttributes;
+  }
+
+  @Nullable
+  private TextAttributes getInnerHighlighterAttributes(@NotNull FoldRegion region) {
+    if (Boolean.TRUE.equals(region.getUserData(FoldRegion.MUTE_INNER_HIGHLIGHTERS))) return null;
+    List<RangeHighlighterEx> innerHighlighters = new ArrayList<>();
+    collectVisibleInnerHighlighters(region, myEditor.getMarkupModel(), innerHighlighters);
+    collectVisibleInnerHighlighters(region, myEditor.getFilteredDocumentMarkupModel(), innerHighlighters);
+    if (innerHighlighters.isEmpty()) return null;
+    innerHighlighters.sort(IterationState.BY_LAYER_THEN_ATTRIBUTES);
+    Color fgColor = null;
+    Color bgColor = null;
+    Color effectColor = null;
+    EffectType effectType = null;
+    for (RangeHighlighter h : innerHighlighters) {
+      TextAttributes attrs = h.getTextAttributes();
+      if (attrs == null) continue;
+      if (fgColor == null && attrs.getForegroundColor() != null) fgColor = attrs.getForegroundColor(); 
+      if (bgColor == null && attrs.getBackgroundColor() != null) bgColor = attrs.getBackgroundColor();
+      if (effectColor == null && attrs.getEffectColor() != null) {
+        EffectType type = attrs.getEffectType();
+        if (type != null && type != EffectType.BOXED && type != EffectType.ROUNDED_BOX) {
+          effectColor = attrs.getEffectColor();
+          effectType = type;
+        }
+      }
+    }
+    return new TextAttributes(fgColor, bgColor, effectColor, effectType, Font.PLAIN);
+  }
+
+  private static void collectVisibleInnerHighlighters(@NotNull FoldRegion region, @NotNull MarkupModelEx markupModel,
+                                                      @NotNull List<RangeHighlighterEx> highlighters) {
+    int startOffset = region.getStartOffset();
+    int endOffset = region.getEndOffset();
+    markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, h -> {
+      if (h.isVisibleIfFolded() && h.getAffectedAreaStartOffset() >= startOffset && h.getAffectedAreaEndOffset() <= endOffset) {
+        highlighters.add(h);
+      }
+      return true;
+    });
   }
 
   private float paintLineLayoutWithEffect(Graphics2D g, LineLayout layout, float x, float y, 
@@ -740,7 +817,7 @@ class EditorPainter implements TextDrawingCallback {
   }
 
   private void drawSimpleBorder(Graphics2D g, float xStart, float xEnd, float y, boolean rounded) {
-    Shape border = getBorderShape(xStart, y, xEnd - xStart, myView.getLineHeight(), rounded);
+    Shape border = getBorderShape(xStart, y, xEnd - xStart, myView.getLineHeight(), 1, rounded);
     if (border != null) {
       Object old = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -749,14 +826,14 @@ class EditorPainter implements TextDrawingCallback {
     }
   }
 
-  private static Shape getBorderShape(float x, float y, float width, int height, boolean rounded) {
+  private static Shape getBorderShape(float x, float y, float width, int height, int thickness, boolean rounded) {
     if (width <= 0 || height <= 0) return null;
     Shape outer = rounded
                   ? new RoundRectangle2D.Float(x, y, width, height, 2, 2)
                   : new Rectangle2D.Float(x, y, width, height);
-
-    if (width <= 2 || height <= 2) return outer;
-    Shape inner = new Rectangle2D.Float(x + 1, y + 1, width - 2, height - 2);
+    int doubleThickness = 2 * thickness;
+    if (width <= doubleThickness || height <= doubleThickness) return outer;
+    Shape inner = new Rectangle2D.Float(x + thickness, y + thickness, width - doubleThickness, height - doubleThickness);
 
     Path2D path = new Path2D.Float(Path2D.WIND_EVEN_ODD);
     path.append(outer, false);

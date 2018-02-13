@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl
 
 import com.intellij.codeInsight.JavaModuleSystemEx
@@ -31,43 +29,40 @@ import com.intellij.psi.util.PsiUtil
 class JavaPlatformModuleSystem : JavaModuleSystemEx {
   override fun getName() = "Java Platform Module System"
 
-  override fun isAccessible(target: PsiPackage, place: PsiElement) = checkAccess(target, place, quick = true) == null
-  override fun isAccessible(target: PsiClass, place: PsiElement) = checkAccess(target, place, quick = true) == null
+  override fun isAccessible(targetPackageName: String, targetFile: PsiFile?, place: PsiElement) =
+    checkAccess(targetPackageName, targetFile, place, quick = true) == null
 
-  override fun checkAccess(target: PsiPackage, place: PsiElement) = checkAccess(target, place, quick = false)
-  override fun checkAccess(target: PsiClass, place: PsiElement) = checkAccess(target, place, quick = false)
+  override fun checkAccess(targetPackageName: String, targetFile: PsiFile?, place: PsiElement) =
+    checkAccess(targetPackageName, targetFile, place, quick = false)
 
-  private fun checkAccess(target: PsiClass, place: PsiElement, quick: Boolean): ErrorWithFixes? {
+  private fun checkAccess(targetPackageName: String, targetFile: PsiFile?, place: PsiElement, quick: Boolean): ErrorWithFixes? {
     val useFile = place.containingFile?.originalFile
     if (useFile != null && PsiUtil.isLanguageLevel9OrHigher(useFile)) {
-      val targetFile = target.containingFile
-      if (targetFile is PsiClassOwner) {
-        return checkAccess(targetFile, useFile, targetFile.packageName, quick)
+      if (targetFile != null && targetFile.isPhysical) {
+        return checkAccess(targetFile, useFile, targetPackageName, quick)
       }
-    }
-
-    return null
-  }
-
-  private fun checkAccess(target: PsiPackage, place: PsiElement, quick: Boolean): ErrorWithFixes? {
-    val useFile = place.containingFile?.originalFile
-    if (useFile != null && PsiUtil.isLanguageLevel9OrHigher(useFile)) {
-      val useVFile = useFile.virtualFile
-      if (useVFile != null) {
-        val index = ProjectFileIndex.getInstance(useFile.project)
-        val module = index.getModuleForFile(useVFile)
-        if (module != null) {
-          val test = index.isInTestSourceContent(useVFile)
-          val dirs = target.getDirectories(module.getModuleWithDependenciesAndLibrariesScope(test))
-          if (dirs.isEmpty()) {
-            return if (quick) ERR else ErrorWithFixes(JavaErrorMessages.message("package.not.found", target.qualifiedName))
-          }
-          val error = checkAccess(dirs[0], useFile, target.qualifiedName, quick)
-          return when {
-            error == null -> null
-            dirs.size == 1 -> error
-            dirs.asSequence().drop(1).any { checkAccess(it, useFile, target.qualifiedName, true) == null } -> null
-            else -> error
+      else {
+        val project = useFile.project
+        val target = JavaPsiFacade.getInstance(project).findPackage(targetPackageName)
+        if (target != null) {
+          val useVFile = useFile.virtualFile
+          if (useVFile != null) {
+            val index = ProjectFileIndex.getInstance(useFile.project)
+            val module = index.getModuleForFile(useVFile)
+            if (module != null) {
+              val test = index.isInTestSourceContent(useVFile)
+              val dirs = target.getDirectories(module.getModuleWithDependenciesAndLibrariesScope(test))
+              if (dirs.isEmpty()) {
+                return if (quick) ERR else ErrorWithFixes(JavaErrorMessages.message("package.not.found", target.qualifiedName))
+              }
+              val error = checkAccess(dirs[0], useFile, target.qualifiedName, quick)
+              return when {
+                error == null -> null
+                dirs.size == 1 -> error
+                dirs.asSequence().drop(1).any { checkAccess(it, useFile, target.qualifiedName, true) == null } -> null
+                else -> error
+              }
+            }
           }
         }
       }

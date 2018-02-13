@@ -18,15 +18,15 @@ package git4idea.index;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
-import git4idea.GitVcs;
 import git4idea.commands.*;
 import git4idea.repo.GitRepository;
 import git4idea.util.StringScanner;
@@ -39,8 +39,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static com.intellij.util.ObjectUtils.notNull;
 
 public class GitIndexUtil {
   private static final String EXECUTABLE_MODE = "100755";
@@ -95,59 +93,47 @@ public class GitIndexUtil {
   }
 
   @NotNull
-  public static String write(@NotNull GitRepository repository,
-                             @NotNull FilePath filePath,
-                             @NotNull byte[] bytes,
-                             boolean executable) throws VcsException {
+  public static Hash write(@NotNull GitRepository repository,
+                           @NotNull FilePath filePath,
+                           @NotNull byte[] bytes,
+                           boolean executable) throws VcsException {
     return write(repository, filePath, new ByteArrayInputStream(bytes), executable);
   }
 
   @NotNull
-  public static String write(@NotNull GitRepository repository,
-                             @NotNull FilePath filePath,
-                             @NotNull InputStream content,
-                             boolean executable) throws VcsException {
-    String hash = hashObject(repository, filePath, content);
+  public static Hash write(@NotNull GitRepository repository,
+                           @NotNull FilePath filePath,
+                           @NotNull InputStream content,
+                           boolean executable) throws VcsException {
+    Hash hash = hashObject(repository, filePath, content);
     updateIndex(repository, filePath, hash, executable);
     return hash;
   }
 
   @NotNull
-  private static String hashObject(@NotNull GitRepository repository,
-                                   @NotNull FilePath filePath,
-                                   @NotNull InputStream content) throws VcsException {
+  private static Hash hashObject(@NotNull GitRepository repository,
+                                 @NotNull FilePath filePath,
+                                 @NotNull InputStream content) throws VcsException {
     GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.HASH_OBJECT);
     h.setSilent(true);
     h.addParameters("-w", "--stdin");
     h.addParameters("--path", VcsFileUtil.relativePath(repository.getRoot(), filePath));
-    h.setInputProcessor(out -> {
-      try {
-        FileUtil.copy(content, out);
-      }
-      finally {
-        out.close();
-      }
-    });
+    h.setInputProcessor(GitHandlerInputProcessorUtil.redirectStream(content));
     h.endOptions();
     String output = Git.getInstance().runCommand(h).getOutputOrThrow();
-
-    if (!h.errors().isEmpty()) {
-      notNull(GitVcs.getInstance(repository.getProject())).showErrors(h.errors(), "Applying index modifications");
-      throw h.errors().get(0);
-    }
-    return output.trim();
+    return HashImpl.build(output.trim());
   }
 
   private static void updateIndex(@NotNull GitRepository repository,
                                   @NotNull FilePath filePath,
-                                  @NotNull String blobHash,
+                                  @NotNull Hash blobHash,
                                   boolean isExecutable) throws VcsException {
     String mode = isExecutable ? EXECUTABLE_MODE : DEFAULT_MODE;
     String path = VcsFileUtil.relativePath(repository.getRoot(), filePath);
 
     GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.UPDATE_INDEX);
     h.setSilent(true);
-    h.addParameters("--cacheinfo", mode + "," + blobHash + "," + path);
+    h.addParameters("--cacheinfo", mode + "," + blobHash.asString() + "," + path);
     h.endOptions();
     Git.getInstance().runCommandWithoutCollectingOutput(h).getOutputOrThrow();
   }

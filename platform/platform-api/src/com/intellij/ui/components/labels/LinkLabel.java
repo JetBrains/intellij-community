@@ -36,7 +36,7 @@ public class LinkLabel<T> extends JLabel {
 
   private boolean myIsLinkActive;
 
-  private String myVisitedLinksKey;
+  private final String myVisitedLinksKey;
   private Icon myHoveringIcon;
   private Icon myInactiveIcon;
 
@@ -309,20 +309,20 @@ public class LinkLabel<T> extends JLabel {
 
   private class MyMouseHandler extends MouseAdapter implements MouseMotionListener {
     public void mousePressed(MouseEvent e) {
-      if (isInClickableArea(e.getPoint())) {
+      if (isEnabled() && isInClickableArea(e.getPoint())) {
         setActive(true);
       }
     }
 
     public void mouseReleased(MouseEvent e) {
-      if (myIsLinkActive && isInClickableArea(e.getPoint())) {
+      if (isEnabled() && myIsLinkActive && isInClickableArea(e.getPoint())) {
         doClick(e);
       }
       setActive(false);
     }
 
     public void mouseMoved(MouseEvent e) {
-      if (isInClickableArea(e.getPoint())) {
+      if (isEnabled() && isInClickableArea(e.getPoint())) {
         enableUnderline();
       }
       else {

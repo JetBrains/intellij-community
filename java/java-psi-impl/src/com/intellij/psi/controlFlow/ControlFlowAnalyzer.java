@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -282,7 +268,10 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void generateCheckedExceptionJumps(@NotNull PsiElement element) {
     //generate jumps to all handled exception handlers
-    Collection<PsiClassType> unhandledExceptions = ExceptionUtil.collectUnhandledExceptions(element, element.getParent());
+    generateExceptionJumps(element, ExceptionUtil.collectUnhandledExceptions(element, element.getParent()));
+  }
+
+  private void generateExceptionJumps(@NotNull PsiElement element, Collection<PsiClassType> unhandledExceptions) {
     for (PsiClassType unhandledException : unhandledExceptions) {
       ProgressManager.checkCanceled();
       generateThrow(unhandledException, element);
@@ -928,6 +917,12 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       exception.accept(this);
     }
     final List<PsiElement> blocks = findThrowToBlocks(statement);
+    addThrowInstructions(blocks);
+
+    finishElement(statement);
+  }
+
+  private void addThrowInstructions(@NotNull List<PsiElement> blocks) {
     PsiElement element;
     if (blocks.isEmpty() || blocks.get(0) == null) {
       ThrowToInstruction instruction = new ThrowToInstruction(0);
@@ -954,16 +949,13 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         addElementOffsetLater(element, true);
       }
     }
-
-
-    finishElement(statement);
   }
 
   /**
    * find offsets of catch(es) corresponding to this throw statement
    * myCatchParameters and myCatchBlocks arrays should be sorted in ascending scope order (from outermost to innermost)
    *
-   * @return offset or -1 if not found
+   * @return list of targets or list of single null element if no appropriate targets found
    */
   @NotNull
   private List<PsiElement> findThrowToBlocks(@NotNull PsiThrowStatement statement) {
@@ -1002,33 +994,49 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     myCurrentFlow.addInstruction(passByWhenAssertionsDisabled);
     addElementOffsetLater(statement, false);
 
-    // should not try to compute constant expression within assert
-    // since assertions can be disabled/enabled at any moment via JVM flags
-
     final PsiExpression condition = statement.getAssertCondition();
-    if (condition != null) {
-      myStartStatementStack.pushStatement(statement, false);
-      myEndStatementStack.pushStatement(statement, false);
-
-      myEndJumpRoles.push(BranchingInstruction.Role.END);
-      myStartJumpRoles.push(BranchingInstruction.Role.END);
-
-      condition.accept(this);
-
-      myStartJumpRoles.pop();
-      myEndJumpRoles.pop();
-
-      myStartStatementStack.popStatement();
-      myEndStatementStack.popStatement();
-    }
-    PsiExpression description = statement.getAssertDescription();
-    if (description != null) {
-      description.accept(this);
+    boolean generateCondition = true;
+    boolean generateThrow = true;
+    if (myEvaluateConstantIfCondition) {
+      Object conditionValue = myConstantEvaluationHelper.computeConstantExpression(condition);
+      if (conditionValue instanceof Boolean) {
+        generateThrow = !((Boolean)conditionValue);
+        generateCondition = false;
+        emitEmptyInstruction();
+      }
     }
 
-    Instruction instruction = new ConditionalThrowToInstruction(0, statement.getAssertCondition());
-    myCurrentFlow.addInstruction(instruction);
-    addElementOffsetLater(myCodeFragment, false);
+    if (generateCondition) {
+      if (condition != null) {
+        myStartStatementStack.pushStatement(statement, false);
+        myEndStatementStack.pushStatement(statement, false);
+
+        myEndJumpRoles.push(BranchingInstruction.Role.END);
+        myStartJumpRoles.push(BranchingInstruction.Role.END);
+
+        condition.accept(this);
+
+        myStartJumpRoles.pop();
+        myEndJumpRoles.pop();
+
+        myStartStatementStack.popStatement();
+        myEndStatementStack.popStatement();
+      }
+      Instruction ifTrue = new ConditionalGoToInstruction(0, BranchingInstruction.Role.END, statement.getAssertCondition());
+      myCurrentFlow.addInstruction(ifTrue);
+      addElementOffsetLater(statement, false);
+    }
+    if (generateThrow) {
+      PsiExpression description = statement.getAssertDescription();
+      if (description != null) {
+        description.accept(this);
+      }
+      // if description is evaluated, the assert statement cannot complete normally
+      // though non-necessarily AssertionError will be thrown (description may throw something, or AssertionError ctor, etc.)
+      PsiClassType exceptionClass = JavaPsiFacade.getElementFactory(statement.getProject()).createTypeByFQClassName(
+        CommonClassNames.JAVA_LANG_THROWABLE, statement.getResolveScope());
+      addThrowInstructions(findThrowToBlocks(exceptionClass));
+    }
 
     myStartStatementStack.popStatement();
     myEndStatementStack.popStatement();
@@ -1545,14 +1553,21 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   public void visitMethodCallExpression(PsiMethodCallExpression expression) {
     startElement(expression);
 
-    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-    methodExpression.accept(this);
+    PsiReferenceExpression methodExpression = expression.getMethodExpression();
+    startElement(methodExpression);
+    PsiExpression qualifier = methodExpression.getQualifierExpression();
+    if (qualifier != null) {
+      qualifier.accept(this);
+    }
+    finishElement(methodExpression);
+
     final PsiExpressionList argumentList = expression.getArgumentList();
     argumentList.accept(this);
     // just to increase counter - there is some executable code here
     emitEmptyInstruction();
 
-    generateCheckedExceptionJumps(expression);
+    //generate jumps to all handled exception handlers
+    generateExceptionJumps(expression, ExceptionUtil.getUnhandledExceptions(expression, expression.getParent(), true));
 
     finishElement(expression);
   }
@@ -1567,7 +1582,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       ProgressManager.checkCanceled();
       child.accept(this);
     }
-    generateCheckedExceptionJumps(expression);
+    //generate jumps to all handled exception handlers
+    generateExceptionJumps(expression, ExceptionUtil.getUnhandledExceptions(expression, expression.getParent(), true));
 
     if (pc == myCurrentFlow.getSize()) {
       // generate at least one instruction for constructor call

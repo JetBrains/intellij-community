@@ -92,7 +92,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   public JPanel myParamTable;
   private VariableData[] myInputVariables;
   private TypeSelector mySelector;
-  private int myDuplicatesCount;
+  private final int myDuplicatesCount;
 
   public ExtractMethodDialog(Project project,
                              PsiClass targetClass, final InputVariables inputVariables, PsiType returnType,

@@ -110,7 +110,16 @@ envs {
   createPython("django_latest", "3.5.3", ["django"], "python3.5\ndjango", true)
 }
 
-task prepare (type: Delete) {
+/**
+ * Kills any process named "python" using windows powershell.
+ * Works on Win7+.
+ */
+task killPythonWindows(type: Exec) {
+  commandLine 'powershell', '"Get-Process | where {$_.Name -ieq \\"python\\"} | Stop-Process"'
+}
+killPythonWindows.onlyIf { Os.isFamily(Os.FAMILY_WINDOWS)}
+
+task prepare(type: Delete) {
   doFirst {
     new File(envs.bootstrapDirectory, "django_latest").with { djangoLatestFolder ->
       if (djangoLatestFolder.exists() && djangoLatestFolder.lastModified() < System.currentTimeMillis() - 24 * 60 * 60 * 1000) {
@@ -129,11 +138,13 @@ task prepare (type: Delete) {
       delete envs.bootstrapDirectory
     }
   }
-}
 
+  // Python leaked from previous test may prevent this script from
+  // deleting folder because you can't delete file opened by process on Windows
+  dependsOn killPythonWindows
+}
 
 task build {
   mustRunAfter prepare
-
   dependsOn prepare, 'build_envs', tasks.findAll { it.name.startsWith("Misc") }
 }

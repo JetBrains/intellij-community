@@ -84,6 +84,6 @@ public class IdeaActionButtonLook extends ActionButtonLook {
   }
 
   private static Shape getShape(Dimension size) {
-    return new RoundRectangle2D.Double(1, 1, size.width - 3, size.height - 3, 4, 4);
+    return new RoundRectangle2D.Double(0, 0, size.width - 1, size.height - 1, 4, 4);
   }
 }

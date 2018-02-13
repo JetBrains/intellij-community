@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.packaging.PyPackageManager
@@ -39,7 +38,6 @@ import com.jetbrains.python.sdk.*
 import icons.PythonIcons
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.BorderLayout
-import java.io.File
 import javax.swing.Icon
 import javax.swing.event.DocumentEvent
 
@@ -74,10 +72,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
     }
   }
   private val pathField = TextFieldWithBrowseButton().apply {
-    val defaultBasePath = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectBasePath))
-    val parentPath = PathUtil.getParentPath(defaultBasePath)
-    val fileName = PathUtil.getFileName(defaultBasePath)
-    text = FileUtil.findSequentNonexistentFile(File(parentPath), fileName, "").path
+    text = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectBasePath))
     addBrowseFolderListener("Select Location for Virtual Environment", null, project,
                             FileChooserDescriptorFactory.createSingleFolderDescriptor())
   }
@@ -96,9 +91,8 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
   }
 
   override fun validateAll() =
-    listOf(validateEmptyOrNonExistingDirectoryLocation(pathField),
-           validateSdkComboBox(baseSdkField))
-      .filterNotNull()
+    listOfNotNull(validateEnvironmentDirectoryLocation(pathField),
+                  validateSdkComboBox(baseSdkField))
 
   override fun getOrCreateSdk(): Sdk? {
     val root = pathField.text

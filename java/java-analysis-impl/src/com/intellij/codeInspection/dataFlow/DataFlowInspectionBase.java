@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.dataFlow;
 
@@ -29,10 +29,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ThreeState;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -175,8 +172,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     PsiClass containingClass = PsiTreeUtil.getNonStrictParentOfType(scope, PsiClass.class);
     if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass) && !(containingClass instanceof PsiEnumConstantInitializer)) return;
 
-    final StandardDataFlowRunner dfaRunner =
-      new StandardDataFlowRunner(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, !DfaUtil.isInsideConstructorOrInitializer(scope));
+    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, scope);
     analyzeDfaWithNestedClosures(scope, holder, dfaRunner, Collections.singletonList(dfaRunner.createMemoryState()));
   }
 
@@ -262,6 +258,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     reportNullableReturns(visitor, holder, reportedAnchors, scope);
     if (SUGGEST_NULLABLE_ANNOTATIONS) {
       reportNullableArgumentsPassedToNonAnnotated(visitor, holder, reportedAnchors);
+      reportNullableAssignedToNonAnnotatedFields(visitor, holder, reportedAnchors);
     }
 
     reportOptionalOfNullableImprovements(holder, reportedAnchors, visitor.getOfNullableCalls());
@@ -340,8 +337,9 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
                                          HashSet<PsiElement> reportedAnchors) {
     visitor.problems().forEach(problem -> {
       if (NullabilityProblemKind.passingNullableArgumentToNonAnnotatedParameter.isMyProblem(problem) ||
+          NullabilityProblemKind.assigningNullableValueToNonAnnotatedField.isMyProblem(problem) ||
           NullabilityProblemKind.nullableReturn.isMyProblem(problem)) {
-        // these two kinds are still reported separately
+        // these kinds are still reported separately
         return;
       }
       if (!reportedAnchors.add(problem.getAnchor())) return;
@@ -562,13 +560,13 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       if (reportedAnchors.contains(expr)) continue;
 
       if (expr.getParent() instanceof PsiMethodReferenceExpression) {
-        holder.registerProblem(expr.getParent(), "Method reference argument might be null but passed to non annotated parameter");
+        holder.registerProblem(expr.getParent(), "Method reference argument might be null but passed to non-annotated parameter");
         continue;
       }
 
       final String text = isNullLiteralExpression(expr)
-                          ? "Passing <code>null</code> argument to non annotated parameter"
-                          : "Argument <code>#ref</code> #loc might be null but passed to non annotated parameter";
+                          ? "Passing <code>null</code> argument to non-annotated parameter"
+                          : "Argument <code>#ref</code> #loc might be null but passed to non-annotated parameter";
       List<LocalQuickFix> fixes = createNPEFixes((PsiExpression)expr, (PsiExpression)expr, holder.isOnTheFly());
       final PsiElement parent = expr.getParent();
       if (parent instanceof PsiExpressionList) {
@@ -590,6 +588,36 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       }
 
     }
+  }
+  
+  private void reportNullableAssignedToNonAnnotatedFields(DataFlowInstructionVisitor visitor, ProblemsHolder holder, Set<PsiElement> reportedAnchors) {
+    for (PsiElement expr : visitor.problems()
+      .map(NullabilityProblemKind.assigningNullableValueToNonAnnotatedField::asMyProblem).nonNull()
+      .map(NullabilityProblem::getAnchor)) {
+      if (reportedAnchors.contains(expr)) continue;
+
+      String text = isNullLiteralExpression(expr)
+                    ? "Assigning <code>null</code> value to non-annotated field"
+                    : "Expression <code>#ref</code> #loc might be null but is assigned to non-annotated field";
+      List<LocalQuickFix> fixes = createNPEFixes((PsiExpression)expr, (PsiExpression)expr, holder.isOnTheFly());
+      PsiField field = getAssignedField(expr);
+      if (field != null) {
+        fixes.add(new AddNullableAnnotationFix(field));
+        holder.registerProblem(expr, text, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+        reportedAnchors.add(expr);
+      }
+    }
+  }
+
+  @Nullable
+  private static PsiField getAssignedField(PsiElement assignedValue) {
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(assignedValue.getParent());
+    if (parent instanceof PsiAssignmentExpression) {
+      PsiExpression lExpression = ((PsiAssignmentExpression)parent).getLExpression();
+      PsiElement target = lExpression instanceof PsiReferenceExpression ? ((PsiReferenceExpression)lExpression).resolve() : null;
+      return ObjectUtils.tryCast(target, PsiField.class);
+    }
+    return null;
   }
 
   private void reportCallMayProduceNpe(ProblemsHolder holder, PsiMethodCallExpression callExpression) {

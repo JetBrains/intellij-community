@@ -418,10 +418,13 @@ public class IdeBackgroundUtil {
       Graphics2D gg = withEditorBackground(g, c);
       if (gg instanceof MyGraphics) {
         Component view = c instanceof JViewport ? ((JViewport)c).getView() : c;
-        Color selectionColor = view instanceof JTree ? UIUtil.getTreeSelectionBackground() :
-                               view instanceof JList ? UIUtil.getListSelectionBackground() :
-                               view instanceof JTable ? UIUtil.getTableSelectionBackground() : null;
-        ((MyGraphics)gg).preserved = color -> color == selectionColor;
+        Color selection1 = view instanceof JTree ? UIUtil.getTreeSelectionBackground() :
+                           view instanceof JList ? UIUtil.getListSelectionBackground() :
+                           view instanceof JTable ? UIUtil.getTableSelectionBackground() : null;
+        Color selection2 = view instanceof JTree ? UIUtil.getTreeUnfocusedSelectionBackground() :
+                           view instanceof JList ? UIUtil.getListUnfocusedSelectionBackground() :
+                           view instanceof JTable ? UIUtil.getTableUnfocusedSelectionBackground() : null;
+        ((MyGraphics)gg).preserved = color -> color == selection1 || color == selection2;
       }
       return gg;
     }

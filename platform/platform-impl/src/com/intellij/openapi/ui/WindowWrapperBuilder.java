@@ -180,7 +180,7 @@ public class WindowWrapperBuilder {
     }
 
     private static class MyDialogWrapper extends DialogWrapper {
-      @NotNull private JComponent myComponent;
+      @NotNull private final JComponent myComponent;
       @Nullable private String myDimensionServiceKey;
       @Nullable private Computable<JComponent> myPreferredFocusedComponent;
 

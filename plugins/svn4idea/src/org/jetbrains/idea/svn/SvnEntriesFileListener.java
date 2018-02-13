@@ -32,7 +32,7 @@ import java.util.List;
 public class SvnEntriesFileListener implements VirtualFileListener {
   private final Project myProject;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnEntriesFileListener");
-  private VcsDirtyScopeManager myDirtyScopeManager;
+  private final VcsDirtyScopeManager myDirtyScopeManager;
 
   public SvnEntriesFileListener(final Project project) {
     myProject = project;

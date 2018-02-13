@@ -6,21 +6,99 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.util.containers.ContainerUtil
+import java.util.*
 
-open class LogEvent(@Transient var recorderId: String, @Transient var userUid: String, sessionId: String, type: String) {
-    @Transient val timestamp = System.currentTimeMillis()
-    @Transient var endTimestamp = System.currentTimeMillis()
-    @Transient val sessionUid: String = sessionId
-    @Transient val actionType: String = type
-    @Transient val data: MutableMap<String, Any> = ContainerUtil.newHashMap()
+open class LogEvent(val session: String, val bucket: String,
+                    recorderId: String,
+                    recorderVersion: String,
+                    type: String) {
+  val time = System.currentTimeMillis()
+  val recorder: LogEventRecorder = LogEventRecorder(removeTabsOrSpaces(recorderId), recorderVersion)
+  val action: LogEventAction = LogEventAction(removeTabsOrSpaces(type))
 
-    fun shouldMerge(next: LogEvent): Boolean {
-        if (next.timestamp - endTimestamp > 10000) return false
-        if (actionType != next.actionType) return false
-        if (recorderId != next.recorderId) return false
-        if (userUid != next.userUid) return false
-        if (sessionUid != next.sessionUid) return false
-        if (data != next.data) return false
-        return true
+  fun shouldMerge(next: LogEvent): Boolean {
+    if (session != next.session) return false
+    if (bucket != next.bucket) return false
+    if (recorder.id != next.recorder.id) return false
+    if (recorder.version != next.recorder.version) return false
+    if (action.id != next.action.id) return false
+    if (action.data != next.action.data) return false
+    return true
+  }
+
+  private fun removeTabsOrSpaces(str : String) : String {
+    return str.replace(" ", "_").replace("\t", "_")
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as LogEvent
+
+    if (session != other.session) return false
+    if (bucket != other.bucket) return false
+    if (time != other.time) return false
+    if (recorder != other.recorder) return false
+    if (action != other.action) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = session.hashCode()
+    result = 31 * result + bucket.hashCode()
+    result = 31 * result + time.hashCode()
+    result = 31 * result + recorder.hashCode()
+    result = 31 * result + action.hashCode()
+    return result
+  }
+}
+
+class LogEventRecorder(val id: String, val version: String) {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as LogEventRecorder
+
+    if (id != other.id) return false
+    if (version != other.version) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = id.hashCode()
+    result = 31 * result + version.hashCode()
+    return result
+  }
+}
+
+class LogEventAction(val id: String) {
+  var data: MutableMap<String, Any> = Collections.emptyMap()
+
+  fun addData(key: String, value: Any) {
+    if (data.isEmpty()) {
+      data = ContainerUtil.newHashMap()
     }
+    data.put(key, value)
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as LogEventAction
+
+    if (id != other.id) return false
+    if (data != other.data) return false
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = id.hashCode()
+    result = 31 * result + (data?.hashCode() ?: 0)
+    return result
+  }
 }

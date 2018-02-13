@@ -1049,6 +1049,11 @@
       <action id="RunInspectionOn" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$RunInspectionOn"/>
     </group>
 
+    <group id="ExtractMethodToolWindow.TreePopup" compact="true">
+      <reference ref="EditSource"/>
+      <reference ref="TreeNodeExclusion"/>
+    </group>
+
     <group id="RunDashboardContentToolbar">
       <!--suppress PluginXmlValidity -->
       <action id="RunDashboard.Run" class="com.intellij.execution.dashboard.actions.RunAction" use-shortcut-of="RunClass"/>

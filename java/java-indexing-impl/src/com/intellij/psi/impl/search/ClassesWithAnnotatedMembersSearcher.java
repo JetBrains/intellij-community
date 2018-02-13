@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.Extensions;
@@ -48,14 +47,7 @@ public class ClassesWithAnnotatedMembersSearcher extends QueryExecutorBase<PsiCl
 
     final Set<PsiClass> processed = new HashSet<>();
     AnnotatedElementsSearch.searchPsiMembers(queryParameters.getAnnotationClass(), scope).forEach(member -> {
-      PsiClass psiClass;
-      AccessToken token = ReadAction.start();
-      try {
-        psiClass = member instanceof PsiClass ? (PsiClass)member : member.getContainingClass();
-      }
-      finally {
-        token.finish();
-      }
+      PsiClass psiClass = ReadAction.compute(() -> member instanceof PsiClass ? (PsiClass)member : member.getContainingClass());
 
       if (psiClass != null && processed.add(psiClass)) {
         consumer.process(psiClass);

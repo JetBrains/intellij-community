@@ -40,13 +40,10 @@ public class JdkBundleTest {
     assertTrue(bundle.isJdk());
     assertTrue(bundle.isOperational());
 
-    //todo[r.sh] mutant JDK on build agents (either fix the layout or adopt the assertion)
-    if (!SystemInfo.isMac) {
-      File home = new File(SystemProperties.getJavaHome());
-      if ("jre".equals(home.getName())) home = home.getParentFile();
-      if (SystemInfo.isMac && "Home".equals(home.getName())) home = home.getParentFile().getParentFile();
-      assertEquals(home, bundle.getLocation());
-    }
+    File home = new File(SystemProperties.getJavaHome());
+    if ("jre".equals(home.getName())) home = home.getParentFile();
+    if (SystemInfo.isMac && "Home".equals(home.getName())) home = home.getParentFile().getParentFile();
+    assertEquals(home, bundle.getLocation());
 
     JavaVersion current = JavaVersion.current();
     JavaVersion actual = bundle.getBundleVersion();

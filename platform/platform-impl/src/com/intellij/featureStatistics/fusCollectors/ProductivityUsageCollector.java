@@ -5,14 +5,15 @@ import com.intellij.featureStatistics.FeatureDescriptor;
 import com.intellij.featureStatistics.ProductivityFeaturesRegistry;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
-import com.intellij.util.containers.HashSet;
+import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsDifferenceSender;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class ProductivityUsageCollector extends ApplicationUsagesCollector {
+public class ProductivityUsageCollector extends ApplicationUsagesCollector implements FUStatisticsDifferenceSender {
 
-  private static String GROUP_ID = "statistics.productivity";
+  private static final String GROUP_ID = "statistics.productivity";
   @NotNull
   @Override
   public String getGroupId() {
@@ -22,7 +23,7 @@ public class ProductivityUsageCollector extends ApplicationUsagesCollector {
   @NotNull
   @Override
   public Set<UsageDescriptor> getUsages() {
-    Set<UsageDescriptor> usages = new HashSet<>();
+    Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
 
     final ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
     for (String featureId : registry.getFeatureIds()) {

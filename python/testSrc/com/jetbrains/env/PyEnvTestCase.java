@@ -91,6 +91,9 @@ public abstract class PyEnvTestCase {
 
   protected boolean isStaging(Description description) {
     try {
+      if (description.getTestClass().isAnnotationPresent(Staging.class)) {
+        return true;
+      }
       if (description.getTestClass().getMethod(description.getMethodName()).isAnnotationPresent(Staging.class)) {
         return true;
       }
@@ -120,11 +123,6 @@ public abstract class PyEnvTestCase {
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected PyEnvTestCase(@NotNull final String... requiredTags) {
     myRequiredTags = requiredTags.length > 0 ? requiredTags.clone() : null;
-  }
-
-  @Nullable
-  public static PyPackage getInstalledDjango(@NotNull final Sdk sdk) throws ExecutionException {
-    return PyPackageUtil.findPackage(PyPackageManager.getInstance(sdk).refreshAndGetPackages(false), "django");
   }
 
   public static String norm(String testDataPath) {
@@ -303,7 +301,7 @@ public abstract class PyEnvTestCase {
     myLogger = null;
   }
 
-  private Disposable myDisposable = Disposer.newDisposable();
+  private final Disposable myDisposable = Disposer.newDisposable();
 
   public Disposable getTestRootDisposable() {
     return myDisposable;

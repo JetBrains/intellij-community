@@ -24,10 +24,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.stubs.*;
-import com.jetbrains.python.psi.types.PyCallableType;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -741,7 +738,7 @@ public class PyStubsTest extends PyTestCase {
 
   // PY-18116
   public void testParameterAnnotation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       final PyFile file = getTestFile();
       final PyFunction func = file.findTopLevelFunction("func");
       final PyNamedParameter param = func.getParameterList().findParameterByName("x");
@@ -756,7 +753,7 @@ public class PyStubsTest extends PyTestCase {
 
   // PY-18116
   public void testFunctionAnnotation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       final PyFile file = getTestFile();
       final PyFunction func = file.findTopLevelFunction("func");
       final String annotation = func.getAnnotationValue();
@@ -804,7 +801,7 @@ public class PyStubsTest extends PyTestCase {
 
   // PY-18116
   public void testTypeAliasInParameterAnnotation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       final PyFile file = getTestFile();
       final PyFunction func = file.findTopLevelFunction("func");
       final PyNamedParameter param = func.getParameterList().findParameterByName("x");
@@ -838,7 +835,7 @@ public class PyStubsTest extends PyTestCase {
 
   // PY-18166
   public void testUnresolvedTypingSymbol() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       final PyFile file = getTestFile();
       final PyFunction func = file.findTopLevelFunction("func");
       assertType("() -> Any", func, TypeEvalContext.codeInsightFallback(file.getProject()));
@@ -887,7 +884,7 @@ public class PyStubsTest extends PyTestCase {
 
   // PY-18816
   public void testComplexGenericType() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       myFixture.copyDirectoryToProject(getTestName(true), "");
       final PsiManager manager = PsiManager.getInstance(myFixture.getProject());
       final PyFile originFile = (PyFile)manager.findFile(myFixture.findFileInTempDir("a.py"));
@@ -969,6 +966,29 @@ public class PyStubsTest extends PyTestCase {
         assertNotParsed(file1);
         assertNotParsed(file2);
         assertNotParsed(file3);
+      }
+    );
+  }
+
+  // PY-27398
+  public void testTypingNewType() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> {
+        final PyFile file = getTestFile("typingNewType/new_type.py");
+
+        final PyTargetExpression type = file.findTopLevelAttribute("UserId");
+        final PyTypingNewTypeStub stub = type.getStub().getCustomStub(PyTypingNewTypeStub.class);
+
+        assertNotNull(stub);
+        assertTrue("UserId".equals(stub.getName()));
+        assertTrue("int".equals(stub.getClassType()));
+
+        final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+        final PyType typeDef = context.getType(type);
+
+        assertTrue(typeDef instanceof PyTypingNewType);
+        assertNotParsed(file);
       }
     );
   }

@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TemplateXmlBlock extends XmlBlock implements IndentInheritingBlock {
-  private AbstractXmlTemplateFormattingModelBuilder myBuilder;
+  private final AbstractXmlTemplateFormattingModelBuilder myBuilder;
   private Indent myIndent;
 
   private final static List<Block> EMPTY_BLOCK_LIST = new ArrayList<>();

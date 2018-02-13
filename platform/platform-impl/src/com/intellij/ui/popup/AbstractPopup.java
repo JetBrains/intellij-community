@@ -650,7 +650,9 @@ public class AbstractPopup implements JBPopup {
         myState = State.SHOWN;
         return;
       }
-      storeDimensionSize(myContent.getSize());
+      Dimension size = myContent.getSize();
+      JBInsets.removeFrom(size, myContent.getInsets());
+      storeDimensionSize(size);
       if (myUseDimServiceForXYLocation) {
         final JRootPane root = myComponent.getRootPane();
         if (root != null) {
@@ -778,6 +780,8 @@ public class AbstractPopup implements JBPopup {
       sizeToSet.width = Math.max(sizeToSet.width, myContent.getMinimumSize().width);
       sizeToSet.height = Math.max(sizeToSet.height, myContent.getMinimumSize().height);
 
+      JBInsets.addTo(sizeToSet, myContent.getInsets());
+
       myContent.setSize(sizeToSet);
       myContent.setPreferredSize(sizeToSet);
     }
@@ -877,6 +881,7 @@ public class AbstractPopup implements JBPopup {
           if (myCursor != cursor || myCursor != Cursor.getDefaultCursor()) {
             glass.setCursor(cursor, this);
             myCursor = cursor;
+            super.setCursor(content, cursor);
           }
         }
       };

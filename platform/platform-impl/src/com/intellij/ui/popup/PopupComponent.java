@@ -170,7 +170,7 @@ public interface PopupComponent {
   class AwtPopupWrapper implements PopupComponent {
 
     private final Popup myPopup;
-    private JBPopup myJBPopup;
+    private final JBPopup myJBPopup;
 
     public AwtPopupWrapper(Popup popup, JBPopup jbPopup) {
       myPopup = popup;

@@ -53,7 +53,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   protected final JPanel myPanel = new JPanel(new GridBagLayout());
 
   private boolean myShowAllStandardOptions = false;
-  private Set<String> myAllowedOptions = new HashSet<>();
+  private final Set<String> myAllowedOptions = new HashSet<>();
   protected MultiMap<String, CustomBooleanOptionInfo> myCustomOptions = new MultiMap<>();
   protected boolean isFirstUpdate = true;
   private final Map<String, String> myRenamedFields = new THashMap<>();

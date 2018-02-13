@@ -1,34 +1,39 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.codeInsight.template.postfix.settings.PostfixTemplateStorage;
+import com.intellij.codeInsight.template.postfix.templates.editable.PostfixChangedBuiltinTemplate;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public abstract class PostfixTemplatesUtils {
   private PostfixTemplatesUtils() {
+  }
+
+  /**
+   * Returns all templates registered in the provider, including the edited templates and builtin templates in their current state
+   */
+  @NotNull
+  public static Set<PostfixTemplate> getAvailableTemplates(@NotNull PostfixTemplateProvider provider) {
+    Set<PostfixTemplate> result = ContainerUtil.newHashSet(provider.getTemplates());
+    for (PostfixTemplate template : PostfixTemplateStorage.getInstance().getTemplates(provider)) {
+      if (template instanceof PostfixChangedBuiltinTemplate) {
+        result.remove(((PostfixChangedBuiltinTemplate)template).getBuiltinTemplate());
+      }
+      result.add(template);
+    }
+    return result;
   }
 
   @Nullable
@@ -51,15 +56,14 @@ public abstract class PostfixTemplatesUtils {
   }
 
   @NotNull
-  public static String getLangForProvider(@NotNull PostfixTemplateProvider provider) {
-    LanguageExtensionPoint[] extensions = new ExtensionPointName<LanguageExtensionPoint>(LanguagePostfixTemplate.EP_NAME).getExtensions();
-
-    for (LanguageExtensionPoint extension : extensions) {
-      if (provider.equals(extension.getInstance())) {
-        return extension.getKey();
-      }
+  public static String generateTemplateId(@NotNull String templateKey, @NotNull PostfixTemplateProvider provider) {
+    Set<String> usedIds = new HashSet<>();
+    for (PostfixTemplate builtinTemplate : provider.getTemplates()) {
+      usedIds.add(builtinTemplate.getId());
     }
-
-    return Language.ANY.getID();
+    for (PostfixTemplate template : PostfixTemplateStorage.getInstance().getTemplates(provider)) {
+      usedIds.add(template.getId());
+    }
+    return UniqueNameGenerator.generateUniqueName(templateKey + "@userDefined", usedIds);
   }
 }

@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.util.NullableConsumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
@@ -44,6 +45,7 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,13 +53,15 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   @NotNull private final Project myProject;
   @Nullable private final Module myModule;
-  private MySdkModelListener mySdkModelListener = new MySdkModelListener();
+  private final MySdkModelListener mySdkModelListener = new MySdkModelListener();
   private PyConfigurableInterpreterList myInterpreterList;
   private ProjectSdksModel myProjectSdksModel;
   private NullableConsumer<Sdk> myAddSdkCallback;
@@ -299,35 +303,45 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   private void updateSdkList(boolean preserveSelection) {
-    final List<Sdk> sdkList = myInterpreterList.getAllPythonSdks(myProject);
-    Sdk selection = preserveSelection ? (Sdk)mySdkCombo.getSelectedItem() : null;
-    if (!sdkList.contains(selection)) {
+    final List<Sdk> allPythonSdks = myInterpreterList.getAllPythonSdks(myProject);
+    final List<Sdk> visibleSdks = StreamEx
+      .of(allPythonSdks)
+      .filter(sdk -> !PythonSdkType.isInvalid(sdk) && !PySdkExtKt.isAssociatedWithAnotherProject(sdk, myProject))
+      .toList();
+    final LinkedHashSet<Sdk> virtualEnvironments = StreamEx
+      .of(visibleSdks)
+      .filter(sdk -> PythonSdkType.isVirtualEnv(sdk) || PythonSdkType.isCondaVirtualEnv(sdk))
+      .collect(Collectors.toCollection(LinkedHashSet::new));
+    final LinkedHashSet<Sdk> remoteSdks = StreamEx
+      .of(visibleSdks)
+      .filter(sdk -> PythonSdkType.isRemote(sdk))
+      .collect(Collectors.toCollection(LinkedHashSet::new));
+    final List<Sdk> otherSdks = StreamEx
+      .of(visibleSdks)
+      .filter(sdk -> !virtualEnvironments.contains(sdk) && !remoteSdks.contains(sdk))
+      .toList();
+
+    Sdk selection = preserveSelection ? ObjectUtils.tryCast(mySdkCombo.getSelectedItem(), Sdk.class) : null;
+    if (!allPythonSdks.contains(selection)) {
       selection = null;
     }
-    VirtualEnvProjectFilter.removeNotMatching(myProject, sdkList);
-    // if the selection is a non-matching virtualenv, show it anyway
-    if (selection != null && !sdkList.contains(selection)) {
-      sdkList.add(0, selection);
-    }
+
     List<Object> items = new ArrayList<>();
     items.add(null);
 
-    boolean remoteSeparator = true;
-    boolean separator = true;
-    for (Sdk sdk : sdkList) {
-      if (PythonSdkType.isInvalid(sdk) && !sdk.equals(selection)) {
-        continue;
-      }
-      if (!PythonSdkType.isVirtualEnv(sdk) && !PythonSdkType.isRemote(sdk) && separator) {
-        items.add(PySdkListCellRenderer.SEPARATOR);
-        separator = false;
-      }
-      if (PythonSdkType.isRemote(sdk) && remoteSeparator) {
-        items.add(PySdkListCellRenderer.SEPARATOR);
-        remoteSeparator = false;
-      }
-      items.add(sdk);
+    if (selection != null && !visibleSdks.contains(selection)) {
+      items.add(0, selection);
     }
+
+    items.addAll(virtualEnvironments);
+    if (!otherSdks.isEmpty()) {
+      items.add(PySdkListCellRenderer.SEPARATOR);
+    }
+    items.addAll(otherSdks);
+    if (!remoteSdks.isEmpty()) {
+      items.add(PySdkListCellRenderer.SEPARATOR);
+    }
+    items.addAll(remoteSdks);
 
     items.add(PySdkListCellRenderer.SEPARATOR);
     items.add(SHOW_ALL);

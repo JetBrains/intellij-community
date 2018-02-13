@@ -81,7 +81,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     new TIntArrayList(new int[]{4}),
     new TIntArrayList(new int[]{5}),
     new TIntArrayList(new int[]{1, 2}),
-    new TIntArrayList(new int[]{6})
+    new TIntArrayList(new int[]{6}),
+    new TIntArrayList(new int[]{1, 2})
     );
   private static final String[] FORK_MODE_ALL =
     {JUnitConfiguration.FORK_NONE, JUnitConfiguration.FORK_METHOD, JUnitConfiguration.FORK_KLASS};
@@ -104,7 +105,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   private JRadioButton myWholeProjectScope;
   private JRadioButton mySingleModuleScope;
   private JRadioButton myModuleWDScope;
-  private TextFieldWithBrowseButton myPatternTextField;
+  private final TextFieldWithBrowseButton myPatternTextField;
   private JrePathEditor myJrePathEditor;
   private LabeledComponent<ShortenCommandLineModeCombo> myShortenClasspathModeCombo;
   private JComboBox myForkCb;
@@ -117,7 +118,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   private LabeledComponent<JComboBox<String>> myChangeListLabeledComponent;
   private LabeledComponent<RawCommandLineEditor> myUniqueIdField;
   private LabeledComponent<RawCommandLineEditor> myTagsField;
-  private Project myProject;
+  private final Project myProject;
   private JComponent anchor;
 
   public JUnitConfigurable(final Project project) {
@@ -625,9 +626,9 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
   public void onTypeChanged(final int newType) {
     myTypeChooser.setSelectedItem(newType);
-    final TIntArrayList enabledFields = ourEnabledFields.get(newType);
+    final TIntArrayList enabledFields = ourEnabledFields.size() > newType ? ourEnabledFields.get(newType) : null;
     for (int i = 0; i < myTestLocations.length; i++)
-      getTestLocation(i).setEnabled(enabledFields.contains(i));
+      getTestLocation(i).setEnabled(enabledFields != null && enabledFields.contains(i));
     /*if (newType == JUnitConfigurationModel.PATTERN) {
       myModule.setEnabled(false);
     } else */if (newType != JUnitConfigurationModel.ALL_IN_PACKAGE &&

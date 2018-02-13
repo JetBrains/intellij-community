@@ -27,7 +27,7 @@ import java.awt.event.*;
 
 public abstract class BaseButtonBehavior {
 
-  private JComponent myComponent;
+  private final JComponent myComponent;
 
   private boolean myHovered;
   private boolean myPressedByMouse;

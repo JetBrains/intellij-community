@@ -42,8 +42,8 @@ import java.util.Set;
 public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private JEditorPane myDescriptionPanel = new JEditorPane();
-  private PluginHeaderPanel myHeader;
+  private final JEditorPane myDescriptionPanel = new JEditorPane();
+  private final PluginHeaderPanel myHeader;
 
   public DetectedPluginsPanel() {
     super(PluginDownloader.class);

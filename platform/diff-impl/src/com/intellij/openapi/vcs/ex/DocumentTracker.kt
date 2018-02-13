@@ -33,8 +33,7 @@ import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
-import com.intellij.openapi.vcs.ex.DocumentTracker.Listener
-import com.intellij.util.EventDispatcher
+import com.intellij.openapi.vcs.ex.DocumentTracker.Handler
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.CalledInAwt
 import java.util.*
@@ -42,8 +41,7 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 class DocumentTracker : Disposable {
-  private val dispatcher: EventDispatcher<Listener> = EventDispatcher.create(Listener::class.java)
-  private val multicaster = dispatcher.multicaster
+  private val handler: Handler
 
   // Any external calls (ex: Document modifications) must be avoided under lock,
   // do avoid deadlock with ChangeListManager
@@ -52,22 +50,25 @@ class DocumentTracker : Disposable {
   val document1: Document
   val document2: Document
 
-  private val tracker: LineTracker = LineTracker(dispatcher)
+  private val tracker: LineTracker
   private val freezeHelper: FreezeHelper = FreezeHelper()
 
   private var isDisposed: Boolean = false
 
 
-  constructor(document1: Document, document2: Document) {
+  constructor(document1: Document,
+              document2: Document,
+              handler: Handler) {
     assert(document1 != document2)
     this.document1 = document1
     this.document2 = document2
+    this.handler = handler
 
     val changes = compareLines(document1.immutableCharSequence,
                                document2.immutableCharSequence,
                                document1.lineOffsets,
                                document2.lineOffsets).iterateChanges().toList()
-    tracker.setRanges(changes, false)
+    tracker = LineTracker(this.handler, changes)
 
     val application = ApplicationManager.getApplication()
     application.addApplicationListener(MyApplicationListener(), this)
@@ -92,10 +93,6 @@ class DocumentTracker : Disposable {
 
 
   val blocks: List<Block> get() = tracker.blocks
-
-  fun addListener(listener: Listener) {
-    dispatcher.addListener(listener)
-  }
 
 
   fun <T> readLock(task: () -> T): T = LOCK.read(task)
@@ -412,7 +409,7 @@ class DocumentTracker : Disposable {
         setData(side, data)
         data.counter++
 
-        multicaster.onFreeze(side)
+        handler.onFreeze(side)
       }
       else {
         data.counter++
@@ -433,7 +430,7 @@ class DocumentTracker : Disposable {
 
         setData(side, null)
         refreshDirty(fastRefresh = false)
-        multicaster.onUnfreeze(side)
+        handler.onUnfreeze(side)
       }
     }
 
@@ -474,7 +471,7 @@ class DocumentTracker : Disposable {
       get() = myLock.isHeldByCurrentThread
   }
 
-  interface Listener : EventListener {
+  interface Handler {
     fun onRangeRefreshed(before: Block, after: List<Block>) {}
     fun onRangesChanged(before: List<Block>, after: Block) {}
     fun onRangeShifted(before: Block, after: Block) {}
@@ -503,17 +500,16 @@ class DocumentTracker : Disposable {
 }
 
 
-private class LineTracker(private val dispatcher: EventDispatcher<Listener>) {
-  private val multicaster = dispatcher.multicaster
-
-  var blocks: List<Block> = emptyList()
+private class LineTracker(private val handler: Handler,
+                          originalChanges: List<Range>) {
+  var blocks: List<Block> = originalChanges.map { Block(it, false, false) }
     private set
 
   private var isDirty: Boolean = false
 
 
   fun destroy() {
-    multicaster.onRangesRemoved(blocks)
+    handler.onRangesRemoved(blocks)
     blocks = emptyList()
   }
 
@@ -531,12 +527,12 @@ private class LineTracker(private val dispatcher: EventDispatcher<Listener>) {
 
     BlockGroupsProcessor(text1, lineOffsets1).processMergeableGroups(blocks) { group ->
       if (group.any { it.isDirty }) {
-        MergingBlockProcessor(dispatcher).processMergedBlocks(group) { original, mergedBlock ->
+        MergingBlockProcessor(handler).processMergedBlocks(group) { original, mergedBlock ->
           val freshBlocks = refreshBlock(mergedBlock, text1, text2, lineOffsets1, lineOffsets2, fastRefresh)
 
           removedBlocks.addAll(original)
           addedBlocks.addAll(freshBlocks)
-          multicaster.onRangeRefreshed(mergedBlock, freshBlocks)
+          handler.onRangeRefreshed(mergedBlock, freshBlocks)
 
           newBlocks.addAll(freshBlocks)
         }
@@ -546,33 +542,33 @@ private class LineTracker(private val dispatcher: EventDispatcher<Listener>) {
       }
     }
 
-    multicaster.onRangesRemoved(removedBlocks)
-    multicaster.onRangesAdded(addedBlocks)
+    handler.onRangesRemoved(removedBlocks)
+    handler.onRangesAdded(addedBlocks)
 
     blocks = newBlocks
     isDirty = false
 
-    multicaster.afterRefresh()
+    handler.afterRefresh()
   }
 
   fun rangeChanged(side: Side, startLine: Int, beforeLength: Int, afterLength: Int) {
     val data = handleRangeChange(blocks, side, startLine, beforeLength, afterLength)
 
-    multicaster.onRangesChanged(data.affectedBlocks, data.newAffectedBlock)
+    handler.onRangesChanged(data.affectedBlocks, data.newAffectedBlock)
     for (i in data.afterBlocks.indices) {
-      multicaster.onRangeShifted(data.afterBlocks[i], data.newAfterBlocks[i])
+      handler.onRangeShifted(data.afterBlocks[i], data.newAfterBlocks[i])
     }
 
-    multicaster.onRangesRemoved(data.affectedBlocks)
-    multicaster.onRangesRemoved(data.afterBlocks)
+    handler.onRangesRemoved(data.affectedBlocks)
+    handler.onRangesRemoved(data.afterBlocks)
 
-    multicaster.onRangeAdded(data.newAffectedBlock)
-    multicaster.onRangesAdded(data.newAfterBlocks)
+    handler.onRangeAdded(data.newAffectedBlock)
+    handler.onRangesAdded(data.newAfterBlocks)
 
     blocks = ContainerUtil.concat(data.beforeBlocks, listOf(data.newAffectedBlock), data.newAfterBlocks)
     isDirty = true
 
-    multicaster.afterRangeChange()
+    handler.afterRangeChange()
   }
 
   private fun refreshBlock(block: Block,
@@ -618,18 +614,18 @@ private class LineTracker(private val dispatcher: EventDispatcher<Listener>) {
       }
       else {
         val newBlock = block.shift(side, shift)
-        multicaster.onRangeShifted(block, newBlock)
+        handler.onRangeShifted(block, newBlock)
 
         newBlocks.add(newBlock)
       }
     }
 
-    multicaster.onRangesRemoved(oldBlocks)
-    multicaster.onRangesAdded(newBlocks)
+    handler.onRangesRemoved(oldBlocks)
+    handler.onRangesAdded(newBlocks)
 
     blocks = newBlocks
 
-    multicaster.afterExplicitChange()
+    handler.afterExplicitChange()
 
     return appliedBlocks
   }
@@ -638,13 +634,13 @@ private class LineTracker(private val dispatcher: EventDispatcher<Listener>) {
     val oldBlocks = blocks
     val newBlocks = ranges.map { Block(it, dirty, false) }
 
-    multicaster.onRangesRemoved(oldBlocks)
-    multicaster.onRangesAdded(newBlocks)
+    handler.onRangesRemoved(oldBlocks)
+    handler.onRangesAdded(newBlocks)
 
     blocks = newBlocks
     if (dirty) isDirty = true
 
-    multicaster.afterExplicitChange()
+    handler.afterExplicitChange()
   }
 
   companion object {
@@ -794,11 +790,11 @@ private class LineTracker(private val dispatcher: EventDispatcher<Listener>) {
                                      val affectedBlocks: List<Block>, val afterBlocks: List<Block>,
                                      val newAffectedBlock: Block, val newAfterBlocks: List<Block>)
 
-  private fun Listener.onRangesRemoved(blocks: List<Block>) {
+  private fun Handler.onRangesRemoved(blocks: List<Block>) {
     blocks.forEach(this::onRangeRemoved)
   }
 
-  private fun Listener.onRangesAdded(blocks: List<Block>) {
+  private fun Handler.onRangesAdded(blocks: List<Block>) {
     blocks.forEach(this::onRangeAdded)
   }
 }
@@ -830,7 +826,7 @@ private class BlockGroupsProcessor(private val text1: CharSequence,
   }
 }
 
-private class MergingBlockProcessor(private val dispatcher: EventDispatcher<Listener>) {
+private class MergingBlockProcessor(private val handler: Handler) {
   fun processMergedBlocks(group: List<Block>,
                           processBlock: (original: List<Block>, merged: Block) -> Unit) {
     assert(!group.isEmpty())
@@ -868,10 +864,8 @@ private class MergingBlockProcessor(private val dispatcher: EventDispatcher<List
                       block1.range.start2, block2.range.end2)
     val merged = Block(range, isDirty, isTooBig)
 
-    for (listener in dispatcher.listeners) {
-      if (!listener.onRangesMerged(block1, block2, merged)) {
-        return null // merging vetoed
-      }
+    if (!handler.onRangesMerged(block1, block2, merged)) {
+      return null // merging vetoed
     }
     return merged
   }

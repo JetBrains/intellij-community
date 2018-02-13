@@ -42,6 +42,7 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
   private final List<String> myResourcePatterns = new ArrayList<>();
   private final List<ProcessorConfigProfile> myAnnotationProcessingProfiles = new ArrayList<>();
   private final ProcessorConfigProfileImpl myDefaultAnnotationProcessingProfile = new ProcessorConfigProfileImpl("Default");
+  private boolean myUseReleaseOption = true;
   private String myProjectByteCodeTargetLevel;
   private final Map<String, String> myModulesByteCodeTargetLevels = new HashMap<>();
   private final Map<String, JpsJavaCompilerOptions> myCompilerOptions = new HashMap<>();
@@ -186,6 +187,16 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
   @Override
   public void setProjectByteCodeTargetLevel(String level) {
     myProjectByteCodeTargetLevel = level;
+  }
+
+  @Override
+  public boolean useReleaseOption() {
+    return myUseReleaseOption;
+  }
+
+  @Override
+  public void setUseReleaseOption(boolean useReleaseOption) {
+    myUseReleaseOption = useReleaseOption;
   }
 
   @Override

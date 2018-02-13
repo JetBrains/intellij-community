@@ -32,6 +32,7 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
+import com.jetbrains.env.Staging;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelper;
@@ -44,6 +45,7 @@ import com.jetbrains.python.testing.*;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -126,7 +128,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
 
     runPythonTest(new PyExecutionFixtureTestTask(null) {
       @Override
-      public void runTestOn(final String sdkHome) throws Exception {
+      public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws Exception {
         final Project project = myFixture.getProject();
         final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
         EdtTestUtil.runInEdtAndWait(() -> {
@@ -258,6 +260,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
 
   // Ensure failed and error subtests work
   @Test
+  @Staging //Fails on TC from time to time, investigate
   @EnvTestTagsRequired(tags = "python3")
   public void testSubTestError() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/subtestError", "test_test.py") {
@@ -563,6 +566,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   }
 
   @EnvTestTagsRequired(tags = "python3") // No subtest in py2
+  @Staging // Flaky
   @Test
   public void testSubtestSkipped() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/", "test_skipped_subtest.py", 1) {
@@ -763,11 +767,11 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
         private static final String SOME_RANDOM_DIR = "//some/random/ddir";
 
         @Override
-        public void runTestOn(final String sdkHome) throws InvalidSdkException, IOException {
+        public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws InvalidSdkException, IOException {
           // Set default working directory to some random location before actual exection
           final PyUnitTestConfiguration templateConfiguration = getTemplateConfiguration(PyUnitTestFactory.INSTANCE);
           templateConfiguration.setWorkingDirectory(SOME_RANDOM_DIR);
-          super.runTestOn(sdkHome);
+          super.runTestOn(sdkHome, existingSdk);
           templateConfiguration.setWorkingDirectory("");
         }
 

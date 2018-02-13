@@ -41,12 +41,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Konstantin Bulenkov
  */
 public class NavBarUpdateQueue extends MergingUpdateQueue {
-  private AtomicBoolean myModelUpdating = new AtomicBoolean(Boolean.FALSE);
-  private Alarm myUserActivityAlarm = new Alarm(this);
+  private final AtomicBoolean myModelUpdating = new AtomicBoolean(Boolean.FALSE);
+  private final Alarm myUserActivityAlarm = new Alarm(this);
   private Runnable myRunWhenListRebuilt;
-  private Runnable myUserActivityAlarmRunnable = () -> processUserActivity();
+  private final Runnable myUserActivityAlarmRunnable = () -> processUserActivity();
 
-  private NavBarPanel myPanel;
+  private final NavBarPanel myPanel;
 
   public NavBarUpdateQueue(NavBarPanel panel) {
     super("NavBar", Registry.intValue("navBar.updateMergeTime"), true, panel, panel);

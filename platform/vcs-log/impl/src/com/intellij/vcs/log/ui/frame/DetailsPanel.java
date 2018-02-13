@@ -31,7 +31,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.history.VcsHistoryUtil;
+import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.JBLabel;
@@ -41,7 +41,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -58,6 +57,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Collection;
@@ -92,7 +92,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     myLogData = logData;
     myColorManager = colorManager;
 
-    myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     myMainContentPanel = new MyMainContentPanel();
     myEmptyText = new StatusText(myMainContentPanel) {
       @Override
@@ -172,8 +172,8 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     if (selectionLength > MAX_ROWS) {
       myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null));
       JBLabel label = new JBLabel("(showing " + MAX_ROWS + " of " + selectionLength + " selected commits)");
-      label.setFont(VcsHistoryUtil.getCommitDetailsFont());
-      label.setBorder(CommitPanel.getDetailsBorder());
+      label.setFont(FontUtil.getCommitMetadataFont());
+      label.setBorder(JBUI.Borders.emptyLeft(CommitPanel.SIDE_BORDER));
       myMainContentPanel.add(label);
     }
 
@@ -342,32 +342,9 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
 
   private class MyMainContentPanel extends ScrollablePanel {
     @Override
-    public boolean getScrollableTracksViewportWidth() {
-      boolean expanded = false;
-      for (Component c : getComponents()) {
-        if (c instanceof CommitPanel && ((CommitPanel)c).isExpanded()) {
-          expanded = true;
-          break;
-        }
-      }
-      // expanded containing branches are displayed in a table, it is more convenient to have a scrollbar in this case
-      return !expanded;
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      Dimension preferredSize = super.getPreferredSize();
-      int height = Math.max(preferredSize.height, myScrollPane.getViewport().getHeight());
-      JBScrollPane scrollPane = UIUtil.getParentOfType(JBScrollPane.class, this);
-      if (scrollPane == null || getScrollableTracksViewportWidth()) {
-        return new Dimension(preferredSize.width, height);
-      }
-      else {
-        // we want content panel to fill all available horizontal space in order to display root label in the upper-right corner
-        // but when containing branches are expanded, we show a horizontal scrollbar, so content panel width wont be automatically adjusted
-        // here it is done manually
-        return new Dimension(Math.max(preferredSize.width, scrollPane.getViewport().getWidth()), height);
-      }
+    public Insets getInsets() {
+      // to fight ViewBorder
+      return JBUI.emptyInsets();
     }
 
     @Override

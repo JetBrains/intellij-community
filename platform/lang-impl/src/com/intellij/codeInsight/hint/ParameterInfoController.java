@@ -530,22 +530,18 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     boolean p1Ok = p1.y + hintSize.height < layeredPane.getHeight();
     boolean p2Ok = p2.y >= 0;
 
-    if (showLookupHint) {
-      if (p1Ok) return new Pair<>(p1, HintManager.UNDER);
-      if (p2Ok) return new Pair<>(p2, HintManager.ABOVE);
-    }
-    else {
+    if (!showLookupHint) {
       if (preferredPosition != HintManager.DEFAULT) {
         if (preferredPosition == HintManager.ABOVE) {
           if (p2Ok) return new Pair<>(p2, HintManager.ABOVE);
-        } else if (preferredPosition == HintManager.UNDER) {
+        }
+        else if (preferredPosition == HintManager.UNDER) {
           if (p1Ok) return new Pair<>(p1, HintManager.UNDER);
         }
       }
-
-      if (p1Ok) return new Pair<>(p1, HintManager.UNDER);
-      if (p2Ok) return new Pair<>(p2, HintManager.ABOVE);
     }
+    if (p1Ok) return new Pair<>(p1, HintManager.UNDER);
+    if (p2Ok) return new Pair<>(p2, HintManager.ABOVE);
 
     int underSpace = layeredPane.getHeight() - p1.y;
     int aboveSpace = p2.y;

@@ -23,7 +23,7 @@ import java.util.Set;
  * @author nik
  */
 public class BuildTargetChunk {
-  private Set<BuildTarget<?>> myTargets;
+  private final Set<BuildTarget<?>> myTargets;
 
   public BuildTargetChunk(Set<BuildTarget<?>> targets) {
     myTargets = targets;

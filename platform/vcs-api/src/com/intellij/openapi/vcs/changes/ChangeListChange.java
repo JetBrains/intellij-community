@@ -9,7 +9,7 @@ import java.util.Objects;
 public class ChangeListChange extends Change {
   @NotNull private final Change myChange;
   @NotNull private final String myChangeListName;
-  private String myChangeListId;
+  private final String myChangeListId;
 
   public ChangeListChange(@NotNull Change change,
                           @NotNull String changeListName,

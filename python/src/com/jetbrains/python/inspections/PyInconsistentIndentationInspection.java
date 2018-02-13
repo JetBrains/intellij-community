@@ -52,10 +52,10 @@ public class PyInconsistentIndentationInspection extends PyInspection {
   }
 
   private static class IndentValidator {
-    private PsiFile myFile;
-    private InspectionManager myManager;
-    private boolean myOnTheFly;
-    private List<ProblemDescriptor> myProblems;
+    private final PsiFile myFile;
+    private final InspectionManager myManager;
+    private final boolean myOnTheFly;
+    private final List<ProblemDescriptor> myProblems;
     private int myLastTabs = 0;
     private int myLastSpaces = 0;
 

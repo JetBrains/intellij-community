@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
@@ -31,7 +18,6 @@ import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
-import java.awt.geom.AffineTransform;
 import java.awt.image.ImageObserver;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -46,6 +32,7 @@ import static com.intellij.util.ui.JBUI.ScaleType.*;
  * @author Konstantin Bulenkov
  * @author tav
  */
+@SuppressWarnings("UseJBColor")
 public class JBUI {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.JBUI");
 
@@ -560,46 +547,6 @@ public class JBUI {
     return scale > 1f;
   }
 
-  /**
-   * Aligns the x or/and y translate of the graphics to the integer coordinate grid if the graphics has fractional scale transform,
-   * otherwise does nothing. This is used to avoid the rounding problem, see JRE-502.
-   *
-   * @param g the graphics to align
-   * @param alignX should the x-translate be aligned
-   * @param alignY should the y-translate be aligned
-   * @return the original graphics transform when aligned, otherwise null
-   */
-  public static AffineTransform alignToIntGrid(@NotNull Graphics2D g, boolean alignX, boolean alignY) {
-    try {
-      AffineTransform tx = g.getTransform();
-      if (isFractionalScale(tx)) {
-        double scaleX = tx.getScaleX();
-        double scaleY = tx.getScaleY();
-        AffineTransform alignedTx = new AffineTransform();
-        double trX = alignX ? (int)Math.ceil(tx.getTranslateX() - 0.5) : tx.getTranslateX();
-        double trY = alignY ? (int)Math.ceil(tx.getTranslateY() - 0.5) : tx.getTranslateY();
-        alignedTx.translate(trX, trY);
-        alignedTx.scale(scaleX, scaleY);
-        assert tx.getShearX() == 0 && tx.getShearY() == 0; // the shear is ignored
-        g.setTransform(alignedTx);
-        return tx;
-      }
-    }
-    catch (Exception e) {
-      LOG.trace(e);
-    }
-    return null;
-  }
-
-  /**
-   * Returns true if the transform matrix contains fractional scale element.
-   */
-  public static boolean isFractionalScale(AffineTransform tx) {
-    double scaleX = tx.getScaleX();
-    double scaleY = tx.getScaleY();
-    return scaleX != (int)scaleX || scaleY != (int)scaleY;
-  }
-
   public static class Fonts {
     @NotNull
     public static JBFont label() {
@@ -920,6 +867,13 @@ public class JBUI {
         case PIX_SCALE: break;
       }
       update(pixScale, derivePixScale());
+    }
+
+    /**
+     * Creates a context with all scale factors set to 1.
+     */
+    public static ScaleContext createIdentity() {
+      return create(USR_SCALE.of(1), SYS_SCALE.of(1));
     }
 
     /**
@@ -1269,5 +1223,115 @@ public class JBUI {
     public RasterJBIcon() {
       super(ScaleContext.create());
     }
+  }
+
+  public static class CurrentTheme {
+    public static class ToolWindow {
+      public static Color tabSelectedBackground() {
+        return getColor("ToolWindow.header.tab.selected.background", 0xDEDEDE);
+      }
+
+      public static Color tabSelectedActiveBackground() {
+        return getColor("ToolWindow.header.tab.selected.active.background", 0xD0D4D8);
+      }
+
+      public static Color tabHoveredBackground() {
+        return getColor("ToolWindow.header.tab.hovered.background", tabSelectedBackground());
+      }
+
+      public static Color tabHoveredActiveBackground() {
+        return getColor("ToolWindow.header.tab.hovered.active.background", tabSelectedActiveBackground());
+      }
+
+      public static Color tabSelectedBackground(boolean active) {
+        return active ? tabSelectedActiveBackground() : tabSelectedBackground();
+      }
+
+      public static Color tabHoveredBackground(boolean active) {
+        return active ? tabHoveredActiveBackground() : tabHoveredBackground();
+      }
+
+      public static Color headerBackground(boolean active) {
+        return active ? headerActiveBackground() : headerBackground();
+      }
+
+      public static Color headerBackground() {
+        return getColor("ToolWindow.header.background", 0xECECEC);
+      }
+
+      public static Color headerBorderBackground() {
+        return getColor("ToolWindow.header.border.background", 0xC9C9C9);
+      }
+
+      public static Color headerActiveBackground() {
+        return getColor("ToolWindow.header.active.background", 0xE2E6EC);
+      }
+
+      public static int tabVerticalPadding() {
+        return getInt("ToolWindow.tab.verticalPadding", scale(3));
+      }
+
+      public static Font headerFont() {
+        JBFont font = Fonts.label();
+        Object size = UIManager.get("ToolWindow.header.font.size");
+        if (size instanceof Integer) {
+          return font.deriveFont(((Integer)size).floatValue());
+        }
+        return font;
+      }
+
+      public static Color hoveredIconBackground() {
+        return getColor("ToolWindow.header.closeButton.background", 0xB9B9B9);
+      }
+
+      public static Icon closeTabIcon(boolean hovered) {
+        return hovered ? getIcon("ToolWindow.header.closeButton.hovered.icon", AllIcons.Actions.CloseNewHovered)
+                       : getIcon("ToolWindow.header.closeButton.icon", AllIcons.Actions.CloseNew);
+      }
+
+      public static Icon comboTabIcon(boolean hovered) {
+        return hovered ? getIcon("ToolWindow.header.comboButton.hovered.icon", AllIcons.General.ComboArrow)
+                       : getIcon("ToolWindow.header.comboButton.icon", AllIcons.General.ComboArrow);
+      }
+    }
+
+    public static class Label {
+      public static Color foreground(boolean selected) {
+        return selected ? getColor("Label.selectedForeground", 0xFFFFFF)
+                        : getColor("Label.foreground", 0x000000);
+      }
+
+      public static Color foreground() {
+        return foreground(false);
+      }
+
+      public static Color disabledForeground(boolean selected) {
+        return selected ? getColor("Label.selectedDisabledForeground", 0x999999)
+                        : getColor("Label.disabledForeground", getColor("Label.disabledText", 0x999999));
+      }
+
+      public static Color disabledForeground() {
+        return foreground(false);
+      }
+    }
+  }
+
+  private static Color getColor(String propertyName, int defaultColor) {
+    return getColor(propertyName, new Color(defaultColor));
+  }
+
+  private static Color getColor(String propertyName, Color defaultColor) {
+    Color color = UIManager.getColor(propertyName);
+    return color == null ? defaultColor : color;
+  }
+
+  private static int getInt(String propertyName, int defaultValue) {
+    Object value = UIManager.get(propertyName);
+    return value instanceof Integer ? (Integer)value : defaultValue;
+  }
+
+  private static Icon getIcon(String propertyName, Icon defaultIcon) {
+    Icon icon = UIManager.getIcon(propertyName);
+    return icon == null ? defaultIcon : icon;
   }
 }

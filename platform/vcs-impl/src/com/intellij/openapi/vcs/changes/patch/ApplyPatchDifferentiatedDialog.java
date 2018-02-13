@@ -77,7 +77,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   private final List<AbstractFilePatchInProgress> myPatches;
   private final List<ShelvedBinaryFilePatch> myBinaryShelvedPatches;
-  @NotNull private EditorNotificationPanel myErrorNotificationPanel;
+  @NotNull private final EditorNotificationPanel myErrorNotificationPanel;
   @NotNull private final MyChangeTreeList myChangesTreeList;
   @Nullable private final Collection<Change> myPreselectedChanges;
   private final boolean myUseProjectRootAsPredefinedBase;
@@ -239,9 +239,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
           syncUpdatePatchFileAndScheduleReloadIfNeeded(event.getFile());
         }
       };
-      final VirtualFileManager fileManager = VirtualFileManager.getInstance();
-      fileManager.addVirtualFileListener(myListener);
-      Disposer.register(getDisposable(), () -> fileManager.removeVirtualFileListener(myListener));
+      VirtualFileManager.getInstance().addVirtualFileListener(myListener, getDisposable());
     }
     updateOkActions();
   }

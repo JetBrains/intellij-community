@@ -340,7 +340,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     return myContext;
   }
 
-  private static Map<Method, Boolean> ourImplStatus = Collections.synchronizedMap(new HashMap<Method, Boolean>());
+  private static final Map<Method, Boolean> ourImplStatus = Collections.synchronizedMap(new HashMap<Method, Boolean>());
 
   JavaFileManager getApiCallHandler(Method method) {
     Boolean isImplemented = ourImplStatus.get(method);

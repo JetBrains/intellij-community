@@ -75,6 +75,9 @@ processed incorrectly by a type checker. It is also helpful to add
 links to online documentation or to the implementation of the code
 you are changing.
 
+Also, do not squash your commits after you have submitted a pull request, as this
+erases context during review. We will squash commits when the pull request is merged.
+
 At present the core developers are (alphabetically):
 * David Fisher (@ddfisher)
 * Łukasz Langa (@ambv)
@@ -145,10 +148,10 @@ that you know.
 The below is an excerpt from the types for the `datetime` module.
 
 ```python
-MAXYEAR = ...  # type: int
-MINYEAR = ...  # type: int
+MAXYEAR: int
+MINYEAR: int
 
-class date(object):
+class date:
     def __init__(self, year: int, month: int, day: int) -> None: ...
     @classmethod
     def fromtimestamp(cls, timestamp: float) -> date: ...
@@ -156,6 +159,8 @@ class date(object):
     def today(cls) -> date: ...
     @classmethod
     def fromordinal(cls, ordinal: int) -> date: ...
+    @property
+    def year(self) -> int: ...
     def replace(self, year: int = ..., month: int = ..., day: int = ...) -> date: ...
     def ctime(self) -> str: ...
     def weekday(self) -> int: ...
@@ -180,6 +185,8 @@ rule is that they should be as concise as possible.  Specifically:
 * use a single blank line between top-level class definitions, or none
   if the classes are very small;
 * do not use docstrings;
+* use variable annotations instead of type comments, even for stubs
+  that target older versions of Python;
 * for arguments with a type and a default, use spaces around the `=`.
 
 Stub files should only contain information necessary for the type
@@ -290,7 +297,7 @@ project's tracker to fix their documentation.
 ## Issue-tracker conventions
 
 We aim to reply to all new issues promptly.  We'll assign one or more
-labels to to indicate we've triaged an issue, but most typeshed issues
+labels to indicate we've triaged an issue, but most typeshed issues
 are relatively simple (stubs for a given module or package are
 missing, incomplete or incorrect) and we won't add noise to the
 tracker by labeling all of them.  Here's what our labels mean.  (We

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToLoopReplacementContext;
@@ -203,7 +189,7 @@ abstract class SourceOperation extends Operation {
   }
 
   static class GenerateSource extends SourceOperation {
-    private FunctionHelper myFn;
+    private final FunctionHelper myFn;
     private PsiExpression myLimit;
 
     GenerateSource(FunctionHelper fn, PsiExpression limit) {
@@ -252,7 +238,7 @@ abstract class SourceOperation extends Operation {
 
   static class IterateSource extends SourceOperation {
     private PsiExpression myInitializer;
-    private FunctionHelper myFn;
+    private final FunctionHelper myFn;
 
     IterateSource(PsiExpression initializer, FunctionHelper fn) {
       myInitializer = initializer;
@@ -288,7 +274,7 @@ abstract class SourceOperation extends Operation {
   static class RangeSource extends SourceOperation {
     private PsiExpression myOrigin;
     private PsiExpression myBound;
-    private boolean myInclusive;
+    private final boolean myInclusive;
 
     RangeSource(PsiExpression origin, PsiExpression bound, boolean inclusive) {
       myOrigin = origin;
@@ -311,7 +297,7 @@ abstract class SourceOperation extends Operation {
     @Override
     String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
       String bound = myBound.getText();
-      if(!ExpressionUtils.isSimpleExpression(context.createExpression(bound))) {
+      if(!ExpressionUtils.isSafelyRecomputableExpression(context.createExpression(bound))) {
         bound = context.declare("bound", outVar.getType().getCanonicalText(), bound);
       }
       String loopVar = outVar.getName();
@@ -333,7 +319,7 @@ abstract class SourceOperation extends Operation {
     private @NotNull PsiExpression myArray;
     private @NotNull PsiExpression myOrigin;
     private @NotNull PsiExpression myBound;
-    private @NotNull PsiType myArrayType;
+    private @NotNull final PsiType myArrayType;
 
     ArraySliceSource(@NotNull PsiExpression array, @NotNull PsiExpression origin, @NotNull PsiExpression bound) {
       myOrigin = origin;
@@ -360,10 +346,10 @@ abstract class SourceOperation extends Operation {
     String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
       String bound = myBound.getText();
       String array = myArray.getText();
-      if (!ExpressionUtils.isSimpleExpression(context.createExpression(array))) {
+      if (!ExpressionUtils.isSafelyRecomputableExpression(context.createExpression(array))) {
         array = context.declare("array", myArrayType.getCanonicalText(), array);
       }
-      if (!ExpressionUtils.isSimpleExpression(context.createExpression(bound))) {
+      if (!ExpressionUtils.isSafelyRecomputableExpression(context.createExpression(bound))) {
         bound = context.declare("bound", "int", bound);
       }
       String loopVar = context.registerVarName(Arrays.asList("i", "j", "idx"));

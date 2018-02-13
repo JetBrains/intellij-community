@@ -45,7 +45,7 @@ import java.util.*;
 public class MavenProjectModelModifier extends JavaProjectModelModifier {
   private final Project myProject;
   private final MavenProjectsManager myProjectsManager;
-  private MavenProjectIndicesManager myIndicesManager;
+  private final MavenProjectIndicesManager myIndicesManager;
 
   public MavenProjectModelModifier(Project project, MavenProjectsManager projectsManager, MavenProjectIndicesManager manager) {
     myProject = project;

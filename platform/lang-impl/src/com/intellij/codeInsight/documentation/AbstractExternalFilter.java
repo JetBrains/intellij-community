@@ -406,7 +406,7 @@ public abstract class AbstractExternalFilter {
   }
 
   private static class MyReader extends InputStreamReader {
-    private ByteArrayInputStream myInputStream;
+    private final ByteArrayInputStream myInputStream;
 
     public MyReader(ByteArrayInputStream in) {
       super(in);

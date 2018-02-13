@@ -29,9 +29,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
 
+  @SuppressWarnings("PublicField")
   public boolean WARN_IF_NO_MUTUAL_SUBCLASS_FOUND = true;
 
   @Override
@@ -99,7 +102,7 @@ public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
           !TypeUtils.areConvertible(lhsType, rhsType) /* red code */) {
         return;
       }
-      deepCheck(lhsType, rhsType, expression.getOperationSign());
+      deepCheck(lhsType, rhsType, expression.getOperationSign(), new HashMap<>());
     }
 
     void checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType leftType, @NotNull PsiType rightType) {
@@ -108,13 +111,20 @@ public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
         return;
       }
       if (TypeUtils.areConvertible(leftType, rightType) || TypeUtils.mayBeEqualByContract(leftType, rightType)) {
-        deepCheck(leftType, rightType, name);
+        deepCheck(leftType, rightType, name, new HashMap<>());
         return;
       }
       registerError(name, leftType, rightType, false);
     }
 
-    private void deepCheck(@NotNull PsiType leftType, @NotNull PsiType rightType, PsiElement highlightLocation) {
+    private void deepCheck(@NotNull PsiType leftType, @NotNull PsiType rightType, PsiElement highlightLocation, Map<PsiType, PsiType> checked) {
+      PsiType checkedRight = checked.putIfAbsent(leftType, rightType);
+      if (checkedRight != null) {
+        if (!checkedRight.equals(rightType)) {
+          registerError(highlightLocation, leftType, rightType, false);
+        }
+        return;
+      }
       if (leftType instanceof PsiCapturedWildcardType) {
         leftType = ((PsiCapturedWildcardType)leftType).getUpperBound();
       }
@@ -143,15 +153,16 @@ public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
                 registerError(highlightLocation, leftType, rightType, false);
                 return;
               }
-              deepCheck(leftParameter, rightParameter, highlightLocation);
+              deepCheck(leftParameter, rightParameter, highlightLocation, checked);
             }
           }
         }
       }
-      else {
-        if (WARN_IF_NO_MUTUAL_SUBCLASS_FOUND & !InheritanceUtil.existsMutualSubclass(leftClass, rightClass, isOnTheFly())) {
-          registerError(highlightLocation, leftType, rightType, true);
-        }
+      else if (TypeUtils.cannotBeEqualByContract(leftType, rightType)) {
+        registerError(highlightLocation, leftType, rightType, false);
+      }
+      else if (WARN_IF_NO_MUTUAL_SUBCLASS_FOUND && !InheritanceUtil.existsMutualSubclass(leftClass, rightClass, isOnTheFly())) {
+        registerError(highlightLocation, leftType, rightType, true);
       }
     }
   }

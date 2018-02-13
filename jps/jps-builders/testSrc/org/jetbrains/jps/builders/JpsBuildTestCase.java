@@ -440,16 +440,27 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   }
 
   public JpsModule addModule(String moduleName, String... srcPaths) {
+    return addModule(moduleName, srcPaths, getAbsolutePath(getModuleOutputRelativePath(moduleName)), null, getJdk());
+  }
+
+  protected final JpsSdk<JpsDummyElement> getJdk() {
     if (myJdk == null) {
       myJdk = addJdk("1.6");
     }
-    return addModule(moduleName, srcPaths, getAbsolutePath(getModuleOutputRelativePath(moduleName)), null, myJdk);
+    return myJdk;
+  }
+
+  @NotNull
+  protected static File getModuleOutput(JpsModule module) {
+    String outputUrl = JpsJavaExtensionService.getInstance().getOutputUrl(module, false);
+    return JpsPathUtil.urlToFile(outputUrl);
   }
 
   @NotNull
   protected String getModuleOutputRelativePath(JpsModule module) {
     return getModuleOutputRelativePath(module.getName());
   }
+
   @NotNull
   protected String getModuleOutputRelativePath(String moduleName) {
     return "out/production/" + moduleName;

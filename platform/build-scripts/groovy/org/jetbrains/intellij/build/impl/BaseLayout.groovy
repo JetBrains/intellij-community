@@ -33,13 +33,15 @@ abstract class BaseLayout {
   final List<ModuleResourceData> resourcePaths = []
   /** module name to entries which should be excluded from its output */
   final MultiValuesMap<String, String> moduleExcludes = new MultiValuesMap<>(true)
-  final List<String> includedProjectLibraries = []
+  final List<ProjectLibraryData> includedProjectLibraries = []
   final List<ModuleLibraryData> includedModuleLibraries = []
   /** JAR name -> name of project library which content should be unpacked */
   final MultiValuesMap<String, String> projectLibrariesToUnpack = new MultiValuesMap<>()
   protected final Map<String, String>  modulesWithLocalizableResourcesInCommonJar = new LinkedHashMap<>()
   final List<String> modulesWithExcludedModuleLibraries = []
   final List<Pair<ResourcesGenerator, String>> resourceGenerators = []
+  /** set of keys in {@link #moduleJars} which are set explicitly, not automatically derived from modules names */
+  final Set<String> explicitlySetJarPaths = new LinkedHashSet<>()
 
   String localizableResourcesJarName(String moduleName) {
     return modulesWithLocalizableResourcesInCommonJar.get(moduleName)

@@ -27,7 +27,7 @@ public class EndlessStreamInspection extends AbstractBaseJavaLocalInspectionTool
     "summaryStatistics"
   ));
 
-  private static Set<String> NON_LIMITING_OPERATIONS = new HashSet<>(Arrays.asList(
+  private static final Set<String> NON_LIMITING_OPERATIONS = new HashSet<>(Arrays.asList(
     "filter",
     "map",
     "distinct",

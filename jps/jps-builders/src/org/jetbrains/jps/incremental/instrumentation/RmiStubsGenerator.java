@@ -54,7 +54,7 @@ import java.util.concurrent.Future;
 public class RmiStubsGenerator extends ClassProcessingBuilder {
   private static final String REMOTE_INTERFACE_NAME = Remote.class.getName().replace('.', '/');
   private static final File[] EMPTY_FILE_ARRAY = new File[0];
-  private static Key<Boolean> IS_ENABLED = Key.create("_rmic_compiler_enabled_");
+  private static final Key<Boolean> IS_ENABLED = Key.create("_rmic_compiler_enabled_");
 
   public RmiStubsGenerator() {
     super(BuilderCategory.CLASS_INSTRUMENTER);

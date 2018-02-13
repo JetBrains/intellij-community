@@ -90,7 +90,7 @@ public class SetBackgroundImageDialog extends DialogWrapper {
   private JPanel myTargetPanel;
 
   boolean myAdjusting;
-  private Map<String, String> myResults = ContainerUtil.newHashMap();
+  private final Map<String, String> myResults = ContainerUtil.newHashMap();
 
   private final SimpleEditorPreview myEditorPreview;
   private final JComponent myIdePreview;

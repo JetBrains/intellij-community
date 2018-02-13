@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.keymap;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -33,8 +33,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control 3",                "GotoBookmark3", "FileChooser.GotoModule"},
     { "control ADD",              "ExpandAll", "ExpandExpandableComponent", "ExpandRegion"},
     { "control DIVIDE",           "CommentByLineComment", "Images.Editor.ActualSize", "UML.ActualSize"},
-    { "control DOWN",             "EditorScrollDown", "EditorLookupDown"},
-    { "control ENTER",            "Console.Execute.Multiline", "DirDiffMenu.SynchronizeDiff.All", "EditorSplitLine", "ViewSource"},
+    { "control DOWN",             "EditorScrollDown", "EditorLookupDown", "MethodOverloadSwitchDown"},
+    { "control ENTER",            "Console.Execute.Multiline", "DirDiffMenu.SynchronizeDiff.All", "EditorSplitLine", "ViewSource", "PyExecuteCellAction"},
     { "control EQUALS",           "ExpandAll", "ExpandExpandableComponent", "ExpandRegion"},
     { "control F5",               "Refresh", "Rerun"},
     { "control D",                "EditorDuplicate", "Diff.ShowDiff", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop"},
@@ -45,7 +45,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control R",                "Replace", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
     { "control SLASH",            "CommentByLineComment", "Images.Editor.ActualSize", "UML.ActualSize"},
     { "control U",                "GotoSuperMethod", "CommanderSwapPanels"},
-    { "control UP",               "EditorScrollUp", "EditorLookupUp"},
+    { "control UP",               "EditorScrollUp", "EditorLookupUp", "MethodOverloadSwitchUp"},
     { "control SUBTRACT",         "CollapseAll", "CollapseExpandableComponent", "CollapseRegion"},
     { "control alt A",            "ChangesView.AddUnversioned", "Diagram.DeselectAll"},
     { "control alt K",            "Git.Commit.And.Push.Executor", "Hg.Commit.And.Push.Executor"},
@@ -108,11 +108,9 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift meta LEFT",          "EditorLineStartWithSelection", "ResizeToolWindowLeft", },
     { "shift meta RIGHT",         "EditorLineEndWithSelection", "ResizeToolWindowRight", },
     { "alt R",                    "Django.RunManageTaskAction", "org.jetbrains.plugins.ruby.tasks.rake.actions.RakeTasksPopupAction"},
-    { "alt DOWN",                 "EditorUnSelectWord", "Arrangement.Rule.Match.Condition.Move.Down"},
-    { "alt UP",                   "EditorSelectWord", "Arrangement.Rule.Match.Condition.Move.Up"},
+    { "alt DOWN",                 "EditorUnSelectWord", "Arrangement.Rule.Match.Condition.Move.Down", "MethodOverloadSwitchDown"},
+    { "alt UP",                   "EditorSelectWord", "Arrangement.Rule.Match.Condition.Move.Up", "MethodOverloadSwitchUp"},
     { "ctrl m",                   "EditorMatchBrace", "Vcs.ShowMessageHistory"},
-    { "control P",                "EditorUp", "MethodOverloadSwitchUp"},
-    { "control N",                "EditorDown", "MethodOverloadSwitchDown"},
     });
     put("Mac OS X", new String[][] {
     { "BACK_SPACE",               "$Delete", "EditorBackSpace", "Images.Thumbnails.UpFolder"},
@@ -142,8 +140,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control P",                "EditorUp", "FileChooser.TogglePathShowing"},
     { "control R",                "org.jetbrains.plugins.ruby.rails.console.ReloadSources", "FindPrevious"},
     { "control SLASH",            "$Undo", "Images.Editor.ActualSize", "UML.ActualSize"},
-    { "control UP",               "EditorBackwardParagraph", "EditorLookupUp"},
-    { "control DOWN",             "EditorForwardParagraph", "EditorLookupDown"},
+    { "control UP",               "EditorBackwardParagraph", "EditorLookupUp", "MethodOverloadSwitchUp"},
+    { "control DOWN",             "EditorForwardParagraph", "EditorLookupDown", "MethodOverloadSwitchDown"},
     { "control alt A",            "MethodUp", "ChangesView.AddUnversioned", "Diagram.DeselectAll"},
     { "control alt E",            "MethodDown", "PerforceDirect.Edit", "Console.History.Browse"},
     { "control alt G",            "GotoDeclaration", "org.jetbrains.plugins.ruby.rails.actions.generators.GeneratorsPopupAction", "Mvc.RunTarget"},
@@ -270,8 +268,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "F2",                       "Console.TableResult.EditValue", "QuickJavaDoc", "XDebugger.SetValue", "Arrangement.Rule.Edit", "Git.Reword.Commit", "ShelvedChanges.Rename"},
     { "F3",                       "GotoDeclaration", "EditSource"},
     { "F5",                       "StepInto", "UML.ApplyCurrentLayout"},
-    { "alt DOWN",                 "MoveStatementDown", "Arrangement.Rule.Match.Condition.Move.Down"},
-    { "alt UP",                   "MoveStatementUp", "Arrangement.Rule.Match.Condition.Move.Up"},
+    { "alt DOWN",                 "MoveStatementDown", "Arrangement.Rule.Match.Condition.Move.Down", "MethodOverloadSwitchDown"},
+    { "alt UP",                   "MoveStatementUp", "Arrangement.Rule.Match.Condition.Move.Up", "MethodOverloadSwitchUp"},
     { "control PERIOD",           "EditorChooseLookupItemDot", "HippieCompletion"},
     { "meta 1",                   "FileChooser.GotoHome", "ShowIntentionActions", "DuplicatesForm.SendToLeft"},
     { "meta 3",                   "FileChooser.GotoModule", "GotoAction"},

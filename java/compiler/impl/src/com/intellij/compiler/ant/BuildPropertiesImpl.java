@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.ant;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -28,14 +14,15 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
 import java.io.File;
 import java.io.IOException;
+
+import static com.intellij.openapi.util.Pair.pair;
 
 /**
  * @author Eugene Zhuravlev
@@ -105,20 +92,23 @@ public class BuildPropertiesImpl extends BuildProperties {
       add(new Comment(CompilerBundle.message("generated.ant.build.custom.compilers.comment")));
       Target register = new Target(TARGET_REGISTER_CUSTOM_COMPILERS, null, null, null);
       if (genOptions.enableFormCompiler) {
-        //noinspection HardCodedStringLiteral
         add(new Property(PROPERTY_JAVAC2_HOME, propertyRelativePath(PROPERTY_IDEA_HOME, "lib")));
         Path javac2 = new Path(PROPERTY_JAVAC2_CLASSPATH_ID);
-        javac2.add(new PathElement(propertyRelativePath(PROPERTY_JAVAC2_HOME, "javac2.jar")));
-        javac2.add(new PathElement(propertyRelativePath(PROPERTY_JAVAC2_HOME, "jdom.jar")));
-        javac2.add(new PathElement(propertyRelativePath(PROPERTY_JAVAC2_HOME, "asm-all.jar")));
-        javac2.add(new PathElement(propertyRelativePath(PROPERTY_JAVAC2_HOME, "jgoodies-forms.jar")));
+        FileSet fileSet = new FileSet("${" + PROPERTY_JAVAC2_HOME + "}");
+        fileSet.add(new Include("javac2.jar"));
+        fileSet.add(new Include("jdom.jar"));
+        fileSet.add(new Include("asm-all*.jar"));
+        fileSet.add(new Include("jgoodies-forms.jar"));
+        javac2.add(fileSet);
         add(javac2);
-        //noinspection HardCodedStringLiteral
-        register.add(new Tag("taskdef", Couple.of("name", "javac2"), Couple.of("classname", "com.intellij.ant.Javac2"),
-                             Couple.of("classpathref", PROPERTY_JAVAC2_CLASSPATH_ID)));
-        register.add(new Tag("taskdef", Couple.of("name", "instrumentIdeaExtensions"),
-                             Couple.of("classname", "com.intellij.ant.InstrumentIdeaExtensions"),
-                             Couple.of("classpathref", PROPERTY_JAVAC2_CLASSPATH_ID)));
+        register.add(new Tag("taskdef",
+                             pair("name", "javac2"),
+                             pair("classname", "com.intellij.ant.Javac2"),
+                             pair("classpathref", PROPERTY_JAVAC2_CLASSPATH_ID)));
+        register.add(new Tag("taskdef",
+                             pair("name", "instrumentIdeaExtensions"),
+                             pair("classname", "com.intellij.ant.InstrumentIdeaExtensions"),
+                             pair("classpathref", PROPERTY_JAVAC2_CLASSPATH_ID)));
       }
       if (customCompilers.length > 0) {
         for (ChunkCustomCompilerExtension ext : customCompilers) {
@@ -143,7 +133,7 @@ public class BuildPropertiesImpl extends BuildProperties {
         if (!(sdkType instanceof JavaSdkType) || ((JavaSdkType)sdkType).getBinPath(jdk) == null) {
           continue;
         }
-        final File home = VfsUtil.virtualToIoFile(jdk.getHomeDirectory());
+        final File home = VfsUtilCore.virtualToIoFile(jdk.getHomeDirectory());
         File homeDir;
         try {
           // use canonical path in order to resolve symlinks

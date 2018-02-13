@@ -32,7 +32,7 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.PROJECT;
  * @since 10/28/2014
  */
 public class TaskNode extends ExternalSystemNode<TaskData> {
-  private TaskData myTaskData;
+  private final TaskData myTaskData;
   private String moduleOwnerName;
 
   public TaskNode(@NotNull ExternalProjectsView externalProjectsView, @NotNull DataNode<TaskData> dataNode) {

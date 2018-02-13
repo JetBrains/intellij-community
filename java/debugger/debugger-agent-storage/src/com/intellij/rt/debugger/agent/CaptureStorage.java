@@ -57,6 +57,7 @@ public class CaptureStorage {
       return;
     }
     try {
+      //noinspection SuspiciousMethodCalls
       CapturedStack stack = STORAGE.get(new HardKey(key));
       Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
       if (stack != null) {
@@ -131,6 +132,7 @@ public class CaptureStorage {
     private final CapturedStack myValue;
 
     public WeakKey(Object key, CapturedStack value, ReferenceQueue q) {
+      //noinspection unchecked
       super(key, q);
       myHash = System.identityHashCode(key);
       myValue = value;
@@ -247,6 +249,7 @@ public class CaptureStorage {
   // to be run from the debugger
   @SuppressWarnings("unused")
   public static Object[][] getRelatedStack(Object key, int limit) {
+    //noinspection SuspiciousMethodCalls
     CapturedStack stack = STORAGE.get(new HardKey(key));
     if (stack == null) {
       return null;

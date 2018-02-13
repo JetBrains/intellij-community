@@ -7,7 +7,7 @@ package com.intellij.internal.statistic.eventLog
 import com.intellij.openapi.application.ApplicationAdapter
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.PermanentInstallationID
+import com.intellij.openapi.util.registry.Registry
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.apache.log4j.PatternLayout
@@ -18,11 +18,14 @@ import java.nio.file.Paths
 import java.util.*
 
 object FeatureUsageEventLogger {
-  private val userId = PermanentInstallationID.get().shortedUUID()
   private val sessionId = UUID.randomUUID().toString().shortedUUID()
-  private val eventLogger = if (ApplicationManager.getApplication().isInternal) createLogger() else null
+  private val bucket = "-1"
+  private val recorderVersion = "1"
+
+  private val eventLogger = if (Registry.`is`("feature.usage.event.log.collect.and.upload")) createLogger() else null
 
   private var lastEvent: LogEvent? = null
+  private var lastEventTime: Long = 0
   private var count: Int = 1
 
   init {
@@ -45,30 +48,31 @@ object FeatureUsageEventLogger {
 
   fun log(recorderId: String, action: String) {
     if (eventLogger != null) {
-      log(eventLogger, LogEvent(recorderId, userId, sessionId, action))
+      log(eventLogger, LogEvent(sessionId, bucket, recorderId, recorderVersion, action))
     }
   }
 
   private fun log(logger: Logger, event: LogEvent) {
-    if (lastEvent != null && lastEvent!!.shouldMerge(event)) {
-      lastEvent!!.endTimestamp = event.endTimestamp
+    if (lastEvent != null && event.time - lastEventTime <= 10000 && lastEvent!!.shouldMerge(event)) {
+      lastEventTime = event.time
       count++
     }
     else {
       logLastEvent(logger)
       lastEvent = event
+      lastEventTime = event.time
     }
   }
 
   private fun dispose(logger: Logger) {
-    log(logger, LogEvent("feature-usage-stats", userId, sessionId, "ideaapp.closed"))
+    log(logger, LogEvent(sessionId, bucket, "feature-usage-stats", recorderVersion, "ideaapp.closed"))
     logLastEvent(logger)
   }
 
   private fun logLastEvent(logger: Logger) {
     if (lastEvent != null) {
       if (count > 1) {
-        lastEvent!!.data.put("count", count)
+        lastEvent!!.action.addData("count", count)
       }
       logger.info(LogEventSerializer.toString(lastEvent!!))
     }
@@ -77,7 +81,7 @@ object FeatureUsageEventLogger {
   }
 
   private fun createLogger(): Logger? {
-    val path = Paths.get(PathManager.getSystemPath()).resolve("event-log").resolve("feature-usage.log")
+    val path = Paths.get(PathManager.getSystemPath()).resolve("event-log").resolve("feature-usage-event.log")
     val file = File(path.toUri())
 
     val logger = Logger.getLogger("feature-usage-event-logger")

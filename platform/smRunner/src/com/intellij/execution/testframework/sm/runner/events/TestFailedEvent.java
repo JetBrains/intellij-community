@@ -35,8 +35,8 @@ public class TestFailedEvent extends TreeNodeEvent {
   private final String myExpectedFilePath;
   private final String myActualFilePath;
   private final long myDurationMillis;
-  private boolean myExpectedFileTemp;
-  private boolean myActualFileTemp;
+  private final boolean myExpectedFileTemp;
+  private final boolean myActualFileTemp;
 
   public TestFailedEvent(@NotNull TestFailed testFailed, boolean testError) {
     this(testFailed, testError, null);

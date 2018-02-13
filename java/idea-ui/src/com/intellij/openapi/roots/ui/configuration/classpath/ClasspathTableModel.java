@@ -98,7 +98,7 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
   public static final int ITEM_COLUMN = 1;
   public static final int SCOPE_COLUMN = 2;
   private final ModuleConfigurationState myState;
-  private StructureConfigurableContext myContext;
+  private final StructureConfigurableContext myContext;
 
   public ClasspathTableModel(final ModuleConfigurationState state, StructureConfigurableContext context) {
     super(EXPORT_COLUMN_INFO, new ClasspathTableItemClasspathColumnInfo(context), SCOPE_COLUMN_INFO);

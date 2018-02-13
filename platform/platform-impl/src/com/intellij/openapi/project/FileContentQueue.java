@@ -43,6 +43,7 @@ public class FileContentQueue {
 
   private final AtomicLong myLoadedBytesInQueue = new AtomicLong();
   private static final Object ourProceedWithLoadingLock = new Object();
+  @NotNull private final Project myProject;
 
   private volatile long myBytesBeingProcessed;
   private volatile boolean myLargeSizeRequested;
@@ -51,7 +52,10 @@ public class FileContentQueue {
   private final ProgressIndicator myProgressIndicator;
   private static final Deque<FileContentQueue> ourContentLoadingQueues = new LinkedBlockingDeque<>();
 
-  public FileContentQueue(@NotNull Collection<VirtualFile> files, @NotNull final ProgressIndicator indicator) {
+  FileContentQueue(@NotNull Project project,
+                   @NotNull Collection<VirtualFile> files,
+                   @NotNull final ProgressIndicator indicator) {
+    myProject = project;
     int numberOfFiles = files.size();
     myContentsToLoad.set(numberOfFiles);
     // ABQ is more memory efficient for significant number of files (e.g. 500K)
@@ -135,7 +139,9 @@ public class FileContentQueue {
     try {
       myLoadedBytesInQueue.addAndGet(contentLength);
 
-      content.getBytes(); // Reads the content bytes and caches them.
+      // Reads the content bytes and caches them.
+      // hint at the current project to avoid expensive read action in ProjectLocatorImpl
+      ProjectLocator.computeWithPreferredProject(content.getVirtualFile(), myProject, ()-> content.getBytes());
 
       return true;
     }

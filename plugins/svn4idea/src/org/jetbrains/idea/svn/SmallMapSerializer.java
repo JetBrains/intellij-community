@@ -40,7 +40,7 @@ public class SmallMapSerializer<K,V> implements Forceable {
   private final KeyDescriptor<K> myKeyDescriptor;
   private final DataExternalizer<V> myValueExternalizer;
   private boolean myDirty;
-  private Logger LOG = Logger.getInstance(SmallMapSerializer.class);
+  private final Logger LOG = Logger.getInstance(SmallMapSerializer.class);
 
   public SmallMapSerializer(final File file, final KeyDescriptor<K> keyDescriptor, final DataExternalizer<V> valueExternalizer) {
     myFile = file;

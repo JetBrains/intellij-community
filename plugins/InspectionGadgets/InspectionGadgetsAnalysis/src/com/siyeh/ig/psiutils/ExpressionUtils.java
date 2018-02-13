@@ -746,18 +746,20 @@ public class ExpressionUtils {
   /**
    * Returns true if the expression can be moved to earlier point in program order without possible semantic change or
    * notable performance handicap. Examples of simple expressions are:
-   * - literal (number, char, string, class literal, true, false, null)
-   * - compile-time constant
-   * - this
-   * - variable/parameter read
-   * - static field read
-   * - instance field read having 'this' as qualifier
+   * <ul>
+   * <li>literal (number, char, string, class literal, true, false, null)</li>
+   * <li>compile-time constant</li>
+   * <li>this</li>
+   * <li>variable/parameter read</li>
+   * <li>final field read (either static or this-qualified)</li>
+   * <li>some static method calls known to return final static field (like {@code Collections.emptyList()})</li>
+   * </ul>
    *
    * @param expression an expression to test (must be valid expression)
    * @return true if the supplied expression is simple
    */
   @Contract("null -> false")
-  public static boolean isSimpleExpression(@Nullable PsiExpression expression) {
+  public static boolean isSafelyRecomputableExpression(@Nullable PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiLiteralExpression ||
         expression instanceof PsiThisExpression ||
@@ -766,11 +768,14 @@ public class ExpressionUtils {
       return true;
     }
     if(expression instanceof PsiReferenceExpression) {
+      PsiElement target = ((PsiReferenceExpression)expression).resolve();
+      if (target instanceof PsiLocalVariable || target instanceof PsiParameter) return true;
       PsiExpression qualifier = ((PsiReferenceExpression)expression).getQualifierExpression();
-      if(qualifier == null || qualifier instanceof PsiThisExpression) return true;
-      if(qualifier instanceof PsiReferenceExpression) {
-        PsiElement resolvedQualifier = ((PsiReferenceExpression)qualifier).resolve();
-        if(resolvedQualifier instanceof PsiClass) return true;
+      if (target == null && qualifier == null) return true;
+      if (target instanceof PsiField) {
+        PsiField field = (PsiField)target;
+        if (!field.hasModifierProperty(PsiModifier.FINAL)) return false;
+        return qualifier == null || qualifier instanceof PsiThisExpression || field.hasModifierProperty(PsiModifier.STATIC);
       }
     }
     if (expression instanceof PsiMethodCallExpression) {

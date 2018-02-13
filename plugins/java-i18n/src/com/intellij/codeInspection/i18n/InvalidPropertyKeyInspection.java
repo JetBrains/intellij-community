@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -113,7 +111,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
     UnresolvedPropertyVisitor visitor = new UnresolvedPropertyVisitor(manager, onTheFly);
     element.accept(visitor);
     Map<PsiElement, ProblemDescriptor> problems = visitor.getProblems();
-    return problems.isEmpty() ? null : problems.values().toArray(new ProblemDescriptor[problems.size()]);
+    return problems.isEmpty() ? null : problems.values().toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   private static class UnresolvedPropertyVisitor extends JavaRecursiveElementWalkingVisitor {

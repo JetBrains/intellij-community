@@ -596,10 +596,10 @@
   </action>
 
   <action id="MethodOverloadSwitchUp">
-    <keyboard-shortcut first-keystroke="control P"/>
+    <keyboard-shortcut first-keystroke="alt UP"/>
   </action>
   <action id="MethodOverloadSwitchDown">
-    <keyboard-shortcut first-keystroke="control N"/>
+    <keyboard-shortcut first-keystroke="alt DOWN"/>
   </action>
 
   <action id="RunDashboard.ShowConfigurations">

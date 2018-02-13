@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.abstraction;
 
 import com.siyeh.InspectionGadgetsBundle;
@@ -25,10 +26,12 @@ public class TypeMayBeWeakenedFixTest extends IGQuickFixesTestCase {
 
   public void testShorten() { doTest(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.quickfix", "java.util.Collection")); }
   public void testLocalClass() { doTest(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.quickfix", "A")); }
-  public void testGeneric() { doTest(
-    InspectionGadgetsBundle.message("inspection.type.may.be.weakened.quickfix", "com.siyeh.igfixes.abstraction.type_may_be_weakened.C")); }
+
+  public void testGeneric() {
+    doTest(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.quickfix", "com.siyeh.igfixes.abstraction.type_may_be_weakened.C"));
+  }
+
   public void testStopClass() {
     doTest(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.quickfix", "com.siyeh.igfixes.abstraction.type_may_be_weakened.Stop"));
   }
-
 }

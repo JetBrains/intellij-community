@@ -20,9 +20,9 @@ import java.awt.*;
 
 public class AlertIcon implements Icon {
 
-  private Icon myIcon;
-  private int myVShift;
-  private int myHShift;
+  private final Icon myIcon;
+  private final int myVShift;
+  private final int myHShift;
 
   public AlertIcon(final Icon icon) {
     this(icon, 0, 0);

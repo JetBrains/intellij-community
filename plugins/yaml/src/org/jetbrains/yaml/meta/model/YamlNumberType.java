@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Experimental
 public class YamlNumberType extends YamlScalarType {
-  private static YamlNumberType SHARED_INSTANCE = new YamlNumberType();
+  private static final YamlNumberType SHARED_INSTANCE = new YamlNumberType();
 
   public static YamlNumberType getInstance() {
     return SHARED_INSTANCE;
@@ -15,5 +15,6 @@ public class YamlNumberType extends YamlScalarType {
 
   public YamlNumberType() {
     super("yaml:number");
+    setDisplayName("number");
   }
 }

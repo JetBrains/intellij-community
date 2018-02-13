@@ -36,8 +36,8 @@ import static org.fest.swing.timing.Pause.pause;
 
 public class SelectSdkDialogFixture implements ContainerFixture<JDialog>{
 
-  private JDialog myDialog;
-  private Robot myRobot;
+  private final JDialog myDialog;
+  private final Robot myRobot;
 
   public SelectSdkDialogFixture(@NotNull Robot robot, JDialog selectSdkDialog) {
     myRobot = robot;

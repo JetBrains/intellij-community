@@ -19,8 +19,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 public class DownloadAllSourcesAndDocsAction extends MavenProjectsManagerAction {
-  private boolean mySources;
-  private boolean myDocs;
+  private final boolean mySources;
+  private final boolean myDocs;
 
   @SuppressWarnings({"UnusedDeclaration"})
   public DownloadAllSourcesAndDocsAction() {

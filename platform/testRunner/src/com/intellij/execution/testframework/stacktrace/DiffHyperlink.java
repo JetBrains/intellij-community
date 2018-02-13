@@ -41,7 +41,7 @@ public class DiffHyperlink implements Printable {
   protected final String myActual;
   protected final String myFilePath;
   protected final String myActualFilePath;
-  private boolean myPrintOneLine;
+  private final boolean myPrintOneLine;
   private final HyperlinkInfo myDiffHyperlink = new DiffHyperlinkInfo();
 
 

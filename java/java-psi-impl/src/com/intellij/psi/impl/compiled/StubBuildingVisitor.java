@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -249,22 +247,18 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     boolean isLocalClassInner = !isAnonymousInner && outerName == null;
 
     if (innerName == null || outerName == null) {
-      if(myInternalName.equals(name)) {
+      int $index;
+      if (myInternalName.equals(name) || ($index = name.lastIndexOf('$')) == -1) {
         return;
       }
-      int $index = name.lastIndexOf('$');
-      if ($index == -1) {
-        return;
-      } else {
-        if (isAnonymousInner) {
-          jvmClassName = name.substring($index + 1);
-          innerName = jvmClassName;
-          outerName = name.substring(0, $index);
-        }
-        else { // isLocalClassInner
-          outerName = name.substring(0, $index);
-          jvmClassName = name.substring($index + 1);
-        }
+      else if (isAnonymousInner) {
+        jvmClassName = name.substring($index + 1);
+        innerName = jvmClassName;
+        outerName = name.substring(0, $index);
+      }
+      else { // isLocalClassInner
+        outerName = name.substring(0, $index);
+        jvmClassName = name.substring($index + 1);
       }
     }
 
@@ -275,13 +269,13 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     if (myInternalName.equals(outerName)) {
       T innerClass = myInnersStrategy.findInnerClass(jvmClassName, mySource);
       if (innerClass != null) {
-        myInnersStrategy.accept(innerClass, new StubBuildingVisitor<>(innerClass, myInnersStrategy, myResult, access, innerName, isAnonymousInner, isLocalClassInner));
+        myInnersStrategy.accept(
+          innerClass, new StubBuildingVisitor<>(innerClass, myInnersStrategy, myResult, access, innerName, isAnonymousInner, isLocalClassInner));
       }
     }
   }
 
   @Override
-  @Nullable
   public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
     if (isSet(access, Opcodes.ACC_SYNTHETIC)) return null;
     if (name == null) return null;
@@ -313,7 +307,6 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private static final String[] parameterNames = {"p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9"};
 
   @Override
-  @Nullable
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
     // JLS 13.1 says: Any constructs introduced by the compiler that do not have a corresponding construct in the source code
     // must be marked as synthetic, except for default constructors and the class initialization method.
@@ -560,7 +553,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
 
     @Override
-    public AnnotationVisitor visitTypeAnnotation(int typeRef, final TypePath typePath, String desc, boolean visible) {
+    public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
       return new AnnotationTextCollector(desc, myMapping, text -> {
         if (typePath == null && (myFilter == null || !myFilter.contains(text))) {
           new PsiAnnotationStubImpl(myModList, text);
@@ -608,8 +601,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
 
     @Override
-    @Nullable
-    public AnnotationVisitor visitParameterAnnotation(final int parameter, String desc, boolean visible) {
+    public AnnotationVisitor visitParameterAnnotation(int parameter, String desc, boolean visible) {
       return parameter < myParamIgnoreCount ? null : new AnnotationTextCollector(desc, myMapping, text -> {
         int idx = parameter - myParamIgnoreCount;
         filter(idx + 1, text);
@@ -618,8 +610,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
 
     @Override
-    public AnnotationVisitor visitTypeAnnotation(int typeRef, final TypePath typePath, String desc, boolean visible) {
-      final TypeReference ref = new TypeReference(typeRef);
+    public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
+      TypeReference ref = new TypeReference(typeRef);
       return new AnnotationTextCollector(desc, myMapping, text -> {
         if (ref.getSort() == TypeReference.METHOD_RETURN && typePath == null && !filtered(0, text)) {
           new PsiAnnotationStubImpl(myModList, text);

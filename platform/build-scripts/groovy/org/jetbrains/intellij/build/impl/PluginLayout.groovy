@@ -32,6 +32,7 @@ class PluginLayout extends BaseLayout {
   final Set<String> optionalModules = new LinkedHashSet<>()
   private boolean doNotCreateSeparateJarForLocalizableResources
   Function<BuildContext, String> versionEvaluator = { BuildContext context -> context.buildNumber } as Function<BuildContext, String>
+  boolean directoryNameSetExplicitly
 
   private PluginLayout(String mainModule) {
     this.mainModule = mainModule
@@ -57,6 +58,13 @@ class PluginLayout extends BaseLayout {
       layout.versionEvaluator = { BuildContext context -> spec.version } as Function<BuildContext, String>
     }
     spec.withModule(mainModuleName, spec.mainJarName)
+    if (spec.mainJarNameSetExplicitly) {
+      layout.explicitlySetJarPaths.add(spec.mainJarName)
+    }
+    else {
+      layout.explicitlySetJarPaths.remove(spec.mainJarName)
+    }
+    layout.directoryNameSetExplicitly = spec.directoryNameSetExplicitly
     if (layout.doNotCreateSeparateJarForLocalizableResources) {
       layout.modulesWithLocalizableResourcesInCommonJar.clear()
     }
@@ -81,19 +89,10 @@ class PluginLayout extends BaseLayout {
 
   static class PluginLayoutSpec extends BaseLayoutSpec {
     private final PluginLayout layout
-    /**
-     * Custom name of the directory (under 'plugins' directory) where the plugin should be placed. By default the main module name is used
-     * (with stripped {@code intellij} prefix and dots replaced by dashes).
-     * <strong>Don't set this property for new plugins</strong>; it is temporary added to keep layout of old plugins unchanged.
-     */
-    String directoryName
-
-    /**
-     * Custom name of the main plugin JAR file. By default the main module name with 'jar' extension is used (with stripped {@code intellij}
-     * prefix and dots replaced by dashes).
-     * <strong>Don't set this property for new plugins</strong>; it is temporary added to keep layout of old plugins unchanged.
-     */
-    String mainJarName
+    private String directoryName
+    private String mainJarName
+    private boolean mainJarNameSetExplicitly
+    private boolean directoryNameSetExplicitly
 
     /**
      * @deprecated use {@link #withCustomVersion(java.util.function.Function)} instead
@@ -105,6 +104,34 @@ class PluginLayout extends BaseLayout {
       this.layout = layout
       directoryName = convertModuleNameToFileName(layout.mainModule)
       mainJarName = "${convertModuleNameToFileName(layout.mainModule)}.jar"
+    }
+
+    /**
+     * Custom name of the directory (under 'plugins' directory) where the plugin should be placed. By default the main module name is used
+     * (with stripped {@code intellij} prefix and dots replaced by dashes).
+     * <strong>Don't set this property for new plugins</strong>; it is temporary added to keep layout of old plugins unchanged.
+     */
+    void setDirectoryName(String directoryName) {
+      this.directoryName = directoryName
+      directoryNameSetExplicitly = true
+    }
+
+    String getDirectoryName() {
+      return directoryName
+    }
+
+    /**
+     * Custom name of the main plugin JAR file. By default the main module name with 'jar' extension is used (with stripped {@code intellij}
+     * prefix and dots replaced by dashes).
+     * <strong>Don't set this property for new plugins</strong>; it is temporary added to keep layout of old plugins unchanged.
+     */
+    void setMainJarName(String mainJarName) {
+      this.mainJarName = mainJarName
+      mainJarNameSetExplicitly = true
+    }
+
+    String getMainJarName() {
+      return mainJarName
     }
 
     /**
@@ -141,10 +168,21 @@ class PluginLayout extends BaseLayout {
     /**
      * Register an optional module which may be excluded from the plugin distribution in some products. These modules are included in plugin
      * distribution only if they are added to {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledPluginModules} list.
+     * @param relativeJarPath target JAR path relative to 'lib' directory of the plugin; different modules may be packed into the same JAR,
+     * but <strong>don't use this for new plugins</strong>; this parameter is temporary added to keep layout of old plugins.
      */
-    void withOptionalModule(String moduleName, String relativeJarPath = "${moduleName}.jar") {
+    void withOptionalModule(String moduleName, String relativeJarPath) {
       layout.optionalModules << moduleName
       withModule(moduleName, relativeJarPath)
+    }
+
+    /**
+     * Register an optional module which may be excluded from the plugin distribution in some products. These modules are included in plugin
+     * distribution only if they are added to {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledPluginModules} list.
+     */
+    void withOptionalModule(String moduleName) {
+      layout.optionalModules << moduleName
+      withModule(moduleName)
     }
 
     void withJpsModule(String moduleName) {

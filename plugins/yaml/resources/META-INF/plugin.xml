@@ -34,5 +34,10 @@
     <support language="yaml" implementationClass="org.jetbrains.yaml.YAMLSpellcheckerStrategy"/>
   </extensions>
 
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.yaml.customStructureViewFactory"
+                    interface="org.jetbrains.yaml.structureView.YAMLCustomStructureViewFactory">
+    </extensionPoint>
+  </extensionPoints>
 
 </idea-plugin>

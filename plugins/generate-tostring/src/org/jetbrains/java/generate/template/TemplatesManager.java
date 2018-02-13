@@ -122,8 +122,14 @@ public abstract class TemplatesManager implements PersistentStateComponent<Templ
     @NotNull
     public static PsiType createFieldListElementType(Project project) {
       final PsiType classType = createElementType(project, FieldElement.class);
-      final PsiClass listClass = JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_UTIL_LIST, GlobalSearchScope.allScope(project));
-      return listClass != null ? JavaPsiFacade.getElementFactory(project).createType(listClass, classType) : PsiType.NULL;
+      PsiClass[] classes = JavaPsiFacade.getInstance(project).findClasses(CommonClassNames.JAVA_UTIL_LIST, 
+                                                                          GlobalSearchScope.allScope(project));
+      for (PsiClass listClass : classes) {
+        if (listClass.getTypeParameters().length == 1) {
+          return JavaPsiFacade.getElementFactory(project).createType(listClass, classType);
+        }
+      }
+      return PsiType.NULL;
     }
 
     @NotNull

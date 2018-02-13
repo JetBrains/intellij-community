@@ -20,7 +20,6 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.CompleteMacro;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.RunResult;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -65,7 +64,7 @@ public class AddWithParamFix extends AbstractFix {
     }
 
     public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
-        final RunResult<SmartPsiElementPointer<XmlTag>> result = new WriteAction<SmartPsiElementPointer<XmlTag>>() {
+        SmartPsiElementPointer<XmlTag> result = new WriteAction<SmartPsiElementPointer<XmlTag>>() {
             protected void run(@NotNull Result<SmartPsiElementPointer<XmlTag>> result) throws Throwable {
                 final XmlTag withParamTag = RefactoringUtil.addWithParam(myTag);
 
@@ -75,14 +74,14 @@ public class AddWithParamFix extends AbstractFix {
                 result.setResult(SmartPointerManager.getInstance(project).
                         createSmartPsiElementPointer(withParamTag));
             }
-        }.execute();
+        }.execute().getResultObject();
 
         final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
         final Document doc = psiDocumentManager.getDocument(file);
         assert doc != null;
         psiDocumentManager.doPostponedOperationsAndUnblockDocument(doc);
 
-        final XmlTag withParamTag = result.getResultObject().getElement();
+        final XmlTag withParamTag = result.getElement();
         assert withParamTag != null;
 
         final TemplateBuilderImpl builder = new TemplateBuilderImpl(withParamTag);

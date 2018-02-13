@@ -65,17 +65,20 @@ public class PyCompatibilityInspection extends PyInspection {
     .add("typing")
     .build();
 
-  public static final int LATEST_INSPECTION_VERSION = 2;
+  public static final int LATEST_INSPECTION_VERSION = 3;
 
   @NotNull
   public static final List<LanguageLevel> DEFAULT_PYTHON_VERSIONS = ImmutableList.of(LanguageLevel.PYTHON27, LanguageLevel.getLatest());
+
+  @NotNull
+  public static final List<String> SUPPORTED_LEVELS = ContainerUtil.map(LanguageLevel.SUPPORTED_LEVELS, LanguageLevel::toString);
 
   // Legacy DefaultJDOMExternalizer requires public fields for proper serialization
   public JDOMExternalizableStringList ourVersions = new JDOMExternalizableStringList();
 
   public PyCompatibilityInspection () {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      ourVersions.addAll(UnsupportedFeaturesUtil.ALL_LANGUAGE_LEVELS);
+      ourVersions.addAll(SUPPORTED_LEVELS);
     }
     else {
       ourVersions.addAll(ContainerUtil.map(DEFAULT_PYTHON_VERSIONS, LanguageLevel::toString));
@@ -98,8 +101,10 @@ public class PyCompatibilityInspection extends PyInspection {
     List<LanguageLevel> result = new ArrayList<>();
 
     for (String version : ourVersions) {
-      LanguageLevel level = LanguageLevel.fromPythonVersion(version);
-      result.add(level);
+      if (SUPPORTED_LEVELS.contains(version)) {
+        LanguageLevel level = LanguageLevel.fromPythonVersion(version);
+        result.add(level);
+      }
     }
     return result;
   }
@@ -114,8 +119,8 @@ public class PyCompatibilityInspection extends PyInspection {
   @Override
   public JComponent createOptionsPanel() {
     final ElementsChooser<String> chooser = new ElementsChooser<>(true);
-    chooser.setElements(UnsupportedFeaturesUtil.ALL_LANGUAGE_LEVELS, false);
-    chooser.markElements(ourVersions);
+    chooser.setElements(SUPPORTED_LEVELS, false);
+    chooser.markElements(ContainerUtil.filter(ourVersions, SUPPORTED_LEVELS::contains));
     chooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<String>() {
       @Override
       public void elementMarkChanged(String element, boolean isMarked) {
@@ -139,7 +144,7 @@ public class PyCompatibilityInspection extends PyInspection {
 
   private static class Visitor extends CompatibilityVisitor {
     private final ProblemsHolder myHolder;
-    private Set<String> myUsedImports = Collections.synchronizedSet(new HashSet<String>());
+    private final Set<String> myUsedImports = Collections.synchronizedSet(new HashSet<String>());
 
     public Visitor(ProblemsHolder holder, List<LanguageLevel> versionsToProcess) {
       super(versionsToProcess);
@@ -238,7 +243,7 @@ public class PyCompatibilityInspection extends PyInspection {
         }
       }
 
-      final QualifiedName qName = importElement.getImportedQName();
+      final QualifiedName qName = getImportedFullyQName(importElement);
       if (qName != null && !qName.matches("builtins") && !qName.matches("__builtin__")) {
         final String moduleName = qName.toString();
 
@@ -247,6 +252,19 @@ public class PyCompatibilityInspection extends PyInspection {
                                        importElement,
                                        null);
       }
+    }
+
+    @Nullable
+    private static QualifiedName getImportedFullyQName(@NotNull PyImportElement importElement) {
+      final QualifiedName importedQName = importElement.getImportedQName();
+      if (importedQName == null) return null;
+
+      final PyStatement containingImportStatement = importElement.getContainingImportStatement();
+      final QualifiedName importSourceQName = containingImportStatement instanceof PyFromImportStatement
+                                              ? ((PyFromImportStatement)containingImportStatement).getImportSourceQName()
+                                              : null;
+
+      return importSourceQName == null ? importedQName : importSourceQName.append(importedQName);
     }
 
     @Override
@@ -271,7 +289,7 @@ public class PyCompatibilityInspection extends PyInspection {
     public void visitPyArgumentList(final PyArgumentList node) { //PY-5588
       if (node.getParent() instanceof PyClass) {
         final boolean isPython2 = LanguageLevel.forElement(node).isPython2();
-        if (myVersionsToProcess.stream().anyMatch(level -> level.isOlderThan(LanguageLevel.PYTHON30)) || isPython2) {
+        if (isPython2 || myVersionsToProcess.stream().anyMatch(LanguageLevel::isPython2)) {
           Arrays
             .stream(node.getArguments())
             .filter(PyKeywordArgument.class::isInstance)
@@ -324,28 +342,29 @@ public class PyCompatibilityInspection extends PyInspection {
     @Override
     public void visitPyTargetExpression(PyTargetExpression node) {
       super.visitPyTargetExpression(node);
-      warnAboutAsyncAndAwaitInPy35AndPy36(node);
+      warnAsyncAndAwaitAreBecomingKeywordsInPy37(node);
     }
 
     @Override
     public void visitPyClass(PyClass node) {
       super.visitPyClass(node);
-      warnAboutAsyncAndAwaitInPy35AndPy36(node);
+      warnAsyncAndAwaitAreBecomingKeywordsInPy37(node);
     }
 
     @Override
     public void visitPyFunction(PyFunction node) {
       super.visitPyFunction(node);
-      warnAboutAsyncAndAwaitInPy35AndPy36(node);
+      warnAsyncAndAwaitAreBecomingKeywordsInPy37(node);
     }
 
-    private void warnAboutAsyncAndAwaitInPy35AndPy36(@NotNull PsiNameIdentifierOwner nameIdentifierOwner) {
+    private void warnAsyncAndAwaitAreBecomingKeywordsInPy37(@NotNull PsiNameIdentifierOwner nameIdentifierOwner) {
       final PsiElement nameIdentifier = nameIdentifierOwner.getNameIdentifier();
 
-      if (nameIdentifier != null && ArrayUtil.contains(nameIdentifierOwner.getName(), PyNames.AWAIT, PyNames.ASYNC)) {
-        registerOnFirstMatchingVersion(level -> LanguageLevel.PYTHON35.equals(level) || LanguageLevel.PYTHON36.equals(level),
-                                       "'async' and 'await' are not recommended to be used as variable, class, function or module names. " +
-                                       "They will become proper keywords in Python 3.7.",
+      if (nameIdentifier != null &&
+          ArrayUtil.contains(nameIdentifierOwner.getName(), PyNames.AWAIT, PyNames.ASYNC) &&
+          LanguageLevel.forElement(nameIdentifierOwner).isOlderThan(LanguageLevel.PYTHON37)) {
+        registerOnFirstMatchingVersion(level -> level.isAtLeast(LanguageLevel.PYTHON37),
+                                       "'async' and 'await' are keywords in Python 3.7 and newer",
                                        nameIdentifier,
                                        new PyRenameElementQuickFix());
       }

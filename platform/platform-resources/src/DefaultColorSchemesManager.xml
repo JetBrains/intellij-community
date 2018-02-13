@@ -22,6 +22,7 @@
       <option name="SEPARATOR_BELOW_COLOR" value="e4e4e4"/>
       <option name="READONLY_FRAGMENT_BACKGROUND" value="cfe7ff"/>
       <option name="VISUAL_INDENT_GUIDE" value="eeeeee"/>
+      <option name="FOLDED_TEXT_BORDER_COLOR" value="add9c7"/>
 
       <option name="ADDED_LINES_COLOR" value="c9dec1" deuteranopia="99ca90" protanopia="99ca90"/>
       <option name="MODIFIED_LINES_COLOR" value="c3d6e8" deuteranopia="9ca9bf" protanopia="9ca9bf"/>
@@ -433,7 +434,13 @@
       <option name="INLINE_PARAMETER_HINT_HIGHLIGHTED">
         <value>
           <option name="FOREGROUND" value="5b5b5b"/>
-          <option name="BACKGROUND" value="c0c0c0"/>
+          <option name="BACKGROUND" value="cccccc"/>
+        </value>
+      </option>
+      <option name="INLINE_PARAMETER_HINT_CURRENT">
+        <value>
+          <option name="FOREGROUND" value="5b5b5b"/>
+          <option name="BACKGROUND" value="bcdaf7"/>
         </value>
       </option>
       <option name="IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES">
@@ -1140,6 +1147,7 @@
       <option name="DIFF_SEPARATORS_BACKGROUND" value="232323"/>
       <option name="DIFF_SEPARATORS_BOTTOM_BORDER" value="222222"/>
       <option name="VISUAL_INDENT_GUIDE" value="3c3c3c"/>
+      <option name="FOLDED_TEXT_BORDER_COLOR" value="43474a"/>
 
       <option name="VCS_ANNOTATIONS_COLOR_1" value="464c43"/>
       <option name="VCS_ANNOTATIONS_COLOR_2" value="444342"/>
@@ -1715,7 +1723,13 @@
       <option name="INLINE_PARAMETER_HINT_HIGHLIGHTED">
         <value>
           <option name="FOREGROUND" value="acacac"/>
-          <option name="BACKGROUND" value="686868"/>
+          <option name="BACKGROUND" value="4d4d4d"/>
+        </value>
+      </option>
+      <option name="INLINE_PARAMETER_HINT_CURRENT">
+        <value>
+          <option name="FOREGROUND" value="acacac"/>
+          <option name="BACKGROUND" value="305d78"/>
         </value>
       </option>
       <option name="IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES">

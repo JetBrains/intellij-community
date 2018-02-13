@@ -40,7 +40,7 @@ import java.util.List;
  */
 public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLinkProvider {
   // use tools/stdlib-modindex.py to regenerate the map when new Python versions are released
-  private static List<String> py2LibraryModules = ImmutableList.of(
+  private static final List<String> py2LibraryModules = ImmutableList.of(
     "abc",
     "aepack",
     "aetools",
@@ -317,7 +317,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     "__future__"
   );
 
-  private static List<String> py3LibraryModules = ImmutableList.of(
+  private static final List<String> py3LibraryModules = ImmutableList.of(
     "abc",
     "aifc",
     "argparse",

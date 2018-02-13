@@ -3,6 +3,7 @@ package com.jetbrains.env.python.testing;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,6 +29,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -70,7 +72,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   public void testDeserialization() {
     runPythonTest(new PyExecutionFixtureTestTask("testRunner/env/pytest/config/") {
       @Override
-      public void runTestOn(String sdkHome) throws Exception {
+      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
         final PyTestConfiguration configuration = configureByFile("MyConfig.xml");
         assertEquals("Wrong target type", new ConfigurationTarget("foo.py", PyRunTargetVariant.PATH), configuration.getTarget());
         assertEquals("Wrong keywords", "keywords", configuration.getKeywords());

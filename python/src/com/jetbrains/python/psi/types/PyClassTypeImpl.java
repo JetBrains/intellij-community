@@ -49,7 +49,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @NotNull protected final PyClass myClass;
   protected final boolean myIsDefinition;
 
-  private static ThreadLocal<Set<Pair<PyClass, String>>> ourResolveMemberStack = new ThreadLocal<Set<Pair<PyClass, String>>>() {
+  private static final ThreadLocal<Set<Pair<PyClass, String>>> ourResolveMemberStack = new ThreadLocal<Set<Pair<PyClass, String>>>() {
     @Override
     protected Set<Pair<PyClass, String>> initialValue() {
       return new HashSet<>();
@@ -83,6 +83,13 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @NotNull
   public PyClass getPyClass() {
     return myClass;
+  }
+
+
+  @NotNull
+  @Override
+  public PyQualifiedNameOwner getDeclarationElement() {
+    return getPyClass();
   }
 
   /**
@@ -370,7 +377,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       );
     }
 
-    if (LanguageLevel.forElement(myClass).isOlderThan(LanguageLevel.PYTHON30) && !newStyleClass) {
+    if (LanguageLevel.forElement(myClass).isPython2() && !newStyleClass) {
       return classMembers;
     }
 
@@ -460,7 +467,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
   @NotNull
   @Override
-  public final List<PyClassLikeType> getAncestorTypes(@NotNull final TypeEvalContext context) {
+  public List<PyClassLikeType> getAncestorTypes(@NotNull final TypeEvalContext context) {
     return myClass.getAncestorTypes(context);
   }
 
@@ -526,7 +533,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return ContainerUtil.map(result, element -> new RatedResolveResult(PyReferenceImpl.getRate(element, context), element));
   }
 
-  private static Key<Set<PyClassType>> CTX_VISITED = Key.create("PyClassType.Visited");
+  private static final Key<Set<PyClassType>> CTX_VISITED = Key.create("PyClassType.Visited");
   public static Key<Boolean> CTX_SUPPRESS_PARENTHESES = Key.create("PyFunction.SuppressParentheses");
 
   @Override
@@ -891,5 +898,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     public boolean value(final PsiElement target) {
       return (instance != target);
     }
+  }
+
+  @Override
+  public void accept(@NotNull PyTypeVisitor visitor) {
+    visitor.visitClassType(this);
   }
 }

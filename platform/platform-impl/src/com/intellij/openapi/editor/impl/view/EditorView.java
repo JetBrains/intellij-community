@@ -40,7 +40,7 @@ import java.text.Bidi;
  * Also contains a cache of several font-related quantities (line height, space width, etc).
  */
 public class EditorView implements TextDrawingCallback, Disposable, Dumpable, HierarchyListener, VisibleAreaListener {
-  private static Key<LineLayout> FOLD_REGION_TEXT_LAYOUT = Key.create("text.layout");
+  private static final Key<LineLayout> FOLD_REGION_TEXT_LAYOUT = Key.create("text.layout");
 
   private final EditorImpl myEditor;
   private final DocumentEx myDocument;

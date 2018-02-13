@@ -18,7 +18,6 @@ package org.jetbrains.jps.builders;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -27,7 +26,7 @@ import java.util.List;
  * @author nik
  */
 public abstract class AdditionalRootsProviderService<R extends BuildRootDescriptor> {
-  private Collection<? extends BuildTargetType<? extends BuildTarget<R>>> myTargetTypes;
+  private final Collection<? extends BuildTargetType<? extends BuildTarget<R>>> myTargetTypes;
 
   protected AdditionalRootsProviderService(Collection<? extends BuildTargetType<? extends BuildTarget<R>>> targetTypes) {
     myTargetTypes = targetTypes;

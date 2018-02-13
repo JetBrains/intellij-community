@@ -46,7 +46,7 @@ public class LocationNameFieldsBinding {
   private boolean myModifyingProjectName = false;
   private boolean myExternalModify = false;
   private String myBaseDir;
-  private String mySuggestedProjectName;
+  private final String mySuggestedProjectName;
 
   public LocationNameFieldsBinding(@Nullable Project project,
                                    final TextFieldWithBrowseButton locationField,
