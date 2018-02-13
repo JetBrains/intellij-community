@@ -245,34 +245,34 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     if (context == PatternTreeContext.Block) {
       final PsiCodeBlock codeBlock = elementFactory.createCodeBlockFromText("{\n" + text + "\n}", null);
-      final PsiElement[] children = codeBlock.getChildren();
-      final int extraChildCount = 4;
+      PsiElement element = codeBlock.getFirstBodyElement();
+      if (element == null) return PsiElement.EMPTY_ARRAY;
+      final List<PsiElement> result = new SmartList<>();
+      final PsiElement lastBodyElement = codeBlock.getLastBodyElement();
+      while (element != null) {
+        if (!(element instanceof PsiWhiteSpace)) result.add(element);
+        if (element == lastBodyElement) break;
+        element = element.getNextSibling();
+      }
+      if (result.isEmpty()) return PsiElement.EMPTY_ARRAY;
 
-      if (children.length > extraChildCount) {
-        PsiElement[] result = new PsiElement[children.length - extraChildCount];
-        System.arraycopy(children, 2, result, 0, children.length - extraChildCount);
-
-        if (shouldTryExpressionPattern(result)) {
-          try {
-            final PsiElement[] expressionPattern =
-              createPatternTree(text, PatternTreeContext.Expression, fileType, language, contextName, extension, project, false);
-            if (expressionPattern.length == 1) {
-              result = expressionPattern;
-            }
-          } catch (IncorrectOperationException ignore) {}
-        }
-        else if (shouldTryClassPattern(result)) {
-          final PsiElement[] classPattern =
-            createPatternTree(text, PatternTreeContext.Class, fileType, language, contextName, extension, project, false);
-          if (classPattern.length == 1) {
-            result = classPattern;
+      if (shouldTryExpressionPattern(result)) {
+        try {
+          final PsiElement[] expressionPattern =
+            createPatternTree(text, PatternTreeContext.Expression, fileType, language, contextName, extension, project, false);
+          if (expressionPattern.length == 1) {
+            return expressionPattern;
           }
+        } catch (IncorrectOperationException ignore) {}
+      }
+      else if (shouldTryClassPattern(result)) {
+        final PsiElement[] classPattern =
+          createPatternTree(text, PatternTreeContext.Class, fileType, language, contextName, extension, project, false);
+        if (classPattern.length == 1) {
+          return classPattern;
         }
-        return result;
       }
-      else {
-        return PsiElement.EMPTY_ARRAY;
-      }
+      return result.toArray(PsiElement.EMPTY_ARRAY);
     }
     else if (context == PatternTreeContext.Class) {
       final PsiClass clazz = elementFactory.createClassFromText(text, null);
@@ -300,9 +300,9 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     }
   }
 
-  private static boolean shouldTryExpressionPattern(PsiElement[] elements) {
-    if (elements.length >= 1 && elements.length <= 3) {
-      final PsiElement firstElement = elements[0];
+  private static boolean shouldTryExpressionPattern(List<PsiElement> elements) {
+    if (elements.size() >= 1 && elements.size() <= 3) {
+      final PsiElement firstElement = elements.get(0);
       if (firstElement instanceof PsiDeclarationStatement) {
         final PsiElement lastChild = firstElement.getLastChild();
         if (lastChild instanceof PsiErrorElement && PsiTreeUtil.prevLeaf(lastChild) instanceof PsiErrorElement) {
@@ -316,13 +316,13 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return false;
   }
 
-  private static boolean shouldTryClassPattern(PsiElement[] elements) {
-    if (elements.length < 2) {
+  private static boolean shouldTryClassPattern(List<PsiElement> elements) {
+    if (elements.size() < 2) {
       return false;
     }
-    final PsiElement firstElement = elements[0];
-    final PsiElement secondElement = elements[1];
-    final PsiElement lastElement = elements[elements.length - 1];
+    final PsiElement firstElement = elements.get(0);
+    final PsiElement secondElement = elements.get(1);
+    final PsiElement lastElement = elements.get(elements.size() - 1);
 
     if (firstElement instanceof PsiDocComment) {
       // might be method with javadoc
