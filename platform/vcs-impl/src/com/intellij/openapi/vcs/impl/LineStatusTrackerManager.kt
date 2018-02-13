@@ -25,6 +25,7 @@ import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationAdapter
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
@@ -613,6 +614,7 @@ class LineStatusTrackerManager(
 
   private inner class MyDocumentListener : DocumentListener {
     override fun documentChanged(event: DocumentEvent) {
+      if (!ApplicationManager.getApplication().isDispatchThread) return // disable for documents forUseInNonAWTThread
       if (!partialChangeListsEnabled) return
 
       val document = event.document
