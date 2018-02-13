@@ -57,7 +57,7 @@ class ChangesGroupingSupport(project: Project, source: Any) {
   fun removePropertyChangeListener(listener: PropertyChangeListener) = changeSupport.removePropertyChangeListener(listener)
 
   companion object {
-    @JvmField val KEY = DataKey.create<ChangesGroupingSupport>("ChangesTree.GroupingSupport")!!
+    @JvmField val KEY = DataKey.create<ChangesGroupingSupport>("ChangesTree.GroupingSupport")
     const val PROP_GROUPING_KEYS = "ChangesGroupingKeys"
     const val DIRECTORY_GROUPING = "directory"
     const val MODULE_GROUPING = "module"
