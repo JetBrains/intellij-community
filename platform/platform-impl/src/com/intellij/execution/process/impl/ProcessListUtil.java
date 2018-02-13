@@ -173,9 +173,13 @@ public class ProcessListUtil {
                                                         full -> parseMacOutput(commandOnly, full)));
   }
 
+  @Nullable
+  public static List<ProcessInfo> parseProcessInfos(@NotNull String commandOnly, @NotNull String full) {
+    return parseMacOutput(commandOnly, full);
+  }
 
   @Nullable
-  static List<ProcessInfo> parseMacOutput(String commandOnly, String full) {
+  static List<ProcessInfo> parseMacOutput(@NotNull String commandOnly, @NotNull String full) {
     List<MacProcessInfo> commands = doParseMacOutput(commandOnly);
     List<MacProcessInfo> fulls = doParseMacOutput(full);
     if (commands == null || fulls == null) return null;
