@@ -150,9 +150,7 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
       if (!HardcodedMethodConstants.SIZE.equals(referenceName) && !HardcodedMethodConstants.LENGTH.equals(referenceName)) {
         return;
       }
-      final PsiExpressionList argumentList = callExpression.getArgumentList();
-      final PsiExpression[] expressions = argumentList.getExpressions();
-      if (expressions.length != 0) {
+      if (!callExpression.getArgumentList().isEmpty()) {
         return;
       }
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();

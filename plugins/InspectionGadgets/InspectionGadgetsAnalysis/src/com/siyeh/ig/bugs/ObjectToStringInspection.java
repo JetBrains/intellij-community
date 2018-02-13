@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,9 +103,7 @@ public class ObjectToStringInspection extends BaseInspection {
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       @NonNls final String name = methodExpression.getReferenceName();
       if (HardcodedMethodConstants.TO_STRING.equals(name)) {
-        final PsiExpressionList argumentList = expression.getArgumentList();
-        final PsiExpression[] arguments = argumentList.getExpressions();
-        if (arguments.length != 0) {
+        if (!expression.getArgumentList().isEmpty()) {
           return;
         }
         final PsiExpression qualifier = methodExpression.getQualifierExpression();
