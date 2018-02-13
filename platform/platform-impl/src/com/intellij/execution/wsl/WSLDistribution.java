@@ -65,6 +65,7 @@ public class WSLDistribution {
     return StringUtil.isEmpty(localAppDataPath) ? null : Paths.get(localAppDataPath, "Microsoft\\WindowsApps");
   }
 
+  @SuppressWarnings("CopyConstructorMissesField")
   public WSLDistribution(@NotNull WSLDistribution dist) {
     this(dist.myId, dist.myMsId, dist.myExeName, dist.myPresentableName);
   }
@@ -163,17 +164,19 @@ public class WSLDistribution {
    *
    * @param wslPath           source path inside wsl, e.g. /usr/bin
    * @param windowsPath       target windows path, e.g. C:/tmp; Directory going to be created
-   * @param additionalOptions may be used for --delete (not recommended), --inclulde and so on
-   * @param handlerConsumer   consumes process handler jsut before execution. Can be used for fast cancellation
+   * @param additionalOptions may be used for --delete (not recommended), --include and so on
+   * @param handlerConsumer   consumes process handler just before execution. Can be used for fast cancellation
    * @return process output
    */
 
+  @SuppressWarnings("UnusedReturnValue")
   public ProcessOutput copyFromWsl(@NotNull String wslPath,
                                    @NotNull String windowsPath,
                                    @Nullable List<String> additionalOptions,
                                    @Nullable Consumer<ProcessHandler> handlerConsumer
   )
     throws ExecutionException {
+    //noinspection ResultOfMethodCallIgnored
     new File(windowsPath).mkdirs();
     List<String> command = new ArrayList<>(Arrays.asList("rsync", "-cr"));
 
@@ -294,8 +297,8 @@ public class WSLDistribution {
   /**
    * Attempts to resolve symlink with a given timeout
    *
-   * @param path                   path in question
-   * @param timeoutInMillisecondss timeout for execution
+   * @param path                  path in question
+   * @param timeoutInMilliseconds timeout for execution
    * @return actual file name
    */
   @NotNull
@@ -342,7 +345,7 @@ public class WSLDistribution {
    * @return environment map of the default user in wsl
    */
   @NotNull
-  public Map<String, String> getEnvirionment() {
+  public Map<String, String> getEnvironment() {
     if (!isAvailable()) {
       return Collections.emptyMap();
     }
