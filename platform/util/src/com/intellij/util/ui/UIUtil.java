@@ -2986,30 +2986,29 @@ public class UIUtil {
     // With JB Linux JDK the label font comes properly scaled based on Xft.dpi settings.
     Font font = getLabelFont();
 
-    Float forcedScale = null;
-    if (Registry.is("ide.ui.scale.override")) {
-      forcedScale = Float.valueOf((float)Registry.get("ide.ui.scale").asDouble());
-    }
-    else if (SystemInfo.isLinux) {
-      Object value = Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI");
-      if (value instanceof Integer) { // defined by JB JDK when the resource is available in the system
-        // If the property is defined, then:
-        // 1) it provides correct system scale
-        // 2) the label font size is scaled
-        int dpi = ((Integer)value).intValue() / 1024;
-        if (dpi < 50) dpi = 50;
-        float scale = JBUI.discreteScale(dpi / 96f);
-        DEF_SYSTEM_FONT_SIZE = font.getSize() / scale; // derive actual system base font size
+    Float forcedScale = JBUI.DEBUG_USER_SCALE_FACTOR.get();
+    if (forcedScale == null) {
+      if (SystemInfo.isLinux) {
+        Object value = Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI");
+        if (value instanceof Integer) { // defined by JB JDK when the resource is available in the system
+          // If the property is defined, then:
+          // 1) it provides correct system scale
+          // 2) the label font size is scaled
+          int dpi = ((Integer)value).intValue() / 1024;
+          if (dpi < 50) dpi = 50;
+          float scale = JBUI.discreteScale(dpi / 96f);
+          DEF_SYSTEM_FONT_SIZE = font.getSize() / scale; // derive actual system base font size
+        }
+        else if (!SystemInfo.isJetBrainsJvm) {
+          forcedScale = Float.valueOf(getScreenScale()); // With Oracle JDK: derive scale from X server DPI
+        }
       }
-      else if (!SystemInfo.isJetBrainsJvm){
-        forcedScale = Float.valueOf(getScreenScale()); // With Oracle JDK: derive scale from X server DPI
-      }
-    }
-    else if (SystemInfo.isWindows) {
-      //noinspection HardCodedStringLiteral
-      Font winFont = (Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
-      if (winFont != null) {
-        font = winFont; // comes scaled
+      else if (SystemInfo.isWindows) {
+        //noinspection HardCodedStringLiteral
+        Font winFont = (Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
+        if (winFont != null) {
+          font = winFont; // comes scaled
+        }
       }
     }
     if (forcedScale != null) {
