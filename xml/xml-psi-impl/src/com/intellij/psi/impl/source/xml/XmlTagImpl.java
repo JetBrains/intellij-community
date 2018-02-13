@@ -184,7 +184,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   }
 
   @NotNull
-  public PsiReference[] getReferencesImpl(@NotNull PsiReferenceService.Hints hints) {
+  private PsiReference[] getReferencesImpl(@NotNull PsiReferenceService.Hints hints) {
     final ASTNode startTagName = XmlChildRole.START_TAG_NAME_FINDER.findChild(this);
     if (startTagName == null) return PsiReference.EMPTY_ARRAY;
     final ASTNode endTagName = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(this);
