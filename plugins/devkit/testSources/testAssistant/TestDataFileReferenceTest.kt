@@ -29,6 +29,27 @@ class TestDataFileReferenceTest : TestDataReferenceTestCase() {
     assertResolvedTo(javaFile, "TestClass.java")
   }
 
+  fun testDataFileResolveVarags() {
+    val testClass1 = myContentRootSubdir.writeChild("TestClass1.java", "some java code here")
+    val testClass2 = myContentRootSubdir.writeChild("TestClass2.java", "some java code here")
+
+    myFixture.configureByText("ATest.java", """
+      import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+
+      @com.intellij.testFramework.TestDataPath("${"\$"}CONTENT_ROOT/contentRootSubdir/")
+      public class ATest extends LightCodeInsightFixtureTestCase {
+        protected void doTest() {
+          configureByFiles("TestClass1.java", "TestClass2.java");
+        }
+
+        void configureByFiles(@com.intellij.testFramework.TestDataFile String... files){}
+      }
+    """.trimIndent())
+
+    assertResolvedTo(testClass1, "TestClass1.java")
+    assertResolvedTo(testClass2, "TestClass2.java")
+  }
+
 }
 
 
