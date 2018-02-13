@@ -312,8 +312,7 @@
     </action>
 
     <action id="Vcs.RollbackChangedLines" class="com.intellij.openapi.vcs.ex.RollbackLineStatusAction" icon="AllIcons.Actions.Rollback"/>
-    <action id="Vcs.MoveChangedLinesToChangelist" class="com.intellij.openapi.vcs.ex.MoveChangesLineStatusAction" icon="AllIcons.Actions.MoveToAnotherChangelist"
-            use-shortcut-of="ChangesView.Move"/>
+    <action id="Vcs.MoveChangedLinesToChangelist" class="com.intellij.openapi.vcs.ex.MoveChangesLineStatusAction" icon="AllIcons.Actions.MoveToAnotherChangelist"/>
 
     <action id="WelcomeScreen.GetFromVcs" class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVcsAction"
             icon="AllIcons.Welcome.FromVCS">
@@ -370,6 +369,8 @@
       <reference ref="VcsShowNextChangeMarker"/>
       <reference ref="VcsShowPrevChangeMarker"/>
       <reference ref="VcsShowCurrentChangeMarker"/>
+      <reference ref="Vcs.RollbackChangedLines"/>
+      <reference ref="Vcs.MoveChangedLinesToChangelist"/>
       <separator/>
       <reference ref="Start.Use.Vcs"/>
       <reference ref="Vcs.QuickListPopupAction"/>
@@ -413,7 +414,6 @@
       <separator/>
       <reference ref="Vcs.ShowMessageHistory"/>
       <reference ref="CloseAllUnmodifiedEditors"/>
-      <reference ref="Vcs.RollbackChangedLines"/>
       <reference ref="WelcomeScreen.GetFromVcs"/>
       <reference ref="Vcs.CopyRevisionNumberAction"/>
       <separator/>
