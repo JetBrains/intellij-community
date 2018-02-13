@@ -437,7 +437,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     boolean targetFound = false;
     for (final String name : matchOptions.getVariableConstraintNames()) {
       final MatchVariableConstraint constraint = matchOptions.getVariableConstraint(name);
-      if (constraint.isPartOfSearchResults()) {
+      if (constraint.isPartOfSearchResults() && !Configuration.CONTEXT_VAR_NAME.equals(constraint.getName())) {
         targetFound = true;
         break;
       }
