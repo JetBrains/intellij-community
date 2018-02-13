@@ -1,23 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
@@ -27,23 +11,19 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.codeInsight.AnnotationUtil.getStringAttributeValue;
+import static com.intellij.openapi.util.text.StringUtil.nullize;
+import static com.intellij.util.containers.ContainerUtil.emptyList;
+import static com.intellij.util.containers.ContainerUtil.mapNotNull;
+
 /**
  * @author Max Medvedev
  */
 public class GrAnnotationUtil {
-  @Nullable
-  public static String inferStringAttribute(@NotNull PsiAnnotation annotation, @NotNull String attributeName) {
-    final PsiAnnotationMemberValue targetValue = annotation.findAttributeValue(attributeName);
-    return getString(targetValue);
-  }
 
   @Nullable
-  public static String getString(@Nullable PsiAnnotationMemberValue targetValue) {
-    if (targetValue instanceof PsiLiteral) {
-      final Object value = ((PsiLiteral)targetValue).getValue();
-      if (value instanceof String) return (String)value;
-    }
-    return null;
+  public static String inferStringAttribute(@NotNull PsiAnnotation annotation, @NotNull String attributeName) {
+    return getStringAttributeValue(annotation, attributeName);
   }
 
   @Nullable
@@ -131,11 +111,12 @@ public class GrAnnotationUtil {
     return (PsiElement)owner;
   }
 
+  @NotNull
   public static List<PsiClass> getClassArrayValue(@NotNull PsiAnnotation annotation, @NotNull String attributeName, boolean declared) {
     PsiAnnotationMemberValue value =
       declared ? annotation.findDeclaredAttributeValue(attributeName) : annotation.findAttributeValue(attributeName);
     if (value instanceof PsiArrayInitializerMemberValue) {
-      return ContainerUtil.mapNotNull(((PsiArrayInitializerMemberValue)value).getInitializers(), GrAnnotationUtil::getPsiClass);
+      return mapNotNull(((PsiArrayInitializerMemberValue)value).getInitializers(), GrAnnotationUtil::getPsiClass);
     }
     else if (value instanceof PsiReference) {
       PsiClass psiClass = getPsiClass(value);
@@ -145,21 +126,17 @@ public class GrAnnotationUtil {
     return Collections.emptyList();
   }
 
+  @NotNull
   public static List<String> getStringArrayValue(@NotNull PsiAnnotation annotation, @NotNull String attributeName, boolean declared) {
-    PsiAnnotationMemberValue value =
-      declared ? annotation.findDeclaredAttributeValue(attributeName) : annotation.findAttributeValue(attributeName);
+    PsiAnnotationMemberValue value = declared ? annotation.findDeclaredAttributeValue(attributeName)
+                                              : annotation.findAttributeValue(attributeName);
     if (value instanceof PsiArrayInitializerMemberValue) {
-      return ContainerUtil.mapNotNull(((PsiArrayInitializerMemberValue)value).getInitializers(), memberValue -> {
-        String string = getString(memberValue);
-        return StringUtil.isEmpty(string) ? null : string;
-      });
+      PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)value).getInitializers();
+      return mapNotNull(initializers, it -> nullize(getStringAttributeValue(it), true));
     }
     else {
-      String string = getString(value);
-      if (!StringUtil.isEmpty(string)) {
-        return Collections.singletonList(string);
-      }
+      String string = value == null ? null : nullize(getStringAttributeValue(value), true);
+      return string == null ? emptyList() : Collections.singletonList(string);
     }
-    return Collections.emptyList();
   }
 }
