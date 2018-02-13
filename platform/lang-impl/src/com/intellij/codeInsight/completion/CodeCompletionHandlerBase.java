@@ -288,8 +288,12 @@ public class CodeCompletionHandlerBase {
 
     CompletionServiceImpl.setCompletionPhase(synchronous ? new CompletionPhase.Synchronous(indicator) : new CompletionPhase.BgCalculation(indicator));
 
-    indicator.getCompletionThreading().startThread(indicator, () -> AsyncCompletion.tryReadOrCancel(indicator, () ->
-      performCompletionInBackground(initContext, indicator)));
+    indicator.getCompletionThreading().startThread(indicator, () -> AsyncCompletion.tryReadOrCancel(indicator, () -> {
+      CompletionParameters parameters = prepareCompletionParameters(initContext, indicator);
+      if (parameters != null) {
+        indicator.runContributors(initContext, parameters);
+      }
+    }));
 
     if (!synchronous) {
       return;
@@ -314,21 +318,42 @@ public class CodeCompletionHandlerBase {
     indicator.showLookup();
   }
 
-  private void performCompletionInBackground(CompletionInitializationContext initContext, CompletionProgressIndicator indicator) {
+  @Nullable
+  private CompletionParameters prepareCompletionParameters(CompletionInitializationContext initContext,
+                                                           CompletionProgressIndicator indicator) {
     if (autopopup && shouldSkipAutoPopup(initContext.getEditor(), initContext.getFile())) {
-      return;
+      return null;
     }
 
     OffsetsInFile hostCopyOffsets = insertDummyIdentifier(initContext, indicator, indicator.getHostOffsets());
     if (hostCopyOffsets == null) {
-      return;
+      return null;
     }
 
     Disposer.register(indicator, hostCopyOffsets.getOffsets());
     OffsetsInFile finalOffsets = toInjectedIfAny(initContext.getFile(), hostCopyOffsets);
     Disposer.register(indicator, finalOffsets.getOffsets());
 
-    indicator.runContributors(initContext, finalOffsets);
+    return createCompletionParameters(initContext, indicator, finalOffsets);
+  }
+
+  @NotNull
+  private CompletionParameters createCompletionParameters(CompletionInitializationContext initContext,
+                                                          CompletionProgressIndicator indicator, OffsetsInFile finalOffsets) {
+    int offset = finalOffsets.getOffsets().getOffset(CompletionInitializationContext.START_OFFSET);
+    PsiFile fileCopy = finalOffsets.getFile();
+    PsiFile originalFile = fileCopy.getOriginalFile();
+    PsiElement insertedElement = findCompletionPositionLeaf(finalOffsets, offset, originalFile);
+    insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, new CompletionContext(fileCopy, finalOffsets.getOffsets()));
+    return new CompletionParameters(insertedElement, originalFile, completionType, offset, initContext.getInvocationCount(),
+                                    initContext.getEditor(), indicator);
+  }
+
+  @NotNull
+  private static PsiElement findCompletionPositionLeaf(OffsetsInFile offsets, int offset, PsiFile originalFile) {
+    PsiElement insertedElement = offsets.getFile().findElementAt(offset);
+    CompletionAssertions.assertCompletionPositionPsiConsistent(offsets, offset, originalFile, insertedElement);
+    return insertedElement;
   }
 
   private static void checkNotSync(CompletionProgressIndicator indicator, List<LookupElement> allItems) {
