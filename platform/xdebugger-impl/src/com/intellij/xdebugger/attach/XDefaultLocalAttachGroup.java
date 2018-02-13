@@ -20,9 +20,13 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+/**
+ * @deprecated use {@link XAttachPresentationGroup} instead
+ */
 public class XDefaultLocalAttachGroup implements XLocalAttachGroup {
   @Override
   public int getOrder() {
@@ -37,12 +41,28 @@ public class XDefaultLocalAttachGroup implements XLocalAttachGroup {
 
   @NotNull
   @Override
+  public Icon getIcon(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
+    return getProcessIcon(project, info, dataHolder);
+  }
+
+  @NotNull
+  @Override
+  public String getItemDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
+    return getProcessDisplayText(project, info, dataHolder);
+  }
+
+  @Nullable
+  @Override
+  public String getItemDescription(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
+    return null;
+  }
+
+  @NotNull
   public Icon getProcessIcon(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
     return AllIcons.RunConfigurations.Application;
   }
 
   @NotNull
-  @Override
   public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
     return info.getExecutableDisplayName();
   }
