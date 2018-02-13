@@ -20,6 +20,8 @@
     <extensions defaultExtensionNs="com.intellij">
         <applicationConfigurable id="circlet.settings.global" groupId="tools"
                                  instance="circlet.settings.CircletGlobalConfigurable"/>
+        <projectConfigurable id="circlet.settings.connection" groupId="tools" parentId="circlet.settings.global"
+                             instance="circlet.settings.CircletConnectionConfigurable"/>
     </extensions>
 
     <application-components>
