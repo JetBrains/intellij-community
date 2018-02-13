@@ -1,14 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.light.JavaIdentifier;
@@ -1128,21 +1128,26 @@ public class PsiUtil {
     return (GrCall)eMethodCall;
   }
 
-  @NotNull
-  public static String getAnnoAttributeValue(@NotNull PsiAnnotation annotation,
-                                             @NotNull String attributeName,
-                                             @NotNull String defaultValue) {
-    return StringUtil.notNullize(AnnotationUtil.getStringAttributeValue(annotation, attributeName), defaultValue);
+  public static String getAnnoAttributeValue(@NotNull PsiAnnotation annotation, final String attributeName, String defaultValue) {
+    PsiAnnotationMemberValue value = annotation.findAttributeValue(attributeName);
+    if (value instanceof GrExpression) {
+      Object o = GroovyConstantExpressionEvaluator.evaluate((GrExpression)value);
+      if (o instanceof String) {
+        return (String)o;
+      }
+    }
+    return defaultValue;
   }
 
-  public static boolean getAnnoAttributeValue(@NotNull PsiAnnotation annotation, @NotNull String attributeName, boolean defaultValue) {
-    Boolean value = AnnotationUtil.getBooleanAttributeValue(annotation, attributeName);
-    if (value == null) {
-      return defaultValue;
+  public static boolean getAnnoAttributeValue(@NotNull PsiAnnotation annotation, final String attributeName, boolean defaultValue) {
+    PsiAnnotationMemberValue value = annotation.findAttributeValue(attributeName);
+    if (value instanceof GrExpression) {
+      Object o = GroovyConstantExpressionEvaluator.evaluate((GrExpression)value);
+      if (o instanceof Boolean) {
+        return (Boolean)o;
+      }
     }
-    else {
-      return value;
-    }
+    return defaultValue;
   }
 
   public static boolean isExpressionUsed(PsiElement expr) {

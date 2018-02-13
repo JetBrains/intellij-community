@@ -1,4 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
@@ -478,9 +480,9 @@ public class AnnotationUtil {
   @Nullable
   public static String getStringAttributeValue(@NotNull PsiAnnotation anno, @Nullable final String attributeName) {
     PsiAnnotationMemberValue attrValue = anno.findAttributeValue(attributeName);
-    return attrValue == null ? null : getStringAttributeValue(attrValue);
+    Object constValue = JavaPsiFacade.getInstance(anno.getProject()).getConstantEvaluationHelper().computeConstantExpression(attrValue);
+    return constValue instanceof String ? (String)constValue : null;
   }
-
   @Nullable
   public static Boolean getBooleanAttributeValue(@NotNull PsiAnnotation anno, @Nullable final String attributeName) {
     PsiAnnotationMemberValue attrValue = anno.findAttributeValue(attributeName);
@@ -498,13 +500,7 @@ public class AnnotationUtil {
   @Nullable
   public static String getDeclaredStringAttributeValue(@NotNull PsiAnnotation anno, @Nullable final String attributeName) {
     PsiAnnotationMemberValue attrValue = anno.findDeclaredAttributeValue(attributeName);
-    return attrValue == null ? null : getStringAttributeValue(attrValue);
-  }
-
-  @Nullable
-  public static String getStringAttributeValue(@NotNull PsiAnnotationMemberValue attrValue) {
-    PsiConstantEvaluationHelper evaluationHelper = JavaPsiFacade.getInstance(attrValue.getProject()).getConstantEvaluationHelper();
-    Object constValue = evaluationHelper.computeConstantExpression(attrValue);
+    Object constValue = JavaPsiFacade.getInstance(anno.getProject()).getConstantEvaluationHelper().computeConstantExpression(attrValue);
     return constValue instanceof String ? (String)constValue : null;
   }
 
