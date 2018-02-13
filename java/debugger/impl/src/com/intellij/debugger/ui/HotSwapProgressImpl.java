@@ -51,7 +51,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HotSwapProgressImpl extends HotSwapProgress{
+public class HotSwapProgressImpl extends HotSwapProgress {
   static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("HotSwap", ToolWindowId.DEBUG);
 
   private final TIntObjectHashMap<List<String>> myMessages = new TIntObjectHashMap<>();
@@ -59,6 +59,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
   private String myTitle = DebuggerBundle.message("progress.hot.swap.title");
   private final MergingUpdateQueue myUpdateQueue;
   private WeakReference<XDebugSession> mySessionRef = null;
+  private List<HotSwapProgressListener> myListeners = ContainerUtil.newSmartList();
 
   public HotSwapProgressImpl(Project project) {
     super(project);
@@ -79,8 +80,20 @@ public class HotSwapProgressImpl extends HotSwapProgress{
   }
 
   @Override
+  public void cancel() {
+    super.cancel();
+    for (HotSwapProgressListener listener : myListeners) {
+      listener.onCancel();
+    }
+  }
+
+  @Override
   public void finished() {
     super.finished();
+
+    for (HotSwapProgressListener listener : myListeners) {
+      listener.onFinish();
+    }
 
     List<String> errors = getMessages(MessageCategory.ERROR);
     List<String> warnings = getMessages(MessageCategory.WARNING);
@@ -143,7 +156,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
     mySessionRef = new WeakReference<>(session.getXDebugSession());
   }
 
-  private List<String> getMessages(int category) {
+  List<String> getMessages(int category) {
     return ContainerUtil.notNullize(myMessages.get(category));
   }
 
@@ -214,5 +227,17 @@ public class HotSwapProgressImpl extends HotSwapProgress{
   public void setDebuggerSession(DebuggerSession session) {
     myTitle = DebuggerBundle.message("progress.hot.swap.title") + " : " + session.getSessionName();
     myProgressWindow.setTitle(myTitle);
+  }
+
+  void addProgressListener(@NotNull HotSwapProgressListener listener) {
+    myListeners.add(listener);
+  }
+
+  interface HotSwapProgressListener {
+    default void onCancel() {
+    }
+
+    default void onFinish() {
+    }
   }
 }
