@@ -5,10 +5,8 @@ import com.intellij.ide.passwordSafe.*
 import runtime.*
 
 object IdeaPersistence : Persistence {
-    override suspend fun put(key: String, value: String): String {
+    override suspend fun put(key: String, value: String) {
         PasswordSafe.getInstance().setPassword(createCredentialAttributes(key), value)
-
-        return value
     }
 
     override suspend fun get(key: String): String? =
