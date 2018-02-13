@@ -16,7 +16,6 @@
     <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
          on how to target different products -->
     <depends>com.intellij.modules.platform</depends>
-    <depends>com.intellij.modules.lang</depends>
 
     <extensions defaultExtensionNs="com.intellij">
     </extensions>
@@ -30,9 +29,6 @@
     <project-components>
         <component>
             <implementation-class>circlet.components.CircletConnectionComponent</implementation-class>
-        </component>
-        <component>
-            <implementation-class>circlet.features.livevcs.LiveVcsFileWatcher</implementation-class>
         </component>
     </project-components>
 
