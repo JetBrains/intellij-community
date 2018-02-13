@@ -233,7 +233,7 @@ public class ReplaceInProjectManager {
       FindBundle.message("find.replace.all.confirmation.title"),
       FindBundle.message("find.replace.all.confirmation", usagesCount, StringUtil.escapeXml(stringToFind), filesCount,
                          StringUtil.escapeXml(stringToReplace)))
-      .yesText(Messages.OK_BUTTON)
+      .yesText(FindBundle.message("find.replace.command"))
       .noText(Messages.CANCEL_BUTTON).show();
   }
 

@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -91,7 +89,7 @@ public abstract class ChangesTreeImpl<T> extends ChangesTree {
     @NotNull
     @Override
     protected DefaultTreeModel buildTreeModel(@NotNull List<Change> changes) {
-      return TreeModelBuilder.buildFromChanges(myProject, isShowFlatten(), changes, null);
+      return TreeModelBuilder.buildFromChanges(myProject, getGrouping(), changes, null);
     }
   }
 
@@ -112,7 +110,7 @@ public abstract class ChangesTreeImpl<T> extends ChangesTree {
     @NotNull
     @Override
     protected DefaultTreeModel buildTreeModel(@NotNull List<FilePath> changes) {
-      return TreeModelBuilder.buildFromFilePaths(myProject, isShowFlatten(), changes);
+      return TreeModelBuilder.buildFromFilePaths(myProject, getGrouping(), changes);
     }
   }
 
@@ -133,7 +131,7 @@ public abstract class ChangesTreeImpl<T> extends ChangesTree {
     @NotNull
     @Override
     protected DefaultTreeModel buildTreeModel(@NotNull List<VirtualFile> changes) {
-      return TreeModelBuilder.buildFromVirtualFiles(myProject, isShowFlatten(), changes);
+      return TreeModelBuilder.buildFromVirtualFiles(myProject, getGrouping(), changes);
     }
   }
 }
