@@ -184,7 +184,12 @@ fun guessCorrespondingParameter(callExpression: UCallExpression, arg: UExpressio
   val parameters = psiMethod.parameterList.parameters
 
   if (callExpression is UCallExpressionEx)
-    return parameters.withIndex().find { (i, _) -> callExpression.getArgumentForParameter(i) == arg }?.value
+    return parameters.withIndex().find { (i, p) ->
+      val argumentForParameter = callExpression.getArgumentForParameter(i) ?: return@find false
+      if (argumentForParameter == arg) return@find true
+      if (p.isVarArgs && argumentForParameter is UExpressionList) return@find argumentForParameter.expressions.contains(arg)
+      return@find false
+    }?.value
 
   // not everyone implements UCallExpressionEx, lets try to guess
   val indexInArguments = callExpression.valueArguments.indexOf(arg)
