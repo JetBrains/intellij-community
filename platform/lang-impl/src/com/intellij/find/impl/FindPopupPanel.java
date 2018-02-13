@@ -712,9 +712,10 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     bottomPanel.add(Box.createHorizontalGlue(), "growx, pushx");
     myOKHintLabel = new JBLabel("");
     myOKHintLabel.setEnabled(false);
-    bottomPanel.add(myOKHintLabel, "gapright " + JBUI.scale(8));
-    bottomPanel.add(myOKButton, "gapright " + JBUI.scale(12));
-    bottomPanel.add(myReplaceAllButton, "gapright " + JBUI.scale(12));
+    Insets insets = myOKButton.getInsets();
+    bottomPanel.add(myOKHintLabel, "gapright " + Math.max(0, (JBUI.scale(8) - insets.left)));
+    bottomPanel.add(myOKButton, "gapright " + Math.max(0, (JBUI.scale(12) - insets.left - insets.right)));
+    bottomPanel.add(myReplaceAllButton, "gapright " + Math.max(0, (JBUI.scale(12) - insets.left - insets.right)));
     bottomPanel.add(myReplaceSelectedButton);
 
     myCodePreviewComponent = myUsagePreviewPanel.createComponent();
