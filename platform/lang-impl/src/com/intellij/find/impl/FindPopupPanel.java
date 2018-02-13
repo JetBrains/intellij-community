@@ -88,6 +88,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   private static final KeyStroke ENTER = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
   private static final KeyStroke ENTER_WITH_MODIFIERS =
     KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK);
+  private static final KeyStroke REPLACE_ALL =
+    KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK | InputEvent.ALT_MASK);
 
   private static final String SERVICE_KEY = "find.popup";
   private static final String SPLITTER_SERVICE_KEY = "find.popup.splitter";
@@ -228,6 +230,10 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         myBalloon.show(showPoint);
       } else {
         myBalloon.showCenteredInCurrentWindow(myProject);
+      }
+      JRootPane rootPane = getRootPane();
+      if (rootPane != null && myHelper.isReplaceState()) {
+        rootPane.setDefaultButton(myReplaceSelectedButton);
       }
     }
   }
@@ -459,7 +465,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myOKButton = new JButton(FindBundle.message("find.popup.find.button"));
     myReplaceAllButton = new JButton(FindBundle.message("find.popup.replace.all.button"));
     myReplaceSelectedButton = new JButton(FindBundle.message("find.popup.replace.selected.button", 0));
-    myReplaceSelectedButton.setToolTipText("Replace " + KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.ALT_DOWN_MASK)));
 
     myOkActionListener = __ -> doOK(true);
     myReplaceAllButton.addActionListener(e -> {
@@ -530,7 +535,11 @@ public class FindPopupPanel extends JBPanel implements FindUI {
           myOkActionListener.actionPerformed(null);
         }
         else {
-          navigateToSelectedUsage(null);
+          if (myHelper.isReplaceState()) {
+            myReplaceSelectedButton.doClick();
+          } else {
+            navigateToSelectedUsage(null);
+          }
         }
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(ENTER), this);
@@ -542,6 +551,11 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         myOkActionListener.actionPerformed(null);
       }
     }).registerCustomShortcutSet(new CustomShortcutSet(ENTER_WITH_MODIFIERS), this);
+
+    DumbAwareAction.create(e -> {
+      myReplaceAllButton.doClick();
+    }).registerCustomShortcutSet(new CustomShortcutSet(REPLACE_ALL), this);
+    myReplaceAllButton.setToolTipText(KeymapUtil.getKeystrokeText(REPLACE_ALL));
     
     List<Shortcut> navigationKeyStrokes = ContainerUtil.newArrayList();
     KeyStroke viewSourceKeyStroke = KeymapUtil.getKeyStroke(CommonShortcuts.getViewSource());
@@ -698,9 +712,9 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     bottomPanel.add(Box.createHorizontalGlue(), "growx, pushx");
     myOKHintLabel = new JBLabel("");
     myOKHintLabel.setEnabled(false);
-    bottomPanel.add(myOKHintLabel, "gapright 10");
-    bottomPanel.add(myOKButton);
-    bottomPanel.add(myReplaceAllButton);
+    bottomPanel.add(myOKHintLabel, "gapright " + JBUI.scale(8));
+    bottomPanel.add(myOKButton, "gapright " + JBUI.scale(12));
+    bottomPanel.add(myReplaceAllButton, "gapright " + JBUI.scale(12));
     bottomPanel.add(myReplaceSelectedButton);
 
     myCodePreviewComponent = myUsagePreviewPanel.createComponent();
@@ -1014,7 +1028,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myReplaceAllButton.setEnabled(false);
     myReplaceSelectedButton.setEnabled(false);
     myReplaceSelectedButton.setText(FindBundle.message("find.popup.replace.selected.button", 0));
-    myReplaceSelectedButton.setMnemonic('r');
     myCodePreviewComponent.setVisible(false);
 
     mySearchTextArea.setInfoText(null);
@@ -1087,7 +1100,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
             int occurrences = resultsCount.get();
             int filesWithOccurrences = resultsFilesCount.get();
             myCodePreviewComponent.setVisible(occurrences > 0);
-            myReplaceAllButton.setEnabled(occurrences > 0);
+            myReplaceAllButton.setEnabled(occurrences > 1);
             myReplaceSelectedButton.setEnabled(occurrences > 0);
 
             StringBuilder stringBuilder = new StringBuilder();
