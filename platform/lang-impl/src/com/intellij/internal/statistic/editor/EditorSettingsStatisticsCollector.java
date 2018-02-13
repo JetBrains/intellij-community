@@ -20,12 +20,10 @@ import java.util.Set;
 import java.util.function.Function;
 
 class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
-  private static final String GROUP_ID = "statistics.editor.settings";
-
   @NotNull
   @Override
   public String getGroupId() {
-    return GROUP_ID;
+    return "statistics.editor.settings.ide";
   }
 
   @NotNull
@@ -134,7 +132,7 @@ class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
     @NotNull
     @Override
     public String getGroupId() {
-      return GROUP_ID;
+      return "statistics.editor.settings.project";
     }
 
     @NotNull
