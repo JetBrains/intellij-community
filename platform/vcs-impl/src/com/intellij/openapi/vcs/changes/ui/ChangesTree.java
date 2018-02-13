@@ -72,6 +72,8 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   public static final String[] DEFAULT_GROUPING_KEYS = ar(DIRECTORY_GROUPING, MODULE_GROUPING);
 
+  @NonNls public static final String GROUP_BY_ACTION_GROUP = "ChangesView.GroupBy";
+
   @Nullable private Runnable myInclusionListener;
   @NotNull private final CopyProvider myTreeCopyProvider;
   private TreeState myDirectoryTreeState;
@@ -470,7 +472,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
         e.getPresentation().setEnabledAndVisible(!myGroupingSupport.isNone() || !myIsModelFlat);
       }
     };
-    AnAction[] actions = new AnAction[]{ActionManager.getInstance().getAction("ChangesView.GroupBy"), expandAllAction, collapseAllAction};
+    AnAction[] actions = new AnAction[]{ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP), expandAllAction, collapseAllAction};
     expandAllAction.registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_EXPAND_ALL), this);
     collapseAllAction.registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_COLLAPSE_ALL), this);
     return actions;
