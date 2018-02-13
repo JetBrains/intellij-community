@@ -40,6 +40,7 @@ public abstract class HintManager {
   public static final short RIGHT_UNDER = 5;
   public static final short DEFAULT = 6;
 
+  @Deprecated
   public abstract boolean isHint(Window window);
 
   public abstract boolean isEscapeHandlerEnabled();

@@ -98,13 +98,14 @@ public class UsageViewManagerImpl extends UsageViewManager {
     UsageView usageView = createUsageView(searchedFor, foundUsages, presentation, factory);
     if (usageView instanceof UsageViewImpl) {
       showToolWindow(true);
-      addContent((UsageViewImpl)usageView, presentation);
       UIUtil.invokeLaterIfNeeded(() -> {
+
         if (!((UsageViewImpl)usageView).isDisposed()) {
           ((UsageViewImpl)usageView).expandRoot();
         }
       });
     }
+    addContent(usageView, presentation);
     return usageView;
   }
 
@@ -114,7 +115,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     return showUsages(searchedFor, foundUsages, presentation, null);
   }
 
-  void addContent(@NotNull UsageViewImpl usageView, @NotNull UsageViewPresentation presentation) {
+  public void addContent(@NotNull UsageView usageView, @NotNull UsageViewPresentation presentation) {
     Content content = com.intellij.usageView.UsageViewManager.getInstance(myProject).addContent(
       presentation.getTabText(),
       presentation.getTabName(),
@@ -124,7 +125,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
       presentation.isOpenInNewTab(),
       true
     );
-    usageView.setContent(content);
+    ((UsageViewImpl)usageView).setContent(content);
     content.putUserData(USAGE_VIEW_KEY, usageView);
   }
 

@@ -175,7 +175,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
   }
 
-  protected void showDialog() {
+  public void showDialog() {
     if (!isRunning() || isCanceled()) {
       return;
     }
