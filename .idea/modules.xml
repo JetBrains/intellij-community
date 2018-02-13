@@ -259,6 +259,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven3-server-common/maven3-server-common.iml" filepath="$PROJECT_DIR$/plugins/maven/maven3-server-common/maven3-server-common.iml" group="plugins/maven" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven3-server-impl/maven3-server-impl.iml" filepath="$PROJECT_DIR$/plugins/maven/maven3-server-impl/maven3-server-impl.iml" group="plugins/maven" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven30-server-impl/maven30-server-impl.iml" filepath="$PROJECT_DIR$/plugins/maven/maven30-server-impl/maven30-server-impl.iml" group="plugins/maven" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/native-symbolizer/native-symbolizer.iml" filepath="$PROJECT_DIR$/../adt/idea/native-symbolizer/native-symbolizer.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../base/ninepatch/ninepatch.iml" filepath="$PROJECT_DIR$/../base/ninepatch/ninepatch.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/observable/observable.iml" filepath="$PROJECT_DIR$/../adt/idea/observable/observable.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/observable-demo/observable-demo.iml" filepath="$PROJECT_DIR$/../adt/idea/observable-demo/observable-demo.iml" group="android" />
