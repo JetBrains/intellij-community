@@ -603,15 +603,15 @@ public class JavaDocInfoGenerator {
   }
 
   @Nullable
-  private static PsiDocComment getDocComment(final PsiDocCommentOwner docOwner) {
+  private static PsiDocComment getDocComment(final PsiJavaDocumentedElement docOwner) {
     PsiElement navElement = docOwner.getNavigationElement();
-    if (!(navElement instanceof PsiDocCommentOwner)) {
+    if (!(navElement instanceof PsiJavaDocumentedElement)) {
       LOG.info("Wrong navElement: " + navElement + "; original = " + docOwner + " of class " + docOwner.getClass());
       return null;
     }
-    PsiDocComment comment = ((PsiDocCommentOwner)navElement).getDocComment();
+    PsiDocComment comment = ((PsiJavaDocumentedElement)navElement).getDocComment();
     if (comment == null) { //check for non-normalized fields
-      final PsiModifierList modifierList = docOwner.getModifierList();
+      final PsiModifierList modifierList = docOwner instanceof PsiDocCommentOwner ? ((PsiDocCommentOwner)docOwner).getModifierList() : null;
       if (modifierList != null) {
         final PsiElement parent = modifierList.getParent();
         if (parent instanceof PsiDocCommentOwner && parent.getNavigationElement() instanceof PsiDocCommentOwner) {
@@ -726,7 +726,7 @@ public class JavaDocInfoGenerator {
     buffer.append("module <b>").append(module.getName()).append("</b>");
     buffer.append(DocumentationMarkup.DEFINITION_END);
 
-    PsiDocComment comment = module.getDocComment();
+    PsiDocComment comment = getDocComment(module);
     if (comment != null) {
       generateCommonSection(buffer, comment);
       buffer.append(DocumentationMarkup.SECTIONS_END);
