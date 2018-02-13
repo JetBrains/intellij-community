@@ -204,16 +204,13 @@ public class MethodCallUtils {
   }
 
   public static boolean isCallDuringObjectConstruction(PsiMethodCallExpression expression) {
+    PsiExpression qualifier = expression.getMethodExpression().getQualifierExpression();
+    if (qualifier != null && !(qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression)) {
+      return false;
+    }
     final PsiMember member = PsiTreeUtil.getParentOfType(expression, PsiMember.class, true, PsiClass.class, PsiLambdaExpression.class);
     if (member == null) {
       return false;
-    }
-    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-    final PsiExpression qualifier = methodExpression.getQualifierExpression();
-    if (qualifier != null) {
-      if (!(qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression)) {
-        return false;
-      }
     }
     final PsiClass containingClass = member.getContainingClass();
     if (containingClass == null || containingClass.hasModifierProperty(PsiModifier.FINAL)) {
@@ -324,13 +321,13 @@ public class MethodCallUtils {
   }
 
   public static boolean isSuperMethodCall(@NotNull PsiMethodCallExpression expression, @NotNull PsiMethod method) {
-    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-    final PsiExpression target = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
-    if (!(target instanceof PsiSuperExpression)) {
-      return false;
-    }
+    if (!hasSuperQualifier(expression)) return false;
     final PsiMethod targetMethod = expression.resolveMethod();
     return targetMethod != null && MethodSignatureUtil.isSuperMethod(targetMethod, method);
+  }
+
+  public static boolean hasSuperQualifier(@NotNull PsiMethodCallExpression expression) {
+    return ParenthesesUtils.stripParentheses(expression.getMethodExpression().getQualifierExpression()) instanceof PsiSuperExpression;
   }
 
   /**

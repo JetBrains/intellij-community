@@ -2218,7 +2218,7 @@ public class AbstractTreeUi {
     final List<TreeNode> nodesToInsert = new ArrayList<>();
     Collection<Object> allElements = elementToIndexMap.getKeys();
 
-    final ActionCallback processingDone = new ActionCallback(allElements.size());
+    ActionCallback processingDone = allElements.isEmpty() ? ActionCallback.DONE : new ActionCallback(allElements.size());
 
     for (final Object child : allElements) {
       Integer index = elementToIndexMap.getValue(child);

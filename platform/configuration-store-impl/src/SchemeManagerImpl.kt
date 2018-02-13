@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -206,7 +192,7 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
           val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
           val schemeName = name
                            ?: processor.getSchemeKey(attributeProvider, FileUtilRt.getNameWithoutExtension(fileName))
-                           ?: throw RuntimeException("Name is missed:\n${bytes.toString(Charsets.UTF_8)}")
+                           ?: throw nameIsMissed(bytes)
 
           val dataHolder = SchemeDataHolderImpl(bytes, externalInfo)
           @Suppress("UNCHECKED_CAST")
@@ -289,7 +275,7 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
 
         val schemeKey = name
                         ?: (processor as LazySchemeProcessor).getSchemeKey(attributeProvider, externalInfo.fileNameWithoutExtension)
-                        ?: throw RuntimeException("Name is missed:\n${bytes.toString(Charsets.UTF_8)}")
+                        ?: throw nameIsMissed(bytes)
 
         externalInfo.schemeKey = schemeKey
 
@@ -491,10 +477,9 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
             null
           }
         }
-        val schemeName = name ?: processor.getSchemeKey(attributeProvider, fileNameWithoutExtension)
-        if (schemeName == null) {
-          throw RuntimeException("Name is missed:\n${bytes.toString(Charsets.UTF_8)}")
-        }
+        val schemeName = name
+                         ?: processor.getSchemeKey(attributeProvider, fileNameWithoutExtension)
+                         ?: throw nameIsMissed(bytes)
         if (!checkExisting(schemeName)) {
           return null
         }
@@ -702,7 +687,7 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
         }
 
         runUndoTransparentWriteAction {
-          file!!.getOutputStream(this).use { byteOut.writeTo(it) }
+          file.getOutputStream(this).use { byteOut.writeTo(it) }
         }
       }
       else {
@@ -858,3 +843,5 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
 
   override fun toString() = fileSpec
 }
+
+private fun nameIsMissed(bytes: ByteArray) = RuntimeException("Name is missed:\n${bytes.toString(Charsets.UTF_8)}")

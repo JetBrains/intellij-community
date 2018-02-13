@@ -16,7 +16,7 @@ import org.jdom.Element
 import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer
 import java.util.*
 
-@State(name = "ExternalCompilerConfiguration", storages = arrayOf(Storage("compiler.xml")), externalStorageOnly = true)
+@State(name = "ExternalCompilerConfiguration", storages = [(Storage("compiler.xml"))], externalStorageOnly = true)
 internal class ExternalCompilerConfigurationStorage(private val project: Project) : PersistentStateComponent<Element>, ProjectModelElement {
   var loadedState: Map<String, String>? = null
     private set

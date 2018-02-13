@@ -2128,7 +2128,7 @@ public class HighlightUtil extends HighlightUtilBase {
                                                                             @NotNull PsiClass referencedClass,
                                                                             final String resolvedName,
                                                                             @NotNull PsiFile containingFile) {
-    if (PsiTreeUtil.getParentOfType(expression, PsiReferenceParameterList.class) != null) return null;
+    if (PsiTreeUtil.getParentOfType(expression, PsiReferenceParameterList.class, true, PsiExpression.class) != null) return null;
     PsiElement element = expression.getParent();
     while (element != null) {
       // check if expression inside super()/this() call

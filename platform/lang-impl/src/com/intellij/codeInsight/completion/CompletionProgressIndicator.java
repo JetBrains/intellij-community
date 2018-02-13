@@ -173,22 +173,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   }
 
-  private CompletionParameters createCompletionParameters(OffsetsInFile offsets) {
-    int offset = offsets.getOffsets().getOffset(CompletionInitializationContext.START_OFFSET);
-    PsiFile fileCopy = offsets.getFile();
-    PsiFile originalFile = fileCopy.getOriginalFile();
-    PsiElement insertedElement = findCompletionPositionLeaf(offsets, offset, originalFile);
-    insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, new CompletionContext(fileCopy, offsets.getOffsets()));
-    return new CompletionParameters(insertedElement, originalFile, myCompletionType, offset, myInvocationCount, myEditor, this);
-  }
-
-  @NotNull
-  private static PsiElement findCompletionPositionLeaf(OffsetsInFile offsets, int offset, PsiFile originalFile) {
-    PsiElement insertedElement = offsets.getFile().findElementAt(offset);
-    CompletionAssertions.assertCompletionPositionPsiConsistent(offsets, offset, originalFile, insertedElement);
-    return insertedElement;
-  }
-
   void itemSelected(@Nullable LookupElement lookupItem, char completionChar) {
     boolean dispose = lookupItem == null;
     finishCompletionProcess(dispose);
@@ -788,8 +772,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return true;
   }
 
-  void runContributors(CompletionInitializationContext initContext, OffsetsInFile offsets) {
-    CompletionParameters parameters = createCompletionParameters(offsets);
+  void runContributors(CompletionInitializationContext initContext, CompletionParameters parameters) {
     myParameters = parameters;
 
     myThreading.startThread(ProgressWrapper.wrap(this), ()-> AsyncCompletion.tryReadOrCancel(this, () -> scheduleAdvertising(parameters)));

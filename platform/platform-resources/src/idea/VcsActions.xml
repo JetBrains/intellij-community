@@ -83,6 +83,12 @@
     <action id="ChangesView.Revert" class="com.intellij.openapi.vcs.changes.actions.RollbackAction"
             icon="AllIcons.Actions.Rollback"/>
 
+    <group id="ChangesView.GroupBy" text="Group By" icon="AllIcons.General.SecondaryGroup" popup="true"
+           class="com.intellij.openapi.vcs.changes.actions.SelectChangesGroupingActionGroup">
+      <action id="ChangesView.GroupBy.Directory" text="Directory"
+              class="com.intellij.openapi.vcs.changes.actions.SetDirectoryChangesGroupingAction"/>
+    </group>
+
     <group id="ChangesViewToolbar">
       <action id="ChangesView.Refresh" class="com.intellij.openapi.vcs.changes.actions.RefreshAction"
               icon="AllIcons.Actions.Refresh"/>

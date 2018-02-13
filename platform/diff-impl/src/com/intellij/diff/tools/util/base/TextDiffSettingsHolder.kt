@@ -15,10 +15,7 @@ import com.intellij.util.xmlb.annotations.Transient
 import com.intellij.util.xmlb.annotations.XMap
 import java.util.*
 
-@State(
-  name = "TextDiffSettings",
-  storages = arrayOf(Storage(value = DiffUtil.DIFF_CONFIG))
-)
+@State(name = "TextDiffSettings", storages = [(Storage(value = DiffUtil.DIFF_CONFIG))])
 class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.State> {
   companion object {
     @JvmField val CONTEXT_RANGE_MODES: IntArray = intArrayOf(1, 2, 4, 8, -1)

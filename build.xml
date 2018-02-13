@@ -5,7 +5,7 @@
  specify custom output directory.
 
  Note that this script is for building IntelliJ IDEA Community Edition only. If you want to build your own product based on IntelliJ Platform,
- create a gant script for it, see javadoc for org.jetbrains.intellij.build for details.
+ create a gant script for it, see javadoc for org.jetbrains.intellij.build package for details.
  -->
 <project name="IntelliJ IDEA Community Edition" default="build">
   <property name="project.home" value="${basedir}"/>
@@ -43,6 +43,7 @@
     </sequential>
   </macrodef>
 
+  <!-- build distribution archives for IntelliJ Community Edition in out/idea-ce/artifacts directory -->
   <target name="build" depends="init">
     <call_gant script="${project.home}/build/scripts/idea_community.gant"/>
   </target>

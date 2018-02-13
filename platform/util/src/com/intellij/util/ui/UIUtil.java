@@ -2986,11 +2986,7 @@ public class UIUtil {
     // With JB Linux JDK the label font comes properly scaled based on Xft.dpi settings.
     Font font = getLabelFont();
 
-    Float forcedScale = null;
-    if (Registry.is("ide.ui.scale.override")) {
-      forcedScale = Float.valueOf((float)Registry.get("ide.ui.scale").asDouble());
-    }
-    else if (SystemInfo.isLinux) {
+    if (SystemInfo.isLinux) {
       Object value = Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI");
       if (value instanceof Integer) { // defined by JB JDK when the resource is available in the system
         // If the property is defined, then:
@@ -3001,8 +2997,9 @@ public class UIUtil {
         float scale = JBUI.discreteScale(dpi / 96f);
         DEF_SYSTEM_FONT_SIZE = font.getSize() / scale; // derive actual system base font size
       }
-      else if (!SystemInfo.isJetBrainsJvm){
-        forcedScale = Float.valueOf(getScreenScale()); // With Oracle JDK: derive scale from X server DPI
+      else if (!SystemInfo.isJetBrainsJvm) {
+        // With Oracle JDK: derive scale from X server DPI, do not change DEF_SYSTEM_FONT_SIZE
+        font = font.deriveFont(DEF_SYSTEM_FONT_SIZE * getScreenScale());
       }
     }
     else if (SystemInfo.isWindows) {
@@ -3011,11 +3008,6 @@ public class UIUtil {
       if (winFont != null) {
         font = winFont; // comes scaled
       }
-    }
-    if (forcedScale != null) {
-      // With forced scale, we derive font from a hard-coded value as we cannot be sure
-      // the system font comes unscaled.
-      font = font.deriveFont(DEF_SYSTEM_FONT_SIZE * forcedScale.floatValue());
     }
     ourSystemFontData = Pair.create(font.getName(), font.getSize());
   }

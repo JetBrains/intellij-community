@@ -178,12 +178,18 @@ fun getUParentForIdentifier(identifier: PsiElement): UElement? {
  * tries to find parameter in declaration that corresponds to an argument:
  * considers simple positional calls and Kotlin extension calls.
  */
+@ApiStatus.Experimental
 fun guessCorrespondingParameter(callExpression: UCallExpression, arg: UExpression): PsiParameter? {
   val psiMethod = callExpression.resolve() ?: return null
   val parameters = psiMethod.parameterList.parameters
 
   if (callExpression is UCallExpressionEx)
-    return parameters.withIndex().find { (i, _) -> callExpression.getArgumentForParameter(i) == arg }?.value
+    return parameters.withIndex().find { (i, p) ->
+      val argumentForParameter = callExpression.getArgumentForParameter(i) ?: return@find false
+      if (argumentForParameter == arg) return@find true
+      if (p.isVarArgs && argumentForParameter is UExpressionList) return@find argumentForParameter.expressions.contains(arg)
+      return@find false
+    }?.value
 
   // not everyone implements UCallExpressionEx, lets try to guess
   val indexInArguments = callExpression.valueArguments.indexOf(arg)

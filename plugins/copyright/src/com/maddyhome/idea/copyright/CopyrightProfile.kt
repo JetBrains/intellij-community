@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.maddyhome.idea.copyright
 
 import com.intellij.configurationStore.SerializableScheme
@@ -22,6 +20,7 @@ val DEFAULT_COPYRIGHT_NOTICE: String = EntityUtil.encode(
 class CopyrightProfile @JvmOverloads constructor(profileName: String? = null) : ExternalizableScheme, BaseState(), SerializableScheme {
   // ugly name to preserve compatibility
   // must be not private because otherwise binding is not created for private accessor
+  @Suppress("MemberVisibilityCanBePrivate")
   @get:OptionTag("myName")
   var profileName by string()
 
