@@ -18,6 +18,8 @@
     <depends>com.intellij.modules.platform</depends>
 
     <extensions defaultExtensionNs="com.intellij">
+        <applicationConfigurable id="circlet.settings.global" groupId="tools"
+                                 instance="circlet.settings.CircletGlobalConfigurable"/>
     </extensions>
 
     <application-components>
