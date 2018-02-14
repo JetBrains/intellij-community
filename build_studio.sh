@@ -11,7 +11,7 @@ PROG_DIR=$(dirname "$0")
 
 function die() {
   echo "$*" > /dev/stderr
-  echo "Usage: $0 [<out_dir> <dist_dir> <build_number>] [--enable-aswb]" > /dev/stderr
+  echo "Usage: $0 [<out_dir> [<dist_dir> [<build_number>]]] [--enable-aswb]" > /dev/stderr
   exit 1
 }
 
@@ -50,15 +50,10 @@ while [[ -n "$1" ]]; do
   shift
 done
 
-#if $OUT is not set, then none of the values are set.
-if [[ -z "$OUT" ]]; then
-  OUT="$PROG_DIR"/out/studio
-  DIST="$OUT"/dist
-  BNUM=SNAPSHOT
-else
-  if [[ -z "$DIST" ]]; then die "## Error: Missing distribution folder"; fi
-  if [[ -z "$BNUM" ]]; then die "## Error: Missing build number"; fi
-fi
+# Set defaults for OUT, DIST, BNUM if necessary
+[[ -z "$OUT" ]] && OUT="$PROG_DIR/out/studio"
+[[ -z "$DIST" ]] && DIST="$OUT/dist"
+[[ -z "$BNUM" ]] && BNUM=SNAPSHOT
 
 cd "$PROG_DIR"
 mkdir -p "$OUT"
