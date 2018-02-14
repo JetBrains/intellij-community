@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,7 +92,7 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
       currentIndex = mySwitchUp ? objects.length : -1;
     }
     else {
-      currentIndex = ContainerUtil.indexOf(Arrays.asList(objects), highlighted);
+      currentIndex = Arrays.asList(objects).indexOf(highlighted);
       if (currentIndex < 0) return;
 
       PsiMethod currentMethod = (PsiMethod)((CandidateInfo)objects[currentIndex]).getElement();

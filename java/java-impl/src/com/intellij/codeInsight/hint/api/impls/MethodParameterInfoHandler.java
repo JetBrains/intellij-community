@@ -56,7 +56,7 @@ import java.util.List;
 public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<PsiExpressionList, Object, PsiExpression>, DumbAware {
   private static final Set<Class> ourArgumentListAllowedParentClassesSet = ContainerUtil.newHashSet(
     PsiMethodCallExpression.class, PsiNewExpression.class, PsiAnonymousClass.class, PsiEnumConstant.class);
-  private static final Set<? extends Class> ourStopSearch = Collections.singleton(PsiMethod.class);
+  private static final Set<Class> ourStopSearch = Collections.singleton(PsiMethod.class);
   private static final String WHITESPACE = " \t";
   private static final Key<Inlay> CURRENT_HINT = Key.create("current.hint");
   private static final Key<List<Inlay>> HIGHLIGHTED_HINTS = Key.create("highlighted.hints");
@@ -517,7 +517,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
   @NotNull
   @Override
-  public Set<? extends Class> getArgListStopSearchClasses() {
+  public Set<Class> getArgListStopSearchClasses() {
     return ourStopSearch;
   }
 
