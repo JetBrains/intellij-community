@@ -225,7 +225,7 @@ class ContentTabLabel extends BaseLabel {
   @Override
   protected Color getPassiveFg(boolean selected) {
     if (contentManager().getContentCount() > 1) {
-      return JBUI.CurrentTheme.Label.disabledForeground(selected);
+      return JBUI.CurrentTheme.Label.foreground(selected);
     }
 
     return super.getPassiveFg(selected);
