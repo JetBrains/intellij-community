@@ -26,6 +26,7 @@ class AndroidStudioLibraryLicenses {
                        url: "http://www.antlr.org", licenseUrl: "http://www.antlr.org/license.html"),
     new LibraryLicense(name: "Apache Commons IO", libraryName: "commons-io", version: "2.4", license: "Apache 2.0",
                        url: "http://commons.apache.org/io/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
+    new LibraryLicense(name: "Android Instant Apps SDK API", libraryName: "instantapps-api-1.0", license: "Apache 2.0"),
     new LibraryLicense(name: "Baksmali", libraryName: "baksmali", version: "2.2.1", url: "https://github.com/JesusFreke/smali",
                        additionalLibraryNames: ["baksmali-2.2.1.jar"], license: "New BSD License",
                        licenseUrl: "http://opensource.org/licenses/BSD-3-Clause"),
