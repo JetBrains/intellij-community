@@ -891,6 +891,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       public void stopIfRunning() {
         super.stopIfRunning();
         myProject.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC).daemonFinished();
+        HighlightingSessionImpl.clearProgressIndicator(this);
       }
     };
     progress.setModalityProgress(null);
