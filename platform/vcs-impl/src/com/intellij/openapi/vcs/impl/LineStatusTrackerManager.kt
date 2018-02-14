@@ -234,9 +234,10 @@ class LineStatusTrackerManager(
       if (forcedDocuments.containsKey(document)) return
 
       if (data.tracker is PartialLocalLineStatusTracker) {
-        val hasPartialChanges = data.tracker.getAffectedChangeListsIds().size > 1
+        val hasPartialChanges = data.tracker.affectedChangeListsIds.size > 1
+        val hasBlocksExcludedFromCommit = data.tracker.hasBlocksExcludedFromCommit()
         val isLoading = loader.hasRequest(RefreshRequest(document))
-        if (hasPartialChanges || isLoading) return
+        if (hasPartialChanges || hasBlocksExcludedFromCommit || isLoading) return
       }
 
       releaseTracker(document)
@@ -765,6 +766,26 @@ class LineStatusTrackerManager(
     }
     else {
       LOG.warn(message)
+    }
+  }
+
+
+  @CalledInAwt
+  fun resetExcludedFromCommitMarkers() {
+    synchronized(LOCK) {
+      val documents = mutableListOf<Document>()
+
+      for (data in trackers.values) {
+        val tracker = data.tracker
+        if (tracker is PartialLocalLineStatusTracker) {
+          tracker.setExcludedFromCommit(false)
+          documents.add(tracker.document)
+        }
+      }
+
+      for (document in documents) {
+        checkIfTrackerCanBeReleased(document)
+      }
     }
   }
 

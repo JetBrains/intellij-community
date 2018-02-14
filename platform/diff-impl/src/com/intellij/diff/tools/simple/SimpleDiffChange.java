@@ -36,14 +36,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SimpleDiffChange {
-  @NotNull private final SimpleDiffViewer myViewer;
+  @NotNull protected final SimpleDiffViewer myViewer;
 
   @NotNull private final LineFragment myFragment;
   @Nullable private final List<DiffFragment> myInnerFragments;
   private final boolean myIsSkipped;
 
-  @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
-  @NotNull private final List<GutterOperation> myOperations = new ArrayList<>();
+  @NotNull protected final List<RangeHighlighter> myHighlighters = new ArrayList<>();
+  @NotNull protected final List<GutterOperation> myOperations = new ArrayList<>();
 
   private boolean myIsValid = true;
   private final int[] myLineStartShifts = new int[2];
@@ -112,7 +112,7 @@ public class SimpleDiffChange {
     createNonSquashedChangesSeparator(previousFragment, Side.RIGHT);
   }
 
-  private void doInstallActionHighlighters() {
+  protected void doInstallActionHighlighters() {
     if (myIsSkipped) return;
     myOperations.add(new AcceptGutterOperation(Side.LEFT));
     myOperations.add(new AcceptGutterOperation(Side.RIGHT));
