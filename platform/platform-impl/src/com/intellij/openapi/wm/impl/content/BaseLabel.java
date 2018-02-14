@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl.content;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.EngravedTextGraphics;
-import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ui.GraphicsUtil;
@@ -44,7 +43,7 @@ public class BaseLabel extends JLabel {
   @Override
   public void updateUI() {
     setActiveFg(JBColor.foreground());
-    setPassiveFg(new JBColor(Gray._75, UIUtil.getLabelDisabledForeground()));
+    setPassiveFg(JBColor.foreground());
     super.updateUI();
   }
 
