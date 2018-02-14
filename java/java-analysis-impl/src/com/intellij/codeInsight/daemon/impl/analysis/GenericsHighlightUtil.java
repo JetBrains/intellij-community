@@ -1303,23 +1303,6 @@ public class GenericsHighlightUtil {
     return null;
   }
 
-  static HighlightInfo checkEnumWithoutConstantsCantHaveAbstractMethods(final PsiClass aClass) {
-    if (!aClass.isEnum()) return null;
-    for (PsiField field : aClass.getFields()) {
-      if (field instanceof PsiEnumConstant) {
-        return null;
-      }
-    }
-    for (PsiMethod method : aClass.getMethods()) {
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        final String description = "Enum declaration without enum constants cannot have abstract methods";
-        final TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
-      }
-    }
-    return null;
-  }
-
   static HighlightInfo checkSelectStaticClassFromParameterizedType(final PsiElement resolved, final PsiJavaCodeReferenceElement ref) {
     if (resolved instanceof PsiClass && ((PsiClass)resolved).hasModifierProperty(PsiModifier.STATIC)) {
       final PsiElement qualifier = ref.getQualifier();
