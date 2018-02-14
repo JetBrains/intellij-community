@@ -44,7 +44,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
                                boolean showCheckboxes,
                                boolean highlightProblems) {
     myProject = project;
-    myViewer = new MyChangesTreeList(this, project, showCheckboxes, highlightProblems);
+    myViewer = createTreeList(project, showCheckboxes, highlightProblems);
 
     DefaultActionGroup toolbarGroups = new DefaultActionGroup();
     toolbarGroups.add(myToolBarGroup);
@@ -57,6 +57,11 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     myViewerScrollPane = ScrollPaneFactory.createScrollPane(myViewer);
 
     myShowDiffAction = new MyShowDiffAction();
+  }
+
+  @NotNull
+  protected ChangesBrowserTreeList createTreeList(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
+    return new ChangesBrowserTreeList(this, project, showCheckboxes, highlightProblems);
   }
 
   protected void init() {
@@ -211,13 +216,13 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
 
-  private static class MyChangesTreeList extends ChangesTree {
+  protected static class ChangesBrowserTreeList extends ChangesTree {
     @NotNull private final ChangesBrowserBase myViewer;
 
-    public MyChangesTreeList(@NotNull ChangesBrowserBase viewer,
-                             @NotNull Project project,
-                             boolean showCheckboxes,
-                             boolean highlightProblems) {
+    public ChangesBrowserTreeList(@NotNull ChangesBrowserBase viewer,
+                                  @NotNull Project project,
+                                  boolean showCheckboxes,
+                                  boolean highlightProblems) {
       super(project, showCheckboxes, highlightProblems);
       myViewer = viewer;
       setDoubleClickHandler(myViewer::onDoubleClick);
@@ -225,7 +230,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     }
 
     @Override
-    public void rebuildTree() {
+    public final void rebuildTree() {
       DefaultTreeModel newModel = myViewer.buildTreeModel();
       updateTreeModel(newModel);
     }
