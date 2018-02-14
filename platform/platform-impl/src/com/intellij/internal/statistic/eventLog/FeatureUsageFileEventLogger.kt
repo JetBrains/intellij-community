@@ -7,9 +7,11 @@ package com.intellij.internal.statistic.eventLog
 import com.intellij.openapi.application.ApplicationAdapter
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.util.text.StringUtil
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.apache.log4j.PatternLayout
+import java.io.File
 import java.io.IOException
 import java.nio.file.Paths
 import java.util.*
@@ -32,7 +34,7 @@ class FeatureUsageFileEventLogger : FeatureUsageEventLogger {
 
     val pattern = PatternLayout("%m\n")
     try {
-      val dir = Paths.get(PathManager.getSystemPath()).resolve("event-log")
+      val dir = getEventLogDir()
       fileAppender = FeatureUsageEventFileAppender.create(pattern, dir)
       fileAppender?.let { appender ->
         appender.setMaxFileSize("200KB")
@@ -49,6 +51,8 @@ class FeatureUsageFileEventLogger : FeatureUsageEventLogger {
       }
     })
   }
+
+  private fun getEventLogDir() = Paths.get(PathManager.getSystemPath()).resolve("event-log")
 
   private fun String.shortedUUID(): String {
     val start = this.lastIndexOf('-')
@@ -88,5 +92,11 @@ class FeatureUsageFileEventLogger : FeatureUsageEventLogger {
     }
     lastEvent = null
     count = 1
+  }
+
+  override fun getLogFiles() : List<File> {
+    val activeLog = fileAppender?.activeLogName
+    val files = File(getEventLogDir().toUri()).listFiles({ f: File-> !StringUtil.equals(f.name, activeLog) })
+    return files?.toList() ?: emptyList()
   }
 }
