@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.*;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
+import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.icons.AllIcons;
@@ -19,6 +20,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -367,7 +369,26 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     while (a instanceof IntentionActionDelegate) {
       a = ((IntentionActionDelegate)a).getDelegate();
     }
-    return a instanceof PriorityAction ? group + ((PriorityAction)a).getPriorityModifier() : group;
+    if (a instanceof PriorityAction) {
+      return group + getPriorityWeight(((PriorityAction)a).getPriority());
+    }
+    if (a instanceof SuppressIntentionActionFromFix) {
+      if (((SuppressIntentionActionFromFix)a).isShouldBeAppliedToInjectionHost() == ThreeState.NO) {
+        return group - 1;
+      }
+    }
+    return group;
+  }
+
+  private static int getPriorityWeight(PriorityAction.Priority priority) {
+    switch (priority) {
+      case HIGH:
+        return 3;
+      case LOW:
+        return -3;
+      default:
+        return 0;
+    }
   }
 
   private int getGroup(IntentionActionWithTextCaching action) {

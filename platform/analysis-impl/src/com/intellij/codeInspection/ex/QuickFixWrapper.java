@@ -95,9 +95,10 @@ public class QuickFixWrapper implements IntentionAction, PriorityAction {
     return myFix;
   }
 
+  @NotNull
   @Override
-  public int getPriorityModifier() {
-    return myFix instanceof PriorityAction ? ((PriorityAction)myFix).getPriorityModifier() : 0;
+  public Priority getPriority() {
+    return myFix instanceof PriorityAction ? ((PriorityAction)myFix).getPriority() : Priority.NORMAL;
   }
 
   @TestOnly
