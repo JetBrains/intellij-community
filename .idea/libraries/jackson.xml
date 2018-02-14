@@ -1,5 +1,5 @@
 <component name="libraryTable">
-  <library name="jackson-databind" type="repository">
+  <library name="jackson" type="repository">
     <properties maven-id="com.fasterxml.jackson.core:jackson-databind:2.9.4" />
     <ANNOTATIONS>
       <root url="file://$PROJECT_DIR$/lib/annotations/jackson" />

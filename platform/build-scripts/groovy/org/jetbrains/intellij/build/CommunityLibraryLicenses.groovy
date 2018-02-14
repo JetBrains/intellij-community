@@ -295,8 +295,6 @@ class CommunityLibraryLicenses {
                        url: "http://www.sparetimelabs.com/purejavacomm"),
     new LibraryLicense(name: "Relax NG Object Model", libraryName: "rngom-20051226-patched.jar", license: "MIT",
                        url: "http://java.net/projects/rngom/", licenseUrl: "http://www.opensource.org/licenses/mit-license.php"),
-    new LibraryLicense(name: "Rhino JavaScript Engine", libraryName: "rhino-js-1_7R4", version: "1.7R4", license: "MPL 1.1",
-                       url: "http://www.mozilla.org/rhino/", licenseUrl: "http://www.mozilla.org/MPL/MPL-1.1.html"),
     new LibraryLicense(name: "RMI Stubs", attachedTo: "intellij.xslt.debugger.engine", license: "Apache 2.0",
                        url: "https://confluence.jetbrains.com/display/CONTEST/XSLT-Debugger",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
