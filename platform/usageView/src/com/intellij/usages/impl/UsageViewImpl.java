@@ -351,7 +351,9 @@ public class UsageViewImpl implements UsageView {
 
       @Override
       public void onDone(boolean isExcludeAction) {
-
+         if (myRootPanel.hasNextOccurence()) {
+           myRootPanel.goNextOccurence();
+         }
       }
     };
   }
