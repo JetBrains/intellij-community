@@ -58,9 +58,10 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
     return getText();
   }
 
+  @NotNull
   @Override
-  public int getPriorityModifier() {
-    return PriorityAction.LOWER_PRIORITY;
+  public Priority getPriority() {
+    return Priority.LOW;
   }
 
   @Override
@@ -211,9 +212,10 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
       myContext = context;
     }
 
+    @NotNull
     @Override
-    public int getPriorityModifier() {
-      return PriorityAction.HIGHER_PRIORITY;
+    public Priority getPriority() {
+      return Priority.HIGH;
     }
 
     @Override
