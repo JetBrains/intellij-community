@@ -231,7 +231,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
 
   public abstract int hc(); // Used in tree diffing
 
-  public abstract void acceptTree(TreeElementVisitor visitor);
+  public abstract void acceptTree(@NotNull TreeElementVisitor visitor);
 
   protected void onInvalidated() {
     DebugUtil.onInvalidated(this);

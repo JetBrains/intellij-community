@@ -82,8 +82,7 @@ public class InvokeCompletion extends ActionOnRange {
 
   @Override
   public void performCommand(@NotNull Environment env) {
-    int offset = env.generateValue(Generator.integers(0, getDocument().getTextLength()),
-                                   "Invoke basic completion at offset %s (" + getPath() + ")");
+    int offset = generateDocOffset(env, "Invoke basic completion at offset %s (" + getPath() + ")");
     String selectionCharacters = myPolicy.getPossibleSelectionCharacters();
     char c = selectionCharacters.charAt(env.generateValue(Generator.integers(0, selectionCharacters.length() - 1), null));
     performActionAt(offset, c, items -> env.generateValue(Generator.sampledFrom(items), null), env::logMessage);

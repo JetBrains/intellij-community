@@ -1,0 +1,4 @@
+enum E {
+    AAA,
+    CCC
+}

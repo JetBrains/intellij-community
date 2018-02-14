@@ -12,6 +12,7 @@ import com.intellij.diff.util.Range;
 import com.intellij.diff.util.Side;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -36,7 +37,6 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
-import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
@@ -53,7 +53,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
 
     myTracker.addListener(new MyTrackerListener(), this);
 
-    DiffUtil.registerAction(new MoveSelectedChangesToAnotherChangelistAction(), myPanel);
+    DiffUtil.registerAction(new MoveSelectedChangesToAnotherChangelistAction(true), myPanel);
   }
 
   @NotNull
@@ -68,7 +68,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   protected List<AnAction> createEditorPopupActions() {
     List<AnAction> group = new ArrayList<>(super.createEditorPopupActions());
 
-    group.add(new MoveSelectedChangesToAnotherChangelistAction());
+    group.add(new MoveSelectedChangesToAnotherChangelistAction(false));
 
     return group;
   }
@@ -185,8 +185,20 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   }
 
   private class MoveSelectedChangesToAnotherChangelistAction extends DumbAwareAction {
+    private final boolean myShortcut;
+
+    public MoveSelectedChangesToAnotherChangelistAction(boolean shortcut) {
+      myShortcut = shortcut;
+      copyShortcutFrom(ActionManager.getInstance().getAction("Vcs.MoveChangedLinesToChangelist"));
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
+      if (myShortcut) {
+        e.getPresentation().setEnabledAndVisible(true);
+        return;
+      }
+
       Editor editor = e.getData(CommonDataKeys.EDITOR);
       Side side = Side.fromValue(getEditors(), editor);
       if (side == null) {
@@ -215,7 +227,9 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
-      Side side = assertNotNull(Side.fromValue(getEditors(), editor));
+      Side side = Side.fromValue(getEditors(), editor);
+      if (editor == null || side == null) return;
+
       List<SimpleDiffChange> selectedChanges = getSelectedChanges(side);
       if (selectedChanges.isEmpty()) return;
 

@@ -74,8 +74,7 @@ public class InvokeIntention extends ActionOnRange {
 
   @Override
   public void performCommand(@NotNull Environment env) {
-    int offset = env.generateValue(Generator.integers(0, getDocument().getTextLength()), 
-                                   "Go to offset %s and run daemon (" + getPath() + ")");
+    int offset = generateDocOffset(env, "Go to offset %s and run daemon (" + getPath() + ")");
 
     doInvokeIntention(offset, actions -> {
       if (actions.isEmpty()) {
@@ -83,7 +82,7 @@ public class InvokeIntention extends ActionOnRange {
         return null;
       }
 
-      IntentionAction result = env.generateValue(Generator.sampledFrom(actions), null);
+      IntentionAction result = env.generateValue(Generator.sampledFrom(actions).noShrink(), null);
       env.logMessage("Invoke intention '" + result.getText() + "'");
       return result;
     });

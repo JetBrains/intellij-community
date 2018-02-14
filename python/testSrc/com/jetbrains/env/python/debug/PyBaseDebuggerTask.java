@@ -17,6 +17,8 @@ package com.jetbrains.env.python.debug;
 
 import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionResult;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
@@ -241,8 +243,8 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   }
 
   protected void clearAllBreakpoints() {
-
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> XDebuggerTestUtil.removeAllBreakpoints(getProject()));
+    ApplicationManager.getApplication()
+                      .invokeLater(() -> XDebuggerTestUtil.removeAllBreakpoints(getProject()), ModalityState.defaultModalityState());
   }
 
   /**

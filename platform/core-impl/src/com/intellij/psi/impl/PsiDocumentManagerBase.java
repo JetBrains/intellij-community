@@ -823,6 +823,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
 
     List<PsiFile> files = viewProvider.getAllFiles();
+    if (files.isEmpty()) {
+      handleCommitWithoutPsi(document);
+      return;
+    }
+    
     boolean commitNecessary = files.stream().noneMatch(file -> PsiToDocumentSynchronizer.isInsideAtomicChange(file) || !(file instanceof PsiFileImpl));
 
     boolean forceCommit = ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class) &&

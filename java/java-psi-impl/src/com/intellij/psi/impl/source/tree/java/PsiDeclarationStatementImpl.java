@@ -39,7 +39,7 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     if (child.getElementType() == JavaTokenType.COMMA) return ChildRole.COMMA;
     return super.getChildRole(child);
   }

@@ -307,6 +307,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     settings.setAdditionalColumnsCount(0);
     settings.setAdditionalLinesCount(0);
     settings.setAnimatedScrolling(false);
+    settings.setAutoCodeFoldingEnabled(false);
   }
 
   @Override

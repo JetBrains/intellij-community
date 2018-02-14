@@ -38,7 +38,7 @@ public class TypeParameterListElement extends CompositeElement {
   }
 
   @Override
-  public int getChildRole(final ASTNode child) {
+  public int getChildRole(@NotNull final ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     final IElementType elType = child.getElementType();
     if (elType == JavaElementType.TYPE_PARAMETER) {
