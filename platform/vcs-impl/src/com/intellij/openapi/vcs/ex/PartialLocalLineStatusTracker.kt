@@ -373,18 +373,26 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
 
+  fun hasPartialChangesToCommit(): Boolean {
+    return documentTracker.readLock {
+      affectedChangeLists.size > 1
+    }
+  }
+
   fun getPartiallyAppliedContent(side: Side, changelistIds: List<String>): String {
     return runReadAction {
       val markers = changelistIds.mapTo(HashSet()) { ChangeListMarker(it) }
-      documentTracker.getContentWithPartiallyAppliedBlocks(side) { markers.contains(it.marker) }
+      val toCommitCondition: (Block) -> Boolean = { markers.contains(it.marker) }
+      documentTracker.getContentWithPartiallyAppliedBlocks(side, toCommitCondition)
     }
   }
 
   @CalledInAwt
-  fun handlePartialCommit(side: Side, changelistId: String): PartialCommitHelper {
-    val marker = ChangeListMarker(changelistId)
+  fun handlePartialCommit(side: Side, changelistIds: List<String>): PartialCommitHelper {
+    val markers = changelistIds.mapTo(HashSet()) { ChangeListMarker(it) }
+    val toCommitCondition: (Block) -> Boolean = { markers.contains(it.marker) }
 
-    val contentToCommit = documentTracker.getContentWithPartiallyAppliedBlocks(side) { it.marker == marker }
+    val contentToCommit = documentTracker.getContentWithPartiallyAppliedBlocks(side, toCommitCondition)
 
     return object : PartialCommitHelper(contentToCommit) {
       override fun applyChanges() {
@@ -392,7 +400,7 @@ class PartialLocalLineStatusTracker(project: Project,
 
         val success = updateDocument(side) { doc ->
           documentTracker.doFrozen(side) {
-            documentTracker.partiallyApplyBlocks(side, { it.marker == marker }, { _, _ -> })
+            documentTracker.partiallyApplyBlocks(side, toCommitCondition, { _, _ -> })
 
             doc.setText(contentToCommit)
           }
