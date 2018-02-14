@@ -81,9 +81,13 @@ public class KeyedExtensionCollector<T, KeyT> {
 
     @Override
     public void areaReplaced(@NotNull final ExtensionsArea area) {
-      myCache.clear();
+      dropCaches();
     }
   };
+
+  protected void dropCaches() {
+    myCache.clear();
+  }
 
   public KeyedExtensionCollector(@NonNls @NotNull String epName) {
     myEpName = epName;
@@ -94,7 +98,7 @@ public class KeyedExtensionCollector<T, KeyT> {
         if (extensionPoint.getName().equals(epName)) {
           //noinspection unchecked
           extensionPoint.addExtensionPointListener(myListener);
-          myCache.clear();
+          dropCaches();
         }
       }
 

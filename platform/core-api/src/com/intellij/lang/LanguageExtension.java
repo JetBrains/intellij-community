@@ -49,6 +49,16 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     return key.getID();
   }
 
+  @Override
+  protected void dropCaches() {
+    super.dropCaches();
+    if (IN_LANGUAGE_CACHE != null) {
+      for (Language language : Language.getRegisteredLanguages()) {
+        language.putUserData(IN_LANGUAGE_CACHE, null);
+      }
+    }
+  }
+
   public T forLanguage(@NotNull Language l) {
     T cached = l.getUserData(IN_LANGUAGE_CACHE);
     if (cached != null) return cached;
