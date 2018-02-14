@@ -43,7 +43,7 @@ public class SimpleDiffChange {
   private final boolean myIsSkipped;
 
   @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
-  @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<>();
+  @NotNull private final List<GutterOperation> myOperations = new ArrayList<>();
 
   private boolean myIsValid = true;
   private final int[] myLineStartShifts = new int[2];
@@ -84,7 +84,7 @@ public class SimpleDiffChange {
     }
     myHighlighters.clear();
 
-    for (MyGutterOperation operation : myOperations) {
+    for (GutterOperation operation : myOperations) {
       operation.dispose();
     }
     myOperations.clear();
@@ -114,8 +114,8 @@ public class SimpleDiffChange {
 
   private void doInstallActionHighlighters() {
     if (myIsSkipped) return;
-    myOperations.add(createOperation(Side.LEFT));
-    myOperations.add(createOperation(Side.RIGHT));
+    myOperations.add(new AcceptGutterOperation(Side.LEFT));
+    myOperations.add(new AcceptGutterOperation(Side.RIGHT));
   }
 
   private void createHighlighter(@NotNull Side side, boolean ignored) {
@@ -160,7 +160,7 @@ public class SimpleDiffChange {
   }
 
   public void updateGutterActions(boolean force) {
-    for (MyGutterOperation operation : myOperations) {
+    for (GutterOperation operation : myOperations) {
       operation.update(force);
     }
   }
@@ -209,7 +209,7 @@ public class SimpleDiffChange {
     myLineEndShifts[sideIndex] += newRange.endLine - line2;
 
     if (newRange.damaged) {
-      for (MyGutterOperation operation : myOperations) {
+      for (GutterOperation operation : myOperations) {
         operation.dispose();
       }
       myOperations.clear();
@@ -235,26 +235,21 @@ public class SimpleDiffChange {
   // Helpers
   //
 
-  @NotNull
-  private MyGutterOperation createOperation(@NotNull Side side) {
-    int offset = side.getStartOffset(myFragment);
-    EditorEx editor = myViewer.getEditor(side);
-    RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(offset, offset,
-                                                                               HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                                               null,
-                                                                               HighlighterTargetArea.LINES_IN_RANGE);
-    return new MyGutterOperation(side, highlighter);
-  }
-
-  private class MyGutterOperation {
-    @NotNull private final Side mySide;
+  protected abstract class GutterOperation {
+    @NotNull protected final Side mySide;
     @NotNull private final RangeHighlighter myHighlighter;
 
-    private boolean myCtrlPressed;
+    protected boolean myCtrlPressed;
 
-    private MyGutterOperation(@NotNull Side side, @NotNull RangeHighlighter highlighter) {
+    public GutterOperation(@NotNull Side side) {
       mySide = side;
-      myHighlighter = highlighter;
+
+      int offset = side.getStartOffset(myFragment);
+      EditorEx editor = myViewer.getEditor(side);
+      myHighlighter = editor.getMarkupModel().addRangeHighlighter(offset, offset,
+                                                                  HighlighterLayer.ADDITIONAL_SYNTAX,
+                                                                  null,
+                                                                  HighlighterTargetArea.LINES_IN_RANGE);
 
       update(true);
     }
@@ -275,6 +270,16 @@ public class SimpleDiffChange {
     }
 
     @Nullable
+    public abstract GutterIconRenderer createRenderer();
+  }
+
+  private class AcceptGutterOperation extends GutterOperation {
+    public AcceptGutterOperation(@NotNull Side side) {
+      super(side);
+    }
+
+    @Nullable
+    @Override
     public GutterIconRenderer createRenderer() {
       myCtrlPressed = myViewer.getModifierProvider().isCtrlPressed();
 
