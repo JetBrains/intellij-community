@@ -408,25 +408,21 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   @NotNull
   @CalledInAwt
-  private List<SimpleDiffChange> getSelectedChanges(@NotNull Side side) {
-    final BitSet lines = DiffUtil.getSelectedLines(getEditor(side));
+  protected List<SimpleDiffChange> getSelectedChanges(@NotNull Side side) {
+    EditorEx editor = getEditor(side);
+    BitSet lines = DiffUtil.getSelectedLines(editor);
 
-    List<SimpleDiffChange> affectedChanges = new ArrayList<>();
-    for (int i = myDiffChanges.size() - 1; i >= 0; i--) {
-      SimpleDiffChange change = myDiffChanges.get(i);
+    return ContainerUtil.filter(getDiffChanges(), change -> {
       int line1 = change.getStartLine(side);
       int line2 = change.getEndLine(side);
 
-      if (DiffUtil.isSelectedByLine(lines, line1, line2)) {
-        affectedChanges.add(change);
-      }
-    }
-    return affectedChanges;
+      return DiffUtil.isSelectedByLine(lines, line1, line2);
+    });
   }
 
   @Nullable
   @CalledInAwt
-  private SimpleDiffChange getSelectedChange(@NotNull Side side) {
+  protected SimpleDiffChange getSelectedChange(@NotNull Side side) {
     int caretLine = getEditor(side).getCaretModel().getLogicalPosition().line;
 
     for (SimpleDiffChange change : myDiffChanges) {
@@ -525,7 +521,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       final List<SimpleDiffChange> selectedChanges = getSelectedChanges(side);
       if (selectedChanges.isEmpty()) return;
 
-      doPerform(e, side, selectedChanges);
+      doPerform(e, side, ContainerUtil.reverse(selectedChanges));
     }
 
     protected boolean isSomeChangeSelected(@NotNull Side side) {
