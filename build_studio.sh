@@ -35,7 +35,7 @@ function set_java_home() {
 ASWB=
 while [[ -n "$1" ]]; do
   if [[ $1 == "--enable-aswb" ]]; then
-      ASWB=true
+      ASWB="-Dinclude.aswb=true"
   elif [[ -z "$OUT" ]]; then
     OUT="$1"
   elif [[ -z "$DIST" ]]; then
@@ -85,7 +85,7 @@ echo "## JAVA_HOME: $JAVA_HOME"
 
 export PATH=$JDK_18_x64/bin:$PATH
 
-$ANT "-Dintellij.build.output.root=$OUT" "-Dbuild.number=$BNUM" "-Dinclude.aswb=$ASWB" -Dbundle.gradle.release.plugin=true fullupdater
+$ANT "-Dintellij.build.output.root=$OUT" "-Dbuild.number=$BNUM" "$ASWB" -Dbundle.gradle.release.plugin=true fullupdater
 
 echo "## Copying android-studio distribution files"
 mkdir -p "$DIST"
