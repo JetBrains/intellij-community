@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PathUtil;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Layout;
 import org.apache.log4j.helpers.CountingQuietWriter;
@@ -30,6 +32,11 @@ public class FeatureUsageEventFileAppender extends FileAppender {
   public static FeatureUsageEventFileAppender create(@NotNull Layout layout, @NotNull Path dir) throws IOException {
     final File file = nextFile(dir);
     return new FeatureUsageEventFileAppender(layout, dir, file.getPath());
+  }
+
+  @NotNull
+  public String getActiveLogName() {
+    return StringUtil.isNotEmpty(fileName) ? PathUtil.getFileName(fileName) : "";
   }
 
   public void setMaxFileSize(String value) {
