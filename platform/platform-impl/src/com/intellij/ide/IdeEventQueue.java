@@ -22,10 +22,13 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
@@ -60,6 +63,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -1174,6 +1178,20 @@ public class IdeEventQueue extends EventQueue {
     doPostEvent(event);
   }
 
+  private static boolean isPopupLosingFocus (AWTEvent e) {
+    if (e.getID() == WindowEvent.WINDOW_GAINED_FOCUS) {
+      WindowEvent windowEvent = (WindowEvent)e;
+      Window eventWindow = windowEvent.getWindow();
+      Window oppositeWindow = windowEvent.getOppositeWindow();
+      if (eventWindow.getClass().getName().contains("HeavyWeightWindow")) {
+        if (oppositeWindow instanceof IdeFrame) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   private static boolean isFocusEvent (AWTEvent e) {
     return
       e.getID() == FocusEvent.FOCUS_GAINED ||
@@ -1201,15 +1219,64 @@ public class IdeEventQueue extends EventQueue {
 
     if (isKeyboardEvent(event)) {
       myKeyboardEventsPosted.incrementAndGet();
+      if (Registry.is("action.aware.typeAhead")) {
+        if (delayKeyEvents.get()) {
+          myDelayedKeyEvents.add((KeyEvent)event);
+          return true;
+        }
+      }
     }
 
     if (isFocusEvent(event)) {
         focusEventsList.add(event);
     }
 
+    if (Registry.is("action.aware.typeAhead")) {
+      if (event.getID() == KeyEvent.KEY_PRESSED) {
+        KeyEvent keyEvent = (KeyEvent)event;
+        boolean thisShortcutMayShowPopup = getShortcutsShowingPopups().stream().
+          filter(s -> s instanceof KeyboardShortcut).map(s -> ((KeyboardShortcut)s).getFirstKeyStroke()).
+          filter(ks -> keyEvent.getKeyCode() == ks.getKeyCode()).
+          anyMatch(ks -> (keyEvent.getModifiersEx() & ks.getModifiers()) != 0);
+
+        if (thisShortcutMayShowPopup) {
+          delayKeyEvents.set(true);
+        }
+      }
+    }
+
     super.postEvent(event);
+
+    if (Registry.is("action.aware.typeAhead")) {
+      if (isPopupLosingFocus(event) && !myDelayedKeyEvents.isEmpty()) {
+        delayKeyEvents.set(false);
+        int size = myDelayedKeyEvents.size();
+        for (int keyEventIndex = 0; keyEventIndex < size; keyEventIndex++) {
+          super.postEvent(myDelayedKeyEvents.remove());
+        }
+      }
+    }
+
     return true;
   }
+
+  private List<Shortcut> shortcutsShowingPopups;
+
+  private List<Shortcut> getShortcutsShowingPopups () {
+    if (KeymapManager.getInstance().getActiveKeymap() != null) {
+      Shortcut[] classesShortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts("GotoClass");
+      Shortcut[] gotoFilesShortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts("GotoFile");
+      Shortcut[] gotoSymbolsShortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts("GotoSymbol");
+      shortcutsShowingPopups = new LinkedList<>();
+      shortcutsShowingPopups.addAll(Arrays.asList(classesShortcuts));
+      shortcutsShowingPopups.addAll(Arrays.asList(gotoFilesShortcuts));
+      shortcutsShowingPopups.addAll(Arrays.asList(gotoSymbolsShortcuts));
+    }
+    return shortcutsShowingPopups;
+  }
+
+  private final LinkedList<KeyEvent> myDelayedKeyEvents = new LinkedList<>();
+  private final AtomicBoolean delayKeyEvents = new AtomicBoolean();
 
   private static boolean isKeyboardEvent(@NotNull AWTEvent event) {
     return event instanceof KeyEvent;
