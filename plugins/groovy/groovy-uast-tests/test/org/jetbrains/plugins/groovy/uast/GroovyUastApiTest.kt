@@ -4,10 +4,9 @@
 package org.jetbrains.plugins.groovy.uast
 
 import junit.framework.TestCase
-import org.jetbrains.uast.UAnnotation
-import org.jetbrains.uast.UAnnotationEx
-import org.jetbrains.uast.UFile
+import org.jetbrains.uast.*
 import org.jetbrains.uast.test.env.findElementByText
+import org.jetbrains.uast.test.env.findElementByTextFromPsi
 import org.junit.Test
 
 class GroovyUastApiTest : AbstractGroovyUastTest() {
@@ -31,6 +30,23 @@ class GroovyUastApiTest : AbstractGroovyUastTest() {
     doTest("SimpleClass.groovy") { name, file ->
       val uAnnotation = file.findElementByText<UAnnotation>("@java.lang.Deprecated")
       TestCase.assertEquals("Deprecated", (uAnnotation as UAnnotationEx).uastAnchor?.psi?.text)
+    }
+  }
+
+  @Test
+  fun testStringLiteral() {
+    doTest("Annotations.groovy") { name, file ->
+      file.findElementByTextFromPsi<ULiteralExpression>("\"abc\"").let { literal ->
+        TestCase.assertTrue(literal.isStringLiteral())
+        TestCase.assertEquals("abc", literal.value)
+        TestCase.assertEquals("abc", literal.getValueIfStringLiteral())
+      }
+      file.findElementByTextFromPsi<ULiteralExpression>("123").let { literal ->
+        TestCase.assertFalse(literal.isStringLiteral())
+        TestCase.assertEquals(123, literal.value)
+        TestCase.assertEquals(null, literal.getValueIfStringLiteral())
+      }
+
     }
   }
 
