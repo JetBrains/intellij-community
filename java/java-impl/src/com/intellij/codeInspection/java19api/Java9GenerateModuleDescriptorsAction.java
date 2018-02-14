@@ -19,8 +19,12 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,6 +34,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -46,13 +51,18 @@ import java.util.*;
 public class Java9GenerateModuleDescriptorsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(Java9GenerateModuleDescriptorsAction.class);
 
-  private static final String TITLE = "Generate Module Descriptors";
-  private static final String COMMAND_TITLE = "Creating module-info Files";
+  private static final String TITLE = RefactoringBundle.message("generate.module.descriptors.title");
+  private static final String COMMAND_TITLE = RefactoringBundle.message("generate.module.descriptors.command.title");
 
   @Override
   public void update(AnActionEvent e) {
     Project project = e.getProject();
-    e.getPresentation().setEnabled(project != null && !DumbService.isDumb(project));
+    e.getPresentation().setEnabled(project != null && !DumbService.isDumb(project) && isModularJdkAvailable());
+  }
+
+  private static boolean isModularJdkAvailable() {
+    return Arrays.stream(ProjectJdkTable.getInstance().getAllJdks())
+                 .anyMatch(sdk -> JavaSdkUtil.isJdkAtLeast(sdk, JavaSdkVersion.JDK_1_9));
   }
 
   @Override
@@ -62,10 +72,8 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     CompilerManager compilerManager = CompilerManager.getInstance(project);
     CompileScope scope = compilerManager.createProjectCompileScope(project);
     if (!compilerManager.isUpToDate(scope)) {
-      int result = Messages.showYesNoCancelDialog(project,
-                                                  "The project needs to be built for better accuracy of dependencies calculation. \n" +
-                                                  "Start the build before generating module-info descriptors?",
-                                                  TITLE, null);
+      int result = Messages.showYesNoCancelDialog(
+        project, RefactoringBundle.message("generate.module.descriptors.rebuild.message"), TITLE, null);
       if (result == Messages.CANCEL) {
         return;
       }
@@ -82,25 +90,30 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
   }
 
   private static void generate(Project project) {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      THashMap<Module, List<File>> classFiles = new THashMap<>();
-      int totalFiles = collectClassFiles(project, classFiles);
-      if (totalFiles != 0) {
-        new DescriptorsGenerator(project).generate(classFiles, totalFiles);
-      }
-    }, TITLE, true, project);
+    ProgressManager.getInstance().run(
+      new Task.Backgroundable(project, TITLE, true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          THashMap<Module, List<File>> classFiles = new THashMap<>();
+          int totalFiles = collectClassFiles(project, classFiles);
+          if (totalFiles != 0) {
+            new DescriptorsGenerator(project).generate(classFiles, totalFiles);
+          }
+        }
+      });
   }
 
   private static int collectClassFiles(@NotNull Project project, @NotNull Map<Module, List<File>> classFiles) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     indicator.setIndeterminate(true);
-    indicator.setText("Scanning Compiler Output");
+    indicator.setText(RefactoringBundle.message("generate.module.descriptors.scanning.message"));
 
     Module[] modules = StreamEx.of(ModuleManager.getInstance(project).getModules())
                                .filter(module -> mayContainModuleInfo(module))
                                .toArray(Module.EMPTY_ARRAY);
     if (modules.length == 0) {
-      CommonRefactoringUtil.showErrorHint(project, null, "Found no modules which may contain module-info", TITLE, null);
+      CommonRefactoringUtil.showErrorHint(
+        project, null, RefactoringBundle.message("generate.module.descriptors.no.suitable.modules.message"), TITLE, null);
       return 0;
     }
 
@@ -117,8 +130,8 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       totalFiles += moduleClasses.size();
     }
     if (totalFiles == 0) {
-      CommonRefactoringUtil
-        .showErrorHint(project, null, "Couldn't generate module descriptors because the project hasn't been built yet", TITLE, null);
+      CommonRefactoringUtil.showErrorHint(
+        project, null, RefactoringBundle.message("generate.module.descriptors.build.required.message"), TITLE, null);
     }
     return totalFiles;
   }
@@ -196,15 +209,15 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     void generate(THashMap<Module, List<File>> classFiles, int totalFiles) {
       List<GeneratedCode> generatedCode;
       try {
-        myProgressTracker.startPhase("Collecting Dependencies", totalFiles);
+        myProgressTracker.startPhase(RefactoringBundle.message("generate.module.descriptors.collecting.message"), totalFiles);
         Map<String, Set<ModuleNode>> packagesDeclaredInModules = collectDependencies(classFiles);
         myProgressTracker.nextPhase();
 
-        myProgressTracker.startPhase("Analysing Dependencies", myModuleNodes.size());
+        myProgressTracker.startPhase(RefactoringBundle.message("generate.module.descriptors.analysing.message"), myModuleNodes.size());
         analyseDependencies(packagesDeclaredInModules);
         myProgressTracker.nextPhase();
 
-        myProgressTracker.startPhase("Preparing Code", myModuleNodes.size());
+        myProgressTracker.startPhase(RefactoringBundle.message("generate.module.descriptors.preparing.message"), myModuleNodes.size());
         generatedCode = generateCode();
         myProgressTracker.nextPhase();
       }
