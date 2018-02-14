@@ -40,6 +40,21 @@ public class LocalAttachHost extends EnvironmentAwareHost {
 
   @NotNull
   @Override
+  public OSType getOsType(Project project) {
+    if (SystemInfo.isWindows)
+      return OSType.WINDOWS;
+
+    if (SystemInfo.isLinux)
+      return OSType.LINUX;
+
+    if (SystemInfo.isMac)
+      return OSType.MACOSX;
+
+    return OSType.UNKNOWN;
+  }
+
+  @NotNull
+  @Override
   public ProcessOutput execAndGetOutput(@Nullable Project project, @NotNull GeneralCommandLine command)
     throws ExecutionException {
     return ExecUtil.execAndGetOutput(command);
@@ -58,11 +73,6 @@ public class LocalAttachHost extends EnvironmentAwareHost {
     catch (IOException e) {
       throw new ExecutionException("Can't get input stream", e);
     }
-  }
-
-  @Override
-  public boolean isUnix() {
-    return SystemInfo.isUnix;
   }
 
   @Override
