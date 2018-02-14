@@ -171,15 +171,30 @@ public abstract class PyEnvTestCase {
     return false;
   }
 
+  /**
+   * Runs task on several envs. If you care about exception thrown from task use {@link #runPythonTestWithException(PyTestTask)}
+   */
   public void runPythonTest(final PyTestTask testTask) {
     runTest(testTask, getTestName(false));
+  }
+
+  /**
+   * Like {@link #runPythonTest(PyTestTask)} but for tasks that may throw exception
+   */
+  protected final void runPythonTestWithException(final PyTestTask testTask) throws Exception {
+    try {
+      runPythonTest(testTask);
+    }
+    catch (final PyEnvWrappingException ex) {
+      throw ex.getCauseException();
+    }
   }
 
   protected String getTestName(boolean lowercaseFirstLetter) {
     return UsefulTestCase.getTestName(myTestName.getMethodName(), lowercaseFirstLetter);
   }
 
-  public void runTest(@NotNull PyTestTask testTask, @NotNull String testName) {
+  private void runTest(@NotNull PyTestTask testTask, @NotNull String testName) {
     Assume.assumeFalse("Running under teamcity but not by Env configuration. Test seems to be launched by accident, skip it.",
                        UsefulTestCase.IS_UNDER_TEAMCITY && !SETTINGS.isEnvConfiguration());
     checkStaging();
@@ -266,10 +281,6 @@ public abstract class PyEnvTestCase {
       envTags = Lists.newArrayList();
     }
     return envTags;
-  }
-
-  public static String joinStrings(Collection<String> roots, String rootsName) {
-    return roots.size() > 0 ? rootsName + StringUtil.join(roots, ", ") + "\n" : "";
   }
 
   /**
