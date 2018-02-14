@@ -167,12 +167,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
                                                     Arrays.asList(myExcludedLibClsDir.getUrl(), myExcludedLibSrcDir.getUrl()), DependencyScope.COMPILE, true);
       }
 
-      for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensions()) {
-        for (SyntheticLibrary library : provider.getAdditionalProjectLibraries(getProject())) {
-          myLibAdditionalSrcDirs.addAll(library.getSourceRoots());
-          myLibAdditionalClsDirs.addAll(library.getBinaryRoots());
-        }
-      }
+      PlatformTestUtil.unregisterAllExtensions(AdditionalLibraryRootsProvider.EP_NAME, getTestRootDisposable());
       PlatformTestUtil.registerExtension(AdditionalLibraryRootsProvider.EP_NAME, new AdditionalLibraryRootsProvider() {
         @NotNull
         @Override
