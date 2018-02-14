@@ -47,7 +47,7 @@ public class XmlPrologImpl extends XmlElementImpl implements XmlProlog, XmlEleme
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (child.getElementType() == XML_DOCTYPE) {
       return XmlChildRole.XML_DOCTYPE;

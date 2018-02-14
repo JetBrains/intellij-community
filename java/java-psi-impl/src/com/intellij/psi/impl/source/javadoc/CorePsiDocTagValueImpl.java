@@ -44,7 +44,7 @@ public class CorePsiDocTagValueImpl extends CompositePsiElement implements PsiDo
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     if (child.getElementType() == JavaDocTokenType.DOC_TAG_VALUE_COMMA) {
       return ChildRole.COMMA;
     }
