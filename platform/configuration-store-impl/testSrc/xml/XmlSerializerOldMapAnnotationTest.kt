@@ -96,17 +96,17 @@ internal class XmlSerializerOldMapAnnotationTest {
     @Tag("bean")
     class BeanWithMapWithSetValue {
       @MapAnnotation(entryTagName = "entry-tag", keyAttributeName = "key-attr", surroundWithTag = false)
-      var myValues = LinkedHashMap<String, Set<String>>()
+      var values = LinkedHashMap<String, Set<String>>()
     }
 
     val bean = BeanWithMapWithSetValue()
 
-    bean.myValues.put("a", LinkedHashSet(Arrays.asList("first1", "second1")))
-    bean.myValues.put("b", LinkedHashSet(Arrays.asList("first2", "second2")))
+    bean.values.put("a", linkedSetOf("first1", "second1"))
+    bean.values.put("b", linkedSetOf("first2", "second2"))
 
     testSerializer("""
     <bean>
-      <option name="myValues">
+      <option name="values">
         <entry-tag key-attr="a">
           <value>
             <set>

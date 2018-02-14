@@ -11,18 +11,22 @@ import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiType
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.annotator.intentions.GroovyCreateFieldFromUsageHelper
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 
 internal class CreateFieldAction(
-  target: PsiClass,
+  target: GrTypeDefinition,
   request: CreateFieldRequest,
   private val constantField: Boolean
 ) : CreateFieldActionBase(target, request), JvmGroupIntentionAction {
@@ -53,7 +57,7 @@ internal val constantModifiers = setOf(
 private class GroovyFieldRenderer(
   val project: Project,
   val constantField: Boolean,
-  val targetClass: PsiClass,
+  val targetClass: GrTypeDefinition,
   val request: CreateFieldRequest
 ) {
 
@@ -84,7 +88,7 @@ private class GroovyFieldRenderer(
     startTemplate(field)
   }
 
-  private fun renderField(): PsiField {
+  private fun renderField(): GrField {
     val elementFactory = GroovyPsiElementFactory.getInstance(project)
     val field = elementFactory.createField(request.fieldName, PsiType.INT)
 
@@ -108,12 +112,12 @@ private class GroovyFieldRenderer(
     return field
   }
 
-  private fun insertField(field: PsiField): PsiField {
+  private fun insertField(field: GrField): GrField {
     return helper.insertFieldImpl(targetClass, field, null)
 
   }
 
-  private fun startTemplate(field: PsiField) {
+  private fun startTemplate(field: GrField) {
     val targetFile = targetClass.containingFile ?: return
     val newEditor = positionCursor(field.project, targetFile, field) ?: return
     val substitutor = request.targetSubstitutor.toPsiSubstitutor(project)
@@ -128,7 +132,7 @@ private class MyTemplateListener(val project: Project, val editor: Editor, val f
   override fun templateFinished(template: Template, brokenOff: Boolean) {
     PsiDocumentManager.getInstance(project).commitDocument(editor.document)
     val offset = editor.caretModel.offset
-    val psiField = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiField::class.java, false) ?: return
+    val psiField = PsiTreeUtil.findElementOfClassAtOffset(file, offset, GrField::class.java, false) ?: return
     runWriteAction {
       CodeStyleManager.getInstance(project).reformat(psiField)
     }

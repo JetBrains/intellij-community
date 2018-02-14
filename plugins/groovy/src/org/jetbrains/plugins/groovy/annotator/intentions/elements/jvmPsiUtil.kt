@@ -7,8 +7,11 @@ import com.intellij.lang.jvm.actions.ExpectedType
 import com.intellij.lang.jvm.actions.ExpectedTypes
 import com.intellij.lang.jvm.types.JvmSubstitutor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.psi.JvmPsiConversionHelper
+import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifier.ModifierConstant
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.compiled.ClsClassImpl
 import com.intellij.psi.impl.light.LightElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
@@ -39,7 +42,7 @@ internal fun JvmModifier.toPsiModifier(): String = when (this) {
  *
  * @return Java PsiClass or `null` if the receiver is not a Java PsiClass
  */
-internal fun JvmClass.toGroovyClassOrNull(): PsiClass? {
+internal fun JvmClass.toGroovyClassOrNull(): GrTypeDefinition? {
   if (this !is GrTypeDefinition) return null
   if (this is PsiTypeParameter) return null
   if (this is ClsClassImpl) return null

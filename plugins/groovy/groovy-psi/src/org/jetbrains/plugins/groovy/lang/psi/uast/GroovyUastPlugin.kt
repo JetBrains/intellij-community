@@ -67,8 +67,8 @@ class GroovyUastPlugin : UastLanguagePlugin {
 }
 
 class GrULiteral(val grElement: GrLiteral, val parentProvider: () -> UElement?) : ULiteralExpression, JvmDeclarationUElement {
-  override val value: Any?
-    get() = grElement.value
+  override val value: Any? get() = grElement.value
+  override fun evaluate(): Any? = value
   override val uastParent by lazy(parentProvider)
   override val psi: PsiElement? = grElement
   override val annotations: List<UAnnotation> = emptyList() //not implemented
@@ -85,6 +85,12 @@ class GrUNamedExpression(val grElement: GrAnnotationNameValuePair, val parentPro
   override val psi = grElement
   override val annotations: List<UAnnotation> = emptyList() //not implemented
 
+  override fun equals(other: Any?): Boolean {
+    if (other !is GrUNamedExpression) return false
+    return grElement == other.grElement
+  }
+
+  override fun hashCode(): Int = grElement.hashCode()
 }
 
 class GrUAnnotation(val grElement: GrAnnotation,

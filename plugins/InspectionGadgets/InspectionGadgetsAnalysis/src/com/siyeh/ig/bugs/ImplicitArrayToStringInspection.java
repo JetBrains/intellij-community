@@ -201,21 +201,13 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
       registerError(expression, expression, Boolean.FALSE);
     }
 
-    private static boolean isExplicitArrayToStringCall(
-      PsiMethodCallExpression expression) {
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
+    private static boolean isExplicitArrayToStringCall(PsiMethodCallExpression expression) {
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final String methodName = methodExpression.getReferenceName();
-      if (!HardcodedMethodConstants.TO_STRING.equals(methodName)) {
+      if (!HardcodedMethodConstants.TO_STRING.equals(methodName) || !expression.getArgumentList().isEmpty()) {
         return false;
       }
-      final PsiExpressionList argumentList = expression.getArgumentList();
-      final PsiExpression[] arguments = argumentList.getExpressions();
-      if (arguments.length != 0) {
-        return false;
-      }
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier == null) {
         return false;
       }

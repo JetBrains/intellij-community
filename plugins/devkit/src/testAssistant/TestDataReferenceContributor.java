@@ -70,7 +70,8 @@ public class TestDataReferenceContributor extends PsiReferenceContributor {
       //ideally `literalExpression.getValue()` should be the right value for `stringValue`, but something is wrong with Kotlin
       String stringValue;
       if (literalExpression.getSourcePsi() == host) {
-        stringValue = range.substring(host.getText());
+        stringValue = UastLiteralUtils.getValueIfStringLiteral(literalExpression);
+        if (stringValue == null) return PsiReference.EMPTY_ARRAY;
       }
       else {
         StringBuilder chars = new StringBuilder();
@@ -87,7 +88,7 @@ public class TestDataReferenceContributor extends PsiReferenceContributor {
   }
 
   private static class TestDataReferenceSet extends FileReferenceSet {
-    public TestDataReferenceSet(String str,
+    public TestDataReferenceSet(@NotNull String str,
                                 @NotNull PsiElement element,
                                 int startInElement,
                                 @Nullable PsiReferenceProvider provider,
