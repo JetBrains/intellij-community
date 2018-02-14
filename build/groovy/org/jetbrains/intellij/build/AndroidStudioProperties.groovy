@@ -367,6 +367,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
           fileset(dir: "$root/prebuilts/tools/linux-x86_64/lldb")
         }
         extraExecutables.add("bin/lldb/bin/LLDBFrontend")
+        extraExecutables.add("bin/lldb/bin/llvm-symbolizer")
         extraExecutables.add("bin/lldb/bin/minidump_stackwalk")
         context.ant.copy(todir: "$lldbTarget/lib/python2.7") {
           fileset(dir: "$root/prebuilts/python/linux-x86/lib/python2.7")
@@ -412,6 +413,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
           fileset(dir: "$root/prebuilts/tools/darwin-x86_64/lldb")
         }
         extraExecutables.add("bin/lldb/bin/LLDBFrontend")
+        extraExecutables.add("bin/lldb/bin/llvm-symbolizer")
         extraExecutables.add("bin/lldb/bin/minidump_stackwalk")
       }
     }
