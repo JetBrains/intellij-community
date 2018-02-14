@@ -901,6 +901,13 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkHintContents("<html><b>long</b>&nbsp;&nbsp;<i>a The <code>long</code> to be printed.</i></html>");
   }
 
+  public void testSecondCtrlPShowsHints() {
+    configureJava("class C { void m() { System.setProperty(\"a\", \"<caret>b\"); } }");
+    showParameterInfo();
+    showParameterInfo();
+    checkResultWithInlays("class C { void m() { System.setProperty(<Hint text=\"key:\"/>\"a\", <HINT text=\"value:\"/>\"<caret>b\"); } }");
+  }
+
   private void checkResultWithInlays(String text) {
     myFixture.checkResultWithInlays(text);
   }

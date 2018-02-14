@@ -10,6 +10,7 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
+import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -110,7 +111,24 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
   @Override
   public void showParameterInfo(@NotNull final PsiExpressionList element, @NotNull final CreateParameterInfoContext context) {
-    context.showHint(element, element.getTextRange().getStartOffset(), this);
+    int offset = element.getTextRange().getStartOffset();
+    if (CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) {
+      ParameterInfoController controller = ParameterInfoController.findControllerAtOffset(context.getEditor(), offset);
+      PsiElement parent = element.getParent();
+      if (parent instanceof PsiCall && controller != null && controller.isHintShown(false)) {
+        Object highlighted = controller.getHighlighted();
+        Object[] objects = controller.getObjects();
+        if (objects != null && objects.length > 0 && (highlighted != null || objects.length == 1)) {
+          PsiCall methodCall = (PsiCall)parent;
+          JavaMethodCallElement.setCompletionModeIfNotSet(methodCall, controller);
+          PsiMethod targetMethod = (PsiMethod)((CandidateInfo)(highlighted == null ? objects[0] : highlighted)).getElement();
+          CompletionMemory.registerChosenMethod(targetMethod, methodCall);
+          controller.setPreservedOnHintHidden(true);
+          ParameterHintsPass.syncUpdate(methodCall, context.getEditor());
+        }
+      }
+    }
+    context.showHint(element, offset, this);
   }
 
   @Override

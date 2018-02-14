@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -141,10 +140,7 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
     });
     caret.moveToLogicalPosition(editor.offsetToLogicalPosition(targetCaretPosition.get()).leanForward(true));
     PsiCall methodCall = (PsiCall)call;
-    if (!JavaMethodCallElement.isCompletionMode(methodCall)) {
-      JavaMethodCallElement.setCompletionMode(methodCall, true);
-      Disposer.register(controller, () -> JavaMethodCallElement.setCompletionMode(methodCall, false));
-    }
+    JavaMethodCallElement.setCompletionModeIfNotSet(methodCall, controller);
 
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     CompletionMemory.registerChosenMethod(targetMethod, methodCall);
