@@ -130,7 +130,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       }
 
       if (myTextDiffProvider.isHighlightingDisabled()) {
-        return apply(new CompareData(null, null, data.ranges.isEmpty()));
+        return apply(new CompareData(null, data.ranges.isEmpty()));
       }
 
       List<Range> linesRanges = ContainerUtil.map(data.ranges, range -> {
@@ -140,20 +140,20 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       List<List<LineFragment>> newFragments = notNull(myTextDiffProvider.compare(data.vcsText, data.localText, linesRanges, indicator));
 
       boolean isContentsEqual = data.ranges.isEmpty();
-      BitSet areSkipped = new BitSet();
-      List<LineFragment> fragments = new ArrayList<>();
+      List<SimpleDiffChange> changes = new ArrayList<>();
 
       for (int i = 0; i < data.ranges.size(); i++) {
         PartialLocalLineStatusTracker.LocalRange localRange = data.ranges.get(i);
         List<LineFragment> rangeFragments = newFragments.get(i);
 
         boolean isSkipped = !localRange.getChangelistId().equals(myChangelistId);
-        areSkipped.set(fragments.size(), fragments.size() + newFragments.size(), isSkipped);
 
-        fragments.addAll(rangeFragments);
+        changes.addAll(ContainerUtil.map(rangeFragments, fragment -> {
+          return new SimpleDiffChange(this, fragment, isSkipped);
+        }));
       }
 
-      return apply(new CompareData(fragments, areSkipped, isContentsEqual));
+      return apply(new CompareData(changes, isContentsEqual));
     }
     catch (DiffTooBigException e) {
       return applyNotification(DiffNotifications.createDiffTooBig());
