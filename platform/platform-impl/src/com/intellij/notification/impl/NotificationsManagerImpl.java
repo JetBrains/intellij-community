@@ -687,12 +687,12 @@ public class NotificationsManagerImpl extends NotificationsManager {
             if (isDarcula) {
               ui = new DarculaButtonUI() {
                 @Override
-                protected Color getButtonColor1() {
+                protected Color getButtonColorStart() {
                   return new ColorUIResource(0x5a5f61);
                 }
 
                 @Override
-                protected Color getButtonColor2() {
+                protected Color getButtonColorEnd() {
                   return new ColorUIResource(0x5a5f61);
                 }
               };
