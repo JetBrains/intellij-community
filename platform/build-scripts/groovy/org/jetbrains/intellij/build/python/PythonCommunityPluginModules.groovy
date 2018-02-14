@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.python
 
 import org.jetbrains.intellij.build.BuildContext
@@ -31,7 +29,7 @@ class PythonCommunityPluginModules {
   static PluginLayout pythonCommunityPluginLayout(@DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
     pythonPlugin(PYTHON_COMMUNITY_PLUGIN_MODULE, "python-ce", "intellij.python.community.plugin.buildPatches",
                  COMMUNITY_MODULES) {
-      withProjectLibrary("markdown4j-2.2")  // Required for ipnb
+      withProjectLibrary("markdown4j")  // Required for ipnb
       PYCHARM_ONLY_PLUGIN_MODULES.each { module ->
         excludeFromModule(module, "META-INF/plugin.xml")
       }

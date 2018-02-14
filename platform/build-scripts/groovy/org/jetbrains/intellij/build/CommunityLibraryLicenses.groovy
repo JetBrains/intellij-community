@@ -226,7 +226,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://opensource.org/licenses/mit-license.php"),
     new LibraryLicense(name: "lz4-java", libraryName: "lz4-java", version: "1.3", license: "Apache 2.0", url: "https://github.com/lz4/lz4-java",
                        licenseUrl: "https://github.com/lz4/lz4-java/blob/master/LICENSE.txt"),
-    new LibraryLicense(name: "markdown4j", libraryName: "markdown4j-2.2", version: "2.2", license: "New BSD",
+    new LibraryLicense(name: "markdown4j", libraryName: "markdown4j", version: "2.2", license: "New BSD",
                        url: "https://code.google.com/p/markdown4j/", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause"),
     new LibraryLicense(name: "markdownj", attachedTo: "intellij.tasks.core", version: "", license: "BSD", url: "https://github.com/myabc/markdownj",
                        licenseUrl: "http://www.opensource.org/licenses/bsd-license.php"),
