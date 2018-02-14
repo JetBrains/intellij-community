@@ -20,14 +20,10 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import com.sun.tools.javac.util.ArrayUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -60,9 +56,7 @@ public interface XAttachDebuggerProvider {
   /**
    * @return if this XAttachDebuggerProvider is able to interact with this host
    */
-  default boolean isAttachHostApplicable(@NotNull XAttachHost attachHost) {
-    return attachHost instanceof LocalAttachHost;
-  }
+  boolean isAttachHostApplicable(@NotNull XAttachHost attachHost);
 
   /**
    * Attach to Process action invokes {@link #getAvailableDebuggers} method for every running process on the given host.
