@@ -40,7 +40,7 @@ public class WebModuleBuilder<T> extends ModuleBuilder {
   }
 
   @Override
-  public void setupRootModel(ModifiableRootModel modifiableRootModel) {
+  public void setupRootModel(ModifiableRootModel modifiableRootModel) throws ConfigurationException {
     doAddContentEntry(modifiableRootModel);
   }
 
