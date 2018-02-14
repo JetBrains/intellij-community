@@ -24,7 +24,6 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
@@ -66,7 +65,7 @@ public class DarculaButtonPainter implements Border, UIResource {
           DarculaUIUtil.paintFocusBorder(g2, r.width, r.height, arc, true);
         }
       } else {
-        paintShadow(g2, r, arc);
+        paintShadow(g2, r);
       }
 
       g2.setPaint(getBorderColor(c));
@@ -88,21 +87,23 @@ public class DarculaButtonPainter implements Border, UIResource {
 
   public Color getBorderColor(Component button) {
     return button.hasFocus() ?
-            DarculaButtonUI.isDefaultButton((JComponent)button) ?
-              new ColorUIResource(0x537c99) : new ColorUIResource(0x497292)
-           : button.isEnabled() && DarculaButtonUI.isDefaultButton((JComponent)button) ?
-             new ColorUIResource(0x3B608A) : new ColorUIResource(0x5E6060);
+           UIManager.getColor(DarculaButtonUI.isDefaultButton((JComponent)button) ?
+             "Button.darcula.defaultFocusedBorderColor" : "Button.darcula.focusedBorderColor") :
+           UIManager.getColor(button.isEnabled() && DarculaButtonUI.isDefaultButton((JComponent)button) ?
+             "Button.darcula.defaultBorderColor" : "Button.darcula.borderColor");
   }
 
-  protected void paintShadow(Graphics2D g2, Rectangle r, float arc) {
-    g2.setColor(new ColorUIResource(0x363636));
-    Composite composite = g2.getComposite();
-    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
+  protected void paintShadow(Graphics2D g2, Rectangle r) {
+    if (UIManager.getBoolean("Button.darcula.paintShadow")) {
+      g2.setColor(UIManager.getColor("Button.darcula.shadowColor"));
+      Composite composite = g2.getComposite();
+      g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
 
-    float bw = DarculaUIUtil.bw();
-    g2.fill(new Rectangle2D.Float(bw, r.height - bw, r.width - bw * 2, JBUI.scale(2)));
+      float bw = DarculaUIUtil.bw();
+      g2.fill(new Rectangle2D.Float(bw, r.height - bw, r.width - bw * 2, JBUI.scale(2)));
 
-    g2.setComposite(composite);
+      g2.setComposite(composite);
+    }
   }
 
   @Override
