@@ -13,5 +13,6 @@
     <orderEntry type="library" name="xpp3-1.1.4-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="library" name="XStream" level="project" />
   </component>
 </module>
