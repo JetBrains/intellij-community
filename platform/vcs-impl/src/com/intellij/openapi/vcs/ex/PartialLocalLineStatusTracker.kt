@@ -365,8 +365,8 @@ class PartialLocalLineStatusTracker(project: Project,
       updateAffectedChangeLists()
     }
 
-    override fun onUnfreeze(side: Side) {
-      super.onUnfreeze(side)
+    override fun onUnfreeze() {
+      super.onUnfreeze()
 
       if (isValid()) eventDispatcher.multicaster.onBecomingValid(this@PartialLocalLineStatusTracker)
     }
