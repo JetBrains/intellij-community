@@ -171,6 +171,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
     return PythonTestUtil.getTestDataPath();
   }
 
+  @Override
   public void tearDown() throws Exception {
     if (myFixture != null) {
       EdtTestUtil.runInEdtAndWait(() -> {
