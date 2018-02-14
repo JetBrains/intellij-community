@@ -1082,4 +1082,46 @@ module M {
 """
     )
   }
+
+  /**
+   * See [IDEA-153768](https://youtrack.jetbrains.com/issue/IDEA-153768)
+   */
+  fun testPTagsBeforeTags() {
+    getJavaSettings().JD_P_AT_EMPTY_LINES = true
+    doTextTest(
+"""
+package com.company;
+
+public class Test {
+    /**
+     * Before title
+     *
+     * <h1>Title</h1>
+     *
+     * <p>Before another already existing tag
+     *
+     * Normal case, should be inserted.
+     */
+    void foo() {
+    }
+}
+""",
+"""
+package com.company;
+
+public class Test {
+    /**
+     * Before title
+     *
+     * <h1>Title</h1>
+     *
+     * <p>Before another already existing tag
+     * <p>
+     * Normal case, should be inserted.
+     */
+    void foo() {
+    }
+}
+""")
+  }
 }
