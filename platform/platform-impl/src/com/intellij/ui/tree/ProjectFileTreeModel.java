@@ -8,11 +8,12 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.SmartList;
+import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.messages.MessageBusConnection;
@@ -33,7 +34,6 @@ import static com.intellij.openapi.vfs.VfsUtilCore.isAncestor;
 import static com.intellij.openapi.vfs.VirtualFileManager.VFS_CHANGES;
 import static com.intellij.ui.tree.TreePathUtil.pathToCustomNode;
 import static java.util.Collections.emptyList;
-import static java.util.Collections.unmodifiableList;
 
 public final class ProjectFileTreeModel extends BaseTreeModel<Object> implements InvokerSupplier {
   private final Invoker invoker = new Invoker.BackgroundThread(this);
@@ -47,7 +47,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<Object> implements
       public void rootsChanged(ModuleRootEvent event) {
         onValidThread(() -> {
           root.valid = false; // need to reload content roots
-          treeStructureChanged(null, null, null);
+          pathChanged(null);
         });
       }
     });
@@ -122,19 +122,45 @@ public final class ProjectFileTreeModel extends BaseTreeModel<Object> implements
     Node node = object instanceof Node && isValidThread() ? (Node)object : null;
     if (node == null) return emptyList();
     List<?> children = node.getChildren();
-    return unmodifiableList(children);
+    if (children.isEmpty()) return emptyList();
+    List<Object> result = new SmartList<>();
+    VirtualFileFilter filter = root.filter;
+    for (Object child : children) {
+      if (filter == null || child instanceof FileNode && isVisible((FileNode)child, filter)) {
+        result.add(child);
+      }
+    }
+    return result;
+  }
+
+  private static boolean isVisible(@NotNull FileNode node, @NotNull VirtualFileFilter filter) {
+    ThreeState visibility = node.visibility;
+    if (visibility == ThreeState.NO) return false;
+    if (visibility == ThreeState.YES) return true;
+    boolean visible;
+    if (!node.file.isDirectory()) {
+      visible = filter.accept(node.file);
+    }
+    else {
+      List<FileNode> children = node.getChildren();
+      visible = !children.stream().allMatch(child -> child.visibility == ThreeState.NO) &&
+                (children.stream().anyMatch(child -> child.visibility == ThreeState.YES) ||
+                 children.stream().anyMatch(child -> isVisible(child, filter)));
+    }
+    node.visibility = ThreeState.fromBoolean(visible);
+    return visible;
   }
 
   @Nullable
-  public Object getContentRoot(@Nullable Object object) {
-    FileNode node = object instanceof FileNode && isValidThread() ? (FileNode)object : null;
-    return node == null ? null : node.findParent(RootNode.class);
-  }
-
-  @Nullable
-  public Pair<VirtualFile, Module> getContent(@Nullable Object object) {
+  public static Module getModule(@Nullable Object object) {
     FileNode node = object instanceof FileNode ? (FileNode)object : null;
-    return node == null ? null : Pair.create(node.file, node.module);
+    return node == null ? null : node.module;
+  }
+
+  @Nullable
+  public static VirtualFile getVirtualFile(@Nullable Object object) {
+    FileNode node = object instanceof FileNode ? (FileNode)object : null;
+    return node == null ? null : node.file;
   }
 
   public void invalidate(VirtualFile file) {
@@ -148,10 +174,23 @@ public final class ProjectFileTreeModel extends BaseTreeModel<Object> implements
 
       for (RootNode node : root.children) {
         if (node.module == module && node.invalidate(file) && node.valid && root.valid) {
-          node.invalidateLater(invoker, path -> treeStructureChanged(path, null, null));
+          node.invalidateLater(invoker, this::pathChanged);
         }
       }
     });
+  }
+
+  public void setFilter(@Nullable VirtualFileFilter filter) {
+    onValidThread(() -> {
+      if (root.filter == null && filter == null) return;
+      root.filter = filter;
+      root.resetVisibility();
+      pathChanged(null);
+    });
+  }
+
+  private void pathChanged(@Nullable TreePath path) {
+    onValidThread(() -> treeStructureChanged(path, null, null));
   }
 
 
@@ -175,6 +214,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<Object> implements
 
   private static abstract class Node<FN extends FileNode> {
     volatile Node parent;
+    volatile ThreeState visibility;
     volatile List<FN> children = emptyList();
     volatile boolean valid;
 
@@ -192,6 +232,18 @@ public final class ProjectFileTreeModel extends BaseTreeModel<Object> implements
       return newList;
     }
 
+    final void resetVisibility() {
+      visibility = null;
+      children.forEach(Node::resetVisibility);
+    }
+
+    final void resetParentVisibility() {
+      for (Node node = parent; node != null; node = node.parent) {
+        node.visibility = null;
+      }
+    }
+
+    @SuppressWarnings("SameParameterValue")
     final <N> N findParent(Class<N> type) {
       for (Node node = this; node != null; node = node.parent) {
         if (type.isInstance(node)) return type.cast(node);
@@ -202,6 +254,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<Object> implements
 
 
   private static class ProjectNode extends Node<RootNode> {
+    volatile VirtualFileFilter filter;
     final Project project;
 
     ProjectNode(@NotNull Project project) {
@@ -255,9 +308,11 @@ public final class ProjectFileTreeModel extends BaseTreeModel<Object> implements
     @NotNull
     @Override
     List<FileNode> getChildren(@NotNull List<FileNode> oldList) {
+      visibility = ThreeState.NO;
       if (!file.isValid() || module.isDisposed()) return emptyList();
       ModuleRootManager manager = ModuleRootManager.getInstance(module);
       if (manager == null) return emptyList();
+      visibility = ThreeState.UNSURE;
 
       List<FileNode> list = new SmartList<>();
       Mapper<FileNode> mapper = new Mapper<>(oldList, FileNode::new);
@@ -326,10 +381,15 @@ public final class ProjectFileTreeModel extends BaseTreeModel<Object> implements
           if (parent != null && !parent.project.isDisposed()) {
             List<FileNode> list = new SmartList<>();
             invalidateNow(node -> list.add(node));
-            for (FileNode node : list) {
-              //noinspection RedundantCast TODO:IDEA-186224
-              TreePath path = pathToCustomNode((Node)node, child -> child.parent);
-              if (path != null) invoker.invokeLaterIfNeeded(() -> consumer.accept(path));
+            if (parent.filter == null) {
+              for (FileNode node : list) {
+                TreePath path = pathToCustomNode((Node)node, child -> child.parent);
+                if (path != null) consumer.accept(path);
+              }
+            }
+            else if (!list.isEmpty()) {
+              list.forEach(Node::resetParentVisibility);
+              consumer.accept(null);
             }
           }
         }
