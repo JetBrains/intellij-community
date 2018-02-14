@@ -2,14 +2,10 @@ package circlet.utils
 
 import com.intellij.notification.*
 import com.intellij.openapi.*
-import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.*
-import com.intellij.openapi.application.ex.*
 import com.intellij.openapi.components.*
-import com.intellij.openapi.editor.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.util.*
-import com.intellij.psi.*
 import runtime.reactive.*
 
 inline fun <reified T : Any> ComponentManager.getComponent(): T =
@@ -18,16 +14,7 @@ inline fun <reified T : Any> ComponentManager.getComponent(): T =
 inline fun <reified T : Any> component(): T = application.getComponent()
 inline fun <reified T : Any> Project.component(): T = this.getComponent()
 
-val DataContext.Editor: Editor?
-    get() = CommonDataKeys.EDITOR.getData(this)
-
-val DataContext.PsiFile: PsiFile?
-    get() = CommonDataKeys.PSI_FILE.getData(this)
-
-val DataContext.Project: Project?
-    get() = CommonDataKeys.PROJECT.getData(this)
-
-
+@Suppress("unused")
 fun createApplicationLifetime(): Lifetime {
     val result = Lifetime()
     application.addApplicationListener(object : ApplicationAdapter() {
@@ -40,9 +27,6 @@ fun createApplicationLifetime(): Lifetime {
 
 val application: Application
     get() = ApplicationManager.getApplication()
-
-val applicationEx: ApplicationEx
-    get() = ApplicationManagerEx.getApplicationEx()
 
 // Bad inspection Disposable {} != object: Disposable {}
 @Suppress("ObjectLiteralToLambda")
@@ -89,4 +73,3 @@ fun Notification.notify(lifetime: Lifetime, project: Project?) {
     lifetime.add { expire() }
     Notifications.Bus.notify(this, project)
 }
-
