@@ -120,7 +120,7 @@ public class ChangelistConflictTracker {
 
       @Override
       public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
-        if (((LocalChangeList)toList).isDefault()) {
+        if (((LocalChangeList)toList).isDefault() || ((LocalChangeList)fromList).isDefault()) {
           clearChanges(changes);
         }
       }
@@ -173,15 +173,14 @@ public class ChangelistConflictTracker {
   }
 
   public boolean isWritingAllowed(@NotNull VirtualFile file) {
-    if (!shouldDetectConflictsFor(file)) return true;
     if (isFromActiveChangelist(file)) return true;
     Conflict conflict = myConflicts.get(file.getPath());
     return conflict != null && conflict.ignored;
   }
 
   public boolean isFromActiveChangelist(VirtualFile file) {
-    LocalChangeList changeList = myChangeListManager.getChangeList(file);
-    return changeList == null || changeList.isDefault();
+    List<LocalChangeList> changeLists = myChangeListManager.getChangeLists(file);
+    return changeLists.isEmpty() || ContainerUtil.exists(changeLists, list -> list.isDefault());
   }
 
   public boolean shouldDetectConflictsFor(@NotNull VirtualFile file) {
@@ -196,8 +195,11 @@ public class ChangelistConflictTracker {
         String path = filePath.getPath();
         final Conflict wasRemoved = myConflicts.remove(path);
         final VirtualFile file = filePath.getVirtualFile();
-        if (wasRemoved != null && file != null) {
-          myEditorNotifications.updateNotifications(file);
+        if (file != null) {
+          if (wasRemoved != null) {
+            myEditorNotifications.updateNotifications(file);
+          }
+
           // we need to update status
           myFileStatusManager.fileStatusChanged(file);
         }
