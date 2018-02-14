@@ -97,8 +97,6 @@ class LogEventAction(val id: String) {
   }
 
   override fun hashCode(): Int {
-    var result = id.hashCode()
-    result = 31 * result + (data?.hashCode() ?: 0)
-    return result
+    return 31 * id.hashCode() + data.hashCode()
   }
 }
