@@ -48,6 +48,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictFileStatusProvider
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.ex.LineStatusTracker
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
@@ -339,6 +340,7 @@ class LineStatusTrackerManager(
 
     val status = FileStatusManager.getInstance(project).getStatus(virtualFile)
     if (status != FileStatus.MODIFIED &&
+        status != ChangelistConflictFileStatusProvider.MODIFIED_OUTSIDE &&
         status != FileStatus.NOT_CHANGED) return false
 
     val change = ChangeListManager.getInstance(project).getChange(virtualFile)
