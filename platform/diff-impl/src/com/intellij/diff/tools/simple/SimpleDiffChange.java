@@ -50,16 +50,18 @@ public class SimpleDiffChange {
   private final int[] myLineEndShifts = new int[2];
 
   public SimpleDiffChange(@NotNull SimpleDiffViewer viewer,
+                          @NotNull LineFragment fragment) {
+    this(viewer, fragment, false);
+  }
+
+  public SimpleDiffChange(@NotNull SimpleDiffViewer viewer,
                           @NotNull LineFragment fragment,
-                          @Nullable LineFragment previousFragment,
                           boolean isSkipped) {
     myViewer = viewer;
 
     myFragment = fragment;
     myInnerFragments = fragment.getInnerFragments();
     myIsSkipped = isSkipped;
-
-    installHighlighter(previousFragment);
   }
 
   public void installHighlighter(@Nullable LineFragment previousFragment) {
@@ -186,6 +188,11 @@ public class SimpleDiffChange {
 
   public boolean isValid() {
     return myIsValid;
+  }
+
+  @NotNull
+  public LineFragment getFragment() {
+    return myFragment;
   }
 
   //
