@@ -88,3 +88,4 @@ io.github.sirlantis.rubymine.rubocop 0.0.2 1.0.0 2.0.0 3.0.0 3.0.1 3.1.0
 "Railways for IDEA" 0.7.0 0.7.1 0.8.0 0.8.1 0.8.2 0.8.3 0.8.4 0.8.5 0.8.6 0.8.7
 Railways 0.7.0 0.7.1 0.8.0 0.8.1 0.8.2 0.8.3 0.8.4 0.8.5 0.8.6 0.8.7
 net.rentalhost.idea.laravelInsight 0.2.0 0.3.0 0.3.1 0.3.2
+com.intellij.plugins.watcher 173.1310 173.2099.6 173.2463.22 173.2941.6 173.622
