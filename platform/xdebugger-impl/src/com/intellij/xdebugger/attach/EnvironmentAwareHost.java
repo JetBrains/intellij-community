@@ -19,8 +19,6 @@ public abstract class EnvironmentAwareHost implements XAttachHost {
 
   private OSType myOSType;
 
-  public abstract boolean isUnix() throws ExecutionException;
-
   /**
    * @param command commandLine to execute on this host
    * @return output of the corresponding process
