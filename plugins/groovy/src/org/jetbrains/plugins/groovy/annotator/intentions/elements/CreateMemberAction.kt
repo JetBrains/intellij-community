@@ -6,13 +6,13 @@ import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.actions.ActionRequest
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.createSmartPointer
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 
 internal abstract class CreateMemberAction(
-  target: PsiClass,
+  target: GrTypeDefinition,
   protected open val request: ActionRequest
 ) : IntentionAction {
 
@@ -22,7 +22,7 @@ internal abstract class CreateMemberAction(
     return myTargetPointer.element != null && request.isValid
   }
 
-  protected val target: PsiClass
+  protected val target: GrTypeDefinition
     get() = requireNotNull(myTargetPointer.element) {
       "Don't access this property if isAvailable() returned false"
     }
