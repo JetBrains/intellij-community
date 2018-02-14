@@ -179,7 +179,7 @@ class CommunityLibraryLicenses {
                        url: "https://github.com/JetBrains/jediterm", licenseUrl: "https://github.com/JetBrains/jediterm/blob/master/COPYING"),
     new LibraryLicense(name: "JEuclid", libraryName: "jeuclid-core-3.1.9.jar", version: "3.1.9", license: "Apache 2.0",
                        url: "http://jeuclid.sourceforge.net", licenseUrl: "http://sourceforge.net/p/jeuclid/code/ci/default/tree/LICENSE.txt"),
-    new LibraryLicense(name: "Jackson", libraryName: "jackson-databind", version: "2.9.4", license: "Apache 2.0",
+    new LibraryLicense(name: "Jackson", libraryName: "jackson", version: "2.9.4", license: "Apache 2.0",
                            licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0", url: "https://github.com/FasterXML/jackson"),
     new LibraryLicense(name: "javax inject", libraryName: "javax.inject:javax.inject:1", version: "1", license: "Apache 2.0",
                        licenseUrl: "http://apache.org/licenses/LICENSE-2.0", url: "http://code.google.com/p/atinject/"),
