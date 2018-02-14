@@ -18,5 +18,7 @@
     <applicationService serviceInterface="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"
                         serviceImplementation="com.intellij.ide.customization.UtmIdeUrlTrackingParametersProvider"
                         overrides="true"/>
+
+    <annotator language="Python" implementationClass="com.jetbrains.python.PyCharmProfessionalAdvertiser"/>
   </extensions>
 </idea-plugin>
