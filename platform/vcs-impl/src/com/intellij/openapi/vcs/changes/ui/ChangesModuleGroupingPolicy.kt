@@ -16,7 +16,7 @@ import javax.swing.tree.DefaultTreeModel
 
 private const val PROJECT_ROOT_TAG = "<Project Root>"
 
-class ChangesModuleGroupingPolicy(val myProject: Project, val myModel: DefaultTreeModel) : ChangesGroupingPolicy {
+open class ChangesModuleGroupingPolicy(val myProject: Project, val myModel: DefaultTreeModel) : ChangesGroupingPolicy {
   private val myIndex = ProjectFileIndex.getInstance(myProject)
 
   override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
