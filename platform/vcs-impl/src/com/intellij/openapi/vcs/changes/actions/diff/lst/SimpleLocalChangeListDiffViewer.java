@@ -168,18 +168,14 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     }
   }
 
-  private class MyTrackerListener implements PartialLocalLineStatusTracker.Listener {
+  private class MyTrackerListener extends PartialLocalLineStatusTracker.ListenerAdapter {
     @Override
-    public void onBecomingValid() {
+    public void onBecomingValid(@NotNull PartialLocalLineStatusTracker tracker) {
       scheduleRediff();
     }
 
     @Override
-    public void onChangeListsChange() {
-    }
-
-    @Override
-    public void onChangeListMarkerChange() {
+    public void onChangeListMarkerChange(@NotNull PartialLocalLineStatusTracker tracker) {
       scheduleRediff();
     }
   }
