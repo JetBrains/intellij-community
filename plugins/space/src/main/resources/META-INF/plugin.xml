@@ -18,6 +18,8 @@
     <depends>com.intellij.modules.platform</depends>
 
     <extensions defaultExtensionNs="com.intellij">
+        <projectService serviceImplementation="circlet.settings.CircletProjectSettings"/>
+
         <applicationConfigurable id="circlet.settings.global" groupId="tools"
                                  instance="circlet.settings.CircletGlobalConfigurable"/>
         <projectConfigurable id="circlet.settings.connection" groupId="tools" parentId="circlet.settings.global"
