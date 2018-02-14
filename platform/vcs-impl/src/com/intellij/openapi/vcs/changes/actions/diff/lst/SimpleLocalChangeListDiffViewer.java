@@ -18,7 +18,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -243,19 +242,6 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       }
 
       rediff();
-    }
-
-    @NotNull
-    private List<SimpleDiffChange> getSelectedChanges(@NotNull Side side) {
-      EditorEx editor = getEditor(side);
-      BitSet lines = DiffUtil.getSelectedLines(editor);
-
-      return ContainerUtil.filter(getDiffChanges(), change -> {
-        int line1 = change.getStartLine(side);
-        int line2 = change.getEndLine(side);
-
-        return DiffUtil.isSelectedByLine(lines, line1, line2);
-      });
     }
   }
 
