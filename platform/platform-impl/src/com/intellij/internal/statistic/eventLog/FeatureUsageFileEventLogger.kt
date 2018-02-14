@@ -10,8 +10,6 @@ import com.intellij.openapi.application.PathManager
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.apache.log4j.PatternLayout
-import org.apache.log4j.RollingFileAppender
-import java.io.File
 import java.io.IOException
 import java.nio.file.Paths
 import java.util.*
@@ -21,13 +19,30 @@ class FeatureUsageFileEventLogger : FeatureUsageEventLogger {
   private val bucket = "-1"
   private val recorderVersion = "1"
 
-  private val eventLogger = createLogger()
+  private var fileAppender: FeatureUsageEventFileAppender? = null
+  private val eventLogger: Logger = Logger.getLogger("feature-usage-event-logger")
 
   private var lastEvent: LogEvent? = null
   private var lastEventTime: Long = 0
   private var count: Int = 1
 
   init {
+    eventLogger.level = Level.INFO
+    eventLogger.additivity = false
+
+    val pattern = PatternLayout("%m\n")
+    try {
+      val dir = Paths.get(PathManager.getSystemPath()).resolve("event-log")
+      fileAppender = FeatureUsageEventFileAppender.create(pattern, dir)
+      fileAppender?.let { appender ->
+        appender.setMaxFileSize("200KB")
+        eventLogger.addAppender(appender)
+      }
+    }
+    catch (e: IOException) {
+      System.err.println("Unable to initialize logging for feature usage: " + e.localizedMessage)
+    }
+
     ApplicationManager.getApplication().addApplicationListener(object : ApplicationAdapter() {
       override fun applicationExiting() {
         dispose(eventLogger)
@@ -73,26 +88,5 @@ class FeatureUsageFileEventLogger : FeatureUsageEventLogger {
     }
     lastEvent = null
     count = 1
-  }
-
-  private fun createLogger(): Logger {
-    val path = Paths.get(PathManager.getSystemPath()).resolve("event-log").resolve("feature-usage-event.log")
-    val file = File(path.toUri())
-
-    val logger = Logger.getLogger("feature-usage-event-logger")
-    logger.level = Level.INFO
-    logger.additivity = false
-
-    val pattern = PatternLayout("%m\n")
-    try {
-      val fileAppender = RollingFileAppender(pattern, file.absolutePath)
-      fileAppender.setMaxFileSize("200KB")
-      fileAppender.maxBackupIndex = 10
-      logger.addAppender(fileAppender)
-    }
-    catch (e: IOException) {
-      System.err.println("Unable to initialize logging for feature usage: " + e.localizedMessage)
-    }
-    return logger
   }
 }
