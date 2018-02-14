@@ -95,9 +95,4 @@ public class LazyInitializer<T> {
   public String toString() {
     return value != null ? value.toString() : "null";
   }
-
-  @Override
-  public int hashCode() {
-    return value != null ? value.hashCode() : super.hashCode();
-  }
 }
