@@ -135,6 +135,13 @@ public class PlatformTestUtil {
     Disposer.register(parentDisposable, () -> extensionPoint.unregisterExtension(t));
   }
 
+  public static <T> void unregisterAllExtensions(@NotNull ExtensionPointName<T> name, @NotNull Disposable parentDisposable) {
+    ExtensionPoint<T> extensionPoint = Extensions.getRootArea().getExtensionPoint(name.getName());
+    T[] extensions = name.getExtensions();
+    Arrays.stream(extensions).forEach(extensionPoint::unregisterExtension);
+    Disposer.register(parentDisposable, () -> Arrays.stream(extensions).forEach(extensionPoint::registerExtension));
+  }
+
   @Nullable
   public static String toString(@Nullable Object node, @Nullable Queryable.PrintInfo printInfo) {
     if (node instanceof AbstractTreeNode) {
