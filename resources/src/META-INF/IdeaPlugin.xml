@@ -399,6 +399,10 @@
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
 
+    <action class="com.intellij.execution.testDiscovery.FindTestsInTestDiscoveryServerAction" internal="true" id="FindTestsInTestDiscoveryServer" text="Test Discovery">
+      <add-to-group group-id="Internal" anchor="last"/>
+    </action>
+
     <action id="JShell.Console"
             class="com.intellij.execution.jshell.LaunchJShellConsoleAction"
             text="JShell Console..." description="Launch JShell Console">
