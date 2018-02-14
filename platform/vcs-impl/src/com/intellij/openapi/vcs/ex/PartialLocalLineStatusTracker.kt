@@ -134,10 +134,10 @@ class PartialLocalLineStatusTracker(project: Project,
         changeListManager.notifyChangelistsChanged()
       }
 
-      eventDispatcher.multicaster.onChangeListsChange()
+      eventDispatcher.multicaster.onChangeListsChange(this)
     }
 
-    eventDispatcher.multicaster.onChangeListMarkerChange()
+    eventDispatcher.multicaster.onChangeListMarkerChange(this)
   }
 
   @CalledInAwt
@@ -151,7 +151,7 @@ class PartialLocalLineStatusTracker(project: Project,
       currentMarker = null
     }
 
-    if (isValid()) eventDispatcher.multicaster.onBecomingValid()
+    if (isValid()) eventDispatcher.multicaster.onBecomingValid(this)
   }
 
 
@@ -368,7 +368,7 @@ class PartialLocalLineStatusTracker(project: Project,
     override fun onUnfreeze(side: Side) {
       super.onUnfreeze(side)
 
-      if (isValid()) eventDispatcher.multicaster.onBecomingValid()
+      if (isValid()) eventDispatcher.multicaster.onBecomingValid(this@PartialLocalLineStatusTracker)
     }
   }
 
@@ -637,17 +637,16 @@ class PartialLocalLineStatusTracker(project: Project,
     eventDispatcher.addListener(listener, disposable)
   }
 
+  open class ListenerAdapter : Listener
   interface Listener : EventListener {
     @CalledInAwt
-    fun onBecomingValid() {
+    fun onBecomingValid(tracker: PartialLocalLineStatusTracker) {
     }
 
-    @CalledInAwt
-    fun onChangeListsChange() {
+    fun onChangeListsChange(tracker: PartialLocalLineStatusTracker) {
     }
 
-    @CalledInAwt
-    fun onChangeListMarkerChange() {
+    fun onChangeListMarkerChange(tracker: PartialLocalLineStatusTracker) {
     }
   }
 
