@@ -520,14 +520,13 @@ public class UsageViewImpl implements UsageView {
     // since the UsageViewTreeCellRenderer ignores invisible nodes (outside the viewport), their preferred size is incorrect
     // and we need to recalculate them when the node scrolled into the visible rectangle
     treePane.getViewport().addChangeListener(__ -> clearRendererCache());
-    myPreviewSplitter = new Splitter(false, 0.5f, 0.1f, 0.9f);
+    myPreviewSplitter = new OnePixelSplitter(false, 0.5f, 0.1f, 0.9f);
     myPreviewSplitter.setFirstComponent(treePane);
 
     myCentralPanel.add(myPreviewSplitter, BorderLayout.CENTER);
 
     if (isPreviewUsages()) {
       myPreviewSplitter.setProportion(getUsageViewSettings().getPreviewUsagesSplitterProportion());
-      treePane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.RIGHT);
       final JBTabbedPane tabbedPane = new JBTabbedPane(SwingConstants.BOTTOM){
         @NotNull
         @Override
@@ -560,7 +559,6 @@ public class UsageViewImpl implements UsageView {
           tabSelected(selectedProvider);
         }
       });
-      tabbedPane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
       JBPanelWithEmptyText panel = new JBPanelWithEmptyText(new BorderLayout());
       panel.add(tabbedPane, BorderLayout.CENTER);
       myPreviewSplitter.setSecondComponent(panel);
