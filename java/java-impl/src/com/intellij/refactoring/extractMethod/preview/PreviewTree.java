@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SmartExpander;
@@ -96,6 +97,11 @@ class PreviewTree implements Disposable {
 
   public JComponent getComponent() {
     return myTree;
+  }
+
+  void updateMethod(PsiMethod method) {
+    myModel.updateMethod(method);
+    onSelectionUpdate();
   }
 
   @Override
