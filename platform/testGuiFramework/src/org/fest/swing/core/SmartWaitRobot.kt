@@ -30,24 +30,19 @@ import java.awt.Point
 import java.awt.Window
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
-import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 
-class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
+class SmartWaitRobot : BasicRobot(null, ExistingHierarchy()) {
 
   init {
     settings().delayBetweenEvents(10)
   }
 
-  val waitConst = 30L
-  var myAwareClick: Boolean = false
-  val fastRobot: java.awt.Robot = java.awt.Robot()
-
-  fun superWaitForIdle() {
-    super.waitForIdle()
-  }
+  private val waitConst = 30L
+  private var myAwareClick: Boolean = false
+  private val fastRobot: java.awt.Robot = java.awt.Robot()
 
   override fun waitForIdle() {
     if (myAwareClick) {
@@ -61,7 +56,7 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
 
   override fun close(w: Window) {
     super.close(w)
-    superWaitForIdle()
+    super.waitForIdle()
   }
 
   //smooth mouse move
@@ -127,7 +122,7 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
       if(condition()){
         cdl.countDown()
       }
-    }, 0, 100, TimeUnit.MILLISECONDS);
+    }, 0, 100, TimeUnit.MILLISECONDS)
     cdl.await(timeout.toLong(), TimeUnit.MILLISECONDS)
     executor.cancel(true)
   }
@@ -148,18 +143,6 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
     fastReleaseKey(keyCode)
   }
 
-  fun fastType(character: Char) {
-    val keyStroke = KeyStrokeMap.keyStrokeFor(character) ?: throw Exception("Unable to get keystroke for char '$character'")
-    fastPressAndReleaseKey(keyStroke.keyCode)
-  }
-
-  fun preparedFastTypeWithoutModifiers(string: String) {
-    val keyCodeArray = string
-      .map { KeyStrokeMap.keyStrokeFor(it)?.keyCode ?: throw Exception("Unable to get keystroke for char '$it'") }
-      .toIntArray()
-    keyCodeArray.forEach { fastPressAndReleaseKeyWithoutModifiers(keyCode = it) }
-  }
-
   fun shortcutAndTypeString(keyStoke: KeyStroke, string: String, delayBetweenShortcutAndTypingMs: Int = 0) {
     val keyCodeArray = string
       .map { KeyStrokeMap.keyStrokeFor(it)?.keyCode ?: throw Exception("Unable to get keystroke for char '$it'") }
@@ -170,11 +153,11 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
   }
 
   private fun fastPressKey(keyCode: Int) {
-    fastRobot.keyPress(keyCode);
+    fastRobot.keyPress(keyCode)
   }
 
   private fun fastReleaseKey(keyCode: Int) {
-    fastRobot.keyRelease(keyCode);
+    fastRobot.keyRelease(keyCode)
   }
 
   private fun fastPressModifiers(modifierMask: Int) {
