@@ -255,12 +255,12 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
   private static final Charset CHARSET;
   static {
-    Charset charset = null;
+    Charset cs = null;
     try {
-      charset = SystemInfo.isWindows | SystemInfo.isMac ? CharsetToolkit.UTF8_CHARSET : Charset.forName(System.getProperty("sun.jnu.encoding"));
+      cs = SystemInfo.isWindows | SystemInfo.isMac ? CharsetToolkit.UTF8_CHARSET : Charset.forName(System.getProperty("sun.jnu.encoding"));
     }
     catch (IllegalArgumentException ignored) { }
-    CHARSET = charset;
+    CHARSET = cs;
   }
 
   private static final BaseOutputReader.Options READER_OPTIONS = new BaseOutputReader.Options() {
