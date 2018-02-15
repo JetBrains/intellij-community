@@ -1,11 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.testGuiFramework.tests.community
+package com.intellij.testGuiFramework.tests.community.focus
 
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.framework.RunWithIde
 import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.launcher.ide.CommunityIde
+import com.intellij.testGuiFramework.tests.community.CommunityProjectCreator
 import org.fest.swing.timing.Pause.pause
 import org.junit.Test
 
