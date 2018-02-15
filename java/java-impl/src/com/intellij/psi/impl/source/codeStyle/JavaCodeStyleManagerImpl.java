@@ -610,13 +610,8 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       }
     }
     else if (expr instanceof PsiReferenceExpression) {
-      String propertyName = ((PsiReferenceExpression)expr).getReferenceName();
-      PsiElement refElement = ((PsiReferenceExpression)expr).resolve();
-      if (refElement instanceof PsiVariable) {
-        VariableKind refVariableKind = getVariableKind((PsiVariable)refElement);
-        propertyName = variableNameToPropertyName(propertyName, refVariableKind);
-      }
-      if (refElement != null && propertyName != null) {
+      String propertyName = getPropertyName((PsiReferenceExpression)expr, true);
+      if (propertyName != null) {
         String[] names = getSuggestionsByName(propertyName, variableKind, false, correctKeywords);
         return new NamesByExprInfo(propertyName, names);
       }
@@ -624,13 +619,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     else if (expr instanceof PsiArrayAccessExpression) {
       PsiExpression arrayExpr = ((PsiArrayAccessExpression)expr).getArrayExpression();
       if (arrayExpr instanceof PsiReferenceExpression) {
-        String arrayName = ((PsiReferenceExpression)arrayExpr).getReferenceName();
-        PsiElement refElement = ((PsiReferenceExpression)arrayExpr).resolve();
-        if (refElement instanceof PsiVariable) {
-          VariableKind refVariableKind = getVariableKind((PsiVariable)refElement);
-          arrayName = variableNameToPropertyName(arrayName, refVariableKind);
-        }
-
+        String arrayName = getPropertyName((PsiReferenceExpression)arrayExpr);
         if (arrayName != null) {
           String name = StringUtil.unpluralize(arrayName);
           if (name != null) {
@@ -686,6 +675,29 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   private static boolean isJavaUtilMethod(@NotNull PsiMethod method) {
     String name = PsiUtil.getMemberQualifiedName(method);
     return name != null && name.startsWith("java.util.");
+  }
+
+  @Nullable
+  private String getPropertyName(@NotNull PsiReferenceExpression expression) {
+    return getPropertyName(expression, false);
+  }
+
+  @Nullable
+  private String getPropertyName(@NotNull PsiReferenceExpression expression, boolean skipUnresolved) {
+    String propertyName = expression.getReferenceName();
+    if (propertyName == null) return null;
+
+    PsiElement refElement = expression.resolve();
+    if (refElement instanceof PsiVariable) {
+      VariableKind refVariableKind = getVariableKind((PsiVariable)refElement);
+      return variableNameToPropertyName(propertyName, refVariableKind);
+    }
+    else if (refElement == null && skipUnresolved) {
+      return null;
+    }
+    else {
+      return propertyName;
+    }
   }
 
   @NotNull
@@ -786,12 +798,8 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       if (expr == assignmentExpression.getRExpression()) {
         final PsiExpression leftExpression = assignmentExpression.getLExpression();
         if (leftExpression instanceof PsiReferenceExpression) {
-          String name = ((PsiReferenceExpression)leftExpression).getReferenceName();
+          String name = getPropertyName((PsiReferenceExpression)leftExpression);
           if (name != null) {
-            final PsiElement resolve = ((PsiReferenceExpression)leftExpression).resolve();
-            if (resolve instanceof PsiVariable) {
-              name = variableNameToPropertyName(name, getVariableKind((PsiVariable)resolve));
-            }
             String[] names = getSuggestionsByName(name, variableKind, false, correctKeywords);
             return new NamesByExprInfo(name, names);
           }
