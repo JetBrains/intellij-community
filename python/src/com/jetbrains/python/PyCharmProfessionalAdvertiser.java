@@ -9,8 +9,6 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,7 +17,6 @@ import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyImportElement;
-import com.jetbrains.python.sdk.PythonSdkType;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,14 +66,6 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
         showInspectionAdvertisement(project, "the Pyramid Framework", null,"pyramid");
       }
     }
-  }
-
-  private static boolean moduleUsesPythonSdk(@NotNull PyFile file) {
-    final Module module = ModuleUtilCore.findModuleForFile(file.getVirtualFile(), file.getProject());
-    if (module != null) {
-      return PythonSdkType.findPythonSdk(module) != null;
-    }
-    return false;
   }
 
   private static void showInspectionAdvertisement(@NotNull Project project,
