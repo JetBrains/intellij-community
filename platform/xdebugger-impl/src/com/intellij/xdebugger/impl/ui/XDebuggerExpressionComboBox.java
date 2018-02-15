@@ -106,10 +106,8 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
 
   @Override
   protected void doSetText(XExpression text) {
-    //if (myComboBox.isEditable()) {
-      myEditor.setItem(text);
-    //}
     myExpression = text;
+    myEditor.getEditorTextField().setNewDocumentAndFileType(getFileType(text), createDocument(text));
   }
 
   @Override
@@ -182,8 +180,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     @Override
     public void setItem(Object anObject) {
       if (anObject != null) { // do not reset the editor on null
-        XExpression expression = (XExpression)anObject;
-        myDelegate.getEditorComponent().setNewDocumentAndFileType(getFileType(expression), createDocument(expression));
+        setExpression((XExpression)anObject);
       }
     }
 
