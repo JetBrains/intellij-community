@@ -13,7 +13,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
@@ -23,6 +22,7 @@ import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author traff
@@ -36,8 +36,6 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
 
   private static final NotificationGroup BALLOON_NOTIFICATIONS = new NotificationGroup("PyCharm Professional Advertiser",
                                                                                        NotificationDisplayType.STICKY_BALLOON, false);
-  private static final Key<Boolean> DONT_SHOW_BALLOON = Key.create("showingPyCompatibilityAdvertiserBalloon");
-
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
 
@@ -49,7 +47,6 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
       if (getSettings(project).shown) {
         return;
       }
-      getSettings(project).shown = true;
 
       final VirtualFile vFile = pyFile.getVirtualFile();
       if (vFile != null && FileIndexFacade.getInstance(project).isInLibraryClasses(vFile)) {
@@ -62,19 +59,19 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
       }
 
       if (PyCellUtil.hasCells(pyFile)) {
-        showInspectionAdvertisement(project, "code cells in the editor", "codecells");
+        showInspectionAdvertisement(project, "code cells in the editor", "https://www.jetbrains.com/pycharm/features/scientific_tools.html", "codecells");
       }
 
       if (containsImport(pyFile, "django")) {
-        showInspectionAdvertisement(project, "the Django Framework", "django");
+        showInspectionAdvertisement(project, "the Django Framework", "https://www.jetbrains.com/pycharm/features/web_development.html#django","django");
       }
 
       if (containsImport(pyFile, "flask")) {
-        showInspectionAdvertisement(project, "the Flask Framework", "flask");
+        showInspectionAdvertisement(project, "the Flask Framework", null,"flask");
       }
 
       if (containsImport(pyFile, "pyramid")) {
-        showInspectionAdvertisement(project, "the Pyramid Framework", "pyramid");
+        showInspectionAdvertisement(project, "the Pyramid Framework", null,"pyramid");
       }
     }
   }
@@ -87,11 +84,17 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
     return false;
   }
 
-  private static void showInspectionAdvertisement(@NotNull Project project, @NotNull String message, @NotNull String source) {
+  private static void showInspectionAdvertisement(@NotNull Project project,
+                                                  @NotNull String message,
+                                                  @Nullable String url,
+                                                  @NotNull String source) {
     showSingletonNotification(project, "You are using " + message, NOTIFICATIONS_TEXT, NotificationType.INFORMATION,
                               (notification, event) -> {
                                 if ("prof".equals(event.getDescription())) {
-                                  BrowserUtil.browse("https://www.jetbrains.com/pycharm/features/editions_comparison_matrix.html?utm_source=from_product&utm_medium=advertiser&utm_campaign=" + source);
+                                  BrowserUtil.browse(
+                                    (url != null ? url : "https://www.jetbrains.com/pycharm/features/editions_comparison_matrix.html") +
+                                    "?utm_source=from_product&utm_medium=advertiser&utm_campaign=" +
+                                    source);
                                 }
                               });
   }
@@ -101,7 +104,7 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
                                                 @NotNull String htmlContent,
                                                 @NotNull NotificationType type,
                                                 @NotNull NotificationListener listener) {
-    project.putUserData(DONT_SHOW_BALLOON, true);
+    getSettings(project).shown = true;
     BALLOON_NOTIFICATIONS.createNotification(title, htmlContent, type, (notification, event) -> {
       try {
         listener.hyperlinkUpdate(notification, event);
