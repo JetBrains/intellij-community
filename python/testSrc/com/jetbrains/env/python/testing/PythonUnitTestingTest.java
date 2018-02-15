@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.testframework.sm.ServiceMessageBuilder;
+import com.intellij.execution.testframework.sm.runner.GeneralIdBasedToSMTRunnerEventsConvertor;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -53,6 +54,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static com.jetbrains.env.ut.PyScriptTestProcessRunner.TEST_TARGET_PREFIX;
@@ -63,6 +65,7 @@ import static org.junit.Assert.assertEquals;
  * @author traff
  */
 public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUnitTestProcessRunner> {
+  private int a = 0;
 
   @Test(expected = RuntimeConfigurationWarning.class)
   public void testEmptyValidation() {
@@ -818,6 +821,12 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                                 @NotNull String scriptName,
                                                 int rerunFailedTests) {
       super(relativePathToTestData, scriptName, rerunFailedTests, PythonUnitTestingTest.this::createTestRunner);
+    }
+
+    @NotNull
+    @Override
+    public Iterable<Class<?>> getClassesToEnableDebug() {
+      return Collections.singletonList(GeneralIdBasedToSMTRunnerEventsConvertor.class);
     }
   }
 
