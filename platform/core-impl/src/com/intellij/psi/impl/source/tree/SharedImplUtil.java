@@ -23,7 +23,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.tree.IElementType;
@@ -42,8 +41,8 @@ public class SharedImplUtil {
   }
 
   public static PsiElement getParent(ASTNode thisElement) {
-    if (CHECK_FOR_READ_ACTION && thisElement instanceof ElementBase) {
-      ApplicationManager.getApplication().assertReadAccessAllowed();
+    if (CHECK_FOR_READ_ACTION && thisElement instanceof TreeElement) {
+      ((TreeElement)thisElement).assertReadAccessAllowed();
     }
     return SourceTreeToPsiMap.treeElementToPsi(thisElement.getTreeParent());
   }
@@ -84,13 +83,14 @@ public class SharedImplUtil {
   }
 
   public static FileASTNode findFileElement(@NotNull ASTNode element) {
-    if (CHECK_FOR_READ_ACTION && element instanceof ElementBase) {
-      ApplicationManager.getApplication().assertReadAccessAllowed();
-    }
     ASTNode parent = element.getTreeParent();
     while (parent != null) {
       element = parent;
       parent = parent.getTreeParent();
+    }
+
+    if (CHECK_FOR_READ_ACTION && element instanceof TreeElement) {
+      ((TreeElement)element).assertReadAccessAllowed();
     }
 
     if (element instanceof FileASTNode) {
