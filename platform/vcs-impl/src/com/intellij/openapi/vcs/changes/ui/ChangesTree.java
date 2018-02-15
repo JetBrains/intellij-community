@@ -76,7 +76,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   @Nullable private Runnable myInclusionListener;
   @NotNull private final CopyProvider myTreeCopyProvider;
-  private TreeState myDirectoryTreeState;
 
   public ChangesTree(@NotNull Project project,
                      boolean showCheckboxes,
@@ -165,8 +164,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     migrateShowFlattenSetting();
     myGroupingSupport
       .setGroupingKeysOrSkip(set(notNull(PropertiesComponent.getInstance(myProject).getValues(GROUPING_KEYS), DEFAULT_GROUPING_KEYS)));
-    //noinspection unchecked
-    myGroupingSupport.addPropertyChangeListener(e -> changeGrouping((Set<String>)e.getOldValue(), (Set<String>)e.getNewValue()));
+    myGroupingSupport.addPropertyChangeListener(e -> changeGrouping());
 
     String emptyText = StringUtil.capitalize(DiffBundle.message("diff.count.differences.status.text", 0));
     setEmptyText(emptyText);
@@ -230,19 +228,11 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     return myShowCheckboxes;
   }
 
-  private void changeGrouping(@NotNull Set<String> oldGrouping, @NotNull Set<String> newGrouping) {
-    PropertiesComponent.getInstance(myProject).setValues(GROUPING_KEYS, toStringArray(newGrouping));
+  private void changeGrouping() {
+    PropertiesComponent.getInstance(myProject).setValues(GROUPING_KEYS, toStringArray(getGroupingSupport().getGroupingKeys()));
 
-    final List<Object> oldSelection = getSelectedUserObjects();
-    if (myKeepTreeState && oldGrouping.contains(DIRECTORY_GROUPING)) {
-      myDirectoryTreeState = TreeState.createOn(this, getRoot());
-    }
-
+    List<Object> oldSelection = getSelectedUserObjects();
     rebuildTree();
-
-    if (myKeepTreeState && newGrouping.contains(DIRECTORY_GROUPING) && myDirectoryTreeState != null) {
-      myDirectoryTreeState.applyTo(this, getRoot());
-    }
     setSelectedChanges(oldSelection);
   }
 
