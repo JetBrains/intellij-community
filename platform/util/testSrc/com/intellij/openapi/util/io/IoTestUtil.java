@@ -12,11 +12,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -33,7 +35,16 @@ public class IoTestUtil {
 
   @Nullable
   public static String getUnicodeName() {
-    return StringUtil.nullize(Stream.of(UNICODE_PARTS).filter(PathUtil::isValidFileName).collect(Collectors.joining("_")));
+    return filterParts(PathUtil::isValidFileName);
+  }
+
+  @Nullable
+  public static String getUnicodeName(String forEncoding) {
+    return filterParts(Charset.forName(forEncoding).newEncoder()::canEncode);
+  }
+
+  private static String filterParts(Predicate<String> predicate) {
+    return StringUtil.nullize(Stream.of(UNICODE_PARTS).filter(predicate).collect(Collectors.joining("_")));
   }
 
   @NotNull
