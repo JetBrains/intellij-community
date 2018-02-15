@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -31,6 +31,9 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
+import java.lang.IllegalStateException
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.test.assertEquals
@@ -46,9 +49,6 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   private val INTER_RESPONSE_DELAY = 500L    // time to wait for a next event in a sequence
   private val NATIVE_PROCESS_DELAY = 60000L  // time to wait for a native watcher response
   private val SHORT_PROCESS_DELAY = 5000L    // time to wait when no native watcher response is expected
-
-  private val UNICODE_NAME_1 = "Úñíçødê"
-  private val UNICODE_NAME_2 = "Юникоде"
 
   @Rule @JvmField val tempDir = TempDirectory()
 
@@ -231,7 +231,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   @Test fun testSymbolicLinkIntoFlatRoot() {
     val root = tempDir.newFolder("root")
     val cDir = tempDir.newFolder("root/A/B/C")
-    val aLink = IoTestUtil.createSymLink("${root.path}/A", "${root.path}/aLink")
+    val aLink = File(root, "aLink")
+    Files.createSymbolicLink(aLink.toPath(), Paths.get("${root.path}/A"))
     val flatWatchedFile = tempDir.newFile("root/aLink/test.txt")
     val fileOutsideFlatWatchRoot = tempDir.newFile("root/A/B/C/test.txt")
     refresh(root)
@@ -245,8 +246,10 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   @Test fun testMultipleSymbolicLinkPathsToFile() {
     val root = tempDir.newFolder("root")
     val file = tempDir.newFile("root/A/B/C/test.txt")
-    val bLink = IoTestUtil.createSymLink("${root.path}/A/B", "${root.path}/bLink")
-    val cLink = IoTestUtil.createSymLink("${root.path}/A/B/C", "${root.path}/cLink")
+    val bLink = File(root, "bLink")
+    Files.createSymbolicLink(bLink.toPath(), Paths.get("${root.path}/A/B"))
+    val cLink = File(root, "cLink")
+    Files.createSymbolicLink(cLink.toPath(), Paths.get("${root.path}/A/B/C"))
     refresh(root)
     val bFilePath = File(bLink.path, "C/${file.name}")
     val cFilePath = File(cLink.path, file.name)
@@ -261,7 +264,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   @Test fun testSymbolicLinkAboveWatchRoot() {
     val top = tempDir.newFolder("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
-    val link = IoTestUtil.createSymLink("${top.path}/dir1/dir2", "${top.path}/link")
+    val link = File(top, "link")
+    Files.createSymbolicLink(link.toPath(), Paths.get("${top.path}/dir1/dir2"))
     val fileLink = File(top, "link/dir3/test.txt")
     refresh(top)
 
@@ -431,7 +435,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     refresh(root)
 
     watch(root)
-    assertEvents({ IoTestUtil.setHidden(file.path, true) }, mapOf(file to 'P'))
+    assertEvents({ Files.setAttribute(file.toPath(), "dos:hidden", true) }, mapOf(file to 'P'))
   }
 
   @Test fun testFileCaseChange() {
@@ -453,8 +457,11 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   @Test fun testRefreshEquality() = LocalFileSystemTest.doTestRefreshEquality(tempDir.newFolder("top"))
 
   @Test fun testUnicodePaths() {
-    val root = tempDir.newFolder(UNICODE_NAME_1)
-    val file = tempDir.newFile("${UNICODE_NAME_1}/${UNICODE_NAME_2}.txt")
+    val name = IoTestUtil.getUnicodeName()
+    assumeTrue(name != null)
+
+    val root = tempDir.newFolder(name)
+    val file = tempDir.newFile("${name}/${name}.txt")
     refresh(root)
     watch(root)
 
@@ -541,7 +548,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   private fun refresh(file: File): VirtualFile {
-    val vFile = fs.refreshAndFindFileByIoFile(file)!!
+    val vFile = fs.refreshAndFindFileByIoFile(file) ?: throw IllegalStateException("can't get '${file.path}' into VFS")
     VfsUtilCore.visitChildrenRecursively(vFile, object : VirtualFileVisitor<Any>() {
       override fun visitFile(file: VirtualFile): Boolean { file.children; return true }
     })
