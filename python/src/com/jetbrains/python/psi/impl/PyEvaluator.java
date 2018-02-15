@@ -98,6 +98,9 @@ public class PyEvaluator {
     else if (expression instanceof PyNumericLiteralExpression) {
       return evaluateNumeric((PyNumericLiteralExpression)expression);
     }
+    else if (expression instanceof PyPrefixExpression) {
+      return evaluatePrefix((PyPrefixExpression)expression);
+    }
     return null;
   }
 
@@ -152,6 +155,16 @@ public class PyEvaluator {
         return first.compareTo(second) != 0;
       }
     }
+    else if (lhs instanceof Boolean && rhs instanceof Boolean) {
+      final Boolean first = (Boolean)lhs;
+      final Boolean second = (Boolean)rhs;
+      if (op == PyTokenTypes.AND_KEYWORD) {
+        return first && second;
+      }
+      else if (op == PyTokenTypes.OR_KEYWORD) {
+        return first || second;
+      }
+    }
 
     return null;
   }
@@ -168,6 +181,18 @@ public class PyEvaluator {
       }
       if (PyNames.FALSE.equals(text)) {
         return false;
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private Object evaluatePrefix(@NotNull PyPrefixExpression expression) {
+    if (expression.getOperator() == PyTokenTypes.NOT_KEYWORD) {
+      final Boolean value = PyUtil.as(evaluate(expression.getOperand()), Boolean.class);
+      if (value != null) {
+        return !value;
       }
     }
 
