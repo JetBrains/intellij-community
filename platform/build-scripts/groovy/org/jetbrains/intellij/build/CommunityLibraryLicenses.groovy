@@ -375,6 +375,8 @@ class CommunityLibraryLicenses {
                        url: "http://plantuml.com", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "FST", libraryName: "de.ruedigermoeller:fst", version: "2.56", license: "Apache 2.0",
                        url: "https://github.com/RuedigerMoeller/fast-serialization", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
+    new LibraryLicense(name: "xpp3", libraryName: "xpp3", version: "1.1.4", license: "Apache 2.0",
+                       url: "https://www.extreme.indiana.edu/xgws/xsoap/xpp/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
 
     jetbrainsLibrary("Coverage"),
     jetbrainsLibrary("CoverageReport"),
