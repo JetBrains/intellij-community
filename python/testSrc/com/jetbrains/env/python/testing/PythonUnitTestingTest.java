@@ -277,12 +277,13 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
-        assertEquals("subtest error reported as success", "Test tree:\n" +
-                                                          "[root]\n" +
-                                                          ".test_test\n" +
-                                                          "..TestThis\n" +
-                                                          "...test_this\n" +
-                                                          "....[test](-)\n", runner.getFormattedTestTree());
+        final String formattedTestTree = runner.getFormattedTestTree();
+        assertEquals("Bad tree:" + formattedTestTree, "Test tree:\n" +
+                                                      "[root]\n" +
+                                                      ".test_test\n" +
+                                                      "..TestThis\n" +
+                                                      "...test_this\n" +
+                                                      "....[test](-)\n", formattedTestTree);
       }
     });
   }
@@ -561,7 +562,8 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                       "....(i=7)(+)\n" +
                                       "....(i=8)(-)\n" +
                                       "....(i=9)(+)\n";
-        Assert.assertEquals("", expectedResult, runner.getFormattedTestTree());
+        final String tree = runner.getFormattedTestTree();
+        Assert.assertEquals("Bad tree:" + tree, expectedResult, tree);
       }
     });
   }
