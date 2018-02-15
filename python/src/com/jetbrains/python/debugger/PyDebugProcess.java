@@ -306,10 +306,16 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           if (myProcessHandler != null) {
             myProcessHandler.destroyProcess();
           }
-          LOG.error(e);
+          if (logConnectionException(e)) {
+            LOG.error(e);
+          }
         }
       }
     });
+  }
+
+  protected boolean logConnectionException(final Exception e) {
+    return true;
   }
 
   @Override

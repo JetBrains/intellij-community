@@ -82,8 +82,13 @@ class CopyrightManager @JvmOverloads constructor(private val project: Project, s
 
     override fun isSchemeFile(name: CharSequence) = !StringUtil.equals(name, "profiles_settings.xml")
 
-    override fun getSchemeKey(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String): String? {
-      return super.getSchemeKey(attributeProvider, fileNameWithoutExtension) ?: fileNameWithoutExtension
+    override fun getSchemeKey(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String): String {
+      val schemeKey = super.getSchemeKey(attributeProvider, fileNameWithoutExtension)
+      if (schemeKey != null) {
+        return schemeKey
+      }
+      LOG.warn("Name is not specified for scheme $fileNameWithoutExtension, file name will be used instead")
+      return fileNameWithoutExtension
     }
   }, schemeNameToFileName = OLD_NAME_CONVERTER, streamProvider = schemeManagerIprProvider)
 

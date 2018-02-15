@@ -1082,5 +1082,11 @@
     <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">
       <add-to-group group-id="EditorTabPopupMenuEx" anchor="after" relative-to-action="AddAllToFavorites"/>
     </action>
+
+    <action id="UpdateRunningApplication" class="com.intellij.execution.update.UpdateRunningApplicationAction"
+            text="Update Running Application">
+      <keyboard-shortcut first-keystroke="control F10" keymap="$default"/>
+      <add-to-group group-id="DebugMainMenu" anchor="before" relative-to-action="StepOver"/>
+    </action>
   </actions>
 </idea-plugin>

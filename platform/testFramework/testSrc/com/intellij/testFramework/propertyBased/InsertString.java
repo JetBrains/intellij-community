@@ -30,7 +30,7 @@ public class InsertString extends ActionOnRange {
 
   @Override
   public void performCommand(@NotNull Environment env) {
-    int offset = env.generateValue(Generator.integers(0, getDocument().getTextLength()), null);
+    int offset = generateDocOffset(env, null);
     String toInsert = env.generateValue(Generator.stringsOf(Generator.asciiPrintableChars()), "Insert '%s' at " + offset + " in " + getPath());
     WriteCommandAction.runWriteCommandAction(getProject(), () -> getDocument().insertString(offset, toInsert));
   }

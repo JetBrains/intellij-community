@@ -102,7 +102,7 @@ public class PythonCodeInsightSanityTest extends PyEnvTestCase {
   private void runSanityTest(@NotNull final Consumer<Pair<String, CodeInsightTestFixture>> test) {
 
     final String subfolder = "sanity";
-    runTest(new PyExecutionFixtureTestTask(subfolder) {
+    runPythonTest(new PyExecutionFixtureTestTask(subfolder) {
       @Override
       public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) {
         ApplicationManager.getApplication().invokeAndWait(() -> {
@@ -111,6 +111,6 @@ public class PythonCodeInsightSanityTest extends PyEnvTestCase {
           test.accept(pathAndFixture);
         });
       }
-    }, getTestName(true));
+    });
   }
 }

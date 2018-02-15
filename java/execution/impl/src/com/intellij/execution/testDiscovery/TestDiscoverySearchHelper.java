@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -86,7 +72,7 @@ public class TestDiscoverySearchHelper {
                   try {
                     if (classQualifiedName != null &&
                         (position == null && TestFrameworks.detectFramework(containingClass) != null ||
-                         position != null && !discoveryIndex.hasTestTrace(frameworkPrefix + classQualifiedName + "-" + changedMethodName))) {
+                         position != null && !discoveryIndex.hasTestTrace(classQualifiedName + "-" + changedMethodName))) {
                       patterns.add(classQualifiedName + "," + changedMethodName);
                     }
                   }
@@ -112,10 +98,10 @@ public class TestDiscoverySearchHelper {
                                       final String methodName,
                                       final String frameworkId) throws IOException {
     final TestDiscoveryIndex discoveryIndex = TestDiscoveryIndex.getInstance(project);
-    final Collection<String> testsByMethodName = discoveryIndex.getTestsByMethodName(classFQName, methodName);
+    final Collection<String> testsByMethodName = discoveryIndex.getTestsByMethodName(classFQName, methodName, frameworkId);
     if (testsByMethodName != null) {
-      for (String pattern : ContainerUtil.filter(testsByMethodName, s -> s.startsWith(frameworkId))) {
-        patterns.add(pattern.substring(frameworkId.length()).replace('-', ','));
+      for (String pattern : testsByMethodName) {
+        patterns.add(pattern.replace('-', ','));
       }
     }
   }

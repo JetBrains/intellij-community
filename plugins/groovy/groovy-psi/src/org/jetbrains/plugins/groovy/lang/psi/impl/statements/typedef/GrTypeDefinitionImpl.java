@@ -692,7 +692,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   }
 
   @Nullable
-  private static PsiMember getAnyMember(@Nullable PsiElement psiElement) {
+  protected static PsiMember getAnyMember(@Nullable PsiElement psiElement) {
     if (psiElement instanceof PsiMember) {
       return (PsiMember)psiElement;
     }
@@ -729,7 +729,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   }
 
   @Nullable
-  private PsiElement getDefaultAnchor(GrTypeDefinitionBody body, PsiMember member) {
+  protected PsiElement getDefaultAnchor(GrTypeDefinitionBody body, PsiMember member) {
     GroovyCodeStyleSettingsFacade settings = GroovyCodeStyleSettingsFacade.getInstance(getProject());
 
     int order = getMemberOrderWeight(member, settings);

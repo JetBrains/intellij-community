@@ -14,4 +14,6 @@ public interface DocumentationMarkup {
   String SECTION_SEPARATOR = "</td><td>";
   String SECTION_START = "<td>";
   String SECTION_END = "</td>";
+  String GRAYED_START = "<span class='grayed'>";
+  String GRAYED_END = "</span>";
 }

@@ -9,15 +9,19 @@ import com.intellij.openapi.util.text.StringUtil
 
 class GroovyElementActionsFactory : JvmElementActionsFactory() {
   override fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> {
-    val javaClass = targetClass.toGroovyClassOrNull() ?: return emptyList()
+    val groovyClass = targetClass.toGroovyClassOrNull() ?: return emptyList()
 
     val constantRequested = request.constant || javaClass.isInterface || request.modifiers.containsAll(constantModifiers)
     val result = ArrayList<IntentionAction>()
     if (constantRequested || StringUtil.isCapitalized(request.fieldName)) {
-      result += CreateFieldAction(javaClass, request, true)
+      result += CreateFieldAction(groovyClass, request, true)
     }
     if (!constantRequested) {
-      result += CreateFieldAction(javaClass, request, false)
+      result += CreateFieldAction(groovyClass, request, false)
+    }
+
+    if (canCreateEnumConstant(groovyClass, request)) {
+      result += CreateEnumConstantAction(groovyClass, request)
     }
     return result
   }

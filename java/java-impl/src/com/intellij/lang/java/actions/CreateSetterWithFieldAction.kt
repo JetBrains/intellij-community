@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
+import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
 
 /**
  * This action renders a write-only property (field + setter) in Java class when setter is requested.
@@ -24,7 +25,9 @@ internal class CreateSetterWithFieldAction(target: PsiClass, request: CreateMeth
     return super.isAvailable(project, editor, file) && propertyInfo.second == PropertyKind.SETTER
   }
 
-  override fun getText(): String = message("create.setter")
+  override fun getText(): String {
+    return message("create.write.only.property.from.usage.full.text", propertyInfo.first, getNameForClass(target, false))
+  }
 
   override fun createRenderer(project: Project) = object : PropertyRenderer(project, target, request, propertyInfo) {
 

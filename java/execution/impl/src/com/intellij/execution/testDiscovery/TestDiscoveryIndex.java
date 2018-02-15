@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.openapi.Disposable;
@@ -21,9 +7,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.ThrowableConvertor;
-import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.io.IOUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.PathKt;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
@@ -31,13 +17,10 @@ import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Maxim.Mossienko on 7/9/2015.
@@ -97,7 +80,8 @@ public class TestDiscoveryIndex implements Disposable {
     // todo: should we remove our local run data ?
   }
 
-  public Collection<String> getTestsByMethodName(@NotNull String classFQName, @NotNull String methodName) throws IOException {
+  public Collection<String> getTestsByMethodName(@NotNull String classFQName, @NotNull String methodName, String frameworkPrefix) throws IOException {
+    //TODO support framework prefix again
     return myLocalTestRunDataController.withTestDataHolder(new ThrowableConvertor<TestInfoHolder, Collection<String>, IOException>() {
       @Override
       public Collection<String> convert(TestInfoHolder localHolder) throws IOException {
@@ -263,18 +247,31 @@ public class TestDiscoveryIndex implements Disposable {
     myRemoteTestRunDataController.dispose();
   }
 
-  public void updateFromTestTrace(@NotNull File file,
-                                  @Nullable final String moduleName,
-                                  @NotNull final String frameworkPrefix) throws IOException {
-    int fileNameDotIndex = file.getName().lastIndexOf('.');
-    final String testName = fileNameDotIndex != -1 ? file.getName().substring(0, fileNameDotIndex) : file.getName();
-    doUpdateFromTestTrace(file, testName, moduleName != null ? frameworkPrefix + moduleName : null);
+  public void updateFromData(@NotNull String testName,
+                             @NotNull MultiMap<String, String> usedMethods,
+                             @Nullable String moduleName,
+                             @NotNull String frameworkPrefix) throws IOException {
+    doUpdateFromTestTrace(testName, holder -> {
+      TIntObjectHashMap<TIntArrayList> result = new TIntObjectHashMap<>();
+      for (Map.Entry<String, Collection<String>> e : usedMethods.entrySet()) {
+        int classId = holder.myClassEnumeratorCache.enumerate(e.getKey());
+        TIntArrayList methodIds = new TIntArrayList();
+        result.put(classId, methodIds);
+        for (String methodName : e.getValue()) {
+          methodIds.add(holder.myMethodEnumeratorCache.enumerate(methodName));
+        }
+      }
+      return result;
+    }, moduleName, frameworkPrefix);
   }
 
-  private void doUpdateFromTestTrace(File file, final String testName, @Nullable final String moduleName) throws IOException {
-    myLocalTestRunDataController.withTestDataHolder((ThrowableConvertor<TestInfoHolder, Void, IOException>)localHolder -> {
+  private void doUpdateFromTestTrace(@NotNull String testName,
+                                     @NotNull ThrowableNotNullFunction<TestInfoHolder, TIntObjectHashMap<TIntArrayList>, IOException> classDataExtractor,
+                                     @Nullable String moduleName,
+                                     @NotNull String frameworkPrefix) throws IOException {
+    myLocalTestRunDataController.withTestDataHolder(localHolder -> {
       final int testNameId = localHolder.myTestNameEnumerator.enumerate(testName);
-      TIntObjectHashMap<TIntArrayList> classData = loadClassAndMethodsMap(file, localHolder);
+      TIntObjectHashMap<TIntArrayList> classData = classDataExtractor.fun(localHolder);
       TIntObjectHashMap<TIntArrayList> previousClassData = localHolder.myTestNameToUsedClassesAndMethodMap.get(testNameId);
       if (previousClassData == null) {
         previousClassData = myRemoteTestRunDataController.withTestDataHolder(
@@ -304,36 +301,9 @@ public class TestDiscoveryIndex implements Disposable {
           });
       }
 
-      localHolder.doUpdateFromDiff(testNameId, classData, previousClassData, moduleName != null ? localHolder.myModuleNameEnumerator.enumerate(moduleName) : null);
+      String moduleId = moduleName == null ? null : moduleName + frameworkPrefix;
+      localHolder.doUpdateFromDiff(testNameId, classData, previousClassData, moduleId != null ? localHolder.myModuleNameEnumerator.enumerate(moduleId) : null);
       return null;
     });
-  }
-
-  @NotNull
-  private static TIntObjectHashMap<TIntArrayList> loadClassAndMethodsMap(File file, TestInfoHolder holder) throws IOException {
-    DataInputStream inputStream = new DataInputStream(new BufferedInputStream(new FileInputStream(file), 64 * 1024));
-    byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
-
-    try {
-      int numberOfClasses = DataInputOutputUtil.readINT(inputStream);
-      TIntObjectHashMap<TIntArrayList> classData = new TIntObjectHashMap<>(numberOfClasses);
-      while (numberOfClasses-- > 0) {
-        String classQName = IOUtil.readUTFFast(buffer, inputStream);
-        int classId = holder.myClassEnumeratorCache.enumerate(classQName);
-        int numberOfMethods = DataInputOutputUtil.readINT(inputStream);
-        TIntArrayList methodsList = new TIntArrayList(numberOfMethods);
-
-        while (numberOfMethods-- > 0) {
-          String methodName = IOUtil.readUTFFast(buffer, inputStream);
-          methodsList.add(holder.myMethodEnumeratorCache.enumerate(methodName));
-        }
-
-        classData.put(classId, methodsList);
-      }
-      return classData;
-    }
-    finally {
-      inputStream.close();
-    }
   }
 }

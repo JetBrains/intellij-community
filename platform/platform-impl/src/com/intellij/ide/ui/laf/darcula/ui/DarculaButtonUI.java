@@ -79,7 +79,7 @@ public class DarculaButtonUI extends BasicButtonUI {
     JBInsets.removeFrom(r, JBUI.insets(1));
 
     if (UIUtil.isHelpButton(c)) {
-      g.setPaint(UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, r.height, getButtonColor2()));
+      g.setPaint(UIUtil.getGradientPaint(0, 0, getButtonColorStart(), 0, r.height, getButtonColorEnd()));
       int diam = JBUI.scale(HELP_BUTTON_DIAMETER);
       int x = r.x + (r.width - diam) / 2;
       int y = r.x + (r.height - diam) / 2;
@@ -101,13 +101,13 @@ public class DarculaButtonUI extends BasicButtonUI {
 
         if (c.isEnabled()) {
           if (isSquare(c)) {
-            g2.setPaint(UIUtil.getGradientPaint(r.x, r.y, getButtonColor1(), r.x + r.width, r.y + r.height, getButtonColor2()));
+            g2.setPaint(UIUtil.getGradientPaint(r.x, r.y, getButtonColorStart(), r.x + r.width, r.y + r.height, getButtonColorEnd()));
             g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
           }
           else {
             g2.setPaint(isDefaultButton(c) ?
-                        UIUtil.getGradientPaint(0, 0, getDefaultButtonColor1(), 0, r.height, getDefaultButtonColor2()) :
-                        UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, r.height, getButtonColor2()));
+                        UIUtil.getGradientPaint(0, 0, getDefaultButtonColorStart(), 0, r.height, getDefaultButtonColorEnd()) :
+                        UIUtil.getGradientPaint(0, 0, getButtonColorStart(), 0, r.height, getButtonColorEnd()));
 
             g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
           }
@@ -134,8 +134,6 @@ public class DarculaButtonUI extends BasicButtonUI {
     AbstractButton button = (AbstractButton)c;
     ButtonModel model = button.getModel();
     g.setColor(getTextColor(button));
-
-    //UISettings.setupAntialiasing(g);
 
     FontMetrics metrics = SwingUtilities2.getFontMetrics(c, g);
     int mnemonicIndex = DarculaLaf.isAltPressed() ? button.getDisplayedMnemonicIndex() : -1;
@@ -237,20 +235,20 @@ public class DarculaButtonUI extends BasicButtonUI {
     }
   }
 
-  protected Color getButtonColor1() {
-    return ObjectUtils.notNull(UIManager.getColor("Button.darcula.color1"), new ColorUIResource(0x555a5c));
+  protected Color getButtonColorStart() {
+    return ObjectUtils.notNull(UIManager.getColor("Button.darcula.startColor"), new ColorUIResource(0x555a5c));
   }
 
-  protected Color getButtonColor2() {
-    return ObjectUtils.notNull(UIManager.getColor("Button.darcula.color2"), new ColorUIResource(0x414648));
+  protected Color getButtonColorEnd() {
+    return ObjectUtils.notNull(UIManager.getColor("Button.darcula.endColor"), new ColorUIResource(0x414648));
   }
 
-  protected Color getDefaultButtonColor1() {
-    return ObjectUtils.notNull(UIManager.getColor("Button.darcula.selection.color1"), new ColorUIResource(0x384f6b));
+  protected Color getDefaultButtonColorStart() {
+    return ObjectUtils.notNull(UIManager.getColor("Button.darcula.defaultStartColor"), new ColorUIResource(0x384f6b));
   }
 
-  protected Color getDefaultButtonColor2() {
-    return ObjectUtils.notNull(UIManager.getColor("Button.darcula.selection.color2"), new ColorUIResource(0x233143));
+  protected Color getDefaultButtonColorEnd() {
+    return ObjectUtils.notNull(UIManager.getColor("Button.darcula.defaultEndColor"), new ColorUIResource(0x233143));
   }
 
   protected String layout(AbstractButton b, String text, Icon icon, FontMetrics fm, int width, int height) {

@@ -549,7 +549,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == XmlTokenType.XML_NAME || i == XmlTokenType.XML_TAG_NAME) {

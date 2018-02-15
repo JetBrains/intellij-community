@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.MultiLineLabelUI
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testGuiFramework.framework.RunWithIde
 import com.intellij.testGuiFramework.impl.GuiTestCase
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.launcher.ide.CommunityIde
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -46,6 +47,7 @@ public class Main {
       actionLink("Create New Project").click()
       dialog("New Project") {
         jList("Java").clickItem("Java")
+        GuiTestUtilKt.waitProgressDialogUntilGone(robot(), "Loading Templates")
         button("Next").click()
         checkbox("Create project from template").click()
         jList("Command Line App").clickItem("Command Line App")

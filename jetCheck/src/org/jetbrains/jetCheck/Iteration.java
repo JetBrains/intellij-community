@@ -71,7 +71,9 @@ class Iteration<T> {
     String rechecking = failureReason != null && StatusNotifier.printStackTrace(failureReason).contains("ImperativeCommand.checkScenario") ?
       "ImperativeCommand.checkScenario(" + iterationSeed + "L, " + sizeHint + ", ...))\n" :
       "PropertyChecker.forAll(...).rechecking(" + iterationSeed + "L, " + sizeHint + ").shouldHold(...)\n";
-    return "To reproduce the last iteration, run " + rechecking + "Global seed: " + session.globalSeed + "L";
+    return "To reproduce the last iteration, run " + rechecking +
+           "To debug the minimal failing example, catch this exception and invoke 'replayMinimalExample' on it.\n" +
+           "Global seed: " + session.globalSeed + "L";
   }
 
   String printSeeds() {

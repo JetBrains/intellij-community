@@ -54,7 +54,7 @@ public class PsiBlockStatementImpl extends CompositePsiElement implements PsiBlo
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (child.getElementType() == JavaElementType.CODE_BLOCK) {
       return ChildRole.BLOCK;

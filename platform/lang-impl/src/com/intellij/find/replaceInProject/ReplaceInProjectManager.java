@@ -339,7 +339,7 @@ public class ReplaceInProjectManager {
       }
     };
 
-    replaceContext.getUsageView().addButtonToLowerPane(replaceAllInThisFileAction);
+    //replaceContext.getUsageView().addButtonToLowerPane(replaceAllInThisFileAction);
 
     final AbstractAction skipThisFileAction = new AbstractAction() {
       @Override
@@ -374,7 +374,7 @@ public class ReplaceInProjectManager {
       }
     };
 
-    replaceContext.getUsageView().addButtonToLowerPane(skipThisFileAction);
+    //replaceContext.getUsageView().addButtonToLowerPane(skipThisFileAction);
   }
 
   private boolean replaceUsages(@NotNull ReplaceContext replaceContext, @NotNull Collection<Usage> usages) {

@@ -1,15 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
+import com.google.gson.JsonSyntaxException
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PermanentInstallationID
 import com.intellij.openapi.diagnostic.Logger
-
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
 import java.io.IOException
-import java.util.ArrayList
+import java.util.*
 
 class LogEventContent(val events: List<LogEvent>) {
   val product = ApplicationInfo.getInstance().build.productCode
@@ -32,6 +32,9 @@ class LogEventContent(val events: List<LogEvent>) {
         if (!events.isEmpty()) {
           return LogEventContent(events)
         }
+      }
+      catch (e: JsonSyntaxException) {
+        LOG.warn(e)
       }
       catch (e: IOException) {
         LOG.warn(e)

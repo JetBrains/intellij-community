@@ -17,7 +17,6 @@
   <project-components>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.JavaSoftKeywordHighlightingPassFactory</implementation-class>
-      <skipForDefaultProject/>
     </component>
   </project-components>
 

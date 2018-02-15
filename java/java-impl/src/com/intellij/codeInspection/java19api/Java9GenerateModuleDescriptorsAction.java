@@ -3,7 +3,9 @@ package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInspection.AbstractDependencyVisitor;
-import com.intellij.lang.java.JavaLanguage;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,8 +21,12 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,6 +36,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -40,19 +47,27 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
+import static com.intellij.ide.fileTemplates.JavaTemplateUtil.INTERNAL_MODULE_INFO_TEMPLATE_NAME;
+import static com.intellij.psi.PsiJavaModule.*;
+
 /**
  * @author Pavel.Dolgov
  */
 public class Java9GenerateModuleDescriptorsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(Java9GenerateModuleDescriptorsAction.class);
 
-  private static final String TITLE = "Generate Module Descriptors";
-  private static final String COMMAND_TITLE = "Creating module-info Files";
+  private static final String TITLE = RefactoringBundle.message("generate.module.descriptors.title");
+  private static final String COMMAND_TITLE = RefactoringBundle.message("generate.module.descriptors.command.title");
 
   @Override
   public void update(AnActionEvent e) {
     Project project = e.getProject();
-    e.getPresentation().setEnabled(project != null && !DumbService.isDumb(project));
+    e.getPresentation().setEnabled(project != null && !DumbService.isDumb(project) && isModularJdkAvailable());
+  }
+
+  private static boolean isModularJdkAvailable() {
+    return Arrays.stream(ProjectJdkTable.getInstance().getAllJdks())
+                 .anyMatch(sdk -> JavaSdkUtil.isJdkAtLeast(sdk, JavaSdkVersion.JDK_1_9));
   }
 
   @Override
@@ -62,10 +77,8 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     CompilerManager compilerManager = CompilerManager.getInstance(project);
     CompileScope scope = compilerManager.createProjectCompileScope(project);
     if (!compilerManager.isUpToDate(scope)) {
-      int result = Messages.showYesNoCancelDialog(project,
-                                                  "The project needs to be built for better accuracy of dependencies calculation. \n" +
-                                                  "Start the build before generating module-info descriptors?",
-                                                  TITLE, null);
+      int result = Messages.showYesNoCancelDialog(
+        project, RefactoringBundle.message("generate.module.descriptors.rebuild.message"), TITLE, null);
       if (result == Messages.CANCEL) {
         return;
       }
@@ -82,25 +95,30 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
   }
 
   private static void generate(Project project) {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      THashMap<Module, List<File>> classFiles = new THashMap<>();
-      int totalFiles = collectClassFiles(project, classFiles);
-      if (totalFiles != 0) {
-        new DescriptorsGenerator(project).generate(classFiles, totalFiles);
-      }
-    }, TITLE, true, project);
+    ProgressManager.getInstance().run(
+      new Task.Backgroundable(project, TITLE, true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          THashMap<Module, List<File>> classFiles = new THashMap<>();
+          int totalFiles = collectClassFiles(project, classFiles);
+          if (totalFiles != 0) {
+            new DescriptorsGenerator(project).generate(classFiles, totalFiles);
+          }
+        }
+      });
   }
 
   private static int collectClassFiles(@NotNull Project project, @NotNull Map<Module, List<File>> classFiles) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     indicator.setIndeterminate(true);
-    indicator.setText("Scanning Compiler Output");
+    indicator.setText(RefactoringBundle.message("generate.module.descriptors.scanning.message"));
 
     Module[] modules = StreamEx.of(ModuleManager.getInstance(project).getModules())
                                .filter(module -> mayContainModuleInfo(module))
                                .toArray(Module.EMPTY_ARRAY);
     if (modules.length == 0) {
-      CommonRefactoringUtil.showErrorHint(project, null, "Found no modules which may contain module-info", TITLE, null);
+      CommonRefactoringUtil.showErrorHint(
+        project, null, RefactoringBundle.message("generate.module.descriptors.no.suitable.modules.message"), TITLE, null);
       return 0;
     }
 
@@ -117,8 +135,8 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       totalFiles += moduleClasses.size();
     }
     if (totalFiles == 0) {
-      CommonRefactoringUtil
-        .showErrorHint(project, null, "Couldn't generate module descriptors because the project hasn't been built yet", TITLE, null);
+      CommonRefactoringUtil.showErrorHint(
+        project, null, RefactoringBundle.message("generate.module.descriptors.build.required.message"), TITLE, null);
     }
     return totalFiles;
   }
@@ -194,33 +212,33 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     }
 
     void generate(THashMap<Module, List<File>> classFiles, int totalFiles) {
-      List<GeneratedCode> generatedCode;
+      List<ModuleInfo> moduleInfos;
       try {
-        myProgressTracker.startPhase("Collecting Dependencies", totalFiles);
+        myProgressTracker.startPhase(RefactoringBundle.message("generate.module.descriptors.collecting.message"), totalFiles);
         Map<String, Set<ModuleNode>> packagesDeclaredInModules = collectDependencies(classFiles);
         myProgressTracker.nextPhase();
 
-        myProgressTracker.startPhase("Analysing Dependencies", myModuleNodes.size());
+        myProgressTracker.startPhase(RefactoringBundle.message("generate.module.descriptors.analysing.message"), myModuleNodes.size());
         analyseDependencies(packagesDeclaredInModules);
         myProgressTracker.nextPhase();
 
-        myProgressTracker.startPhase("Preparing Code", myModuleNodes.size());
-        generatedCode = generateCode();
+        myProgressTracker.startPhase(RefactoringBundle.message("generate.module.descriptors.preparing.message"), myModuleNodes.size());
+        moduleInfos = prepareModuleInfos();
         myProgressTracker.nextPhase();
       }
       finally {
         myProgressTracker.dispose();
       }
-      createFilesLater(generatedCode);
+      createFilesLater(moduleInfos);
     }
 
-    private void createFilesLater(List<GeneratedCode> generatedCode) {
+    private void createFilesLater(List<ModuleInfo> moduleInfos) {
       ApplicationManager.getApplication().invokeLater(() -> {
         if (!myProject.isDisposed()) {
           CommandProcessor.getInstance().executeCommand(myProject, () ->
             ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
               COMMAND_TITLE, myProject, null,
-              indicator -> createFiles(myProject, generatedCode, indicator)), COMMAND_TITLE, null);
+              indicator -> createFiles(myProject, moduleInfos, indicator)), COMMAND_TITLE, null);
         }
       });
     }
@@ -233,7 +251,12 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
         Module module = entry.getKey();
 
         ModuleVisitor visitor = new ModuleVisitor(packageNamesCache);
-        for (File file : entry.getValue()) {
+        List<File> files = entry.getValue();
+        if (files.isEmpty()) {
+          LOG.info("Output directory for module " + module.getName() + " doesn't contain .class files");
+          continue;
+        }
+        for (File file : files) {
           visitor.processFile(file);
           myProgressTracker.increment();
         }
@@ -272,7 +295,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
           }
           else {
             if (set.size() != 1) {
-              LOG.debug("Split package " + packageName + " in " + set);
+              LOG.info("Split package " + packageName + " found in " + set);
             }
             moduleNode.getDependencies().addAll(set);
           }
@@ -281,11 +304,11 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       }
     }
 
-    private List<GeneratedCode> generateCode() {
-      List<GeneratedCode> generatedCode = new ArrayList<>();
+    private List<ModuleInfo> prepareModuleInfos() {
+      List<ModuleInfo> moduleInfo = new ArrayList<>();
       for (ModuleNode moduleNode : myModuleNodes) {
         if (moduleNode.getDescriptor() != null) {
-          LOG.debug("Descriptor already exists in " + moduleNode);
+          LOG.info("Module descriptor already exists in " + moduleNode);
           continue;
         }
         for (String packageName : moduleNode.getDeclaredPackages()) {
@@ -294,47 +317,57 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
           }
         }
 
-        StringBuilder text = new StringBuilder();
-        text.append("module ").append(moduleNode.getName()).append(" {");
-        List<ModuleNode> sortedDependencies = moduleNode.getSortedDependencies();
-        List<String> sortedExports = moduleNode.getSortedExports();
-        for (ModuleNode dependencyNode : sortedDependencies) {
-          if (!"java.base".equals(dependencyNode.getName())) {
-            text.append("\n requires ").append(dependencyNode.getName()).append(";");
-          }
-        }
-        if (!sortedDependencies.isEmpty() && !sortedExports.isEmpty()) {
-          text.append('\n');
-        }
-        for (String packageName : sortedExports) {
-          text.append("\n exports ").append(packageName).append(";");
-        }
-        text.append("\n}");
-
         PsiDirectory rootDir = moduleNode.getRootDir();
         if (rootDir != null) {
-          generatedCode.add(new GeneratedCode(rootDir, text.toString()));
+          List<String> dependencies = StreamEx.of(moduleNode.getSortedDependencies())
+                                              .map(ModuleNode::getName)
+                                              .filter(name -> !JAVA_BASE.equals(name))
+                                              .toList();
+
+          List<String> exports = moduleNode.getSortedExports();
+          moduleInfo.add(new ModuleInfo(rootDir, moduleNode.getName(), dependencies, exports));
         }
         else {
-          LOG.debug("Skipped module " + moduleNode);
+          LOG.info("Skipped module " + moduleNode + " because it doesn't have production source root");
         }
         myProgressTracker.increment();
       }
-      return generatedCode;
+      return moduleInfo;
     }
 
-    private static void createFiles(Project project, List<GeneratedCode> generatedCode, ProgressIndicator indicator) {
+    private static void createFiles(Project project, List<ModuleInfo> moduleInfos, ProgressIndicator indicator) {
       indicator.setIndeterminate(false);
       int count = 0;
-      double total = generatedCode.size();
-      PsiFileFactory factory = PsiFileFactory.getInstance(project);
-      for (GeneratedCode code : generatedCode) {
-        ProgressManager.getInstance().executeNonCancelableSection(() -> {
-          PsiFile file = factory.createFileFromText(PsiJavaModule.MODULE_INFO_FILE, JavaLanguage.INSTANCE, code.myText);
-          PsiElement added = code.myRootDir.add(file);
-          CodeStyleManager.getInstance(project).reformat(added);
-        });
+      double total = moduleInfos.size();
+      FileTemplate template = FileTemplateManager.getInstance(project).getInternalTemplate(INTERNAL_MODULE_INFO_TEMPLATE_NAME);
+      for (ModuleInfo moduleInfo : moduleInfos) {
+        ProgressManager.getInstance().executeNonCancelableSection(() -> createFile(template, moduleInfo));
         indicator.setFraction(++count / total);
+      }
+    }
+
+    private static void createFile(FileTemplate template, ModuleInfo moduleInfo) {
+      Project project = moduleInfo.myRootDir.getProject();
+      Properties properties = FileTemplateManager.getInstance(project).getDefaultProperties();
+      FileTemplateUtil.fillDefaultProperties(properties, moduleInfo.myRootDir);
+      properties.setProperty(FileTemplate.ATTRIBUTE_NAME, MODULE_INFO_CLASS);
+      try {
+        PsiJavaFile moduleInfoFile =
+          (PsiJavaFile)FileTemplateUtil.createFromTemplate(template, MODULE_INFO_FILE, properties, moduleInfo.myRootDir);
+        PsiJavaModule javaModule = moduleInfoFile.getModuleDeclaration();
+        LOG.assertTrue(javaModule != null, "module-info file should contain module declaration");
+
+        javaModule.setName(moduleInfo.myName);
+        for (String export : moduleInfo.myExports) {
+          PsiUtil.addModuleStatement(javaModule, PsiKeyword.EXPORTS + ' ' + export);
+        }
+        for (String dependency : moduleInfo.myRequires) {
+          PsiUtil.addModuleStatement(javaModule, PsiKeyword.REQUIRES + ' ' + dependency);
+        }
+        CodeStyleManager.getInstance(project).reformat(moduleInfoFile);
+      }
+      catch (Exception e) {
+        LOG.info("Failed to create module-info.java in " + moduleInfo.myRootDir.getVirtualFile().getPath() + ": " + e.getMessage());
       }
     }
 
@@ -530,13 +563,20 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     }
   }
 
-  private static class GeneratedCode {
+  private static class ModuleInfo {
     final PsiDirectory myRootDir;
-    final String myText;
+    final String myName;
+    final List<String> myRequires;
+    final List<String> myExports;
 
-    private GeneratedCode(@NotNull PsiDirectory rootDir, @NotNull String text) {
+    private ModuleInfo(@NotNull PsiDirectory rootDir,
+                       @NotNull String name,
+                       @NotNull List<String> requires,
+                       @NotNull List<String> exports) {
       myRootDir = rootDir;
-      myText = text;
+      myName = name;
+      myRequires = requires;
+      myExports = exports;
     }
   }
 }

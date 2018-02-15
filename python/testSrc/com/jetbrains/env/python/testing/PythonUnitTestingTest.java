@@ -32,7 +32,6 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
-import com.jetbrains.env.Staging;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelper;
@@ -41,7 +40,10 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import com.jetbrains.python.sdk.InvalidSdkException;
-import com.jetbrains.python.testing.*;
+import com.jetbrains.python.testing.ConfigurationTarget;
+import com.jetbrains.python.testing.PyUnitTestConfiguration;
+import com.jetbrains.python.testing.PyUnitTestFactory;
+import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
@@ -175,23 +177,23 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   @Test(expected = RuntimeConfigurationWarning.class)
   public void testValidation() throws Throwable {
 
+    runPythonTestWithException(
+      new CreateConfigurationTestTask.PyConfigurationValidationTask<PyUnitTestConfiguration>() {
+        @NotNull
+        @Override
+        protected PyUnitTestFactory createFactory() {
+          return PyUnitTestFactory.INSTANCE;
+        }
 
-    new CreateConfigurationTestTask.PyConfigurationValidationTask<PyUnitTestConfiguration>() {
-      @NotNull
-      @Override
-      protected PyUnitTestFactory createFactory() {
-        return PyUnitTestFactory.INSTANCE;
-      }
-
-      @Override
-      protected void validateConfiguration() {
-        final PyUnitTestConfiguration configuration = getConfiguration();
-        configuration.setPattern("foo");
-        configuration.getTarget().setTargetType(PyRunTargetVariant.PATH);
-        configuration.getTarget().setTarget("foo.py");
-        configuration.checkConfiguration();
-      }
-    }.fetchException(this::runPythonTest);
+        @Override
+        protected void validateConfiguration() {
+          final PyUnitTestConfiguration configuration = getConfiguration();
+          configuration.setPattern("foo");
+          configuration.getTarget().setTargetType(PyRunTargetVariant.PATH);
+          configuration.getTarget().setTarget("foo.py");
+          configuration.checkConfiguration();
+        }
+      });
   }
 
   /**
@@ -260,7 +262,6 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
 
   // Ensure failed and error subtests work
   @Test
-  @Staging //Fails on TC from time to time, investigate
   @EnvTestTagsRequired(tags = "python3")
   public void testSubTestError() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/subtestError", "test_test.py") {
@@ -276,12 +277,13 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
-        assertEquals("subtest error reported as success", "Test tree:\n" +
-                                                          "[root]\n" +
-                                                          ".test_test\n" +
-                                                          "..TestThis\n" +
-                                                          "...test_this\n" +
-                                                          "....[test](-)\n", runner.getFormattedTestTree());
+        final String formattedTestTree = runner.getFormattedTestTree();
+        assertEquals("Bad tree:" + formattedTestTree, "Test tree:\n" +
+                                                      "[root]\n" +
+                                                      ".test_test\n" +
+                                                      "..TestThis\n" +
+                                                      "...test_this\n" +
+                                                      "....[test](-)\n", formattedTestTree);
       }
     });
   }
@@ -560,13 +562,14 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                       "....(i=7)(+)\n" +
                                       "....(i=8)(-)\n" +
                                       "....(i=9)(+)\n";
-        Assert.assertEquals("", expectedResult, runner.getFormattedTestTree());
+        final String tree = runner.getFormattedTestTree();
+        Assert.assertEquals("Bad tree:" + tree, expectedResult, tree);
       }
     });
   }
 
   @EnvTestTagsRequired(tags = "python3") // No subtest in py2
-  @Staging // Flaky
+
   @Test
   public void testSubtestSkipped() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/", "test_skipped_subtest.py", 1) {

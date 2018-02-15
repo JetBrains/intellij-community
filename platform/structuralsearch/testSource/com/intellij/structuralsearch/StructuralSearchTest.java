@@ -2345,6 +2345,11 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       fail("malformed pattern warning expected");
     } catch (MalformedPatternException ignored) {}
 
+    findMatchesCount(source, "'_ReturnType '_Method*('_ParameterType '_Parameter);");
+  }
+
+  public void testInvalidPatternWarnings() {
+    final String source = "{}";
     try {
       findMatchesCount(source, "import java.util.ArrayList;");
       fail("malformed pattern warning expected");
@@ -2361,11 +2366,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     } catch (MalformedPatternException ignored) {}
 
     try {
-      findMatchesCount(s4, "0x100000000");
+      findMatchesCount(source, "0x100000000");
       fail("malformed pattern warning expected");
     } catch (MalformedPatternException ignored) {}
 
-    findMatchesCount(source, "'_ReturnType '_Method*('_ParameterType '_Parameter);");
+    try {
+      findMatchesCount(source, "assert '_C;\n" +
+                               "System.out.println(");
+      fail("malformed pattern warning expected");
+    } catch (MalformedPatternException ignored) {}
   }
 
   public void testFindInnerClass() {

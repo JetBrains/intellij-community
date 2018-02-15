@@ -247,7 +247,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
   @Override
-  public final int getChildRole(final ASTNode child) {
+  public final int getChildRole(@NotNull final ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     final IElementType i = child.getElementType();
     if (i == JavaElementType.REFERENCE_PARAMETER_LIST) {

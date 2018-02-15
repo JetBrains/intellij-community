@@ -36,9 +36,8 @@ public class DeleteRange extends ActionOnRange {
   public void performCommand(@NotNull Environment env) {
     PsiFile psiFile = getFile();
 
-    int fileLength = psiFile.getTextLength();
-    int startOffset = env.generateValue(Generator.integers(0, fileLength), null);
-    int endOffset = Math.min(fileLength, startOffset + env.generateValue(Generator.integers(IntDistribution.geometric(10)), null));
+    int startOffset = generatePsiOffset(env, null);
+    int endOffset = Math.min(psiFile.getTextLength(), startOffset + env.generateValue(Generator.integers(IntDistribution.geometric(10)).noShrink(), null));
     PsiElement start = psiFile.findElementAt(startOffset);
     PsiElement end = psiFile.findElementAt(endOffset);
     if (start == null || end == null) return;

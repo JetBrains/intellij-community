@@ -823,7 +823,7 @@ public class JavaDocInfoGenerator {
     return null;
   }
 
-  public static void appendExpressionValue(StringBuilder buffer, PsiExpression initializer, String label) {
+  public static void appendExpressionValue(StringBuilder buffer, PsiExpression initializer) {
     String text = initializer.getText().trim();
     int index1 = text.indexOf('\n');
     if (index1 < 0) index1 = text.length();
@@ -832,7 +832,7 @@ public class JavaDocInfoGenerator {
     int index = Math.min(index1, index2);
     boolean trunc = index < text.length();
     text = text.substring(0, index);
-    buffer.append(label);
+    buffer.append(" = ");
     buffer.append(StringUtil.escapeXml(text));
     if (trunc) {
       buffer.append("...");
@@ -862,8 +862,9 @@ public class JavaDocInfoGenerator {
       }
       PsiExpression constantInitializer = calcInitializerExpression(variable);
       if (constantInitializer != null) {
-        buffer.append("\n");
-        appendExpressionValue(buffer, constantInitializer, CodeInsightBundle.message("javadoc.resolved.value"));
+        buffer.append(DocumentationMarkup.GRAYED_START);
+        appendExpressionValue(buffer, constantInitializer);
+        buffer.append(DocumentationMarkup.GRAYED_END);
       }
     }
   }

@@ -191,7 +191,9 @@ public class JavaDocCompletionContributor extends CompletionContributor {
         suggestSimilarParameterDescriptions(result, position, param);
       }
 
-      suggestLinkWrappingVariants(parameters, result.withPrefixMatcher(CompletionUtil.findJavaIdentifierPrefix(parameters)), position);
+      if (!(position.getParent() instanceof PsiInlineDocTag)) {
+        suggestLinkWrappingVariants(parameters, result.withPrefixMatcher(CompletionUtil.findJavaIdentifierPrefix(parameters)), position);
+      }
 
       suggestCodeLiterals(result, position);
 

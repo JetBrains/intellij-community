@@ -17,12 +17,12 @@ package com.intellij.internal.statistic.utils;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
-import com.intellij.internal.statistic.service.old.OldConfigurableStatisticsService;
 import com.intellij.internal.statistic.connect.StatisticsService;
+import com.intellij.internal.statistic.eventLog.EventLogStatisticsService;
 import com.intellij.internal.statistic.persistence.SentUsagesPersistence;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.service.fus.FUStatisticsService;
-import com.intellij.openapi.util.KeyedExtensionCollector;
+import com.intellij.internal.statistic.service.old.OldConfigurableStatisticsService;
 import com.intellij.util.Time;
 
 public class StatisticsUploadAssistant {
@@ -43,6 +43,11 @@ public class StatisticsUploadAssistant {
     final long timeDelta = System.currentTimeMillis() - settings.getLastTimeSent();
 
     return Math.abs(timeDelta) > settings.getPeriod().getMillis();
+  }
+
+  public static boolean isTimeToSendEventLog() {
+    final long timeDelta = System.currentTimeMillis() - UsageStatisticsPersistenceComponent.getInstance().getEventLogLastTimeSent();
+    return Math.abs(timeDelta) > UsageStatisticsPersistenceComponent.getInstance().getPeriod().getMillis();
   }
 
   public static boolean isSendAllowed() {
@@ -66,4 +71,7 @@ public class StatisticsUploadAssistant {
     return new FUStatisticsService();
   }
 
+  public static StatisticsService getEventLogStatisticsService() {
+    return new EventLogStatisticsService();
+  }
 }

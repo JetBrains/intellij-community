@@ -25,7 +25,7 @@ public class InsertLineComment extends ActionOnRange {
   public void performCommand(@NotNull Environment env) {
     PsiDocumentManager.getInstance(getProject()).commitDocument(getDocument());
     
-    int randomOffset = env.generateValue(Generator.integers(0, getFile().getTextLength()), null);
+    int randomOffset = generatePsiOffset(env, null);
     PsiElement leaf = getFile().findElementAt(randomOffset);
     TextRange leafRange = leaf != null ? leaf.getTextRange() : null;
     int insertOffset = leafRange != null ? leafRange.getEndOffset() : 0;

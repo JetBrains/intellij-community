@@ -32,21 +32,29 @@ import javax.swing.KeyStroke
 import javax.swing.RootPaneContainer
 import javax.swing.SwingUtilities
 
-/**
- * @author Sergey Karashevich
- */
 object EventDispatcher {
 
   private val LOG = Logger.getInstance("#${EventDispatcher::class.qualifiedName}")
   private val MAC_NATIVE_ACTIONS = arrayOf("ShowSettings", "EditorEscape")
 
   fun processMouseEvent(event: MouseEvent) {
-    if (event.id != MOUSE_PRESSED) return
+    if (isMainFrame(event.component)) return
+    if (event.id == MOUSE_PRESSED) processClick(event)
+  }
 
-    val eventComponent: Component? = event.component
-    if (isMainFrame(eventComponent)) return
+  private fun processClick(event: MouseEvent){
+    val actualComponent: Component? = findComponent(event)
+    if (actualComponent != null) {
+      LOG.info("Delegate click from component:${actualComponent}")
+      val convertedPoint = Point(event.locationOnScreen.x - actualComponent.locationOnScreen.x,
+                                 event.locationOnScreen.y - actualComponent.locationOnScreen.y)
+      ScriptGenerator.clickComponent(actualComponent, convertedPoint, event)
+    }
+  }
 
+  private fun findComponent(event: MouseEvent): Component? {
     val mousePoint = event.point
+    val eventComponent = event.component
     var actualComponent: Component? = null
     when (eventComponent) {
       is RootPaneContainer -> {
@@ -57,13 +65,7 @@ object EventDispatcher {
       is Container -> actualComponent = eventComponent.findComponentAt(mousePoint)
     }
     if (actualComponent == null) actualComponent = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
-
-    if (actualComponent != null) {
-      LOG.info("Delegate click from component:${actualComponent}")
-      val convertedPoint = Point(event.locationOnScreen.x - actualComponent.locationOnScreen.x,
-                                 event.locationOnScreen.y - actualComponent.locationOnScreen.y)
-      ScriptGenerator.clickComponent(actualComponent, convertedPoint, event)
-    }
+    return actualComponent
   }
 
   fun processKeyBoardEvent(keyEvent: KeyEvent) {

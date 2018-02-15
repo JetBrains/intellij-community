@@ -227,7 +227,6 @@ public class JBUI {
   {
     @Override
     protected void onInitialized() {
-      // [tav] todo: the logger might not have been initialized yet
       LOG.info("System scale factor: " + this + " (" + (UIUtil.isJreHiDPIEnabled() ? "JRE" : "IDE") + "-managed HiDPI)");
     }
   };

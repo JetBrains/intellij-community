@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.util.containers.ContainerUtil.newTroveSet;
@@ -151,17 +152,16 @@ public abstract class SyntheticLibrary {
         if (o == null || getClass() != o.getClass()) return false;
         SyntheticLibrary library = (SyntheticLibrary)o;
         if (!sourceRoots.equals(library.getSourceRoots())) return false;
+        if (!binaryRoots.equals(library.getBinaryRoots())) return false;
         if (!excludedRoots.equals(library.getExcludedRoots())) return false;
-        if (excludeCondition != null ? !excludeCondition.equals(library.getExcludeFileCondition())
-                                     : library.getExcludeFileCondition() != null) {
-          return false;
-        }
+        if (!Objects.equals(excludeCondition, library.getExcludeFileCondition())) return false;
         return true;
       }
 
       @Override
       public int hashCode() {
         int result = sourceRoots.hashCode();
+        result = 31 * result + binaryRoots.hashCode();
         result = 31 * result + excludedRoots.hashCode();
         result = 31 * result + (excludeCondition != null ? excludeCondition.hashCode() : 0);
         return result;

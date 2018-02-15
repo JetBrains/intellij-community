@@ -634,7 +634,7 @@ public class JDParser {
         String line = list.get(i);
         if (line.isEmpty() && !mySettings.JD_KEEP_EMPTY_LINES) continue;
         if (i != 0) sb.append(continuationPrefix);
-        if (line.isEmpty() && mySettings.JD_P_AT_EMPTY_LINES && !insidePreTag) {
+        if (line.isEmpty() && mySettings.JD_P_AT_EMPTY_LINES && !insidePreTag && !isFollowedByTagLine(list, i)) {
           sb.append(P_START_TAG);
         }
         else {
@@ -653,6 +653,16 @@ public class JDParser {
     }
 
     return sb;
+  }
+
+  private static boolean isFollowedByTagLine(List<String> lines, int currLine) {
+    for (int i = currLine + 1; i < lines.size(); i ++) {
+      String line = lines.get(i);
+      if (!line.isEmpty()) {
+        return startsWithTag(line);
+      }
+    }
+    return false;
   }
 
   private static class CommentInfo {

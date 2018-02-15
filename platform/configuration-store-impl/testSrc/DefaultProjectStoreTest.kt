@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.refreshVfs
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.util.SmartList
 import com.intellij.util.io.delete
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.isEmpty
@@ -105,6 +106,11 @@ internal class DefaultProjectStoreTest {
       }
     }
     finally {
+      // clear state
+      defaultTestComponent.loadState(Element("empty"))
+      runInEdtAndWait {
+        stateStore.save(SmartList())
+      }
       stateStore.removeComponent(TEST_COMPONENT_NAME)
     }
   }

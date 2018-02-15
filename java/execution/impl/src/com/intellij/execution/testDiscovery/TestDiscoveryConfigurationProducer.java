@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -52,7 +38,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
   protected boolean setupConfigurationFromContext(final JavaTestConfigurationBase configuration,
                                                   ConfigurationContext configurationContext,
                                                   Ref<PsiElement> ref) {
-    if (!Registry.is("testDiscovery.enabled")) {
+    if (!Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY)) {
       return false;
     }
     final Location contextLocation = configurationContext.getLocation();
@@ -65,9 +51,8 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
       try {
         final Project project = configuration.getProject();
         final TestDiscoveryIndex testDiscoveryIndex = TestDiscoveryIndex.getInstance(project);
-        final Collection<String> testsByMethodName = testDiscoveryIndex.getTestsByMethodName(position.first, position.second);
-        if (testsByMethodName == null ||
-            ContainerUtil.filter(testsByMethodName, s -> s.startsWith(configuration.getFrameworkPrefix())).isEmpty()) {
+        final Collection<String> testsByMethodName = testDiscoveryIndex.getTestsByMethodName(position.first, position.second, configuration.getFrameworkPrefix());
+        if (ContainerUtil.isEmpty(testsByMethodName)) {
           return false;
         }
         setPosition(configuration, new PsiLocation<>(sourceMethod));

@@ -56,7 +56,7 @@ class RemoveListRange extends ShrinkStep {
     }
 
     int newEnd = start == 1 ? node.children.size() : start;
-    if (newEnd == lastSuccessfulRemove) return node.shrinkChild(1);
+    if (newEnd == lastSuccessfulRemove) return node.shrinkChild(node.children.size() - 1);
     return new RemoveListRange(node, lastSuccessfulRemove, newEnd - 1, 1);
   }
 

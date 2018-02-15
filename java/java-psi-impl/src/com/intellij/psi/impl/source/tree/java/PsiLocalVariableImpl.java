@@ -262,7 +262,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == MODIFIER_LIST) {

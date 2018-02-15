@@ -463,10 +463,6 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     return myComponent.getHighlighted();
   }
 
-  public void resetHighlighted() {
-    myComponent.setHighlightedParameter(null);
-  }
-
   public void setPreservedOnHintHidden(boolean value) {
     myKeepOnHintHidden = value;
   }

@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
@@ -34,6 +35,7 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.content.Content;
@@ -55,6 +57,7 @@ import com.intellij.util.containers.Queue;
 import com.intellij.util.enumeration.EmptyEnumeration;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.DialogUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -348,7 +351,9 @@ public class UsageViewImpl implements UsageView {
 
       @Override
       public void onDone(boolean isExcludeAction) {
-
+         if (myRootPanel.hasNextOccurence()) {
+           myRootPanel.goNextOccurence();
+         }
       }
     };
   }
@@ -515,14 +520,13 @@ public class UsageViewImpl implements UsageView {
     // since the UsageViewTreeCellRenderer ignores invisible nodes (outside the viewport), their preferred size is incorrect
     // and we need to recalculate them when the node scrolled into the visible rectangle
     treePane.getViewport().addChangeListener(__ -> clearRendererCache());
-    myPreviewSplitter = new Splitter(false, 0.5f, 0.1f, 0.9f);
+    myPreviewSplitter = new OnePixelSplitter(false, 0.5f, 0.1f, 0.9f);
     myPreviewSplitter.setFirstComponent(treePane);
 
     myCentralPanel.add(myPreviewSplitter, BorderLayout.CENTER);
 
     if (isPreviewUsages()) {
       myPreviewSplitter.setProportion(getUsageViewSettings().getPreviewUsagesSplitterProportion());
-      treePane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.RIGHT);
       final JBTabbedPane tabbedPane = new JBTabbedPane(SwingConstants.BOTTOM){
         @NotNull
         @Override
@@ -555,7 +559,6 @@ public class UsageViewImpl implements UsageView {
           tabSelected(selectedProvider);
         }
       });
-      tabbedPane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
       JBPanelWithEmptyText panel = new JBPanelWithEmptyText(new BorderLayout());
       panel.add(tabbedPane, BorderLayout.CENTER);
       myPreviewSplitter.setSecondComponent(panel);
@@ -1867,7 +1870,7 @@ public class UsageViewImpl implements UsageView {
 
   private final class ButtonPanel extends JPanel {
     private ButtonPanel() {
-      setLayout(new FlowLayout(FlowLayout.LEFT, 8, 0));
+      setLayout(new FlowLayout(FlowLayout.LEFT, 6, 0));
       getProject().getMessageBus().connect(UsageViewImpl.this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
         @Override
         public void enteredDumbMode() {
@@ -1889,6 +1892,12 @@ public class UsageViewImpl implements UsageView {
 
       if (getBorder() == null) setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
       update();
+      Object o = action.getValue(Action.ACCELERATOR_KEY);
+      if (o instanceof KeyStroke) {
+        JBLabel label = new JBLabel(KeymapUtil.getKeystrokeText((KeyStroke)o));
+        label.setFont(JBUI.Fonts.smallFont());
+        add(JBUI.Borders.emptyLeft(-1).wrap(label));
+      }
       invalidate();
       if (getParent() != null) {
         getParent().validate();

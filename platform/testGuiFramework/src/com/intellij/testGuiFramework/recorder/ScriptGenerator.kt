@@ -74,7 +74,8 @@ object ScriptGenerator {
       addToScript("//invokeAction(\"$actionId\")")
       return
     }
-    addToScript("""invokeMainMenu("$actionId")""")
+    val normalizedActionId = actionId.replace("\$","\\$")
+    addToScript("""invokeMainMenu("$normalizedActionId")""")
   }
 
   fun addToScript(code: String) {

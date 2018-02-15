@@ -109,7 +109,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <javaModuleSystem implementation="com.intellij.psi.impl.JavaPlatformModuleSystem"/>
     <java.error.fix errorCode="lambda.variable.must.be.final" implementationClass="com.intellij.codeInspection.streamMigration.SimplifyForEachInspection$ForEachNonFinalFix"/>
-    <lang.jvm.actions.jvmElementActionsFactory implementation="com.intellij.codeInsight.intention.impl.UastJvmElementFactory"/>
     <lang.jvm.actions.jvmElementActionsFactory implementation="com.intellij.codeInsight.intention.impl.JavaElementActionsFactory"/>
     <longLineInspectionPolicy implementation="com.intellij.codeInspection.JavaLongLineInspectionPolicy"/>
     <projectService serviceImplementation="com.intellij.jarRepository.RemoteRepositoriesConfiguration"/>
@@ -180,7 +179,6 @@
     <inlineActionHandler implementation="com.intellij.refactoring.inlineSuperClass.InlineSuperClassRefactoringHandler"/>
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlineToAnonymousClassHandler"/>
     <inlineActionHandler implementation="com.intellij.refactoring.inline.InlineParameterHandler"/>
-    <projectViewPane implementation="com.intellij.ide.projectView.impl.PackageViewPane"/>
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.JavaRainbowVisitor"/>
     <problemHighlightFilter implementation="com.intellij.codeInsight.daemon.JavaProblemHighlightFilter"/>
     <bundledKeymapProvider implementation="com.intellij.openapi.keymap.JBuilderKeymapProvider"/>

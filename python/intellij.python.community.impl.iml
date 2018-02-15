@@ -36,5 +36,6 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="XStream" level="project" />
   </component>
 </module>
