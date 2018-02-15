@@ -20,5 +20,6 @@
                         overrides="true"/>
 
     <annotator language="Python" implementationClass="com.jetbrains.python.PyCharmProfessionalAdvertiser"/>
+    <projectService serviceImplementation="com.jetbrains.python.PyCharmProfessionalAdvertiserSettings"/>
   </extensions>
 </idea-plugin>
