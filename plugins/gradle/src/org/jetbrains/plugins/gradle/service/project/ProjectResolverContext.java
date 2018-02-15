@@ -78,4 +78,6 @@ public interface ProjectResolverContext extends UserDataHolderEx {
   boolean hasModulesWithModel(@NotNull Class modelClazz);
 
   void checkCancelled() throws ProcessCanceledException;
+
+  String getProjectGradleVersion();
 }

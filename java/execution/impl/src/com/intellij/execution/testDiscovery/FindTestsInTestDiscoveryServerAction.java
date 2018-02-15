@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.find.FindUtil;
 import com.intellij.find.actions.CompositeActiveComponent;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
@@ -15,13 +16,13 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -41,6 +42,7 @@ import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
@@ -82,6 +84,7 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
     String fqn = c.getQualifiedName();
     String methodName = method.getName();
     String methodFqn = fqn + "." + methodName;
+    String methodPresentationName = c.getName() + "." + methodName;
 
     String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/tests/by-method/" + methodFqn;
 
@@ -89,8 +92,9 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
     final JBList<PsiElement> list = new JBList<>(model);
     //list.setFixedCellHeight();
     HintUpdateSupply.installSimpleHintUpdateSupply(list);
+    list.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-    String initTitle = "Tests for " + methodName;
+    String initTitle = "Tests for " + methodPresentationName;
     DefaultPsiElementCellRenderer renderer = new DefaultPsiElementCellRenderer();
 
     AnAction run = ActionManager.getInstance().getAction(DefaultRunExecutor.getRunExecutorInstance().getContextActionId());
@@ -98,9 +102,16 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
     InplaceButton runButton = new InplaceButton(new IconButton("Run", AllIcons.Actions.Execute), __ ->
       run.actionPerformed(AnActionEvent.createFromAnAction(run, null, ActionPlaces.UNKNOWN, e.getDataContext())));
 
+    Ref<JBPopup> ref = new Ref<>();
     InplaceButton pinButton = new InplaceButton(
       new IconButton("Pin", AllIcons.General.AutohideOff, AllIcons.General.AutohideOffPressed, AllIcons.General.AutohideOffInactive),
       __ -> {
+        PsiElement[] elements = model.getItems().toArray(PsiElement.EMPTY_ARRAY);
+        FindUtil.showInUsageView(null, elements, initTitle, project);
+        JBPopup pinPopup = ref.get();
+        if (pinPopup != null) {
+          pinPopup.cancel();
+        }
       });
 
     CompositeActiveComponent component = new CompositeActiveComponent(runButton, pinButton);
@@ -112,13 +123,14 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
         .setResizable(true)
         .setCommandButton(component)
         .setItemChoosenCallback(() -> PsiNavigateUtil.navigate(list.getSelectedValue()))
-        .setMinSize(new JBDimension(300, 300));
+        .setMinSize(new JBDimension(500, 300));
 
     renderer.installSpeedSearch(builder, true);
 
     JBPopup popup = builder.createPopup();
+    ref.set(popup);
 
-    list.setEmptyText("No test captured for " + methodName);
+    list.setEmptyText("No tests captured for " + methodPresentationName);
     list.setPaintBusy(true);
 
     popup.showInBestPositionFor(editor);
@@ -130,7 +142,7 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
     ListBackgroundUpdaterTask loadTestsTask = new ListBackgroundUpdaterTask(project, "Load tests", renderer.getComparator()) {
       @Override
       public String getCaption(int size) {
-        return "Found " + size + " Tests for " + methodName;
+        return "Found " + size + " Tests for " + methodPresentationName;
       }
     };
 
@@ -149,7 +161,7 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
               String classFqn = StringUtil.substringBefore(s, "-");
               String testMethodName = StringUtil.substringAfter(s, "-");
 
-              PsiMethod psiMethod = ApplicationManager.getApplication().runReadAction((Computable<PsiMethod>)() -> {
+              PsiMethod psiMethod = ReadAction.compute(() -> {
                 PsiClass cc = classFqn == null ? null : javaFacade.findClass(classFqn, scope);
                 return cc == null ? null : ArrayUtil.getFirstElement(cc.findMethodsByName(testMethodName, false));
               });

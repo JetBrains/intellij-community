@@ -15,8 +15,11 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Paths
 import java.util.*
+import java.util.concurrent.Executors
 
 class FeatureUsageFileEventLogger : FeatureUsageEventLogger {
+  private val myLogExecutor = Executors.newSingleThreadExecutor()
+
   private val sessionId = UUID.randomUUID().toString().shortedUUID()
   private val bucket = "-1"
   private val recorderVersion = "1"
@@ -63,7 +66,16 @@ class FeatureUsageFileEventLogger : FeatureUsageEventLogger {
   }
 
   override fun log(recorderId: String, action: String) {
-    log(eventLogger, LogEvent(sessionId, bucket, recorderId, recorderVersion, action))
+    myLogExecutor.execute(Runnable {
+      log(eventLogger, LogEvent(sessionId, bucket, recorderId, recorderVersion, action))
+    })
+  }
+
+  private fun dispose(logger: Logger) {
+    myLogExecutor.execute(Runnable {
+      log(logger, LogEvent(sessionId, bucket, "feature-usage-stats", recorderVersion, "ideaapp.closed"))
+      logLastEvent(logger)
+    })
   }
 
   private fun log(logger: Logger, event: LogEvent) {
@@ -76,11 +88,6 @@ class FeatureUsageFileEventLogger : FeatureUsageEventLogger {
       lastEvent = event
       lastEventTime = event.time
     }
-  }
-
-  private fun dispose(logger: Logger) {
-    log(logger, LogEvent(sessionId, bucket, "feature-usage-stats", recorderVersion, "ideaapp.closed"))
-    logLastEvent(logger)
   }
 
   private fun logLastEvent(logger: Logger) {

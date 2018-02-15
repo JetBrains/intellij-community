@@ -273,7 +273,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
           }
           return ObjectUtils.chooseNotNull(psi.getText(), defaultPresentation);
         }, "\n");
-        
+
         String htmlText = "<body>\n" + text + "\n</body>";
         return new TextTransferable(XmlStringUtil.wrapInHtml(htmlText), text);
       }
@@ -489,7 +489,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   public AsyncPromise<Void> rebuildAndUpdate() {
     AsyncPromise<Void> result = new AsyncPromise<>();
     if (!myUseATM) {
-      rebuild(false).notify(result);
+      rebuild(false).processed(result);
       return result;
     }
     TreeVisitor visitor = path -> {
@@ -587,7 +587,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         TreePath path = myTree.getClosestPathForLocation(e.getX(), e.getY());
         Rectangle bounds = path == null ? null : myTree.getPathBounds(path);
-        if (bounds == null || 
+        if (bounds == null ||
             bounds.x > e.getX() ||
             bounds.y > e.getY() || bounds.y + bounds.height < e.getY()) return false;
         navigateSelectedElement();
@@ -879,7 +879,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       }
       else {
         myTreeStructure.rebuildTree();
-        myStructureTreeModel.invalidate(() -> rebuildAndSelect(true, selection).notify(result));
+        myStructureTreeModel.invalidate(() -> rebuildAndSelect(true, selection).processed(result));
       }
     });
     return result;

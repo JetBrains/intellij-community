@@ -38,6 +38,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public class TestDiscoveryExtension extends RunConfigurationExtension {
+  public static final String TEST_DISCOVERY_REGISTRY_KEY = "testDiscovery.enabled";
+
   private static final boolean USE_SOCKET = SystemProperties.getBooleanProperty("test.discovery.use.socket", false);
   private static final Key<TestDiscoveryDataSocketListener> SOCKET_LISTENER_KEY = Key.create("test.discovery.socket.data.listener");
 
@@ -120,7 +122,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
 
   @Override
   protected boolean isApplicableFor(@NotNull final RunConfigurationBase configuration) {
-    return configuration instanceof JavaTestConfigurationBase && Registry.is("testDiscovery.enabled");
+    return configuration instanceof JavaTestConfigurationBase && Registry.is(TEST_DISCOVERY_REGISTRY_KEY);
   }
 
   @NotNull

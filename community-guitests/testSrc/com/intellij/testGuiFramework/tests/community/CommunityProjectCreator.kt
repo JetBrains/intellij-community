@@ -20,6 +20,7 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
         actionLink("Create New Project").click()
         GuiTestUtilKt.waitProgressDialogUntilGone(robot(), "Loading Templates")
         dialog("New Project") {
+          jList("Java").clickItem("Java")
           button("Next").click()
           checkbox("Create project from template").click()
           jList("Command Line App").clickItem("Command Line App")
@@ -29,6 +30,7 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
         }
       }
       ideFrame {
+        waitForStartingIndexing()
         waitForBackgroundTasksToFinish()
         if (needToOpenMainJava) {
           projectView {

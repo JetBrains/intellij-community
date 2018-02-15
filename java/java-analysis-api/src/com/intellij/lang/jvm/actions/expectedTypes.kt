@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.jvm.actions
 
 import com.intellij.lang.jvm.types.JvmType
@@ -9,7 +9,7 @@ fun expectedType(type: JvmType, kind: ExpectedType.Kind = ExpectedType.Kind.EXAC
 
 fun expectedTypes(type: JvmType): ExpectedTypes = listOf(expectedType(type))
 
-private class SimpleExpectedType(
-  override val theType: JvmType,
-  override val theKind: ExpectedType.Kind
-) : ExpectedType
+private class SimpleExpectedType(private val theType: JvmType, private val theKind: ExpectedType.Kind) : ExpectedType {
+  override fun getTheType(): JvmType = theType
+  override fun getTheKind(): ExpectedType.Kind = theKind
+}

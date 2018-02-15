@@ -1,13 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight
 
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.javadoc.DocumentationDelegateProvider
-import com.intellij.codeInsight.lookup.Lookup
-import com.intellij.codeInsight.lookup.LookupElementPresentation
-import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.navigation.CtrlMouseHandler
-import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.JavaDocumentationProvider
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiExpressionList
@@ -15,22 +11,10 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-
 /**
  * @author peter
  */
 class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
-  private static final String STYLE_BLOCK =
-    "    <style type=\"text/css\">" +
-    "        #error {" +
-    "            background-color: #eeeeee;" +
-    "            margin-bottom: 10px;" +
-    "        }" +
-    "        p {" +
-    "            margin: 5px 0;" +
-    "        }" +
-    "    </style>"
-
   void testConstructorDoc() {
     configure """\
       class Foo { Foo() {} Foo(int param) {} }
@@ -228,20 +212,6 @@ class Bar {
       "</html>"
 
     assert actual == expected
-  }
-
-  void "test overload selected by completion"() {
-    myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { System.getPro<caret> } }")
-    def elements = myFixture.completeBasic()
-    ((LookupImpl)myFixture.lookup).finishLookup(Lookup.NORMAL_SELECT_CHAR, 
-                                                elements.find { 
-                                                  LookupElementPresentation p = new LookupElementPresentation();
-                                                  it.renderElement(p)
-                                                  it.lookupString == "getProperty" && p.tailText == "(String key)"})
-    myFixture.checkResult("class C { void m() { System.getProperty(<caret>) } }")
-
-    def actual = JavaExternalDocumentationTest.getDocumentationText(editor)
-    assert actual.contains("<code>null</code> if there is no property with that key")
   }
 
   private void configure(String text) {

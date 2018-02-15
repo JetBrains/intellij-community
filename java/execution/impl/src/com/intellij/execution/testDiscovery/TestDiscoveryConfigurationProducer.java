@@ -38,7 +38,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
   protected boolean setupConfigurationFromContext(final JavaTestConfigurationBase configuration,
                                                   ConfigurationContext configurationContext,
                                                   Ref<PsiElement> ref) {
-    if (!Registry.is("testDiscovery.enabled")) {
+    if (!Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY)) {
       return false;
     }
     final Location contextLocation = configurationContext.getLocation();

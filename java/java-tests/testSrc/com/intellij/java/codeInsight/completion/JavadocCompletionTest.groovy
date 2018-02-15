@@ -672,6 +672,12 @@ class Foo {
     myFixture.completeBasic()
     myFixture.checkResult "/** {@code null<caret>} */"
   }
+  
+  void "test no link inside code tag"() {
+    myFixture.configureByText 'a.java', "/** {@code FBG<caret>} */ interface FooBarGoo {}"
+    myFixture.completeBasic()
+    myFixture.checkResult "/** {@code FooBarGoo<caret>} */ interface FooBarGoo {}"
+  }
 
   void "test completing inside qualified name"() {
     myFixture.configureByText 'a.java', "/** @see java.io.<caret> */"

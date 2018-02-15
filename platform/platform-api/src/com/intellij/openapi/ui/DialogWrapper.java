@@ -2015,6 +2015,13 @@ public abstract class DialogWrapper {
     }
   }
 
+  /**
+   * Check if component is in error state validation-wise
+   */
+  protected boolean hasErrors(@NotNull JComponent component) {
+    return myInfo.stream().anyMatch(i -> component.equals(i.component));
+  }
+
   private void setErrorTipText(JComponent component, JLabel label, String text) {
     Insets insets = UIManager.getInsets("Balloon.error.textInsets");
     int oneLineWidth = SwingUtilities2.stringWidth(label, label.getFontMetrics(label.getFont()), text);
