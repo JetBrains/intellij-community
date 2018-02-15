@@ -70,4 +70,23 @@ public class AcceptWordAsCorrectTest extends LightPlatformCodeInsightFixtureTest
 
     assertTrue(instance.isUndoAvailable(editor));
   }
+
+  public void testUndoRedo() {
+    final VirtualFile file = myFixture.configureByText(TEST_TXT, TYPPO).getVirtualFile();
+    final UndoManager instance = UndoManager.getInstance(getProject());
+    ((UndoManagerImpl)instance).dropHistoryInTests(); // to make sure it's empty
+    final SpellCheckerManager manager = SpellCheckerManager.getInstance(getProject());
+
+    assertTrue(manager.hasProblem(TYPPO));
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> manager
+      .acceptWordAsCorrect(TYPPO, file, getProject(), PROJECT), getName(), null);
+    assertFalse(manager.hasProblem(TYPPO));
+
+    instance.undo(FileEditorManager.getInstance(getProject()).getSelectedEditor(file));
+
+    assertTrue(manager.hasProblem(TYPPO));
+
+    instance.redo(FileEditorManager.getInstance(getProject()).getSelectedEditor(file));
+    assertFalse(manager.hasProblem(TYPPO));
+  }
 }
