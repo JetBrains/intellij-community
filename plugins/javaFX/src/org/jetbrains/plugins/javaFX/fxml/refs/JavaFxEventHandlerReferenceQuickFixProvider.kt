@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.QuickFixActionRegistrar
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
-import com.intellij.lang.jvm.types.JvmSubstitutor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiJvmSubstitutor
 import com.intellij.psi.PsiModifier
@@ -41,18 +40,17 @@ class CreateEventHandlerRequest(element: XmlAttributeValue) : CreateMethodReques
   private val myVisibility = getVisibility(myProject)
   private val myPointer = element.createSmartPointer(myProject)
 
-  override val isValid: Boolean get() {
-    val element = myPointer.element
-    return element != null && element.value != null
+  override fun isValid(): Boolean = myPointer.element.let {
+    it != null && it.value != null
   }
 
   private val myElement get() = myPointer.element!!
 
-  override val methodName: String get() = myElement.value!!.substring(1)
+  override fun getMethodName() = myElement.value!!.substring(1)
 
-  override val returnType: ExpectedTypes get() = listOf(expectedType(PsiType.VOID, ExpectedType.Kind.EXACT))
+  override fun getReturnType() = listOf(expectedType(PsiType.VOID, ExpectedType.Kind.EXACT))
 
-  override val parameters: List<ExpectedParameter> get() {
+  override fun getParameters(): List<ExpectedParameter> {
     val eventType = getEventType(myElement)
     val expectedType = expectedType(eventType, ExpectedType.Kind.EXACT)
     val nameInfo = suggestParamName(myProject, eventType)
@@ -60,18 +58,16 @@ class CreateEventHandlerRequest(element: XmlAttributeValue) : CreateMethodReques
     return listOf(parameter)
   }
 
-  override val modifiers: Collection<JvmModifier> get() = setOf(myVisibility)
+  override fun getModifiers() = setOf(myVisibility)
 
-  override val annotations: Collection<AnnotationRequest> get() {
-    return if (myVisibility != JvmModifier.PUBLIC) {
-      listOf(annotationRequest(JavaFxCommonNames.JAVAFX_FXML_ANNOTATION))
-    }
-    else {
-      emptyList()
-    }
+  override fun getAnnotations() = if (myVisibility != JvmModifier.PUBLIC) {
+    listOf(annotationRequest(JavaFxCommonNames.JAVAFX_FXML_ANNOTATION))
+  }
+  else {
+    emptyList()
   }
 
-  override val targetSubstitutor: JvmSubstitutor get() = PsiJvmSubstitutor(myProject, PsiSubstitutor.EMPTY)
+  override fun getTargetSubstitutor() = PsiJvmSubstitutor(myProject, PsiSubstitutor.EMPTY)
 }
 
 private fun getVisibility(project: Project): JvmModifier {
