@@ -7,6 +7,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyEvaluator;
 import org.jetbrains.annotations.NotNull;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +51,18 @@ public class PyEvaluatorTest extends PyTestCase {
   public void testInteger() {
     final int i = byExpression("5", Integer.class);
     assertEquals(5, i);
+  }
+
+  public void testLong() {
+    final long expected = Long.valueOf(Integer.MAX_VALUE) + 1;
+    final long l = byExpression(Long.toString(expected), Long.class);
+    assertEquals(expected, l);
+  }
+
+  public void testBigInteger() {
+    final BigInteger expected = BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE);
+    final BigInteger bigInteger = byExpression(expected.toString(), BigInteger.class);
+    assertEquals(expected, bigInteger);
   }
 
   public void testConcatStrings() {
