@@ -1,16 +1,26 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.lang.jvm.actions
+package com.intellij.lang.jvm.actions;
 
-import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.types.JvmSubstitutor
+import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.lang.jvm.types.JvmSubstitutor;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import kotlin.Pair;
+import org.jetbrains.annotations.NotNull;
 
-interface CreateExecutableRequest : ActionRequest {
+import java.util.Collection;
+import java.util.List;
 
-  val modifiers: Collection<JvmModifier>
+public interface CreateExecutableRequest extends ActionRequest {
 
-  val annotations: Collection<AnnotationRequest>
+  @NotNull
+  Collection<JvmModifier> getModifiers();
 
-  val targetSubstitutor: JvmSubstitutor
+  @NotNull
+  Collection<AnnotationRequest> getAnnotations();
 
-  val parameters: ExpectedParameters
+  @NotNull
+  JvmSubstitutor getTargetSubstitutor();
+
+  @NotNull
+  List<Pair<SuggestedNameInfo, List<ExpectedType>>> getParameters();
 }
