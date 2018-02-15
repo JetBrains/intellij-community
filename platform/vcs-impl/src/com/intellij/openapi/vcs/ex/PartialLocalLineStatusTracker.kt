@@ -42,6 +42,7 @@ import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.LocalRange
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.GuiUtils
 import com.intellij.ui.components.labels.ActionGroupLink
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
@@ -214,9 +215,12 @@ class PartialLocalLineStatusTracker(project: Project,
       dropExistingUndoActions()
       updateAffectedChangeLists(notifyChangeListManager) // no need to notify CLM, as we're inside it's action
 
-      for (block in affectedBlocks) {
-        updateHighlighter(block)
-      }
+      GuiUtils.invokeLaterIfNeeded(
+        {
+          for (block in affectedBlocks) {
+            updateHighlighter(block)
+          }
+        }, ModalityState.any())
     }
   }
 
