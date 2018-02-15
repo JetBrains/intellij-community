@@ -17,11 +17,13 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFQDNNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,12 +36,24 @@ import java.util.*;
  * @author yole
  */
 public class PyEvaluator {
+
+  @NotNull
   private final Set<PyExpression> myVisited = new HashSet<>();
-  private Map<String, Object> myNamespace;
+
+  @Nullable
+  private Map<String, Object> myNamespace = null;
+
+  /**
+   * if true, collection items or dict values will be evaluated
+   */
   private boolean myEvaluateCollectionItems = true;
+
+  /**
+   * if true, dict keys will be evaluated
+   */
   private boolean myEvaluateKeys = true;
 
-  public void setNamespace(Map<String, Object> namespace) {
+  public void setNamespace(@Nullable Map<String, Object> namespace) {
     myNamespace = namespace;
   }
 
@@ -47,77 +61,79 @@ public class PyEvaluator {
     myEvaluateCollectionItems = evaluateCollectionItems;
   }
 
-  /**
-   * @param evaluateKeys evaluate keys for dicts or not (i.e. you wanna see string or StringLiteralExpressions as keys)
-   */
-  public void setEvaluateKeys(final boolean evaluateKeys) {
+  public void setEvaluateKeys(boolean evaluateKeys) {
     myEvaluateKeys = evaluateKeys;
   }
 
   @Nullable
-  public Object evaluate(@Nullable PyExpression expr) {
-    if (expr == null || myVisited.contains(expr)) {
+  @Contract("null -> null")
+  public Object evaluate(@Nullable PyExpression expression) {
+    if (expression == null || myVisited.contains(expression)) {
       return null;
     }
-    PyUtil.verboseOnly(() ->PyPsiUtils.assertValid(expr));
-    myVisited.add(expr);
-    if (expr instanceof PyParenthesizedExpression) {
-      return evaluate(((PyParenthesizedExpression)expr).getContainedExpression());
+    PyUtil.verboseOnly(() -> PyPsiUtils.assertValid(expression));
+    myVisited.add(expression);
+    if (expression instanceof PyParenthesizedExpression) {
+      return evaluate(((PyParenthesizedExpression)expression).getContainedExpression());
     }
-    if (expr instanceof PySequenceExpression) {
-      return evaluateSequenceExpression((PySequenceExpression)expr);
+    else if (expression instanceof PySequenceExpression) {
+      return evaluateSequence((PySequenceExpression)expression);
     }
-    final Boolean booleanExpression = getBooleanExpression(expr);
-    if (booleanExpression != null) { // support bool
-      return booleanExpression;
+    final Boolean bool = evaluateBoolean(expression);
+    if (bool != null) {
+      return bool;
     }
-    if (expr instanceof PyCallExpression) {
-      return evaluateCall((PyCallExpression)expr);
+    if (expression instanceof PyCallExpression) {
+      return evaluateCall((PyCallExpression)expression);
     }
-    else if (expr instanceof PyReferenceExpression) {
-      return evaluateReferenceExpression((PyReferenceExpression)expr);
+    else if (expression instanceof PyReferenceExpression) {
+      return evaluateReference((PyReferenceExpression)expression);
     }
-    else if (expr instanceof PyStringLiteralExpression) {
-      return ((PyStringLiteralExpression)expr).getStringValue();
+    else if (expression instanceof PyStringLiteralExpression) {
+      return ((PyStringLiteralExpression)expression).getStringValue();
     }
-    else if (expr instanceof PyBinaryExpression) {
-      PyBinaryExpression binaryExpr = (PyBinaryExpression)expr;
-      PyElementType op = binaryExpr.getOperator();
-      if (op == PyTokenTypes.PLUS) {
-        Object lhs = evaluate(binaryExpr.getLeftExpression());
-        Object rhs = evaluate(binaryExpr.getRightExpression());
-        if (lhs != null && rhs != null) {
-          return concatenate(lhs, rhs);
-        }
-      }
+    else if (expression instanceof PyBinaryExpression) {
+      return evaluateBinary((PyBinaryExpression)expression);
     }
-    else if (expr instanceof PyNumericLiteralExpression) {
-      final PyNumericLiteralExpression numericLiteral = (PyNumericLiteralExpression)expr;
-      if (numericLiteral.isIntegerLiteral()) {
-        final BigInteger value = numericLiteral.getBigIntegerValue();
-        if ((long)value.intValue() == value.longValue()) {
-          return value.intValue();
-        }
-      }
+    else if (expression instanceof PyNumericLiteralExpression) {
+      return evaluateNumeric((PyNumericLiteralExpression)expression);
     }
     return null;
   }
 
-  /**
-   * TODO: Move to PyExpression? PyUtil?
-   * True/False is bool literal in Py3K, but reference in Python2.
-   *
-   * @param expression expression to check
-   * @return true if expression is boolean
-   */
   @Nullable
-  private static Boolean getBooleanExpression(@NotNull final PyExpression expression) {
-    final boolean py3K = LanguageLevel.forElement(expression).isPy3K();
-    if ((expression instanceof PyBoolLiteralExpression)) {
+  private static Object evaluateNumeric(@NotNull PyNumericLiteralExpression expression) {
+    if (expression.isIntegerLiteral()) {
+      final BigInteger value = expression.getBigIntegerValue();
+      if ((long)value.intValue() == value.longValue()) {
+        return value.intValue();
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private Object evaluateBinary(@NotNull PyBinaryExpression expression) {
+    final PyElementType op = expression.getOperator();
+    if (op == PyTokenTypes.PLUS) {
+      final Object lhs = evaluate(expression.getLeftExpression());
+      final Object rhs = evaluate(expression.getRightExpression());
+      if (lhs != null && rhs != null) {
+        return applyPlus(lhs, rhs);
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static Boolean evaluateBoolean(@NotNull PyExpression expression) {
+    if (expression instanceof PyBoolLiteralExpression) {
       return ((PyBoolLiteralExpression)expression).getValue();
     }
-    if ((!py3K && (expression instanceof PyReferenceExpression))) {
-      final String text = ((PyQualifiedExpression)expression).getReferencedName(); // Ref in Python2
+    else if (expression instanceof PyReferenceExpression && LanguageLevel.forElement(expression).isPython2()) {
+      final String text = ((PyQualifiedExpression)expression).getReferencedName();
       if (PyNames.TRUE.equals(text)) {
         return true;
       }
@@ -130,48 +146,42 @@ public class PyEvaluator {
   }
 
   /**
-   * Evaluates some sequence (tuple, list)
+   * Evaluates sequence (tuple, list, set, dict)
    *
-   * @param expr seq expression
-   * @return evaluated seq
+   * @param expression sequence expression
+   * @return evaluated sequence
    */
-  protected Object evaluateSequenceExpression(PySequenceExpression expr) {
-    PyExpression[] elements = expr.getElements();
-    if (expr instanceof PyDictLiteralExpression) {
-      Map<Object, Object> result = new HashMap<>();
-      for (final PyKeyValueExpression keyValueExpression : ((PyDictLiteralExpression)expr).getElements()) {
-        addRecordFromDict(result, keyValueExpression.getKey(), keyValueExpression.getValue());
+  @NotNull
+  protected Object evaluateSequence(@NotNull PySequenceExpression expression) {
+    if (expression instanceof PyDictLiteralExpression) {
+      final Map<Object, Object> result = new HashMap<>();
+      for (final PyKeyValueExpression keyValue : ((PyDictLiteralExpression)expression).getElements()) {
+        addRecordFromDict(result, keyValue.getKey(), keyValue.getValue());
       }
       return result;
     }
-    else {
-      List<Object> result = new ArrayList<>();
-      for (PyExpression element : elements) {
-        result.add(myEvaluateCollectionItems ? evaluate(element) : element);
-      }
-      return result;
-    }
+
+    return ContainerUtil.map(expression.getElements(), element -> myEvaluateCollectionItems ? evaluate(element) : element);
   }
 
-  public Object concatenate(Object lhs, Object rhs) {
+  @Nullable
+  public Object applyPlus(@Nullable Object lhs, @Nullable Object rhs) {
     if (lhs instanceof String && rhs instanceof String) {
-      return (String)lhs + (String)rhs;
+      return (String)lhs + rhs;
     }
-    if (lhs instanceof List && rhs instanceof List) {
-      List<Object> result = new ArrayList<>();
-      result.addAll((List)lhs);
-      result.addAll((List)rhs);
-      return result;
+    else if (lhs instanceof List && rhs instanceof List) {
+      return ContainerUtil.concat((List)lhs, (List)rhs);
     }
     return null;
   }
 
-  protected Object evaluateReferenceExpression(PyReferenceExpression expr) {
-    if (!expr.isQualified()) {
+  @Nullable
+  protected Object evaluateReference(@NotNull PyReferenceExpression expression) {
+    if (!expression.isQualified()) {
       if (myNamespace != null) {
-        return myNamespace.get(expr.getReferencedName());
+        return myNamespace.get(expression.getReferencedName());
       }
-      PsiElement result = expr.getReference(PyResolveContext.noImplicits()).resolve();
+      PsiElement result = expression.getReference(PyResolveContext.noImplicits()).resolve();
       if (result instanceof PyTargetExpression) {
         result = ((PyTargetExpression)result).findAssignedValue();
       }
@@ -183,25 +193,25 @@ public class PyEvaluator {
   }
 
   @Nullable
-  protected Object evaluateCall(PyCallExpression call) {
-    final PyExpression[] args = call.getArguments();
-    if (call.isCalleeText(PyNames.REPLACE) && args.length == 2) {
-      final PyExpression callee = call.getCallee();
-      if (!(callee instanceof PyQualifiedExpression)) return null;
-      final PyExpression qualifier = ((PyQualifiedExpression)callee).getQualifier();
-      Object result = evaluate(qualifier);
-      if (result instanceof String) {
-        Object arg1 = evaluate(args[0]);
-        Object arg2 = evaluate(args[1]);
-        if (arg1 instanceof String && arg2 instanceof String) {
-          return ((String)result).replace((String)arg1, (String)arg2);
+  protected Object evaluateCall(@NotNull PyCallExpression expression) {
+    final PyExpression[] args = expression.getArguments();
+    if (expression.isCalleeText(PyNames.REPLACE) && args.length == 2) {
+      final PyExpression callee = expression.getCallee();
+      if (callee instanceof PyQualifiedExpression) {
+        final Object evaluatedQualifier = evaluate(((PyQualifiedExpression)callee).getQualifier());
+        if (evaluatedQualifier instanceof String) {
+          final Object oldSubstring = evaluate(args[0]);
+          final Object newSubstring = evaluate(args[1]);
+          if (oldSubstring instanceof String && newSubstring instanceof String) {
+            return ((String)evaluatedQualifier).replace((String)oldSubstring, (String)newSubstring);
+          }
         }
       }
     }
 
-    // Support dict([("k": "v")]) syntax
-    if (call.isCallee(PythonFQDNNames.DICT_CLASS)) {
-      final Collection<PyTupleExpression> tuples = PsiTreeUtil.findChildrenOfType(call, PyTupleExpression.class);
+    // Support dict([("k", "v")]) syntax
+    if (expression.isCallee(PythonFQDNNames.DICT_CLASS)) {
+      final Collection<PyTupleExpression> tuples = PsiTreeUtil.findChildrenOfType(expression, PyTupleExpression.class);
       if (!tuples.isEmpty()) {
         final Map<Object, Object> result = new HashMap<>();
         for (final PyTupleExpression tuple : tuples) {
@@ -211,7 +221,7 @@ public class PyEvaluator {
           }
           final PyExpression key = PyUtil.as(tupleElements[0], PyExpression.class);
           final PyExpression value = PyUtil.as(tupleElements[1], PyExpression.class);
-          if ((key != null)) {
+          if (key != null) {
             addRecordFromDict(result, key, value);
           }
         }
@@ -219,38 +229,28 @@ public class PyEvaluator {
       }
     }
 
-
     return null;
   }
 
-  /**
-   * Adds record for map when working with dict
-   *
-   * @param result map to return to user
-   * @param key    dict key
-   * @param value  dict value
-   */
-  private void addRecordFromDict(@NotNull final Map<Object, Object> result,
-                                 @NotNull final PyExpression key,
-                                 @Nullable final PyExpression value) {
+  private void addRecordFromDict(@NotNull Map<Object, Object> result, @NotNull PyExpression key, @Nullable PyExpression value) {
     result.put(myEvaluateKeys ? evaluate(key) : key, myEvaluateCollectionItems ? evaluate(value) : value);
   }
 
   /**
    * Shortcut that evaluates expression with default params and casts it to particular type (if possible)
    *
-   * @param expression exp to evaluate
+   * @param expression expression to evaluate
    * @param resultType expected type
    * @param <T>        expected type
    * @return value if expression is evaluated to this type, null otherwise
    */
   @Nullable
-  public static <T> T evaluate(@Nullable final PyExpression expression, @NotNull final Class<T> resultType) {
+  public static <T> T evaluate(@Nullable PyExpression expression, @NotNull Class<T> resultType) {
     return PyUtil.as(new PyEvaluator().evaluate(expression), resultType);
   }
 
-  public static boolean evaluateBoolean(final PyExpression expr, boolean defaultValue) {
-    Object result = new PyEvaluator().evaluate(expr);
+  public static boolean evaluateBoolean(@Nullable PyExpression expr, boolean defaultValue) {
+    final Object result = new PyEvaluator().evaluate(expr);
     if (result instanceof Boolean) {
       return (Boolean)result;
     }
