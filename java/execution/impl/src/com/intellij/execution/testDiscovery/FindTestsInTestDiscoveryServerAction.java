@@ -84,6 +84,7 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
     String fqn = c.getQualifiedName();
     String methodName = method.getName();
     String methodFqn = fqn + "." + methodName;
+    String methodPresentationName = c.getName() + "." + methodName;
 
     String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/tests/by-method/" + methodFqn;
 
@@ -93,7 +94,7 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
     HintUpdateSupply.installSimpleHintUpdateSupply(list);
     list.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-    String initTitle = "Tests for " + methodName;
+    String initTitle = "Tests for " + methodPresentationName;
     DefaultPsiElementCellRenderer renderer = new DefaultPsiElementCellRenderer();
 
     AnAction run = ActionManager.getInstance().getAction(DefaultRunExecutor.getRunExecutorInstance().getContextActionId());
@@ -122,14 +123,14 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
         .setResizable(true)
         .setCommandButton(component)
         .setItemChoosenCallback(() -> PsiNavigateUtil.navigate(list.getSelectedValue()))
-        .setMinSize(new JBDimension(300, 300));
+        .setMinSize(new JBDimension(500, 300));
 
     renderer.installSpeedSearch(builder, true);
 
     JBPopup popup = builder.createPopup();
     ref.set(popup);
 
-    list.setEmptyText("No test captured for " + methodName);
+    list.setEmptyText("No tests captured for " + methodPresentationName);
     list.setPaintBusy(true);
 
     popup.showInBestPositionFor(editor);
@@ -141,7 +142,7 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
     ListBackgroundUpdaterTask loadTestsTask = new ListBackgroundUpdaterTask(project, "Load tests", renderer.getComparator()) {
       @Override
       public String getCaption(int size) {
-        return "Found " + size + " Tests for " + methodName;
+        return "Found " + size + " Tests for " + methodPresentationName;
       }
     };
 
