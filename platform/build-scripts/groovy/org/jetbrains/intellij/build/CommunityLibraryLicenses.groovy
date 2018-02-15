@@ -77,7 +77,7 @@ class CommunityLibraryLicenses {
                        license: "BSD", url: "http://asm.objectweb.org/", licenseUrl: "http://asm.objectweb.org/license.html"),
     new LibraryLicense(name: "Automaton", libraryName: "automaton", version: "1.11", license: "BSD", url: "http://www.brics.dk/automaton/",
                        licenseUrl: "http://www.opensource.org/licenses/bsd-license.php"),
-    new LibraryLicense(name: "Axis", libraryName: "axis-1.4", version: "1.4", license: "Apache 2.0", url: "http://ws.apache.org/axis/",
+    new LibraryLicense(name: "Apache Axis", libraryName: "axis-1.4", version: "1.4", license: "Apache 2.0", url: "http://ws.apache.org/axis/",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.html"),
     new LibraryLicense(name: "bouncy-castle", version: "1.48", license: "MIT License", url: "http://bouncycastle.org",
                        licenseUrl: "http://bouncycastle.org/licence.html"),
