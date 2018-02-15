@@ -111,8 +111,7 @@ public class ChangelistConflictDialog extends DialogWrapper {
   protected Action[] createLeftSideActions() {
     return new Action[] { new AbstractAction("&Configure...") {
       public void actionPerformed(ActionEvent e) {
-        ChangeListManagerImpl manager = ChangeListManagerImpl.getInstanceImpl(myProject);
-        ShowSettingsUtil.getInstance().editConfigurable(myPanel, new ChangelistConflictConfigurable(manager));
+        ShowSettingsUtil.getInstance().editConfigurable(myPanel, new ChangelistConflictConfigurable(myProject));
       }
     }};
   }

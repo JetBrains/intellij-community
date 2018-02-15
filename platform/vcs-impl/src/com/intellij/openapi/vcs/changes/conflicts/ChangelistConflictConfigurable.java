@@ -22,6 +22,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.binding.BindControl;
 import com.intellij.openapi.options.binding.BindableConfigurable;
 import com.intellij.openapi.options.binding.ControlBinder;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
@@ -31,6 +32,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -59,15 +61,16 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
 
   private JCheckBox myEnablePartialChangelistsCheckBox;
 
+  private JPanel myIgnoredPanel;
   private JBList myIgnoredFiles;
   private JButton myClearButton;
   private boolean myIgnoredFilesCleared;
 
-  private final ChangelistConflictTracker myConflictTracker;
+  @Nullable private final ChangelistConflictTracker myConflictTracker;
   private final VcsApplicationSettings myVcsApplicationSettings;
 
-  public ChangelistConflictConfigurable(ChangeListManagerImpl manager) {
-    super(new ControlBinder(manager.getConflictTracker().getOptions()));
+  public ChangelistConflictConfigurable(@NotNull Project project) {
+    super(new ControlBinder(ChangelistConflictSettings.getInstance(project)));
     myVcsApplicationSettings = VcsApplicationSettings.getInstance();
 
     myEnableConflictTrackingCheckBox.addActionListener(new ActionListener() {
@@ -75,17 +78,24 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
         UIUtil.setEnabled(myOptionsPanel, myEnableConflictTrackingCheckBox.isSelected(), true);
       }
     });
-    myConflictTracker = manager.getConflictTracker();
 
-    myClearButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myIgnoredFiles.setModel(new DefaultListModel());
-        myIgnoredFilesCleared = true;
-        myClearButton.setEnabled(false);
-      }
-    });
+    if (!project.isDefault()) {
+      myConflictTracker = ChangeListManagerImpl.getInstanceImpl(project).getConflictTracker();
 
-    myIgnoredFiles.getEmptyText().setText(VcsBundle.message("no.ignored.files"));
+      myClearButton.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          myIgnoredFiles.setModel(new DefaultListModel());
+          myIgnoredFilesCleared = true;
+          myClearButton.setEnabled(false);
+        }
+      });
+
+      myIgnoredFiles.getEmptyText().setText(VcsBundle.message("no.ignored.files"));
+    }
+    else {
+      myConflictTracker = null;
+      myIgnoredPanel.setVisible(false);
+    }
   }
 
   public JComponent createComponent() {
@@ -98,31 +108,37 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
     super.reset();
     myEnablePartialChangelistsCheckBox.setSelected(myVcsApplicationSettings.ENABLE_PARTIAL_CHANGELISTS);
 
-    Collection<String> conflicts = myConflictTracker.getIgnoredConflicts();
-    myIgnoredFiles.setListData(ArrayUtil.toStringArray(conflicts));
-    myClearButton.setEnabled(!conflicts.isEmpty());
+    if (myConflictTracker != null) {
+      Collection<String> conflicts = myConflictTracker.getIgnoredConflicts();
+      myIgnoredFiles.setListData(ArrayUtil.toStringArray(conflicts));
+      myClearButton.setEnabled(!conflicts.isEmpty());
+    }
+
     UIUtil.setEnabled(myOptionsPanel, myEnableConflictTrackingCheckBox.isSelected(), true);
   }
 
   @Override
   public void apply() throws ConfigurationException {
     super.apply();
-    if (myIgnoredFilesCleared) {
-      for (ChangelistConflictTracker.Conflict conflict : myConflictTracker.getConflicts().values()) {
-        conflict.ignored = false;        
-      }
-    }
     if (myEnablePartialChangelistsCheckBox.isSelected() != myVcsApplicationSettings.ENABLE_PARTIAL_CHANGELISTS) {
       myVcsApplicationSettings.ENABLE_PARTIAL_CHANGELISTS = myEnablePartialChangelistsCheckBox.isSelected();
       ApplicationManager.getApplication().getMessageBus().syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated();
     }
-    myConflictTracker.optionsChanged();
+
+    if (myConflictTracker != null) {
+      if (myIgnoredFilesCleared) {
+        for (ChangelistConflictTracker.Conflict conflict : myConflictTracker.getConflicts().values()) {
+          conflict.ignored = false;
+        }
+      }
+      myConflictTracker.optionsChanged();
+    }
   }
 
   @Override
   public boolean isModified() {
     return super.isModified() ||
-           myIgnoredFiles.getModel().getSize() != myConflictTracker.getIgnoredConflicts().size() ||
+           myConflictTracker != null && myIgnoredFiles.getModel().getSize() != myConflictTracker.getIgnoredConflicts().size() ||
            myEnablePartialChangelistsCheckBox.isSelected() != myVcsApplicationSettings.ENABLE_PARTIAL_CHANGELISTS;
   }
 
