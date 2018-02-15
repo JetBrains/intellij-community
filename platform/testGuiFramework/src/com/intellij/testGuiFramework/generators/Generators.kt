@@ -82,10 +82,6 @@ import javax.swing.plaf.basic.BasicArrowButton
 import javax.swing.tree.TreeNode
 import javax.swing.tree.TreePath
 
-/**
- * @author Sergey Karashevich
- */
-
 //**********COMPONENT GENERATORS**********
 
 private val leftButton = MouseEvent.BUTTON1
@@ -310,7 +306,14 @@ class PluginTableGenerator : ComponentCodeGenerator<PluginTable> {
   }
 }
 
-class EditorComponentGenerator : ComponentCodeGenerator<EditorComponentImpl> {
+class EditorComponentGenerator : ComponentSelectionCodeGenerator<EditorComponentImpl> {
+  override fun generateSelection(cmp: EditorComponentImpl, firstPoint: Point, lastPoint: Point): String {
+    val editor = cmp.editor
+    val firstOffset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(firstPoint))
+    val lastOffset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(lastPoint))
+    return "select($firstOffset, $lastOffset)"
+  }
+
   override fun accept(cmp: Component) = cmp is EditorComponentImpl
 
   override fun generate(cmp: EditorComponentImpl, me: MouseEvent, cp: Point): String {
@@ -598,7 +601,7 @@ object Generators {
     val classLoader = Generators.javaClass.classLoader
     return generatorClassPaths
       .map { clzPath -> classLoader.loadClass("${Generators.javaClass.`package`.name}.${File(clzPath).nameWithoutExtension}") }
-      .filter { clz -> clz.interfaces.contains(ComponentCodeGenerator::class.java) }
+      .filter { clz -> ComponentCodeGenerator::class.java.isAssignableFrom(clz) && !clz.isInterface }
       .map(Class<*>::newInstance)
       .filterIsInstance(ComponentCodeGenerator::class.java)
   }

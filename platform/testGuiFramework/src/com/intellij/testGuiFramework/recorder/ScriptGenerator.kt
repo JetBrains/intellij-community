@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.wm.impl.FocusManagerImpl
 import com.intellij.testGuiFramework.generators.ComponentCodeGenerator
+import com.intellij.testGuiFramework.generators.ComponentSelectionCodeGenerator
 import com.intellij.testGuiFramework.generators.Generators
 import com.intellij.testGuiFramework.recorder.ui.KeyUtil
 import com.intellij.ui.KeyStrokeAdapter
@@ -29,9 +30,6 @@ import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import javax.swing.KeyStroke.getKeyStrokeForEvent
 
-/**
- * @author Sergey Karashevich
- */
 object ScriptGenerator {
   private val generators: List<ComponentCodeGenerator<*>> = Generators.getGenerators()
 
@@ -89,6 +87,22 @@ object ScriptGenerator {
     val ignoreActions = listOf("EditorBackSpace")
     val ignoreShortcuts = listOf("space")
     return ignoreActions.contains(actionOrShortCut) || ignoreShortcuts.contains(actionOrShortCut)
+  }
+
+  fun selectInComponent(component: Component,
+                        firstPoint: Point,
+                        lastPoint: Point,
+                        lastEvent: MouseEvent) {
+    ContextChecker.checkContext(component, lastEvent)
+
+    val suitableGenerator = generators.filter { generator ->
+      generator.accept(component) && generator is ComponentSelectionCodeGenerator
+    }.sortedByDescending(ComponentCodeGenerator<*>::priority).firstOrNull() ?: return
+
+    if (suitableGenerator is ComponentSelectionCodeGenerator) {
+      val code = suitableGenerator.generateSelectionCode(component, firstPoint, lastPoint)
+      addToScript(code)
+    }
   }
 }
 
