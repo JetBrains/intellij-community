@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.concurrency;
 
 import com.intellij.util.Consumer;
@@ -22,13 +8,23 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * The Promise represents the eventual completion (or failure) of an asynchronous operation, and its resulting value.
+ *
+ * A Promise is a proxy for a value not necessarily known when the promise is created.
+ * It allows you to associate handlers with an asynchronous action's eventual success value or failure reason.
+ * This lets asynchronous methods return values like synchronous methods: instead of immediately returning the final value,
+ * the asynchronous method returns a promise to supply the value at some point in the future.
+ *
+ * A Promise is in one of these states:
+ *
+ * <ul>
+ *   <li>pending: initial state, neither fulfilled nor rejected.</li>
+ *   <li>fulfilled: meaning that the operation completed successfully.</li>
+ *   <li>rejected: meaning that the operation failed.</li>
+ * </ul>
+ */
 public interface Promise<T> {
-  /**
-   * @deprecated Use Promises.resolvedPromise()
-   */
-  @Deprecated
-  Promise<Void> DONE = new DonePromise(null);
-
   enum State {
     PENDING, FULFILLED, REJECTED
   }
@@ -47,12 +43,19 @@ public interface Promise<T> {
   @NotNull
   Promise<T> done(@NotNull Consumer<? super T> done);
 
+  /**
+   * Resolve or reject passed promise as soon as this promise resolved or rejected.
+   */
   @NotNull
-  Promise<T> processed(@NotNull AsyncPromise<? super T> fulfilled);
+  Promise<T> processed(@NotNull Promise<? super T> child);
 
   @NotNull
   Promise<T> rejected(@NotNull Consumer<Throwable> rejected);
 
+  /**
+   * Execute passed handler on resolve (result value will be passed),
+   * or on reject (null as result value will be passed).
+   */
   Promise<T> processed(@NotNull Consumer<? super T> processed);
 
   @NotNull
@@ -71,5 +74,11 @@ public interface Promise<T> {
     return blockingGet(timeout, TimeUnit.MILLISECONDS);
   }
 
-  void notify(@NotNull AsyncPromise<? super T> child);
+  /**
+   * @deprecated Use {@link #processed(Promise)}
+   */
+  @Deprecated
+  default void notify(@NotNull AsyncPromise<? super T> child) {
+    processed(child);
+  }
 }
