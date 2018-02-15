@@ -33,6 +33,9 @@ fun <T> resolvedPromise(): Promise<T> = DONE as Promise<T>
 
 fun nullPromise(): Promise<*> = DONE
 
+/**
+ * Creates a promise that is resolved with the given value.
+ */
 fun <T> resolvedPromise(result: T): Promise<T> = if (result == null) resolvedPromise() else DonePromise(result)
 
 @Suppress("UNCHECKED_CAST")
