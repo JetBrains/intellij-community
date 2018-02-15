@@ -1166,6 +1166,23 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private static boolean isPopupLosingFocus (AWTEvent e) {
+
+    if (e.getClass().getName().contains("SequencedEvent")) {
+      Field nestedField = ReflectionUtil.getDeclaredField(e.getClass(), "nested");
+      try {
+        WindowEvent nested = (WindowEvent)nestedField.get(e);
+        if (nested != null && isPopupLosingFocusFromWindowEvent(nested)) return true;
+      }
+      catch (IllegalAccessException illegalAccessException) {
+        LOG.error(illegalAccessException);
+      }
+    }
+
+    if (isPopupLosingFocusFromWindowEvent(e)) return true;
+    return false;
+  }
+
+  private static boolean isPopupLosingFocusFromWindowEvent(AWTEvent e) {
     if (e.getID() == WindowEvent.WINDOW_GAINED_FOCUS) {
       WindowEvent windowEvent = (WindowEvent)e;
       Window eventWindow = windowEvent.getWindow();
