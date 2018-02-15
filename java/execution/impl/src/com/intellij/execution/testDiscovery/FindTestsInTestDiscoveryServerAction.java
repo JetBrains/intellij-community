@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.find.FindUtil;
 import com.intellij.find.actions.CompositeActiveComponent;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
@@ -15,13 +16,13 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -100,9 +101,16 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
     InplaceButton runButton = new InplaceButton(new IconButton("Run", AllIcons.Actions.Execute), __ ->
       run.actionPerformed(AnActionEvent.createFromAnAction(run, null, ActionPlaces.UNKNOWN, e.getDataContext())));
 
+    Ref<JBPopup> ref = new Ref<>();
     InplaceButton pinButton = new InplaceButton(
       new IconButton("Pin", AllIcons.General.AutohideOff, AllIcons.General.AutohideOffPressed, AllIcons.General.AutohideOffInactive),
       __ -> {
+        PsiElement[] elements = model.getItems().toArray(PsiElement.EMPTY_ARRAY);
+        FindUtil.showInUsageView(null, elements, initTitle, project);
+        JBPopup pinPopup = ref.get();
+        if (pinPopup != null) {
+          pinPopup.cancel();
+        }
       });
 
     CompositeActiveComponent component = new CompositeActiveComponent(runButton, pinButton);
@@ -119,6 +127,7 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
     renderer.installSpeedSearch(builder, true);
 
     JBPopup popup = builder.createPopup();
+    ref.set(popup);
 
     list.setEmptyText("No test captured for " + methodName);
     list.setPaintBusy(true);
@@ -151,7 +160,7 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
               String classFqn = StringUtil.substringBefore(s, "-");
               String testMethodName = StringUtil.substringAfter(s, "-");
 
-              PsiMethod psiMethod = ApplicationManager.getApplication().runReadAction((Computable<PsiMethod>)() -> {
+              PsiMethod psiMethod = ReadAction.compute(() -> {
                 PsiClass cc = classFqn == null ? null : javaFacade.findClass(classFqn, scope);
                 return cc == null ? null : ArrayUtil.getFirstElement(cc.findMethodsByName(testMethodName, false));
               });
