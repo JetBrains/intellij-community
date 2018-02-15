@@ -234,6 +234,21 @@ public class PyEvaluatorTest extends PyTestCase {
     assertEquals(BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), byExpression(Long.MAX_VALUE + "+ 1", BigInteger.class));
   }
 
+  public void testNumbersSubMulDiv() {
+    assertEquals(Integer.valueOf(17), byExpression("20 - 3", Integer.class));
+    assertEquals(Integer.valueOf(60), byExpression("20 * 3", Integer.class));
+    assertEquals(Integer.valueOf(6), byExpression("20 // 3", Integer.class));
+  }
+
+  public void testNumbersComparison() {
+    assertTrue(byExpression("1 < 2", Boolean.class));
+    assertTrue(byExpression("1 <= 1", Boolean.class));
+    assertTrue(byExpression("2 > 1", Boolean.class));
+    assertTrue(byExpression("1 >= 1", Boolean.class));
+    assertTrue(byExpression("1 == 1", Boolean.class));
+    assertTrue(byExpression("2 != 1", Boolean.class));
+  }
+
   @NotNull
   private <T> T byExpression(@NotNull String expression, @NotNull Class<T> cls) {
     final Object value = new PyEvaluator().evaluate(parseExpression(expression));
