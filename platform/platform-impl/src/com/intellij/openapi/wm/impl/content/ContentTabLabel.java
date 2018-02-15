@@ -82,7 +82,7 @@ class ContentTabLabel extends BaseLabel {
 
     if (toolText != null && !toolText.isEmpty()) {
       IdeTooltip tooltip = new IdeTooltip(this, icon.getCenterPoint(), new JLabel(toolText));
-      currentIconTooltip = new CurrentTooltip(IdeTooltipManager.getInstance().show(tooltip, true, false), icon);
+      currentIconTooltip = new CurrentTooltip(IdeTooltipManager.getInstance().show(tooltip, false, false), icon);
     }
   }
 
@@ -105,7 +105,7 @@ class ContentTabLabel extends BaseLabel {
   };
 
   protected final boolean mouseOverIcon(AdditionalIcon icon) {
-    if (!isHovered()) return false;
+    if (!isHovered() || !icon.getAvailable()) return false;
 
     Point point = MouseInfo.getPointerInfo().getLocation();
     SwingUtilities.convertPointFromScreen(point, this);

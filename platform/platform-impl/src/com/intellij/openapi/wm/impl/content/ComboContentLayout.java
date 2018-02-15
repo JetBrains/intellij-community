@@ -119,11 +119,6 @@ class ComboContentLayout extends ContentLayout {
   }
 
   @Override
-  public boolean shouldDrawDecorations() {
-    return isToDrawCombo();
-  }
-
-  @Override
   public void showContentPopup(ListPopup listPopup) {
     final int width = myComboLabel.getSize().width;
     listPopup.setMinimumSize(new Dimension(width, 0));
