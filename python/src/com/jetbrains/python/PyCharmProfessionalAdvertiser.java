@@ -62,19 +62,19 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
       }
 
       if (PyCellUtil.hasCells(pyFile)) {
-        showInspectionAdvertisement(project, "code cells in the editor");
+        showInspectionAdvertisement(project, "code cells in the editor", "codecells");
       }
 
       if (containsImport(pyFile, "django")) {
-        showInspectionAdvertisement(project, "Django Framework");
+        showInspectionAdvertisement(project, "the Django Framework", "django");
       }
 
       if (containsImport(pyFile, "flask")) {
-        showInspectionAdvertisement(project, "Flask Framework");
+        showInspectionAdvertisement(project, "the Flask Framework", "flask");
       }
 
       if (containsImport(pyFile, "pyramid")) {
-        showInspectionAdvertisement(project, "Pyramid Framework");
+        showInspectionAdvertisement(project, "the Pyramid Framework", "pyramid");
       }
     }
   }
@@ -87,11 +87,11 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
     return false;
   }
 
-  private static void showInspectionAdvertisement(@NotNull Project project, @NotNull String message) {
+  private static void showInspectionAdvertisement(@NotNull Project project, @NotNull String message, @NotNull String source) {
     showSingletonNotification(project, "You are using " + message, NOTIFICATIONS_TEXT, NotificationType.INFORMATION,
                               (notification, event) -> {
                                 if ("prof".equals(event.getDescription())) {
-                                  BrowserUtil.browse("https://www.jetbrains.com/pycharm/features/editions_comparison_matrix.html");
+                                  BrowserUtil.browse("https://www.jetbrains.com/pycharm/features/editions_comparison_matrix.html?utm_source=from_product&utm_medium=advertiser&utm_campaign=" + source);
                                 }
                               });
   }
