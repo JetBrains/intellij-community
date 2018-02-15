@@ -40,27 +40,29 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
 
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+
     if (element instanceof PyFile) {
 
       final PyFile pyFile = (PyFile)element;
       final Project project = element.getProject();
+
+      if (getSettings(project).shown) {
+        return;
+      }
+      getSettings(project).shown = true;
 
       final VirtualFile vFile = pyFile.getVirtualFile();
       if (vFile != null && FileIndexFacade.getInstance(project).isInLibraryClasses(vFile)) {
         return;
       }
 
-      final Boolean showingFlag = project.getUserData(DONT_SHOW_BALLOON);
-      if (showingFlag != null && showingFlag.booleanValue()) {
-        return;
-      }
 
       if (!moduleUsesPythonSdk(pyFile)) {
         return;
       }
 
       if (PyCellUtil.hasCells(pyFile)) {
-        showInspectionAdvertisement(project, "code cells in editor");
+        showInspectionAdvertisement(project, "code cells in the editor");
       }
 
       if (containsImport(pyFile, "django")) {
