@@ -3,10 +3,11 @@ package org.jetbrains.concurrency
 
 import com.intellij.util.Consumer
 import com.intellij.util.Function
+import java.util.concurrent.Future
 
 import java.util.concurrent.TimeUnit
 
-internal class RejectedPromise<T>(private val error: Throwable) : Promise<T> {
+internal class RejectedPromise<T>(private val error: Throwable) : Promise<T>, Future<T> {
   override fun getState() = Promise.State.REJECTED
 
   override fun done(done: Consumer<in T>) = this
@@ -39,4 +40,14 @@ internal class RejectedPromise<T>(private val error: Throwable) : Promise<T> {
   override fun blockingGet(timeout: Int, timeUnit: TimeUnit): T? {
     throw error
   }
+
+  override fun cancel(mayInterruptIfRunning: Boolean) = false
+
+  override fun get(): T? = null
+
+  override fun get(timeout: Long, unit: TimeUnit?): T? = null
+
+  override fun isCancelled() = error == OBSOLETE_ERROR
+
+  override fun isDone() = state != Promise.State.PENDING
 }

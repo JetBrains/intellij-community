@@ -7,12 +7,15 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
 import static org.jetbrains.concurrency.Promises.resolvedPromise;
 
-class DonePromise<T> implements Getter<T>, Promise<T> {
+class DonePromise<T> implements Getter<T>, Promise<T>, Future<T> {
   private final T result;
 
   public DonePromise(T result) {
@@ -81,7 +84,27 @@ class DonePromise<T> implements Getter<T>, Promise<T> {
   }
 
   @Override
+  public boolean isDone() {
+    return getState() != State.PENDING;
+  }
+
+  @Override
   public T get() {
+    return result;
+  }
+
+  @Override
+  public boolean cancel(boolean mayInterruptIfRunning) {
+    return false;
+  }
+
+  @Override
+  public boolean isCancelled() {
+    return false;
+  }
+
+  @Override
+  public T get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
     return result;
   }
 }
