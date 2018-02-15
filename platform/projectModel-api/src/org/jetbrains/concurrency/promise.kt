@@ -68,10 +68,13 @@ inline fun <T> Promise<T>.done(node: Obsolescent, crossinline handler: (T) -> Un
   override fun consume(param: T) = handler(param)
 })
 
-@Suppress("UNCHECKED_CAST")
-inline fun Promise<*>.processed(node: Obsolescent, crossinline handler: () -> Unit) = (this as Promise<Any?>).processed(object : ObsolescentConsumer<Any?>(node) {
-  override fun consume(param: Any?) = handler()
-})
+inline fun Promise<*>.processed(node: Obsolescent, crossinline handler: () -> Unit): Promise<Any?>? {
+  @Suppress("UNCHECKED_CAST")
+  return (this as Promise<Any?>)
+    .processed(object : ObsolescentConsumer<Any?>(node) {
+      override fun consume(param: Any?) = handler()
+    })
+}
 
 @Suppress("UNCHECKED_CAST")
 inline fun Promise<*>.doneRun(crossinline handler: () -> Unit) = done({ handler() })
@@ -108,7 +111,7 @@ fun <T> collectResults(promises: List<Promise<T>>, ignoreErrors: Boolean = false
     return resolvedPromise(emptyList())
   }
 
-  val results: MutableList<T> = if (promises.size == 1) SmartList<T>() else ArrayList<T>(promises.size)
+  val results: MutableList<T> = if (promises.size == 1) SmartList<T>() else ArrayList(promises.size)
   for (promise in promises) {
     promise.done { results.add(it) }
   }
@@ -153,7 +156,7 @@ internal class MessageError(error: String, log: Boolean) : RuntimeException(erro
 fun Logger.errorIfNotMessage(e: Throwable): Boolean {
   if (e is MessageError) {
     val log = e.log
-    if (log == ThreeState.YES || (log == ThreeState.UNSURE && (ApplicationManager.getApplication()?.isUnitTestMode ?: false))) {
+    if (log == ThreeState.YES || (log == ThreeState.UNSURE && ApplicationManager.getApplication()?.isUnitTestMode == true)) {
       error(e)
       return true
     }
@@ -183,7 +186,7 @@ fun <T> all(promises: Collection<Promise<*>>, totalResult: T?, ignoreErrors: Boo
 
   val totalPromise = AsyncPromise<T>()
   val done = CountDownConsumer(promises.size, totalPromise, totalResult)
-  val rejected = if (ignoreErrors) Consumer<Throwable> { done.consume(null) } else Consumer<Throwable> { totalPromise.setError(it) }
+  val rejected = if (ignoreErrors) Consumer { done.consume(null) } else Consumer<Throwable> { totalPromise.setError(it) }
 
   for (promise in promises) {
     promise.done(done)

@@ -30,12 +30,6 @@ public interface Promise<T> {
   }
 
   @NotNull
-  @Deprecated
-  static RuntimeException createError(@NotNull String error) {
-    return Promises.createError(error);
-  }
-
-  @NotNull
   static <T> Promise<T> resolve(T result) {
     return result == null ? Promises.resolvedPromise() : new DonePromise<>(result);
   }
