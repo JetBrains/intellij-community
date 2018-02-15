@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt;
+import org.fest.swing.core.ComponentDragAndDrop;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.MouseButton;
 import org.fest.swing.core.Robot;
@@ -458,16 +459,20 @@ public class EditorFixture {
     Editor editor = getEditor();
     assert editor != null;
     Component editorComponent = GuiTestUtilKt.INSTANCE.findAllWithBFS(editor.getComponent(), EditorComponentImpl.class).get(0);
-    Point pointToClick = execute(new GuiQuery<Point>() {
+    Point pointToClick = getPointToClick(editor, offset);
+    robot.click(editorComponent, pointToClick, button, 1);
+    return this;
+  }
+
+  private static Point getPointToClick(Editor editor, final int offset) {
+    return execute(new GuiQuery<Point>() {
       @Override
       protected Point executeInEDT() {
-        editor.getScrollingModel().scrollTo(editor.offsetToLogicalPosition(offset),ScrollType.CENTER);
+        editor.getScrollingModel().scrollTo(editor.offsetToLogicalPosition(offset), ScrollType.CENTER);
         VisualPosition visualPosition = editor.offsetToVisualPosition(offset);
         return editor.visualPositionToXY(visualPosition);
       }
     });
-    robot.click(editorComponent, pointToClick, button, 1);
-    return this;
   }
 
   public EditorFixture moveTo(final int offset) {
@@ -490,17 +495,16 @@ public class EditorFixture {
    *                     offset than the firstOffset
    */
   public EditorFixture select(final int firstOffset, final int secondOffset) {
-    execute(new GuiTask() {
-      @Override
-      protected void executeInEDT() {
-        // TODO: Do this via mouse drags!
-        Editor editor = getEditor();
-        if (editor != null) {
-          editor.getCaretModel().getPrimaryCaret().setSelection(firstOffset, secondOffset);
-          editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-        }
-      }
-    });
+    Editor editor = getEditor();
+    assert editor != null;
+    Component editorComponent = editor.getContentComponent();
+
+    Point firstPoint = getPointToClick(editor, firstOffset);
+    Point lastPoint = getPointToClick(editor, secondOffset);
+
+    ComponentDragAndDrop dragAndDrop = new ComponentDragAndDrop(robot);
+    dragAndDrop.drag(editorComponent, firstPoint);
+    dragAndDrop.drop(editorComponent, lastPoint);
 
     return this;
   }
