@@ -500,10 +500,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @NotNull
   private NamesByExprInfo suggestVariableNameByExpression(@NotNull PsiExpression expr, @NotNull VariableKind variableKind, boolean correctKeywords) {
     final LinkedHashSet<String> names = new LinkedHashSet<>();
-    final String[] fromLiterals = suggestVariableNameFromLiterals(expr, variableKind, correctKeywords);
-    if (fromLiterals != null) {
-      ContainerUtil.addAll(names, fromLiterals);
-    }
+    ContainerUtil.addAll(names, suggestVariableNameFromLiterals(expr, variableKind, correctKeywords));
 
     ContainerUtil.addAll(names, suggestVariableNameByExpressionOnly(expr, variableKind, correctKeywords, false).names);
     ContainerUtil.addAll(names, suggestVariableNameByExpressionPlace(expr, variableKind, correctKeywords).names);
@@ -521,8 +518,17 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     return new NamesByExprInfo(propertyName, namesArray);
   }
 
+  @NotNull
+  private String[] suggestVariableNameFromLiterals(@NotNull PsiExpression expr,
+                                                   @NotNull VariableKind variableKind,
+                                                   boolean correctKeywords) {
+    String text = findLiteralText(expr);
+    if (text == null) return ArrayUtil.EMPTY_STRING_ARRAY;
+    return getSuggestionsByName(text, variableKind, expr.getType() instanceof PsiArrayType, correctKeywords);
+  }
+
   @Nullable
-  private String[] suggestVariableNameFromLiterals(@NotNull PsiExpression expr, @NotNull VariableKind variableKind, boolean correctKeywords) {
+  private static String findLiteralText(@NotNull PsiExpression expr) {
     final PsiElement[] literals = PsiTreeUtil.collectElements(expr, new PsiElementFilter() {
       @Override
       public boolean isAccepted(PsiElement element) {
@@ -550,8 +556,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     });
 
     if (literals.length == 1) {
-      final String text = StringUtil.unquoteString(literals[0].getText());
-      return getSuggestionsByName(text.replaceAll(" ", "_"), variableKind, expr.getType() instanceof PsiArrayType, correctKeywords);
+      return StringUtil.unquoteString(literals[0].getText()).replaceAll(" ", "_");
     }
     return null;
   }
