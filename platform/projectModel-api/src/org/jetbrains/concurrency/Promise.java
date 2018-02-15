@@ -31,7 +31,7 @@ public interface Promise<T> {
 
   @NotNull
   static <T> Promise<T> resolve(T result) {
-    return result == null ? Promises.resolvedPromise() : new DonePromise<>(result);
+    return Promises.resolvedPromise(result);
   }
 
   @NotNull
