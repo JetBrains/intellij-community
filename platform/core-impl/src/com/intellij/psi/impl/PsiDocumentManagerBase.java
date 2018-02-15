@@ -862,7 +862,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       return;
     }
 
-    if (!myProject.isInitialized() || myProject.isDisposed()) {
+    if (!myProject.isInitialized() || myProject.isDisposed() || myProject.isDefault()) {
       return;
     }
     
