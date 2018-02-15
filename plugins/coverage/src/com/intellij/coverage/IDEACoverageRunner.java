@@ -66,12 +66,8 @@ public class IDEACoverageRunner extends JavaCoverageRunner {
                                      @Nullable String sourceMapPath) {
     StringBuilder argument = new StringBuilder("-javaagent:");
     final String agentPath = PathUtil.getJarPathForClass(ProjectData.class);
-    final String parentPath = handleSpacesInPath(agentPath, file -> {
-      final String fileName = file.getName();
-      return fileName.startsWith("intellij-coverage-");
-    });
-    //todo
-    argument.append(parentPath).append(File.separator).append(new File("intellij-coverage-1.0.369.jar").getName());
+    final String parentPath = handleSpacesInPath(agentPath, file -> file.getName().startsWith("intellij-coverage-"));
+    argument.append(parentPath).append(File.separator).append(new File(agentPath).getName());
     argument.append("=");
     try {
       final File tempFile = createTempFile();
