@@ -9,6 +9,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.intention.impl.CachedIntentions;
 import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.diagnostic.ThreadDumper;
@@ -103,7 +104,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   private final FileStatusMap myFileStatusMap;
   private DaemonCodeAnalyzerSettings myLastSettings;
 
-  private volatile IntentionHintComponent myLastIntentionHint;
   private volatile boolean myDisposed;     // the only possible transition: false -> true
   private volatile boolean myInitialized;  // the only possible transition: false -> true
 
@@ -710,38 +710,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     return result;
   }
 
-  void setLastIntentionHint(@NotNull Project project,
-                            @NotNull PsiFile file,
-                            @NotNull Editor editor,
-                            @NotNull ShowIntentionsPass.IntentionsInfo intentions,
-                            boolean hasToRecreate) {
-    if (!editor.getSettings().isShowIntentionBulb()) {
-      return;
-    }
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    hideLastIntentionHint();
-    
-    if (editor.getCaretModel().getCaretCount() > 1) return;
-    
-    IntentionHintComponent hintComponent = IntentionHintComponent.showIntentionHint(project, file, editor, intentions, false);
-    if (hasToRecreate) {
-      hintComponent.recreate();
-    }
-    myLastIntentionHint = hintComponent;
-  }
-
-  void hideLastIntentionHint() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    IntentionHintComponent hint = myLastIntentionHint;
-    if (hint != null && hint.isVisible()) {
-      hint.hide();
-      myLastIntentionHint = null;
-    }
-  }
-
   @Nullable
   public IntentionHintComponent getLastIntentionHint() {
-    return myLastIntentionHint;
+    return ((IntentionsUIImpl)IntentionsUI.SERVICE.getInstance()).getLastIntentionHint();
   }
 
   @Nullable

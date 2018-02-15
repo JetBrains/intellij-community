@@ -21,12 +21,11 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInsight.intention.impl.CachedIntentions;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
-import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInspection.*;
@@ -41,7 +40,6 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -72,7 +70,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -85,8 +82,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   private final PsiFile myFile;
   private final int myPassIdToShowIntentionsFor;
   private final IntentionsInfo myIntentionsInfo = new IntentionsInfo();
-  private volatile boolean myShowBulb;
-  private volatile boolean myHasToRecreate;
+  private final CachedIntentions myCachedIntentions;
+  private boolean myActionsChanged;
 
   ShowIntentionsPass(@NotNull Project project, @NotNull Editor editor, int passId) {
     super(project, editor.getDocument(), false);
@@ -99,6 +96,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     myFile = documentManager.getPsiFile(myEditor.getDocument());
     assert myFile != null : FileDocumentManager.getInstance().getFile(myEditor.getDocument());
+    myCachedIntentions = new CachedIntentions(myProject, myFile, myEditor);
   }
 
   @NotNull
@@ -241,39 +239,17 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     if (!ApplicationManager.getApplication().isUnitTestMode() && !myEditor.getContentComponent().hasFocus()) return;
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
     if (state != null && !state.isFinished()) return;
-    DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
-    getIntentionActionsToShow();
-    updateActions(codeAnalyzer);
+    getActionsToShow(myEditor, myFile, myIntentionsInfo, myPassIdToShowIntentionsFor);
+    myActionsChanged = myCachedIntentions.wrapAndUpdateActions(myIntentionsInfo, true);
   }
 
   @Override
   public void doApplyInformationToEditor() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !myEditor.getContentComponent().hasFocus()) return;
-
-    // do not show intentions if caret is outside visible area
-    LogicalPosition caretPos = myEditor.getCaretModel().getLogicalPosition();
-    Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
-    Point xy = myEditor.logicalPositionToXY(caretPos);
-    if (!visibleArea.contains(xy)) return;
-
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
-    if (myShowBulb && (state == null || state.isFinished()) && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(false)) {
-      DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
-      codeAnalyzer.setLastIntentionHint(myProject, myFile, myEditor, myIntentionsInfo, myHasToRecreate);
+    if ((state == null || state.isFinished())) {
+      IntentionsUI.SERVICE.getInstance().update(myCachedIntentions, myActionsChanged);
     }
-  }
-
-  private void getIntentionActionsToShow() {
-    getActionsToShow(myEditor, myFile, myIntentionsInfo, myPassIdToShowIntentionsFor);
-
-    if (myIntentionsInfo.isEmpty()) {
-      return;
-    }
-    myShowBulb = !myIntentionsInfo.guttersToShow.isEmpty() || !myIntentionsInfo.notificationActionsToShow.isEmpty() ||
-      ContainerUtil.exists(ContainerUtil.concat(myIntentionsInfo.errorFixesToShow, myIntentionsInfo.inspectionFixesToShow,myIntentionsInfo.intentionsToShow),
-                           descriptor -> IntentionManagerSettings.getInstance().isShowLightBulb(descriptor.getAction()));
   }
 
   private static boolean appendCleanupCode(@NotNull List<HighlightInfo.IntentionActionDescriptor> actionDescriptors, @NotNull PsiFile file) {
@@ -288,19 +264,6 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     return false;
   }
 
-  private void updateActions(@NotNull DaemonCodeAnalyzerImpl codeAnalyzer) {
-    IntentionHintComponent hintComponent = codeAnalyzer.getLastIntentionHint();
-    if (!myShowBulb || hintComponent == null || !hintComponent.isForEditor(myEditor)) {
-      return;
-    }
-    IntentionHintComponent.PopupUpdateResult result = hintComponent.updateActions(myIntentionsInfo);
-    if (result == IntentionHintComponent.PopupUpdateResult.HIDE_AND_RECREATE) {
-      // reshow all
-    }
-    else if (result == IntentionHintComponent.PopupUpdateResult.CHANGED_INVISIBLE) {
-      myHasToRecreate = true;
-    }
-  }
 
   public static void getActionsToShow(@NotNull final Editor hostEditor,
                                       @NotNull final PsiFile hostFile,
