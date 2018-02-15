@@ -51,6 +51,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     initEditor(showEditor, languageInside);
     fillComboBox();
     myComponent = JBUI.Panels.simplePanel().addToTop(myComboBox);
+    setExpression(myExpression);
   }
 
   public ComboBox getComboBox() {
