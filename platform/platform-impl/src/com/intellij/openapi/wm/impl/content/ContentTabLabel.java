@@ -71,7 +71,7 @@ class ContentTabLabel extends BaseLabel {
 
     if (currentIconTooltip != null) {
       if (currentIconTooltip.icon == icon) {
-        IdeTooltipManager.getInstance().show(currentIconTooltip.currentTooltip, true, false);
+        IdeTooltipManager.getInstance().show(currentIconTooltip.currentTooltip, false, false);
         return;
       }
 
