@@ -236,7 +236,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
     final JPanel panel = myPattern.getComponent();
     panel.setLayout(new BorderLayout());
-    myPatternTextField = new TextFieldWithBrowseButton(new ExpandableTextField());
+    myPatternTextField = new TextFieldWithBrowseButton(new ExpandableTextField(text -> Arrays.asList(text.split("\\|\\|")), 
+                                                                               strings -> StringUtil.join(strings, "||")));
     myPatternTextField.setButtonIcon(IconUtil.getAddIcon());
     panel.add(myPatternTextField, BorderLayout.CENTER);
     myTestLocations[JUnitConfigurationModel.PATTERN] = myPattern;
