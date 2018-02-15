@@ -19,7 +19,6 @@ import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -30,7 +29,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
-import com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator;
+import com.jetbrains.python.psi.impl.PyEvaluator;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -444,7 +443,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     boolean isStaticallyTrue = false;
     if (condition != null) {
       condition.accept(this);
-      isStaticallyTrue = PyConstantExpressionEvaluator.evaluateBoolean(condition, false);
+      isStaticallyTrue = PyEvaluator.evaluateBoolean(condition, false);
     }
     final Instruction head = myBuilder.prevInstruction;
     final PyElsePart elsePart = node.getElsePart();
@@ -814,7 +813,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     super.visitPyAssertStatement(node);
     final PyExpression[] args = node.getArguments();
     // assert False
-    if (args.length >= 1 && !PyConstantExpressionEvaluator.evaluateBoolean(args[0], true)) {
+    if (args.length >= 1 && !PyEvaluator.evaluateBoolean(args[0], true)) {
       abruptFlow(node);
       return;
     }
