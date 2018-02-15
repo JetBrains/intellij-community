@@ -42,6 +42,7 @@ public interface CreateFieldRequest extends ActionRequest {
    *
    * @return modifiers that should be present when requested field is compiled
    */
+  @NotNull
   Collection<JvmModifier> getModifiers();
 
   /**
