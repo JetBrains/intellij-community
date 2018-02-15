@@ -92,8 +92,7 @@
     <writingAccessProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictAccessProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictNotificationProvider"/>
     <customFileDropHandler implementation="com.intellij.openapi.vcs.changes.patch.PatchFileDropHandler"/>
-    <projectService serviceInterface="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictSettings"
-                    serviceImplementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictSettings"/>
+    <projectService serviceImplementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictSettings"/>
 
     <handleTypeFactory implementation="com.intellij.openapi.vcs.readOnlyHandler.VcsHandleTypeFactory"/>
 
