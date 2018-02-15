@@ -181,11 +181,13 @@ public class LazyParseableElement extends CompositeElement {
       assert text != null;
     }
 
-    if (TreeUtil.getFileElement(this) == null) {
+    FileElement fileElement = TreeUtil.getFileElement(this);
+    if (fileElement == null) {
       LOG.error("Chameleons must not be parsed till they're in file tree: " + this);
     }
-
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    else {
+      fileElement.assertReadAccessAllowed();
+    }
 
     DebugUtil.performPsiModification("lazy-parsing", () -> {
       TreeElement parsedNode = (TreeElement)((ILazyParseableElementTypeBase)getElementType()).parseContents(this);
