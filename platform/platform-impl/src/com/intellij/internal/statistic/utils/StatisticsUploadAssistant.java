@@ -35,6 +35,10 @@ public class StatisticsUploadAssistant {
            (System.currentTimeMillis() - Time.WEEK > ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFirstRunTime());
   }
 
+  public static long getSendPeriodInMillis() {
+    return UsageStatisticsPersistenceComponent.getInstance().getPeriod().getMillis();
+  }
+
   public static boolean isTimeToSend() {
     return isTimeToSend(UsageStatisticsPersistenceComponent.getInstance());
   }
