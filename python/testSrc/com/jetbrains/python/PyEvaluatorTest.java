@@ -224,6 +224,16 @@ public class PyEvaluatorTest extends PyTestCase {
     assertNull(evaluator.evaluate(parseText("a = True\nb = a\nc = b\nexpr = c")));
   }
 
+  public void testNumbersAddition() {
+    assertEquals(Integer.valueOf(3), byExpression("1 + 2", Integer.class));
+
+    assertEquals(Long.valueOf(Long.valueOf(Integer.MAX_VALUE) + 1), byExpression("1 + " + Integer.MAX_VALUE, Long.class));
+    assertEquals(Long.valueOf(Long.valueOf(Integer.MAX_VALUE) + 1), byExpression(Integer.MAX_VALUE + "+ 1", Long.class));
+
+    assertEquals(BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), byExpression("1 + " + Long.MAX_VALUE, BigInteger.class));
+    assertEquals(BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE), byExpression(Long.MAX_VALUE + "+ 1", BigInteger.class));
+  }
+
   @NotNull
   private <T> T byExpression(@NotNull String expression, @NotNull Class<T> cls) {
     final Object value = new PyEvaluator().evaluate(parseExpression(expression));

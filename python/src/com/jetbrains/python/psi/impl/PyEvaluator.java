@@ -106,17 +106,7 @@ public class PyEvaluator {
     if (expression.isIntegerLiteral()) {
       final BigInteger value = expression.getBigIntegerValue();
       if (value != null) {
-        final int intValue = value.intValue();
-        if (BigInteger.valueOf(intValue).equals(value)) {
-          return intValue;
-        }
-
-        final long longValue = value.longValue();
-        if (BigInteger.valueOf(longValue).equals(value)) {
-          return longValue;
-        }
-
-        return value;
+        return fromBigInteger(value);
       }
     }
 
@@ -182,6 +172,11 @@ public class PyEvaluator {
     else if (lhs instanceof List && rhs instanceof List) {
       return ContainerUtil.concat((List)lhs, (List)rhs);
     }
+    else if (lhs instanceof Number && rhs instanceof Number) {
+      final BigInteger first = toBigInteger((Number)lhs);
+      final BigInteger second = toBigInteger((Number)rhs);
+      return fromBigInteger(first.add(second));
+    }
     return null;
   }
 
@@ -244,6 +239,34 @@ public class PyEvaluator {
 
   private void addRecordFromDict(@NotNull Map<Object, Object> result, @NotNull PyExpression key, @Nullable PyExpression value) {
     result.put(myEvaluateKeys ? evaluate(key) : key, myEvaluateCollectionItems ? evaluate(value) : value);
+  }
+
+  @NotNull
+  private static BigInteger toBigInteger(@NotNull Number value) {
+    // don't forget to update fromBigInteger() after changing this method
+
+    return value instanceof Integer
+           ? BigInteger.valueOf((Integer)value)
+           : value instanceof Long
+             ? BigInteger.valueOf((Long)value)
+             : (BigInteger)value;
+  }
+
+  @NotNull
+  private static Number fromBigInteger(@NotNull BigInteger value) {
+    // don't forget to update toBigInteger() after changing this method
+
+    final int intValue = value.intValue();
+    if (BigInteger.valueOf(intValue).equals(value)) {
+      return intValue;
+    }
+
+    final long longValue = value.longValue();
+    if (BigInteger.valueOf(longValue).equals(value)) {
+      return longValue;
+    }
+
+    return value;
   }
 
   /**
