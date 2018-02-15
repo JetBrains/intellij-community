@@ -81,7 +81,6 @@ public class ModuleVcsDetector {
   }
 
   private void autoDetectVcsMappings(final boolean tryMapPieces) {
-    Set<AbstractVcs> usedVcses = new HashSet<>();
     Map<VirtualFile, AbstractVcs> vcsMap = new HashMap<>();
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     for(Module module: moduleManager.getModules()) {
@@ -91,27 +90,25 @@ public class ModuleVcsDetector {
         if (contentRootVcs != null) {
           vcsMap.put(file, contentRootVcs);
         }
-        usedVcses.add(contentRootVcs);
       }
     }
     final VirtualFile projectBaseDir = myProject.getBaseDir();
     // this case is only for project <-> one vcs.
     // Additional check for the case when just content root should be mapped, not all project
-    if (usedVcses.size() == 1 && projectBaseDir != null && projectBaseDir.equals(vcsMap.keySet().iterator().next())) {
-      // todo I doubt this is correct, see IDEA-50527
-      final AbstractVcs[] abstractVcses = usedVcses.toArray(new AbstractVcs[1]);
-      final Module[] modules = moduleManager.getModules();
-      final Set<String> contentRoots = new HashSet<>();
-      for (Module module : modules) {
-        final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
-        for (VirtualFile root : roots) {
-          contentRoots.add(root.getPath());
-        }
-      }
-
-      if (abstractVcses[0] != null) {
+    if (vcsMap.size() == 1) {
+      final VirtualFile folder = vcsMap.keySet().iterator().next();
+      final AbstractVcs vcs = vcsMap.get(folder);
+      if (vcs != null && projectBaseDir != null && projectBaseDir.equals(folder)) {
         // here we put the project <-> vcs mapping, and removing all inside-project-roots mappings
         // (i.e. keeping all other mappings)
+        final Module[] modules = moduleManager.getModules();
+        final Set<String> contentRoots = new HashSet<>();
+        for (Module module : modules) {
+          final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
+          for (VirtualFile root : roots) {
+            contentRoots.add(root.getPath());
+          }
+        }
         final List<VcsDirectoryMapping> vcsDirectoryMappings = new ArrayList<>(myVcsManager.getDirectoryMappings());
         for (Iterator<VcsDirectoryMapping> iterator = vcsDirectoryMappings.iterator(); iterator.hasNext(); ) {
           final VcsDirectoryMapping mapping = iterator.next();
@@ -119,7 +116,7 @@ public class ModuleVcsDetector {
             iterator.remove();
           }
         }
-        myVcsManager.setAutoDirectoryMapping("", abstractVcses[0].getName());
+        myVcsManager.setAutoDirectoryMapping("", vcs.getName());
         for (VcsDirectoryMapping mapping : vcsDirectoryMappings) {
           myVcsManager.removeDirectoryMapping(mapping);
         }
