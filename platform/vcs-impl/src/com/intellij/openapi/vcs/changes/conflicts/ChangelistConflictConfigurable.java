@@ -57,9 +57,10 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
   @BindControl("HIGHLIGHT_NON_ACTIVE_CHANGELIST")
   private JCheckBox myHighlightNonActiveCheckBox;
 
+  private JCheckBox myEnablePartialChangelistsCheckBox;
+
   private JBList myIgnoredFiles;
   private JButton myClearButton;
-  private JCheckBox myEnablePartialChangelists;
   private boolean myIgnoredFilesCleared;
 
   private final ChangelistConflictTracker myConflictTracker;
@@ -95,7 +96,7 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
   @Override
   public void reset() {
     super.reset();
-    myEnablePartialChangelists.setSelected(myVcsApplicationSettings.ENABLE_PARTIAL_CHANGELISTS);
+    myEnablePartialChangelistsCheckBox.setSelected(myVcsApplicationSettings.ENABLE_PARTIAL_CHANGELISTS);
 
     Collection<String> conflicts = myConflictTracker.getIgnoredConflicts();
     myIgnoredFiles.setListData(ArrayUtil.toStringArray(conflicts));
@@ -111,8 +112,8 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
         conflict.ignored = false;        
       }
     }
-    if (myEnablePartialChangelists.isSelected() != myVcsApplicationSettings.ENABLE_PARTIAL_CHANGELISTS) {
-      myVcsApplicationSettings.ENABLE_PARTIAL_CHANGELISTS = myEnablePartialChangelists.isSelected();
+    if (myEnablePartialChangelistsCheckBox.isSelected() != myVcsApplicationSettings.ENABLE_PARTIAL_CHANGELISTS) {
+      myVcsApplicationSettings.ENABLE_PARTIAL_CHANGELISTS = myEnablePartialChangelistsCheckBox.isSelected();
       ApplicationManager.getApplication().getMessageBus().syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated();
     }
     myConflictTracker.optionsChanged();
@@ -122,7 +123,7 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
   public boolean isModified() {
     return super.isModified() ||
            myIgnoredFiles.getModel().getSize() != myConflictTracker.getIgnoredConflicts().size() ||
-           myEnablePartialChangelists.isSelected() != myVcsApplicationSettings.ENABLE_PARTIAL_CHANGELISTS;
+           myEnablePartialChangelistsCheckBox.isSelected() != myVcsApplicationSettings.ENABLE_PARTIAL_CHANGELISTS;
   }
 
   @Nls
