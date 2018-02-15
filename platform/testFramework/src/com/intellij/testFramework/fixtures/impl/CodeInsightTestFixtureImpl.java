@@ -15,6 +15,7 @@ import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.CachedIntentions;
 import com.intellij.codeInsight.intention.impl.IntentionListStep;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.codeInsight.lookup.Lookup;
@@ -254,7 +255,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     ShowIntentionsPass.getActionsToShow(editor, file, intentions, -1);
 
     List<IntentionAction> result = new ArrayList<>();
-    IntentionListStep intentionListStep = new IntentionListStep(null, intentions, editor, file, file.getProject());
+    IntentionListStep intentionListStep = new IntentionListStep(null, editor, file, file.getProject(),
+                                                                CachedIntentions.create(file.getProject(), file, editor, intentions));
     for (Map.Entry<IntentionAction, List<IntentionAction>> entry : intentionListStep.getActionsWithSubActions().entrySet()) {
       result.add(entry.getKey());
       result.addAll(entry.getValue());
