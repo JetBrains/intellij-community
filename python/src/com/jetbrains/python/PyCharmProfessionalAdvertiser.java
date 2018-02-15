@@ -53,11 +53,6 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
         return;
       }
 
-
-      if (!moduleUsesPythonSdk(pyFile)) {
-        return;
-      }
-
       if (PyCellUtil.hasCells(pyFile)) {
         showInspectionAdvertisement(project, "code cells in the editor", "https://www.jetbrains.com/pycharm/features/scientific_tools.html", "codecells");
       }
