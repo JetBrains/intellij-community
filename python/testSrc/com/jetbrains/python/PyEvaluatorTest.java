@@ -1,0 +1,240 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.jetbrains.python;
+
+import com.google.common.collect.ImmutableMap;
+import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyEvaluator;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class PyEvaluatorTest extends PyTestCase {
+
+  public void testNull() {
+    assertNull(new PyEvaluator().evaluate(null));
+  }
+
+  public void testParenthesized() {
+    assertTrue(byExpression("(True)", Boolean.class));
+  }
+
+  public void testDict() {
+    final Map map1 = byExpression("{'a': 1, 2: 'b'}", Map.class);
+    assertEquals(ImmutableMap.of("a", 1, 2, "b"), map1);
+
+    final Map map2 = byText("a='a'\none=1\ntwo=2\nb='b'\nexpr={a: one, two: b}", Map.class);
+    assertEquals(ImmutableMap.of("a", 1, 2, "b"), map2);
+  }
+
+  public void testList() {
+    final List list1 = byExpression("[1, 3, 5]", List.class);
+    assertEquals(Arrays.asList(1, 3, 5), list1);
+
+    final List list2 = byText("one=1\nthree=3\nfive=5\nexpr=[one, three, five]", List.class);
+    assertEquals(Arrays.asList(1, 3, 5), list2);
+  }
+
+  public void testBoolean() {
+    assertFalse(byExpression("False", Boolean.class));
+  }
+
+  public void testString() {
+    final String s = byExpression("'abc'", String.class);
+    assertEquals("abc", s);
+  }
+
+  public void testInteger() {
+    final int i = byExpression("5", Integer.class);
+    assertEquals(5, i);
+  }
+
+  public void testConcatStrings() {
+    final String s = byExpression("'ab' + 'cd'", String.class);
+    assertEquals("abcd", s);
+  }
+
+  public void testConcatLists() {
+    final List list = byExpression("[1, 'a'] + ['b', 2]", List.class);
+    assertEquals(Arrays.asList(1, "a", "b", 2), list);
+  }
+
+  public void testReference() {
+    assertTrue(byText("a = True\nexpr = a", Boolean.class));
+  }
+
+  public void testReferenceChain() {
+    assertTrue(byText("a = True\nb = a\nexpr = b", Boolean.class));
+  }
+
+  public void testStringReplace() {
+    final String s = byExpression("'aaa'.replace('a', 'b')", String.class);
+    assertEquals("bbb", s);
+  }
+
+  public void testDictFromTuples() {
+    final Map map = byText("expr = dict([('a', 1), (2, 'b')])", Map.class);
+    assertEquals(ImmutableMap.of("a", 1, 2, "b"), map);
+  }
+
+  public void testNotEvaluatedList() {
+    final PyEvaluator evaluator = new PyEvaluator();
+    evaluator.setEvaluateCollectionItems(false);
+
+    final List list = PyUtil.as(evaluator.evaluate(parseText("a = 10\nb = 20\nexpr = [a, b]")), List.class);
+    assertNotNull(list);
+
+    assertEquals(2, list.size());
+
+    final PyReferenceExpression first = PyUtil.as(list.get(0), PyReferenceExpression.class);
+    assertNotNull(first);
+    assertEquals(10, evaluator.evaluate(first));
+
+    final PyReferenceExpression second = PyUtil.as(list.get(1), PyReferenceExpression.class);
+    assertNotNull(second);
+    assertEquals(20, evaluator.evaluate(second));
+  }
+
+  public void testNotEvaluatedDictKeys() {
+    final PyEvaluator evaluator = new PyEvaluator();
+    evaluator.setEvaluateKeys(false);
+
+    final Map map = PyUtil.as(evaluator.evaluate(parseText("a='a'\none=1\ntwo=2\nb='b'\nexpr={a: one, two: b}")), Map.class);
+    assertNotNull(map);
+
+    assertEquals(2, map.size());
+    final AtomicInteger checks = new AtomicInteger();
+
+    map.forEach(
+      (k, v) -> {
+        if (v instanceof Integer) {
+          assertEquals(1, v);
+          assertInstanceOf(k, PyReferenceExpression.class);
+          assertEquals("a", evaluator.evaluate((PyReferenceExpression)k));
+          checks.incrementAndGet();
+        }
+        else if (v instanceof String) {
+          assertEquals("b", v);
+          assertInstanceOf(k, PyReferenceExpression.class);
+          assertEquals(2, evaluator.evaluate((PyReferenceExpression)k));
+          checks.incrementAndGet();
+        }
+      }
+    );
+
+    assertEquals(2, checks.get());
+  }
+
+  public void testNotEvaluatedDictValues() {
+    final PyEvaluator evaluator = new PyEvaluator();
+    evaluator.setEvaluateCollectionItems(false);
+
+    final Map map = PyUtil.as(evaluator.evaluate(parseText("a='a'\none=1\ntwo=2\nb='b'\nexpr={a: one, two: b}")), Map.class);
+    assertNotNull(map);
+
+    assertEquals(2, map.size());
+    final AtomicInteger checks = new AtomicInteger();
+
+    map.forEach(
+      (k, v) -> {
+        if (k instanceof String) {
+          assertEquals("a", k);
+          assertInstanceOf(v, PyReferenceExpression.class);
+          assertEquals(1, evaluator.evaluate((PyReferenceExpression)v));
+          checks.incrementAndGet();
+        }
+        else if (k instanceof Integer) {
+          assertEquals(2, k);
+          assertInstanceOf(v, PyReferenceExpression.class);
+          assertEquals("b", evaluator.evaluate((PyReferenceExpression)v));
+          checks.incrementAndGet();
+        }
+      }
+    );
+
+    assertEquals(2, checks.get());
+  }
+
+  public void testNotEvaluatedDictKeysAndValues() {
+    final PyEvaluator evaluator = new PyEvaluator();
+    evaluator.setEvaluateKeys(false);
+    evaluator.setEvaluateCollectionItems(false);
+
+    final Map map = PyUtil.as(evaluator.evaluate(parseText("a='a'\none=1\ntwo=2\nb='b'\nexpr={a: one, two: b}")), Map.class);
+    assertNotNull(map);
+
+    assertEquals(2, map.size());
+    final AtomicInteger checks = new AtomicInteger();
+
+    map.forEach(
+      (k, v) -> {
+        assertInstanceOf(k, PyReferenceExpression.class);
+        assertInstanceOf(v, PyReferenceExpression.class);
+
+        final Object evaluatedK = evaluator.evaluate((PyReferenceExpression)k);
+        final Object evaluatedV = evaluator.evaluate((PyReferenceExpression)v);
+
+        if (evaluatedK instanceof String) {
+          assertInstanceOf(evaluatedV, Integer.class);
+          assertEquals("a", evaluatedK);
+          assertEquals(1, evaluatedV);
+          checks.incrementAndGet();
+        }
+        else if (evaluatedK instanceof Integer) {
+          assertInstanceOf(evaluatedV, String.class);
+          assertEquals(2, evaluatedK);
+          assertEquals("b", evaluatedV);
+          checks.incrementAndGet();
+        }
+      }
+    );
+
+    assertEquals(2, checks.get());
+  }
+
+  public void testReferenceWithNamespace() {
+    final PyEvaluator evaluator = new PyEvaluator();
+    evaluator.setNamespace(ImmutableMap.of("a", 1));
+
+    final Object value = evaluator.evaluate(parseText("a = True\nexpr = a"));
+    assertInstanceOf(value, Integer.class);
+    assertEquals(1, value);
+  }
+
+  public void testReferenceWithIncompleteNamespace() {
+    final PyEvaluator evaluator = new PyEvaluator();
+    evaluator.setNamespace(ImmutableMap.of("b", 1));
+
+    assertNull(evaluator.evaluate(parseText("a = True\nb = a\nc = b\nexpr = c")));
+  }
+
+  @NotNull
+  private <T> T byExpression(@NotNull String expression, @NotNull Class<T> cls) {
+    final Object value = new PyEvaluator().evaluate(parseExpression(expression));
+    assertInstanceOf(value, cls);
+    return cls.cast(value);
+  }
+
+  @NotNull
+  private PyExpression parseExpression(@NotNull String expression) {
+    return PyElementGenerator.getInstance(myFixture.getProject()).createExpressionFromText(LanguageLevel.PYTHON37, expression);
+  }
+
+  @NotNull
+  private <T> T byText(@NotNull String text, @NotNull Class<T> cls) {
+    final Object value = new PyEvaluator().evaluate(parseText(text));
+    assertInstanceOf(value, cls);
+    return cls.cast(value);
+  }
+
+  @NotNull
+  private PyExpression parseText(@NotNull String text) {
+    myFixture.configureByText(PythonFileType.INSTANCE, text);
+    final PyTargetExpression target = myFixture.findElementByText("expr", PyTargetExpression.class);
+    assertNotNull(target);
+    return target.findAssignedValue();
+  }
+}
