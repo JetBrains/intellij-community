@@ -1,9 +1,9 @@
-class Foo {
-    public static void foo(){}
+interface Foo {
+    static void foo(){}
 }
-class FooImpl extends Foo {
+class FooImpl implements Foo {
   {
-    foo();
+    Foo.foo();
   }
 
 }

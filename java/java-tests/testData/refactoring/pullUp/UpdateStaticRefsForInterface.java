@@ -1,5 +1,5 @@
-class Foo {}
-class FooImpl extends Foo {
+interface Foo {}
+class FooImpl implements Foo {
   {
     foo();
   }

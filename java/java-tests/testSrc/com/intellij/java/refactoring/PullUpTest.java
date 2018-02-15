@@ -141,6 +141,10 @@ public class PullUpTest extends LightRefactoringTestCase {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
 
+  public void testUpdateStaticRefsForInterface() {
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
+  }
+
   public void testRemoveOverrideFromPulledMethod() {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
