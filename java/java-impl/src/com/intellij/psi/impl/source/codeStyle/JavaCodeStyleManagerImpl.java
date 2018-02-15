@@ -502,19 +502,21 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     final LinkedHashSet<String> names = new LinkedHashSet<>();
     ContainerUtil.addAll(names, suggestVariableNameFromLiterals(expr, variableKind, correctKeywords));
 
-    ContainerUtil.addAll(names, suggestVariableNameByExpressionOnly(expr, variableKind, correctKeywords, false).names);
-    ContainerUtil.addAll(names, suggestVariableNameByExpressionPlace(expr, variableKind, correctKeywords).names);
+    NamesByExprInfo byExpr = suggestVariableNameByExpressionOnly(expr, variableKind, correctKeywords, false);
+    NamesByExprInfo byExprPlace = suggestVariableNameByExpressionPlace(expr, variableKind, correctKeywords);
+    NamesByExprInfo byExprAllMethods = suggestVariableNameByExpressionOnly(expr, variableKind, correctKeywords, true);
+
+    ContainerUtil.addAll(names, byExpr.names);
+    ContainerUtil.addAll(names, byExprPlace.names);
 
     PsiType type = expr.getType();
     if (type != null) {
       ContainerUtil.addAll(names, suggestVariableNameByType(type, variableKind, correctKeywords));
     }
-    ContainerUtil.addAll(names, suggestVariableNameByExpressionOnly(expr, variableKind, correctKeywords, true).names);
+    ContainerUtil.addAll(names, byExprAllMethods.names);
 
     String[] namesArray = ArrayUtil.toStringArray(names);
-    String propertyName = suggestVariableNameByExpressionOnly(expr, variableKind, correctKeywords, false).propertyName != null
-                          ? suggestVariableNameByExpressionOnly(expr, variableKind, correctKeywords, false).propertyName
-                          : suggestVariableNameByExpressionPlace(expr, variableKind, correctKeywords).propertyName;
+    String propertyName = byExpr.propertyName != null ? byExpr.propertyName : byExprPlace.propertyName;
     return new NamesByExprInfo(propertyName, namesArray);
   }
 
