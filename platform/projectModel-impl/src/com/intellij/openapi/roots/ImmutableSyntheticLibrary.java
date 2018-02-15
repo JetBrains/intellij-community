@@ -3,6 +3,7 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,9 +22,9 @@ class ImmutableSyntheticLibrary extends SyntheticLibrary {
                             @NotNull Collection<VirtualFile> binaryRoots,
                             @NotNull Set<VirtualFile> excludedRoots,
                             @Nullable Condition<VirtualFile> excludeCondition) {
-    mySourceRoots = sourceRoots;
-    myBinaryRoots = binaryRoots;
-    myExcludedRoots = excludedRoots;
+    mySourceRoots = ContainerUtil.unmodifiableOrEmptyCollection(sourceRoots);
+    myBinaryRoots = ContainerUtil.unmodifiableOrEmptyCollection(binaryRoots);
+    myExcludedRoots = ContainerUtil.unmodifiableOrEmptySet(excludedRoots);
     myExcludeCondition = excludeCondition;
   }
 
@@ -65,10 +66,6 @@ class ImmutableSyntheticLibrary extends SyntheticLibrary {
 
   @Override
   public int hashCode() {
-    int result = mySourceRoots.hashCode();
-    result = 31 * result + myBinaryRoots.hashCode();
-    result = 31 * result + myExcludedRoots.hashCode();
-    result = 31 * result + (myExcludeCondition != null ? myExcludeCondition.hashCode() : 0);
-    return result;
+    return Objects.hash(mySourceRoots, myBinaryRoots, myExcludedRoots, myExcludeCondition);
   }
 }
