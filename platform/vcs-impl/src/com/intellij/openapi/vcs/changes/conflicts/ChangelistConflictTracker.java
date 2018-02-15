@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ZipperUpdater;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.*;
@@ -39,6 +40,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.xmlb.XmlSerializer;
+import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,7 +54,7 @@ public class ChangelistConflictTracker {
 
   private final Map<String, Conflict> myConflicts = Collections.synchronizedMap(new LinkedHashMap<String, Conflict>());
 
-  private final Options myOptions = new Options();
+  @Deprecated private final Options myOldOptions = new Options();
   private final Project myProject;
 
   private final ChangeListManager myChangeListManager;
@@ -70,6 +72,9 @@ public class ChangelistConflictTracker {
                                    @NotNull ChangeListManager changeListManager,
                                    @NotNull FileStatusManager fileStatusManager,
                                    @NotNull EditorNotifications editorNotifications) {
+    // DO NOT access `ChangelistConflictSettings` from this constructor
+    // This will cause cyclic dependency with ChangeListManagerImpl in case of fallback to myOldOptions
+
     myProject = project;
 
     myChangeListManager = changeListManager;
@@ -96,7 +101,7 @@ public class ChangelistConflictTracker {
     myDocumentListener = new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
-        if (!myOptions.TRACKING_ENABLED) {
+        if (!getOptions().TRACKING_ENABLED) {
           return;
         }
         Document document = e.getDocument();
@@ -166,7 +171,7 @@ public class ChangelistConflictTracker {
       }
     }
 
-    if (newConflict && myOptions.HIGHLIGHT_CONFLICTS) {
+    if (newConflict && getOptions().HIGHLIGHT_CONFLICTS) {
       myFileStatusManager.fileStatusChanged(file);
       myEditorNotifications.updateNotifications(file);
     }
@@ -221,7 +226,6 @@ public class ChangelistConflictTracker {
       fileElement.setAttribute("ignored", Boolean.toString(entry.getValue().ignored));
       to.addContent(fileElement);
     }
-    XmlSerializer.serializeInto(myOptions, to);
   }
 
   public void loadState(Element from) {
@@ -241,7 +245,8 @@ public class ChangelistConflictTracker {
       conflict.ignored = Boolean.parseBoolean(element.getAttributeValue("ignored"));
       myConflicts.put(path, conflict);
     }
-    XmlSerializer.deserializeInto(myOptions, from);
+
+    XmlSerializer.deserializeInto(myOldOptions, from);
   }
 
   public void optionsChanged() {
@@ -267,7 +272,7 @@ public class ChangelistConflictTracker {
   }
 
   public boolean hasConflict(@NotNull VirtualFile file) {
-    if (!myOptions.TRACKING_ENABLED) {
+    if (!getOptions().TRACKING_ENABLED) {
       return false;
     }
     String path = file.getPath();
@@ -305,10 +310,17 @@ public class ChangelistConflictTracker {
     return myChangeListManager;
   }
 
-  public Options getOptions() {
-    return myOptions;
+  public ChangelistConflictSettings getOptions() {
+    return ChangelistConflictSettings.getInstance(myProject);
   }
 
+  public Options getOldOptions() {
+    return myOldOptions;
+  }
+
+  /**
+   * @deprecated See {@link ChangelistConflictSettings}
+   */
   public static class Options {
     public boolean TRACKING_ENABLED = true;
     public boolean SHOW_DIALOG = false;
