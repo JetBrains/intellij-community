@@ -29,13 +29,12 @@ import java.awt.MouseInfo
 import java.awt.Point
 import java.awt.Window
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 
-/**
- * @author Sergey Karashevich
- */
 class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
 
   init {
@@ -124,20 +123,13 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
   private fun waitFor(condition: () -> Boolean) {
     val timeout = 5000 //5 sec
     val cdl = CountDownLatch(1)
-    val timeStart = System.currentTimeMillis()
-    invokeWithCondition(timeStart, timeout, cdl, condition)
-    cdl.await(timeout.toLong(), TimeUnit.MILLISECONDS)
-  }
-
-  private fun invokeWithCondition(timeStart: Long, timeout: Int, cdl: CountDownLatch, condition: () -> Boolean) {
-    EdtInvocationManager.getInstance().invokeLater {
-      if (condition.invoke()) {
+    val executor = Executors.newSingleThreadScheduledExecutor().scheduleWithFixedDelay(Runnable {
+      if(condition()){
         cdl.countDown()
       }
-      else {
-        if (System.currentTimeMillis() - timeStart < timeout) invokeWithCondition(timeStart, timeout, cdl, condition)
-      }
-    }
+    }, 0, 100, TimeUnit.MILLISECONDS);
+    cdl.await(timeout.toLong(), TimeUnit.MILLISECONDS)
+    executor.cancel(true)
   }
 
   fun fastPressAndReleaseKey(keyCode: Int, vararg modifiers: Int) {
