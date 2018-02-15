@@ -106,8 +106,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
 
   @Override
   public ModuleWizardStep[] createFinishingSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
-    ModuleType moduleType = getModuleType();
-    return moduleType == null ? ModuleWizardStep.EMPTY_ARRAY : moduleType.createFinishingSteps(wizardContext, this, modulesProvider);
+    return ModuleWizardStep.EMPTY_ARRAY;
   }
 
   /**
