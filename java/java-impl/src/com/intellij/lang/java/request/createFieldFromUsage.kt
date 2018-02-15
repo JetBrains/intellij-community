@@ -112,7 +112,7 @@ private class CreateFieldRequests(val myRef: PsiReferenceExpression) {
       modifiers = modifiers,
       reference = myRef,
       useAnchor = target.toJavaClassOrNull() == ownerClass,
-      constant = false
+      isConstant = false
     )
     requests[target] = request
   }
