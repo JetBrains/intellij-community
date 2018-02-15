@@ -1,20 +1,26 @@
 package circlet.settings
 
+import circlet.utils.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
+import runtime.reactive.*
 
 @State(name = "CircletProjectSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
-class CircletProjectSettings(
-    @Suppress("unused") private val project: Project
-) : PersistentStateComponent<CircletProjectSettings.State> {
+class CircletProjectSettings(private val project: Project) :
+    ILifetimedComponent by LifetimedComponent(project),
+    PersistentStateComponent<CircletProjectSettings.State> {
 
     data class State(var serverUrl: String = "")
 
-    var currentState: State = State()
+    val serverUrl: MutableProperty<String> = mutableProperty("")
 
-    override fun getState(): State? = currentState
+    override fun getState(): State? = State(
+        serverUrl = serverUrl.value
+    )
 
     override fun loadState(state: State) {
-        currentState = state
+        serverUrl.value = state.serverUrl
     }
 }
+
+val Project.settings: CircletProjectSettings get() = getService()

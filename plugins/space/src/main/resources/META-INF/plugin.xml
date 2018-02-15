@@ -26,12 +26,6 @@
                              instance="circlet.settings.CircletConnectionConfigurable"/>
     </extensions>
 
-    <application-components>
-        <component>
-            <implementation-class>circlet.components.CircletLoginComponent</implementation-class>
-        </component>
-    </application-components>
-
     <project-components>
         <component>
             <implementation-class>circlet.components.CircletConnectionComponent</implementation-class>
@@ -40,16 +34,12 @@
 
     <actions>
 
-        <action class="circlet.actions.EnableAction" text="Enable" id="Circlet.EnableAction"/>
-        <action class="circlet.actions.DisableAction" text="Disable" id="Circlet.DisableAction"/>
-        <action class="circlet.actions.ReEnterCredentials" text="Re-enter credentials..." id="Circlet.ReEnterCredentials"/>
+        <action class="circlet.actions.ReEnterCredentialsAction" text="Re-enter credentials..." id="Circlet.ReEnterCredentialsAction"/>
         <action class="circlet.actions.TestCircletAction" text="Test Circlet..." id="Circlet.TestCircletAction"/>
 
         <group text="Circlet" id="CircletGroup" popup="true">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
-            <reference id="Circlet.EnableActionRef" ref="Circlet.EnableAction"/>
-            <reference id="Circlet.DisableActionRef" ref="Circlet.DisableAction"/>
-            <reference id="Circlet.ReEnterCredentialsRef" ref="Circlet.ReEnterCredentials"/>
+            <reference id="Circlet.ReEnterCredentialsActionRef" ref="Circlet.ReEnterCredentialsAction"/>
             <reference id="Circlet.TestCircletActionRef" ref="Circlet.TestCircletAction"/>
         </group>
 

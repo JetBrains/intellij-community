@@ -8,6 +8,7 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.util.*
 import runtime.reactive.*
 
+@Suppress("unused")
 inline fun <reified T : Any> component(): T = application.getComponent()
 inline fun <reified T : Any> Project.component(): T = getComponent()
 
@@ -55,6 +56,7 @@ interface ILifetimedApplicationComponent : Disposable {
     val componentLifetime: Lifetime
 }
 
+@Suppress("unused")
 class LifetimedApplicationComponent : ILifetimedApplicationComponent {
     private val lifetimeDefinition = Lifetime()
 

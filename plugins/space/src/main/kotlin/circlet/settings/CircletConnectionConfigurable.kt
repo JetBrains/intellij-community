@@ -1,7 +1,6 @@
 package circlet.settings
 
 import circlet.messages.*
-import circlet.utils.*
 import com.intellij.openapi.options.*
 import com.intellij.openapi.project.*
 import javax.swing.*
@@ -21,7 +20,7 @@ class CircletConnectionConfigurable(private val project: Project) : SearchableCo
         }
 
     override fun isModified(): Boolean =
-        serverUrlWithProtocol != project.getService<CircletProjectSettings>().currentState.serverUrl
+        serverUrlWithProtocol != project.settings.serverUrl.value
 
     override fun getId(): String = "circlet.settings.connection"
 
@@ -30,13 +29,13 @@ class CircletConnectionConfigurable(private val project: Project) : SearchableCo
     override fun apply() {
         val serverUrl = serverUrlWithProtocol
 
-        project.getService<CircletProjectSettings>().loadState(CircletProjectSettings.State(serverUrl))
+        project.settings.serverUrl.value = serverUrl
         form.serverUrlField.text = serverUrl
     }
 
     override fun createComponent(): JComponent? = form.panel
 
     override fun reset() {
-        form.serverUrlField.text = project.getService<CircletProjectSettings>().currentState.serverUrl
+        form.serverUrlField.text = project.settings.serverUrl.value
     }
 }
