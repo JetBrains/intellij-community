@@ -41,6 +41,7 @@ import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
@@ -89,6 +90,7 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
     final JBList<PsiElement> list = new JBList<>(model);
     //list.setFixedCellHeight();
     HintUpdateSupply.installSimpleHintUpdateSupply(list);
+    list.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
     String initTitle = "Tests for " + methodName;
     DefaultPsiElementCellRenderer renderer = new DefaultPsiElementCellRenderer();
