@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -453,6 +453,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   @Test fun testRefreshEquality() = LocalFileSystemTest.doTestRefreshEquality(tempDir.newFolder("top"))
 
   @Test fun testUnicodePaths() {
+    assumeTrue(!SystemInfo.isLinux || System.getProperty("sun.jnu.encoding") == "UTF-8")
+
     val root = tempDir.newFolder(UNICODE_NAME_1)
     val file = tempDir.newFile("${UNICODE_NAME_1}/${UNICODE_NAME_2}.txt")
     refresh(root)
