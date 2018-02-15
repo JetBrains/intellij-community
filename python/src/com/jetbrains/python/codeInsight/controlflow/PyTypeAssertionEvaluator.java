@@ -8,7 +8,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator;
+import com.jetbrains.python.psi.impl.PyEvaluator;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,8 +120,8 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       }
     }
 
-    final Object leftValue = PyConstantExpressionEvaluator.evaluate(lhs);
-    final Object rightValue = PyConstantExpressionEvaluator.evaluate(rhs);
+    final Object leftValue = new PyEvaluator().evaluate(lhs);
+    final Object rightValue = new PyEvaluator().evaluate(rhs);
 
     if (leftValue instanceof Boolean && rightValue instanceof Boolean) {
       return;

@@ -25,10 +25,11 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.math.BigInteger;
 import java.util.*;
 
 /**
- * TODO: Merge PythonDataflowUtil, {@link com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator}  and {@link com.jetbrains.python.psi.impl.PyEvaluator} and all its inheritors and improve Abstract Interpretation
+ * TODO: Merge PythonDataflowUtil and {@link PyEvaluator} and all its inheritors and improve Abstract Interpretation
  *
  * @author yole
  */
@@ -87,6 +88,15 @@ public class PyEvaluator {
         Object rhs = evaluate(binaryExpr.getRightExpression());
         if (lhs != null && rhs != null) {
           return concatenate(lhs, rhs);
+        }
+      }
+    }
+    else if (expr instanceof PyNumericLiteralExpression) {
+      final PyNumericLiteralExpression numericLiteral = (PyNumericLiteralExpression)expr;
+      if (numericLiteral.isIntegerLiteral()) {
+        final BigInteger value = numericLiteral.getBigIntegerValue();
+        if ((long)value.intValue() == value.longValue()) {
+          return value.intValue();
         }
       }
     }
@@ -237,5 +247,18 @@ public class PyEvaluator {
   @Nullable
   public static <T> T evaluate(@Nullable final PyExpression expression, @NotNull final Class<T> resultType) {
     return PyUtil.as(new PyEvaluator().evaluate(expression), resultType);
+  }
+
+  public static boolean evaluateBoolean(final PyExpression expr, boolean defaultValue) {
+    Object result = new PyEvaluator().evaluate(expr);
+    if (result instanceof Boolean) {
+      return (Boolean)result;
+    }
+    else if (result instanceof Integer) {
+      return ((Integer)result) != 0;
+    }
+    else {
+      return defaultValue;
+    }
   }
 }
