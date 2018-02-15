@@ -180,11 +180,11 @@ public class DaemonListeners implements Disposable {
         Document document = e.getDocument();
         VirtualFile virtualFile = fileDocumentManager.getFile(document);
         Project project = virtualFile == null ? null : ProjectUtil.guessProjectForFile(virtualFile);
-        if (!worthBothering(document, project)) {
-          return; //no need to stop daemon if something happened in the console
+        //no need to stop daemon if something happened in the console
+        if (worthBothering(document, project)) {
+          stopDaemon(true, "Document change");
+          UpdateHighlightersUtil.updateHighlightersByTyping(myProject, e);
         }
-        stopDaemon(true, "Document change");
-        UpdateHighlightersUtil.updateHighlightersByTyping(myProject, e);
       }
     }, this);
 
@@ -192,17 +192,16 @@ public class DaemonListeners implements Disposable {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         final Editor editor = e.getEditor();
-        if (!editor.getComponent().isShowing() && !application.isUnitTestMode() ||
-            !worthBothering(editor.getDocument(), editor.getProject())) {
-          return; //no need to stop daemon if something happened in the console
-        }
-        if (!application.isUnitTestMode()) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            if (!editor.getComponent().isShowing() || myProject.isDisposed()) {
-              return;
-            }
-            IntentionsUI.SERVICE.getInstance().hide();
-          }, ModalityState.current());
+        if ((editor.getComponent().isShowing() || application.isHeadlessEnvironment()) &&
+            worthBothering(editor.getDocument(), editor.getProject())) {
+
+          if (!application.isUnitTestMode()) {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              if ((editor.getComponent().isShowing() || application.isHeadlessEnvironment()) && !myProject.isDisposed()) {
+                IntentionsUI.SERVICE.getInstance().hide();
+              }
+            }, ModalityState.current());
+          }
         }
       }
     }, this);
