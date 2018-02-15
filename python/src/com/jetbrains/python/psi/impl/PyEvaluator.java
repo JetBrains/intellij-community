@@ -105,8 +105,18 @@ public class PyEvaluator {
   private static Object evaluateNumeric(@NotNull PyNumericLiteralExpression expression) {
     if (expression.isIntegerLiteral()) {
       final BigInteger value = expression.getBigIntegerValue();
-      if ((long)value.intValue() == value.longValue()) {
-        return value.intValue();
+      if (value != null) {
+        final int intValue = value.intValue();
+        if (BigInteger.valueOf(intValue).equals(value)) {
+          return intValue;
+        }
+
+        final long longValue = value.longValue();
+        if (BigInteger.valueOf(longValue).equals(value)) {
+          return longValue;
+        }
+
+        return value;
       }
     }
 
