@@ -116,11 +116,40 @@ public class PyEvaluator {
   @Nullable
   private Object evaluateBinary(@NotNull PyBinaryExpression expression) {
     final PyElementType op = expression.getOperator();
-    if (op == PyTokenTypes.PLUS) {
-      final Object lhs = evaluate(expression.getLeftExpression());
-      final Object rhs = evaluate(expression.getRightExpression());
-      if (lhs != null && rhs != null) {
-        return applyPlus(lhs, rhs);
+    final Object lhs = evaluate(expression.getLeftExpression());
+    final Object rhs = evaluate(expression.getRightExpression());
+    if (op == PyTokenTypes.PLUS && lhs != null && rhs != null) {
+      return applyPlus(lhs, rhs);
+    }
+    else if (lhs instanceof Number && rhs instanceof Number) {
+      final BigInteger first = toBigInteger((Number)lhs);
+      final BigInteger second = toBigInteger((Number)rhs);
+      if (op == PyTokenTypes.MINUS) {
+        return fromBigInteger(first.subtract(second));
+      }
+      else if (op == PyTokenTypes.MULT) {
+        return fromBigInteger(first.multiply(second));
+      }
+      else if (op == PyTokenTypes.FLOORDIV) {
+        return fromBigInteger(first.divide(second));
+      }
+      else if (op == PyTokenTypes.LT) {
+        return first.compareTo(second) < 0;
+      }
+      else if (op == PyTokenTypes.LE) {
+        return first.compareTo(second) <= 0;
+      }
+      else if (op == PyTokenTypes.GT) {
+        return first.compareTo(second) > 0;
+      }
+      else if (op == PyTokenTypes.GE) {
+        return first.compareTo(second) >= 0;
+      }
+      else if (op == PyTokenTypes.EQEQ) {
+        return first.compareTo(second) == 0;
+      }
+      else if (op == PyTokenTypes.NE) {
+        return first.compareTo(second) != 0;
       }
     }
 
