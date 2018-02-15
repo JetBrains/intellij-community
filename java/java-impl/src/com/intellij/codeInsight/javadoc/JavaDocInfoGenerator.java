@@ -41,6 +41,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.xml.util.XmlStringUtil;
+import com.sun.org.apache.bcel.internal.generic.DMUL;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -423,14 +424,17 @@ public class JavaDocInfoGenerator {
         LOG.debug("Documentation for " + myElement + " was generated from source code, it wasn't found at following URLs: ", docURLs);
       }
       else {
-        if (buffer.length() == 0) {
-          buffer.append("<html><body></body></html>");
-        }
-        String errorSection = "<p id=\"error\">Following external urls were checked:<br>&nbsp;&nbsp;&nbsp;<i>" +
-                              StringUtil.join(docURLs, XmlStringUtil::escapeString, "</i><br>&nbsp;&nbsp;&nbsp;<i>") +
-                              "</i><br>The documentation for this element is not found. Please add all the needed paths to API docs in " +
-                              "<a href=\"open://Project Settings\">Project Settings.</a></p>";
-        buffer.append( errorSection);
+        buffer.append(DocumentationMarkup.CONTENT_START).append("<p class='centered'>");
+        buffer.append(DocumentationMarkup.GRAYED_START)
+              .append("The following documentation url").append(docURLs.size() > 1 ? "s were" : " was").append(" checked:")
+              .append(BR_TAG)
+              .append(NBSP)
+              .append(StringUtil.join(docURLs, XmlStringUtil::escapeString, BR_TAG + NBSP))
+              .append(DocumentationMarkup.GRAYED_END);
+        buffer.append(BR_TAG);
+        buffer.append("<a href=\"open://Project Settings\">Edit API docs paths</a>");
+        buffer.append("</p>");
+        buffer.append(DocumentationMarkup.CONTENT_END);
       }
     }
 
