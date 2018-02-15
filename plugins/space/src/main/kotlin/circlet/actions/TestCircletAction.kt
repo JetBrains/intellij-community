@@ -15,23 +15,20 @@ private val log = KLoggers.logger("plugin/TestCircletAction.kt")
 
 class TestCircletAction : AnAction() {
     override fun update(e: AnActionEvent) {
-        val project = e.project
-
         e.presentation.isEnabledAndVisible =
-            project != null && component<CircletLoginComponent>().enabled.value
-            && project.component<CircletConnectionComponent>().loginModel.client.connectionStatus.value == ConnectionStatus.CONNECTED
+            e.project?.connection?.loginModel?.client?.connectionStatus?.value == ConnectionStatus.CONNECTED
     }
 
     override fun actionPerformed(e: AnActionEvent) {
         async {
             val project = e.project!!
-            val res = project.component<CircletConnectionComponent>().loginModel.client.service<Me>().info()
+            val result = project.connection.loginModel!!.client.service<Me>().info()
 
             application.invokeLater {
                 Notification(
-                    "IdeaPluginClient",
+                    "Circlet",
                     "Circlet check",
-                    "Me = $res",
+                    "Me = $result",
                     NotificationType.INFORMATION
                 ).notify(project)
             }

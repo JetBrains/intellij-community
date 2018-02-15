@@ -16,38 +16,30 @@
     <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
          on how to target different products -->
     <depends>com.intellij.modules.platform</depends>
-    <depends>com.intellij.modules.lang</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-    </extensions>
+        <projectService serviceImplementation="circlet.settings.CircletProjectSettings"/>
 
-    <application-components>
-        <component>
-            <implementation-class>circlet.components.CircletLoginComponent</implementation-class>
-        </component>
-    </application-components>
+        <applicationConfigurable id="circlet.settings.global" groupId="tools"
+                                 instance="circlet.settings.CircletGlobalConfigurable"/>
+        <projectConfigurable id="circlet.settings.connection" groupId="tools" parentId="circlet.settings.global"
+                             instance="circlet.settings.CircletConnectionConfigurable"/>
+    </extensions>
 
     <project-components>
         <component>
             <implementation-class>circlet.components.CircletConnectionComponent</implementation-class>
         </component>
-        <component>
-            <implementation-class>circlet.features.livevcs.LiveVcsFileWatcher</implementation-class>
-        </component>
     </project-components>
 
     <actions>
 
-        <action class="circlet.actions.EnableAction" text="Enable" id="Circlet.EnableAction"/>
-        <action class="circlet.actions.DisableAction" text="Disable" id="Circlet.DisableAction"/>
-        <action class="circlet.actions.ReEnterCredentials" text="Re-enter credentials..." id="Circlet.ReEnterCredentials"/>
+        <action class="circlet.actions.ReEnterCredentialsAction" text="Re-enter credentials..." id="Circlet.ReEnterCredentialsAction"/>
         <action class="circlet.actions.TestCircletAction" text="Test Circlet..." id="Circlet.TestCircletAction"/>
 
         <group text="Circlet" id="CircletGroup" popup="true">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
-            <reference id="Circlet.EnableActionRef" ref="Circlet.EnableAction"/>
-            <reference id="Circlet.DisableActionRef" ref="Circlet.DisableAction"/>
-            <reference id="Circlet.ReEnterCredentialsRef" ref="Circlet.ReEnterCredentials"/>
+            <reference id="Circlet.ReEnterCredentialsActionRef" ref="Circlet.ReEnterCredentialsAction"/>
             <reference id="Circlet.TestCircletActionRef" ref="Circlet.TestCircletAction"/>
         </group>
 
