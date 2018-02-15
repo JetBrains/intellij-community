@@ -334,11 +334,6 @@ class TabContentLayout extends ContentLayout {
   }
 
   @Override
-  public boolean shouldDrawDecorations() {
-    return isToDrawTabs();
-  }
-
-  @Override
   public void showContentPopup(ListPopup listPopup) {
     Content selected = myUi.myManager.getSelectedContent();
     if (selected != null) {
