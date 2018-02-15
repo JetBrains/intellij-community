@@ -46,8 +46,6 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
   private VirtualFile myLibAdditionalOutsideDir, myLibAdditionalOutsideSrcDir, myLibAdditionalOutsideExcludedDir, myLibAdditionalOutsideClsDir;
   private VirtualFile myLibDir, myLibSrcDir, myLibClsDir;
   private VirtualFile myLibAdditionalDir, myLibAdditionalSrcDir, myLibAdditionalSrcFile, myLibAdditionalExcludedDir, myLibAdditionalClsDir, myLibAdditionalClsFile;
-  private final Collection<VirtualFile> myLibAdditionalSrcDirs = ContainerUtil.newArrayList();
-  private final Collection<VirtualFile> myLibAdditionalClsDirs = ContainerUtil.newArrayList();
   private VirtualFile myCvsDir;
   private VirtualFile myExcludeDir;
   private VirtualFile myOutputDir;
@@ -251,17 +249,10 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
   }
 
   public void testDirsByPackageName() {
-    Collection<VirtualFile> sources = ContainerUtil.newArrayList();
-    sources.addAll(Arrays.asList(mySrcDir1, myTestSrc1, myResDir, myTestResDir, mySrcDir2, myLibSrcDir, myLibClsDir, myLibAdditionalSrcDir,
-                                 myLibAdditionalOutsideSrcDir, myLibAdditionalClsDir, myLibAdditionalOutsideClsDir));
-    sources.addAll(myLibAdditionalSrcDirs);
-    sources.addAll(myLibAdditionalClsDirs);
-    checkPackage("", true, sources.toArray(VirtualFile.EMPTY_ARRAY));
-    Collection<VirtualFile> classes = ContainerUtil.newArrayList();
-    classes.addAll(Arrays.asList(mySrcDir1, myTestSrc1, myResDir, myTestResDir, mySrcDir2, myLibClsDir, myLibAdditionalClsDir,
-                                 myLibAdditionalOutsideClsDir));
-    classes.addAll(myLibAdditionalClsDirs);
-    checkPackage("", false, classes.toArray(VirtualFile.EMPTY_ARRAY));
+    checkPackage("", true, mySrcDir1, myTestSrc1, myResDir, myTestResDir, mySrcDir2, myLibSrcDir, myLibClsDir,
+                 myLibAdditionalSrcDir, myLibAdditionalOutsideSrcDir, myLibAdditionalClsDir, myLibAdditionalOutsideClsDir);
+    checkPackage("", false, mySrcDir1, myTestSrc1, myResDir, myTestResDir, mySrcDir2, myLibClsDir,
+                 myLibAdditionalClsDir, myLibAdditionalOutsideClsDir);
 
     checkPackage("pack1", true, myPack1Dir);
     checkPackage("pack1", false, myPack1Dir);
