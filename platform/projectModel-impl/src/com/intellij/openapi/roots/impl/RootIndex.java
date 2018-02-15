@@ -200,7 +200,9 @@ public class RootIndex {
 
           info.libraryOrSdkSources.add(sourceRoot);
           info.classAndSourceRoots.add(sourceRoot);
-          info.packagePrefix.put(sourceRoot, "");
+          if (descriptor instanceof JavaSyntheticLibrary) {
+            info.packagePrefix.put(sourceRoot, "");
+          }
           info.sourceOfLibraries.putValue(sourceRoot, descriptor);
         }
         for (VirtualFile classRoot : descriptor.getBinaryRoots()) {
@@ -208,7 +210,9 @@ public class RootIndex {
 
           info.libraryOrSdkClasses.add(classRoot);
           info.classAndSourceRoots.add(classRoot);
-          info.packagePrefix.put(classRoot, "");
+          if (descriptor instanceof JavaSyntheticLibrary) {
+            info.packagePrefix.put(classRoot, "");
+          }
           info.classOfLibraries.putValue(classRoot, descriptor);
         }
         for (VirtualFile file : descriptor.getExcludedRoots()) {
