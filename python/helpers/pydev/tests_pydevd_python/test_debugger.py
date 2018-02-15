@@ -145,7 +145,7 @@ class WriterThreadCaseDjango(AbstractWriterThreadCaseDjango):
         self.write_make_initial_run()
 
         t = self.create_request_thread('my_app')
-        time.sleep(2) # Give django some time to get to startup before requesting the page
+        time.sleep(5)  # Give django some time to get to startup before requesting the page
         t.start()
 
         thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
@@ -192,14 +192,14 @@ class WriterThreadCaseDjango2(AbstractWriterThreadCaseDjango):
         self.write_make_initial_run()
 
         t = self.create_request_thread('my_app/name')
-        time.sleep(2) # Give django some time to get to startup before requesting the page
+        time.sleep(5)  # Give django some time to get to startup before requesting the page
         t.start()
 
         thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
         assert line == 4, 'Expected return to be in line 4, was: %s' % line
 
         self.write_get_frame(thread_id, frame_id)
-        self.wait_for_var('<var name="form" type="NameForm" qualifier="my_app.forms" value="NameForm%253A %253Cmy_app.forms.NameForm object')
+        self.wait_for_var('<var name="form" type="NameForm" qualifier="my_app.forms" value="NameForm%253A')
         self.write_run_thread(thread_id)
         self.finished_ok = True
 
