@@ -249,6 +249,12 @@ public class PyEvaluatorTest extends PyTestCase {
     assertTrue(byExpression("2 != 1", Boolean.class));
   }
 
+  public void testBooleanOperators() {
+    assertTrue(byExpression("True and True", Boolean.class));
+    assertTrue(byExpression("True or False", Boolean.class));
+    assertTrue(byExpression("not False", Boolean.class));
+  }
+
   @NotNull
   private <T> T byExpression(@NotNull String expression, @NotNull Class<T> cls) {
     final Object value = new PyEvaluator().evaluate(parseExpression(expression));
