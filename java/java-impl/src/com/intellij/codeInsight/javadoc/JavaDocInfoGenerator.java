@@ -78,6 +78,7 @@ public class JavaDocInfoGenerator {
   private static final String VALUE_TAG = "value";
   private static final String LT = "&lt;";
   private static final String GT = "&gt;";
+  private static final String NBSP = "&nbsp;";
 
   private static final Pattern ourWhitespaces = Pattern.compile("[ \\n\\r\\t]+");
   private static final Pattern ourRelativeHtmlLinks = Pattern.compile("<A.*?HREF=\"([^\":]*)\"", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
@@ -877,7 +878,7 @@ public class JavaDocInfoGenerator {
     for (AnnotationDocGenerator anno : AnnotationDocGenerator.getAnnotationsToShow(owner)) {
       anno.generateAnnotation(buffer, format);
 
-      buffer.append("&nbsp;");
+      buffer.append(NBSP);
       if (splitAnnotations) buffer.append("\n");
     }
   }
@@ -1084,7 +1085,7 @@ public class JavaDocInfoGenerator {
     int indent = 0;
     if (!modifiers.isEmpty()) {
       buffer.append(modifiers);
-      buffer.append("&nbsp;");
+      buffer.append(NBSP);
       indent += modifiers.length() + 1;
     }
 
@@ -1092,13 +1093,13 @@ public class JavaDocInfoGenerator {
     indent += StringUtil.unescapeXml(StringUtil.stripHtml(typeParamsString, true)).length();
     if (!typeParamsString.isEmpty()) {
       buffer.append(typeParamsString);
-      buffer.append("&nbsp;");
+      buffer.append(NBSP);
       indent++;
     }
 
     if (method.getReturnType() != null) {
       indent += generateType(buffer, method.getReturnType(), method, generateLink, useShortNames);
-      buffer.append("&nbsp;");
+      buffer.append(NBSP);
       indent++;
     }
     buffer.append("<b>");
@@ -1114,7 +1115,7 @@ public class JavaDocInfoGenerator {
       PsiParameter parm = parameters[i];
       generateAnnotations(buffer, parm, place, false);
       generateType(buffer, parm.getType(), method, generateLink, useShortNames);
-      buffer.append("&nbsp;");
+      buffer.append(NBSP);
       if (parm.getName() != null) {
         buffer.append(parm.getName());
       }
@@ -1128,20 +1129,13 @@ public class JavaDocInfoGenerator {
     PsiClassType[] refs = method.getThrowsList().getReferencedTypes();
     if (refs.length > 0) {
       buffer.append("\n");
-      indent -= THROWS_KEYWORD.length() + 1;
-      for (int i = 0; i < indent; i++) {
-        buffer.append(" ");
-      }
-      indent += THROWS_KEYWORD.length() + 1;
       buffer.append(THROWS_KEYWORD);
-      buffer.append("&nbsp;");
+      buffer.append(NBSP);
       for (int i = 0; i < refs.length; i++) {
         generateLink(buffer, useShortNames ? refs[i].getPresentableText() : refs[i].getCanonicalText(), null, method, false);
         if (i < refs.length - 1) {
-          buffer.append(",\n");
-          for (int j = 0; j < indent; j++) {
-            buffer.append(" ");
-          }
+          buffer.append(",")
+                .append(NBSP);
         }
       }
     }
