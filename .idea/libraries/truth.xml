@@ -1,13 +1,12 @@
 <component name="libraryTable">
-  <library name="truth">
+  <library name="truth" type="repository">
+    <properties maven-id="com.google.truth:truth:0.34" />
     <CLASSES>
-      <root url="file://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/com/google/truth/truth/0.34" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/truth/truth/0.34/truth-0.34.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="file://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/com/google/truth/truth/0.34" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/truth/truth/0.34/truth-0.34-sources.jar!/" />
     </SOURCES>
-    <jarDirectory url="file://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/com/google/truth/truth/0.34" recursive="false" />
-    <jarDirectory url="file://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/com/google/truth/truth/0.34" recursive="false" type="SOURCES" />
   </library>
 </component>
