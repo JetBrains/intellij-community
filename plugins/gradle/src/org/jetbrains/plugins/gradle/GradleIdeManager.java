@@ -5,19 +5,16 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NotNullLazyValue;
-import org.jetbrains.annotations.NotNull;
+
+import java.util.Optional;
 
 /**
  * @author Vladislav.Soroka
  */
 public class GradleIdeManager {
 
-  private static final @NotNull NotNullLazyValue<GradleIdeManager> myDefaultLazyValue = NotNullLazyValue.createValue(GradleIdeManager::new);
-
   public static GradleIdeManager getInstance() {
-    GradleIdeManager ideManager = ServiceManager.getService(GradleIdeManager.class);
-    return ideManager != null ? ideManager : myDefaultLazyValue.getValue();
+    return Optional.ofNullable(ServiceManager.getService(GradleIdeManager.class)).orElseGet(GradleIdeManager::new);
   }
 
   public Object createTestConsoleProperties(Project project, Executor executor, RunConfiguration runConfiguration) {
