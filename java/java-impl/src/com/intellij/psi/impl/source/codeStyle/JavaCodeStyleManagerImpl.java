@@ -21,7 +21,6 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -235,11 +234,12 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
     final NamesByExprInfo namesByExpr;
     if (expr != null) {
-      namesByExpr = suggestVariableNameByExpression(expr, kind, correctKeywords);
+      namesByExpr = suggestVariableNameByExpression(expr, kind);
+      String[] suggestions = getSuggestionsByNames(namesByExpr.names, kind, correctKeywords).toArray(ArrayUtil.EMPTY_STRING_ARRAY);
       if (namesByExpr.propertyName != null) {
-        sortVariableNameSuggestions(namesByExpr.names, kind, namesByExpr.propertyName, null);
+        sortVariableNameSuggestions(suggestions, kind, namesByExpr.propertyName, null);
       }
-      ContainerUtil.addAll(names, namesByExpr.names);
+      ContainerUtil.addAll(names, suggestions);
     }
     else {
       namesByExpr = null;
@@ -515,47 +515,55 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   private static class NamesByExprInfo {
-    static final NamesByExprInfo EMPTY = new NamesByExprInfo(null, ArrayUtil.EMPTY_STRING_ARRAY);
+    static final NamesByExprInfo EMPTY = new NamesByExprInfo(null, Collections.emptyList());
 
-    private final String[] names;
     private final String propertyName;
+    private final Collection<String> names;
 
-    private NamesByExprInfo(String propertyName, @NotNull String... names) {
-      this.names = names;
+    private NamesByExprInfo(@Nullable String propertyName, @NotNull Collection<String> names) {
       this.propertyName = propertyName;
+      this.names = names;
+    }
+
+    private NamesByExprInfo(@NotNull String propertyName) {
+      this(propertyName, Collections.singletonList(propertyName));
+    }
+
+    private NamesByExprInfo(@Nullable String propertyName, @NotNull String... names) {
+      this(
+        propertyName,
+        propertyName == null ? Arrays.asList(names) : ContainerUtil.prepend(Arrays.asList(names), propertyName)
+      );
     }
   }
 
   @NotNull
-  private NamesByExprInfo suggestVariableNameByExpression(@NotNull PsiExpression expr, @NotNull VariableKind variableKind, boolean correctKeywords) {
+  private NamesByExprInfo suggestVariableNameByExpression(@NotNull PsiExpression expr, @NotNull VariableKind variableKind) {
     final LinkedHashSet<String> names = new LinkedHashSet<>();
-    ContainerUtil.addAll(names, suggestVariableNameFromLiterals(expr, variableKind, correctKeywords));
+    ContainerUtil.addIfNotNull(names, suggestVariableNameFromLiterals(expr));
 
-    NamesByExprInfo byExpr = suggestVariableNameByExpressionOnly(expr, variableKind, correctKeywords, false);
-    NamesByExprInfo byExprPlace = suggestVariableNameByExpressionPlace(expr, variableKind, correctKeywords);
-    NamesByExprInfo byExprAllMethods = suggestVariableNameByExpressionOnly(expr, variableKind, correctKeywords, true);
+    NamesByExprInfo byExpr = suggestVariableNameByExpressionOnly(expr, variableKind, false);
+    NamesByExprInfo byExprPlace = suggestVariableNameByExpressionPlace(expr, variableKind);
+    NamesByExprInfo byExprAllMethods = suggestVariableNameByExpressionOnly(expr, variableKind, true);
 
     ContainerUtil.addAll(names, byExpr.names);
     ContainerUtil.addAll(names, byExprPlace.names);
 
     PsiType type = expr.getType();
     if (type != null) {
-      ContainerUtil.addAll(names, suggestVariableNameByType(type, variableKind, correctKeywords));
+      ContainerUtil.addAll(names, doSuggestNamesByType(type, variableKind, false));
     }
     ContainerUtil.addAll(names, byExprAllMethods.names);
 
-    String[] namesArray = ArrayUtil.toStringArray(names);
     String propertyName = byExpr.propertyName != null ? byExpr.propertyName : byExprPlace.propertyName;
-    return new NamesByExprInfo(propertyName, namesArray);
+    return new NamesByExprInfo(propertyName, names);
   }
 
-  @NotNull
-  private String[] suggestVariableNameFromLiterals(@NotNull PsiExpression expr,
-                                                   @NotNull VariableKind variableKind,
-                                                   boolean correctKeywords) {
+  @Nullable
+  private static String suggestVariableNameFromLiterals(@NotNull PsiExpression expr) {
     String text = findLiteralText(expr);
-    if (text == null) return ArrayUtil.EMPTY_STRING_ARRAY;
-    return getSuggestionsByName(text, variableKind, expr.getType() instanceof PsiArrayType, correctKeywords);
+    if (text == null) return null;
+    return expr.getType() instanceof PsiArrayType ? StringUtil.pluralize(text) : text;
   }
 
   @Nullable
@@ -593,7 +601,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   @NotNull
-  private NamesByExprInfo suggestVariableNameByExpressionOnly(@NotNull PsiExpression expr, @NotNull VariableKind variableKind, boolean correctKeywords, boolean useAllMethodNames) {
+  private NamesByExprInfo suggestVariableNameByExpressionOnly(@NotNull PsiExpression expr, @NotNull VariableKind variableKind, boolean useAllMethodNames) {
     if (expr instanceof PsiMethodCallExpression) {
       PsiReferenceExpression methodExpr = ((PsiMethodCallExpression)expr).getMethodExpression();
       String methodName = methodExpr.getReferenceName();
@@ -602,7 +610,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
           if (isJavaUtilMethodCall((PsiMethodCallExpression)expr)) {
             PsiExpression[] expressions = ((PsiMethodCallExpression)expr).getArgumentList().getExpressions();
             if (expressions.length > 0) {
-              return suggestVariableNameByExpressionOnly(expressions[0], variableKind, correctKeywords, useAllMethodNames);
+              return suggestVariableNameByExpressionOnly(expressions[0], variableKind, useAllMethodNames);
             }
           }
         }
@@ -621,19 +629,17 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
               || CREATE_PREFIX.equals(firstWord)) {
             if (words.length > 1) {
               final String propertyName = methodName.substring(firstWord.length());
-              String[] names = getSuggestionsByName(propertyName, variableKind, false, correctKeywords);
               final PsiExpression qualifierExpression = methodExpr.getQualifierExpression();
               if (qualifierExpression instanceof PsiReferenceExpression &&
                   ((PsiReferenceExpression)qualifierExpression).resolve() instanceof PsiVariable) {
                 String name = qualifierExpression.getText() + StringUtil.capitalize(propertyName);
-                String[] propertySuggestions = getSuggestionsByName(name, variableKind, false, correctKeywords);
-                names = StreamEx.of(names).append(propertySuggestions).distinct().toArray(String[]::new);
+                return new NamesByExprInfo(propertyName, name);
               }
-              return new NamesByExprInfo(propertyName, names);
+              return new NamesByExprInfo(propertyName);
             }
           }
           else if (words.length == 1 || useAllMethodNames) {
-            return new NamesByExprInfo(methodName, getSuggestionsByName(methodName, variableKind, false, correctKeywords));
+            return new NamesByExprInfo(methodName);
           }
         }
       }
@@ -641,8 +647,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     else if (expr instanceof PsiReferenceExpression) {
       String propertyName = getPropertyName((PsiReferenceExpression)expr, true);
       if (propertyName != null) {
-        String[] names = getSuggestionsByName(propertyName, variableKind, false, correctKeywords);
-        return new NamesByExprInfo(propertyName, names);
+        return new NamesByExprInfo(propertyName);
       }
     }
     else if (expr instanceof PsiArrayAccessExpression) {
@@ -652,8 +657,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         if (arrayName != null) {
           String name = StringUtil.unpluralize(arrayName);
           if (name != null) {
-            String[] names = getSuggestionsByName(name, variableKind, false, correctKeywords);
-            return new NamesByExprInfo(name, names);
+            return new NamesByExprInfo(name);
           }
         }
       }
@@ -671,23 +675,22 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     } else if (expr instanceof PsiParenthesizedExpression) {
       final PsiExpression expression = ((PsiParenthesizedExpression)expr).getExpression();
       if (expression != null) {
-        return suggestVariableNameByExpressionOnly(expression, variableKind, correctKeywords, useAllMethodNames);
+        return suggestVariableNameByExpressionOnly(expression, variableKind, useAllMethodNames);
       }
     } else if (expr instanceof PsiTypeCastExpression) {
       final PsiExpression operand = ((PsiTypeCastExpression)expr).getOperand();
       if (operand != null) {
-        return suggestVariableNameByExpressionOnly(operand, variableKind, correctKeywords, useAllMethodNames);
+        return suggestVariableNameByExpressionOnly(operand, variableKind, useAllMethodNames);
       }
     } else if (expr instanceof PsiLiteralExpression) {
       final String text = StringUtil.unquoteString(expr.getText());
       if (isIdentifier(text)) {
-        return new NamesByExprInfo(text, getSuggestionsByName(text, variableKind, false, correctKeywords));
+        return new NamesByExprInfo(text);
       }
     } else if (expr instanceof PsiFunctionalExpression) {
       final PsiType functionalInterfaceType = ((PsiFunctionalExpression)expr).getFunctionalInterfaceType();
       if (functionalInterfaceType != null) {
-        final String[] namesByType = suggestVariableNameByType(functionalInterfaceType, variableKind, correctKeywords);
-        return new NamesByExprInfo(null, namesByType);
+        return new NamesByExprInfo(null, doSuggestNamesByType(functionalInterfaceType, variableKind, false));
       }
     }
 
@@ -772,7 +775,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   @NotNull
-  private NamesByExprInfo suggestVariableNameByExpressionPlace(@NotNull PsiExpression expr, @NotNull VariableKind variableKind, boolean correctKeywords) {
+  private NamesByExprInfo suggestVariableNameByExpressionPlace(@NotNull PsiExpression expr, @NotNull VariableKind variableKind) {
     if (expr.getParent() instanceof PsiExpressionList) {
       PsiExpressionList list = (PsiExpressionList)expr.getParent();
       PsiElement listParent = list.getParent();
@@ -804,7 +807,6 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
           String name = parameters[index].getName();
           if (name != null && TypeConversionUtil.areTypesAssignmentCompatible(subst.substitute(parameters[index].getType()), expr)) {
             name = variableNameToPropertyName(name, VariableKind.PARAMETER);
-            String[] names = getSuggestionsByName(name, variableKind, false, correctKeywords);
             if (expressions.length == 1) {
               final String methodName = method.getName();
               String[] words = NameUtil.nameToWords(methodName);
@@ -812,12 +814,11 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
                 final String firstWord = words[0];
                 if (SET_PREFIX.equals(firstWord)) {
                   final String propertyName = methodName.substring(firstWord.length());
-                  final String[] setterNames = getSuggestionsByName(propertyName, variableKind, false, correctKeywords);
-                  names = ArrayUtil.mergeArrays(names, setterNames);
+                  return new NamesByExprInfo(name, propertyName);
                 }
               }
             }
-            return new NamesByExprInfo(name, names);
+            return new NamesByExprInfo(name);
           }
         }
       }
@@ -829,8 +830,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         if (leftExpression instanceof PsiReferenceExpression) {
           String name = getPropertyName((PsiReferenceExpression)leftExpression);
           if (name != null) {
-            String[] names = getSuggestionsByName(name, variableKind, false, correctKeywords);
-            return new NamesByExprInfo(name, names);
+            return new NamesByExprInfo(name);
           }
         }
       }
@@ -841,7 +841,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       String variableName = variable.getName();
       if (variableName != null) {
         String propertyName = variableNameToPropertyName(variableName, getVariableKind(variable));
-        return new NamesByExprInfo(propertyName, getSuggestionsByName(propertyName, variableKind, false, correctKeywords));
+        return new NamesByExprInfo(propertyName);
       }
     }
 
