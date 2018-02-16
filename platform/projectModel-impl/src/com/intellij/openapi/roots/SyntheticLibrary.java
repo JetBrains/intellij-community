@@ -127,8 +127,8 @@ public abstract class SyntheticLibrary {
   }
 
   @NotNull
-  private Set<VirtualFile> getRoots(boolean includeSources, boolean includeClasses) {
-    if (includeSources && includeClasses) {
+  private Set<VirtualFile> getRoots(boolean includeSources, boolean includeBinaries) {
+    if (includeSources && includeBinaries) {
       Collection<VirtualFile> sourceRoots = getSourceRoots();
       Collection<VirtualFile> binaryRoots = getBinaryRoots();
       if (binaryRoots.isEmpty()) {
@@ -142,7 +142,7 @@ public abstract class SyntheticLibrary {
     if (includeSources) {
       return asSet(getSourceRoots());
     }
-    if (includeClasses) {
+    if (includeBinaries) {
       return asSet(getBinaryRoots());
     }
     return Collections.emptySet();
