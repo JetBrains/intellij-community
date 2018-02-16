@@ -71,6 +71,8 @@ public class ExternalSystemTaskActivator {
 
   public void init() {
     CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+    // todo extract to "java" external system module
+    if(compilerManager == null) return;
 
     class MyCompileTask implements CompileTask {
       private final boolean myBefore;

@@ -132,7 +132,10 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     if (e != null) {
       mySettings = XmlSerializer.deserialize(e, ExternalSystemTaskExecutionSettings.class);
     }
-    JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
+    JavaRunConfigurationExtensionManager javaRunConfigurationExtensionManager = JavaRunConfigurationExtensionManager.getInstance();
+    if (javaRunConfigurationExtensionManager != null) {
+      javaRunConfigurationExtensionManager.readExternal(this, element);
+    }
   }
 
   @Override
@@ -152,7 +155,10 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
         }
       }
     }));
-    JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
+    JavaRunConfigurationExtensionManager javaRunConfigurationExtensionManager = JavaRunConfigurationExtensionManager.getInstance();
+    if (javaRunConfigurationExtensionManager != null) {
+      javaRunConfigurationExtensionManager.writeExternal(this, element);
+    }
   }
 
   @NotNull
@@ -166,7 +172,10 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     SettingsEditorGroup<ExternalSystemRunConfiguration> group = new SettingsEditorGroup<>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"),
                     new ExternalSystemRunConfigurationEditor(getProject(), mySettings.getExternalSystemId()));
-    JavaRunConfigurationExtensionManager.getInstance().appendEditors(this, group);
+    JavaRunConfigurationExtensionManager javaRunConfigurationExtensionManager = JavaRunConfigurationExtensionManager.getInstance();
+    if (javaRunConfigurationExtensionManager != null) {
+      javaRunConfigurationExtensionManager.appendEditors(this, group);
+    }
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
     return group;
   }
@@ -329,8 +338,10 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
         progressListener == null || buildOutputParsers.isEmpty() ? null :
         new BuildOutputInstantReaderImpl(task.getId(), progressListener, buildOutputParsers);
 
-      JavaRunConfigurationExtensionManager.getInstance()
-        .attachExtensionsToProcess(myConfiguration, processHandler, myEnv.getRunnerSettings());
+      JavaRunConfigurationExtensionManager javaRunConfigurationExtensionManager = JavaRunConfigurationExtensionManager.getInstance();
+      if (javaRunConfigurationExtensionManager != null) {
+        javaRunConfigurationExtensionManager.attachExtensionsToProcess(myConfiguration, processHandler, myEnv.getRunnerSettings());
+      }
 
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         final String startDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
