@@ -135,10 +135,6 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     return renamer;
   }
 
-  protected static void performDialogRename(PsiElement elementToRename, Editor editor, DataContext dataContext) {
-    performDialogRename(elementToRename, editor, dataContext, null);
-  }
-
   protected static void performDialogRename(PsiElement elementToRename, Editor editor, DataContext dataContext, String initialName) {
     try {
       ourPreventInlineRenameFlag.set(initialName == null ? "" : initialName);
