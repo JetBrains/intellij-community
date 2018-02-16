@@ -14,23 +14,23 @@ import static org.jetbrains.jetCheck.StatefulGeneratorTest.*;
  * @author peter
  */
 @RunWith(Parameterized.class)
-public class MinimizationCountTest extends PropertyCheckerTestCase{
+public class SubSequenceTest extends PropertyCheckerTestCase{
   private final String subSequence;
   private final int expectedMinimizations;
 
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  public MinimizationCountTest(String subSequence, int expectedMinimizations) {
+  public SubSequenceTest(String subSequence, int expectedMinimizations) {
     this.subSequence = subSequence;
     this.expectedMinimizations = expectedMinimizations;
   }
 
-  @Parameterized.Parameters(name = "subSequence={0}")
+  @Parameterized.Parameters(name = "{0}")
   public static Collection data() {
     return Arrays.asList(
-      new Object[]{"abcde", 392}, 
-      new Object[]{"abcdef", 411},
+      new Object[]{"abcde", 435}, 
+      new Object[]{"abcdef", 449},
       new Object[]{"sadf", 116},
-      new Object[]{"asdf", 132},
+      new Object[]{"asdf", 131},
       new Object[]{"xxx", 96},
       new Object[]{"AA", 60}
     );
@@ -38,17 +38,18 @@ public class MinimizationCountTest extends PropertyCheckerTestCase{
 
   @Test
   public void checkGeneratesSubSequence() {
-    Throwable cause = checkFalsified(ImperativeCommand.scenarios(() -> env -> {
+    PropertyFailure.CounterExample<Scenario> example = checkFalsified(ImperativeCommand.scenarios(() -> env -> {
       StringBuilder sb = new StringBuilder();
       env.executeCommands(withRecursion(insertStringCmd(sb), deleteStringCmd(sb), e -> {
         if (containsSubSequence(sb.toString(), subSequence)) {
           throw new AssertionError("Found " + sb.toString());
         }
       }));
-    }), Scenario::ensureSuccessful, expectedMinimizations).getMinimalCounterexample().getExceptionCause();
-    assertEquals("Found " + subSequence, cause.getMessage());
+    }), Scenario::ensureSuccessful, expectedMinimizations).getMinimalCounterexample();
+    String log = example.getExampleValue().toString();
+    assertEquals(log, "Found " + subSequence, example.getExceptionCause().getMessage());
+    assertFalse(log, log.contains(DELETING));
   }
-
 
   private static boolean containsSubSequence(String string, String subSequence) {
     int pos = -1;

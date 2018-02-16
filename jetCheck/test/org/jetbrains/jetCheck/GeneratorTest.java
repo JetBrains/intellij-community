@@ -23,7 +23,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testListSumMod() {
     checkFalsified(nonEmptyLists(integers()),
                    l -> l.stream().mapToInt(Integer::intValue).sum() % 10 != 0,
-                   223);
+                   301);
   }
 
   public void testListContainsDivisible() {
@@ -60,7 +60,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testSortedDoublesNonDescending() {
     PropertyFailure<List<Double>> failure = checkFalsified(listsOf(doubles()),
                                                            l -> isSorted(l.stream().sorted().collect(Collectors.toList())),
-                                                           21);
+                                                           23);
     assertEquals(2, failure.getMinimalCounterexample().getExampleValue().size());
   }
 

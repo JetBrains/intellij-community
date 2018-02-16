@@ -16,6 +16,7 @@ import static org.jetbrains.jetCheck.Generator.*;
  * @author peter
  */
 public class StatefulGeneratorTest extends PropertyCheckerTestCase {
+  static final String DELETING = "deleting";
 
   public void testShrinkingIntsWithDistributionsDependingOnListSize() {
     Generator<List<InsertChar>> gen = from(data -> {
@@ -124,7 +125,7 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
   static ImperativeCommand deleteStringCmd(StringBuilder sb) {
     return env -> {
       int start = env.generateValue(integers(0, sb.length()), null);
-      int end = env.generateValue(integers(start, sb.length()), "deleting (" + start + ", %s)");
+      int end = env.generateValue(integers(start, sb.length()), DELETING + " (" + start + ", %s)");
       sb.delete(start, end);
     };
   }

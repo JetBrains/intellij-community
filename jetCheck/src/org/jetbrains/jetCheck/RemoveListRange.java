@@ -3,10 +3,10 @@
  */
 package org.jetbrains.jetCheck;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -32,6 +32,11 @@ class RemoveListRange extends ShrinkStep {
     assert start + length <= node.children.size();
     assert lastSuccessfulRemove > 0;
     assert lastSuccessfulRemove <= node.children.size();
+  }
+
+  @Override
+  List<?> getEqualityObjects() {
+    return Arrays.asList(node.id, start, length);
   }
 
   @Nullable
@@ -70,12 +75,6 @@ class RemoveListRange extends ShrinkStep {
     
     int newLength = Math.min(length * 2, start - 1);
     return new RemoveListRange(inheritor, start, start - newLength, newLength);
-  }
-
-  @NotNull
-  @Override
-  NodeId getNodeAfter() {
-    return node.id;
   }
 
   @Override
