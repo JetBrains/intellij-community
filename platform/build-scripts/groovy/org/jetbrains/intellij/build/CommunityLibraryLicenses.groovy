@@ -377,6 +377,8 @@ class CommunityLibraryLicenses {
                        url: "https://github.com/RuedigerMoeller/fast-serialization", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "xpp3", libraryName: "xpp3", version: "1.1.4", license: "Apache 2.0",
                        url: "https://www.extreme.indiana.edu/xgws/xsoap/xpp/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
+    new LibraryLicense(name: "xml-resolver", libraryName: "xml-resolver", version: "1.2.0", license: "Apache 2.0",
+                           url: "http://xml.apache.org/commons/components/resolver/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
 
     jetbrainsLibrary("intellij-coverage"),
     jetbrainsLibrary("intellij-test-discovery"),
