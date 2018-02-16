@@ -7,7 +7,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,8 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
-
-import static com.intellij.util.containers.ContainerUtil.newTroveSet;
 
 /**
  * A lightweight library definition comparing to {@link com.intellij.openapi.roots.libraries.Library}.
@@ -129,15 +127,30 @@ public abstract class SyntheticLibrary {
   }
 
   @NotNull
-  private Set<VirtualFile> getRoots(boolean includeSources, boolean includeBinaries) {
-    THashSet<VirtualFile> roots = newTroveSet();
+  private Set<VirtualFile> getRoots(boolean includeSources, boolean includeClasses) {
+    if (includeSources && includeClasses) {
+      Collection<VirtualFile> sourceRoots = getSourceRoots();
+      Collection<VirtualFile> binaryRoots = getBinaryRoots();
+      if (binaryRoots.isEmpty()) {
+        return asSet(sourceRoots);
+      }
+      if (sourceRoots.isEmpty()) {
+        return asSet(binaryRoots);
+      }
+      return ContainerUtil.union(sourceRoots, binaryRoots);
+    }
     if (includeSources) {
-      roots.addAll(getSourceRoots());
+      return asSet(getSourceRoots());
     }
-    if (includeBinaries) {
-      roots.addAll(getBinaryRoots());
+    if (includeClasses) {
+      return asSet(getBinaryRoots());
     }
-    return roots;
+    return Collections.emptySet();
+  }
+
+  @NotNull
+  private static Set<VirtualFile> asSet(@NotNull Collection<VirtualFile> collection) {
+    return collection instanceof Set ? (Set)collection : ContainerUtil.newTroveSet(collection);
   }
 
   public final boolean contains(@NotNull VirtualFile file, boolean includeSources, boolean includeBinaries) {
