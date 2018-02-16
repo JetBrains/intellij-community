@@ -1295,7 +1295,7 @@ public class IdeEventQueue extends EventQueue {
       actionsShowingPopupsList.add("ReplaceInPath");
 
       actionsShowingPopupsList.forEach(actionId -> {
-        List<Shortcut> shortcuts = Arrays.asList(KeymapManager.getInstance().getActiveKeymap().getShortcuts("GotoClass"));
+        List<Shortcut> shortcuts = Arrays.asList(KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId));
         if (TYPEAHEAD_LOG.isDebugEnabled()) {
           shortcuts.forEach(s -> TYPEAHEAD_LOG.debug("Typeahead for " + actionId + " : Shortcuts: " + s));
         }
