@@ -73,12 +73,15 @@ public class CompileDriver {
   private final Map<Module, String> myModuleOutputPaths = new HashMap<>();
   private final Map<Module, String> myModuleTestOutputPaths = new HashMap<>();
 
+  @SuppressWarnings("deprecation") private CompilerFilter myCompilerFilter = CompilerFilter.ALL;
+
   public CompileDriver(Project project) {
     myProject = project;
   }
 
   @SuppressWarnings("deprecation")
   public void setCompilerFilter(CompilerFilter compilerFilter) {
+    myCompilerFilter = compilerFilter == null? CompilerFilter.ALL : compilerFilter;
   }
 
   public void rebuild(CompileStatusNotification callback) {
@@ -202,7 +205,8 @@ public class CompileDriver {
   }
 
   @Nullable
-  private TaskFuture compileInExternalProcess(@NotNull final CompileContextImpl compileContext, final boolean onlyCheckUpToDate) {
+  private TaskFuture compileInExternalProcess(@NotNull final CompileContextImpl compileContext, final boolean onlyCheckUpToDate)
+    throws Exception {
     final CompileScope scope = compileContext.getCompileScope();
     final Collection<String> paths = CompileScopeUtil.fetchFiles(compileContext);
     List<TargetTypeBuildScope> scopes = getBuildScopes(compileContext, scope, paths);
@@ -246,8 +250,8 @@ public class CompileDriver {
 
       @Override
       public void handleFailure(UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
-        compileContext.addMessage(CompilerMessageCategory.ERROR, failure.getDescription(), null, -1, -1);
-        final String trace = failure.getStacktrace();
+        compileContext.addMessage(CompilerMessageCategory.ERROR, failure.hasDescription()? failure.getDescription() : "", null, -1, -1);
+        final String trace = failure.hasStacktrace()? failure.getStacktrace() : null;
         if (trace != null) {
           LOG.info(trace);
         }
@@ -262,7 +266,7 @@ public class CompileDriver {
         if (kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.PROGRESS) {
           final ProgressIndicator indicator = compileContext.getProgressIndicator();
           indicator.setText(messageText);
-          if (message.getDone() != 0) {
+          if (message.hasDone()) {
             indicator.setFraction(message.getDone());
           }
         }
@@ -270,12 +274,12 @@ public class CompileDriver {
           final CompilerMessageCategory category = kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.ERROR ? CompilerMessageCategory.ERROR
             : kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.WARNING ? CompilerMessageCategory.WARNING : CompilerMessageCategory.INFORMATION;
 
-          String sourceFilePath = message.getSourceFilePath();
+          String sourceFilePath = message.hasSourceFilePath() ? message.getSourceFilePath() : null;
           if (sourceFilePath != null) {
             sourceFilePath = FileUtil.toSystemIndependentName(sourceFilePath);
           }
-          final long line = message.getLine();
-          final long column = message.getColumn();
+          final long line = message.hasLine() ? message.getLine() : -1;
+          final long column = message.hasColumn() ? message.getColumn() : -1;
           final String srcUrl = sourceFilePath != null ? VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, sourceFilePath) : null;
           compileContext.addMessage(category, messageText, srcUrl, (int)line, (int)column);
           if (compileContext.shouldUpdateProblemsView() && kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.JPS_INFO) {
@@ -320,8 +324,8 @@ public class CompileDriver {
 
           case BUILD_COMPLETED:
             ExitStatus status = ExitStatus.SUCCESS;
-            final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status completionStatus = event.getCompletionStatus();
-            if (completionStatus != CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.UNRECOGNIZED) {
+            if (event.hasCompletionStatus()) {
+              final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status completionStatus = event.getCompletionStatus();
               switch (completionStatus) {
                 case CANCELED:
                   status = ExitStatus.CANCELLED;

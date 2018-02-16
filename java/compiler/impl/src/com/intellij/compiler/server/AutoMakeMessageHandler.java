@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -54,8 +53,8 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
     switch (event.getEventType()) {
       case BUILD_COMPLETED:
         myContext.getProgressIndicator().stop();
-        final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status status = event.getCompletionStatus();
-        if (status != CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.UNRECOGNIZED) {
+        if (event.hasCompletionStatus()) {
+          final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status status = event.getCompletionStatus();
           myBuildStatus = status;
           if (status == CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.CANCELED) {
             myContext.getProgressIndicator().cancel();
@@ -103,7 +102,7 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
     final CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind kind = message.getKind();
     if (kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.PROGRESS) {
       final ProblemsView view = ProblemsView.SERVICE.getInstance(myProject);
-      if (message.getDone() != 0) {
+      if (message.hasDone()) {
         view.setProgress(message.getText(), message.getDone());
       }
       else {
@@ -113,10 +112,10 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
     else {
       final CompilerMessageCategory category = convertToCategory(kind);
       if (category != null) { // only process supported kinds of messages
-        final String sourceFilePath = message.getSourceFilePath();
+        final String sourceFilePath = message.hasSourceFilePath() ? message.getSourceFilePath() : null;
         final String url = sourceFilePath != null ? VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(sourceFilePath)) : null;
-        final long line = message.getLine();
-        final long column = message.getColumn();
+        final long line = message.hasLine() ? message.getLine() : -1;
+        final long column = message.hasColumn() ? message.getColumn() : -1;
         final CompilerMessage msg = myContext.createAndAddMessage(category, message.getText(), url, (int)line, (int)column, null);
         if (kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.ERROR || kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.JPS_INFO) {
           if (kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.ERROR) {
@@ -147,9 +146,9 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
     if (myProject.isDisposed()) {
       return;
     }
-    String descr = failure.getDescription();
+    String descr = failure.hasDescription() ? failure.getDescription() : null;
     if (descr == null) {
-      descr = StringUtil.notNullize(failure.getStacktrace());
+      descr = failure.hasStacktrace()? failure.getStacktrace() : "";
     }
     final String msg = "Auto build failure: " + descr;
     CompilerManager.NOTIFICATION_GROUP.createNotification(msg, MessageType.INFO);
