@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Javadoc parser
@@ -33,6 +35,11 @@ public class JDParser {
 
   private final JavaCodeStyleSettings mySettings;
   private final CommonCodeStyleSettings myCommonSettings;
+
+  private final static String HTML_TAG_REGEXP = "\\s*</?\\w+\\s*(\\w+\\s*=.*)?>.*";
+  private final static String PRE_TAG_START_REGEXP = "<pre\\s*(\\w+\\s*=.*)?>";
+  private final static Pattern HTML_TAG_PATTERN = Pattern.compile(HTML_TAG_REGEXP);
+  private final static Pattern PRE_TAG_START_PATTERN = Pattern.compile(PRE_TAG_START_REGEXP);
 
   public JDParser(@NotNull CodeStyleSettings settings) {
     mySettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
@@ -290,9 +297,9 @@ public class JDParser {
         list.add(token);
 
         if (markers != null) {
-          if (token.contains(PRE_TAG_START)) preCount++;
+          if (lineHasUnclosedPreTag(token)) preCount++;
           markers.add(Boolean.valueOf(preCount > 0));
-          if (token.contains(PRE_TAG_END)) preCount--;
+          if (lineHasClosingPreTag(token)) preCount--;
         }
 
       }
@@ -444,7 +451,7 @@ public class JDParser {
 
   private static boolean startsWithTag(@NotNull String line) {
     if (line.trim().startsWith("<")) {
-      return line.matches("\\s*</?\\w+>.*");
+      return HTML_TAG_PATTERN.matcher(line).matches();
     }
     return false;
   }
@@ -553,11 +560,21 @@ public class JDParser {
   };
 
   private static boolean lineHasUnclosedPreTag(@NotNull String line) {
-    return StringUtil.getOccurrenceCount(line, PRE_TAG_START) > StringUtil.getOccurrenceCount(line, PRE_TAG_END);
+    return getOccurenceCount(line, PRE_TAG_START_PATTERN) > StringUtil.getOccurrenceCount(line, PRE_TAG_END);
   }
 
   private static boolean lineHasClosingPreTag(@NotNull String line) {
-    return StringUtil.getOccurrenceCount(line, PRE_TAG_END) > StringUtil.getOccurrenceCount(line, PRE_TAG_START);
+    return StringUtil.getOccurrenceCount(line, PRE_TAG_END) > getOccurenceCount(line, PRE_TAG_START_PATTERN);
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private static int getOccurenceCount(@NotNull String line, @NotNull Pattern pattern) {
+    Matcher matcher = pattern.matcher(line);
+    int count = 0;
+    while (matcher.find()) {
+      count++;
+    }
+    return count;
   }
 
   @NotNull
@@ -641,10 +658,10 @@ public class JDParser {
           sb.append(line);
 
           // We want to track if we're inside <pre>...</pre> in order to not generate <p/> there.
-          if (line.startsWith(PRE_TAG_START)) {
+          if (lineHasUnclosedPreTag(line)) {
             insidePreTag = true;
           }
-          else if (line.endsWith(PRE_TAG_END)) {
+          else if (lineHasClosingPreTag(line)) {
             insidePreTag = false;
           }
         }

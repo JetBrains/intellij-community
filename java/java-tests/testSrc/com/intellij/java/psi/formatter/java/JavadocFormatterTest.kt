@@ -1124,4 +1124,53 @@ public class Test {
 }
 """)
   }
+
+  /**
+   * See [IDEA-21623](https://youtrack.jetbrains.com/issue/IDEA-21623)
+   */
+  fun testPreTagWithAttributes() {
+    getSettings().WRAP_COMMENTS = true
+    getSettings().RIGHT_MARGIN = 60
+
+    doTextTest(
+"""
+package com.company;
+
+interface Test {
+    /**
+     * The sample is below:
+     *
+     * <pre class="sample">
+     *     class Foo {
+     *         private int x;
+     *         private int y;
+     *     }
+     * </pre>
+     * @return Some value
+     */
+    String foo();
+}
+""",
+
+"""
+package com.company;
+
+interface Test {
+    /**
+     * The sample is below:
+     *
+     * <pre class="sample">
+     *     class Foo {
+     *         private int x;
+     *         private int y;
+     *     }
+     * </pre>
+     *
+     * @return Some value
+     */
+    String foo();
+}
+"""
+    )
+  }
 }
