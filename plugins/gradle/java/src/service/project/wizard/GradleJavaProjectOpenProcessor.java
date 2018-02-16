@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.service.project.GradleProjectOpenProcessor;
 import org.jetbrains.plugins.gradle.service.settings.GradleProjectSettingsControl;
 import org.jetbrains.plugins.gradle.service.settings.GradleSystemSettingsControl;
 import org.jetbrains.plugins.gradle.service.settings.ImportFromGradleControl;
@@ -39,11 +40,9 @@ import static org.jetbrains.plugins.gradle.util.GradleEnvironment.Headless.*;
  * @author Denis Zhdanov
  * @since 4/30/13 11:22 PM
  */
-public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleProjectImportBuilder> {
+public class GradleJavaProjectOpenProcessor extends ProjectOpenProcessorBase<GradleProjectImportBuilder> {
 
-  @NotNull public static final String[] BUILD_FILE_EXTENSIONS = {GradleConstants.EXTENSION, GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION};
-
-  public GradleProjectOpenProcessor(@NotNull GradleProjectImportBuilder builder) {
+  public GradleJavaProjectOpenProcessor(@NotNull GradleProjectImportBuilder builder) {
     super(builder);
   }
 
@@ -55,13 +54,8 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
 
   @Override
   public boolean canOpenProject(VirtualFile file) {
-    if (!file.isDirectory()) {
-      String fileName = file.getName();
-      for (String extension : BUILD_FILE_EXTENSIONS) {
-        if (fileName.endsWith(extension)) {
-          return true;
-        }
-      }
+    if (GradleProjectOpenProcessor.canOpenFile(file)) {
+      return true;
     }
     return super.canOpenProject(file);
   }
@@ -140,9 +134,8 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
         if (GRADLE_OFFLINE != null) {
           gradleSettings.setOfflineWork(Boolean.parseBoolean(GRADLE_OFFLINE));
         }
-        String serviceDirectory = GRADLE_SERVICE_DIRECTORY;
         if (GRADLE_SERVICE_DIRECTORY != null) {
-          gradleSettings.setServiceDirectoryPath(serviceDirectory);
+          gradleSettings.setServiceDirectoryPath(GRADLE_SERVICE_DIRECTORY);
         }
         systemSettingsControl.reset();
 
