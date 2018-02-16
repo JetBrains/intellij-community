@@ -29,8 +29,9 @@ betas.)
 
     This directory name used to be hardcoded, but is now derived from
     the version numbers specified in the branding files. If you want
-    to tweak it, edit build/scripts/studio_properties.gant and tweak
-    the string returned by the systemSelector() method.
+    to tweak it, edit
+    build/groovy/org/jetbrains/intellij/build/AndroidStudioProperties.groovy
+    and tweak the string returned by the getSystemSelector() method.
 
     The convention we have been using is the following for previews:
         `AndroidStudioPreviewX.Y`
@@ -72,7 +73,8 @@ betas.)
                   ~~~~~
     ```
 
-    This should be set to -da in production builds.
+    This should be set to -da in production builds. (You normally do not have
+    to touch anything since this is already controlled by an EAP flag.)
 
  6. Turn off null checking.
 
@@ -89,12 +91,32 @@ betas.)
     remove it and then leave the .idea/compiler.xml file in an edited state
     for all developers who open the project.)
 
+    Edit .idea/kotlinc.xml and make sure null assertions are disabled by
+    adding the following lines:
+
+   ```diff
+   diff --git a/.idea/kotlinc.xml b/.idea/kotlinc.xml
+   index 894c2d2f197..8f910907aee 100644
+   --- a/.idea/kotlinc.xml
+   +++ b/.idea/kotlinc.xml
+   @@ -7,8 +7,11 @@
+      <component name="Kotlin2JvmCompilerArguments">
+        <option name="jvmTarget" value="1.8" />
+      </component>
+   +  <component name="KotlinCompilerSettings">
+   +    <option name="additionalArguments" value="-version -Xno-param-assertions -Xno-call-assertions -Xno-receiver-assertions" />
+   +  </component>
+      <component name="KotlinCommonCompilerArguments">
+        <option name="apiVersion" value="1.1"/>
+        <option name="languageVersion" value="1.1"/>
+    ```
+
  7. Turn off CLASS retention in
     `platform/annotations/java8/src/org/jetbrains/annotations`
     (Sadly, we can't also do this in
       `platform/annotations/java5/src/org/jetbrains/annotations`
      because the Kotlin compiler seems to require class retention; without it
-     compilation fails.)
+     Kotlin compilation fails.)
 
     ```
     --- a/platform/annotations/src/org/jetbrains/annotations/NotNull.java
@@ -115,9 +137,9 @@ betas.)
     Build Android Studio and copy the data-binding jar from the production build into the
     plugin library prebuilts folder:
 
-    $ cp tools/idea/out/dist.all/plugins/android/lib/data-binding.jar tools/adt/idea/android/lib
+    $ cd tools/idea && ./build\_studio.sh && cd ..
+    $ cp tools/idea/out/studio/dist.all/plugins/android/lib/data-binding.jar tools/adt/idea/android/lib
 
-    tools/idea/out/dist.all.ce/plugins/android/lib/data-binding.jar to tools/adt/idea/android/lib.
     Edit the tools/idea/build/groovy/org/jetbrains/intellij/build/AndroidStudioProperties.groovy
     file to stop building the data-binding modules:
 
@@ -144,6 +166,8 @@ betas.)
          <orderEntry type="module" module-name="instant-run-client" />
          <orderEntry type="module" module-name="instant-run-common" />
          <orderEntry type="library" name="jna" level="project" />
+    -    <orderEntry type="module" module-name="db-baseLibrary"/>
+    -    <orderEntry type="module" module-name="db-compilerCommon" />
     -    <orderEntry type="module" module-name="db-compiler" />
     +    <orderEntry type="module-library">
     +      <library>
@@ -182,13 +206,35 @@ For AOSP push:
 
  2. Remove the build.xml reference which calls ant in tools/adt/idea to
     build the protobufs from source; instead, after a build, check these
-    in as prebuilts into android/lib. Also remove
+    in as prebuilts into android/lib.
+
+    $ cp tools/idea/out/studio/dist.all/plugins/android/lib/studio-profiler-grpc-1.0-jarjar.jar \
+      tools/adt/idea/android/lib/
+
+    Also remove
       fileset(dir: "$root/out/studio/runtime")
     from
       build/groovy/org/jetbrains/intellij/build/AndroidStudioProperties.groovy
 
+    And remove the same hook from .idea/ant.xml.
+
  3. Perform a test build of tools/idea/build\_studio.sh and make sure the sources
     build correctly.
+
+ 4. Ensure that the branch names for the tools/idea and tools/base projects
+    are sensible:
+
+    ```diff
+    diff --git a/.idea/.name b/.idea/.name
+    index 310ac3d20a3..8a1a9797418 100644
+    --- a/.idea/.name
+    +++ b/.idea/.name
+    @@ -1 +1 @@
+    -Android Studio (studio-master-dev)
+    \ No newline at end of file
+    +Android Studio 3.1
+    \ No newline at end of file
+    ```
 
  Relevant CLs from the 2.3 AOSP push (though they'll need to be adjusted to
  account for the big build script changes in 2.4) :
@@ -196,3 +242,6 @@ For AOSP push:
  Change-Id: I9298c7319ce55fb64c29e38636808e57f2a84209
  Change-Id: Ic60a95a21ea0e483d82f6013539d112b89a7d0c0 (AOSP)
  Change-Id: I42bcad10589b8172a46a3f74aa1e7a5826ea52fc (AOSP)
+
+ Relevant CLs from the 3.0 AOSP push:
+ https://android-review.googlesource.com/#/q/topic:studio-30
