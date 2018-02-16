@@ -63,14 +63,36 @@ class CombinatorialIntCustomizer implements IntCustomizer {
     int oMin = original.getMin();
     int cMin = current.getMin();
     if (oMax != cMax || oMin != cMin) {
+      if (!tooManyCombinations()) {
+        addHeuristicValues(data, current, oMax, cMax, oMin, cMin);
+      }
+      
       addValueToTry(data, current, data.value);
-      addValueToTry(data, current, (data.value - oMin) + cMin);
-      addValueToTry(data, current, cMax - (oMax - data.value));
       if (valuesToTry.containsKey(data.id)) {
         return true;
       }
     }
     return false;
+  }
+
+  private boolean tooManyCombinations() {
+    return valuesToTry.values().stream().filter(s -> s.size() > 1).count() > 3;
+  }
+
+  private void addHeuristicValues(IntData data, BoundedIntDistribution current, int oMax, int cMax, int oMin, int cMin) {
+    int fromStart = data.value - oMin;
+    int fromEnd = oMax - data.value;
+
+    int sameDistanceFromStart = cMin + fromStart;
+    int sameDistanceFromEnd = cMax - fromEnd;
+
+    if (fromStart < fromEnd) {
+      addValueToTry(data, current, sameDistanceFromStart);
+      addValueToTry(data, current, sameDistanceFromEnd);
+    } else {
+      addValueToTry(data, current, sameDistanceFromEnd);
+      addValueToTry(data, current, sameDistanceFromStart);
+    }
   }
 
   private void addValueToTry(IntData data, BoundedIntDistribution current, int value) {
