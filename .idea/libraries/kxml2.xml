@@ -1,13 +1,14 @@
 <component name="libraryTable">
-  <library name="kxml2">
+  <library name="kxml2" type="repository">
+    <properties maven-id="net.sf.kxml:kxml2:2.3.0" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kxml2-tools/kxml2-2.3.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/sf/kxml/kxml2/2.3.0/kxml2-2.3.0.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kxml2-tools/kxml2-src-2.3.0.zip!/www/kxml2/javadoc" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/sf/kxml/kxml2/2.3.0/kxml2-2.3.0-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/kxml2-tools/kxml2-src-2.3.0.zip!/src" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/sf/kxml/kxml2/2.3.0/kxml2-2.3.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

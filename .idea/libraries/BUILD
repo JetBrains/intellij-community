@@ -78,8 +78,8 @@ java_library(
     name = "kxml2",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/kxml2-tools:kxml2-2.3.0"],
-    runtime_deps = ["//prebuilts/tools/common/kxml2-tools:kxml2-2.3.0"],
+    exports = ["//prebuilts/tools/common/m2/repository/net/sf/kxml/kxml2/2.3.0:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/net/sf/kxml/kxml2/2.3.0:jar"],
 )
 
 java_library(
