@@ -42,7 +42,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   private final Sdk[] myExistingSdks;
   private final NullableConsumer<Sdk> mySdkAddedCallback;
 
-  private static final String ADD = "Add...";
+  private static final String ADD = PyBundle.message("sdk.details.step.add");
   private static final String ALL = PyBundle.message("sdk.details.step.show.all");
   @Nullable private String myNewProjectPath;
 
