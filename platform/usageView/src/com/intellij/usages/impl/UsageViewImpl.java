@@ -15,7 +15,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
@@ -537,6 +536,7 @@ public class UsageViewImpl implements UsageView {
 
       UsageContextPanel.Provider[] extensions = Extensions.getExtensions(UsageContextPanel.Provider.EP_NAME, myProject);
       myUsageContextPanelProviders = ContainerUtil.filter(extensions, provider -> provider.isAvailableFor(this));
+      Map<String, JComponent> components = new LinkedHashMap<>();
       for (UsageContextPanel.Provider provider : myUsageContextPanelProviders) {
         JComponent component;
         if (myCurrentUsageContextProvider == null || myCurrentUsageContextProvider == provider) {
@@ -547,20 +547,26 @@ public class UsageViewImpl implements UsageView {
         else {
           component = new JLabel();
         }
-
-        tabbedPane.addTab(provider.getTabTitle(), component);
+        components.put(provider.getTabTitle(), component);
       }
-      int index = myUsageContextPanelProviders.indexOf(myCurrentUsageContextProvider);
-      tabbedPane.setSelectedIndex(index);
-      tabbedPane.addChangeListener(e -> {
-        int currentIndex = tabbedPane.getSelectedIndex();
-        UsageContextPanel.Provider selectedProvider = myUsageContextPanelProviders.get(currentIndex);
-        if (selectedProvider != myCurrentUsageContextProvider) {
-          tabSelected(selectedProvider);
-        }
-      });
       JBPanelWithEmptyText panel = new JBPanelWithEmptyText(new BorderLayout());
-      panel.add(tabbedPane, BorderLayout.CENTER);
+      if (components.size() == 1) {
+        panel.add(components.values().iterator().next(), BorderLayout.CENTER);
+      } else {
+        for (Map.Entry<String, JComponent> entry : components.entrySet()) {
+          tabbedPane.addTab(entry.getKey(), entry.getValue());
+        }
+        int index = myUsageContextPanelProviders.indexOf(myCurrentUsageContextProvider);
+        tabbedPane.setSelectedIndex(index);
+        tabbedPane.addChangeListener(e -> {
+          int currentIndex = tabbedPane.getSelectedIndex();
+          UsageContextPanel.Provider selectedProvider = myUsageContextPanelProviders.get(currentIndex);
+          if (selectedProvider != myCurrentUsageContextProvider) {
+            tabSelected(selectedProvider);
+          }
+        });
+        panel.add(tabbedPane, BorderLayout.CENTER);
+      }
       myPreviewSplitter.setSecondComponent(panel);
     }
     else {
@@ -1890,7 +1896,9 @@ public class UsageViewImpl implements UsageView {
         }
       });
     }
-
+    //Here we use
+    // Action.LONG_DESCRIPTION as hint label for button
+    // Action.SHORT_DESCRIPTION as a tooltip for button
     private void addButtonAction(int index, @NotNull Action action) {
       JButton button = new JButton(action);
       add(button, index);
@@ -1899,11 +1907,15 @@ public class UsageViewImpl implements UsageView {
 
       if (getBorder() == null) setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
       update();
-      Object o = action.getValue(Action.ACCELERATOR_KEY);
-      if (o instanceof KeyStroke) {
-        JBLabel label = new JBLabel(KeymapUtil.getKeystrokeText((KeyStroke)o));
+      Object s = action.getValue(Action.LONG_DESCRIPTION);
+      if (s instanceof String) {
+        JBLabel label = new JBLabel((String)s);
         label.setFont(JBUI.Fonts.smallFont());
         add(JBUI.Borders.emptyLeft(-1).wrap(label));
+      }
+      s = action.getValue(Action.SHORT_DESCRIPTION);
+      if (s instanceof String) {
+        button.setToolTipText((String)s);
       }
       invalidate();
       if (getParent() != null) {

@@ -114,7 +114,7 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
     return createFix(paramName, value);
   }
 
-  protected LocalQuickFix createFix(String paramName, Object value) {
+  protected LocalQuickFix createFix(String paramName, String value) {
     return null;
   }
 
@@ -246,11 +246,12 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
                                             Object value,
                                             boolean usedForWriting) {
     final String name = parameter.getName();
+    String stringPresentation = value instanceof PsiType ? ((PsiType)value).getPresentableText() + ".class" : String.valueOf(value);
     return manager.createProblemDescriptor(ObjectUtils.notNull(parameter.getNameIdentifier(), parameter),
                                            InspectionsBundle.message("inspection.same.parameter.problem.descriptor",
                                                                      name,
-                                                                     StringUtil.unquoteString(String.valueOf(value))),
-                                           usedForWriting ? null : createFix(name, value),
+                                                                     StringUtil.unquoteString(stringPresentation)),
+                                           usedForWriting ? null : createFix(name, stringPresentation),
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
   }
 }

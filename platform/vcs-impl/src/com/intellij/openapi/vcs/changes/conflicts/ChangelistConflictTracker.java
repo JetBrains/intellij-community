@@ -35,7 +35,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.Alarm;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -215,11 +214,13 @@ public class ChangelistConflictTracker {
   }
 
   public void saveState(Element to) {
-    for (Map.Entry<String,Conflict> entry : myConflicts.entrySet()) {
-      Element fileElement = new Element("file");
-      fileElement.setAttribute("path", entry.getKey());
-      fileElement.setAttribute("ignored", Boolean.toString(entry.getValue().ignored));
-      to.addContent(fileElement);
+    synchronized (myConflicts) {
+      for (Map.Entry<String, Conflict> entry : myConflicts.entrySet()) {
+        Element fileElement = new Element("file");
+        fileElement.setAttribute("path", entry.getKey());
+        fileElement.setAttribute("ignored", Boolean.toString(entry.getValue().ignored));
+        to.addContent(fileElement);
+      }
     }
     XmlSerializer.serializeInto(myOptions, to);
   }
@@ -245,7 +246,12 @@ public class ChangelistConflictTracker {
   }
 
   public void optionsChanged() {
-    for (Map.Entry<String, Conflict> entry : myConflicts.entrySet()) {
+    Map<String, Conflict> copyMap;
+    synchronized (myConflicts) {
+      copyMap = new HashMap<>(myConflicts);
+    }
+
+    for (Map.Entry<String, Conflict> entry : copyMap.entrySet()) {
       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(entry.getKey());
       if (file != null) {
         myFileStatusManager.fileStatusChanged(file);
@@ -259,7 +265,9 @@ public class ChangelistConflictTracker {
   }
 
   public Collection<String> getIgnoredConflicts() {
-    return ContainerUtil.mapNotNull(myConflicts.entrySet(), (NullableFunction<Map.Entry<String, Conflict>, String>)entry -> entry.getValue().ignored ? entry.getKey() : null);
+    synchronized (myConflicts) {
+      return ContainerUtil.mapNotNull(myConflicts.entrySet(), entry -> entry.getValue().ignored ? entry.getKey() : null);
+    }
   }
 
   public static class Conflict {

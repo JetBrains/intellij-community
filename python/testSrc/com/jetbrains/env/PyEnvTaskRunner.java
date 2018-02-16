@@ -5,16 +5,20 @@ package com.jetbrains.env;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
+import com.jetbrains.LoggingRule;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.tools.sdkTools.PySdkTools;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
 import java.util.Collection;
@@ -27,9 +31,17 @@ import java.util.Set;
 public class PyEnvTaskRunner {
   private static final Logger LOG = Logger.getInstance(PyEnvTaskRunner.class);
   private final List<String> myRoots;
+  @Nullable
+  private final LoggingRule myLoggingRule;
 
-  public PyEnvTaskRunner(List<String> roots) {
+  /**
+   * @param loggingRule to be passed by {@link PyEnvTestCase}.
+   *                    {@link LoggingRule#startLogging(Disposable, Iterable)} will be called
+   *                    if task has {@link PyExecutionFixtureTestTask#getClassesToEnableDebug()}
+   */
+  public PyEnvTaskRunner(List<String> roots, @Nullable final LoggingRule loggingRule) {
     myRoots = roots;
+    myLoggingRule = loggingRule;
   }
 
   // todo: doc
@@ -82,7 +94,18 @@ public class PyEnvTaskRunner {
          */
         final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
         if (testTask.isLanguageLevelSupported(languageLevel)) {
+
+          if (myLoggingRule != null) {
+            final PyExecutionFixtureTestTask execTask = ObjectUtils.tryCast(testTask, PyExecutionFixtureTestTask.class);
+            if (execTask != null) {
+              // Fill be disabled automatically on project dispose
+              myLoggingRule.startLogging(execTask.getProject(), execTask.getClassesToEnableDebug());
+            }
+          }
+
+
           testTask.runTestOn(executable, sdk);
+
           passedRoots.add(root);
         }
         else {

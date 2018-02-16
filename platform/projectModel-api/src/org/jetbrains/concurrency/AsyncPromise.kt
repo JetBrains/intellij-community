@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 private val LOG = Logger.getInstance(AsyncPromise::class.java)
 
-open class AsyncPromise<T> : Promise<T>, Getter<T> {
+open class AsyncPromise<T> : Promise<T>, Getter<T>, CancellablePromise<T> {
   private val doneRef = AtomicReference<Consumer<in T>?>()
   private val rejectedRef = AtomicReference<Consumer<in Throwable>?>()
 
@@ -124,7 +124,7 @@ open class AsyncPromise<T> : Promise<T>, Getter<T> {
 
   fun setError(error: String) = setError(createError(error))
 
-  fun cancel() {
+  override fun cancel() {
     setError(OBSOLETE_ERROR)
   }
 
@@ -225,6 +225,24 @@ open class AsyncPromise<T> : Promise<T>, Getter<T> {
         it.consume(result as T?)
       }
     }
+  }
+
+  override fun get(timeout: Long, unit: TimeUnit): T? {
+    return blockingGet(timeout.toInt(), unit)
+  }
+
+  override fun cancel(mayInterruptIfRunning: Boolean): Boolean {
+    if (state == State.PENDING) {
+      cancel()
+      return true
+    }
+    else {
+      return false
+    }
+  }
+
+  override fun isCancelled(): Boolean {
+    return result == OBSOLETE_ERROR
   }
 }
 

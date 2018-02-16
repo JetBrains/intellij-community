@@ -313,6 +313,9 @@
 
     <action id="Vcs.RollbackChangedLines" class="com.intellij.openapi.vcs.ex.RollbackLineStatusAction" icon="AllIcons.Actions.Rollback"/>
     <action id="Vcs.MoveChangedLinesToChangelist" class="com.intellij.openapi.vcs.ex.MoveChangesLineStatusAction" icon="AllIcons.Actions.MoveToAnotherChangelist"/>
+    <action id="Vcs.Diff.ExcludeChangedLinesFromCommit" class="com.intellij.openapi.actionSystem.EmptyAction">
+      <add-to-group group-id="Diff.KeymapGroup" relative-to-action="Diff.ResolveConflict" anchor="after"/>
+    </action>
 
     <action id="WelcomeScreen.GetFromVcs" class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVcsAction"
             icon="AllIcons.Welcome.FromVCS">

@@ -450,7 +450,7 @@ public abstract class ChooseByNameBase {
     myTextFieldPanel.add(myTextField);
     Font editorFont = EditorUtil.getEditorFont();
     myTextField.setFont(editorFont);
-    myTextField.putClientProperty("caretWidth", new SettingsImpl().getLineCursorWidth());
+    myTextField.putClientProperty("caretWidth", JBUI.scale(new SettingsImpl().getLineCursorWidth()));
 
     if (checkBoxName != null) {
       if (myCheckBoxShortcut != null) {

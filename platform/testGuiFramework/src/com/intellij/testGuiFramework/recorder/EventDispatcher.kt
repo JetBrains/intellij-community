@@ -25,7 +25,7 @@ import java.awt.KeyboardFocusManager
 import java.awt.Point
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
-import java.awt.event.MouseEvent.MOUSE_PRESSED
+import java.awt.event.MouseEvent.*
 import java.util.*
 import javax.swing.JFrame
 import javax.swing.KeyStroke
@@ -37,9 +37,40 @@ object EventDispatcher {
   private val LOG = Logger.getInstance("#${EventDispatcher::class.qualifiedName}")
   private val MAC_NATIVE_ACTIONS = arrayOf("ShowSettings", "EditorEscape")
 
+  object SelectionProcessor {
+    private var firstEvent: MouseEvent? = null
+
+    fun processDragging(event: MouseEvent) {
+      if (firstEvent == null) firstEvent = event
+    }
+
+    fun stopDragging(event: MouseEvent) {
+      if (firstEvent != null) {
+        processSelection(firstEvent!!, event)
+        firstEvent = null
+      }
+    }
+
+    private fun processSelection(firstEvent: MouseEvent, lastEvent: MouseEvent) {
+      val firstComponent: Component? = findComponent(firstEvent)
+      val lastComponent: Component? = findComponent(lastEvent)
+
+      //drag and drop between components is not supported yet
+      if (lastComponent != firstComponent) return
+
+      if (lastComponent != null) {
+        val firstPoint = getPoint(firstEvent, lastComponent)
+        val lastPoint = getPoint(lastEvent, lastComponent)
+        ScriptGenerator.selectInComponent(lastComponent, firstPoint, lastPoint, lastEvent)
+      }
+    }
+  }
+
   fun processMouseEvent(event: MouseEvent) {
     if (isMainFrame(event.component)) return
-    if (event.id == MOUSE_PRESSED) processClick(event)
+    if (event.id == MOUSE_CLICKED) processClick(event)
+    if (event.id == MOUSE_DRAGGED) SelectionProcessor.processDragging(event)
+    if (event.id == MOUSE_RELEASED) SelectionProcessor.stopDragging(event)
   }
 
   private fun processClick(event: MouseEvent){
@@ -50,6 +81,10 @@ object EventDispatcher {
                                  event.locationOnScreen.y - actualComponent.locationOnScreen.y)
       ScriptGenerator.clickComponent(actualComponent, convertedPoint, event)
     }
+  }
+
+  private fun getPoint(event: MouseEvent, component: Component): Point {
+    return Point(event.locationOnScreen.x - component.locationOnScreen.x, event.locationOnScreen.y - component.locationOnScreen.y)
   }
 
   private fun findComponent(event: MouseEvent): Component? {

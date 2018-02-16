@@ -41,7 +41,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.xml.util.XmlStringUtil;
-import com.sun.org.apache.bcel.internal.generic.DMUL;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;

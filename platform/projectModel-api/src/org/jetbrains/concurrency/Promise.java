@@ -29,19 +29,54 @@ public interface Promise<T> {
     PENDING, FULFILLED, REJECTED
   }
 
-  @NotNull
-  @Deprecated
-  static RuntimeException createError(@NotNull String error) {
-    return Promises.createError(error);
-  }
-
+  /**
+   * Create a promise that is resolved with the given value.
+   */
   @NotNull
   static <T> Promise<T> resolve(T result) {
-    return result == null ? Promises.resolvedPromise() : new DonePromise<>(result);
+    return Promises.resolvedPromise(result);
   }
 
+  /**
+   * Execute passed handler on promise resolve and return a promise with a transformed result value.
+   *
+   * <pre>
+   * {@code
+   *
+   * somePromise
+   *  .then { transformOrProcessValue(it) }
+   * }
+   * </pre>
+   */
+  @NotNull
+  <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull Function<? super T, ? extends SUB_RESULT> done);
+
+  /**
+   * The same as {@link #then(Function)}, but handler can be asynchronous.
+   *
+   * <pre>
+   * {@code
+   *
+   * somePromise
+   *  .then { transformOrProcessValue(it) }
+   *  .thenAsync { processValueAsync(it) }
+   * }
+   * </pre>
+   */
+  @NotNull
+  <SUB_RESULT> Promise<SUB_RESULT> thenAsync(@NotNull Function<? super T, Promise<SUB_RESULT>> done);
+
+  /**
+   * Execute passed handler on promise resolve.
+   */
   @NotNull
   Promise<T> done(@NotNull Consumer<? super T> done);
+
+  /**
+   * Execute passed handler on promise reject.
+   */
+  @NotNull
+  Promise<T> rejected(@NotNull Consumer<Throwable> rejected);
 
   /**
    * Resolve or reject passed promise as soon as this promise resolved or rejected.
@@ -49,21 +84,15 @@ public interface Promise<T> {
   @NotNull
   Promise<T> processed(@NotNull Promise<? super T> child);
 
-  @NotNull
-  Promise<T> rejected(@NotNull Consumer<Throwable> rejected);
-
   /**
-   * Execute passed handler on resolve (result value will be passed),
-   * or on reject (null as result value will be passed).
+   * Execute passed handler on promise resolve (result value will be passed),
+   * or on promise reject (null as result value will be passed).
    */
   Promise<T> processed(@NotNull Consumer<? super T> processed);
 
-  @NotNull
-  <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull Function<? super T, ? extends SUB_RESULT> done);
-
-  @NotNull
-  <SUB_RESULT> Promise<SUB_RESULT> thenAsync(@NotNull Function<? super T, Promise<SUB_RESULT>> done);
-
+  /**
+   * Get promise state.
+   */
   @NotNull
   State getState();
 

@@ -74,7 +74,7 @@ public class FeatureUsageEventFileAppender extends FileAppender {
     nextRollover = getQuietWriter().getCount() + maxFileSize;
     try {
       final File file = nextFile(myLogDirectory);
-      setFile(file.getName(), false, bufferedIO, bufferSize);
+      setFile(file.getPath(), false, bufferedIO, bufferSize);
       nextRollover = 0;
     }
     catch (InterruptedIOException e) {

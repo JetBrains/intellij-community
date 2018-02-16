@@ -1,13 +1,12 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
-package com.intellij.testGuiFramework.tests.community
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.testGuiFramework.tests.community.focus
 
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
+import com.intellij.testGuiFramework.tests.community.CommunityProjectCreator
 import com.intellij.testGuiFramework.util.Key
 import org.fest.swing.core.SmartWaitRobot
 import org.fest.swing.exception.ComponentLookupException
