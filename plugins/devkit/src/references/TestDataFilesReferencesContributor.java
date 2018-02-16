@@ -35,7 +35,7 @@ public class TestDataFilesReferencesContributor extends PsiReferenceContributor 
             UCallExpression call = UastUtils.getUCallExpression(expression);
             if (call == null) return PsiReference.EMPTY_ARRAY;
 
-            PsiParameter targetParameter = UastUtils.guessCorrespondingParameter(call, expression);
+            PsiParameter targetParameter = UastUtils.getParameterForArgument(call, expression);
             if (!checkTestDataFileAnnotationPresent(targetParameter)) {
               return PsiReference.EMPTY_ARRAY;
             }
