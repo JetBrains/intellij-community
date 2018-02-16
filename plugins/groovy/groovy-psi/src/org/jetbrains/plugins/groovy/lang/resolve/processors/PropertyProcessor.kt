@@ -17,11 +17,12 @@ class PropertyProcessor(
   private val receiverType: PsiType?,
   propertyName: String,
   private val propertyKind: PropertyKind,
-  private val argumentTypes: Array<PsiType?>?,
+  argumentTypes: () -> Array<PsiType?>?,
   private val place: PsiElement
 ) : ProcessorWithCommonHints(), GrResolverProcessor<GroovyResolveResult> {
 
   private val accessorName = propertyKind.getAccessorName(propertyName)
+  private val argumentTypes by lazy(LazyThreadSafetyMode.NONE, argumentTypes)
 
   init {
     nameHint(accessorName)
