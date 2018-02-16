@@ -639,6 +639,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
                             .withTooltip(DvcsBundle.getString("clone.repository.url.autocomplete.login.tooltip"))
                             .createPanel();
       myPanel.setVisible(!actions.isEmpty());
+      myPanel.setBorder(JBUI.Borders.emptyRight(16));
       myActions = new ArrayList<>(actions);
     }
 
