@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
@@ -240,7 +241,11 @@ public class PyEvaluator {
       if (myNamespace != null) {
         return myNamespace.get(expression.getReferencedName());
       }
-      PsiElement result = expression.getReference(PyResolveContext.noImplicits()).resolve();
+      final ResolveResult[] results = expression.getReference(PyResolveContext.noImplicits()).multiResolve(false);
+      if (results.length != 1) {
+        return null;
+      }
+      PsiElement result = results[0].getElement();
       if (result instanceof PyTargetExpression) {
         result = ((PyTargetExpression)result).findAssignedValue();
       }
