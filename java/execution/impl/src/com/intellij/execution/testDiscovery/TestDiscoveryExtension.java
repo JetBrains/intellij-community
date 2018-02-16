@@ -24,6 +24,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.rt.coverage.data.SingleTrFileDiscoveryProtocolDataListener;
 import com.intellij.rt.coverage.data.SocketTestDiscoveryProtocolDataListener;
 import com.intellij.rt.coverage.data.TestDiscoveryProjectData;
+import com.intellij.rt.coverage.data.api.TestDiscoveryProtocolUtil;
 import com.intellij.rt.coverage.main.CoveragePremain;
 import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
@@ -157,7 +158,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     final File tracesFile = new File(tracesFilePath);
     synchronized (ourTracesLock) {
       try {
-        new IdeaTrFileTestDataReader(tracesFile, discoveryIndex, moduleName, frameworkPrefix).read();
+        TestDiscoveryProtocolUtil.readFile(tracesFile, new IdeaTestDiscoveryProtocolReader(discoveryIndex, moduleName, frameworkPrefix));
       }
       catch (IOException e) {
         LOG.error("Can not load " + tracesFilePath, e);
