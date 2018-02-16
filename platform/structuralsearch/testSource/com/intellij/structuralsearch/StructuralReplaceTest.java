@@ -3,6 +3,7 @@ package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -1674,6 +1675,62 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                                "    }\n" +
                                "}";
       assertEquals("don't add static import to inaccessible members", expected5, replacer.testReplace(in4, what4, by4, options, true));
+
+      final String in5 = "package cz.ahoj.sample.annotations;\n" +
+                         "/**\n" +
+                         " * @author Ales Holy\n" +
+                         " * @since 18. 7. 2017.\n" +
+                         " */\n" +
+                         "@OuterAnnotation({\n" +
+                         "        @InnerAnnotation(classes = {Integer.class}),\n" +
+                         "        @InnerAnnotation(classes = {String.class}),\n" +
+                         "        @InnerAnnotation(classes = {ReplacementTest.ReplacementTestConfig.class})\n" +
+                         "})\n" +
+                         "public class ReplacementTest {\n" +
+                         "    static class ReplacementTestConfig {\n" +
+                         "    }\n" +
+                         "}\n" +
+                         "@interface InnerAnnotation {\n" +
+                         "    Class<?>[] classes() default {};\n" +
+                         "}\n" +
+                         "@interface OuterAnnotation {\n" +
+                         "\n" +
+                         "    InnerAnnotation[] value();\n" +
+                         "}";
+      configureFromFileText("ReplacementTest.java", in5);
+      this.options.getMatchOptions().setScope(new LocalSearchScope( getFile()));
+
+      final String what5 = "@'_a:[regex( InnerAnnotation )](classes = { String.class })";
+      final String by5 = "@$a$(classes = { Integer.class })\n" +
+                         "@$a$(classes = { String.class })";
+      assertEquals("add import when reference is just outside the class",
+
+                   "package cz.ahoj.sample.annotations;\n" +
+                   "\n" +
+                   "import static cz.ahoj.sample.annotations.ReplacementTest.ReplacementTestConfig;\n" +
+                   "\n" +
+                   "/**\n" +
+                   " * @author Ales Holy\n" +
+                   " * @since 18. 7. 2017.\n" +
+                   " */\n" +
+                   "@OuterAnnotation({\n" +
+                   "        @InnerAnnotation(classes = {Integer.class}),\n" +
+                   "        @InnerAnnotation(classes = { Integer.class }),\n" +
+                   "@InnerAnnotation(classes = { String.class }),\n" +
+                   "        @InnerAnnotation(classes = {ReplacementTestConfig.class})\n" +
+                   "})\n" +
+                   "public class ReplacementTest {\n" +
+                   "    static class ReplacementTestConfig {\n" +
+                   "    }\n" +
+                   "}\n" +
+                   "@interface InnerAnnotation {\n" +
+                   "    Class<?>[] classes() default {};\n" +
+                   "}\n" +
+                   "@interface OuterAnnotation {\n" +
+                   "\n" +
+                   "    InnerAnnotation[] value();\n" +
+                   "}",
+                   replacer.testReplace(null, what5, by5, this.options, true));
     } finally {
       options.setToUseStaticImport(save);
     }
