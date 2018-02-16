@@ -51,7 +51,16 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
 
   private void init() {
     UIUtil.addUndoRedoActions(this);
-    myEmptyText = new TextComponentEmptyText(this);
+    myEmptyText = new TextComponentEmptyText(this) {
+      @Override
+      protected Rectangle getTextComponentBound() {
+        return getEmptyTextComponentBounds(super.getTextComponentBound());
+      }
+    };
+  }
+
+  protected Rectangle getEmptyTextComponentBounds(Rectangle bounds) {
+    return bounds;
   }
 
   public void setTextToTriggerEmptyTextStatus(String t) {

@@ -89,13 +89,21 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   };
   private Configurable myConfigurable;
 
+  ConfigurableEditor(Disposable parent) {
+    super(parent);
+  }
+
   ConfigurableEditor(Disposable parent, Configurable configurable) {
     super(parent);
+    init(configurable, parent instanceof SettingsEditor);
+  }
+
+  protected void init(Configurable configurable, boolean enableError) {
     myApplyAction.setEnabled(false);
     myResetAction.putValue(Action.SHORT_DESCRIPTION, RESET_DESCRIPTION);
     myResetAction.setEnabled(false);
     myErrorLabel.setOpaque(true);
-    myErrorLabel.setEnabled(parent instanceof SettingsEditor);
+    myErrorLabel.setEnabled(enableError);
     myErrorLabel.setVisible(false);
     myErrorLabel.setVerticalTextPosition(SwingConstants.TOP);
     myErrorLabel.setBorder(BorderFactory.createEmptyBorder(10, 15, 15, 15));
@@ -107,7 +115,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
     if (configurable != null) {
       myConfigurable = configurable;
-      myCardPanel.select(configurable, true);
+      myCardPanel.select(configurable, true).doWhenDone(() -> postUpdateCurrent(configurable));
     }
     updateCurrent(configurable, false);
   }
@@ -231,6 +239,9 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     }
   }
 
+  void postUpdateCurrent(Configurable configurable) {
+  }
+
   final boolean updateIfCurrent(Configurable configurable) {
     if (myConfigurable != configurable) {
       return false;
@@ -245,6 +256,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     callback.doWhenDone(() -> {
       myConfigurable = configurable;
       updateCurrent(configurable, false);
+      postUpdateCurrent(configurable);
     });
     return callback;
   }
