@@ -3,7 +3,10 @@
     <id>foo</id>
 
     <extensionPoints>
-        <extensionPoint name="bar" interface="bar.MyExtensionPoint"/>
+        <extensionPoint name="bar" interface="bar.MyExtensionPoint">
+          <with attribute="attributeName" implements="java.lang.String"/>
+          <with tag="tagName" implements="java.lang.Integer"/>
+        </extensionPoint>
     </extensionPoints>
 
     <extensions defaultExtensionNs="foo">
