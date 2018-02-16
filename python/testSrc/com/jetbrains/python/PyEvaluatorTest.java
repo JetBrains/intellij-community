@@ -264,6 +264,23 @@ public class PyEvaluatorTest extends PyTestCase {
     assertNull(new PyEvaluator().evaluate(expression));
   }
 
+  public void testEvaluateAsBoolean() {
+    assertTrue(PyEvaluator.evaluateAsBoolean(parseExpression("True")));
+    assertFalse(PyEvaluator.evaluateAsBoolean(parseExpression("False")));
+
+    assertTrue(PyEvaluator.evaluateAsBoolean(parseExpression("\'a\'")));
+    assertFalse(PyEvaluator.evaluateAsBoolean(parseExpression("\'\'")));
+
+    assertTrue(PyEvaluator.evaluateAsBoolean(parseExpression("1")));
+    assertFalse(PyEvaluator.evaluateAsBoolean(parseExpression("0")));
+
+    assertTrue(PyEvaluator.evaluateAsBoolean(parseExpression("{1: 0}")));
+    assertFalse(PyEvaluator.evaluateAsBoolean(parseExpression("{}")));
+
+    assertTrue(PyEvaluator.evaluateAsBoolean(parseExpression("[1]")));
+    assertFalse(PyEvaluator.evaluateAsBoolean(parseExpression("[]")));
+  }
+
   @NotNull
   private <T> T byExpression(@NotNull String expression, @NotNull Class<T> cls) {
     final Object value = new PyEvaluator().evaluate(parseExpression(expression));

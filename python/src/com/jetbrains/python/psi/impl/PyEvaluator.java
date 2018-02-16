@@ -18,6 +18,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -341,16 +342,40 @@ public class PyEvaluator {
     return PyUtil.as(new PyEvaluator().evaluate(expression), resultType);
   }
 
-  public static boolean evaluateBoolean(@Nullable PyExpression expr, boolean defaultValue) {
-    final Object result = new PyEvaluator().evaluate(expr);
+  /**
+   * Shortcut that evaluates expression and tries to determine if `bool` will return true for it
+   *
+   * @param expression expression to evaluate
+   * @return true if expression is evaluated to value so `bool` returns true for it
+   */
+  @Nullable
+  public static Boolean evaluateAsBoolean(@Nullable PyExpression expression) {
+    final PyEvaluator evaluator = new PyEvaluator();
+    evaluator.setEvaluateCollectionItems(false);
+    evaluator.setEvaluateKeys(false);
+
+    final Object result = evaluator.evaluate(expression);
+
     if (result instanceof Boolean) {
       return (Boolean)result;
     }
     else if (result instanceof Integer) {
-      return ((Integer)result) != 0;
+      return (Integer)result != 0;
     }
-    else {
-      return defaultValue;
+    else if (result instanceof String) {
+      return !((String)result).isEmpty();
     }
+    else if (result instanceof Collection) {
+      return !((Collection)result).isEmpty();
+    }
+    else if (result instanceof Map) {
+      return !((Map)result).isEmpty();
+    }
+
+    return null;
+  }
+
+  public static boolean evaluateAsBoolean(@Nullable PyExpression expression, boolean defaultValue) {
+    return ObjectUtils.notNull(evaluateAsBoolean(expression), defaultValue);
   }
 }
