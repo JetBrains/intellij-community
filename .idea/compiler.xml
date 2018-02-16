@@ -40,6 +40,7 @@
         </processorPath>
         <module name="bazel-base" />
         <module name="bazel-cpp" />
+        <module name="bazel-java" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
