@@ -1,10 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.annotations.SerializedName;
 import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
 import com.intellij.execution.Executor;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -20,14 +16,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -38,27 +32,15 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PsiNavigateUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.HttpRequests;
-import com.intellij.util.io.RequestBuilder;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBDimension;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE;
 
 public class FindTestsInTestDiscoveryServerAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance(FindTestsInTestDiscoveryServerAction.class);
-
   @Override
   public void update(AnActionEvent e) {
     Editor editor = e.getData(EDITOR);
@@ -157,10 +139,9 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
     loadTestsTask.init((AbstractPopup)popup, list, new Ref<>());
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      Map<String, String> map = fetchDataFromDiscoveryServer(fqn, methodName);
-      map.forEach((classFqn, testMethodName) -> {
+      TestDiscoveryProducer.consumeTestClassesAndMethods(project, fqn, methodName, "j", (testClassFqn, testMethodName) -> {
         PsiMethod psiMethod = ReadAction.compute(() -> {
-          PsiClass cc = classFqn == null ? null : javaFacade.findClass(classFqn, scope);
+          PsiClass cc = testClassFqn == null ? null : javaFacade.findClass(testClassFqn, scope);
           return cc == null ? null : ArrayUtil.getFirstElement(cc.findMethodsByName(testMethodName, false));
         });
         if (psiMethod != null) {
@@ -173,101 +154,5 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
         list.setPaintBusy(false);
       });
     });
-  }
-
-  private static final String INTELLIJ_TEST_DISCOVERY_HOST = "http://intellij-test-discovery";
-
-  private static Map<String, String> fetchDataFromDiscoveryServer(@NotNull String classFQName, @NotNull String methodName) {
-    String methodFqn = classFQName + "." + methodName;
-    RequestBuilder r = HttpRequests.request(INTELLIJ_TEST_DISCOVERY_HOST + "/search/tests/by-method/" + methodFqn);
-
-    try {
-      return r.connect(request -> {
-        Map<String, String> map = ContainerUtil.newLinkedHashMap();
-        ObjectMapper mapper = new ObjectMapper();
-        TestsSearchResult result = mapper.readValue(request.getInputStream(), TestsSearchResult.class);
-
-        result.getTests().forEach(s -> {
-
-          s = s.length() > 1 && s.charAt(0) == 'j' ? s.substring(1) : s;
-          String classFqn = StringUtil.substringBefore(s, "-");
-          String testMethodName = StringUtil.substringAfter(s, "-");
-
-          map.put(classFqn, testMethodName);
-        });
-        return map;
-      });
-    }
-    catch (HttpRequests.HttpStatusException http) {
-      LOG.debug("No tests found for " + methodFqn);
-    }
-    catch (IOException e) {
-      LOG.debug(e);
-    }
-    return Collections.emptyMap();
-  }
-
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public static class TestsSearchResult {
-    @Nullable
-    private String method;
-
-    @SerializedName("class")
-    @JsonProperty("class")
-    @Nullable
-    private String className;
-
-    private int found;
-
-    @NotNull
-    private List<String> tests = new ArrayList<>();
-
-    @Nullable
-    private String message;
-
-    @Nullable
-    public String getMethod() {
-      return method;
-    }
-
-    public TestsSearchResult setMethod(String method) {
-      this.method = method;
-      return this;
-    }
-
-    @Nullable
-    public String getClassName() {
-      return className;
-    }
-
-    public TestsSearchResult setClassName(String name) {
-      this.className = name;
-      return this;
-    }
-
-    public int getFound() {
-      return found;
-    }
-
-    @NotNull
-    public List<String> getTests() {
-      return tests;
-    }
-
-    public TestsSearchResult setTests(List<String> tests) {
-      this.tests = tests;
-      this.found = tests.size();
-      return this;
-    }
-
-    @Nullable
-    public String getMessage() {
-      return message;
-    }
-
-    public TestsSearchResult setMessage(String message) {
-      this.message = message;
-      return this;
-    }
   }
 }
