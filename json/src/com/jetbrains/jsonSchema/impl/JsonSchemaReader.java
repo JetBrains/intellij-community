@@ -138,7 +138,7 @@ public class JsonSchemaReader {
     READERS_MAP.put("description", (element, object, queue) -> {
       if (element instanceof JsonStringLiteral) object.setDescription(StringUtil.unquoteString(element.getText()));
     });
-    READERS_MAP.put(JsonSchemaObject.X_JETBRAINS_HTML_DESCRIPTION, (element, object, queue) -> {
+    READERS_MAP.put(JsonSchemaObject.X_INTELLIJ_HTML_DESCRIPTION, (element, object, queue) -> {
       if (element instanceof JsonStringLiteral) object.setHtmlDescription(StringUtil.unquoteString(element.getText()));
     });
     READERS_MAP.put("title", (element, object, queue) -> {

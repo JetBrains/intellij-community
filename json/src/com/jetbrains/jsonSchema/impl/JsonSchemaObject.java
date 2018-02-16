@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 public class JsonSchemaObject {
   @NonNls public static final String DEFINITIONS = "definitions";
   @NonNls public static final String PROPERTIES = "properties";
-  @NonNls public static final String X_JETBRAINS_HTML_DESCRIPTION = "x-jetbrains-html-description";
+  @NonNls public static final String X_INTELLIJ_HTML_DESCRIPTION = "x-intellij-html-description";
   @NotNull private final JsonObject myJsonObject;
   private Map<String, JsonSchemaObject> myDefinitionsMap;
   private Map<String, JsonSchemaObject> myProperties;
@@ -476,7 +476,7 @@ public class JsonSchemaObject {
   }
 
   public void setDescription(String description) {
-    myDescription = parseJsonText(description);
+    myDescription = unescapeJsonString(description);
   }
 
   public String getHtmlDescription() {
@@ -484,7 +484,7 @@ public class JsonSchemaObject {
   }
 
   public void setHtmlDescription(String htmlDescription) {
-    myHtmlDescription = parseJsonText(htmlDescription);
+    myHtmlDescription = unescapeJsonString(htmlDescription);
   }
 
   public String getTitle() {
@@ -492,10 +492,10 @@ public class JsonSchemaObject {
   }
 
   public void setTitle(String title) {
-    myTitle = parseJsonText(title);
+    myTitle = unescapeJsonString(title);
   }
 
-  private static String parseJsonText(@NotNull final String text) {
+  private static String unescapeJsonString(@NotNull final String text) {
     try {
       final String object = String.format("{\"prop\": \"%s\"}", text);
       return new Gson().fromJson(object, com.google.gson.JsonObject.class).get("prop").getAsString();
