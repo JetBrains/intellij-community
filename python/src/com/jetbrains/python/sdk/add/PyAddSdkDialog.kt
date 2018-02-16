@@ -262,15 +262,24 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     }
   }
 
-  private fun onFinish() {
+  /**
+   * Tries to create the SDK and closes the dialog if the creation succeeded.
+   *
+   * @see [doOKAction]
+   */
+  override fun doOKAction() {
     try {
-      selectedPanel?.finish()
+      selectedPanel?.complete()
     }
     catch (e: Exception) {
       Messages.showErrorDialog(e.localizedMessage, "Error")
       return
     }
 
+    close(OK_EXIT_CODE)
+  }
+
+  private fun onFinish() {
     doOKAction()
   }
 
