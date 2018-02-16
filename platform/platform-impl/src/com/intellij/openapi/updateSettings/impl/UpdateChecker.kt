@@ -133,7 +133,7 @@ object UpdateChecker {
     val externalUpdates: Collection<ExternalUpdate>?
     try {
       updatedPlugins = checkPluginsUpdate(updateSettings, indicator, incompatiblePlugins, buildNumber)
-      externalUpdates = updateExternal(manualCheck, updateSettings, indicator)
+      externalUpdates = checkExternalUpdates(manualCheck, updateSettings, indicator)
     }
     catch (e: IOException) {
       showErrorMessage(manualCheck, IdeBundle.message("updates.error.connection.failed", e.message))
@@ -191,7 +191,6 @@ object UpdateChecker {
     return strategy.checkForUpdates()
   }
 
-  @JvmStatic
   private fun checkPluginsUpdate(updateSettings: UpdateSettings,
                                  indicator: ProgressIndicator?,
                                  incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?,
@@ -199,12 +198,10 @@ object UpdateChecker {
     val updateable = collectUpdateablePlugins()
     if (updateable.isEmpty()) return null
 
-    // check custom repositories and the main one for updates
     val toUpdate = ContainerUtil.newTroveMap<PluginId, PluginDownloader>()
 
     val hosts = RepositoryHelper.getPluginHosts()
     val state = InstalledPluginsState.getInstance()
-
     outer@ for (host in hosts) {
       try {
         val forceHttps = host == null && updateSettings.canUseSecureConnection()
@@ -274,7 +271,7 @@ object UpdateChecker {
     return updateable
   }
 
-  private fun updateExternal(manualCheck: Boolean, updateSettings: UpdateSettings, indicator: ProgressIndicator?) : Collection<ExternalUpdate> {
+  private fun checkExternalUpdates(manualCheck: Boolean, updateSettings: UpdateSettings, indicator: ProgressIndicator?) : Collection<ExternalUpdate> {
     val result = arrayListOf<ExternalUpdate>()
     val manager = ExternalComponentManager.getInstance()
     indicator?.text = IdeBundle.message("updates.external.progress")
