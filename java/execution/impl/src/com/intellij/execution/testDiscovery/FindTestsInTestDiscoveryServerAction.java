@@ -3,8 +3,8 @@ package com.intellij.execution.testDiscovery;
 
 import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
 import com.intellij.execution.Executor;
+import com.intellij.execution.JavaTestConfigurationBase;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionUtil;
@@ -17,6 +17,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -36,6 +38,9 @@ import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBDimension;
 
 import javax.swing.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE;
@@ -80,19 +85,31 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
     String initTitle = "Tests for " + methodPresentationName;
     DefaultPsiElementCellRenderer renderer = new DefaultPsiElementCellRenderer();
 
+    Ref<JBPopup> ref = new Ref<>();
+
     InplaceButton runButton = new InplaceButton(new IconButton("Run All", AllIcons.Actions.Execute), __ -> {
       Executor executor = DefaultRunExecutor.getRunExecutorInstance();
       ConfigurationContext context = ConfigurationContext.getFromContext(e.getDataContext());
-      //first producer would be picked up, testng will be ignored completely!
-      //all tests would be retrieved again by provider
-      ConfigurationFromContext configuration =
-        RunConfigurationProducer.getInstance(TestDiscoveryConfigurationProducer.class).findOrCreateConfigurationFromContext(context);
-      if (configuration != null) {
-        ExecutionUtil.runConfiguration(configuration.getConfigurationSettings(), executor);
-      }
+      List<Module> containingModules =
+        model.getItems().stream()
+             .map(element -> ModuleUtilCore.findModuleForPsiElement(element))
+             .filter(module -> module != null)
+             .collect(Collectors.toList());
+      Module targetModule = TestDiscoveryConfigurationProducer.detectTargetModule(containingModules, project);
+      //first producer with results will be picked
+      getProducers(project).stream()
+                           .map(producer -> producer.createDelegate(method, targetModule).findOrCreateConfigurationFromContext(context))
+                           .filter(Objects::nonNull)
+                           .findFirst()
+                           .ifPresent(configuration -> {
+                             ExecutionUtil.runConfiguration(configuration.getConfigurationSettings(), executor);
+                             JBPopup pinPopup = ref.get();
+                             if (pinPopup != null) {
+                               pinPopup.cancel();
+                             }
+                           });
     });
 
-    Ref<JBPopup> ref = new Ref<>();
     InplaceButton pinButton = new InplaceButton(
       new IconButton("Pin", AllIcons.General.AutohideOff, AllIcons.General.AutohideOffPressed, AllIcons.General.AutohideOffInactive),
       __ -> {
@@ -139,20 +156,32 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
     loadTestsTask.init((AbstractPopup)popup, list, new Ref<>());
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      TestDiscoveryProducer.consumeTestClassesAndMethods(project, fqn, methodName, "j", (testClassFqn, testMethodName) -> {
-        PsiMethod psiMethod = ReadAction.compute(() -> {
-          PsiClass cc = testClassFqn == null ? null : javaFacade.findClass(testClassFqn, scope);
-          return cc == null ? null : ArrayUtil.getFirstElement(cc.findMethodsByName(testMethodName, false));
+      for (TestDiscoveryConfigurationProducer producer : getProducers(project)) {
+        String frameworkPrefix =
+          ((JavaTestConfigurationBase)producer.getConfigurationFactory().createTemplateConfiguration(project)).getFrameworkPrefix();
+        TestDiscoveryProducer.consumeTestClassesAndMethods(project, fqn, methodName, frameworkPrefix, (testClassFqn, testMethodName) -> {
+          PsiMethod psiMethod = ReadAction.compute(() -> {
+            PsiClass cc = testClassFqn == null ? null : javaFacade.findClass(testClassFqn, scope);
+            return cc == null ? null : ArrayUtil.getFirstElement(cc.findMethodsByName(testMethodName, false));
+          });
+          if (psiMethod != null) {
+            loadTestsTask.updateComponent(psiMethod);
+          }
         });
-        if (psiMethod != null) {
-          loadTestsTask.updateComponent(psiMethod);
-        }
-      });
+      }
 
       EdtInvocationManager.getInstance().invokeLater(() -> {
         popup.pack(true, true);
         list.setPaintBusy(false);
       });
     });
+  }
+  
+  private static List<TestDiscoveryConfigurationProducer> getProducers(Project project) {
+    return RunConfigurationProducer.getProducers(project)
+                                   .stream()
+                                   .filter(producer -> producer instanceof TestDiscoveryConfigurationProducer)
+                                   .map(producer -> (TestDiscoveryConfigurationProducer)producer)
+                                   .collect(Collectors.toList());
   }
 }
