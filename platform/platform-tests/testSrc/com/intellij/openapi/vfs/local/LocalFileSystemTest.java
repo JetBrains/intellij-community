@@ -222,8 +222,8 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
       File fromDir = tempDir.newFolder("from");
       File toDir = tempDir.newFolder("to");
 
-      VirtualFile fromVDir = myFS.findFileByPath(fromDir.getPath());
-      VirtualFile toVDir = myFS.findFileByPath(toDir.getPath());
+      VirtualFile fromVDir = myFS.refreshAndFindFileByIoFile(fromDir);
+      VirtualFile toVDir = myFS.refreshAndFindFileByIoFile(toDir);
       assertNotNull(fromVDir);
       assertNotNull(toVDir);
       VirtualFile fileToCopy = WriteAction.compute(() -> fromVDir.createChildData(this, "temp_file"));
@@ -242,8 +242,8 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
       File fromDir = tempDir.newFolder("from");
       File toDir = tempDir.newFolder("to");
 
-      VirtualFile fromVDir = myFS.findFileByPath(fromDir.getPath());
-      VirtualFile toVDir = myFS.findFileByPath(toDir.getPath());
+      VirtualFile fromVDir = myFS.refreshAndFindFileByIoFile(fromDir);
+      VirtualFile toVDir = myFS.refreshAndFindFileByIoFile(toDir);
       assertNotNull(fromVDir);
       assertNotNull(toVDir);
       VirtualFile dirToCopy = WriteAction.compute(() -> fromVDir.createChildDirectory(this, "dir"));
