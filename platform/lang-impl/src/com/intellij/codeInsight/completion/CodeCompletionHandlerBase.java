@@ -46,7 +46,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -330,9 +329,9 @@ public class CodeCompletionHandlerBase {
       return null;
     }
 
-    Disposer.register(indicator, hostCopyOffsets.getOffsets());
+    indicator.registerChildDisposable(hostCopyOffsets::getOffsets);
     OffsetsInFile finalOffsets = toInjectedIfAny(initContext.getFile(), hostCopyOffsets);
-    Disposer.register(indicator, finalOffsets.getOffsets());
+    indicator.registerChildDisposable(finalOffsets::getOffsets);
 
     return createCompletionParameters(initContext, indicator, finalOffsets);
   }
@@ -476,8 +475,8 @@ public class CodeCompletionHandlerBase {
     int startOffset = hostMap.getOffset(CompletionInitializationContext.START_OFFSET);
     int endOffset = hostMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
 
-    OffsetTranslator translator = new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier);
-    Disposer.register(indicator, translator);
+    indicator.registerChildDisposable(
+      () -> new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier));
 
     OffsetsInFile copyOffsets = topLevelOffsets.replaceInCopy(hostCopy, startOffset, endOffset, dummyIdentifier);
     return hostCopy.isValid() ? copyOffsets : null;
