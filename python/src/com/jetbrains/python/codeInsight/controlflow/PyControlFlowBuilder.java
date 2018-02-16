@@ -443,7 +443,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     boolean isStaticallyTrue = false;
     if (condition != null) {
       condition.accept(this);
-      isStaticallyTrue = PyEvaluator.evaluateBoolean(condition, false);
+      isStaticallyTrue = PyEvaluator.evaluateAsBoolean(condition, false);
     }
     final Instruction head = myBuilder.prevInstruction;
     final PyElsePart elsePart = node.getElsePart();
@@ -813,7 +813,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     super.visitPyAssertStatement(node);
     final PyExpression[] args = node.getArguments();
     // assert False
-    if (args.length >= 1 && !PyEvaluator.evaluateBoolean(args[0], true)) {
+    if (args.length >= 1 && !PyEvaluator.evaluateAsBoolean(args[0], true)) {
       abruptFlow(node);
       return;
     }
