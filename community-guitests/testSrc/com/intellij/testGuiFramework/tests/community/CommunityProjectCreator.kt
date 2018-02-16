@@ -5,6 +5,7 @@ import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
+import org.junit.Assert
 
 val GuiTestCase.CommunityProjectCreator by CommunityProjectCreator
 
@@ -22,7 +23,11 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
         dialog("New Project") {
           jList("Java").clickItem("Java")
           button("Next").click()
-          checkbox("Create project from template").click()
+          val projectFromTemplateCheckbox = checkbox("Create project from template")
+          projectFromTemplateCheckbox.click()
+          //check that "Create project from template" has been clicked. GUI-80
+          if (!projectFromTemplateCheckbox.isSelected) projectFromTemplateCheckbox.click()
+          Assert.assertTrue("Checkbox \"Create project from template\" should be selected!", projectFromTemplateCheckbox.isSelected)
           jList("Command Line App").clickItem("Command Line App")
           button("Next").click()
           if (projectName != defaultProjectName) typeText("typeAheadProblem")
