@@ -9,6 +9,7 @@ import com.intellij.notification.Notification
 import com.intellij.openapi.actionSystem.*
 import klogging.*
 import runtime.async.*
+import kotlinx.coroutines.experimental.async
 
 @Suppress("unused")
 private val log = KLoggers.logger("plugin/TestCircletAction.kt")
