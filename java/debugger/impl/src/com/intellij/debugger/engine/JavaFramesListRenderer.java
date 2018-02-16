@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class JavaFramesListRenderer {
-  public void customizePresentation(StackFrameDescriptorImpl descriptor,
+  public static void customizePresentation(StackFrameDescriptorImpl descriptor,
                                     @NotNull ColoredTextContainer component,
                                     @Nullable StackFrameDescriptorImpl selectedDescriptor) {
     component.setIcon(descriptor.getIcon());
