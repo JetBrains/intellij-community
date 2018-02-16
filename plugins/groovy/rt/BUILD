@@ -12,7 +12,8 @@ iml_module(
         "//tools/idea/.idea/libraries:Groovy",
         "//tools/idea/platform/util[module]",
         "//tools/idea/plugins/groovy/rt-constants:groovy-rt-constants[module]",
-        "//tools/idea/.idea/libraries:griffon-rt",
+        "//tools/idea/plugins/groovy/testdata/griffon:griffon-cli-1.1.0",
+        "//tools/idea/plugins/groovy/testdata/griffon:griffon-rt-1.1.0",
         "//tools/idea/.idea/libraries:Slf4j",
     ],
 )

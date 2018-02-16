@@ -172,8 +172,8 @@ java_library(
     name = "XmlRPC",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:xmlrpc-2.0"],
-    runtime_deps = ["//tools/idea/lib:xmlrpc-2.0"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/apache/ws/xmlrpc/xmlrpc/2.0.1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/apache/ws/xmlrpc/xmlrpc/2.0.1:jar"],
 )
 
 java_library(
@@ -303,9 +303,9 @@ java_library(
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
-    exports = ["//tools/idea/lib:hamcrest-library-1.3"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/hamcrest/hamcrest-library/1.3:jar"],
     # do not sort: must match IML order
-    runtime_deps = ["//tools/idea/lib:hamcrest-library-1.3"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/hamcrest/hamcrest-library/1.3:jar"],
 )
 
 java_library(
@@ -386,8 +386,8 @@ java_library(
     name = "OroMatcher",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:oromatcher"],
-    runtime_deps = ["//tools/idea/lib:oromatcher"],
+    exports = ["//prebuilts/tools/common/m2/repository/oro/oro/2.0.8:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/oro/oro/2.0.8:jar"],
 )
 
 java_library(
@@ -402,8 +402,8 @@ java_library(
     name = "imgscalr",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:imgscalr-lib-4.2"],
-    runtime_deps = ["//tools/idea/lib:imgscalr-lib-4.2"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/imgscalr/imgscalr-lib/4.2:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/imgscalr/imgscalr-lib/4.2:jar"],
 )
 
 java_library(
@@ -418,8 +418,8 @@ java_library(
     name = "xmlgraphics-commons",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:xmlgraphics-commons-1.5"],
-    runtime_deps = ["//tools/idea/lib:xmlgraphics-commons-1.5"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/xmlgraphics-commons/1.5:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/apache/xmlgraphics/xmlgraphics-commons/1.5:jar"],
 )
 
 java_library(
@@ -460,8 +460,8 @@ java_library(
     name = "commons-codec",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:commons-codec-1.9"],
-    runtime_deps = ["//tools/idea/lib:commons-codec-1.9"],
+    exports = ["//prebuilts/tools/common/m2/repository/commons-codec/commons-codec/1.9:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/commons-codec/commons-codec/1.9:jar"],
 )
 
 java_library(
@@ -564,8 +564,8 @@ java_library(
     name = "Jaxen",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:jaxen-1.1.3"],
-    runtime_deps = ["//tools/idea/lib:jaxen-1.1.3"],
+    exports = ["//prebuilts/tools/common/m2/repository/jaxen/jaxen/1.1.3:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/jaxen/jaxen/1.1.3:jar"],
 )
 
 java_library(
@@ -590,16 +590,16 @@ java_library(
     name = "jcip",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:jcip-annotations"],
-    runtime_deps = ["//tools/idea/lib:jcip-annotations"],
+    exports = ["//prebuilts/tools/common/m2/repository/net/jcip/jcip-annotations/1.0:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/net/jcip/jcip-annotations/1.0:jar"],
 )
 
 java_library(
     name = "swingx",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:swingx-core-1.6.2"],
-    runtime_deps = ["//tools/idea/lib:swingx-core-1.6.2"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/swinglabs/swingx-core/1.6.2-2:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/swinglabs/swingx-core/1.6.2-2:jar"],
 )
 
 java_library(
@@ -630,8 +630,8 @@ java_library(
     name = "commons-logging",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:commons-logging-1.2"],
-    runtime_deps = ["//tools/idea/lib:commons-logging-1.2"],
+    exports = ["//prebuilts/tools/common/m2/repository/commons-logging/commons-logging/1.2:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/commons-logging/commons-logging/1.2:jar"],
 )
 
 java_library(
@@ -743,22 +743,6 @@ java_library(
 )
 
 java_library(
-    name = "griffon-rt",
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    exports = [
-        "//tools/idea/plugins/groovy/testdata/griffon:griffon-cli-1.1.0",
-        "//tools/idea/plugins/groovy/testdata/griffon:griffon-rt-1.1.0",
-    ],
-    # do not sort: must match IML order
-    runtime_deps = [
-        "//tools/idea/plugins/groovy/testdata/griffon:griffon-cli-1.1.0",
-        "//tools/idea/plugins/groovy/testdata/griffon:griffon-rt-1.1.0",
-    ],
-)
-
-java_library(
     name = "nekohtml",
     tags = ["managed"],
     visibility = ["//visibility:public"],
@@ -837,26 +821,26 @@ java_library(
 )
 
 java_library(
-    name = "com.twelvemonkeys.imageio_imageio-tiff_3.2.1",
+    name = "imageio-tiff",
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/lib:common-image-3.2.1",
-        "//tools/idea/lib:common-io-3.2.1",
-        "//tools/idea/lib:common-lang-3.2.1",
-        "//tools/idea/lib:imageio-core-3.2.1",
-        "//tools/idea/lib:imageio-metadata-3.2.1",
-        "//tools/idea/lib:imageio-tiff-3.2.1",
+        "//prebuilts/tools/common/m2/repository/com/twelvemonkeys/common/common-image/3.2.1:jar",
+        "//prebuilts/tools/common/m2/repository/com/twelvemonkeys/common/common-io/3.2.1:jar",
+        "//prebuilts/tools/common/m2/repository/com/twelvemonkeys/common/common-lang/3.2.1:jar",
+        "//prebuilts/tools/common/m2/repository/com/twelvemonkeys/imageio/imageio-core/3.2.1:jar",
+        "//prebuilts/tools/common/m2/repository/com/twelvemonkeys/imageio/imageio-metadata/3.2.1:jar",
+        "//prebuilts/tools/common/m2/repository/com/twelvemonkeys/imageio/imageio-tiff/3.2.1:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/lib:common-image-3.2.1",
-        "//tools/idea/lib:common-io-3.2.1",
-        "//tools/idea/lib:common-lang-3.2.1",
-        "//tools/idea/lib:imageio-core-3.2.1",
-        "//tools/idea/lib:imageio-metadata-3.2.1",
-        "//tools/idea/lib:imageio-tiff-3.2.1",
+        "//prebuilts/tools/common/m2/repository/com/twelvemonkeys/common/common-image/3.2.1:jar",
+        "//prebuilts/tools/common/m2/repository/com/twelvemonkeys/common/common-io/3.2.1:jar",
+        "//prebuilts/tools/common/m2/repository/com/twelvemonkeys/common/common-lang/3.2.1:jar",
+        "//prebuilts/tools/common/m2/repository/com/twelvemonkeys/imageio/imageio-core/3.2.1:jar",
+        "//prebuilts/tools/common/m2/repository/com/twelvemonkeys/imageio/imageio-metadata/3.2.1:jar",
+        "//prebuilts/tools/common/m2/repository/com/twelvemonkeys/imageio/imageio-tiff/3.2.1:jar",
     ],
 )
 
@@ -914,16 +898,16 @@ java_library(
     name = "cucumber-java",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:cucumber-java-1.2.4"],
-    runtime_deps = ["//tools/idea/lib:cucumber-java-1.2.4"],
+    exports = ["//prebuilts/tools/common/m2/repository/info/cukes/cucumber-java/1.2.4:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/info/cukes/cucumber-java/1.2.4:jar"],
 )
 
 java_library(
     name = "cucumber-testing",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:cucumber-jvm-deps-1.0.3"],
-    runtime_deps = ["//tools/idea/lib:cucumber-jvm-deps-1.0.3"],
+    exports = ["//prebuilts/tools/common/m2/repository/info/cukes/cucumber-jvm-deps/1.0.3:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/info/cukes/cucumber-jvm-deps/1.0.3:jar"],
 )
 
 java_library(
@@ -947,15 +931,9 @@ java_library(
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
-    exports = [
-        "//tools/idea/lib:commons-httpclient-3.1-patched",
-        "//tools/idea/lib:commons-logging-1.2",
-    ],
+    exports = ["//tools/idea/lib:commons-httpclient-3.1-patched"],
     # do not sort: must match IML order
-    runtime_deps = [
-        "//tools/idea/lib:commons-httpclient-3.1-patched",
-        "//tools/idea/lib:commons-logging-1.2",
-    ],
+    runtime_deps = ["//tools/idea/lib:commons-httpclient-3.1-patched"],
 )
 
 java_library(
@@ -1010,8 +988,8 @@ java_library(
     name = "snakeyaml",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:snakeyaml-1.17"],
-    runtime_deps = ["//tools/idea/lib:snakeyaml-1.17"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/yaml/snakeyaml/1.17:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/yaml/snakeyaml/1.17:jar"],
 )
 
 java_library(
@@ -1196,8 +1174,8 @@ java_library(
     name = "xml-apis-ext",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:xml-apis-ext"],
-    runtime_deps = ["//tools/idea/lib:xml-apis-ext"],
+    exports = ["//prebuilts/tools/common/m2/repository/xml-apis/xml-apis-ext/1.3.04:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/xml-apis/xml-apis-ext/1.3.04:jar"],
 )
 
 java_library(
