@@ -27,10 +27,10 @@ public class SubSequenceTest extends PropertyCheckerTestCase{
   @Parameterized.Parameters(name = "{0}")
   public static Collection data() {
     return Arrays.asList(
-      new Object[]{"abcde", 435}, 
-      new Object[]{"abcdef", 449},
-      new Object[]{"sadf", 116},
-      new Object[]{"asdf", 131},
+      new Object[]{"abcde", 448}, 
+      new Object[]{"abcdef", 463},
+      new Object[]{"sadf", 117},
+      new Object[]{"asdf", 132},
       new Object[]{"xxx", 96},
       new Object[]{"AA", 60}
     );
