@@ -7,6 +7,7 @@ import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.components.service
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
+import com.intellij.psi.codeStyle.SuggestedNameInfo
 import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.psi.util.createSmartPointer
 import com.intellij.psi.util.parentOfType
@@ -30,7 +31,7 @@ internal abstract class CreateExecutableFromJavaUsageRequest<out T : PsiCall>(
 
   override fun getTargetSubstitutor() = PsiJvmSubstitutor(project, getTargetSubstitutor(call))
 
-  override fun getParameters(): List<ExpectedParameter> {
+  override fun getParameters(): List<Pair<SuggestedNameInfo, ExpectedTypes>> {
     val argumentList = call.argumentList ?: return emptyList()
     val scope = call.resolveScope
     val codeStyleManager: JavaCodeStyleManager = project.service()
@@ -48,7 +49,7 @@ internal abstract class CreateExecutableFromJavaUsageRequest<out T : PsiCall>(
       }
       val expectedTypeInfo = argType?.let { expectedType(it, ExpectedType.Kind.SUPERTYPE) }
       val expectedTypes = expectedTypeInfo?.let { listOf(it) } ?: emptyList()
-      ExpectedParameter(names, expectedTypes)
+      Pair<SuggestedNameInfo, ExpectedTypes>(names, expectedTypes)
     }
   }
 

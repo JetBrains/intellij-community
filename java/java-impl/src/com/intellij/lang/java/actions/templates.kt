@@ -5,11 +5,11 @@ import com.intellij.codeInsight.ExpectedTypeInfo
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils
 import com.intellij.codeInsight.daemon.impl.quickfix.GuessTypeParameters
 import com.intellij.codeInsight.template.TemplateBuilder
-import com.intellij.lang.jvm.actions.ExpectedParameters
 import com.intellij.lang.jvm.actions.ExpectedTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.*
+import com.intellij.psi.codeStyle.SuggestedNameInfo
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.util.PsiUtil
 
@@ -22,7 +22,7 @@ internal class TemplateContext(
   val guesserContext: PsiElement?
 )
 
-internal fun TemplateContext.setupParameters(method: PsiMethod, parameters: ExpectedParameters) {
+internal fun TemplateContext.setupParameters(method: PsiMethod, parameters: List<Pair<SuggestedNameInfo, ExpectedTypes>>) {
   if (parameters.isEmpty()) return
   val postprocessReformattingAspect = PostprocessReformattingAspect.getInstance(project)
   val parameterList = method.parameterList
