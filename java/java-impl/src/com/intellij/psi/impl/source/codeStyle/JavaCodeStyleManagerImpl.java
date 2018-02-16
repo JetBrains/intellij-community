@@ -227,7 +227,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     }
 
     if (propertyName != null) {
-      String[] namesByName = getSuggestionsByName(propertyName, kind, false, correctKeywords).toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+      String[] namesByName = getSuggestionsByName(propertyName, kind, correctKeywords).toArray(ArrayUtil.EMPTY_STRING_ARRAY);
       sortVariableNameSuggestions(namesByName, kind, propertyName, null);
       ContainerUtil.addAll(names, namesByName);
     }
@@ -925,28 +925,28 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   private Collection<String> getSuggestionsByNames(@NotNull Iterable<String> names, @NotNull VariableKind kind, boolean correctKeywords) {
     final Collection<String> suggestions = new LinkedHashSet<>();
     for (String name : names) {
-      suggestions.addAll(getSuggestionsByName(name, kind, false, correctKeywords));
+      suggestions.addAll(getSuggestionsByName(name, kind, correctKeywords));
     }
     return suggestions;
   }
 
   @NotNull
-  private Collection<String> getSuggestionsByName(@NotNull String name, @NotNull VariableKind variableKind, boolean isArray, boolean correctKeywords) {
+  private Collection<String> getSuggestionsByName(@NotNull String name, @NotNull VariableKind variableKind, boolean correctKeywords) {
     boolean upperCaseStyle = variableKind == VariableKind.STATIC_FINAL_FIELD;
     boolean preferLongerNames = getJavaSettings().PREFER_LONGER_NAMES;
     String prefix = getPrefixByVariableKind(variableKind);
     String suffix = getSuffixByVariableKind(variableKind);
 
     List<String> answer = new ArrayList<>();
-    for (String suggestion : NameUtil.getSuggestionsByName(name, prefix, suffix, upperCaseStyle, preferLongerNames, isArray)) {
+    for (String suggestion : NameUtil.getSuggestionsByName(name, prefix, suffix, upperCaseStyle, preferLongerNames, false)) {
       answer.add(correctKeywords ? changeIfNotIdentifier(suggestion) : suggestion);
     }
 
-    ContainerUtil.addIfNotNull(answer, getWordByPreposition(name, prefix, suffix, upperCaseStyle, isArray));
+    ContainerUtil.addIfNotNull(answer, getWordByPreposition(name, prefix, suffix, upperCaseStyle));
     return answer;
   }
 
-  private static String getWordByPreposition(@NotNull String name, String prefix, String suffix, boolean upperCaseStyle, boolean isArray) {
+  private static String getWordByPreposition(@NotNull String name, String prefix, String suffix, boolean upperCaseStyle) {
     String[] words = NameUtil.splitNameIntoWords(name);
     for (int i = 1; i < words.length; i++) {
       for (String preposition : ourPrepositions) {
@@ -963,8 +963,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
               mainWord = StringUtil.capitalize(mainWord);
             }
           }
-          String result = prefix + mainWord + suffix;
-          return isArray ? StringUtil.pluralize(result) : result;
+          return prefix + mainWord + suffix;
         }
       }
     }
