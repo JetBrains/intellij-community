@@ -23,6 +23,7 @@ import runtime.reactive.*
 import java.awt.*
 import java.net.*
 import java.util.concurrent.*
+import kotlinx.coroutines.experimental.async
 
 class CircletConnectionComponent(private val project: Project) :
     AbstractProjectComponent(project),
