@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.settings.LocationSettingType;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.service.settings.ExternalSystemSettingsControlCustomizer;
 import com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBox;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
@@ -13,6 +14,7 @@ import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.FixedSizeButton;
@@ -74,9 +76,9 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   private boolean myShowBalloonIfNecessary;
   private final ActionListener myActionListener;
 
-
   private boolean dropUseAutoImportBox;
   private boolean dropCreateEmptyContentRootDirectoriesBox;
+  private boolean dropModulesGroupingOptionPanel;
 
   @SuppressWarnings("FieldCanBeLocal") // Used implicitly by reflection at disposeUIResources() and showUi()
   @Nullable
@@ -117,6 +119,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
   @Nullable
   private JBCheckBox myStoreExternallyCheckBox;
+  private boolean dropStoreExternallyCheckBox;
 
   public IdeaGradleProjectSettingsControlBuilder(@NotNull GradleProjectSettings initialSettings) {
     myInstallationManager = ServiceManager.getService(GradleInstallationManager.class);
@@ -196,6 +199,16 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     return this;
   }
 
+  public IdeaGradleProjectSettingsControlBuilder dropStoreExternallyCheckBox() {
+    dropStoreExternallyCheckBox = true;
+    return this;
+  }
+
+  public IdeaGradleProjectSettingsControlBuilder dropModulesGroupingOptionPanel() {
+    dropModulesGroupingOptionPanel = true;
+    return this;
+  }
+
   @Override
   public void showUi(boolean show) {
     ExternalSystemUiUtil.showUi(this, show);
@@ -208,7 +221,8 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
   @Override
   public ExternalSystemSettingsControlCustomizer getExternalSystemSettingsControlCustomizer() {
-    return new ExternalSystemSettingsControlCustomizer(dropUseAutoImportBox, dropCreateEmptyContentRootDirectoriesBox);
+    return new ExternalSystemSettingsControlCustomizer(
+      dropUseAutoImportBox, dropCreateEmptyContentRootDirectoriesBox, dropModulesGroupingOptionPanel);
   }
 
   @Override
@@ -237,7 +251,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       content.add(myResolveModulePerSourceSetCheckBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
     }
 
-    if (myInitialSettings.getStoreProjectFilesExternally() != ThreeState.UNSURE) {
+    if (!dropStoreExternallyCheckBox && myInitialSettings.getStoreProjectFilesExternally() != ThreeState.UNSURE) {
       myStoreExternallyCheckBox = new JBCheckBox("Store generated project files externally");
       content.add(myStoreExternallyCheckBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
     }
@@ -342,6 +356,16 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
   @Override
   public boolean validate(GradleProjectSettings settings) throws ConfigurationException {
+    if(myGradleJdkComboBox != null) {
+      Sdk selectedJdk = myGradleJdkComboBox.getSelectedJdk();
+      if(selectedJdk == null) {
+        throw new ConfigurationException(GradleBundle.message("gradle.jvm.undefined"));
+      }
+      String homePath = selectedJdk.getHomePath();
+      if(!ExternalSystemJdkUtil.isValidJdk(homePath)) {
+        throw new ConfigurationException(GradleBundle.message("gradle.jvm.incorrect", homePath));
+      }
+    }
     if (myGradleHomePathField == null) return true;
 
     String gradleHomePath = FileUtil.toCanonicalPath(myGradleHomePathField.getText());
@@ -545,7 +569,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     myGradleJdkComboBox.refreshData(sdkItem, projectJdk);
     if (myGradleJdkSetUpButton != null) {
       ProjectSdksModel sdksModel = new ProjectSdksModel();
-      myGradleJdkComboBox.setSetupButton(myGradleJdkSetUpButton, sdksModel, null, id -> id != null && "JavaSDK".equals(id.getName()));
+      myGradleJdkComboBox.setSetupButton(myGradleJdkSetUpButton, sdksModel, null, JavaSdkType.class::isInstance);
     }
   }
 
