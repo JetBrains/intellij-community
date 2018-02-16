@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE;
 
-public class FindTestsInTestDiscoveryServerAction extends AnAction {
+public class ShowDiscoveredTestsAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     Editor editor = e.getData(EDITOR);
@@ -103,9 +103,9 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
                            .findFirst()
                            .ifPresent(configuration -> {
                              ExecutionUtil.runConfiguration(configuration.getConfigurationSettings(), executor);
-                             JBPopup pinPopup = ref.get();
-                             if (pinPopup != null) {
-                               pinPopup.cancel();
+                             JBPopup popup = ref.get();
+                             if (popup != null) {
+                               popup.cancel();
                              }
                            });
     });
@@ -115,9 +115,9 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
       __ -> {
         PsiElement[] elements = model.getItems().toArray(PsiElement.EMPTY_ARRAY);
         FindUtil.showInUsageView(null, elements, initTitle, project);
-        JBPopup pinPopup = ref.get();
-        if (pinPopup != null) {
-          pinPopup.cancel();
+        JBPopup popup = ref.get();
+        if (popup != null) {
+          popup.cancel();
         }
       });
 
@@ -176,7 +176,7 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
       });
     });
   }
-  
+
   private static List<TestDiscoveryConfigurationProducer> getProducers(Project project) {
     return RunConfigurationProducer.getProducers(project)
                                    .stream()
