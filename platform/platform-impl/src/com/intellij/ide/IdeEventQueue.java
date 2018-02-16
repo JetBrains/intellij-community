@@ -1195,17 +1195,24 @@ public class IdeEventQueue extends EventQueue {
     }
 
     if (isPopupLosingFocusFromWindowEvent(e)) return true;
-    if (isFrameDeactivation(e)) {
+    if (isTypeaheadTimeoutExceeded(e)) {
       TYPEAHEAD_LOG.debug("Clear delayed events because of IdeFrame deactivation");
       delayKeyEvents.set(false);
       myDelayedKeyEvents.clear();
+      lastTypeaheadTimestamp = 0;
     };
 
     return false;
   }
 
-  private static boolean isFrameDeactivation(AWTEvent e) {
-    return e.getID() == WindowEvent.WINDOW_DEACTIVATED && e.getSource() instanceof IdeFrame;
+  private boolean isTypeaheadTimeoutExceeded(AWTEvent e) {
+    if (!delayKeyEvents.get()) return false;
+    long currentTypeaheadDelay = System.currentTimeMillis() - lastTypeaheadTimestamp;
+    if (currentTypeaheadDelay > Registry.get("action.aware.typeaheadTimout").asDouble()) {
+      TYPEAHEAD_LOG.warn("Typeahead timeout is exceeded: " + currentTypeaheadDelay);
+      return true;
+    }
+    return false;
   }
 
   private static boolean isPopupLosingFocusFromWindowEvent(AWTEvent e) {
@@ -1267,12 +1274,12 @@ public class IdeEventQueue extends EventQueue {
         KeyEvent keyEvent = (KeyEvent)event;
         boolean thisShortcutMayShowPopup = getShortcutsShowingPopups().stream().
           filter(s -> s instanceof KeyboardShortcut).map(s -> ((KeyboardShortcut)s).getFirstKeyStroke()).
-          filter(ks -> keyEvent.getKeyCode() == ks.getKeyCode()).
-          anyMatch(ks -> (keyEvent.getModifiersEx() & ks.getModifiers()) != 0);
+          anyMatch(ks -> ks.equals(KeyStroke.getKeyStroke(keyEvent.getKeyCode(), keyEvent.getModifiers())));
 
         if (thisShortcutMayShowPopup) {
           TYPEAHEAD_LOG.debug("Delay following events");
           delayKeyEvents.set(true);
+          lastTypeaheadTimestamp = System.currentTimeMillis();
         }
       }
     }
@@ -1297,6 +1304,7 @@ public class IdeEventQueue extends EventQueue {
   private final Set<Shortcut> shortcutsShowingPopups = new HashSet<>();
 
   private final Set<String> actionsShowingPopupsList = new HashSet<>();
+  private long lastTypeaheadTimestamp = -1;
 
   private Set<Shortcut> getShortcutsShowingPopups () {
     if (KeymapManager.getInstance().getActiveKeymap() != null) {
