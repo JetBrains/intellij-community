@@ -328,7 +328,7 @@ object UpdateChecker {
         descriptor = oldDownloader.descriptor
       }
 
-      if (descriptor != null && PluginManagerCore.isCompatible(descriptor, downloader.buildNumber) && !state.wasUpdated(descriptor.pluginId)) {
+      if (PluginManagerCore.isCompatible(descriptor, downloader.buildNumber) && !state.wasUpdated(descriptor.pluginId)) {
         toUpdate[PluginId.getId(pluginId)] = downloader
       }
     }
@@ -336,8 +336,8 @@ object UpdateChecker {
     // collect plugins which were not updated and would be incompatible with new version
     if (incompatiblePlugins != null && installedPlugin != null && installedPlugin.isEnabled &&
         !toUpdate.containsKey(installedPlugin.pluginId) &&
-        PluginManagerCore.isIncompatible(installedPlugin, downloader.buildNumber)) {
-      incompatiblePlugins.add(installedPlugin)
+        !PluginManagerCore.isCompatible(installedPlugin, downloader.buildNumber)) {
+      incompatiblePlugins += installedPlugin
     }
   }
 
