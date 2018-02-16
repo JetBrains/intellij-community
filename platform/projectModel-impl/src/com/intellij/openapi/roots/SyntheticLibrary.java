@@ -122,42 +122,43 @@ public abstract class SyntheticLibrary {
   }
 
   @NotNull
-  public final Set<VirtualFile> getAllRoots() {
+  public final Collection<VirtualFile> getAllRoots() {
     return getRoots(true, true);
   }
 
   @NotNull
-  private Set<VirtualFile> getRoots(boolean includeSources, boolean includeBinaries) {
+  private Collection<VirtualFile> getRoots(boolean includeSources, boolean includeBinaries) {
     if (includeSources && includeBinaries) {
       Collection<VirtualFile> sourceRoots = getSourceRoots();
       Collection<VirtualFile> binaryRoots = getBinaryRoots();
       if (binaryRoots.isEmpty()) {
-        return asSet(sourceRoots);
+        return sourceRoots;
       }
       if (sourceRoots.isEmpty()) {
-        return asSet(binaryRoots);
+        return binaryRoots;
       }
       return ContainerUtil.union(sourceRoots, binaryRoots);
     }
     if (includeSources) {
-      return asSet(getSourceRoots());
+      return getSourceRoots();
     }
     if (includeBinaries) {
-      return asSet(getBinaryRoots());
+      return getBinaryRoots();
     }
     return Collections.emptySet();
+  }
+
+  public final boolean contains(@NotNull VirtualFile file, boolean includeSources, boolean includeBinaries) {
+    Set<VirtualFile> roots = asSet(getRoots(includeSources, includeBinaries));
+    return VfsUtilCore.isUnder(file, roots) && !VfsUtilCore.isUnder(file, getExcludedRoots());
+  }
+
+  public final boolean contains(@NotNull VirtualFile file) {
+    return contains(file, true, true);
   }
 
   @NotNull
   private static Set<VirtualFile> asSet(@NotNull Collection<VirtualFile> collection) {
     return collection instanceof Set ? (Set)collection : ContainerUtil.newTroveSet(collection);
-  }
-
-  public final boolean contains(@NotNull VirtualFile file, boolean includeSources, boolean includeBinaries) {
-    return VfsUtilCore.isUnder(file, getRoots(includeSources, includeBinaries)) && !VfsUtilCore.isUnder(file, getExcludedRoots());
-  }
-
-  public final boolean contains(@NotNull VirtualFile file) {
-    return contains(file, true, true);
   }
 }
