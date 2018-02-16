@@ -16,6 +16,7 @@ import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -142,14 +143,9 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
   }
 
   private static boolean mayContainModuleInfo(Module module) {
-    return ReadAction.compute(() -> {
-      ModuleRootManager moduleManager = ModuleRootManager.getInstance(module);
-      PsiManager psiManager = PsiManager.getInstance(module.getProject());
-      return StreamEx.of(moduleManager.getSourceRoots(false))
-                     .map(psiManager::findDirectory)
-                     .nonNull()
-                     .anyMatch(psiDir -> PsiUtil.getLanguageLevel(psiDir).isAtLeast(LanguageLevel.JDK_1_9));
-    });
+    return ReadAction.compute(() -> 
+      EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module).isAtLeast(LanguageLevel.JDK_1_9)
+    );
   }
 
   private static void collectClassFiles(@NotNull File file, @NotNull List<File> files) {
