@@ -1903,6 +1903,7 @@ public class UsageViewImpl implements UsageView {
       Object s = action.getValue(Action.LONG_DESCRIPTION);
       if (s instanceof String) {
         JBLabel label = new JBLabel((String)s);
+        label.setEnabled(false);
         label.setFont(JBUI.Fonts.smallFont());
         add(JBUI.Borders.emptyLeft(-1).wrap(label));
       }
