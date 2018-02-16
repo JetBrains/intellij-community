@@ -515,6 +515,8 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   private static class NamesByExprInfo {
+    static final NamesByExprInfo EMPTY = new NamesByExprInfo(null, ArrayUtil.EMPTY_STRING_ARRAY);
+
     private final String[] names;
     private final String propertyName;
 
@@ -606,7 +608,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         }
         if ("map".equals(methodName) || "flatMap".equals(methodName) || "filter".equals(methodName)) {
           if (isJavaUtilMethodCall((PsiMethodCallExpression)expr)) {
-            return new NamesByExprInfo(null);
+            return NamesByExprInfo.EMPTY;
           }
         }
 
@@ -689,7 +691,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       }
     }
 
-    return new NamesByExprInfo(null, ArrayUtil.EMPTY_STRING_ARRAY);
+    return NamesByExprInfo.EMPTY;
   }
 
   private static boolean isJavaUtilMethodCall(@NotNull PsiMethodCallExpression expr) {
@@ -843,7 +845,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       }
     }
 
-    return new NamesByExprInfo(null, ArrayUtil.EMPTY_STRING_ARRAY);
+    return NamesByExprInfo.EMPTY;
   }
 
   @NotNull
