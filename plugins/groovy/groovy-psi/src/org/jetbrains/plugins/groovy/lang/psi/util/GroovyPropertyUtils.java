@@ -80,7 +80,7 @@ public class GroovyPropertyUtils {
       final GrExpression fromText = GroovyPsiElementFactory.getInstance(context.getProject()).createExpressionFromText("this", context);
       return findPropertySetter(fromText.getType(), propertyName, context);
     }
-    final PropertyProcessor processor = new PropertyProcessor(type, propertyName, PropertyKind.SETTER, null, context);
+    final PropertyProcessor processor = new PropertyProcessor(type, propertyName, PropertyKind.SETTER, () -> null, context);
     ResolveUtil.processAllDeclarations(type, processor, ResolveState.initial(), context);
     return PsiImplUtil.extractUniqueElement(processor.getResultsArray());
   }
