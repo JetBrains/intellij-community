@@ -126,6 +126,8 @@ iml_project(
         "//tools/adt/idea/uitest-framework-bazel",
         "//tools/adt/idea/uitest-framework-gradle",
         "//tools/adt/idea/updater-ui",
+        "//tools/adt/idea/whats-new-assistant",
+        "//tools/adt/idea/whats-new-assistant:whats-new-assistant-test",
         "//tools/adt/idea/wizard",
         "//tools/adt/idea/wizard-model",
         "//tools/analytics-library/inspector:analytics-inspector",
