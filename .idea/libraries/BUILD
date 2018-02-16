@@ -767,7 +767,7 @@ java_library(
 )
 
 java_library(
-    name = "freemarker-2.3.20",
+    name = "freemarker",
     tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/freemarker/freemarker/2.3.20:jar"],

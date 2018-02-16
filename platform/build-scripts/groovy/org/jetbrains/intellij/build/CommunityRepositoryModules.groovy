@@ -265,7 +265,7 @@ class CommunityRepositoryModules {
       withModule("instant-run-common", "sdk-tools.jar")
       withModule("instant-run-client", "sdk-tools.jar")
       withModule("android-jps-plugin", "jps/android-jps-plugin.jar", false)
-      withProjectLibrary("freemarker-2.3.20") //todo[nik] move to module libraries
+      withProjectLibrary("freemarker") //todo[nik] move to module libraries
       withProjectLibrary("builder-model") //todo[nik] move to module libraries
       withProjectLibrary("jgraphx-3.4.0.1") //todo[nik] move to module libraries
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
