@@ -38,6 +38,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PsiNavigateUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.RequestBuilder;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -47,16 +48,16 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE;
 
 public class FindTestsInTestDiscoveryServerAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(FindTestsInTestDiscoveryServerAction.class);
-  private static final String INTELLIJ_TEST_DISCOVERY_HOST = "http://intellij-test-discovery";
 
   @Override
   public void update(AnActionEvent e) {
@@ -83,13 +84,10 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
     PsiMethod method = PsiTreeUtil.getParentOfType(at, PsiMethod.class);
     assert method != null;
     PsiClass c = method.getContainingClass();
-    if (c == null) return;
-    String fqn = c.getQualifiedName();
+    String fqn = c != null ? c.getQualifiedName() : null;
+    if (fqn == null) return;
     String methodName = method.getName();
-    String methodFqn = fqn + "." + methodName;
     String methodPresentationName = c.getName() + "." + methodName;
-
-    String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/tests/by-method/" + methodFqn;
 
     CollectionListModel<PsiElement> model = new CollectionListModel<>();
     final JBList<PsiElement> list = new JBList<>(model);
@@ -159,50 +157,54 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
     loadTestsTask.init((AbstractPopup)popup, list, new Ref<>());
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      try {
-        RequestBuilder r = HttpRequests.request(url);
-        r.connect(
-          request -> {
-            ObjectMapper mapper = new ObjectMapper();
-            TestsSearchResult result = mapper.readValue(request.getInputStream(), TestsSearchResult.class);
-
-            for (String s : result.getTests()) {
-              s = s.length() > 1 && s.charAt(0) == 'j' ? s.substring(1) : s;
-              String classFqn = StringUtil.substringBefore(s, "-");
-              String testMethodName = StringUtil.substringAfter(s, "-");
-
-              PsiMethod psiMethod = ReadAction.compute(() -> {
-                PsiClass cc = classFqn == null ? null : javaFacade.findClass(classFqn, scope);
-                return cc == null ? null : ArrayUtil.getFirstElement(cc.findMethodsByName(testMethodName, false));
-              });
-
-              if (psiMethod != null) {
-                loadTestsTask.updateComponent(psiMethod);
-              }
-            }
-            EdtInvocationManager.getInstance().invokeLater(() -> {
-              popup.pack(true, true);
-              list.setPaintBusy(false);
-            });
-            return null;
-          }
-        );
-      }
-      catch (HttpRequests.HttpStatusException http) {
-        if (http.getStatusCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-          LOG.debug("No tests found for " + methodFqn);
+      Map<String, String> map = fetchDataFromDiscoveryServer(fqn, methodName);
+      map.forEach((classFqn, testMethodName) -> {
+        PsiMethod psiMethod = ReadAction.compute(() -> {
+          PsiClass cc = classFqn == null ? null : javaFacade.findClass(classFqn, scope);
+          return cc == null ? null : ArrayUtil.getFirstElement(cc.findMethodsByName(testMethodName, false));
+        });
+        if (psiMethod != null) {
+          loadTestsTask.updateComponent(psiMethod);
         }
-        else {
-          LOG.debug(http);
-        }
-      }
-      catch (IOException io) {
-        LOG.debug(io);
-      }
-      finally {
+      });
+
+      EdtInvocationManager.getInstance().invokeLater(() -> {
+        popup.pack(true, true);
         list.setPaintBusy(false);
-      }
+      });
     });
+  }
+
+  private static final String INTELLIJ_TEST_DISCOVERY_HOST = "http://intellij-test-discovery";
+
+  private static Map<String, String> fetchDataFromDiscoveryServer(@NotNull String classFQName, @NotNull String methodName) {
+    String methodFqn = classFQName + "." + methodName;
+    RequestBuilder r = HttpRequests.request(INTELLIJ_TEST_DISCOVERY_HOST + "/search/tests/by-method/" + methodFqn);
+
+    try {
+      return r.connect(request -> {
+        Map<String, String> map = ContainerUtil.newLinkedHashMap();
+        ObjectMapper mapper = new ObjectMapper();
+        TestsSearchResult result = mapper.readValue(request.getInputStream(), TestsSearchResult.class);
+
+        result.getTests().forEach(s -> {
+
+          s = s.length() > 1 && s.charAt(0) == 'j' ? s.substring(1) : s;
+          String classFqn = StringUtil.substringBefore(s, "-");
+          String testMethodName = StringUtil.substringAfter(s, "-");
+
+          map.put(classFqn, testMethodName);
+        });
+        return map;
+      });
+    }
+    catch (HttpRequests.HttpStatusException http) {
+      LOG.debug("No tests found for " + methodFqn);
+    }
+    catch (IOException e) {
+      LOG.debug(e);
+    }
+    return Collections.emptyMap();
   }
 
   @JsonInclude(JsonInclude.Include.NON_EMPTY)
