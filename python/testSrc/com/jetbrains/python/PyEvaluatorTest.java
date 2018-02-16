@@ -255,6 +255,15 @@ public class PyEvaluatorTest extends PyTestCase {
     assertTrue(byExpression("not False", Boolean.class));
   }
 
+  public void testMultiResolve() {
+    final PyExpression expression = parseText("if condition:\n" +
+                                              "    a = 1\n" +
+                                              "else:\n" +
+                                              "    a = 3\n" +
+                                              "expr = a < 2");
+    assertNull(new PyEvaluator().evaluate(expression));
+  }
+
   @NotNull
   private <T> T byExpression(@NotNull String expression, @NotNull Class<T> cls) {
     final Object value = new PyEvaluator().evaluate(parseExpression(expression));
