@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
@@ -87,15 +73,12 @@ public class CompileDriver {
   private final Map<Module, String> myModuleOutputPaths = new HashMap<>();
   private final Map<Module, String> myModuleTestOutputPaths = new HashMap<>();
 
-  @SuppressWarnings("deprecation") private CompilerFilter myCompilerFilter = CompilerFilter.ALL;
-
   public CompileDriver(Project project) {
     myProject = project;
   }
 
   @SuppressWarnings("deprecation")
   public void setCompilerFilter(CompilerFilter compilerFilter) {
-    myCompilerFilter = compilerFilter == null? CompilerFilter.ALL : compilerFilter;
   }
 
   public void rebuild(CompileStatusNotification callback) {
@@ -219,8 +202,7 @@ public class CompileDriver {
   }
 
   @Nullable
-  private TaskFuture compileInExternalProcess(@NotNull final CompileContextImpl compileContext, final boolean onlyCheckUpToDate)
-    throws Exception {
+  private TaskFuture compileInExternalProcess(@NotNull final CompileContextImpl compileContext, final boolean onlyCheckUpToDate) {
     final CompileScope scope = compileContext.getCompileScope();
     final Collection<String> paths = CompileScopeUtil.fetchFiles(compileContext);
     List<TargetTypeBuildScope> scopes = getBuildScopes(compileContext, scope, paths);
@@ -264,8 +246,8 @@ public class CompileDriver {
 
       @Override
       public void handleFailure(UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
-        compileContext.addMessage(CompilerMessageCategory.ERROR, failure.hasDescription()? failure.getDescription() : "", null, -1, -1);
-        final String trace = failure.hasStacktrace()? failure.getStacktrace() : null;
+        compileContext.addMessage(CompilerMessageCategory.ERROR, failure.getDescription(), null, -1, -1);
+        final String trace = failure.getStacktrace();
         if (trace != null) {
           LOG.info(trace);
         }
@@ -280,7 +262,7 @@ public class CompileDriver {
         if (kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.PROGRESS) {
           final ProgressIndicator indicator = compileContext.getProgressIndicator();
           indicator.setText(messageText);
-          if (message.hasDone()) {
+          if (message.getDone() != 0) {
             indicator.setFraction(message.getDone());
           }
         }
@@ -288,12 +270,12 @@ public class CompileDriver {
           final CompilerMessageCategory category = kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.ERROR ? CompilerMessageCategory.ERROR
             : kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.WARNING ? CompilerMessageCategory.WARNING : CompilerMessageCategory.INFORMATION;
 
-          String sourceFilePath = message.hasSourceFilePath() ? message.getSourceFilePath() : null;
+          String sourceFilePath = message.getSourceFilePath();
           if (sourceFilePath != null) {
             sourceFilePath = FileUtil.toSystemIndependentName(sourceFilePath);
           }
-          final long line = message.hasLine() ? message.getLine() : -1;
-          final long column = message.hasColumn() ? message.getColumn() : -1;
+          final long line = message.getLine();
+          final long column = message.getColumn();
           final String srcUrl = sourceFilePath != null ? VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, sourceFilePath) : null;
           compileContext.addMessage(category, messageText, srcUrl, (int)line, (int)column);
           if (compileContext.shouldUpdateProblemsView() && kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.JPS_INFO) {
@@ -338,8 +320,8 @@ public class CompileDriver {
 
           case BUILD_COMPLETED:
             ExitStatus status = ExitStatus.SUCCESS;
-            if (event.hasCompletionStatus()) {
-              final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status completionStatus = event.getCompletionStatus();
+            final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status completionStatus = event.getCompletionStatus();
+            if (completionStatus != CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.UNRECOGNIZED) {
               switch (completionStatus) {
                 case CANCELED:
                   status = ExitStatus.CANCELLED;
@@ -697,7 +679,7 @@ public class CompileDriver {
               return false;
             }
           }
-  
+
           LanguageLevel moduleLanguageLevel = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
           if (languageLevel == null) {
             languageLevel = moduleLanguageLevel;

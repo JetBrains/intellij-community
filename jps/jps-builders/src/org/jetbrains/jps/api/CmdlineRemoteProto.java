@@ -15,47 +15,47 @@ public final class CmdlineRemoteProto {
       com.google.protobuf.MessageLiteOrBuilder {
 
     /**
-     * <code>required .org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
+     * <code>.org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
      */
     boolean hasSessionId();
     /**
-     * <code>required .org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
+     * <code>.org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
      */
     org.jetbrains.jps.api.CmdlineRemoteProto.Message.UUID getSessionId();
 
     /**
-     * <code>required .org.jetbrains.jpsservice.Message.Type type = 2;</code>
+     * <code>.org.jetbrains.jpsservice.Message.Type type = 2;</code>
      */
-    boolean hasType();
+    int getTypeValue();
     /**
-     * <code>required .org.jetbrains.jpsservice.Message.Type type = 2;</code>
+     * <code>.org.jetbrains.jpsservice.Message.Type type = 2;</code>
      */
     org.jetbrains.jps.api.CmdlineRemoteProto.Message.Type getType();
 
     /**
-     * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
+     * <code>.org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
      */
     boolean hasControllerMessage();
     /**
-     * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
+     * <code>.org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
      */
     org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage getControllerMessage();
 
     /**
-     * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
+     * <code>.org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
      */
     boolean hasBuilderMessage();
     /**
-     * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
+     * <code>.org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
      */
     org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage getBuilderMessage();
 
     /**
-     * <code>optional .org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
+     * <code>.org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
      */
     boolean hasFailure();
     /**
-     * <code>optional .org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
+     * <code>.org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
      */
     org.jetbrains.jps.api.CmdlineRemoteProto.Message.Failure getFailure();
   }
@@ -68,7 +68,6 @@ public final class CmdlineRemoteProto {
       // @@protoc_insertion_point(message_implements:org.jetbrains.jpsservice.Message)
       MessageOrBuilder {
     private Message() {
-      type_ = 1;
     }
     /**
      * Protobuf enum {@code org.jetbrains.jpsservice.Message.Type}
@@ -76,34 +75,39 @@ public final class CmdlineRemoteProto {
     public enum Type
         implements com.google.protobuf.Internal.EnumLite {
       /**
-       * <code>CONTROLLER_MESSAGE = 1;</code>
+       * <code>CONTROLLER_MESSAGE = 0;</code>
        */
-      CONTROLLER_MESSAGE(1),
+      CONTROLLER_MESSAGE(0),
       /**
-       * <code>BUILDER_MESSAGE = 2;</code>
+       * <code>BUILDER_MESSAGE = 1;</code>
        */
-      BUILDER_MESSAGE(2),
+      BUILDER_MESSAGE(1),
       /**
-       * <code>FAILURE = 3;</code>
+       * <code>FAILURE = 2;</code>
        */
-      FAILURE(3),
+      FAILURE(2),
+      UNRECOGNIZED(-1),
       ;
 
       /**
-       * <code>CONTROLLER_MESSAGE = 1;</code>
+       * <code>CONTROLLER_MESSAGE = 0;</code>
        */
-      public static final int CONTROLLER_MESSAGE_VALUE = 1;
+      public static final int CONTROLLER_MESSAGE_VALUE = 0;
       /**
-       * <code>BUILDER_MESSAGE = 2;</code>
+       * <code>BUILDER_MESSAGE = 1;</code>
        */
-      public static final int BUILDER_MESSAGE_VALUE = 2;
+      public static final int BUILDER_MESSAGE_VALUE = 1;
       /**
-       * <code>FAILURE = 3;</code>
+       * <code>FAILURE = 2;</code>
        */
-      public static final int FAILURE_VALUE = 3;
+      public static final int FAILURE_VALUE = 2;
 
 
       public final int getNumber() {
+        if (this == UNRECOGNIZED) {
+          throw new java.lang.IllegalArgumentException(
+              "Can't get the number of an unknown enum value.");
+        }
         return value;
       }
 
@@ -117,9 +121,9 @@ public final class CmdlineRemoteProto {
 
       public static Type forNumber(int value) {
         switch (value) {
-          case 1: return CONTROLLER_MESSAGE;
-          case 2: return BUILDER_MESSAGE;
-          case 3: return FAILURE;
+          case 0: return CONTROLLER_MESSAGE;
+          case 1: return BUILDER_MESSAGE;
+          case 2: return FAILURE;
           default: return null;
         }
       }
@@ -150,20 +154,12 @@ public final class CmdlineRemoteProto {
         com.google.protobuf.MessageLiteOrBuilder {
 
       /**
-       * <code>required sint64 most_sig_bits = 1;</code>
-       */
-      boolean hasMostSigBits();
-      /**
-       * <code>required sint64 most_sig_bits = 1;</code>
+       * <code>sint64 most_sig_bits = 1;</code>
        */
       long getMostSigBits();
 
       /**
-       * <code>required sint64 least_sig_bits = 2;</code>
-       */
-      boolean hasLeastSigBits();
-      /**
-       * <code>required sint64 least_sig_bits = 2;</code>
+       * <code>sint64 least_sig_bits = 2;</code>
        */
       long getLeastSigBits();
     }
@@ -177,71 +173,58 @@ public final class CmdlineRemoteProto {
         UUIDOrBuilder {
       private UUID() {
       }
-      private int bitField0_;
       public static final int MOST_SIG_BITS_FIELD_NUMBER = 1;
       private long mostSigBits_;
       /**
-       * <code>required sint64 most_sig_bits = 1;</code>
-       */
-      public boolean hasMostSigBits() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      /**
-       * <code>required sint64 most_sig_bits = 1;</code>
+       * <code>sint64 most_sig_bits = 1;</code>
        */
       public long getMostSigBits() {
         return mostSigBits_;
       }
       /**
-       * <code>required sint64 most_sig_bits = 1;</code>
+       * <code>sint64 most_sig_bits = 1;</code>
        */
       private void setMostSigBits(long value) {
-        bitField0_ |= 0x00000001;
+
         mostSigBits_ = value;
       }
       /**
-       * <code>required sint64 most_sig_bits = 1;</code>
+       * <code>sint64 most_sig_bits = 1;</code>
        */
       private void clearMostSigBits() {
-        bitField0_ = (bitField0_ & ~0x00000001);
+
         mostSigBits_ = 0L;
       }
 
       public static final int LEAST_SIG_BITS_FIELD_NUMBER = 2;
       private long leastSigBits_;
       /**
-       * <code>required sint64 least_sig_bits = 2;</code>
-       */
-      public boolean hasLeastSigBits() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
-      }
-      /**
-       * <code>required sint64 least_sig_bits = 2;</code>
+       * <code>sint64 least_sig_bits = 2;</code>
        */
       public long getLeastSigBits() {
         return leastSigBits_;
       }
       /**
-       * <code>required sint64 least_sig_bits = 2;</code>
+       * <code>sint64 least_sig_bits = 2;</code>
        */
       private void setLeastSigBits(long value) {
-        bitField0_ |= 0x00000002;
+
         leastSigBits_ = value;
       }
       /**
-       * <code>required sint64 least_sig_bits = 2;</code>
+       * <code>sint64 least_sig_bits = 2;</code>
        */
       private void clearLeastSigBits() {
-        bitField0_ = (bitField0_ & ~0x00000002);
+
         leastSigBits_ = 0L;
       }
 
       public void writeTo(com.google.protobuf.CodedOutputStream output)
                           throws java.io.IOException {
-        if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        if (mostSigBits_ != 0L) {
           output.writeSInt64(1, mostSigBits_);
         }
-        if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        if (leastSigBits_ != 0L) {
           output.writeSInt64(2, leastSigBits_);
         }
         unknownFields.writeTo(output);
@@ -252,11 +235,11 @@ public final class CmdlineRemoteProto {
         if (size != -1) return size;
 
         size = 0;
-        if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        if (mostSigBits_ != 0L) {
           size += com.google.protobuf.CodedOutputStream
             .computeSInt64Size(1, mostSigBits_);
         }
-        if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        if (leastSigBits_ != 0L) {
           size += com.google.protobuf.CodedOutputStream
             .computeSInt64Size(2, leastSigBits_);
         }
@@ -361,19 +344,13 @@ public final class CmdlineRemoteProto {
 
 
         /**
-         * <code>required sint64 most_sig_bits = 1;</code>
-         */
-        public boolean hasMostSigBits() {
-          return instance.hasMostSigBits();
-        }
-        /**
-         * <code>required sint64 most_sig_bits = 1;</code>
+         * <code>sint64 most_sig_bits = 1;</code>
          */
         public long getMostSigBits() {
           return instance.getMostSigBits();
         }
         /**
-         * <code>required sint64 most_sig_bits = 1;</code>
+         * <code>sint64 most_sig_bits = 1;</code>
          */
         public Builder setMostSigBits(long value) {
           copyOnWrite();
@@ -381,7 +358,7 @@ public final class CmdlineRemoteProto {
           return this;
         }
         /**
-         * <code>required sint64 most_sig_bits = 1;</code>
+         * <code>sint64 most_sig_bits = 1;</code>
          */
         public Builder clearMostSigBits() {
           copyOnWrite();
@@ -390,19 +367,13 @@ public final class CmdlineRemoteProto {
         }
 
         /**
-         * <code>required sint64 least_sig_bits = 2;</code>
-         */
-        public boolean hasLeastSigBits() {
-          return instance.hasLeastSigBits();
-        }
-        /**
-         * <code>required sint64 least_sig_bits = 2;</code>
+         * <code>sint64 least_sig_bits = 2;</code>
          */
         public long getLeastSigBits() {
           return instance.getLeastSigBits();
         }
         /**
-         * <code>required sint64 least_sig_bits = 2;</code>
+         * <code>sint64 least_sig_bits = 2;</code>
          */
         public Builder setLeastSigBits(long value) {
           copyOnWrite();
@@ -410,7 +381,7 @@ public final class CmdlineRemoteProto {
           return this;
         }
         /**
-         * <code>required sint64 least_sig_bits = 2;</code>
+         * <code>sint64 least_sig_bits = 2;</code>
          */
         public Builder clearLeastSigBits() {
           copyOnWrite();
@@ -420,7 +391,6 @@ public final class CmdlineRemoteProto {
 
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.UUID)
       }
-      private byte memoizedIsInitialized = 2;
       @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
       protected final java.lang.Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
@@ -430,19 +400,7 @@ public final class CmdlineRemoteProto {
             return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.UUID();
           }
           case IS_INITIALIZED: {
-            byte isInitialized = memoizedIsInitialized;
-            if (isInitialized == 1) return DEFAULT_INSTANCE;
-            if (isInitialized == 0) return null;
-
-            boolean shouldMemoize = ((Boolean) arg0).booleanValue();
-            if (!hasMostSigBits()) {
-              return null;
-            }
-            if (!hasLeastSigBits()) {
-              return null;
-            }
             return DEFAULT_INSTANCE;
-
           }
           case MAKE_IMMUTABLE: {
             return null;
@@ -453,15 +411,12 @@ public final class CmdlineRemoteProto {
           case VISIT: {
             Visitor visitor = (Visitor) arg0;
             org.jetbrains.jps.api.CmdlineRemoteProto.Message.UUID other = (org.jetbrains.jps.api.CmdlineRemoteProto.Message.UUID) arg1;
-            mostSigBits_ = visitor.visitLong(
-                hasMostSigBits(), mostSigBits_,
-                other.hasMostSigBits(), other.mostSigBits_);
-            leastSigBits_ = visitor.visitLong(
-                hasLeastSigBits(), leastSigBits_,
-                other.hasLeastSigBits(), other.leastSigBits_);
+            mostSigBits_ = visitor.visitLong(mostSigBits_ != 0L, mostSigBits_,
+                other.mostSigBits_ != 0L, other.mostSigBits_);
+            leastSigBits_ = visitor.visitLong(leastSigBits_ != 0L, leastSigBits_,
+                other.leastSigBits_ != 0L, other.leastSigBits_);
             if (visitor == com.google.protobuf.GeneratedMessageLite.MergeFromVisitor
                 .INSTANCE) {
-              bitField0_ |= other.bitField0_;
             }
             return this;
           }
@@ -488,12 +443,12 @@ public final class CmdlineRemoteProto {
                     break;
                   }
                   case 8: {
-                    bitField0_ |= 0x00000001;
+
                     mostSigBits_ = input.readSInt64();
                     break;
                   }
                   case 16: {
-                    bitField0_ |= 0x00000002;
+
                     leastSigBits_ = input.readSInt64();
                     break;
                   }
@@ -522,10 +477,9 @@ public final class CmdlineRemoteProto {
             return PARSER;
         }
         case GET_MEMOIZED_IS_INITIALIZED: {
-          return memoizedIsInitialized;
+          return (byte) 1;
         }
         case SET_MEMOIZED_IS_INITIALIZED: {
-          memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
           return null;
         }
         }
@@ -556,29 +510,21 @@ public final class CmdlineRemoteProto {
         com.google.protobuf.MessageLiteOrBuilder {
 
       /**
-       * <code>required string key = 1;</code>
-       */
-      boolean hasKey();
-      /**
-       * <code>required string key = 1;</code>
+       * <code>string key = 1;</code>
        */
       java.lang.String getKey();
       /**
-       * <code>required string key = 1;</code>
+       * <code>string key = 1;</code>
        */
       com.google.protobuf.ByteString
           getKeyBytes();
 
       /**
-       * <code>required string value = 2;</code>
-       */
-      boolean hasValue();
-      /**
-       * <code>required string value = 2;</code>
+       * <code>string value = 2;</code>
        */
       java.lang.String getValue();
       /**
-       * <code>required string value = 2;</code>
+       * <code>string value = 2;</code>
        */
       com.google.protobuf.ByteString
           getValueBytes();
@@ -595,115 +541,104 @@ public final class CmdlineRemoteProto {
         key_ = "";
         value_ = "";
       }
-      private int bitField0_;
       public static final int KEY_FIELD_NUMBER = 1;
       private java.lang.String key_;
       /**
-       * <code>required string key = 1;</code>
-       */
-      public boolean hasKey() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      /**
-       * <code>required string key = 1;</code>
+       * <code>string key = 1;</code>
        */
       public java.lang.String getKey() {
         return key_;
       }
       /**
-       * <code>required string key = 1;</code>
+       * <code>string key = 1;</code>
        */
       public com.google.protobuf.ByteString
           getKeyBytes() {
         return com.google.protobuf.ByteString.copyFromUtf8(key_);
       }
       /**
-       * <code>required string key = 1;</code>
+       * <code>string key = 1;</code>
        */
       private void setKey(
           java.lang.String value) {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000001;
+
         key_ = value;
       }
       /**
-       * <code>required string key = 1;</code>
+       * <code>string key = 1;</code>
        */
       private void clearKey() {
-        bitField0_ = (bitField0_ & ~0x00000001);
+
         key_ = getDefaultInstance().getKey();
       }
       /**
-       * <code>required string key = 1;</code>
+       * <code>string key = 1;</code>
        */
       private void setKeyBytes(
           com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000001;
+  checkByteStringIsUtf8(value);
+
         key_ = value.toStringUtf8();
       }
 
       public static final int VALUE_FIELD_NUMBER = 2;
       private java.lang.String value_;
       /**
-       * <code>required string value = 2;</code>
-       */
-      public boolean hasValue() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
-      }
-      /**
-       * <code>required string value = 2;</code>
+       * <code>string value = 2;</code>
        */
       public java.lang.String getValue() {
         return value_;
       }
       /**
-       * <code>required string value = 2;</code>
+       * <code>string value = 2;</code>
        */
       public com.google.protobuf.ByteString
           getValueBytes() {
         return com.google.protobuf.ByteString.copyFromUtf8(value_);
       }
       /**
-       * <code>required string value = 2;</code>
+       * <code>string value = 2;</code>
        */
       private void setValue(
           java.lang.String value) {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000002;
+
         value_ = value;
       }
       /**
-       * <code>required string value = 2;</code>
+       * <code>string value = 2;</code>
        */
       private void clearValue() {
-        bitField0_ = (bitField0_ & ~0x00000002);
+
         value_ = getDefaultInstance().getValue();
       }
       /**
-       * <code>required string value = 2;</code>
+       * <code>string value = 2;</code>
        */
       private void setValueBytes(
           com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000002;
+  checkByteStringIsUtf8(value);
+
         value_ = value.toStringUtf8();
       }
 
       public void writeTo(com.google.protobuf.CodedOutputStream output)
                           throws java.io.IOException {
-        if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        if (!key_.isEmpty()) {
           output.writeString(1, getKey());
         }
-        if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        if (!value_.isEmpty()) {
           output.writeString(2, getValue());
         }
         unknownFields.writeTo(output);
@@ -714,11 +649,11 @@ public final class CmdlineRemoteProto {
         if (size != -1) return size;
 
         size = 0;
-        if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        if (!key_.isEmpty()) {
           size += com.google.protobuf.CodedOutputStream
             .computeStringSize(1, getKey());
         }
-        if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        if (!value_.isEmpty()) {
           size += com.google.protobuf.CodedOutputStream
             .computeStringSize(2, getValue());
         }
@@ -823,26 +758,20 @@ public final class CmdlineRemoteProto {
 
 
         /**
-         * <code>required string key = 1;</code>
-         */
-        public boolean hasKey() {
-          return instance.hasKey();
-        }
-        /**
-         * <code>required string key = 1;</code>
+         * <code>string key = 1;</code>
          */
         public java.lang.String getKey() {
           return instance.getKey();
         }
         /**
-         * <code>required string key = 1;</code>
+         * <code>string key = 1;</code>
          */
         public com.google.protobuf.ByteString
             getKeyBytes() {
           return instance.getKeyBytes();
         }
         /**
-         * <code>required string key = 1;</code>
+         * <code>string key = 1;</code>
          */
         public Builder setKey(
             java.lang.String value) {
@@ -851,7 +780,7 @@ public final class CmdlineRemoteProto {
           return this;
         }
         /**
-         * <code>required string key = 1;</code>
+         * <code>string key = 1;</code>
          */
         public Builder clearKey() {
           copyOnWrite();
@@ -859,7 +788,7 @@ public final class CmdlineRemoteProto {
           return this;
         }
         /**
-         * <code>required string key = 1;</code>
+         * <code>string key = 1;</code>
          */
         public Builder setKeyBytes(
             com.google.protobuf.ByteString value) {
@@ -869,26 +798,20 @@ public final class CmdlineRemoteProto {
         }
 
         /**
-         * <code>required string value = 2;</code>
-         */
-        public boolean hasValue() {
-          return instance.hasValue();
-        }
-        /**
-         * <code>required string value = 2;</code>
+         * <code>string value = 2;</code>
          */
         public java.lang.String getValue() {
           return instance.getValue();
         }
         /**
-         * <code>required string value = 2;</code>
+         * <code>string value = 2;</code>
          */
         public com.google.protobuf.ByteString
             getValueBytes() {
           return instance.getValueBytes();
         }
         /**
-         * <code>required string value = 2;</code>
+         * <code>string value = 2;</code>
          */
         public Builder setValue(
             java.lang.String value) {
@@ -897,7 +820,7 @@ public final class CmdlineRemoteProto {
           return this;
         }
         /**
-         * <code>required string value = 2;</code>
+         * <code>string value = 2;</code>
          */
         public Builder clearValue() {
           copyOnWrite();
@@ -905,7 +828,7 @@ public final class CmdlineRemoteProto {
           return this;
         }
         /**
-         * <code>required string value = 2;</code>
+         * <code>string value = 2;</code>
          */
         public Builder setValueBytes(
             com.google.protobuf.ByteString value) {
@@ -916,7 +839,6 @@ public final class CmdlineRemoteProto {
 
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.KeyValuePair)
       }
-      private byte memoizedIsInitialized = 2;
       @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
       protected final java.lang.Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
@@ -926,19 +848,7 @@ public final class CmdlineRemoteProto {
             return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair();
           }
           case IS_INITIALIZED: {
-            byte isInitialized = memoizedIsInitialized;
-            if (isInitialized == 1) return DEFAULT_INSTANCE;
-            if (isInitialized == 0) return null;
-
-            boolean shouldMemoize = ((Boolean) arg0).booleanValue();
-            if (!hasKey()) {
-              return null;
-            }
-            if (!hasValue()) {
-              return null;
-            }
             return DEFAULT_INSTANCE;
-
           }
           case MAKE_IMMUTABLE: {
             return null;
@@ -949,15 +859,12 @@ public final class CmdlineRemoteProto {
           case VISIT: {
             Visitor visitor = (Visitor) arg0;
             org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair other = (org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair) arg1;
-            key_ = visitor.visitString(
-                hasKey(), key_,
-                other.hasKey(), other.key_);
-            value_ = visitor.visitString(
-                hasValue(), value_,
-                other.hasValue(), other.value_);
+            key_ = visitor.visitString(!key_.isEmpty(), key_,
+                !other.key_.isEmpty(), other.key_);
+            value_ = visitor.visitString(!value_.isEmpty(), value_,
+                !other.value_.isEmpty(), other.value_);
             if (visitor == com.google.protobuf.GeneratedMessageLite.MergeFromVisitor
                 .INSTANCE) {
-              bitField0_ |= other.bitField0_;
             }
             return this;
           }
@@ -984,14 +891,14 @@ public final class CmdlineRemoteProto {
                     break;
                   }
                   case 10: {
-                    java.lang.String s = input.readString();
-                    bitField0_ |= 0x00000001;
+                    java.lang.String s = input.readStringRequireUtf8();
+
                     key_ = s;
                     break;
                   }
                   case 18: {
-                    java.lang.String s = input.readString();
-                    bitField0_ |= 0x00000002;
+                    java.lang.String s = input.readStringRequireUtf8();
+
                     value_ = s;
                     break;
                   }
@@ -1020,10 +927,9 @@ public final class CmdlineRemoteProto {
             return PARSER;
         }
         case GET_MEMOIZED_IS_INITIALIZED: {
-          return memoizedIsInitialized;
+          return (byte) 1;
         }
         case SET_MEMOIZED_IS_INITIALIZED: {
-          memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
           return null;
         }
         }
@@ -1054,38 +960,26 @@ public final class CmdlineRemoteProto {
         com.google.protobuf.MessageLiteOrBuilder {
 
       /**
-       * <code>optional int32 error_code = 1;</code>
-       */
-      boolean hasErrorCode();
-      /**
-       * <code>optional int32 error_code = 1;</code>
+       * <code>int32 error_code = 1;</code>
        */
       int getErrorCode();
 
       /**
-       * <code>optional string description = 2;</code>
-       */
-      boolean hasDescription();
-      /**
-       * <code>optional string description = 2;</code>
+       * <code>string description = 2;</code>
        */
       java.lang.String getDescription();
       /**
-       * <code>optional string description = 2;</code>
+       * <code>string description = 2;</code>
        */
       com.google.protobuf.ByteString
           getDescriptionBytes();
 
       /**
-       * <code>optional string stacktrace = 3;</code>
-       */
-      boolean hasStacktrace();
-      /**
-       * <code>optional string stacktrace = 3;</code>
+       * <code>string stacktrace = 3;</code>
        */
       java.lang.String getStacktrace();
       /**
-       * <code>optional string stacktrace = 3;</code>
+       * <code>string stacktrace = 3;</code>
        */
       com.google.protobuf.ByteString
           getStacktraceBytes();
@@ -1102,147 +996,130 @@ public final class CmdlineRemoteProto {
         description_ = "";
         stacktrace_ = "";
       }
-      private int bitField0_;
       public static final int ERROR_CODE_FIELD_NUMBER = 1;
       private int errorCode_;
       /**
-       * <code>optional int32 error_code = 1;</code>
-       */
-      public boolean hasErrorCode() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      /**
-       * <code>optional int32 error_code = 1;</code>
+       * <code>int32 error_code = 1;</code>
        */
       public int getErrorCode() {
         return errorCode_;
       }
       /**
-       * <code>optional int32 error_code = 1;</code>
+       * <code>int32 error_code = 1;</code>
        */
       private void setErrorCode(int value) {
-        bitField0_ |= 0x00000001;
+
         errorCode_ = value;
       }
       /**
-       * <code>optional int32 error_code = 1;</code>
+       * <code>int32 error_code = 1;</code>
        */
       private void clearErrorCode() {
-        bitField0_ = (bitField0_ & ~0x00000001);
+
         errorCode_ = 0;
       }
 
       public static final int DESCRIPTION_FIELD_NUMBER = 2;
       private java.lang.String description_;
       /**
-       * <code>optional string description = 2;</code>
-       */
-      public boolean hasDescription() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
-      }
-      /**
-       * <code>optional string description = 2;</code>
+       * <code>string description = 2;</code>
        */
       public java.lang.String getDescription() {
         return description_;
       }
       /**
-       * <code>optional string description = 2;</code>
+       * <code>string description = 2;</code>
        */
       public com.google.protobuf.ByteString
           getDescriptionBytes() {
         return com.google.protobuf.ByteString.copyFromUtf8(description_);
       }
       /**
-       * <code>optional string description = 2;</code>
+       * <code>string description = 2;</code>
        */
       private void setDescription(
           java.lang.String value) {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000002;
+
         description_ = value;
       }
       /**
-       * <code>optional string description = 2;</code>
+       * <code>string description = 2;</code>
        */
       private void clearDescription() {
-        bitField0_ = (bitField0_ & ~0x00000002);
+
         description_ = getDefaultInstance().getDescription();
       }
       /**
-       * <code>optional string description = 2;</code>
+       * <code>string description = 2;</code>
        */
       private void setDescriptionBytes(
           com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000002;
+  checkByteStringIsUtf8(value);
+
         description_ = value.toStringUtf8();
       }
 
       public static final int STACKTRACE_FIELD_NUMBER = 3;
       private java.lang.String stacktrace_;
       /**
-       * <code>optional string stacktrace = 3;</code>
-       */
-      public boolean hasStacktrace() {
-        return ((bitField0_ & 0x00000004) == 0x00000004);
-      }
-      /**
-       * <code>optional string stacktrace = 3;</code>
+       * <code>string stacktrace = 3;</code>
        */
       public java.lang.String getStacktrace() {
         return stacktrace_;
       }
       /**
-       * <code>optional string stacktrace = 3;</code>
+       * <code>string stacktrace = 3;</code>
        */
       public com.google.protobuf.ByteString
           getStacktraceBytes() {
         return com.google.protobuf.ByteString.copyFromUtf8(stacktrace_);
       }
       /**
-       * <code>optional string stacktrace = 3;</code>
+       * <code>string stacktrace = 3;</code>
        */
       private void setStacktrace(
           java.lang.String value) {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000004;
+
         stacktrace_ = value;
       }
       /**
-       * <code>optional string stacktrace = 3;</code>
+       * <code>string stacktrace = 3;</code>
        */
       private void clearStacktrace() {
-        bitField0_ = (bitField0_ & ~0x00000004);
+
         stacktrace_ = getDefaultInstance().getStacktrace();
       }
       /**
-       * <code>optional string stacktrace = 3;</code>
+       * <code>string stacktrace = 3;</code>
        */
       private void setStacktraceBytes(
           com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000004;
+  checkByteStringIsUtf8(value);
+
         stacktrace_ = value.toStringUtf8();
       }
 
       public void writeTo(com.google.protobuf.CodedOutputStream output)
                           throws java.io.IOException {
-        if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        if (errorCode_ != 0) {
           output.writeInt32(1, errorCode_);
         }
-        if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        if (!description_.isEmpty()) {
           output.writeString(2, getDescription());
         }
-        if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        if (!stacktrace_.isEmpty()) {
           output.writeString(3, getStacktrace());
         }
         unknownFields.writeTo(output);
@@ -1253,15 +1130,15 @@ public final class CmdlineRemoteProto {
         if (size != -1) return size;
 
         size = 0;
-        if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        if (errorCode_ != 0) {
           size += com.google.protobuf.CodedOutputStream
             .computeInt32Size(1, errorCode_);
         }
-        if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        if (!description_.isEmpty()) {
           size += com.google.protobuf.CodedOutputStream
             .computeStringSize(2, getDescription());
         }
-        if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        if (!stacktrace_.isEmpty()) {
           size += com.google.protobuf.CodedOutputStream
             .computeStringSize(3, getStacktrace());
         }
@@ -1366,19 +1243,13 @@ public final class CmdlineRemoteProto {
 
 
         /**
-         * <code>optional int32 error_code = 1;</code>
-         */
-        public boolean hasErrorCode() {
-          return instance.hasErrorCode();
-        }
-        /**
-         * <code>optional int32 error_code = 1;</code>
+         * <code>int32 error_code = 1;</code>
          */
         public int getErrorCode() {
           return instance.getErrorCode();
         }
         /**
-         * <code>optional int32 error_code = 1;</code>
+         * <code>int32 error_code = 1;</code>
          */
         public Builder setErrorCode(int value) {
           copyOnWrite();
@@ -1386,7 +1257,7 @@ public final class CmdlineRemoteProto {
           return this;
         }
         /**
-         * <code>optional int32 error_code = 1;</code>
+         * <code>int32 error_code = 1;</code>
          */
         public Builder clearErrorCode() {
           copyOnWrite();
@@ -1395,26 +1266,20 @@ public final class CmdlineRemoteProto {
         }
 
         /**
-         * <code>optional string description = 2;</code>
-         */
-        public boolean hasDescription() {
-          return instance.hasDescription();
-        }
-        /**
-         * <code>optional string description = 2;</code>
+         * <code>string description = 2;</code>
          */
         public java.lang.String getDescription() {
           return instance.getDescription();
         }
         /**
-         * <code>optional string description = 2;</code>
+         * <code>string description = 2;</code>
          */
         public com.google.protobuf.ByteString
             getDescriptionBytes() {
           return instance.getDescriptionBytes();
         }
         /**
-         * <code>optional string description = 2;</code>
+         * <code>string description = 2;</code>
          */
         public Builder setDescription(
             java.lang.String value) {
@@ -1423,7 +1288,7 @@ public final class CmdlineRemoteProto {
           return this;
         }
         /**
-         * <code>optional string description = 2;</code>
+         * <code>string description = 2;</code>
          */
         public Builder clearDescription() {
           copyOnWrite();
@@ -1431,7 +1296,7 @@ public final class CmdlineRemoteProto {
           return this;
         }
         /**
-         * <code>optional string description = 2;</code>
+         * <code>string description = 2;</code>
          */
         public Builder setDescriptionBytes(
             com.google.protobuf.ByteString value) {
@@ -1441,26 +1306,20 @@ public final class CmdlineRemoteProto {
         }
 
         /**
-         * <code>optional string stacktrace = 3;</code>
-         */
-        public boolean hasStacktrace() {
-          return instance.hasStacktrace();
-        }
-        /**
-         * <code>optional string stacktrace = 3;</code>
+         * <code>string stacktrace = 3;</code>
          */
         public java.lang.String getStacktrace() {
           return instance.getStacktrace();
         }
         /**
-         * <code>optional string stacktrace = 3;</code>
+         * <code>string stacktrace = 3;</code>
          */
         public com.google.protobuf.ByteString
             getStacktraceBytes() {
           return instance.getStacktraceBytes();
         }
         /**
-         * <code>optional string stacktrace = 3;</code>
+         * <code>string stacktrace = 3;</code>
          */
         public Builder setStacktrace(
             java.lang.String value) {
@@ -1469,7 +1328,7 @@ public final class CmdlineRemoteProto {
           return this;
         }
         /**
-         * <code>optional string stacktrace = 3;</code>
+         * <code>string stacktrace = 3;</code>
          */
         public Builder clearStacktrace() {
           copyOnWrite();
@@ -1477,7 +1336,7 @@ public final class CmdlineRemoteProto {
           return this;
         }
         /**
-         * <code>optional string stacktrace = 3;</code>
+         * <code>string stacktrace = 3;</code>
          */
         public Builder setStacktraceBytes(
             com.google.protobuf.ByteString value) {
@@ -1508,18 +1367,14 @@ public final class CmdlineRemoteProto {
           case VISIT: {
             Visitor visitor = (Visitor) arg0;
             org.jetbrains.jps.api.CmdlineRemoteProto.Message.Failure other = (org.jetbrains.jps.api.CmdlineRemoteProto.Message.Failure) arg1;
-            errorCode_ = visitor.visitInt(
-                hasErrorCode(), errorCode_,
-                other.hasErrorCode(), other.errorCode_);
-            description_ = visitor.visitString(
-                hasDescription(), description_,
-                other.hasDescription(), other.description_);
-            stacktrace_ = visitor.visitString(
-                hasStacktrace(), stacktrace_,
-                other.hasStacktrace(), other.stacktrace_);
+            errorCode_ = visitor.visitInt(errorCode_ != 0, errorCode_,
+                other.errorCode_ != 0, other.errorCode_);
+            description_ = visitor.visitString(!description_.isEmpty(), description_,
+                !other.description_.isEmpty(), other.description_);
+            stacktrace_ = visitor.visitString(!stacktrace_.isEmpty(), stacktrace_,
+                !other.stacktrace_.isEmpty(), other.stacktrace_);
             if (visitor == com.google.protobuf.GeneratedMessageLite.MergeFromVisitor
                 .INSTANCE) {
-              bitField0_ |= other.bitField0_;
             }
             return this;
           }
@@ -1546,19 +1401,19 @@ public final class CmdlineRemoteProto {
                     break;
                   }
                   case 8: {
-                    bitField0_ |= 0x00000001;
+
                     errorCode_ = input.readInt32();
                     break;
                   }
                   case 18: {
-                    java.lang.String s = input.readString();
-                    bitField0_ |= 0x00000002;
+                    java.lang.String s = input.readStringRequireUtf8();
+
                     description_ = s;
                     break;
                   }
                   case 26: {
-                    java.lang.String s = input.readString();
-                    bitField0_ |= 0x00000004;
+                    java.lang.String s = input.readStringRequireUtf8();
+
                     stacktrace_ = s;
                     break;
                   }
@@ -1620,38 +1475,38 @@ public final class CmdlineRemoteProto {
         com.google.protobuf.MessageLiteOrBuilder {
 
       /**
-       * <code>required .org.jetbrains.jpsservice.Message.ControllerMessage.Type type = 1;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.Type type = 1;</code>
        */
-      boolean hasType();
+      int getTypeValue();
       /**
-       * <code>required .org.jetbrains.jpsservice.Message.ControllerMessage.Type type = 1;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.Type type = 1;</code>
        */
       org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.Type getType();
 
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
        */
       boolean hasParamsMessage();
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
        */
       org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage getParamsMessage();
 
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
        */
       boolean hasFsEvent();
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
        */
       org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent getFsEvent();
 
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
        */
       boolean hasConstantSearchResult();
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
        */
       org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult getConstantSearchResult();
     }
@@ -1664,7 +1519,6 @@ public final class CmdlineRemoteProto {
         // @@protoc_insertion_point(message_implements:org.jetbrains.jpsservice.Message.ControllerMessage)
         ControllerMessageOrBuilder {
       private ControllerMessage() {
-        type_ = 1;
       }
       /**
        * Protobuf enum {@code org.jetbrains.jpsservice.Message.ControllerMessage.Type}
@@ -1672,9 +1526,9 @@ public final class CmdlineRemoteProto {
       public enum Type
           implements com.google.protobuf.Internal.EnumLite {
         /**
-         * <code>BUILD_PARAMETERS = 1;</code>
+         * <code>BUILD_PARAMETERS = 0;</code>
          */
-        BUILD_PARAMETERS(1),
+        BUILD_PARAMETERS(0),
         /**
          * <code>CANCEL_BUILD_COMMAND = 2;</code>
          */
@@ -1687,12 +1541,13 @@ public final class CmdlineRemoteProto {
          * <code>CONSTANT_SEARCH_RESULT = 4;</code>
          */
         CONSTANT_SEARCH_RESULT(4),
+        UNRECOGNIZED(-1),
         ;
 
         /**
-         * <code>BUILD_PARAMETERS = 1;</code>
+         * <code>BUILD_PARAMETERS = 0;</code>
          */
-        public static final int BUILD_PARAMETERS_VALUE = 1;
+        public static final int BUILD_PARAMETERS_VALUE = 0;
         /**
          * <code>CANCEL_BUILD_COMMAND = 2;</code>
          */
@@ -1708,6 +1563,10 @@ public final class CmdlineRemoteProto {
 
 
         public final int getNumber() {
+          if (this == UNRECOGNIZED) {
+            throw new java.lang.IllegalArgumentException(
+                "Can't get the number of an unknown enum value.");
+          }
           return value;
         }
 
@@ -1721,7 +1580,7 @@ public final class CmdlineRemoteProto {
 
         public static Type forNumber(int value) {
           switch (value) {
-            case 1: return BUILD_PARAMETERS;
+            case 0: return BUILD_PARAMETERS;
             case 2: return CANCEL_BUILD_COMMAND;
             case 3: return FS_EVENT;
             case 4: return CONSTANT_SEARCH_RESULT;
@@ -1755,11 +1614,7 @@ public final class CmdlineRemoteProto {
           com.google.protobuf.MessageLiteOrBuilder {
 
         /**
-         * <code>required uint64 ordinal = 1;</code>
-         */
-        boolean hasOrdinal();
-        /**
-         * <code>required uint64 ordinal = 1;</code>
+         * <code>uint64 ordinal = 1;</code>
          */
         long getOrdinal();
 
@@ -1817,29 +1672,23 @@ public final class CmdlineRemoteProto {
         public static final int ORDINAL_FIELD_NUMBER = 1;
         private long ordinal_;
         /**
-         * <code>required uint64 ordinal = 1;</code>
-         */
-        public boolean hasOrdinal() {
-          return ((bitField0_ & 0x00000001) == 0x00000001);
-        }
-        /**
-         * <code>required uint64 ordinal = 1;</code>
+         * <code>uint64 ordinal = 1;</code>
          */
         public long getOrdinal() {
           return ordinal_;
         }
         /**
-         * <code>required uint64 ordinal = 1;</code>
+         * <code>uint64 ordinal = 1;</code>
          */
         private void setOrdinal(long value) {
-          bitField0_ |= 0x00000001;
+
           ordinal_ = value;
         }
         /**
-         * <code>required uint64 ordinal = 1;</code>
+         * <code>uint64 ordinal = 1;</code>
          */
         private void clearOrdinal() {
-          bitField0_ = (bitField0_ & ~0x00000001);
+
           ordinal_ = 0L;
         }
 
@@ -1922,7 +1771,8 @@ public final class CmdlineRemoteProto {
           if (value == null) {
     throw new NullPointerException();
   }
-  ensureChangedPathsIsMutable();
+  checkByteStringIsUtf8(value);
+          ensureChangedPathsIsMutable();
           changedPaths_.add(value.toStringUtf8());
         }
 
@@ -2005,13 +1855,14 @@ public final class CmdlineRemoteProto {
           if (value == null) {
     throw new NullPointerException();
   }
-  ensureDeletedPathsIsMutable();
+  checkByteStringIsUtf8(value);
+          ensureDeletedPathsIsMutable();
           deletedPaths_.add(value.toStringUtf8());
         }
 
         public void writeTo(com.google.protobuf.CodedOutputStream output)
                             throws java.io.IOException {
-          if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          if (ordinal_ != 0L) {
             output.writeUInt64(1, ordinal_);
           }
           for (int i = 0; i < changedPaths_.size(); i++) {
@@ -2028,7 +1879,7 @@ public final class CmdlineRemoteProto {
           if (size != -1) return size;
 
           size = 0;
-          if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          if (ordinal_ != 0L) {
             size += com.google.protobuf.CodedOutputStream
               .computeUInt64Size(1, ordinal_);
           }
@@ -2151,19 +2002,13 @@ public final class CmdlineRemoteProto {
 
 
           /**
-           * <code>required uint64 ordinal = 1;</code>
-           */
-          public boolean hasOrdinal() {
-            return instance.hasOrdinal();
-          }
-          /**
-           * <code>required uint64 ordinal = 1;</code>
+           * <code>uint64 ordinal = 1;</code>
            */
           public long getOrdinal() {
             return instance.getOrdinal();
           }
           /**
-           * <code>required uint64 ordinal = 1;</code>
+           * <code>uint64 ordinal = 1;</code>
            */
           public Builder setOrdinal(long value) {
             copyOnWrite();
@@ -2171,7 +2016,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>required uint64 ordinal = 1;</code>
+           * <code>uint64 ordinal = 1;</code>
            */
           public Builder clearOrdinal() {
             copyOnWrite();
@@ -2325,7 +2170,6 @@ public final class CmdlineRemoteProto {
 
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent)
         }
-        private byte memoizedIsInitialized = 2;
         @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
         protected final java.lang.Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
@@ -2335,16 +2179,7 @@ public final class CmdlineRemoteProto {
               return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent();
             }
             case IS_INITIALIZED: {
-              byte isInitialized = memoizedIsInitialized;
-              if (isInitialized == 1) return DEFAULT_INSTANCE;
-              if (isInitialized == 0) return null;
-
-              boolean shouldMemoize = ((Boolean) arg0).booleanValue();
-              if (!hasOrdinal()) {
-                return null;
-              }
               return DEFAULT_INSTANCE;
-
             }
             case MAKE_IMMUTABLE: {
               changedPaths_.makeImmutable();
@@ -2357,9 +2192,8 @@ public final class CmdlineRemoteProto {
             case VISIT: {
               Visitor visitor = (Visitor) arg0;
               org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent other = (org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent) arg1;
-              ordinal_ = visitor.visitLong(
-                  hasOrdinal(), ordinal_,
-                  other.hasOrdinal(), other.ordinal_);
+              ordinal_ = visitor.visitLong(ordinal_ != 0L, ordinal_,
+                  other.ordinal_ != 0L, other.ordinal_);
               changedPaths_= visitor.visitList(changedPaths_, other.changedPaths_);
               deletedPaths_= visitor.visitList(deletedPaths_, other.deletedPaths_);
               if (visitor == com.google.protobuf.GeneratedMessageLite.MergeFromVisitor
@@ -2391,12 +2225,12 @@ public final class CmdlineRemoteProto {
                       break;
                     }
                     case 8: {
-                      bitField0_ |= 0x00000001;
+
                       ordinal_ = input.readUInt64();
                       break;
                     }
                     case 18: {
-                      java.lang.String s = input.readString();
+                      java.lang.String s = input.readStringRequireUtf8();
                       if (!changedPaths_.isModifiable()) {
                         changedPaths_ =
                             com.google.protobuf.GeneratedMessageLite.mutableCopy(changedPaths_);
@@ -2405,7 +2239,7 @@ public final class CmdlineRemoteProto {
                       break;
                     }
                     case 26: {
-                      java.lang.String s = input.readString();
+                      java.lang.String s = input.readStringRequireUtf8();
                       if (!deletedPaths_.isModifiable()) {
                         deletedPaths_ =
                             com.google.protobuf.GeneratedMessageLite.mutableCopy(deletedPaths_);
@@ -2438,10 +2272,9 @@ public final class CmdlineRemoteProto {
               return PARSER;
           }
           case GET_MEMOIZED_IS_INITIALIZED: {
-            return memoizedIsInitialized;
+            return (byte) 1;
           }
           case SET_MEMOIZED_IS_INITIALIZED: {
-            memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
             return null;
           }
           }
@@ -2472,15 +2305,11 @@ public final class CmdlineRemoteProto {
           com.google.protobuf.MessageLiteOrBuilder {
 
         /**
-         * <code>required string global_options_path = 5;</code>
-         */
-        boolean hasGlobalOptionsPath();
-        /**
-         * <code>required string global_options_path = 5;</code>
+         * <code>string global_options_path = 5;</code>
          */
         java.lang.String getGlobalOptionsPath();
         /**
-         * <code>required string global_options_path = 5;</code>
+         * <code>string global_options_path = 5;</code>
          */
         com.google.protobuf.ByteString
             getGlobalOptionsPathBytes();
@@ -2496,61 +2325,55 @@ public final class CmdlineRemoteProto {
         private GlobalSettings() {
           globalOptionsPath_ = "";
         }
-        private int bitField0_;
         public static final int GLOBAL_OPTIONS_PATH_FIELD_NUMBER = 5;
         private java.lang.String globalOptionsPath_;
         /**
-         * <code>required string global_options_path = 5;</code>
-         */
-        public boolean hasGlobalOptionsPath() {
-          return ((bitField0_ & 0x00000001) == 0x00000001);
-        }
-        /**
-         * <code>required string global_options_path = 5;</code>
+         * <code>string global_options_path = 5;</code>
          */
         public java.lang.String getGlobalOptionsPath() {
           return globalOptionsPath_;
         }
         /**
-         * <code>required string global_options_path = 5;</code>
+         * <code>string global_options_path = 5;</code>
          */
         public com.google.protobuf.ByteString
             getGlobalOptionsPathBytes() {
           return com.google.protobuf.ByteString.copyFromUtf8(globalOptionsPath_);
         }
         /**
-         * <code>required string global_options_path = 5;</code>
+         * <code>string global_options_path = 5;</code>
          */
         private void setGlobalOptionsPath(
             java.lang.String value) {
           if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000001;
+
           globalOptionsPath_ = value;
         }
         /**
-         * <code>required string global_options_path = 5;</code>
+         * <code>string global_options_path = 5;</code>
          */
         private void clearGlobalOptionsPath() {
-          bitField0_ = (bitField0_ & ~0x00000001);
+
           globalOptionsPath_ = getDefaultInstance().getGlobalOptionsPath();
         }
         /**
-         * <code>required string global_options_path = 5;</code>
+         * <code>string global_options_path = 5;</code>
          */
         private void setGlobalOptionsPathBytes(
             com.google.protobuf.ByteString value) {
           if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000001;
+  checkByteStringIsUtf8(value);
+
           globalOptionsPath_ = value.toStringUtf8();
         }
 
         public void writeTo(com.google.protobuf.CodedOutputStream output)
                             throws java.io.IOException {
-          if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          if (!globalOptionsPath_.isEmpty()) {
             output.writeString(5, getGlobalOptionsPath());
           }
           unknownFields.writeTo(output);
@@ -2561,7 +2384,7 @@ public final class CmdlineRemoteProto {
           if (size != -1) return size;
 
           size = 0;
-          if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          if (!globalOptionsPath_.isEmpty()) {
             size += com.google.protobuf.CodedOutputStream
               .computeStringSize(5, getGlobalOptionsPath());
           }
@@ -2666,26 +2489,20 @@ public final class CmdlineRemoteProto {
 
 
           /**
-           * <code>required string global_options_path = 5;</code>
-           */
-          public boolean hasGlobalOptionsPath() {
-            return instance.hasGlobalOptionsPath();
-          }
-          /**
-           * <code>required string global_options_path = 5;</code>
+           * <code>string global_options_path = 5;</code>
            */
           public java.lang.String getGlobalOptionsPath() {
             return instance.getGlobalOptionsPath();
           }
           /**
-           * <code>required string global_options_path = 5;</code>
+           * <code>string global_options_path = 5;</code>
            */
           public com.google.protobuf.ByteString
               getGlobalOptionsPathBytes() {
             return instance.getGlobalOptionsPathBytes();
           }
           /**
-           * <code>required string global_options_path = 5;</code>
+           * <code>string global_options_path = 5;</code>
            */
           public Builder setGlobalOptionsPath(
               java.lang.String value) {
@@ -2694,7 +2511,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>required string global_options_path = 5;</code>
+           * <code>string global_options_path = 5;</code>
            */
           public Builder clearGlobalOptionsPath() {
             copyOnWrite();
@@ -2702,7 +2519,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>required string global_options_path = 5;</code>
+           * <code>string global_options_path = 5;</code>
            */
           public Builder setGlobalOptionsPathBytes(
               com.google.protobuf.ByteString value) {
@@ -2713,7 +2530,6 @@ public final class CmdlineRemoteProto {
 
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings)
         }
-        private byte memoizedIsInitialized = 2;
         @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
         protected final java.lang.Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
@@ -2723,16 +2539,7 @@ public final class CmdlineRemoteProto {
               return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings();
             }
             case IS_INITIALIZED: {
-              byte isInitialized = memoizedIsInitialized;
-              if (isInitialized == 1) return DEFAULT_INSTANCE;
-              if (isInitialized == 0) return null;
-
-              boolean shouldMemoize = ((Boolean) arg0).booleanValue();
-              if (!hasGlobalOptionsPath()) {
-                return null;
-              }
               return DEFAULT_INSTANCE;
-
             }
             case MAKE_IMMUTABLE: {
               return null;
@@ -2743,12 +2550,10 @@ public final class CmdlineRemoteProto {
             case VISIT: {
               Visitor visitor = (Visitor) arg0;
               org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings other = (org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings) arg1;
-              globalOptionsPath_ = visitor.visitString(
-                  hasGlobalOptionsPath(), globalOptionsPath_,
-                  other.hasGlobalOptionsPath(), other.globalOptionsPath_);
+              globalOptionsPath_ = visitor.visitString(!globalOptionsPath_.isEmpty(), globalOptionsPath_,
+                  !other.globalOptionsPath_.isEmpty(), other.globalOptionsPath_);
               if (visitor == com.google.protobuf.GeneratedMessageLite.MergeFromVisitor
                   .INSTANCE) {
-                bitField0_ |= other.bitField0_;
               }
               return this;
             }
@@ -2775,8 +2580,8 @@ public final class CmdlineRemoteProto {
                       break;
                     }
                     case 42: {
-                      java.lang.String s = input.readString();
-                      bitField0_ |= 0x00000001;
+                      java.lang.String s = input.readStringRequireUtf8();
+
                       globalOptionsPath_ = s;
                       break;
                     }
@@ -2805,10 +2610,9 @@ public final class CmdlineRemoteProto {
               return PARSER;
           }
           case GET_MEMOIZED_IS_INITIALIZED: {
-            return memoizedIsInitialized;
+            return (byte) 1;
           }
           case SET_MEMOIZED_IS_INITIALIZED: {
-            memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
             return null;
           }
           }
@@ -2839,33 +2643,29 @@ public final class CmdlineRemoteProto {
           com.google.protobuf.MessageLiteOrBuilder {
 
         /**
-         * <code>required .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.Type build_type = 1;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.Type build_type = 1;</code>
          */
-        boolean hasBuildType();
+        int getBuildTypeValue();
         /**
-         * <code>required .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.Type build_type = 1;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.Type build_type = 1;</code>
          */
         org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type getBuildType();
 
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
          */
         boolean hasGlobalSettings();
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
          */
         org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings getGlobalSettings();
 
         /**
-         * <code>optional string project_id = 3;</code>
-         */
-        boolean hasProjectId();
-        /**
-         * <code>optional string project_id = 3;</code>
+         * <code>string project_id = 3;</code>
          */
         java.lang.String getProjectId();
         /**
-         * <code>optional string project_id = 3;</code>
+         * <code>string project_id = 3;</code>
          */
         com.google.protobuf.ByteString
             getProjectIdBytes();
@@ -2926,7 +2726,6 @@ public final class CmdlineRemoteProto {
           // @@protoc_insertion_point(message_implements:org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage)
           ParametersMessageOrBuilder {
         private ParametersMessage() {
-          buildType_ = 1;
           projectId_ = "";
           scope_ = emptyProtobufList();
           filePath_ = com.google.protobuf.GeneratedMessageLite.emptyProtobufList();
@@ -2938,34 +2737,39 @@ public final class CmdlineRemoteProto {
         public enum Type
             implements com.google.protobuf.Internal.EnumLite {
           /**
-           * <code>BUILD = 1;</code>
+           * <code>BUILD = 0;</code>
            */
-          BUILD(1),
+          BUILD(0),
           /**
-           * <code>CLEAN = 2;</code>
+           * <code>CLEAN = 1;</code>
            */
-          CLEAN(2),
+          CLEAN(1),
           /**
-           * <code>UP_TO_DATE_CHECK = 3;</code>
+           * <code>UP_TO_DATE_CHECK = 2;</code>
            */
-          UP_TO_DATE_CHECK(3),
+          UP_TO_DATE_CHECK(2),
+          UNRECOGNIZED(-1),
           ;
 
           /**
-           * <code>BUILD = 1;</code>
+           * <code>BUILD = 0;</code>
            */
-          public static final int BUILD_VALUE = 1;
+          public static final int BUILD_VALUE = 0;
           /**
-           * <code>CLEAN = 2;</code>
+           * <code>CLEAN = 1;</code>
            */
-          public static final int CLEAN_VALUE = 2;
+          public static final int CLEAN_VALUE = 1;
           /**
-           * <code>UP_TO_DATE_CHECK = 3;</code>
+           * <code>UP_TO_DATE_CHECK = 2;</code>
            */
-          public static final int UP_TO_DATE_CHECK_VALUE = 3;
+          public static final int UP_TO_DATE_CHECK_VALUE = 2;
 
 
           public final int getNumber() {
+            if (this == UNRECOGNIZED) {
+              throw new java.lang.IllegalArgumentException(
+                  "Can't get the number of an unknown enum value.");
+            }
             return value;
           }
 
@@ -2979,9 +2783,9 @@ public final class CmdlineRemoteProto {
 
           public static Type forNumber(int value) {
             switch (value) {
-              case 1: return BUILD;
-              case 2: return CLEAN;
-              case 3: return UP_TO_DATE_CHECK;
+              case 0: return BUILD;
+              case 1: return CLEAN;
+              case 2: return UP_TO_DATE_CHECK;
               default: return null;
             }
           }
@@ -3012,25 +2816,17 @@ public final class CmdlineRemoteProto {
             com.google.protobuf.MessageLiteOrBuilder {
 
           /**
-           * <code>required string type_id = 1;</code>
-           */
-          boolean hasTypeId();
-          /**
-           * <code>required string type_id = 1;</code>
+           * <code>string type_id = 1;</code>
            */
           java.lang.String getTypeId();
           /**
-           * <code>required string type_id = 1;</code>
+           * <code>string type_id = 1;</code>
            */
           com.google.protobuf.ByteString
               getTypeIdBytes();
 
           /**
-           * <code>optional bool all_targets = 2;</code>
-           */
-          boolean hasAllTargets();
-          /**
-           * <code>optional bool all_targets = 2;</code>
+           * <code>bool all_targets = 2;</code>
            */
           boolean getAllTargets();
 
@@ -3054,11 +2850,7 @@ public final class CmdlineRemoteProto {
               getTargetIdBytes(int index);
 
           /**
-           * <code>required bool force_build = 4;</code>
-           */
-          boolean hasForceBuild();
-          /**
-           * <code>required bool force_build = 4;</code>
+           * <code>bool force_build = 4;</code>
            */
           boolean getForceBuild();
         }
@@ -3078,80 +2870,69 @@ public final class CmdlineRemoteProto {
           public static final int TYPE_ID_FIELD_NUMBER = 1;
           private java.lang.String typeId_;
           /**
-           * <code>required string type_id = 1;</code>
-           */
-          public boolean hasTypeId() {
-            return ((bitField0_ & 0x00000001) == 0x00000001);
-          }
-          /**
-           * <code>required string type_id = 1;</code>
+           * <code>string type_id = 1;</code>
            */
           public java.lang.String getTypeId() {
             return typeId_;
           }
           /**
-           * <code>required string type_id = 1;</code>
+           * <code>string type_id = 1;</code>
            */
           public com.google.protobuf.ByteString
               getTypeIdBytes() {
             return com.google.protobuf.ByteString.copyFromUtf8(typeId_);
           }
           /**
-           * <code>required string type_id = 1;</code>
+           * <code>string type_id = 1;</code>
            */
           private void setTypeId(
               java.lang.String value) {
             if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000001;
+
             typeId_ = value;
           }
           /**
-           * <code>required string type_id = 1;</code>
+           * <code>string type_id = 1;</code>
            */
           private void clearTypeId() {
-            bitField0_ = (bitField0_ & ~0x00000001);
+
             typeId_ = getDefaultInstance().getTypeId();
           }
           /**
-           * <code>required string type_id = 1;</code>
+           * <code>string type_id = 1;</code>
            */
           private void setTypeIdBytes(
               com.google.protobuf.ByteString value) {
             if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000001;
+  checkByteStringIsUtf8(value);
+
             typeId_ = value.toStringUtf8();
           }
 
           public static final int ALL_TARGETS_FIELD_NUMBER = 2;
           private boolean allTargets_;
           /**
-           * <code>optional bool all_targets = 2;</code>
-           */
-          public boolean hasAllTargets() {
-            return ((bitField0_ & 0x00000002) == 0x00000002);
-          }
-          /**
-           * <code>optional bool all_targets = 2;</code>
+           * <code>bool all_targets = 2;</code>
            */
           public boolean getAllTargets() {
             return allTargets_;
           }
           /**
-           * <code>optional bool all_targets = 2;</code>
+           * <code>bool all_targets = 2;</code>
            */
           private void setAllTargets(boolean value) {
-            bitField0_ |= 0x00000002;
+
             allTargets_ = value;
           }
           /**
-           * <code>optional bool all_targets = 2;</code>
+           * <code>bool all_targets = 2;</code>
            */
           private void clearAllTargets() {
-            bitField0_ = (bitField0_ & ~0x00000002);
+
             allTargets_ = false;
           }
 
@@ -3234,51 +3015,46 @@ public final class CmdlineRemoteProto {
             if (value == null) {
     throw new NullPointerException();
   }
-  ensureTargetIdIsMutable();
+  checkByteStringIsUtf8(value);
+            ensureTargetIdIsMutable();
             targetId_.add(value.toStringUtf8());
           }
 
           public static final int FORCE_BUILD_FIELD_NUMBER = 4;
           private boolean forceBuild_;
           /**
-           * <code>required bool force_build = 4;</code>
-           */
-          public boolean hasForceBuild() {
-            return ((bitField0_ & 0x00000004) == 0x00000004);
-          }
-          /**
-           * <code>required bool force_build = 4;</code>
+           * <code>bool force_build = 4;</code>
            */
           public boolean getForceBuild() {
             return forceBuild_;
           }
           /**
-           * <code>required bool force_build = 4;</code>
+           * <code>bool force_build = 4;</code>
            */
           private void setForceBuild(boolean value) {
-            bitField0_ |= 0x00000004;
+
             forceBuild_ = value;
           }
           /**
-           * <code>required bool force_build = 4;</code>
+           * <code>bool force_build = 4;</code>
            */
           private void clearForceBuild() {
-            bitField0_ = (bitField0_ & ~0x00000004);
+
             forceBuild_ = false;
           }
 
           public void writeTo(com.google.protobuf.CodedOutputStream output)
                               throws java.io.IOException {
-            if (((bitField0_ & 0x00000001) == 0x00000001)) {
+            if (!typeId_.isEmpty()) {
               output.writeString(1, getTypeId());
             }
-            if (((bitField0_ & 0x00000002) == 0x00000002)) {
+            if (allTargets_ != false) {
               output.writeBool(2, allTargets_);
             }
             for (int i = 0; i < targetId_.size(); i++) {
               output.writeString(3, targetId_.get(i));
             }
-            if (((bitField0_ & 0x00000004) == 0x00000004)) {
+            if (forceBuild_ != false) {
               output.writeBool(4, forceBuild_);
             }
             unknownFields.writeTo(output);
@@ -3289,11 +3065,11 @@ public final class CmdlineRemoteProto {
             if (size != -1) return size;
 
             size = 0;
-            if (((bitField0_ & 0x00000001) == 0x00000001)) {
+            if (!typeId_.isEmpty()) {
               size += com.google.protobuf.CodedOutputStream
                 .computeStringSize(1, getTypeId());
             }
-            if (((bitField0_ & 0x00000002) == 0x00000002)) {
+            if (allTargets_ != false) {
               size += com.google.protobuf.CodedOutputStream
                 .computeBoolSize(2, allTargets_);
             }
@@ -3306,7 +3082,7 @@ public final class CmdlineRemoteProto {
               size += dataSize;
               size += 1 * getTargetIdList().size();
             }
-            if (((bitField0_ & 0x00000004) == 0x00000004)) {
+            if (forceBuild_ != false) {
               size += com.google.protobuf.CodedOutputStream
                 .computeBoolSize(4, forceBuild_);
             }
@@ -3411,26 +3187,20 @@ public final class CmdlineRemoteProto {
 
 
             /**
-             * <code>required string type_id = 1;</code>
-             */
-            public boolean hasTypeId() {
-              return instance.hasTypeId();
-            }
-            /**
-             * <code>required string type_id = 1;</code>
+             * <code>string type_id = 1;</code>
              */
             public java.lang.String getTypeId() {
               return instance.getTypeId();
             }
             /**
-             * <code>required string type_id = 1;</code>
+             * <code>string type_id = 1;</code>
              */
             public com.google.protobuf.ByteString
                 getTypeIdBytes() {
               return instance.getTypeIdBytes();
             }
             /**
-             * <code>required string type_id = 1;</code>
+             * <code>string type_id = 1;</code>
              */
             public Builder setTypeId(
                 java.lang.String value) {
@@ -3439,7 +3209,7 @@ public final class CmdlineRemoteProto {
               return this;
             }
             /**
-             * <code>required string type_id = 1;</code>
+             * <code>string type_id = 1;</code>
              */
             public Builder clearTypeId() {
               copyOnWrite();
@@ -3447,7 +3217,7 @@ public final class CmdlineRemoteProto {
               return this;
             }
             /**
-             * <code>required string type_id = 1;</code>
+             * <code>string type_id = 1;</code>
              */
             public Builder setTypeIdBytes(
                 com.google.protobuf.ByteString value) {
@@ -3457,19 +3227,13 @@ public final class CmdlineRemoteProto {
             }
 
             /**
-             * <code>optional bool all_targets = 2;</code>
-             */
-            public boolean hasAllTargets() {
-              return instance.hasAllTargets();
-            }
-            /**
-             * <code>optional bool all_targets = 2;</code>
+             * <code>bool all_targets = 2;</code>
              */
             public boolean getAllTargets() {
               return instance.getAllTargets();
             }
             /**
-             * <code>optional bool all_targets = 2;</code>
+             * <code>bool all_targets = 2;</code>
              */
             public Builder setAllTargets(boolean value) {
               copyOnWrite();
@@ -3477,7 +3241,7 @@ public final class CmdlineRemoteProto {
               return this;
             }
             /**
-             * <code>optional bool all_targets = 2;</code>
+             * <code>bool all_targets = 2;</code>
              */
             public Builder clearAllTargets() {
               copyOnWrite();
@@ -3558,19 +3322,13 @@ public final class CmdlineRemoteProto {
             }
 
             /**
-             * <code>required bool force_build = 4;</code>
-             */
-            public boolean hasForceBuild() {
-              return instance.hasForceBuild();
-            }
-            /**
-             * <code>required bool force_build = 4;</code>
+             * <code>bool force_build = 4;</code>
              */
             public boolean getForceBuild() {
               return instance.getForceBuild();
             }
             /**
-             * <code>required bool force_build = 4;</code>
+             * <code>bool force_build = 4;</code>
              */
             public Builder setForceBuild(boolean value) {
               copyOnWrite();
@@ -3578,7 +3336,7 @@ public final class CmdlineRemoteProto {
               return this;
             }
             /**
-             * <code>required bool force_build = 4;</code>
+             * <code>bool force_build = 4;</code>
              */
             public Builder clearForceBuild() {
               copyOnWrite();
@@ -3588,7 +3346,6 @@ public final class CmdlineRemoteProto {
 
             // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope)
           }
-          private byte memoizedIsInitialized = 2;
           @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
           protected final java.lang.Object dynamicMethod(
               com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
@@ -3598,19 +3355,7 @@ public final class CmdlineRemoteProto {
                 return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope();
               }
               case IS_INITIALIZED: {
-                byte isInitialized = memoizedIsInitialized;
-                if (isInitialized == 1) return DEFAULT_INSTANCE;
-                if (isInitialized == 0) return null;
-
-                boolean shouldMemoize = ((Boolean) arg0).booleanValue();
-                if (!hasTypeId()) {
-                  return null;
-                }
-                if (!hasForceBuild()) {
-                  return null;
-                }
                 return DEFAULT_INSTANCE;
-
               }
               case MAKE_IMMUTABLE: {
                 targetId_.makeImmutable();
@@ -3622,16 +3367,13 @@ public final class CmdlineRemoteProto {
               case VISIT: {
                 Visitor visitor = (Visitor) arg0;
                 org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope other = (org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope) arg1;
-                typeId_ = visitor.visitString(
-                    hasTypeId(), typeId_,
-                    other.hasTypeId(), other.typeId_);
-                allTargets_ = visitor.visitBoolean(
-                    hasAllTargets(), allTargets_,
-                    other.hasAllTargets(), other.allTargets_);
+                typeId_ = visitor.visitString(!typeId_.isEmpty(), typeId_,
+                    !other.typeId_.isEmpty(), other.typeId_);
+                allTargets_ = visitor.visitBoolean(allTargets_ != false, allTargets_,
+                    other.allTargets_ != false, other.allTargets_);
                 targetId_= visitor.visitList(targetId_, other.targetId_);
-                forceBuild_ = visitor.visitBoolean(
-                    hasForceBuild(), forceBuild_,
-                    other.hasForceBuild(), other.forceBuild_);
+                forceBuild_ = visitor.visitBoolean(forceBuild_ != false, forceBuild_,
+                    other.forceBuild_ != false, other.forceBuild_);
                 if (visitor == com.google.protobuf.GeneratedMessageLite.MergeFromVisitor
                     .INSTANCE) {
                   bitField0_ |= other.bitField0_;
@@ -3661,18 +3403,18 @@ public final class CmdlineRemoteProto {
                         break;
                       }
                       case 10: {
-                        java.lang.String s = input.readString();
-                        bitField0_ |= 0x00000001;
+                        java.lang.String s = input.readStringRequireUtf8();
+
                         typeId_ = s;
                         break;
                       }
                       case 16: {
-                        bitField0_ |= 0x00000002;
+
                         allTargets_ = input.readBool();
                         break;
                       }
                       case 26: {
-                        java.lang.String s = input.readString();
+                        java.lang.String s = input.readStringRequireUtf8();
                         if (!targetId_.isModifiable()) {
                           targetId_ =
                               com.google.protobuf.GeneratedMessageLite.mutableCopy(targetId_);
@@ -3681,7 +3423,7 @@ public final class CmdlineRemoteProto {
                         break;
                       }
                       case 32: {
-                        bitField0_ |= 0x00000004;
+
                         forceBuild_ = input.readBool();
                         break;
                       }
@@ -3710,10 +3452,9 @@ public final class CmdlineRemoteProto {
                 return PARSER;
             }
             case GET_MEMOIZED_IS_INITIALIZED: {
-              return memoizedIsInitialized;
+              return (byte) 1;
             }
             case SET_MEMOIZED_IS_INITIALIZED: {
-              memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
               return null;
             }
             }
@@ -3743,70 +3484,76 @@ public final class CmdlineRemoteProto {
         public static final int BUILD_TYPE_FIELD_NUMBER = 1;
         private int buildType_;
         /**
-         * <code>required .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.Type build_type = 1;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.Type build_type = 1;</code>
          */
-        public boolean hasBuildType() {
-          return ((bitField0_ & 0x00000001) == 0x00000001);
+        public int getBuildTypeValue() {
+          return buildType_;
         }
         /**
-         * <code>required .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.Type build_type = 1;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.Type build_type = 1;</code>
          */
         public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type getBuildType() {
           org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type result = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.forNumber(buildType_);
-          return result == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.BUILD : result;
+          return result == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.UNRECOGNIZED : result;
         }
         /**
-         * <code>required .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.Type build_type = 1;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.Type build_type = 1;</code>
+         */
+        private void setBuildTypeValue(int value) {
+            buildType_ = value;
+        }
+        /**
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.Type build_type = 1;</code>
          */
         private void setBuildType(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type value) {
           if (value == null) {
             throw new NullPointerException();
           }
-          bitField0_ |= 0x00000001;
+
           buildType_ = value.getNumber();
         }
         /**
-         * <code>required .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.Type build_type = 1;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.Type build_type = 1;</code>
          */
         private void clearBuildType() {
-          bitField0_ = (bitField0_ & ~0x00000001);
-          buildType_ = 1;
+
+          buildType_ = 0;
         }
 
         public static final int GLOBAL_SETTINGS_FIELD_NUMBER = 2;
         private org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globalSettings_;
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
          */
         public boolean hasGlobalSettings() {
-          return ((bitField0_ & 0x00000002) == 0x00000002);
+          return globalSettings_ != null;
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
          */
         public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings getGlobalSettings() {
           return globalSettings_ == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.getDefaultInstance() : globalSettings_;
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
          */
         private void setGlobalSettings(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings value) {
           if (value == null) {
             throw new NullPointerException();
           }
           globalSettings_ = value;
-          bitField0_ |= 0x00000002;
+
           }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
          */
         private void setGlobalSettings(
             org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.Builder builderForValue) {
           globalSettings_ = builderForValue.build();
-          bitField0_ |= 0x00000002;
+
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
          */
         private void mergeGlobalSettings(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings value) {
           if (globalSettings_ != null &&
@@ -3816,63 +3563,58 @@ public final class CmdlineRemoteProto {
           } else {
             globalSettings_ = value;
           }
-          bitField0_ |= 0x00000002;
+
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
          */
         private void clearGlobalSettings() {  globalSettings_ = null;
-          bitField0_ = (bitField0_ & ~0x00000002);
+
         }
 
         public static final int PROJECT_ID_FIELD_NUMBER = 3;
         private java.lang.String projectId_;
         /**
-         * <code>optional string project_id = 3;</code>
-         */
-        public boolean hasProjectId() {
-          return ((bitField0_ & 0x00000004) == 0x00000004);
-        }
-        /**
-         * <code>optional string project_id = 3;</code>
+         * <code>string project_id = 3;</code>
          */
         public java.lang.String getProjectId() {
           return projectId_;
         }
         /**
-         * <code>optional string project_id = 3;</code>
+         * <code>string project_id = 3;</code>
          */
         public com.google.protobuf.ByteString
             getProjectIdBytes() {
           return com.google.protobuf.ByteString.copyFromUtf8(projectId_);
         }
         /**
-         * <code>optional string project_id = 3;</code>
+         * <code>string project_id = 3;</code>
          */
         private void setProjectId(
             java.lang.String value) {
           if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000004;
+
           projectId_ = value;
         }
         /**
-         * <code>optional string project_id = 3;</code>
+         * <code>string project_id = 3;</code>
          */
         private void clearProjectId() {
-          bitField0_ = (bitField0_ & ~0x00000004);
+
           projectId_ = getDefaultInstance().getProjectId();
         }
         /**
-         * <code>optional string project_id = 3;</code>
+         * <code>string project_id = 3;</code>
          */
         private void setProjectIdBytes(
             com.google.protobuf.ByteString value) {
           if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000004;
+  checkByteStringIsUtf8(value);
+
           projectId_ = value.toStringUtf8();
         }
 
@@ -4075,7 +3817,8 @@ public final class CmdlineRemoteProto {
           if (value == null) {
     throw new NullPointerException();
   }
-  ensureFilePathIsMutable();
+  checkByteStringIsUtf8(value);
+          ensureFilePathIsMutable();
           filePath_.add(value.toStringUtf8());
         }
 
@@ -4201,13 +3944,13 @@ public final class CmdlineRemoteProto {
 
         public void writeTo(com.google.protobuf.CodedOutputStream output)
                             throws java.io.IOException {
-          if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          if (buildType_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.BUILD.getNumber()) {
             output.writeEnum(1, buildType_);
           }
-          if (((bitField0_ & 0x00000002) == 0x00000002)) {
+          if (globalSettings_ != null) {
             output.writeMessage(2, getGlobalSettings());
           }
-          if (((bitField0_ & 0x00000004) == 0x00000004)) {
+          if (!projectId_.isEmpty()) {
             output.writeString(3, getProjectId());
           }
           for (int i = 0; i < scope_.size(); i++) {
@@ -4227,15 +3970,15 @@ public final class CmdlineRemoteProto {
           if (size != -1) return size;
 
           size = 0;
-          if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          if (buildType_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.BUILD.getNumber()) {
             size += com.google.protobuf.CodedOutputStream
               .computeEnumSize(1, buildType_);
           }
-          if (((bitField0_ & 0x00000002) == 0x00000002)) {
+          if (globalSettings_ != null) {
             size += com.google.protobuf.CodedOutputStream
               .computeMessageSize(2, getGlobalSettings());
           }
-          if (((bitField0_ & 0x00000004) == 0x00000004)) {
+          if (!projectId_.isEmpty()) {
             size += com.google.protobuf.CodedOutputStream
               .computeStringSize(3, getProjectId());
           }
@@ -4357,19 +4100,27 @@ public final class CmdlineRemoteProto {
 
 
           /**
-           * <code>required .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.Type build_type = 1;</code>
+           * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.Type build_type = 1;</code>
            */
-          public boolean hasBuildType() {
-            return instance.hasBuildType();
+          public int getBuildTypeValue() {
+            return instance.getBuildTypeValue();
           }
           /**
-           * <code>required .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.Type build_type = 1;</code>
+           * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.Type build_type = 1;</code>
+           */
+          public Builder setBuildTypeValue(int value) {
+            copyOnWrite();
+            instance.setBuildTypeValue(value);
+            return this;
+          }
+          /**
+           * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.Type build_type = 1;</code>
            */
           public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type getBuildType() {
             return instance.getBuildType();
           }
           /**
-           * <code>required .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.Type build_type = 1;</code>
+           * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.Type build_type = 1;</code>
            */
           public Builder setBuildType(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type value) {
             copyOnWrite();
@@ -4377,7 +4128,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>required .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.Type build_type = 1;</code>
+           * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.Type build_type = 1;</code>
            */
           public Builder clearBuildType() {
             copyOnWrite();
@@ -4386,19 +4137,19 @@ public final class CmdlineRemoteProto {
           }
 
           /**
-           * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
+           * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
            */
           public boolean hasGlobalSettings() {
             return instance.hasGlobalSettings();
           }
           /**
-           * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
+           * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
            */
           public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings getGlobalSettings() {
             return instance.getGlobalSettings();
           }
           /**
-           * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
+           * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
            */
           public Builder setGlobalSettings(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings value) {
             copyOnWrite();
@@ -4406,7 +4157,7 @@ public final class CmdlineRemoteProto {
             return this;
             }
           /**
-           * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
+           * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
            */
           public Builder setGlobalSettings(
               org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.Builder builderForValue) {
@@ -4415,7 +4166,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
+           * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
            */
           public Builder mergeGlobalSettings(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings value) {
             copyOnWrite();
@@ -4423,7 +4174,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
+           * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings global_settings = 2;</code>
            */
           public Builder clearGlobalSettings() {  copyOnWrite();
             instance.clearGlobalSettings();
@@ -4431,26 +4182,20 @@ public final class CmdlineRemoteProto {
           }
 
           /**
-           * <code>optional string project_id = 3;</code>
-           */
-          public boolean hasProjectId() {
-            return instance.hasProjectId();
-          }
-          /**
-           * <code>optional string project_id = 3;</code>
+           * <code>string project_id = 3;</code>
            */
           public java.lang.String getProjectId() {
             return instance.getProjectId();
           }
           /**
-           * <code>optional string project_id = 3;</code>
+           * <code>string project_id = 3;</code>
            */
           public com.google.protobuf.ByteString
               getProjectIdBytes() {
             return instance.getProjectIdBytes();
           }
           /**
-           * <code>optional string project_id = 3;</code>
+           * <code>string project_id = 3;</code>
            */
           public Builder setProjectId(
               java.lang.String value) {
@@ -4459,7 +4204,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>optional string project_id = 3;</code>
+           * <code>string project_id = 3;</code>
            */
           public Builder clearProjectId() {
             copyOnWrite();
@@ -4467,7 +4212,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>optional string project_id = 3;</code>
+           * <code>string project_id = 3;</code>
            */
           public Builder setProjectIdBytes(
               com.google.protobuf.ByteString value) {
@@ -4744,7 +4489,6 @@ public final class CmdlineRemoteProto {
 
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage)
         }
-        private byte memoizedIsInitialized = 2;
         @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
         protected final java.lang.Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
@@ -4754,31 +4498,7 @@ public final class CmdlineRemoteProto {
               return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage();
             }
             case IS_INITIALIZED: {
-              byte isInitialized = memoizedIsInitialized;
-              if (isInitialized == 1) return DEFAULT_INSTANCE;
-              if (isInitialized == 0) return null;
-
-              boolean shouldMemoize = ((Boolean) arg0).booleanValue();
-              if (!hasBuildType()) {
-                return null;
-              }
-              if (hasGlobalSettings()) {
-                if (!getGlobalSettings().isInitialized()) {
-                  return null;
-                }
-              }
-              for (int i = 0; i < getScopeCount(); i++) {
-                if (!getScope(i).isInitialized()) {
-                  return null;
-                }
-              }
-              for (int i = 0; i < getBuilderParameterCount(); i++) {
-                if (!getBuilderParameter(i).isInitialized()) {
-                  return null;
-                }
-              }
               return DEFAULT_INSTANCE;
-
             }
             case MAKE_IMMUTABLE: {
               scope_.makeImmutable();
@@ -4792,12 +4512,10 @@ public final class CmdlineRemoteProto {
             case VISIT: {
               Visitor visitor = (Visitor) arg0;
               org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage other = (org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage) arg1;
-              buildType_ = visitor.visitInt(hasBuildType(), buildType_,
-                  other.hasBuildType(), other.buildType_);
+              buildType_ = visitor.visitInt(buildType_ != 0, buildType_,    other.buildType_ != 0, other.buildType_);
               globalSettings_ = visitor.visitMessage(globalSettings_, other.globalSettings_);
-              projectId_ = visitor.visitString(
-                  hasProjectId(), projectId_,
-                  other.hasProjectId(), other.projectId_);
+              projectId_ = visitor.visitString(!projectId_.isEmpty(), projectId_,
+                  !other.projectId_.isEmpty(), other.projectId_);
               scope_= visitor.visitList(scope_, other.scope_);
               filePath_= visitor.visitList(filePath_, other.filePath_);
               builderParameter_= visitor.visitList(builderParameter_, other.builderParameter_);
@@ -4831,18 +4549,13 @@ public final class CmdlineRemoteProto {
                     }
                     case 8: {
                       int rawValue = input.readEnum();
-                      org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type value = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.forNumber(rawValue);
-                      if (value == null) {
-                        super.mergeVarintField(1, rawValue);
-                      } else {
-                        bitField0_ |= 0x00000001;
-                        buildType_ = rawValue;
-                      }
+
+                      buildType_ = rawValue;
                       break;
                     }
                     case 18: {
                       org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.Builder subBuilder = null;
-                      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+                      if (globalSettings_ != null) {
                         subBuilder = globalSettings_.toBuilder();
                       }
                       globalSettings_ = input.readMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.parser(), extensionRegistry);
@@ -4850,12 +4563,12 @@ public final class CmdlineRemoteProto {
                         subBuilder.mergeFrom(globalSettings_);
                         globalSettings_ = subBuilder.buildPartial();
                       }
-                      bitField0_ |= 0x00000002;
+
                       break;
                     }
                     case 26: {
-                      java.lang.String s = input.readString();
-                      bitField0_ |= 0x00000004;
+                      java.lang.String s = input.readStringRequireUtf8();
+
                       projectId_ = s;
                       break;
                     }
@@ -4869,7 +4582,7 @@ public final class CmdlineRemoteProto {
                       break;
                     }
                     case 42: {
-                      java.lang.String s = input.readString();
+                      java.lang.String s = input.readStringRequireUtf8();
                       if (!filePath_.isModifiable()) {
                         filePath_ =
                             com.google.protobuf.GeneratedMessageLite.mutableCopy(filePath_);
@@ -4911,10 +4624,9 @@ public final class CmdlineRemoteProto {
               return PARSER;
           }
           case GET_MEMOIZED_IS_INITIALIZED: {
-            return memoizedIsInitialized;
+            return (byte) 1;
           }
           case SET_MEMOIZED_IS_INITIALIZED: {
-            memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
             return null;
           }
           }
@@ -4945,39 +4657,27 @@ public final class CmdlineRemoteProto {
           com.google.protobuf.MessageLiteOrBuilder {
 
         /**
-         * <code>required string owner_class_name = 1;</code>
-         */
-        boolean hasOwnerClassName();
-        /**
-         * <code>required string owner_class_name = 1;</code>
+         * <code>string owner_class_name = 1;</code>
          */
         java.lang.String getOwnerClassName();
         /**
-         * <code>required string owner_class_name = 1;</code>
+         * <code>string owner_class_name = 1;</code>
          */
         com.google.protobuf.ByteString
             getOwnerClassNameBytes();
 
         /**
-         * <code>required string field_name = 2;</code>
-         */
-        boolean hasFieldName();
-        /**
-         * <code>required string field_name = 2;</code>
+         * <code>string field_name = 2;</code>
          */
         java.lang.String getFieldName();
         /**
-         * <code>required string field_name = 2;</code>
+         * <code>string field_name = 2;</code>
          */
         com.google.protobuf.ByteString
             getFieldNameBytes();
 
         /**
-         * <code>required bool is_success = 3;</code>
-         */
-        boolean hasIsSuccess();
-        /**
-         * <code>required bool is_success = 3;</code>
+         * <code>bool is_success = 3;</code>
          */
         boolean getIsSuccess();
 
@@ -5017,131 +4717,115 @@ public final class CmdlineRemoteProto {
         public static final int OWNER_CLASS_NAME_FIELD_NUMBER = 1;
         private java.lang.String ownerClassName_;
         /**
-         * <code>required string owner_class_name = 1;</code>
-         */
-        public boolean hasOwnerClassName() {
-          return ((bitField0_ & 0x00000001) == 0x00000001);
-        }
-        /**
-         * <code>required string owner_class_name = 1;</code>
+         * <code>string owner_class_name = 1;</code>
          */
         public java.lang.String getOwnerClassName() {
           return ownerClassName_;
         }
         /**
-         * <code>required string owner_class_name = 1;</code>
+         * <code>string owner_class_name = 1;</code>
          */
         public com.google.protobuf.ByteString
             getOwnerClassNameBytes() {
           return com.google.protobuf.ByteString.copyFromUtf8(ownerClassName_);
         }
         /**
-         * <code>required string owner_class_name = 1;</code>
+         * <code>string owner_class_name = 1;</code>
          */
         private void setOwnerClassName(
             java.lang.String value) {
           if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000001;
+
           ownerClassName_ = value;
         }
         /**
-         * <code>required string owner_class_name = 1;</code>
+         * <code>string owner_class_name = 1;</code>
          */
         private void clearOwnerClassName() {
-          bitField0_ = (bitField0_ & ~0x00000001);
+
           ownerClassName_ = getDefaultInstance().getOwnerClassName();
         }
         /**
-         * <code>required string owner_class_name = 1;</code>
+         * <code>string owner_class_name = 1;</code>
          */
         private void setOwnerClassNameBytes(
             com.google.protobuf.ByteString value) {
           if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000001;
+  checkByteStringIsUtf8(value);
+
           ownerClassName_ = value.toStringUtf8();
         }
 
         public static final int FIELD_NAME_FIELD_NUMBER = 2;
         private java.lang.String fieldName_;
         /**
-         * <code>required string field_name = 2;</code>
-         */
-        public boolean hasFieldName() {
-          return ((bitField0_ & 0x00000002) == 0x00000002);
-        }
-        /**
-         * <code>required string field_name = 2;</code>
+         * <code>string field_name = 2;</code>
          */
         public java.lang.String getFieldName() {
           return fieldName_;
         }
         /**
-         * <code>required string field_name = 2;</code>
+         * <code>string field_name = 2;</code>
          */
         public com.google.protobuf.ByteString
             getFieldNameBytes() {
           return com.google.protobuf.ByteString.copyFromUtf8(fieldName_);
         }
         /**
-         * <code>required string field_name = 2;</code>
+         * <code>string field_name = 2;</code>
          */
         private void setFieldName(
             java.lang.String value) {
           if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000002;
+
           fieldName_ = value;
         }
         /**
-         * <code>required string field_name = 2;</code>
+         * <code>string field_name = 2;</code>
          */
         private void clearFieldName() {
-          bitField0_ = (bitField0_ & ~0x00000002);
+
           fieldName_ = getDefaultInstance().getFieldName();
         }
         /**
-         * <code>required string field_name = 2;</code>
+         * <code>string field_name = 2;</code>
          */
         private void setFieldNameBytes(
             com.google.protobuf.ByteString value) {
           if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000002;
+  checkByteStringIsUtf8(value);
+
           fieldName_ = value.toStringUtf8();
         }
 
         public static final int IS_SUCCESS_FIELD_NUMBER = 3;
         private boolean isSuccess_;
         /**
-         * <code>required bool is_success = 3;</code>
-         */
-        public boolean hasIsSuccess() {
-          return ((bitField0_ & 0x00000004) == 0x00000004);
-        }
-        /**
-         * <code>required bool is_success = 3;</code>
+         * <code>bool is_success = 3;</code>
          */
         public boolean getIsSuccess() {
           return isSuccess_;
         }
         /**
-         * <code>required bool is_success = 3;</code>
+         * <code>bool is_success = 3;</code>
          */
         private void setIsSuccess(boolean value) {
-          bitField0_ |= 0x00000004;
+
           isSuccess_ = value;
         }
         /**
-         * <code>required bool is_success = 3;</code>
+         * <code>bool is_success = 3;</code>
          */
         private void clearIsSuccess() {
-          bitField0_ = (bitField0_ & ~0x00000004);
+
           isSuccess_ = false;
         }
 
@@ -5224,19 +4908,20 @@ public final class CmdlineRemoteProto {
           if (value == null) {
     throw new NullPointerException();
   }
-  ensurePathIsMutable();
+  checkByteStringIsUtf8(value);
+          ensurePathIsMutable();
           path_.add(value.toStringUtf8());
         }
 
         public void writeTo(com.google.protobuf.CodedOutputStream output)
                             throws java.io.IOException {
-          if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          if (!ownerClassName_.isEmpty()) {
             output.writeString(1, getOwnerClassName());
           }
-          if (((bitField0_ & 0x00000002) == 0x00000002)) {
+          if (!fieldName_.isEmpty()) {
             output.writeString(2, getFieldName());
           }
-          if (((bitField0_ & 0x00000004) == 0x00000004)) {
+          if (isSuccess_ != false) {
             output.writeBool(3, isSuccess_);
           }
           for (int i = 0; i < path_.size(); i++) {
@@ -5250,15 +4935,15 @@ public final class CmdlineRemoteProto {
           if (size != -1) return size;
 
           size = 0;
-          if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          if (!ownerClassName_.isEmpty()) {
             size += com.google.protobuf.CodedOutputStream
               .computeStringSize(1, getOwnerClassName());
           }
-          if (((bitField0_ & 0x00000002) == 0x00000002)) {
+          if (!fieldName_.isEmpty()) {
             size += com.google.protobuf.CodedOutputStream
               .computeStringSize(2, getFieldName());
           }
-          if (((bitField0_ & 0x00000004) == 0x00000004)) {
+          if (isSuccess_ != false) {
             size += com.google.protobuf.CodedOutputStream
               .computeBoolSize(3, isSuccess_);
           }
@@ -5372,26 +5057,20 @@ public final class CmdlineRemoteProto {
 
 
           /**
-           * <code>required string owner_class_name = 1;</code>
-           */
-          public boolean hasOwnerClassName() {
-            return instance.hasOwnerClassName();
-          }
-          /**
-           * <code>required string owner_class_name = 1;</code>
+           * <code>string owner_class_name = 1;</code>
            */
           public java.lang.String getOwnerClassName() {
             return instance.getOwnerClassName();
           }
           /**
-           * <code>required string owner_class_name = 1;</code>
+           * <code>string owner_class_name = 1;</code>
            */
           public com.google.protobuf.ByteString
               getOwnerClassNameBytes() {
             return instance.getOwnerClassNameBytes();
           }
           /**
-           * <code>required string owner_class_name = 1;</code>
+           * <code>string owner_class_name = 1;</code>
            */
           public Builder setOwnerClassName(
               java.lang.String value) {
@@ -5400,7 +5079,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>required string owner_class_name = 1;</code>
+           * <code>string owner_class_name = 1;</code>
            */
           public Builder clearOwnerClassName() {
             copyOnWrite();
@@ -5408,7 +5087,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>required string owner_class_name = 1;</code>
+           * <code>string owner_class_name = 1;</code>
            */
           public Builder setOwnerClassNameBytes(
               com.google.protobuf.ByteString value) {
@@ -5418,26 +5097,20 @@ public final class CmdlineRemoteProto {
           }
 
           /**
-           * <code>required string field_name = 2;</code>
-           */
-          public boolean hasFieldName() {
-            return instance.hasFieldName();
-          }
-          /**
-           * <code>required string field_name = 2;</code>
+           * <code>string field_name = 2;</code>
            */
           public java.lang.String getFieldName() {
             return instance.getFieldName();
           }
           /**
-           * <code>required string field_name = 2;</code>
+           * <code>string field_name = 2;</code>
            */
           public com.google.protobuf.ByteString
               getFieldNameBytes() {
             return instance.getFieldNameBytes();
           }
           /**
-           * <code>required string field_name = 2;</code>
+           * <code>string field_name = 2;</code>
            */
           public Builder setFieldName(
               java.lang.String value) {
@@ -5446,7 +5119,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>required string field_name = 2;</code>
+           * <code>string field_name = 2;</code>
            */
           public Builder clearFieldName() {
             copyOnWrite();
@@ -5454,7 +5127,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>required string field_name = 2;</code>
+           * <code>string field_name = 2;</code>
            */
           public Builder setFieldNameBytes(
               com.google.protobuf.ByteString value) {
@@ -5464,19 +5137,13 @@ public final class CmdlineRemoteProto {
           }
 
           /**
-           * <code>required bool is_success = 3;</code>
-           */
-          public boolean hasIsSuccess() {
-            return instance.hasIsSuccess();
-          }
-          /**
-           * <code>required bool is_success = 3;</code>
+           * <code>bool is_success = 3;</code>
            */
           public boolean getIsSuccess() {
             return instance.getIsSuccess();
           }
           /**
-           * <code>required bool is_success = 3;</code>
+           * <code>bool is_success = 3;</code>
            */
           public Builder setIsSuccess(boolean value) {
             copyOnWrite();
@@ -5484,7 +5151,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>required bool is_success = 3;</code>
+           * <code>bool is_success = 3;</code>
            */
           public Builder clearIsSuccess() {
             copyOnWrite();
@@ -5566,7 +5233,6 @@ public final class CmdlineRemoteProto {
 
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult)
         }
-        private byte memoizedIsInitialized = 2;
         @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
         protected final java.lang.Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
@@ -5576,22 +5242,7 @@ public final class CmdlineRemoteProto {
               return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult();
             }
             case IS_INITIALIZED: {
-              byte isInitialized = memoizedIsInitialized;
-              if (isInitialized == 1) return DEFAULT_INSTANCE;
-              if (isInitialized == 0) return null;
-
-              boolean shouldMemoize = ((Boolean) arg0).booleanValue();
-              if (!hasOwnerClassName()) {
-                return null;
-              }
-              if (!hasFieldName()) {
-                return null;
-              }
-              if (!hasIsSuccess()) {
-                return null;
-              }
               return DEFAULT_INSTANCE;
-
             }
             case MAKE_IMMUTABLE: {
               path_.makeImmutable();
@@ -5603,15 +5254,12 @@ public final class CmdlineRemoteProto {
             case VISIT: {
               Visitor visitor = (Visitor) arg0;
               org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult other = (org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult) arg1;
-              ownerClassName_ = visitor.visitString(
-                  hasOwnerClassName(), ownerClassName_,
-                  other.hasOwnerClassName(), other.ownerClassName_);
-              fieldName_ = visitor.visitString(
-                  hasFieldName(), fieldName_,
-                  other.hasFieldName(), other.fieldName_);
-              isSuccess_ = visitor.visitBoolean(
-                  hasIsSuccess(), isSuccess_,
-                  other.hasIsSuccess(), other.isSuccess_);
+              ownerClassName_ = visitor.visitString(!ownerClassName_.isEmpty(), ownerClassName_,
+                  !other.ownerClassName_.isEmpty(), other.ownerClassName_);
+              fieldName_ = visitor.visitString(!fieldName_.isEmpty(), fieldName_,
+                  !other.fieldName_.isEmpty(), other.fieldName_);
+              isSuccess_ = visitor.visitBoolean(isSuccess_ != false, isSuccess_,
+                  other.isSuccess_ != false, other.isSuccess_);
               path_= visitor.visitList(path_, other.path_);
               if (visitor == com.google.protobuf.GeneratedMessageLite.MergeFromVisitor
                   .INSTANCE) {
@@ -5642,24 +5290,24 @@ public final class CmdlineRemoteProto {
                       break;
                     }
                     case 10: {
-                      java.lang.String s = input.readString();
-                      bitField0_ |= 0x00000001;
+                      java.lang.String s = input.readStringRequireUtf8();
+
                       ownerClassName_ = s;
                       break;
                     }
                     case 18: {
-                      java.lang.String s = input.readString();
-                      bitField0_ |= 0x00000002;
+                      java.lang.String s = input.readStringRequireUtf8();
+
                       fieldName_ = s;
                       break;
                     }
                     case 24: {
-                      bitField0_ |= 0x00000004;
+
                       isSuccess_ = input.readBool();
                       break;
                     }
                     case 34: {
-                      java.lang.String s = input.readString();
+                      java.lang.String s = input.readStringRequireUtf8();
                       if (!path_.isModifiable()) {
                         path_ =
                             com.google.protobuf.GeneratedMessageLite.mutableCopy(path_);
@@ -5692,10 +5340,9 @@ public final class CmdlineRemoteProto {
               return PARSER;
           }
           case GET_MEMOIZED_IS_INITIALIZED: {
-            return memoizedIsInitialized;
+            return (byte) 1;
           }
           case SET_MEMOIZED_IS_INITIALIZED: {
-            memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
             return null;
           }
           }
@@ -5721,74 +5368,79 @@ public final class CmdlineRemoteProto {
         }
       }
 
-      private int bitField0_;
       public static final int TYPE_FIELD_NUMBER = 1;
       private int type_;
       /**
-       * <code>required .org.jetbrains.jpsservice.Message.ControllerMessage.Type type = 1;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.Type type = 1;</code>
        */
-      public boolean hasType() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
+      public int getTypeValue() {
+        return type_;
       }
       /**
-       * <code>required .org.jetbrains.jpsservice.Message.ControllerMessage.Type type = 1;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.Type type = 1;</code>
        */
       public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.Type getType() {
         org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.Type result = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.Type.forNumber(type_);
-        return result == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.Type.BUILD_PARAMETERS : result;
+        return result == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.Type.UNRECOGNIZED : result;
       }
       /**
-       * <code>required .org.jetbrains.jpsservice.Message.ControllerMessage.Type type = 1;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.Type type = 1;</code>
+       */
+      private void setTypeValue(int value) {
+          type_ = value;
+      }
+      /**
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.Type type = 1;</code>
        */
       private void setType(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.Type value) {
         if (value == null) {
           throw new NullPointerException();
         }
-        bitField0_ |= 0x00000001;
+
         type_ = value.getNumber();
       }
       /**
-       * <code>required .org.jetbrains.jpsservice.Message.ControllerMessage.Type type = 1;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.Type type = 1;</code>
        */
       private void clearType() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        type_ = 1;
+
+        type_ = 0;
       }
 
       public static final int PARAMS_MESSAGE_FIELD_NUMBER = 2;
       private org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage paramsMessage_;
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
        */
       public boolean hasParamsMessage() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
+        return paramsMessage_ != null;
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
        */
       public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage getParamsMessage() {
         return paramsMessage_ == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.getDefaultInstance() : paramsMessage_;
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
        */
       private void setParamsMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage value) {
         if (value == null) {
           throw new NullPointerException();
         }
         paramsMessage_ = value;
-        bitField0_ |= 0x00000002;
+
         }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
        */
       private void setParamsMessage(
           org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Builder builderForValue) {
         paramsMessage_ = builderForValue.build();
-        bitField0_ |= 0x00000002;
+
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
        */
       private void mergeParamsMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage value) {
         if (paramsMessage_ != null &&
@@ -5798,49 +5450,49 @@ public final class CmdlineRemoteProto {
         } else {
           paramsMessage_ = value;
         }
-        bitField0_ |= 0x00000002;
+
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
        */
       private void clearParamsMessage() {  paramsMessage_ = null;
-        bitField0_ = (bitField0_ & ~0x00000002);
+
       }
 
       public static final int FS_EVENT_FIELD_NUMBER = 3;
       private org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent fsEvent_;
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
        */
       public boolean hasFsEvent() {
-        return ((bitField0_ & 0x00000004) == 0x00000004);
+        return fsEvent_ != null;
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
        */
       public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent getFsEvent() {
         return fsEvent_ == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent.getDefaultInstance() : fsEvent_;
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
        */
       private void setFsEvent(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent value) {
         if (value == null) {
           throw new NullPointerException();
         }
         fsEvent_ = value;
-        bitField0_ |= 0x00000004;
+
         }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
        */
       private void setFsEvent(
           org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent.Builder builderForValue) {
         fsEvent_ = builderForValue.build();
-        bitField0_ |= 0x00000004;
+
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
        */
       private void mergeFsEvent(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent value) {
         if (fsEvent_ != null &&
@@ -5850,49 +5502,49 @@ public final class CmdlineRemoteProto {
         } else {
           fsEvent_ = value;
         }
-        bitField0_ |= 0x00000004;
+
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
        */
       private void clearFsEvent() {  fsEvent_ = null;
-        bitField0_ = (bitField0_ & ~0x00000004);
+
       }
 
       public static final int CONSTANT_SEARCH_RESULT_FIELD_NUMBER = 4;
       private org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult constantSearchResult_;
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
        */
       public boolean hasConstantSearchResult() {
-        return ((bitField0_ & 0x00000008) == 0x00000008);
+        return constantSearchResult_ != null;
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
        */
       public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult getConstantSearchResult() {
         return constantSearchResult_ == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult.getDefaultInstance() : constantSearchResult_;
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
        */
       private void setConstantSearchResult(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult value) {
         if (value == null) {
           throw new NullPointerException();
         }
         constantSearchResult_ = value;
-        bitField0_ |= 0x00000008;
+
         }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
        */
       private void setConstantSearchResult(
           org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult.Builder builderForValue) {
         constantSearchResult_ = builderForValue.build();
-        bitField0_ |= 0x00000008;
+
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
        */
       private void mergeConstantSearchResult(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult value) {
         if (constantSearchResult_ != null &&
@@ -5902,27 +5554,27 @@ public final class CmdlineRemoteProto {
         } else {
           constantSearchResult_ = value;
         }
-        bitField0_ |= 0x00000008;
+
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
        */
       private void clearConstantSearchResult() {  constantSearchResult_ = null;
-        bitField0_ = (bitField0_ & ~0x00000008);
+
       }
 
       public void writeTo(com.google.protobuf.CodedOutputStream output)
                           throws java.io.IOException {
-        if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        if (type_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.Type.BUILD_PARAMETERS.getNumber()) {
           output.writeEnum(1, type_);
         }
-        if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        if (paramsMessage_ != null) {
           output.writeMessage(2, getParamsMessage());
         }
-        if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        if (fsEvent_ != null) {
           output.writeMessage(3, getFsEvent());
         }
-        if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        if (constantSearchResult_ != null) {
           output.writeMessage(4, getConstantSearchResult());
         }
         unknownFields.writeTo(output);
@@ -5933,19 +5585,19 @@ public final class CmdlineRemoteProto {
         if (size != -1) return size;
 
         size = 0;
-        if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        if (type_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.Type.BUILD_PARAMETERS.getNumber()) {
           size += com.google.protobuf.CodedOutputStream
             .computeEnumSize(1, type_);
         }
-        if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        if (paramsMessage_ != null) {
           size += com.google.protobuf.CodedOutputStream
             .computeMessageSize(2, getParamsMessage());
         }
-        if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        if (fsEvent_ != null) {
           size += com.google.protobuf.CodedOutputStream
             .computeMessageSize(3, getFsEvent());
         }
-        if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        if (constantSearchResult_ != null) {
           size += com.google.protobuf.CodedOutputStream
             .computeMessageSize(4, getConstantSearchResult());
         }
@@ -6050,19 +5702,27 @@ public final class CmdlineRemoteProto {
 
 
         /**
-         * <code>required .org.jetbrains.jpsservice.Message.ControllerMessage.Type type = 1;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.Type type = 1;</code>
          */
-        public boolean hasType() {
-          return instance.hasType();
+        public int getTypeValue() {
+          return instance.getTypeValue();
         }
         /**
-         * <code>required .org.jetbrains.jpsservice.Message.ControllerMessage.Type type = 1;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.Type type = 1;</code>
+         */
+        public Builder setTypeValue(int value) {
+          copyOnWrite();
+          instance.setTypeValue(value);
+          return this;
+        }
+        /**
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.Type type = 1;</code>
          */
         public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.Type getType() {
           return instance.getType();
         }
         /**
-         * <code>required .org.jetbrains.jpsservice.Message.ControllerMessage.Type type = 1;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.Type type = 1;</code>
          */
         public Builder setType(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.Type value) {
           copyOnWrite();
@@ -6070,7 +5730,7 @@ public final class CmdlineRemoteProto {
           return this;
         }
         /**
-         * <code>required .org.jetbrains.jpsservice.Message.ControllerMessage.Type type = 1;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.Type type = 1;</code>
          */
         public Builder clearType() {
           copyOnWrite();
@@ -6079,19 +5739,19 @@ public final class CmdlineRemoteProto {
         }
 
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
          */
         public boolean hasParamsMessage() {
           return instance.hasParamsMessage();
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
          */
         public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage getParamsMessage() {
           return instance.getParamsMessage();
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
          */
         public Builder setParamsMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage value) {
           copyOnWrite();
@@ -6099,7 +5759,7 @@ public final class CmdlineRemoteProto {
           return this;
           }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
          */
         public Builder setParamsMessage(
             org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Builder builderForValue) {
@@ -6108,7 +5768,7 @@ public final class CmdlineRemoteProto {
           return this;
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
          */
         public Builder mergeParamsMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage value) {
           copyOnWrite();
@@ -6116,7 +5776,7 @@ public final class CmdlineRemoteProto {
           return this;
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage params_message = 2;</code>
          */
         public Builder clearParamsMessage() {  copyOnWrite();
           instance.clearParamsMessage();
@@ -6124,19 +5784,19 @@ public final class CmdlineRemoteProto {
         }
 
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
          */
         public boolean hasFsEvent() {
           return instance.hasFsEvent();
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
          */
         public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent getFsEvent() {
           return instance.getFsEvent();
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
          */
         public Builder setFsEvent(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent value) {
           copyOnWrite();
@@ -6144,7 +5804,7 @@ public final class CmdlineRemoteProto {
           return this;
           }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
          */
         public Builder setFsEvent(
             org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent.Builder builderForValue) {
@@ -6153,7 +5813,7 @@ public final class CmdlineRemoteProto {
           return this;
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
          */
         public Builder mergeFsEvent(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent value) {
           copyOnWrite();
@@ -6161,7 +5821,7 @@ public final class CmdlineRemoteProto {
           return this;
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent fs_event = 3;</code>
          */
         public Builder clearFsEvent() {  copyOnWrite();
           instance.clearFsEvent();
@@ -6169,19 +5829,19 @@ public final class CmdlineRemoteProto {
         }
 
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
          */
         public boolean hasConstantSearchResult() {
           return instance.hasConstantSearchResult();
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
          */
         public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult getConstantSearchResult() {
           return instance.getConstantSearchResult();
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
          */
         public Builder setConstantSearchResult(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult value) {
           copyOnWrite();
@@ -6189,7 +5849,7 @@ public final class CmdlineRemoteProto {
           return this;
           }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
          */
         public Builder setConstantSearchResult(
             org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult.Builder builderForValue) {
@@ -6198,7 +5858,7 @@ public final class CmdlineRemoteProto {
           return this;
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
          */
         public Builder mergeConstantSearchResult(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult value) {
           copyOnWrite();
@@ -6206,7 +5866,7 @@ public final class CmdlineRemoteProto {
           return this;
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
+         * <code>.org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult constant_search_result = 4;</code>
          */
         public Builder clearConstantSearchResult() {  copyOnWrite();
           instance.clearConstantSearchResult();
@@ -6215,7 +5875,6 @@ public final class CmdlineRemoteProto {
 
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage)
       }
-      private byte memoizedIsInitialized = 2;
       @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
       protected final java.lang.Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
@@ -6225,31 +5884,7 @@ public final class CmdlineRemoteProto {
             return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage();
           }
           case IS_INITIALIZED: {
-            byte isInitialized = memoizedIsInitialized;
-            if (isInitialized == 1) return DEFAULT_INSTANCE;
-            if (isInitialized == 0) return null;
-
-            boolean shouldMemoize = ((Boolean) arg0).booleanValue();
-            if (!hasType()) {
-              return null;
-            }
-            if (hasParamsMessage()) {
-              if (!getParamsMessage().isInitialized()) {
-                return null;
-              }
-            }
-            if (hasFsEvent()) {
-              if (!getFsEvent().isInitialized()) {
-                return null;
-              }
-            }
-            if (hasConstantSearchResult()) {
-              if (!getConstantSearchResult().isInitialized()) {
-                return null;
-              }
-            }
             return DEFAULT_INSTANCE;
-
           }
           case MAKE_IMMUTABLE: {
             return null;
@@ -6260,14 +5895,12 @@ public final class CmdlineRemoteProto {
           case VISIT: {
             Visitor visitor = (Visitor) arg0;
             org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage other = (org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage) arg1;
-            type_ = visitor.visitInt(hasType(), type_,
-                other.hasType(), other.type_);
+            type_ = visitor.visitInt(type_ != 0, type_,    other.type_ != 0, other.type_);
             paramsMessage_ = visitor.visitMessage(paramsMessage_, other.paramsMessage_);
             fsEvent_ = visitor.visitMessage(fsEvent_, other.fsEvent_);
             constantSearchResult_ = visitor.visitMessage(constantSearchResult_, other.constantSearchResult_);
             if (visitor == com.google.protobuf.GeneratedMessageLite.MergeFromVisitor
                 .INSTANCE) {
-              bitField0_ |= other.bitField0_;
             }
             return this;
           }
@@ -6295,18 +5928,13 @@ public final class CmdlineRemoteProto {
                   }
                   case 8: {
                     int rawValue = input.readEnum();
-                    org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.Type value = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.Type.forNumber(rawValue);
-                    if (value == null) {
-                      super.mergeVarintField(1, rawValue);
-                    } else {
-                      bitField0_ |= 0x00000001;
-                      type_ = rawValue;
-                    }
+
+                    type_ = rawValue;
                     break;
                   }
                   case 18: {
                     org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Builder subBuilder = null;
-                    if (((bitField0_ & 0x00000002) == 0x00000002)) {
+                    if (paramsMessage_ != null) {
                       subBuilder = paramsMessage_.toBuilder();
                     }
                     paramsMessage_ = input.readMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.parser(), extensionRegistry);
@@ -6314,12 +5942,12 @@ public final class CmdlineRemoteProto {
                       subBuilder.mergeFrom(paramsMessage_);
                       paramsMessage_ = subBuilder.buildPartial();
                     }
-                    bitField0_ |= 0x00000002;
+
                     break;
                   }
                   case 26: {
                     org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent.Builder subBuilder = null;
-                    if (((bitField0_ & 0x00000004) == 0x00000004)) {
+                    if (fsEvent_ != null) {
                       subBuilder = fsEvent_.toBuilder();
                     }
                     fsEvent_ = input.readMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent.parser(), extensionRegistry);
@@ -6327,12 +5955,12 @@ public final class CmdlineRemoteProto {
                       subBuilder.mergeFrom(fsEvent_);
                       fsEvent_ = subBuilder.buildPartial();
                     }
-                    bitField0_ |= 0x00000004;
+
                     break;
                   }
                   case 34: {
                     org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult.Builder subBuilder = null;
-                    if (((bitField0_ & 0x00000008) == 0x00000008)) {
+                    if (constantSearchResult_ != null) {
                       subBuilder = constantSearchResult_.toBuilder();
                     }
                     constantSearchResult_ = input.readMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult.parser(), extensionRegistry);
@@ -6340,7 +5968,7 @@ public final class CmdlineRemoteProto {
                       subBuilder.mergeFrom(constantSearchResult_);
                       constantSearchResult_ = subBuilder.buildPartial();
                     }
-                    bitField0_ |= 0x00000008;
+
                     break;
                   }
                 }
@@ -6368,10 +5996,9 @@ public final class CmdlineRemoteProto {
             return PARSER;
         }
         case GET_MEMOIZED_IS_INITIALIZED: {
-          return memoizedIsInitialized;
+          return (byte) 1;
         }
         case SET_MEMOIZED_IS_INITIALIZED: {
-          memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
           return null;
         }
         }
@@ -6402,38 +6029,38 @@ public final class CmdlineRemoteProto {
         com.google.protobuf.MessageLiteOrBuilder {
 
       /**
-       * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.Type type = 1;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.Type type = 1;</code>
        */
-      boolean hasType();
+      int getTypeValue();
       /**
-       * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.Type type = 1;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.Type type = 1;</code>
        */
       org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.Type getType();
 
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
        */
       boolean hasBuildEvent();
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
        */
       org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent getBuildEvent();
 
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
        */
       boolean hasCompileMessage();
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
        */
       org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage getCompileMessage();
 
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
        */
       boolean hasConstantSearchTask();
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
        */
       org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask getConstantSearchTask();
     }
@@ -6446,7 +6073,6 @@ public final class CmdlineRemoteProto {
         // @@protoc_insertion_point(message_implements:org.jetbrains.jpsservice.Message.BuilderMessage)
         BuilderMessageOrBuilder {
       private BuilderMessage() {
-        type_ = 1;
       }
       /**
        * Protobuf enum {@code org.jetbrains.jpsservice.Message.BuilderMessage.Type}
@@ -6454,42 +6080,47 @@ public final class CmdlineRemoteProto {
       public enum Type
           implements com.google.protobuf.Internal.EnumLite {
         /**
-         * <code>PARAM_REQUEST = 1;</code>
+         * <code>PARAM_REQUEST = 0;</code>
          */
-        PARAM_REQUEST(1),
+        PARAM_REQUEST(0),
         /**
-         * <code>BUILD_EVENT = 2;</code>
+         * <code>BUILD_EVENT = 1;</code>
          */
-        BUILD_EVENT(2),
+        BUILD_EVENT(1),
         /**
-         * <code>COMPILE_MESSAGE = 3;</code>
+         * <code>COMPILE_MESSAGE = 2;</code>
          */
-        COMPILE_MESSAGE(3),
+        COMPILE_MESSAGE(2),
         /**
-         * <code>CONSTANT_SEARCH_TASK = 4;</code>
+         * <code>CONSTANT_SEARCH_TASK = 3;</code>
          */
-        CONSTANT_SEARCH_TASK(4),
+        CONSTANT_SEARCH_TASK(3),
+        UNRECOGNIZED(-1),
         ;
 
         /**
-         * <code>PARAM_REQUEST = 1;</code>
+         * <code>PARAM_REQUEST = 0;</code>
          */
-        public static final int PARAM_REQUEST_VALUE = 1;
+        public static final int PARAM_REQUEST_VALUE = 0;
         /**
-         * <code>BUILD_EVENT = 2;</code>
+         * <code>BUILD_EVENT = 1;</code>
          */
-        public static final int BUILD_EVENT_VALUE = 2;
+        public static final int BUILD_EVENT_VALUE = 1;
         /**
-         * <code>COMPILE_MESSAGE = 3;</code>
+         * <code>COMPILE_MESSAGE = 2;</code>
          */
-        public static final int COMPILE_MESSAGE_VALUE = 3;
+        public static final int COMPILE_MESSAGE_VALUE = 2;
         /**
-         * <code>CONSTANT_SEARCH_TASK = 4;</code>
+         * <code>CONSTANT_SEARCH_TASK = 3;</code>
          */
-        public static final int CONSTANT_SEARCH_TASK_VALUE = 4;
+        public static final int CONSTANT_SEARCH_TASK_VALUE = 3;
 
 
         public final int getNumber() {
+          if (this == UNRECOGNIZED) {
+            throw new java.lang.IllegalArgumentException(
+                "Can't get the number of an unknown enum value.");
+          }
           return value;
         }
 
@@ -6503,10 +6134,10 @@ public final class CmdlineRemoteProto {
 
         public static Type forNumber(int value) {
           switch (value) {
-            case 1: return PARAM_REQUEST;
-            case 2: return BUILD_EVENT;
-            case 3: return COMPILE_MESSAGE;
-            case 4: return CONSTANT_SEARCH_TASK;
+            case 0: return PARAM_REQUEST;
+            case 1: return BUILD_EVENT;
+            case 2: return COMPILE_MESSAGE;
+            case 3: return CONSTANT_SEARCH_TASK;
             default: return null;
           }
         }
@@ -6537,34 +6168,30 @@ public final class CmdlineRemoteProto {
           com.google.protobuf.MessageLiteOrBuilder {
 
         /**
-         * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Type event_type = 1;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Type event_type = 1;</code>
          */
-        boolean hasEventType();
+        int getEventTypeValue();
         /**
-         * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Type event_type = 1;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Type event_type = 1;</code>
          */
         org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type getEventType();
 
         /**
-         * <code>optional string description = 2;</code>
-         */
-        boolean hasDescription();
-        /**
-         * <code>optional string description = 2;</code>
+         * <code>string description = 2;</code>
          */
         java.lang.String getDescription();
         /**
-         * <code>optional string description = 2;</code>
+         * <code>string description = 2;</code>
          */
         com.google.protobuf.ByteString
             getDescriptionBytes();
 
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Status completion_status = 3;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Status completion_status = 3;</code>
          */
-        boolean hasCompletionStatus();
+        int getCompletionStatusValue();
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Status completion_status = 3;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Status completion_status = 3;</code>
          */
         org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status getCompletionStatus();
 
@@ -6583,11 +6210,11 @@ public final class CmdlineRemoteProto {
         int getGeneratedFilesCount();
 
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
          */
         boolean hasCustomBuilderMessage();
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
          */
         org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage getCustomBuilderMessage();
       }
@@ -6600,9 +6227,7 @@ public final class CmdlineRemoteProto {
           // @@protoc_insertion_point(message_implements:org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent)
           BuildEventOrBuilder {
         private BuildEvent() {
-          eventType_ = 1;
           description_ = "";
-          completionStatus_ = 1;
           generatedFiles_ = emptyProtobufList();
         }
         /**
@@ -6611,34 +6236,39 @@ public final class CmdlineRemoteProto {
         public enum Type
             implements com.google.protobuf.Internal.EnumLite {
           /**
-           * <code>BUILD_COMPLETED = 1;</code>
+           * <code>BUILD_COMPLETED = 0;</code>
            */
-          BUILD_COMPLETED(1),
+          BUILD_COMPLETED(0),
           /**
-           * <code>FILES_GENERATED = 2;</code>
+           * <code>FILES_GENERATED = 1;</code>
            */
-          FILES_GENERATED(2),
+          FILES_GENERATED(1),
           /**
-           * <code>CUSTOM_BUILDER_MESSAGE = 3;</code>
+           * <code>CUSTOM_BUILDER_MESSAGE = 2;</code>
            */
-          CUSTOM_BUILDER_MESSAGE(3),
+          CUSTOM_BUILDER_MESSAGE(2),
+          UNRECOGNIZED(-1),
           ;
 
           /**
-           * <code>BUILD_COMPLETED = 1;</code>
+           * <code>BUILD_COMPLETED = 0;</code>
            */
-          public static final int BUILD_COMPLETED_VALUE = 1;
+          public static final int BUILD_COMPLETED_VALUE = 0;
           /**
-           * <code>FILES_GENERATED = 2;</code>
+           * <code>FILES_GENERATED = 1;</code>
            */
-          public static final int FILES_GENERATED_VALUE = 2;
+          public static final int FILES_GENERATED_VALUE = 1;
           /**
-           * <code>CUSTOM_BUILDER_MESSAGE = 3;</code>
+           * <code>CUSTOM_BUILDER_MESSAGE = 2;</code>
            */
-          public static final int CUSTOM_BUILDER_MESSAGE_VALUE = 3;
+          public static final int CUSTOM_BUILDER_MESSAGE_VALUE = 2;
 
 
           public final int getNumber() {
+            if (this == UNRECOGNIZED) {
+              throw new java.lang.IllegalArgumentException(
+                  "Can't get the number of an unknown enum value.");
+            }
             return value;
           }
 
@@ -6652,9 +6282,9 @@ public final class CmdlineRemoteProto {
 
           public static Type forNumber(int value) {
             switch (value) {
-              case 1: return BUILD_COMPLETED;
-              case 2: return FILES_GENERATED;
-              case 3: return CUSTOM_BUILDER_MESSAGE;
+              case 0: return BUILD_COMPLETED;
+              case 1: return FILES_GENERATED;
+              case 2: return CUSTOM_BUILDER_MESSAGE;
               default: return null;
             }
           }
@@ -6686,42 +6316,47 @@ public final class CmdlineRemoteProto {
         public enum Status
             implements com.google.protobuf.Internal.EnumLite {
           /**
-           * <code>CANCELED = 1;</code>
+           * <code>CANCELED = 0;</code>
            */
-          CANCELED(1),
+          CANCELED(0),
           /**
-           * <code>ERRORS = 2;</code>
+           * <code>ERRORS = 1;</code>
            */
-          ERRORS(2),
+          ERRORS(1),
           /**
-           * <code>SUCCESS = 3;</code>
+           * <code>SUCCESS = 2;</code>
            */
-          SUCCESS(3),
+          SUCCESS(2),
           /**
-           * <code>UP_TO_DATE = 4;</code>
+           * <code>UP_TO_DATE = 3;</code>
            */
-          UP_TO_DATE(4),
+          UP_TO_DATE(3),
+          UNRECOGNIZED(-1),
           ;
 
           /**
-           * <code>CANCELED = 1;</code>
+           * <code>CANCELED = 0;</code>
            */
-          public static final int CANCELED_VALUE = 1;
+          public static final int CANCELED_VALUE = 0;
           /**
-           * <code>ERRORS = 2;</code>
+           * <code>ERRORS = 1;</code>
            */
-          public static final int ERRORS_VALUE = 2;
+          public static final int ERRORS_VALUE = 1;
           /**
-           * <code>SUCCESS = 3;</code>
+           * <code>SUCCESS = 2;</code>
            */
-          public static final int SUCCESS_VALUE = 3;
+          public static final int SUCCESS_VALUE = 2;
           /**
-           * <code>UP_TO_DATE = 4;</code>
+           * <code>UP_TO_DATE = 3;</code>
            */
-          public static final int UP_TO_DATE_VALUE = 4;
+          public static final int UP_TO_DATE_VALUE = 3;
 
 
           public final int getNumber() {
+            if (this == UNRECOGNIZED) {
+              throw new java.lang.IllegalArgumentException(
+                  "Can't get the number of an unknown enum value.");
+            }
             return value;
           }
 
@@ -6735,10 +6370,10 @@ public final class CmdlineRemoteProto {
 
           public static Status forNumber(int value) {
             switch (value) {
-              case 1: return CANCELED;
-              case 2: return ERRORS;
-              case 3: return SUCCESS;
-              case 4: return UP_TO_DATE;
+              case 0: return CANCELED;
+              case 1: return ERRORS;
+              case 2: return SUCCESS;
+              case 3: return UP_TO_DATE;
               default: return null;
             }
           }
@@ -6769,29 +6404,21 @@ public final class CmdlineRemoteProto {
             com.google.protobuf.MessageLiteOrBuilder {
 
           /**
-           * <code>required string output_root = 1;</code>
-           */
-          boolean hasOutputRoot();
-          /**
-           * <code>required string output_root = 1;</code>
+           * <code>string output_root = 1;</code>
            */
           java.lang.String getOutputRoot();
           /**
-           * <code>required string output_root = 1;</code>
+           * <code>string output_root = 1;</code>
            */
           com.google.protobuf.ByteString
               getOutputRootBytes();
 
           /**
-           * <code>required string relative_path = 2;</code>
-           */
-          boolean hasRelativePath();
-          /**
-           * <code>required string relative_path = 2;</code>
+           * <code>string relative_path = 2;</code>
            */
           java.lang.String getRelativePath();
           /**
-           * <code>required string relative_path = 2;</code>
+           * <code>string relative_path = 2;</code>
            */
           com.google.protobuf.ByteString
               getRelativePathBytes();
@@ -6808,115 +6435,104 @@ public final class CmdlineRemoteProto {
             outputRoot_ = "";
             relativePath_ = "";
           }
-          private int bitField0_;
           public static final int OUTPUT_ROOT_FIELD_NUMBER = 1;
           private java.lang.String outputRoot_;
           /**
-           * <code>required string output_root = 1;</code>
-           */
-          public boolean hasOutputRoot() {
-            return ((bitField0_ & 0x00000001) == 0x00000001);
-          }
-          /**
-           * <code>required string output_root = 1;</code>
+           * <code>string output_root = 1;</code>
            */
           public java.lang.String getOutputRoot() {
             return outputRoot_;
           }
           /**
-           * <code>required string output_root = 1;</code>
+           * <code>string output_root = 1;</code>
            */
           public com.google.protobuf.ByteString
               getOutputRootBytes() {
             return com.google.protobuf.ByteString.copyFromUtf8(outputRoot_);
           }
           /**
-           * <code>required string output_root = 1;</code>
+           * <code>string output_root = 1;</code>
            */
           private void setOutputRoot(
               java.lang.String value) {
             if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000001;
+
             outputRoot_ = value;
           }
           /**
-           * <code>required string output_root = 1;</code>
+           * <code>string output_root = 1;</code>
            */
           private void clearOutputRoot() {
-            bitField0_ = (bitField0_ & ~0x00000001);
+
             outputRoot_ = getDefaultInstance().getOutputRoot();
           }
           /**
-           * <code>required string output_root = 1;</code>
+           * <code>string output_root = 1;</code>
            */
           private void setOutputRootBytes(
               com.google.protobuf.ByteString value) {
             if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000001;
+  checkByteStringIsUtf8(value);
+
             outputRoot_ = value.toStringUtf8();
           }
 
           public static final int RELATIVE_PATH_FIELD_NUMBER = 2;
           private java.lang.String relativePath_;
           /**
-           * <code>required string relative_path = 2;</code>
-           */
-          public boolean hasRelativePath() {
-            return ((bitField0_ & 0x00000002) == 0x00000002);
-          }
-          /**
-           * <code>required string relative_path = 2;</code>
+           * <code>string relative_path = 2;</code>
            */
           public java.lang.String getRelativePath() {
             return relativePath_;
           }
           /**
-           * <code>required string relative_path = 2;</code>
+           * <code>string relative_path = 2;</code>
            */
           public com.google.protobuf.ByteString
               getRelativePathBytes() {
             return com.google.protobuf.ByteString.copyFromUtf8(relativePath_);
           }
           /**
-           * <code>required string relative_path = 2;</code>
+           * <code>string relative_path = 2;</code>
            */
           private void setRelativePath(
               java.lang.String value) {
             if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000002;
+
             relativePath_ = value;
           }
           /**
-           * <code>required string relative_path = 2;</code>
+           * <code>string relative_path = 2;</code>
            */
           private void clearRelativePath() {
-            bitField0_ = (bitField0_ & ~0x00000002);
+
             relativePath_ = getDefaultInstance().getRelativePath();
           }
           /**
-           * <code>required string relative_path = 2;</code>
+           * <code>string relative_path = 2;</code>
            */
           private void setRelativePathBytes(
               com.google.protobuf.ByteString value) {
             if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000002;
+  checkByteStringIsUtf8(value);
+
             relativePath_ = value.toStringUtf8();
           }
 
           public void writeTo(com.google.protobuf.CodedOutputStream output)
                               throws java.io.IOException {
-            if (((bitField0_ & 0x00000001) == 0x00000001)) {
+            if (!outputRoot_.isEmpty()) {
               output.writeString(1, getOutputRoot());
             }
-            if (((bitField0_ & 0x00000002) == 0x00000002)) {
+            if (!relativePath_.isEmpty()) {
               output.writeString(2, getRelativePath());
             }
             unknownFields.writeTo(output);
@@ -6927,11 +6543,11 @@ public final class CmdlineRemoteProto {
             if (size != -1) return size;
 
             size = 0;
-            if (((bitField0_ & 0x00000001) == 0x00000001)) {
+            if (!outputRoot_.isEmpty()) {
               size += com.google.protobuf.CodedOutputStream
                 .computeStringSize(1, getOutputRoot());
             }
-            if (((bitField0_ & 0x00000002) == 0x00000002)) {
+            if (!relativePath_.isEmpty()) {
               size += com.google.protobuf.CodedOutputStream
                 .computeStringSize(2, getRelativePath());
             }
@@ -7036,26 +6652,20 @@ public final class CmdlineRemoteProto {
 
 
             /**
-             * <code>required string output_root = 1;</code>
-             */
-            public boolean hasOutputRoot() {
-              return instance.hasOutputRoot();
-            }
-            /**
-             * <code>required string output_root = 1;</code>
+             * <code>string output_root = 1;</code>
              */
             public java.lang.String getOutputRoot() {
               return instance.getOutputRoot();
             }
             /**
-             * <code>required string output_root = 1;</code>
+             * <code>string output_root = 1;</code>
              */
             public com.google.protobuf.ByteString
                 getOutputRootBytes() {
               return instance.getOutputRootBytes();
             }
             /**
-             * <code>required string output_root = 1;</code>
+             * <code>string output_root = 1;</code>
              */
             public Builder setOutputRoot(
                 java.lang.String value) {
@@ -7064,7 +6674,7 @@ public final class CmdlineRemoteProto {
               return this;
             }
             /**
-             * <code>required string output_root = 1;</code>
+             * <code>string output_root = 1;</code>
              */
             public Builder clearOutputRoot() {
               copyOnWrite();
@@ -7072,7 +6682,7 @@ public final class CmdlineRemoteProto {
               return this;
             }
             /**
-             * <code>required string output_root = 1;</code>
+             * <code>string output_root = 1;</code>
              */
             public Builder setOutputRootBytes(
                 com.google.protobuf.ByteString value) {
@@ -7082,26 +6692,20 @@ public final class CmdlineRemoteProto {
             }
 
             /**
-             * <code>required string relative_path = 2;</code>
-             */
-            public boolean hasRelativePath() {
-              return instance.hasRelativePath();
-            }
-            /**
-             * <code>required string relative_path = 2;</code>
+             * <code>string relative_path = 2;</code>
              */
             public java.lang.String getRelativePath() {
               return instance.getRelativePath();
             }
             /**
-             * <code>required string relative_path = 2;</code>
+             * <code>string relative_path = 2;</code>
              */
             public com.google.protobuf.ByteString
                 getRelativePathBytes() {
               return instance.getRelativePathBytes();
             }
             /**
-             * <code>required string relative_path = 2;</code>
+             * <code>string relative_path = 2;</code>
              */
             public Builder setRelativePath(
                 java.lang.String value) {
@@ -7110,7 +6714,7 @@ public final class CmdlineRemoteProto {
               return this;
             }
             /**
-             * <code>required string relative_path = 2;</code>
+             * <code>string relative_path = 2;</code>
              */
             public Builder clearRelativePath() {
               copyOnWrite();
@@ -7118,7 +6722,7 @@ public final class CmdlineRemoteProto {
               return this;
             }
             /**
-             * <code>required string relative_path = 2;</code>
+             * <code>string relative_path = 2;</code>
              */
             public Builder setRelativePathBytes(
                 com.google.protobuf.ByteString value) {
@@ -7129,7 +6733,6 @@ public final class CmdlineRemoteProto {
 
             // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.GeneratedFile)
           }
-          private byte memoizedIsInitialized = 2;
           @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
           protected final java.lang.Object dynamicMethod(
               com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
@@ -7139,19 +6742,7 @@ public final class CmdlineRemoteProto {
                 return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile();
               }
               case IS_INITIALIZED: {
-                byte isInitialized = memoizedIsInitialized;
-                if (isInitialized == 1) return DEFAULT_INSTANCE;
-                if (isInitialized == 0) return null;
-
-                boolean shouldMemoize = ((Boolean) arg0).booleanValue();
-                if (!hasOutputRoot()) {
-                  return null;
-                }
-                if (!hasRelativePath()) {
-                  return null;
-                }
                 return DEFAULT_INSTANCE;
-
               }
               case MAKE_IMMUTABLE: {
                 return null;
@@ -7162,15 +6753,12 @@ public final class CmdlineRemoteProto {
               case VISIT: {
                 Visitor visitor = (Visitor) arg0;
                 org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile other = (org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile) arg1;
-                outputRoot_ = visitor.visitString(
-                    hasOutputRoot(), outputRoot_,
-                    other.hasOutputRoot(), other.outputRoot_);
-                relativePath_ = visitor.visitString(
-                    hasRelativePath(), relativePath_,
-                    other.hasRelativePath(), other.relativePath_);
+                outputRoot_ = visitor.visitString(!outputRoot_.isEmpty(), outputRoot_,
+                    !other.outputRoot_.isEmpty(), other.outputRoot_);
+                relativePath_ = visitor.visitString(!relativePath_.isEmpty(), relativePath_,
+                    !other.relativePath_.isEmpty(), other.relativePath_);
                 if (visitor == com.google.protobuf.GeneratedMessageLite.MergeFromVisitor
                     .INSTANCE) {
-                  bitField0_ |= other.bitField0_;
                 }
                 return this;
               }
@@ -7197,14 +6785,14 @@ public final class CmdlineRemoteProto {
                         break;
                       }
                       case 10: {
-                        java.lang.String s = input.readString();
-                        bitField0_ |= 0x00000001;
+                        java.lang.String s = input.readStringRequireUtf8();
+
                         outputRoot_ = s;
                         break;
                       }
                       case 18: {
-                        java.lang.String s = input.readString();
-                        bitField0_ |= 0x00000002;
+                        java.lang.String s = input.readStringRequireUtf8();
+
                         relativePath_ = s;
                         break;
                       }
@@ -7233,10 +6821,9 @@ public final class CmdlineRemoteProto {
                 return PARSER;
             }
             case GET_MEMOIZED_IS_INITIALIZED: {
-              return memoizedIsInitialized;
+              return (byte) 1;
             }
             case SET_MEMOIZED_IS_INITIALIZED: {
-              memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
               return null;
             }
             }
@@ -7267,43 +6854,31 @@ public final class CmdlineRemoteProto {
             com.google.protobuf.MessageLiteOrBuilder {
 
           /**
-           * <code>required string builder_id = 1;</code>
-           */
-          boolean hasBuilderId();
-          /**
-           * <code>required string builder_id = 1;</code>
+           * <code>string builder_id = 1;</code>
            */
           java.lang.String getBuilderId();
           /**
-           * <code>required string builder_id = 1;</code>
+           * <code>string builder_id = 1;</code>
            */
           com.google.protobuf.ByteString
               getBuilderIdBytes();
 
           /**
-           * <code>required string message_type = 2;</code>
-           */
-          boolean hasMessageType();
-          /**
-           * <code>required string message_type = 2;</code>
+           * <code>string message_type = 2;</code>
            */
           java.lang.String getMessageType();
           /**
-           * <code>required string message_type = 2;</code>
+           * <code>string message_type = 2;</code>
            */
           com.google.protobuf.ByteString
               getMessageTypeBytes();
 
           /**
-           * <code>required string message_text = 3;</code>
-           */
-          boolean hasMessageText();
-          /**
-           * <code>required string message_text = 3;</code>
+           * <code>string message_text = 3;</code>
            */
           java.lang.String getMessageText();
           /**
-           * <code>required string message_text = 3;</code>
+           * <code>string message_text = 3;</code>
            */
           com.google.protobuf.ByteString
               getMessageTextBytes();
@@ -7321,169 +6896,153 @@ public final class CmdlineRemoteProto {
             messageType_ = "";
             messageText_ = "";
           }
-          private int bitField0_;
           public static final int BUILDER_ID_FIELD_NUMBER = 1;
           private java.lang.String builderId_;
           /**
-           * <code>required string builder_id = 1;</code>
-           */
-          public boolean hasBuilderId() {
-            return ((bitField0_ & 0x00000001) == 0x00000001);
-          }
-          /**
-           * <code>required string builder_id = 1;</code>
+           * <code>string builder_id = 1;</code>
            */
           public java.lang.String getBuilderId() {
             return builderId_;
           }
           /**
-           * <code>required string builder_id = 1;</code>
+           * <code>string builder_id = 1;</code>
            */
           public com.google.protobuf.ByteString
               getBuilderIdBytes() {
             return com.google.protobuf.ByteString.copyFromUtf8(builderId_);
           }
           /**
-           * <code>required string builder_id = 1;</code>
+           * <code>string builder_id = 1;</code>
            */
           private void setBuilderId(
               java.lang.String value) {
             if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000001;
+
             builderId_ = value;
           }
           /**
-           * <code>required string builder_id = 1;</code>
+           * <code>string builder_id = 1;</code>
            */
           private void clearBuilderId() {
-            bitField0_ = (bitField0_ & ~0x00000001);
+
             builderId_ = getDefaultInstance().getBuilderId();
           }
           /**
-           * <code>required string builder_id = 1;</code>
+           * <code>string builder_id = 1;</code>
            */
           private void setBuilderIdBytes(
               com.google.protobuf.ByteString value) {
             if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000001;
+  checkByteStringIsUtf8(value);
+
             builderId_ = value.toStringUtf8();
           }
 
           public static final int MESSAGE_TYPE_FIELD_NUMBER = 2;
           private java.lang.String messageType_;
           /**
-           * <code>required string message_type = 2;</code>
-           */
-          public boolean hasMessageType() {
-            return ((bitField0_ & 0x00000002) == 0x00000002);
-          }
-          /**
-           * <code>required string message_type = 2;</code>
+           * <code>string message_type = 2;</code>
            */
           public java.lang.String getMessageType() {
             return messageType_;
           }
           /**
-           * <code>required string message_type = 2;</code>
+           * <code>string message_type = 2;</code>
            */
           public com.google.protobuf.ByteString
               getMessageTypeBytes() {
             return com.google.protobuf.ByteString.copyFromUtf8(messageType_);
           }
           /**
-           * <code>required string message_type = 2;</code>
+           * <code>string message_type = 2;</code>
            */
           private void setMessageType(
               java.lang.String value) {
             if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000002;
+
             messageType_ = value;
           }
           /**
-           * <code>required string message_type = 2;</code>
+           * <code>string message_type = 2;</code>
            */
           private void clearMessageType() {
-            bitField0_ = (bitField0_ & ~0x00000002);
+
             messageType_ = getDefaultInstance().getMessageType();
           }
           /**
-           * <code>required string message_type = 2;</code>
+           * <code>string message_type = 2;</code>
            */
           private void setMessageTypeBytes(
               com.google.protobuf.ByteString value) {
             if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000002;
+  checkByteStringIsUtf8(value);
+
             messageType_ = value.toStringUtf8();
           }
 
           public static final int MESSAGE_TEXT_FIELD_NUMBER = 3;
           private java.lang.String messageText_;
           /**
-           * <code>required string message_text = 3;</code>
-           */
-          public boolean hasMessageText() {
-            return ((bitField0_ & 0x00000004) == 0x00000004);
-          }
-          /**
-           * <code>required string message_text = 3;</code>
+           * <code>string message_text = 3;</code>
            */
           public java.lang.String getMessageText() {
             return messageText_;
           }
           /**
-           * <code>required string message_text = 3;</code>
+           * <code>string message_text = 3;</code>
            */
           public com.google.protobuf.ByteString
               getMessageTextBytes() {
             return com.google.protobuf.ByteString.copyFromUtf8(messageText_);
           }
           /**
-           * <code>required string message_text = 3;</code>
+           * <code>string message_text = 3;</code>
            */
           private void setMessageText(
               java.lang.String value) {
             if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000004;
+
             messageText_ = value;
           }
           /**
-           * <code>required string message_text = 3;</code>
+           * <code>string message_text = 3;</code>
            */
           private void clearMessageText() {
-            bitField0_ = (bitField0_ & ~0x00000004);
+
             messageText_ = getDefaultInstance().getMessageText();
           }
           /**
-           * <code>required string message_text = 3;</code>
+           * <code>string message_text = 3;</code>
            */
           private void setMessageTextBytes(
               com.google.protobuf.ByteString value) {
             if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000004;
+  checkByteStringIsUtf8(value);
+
             messageText_ = value.toStringUtf8();
           }
 
           public void writeTo(com.google.protobuf.CodedOutputStream output)
                               throws java.io.IOException {
-            if (((bitField0_ & 0x00000001) == 0x00000001)) {
+            if (!builderId_.isEmpty()) {
               output.writeString(1, getBuilderId());
             }
-            if (((bitField0_ & 0x00000002) == 0x00000002)) {
+            if (!messageType_.isEmpty()) {
               output.writeString(2, getMessageType());
             }
-            if (((bitField0_ & 0x00000004) == 0x00000004)) {
+            if (!messageText_.isEmpty()) {
               output.writeString(3, getMessageText());
             }
             unknownFields.writeTo(output);
@@ -7494,15 +7053,15 @@ public final class CmdlineRemoteProto {
             if (size != -1) return size;
 
             size = 0;
-            if (((bitField0_ & 0x00000001) == 0x00000001)) {
+            if (!builderId_.isEmpty()) {
               size += com.google.protobuf.CodedOutputStream
                 .computeStringSize(1, getBuilderId());
             }
-            if (((bitField0_ & 0x00000002) == 0x00000002)) {
+            if (!messageType_.isEmpty()) {
               size += com.google.protobuf.CodedOutputStream
                 .computeStringSize(2, getMessageType());
             }
-            if (((bitField0_ & 0x00000004) == 0x00000004)) {
+            if (!messageText_.isEmpty()) {
               size += com.google.protobuf.CodedOutputStream
                 .computeStringSize(3, getMessageText());
             }
@@ -7607,26 +7166,20 @@ public final class CmdlineRemoteProto {
 
 
             /**
-             * <code>required string builder_id = 1;</code>
-             */
-            public boolean hasBuilderId() {
-              return instance.hasBuilderId();
-            }
-            /**
-             * <code>required string builder_id = 1;</code>
+             * <code>string builder_id = 1;</code>
              */
             public java.lang.String getBuilderId() {
               return instance.getBuilderId();
             }
             /**
-             * <code>required string builder_id = 1;</code>
+             * <code>string builder_id = 1;</code>
              */
             public com.google.protobuf.ByteString
                 getBuilderIdBytes() {
               return instance.getBuilderIdBytes();
             }
             /**
-             * <code>required string builder_id = 1;</code>
+             * <code>string builder_id = 1;</code>
              */
             public Builder setBuilderId(
                 java.lang.String value) {
@@ -7635,7 +7188,7 @@ public final class CmdlineRemoteProto {
               return this;
             }
             /**
-             * <code>required string builder_id = 1;</code>
+             * <code>string builder_id = 1;</code>
              */
             public Builder clearBuilderId() {
               copyOnWrite();
@@ -7643,7 +7196,7 @@ public final class CmdlineRemoteProto {
               return this;
             }
             /**
-             * <code>required string builder_id = 1;</code>
+             * <code>string builder_id = 1;</code>
              */
             public Builder setBuilderIdBytes(
                 com.google.protobuf.ByteString value) {
@@ -7653,26 +7206,20 @@ public final class CmdlineRemoteProto {
             }
 
             /**
-             * <code>required string message_type = 2;</code>
-             */
-            public boolean hasMessageType() {
-              return instance.hasMessageType();
-            }
-            /**
-             * <code>required string message_type = 2;</code>
+             * <code>string message_type = 2;</code>
              */
             public java.lang.String getMessageType() {
               return instance.getMessageType();
             }
             /**
-             * <code>required string message_type = 2;</code>
+             * <code>string message_type = 2;</code>
              */
             public com.google.protobuf.ByteString
                 getMessageTypeBytes() {
               return instance.getMessageTypeBytes();
             }
             /**
-             * <code>required string message_type = 2;</code>
+             * <code>string message_type = 2;</code>
              */
             public Builder setMessageType(
                 java.lang.String value) {
@@ -7681,7 +7228,7 @@ public final class CmdlineRemoteProto {
               return this;
             }
             /**
-             * <code>required string message_type = 2;</code>
+             * <code>string message_type = 2;</code>
              */
             public Builder clearMessageType() {
               copyOnWrite();
@@ -7689,7 +7236,7 @@ public final class CmdlineRemoteProto {
               return this;
             }
             /**
-             * <code>required string message_type = 2;</code>
+             * <code>string message_type = 2;</code>
              */
             public Builder setMessageTypeBytes(
                 com.google.protobuf.ByteString value) {
@@ -7699,26 +7246,20 @@ public final class CmdlineRemoteProto {
             }
 
             /**
-             * <code>required string message_text = 3;</code>
-             */
-            public boolean hasMessageText() {
-              return instance.hasMessageText();
-            }
-            /**
-             * <code>required string message_text = 3;</code>
+             * <code>string message_text = 3;</code>
              */
             public java.lang.String getMessageText() {
               return instance.getMessageText();
             }
             /**
-             * <code>required string message_text = 3;</code>
+             * <code>string message_text = 3;</code>
              */
             public com.google.protobuf.ByteString
                 getMessageTextBytes() {
               return instance.getMessageTextBytes();
             }
             /**
-             * <code>required string message_text = 3;</code>
+             * <code>string message_text = 3;</code>
              */
             public Builder setMessageText(
                 java.lang.String value) {
@@ -7727,7 +7268,7 @@ public final class CmdlineRemoteProto {
               return this;
             }
             /**
-             * <code>required string message_text = 3;</code>
+             * <code>string message_text = 3;</code>
              */
             public Builder clearMessageText() {
               copyOnWrite();
@@ -7735,7 +7276,7 @@ public final class CmdlineRemoteProto {
               return this;
             }
             /**
-             * <code>required string message_text = 3;</code>
+             * <code>string message_text = 3;</code>
              */
             public Builder setMessageTextBytes(
                 com.google.protobuf.ByteString value) {
@@ -7746,7 +7287,6 @@ public final class CmdlineRemoteProto {
 
             // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage)
           }
-          private byte memoizedIsInitialized = 2;
           @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
           protected final java.lang.Object dynamicMethod(
               com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
@@ -7756,22 +7296,7 @@ public final class CmdlineRemoteProto {
                 return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage();
               }
               case IS_INITIALIZED: {
-                byte isInitialized = memoizedIsInitialized;
-                if (isInitialized == 1) return DEFAULT_INSTANCE;
-                if (isInitialized == 0) return null;
-
-                boolean shouldMemoize = ((Boolean) arg0).booleanValue();
-                if (!hasBuilderId()) {
-                  return null;
-                }
-                if (!hasMessageType()) {
-                  return null;
-                }
-                if (!hasMessageText()) {
-                  return null;
-                }
                 return DEFAULT_INSTANCE;
-
               }
               case MAKE_IMMUTABLE: {
                 return null;
@@ -7782,18 +7307,14 @@ public final class CmdlineRemoteProto {
               case VISIT: {
                 Visitor visitor = (Visitor) arg0;
                 org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage other = (org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage) arg1;
-                builderId_ = visitor.visitString(
-                    hasBuilderId(), builderId_,
-                    other.hasBuilderId(), other.builderId_);
-                messageType_ = visitor.visitString(
-                    hasMessageType(), messageType_,
-                    other.hasMessageType(), other.messageType_);
-                messageText_ = visitor.visitString(
-                    hasMessageText(), messageText_,
-                    other.hasMessageText(), other.messageText_);
+                builderId_ = visitor.visitString(!builderId_.isEmpty(), builderId_,
+                    !other.builderId_.isEmpty(), other.builderId_);
+                messageType_ = visitor.visitString(!messageType_.isEmpty(), messageType_,
+                    !other.messageType_.isEmpty(), other.messageType_);
+                messageText_ = visitor.visitString(!messageText_.isEmpty(), messageText_,
+                    !other.messageText_.isEmpty(), other.messageText_);
                 if (visitor == com.google.protobuf.GeneratedMessageLite.MergeFromVisitor
                     .INSTANCE) {
-                  bitField0_ |= other.bitField0_;
                 }
                 return this;
               }
@@ -7820,20 +7341,20 @@ public final class CmdlineRemoteProto {
                         break;
                       }
                       case 10: {
-                        java.lang.String s = input.readString();
-                        bitField0_ |= 0x00000001;
+                        java.lang.String s = input.readStringRequireUtf8();
+
                         builderId_ = s;
                         break;
                       }
                       case 18: {
-                        java.lang.String s = input.readString();
-                        bitField0_ |= 0x00000002;
+                        java.lang.String s = input.readStringRequireUtf8();
+
                         messageType_ = s;
                         break;
                       }
                       case 26: {
-                        java.lang.String s = input.readString();
-                        bitField0_ |= 0x00000004;
+                        java.lang.String s = input.readStringRequireUtf8();
+
                         messageText_ = s;
                         break;
                       }
@@ -7862,10 +7383,9 @@ public final class CmdlineRemoteProto {
                 return PARSER;
             }
             case GET_MEMOIZED_IS_INITIALIZED: {
-              return memoizedIsInitialized;
+              return (byte) 1;
             }
             case SET_MEMOIZED_IS_INITIALIZED: {
-              memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
               return null;
             }
             }
@@ -7895,118 +7415,125 @@ public final class CmdlineRemoteProto {
         public static final int EVENT_TYPE_FIELD_NUMBER = 1;
         private int eventType_;
         /**
-         * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Type event_type = 1;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Type event_type = 1;</code>
          */
-        public boolean hasEventType() {
-          return ((bitField0_ & 0x00000001) == 0x00000001);
+        public int getEventTypeValue() {
+          return eventType_;
         }
         /**
-         * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Type event_type = 1;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Type event_type = 1;</code>
          */
         public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type getEventType() {
           org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type result = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type.forNumber(eventType_);
-          return result == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type.BUILD_COMPLETED : result;
+          return result == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type.UNRECOGNIZED : result;
         }
         /**
-         * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Type event_type = 1;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Type event_type = 1;</code>
+         */
+        private void setEventTypeValue(int value) {
+            eventType_ = value;
+        }
+        /**
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Type event_type = 1;</code>
          */
         private void setEventType(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type value) {
           if (value == null) {
             throw new NullPointerException();
           }
-          bitField0_ |= 0x00000001;
+
           eventType_ = value.getNumber();
         }
         /**
-         * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Type event_type = 1;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Type event_type = 1;</code>
          */
         private void clearEventType() {
-          bitField0_ = (bitField0_ & ~0x00000001);
-          eventType_ = 1;
+
+          eventType_ = 0;
         }
 
         public static final int DESCRIPTION_FIELD_NUMBER = 2;
         private java.lang.String description_;
         /**
-         * <code>optional string description = 2;</code>
-         */
-        public boolean hasDescription() {
-          return ((bitField0_ & 0x00000002) == 0x00000002);
-        }
-        /**
-         * <code>optional string description = 2;</code>
+         * <code>string description = 2;</code>
          */
         public java.lang.String getDescription() {
           return description_;
         }
         /**
-         * <code>optional string description = 2;</code>
+         * <code>string description = 2;</code>
          */
         public com.google.protobuf.ByteString
             getDescriptionBytes() {
           return com.google.protobuf.ByteString.copyFromUtf8(description_);
         }
         /**
-         * <code>optional string description = 2;</code>
+         * <code>string description = 2;</code>
          */
         private void setDescription(
             java.lang.String value) {
           if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000002;
+
           description_ = value;
         }
         /**
-         * <code>optional string description = 2;</code>
+         * <code>string description = 2;</code>
          */
         private void clearDescription() {
-          bitField0_ = (bitField0_ & ~0x00000002);
+
           description_ = getDefaultInstance().getDescription();
         }
         /**
-         * <code>optional string description = 2;</code>
+         * <code>string description = 2;</code>
          */
         private void setDescriptionBytes(
             com.google.protobuf.ByteString value) {
           if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000002;
+  checkByteStringIsUtf8(value);
+
           description_ = value.toStringUtf8();
         }
 
         public static final int COMPLETION_STATUS_FIELD_NUMBER = 3;
         private int completionStatus_;
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Status completion_status = 3;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Status completion_status = 3;</code>
          */
-        public boolean hasCompletionStatus() {
-          return ((bitField0_ & 0x00000004) == 0x00000004);
+        public int getCompletionStatusValue() {
+          return completionStatus_;
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Status completion_status = 3;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Status completion_status = 3;</code>
          */
         public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status getCompletionStatus() {
           org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status result = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.forNumber(completionStatus_);
-          return result == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.CANCELED : result;
+          return result == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.UNRECOGNIZED : result;
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Status completion_status = 3;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Status completion_status = 3;</code>
+         */
+        private void setCompletionStatusValue(int value) {
+            completionStatus_ = value;
+        }
+        /**
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Status completion_status = 3;</code>
          */
         private void setCompletionStatus(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status value) {
           if (value == null) {
             throw new NullPointerException();
           }
-          bitField0_ |= 0x00000004;
+
           completionStatus_ = value.getNumber();
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Status completion_status = 3;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Status completion_status = 3;</code>
          */
         private void clearCompletionStatus() {
-          bitField0_ = (bitField0_ & ~0x00000004);
-          completionStatus_ = 1;
+
+          completionStatus_ = 0;
         }
 
         public static final int GENERATED_FILES_FIELD_NUMBER = 4;
@@ -8132,37 +7659,37 @@ public final class CmdlineRemoteProto {
         public static final int CUSTOM_BUILDER_MESSAGE_FIELD_NUMBER = 5;
         private org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage customBuilderMessage_;
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
          */
         public boolean hasCustomBuilderMessage() {
-          return ((bitField0_ & 0x00000008) == 0x00000008);
+          return customBuilderMessage_ != null;
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
          */
         public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage getCustomBuilderMessage() {
           return customBuilderMessage_ == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage.getDefaultInstance() : customBuilderMessage_;
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
          */
         private void setCustomBuilderMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage value) {
           if (value == null) {
             throw new NullPointerException();
           }
           customBuilderMessage_ = value;
-          bitField0_ |= 0x00000008;
+
           }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
          */
         private void setCustomBuilderMessage(
             org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage.Builder builderForValue) {
           customBuilderMessage_ = builderForValue.build();
-          bitField0_ |= 0x00000008;
+
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
          */
         private void mergeCustomBuilderMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage value) {
           if (customBuilderMessage_ != null &&
@@ -8172,30 +7699,30 @@ public final class CmdlineRemoteProto {
           } else {
             customBuilderMessage_ = value;
           }
-          bitField0_ |= 0x00000008;
+
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
          */
         private void clearCustomBuilderMessage() {  customBuilderMessage_ = null;
-          bitField0_ = (bitField0_ & ~0x00000008);
+
         }
 
         public void writeTo(com.google.protobuf.CodedOutputStream output)
                             throws java.io.IOException {
-          if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          if (eventType_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type.BUILD_COMPLETED.getNumber()) {
             output.writeEnum(1, eventType_);
           }
-          if (((bitField0_ & 0x00000002) == 0x00000002)) {
+          if (!description_.isEmpty()) {
             output.writeString(2, getDescription());
           }
-          if (((bitField0_ & 0x00000004) == 0x00000004)) {
+          if (completionStatus_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.CANCELED.getNumber()) {
             output.writeEnum(3, completionStatus_);
           }
           for (int i = 0; i < generatedFiles_.size(); i++) {
             output.writeMessage(4, generatedFiles_.get(i));
           }
-          if (((bitField0_ & 0x00000008) == 0x00000008)) {
+          if (customBuilderMessage_ != null) {
             output.writeMessage(5, getCustomBuilderMessage());
           }
           unknownFields.writeTo(output);
@@ -8206,15 +7733,15 @@ public final class CmdlineRemoteProto {
           if (size != -1) return size;
 
           size = 0;
-          if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          if (eventType_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type.BUILD_COMPLETED.getNumber()) {
             size += com.google.protobuf.CodedOutputStream
               .computeEnumSize(1, eventType_);
           }
-          if (((bitField0_ & 0x00000002) == 0x00000002)) {
+          if (!description_.isEmpty()) {
             size += com.google.protobuf.CodedOutputStream
               .computeStringSize(2, getDescription());
           }
-          if (((bitField0_ & 0x00000004) == 0x00000004)) {
+          if (completionStatus_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.CANCELED.getNumber()) {
             size += com.google.protobuf.CodedOutputStream
               .computeEnumSize(3, completionStatus_);
           }
@@ -8222,7 +7749,7 @@ public final class CmdlineRemoteProto {
             size += com.google.protobuf.CodedOutputStream
               .computeMessageSize(4, generatedFiles_.get(i));
           }
-          if (((bitField0_ & 0x00000008) == 0x00000008)) {
+          if (customBuilderMessage_ != null) {
             size += com.google.protobuf.CodedOutputStream
               .computeMessageSize(5, getCustomBuilderMessage());
           }
@@ -8327,19 +7854,27 @@ public final class CmdlineRemoteProto {
 
 
           /**
-           * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Type event_type = 1;</code>
+           * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Type event_type = 1;</code>
            */
-          public boolean hasEventType() {
-            return instance.hasEventType();
+          public int getEventTypeValue() {
+            return instance.getEventTypeValue();
           }
           /**
-           * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Type event_type = 1;</code>
+           * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Type event_type = 1;</code>
+           */
+          public Builder setEventTypeValue(int value) {
+            copyOnWrite();
+            instance.setEventTypeValue(value);
+            return this;
+          }
+          /**
+           * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Type event_type = 1;</code>
            */
           public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type getEventType() {
             return instance.getEventType();
           }
           /**
-           * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Type event_type = 1;</code>
+           * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Type event_type = 1;</code>
            */
           public Builder setEventType(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type value) {
             copyOnWrite();
@@ -8347,7 +7882,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Type event_type = 1;</code>
+           * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Type event_type = 1;</code>
            */
           public Builder clearEventType() {
             copyOnWrite();
@@ -8356,26 +7891,20 @@ public final class CmdlineRemoteProto {
           }
 
           /**
-           * <code>optional string description = 2;</code>
-           */
-          public boolean hasDescription() {
-            return instance.hasDescription();
-          }
-          /**
-           * <code>optional string description = 2;</code>
+           * <code>string description = 2;</code>
            */
           public java.lang.String getDescription() {
             return instance.getDescription();
           }
           /**
-           * <code>optional string description = 2;</code>
+           * <code>string description = 2;</code>
            */
           public com.google.protobuf.ByteString
               getDescriptionBytes() {
             return instance.getDescriptionBytes();
           }
           /**
-           * <code>optional string description = 2;</code>
+           * <code>string description = 2;</code>
            */
           public Builder setDescription(
               java.lang.String value) {
@@ -8384,7 +7913,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>optional string description = 2;</code>
+           * <code>string description = 2;</code>
            */
           public Builder clearDescription() {
             copyOnWrite();
@@ -8392,7 +7921,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>optional string description = 2;</code>
+           * <code>string description = 2;</code>
            */
           public Builder setDescriptionBytes(
               com.google.protobuf.ByteString value) {
@@ -8402,19 +7931,27 @@ public final class CmdlineRemoteProto {
           }
 
           /**
-           * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Status completion_status = 3;</code>
+           * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Status completion_status = 3;</code>
            */
-          public boolean hasCompletionStatus() {
-            return instance.hasCompletionStatus();
+          public int getCompletionStatusValue() {
+            return instance.getCompletionStatusValue();
           }
           /**
-           * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Status completion_status = 3;</code>
+           * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Status completion_status = 3;</code>
+           */
+          public Builder setCompletionStatusValue(int value) {
+            copyOnWrite();
+            instance.setCompletionStatusValue(value);
+            return this;
+          }
+          /**
+           * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Status completion_status = 3;</code>
            */
           public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status getCompletionStatus() {
             return instance.getCompletionStatus();
           }
           /**
-           * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Status completion_status = 3;</code>
+           * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Status completion_status = 3;</code>
            */
           public Builder setCompletionStatus(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status value) {
             copyOnWrite();
@@ -8422,7 +7959,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Status completion_status = 3;</code>
+           * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.Status completion_status = 3;</code>
            */
           public Builder clearCompletionStatus() {
             copyOnWrite();
@@ -8528,19 +8065,19 @@ public final class CmdlineRemoteProto {
           }
 
           /**
-           * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
+           * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
            */
           public boolean hasCustomBuilderMessage() {
             return instance.hasCustomBuilderMessage();
           }
           /**
-           * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
+           * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
            */
           public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage getCustomBuilderMessage() {
             return instance.getCustomBuilderMessage();
           }
           /**
-           * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
+           * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
            */
           public Builder setCustomBuilderMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage value) {
             copyOnWrite();
@@ -8548,7 +8085,7 @@ public final class CmdlineRemoteProto {
             return this;
             }
           /**
-           * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
+           * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
            */
           public Builder setCustomBuilderMessage(
               org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage.Builder builderForValue) {
@@ -8557,7 +8094,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
+           * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
            */
           public Builder mergeCustomBuilderMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage value) {
             copyOnWrite();
@@ -8565,7 +8102,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
+           * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage custom_builder_message = 5;</code>
            */
           public Builder clearCustomBuilderMessage() {  copyOnWrite();
             instance.clearCustomBuilderMessage();
@@ -8574,7 +8111,6 @@ public final class CmdlineRemoteProto {
 
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent)
         }
-        private byte memoizedIsInitialized = 2;
         @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
         protected final java.lang.Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
@@ -8584,26 +8120,7 @@ public final class CmdlineRemoteProto {
               return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent();
             }
             case IS_INITIALIZED: {
-              byte isInitialized = memoizedIsInitialized;
-              if (isInitialized == 1) return DEFAULT_INSTANCE;
-              if (isInitialized == 0) return null;
-
-              boolean shouldMemoize = ((Boolean) arg0).booleanValue();
-              if (!hasEventType()) {
-                return null;
-              }
-              for (int i = 0; i < getGeneratedFilesCount(); i++) {
-                if (!getGeneratedFiles(i).isInitialized()) {
-                  return null;
-                }
-              }
-              if (hasCustomBuilderMessage()) {
-                if (!getCustomBuilderMessage().isInitialized()) {
-                  return null;
-                }
-              }
               return DEFAULT_INSTANCE;
-
             }
             case MAKE_IMMUTABLE: {
               generatedFiles_.makeImmutable();
@@ -8615,13 +8132,10 @@ public final class CmdlineRemoteProto {
             case VISIT: {
               Visitor visitor = (Visitor) arg0;
               org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent other = (org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent) arg1;
-              eventType_ = visitor.visitInt(hasEventType(), eventType_,
-                  other.hasEventType(), other.eventType_);
-              description_ = visitor.visitString(
-                  hasDescription(), description_,
-                  other.hasDescription(), other.description_);
-              completionStatus_ = visitor.visitInt(hasCompletionStatus(), completionStatus_,
-                  other.hasCompletionStatus(), other.completionStatus_);
+              eventType_ = visitor.visitInt(eventType_ != 0, eventType_,    other.eventType_ != 0, other.eventType_);
+              description_ = visitor.visitString(!description_.isEmpty(), description_,
+                  !other.description_.isEmpty(), other.description_);
+              completionStatus_ = visitor.visitInt(completionStatus_ != 0, completionStatus_,    other.completionStatus_ != 0, other.completionStatus_);
               generatedFiles_= visitor.visitList(generatedFiles_, other.generatedFiles_);
               customBuilderMessage_ = visitor.visitMessage(customBuilderMessage_, other.customBuilderMessage_);
               if (visitor == com.google.protobuf.GeneratedMessageLite.MergeFromVisitor
@@ -8654,30 +8168,20 @@ public final class CmdlineRemoteProto {
                     }
                     case 8: {
                       int rawValue = input.readEnum();
-                      org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type value = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Type.forNumber(rawValue);
-                      if (value == null) {
-                        super.mergeVarintField(1, rawValue);
-                      } else {
-                        bitField0_ |= 0x00000001;
-                        eventType_ = rawValue;
-                      }
+
+                      eventType_ = rawValue;
                       break;
                     }
                     case 18: {
-                      java.lang.String s = input.readString();
-                      bitField0_ |= 0x00000002;
+                      java.lang.String s = input.readStringRequireUtf8();
+
                       description_ = s;
                       break;
                     }
                     case 24: {
                       int rawValue = input.readEnum();
-                      org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status value = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.forNumber(rawValue);
-                      if (value == null) {
-                        super.mergeVarintField(3, rawValue);
-                      } else {
-                        bitField0_ |= 0x00000004;
-                        completionStatus_ = rawValue;
-                      }
+
+                      completionStatus_ = rawValue;
                       break;
                     }
                     case 34: {
@@ -8691,7 +8195,7 @@ public final class CmdlineRemoteProto {
                     }
                     case 42: {
                       org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage.Builder subBuilder = null;
-                      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+                      if (customBuilderMessage_ != null) {
                         subBuilder = customBuilderMessage_.toBuilder();
                       }
                       customBuilderMessage_ = input.readMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage.parser(), extensionRegistry);
@@ -8699,7 +8203,7 @@ public final class CmdlineRemoteProto {
                         subBuilder.mergeFrom(customBuilderMessage_);
                         customBuilderMessage_ = subBuilder.buildPartial();
                       }
-                      bitField0_ |= 0x00000008;
+
                       break;
                     }
                   }
@@ -8727,10 +8231,9 @@ public final class CmdlineRemoteProto {
               return PARSER;
           }
           case GET_MEMOIZED_IS_INITIALIZED: {
-            return memoizedIsInitialized;
+            return (byte) 1;
           }
           case SET_MEMOIZED_IS_INITIALIZED: {
-            memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
             return null;
           }
           }
@@ -8761,93 +8264,61 @@ public final class CmdlineRemoteProto {
           com.google.protobuf.MessageLiteOrBuilder {
 
         /**
-         * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage.Kind kind = 1;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage.Kind kind = 1;</code>
          */
-        boolean hasKind();
+        int getKindValue();
         /**
-         * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage.Kind kind = 1;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage.Kind kind = 1;</code>
          */
         org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind getKind();
 
         /**
-         * <code>optional string text = 2;</code>
-         */
-        boolean hasText();
-        /**
-         * <code>optional string text = 2;</code>
+         * <code>string text = 2;</code>
          */
         java.lang.String getText();
         /**
-         * <code>optional string text = 2;</code>
+         * <code>string text = 2;</code>
          */
         com.google.protobuf.ByteString
             getTextBytes();
 
         /**
-         * <code>optional string source_file_path = 3;</code>
-         */
-        boolean hasSourceFilePath();
-        /**
-         * <code>optional string source_file_path = 3;</code>
+         * <code>string source_file_path = 3;</code>
          */
         java.lang.String getSourceFilePath();
         /**
-         * <code>optional string source_file_path = 3;</code>
+         * <code>string source_file_path = 3;</code>
          */
         com.google.protobuf.ByteString
             getSourceFilePathBytes();
 
         /**
-         * <code>optional uint64 problem_begin_offset = 4;</code>
-         */
-        boolean hasProblemBeginOffset();
-        /**
-         * <code>optional uint64 problem_begin_offset = 4;</code>
+         * <code>uint64 problem_begin_offset = 4;</code>
          */
         long getProblemBeginOffset();
 
         /**
-         * <code>optional uint64 problem_end_offset = 5;</code>
-         */
-        boolean hasProblemEndOffset();
-        /**
-         * <code>optional uint64 problem_end_offset = 5;</code>
+         * <code>uint64 problem_end_offset = 5;</code>
          */
         long getProblemEndOffset();
 
         /**
-         * <code>optional uint64 problem_location_offset = 6;</code>
-         */
-        boolean hasProblemLocationOffset();
-        /**
-         * <code>optional uint64 problem_location_offset = 6;</code>
+         * <code>uint64 problem_location_offset = 6;</code>
          */
         long getProblemLocationOffset();
 
         /**
-         * <code>optional uint64 line = 7;</code>
-         */
-        boolean hasLine();
-        /**
-         * <code>optional uint64 line = 7;</code>
+         * <code>uint64 line = 7;</code>
          */
         long getLine();
 
         /**
-         * <code>optional uint64 column = 8;</code>
-         */
-        boolean hasColumn();
-        /**
-         * <code>optional uint64 column = 8;</code>
+         * <code>uint64 column = 8;</code>
          */
         long getColumn();
 
         /**
-         * <code>optional float done = 9;</code>
-         */
-        boolean hasDone();
-        /**
-         * <code>optional float done = 9;</code>
+         * <code>float done = 9;</code>
          */
         float getDone();
       }
@@ -8860,7 +8331,6 @@ public final class CmdlineRemoteProto {
           // @@protoc_insertion_point(message_implements:org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage)
           CompileMessageOrBuilder {
         private CompileMessage() {
-          kind_ = 1;
           text_ = "";
           sourceFilePath_ = "";
         }
@@ -8870,58 +8340,63 @@ public final class CmdlineRemoteProto {
         public enum Kind
             implements com.google.protobuf.Internal.EnumLite {
           /**
-           * <code>ERROR = 1;</code>
+           * <code>ERROR = 0;</code>
            */
-          ERROR(1),
+          ERROR(0),
           /**
-           * <code>WARNING = 2;</code>
+           * <code>WARNING = 1;</code>
            */
-          WARNING(2),
+          WARNING(1),
           /**
-           * <code>INFO = 3;</code>
+           * <code>INFO = 2;</code>
            */
-          INFO(3),
+          INFO(2),
           /**
-           * <code>PROGRESS = 4;</code>
+           * <code>PROGRESS = 3;</code>
            */
-          PROGRESS(4),
+          PROGRESS(3),
           /**
-           * <code>JPS_INFO = 5;</code>
+           * <code>JPS_INFO = 4;</code>
            */
-          JPS_INFO(5),
+          JPS_INFO(4),
           /**
-           * <code>OTHER = 6;</code>
+           * <code>OTHER = 5;</code>
            */
-          OTHER(6),
+          OTHER(5),
+          UNRECOGNIZED(-1),
           ;
 
           /**
-           * <code>ERROR = 1;</code>
+           * <code>ERROR = 0;</code>
            */
-          public static final int ERROR_VALUE = 1;
+          public static final int ERROR_VALUE = 0;
           /**
-           * <code>WARNING = 2;</code>
+           * <code>WARNING = 1;</code>
            */
-          public static final int WARNING_VALUE = 2;
+          public static final int WARNING_VALUE = 1;
           /**
-           * <code>INFO = 3;</code>
+           * <code>INFO = 2;</code>
            */
-          public static final int INFO_VALUE = 3;
+          public static final int INFO_VALUE = 2;
           /**
-           * <code>PROGRESS = 4;</code>
+           * <code>PROGRESS = 3;</code>
            */
-          public static final int PROGRESS_VALUE = 4;
+          public static final int PROGRESS_VALUE = 3;
           /**
-           * <code>JPS_INFO = 5;</code>
+           * <code>JPS_INFO = 4;</code>
            */
-          public static final int JPS_INFO_VALUE = 5;
+          public static final int JPS_INFO_VALUE = 4;
           /**
-           * <code>OTHER = 6;</code>
+           * <code>OTHER = 5;</code>
            */
-          public static final int OTHER_VALUE = 6;
+          public static final int OTHER_VALUE = 5;
 
 
           public final int getNumber() {
+            if (this == UNRECOGNIZED) {
+              throw new java.lang.IllegalArgumentException(
+                  "Can't get the number of an unknown enum value.");
+            }
             return value;
           }
 
@@ -8935,12 +8410,12 @@ public final class CmdlineRemoteProto {
 
           public static Kind forNumber(int value) {
             switch (value) {
-              case 1: return ERROR;
-              case 2: return WARNING;
-              case 3: return INFO;
-              case 4: return PROGRESS;
-              case 5: return JPS_INFO;
-              case 6: return OTHER;
+              case 0: return ERROR;
+              case 1: return WARNING;
+              case 2: return INFO;
+              case 3: return PROGRESS;
+              case 4: return JPS_INFO;
+              case 5: return OTHER;
               default: return null;
             }
           }
@@ -8966,343 +8441,302 @@ public final class CmdlineRemoteProto {
           // @@protoc_insertion_point(enum_scope:org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage.Kind)
         }
 
-        private int bitField0_;
         public static final int KIND_FIELD_NUMBER = 1;
         private int kind_;
         /**
-         * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage.Kind kind = 1;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage.Kind kind = 1;</code>
          */
-        public boolean hasKind() {
-          return ((bitField0_ & 0x00000001) == 0x00000001);
+        public int getKindValue() {
+          return kind_;
         }
         /**
-         * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage.Kind kind = 1;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage.Kind kind = 1;</code>
          */
         public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind getKind() {
           org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind result = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.forNumber(kind_);
-          return result == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.ERROR : result;
+          return result == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.UNRECOGNIZED : result;
         }
         /**
-         * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage.Kind kind = 1;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage.Kind kind = 1;</code>
+         */
+        private void setKindValue(int value) {
+            kind_ = value;
+        }
+        /**
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage.Kind kind = 1;</code>
          */
         private void setKind(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind value) {
           if (value == null) {
             throw new NullPointerException();
           }
-          bitField0_ |= 0x00000001;
+
           kind_ = value.getNumber();
         }
         /**
-         * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage.Kind kind = 1;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage.Kind kind = 1;</code>
          */
         private void clearKind() {
-          bitField0_ = (bitField0_ & ~0x00000001);
-          kind_ = 1;
+
+          kind_ = 0;
         }
 
         public static final int TEXT_FIELD_NUMBER = 2;
         private java.lang.String text_;
         /**
-         * <code>optional string text = 2;</code>
-         */
-        public boolean hasText() {
-          return ((bitField0_ & 0x00000002) == 0x00000002);
-        }
-        /**
-         * <code>optional string text = 2;</code>
+         * <code>string text = 2;</code>
          */
         public java.lang.String getText() {
           return text_;
         }
         /**
-         * <code>optional string text = 2;</code>
+         * <code>string text = 2;</code>
          */
         public com.google.protobuf.ByteString
             getTextBytes() {
           return com.google.protobuf.ByteString.copyFromUtf8(text_);
         }
         /**
-         * <code>optional string text = 2;</code>
+         * <code>string text = 2;</code>
          */
         private void setText(
             java.lang.String value) {
           if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000002;
+
           text_ = value;
         }
         /**
-         * <code>optional string text = 2;</code>
+         * <code>string text = 2;</code>
          */
         private void clearText() {
-          bitField0_ = (bitField0_ & ~0x00000002);
+
           text_ = getDefaultInstance().getText();
         }
         /**
-         * <code>optional string text = 2;</code>
+         * <code>string text = 2;</code>
          */
         private void setTextBytes(
             com.google.protobuf.ByteString value) {
           if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000002;
+  checkByteStringIsUtf8(value);
+
           text_ = value.toStringUtf8();
         }
 
         public static final int SOURCE_FILE_PATH_FIELD_NUMBER = 3;
         private java.lang.String sourceFilePath_;
         /**
-         * <code>optional string source_file_path = 3;</code>
-         */
-        public boolean hasSourceFilePath() {
-          return ((bitField0_ & 0x00000004) == 0x00000004);
-        }
-        /**
-         * <code>optional string source_file_path = 3;</code>
+         * <code>string source_file_path = 3;</code>
          */
         public java.lang.String getSourceFilePath() {
           return sourceFilePath_;
         }
         /**
-         * <code>optional string source_file_path = 3;</code>
+         * <code>string source_file_path = 3;</code>
          */
         public com.google.protobuf.ByteString
             getSourceFilePathBytes() {
           return com.google.protobuf.ByteString.copyFromUtf8(sourceFilePath_);
         }
         /**
-         * <code>optional string source_file_path = 3;</code>
+         * <code>string source_file_path = 3;</code>
          */
         private void setSourceFilePath(
             java.lang.String value) {
           if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000004;
+
           sourceFilePath_ = value;
         }
         /**
-         * <code>optional string source_file_path = 3;</code>
+         * <code>string source_file_path = 3;</code>
          */
         private void clearSourceFilePath() {
-          bitField0_ = (bitField0_ & ~0x00000004);
+
           sourceFilePath_ = getDefaultInstance().getSourceFilePath();
         }
         /**
-         * <code>optional string source_file_path = 3;</code>
+         * <code>string source_file_path = 3;</code>
          */
         private void setSourceFilePathBytes(
             com.google.protobuf.ByteString value) {
           if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000004;
+  checkByteStringIsUtf8(value);
+
           sourceFilePath_ = value.toStringUtf8();
         }
 
         public static final int PROBLEM_BEGIN_OFFSET_FIELD_NUMBER = 4;
         private long problemBeginOffset_;
         /**
-         * <code>optional uint64 problem_begin_offset = 4;</code>
-         */
-        public boolean hasProblemBeginOffset() {
-          return ((bitField0_ & 0x00000008) == 0x00000008);
-        }
-        /**
-         * <code>optional uint64 problem_begin_offset = 4;</code>
+         * <code>uint64 problem_begin_offset = 4;</code>
          */
         public long getProblemBeginOffset() {
           return problemBeginOffset_;
         }
         /**
-         * <code>optional uint64 problem_begin_offset = 4;</code>
+         * <code>uint64 problem_begin_offset = 4;</code>
          */
         private void setProblemBeginOffset(long value) {
-          bitField0_ |= 0x00000008;
+
           problemBeginOffset_ = value;
         }
         /**
-         * <code>optional uint64 problem_begin_offset = 4;</code>
+         * <code>uint64 problem_begin_offset = 4;</code>
          */
         private void clearProblemBeginOffset() {
-          bitField0_ = (bitField0_ & ~0x00000008);
+
           problemBeginOffset_ = 0L;
         }
 
         public static final int PROBLEM_END_OFFSET_FIELD_NUMBER = 5;
         private long problemEndOffset_;
         /**
-         * <code>optional uint64 problem_end_offset = 5;</code>
-         */
-        public boolean hasProblemEndOffset() {
-          return ((bitField0_ & 0x00000010) == 0x00000010);
-        }
-        /**
-         * <code>optional uint64 problem_end_offset = 5;</code>
+         * <code>uint64 problem_end_offset = 5;</code>
          */
         public long getProblemEndOffset() {
           return problemEndOffset_;
         }
         /**
-         * <code>optional uint64 problem_end_offset = 5;</code>
+         * <code>uint64 problem_end_offset = 5;</code>
          */
         private void setProblemEndOffset(long value) {
-          bitField0_ |= 0x00000010;
+
           problemEndOffset_ = value;
         }
         /**
-         * <code>optional uint64 problem_end_offset = 5;</code>
+         * <code>uint64 problem_end_offset = 5;</code>
          */
         private void clearProblemEndOffset() {
-          bitField0_ = (bitField0_ & ~0x00000010);
+
           problemEndOffset_ = 0L;
         }
 
         public static final int PROBLEM_LOCATION_OFFSET_FIELD_NUMBER = 6;
         private long problemLocationOffset_;
         /**
-         * <code>optional uint64 problem_location_offset = 6;</code>
-         */
-        public boolean hasProblemLocationOffset() {
-          return ((bitField0_ & 0x00000020) == 0x00000020);
-        }
-        /**
-         * <code>optional uint64 problem_location_offset = 6;</code>
+         * <code>uint64 problem_location_offset = 6;</code>
          */
         public long getProblemLocationOffset() {
           return problemLocationOffset_;
         }
         /**
-         * <code>optional uint64 problem_location_offset = 6;</code>
+         * <code>uint64 problem_location_offset = 6;</code>
          */
         private void setProblemLocationOffset(long value) {
-          bitField0_ |= 0x00000020;
+
           problemLocationOffset_ = value;
         }
         /**
-         * <code>optional uint64 problem_location_offset = 6;</code>
+         * <code>uint64 problem_location_offset = 6;</code>
          */
         private void clearProblemLocationOffset() {
-          bitField0_ = (bitField0_ & ~0x00000020);
+
           problemLocationOffset_ = 0L;
         }
 
         public static final int LINE_FIELD_NUMBER = 7;
         private long line_;
         /**
-         * <code>optional uint64 line = 7;</code>
-         */
-        public boolean hasLine() {
-          return ((bitField0_ & 0x00000040) == 0x00000040);
-        }
-        /**
-         * <code>optional uint64 line = 7;</code>
+         * <code>uint64 line = 7;</code>
          */
         public long getLine() {
           return line_;
         }
         /**
-         * <code>optional uint64 line = 7;</code>
+         * <code>uint64 line = 7;</code>
          */
         private void setLine(long value) {
-          bitField0_ |= 0x00000040;
+
           line_ = value;
         }
         /**
-         * <code>optional uint64 line = 7;</code>
+         * <code>uint64 line = 7;</code>
          */
         private void clearLine() {
-          bitField0_ = (bitField0_ & ~0x00000040);
+
           line_ = 0L;
         }
 
         public static final int COLUMN_FIELD_NUMBER = 8;
         private long column_;
         /**
-         * <code>optional uint64 column = 8;</code>
-         */
-        public boolean hasColumn() {
-          return ((bitField0_ & 0x00000080) == 0x00000080);
-        }
-        /**
-         * <code>optional uint64 column = 8;</code>
+         * <code>uint64 column = 8;</code>
          */
         public long getColumn() {
           return column_;
         }
         /**
-         * <code>optional uint64 column = 8;</code>
+         * <code>uint64 column = 8;</code>
          */
         private void setColumn(long value) {
-          bitField0_ |= 0x00000080;
+
           column_ = value;
         }
         /**
-         * <code>optional uint64 column = 8;</code>
+         * <code>uint64 column = 8;</code>
          */
         private void clearColumn() {
-          bitField0_ = (bitField0_ & ~0x00000080);
+
           column_ = 0L;
         }
 
         public static final int DONE_FIELD_NUMBER = 9;
         private float done_;
         /**
-         * <code>optional float done = 9;</code>
-         */
-        public boolean hasDone() {
-          return ((bitField0_ & 0x00000100) == 0x00000100);
-        }
-        /**
-         * <code>optional float done = 9;</code>
+         * <code>float done = 9;</code>
          */
         public float getDone() {
           return done_;
         }
         /**
-         * <code>optional float done = 9;</code>
+         * <code>float done = 9;</code>
          */
         private void setDone(float value) {
-          bitField0_ |= 0x00000100;
+
           done_ = value;
         }
         /**
-         * <code>optional float done = 9;</code>
+         * <code>float done = 9;</code>
          */
         private void clearDone() {
-          bitField0_ = (bitField0_ & ~0x00000100);
+
           done_ = 0F;
         }
 
         public void writeTo(com.google.protobuf.CodedOutputStream output)
                             throws java.io.IOException {
-          if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          if (kind_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.ERROR.getNumber()) {
             output.writeEnum(1, kind_);
           }
-          if (((bitField0_ & 0x00000002) == 0x00000002)) {
+          if (!text_.isEmpty()) {
             output.writeString(2, getText());
           }
-          if (((bitField0_ & 0x00000004) == 0x00000004)) {
+          if (!sourceFilePath_.isEmpty()) {
             output.writeString(3, getSourceFilePath());
           }
-          if (((bitField0_ & 0x00000008) == 0x00000008)) {
+          if (problemBeginOffset_ != 0L) {
             output.writeUInt64(4, problemBeginOffset_);
           }
-          if (((bitField0_ & 0x00000010) == 0x00000010)) {
+          if (problemEndOffset_ != 0L) {
             output.writeUInt64(5, problemEndOffset_);
           }
-          if (((bitField0_ & 0x00000020) == 0x00000020)) {
+          if (problemLocationOffset_ != 0L) {
             output.writeUInt64(6, problemLocationOffset_);
           }
-          if (((bitField0_ & 0x00000040) == 0x00000040)) {
+          if (line_ != 0L) {
             output.writeUInt64(7, line_);
           }
-          if (((bitField0_ & 0x00000080) == 0x00000080)) {
+          if (column_ != 0L) {
             output.writeUInt64(8, column_);
           }
-          if (((bitField0_ & 0x00000100) == 0x00000100)) {
+          if (done_ != 0F) {
             output.writeFloat(9, done_);
           }
           unknownFields.writeTo(output);
@@ -9313,39 +8747,39 @@ public final class CmdlineRemoteProto {
           if (size != -1) return size;
 
           size = 0;
-          if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          if (kind_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.ERROR.getNumber()) {
             size += com.google.protobuf.CodedOutputStream
               .computeEnumSize(1, kind_);
           }
-          if (((bitField0_ & 0x00000002) == 0x00000002)) {
+          if (!text_.isEmpty()) {
             size += com.google.protobuf.CodedOutputStream
               .computeStringSize(2, getText());
           }
-          if (((bitField0_ & 0x00000004) == 0x00000004)) {
+          if (!sourceFilePath_.isEmpty()) {
             size += com.google.protobuf.CodedOutputStream
               .computeStringSize(3, getSourceFilePath());
           }
-          if (((bitField0_ & 0x00000008) == 0x00000008)) {
+          if (problemBeginOffset_ != 0L) {
             size += com.google.protobuf.CodedOutputStream
               .computeUInt64Size(4, problemBeginOffset_);
           }
-          if (((bitField0_ & 0x00000010) == 0x00000010)) {
+          if (problemEndOffset_ != 0L) {
             size += com.google.protobuf.CodedOutputStream
               .computeUInt64Size(5, problemEndOffset_);
           }
-          if (((bitField0_ & 0x00000020) == 0x00000020)) {
+          if (problemLocationOffset_ != 0L) {
             size += com.google.protobuf.CodedOutputStream
               .computeUInt64Size(6, problemLocationOffset_);
           }
-          if (((bitField0_ & 0x00000040) == 0x00000040)) {
+          if (line_ != 0L) {
             size += com.google.protobuf.CodedOutputStream
               .computeUInt64Size(7, line_);
           }
-          if (((bitField0_ & 0x00000080) == 0x00000080)) {
+          if (column_ != 0L) {
             size += com.google.protobuf.CodedOutputStream
               .computeUInt64Size(8, column_);
           }
-          if (((bitField0_ & 0x00000100) == 0x00000100)) {
+          if (done_ != 0F) {
             size += com.google.protobuf.CodedOutputStream
               .computeFloatSize(9, done_);
           }
@@ -9450,19 +8884,27 @@ public final class CmdlineRemoteProto {
 
 
           /**
-           * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage.Kind kind = 1;</code>
+           * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage.Kind kind = 1;</code>
            */
-          public boolean hasKind() {
-            return instance.hasKind();
+          public int getKindValue() {
+            return instance.getKindValue();
           }
           /**
-           * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage.Kind kind = 1;</code>
+           * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage.Kind kind = 1;</code>
+           */
+          public Builder setKindValue(int value) {
+            copyOnWrite();
+            instance.setKindValue(value);
+            return this;
+          }
+          /**
+           * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage.Kind kind = 1;</code>
            */
           public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind getKind() {
             return instance.getKind();
           }
           /**
-           * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage.Kind kind = 1;</code>
+           * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage.Kind kind = 1;</code>
            */
           public Builder setKind(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind value) {
             copyOnWrite();
@@ -9470,7 +8912,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage.Kind kind = 1;</code>
+           * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage.Kind kind = 1;</code>
            */
           public Builder clearKind() {
             copyOnWrite();
@@ -9479,26 +8921,20 @@ public final class CmdlineRemoteProto {
           }
 
           /**
-           * <code>optional string text = 2;</code>
-           */
-          public boolean hasText() {
-            return instance.hasText();
-          }
-          /**
-           * <code>optional string text = 2;</code>
+           * <code>string text = 2;</code>
            */
           public java.lang.String getText() {
             return instance.getText();
           }
           /**
-           * <code>optional string text = 2;</code>
+           * <code>string text = 2;</code>
            */
           public com.google.protobuf.ByteString
               getTextBytes() {
             return instance.getTextBytes();
           }
           /**
-           * <code>optional string text = 2;</code>
+           * <code>string text = 2;</code>
            */
           public Builder setText(
               java.lang.String value) {
@@ -9507,7 +8943,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>optional string text = 2;</code>
+           * <code>string text = 2;</code>
            */
           public Builder clearText() {
             copyOnWrite();
@@ -9515,7 +8951,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>optional string text = 2;</code>
+           * <code>string text = 2;</code>
            */
           public Builder setTextBytes(
               com.google.protobuf.ByteString value) {
@@ -9525,26 +8961,20 @@ public final class CmdlineRemoteProto {
           }
 
           /**
-           * <code>optional string source_file_path = 3;</code>
-           */
-          public boolean hasSourceFilePath() {
-            return instance.hasSourceFilePath();
-          }
-          /**
-           * <code>optional string source_file_path = 3;</code>
+           * <code>string source_file_path = 3;</code>
            */
           public java.lang.String getSourceFilePath() {
             return instance.getSourceFilePath();
           }
           /**
-           * <code>optional string source_file_path = 3;</code>
+           * <code>string source_file_path = 3;</code>
            */
           public com.google.protobuf.ByteString
               getSourceFilePathBytes() {
             return instance.getSourceFilePathBytes();
           }
           /**
-           * <code>optional string source_file_path = 3;</code>
+           * <code>string source_file_path = 3;</code>
            */
           public Builder setSourceFilePath(
               java.lang.String value) {
@@ -9553,7 +8983,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>optional string source_file_path = 3;</code>
+           * <code>string source_file_path = 3;</code>
            */
           public Builder clearSourceFilePath() {
             copyOnWrite();
@@ -9561,7 +8991,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>optional string source_file_path = 3;</code>
+           * <code>string source_file_path = 3;</code>
            */
           public Builder setSourceFilePathBytes(
               com.google.protobuf.ByteString value) {
@@ -9571,19 +9001,13 @@ public final class CmdlineRemoteProto {
           }
 
           /**
-           * <code>optional uint64 problem_begin_offset = 4;</code>
-           */
-          public boolean hasProblemBeginOffset() {
-            return instance.hasProblemBeginOffset();
-          }
-          /**
-           * <code>optional uint64 problem_begin_offset = 4;</code>
+           * <code>uint64 problem_begin_offset = 4;</code>
            */
           public long getProblemBeginOffset() {
             return instance.getProblemBeginOffset();
           }
           /**
-           * <code>optional uint64 problem_begin_offset = 4;</code>
+           * <code>uint64 problem_begin_offset = 4;</code>
            */
           public Builder setProblemBeginOffset(long value) {
             copyOnWrite();
@@ -9591,7 +9015,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>optional uint64 problem_begin_offset = 4;</code>
+           * <code>uint64 problem_begin_offset = 4;</code>
            */
           public Builder clearProblemBeginOffset() {
             copyOnWrite();
@@ -9600,19 +9024,13 @@ public final class CmdlineRemoteProto {
           }
 
           /**
-           * <code>optional uint64 problem_end_offset = 5;</code>
-           */
-          public boolean hasProblemEndOffset() {
-            return instance.hasProblemEndOffset();
-          }
-          /**
-           * <code>optional uint64 problem_end_offset = 5;</code>
+           * <code>uint64 problem_end_offset = 5;</code>
            */
           public long getProblemEndOffset() {
             return instance.getProblemEndOffset();
           }
           /**
-           * <code>optional uint64 problem_end_offset = 5;</code>
+           * <code>uint64 problem_end_offset = 5;</code>
            */
           public Builder setProblemEndOffset(long value) {
             copyOnWrite();
@@ -9620,7 +9038,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>optional uint64 problem_end_offset = 5;</code>
+           * <code>uint64 problem_end_offset = 5;</code>
            */
           public Builder clearProblemEndOffset() {
             copyOnWrite();
@@ -9629,19 +9047,13 @@ public final class CmdlineRemoteProto {
           }
 
           /**
-           * <code>optional uint64 problem_location_offset = 6;</code>
-           */
-          public boolean hasProblemLocationOffset() {
-            return instance.hasProblemLocationOffset();
-          }
-          /**
-           * <code>optional uint64 problem_location_offset = 6;</code>
+           * <code>uint64 problem_location_offset = 6;</code>
            */
           public long getProblemLocationOffset() {
             return instance.getProblemLocationOffset();
           }
           /**
-           * <code>optional uint64 problem_location_offset = 6;</code>
+           * <code>uint64 problem_location_offset = 6;</code>
            */
           public Builder setProblemLocationOffset(long value) {
             copyOnWrite();
@@ -9649,7 +9061,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>optional uint64 problem_location_offset = 6;</code>
+           * <code>uint64 problem_location_offset = 6;</code>
            */
           public Builder clearProblemLocationOffset() {
             copyOnWrite();
@@ -9658,19 +9070,13 @@ public final class CmdlineRemoteProto {
           }
 
           /**
-           * <code>optional uint64 line = 7;</code>
-           */
-          public boolean hasLine() {
-            return instance.hasLine();
-          }
-          /**
-           * <code>optional uint64 line = 7;</code>
+           * <code>uint64 line = 7;</code>
            */
           public long getLine() {
             return instance.getLine();
           }
           /**
-           * <code>optional uint64 line = 7;</code>
+           * <code>uint64 line = 7;</code>
            */
           public Builder setLine(long value) {
             copyOnWrite();
@@ -9678,7 +9084,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>optional uint64 line = 7;</code>
+           * <code>uint64 line = 7;</code>
            */
           public Builder clearLine() {
             copyOnWrite();
@@ -9687,19 +9093,13 @@ public final class CmdlineRemoteProto {
           }
 
           /**
-           * <code>optional uint64 column = 8;</code>
-           */
-          public boolean hasColumn() {
-            return instance.hasColumn();
-          }
-          /**
-           * <code>optional uint64 column = 8;</code>
+           * <code>uint64 column = 8;</code>
            */
           public long getColumn() {
             return instance.getColumn();
           }
           /**
-           * <code>optional uint64 column = 8;</code>
+           * <code>uint64 column = 8;</code>
            */
           public Builder setColumn(long value) {
             copyOnWrite();
@@ -9707,7 +9107,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>optional uint64 column = 8;</code>
+           * <code>uint64 column = 8;</code>
            */
           public Builder clearColumn() {
             copyOnWrite();
@@ -9716,19 +9116,13 @@ public final class CmdlineRemoteProto {
           }
 
           /**
-           * <code>optional float done = 9;</code>
-           */
-          public boolean hasDone() {
-            return instance.hasDone();
-          }
-          /**
-           * <code>optional float done = 9;</code>
+           * <code>float done = 9;</code>
            */
           public float getDone() {
             return instance.getDone();
           }
           /**
-           * <code>optional float done = 9;</code>
+           * <code>float done = 9;</code>
            */
           public Builder setDone(float value) {
             copyOnWrite();
@@ -9736,7 +9130,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>optional float done = 9;</code>
+           * <code>float done = 9;</code>
            */
           public Builder clearDone() {
             copyOnWrite();
@@ -9746,7 +9140,6 @@ public final class CmdlineRemoteProto {
 
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage)
         }
-        private byte memoizedIsInitialized = 2;
         @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
         protected final java.lang.Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
@@ -9756,16 +9149,7 @@ public final class CmdlineRemoteProto {
               return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage();
             }
             case IS_INITIALIZED: {
-              byte isInitialized = memoizedIsInitialized;
-              if (isInitialized == 1) return DEFAULT_INSTANCE;
-              if (isInitialized == 0) return null;
-
-              boolean shouldMemoize = ((Boolean) arg0).booleanValue();
-              if (!hasKind()) {
-                return null;
-              }
               return DEFAULT_INSTANCE;
-
             }
             case MAKE_IMMUTABLE: {
               return null;
@@ -9776,35 +9160,25 @@ public final class CmdlineRemoteProto {
             case VISIT: {
               Visitor visitor = (Visitor) arg0;
               org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage other = (org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage) arg1;
-              kind_ = visitor.visitInt(hasKind(), kind_,
-                  other.hasKind(), other.kind_);
-              text_ = visitor.visitString(
-                  hasText(), text_,
-                  other.hasText(), other.text_);
-              sourceFilePath_ = visitor.visitString(
-                  hasSourceFilePath(), sourceFilePath_,
-                  other.hasSourceFilePath(), other.sourceFilePath_);
-              problemBeginOffset_ = visitor.visitLong(
-                  hasProblemBeginOffset(), problemBeginOffset_,
-                  other.hasProblemBeginOffset(), other.problemBeginOffset_);
-              problemEndOffset_ = visitor.visitLong(
-                  hasProblemEndOffset(), problemEndOffset_,
-                  other.hasProblemEndOffset(), other.problemEndOffset_);
-              problemLocationOffset_ = visitor.visitLong(
-                  hasProblemLocationOffset(), problemLocationOffset_,
-                  other.hasProblemLocationOffset(), other.problemLocationOffset_);
-              line_ = visitor.visitLong(
-                  hasLine(), line_,
-                  other.hasLine(), other.line_);
-              column_ = visitor.visitLong(
-                  hasColumn(), column_,
-                  other.hasColumn(), other.column_);
-              done_ = visitor.visitFloat(
-                  hasDone(), done_,
-                  other.hasDone(), other.done_);
+              kind_ = visitor.visitInt(kind_ != 0, kind_,    other.kind_ != 0, other.kind_);
+              text_ = visitor.visitString(!text_.isEmpty(), text_,
+                  !other.text_.isEmpty(), other.text_);
+              sourceFilePath_ = visitor.visitString(!sourceFilePath_.isEmpty(), sourceFilePath_,
+                  !other.sourceFilePath_.isEmpty(), other.sourceFilePath_);
+              problemBeginOffset_ = visitor.visitLong(problemBeginOffset_ != 0L, problemBeginOffset_,
+                  other.problemBeginOffset_ != 0L, other.problemBeginOffset_);
+              problemEndOffset_ = visitor.visitLong(problemEndOffset_ != 0L, problemEndOffset_,
+                  other.problemEndOffset_ != 0L, other.problemEndOffset_);
+              problemLocationOffset_ = visitor.visitLong(problemLocationOffset_ != 0L, problemLocationOffset_,
+                  other.problemLocationOffset_ != 0L, other.problemLocationOffset_);
+              line_ = visitor.visitLong(line_ != 0L, line_,
+                  other.line_ != 0L, other.line_);
+              column_ = visitor.visitLong(column_ != 0L, column_,
+                  other.column_ != 0L, other.column_);
+              done_ = visitor.visitFloat(done_ != 0F, done_,
+                  other.done_ != 0F, other.done_);
               if (visitor == com.google.protobuf.GeneratedMessageLite.MergeFromVisitor
                   .INSTANCE) {
-                bitField0_ |= other.bitField0_;
               }
               return this;
             }
@@ -9832,54 +9206,49 @@ public final class CmdlineRemoteProto {
                     }
                     case 8: {
                       int rawValue = input.readEnum();
-                      org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind value = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.forNumber(rawValue);
-                      if (value == null) {
-                        super.mergeVarintField(1, rawValue);
-                      } else {
-                        bitField0_ |= 0x00000001;
-                        kind_ = rawValue;
-                      }
+
+                      kind_ = rawValue;
                       break;
                     }
                     case 18: {
-                      java.lang.String s = input.readString();
-                      bitField0_ |= 0x00000002;
+                      java.lang.String s = input.readStringRequireUtf8();
+
                       text_ = s;
                       break;
                     }
                     case 26: {
-                      java.lang.String s = input.readString();
-                      bitField0_ |= 0x00000004;
+                      java.lang.String s = input.readStringRequireUtf8();
+
                       sourceFilePath_ = s;
                       break;
                     }
                     case 32: {
-                      bitField0_ |= 0x00000008;
+
                       problemBeginOffset_ = input.readUInt64();
                       break;
                     }
                     case 40: {
-                      bitField0_ |= 0x00000010;
+
                       problemEndOffset_ = input.readUInt64();
                       break;
                     }
                     case 48: {
-                      bitField0_ |= 0x00000020;
+
                       problemLocationOffset_ = input.readUInt64();
                       break;
                     }
                     case 56: {
-                      bitField0_ |= 0x00000040;
+
                       line_ = input.readUInt64();
                       break;
                     }
                     case 64: {
-                      bitField0_ |= 0x00000080;
+
                       column_ = input.readUInt64();
                       break;
                     }
                     case 77: {
-                      bitField0_ |= 0x00000100;
+
                       done_ = input.readFloat();
                       break;
                     }
@@ -9908,10 +9277,9 @@ public final class CmdlineRemoteProto {
               return PARSER;
           }
           case GET_MEMOIZED_IS_INITIALIZED: {
-            return memoizedIsInitialized;
+            return (byte) 1;
           }
           case SET_MEMOIZED_IS_INITIALIZED: {
-            memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
             return null;
           }
           }
@@ -9942,57 +9310,37 @@ public final class CmdlineRemoteProto {
           com.google.protobuf.MessageLiteOrBuilder {
 
         /**
-         * <code>required string owner_class_name = 1;</code>
-         */
-        boolean hasOwnerClassName();
-        /**
-         * <code>required string owner_class_name = 1;</code>
+         * <code>string owner_class_name = 1;</code>
          */
         java.lang.String getOwnerClassName();
         /**
-         * <code>required string owner_class_name = 1;</code>
+         * <code>string owner_class_name = 1;</code>
          */
         com.google.protobuf.ByteString
             getOwnerClassNameBytes();
 
         /**
-         * <code>required string field_name = 2;</code>
-         */
-        boolean hasFieldName();
-        /**
-         * <code>required string field_name = 2;</code>
+         * <code>string field_name = 2;</code>
          */
         java.lang.String getFieldName();
         /**
-         * <code>required string field_name = 2;</code>
+         * <code>string field_name = 2;</code>
          */
         com.google.protobuf.ByteString
             getFieldNameBytes();
 
         /**
-         * <code>required int32 access_flags = 3;</code>
-         */
-        boolean hasAccessFlags();
-        /**
-         * <code>required int32 access_flags = 3;</code>
+         * <code>int32 access_flags = 3;</code>
          */
         int getAccessFlags();
 
         /**
-         * <code>optional bool is_access_changed = 4 [default = false];</code>
-         */
-        boolean hasIsAccessChanged();
-        /**
-         * <code>optional bool is_access_changed = 4 [default = false];</code>
+         * <code>bool is_access_changed = 4;</code>
          */
         boolean getIsAccessChanged();
 
         /**
-         * <code>optional bool is_field_removed = 5 [default = false];</code>
-         */
-        boolean hasIsFieldRemoved();
-        /**
-         * <code>optional bool is_field_removed = 5 [default = false];</code>
+         * <code>bool is_field_removed = 5;</code>
          */
         boolean getIsFieldRemoved();
       }
@@ -10008,211 +9356,182 @@ public final class CmdlineRemoteProto {
           ownerClassName_ = "";
           fieldName_ = "";
         }
-        private int bitField0_;
         public static final int OWNER_CLASS_NAME_FIELD_NUMBER = 1;
         private java.lang.String ownerClassName_;
         /**
-         * <code>required string owner_class_name = 1;</code>
-         */
-        public boolean hasOwnerClassName() {
-          return ((bitField0_ & 0x00000001) == 0x00000001);
-        }
-        /**
-         * <code>required string owner_class_name = 1;</code>
+         * <code>string owner_class_name = 1;</code>
          */
         public java.lang.String getOwnerClassName() {
           return ownerClassName_;
         }
         /**
-         * <code>required string owner_class_name = 1;</code>
+         * <code>string owner_class_name = 1;</code>
          */
         public com.google.protobuf.ByteString
             getOwnerClassNameBytes() {
           return com.google.protobuf.ByteString.copyFromUtf8(ownerClassName_);
         }
         /**
-         * <code>required string owner_class_name = 1;</code>
+         * <code>string owner_class_name = 1;</code>
          */
         private void setOwnerClassName(
             java.lang.String value) {
           if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000001;
+
           ownerClassName_ = value;
         }
         /**
-         * <code>required string owner_class_name = 1;</code>
+         * <code>string owner_class_name = 1;</code>
          */
         private void clearOwnerClassName() {
-          bitField0_ = (bitField0_ & ~0x00000001);
+
           ownerClassName_ = getDefaultInstance().getOwnerClassName();
         }
         /**
-         * <code>required string owner_class_name = 1;</code>
+         * <code>string owner_class_name = 1;</code>
          */
         private void setOwnerClassNameBytes(
             com.google.protobuf.ByteString value) {
           if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000001;
+  checkByteStringIsUtf8(value);
+
           ownerClassName_ = value.toStringUtf8();
         }
 
         public static final int FIELD_NAME_FIELD_NUMBER = 2;
         private java.lang.String fieldName_;
         /**
-         * <code>required string field_name = 2;</code>
-         */
-        public boolean hasFieldName() {
-          return ((bitField0_ & 0x00000002) == 0x00000002);
-        }
-        /**
-         * <code>required string field_name = 2;</code>
+         * <code>string field_name = 2;</code>
          */
         public java.lang.String getFieldName() {
           return fieldName_;
         }
         /**
-         * <code>required string field_name = 2;</code>
+         * <code>string field_name = 2;</code>
          */
         public com.google.protobuf.ByteString
             getFieldNameBytes() {
           return com.google.protobuf.ByteString.copyFromUtf8(fieldName_);
         }
         /**
-         * <code>required string field_name = 2;</code>
+         * <code>string field_name = 2;</code>
          */
         private void setFieldName(
             java.lang.String value) {
           if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000002;
+
           fieldName_ = value;
         }
         /**
-         * <code>required string field_name = 2;</code>
+         * <code>string field_name = 2;</code>
          */
         private void clearFieldName() {
-          bitField0_ = (bitField0_ & ~0x00000002);
+
           fieldName_ = getDefaultInstance().getFieldName();
         }
         /**
-         * <code>required string field_name = 2;</code>
+         * <code>string field_name = 2;</code>
          */
         private void setFieldNameBytes(
             com.google.protobuf.ByteString value) {
           if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000002;
+  checkByteStringIsUtf8(value);
+
           fieldName_ = value.toStringUtf8();
         }
 
         public static final int ACCESS_FLAGS_FIELD_NUMBER = 3;
         private int accessFlags_;
         /**
-         * <code>required int32 access_flags = 3;</code>
-         */
-        public boolean hasAccessFlags() {
-          return ((bitField0_ & 0x00000004) == 0x00000004);
-        }
-        /**
-         * <code>required int32 access_flags = 3;</code>
+         * <code>int32 access_flags = 3;</code>
          */
         public int getAccessFlags() {
           return accessFlags_;
         }
         /**
-         * <code>required int32 access_flags = 3;</code>
+         * <code>int32 access_flags = 3;</code>
          */
         private void setAccessFlags(int value) {
-          bitField0_ |= 0x00000004;
+
           accessFlags_ = value;
         }
         /**
-         * <code>required int32 access_flags = 3;</code>
+         * <code>int32 access_flags = 3;</code>
          */
         private void clearAccessFlags() {
-          bitField0_ = (bitField0_ & ~0x00000004);
+
           accessFlags_ = 0;
         }
 
         public static final int IS_ACCESS_CHANGED_FIELD_NUMBER = 4;
         private boolean isAccessChanged_;
         /**
-         * <code>optional bool is_access_changed = 4 [default = false];</code>
-         */
-        public boolean hasIsAccessChanged() {
-          return ((bitField0_ & 0x00000008) == 0x00000008);
-        }
-        /**
-         * <code>optional bool is_access_changed = 4 [default = false];</code>
+         * <code>bool is_access_changed = 4;</code>
          */
         public boolean getIsAccessChanged() {
           return isAccessChanged_;
         }
         /**
-         * <code>optional bool is_access_changed = 4 [default = false];</code>
+         * <code>bool is_access_changed = 4;</code>
          */
         private void setIsAccessChanged(boolean value) {
-          bitField0_ |= 0x00000008;
+
           isAccessChanged_ = value;
         }
         /**
-         * <code>optional bool is_access_changed = 4 [default = false];</code>
+         * <code>bool is_access_changed = 4;</code>
          */
         private void clearIsAccessChanged() {
-          bitField0_ = (bitField0_ & ~0x00000008);
+
           isAccessChanged_ = false;
         }
 
         public static final int IS_FIELD_REMOVED_FIELD_NUMBER = 5;
         private boolean isFieldRemoved_;
         /**
-         * <code>optional bool is_field_removed = 5 [default = false];</code>
-         */
-        public boolean hasIsFieldRemoved() {
-          return ((bitField0_ & 0x00000010) == 0x00000010);
-        }
-        /**
-         * <code>optional bool is_field_removed = 5 [default = false];</code>
+         * <code>bool is_field_removed = 5;</code>
          */
         public boolean getIsFieldRemoved() {
           return isFieldRemoved_;
         }
         /**
-         * <code>optional bool is_field_removed = 5 [default = false];</code>
+         * <code>bool is_field_removed = 5;</code>
          */
         private void setIsFieldRemoved(boolean value) {
-          bitField0_ |= 0x00000010;
+
           isFieldRemoved_ = value;
         }
         /**
-         * <code>optional bool is_field_removed = 5 [default = false];</code>
+         * <code>bool is_field_removed = 5;</code>
          */
         private void clearIsFieldRemoved() {
-          bitField0_ = (bitField0_ & ~0x00000010);
+
           isFieldRemoved_ = false;
         }
 
         public void writeTo(com.google.protobuf.CodedOutputStream output)
                             throws java.io.IOException {
-          if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          if (!ownerClassName_.isEmpty()) {
             output.writeString(1, getOwnerClassName());
           }
-          if (((bitField0_ & 0x00000002) == 0x00000002)) {
+          if (!fieldName_.isEmpty()) {
             output.writeString(2, getFieldName());
           }
-          if (((bitField0_ & 0x00000004) == 0x00000004)) {
+          if (accessFlags_ != 0) {
             output.writeInt32(3, accessFlags_);
           }
-          if (((bitField0_ & 0x00000008) == 0x00000008)) {
+          if (isAccessChanged_ != false) {
             output.writeBool(4, isAccessChanged_);
           }
-          if (((bitField0_ & 0x00000010) == 0x00000010)) {
+          if (isFieldRemoved_ != false) {
             output.writeBool(5, isFieldRemoved_);
           }
           unknownFields.writeTo(output);
@@ -10223,23 +9542,23 @@ public final class CmdlineRemoteProto {
           if (size != -1) return size;
 
           size = 0;
-          if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          if (!ownerClassName_.isEmpty()) {
             size += com.google.protobuf.CodedOutputStream
               .computeStringSize(1, getOwnerClassName());
           }
-          if (((bitField0_ & 0x00000002) == 0x00000002)) {
+          if (!fieldName_.isEmpty()) {
             size += com.google.protobuf.CodedOutputStream
               .computeStringSize(2, getFieldName());
           }
-          if (((bitField0_ & 0x00000004) == 0x00000004)) {
+          if (accessFlags_ != 0) {
             size += com.google.protobuf.CodedOutputStream
               .computeInt32Size(3, accessFlags_);
           }
-          if (((bitField0_ & 0x00000008) == 0x00000008)) {
+          if (isAccessChanged_ != false) {
             size += com.google.protobuf.CodedOutputStream
               .computeBoolSize(4, isAccessChanged_);
           }
-          if (((bitField0_ & 0x00000010) == 0x00000010)) {
+          if (isFieldRemoved_ != false) {
             size += com.google.protobuf.CodedOutputStream
               .computeBoolSize(5, isFieldRemoved_);
           }
@@ -10344,26 +9663,20 @@ public final class CmdlineRemoteProto {
 
 
           /**
-           * <code>required string owner_class_name = 1;</code>
-           */
-          public boolean hasOwnerClassName() {
-            return instance.hasOwnerClassName();
-          }
-          /**
-           * <code>required string owner_class_name = 1;</code>
+           * <code>string owner_class_name = 1;</code>
            */
           public java.lang.String getOwnerClassName() {
             return instance.getOwnerClassName();
           }
           /**
-           * <code>required string owner_class_name = 1;</code>
+           * <code>string owner_class_name = 1;</code>
            */
           public com.google.protobuf.ByteString
               getOwnerClassNameBytes() {
             return instance.getOwnerClassNameBytes();
           }
           /**
-           * <code>required string owner_class_name = 1;</code>
+           * <code>string owner_class_name = 1;</code>
            */
           public Builder setOwnerClassName(
               java.lang.String value) {
@@ -10372,7 +9685,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>required string owner_class_name = 1;</code>
+           * <code>string owner_class_name = 1;</code>
            */
           public Builder clearOwnerClassName() {
             copyOnWrite();
@@ -10380,7 +9693,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>required string owner_class_name = 1;</code>
+           * <code>string owner_class_name = 1;</code>
            */
           public Builder setOwnerClassNameBytes(
               com.google.protobuf.ByteString value) {
@@ -10390,26 +9703,20 @@ public final class CmdlineRemoteProto {
           }
 
           /**
-           * <code>required string field_name = 2;</code>
-           */
-          public boolean hasFieldName() {
-            return instance.hasFieldName();
-          }
-          /**
-           * <code>required string field_name = 2;</code>
+           * <code>string field_name = 2;</code>
            */
           public java.lang.String getFieldName() {
             return instance.getFieldName();
           }
           /**
-           * <code>required string field_name = 2;</code>
+           * <code>string field_name = 2;</code>
            */
           public com.google.protobuf.ByteString
               getFieldNameBytes() {
             return instance.getFieldNameBytes();
           }
           /**
-           * <code>required string field_name = 2;</code>
+           * <code>string field_name = 2;</code>
            */
           public Builder setFieldName(
               java.lang.String value) {
@@ -10418,7 +9725,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>required string field_name = 2;</code>
+           * <code>string field_name = 2;</code>
            */
           public Builder clearFieldName() {
             copyOnWrite();
@@ -10426,7 +9733,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>required string field_name = 2;</code>
+           * <code>string field_name = 2;</code>
            */
           public Builder setFieldNameBytes(
               com.google.protobuf.ByteString value) {
@@ -10436,19 +9743,13 @@ public final class CmdlineRemoteProto {
           }
 
           /**
-           * <code>required int32 access_flags = 3;</code>
-           */
-          public boolean hasAccessFlags() {
-            return instance.hasAccessFlags();
-          }
-          /**
-           * <code>required int32 access_flags = 3;</code>
+           * <code>int32 access_flags = 3;</code>
            */
           public int getAccessFlags() {
             return instance.getAccessFlags();
           }
           /**
-           * <code>required int32 access_flags = 3;</code>
+           * <code>int32 access_flags = 3;</code>
            */
           public Builder setAccessFlags(int value) {
             copyOnWrite();
@@ -10456,7 +9757,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>required int32 access_flags = 3;</code>
+           * <code>int32 access_flags = 3;</code>
            */
           public Builder clearAccessFlags() {
             copyOnWrite();
@@ -10465,19 +9766,13 @@ public final class CmdlineRemoteProto {
           }
 
           /**
-           * <code>optional bool is_access_changed = 4 [default = false];</code>
-           */
-          public boolean hasIsAccessChanged() {
-            return instance.hasIsAccessChanged();
-          }
-          /**
-           * <code>optional bool is_access_changed = 4 [default = false];</code>
+           * <code>bool is_access_changed = 4;</code>
            */
           public boolean getIsAccessChanged() {
             return instance.getIsAccessChanged();
           }
           /**
-           * <code>optional bool is_access_changed = 4 [default = false];</code>
+           * <code>bool is_access_changed = 4;</code>
            */
           public Builder setIsAccessChanged(boolean value) {
             copyOnWrite();
@@ -10485,7 +9780,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>optional bool is_access_changed = 4 [default = false];</code>
+           * <code>bool is_access_changed = 4;</code>
            */
           public Builder clearIsAccessChanged() {
             copyOnWrite();
@@ -10494,19 +9789,13 @@ public final class CmdlineRemoteProto {
           }
 
           /**
-           * <code>optional bool is_field_removed = 5 [default = false];</code>
-           */
-          public boolean hasIsFieldRemoved() {
-            return instance.hasIsFieldRemoved();
-          }
-          /**
-           * <code>optional bool is_field_removed = 5 [default = false];</code>
+           * <code>bool is_field_removed = 5;</code>
            */
           public boolean getIsFieldRemoved() {
             return instance.getIsFieldRemoved();
           }
           /**
-           * <code>optional bool is_field_removed = 5 [default = false];</code>
+           * <code>bool is_field_removed = 5;</code>
            */
           public Builder setIsFieldRemoved(boolean value) {
             copyOnWrite();
@@ -10514,7 +9803,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>optional bool is_field_removed = 5 [default = false];</code>
+           * <code>bool is_field_removed = 5;</code>
            */
           public Builder clearIsFieldRemoved() {
             copyOnWrite();
@@ -10524,7 +9813,6 @@ public final class CmdlineRemoteProto {
 
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask)
         }
-        private byte memoizedIsInitialized = 2;
         @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
         protected final java.lang.Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
@@ -10534,22 +9822,7 @@ public final class CmdlineRemoteProto {
               return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask();
             }
             case IS_INITIALIZED: {
-              byte isInitialized = memoizedIsInitialized;
-              if (isInitialized == 1) return DEFAULT_INSTANCE;
-              if (isInitialized == 0) return null;
-
-              boolean shouldMemoize = ((Boolean) arg0).booleanValue();
-              if (!hasOwnerClassName()) {
-                return null;
-              }
-              if (!hasFieldName()) {
-                return null;
-              }
-              if (!hasAccessFlags()) {
-                return null;
-              }
               return DEFAULT_INSTANCE;
-
             }
             case MAKE_IMMUTABLE: {
               return null;
@@ -10560,24 +9833,18 @@ public final class CmdlineRemoteProto {
             case VISIT: {
               Visitor visitor = (Visitor) arg0;
               org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask other = (org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask) arg1;
-              ownerClassName_ = visitor.visitString(
-                  hasOwnerClassName(), ownerClassName_,
-                  other.hasOwnerClassName(), other.ownerClassName_);
-              fieldName_ = visitor.visitString(
-                  hasFieldName(), fieldName_,
-                  other.hasFieldName(), other.fieldName_);
-              accessFlags_ = visitor.visitInt(
-                  hasAccessFlags(), accessFlags_,
-                  other.hasAccessFlags(), other.accessFlags_);
-              isAccessChanged_ = visitor.visitBoolean(
-                  hasIsAccessChanged(), isAccessChanged_,
-                  other.hasIsAccessChanged(), other.isAccessChanged_);
-              isFieldRemoved_ = visitor.visitBoolean(
-                  hasIsFieldRemoved(), isFieldRemoved_,
-                  other.hasIsFieldRemoved(), other.isFieldRemoved_);
+              ownerClassName_ = visitor.visitString(!ownerClassName_.isEmpty(), ownerClassName_,
+                  !other.ownerClassName_.isEmpty(), other.ownerClassName_);
+              fieldName_ = visitor.visitString(!fieldName_.isEmpty(), fieldName_,
+                  !other.fieldName_.isEmpty(), other.fieldName_);
+              accessFlags_ = visitor.visitInt(accessFlags_ != 0, accessFlags_,
+                  other.accessFlags_ != 0, other.accessFlags_);
+              isAccessChanged_ = visitor.visitBoolean(isAccessChanged_ != false, isAccessChanged_,
+                  other.isAccessChanged_ != false, other.isAccessChanged_);
+              isFieldRemoved_ = visitor.visitBoolean(isFieldRemoved_ != false, isFieldRemoved_,
+                  other.isFieldRemoved_ != false, other.isFieldRemoved_);
               if (visitor == com.google.protobuf.GeneratedMessageLite.MergeFromVisitor
                   .INSTANCE) {
-                bitField0_ |= other.bitField0_;
               }
               return this;
             }
@@ -10604,29 +9871,29 @@ public final class CmdlineRemoteProto {
                       break;
                     }
                     case 10: {
-                      java.lang.String s = input.readString();
-                      bitField0_ |= 0x00000001;
+                      java.lang.String s = input.readStringRequireUtf8();
+
                       ownerClassName_ = s;
                       break;
                     }
                     case 18: {
-                      java.lang.String s = input.readString();
-                      bitField0_ |= 0x00000002;
+                      java.lang.String s = input.readStringRequireUtf8();
+
                       fieldName_ = s;
                       break;
                     }
                     case 24: {
-                      bitField0_ |= 0x00000004;
+
                       accessFlags_ = input.readInt32();
                       break;
                     }
                     case 32: {
-                      bitField0_ |= 0x00000008;
+
                       isAccessChanged_ = input.readBool();
                       break;
                     }
                     case 40: {
-                      bitField0_ |= 0x00000010;
+
                       isFieldRemoved_ = input.readBool();
                       break;
                     }
@@ -10655,10 +9922,9 @@ public final class CmdlineRemoteProto {
               return PARSER;
           }
           case GET_MEMOIZED_IS_INITIALIZED: {
-            return memoizedIsInitialized;
+            return (byte) 1;
           }
           case SET_MEMOIZED_IS_INITIALIZED: {
-            memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
             return null;
           }
           }
@@ -10684,74 +9950,79 @@ public final class CmdlineRemoteProto {
         }
       }
 
-      private int bitField0_;
       public static final int TYPE_FIELD_NUMBER = 1;
       private int type_;
       /**
-       * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.Type type = 1;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.Type type = 1;</code>
        */
-      public boolean hasType() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
+      public int getTypeValue() {
+        return type_;
       }
       /**
-       * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.Type type = 1;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.Type type = 1;</code>
        */
       public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.Type getType() {
         org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.Type result = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.Type.forNumber(type_);
-        return result == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.Type.PARAM_REQUEST : result;
+        return result == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.Type.UNRECOGNIZED : result;
       }
       /**
-       * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.Type type = 1;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.Type type = 1;</code>
+       */
+      private void setTypeValue(int value) {
+          type_ = value;
+      }
+      /**
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.Type type = 1;</code>
        */
       private void setType(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.Type value) {
         if (value == null) {
           throw new NullPointerException();
         }
-        bitField0_ |= 0x00000001;
+
         type_ = value.getNumber();
       }
       /**
-       * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.Type type = 1;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.Type type = 1;</code>
        */
       private void clearType() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        type_ = 1;
+
+        type_ = 0;
       }
 
       public static final int BUILD_EVENT_FIELD_NUMBER = 2;
       private org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent buildEvent_;
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
        */
       public boolean hasBuildEvent() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
+        return buildEvent_ != null;
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
        */
       public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent getBuildEvent() {
         return buildEvent_ == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.getDefaultInstance() : buildEvent_;
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
        */
       private void setBuildEvent(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent value) {
         if (value == null) {
           throw new NullPointerException();
         }
         buildEvent_ = value;
-        bitField0_ |= 0x00000002;
+
         }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
        */
       private void setBuildEvent(
           org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Builder builderForValue) {
         buildEvent_ = builderForValue.build();
-        bitField0_ |= 0x00000002;
+
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
        */
       private void mergeBuildEvent(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent value) {
         if (buildEvent_ != null &&
@@ -10761,49 +10032,49 @@ public final class CmdlineRemoteProto {
         } else {
           buildEvent_ = value;
         }
-        bitField0_ |= 0x00000002;
+
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
        */
       private void clearBuildEvent() {  buildEvent_ = null;
-        bitField0_ = (bitField0_ & ~0x00000002);
+
       }
 
       public static final int COMPILE_MESSAGE_FIELD_NUMBER = 3;
       private org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage compileMessage_;
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
        */
       public boolean hasCompileMessage() {
-        return ((bitField0_ & 0x00000004) == 0x00000004);
+        return compileMessage_ != null;
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
        */
       public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage getCompileMessage() {
         return compileMessage_ == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.getDefaultInstance() : compileMessage_;
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
        */
       private void setCompileMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage value) {
         if (value == null) {
           throw new NullPointerException();
         }
         compileMessage_ = value;
-        bitField0_ |= 0x00000004;
+
         }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
        */
       private void setCompileMessage(
           org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Builder builderForValue) {
         compileMessage_ = builderForValue.build();
-        bitField0_ |= 0x00000004;
+
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
        */
       private void mergeCompileMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage value) {
         if (compileMessage_ != null &&
@@ -10813,49 +10084,49 @@ public final class CmdlineRemoteProto {
         } else {
           compileMessage_ = value;
         }
-        bitField0_ |= 0x00000004;
+
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
        */
       private void clearCompileMessage() {  compileMessage_ = null;
-        bitField0_ = (bitField0_ & ~0x00000004);
+
       }
 
       public static final int CONSTANT_SEARCH_TASK_FIELD_NUMBER = 4;
       private org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask constantSearchTask_;
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
        */
       public boolean hasConstantSearchTask() {
-        return ((bitField0_ & 0x00000008) == 0x00000008);
+        return constantSearchTask_ != null;
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
        */
       public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask getConstantSearchTask() {
         return constantSearchTask_ == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask.getDefaultInstance() : constantSearchTask_;
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
        */
       private void setConstantSearchTask(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask value) {
         if (value == null) {
           throw new NullPointerException();
         }
         constantSearchTask_ = value;
-        bitField0_ |= 0x00000008;
+
         }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
        */
       private void setConstantSearchTask(
           org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask.Builder builderForValue) {
         constantSearchTask_ = builderForValue.build();
-        bitField0_ |= 0x00000008;
+
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
        */
       private void mergeConstantSearchTask(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask value) {
         if (constantSearchTask_ != null &&
@@ -10865,27 +10136,27 @@ public final class CmdlineRemoteProto {
         } else {
           constantSearchTask_ = value;
         }
-        bitField0_ |= 0x00000008;
+
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
        */
       private void clearConstantSearchTask() {  constantSearchTask_ = null;
-        bitField0_ = (bitField0_ & ~0x00000008);
+
       }
 
       public void writeTo(com.google.protobuf.CodedOutputStream output)
                           throws java.io.IOException {
-        if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        if (type_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.Type.PARAM_REQUEST.getNumber()) {
           output.writeEnum(1, type_);
         }
-        if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        if (buildEvent_ != null) {
           output.writeMessage(2, getBuildEvent());
         }
-        if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        if (compileMessage_ != null) {
           output.writeMessage(3, getCompileMessage());
         }
-        if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        if (constantSearchTask_ != null) {
           output.writeMessage(4, getConstantSearchTask());
         }
         unknownFields.writeTo(output);
@@ -10896,19 +10167,19 @@ public final class CmdlineRemoteProto {
         if (size != -1) return size;
 
         size = 0;
-        if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        if (type_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.Type.PARAM_REQUEST.getNumber()) {
           size += com.google.protobuf.CodedOutputStream
             .computeEnumSize(1, type_);
         }
-        if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        if (buildEvent_ != null) {
           size += com.google.protobuf.CodedOutputStream
             .computeMessageSize(2, getBuildEvent());
         }
-        if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        if (compileMessage_ != null) {
           size += com.google.protobuf.CodedOutputStream
             .computeMessageSize(3, getCompileMessage());
         }
-        if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        if (constantSearchTask_ != null) {
           size += com.google.protobuf.CodedOutputStream
             .computeMessageSize(4, getConstantSearchTask());
         }
@@ -11013,19 +10284,27 @@ public final class CmdlineRemoteProto {
 
 
         /**
-         * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.Type type = 1;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.Type type = 1;</code>
          */
-        public boolean hasType() {
-          return instance.hasType();
+        public int getTypeValue() {
+          return instance.getTypeValue();
         }
         /**
-         * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.Type type = 1;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.Type type = 1;</code>
+         */
+        public Builder setTypeValue(int value) {
+          copyOnWrite();
+          instance.setTypeValue(value);
+          return this;
+        }
+        /**
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.Type type = 1;</code>
          */
         public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.Type getType() {
           return instance.getType();
         }
         /**
-         * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.Type type = 1;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.Type type = 1;</code>
          */
         public Builder setType(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.Type value) {
           copyOnWrite();
@@ -11033,7 +10312,7 @@ public final class CmdlineRemoteProto {
           return this;
         }
         /**
-         * <code>required .org.jetbrains.jpsservice.Message.BuilderMessage.Type type = 1;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.Type type = 1;</code>
          */
         public Builder clearType() {
           copyOnWrite();
@@ -11042,19 +10321,19 @@ public final class CmdlineRemoteProto {
         }
 
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
          */
         public boolean hasBuildEvent() {
           return instance.hasBuildEvent();
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
          */
         public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent getBuildEvent() {
           return instance.getBuildEvent();
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
          */
         public Builder setBuildEvent(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent value) {
           copyOnWrite();
@@ -11062,7 +10341,7 @@ public final class CmdlineRemoteProto {
           return this;
           }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
          */
         public Builder setBuildEvent(
             org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Builder builderForValue) {
@@ -11071,7 +10350,7 @@ public final class CmdlineRemoteProto {
           return this;
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
          */
         public Builder mergeBuildEvent(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent value) {
           copyOnWrite();
@@ -11079,7 +10358,7 @@ public final class CmdlineRemoteProto {
           return this;
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent build_event = 2;</code>
          */
         public Builder clearBuildEvent() {  copyOnWrite();
           instance.clearBuildEvent();
@@ -11087,19 +10366,19 @@ public final class CmdlineRemoteProto {
         }
 
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
          */
         public boolean hasCompileMessage() {
           return instance.hasCompileMessage();
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
          */
         public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage getCompileMessage() {
           return instance.getCompileMessage();
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
          */
         public Builder setCompileMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage value) {
           copyOnWrite();
@@ -11107,7 +10386,7 @@ public final class CmdlineRemoteProto {
           return this;
           }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
          */
         public Builder setCompileMessage(
             org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Builder builderForValue) {
@@ -11116,7 +10395,7 @@ public final class CmdlineRemoteProto {
           return this;
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
          */
         public Builder mergeCompileMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage value) {
           copyOnWrite();
@@ -11124,7 +10403,7 @@ public final class CmdlineRemoteProto {
           return this;
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage compile_message = 3;</code>
          */
         public Builder clearCompileMessage() {  copyOnWrite();
           instance.clearCompileMessage();
@@ -11132,19 +10411,19 @@ public final class CmdlineRemoteProto {
         }
 
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
          */
         public boolean hasConstantSearchTask() {
           return instance.hasConstantSearchTask();
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
          */
         public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask getConstantSearchTask() {
           return instance.getConstantSearchTask();
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
          */
         public Builder setConstantSearchTask(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask value) {
           copyOnWrite();
@@ -11152,7 +10431,7 @@ public final class CmdlineRemoteProto {
           return this;
           }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
          */
         public Builder setConstantSearchTask(
             org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask.Builder builderForValue) {
@@ -11161,7 +10440,7 @@ public final class CmdlineRemoteProto {
           return this;
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
          */
         public Builder mergeConstantSearchTask(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask value) {
           copyOnWrite();
@@ -11169,7 +10448,7 @@ public final class CmdlineRemoteProto {
           return this;
         }
         /**
-         * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
+         * <code>.org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask constant_search_task = 4;</code>
          */
         public Builder clearConstantSearchTask() {  copyOnWrite();
           instance.clearConstantSearchTask();
@@ -11178,7 +10457,6 @@ public final class CmdlineRemoteProto {
 
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage)
       }
-      private byte memoizedIsInitialized = 2;
       @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
       protected final java.lang.Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
@@ -11188,31 +10466,7 @@ public final class CmdlineRemoteProto {
             return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage();
           }
           case IS_INITIALIZED: {
-            byte isInitialized = memoizedIsInitialized;
-            if (isInitialized == 1) return DEFAULT_INSTANCE;
-            if (isInitialized == 0) return null;
-
-            boolean shouldMemoize = ((Boolean) arg0).booleanValue();
-            if (!hasType()) {
-              return null;
-            }
-            if (hasBuildEvent()) {
-              if (!getBuildEvent().isInitialized()) {
-                return null;
-              }
-            }
-            if (hasCompileMessage()) {
-              if (!getCompileMessage().isInitialized()) {
-                return null;
-              }
-            }
-            if (hasConstantSearchTask()) {
-              if (!getConstantSearchTask().isInitialized()) {
-                return null;
-              }
-            }
             return DEFAULT_INSTANCE;
-
           }
           case MAKE_IMMUTABLE: {
             return null;
@@ -11223,14 +10477,12 @@ public final class CmdlineRemoteProto {
           case VISIT: {
             Visitor visitor = (Visitor) arg0;
             org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage other = (org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage) arg1;
-            type_ = visitor.visitInt(hasType(), type_,
-                other.hasType(), other.type_);
+            type_ = visitor.visitInt(type_ != 0, type_,    other.type_ != 0, other.type_);
             buildEvent_ = visitor.visitMessage(buildEvent_, other.buildEvent_);
             compileMessage_ = visitor.visitMessage(compileMessage_, other.compileMessage_);
             constantSearchTask_ = visitor.visitMessage(constantSearchTask_, other.constantSearchTask_);
             if (visitor == com.google.protobuf.GeneratedMessageLite.MergeFromVisitor
                 .INSTANCE) {
-              bitField0_ |= other.bitField0_;
             }
             return this;
           }
@@ -11258,18 +10510,13 @@ public final class CmdlineRemoteProto {
                   }
                   case 8: {
                     int rawValue = input.readEnum();
-                    org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.Type value = org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.Type.forNumber(rawValue);
-                    if (value == null) {
-                      super.mergeVarintField(1, rawValue);
-                    } else {
-                      bitField0_ |= 0x00000001;
-                      type_ = rawValue;
-                    }
+
+                    type_ = rawValue;
                     break;
                   }
                   case 18: {
                     org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Builder subBuilder = null;
-                    if (((bitField0_ & 0x00000002) == 0x00000002)) {
+                    if (buildEvent_ != null) {
                       subBuilder = buildEvent_.toBuilder();
                     }
                     buildEvent_ = input.readMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.parser(), extensionRegistry);
@@ -11277,12 +10524,12 @@ public final class CmdlineRemoteProto {
                       subBuilder.mergeFrom(buildEvent_);
                       buildEvent_ = subBuilder.buildPartial();
                     }
-                    bitField0_ |= 0x00000002;
+
                     break;
                   }
                   case 26: {
                     org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Builder subBuilder = null;
-                    if (((bitField0_ & 0x00000004) == 0x00000004)) {
+                    if (compileMessage_ != null) {
                       subBuilder = compileMessage_.toBuilder();
                     }
                     compileMessage_ = input.readMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.parser(), extensionRegistry);
@@ -11290,12 +10537,12 @@ public final class CmdlineRemoteProto {
                       subBuilder.mergeFrom(compileMessage_);
                       compileMessage_ = subBuilder.buildPartial();
                     }
-                    bitField0_ |= 0x00000004;
+
                     break;
                   }
                   case 34: {
                     org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask.Builder subBuilder = null;
-                    if (((bitField0_ & 0x00000008) == 0x00000008)) {
+                    if (constantSearchTask_ != null) {
                       subBuilder = constantSearchTask_.toBuilder();
                     }
                     constantSearchTask_ = input.readMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask.parser(), extensionRegistry);
@@ -11303,7 +10550,7 @@ public final class CmdlineRemoteProto {
                       subBuilder.mergeFrom(constantSearchTask_);
                       constantSearchTask_ = subBuilder.buildPartial();
                     }
-                    bitField0_ |= 0x00000008;
+
                     break;
                   }
                 }
@@ -11331,10 +10578,9 @@ public final class CmdlineRemoteProto {
             return PARSER;
         }
         case GET_MEMOIZED_IS_INITIALIZED: {
-          return memoizedIsInitialized;
+          return (byte) 1;
         }
         case SET_MEMOIZED_IS_INITIALIZED: {
-          memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
           return null;
         }
         }
@@ -11360,41 +10606,40 @@ public final class CmdlineRemoteProto {
       }
     }
 
-    private int bitField0_;
     public static final int SESSION_ID_FIELD_NUMBER = 1;
     private org.jetbrains.jps.api.CmdlineRemoteProto.Message.UUID sessionId_;
     /**
-     * <code>required .org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
+     * <code>.org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
      */
     public boolean hasSessionId() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
+      return sessionId_ != null;
     }
     /**
-     * <code>required .org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
+     * <code>.org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
      */
     public org.jetbrains.jps.api.CmdlineRemoteProto.Message.UUID getSessionId() {
       return sessionId_ == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.UUID.getDefaultInstance() : sessionId_;
     }
     /**
-     * <code>required .org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
+     * <code>.org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
      */
     private void setSessionId(org.jetbrains.jps.api.CmdlineRemoteProto.Message.UUID value) {
       if (value == null) {
         throw new NullPointerException();
       }
       sessionId_ = value;
-      bitField0_ |= 0x00000001;
+
       }
     /**
-     * <code>required .org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
+     * <code>.org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
      */
     private void setSessionId(
         org.jetbrains.jps.api.CmdlineRemoteProto.Message.UUID.Builder builderForValue) {
       sessionId_ = builderForValue.build();
-      bitField0_ |= 0x00000001;
+
     }
     /**
-     * <code>required .org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
+     * <code>.org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
      */
     private void mergeSessionId(org.jetbrains.jps.api.CmdlineRemoteProto.Message.UUID value) {
       if (sessionId_ != null &&
@@ -11404,82 +10649,88 @@ public final class CmdlineRemoteProto {
       } else {
         sessionId_ = value;
       }
-      bitField0_ |= 0x00000001;
+
     }
     /**
-     * <code>required .org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
+     * <code>.org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
      */
     private void clearSessionId() {  sessionId_ = null;
-      bitField0_ = (bitField0_ & ~0x00000001);
+
     }
 
     public static final int TYPE_FIELD_NUMBER = 2;
     private int type_;
     /**
-     * <code>required .org.jetbrains.jpsservice.Message.Type type = 2;</code>
+     * <code>.org.jetbrains.jpsservice.Message.Type type = 2;</code>
      */
-    public boolean hasType() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
+    public int getTypeValue() {
+      return type_;
     }
     /**
-     * <code>required .org.jetbrains.jpsservice.Message.Type type = 2;</code>
+     * <code>.org.jetbrains.jpsservice.Message.Type type = 2;</code>
      */
     public org.jetbrains.jps.api.CmdlineRemoteProto.Message.Type getType() {
       org.jetbrains.jps.api.CmdlineRemoteProto.Message.Type result = org.jetbrains.jps.api.CmdlineRemoteProto.Message.Type.forNumber(type_);
-      return result == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.Type.CONTROLLER_MESSAGE : result;
+      return result == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.Type.UNRECOGNIZED : result;
     }
     /**
-     * <code>required .org.jetbrains.jpsservice.Message.Type type = 2;</code>
+     * <code>.org.jetbrains.jpsservice.Message.Type type = 2;</code>
+     */
+    private void setTypeValue(int value) {
+        type_ = value;
+    }
+    /**
+     * <code>.org.jetbrains.jpsservice.Message.Type type = 2;</code>
      */
     private void setType(org.jetbrains.jps.api.CmdlineRemoteProto.Message.Type value) {
       if (value == null) {
         throw new NullPointerException();
       }
-      bitField0_ |= 0x00000002;
+
       type_ = value.getNumber();
     }
     /**
-     * <code>required .org.jetbrains.jpsservice.Message.Type type = 2;</code>
+     * <code>.org.jetbrains.jpsservice.Message.Type type = 2;</code>
      */
     private void clearType() {
-      bitField0_ = (bitField0_ & ~0x00000002);
-      type_ = 1;
+
+      type_ = 0;
     }
 
     public static final int CONTROLLER_MESSAGE_FIELD_NUMBER = 3;
     private org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage controllerMessage_;
     /**
-     * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
+     * <code>.org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
      */
     public boolean hasControllerMessage() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
+      return controllerMessage_ != null;
     }
     /**
-     * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
+     * <code>.org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
      */
     public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage getControllerMessage() {
       return controllerMessage_ == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.getDefaultInstance() : controllerMessage_;
     }
     /**
-     * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
+     * <code>.org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
      */
     private void setControllerMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage value) {
       if (value == null) {
         throw new NullPointerException();
       }
       controllerMessage_ = value;
-      bitField0_ |= 0x00000004;
+
       }
     /**
-     * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
+     * <code>.org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
      */
     private void setControllerMessage(
         org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.Builder builderForValue) {
       controllerMessage_ = builderForValue.build();
-      bitField0_ |= 0x00000004;
+
     }
     /**
-     * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
+     * <code>.org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
      */
     private void mergeControllerMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage value) {
       if (controllerMessage_ != null &&
@@ -11489,49 +10740,49 @@ public final class CmdlineRemoteProto {
       } else {
         controllerMessage_ = value;
       }
-      bitField0_ |= 0x00000004;
+
     }
     /**
-     * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
+     * <code>.org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
      */
     private void clearControllerMessage() {  controllerMessage_ = null;
-      bitField0_ = (bitField0_ & ~0x00000004);
+
     }
 
     public static final int BUILDER_MESSAGE_FIELD_NUMBER = 4;
     private org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage builderMessage_;
     /**
-     * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
+     * <code>.org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
      */
     public boolean hasBuilderMessage() {
-      return ((bitField0_ & 0x00000008) == 0x00000008);
+      return builderMessage_ != null;
     }
     /**
-     * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
+     * <code>.org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
      */
     public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage getBuilderMessage() {
       return builderMessage_ == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.getDefaultInstance() : builderMessage_;
     }
     /**
-     * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
+     * <code>.org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
      */
     private void setBuilderMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage value) {
       if (value == null) {
         throw new NullPointerException();
       }
       builderMessage_ = value;
-      bitField0_ |= 0x00000008;
+
       }
     /**
-     * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
+     * <code>.org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
      */
     private void setBuilderMessage(
         org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.Builder builderForValue) {
       builderMessage_ = builderForValue.build();
-      bitField0_ |= 0x00000008;
+
     }
     /**
-     * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
+     * <code>.org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
      */
     private void mergeBuilderMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage value) {
       if (builderMessage_ != null &&
@@ -11541,49 +10792,49 @@ public final class CmdlineRemoteProto {
       } else {
         builderMessage_ = value;
       }
-      bitField0_ |= 0x00000008;
+
     }
     /**
-     * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
+     * <code>.org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
      */
     private void clearBuilderMessage() {  builderMessage_ = null;
-      bitField0_ = (bitField0_ & ~0x00000008);
+
     }
 
     public static final int FAILURE_FIELD_NUMBER = 5;
     private org.jetbrains.jps.api.CmdlineRemoteProto.Message.Failure failure_;
     /**
-     * <code>optional .org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
+     * <code>.org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
      */
     public boolean hasFailure() {
-      return ((bitField0_ & 0x00000010) == 0x00000010);
+      return failure_ != null;
     }
     /**
-     * <code>optional .org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
+     * <code>.org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
      */
     public org.jetbrains.jps.api.CmdlineRemoteProto.Message.Failure getFailure() {
       return failure_ == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.Failure.getDefaultInstance() : failure_;
     }
     /**
-     * <code>optional .org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
+     * <code>.org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
      */
     private void setFailure(org.jetbrains.jps.api.CmdlineRemoteProto.Message.Failure value) {
       if (value == null) {
         throw new NullPointerException();
       }
       failure_ = value;
-      bitField0_ |= 0x00000010;
+
       }
     /**
-     * <code>optional .org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
+     * <code>.org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
      */
     private void setFailure(
         org.jetbrains.jps.api.CmdlineRemoteProto.Message.Failure.Builder builderForValue) {
       failure_ = builderForValue.build();
-      bitField0_ |= 0x00000010;
+
     }
     /**
-     * <code>optional .org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
+     * <code>.org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
      */
     private void mergeFailure(org.jetbrains.jps.api.CmdlineRemoteProto.Message.Failure value) {
       if (failure_ != null &&
@@ -11593,30 +10844,30 @@ public final class CmdlineRemoteProto {
       } else {
         failure_ = value;
       }
-      bitField0_ |= 0x00000010;
+
     }
     /**
-     * <code>optional .org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
+     * <code>.org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
      */
     private void clearFailure() {  failure_ = null;
-      bitField0_ = (bitField0_ & ~0x00000010);
+
     }
 
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+      if (sessionId_ != null) {
         output.writeMessage(1, getSessionId());
       }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+      if (type_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.Type.CONTROLLER_MESSAGE.getNumber()) {
         output.writeEnum(2, type_);
       }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+      if (controllerMessage_ != null) {
         output.writeMessage(3, getControllerMessage());
       }
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+      if (builderMessage_ != null) {
         output.writeMessage(4, getBuilderMessage());
       }
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+      if (failure_ != null) {
         output.writeMessage(5, getFailure());
       }
       unknownFields.writeTo(output);
@@ -11627,23 +10878,23 @@ public final class CmdlineRemoteProto {
       if (size != -1) return size;
 
       size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+      if (sessionId_ != null) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(1, getSessionId());
       }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+      if (type_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.Type.CONTROLLER_MESSAGE.getNumber()) {
         size += com.google.protobuf.CodedOutputStream
           .computeEnumSize(2, type_);
       }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+      if (controllerMessage_ != null) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(3, getControllerMessage());
       }
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+      if (builderMessage_ != null) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(4, getBuilderMessage());
       }
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+      if (failure_ != null) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(5, getFailure());
       }
@@ -11748,19 +10999,19 @@ public final class CmdlineRemoteProto {
 
 
       /**
-       * <code>required .org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
+       * <code>.org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
        */
       public boolean hasSessionId() {
         return instance.hasSessionId();
       }
       /**
-       * <code>required .org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
+       * <code>.org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
        */
       public org.jetbrains.jps.api.CmdlineRemoteProto.Message.UUID getSessionId() {
         return instance.getSessionId();
       }
       /**
-       * <code>required .org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
+       * <code>.org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
        */
       public Builder setSessionId(org.jetbrains.jps.api.CmdlineRemoteProto.Message.UUID value) {
         copyOnWrite();
@@ -11768,7 +11019,7 @@ public final class CmdlineRemoteProto {
         return this;
         }
       /**
-       * <code>required .org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
+       * <code>.org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
        */
       public Builder setSessionId(
           org.jetbrains.jps.api.CmdlineRemoteProto.Message.UUID.Builder builderForValue) {
@@ -11777,7 +11028,7 @@ public final class CmdlineRemoteProto {
         return this;
       }
       /**
-       * <code>required .org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
+       * <code>.org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
        */
       public Builder mergeSessionId(org.jetbrains.jps.api.CmdlineRemoteProto.Message.UUID value) {
         copyOnWrite();
@@ -11785,7 +11036,7 @@ public final class CmdlineRemoteProto {
         return this;
       }
       /**
-       * <code>required .org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
+       * <code>.org.jetbrains.jpsservice.Message.UUID session_id = 1;</code>
        */
       public Builder clearSessionId() {  copyOnWrite();
         instance.clearSessionId();
@@ -11793,19 +11044,27 @@ public final class CmdlineRemoteProto {
       }
 
       /**
-       * <code>required .org.jetbrains.jpsservice.Message.Type type = 2;</code>
+       * <code>.org.jetbrains.jpsservice.Message.Type type = 2;</code>
        */
-      public boolean hasType() {
-        return instance.hasType();
+      public int getTypeValue() {
+        return instance.getTypeValue();
       }
       /**
-       * <code>required .org.jetbrains.jpsservice.Message.Type type = 2;</code>
+       * <code>.org.jetbrains.jpsservice.Message.Type type = 2;</code>
+       */
+      public Builder setTypeValue(int value) {
+        copyOnWrite();
+        instance.setTypeValue(value);
+        return this;
+      }
+      /**
+       * <code>.org.jetbrains.jpsservice.Message.Type type = 2;</code>
        */
       public org.jetbrains.jps.api.CmdlineRemoteProto.Message.Type getType() {
         return instance.getType();
       }
       /**
-       * <code>required .org.jetbrains.jpsservice.Message.Type type = 2;</code>
+       * <code>.org.jetbrains.jpsservice.Message.Type type = 2;</code>
        */
       public Builder setType(org.jetbrains.jps.api.CmdlineRemoteProto.Message.Type value) {
         copyOnWrite();
@@ -11813,7 +11072,7 @@ public final class CmdlineRemoteProto {
         return this;
       }
       /**
-       * <code>required .org.jetbrains.jpsservice.Message.Type type = 2;</code>
+       * <code>.org.jetbrains.jpsservice.Message.Type type = 2;</code>
        */
       public Builder clearType() {
         copyOnWrite();
@@ -11822,19 +11081,19 @@ public final class CmdlineRemoteProto {
       }
 
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
        */
       public boolean hasControllerMessage() {
         return instance.hasControllerMessage();
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
        */
       public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage getControllerMessage() {
         return instance.getControllerMessage();
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
        */
       public Builder setControllerMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage value) {
         copyOnWrite();
@@ -11842,7 +11101,7 @@ public final class CmdlineRemoteProto {
         return this;
         }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
        */
       public Builder setControllerMessage(
           org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.Builder builderForValue) {
@@ -11851,7 +11110,7 @@ public final class CmdlineRemoteProto {
         return this;
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
        */
       public Builder mergeControllerMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage value) {
         copyOnWrite();
@@ -11859,7 +11118,7 @@ public final class CmdlineRemoteProto {
         return this;
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
+       * <code>.org.jetbrains.jpsservice.Message.ControllerMessage controller_message = 3;</code>
        */
       public Builder clearControllerMessage() {  copyOnWrite();
         instance.clearControllerMessage();
@@ -11867,19 +11126,19 @@ public final class CmdlineRemoteProto {
       }
 
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
        */
       public boolean hasBuilderMessage() {
         return instance.hasBuilderMessage();
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
        */
       public org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage getBuilderMessage() {
         return instance.getBuilderMessage();
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
        */
       public Builder setBuilderMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage value) {
         copyOnWrite();
@@ -11887,7 +11146,7 @@ public final class CmdlineRemoteProto {
         return this;
         }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
        */
       public Builder setBuilderMessage(
           org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.Builder builderForValue) {
@@ -11896,7 +11155,7 @@ public final class CmdlineRemoteProto {
         return this;
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
        */
       public Builder mergeBuilderMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage value) {
         copyOnWrite();
@@ -11904,7 +11163,7 @@ public final class CmdlineRemoteProto {
         return this;
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
+       * <code>.org.jetbrains.jpsservice.Message.BuilderMessage builder_message = 4;</code>
        */
       public Builder clearBuilderMessage() {  copyOnWrite();
         instance.clearBuilderMessage();
@@ -11912,19 +11171,19 @@ public final class CmdlineRemoteProto {
       }
 
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
+       * <code>.org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
        */
       public boolean hasFailure() {
         return instance.hasFailure();
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
+       * <code>.org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
        */
       public org.jetbrains.jps.api.CmdlineRemoteProto.Message.Failure getFailure() {
         return instance.getFailure();
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
+       * <code>.org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
        */
       public Builder setFailure(org.jetbrains.jps.api.CmdlineRemoteProto.Message.Failure value) {
         copyOnWrite();
@@ -11932,7 +11191,7 @@ public final class CmdlineRemoteProto {
         return this;
         }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
+       * <code>.org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
        */
       public Builder setFailure(
           org.jetbrains.jps.api.CmdlineRemoteProto.Message.Failure.Builder builderForValue) {
@@ -11941,7 +11200,7 @@ public final class CmdlineRemoteProto {
         return this;
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
+       * <code>.org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
        */
       public Builder mergeFailure(org.jetbrains.jps.api.CmdlineRemoteProto.Message.Failure value) {
         copyOnWrite();
@@ -11949,7 +11208,7 @@ public final class CmdlineRemoteProto {
         return this;
       }
       /**
-       * <code>optional .org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
+       * <code>.org.jetbrains.jpsservice.Message.Failure failure = 5;</code>
        */
       public Builder clearFailure() {  copyOnWrite();
         instance.clearFailure();
@@ -11958,7 +11217,6 @@ public final class CmdlineRemoteProto {
 
       // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message)
     }
-    private byte memoizedIsInitialized = 2;
     @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
     protected final java.lang.Object dynamicMethod(
         com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
@@ -11968,32 +11226,7 @@ public final class CmdlineRemoteProto {
           return new org.jetbrains.jps.api.CmdlineRemoteProto.Message();
         }
         case IS_INITIALIZED: {
-          byte isInitialized = memoizedIsInitialized;
-          if (isInitialized == 1) return DEFAULT_INSTANCE;
-          if (isInitialized == 0) return null;
-
-          boolean shouldMemoize = ((Boolean) arg0).booleanValue();
-          if (!hasSessionId()) {
-            return null;
-          }
-          if (!hasType()) {
-            return null;
-          }
-          if (!getSessionId().isInitialized()) {
-            return null;
-          }
-          if (hasControllerMessage()) {
-            if (!getControllerMessage().isInitialized()) {
-              return null;
-            }
-          }
-          if (hasBuilderMessage()) {
-            if (!getBuilderMessage().isInitialized()) {
-              return null;
-            }
-          }
           return DEFAULT_INSTANCE;
-
         }
         case MAKE_IMMUTABLE: {
           return null;
@@ -12005,14 +11238,12 @@ public final class CmdlineRemoteProto {
           Visitor visitor = (Visitor) arg0;
           org.jetbrains.jps.api.CmdlineRemoteProto.Message other = (org.jetbrains.jps.api.CmdlineRemoteProto.Message) arg1;
           sessionId_ = visitor.visitMessage(sessionId_, other.sessionId_);
-          type_ = visitor.visitInt(hasType(), type_,
-              other.hasType(), other.type_);
+          type_ = visitor.visitInt(type_ != 0, type_,    other.type_ != 0, other.type_);
           controllerMessage_ = visitor.visitMessage(controllerMessage_, other.controllerMessage_);
           builderMessage_ = visitor.visitMessage(builderMessage_, other.builderMessage_);
           failure_ = visitor.visitMessage(failure_, other.failure_);
           if (visitor == com.google.protobuf.GeneratedMessageLite.MergeFromVisitor
               .INSTANCE) {
-            bitField0_ |= other.bitField0_;
           }
           return this;
         }
@@ -12040,7 +11271,7 @@ public final class CmdlineRemoteProto {
                 }
                 case 10: {
                   org.jetbrains.jps.api.CmdlineRemoteProto.Message.UUID.Builder subBuilder = null;
-                  if (((bitField0_ & 0x00000001) == 0x00000001)) {
+                  if (sessionId_ != null) {
                     subBuilder = sessionId_.toBuilder();
                   }
                   sessionId_ = input.readMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.UUID.parser(), extensionRegistry);
@@ -12048,23 +11279,18 @@ public final class CmdlineRemoteProto {
                     subBuilder.mergeFrom(sessionId_);
                     sessionId_ = subBuilder.buildPartial();
                   }
-                  bitField0_ |= 0x00000001;
+
                   break;
                 }
                 case 16: {
                   int rawValue = input.readEnum();
-                  org.jetbrains.jps.api.CmdlineRemoteProto.Message.Type value = org.jetbrains.jps.api.CmdlineRemoteProto.Message.Type.forNumber(rawValue);
-                  if (value == null) {
-                    super.mergeVarintField(2, rawValue);
-                  } else {
-                    bitField0_ |= 0x00000002;
-                    type_ = rawValue;
-                  }
+
+                  type_ = rawValue;
                   break;
                 }
                 case 26: {
                   org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.Builder subBuilder = null;
-                  if (((bitField0_ & 0x00000004) == 0x00000004)) {
+                  if (controllerMessage_ != null) {
                     subBuilder = controllerMessage_.toBuilder();
                   }
                   controllerMessage_ = input.readMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.parser(), extensionRegistry);
@@ -12072,12 +11298,12 @@ public final class CmdlineRemoteProto {
                     subBuilder.mergeFrom(controllerMessage_);
                     controllerMessage_ = subBuilder.buildPartial();
                   }
-                  bitField0_ |= 0x00000004;
+
                   break;
                 }
                 case 34: {
                   org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.Builder subBuilder = null;
-                  if (((bitField0_ & 0x00000008) == 0x00000008)) {
+                  if (builderMessage_ != null) {
                     subBuilder = builderMessage_.toBuilder();
                   }
                   builderMessage_ = input.readMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.parser(), extensionRegistry);
@@ -12085,12 +11311,12 @@ public final class CmdlineRemoteProto {
                     subBuilder.mergeFrom(builderMessage_);
                     builderMessage_ = subBuilder.buildPartial();
                   }
-                  bitField0_ |= 0x00000008;
+
                   break;
                 }
                 case 42: {
                   org.jetbrains.jps.api.CmdlineRemoteProto.Message.Failure.Builder subBuilder = null;
-                  if (((bitField0_ & 0x00000010) == 0x00000010)) {
+                  if (failure_ != null) {
                     subBuilder = failure_.toBuilder();
                   }
                   failure_ = input.readMessage(org.jetbrains.jps.api.CmdlineRemoteProto.Message.Failure.parser(), extensionRegistry);
@@ -12098,7 +11324,7 @@ public final class CmdlineRemoteProto {
                     subBuilder.mergeFrom(failure_);
                     failure_ = subBuilder.buildPartial();
                   }
-                  bitField0_ |= 0x00000010;
+
                   break;
                 }
               }
@@ -12126,10 +11352,9 @@ public final class CmdlineRemoteProto {
           return PARSER;
       }
       case GET_MEMOIZED_IS_INITIALIZED: {
-        return memoizedIsInitialized;
+        return (byte) 1;
       }
       case SET_MEMOIZED_IS_INITIALIZED: {
-        memoizedIsInitialized = (byte) (arg0 == null ? 0 : 1);
         return null;
       }
       }
