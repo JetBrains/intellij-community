@@ -168,6 +168,8 @@ class CommunityRepositoryModules {
       ])
     },
     plugin("intellij.gradle") {
+      withModule("intellij.gradle.common")
+      withModule("intellij.gradle.java")
       withModule("intellij.gradle.jps")
       withModule("intellij.gradle.toolingExtension")
       withModule("intellij.gradle.toolingExtension.impl")
