@@ -74,6 +74,7 @@ import java.util.stream.Collectors;
  */
 public class IdeEventQueue extends EventQueue {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue");
+  private static final Logger TYPEAHEAD_LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue.typeahead");
   private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue.runnables");
   private static TransactionGuardImpl ourTransactionGuard;
 
@@ -1165,7 +1166,9 @@ public class IdeEventQueue extends EventQueue {
     doPostEvent(event);
   }
 
-  private static boolean isPopupLosingFocus (AWTEvent e) {
+  private boolean isPopupLosingFocus (AWTEvent e) {
+
+    TYPEAHEAD_LOG.debug("Window event: " + e.paramString());
 
     if (e.getClass().getName().contains("SequencedEvent")) {
       Field nestedField = ReflectionUtil.getDeclaredField(e.getClass(), "nested");
@@ -1174,12 +1177,22 @@ public class IdeEventQueue extends EventQueue {
         if (nested != null && isPopupLosingFocusFromWindowEvent(nested)) return true;
       }
       catch (IllegalAccessException illegalAccessException) {
-        LOG.error(illegalAccessException);
+        TYPEAHEAD_LOG.error(illegalAccessException);
       }
     }
 
     if (isPopupLosingFocusFromWindowEvent(e)) return true;
+    if (isFrameDeactivation(e)) {
+      TYPEAHEAD_LOG.debug("Clear delayed events because of IdeFrame deactivation");
+      delayKeyEvents.set(false);
+      myDelayedKeyEvents.clear();
+    };
+
     return false;
+  }
+
+  private static boolean isFrameDeactivation(AWTEvent e) {
+    return e.getID() == WindowEvent.WINDOW_DEACTIVATED && e.getSource() instanceof IdeFrame;
   }
 
   private static boolean isPopupLosingFocusFromWindowEvent(AWTEvent e) {
@@ -1226,6 +1239,7 @@ public class IdeEventQueue extends EventQueue {
       if (Registry.is("action.aware.typeAhead")) {
         if (delayKeyEvents.get()) {
           myDelayedKeyEvents.add((KeyEvent)event);
+          TYPEAHEAD_LOG.debug("Waiting for typeahead : " + event);
           return true;
         }
       }
@@ -1244,6 +1258,7 @@ public class IdeEventQueue extends EventQueue {
           anyMatch(ks -> (keyEvent.getModifiersEx() & ks.getModifiers()) != 0);
 
         if (thisShortcutMayShowPopup) {
+          TYPEAHEAD_LOG.debug("Delay following events");
           delayKeyEvents.set(true);
         }
       }
@@ -1256,7 +1271,9 @@ public class IdeEventQueue extends EventQueue {
         delayKeyEvents.set(false);
         int size = myDelayedKeyEvents.size();
         for (int keyEventIndex = 0; keyEventIndex < size; keyEventIndex++) {
-          super.postEvent(myDelayedKeyEvents.remove());
+          KeyEvent theEvent = myDelayedKeyEvents.remove();
+          TYPEAHEAD_LOG.debug("Posted after delay: " + theEvent.paramString());
+          super.postEvent(theEvent);
         }
       }
     }
@@ -1264,17 +1281,26 @@ public class IdeEventQueue extends EventQueue {
     return true;
   }
 
-  private List<Shortcut> shortcutsShowingPopups;
+  private final Set<Shortcut> shortcutsShowingPopups = new HashSet<>();
 
-  private List<Shortcut> getShortcutsShowingPopups () {
+  private final Set<String> actionsShowingPopupsList = new HashSet<>();
+
+  private Set<Shortcut> getShortcutsShowingPopups () {
     if (KeymapManager.getInstance().getActiveKeymap() != null) {
-      Shortcut[] classesShortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts("GotoClass");
-      Shortcut[] gotoFilesShortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts("GotoFile");
-      Shortcut[] gotoSymbolsShortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts("GotoSymbol");
-      shortcutsShowingPopups = new LinkedList<>();
-      shortcutsShowingPopups.addAll(Arrays.asList(classesShortcuts));
-      shortcutsShowingPopups.addAll(Arrays.asList(gotoFilesShortcuts));
-      shortcutsShowingPopups.addAll(Arrays.asList(gotoSymbolsShortcuts));
+      // move to a config
+      actionsShowingPopupsList.add("GotoClass");
+      actionsShowingPopupsList.add("GotoFile");
+      actionsShowingPopupsList.add("GotoSymbol");
+      actionsShowingPopupsList.add("FindInPath");
+      actionsShowingPopupsList.add("ReplaceInPath");
+
+      actionsShowingPopupsList.forEach(actionId -> {
+        List<Shortcut> shortcuts = Arrays.asList(KeymapManager.getInstance().getActiveKeymap().getShortcuts("GotoClass"));
+        if (TYPEAHEAD_LOG.isDebugEnabled()) {
+          shortcuts.forEach(s -> TYPEAHEAD_LOG.debug("Typeahead for " + actionId + " : Shortcuts: " + s));
+        }
+        shortcutsShowingPopups.addAll(shortcuts);
+      });
     }
     return shortcutsShowingPopups;
   }
