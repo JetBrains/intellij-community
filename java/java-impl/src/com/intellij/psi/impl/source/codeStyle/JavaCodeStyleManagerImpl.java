@@ -228,7 +228,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     }
 
     if (propertyName != null) {
-      String[] namesByName = getSuggestionsByName(propertyName, kind, false, correctKeywords);
+      String[] namesByName = getSuggestionsByName(propertyName, kind, false, correctKeywords).toArray(ArrayUtil.EMPTY_STRING_ARRAY);
       sortVariableNameSuggestions(namesByName, kind, propertyName, null);
       ContainerUtil.addAll(names, namesByName);
     }
@@ -923,13 +923,13 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   private Collection<String> getSuggestionsByNames(@NotNull Iterable<String> names, @NotNull VariableKind kind, boolean correctKeywords) {
     final Collection<String> suggestions = new LinkedHashSet<>();
     for (String name : names) {
-      ContainerUtil.addAll(suggestions, getSuggestionsByName(name, kind, false, correctKeywords));
+      suggestions.addAll(getSuggestionsByName(name, kind, false, correctKeywords));
     }
     return suggestions;
   }
 
   @NotNull
-  private String[] getSuggestionsByName(@NotNull String name, @NotNull VariableKind variableKind, boolean isArray, boolean correctKeywords) {
+  private Collection<String> getSuggestionsByName(@NotNull String name, @NotNull VariableKind variableKind, boolean isArray, boolean correctKeywords) {
     boolean upperCaseStyle = variableKind == VariableKind.STATIC_FINAL_FIELD;
     boolean preferLongerNames = getJavaSettings().PREFER_LONGER_NAMES;
     String prefix = getPrefixByVariableKind(variableKind);
@@ -941,7 +941,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     }
 
     ContainerUtil.addIfNotNull(answer, getWordByPreposition(name, prefix, suffix, upperCaseStyle, isArray));
-    return ArrayUtil.toStringArray(answer);
+    return answer;
   }
 
   private static String getWordByPreposition(@NotNull String name, String prefix, String suffix, boolean upperCaseStyle, boolean isArray) {
