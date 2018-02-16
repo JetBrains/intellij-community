@@ -32,7 +32,6 @@ import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.impl.PyEvaluator;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -476,7 +475,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     }
     final Instruction head = myBuilder.prevInstruction;
     final PyElsePart elsePart = node.getElsePart();
-    if (elsePart == null && !nonEmptyIterationSource(source)) {
+    if (elsePart == null && !PyEvaluator.evaluateAsBoolean(source, false)) {
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
     final PyStatementList list = forPart.getStatementList();
@@ -509,13 +508,6 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
     myBuilder.flowAbrupted();
-  }
-
-  private static boolean nonEmptyIterationSource(@Nullable PyExpression source) {
-    return
-      source instanceof PySequenceExpression && !((PySequenceExpression)source).isEmpty() ||
-      source instanceof PyStringLiteralExpression && !((PyStringLiteralExpression)source).getStringValue().isEmpty() ||
-      source instanceof PyParenthesizedExpression && nonEmptyIterationSource(((PyParenthesizedExpression)source).getContainedExpression());
   }
 
   @Override
