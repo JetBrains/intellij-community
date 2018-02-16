@@ -127,7 +127,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
                                      @NotNull Editor editor,
                                      @Nullable DataContext dataContext) {
     VariableInplaceRenamer renamer = createRenamer(elementToRename, editor);
-    boolean startedRename = renamer == null ? false : renamer.performInplaceRename();
+    boolean startedRename = renamer != null && renamer.performInplaceRename();
 
     if (!startedRename) {
       performDialogRename(elementToRename, editor, dataContext, renamer != null ? renamer.myInitialName : null);
