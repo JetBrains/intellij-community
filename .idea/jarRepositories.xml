@@ -26,5 +26,10 @@
       <option name="name" value="18c13506-e994-44b4-9eef-4e6ec3262e15" />
       <option name="url" value="https://dl.google.com/dl/android/maven2" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="5ddb844f-da77-4dd2-9c71-ab1484ec2e60" />
+      <option name="name" value="5ddb844f-da77-4dd2-9c71-ab1484ec2e60" />
+      <option name="url" value="http://repo.jenkins-ci.org/releases" />
+    </remote-repository>
   </component>
 </project>
