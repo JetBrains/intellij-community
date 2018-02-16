@@ -6,13 +6,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
+import com.intellij.execution.Executor;
+import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.ConfigurationFromContext;
+import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.find.FindUtil;
 import com.intellij.find.actions.CompositeActiveComponent;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -97,10 +100,17 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
     String initTitle = "Tests for " + methodPresentationName;
     DefaultPsiElementCellRenderer renderer = new DefaultPsiElementCellRenderer();
 
-    AnAction run = ActionManager.getInstance().getAction(DefaultRunExecutor.getRunExecutorInstance().getContextActionId());
-    // todo: run == null??
-    InplaceButton runButton = new InplaceButton(new IconButton("Run", AllIcons.Actions.Execute), __ ->
-      run.actionPerformed(AnActionEvent.createFromAnAction(run, null, ActionPlaces.UNKNOWN, e.getDataContext())));
+    InplaceButton runButton = new InplaceButton(new IconButton("Run All", AllIcons.Actions.Execute), __ -> {
+      Executor executor = DefaultRunExecutor.getRunExecutorInstance();
+      ConfigurationContext context = ConfigurationContext.getFromContext(e.getDataContext());
+      //first producer would be picked up, testng will be ignored completely!
+      //all tests would be retrieved again by provider
+      ConfigurationFromContext configuration =
+        RunConfigurationProducer.getInstance(TestDiscoveryConfigurationProducer.class).findOrCreateConfigurationFromContext(context);
+      if (configuration != null) {
+        ExecutionUtil.runConfiguration(configuration.getConfigurationSettings(), executor);
+      }
+    });
 
     Ref<JBPopup> ref = new Ref<>();
     InplaceButton pinButton = new InplaceButton(
