@@ -6,6 +6,7 @@ import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -381,7 +382,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
           // TODO: Auto-generated method stub
         }
       };
-      buttons.add(new JBOptionButton(enableDisableAction, new Action[]{uninstallAction}));
+      buttons.add(new MyOptionButton(enableDisableAction, new Action[]{uninstallAction}));
     }
 
     Color background = UIUtil.getListBackground();
@@ -537,6 +538,10 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
   private static JComponent createScrollPane(JComponent panel) {
     JBScrollPane pane = new JBScrollPane(panel);
     pane.setBorder(JBUI.Borders.empty());
+    ApplicationManager.getApplication().invokeLater(() -> {
+      pane.getHorizontalScrollBar().setValue(0);
+      pane.getVerticalScrollBar().setValue(0);
+    });
     return pane;
   }
 
@@ -1242,7 +1247,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
             // TODO: Auto-generated method stub
           }
         };
-        myEnableDisableUninstallButton = new JBOptionButton(enableDisableAction, new Action[]{uninstallAction});
+        myEnableDisableUninstallButton = new MyOptionButton(enableDisableAction, new Action[]{uninstallAction});
         buttons.add(myEnableDisableUninstallButton);
       }
 
@@ -1488,6 +1493,31 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
   private interface TagBuilder {
     @NotNull
     TagComponent createTagComponent(@NotNull String tag);
+  }
+
+  private static class MyOptionButton extends JBOptionButton {
+    public MyOptionButton(Action action, Action[] options) {
+      super(action, options);
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension size = super.getPreferredSize();
+      Object width = getClientProperty("ExtraWidth");
+      if (width instanceof Integer) {
+        size.width += (int)width;
+      }
+      return size;
+    }
+
+    @Override
+    public void setBackground(Color bg) {
+      super.setBackground(bg);
+      int count = getComponentCount();
+      for (int i = 0; i < count; i++) {
+        getComponent(i).setBackground(bg);
+      }
+    }
   }
 
   private static class HorizontalLayout extends AbstractLayoutManager {
