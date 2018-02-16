@@ -314,11 +314,8 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   @NotNull
   private String[] suggestVariableNameByType(@NotNull PsiType type, @NotNull final VariableKind variableKind, final boolean correctKeywords, boolean skipIndices) {
-    Collection<String> result = new LinkedHashSet<>();
-    for (String name : doSuggestNamesByType(type, variableKind, skipIndices)) {
-      ContainerUtil.addAll(result, getSuggestionsByName(name, variableKind, false, correctKeywords));
-    }
-    return result.toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+    Collection<String> byTypeNames = doSuggestNamesByType(type, variableKind, skipIndices);
+    return getSuggestionsByNames(byTypeNames, variableKind, correctKeywords).toArray(ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
   @NotNull
@@ -920,6 +917,15 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     name = prefix + name + getSuffixByVariableKind(variableKind);
     name = changeIfNotIdentifier(name);
     return name;
+  }
+
+  @NotNull
+  private Collection<String> getSuggestionsByNames(@NotNull Iterable<String> names, @NotNull VariableKind kind, boolean correctKeywords) {
+    final Collection<String> suggestions = new LinkedHashSet<>();
+    for (String name : names) {
+      ContainerUtil.addAll(suggestions, getSuggestionsByName(name, kind, false, correctKeywords));
+    }
+    return suggestions;
   }
 
   @NotNull
