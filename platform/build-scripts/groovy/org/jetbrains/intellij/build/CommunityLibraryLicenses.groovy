@@ -287,7 +287,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "pockets", attachedTo: "intellij.python.helpers", version: "0.3.2", license: "BSD", url: "http://pockets.readthedocs.org/"),
     new LibraryLicense(name: "protobuf", version: "2.5.0", license: "New BSD", url: "http://code.google.com/p/protobuf/",
                        licenseUrl: "https://github.com/google/protobuf/blob/master/LICENSE"),
-    new LibraryLicense(name: "Proxy Vole", libraryName: "proxy-vole", version: "1.0.3", license: "Apache 2.0",
+    new LibraryLicense(name: "Proxy Vole", libraryName: "proxy-vole", version: "1.0.4", license: "Apache 2.0",
                        url: "https://github.com/MarkusBernhardt/proxy-vole", licenseUrl: "https://github.com/MarkusBernhardt/proxy-vole/blob/master/LICENSE.md"),
     new LibraryLicense(name: "pty4j", libraryName: "pty4j", version: "0.7.1", license: "Eclipse Public License v1.0",
                        url: "https://github.com/traff/pty4j"),
