@@ -182,7 +182,7 @@ class ContentTabLabel extends BaseLabel {
     else {
       if (additionalIcon.stream().anyMatch(icon -> icon.getAvailable())) {
         setHorizontalAlignment(SwingConstants.LEFT);
-        setBorder(JBUI.Borders.empty(0, 12, 0, 7));
+        setBorder(JBUI.Borders.empty(0, 12, 0, 3));
       }
       else {
         setHorizontalAlignment(SwingConstants.CENTER);

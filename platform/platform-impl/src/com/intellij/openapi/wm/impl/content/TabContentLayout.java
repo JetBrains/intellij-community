@@ -95,7 +95,7 @@ class TabContentLayout extends ContentLayout {
     ContentManager manager = myUi.myManager;
     LayoutData data = new LayoutData(myUi);
 
-    data.eachX = 8;
+    data.eachX = 4;
     data.eachY = 0;
 
     if (isIdVisible()) {
