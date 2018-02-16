@@ -41,7 +41,7 @@
     "description": {
       "type": "string"
     },
-    "x-jetbrains-html-description": {
+    "x-intellij-html-description": {
       "type": "string",
       "description": "Description in html format"
     },
