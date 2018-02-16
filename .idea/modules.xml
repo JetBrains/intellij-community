@@ -140,7 +140,6 @@
     <module old-name="instant-run-annotations" new-name="android.sdktools.instant-run-annotations" />
     <module old-name="instant-run-client" new-name="android.sdktools.instant-run-client" />
     <module old-name="instant-run-common" new-name="android.sdktools.instant-run-common" />
-    <module old-name="instant-run-runtime" new-name="android.sdktools.instant-run-runtime" />
     <module old-name="instrumentation-util" new-name="intellij.java.compiler.instrumentationUtil" />
     <module old-name="instrumentation-util-8" new-name="intellij.java.compiler.instrumentationUtil.java8" />
     <module old-name="intellilang-jps-plugin" new-name="intellij.java.langInjection.jps" />
