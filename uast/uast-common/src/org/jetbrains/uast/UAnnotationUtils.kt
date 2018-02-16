@@ -73,7 +73,7 @@ fun getUParentForAnnotationIdentifier(identifier: PsiElement): UElement? {
  * @param uElement a element that occurs in annotation
  * @return the annotation in which this element occurs and a corresponding parameter name if available
  */
-fun getAnnotationEntry(uElement: UElement?): Pair<PsiAnnotation, String?>? {
+fun getContainingAnnotationEntry(uElement: UElement?): Pair<PsiAnnotation, String?>? {
 
   fun tryConvertToEntry(uElement: UElement, parent: UElement, name: String?): Pair<PsiAnnotation, String?>? {
     val uAnnotation = parent.sourcePsi.toUElementOfType<UAnnotation>() ?: return null
