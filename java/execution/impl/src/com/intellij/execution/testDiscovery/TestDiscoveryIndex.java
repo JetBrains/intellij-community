@@ -301,7 +301,7 @@ public class TestDiscoveryIndex implements Disposable {
           });
       }
 
-      String moduleId = moduleName == null ? null : moduleName + frameworkPrefix;
+      String moduleId = moduleName == null ? null : frameworkPrefix + moduleName;
       localHolder.doUpdateFromDiff(testNameId, classData, previousClassData, moduleId != null ? localHolder.myModuleNameEnumerator.enumerate(moduleId) : null);
       return null;
     });
