@@ -480,7 +480,7 @@ public class AbstractTreeUi {
       @Override
       public void perform() {
         addSubtreeToUpdate(node);
-        // at this point some tree updates may already have been run as a result of 
+        // at this point some tree updates may already have been run as a result of
         // in tests these updates may lead to the instance disposal, so getUpdater() at the next line may return null
         final AbstractTreeUpdater updater = getUpdater();
         if (updater != null) {
@@ -1788,7 +1788,7 @@ public class AbstractTreeUi {
           else {
             try {
               //noinspection unchecked
-              execute(processRunnable).notify((AsyncPromise)result);
+              execute(processRunnable).processed((Promise)result);
             }
             catch (ProcessCanceledException e) {
               pass.expire();

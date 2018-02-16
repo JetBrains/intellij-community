@@ -19,6 +19,7 @@
     <orderEntry type="module" module-name="intellij.xml.dom.impl" scope="TEST" />
     <orderEntry type="library" name="XmlBeans" level="project" />
     <orderEntry type="module" module-name="intellij.platform.tests" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="xml-resolver" level="project" />
   </component>
   <component name="copyright">
     <Base>

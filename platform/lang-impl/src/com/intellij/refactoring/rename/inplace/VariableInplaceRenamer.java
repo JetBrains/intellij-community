@@ -53,6 +53,7 @@ import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -70,22 +71,23 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   private TextRange mySelectedRange;
   protected Language myLanguage;
 
-  public VariableInplaceRenamer(@NotNull PsiNamedElement elementToRename, Editor editor) {
+  public VariableInplaceRenamer(@NotNull PsiNamedElement elementToRename,
+                                @NotNull Editor editor) {
     this(elementToRename, editor, elementToRename.getProject());
   }
 
-  public VariableInplaceRenamer(PsiNamedElement elementToRename,
-                                Editor editor,
-                                Project project) {
+  public VariableInplaceRenamer(@Nullable PsiNamedElement elementToRename,
+                                @NotNull Editor editor,
+                                @NotNull Project project) {
     this(elementToRename, editor, project, elementToRename != null ? elementToRename.getName() : null,
          elementToRename != null ? elementToRename.getName() : null);
   }
 
-  public VariableInplaceRenamer(PsiNamedElement elementToRename,
-                                Editor editor,
-                                Project project,
-                                final String initialName,
-                                final String oldName) {
+  public VariableInplaceRenamer(@Nullable PsiNamedElement elementToRename,
+                                @NotNull Editor editor,
+                                @NotNull Project project,
+                                @Nullable String initialName,
+                                @Nullable String oldName) {
     super(editor, elementToRename, project, initialName, oldName);
   }
 

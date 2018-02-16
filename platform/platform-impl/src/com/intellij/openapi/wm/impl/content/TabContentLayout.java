@@ -5,6 +5,7 @@ import com.intellij.ide.dnd.DnDSupport;
 import com.intellij.ide.dnd.DnDTarget;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -224,7 +225,14 @@ class TabContentLayout extends ContentLayout {
   }
 
   boolean isToDrawTabs() {
-    return myTabs.size() > 1;
+    if(myTabs.size() > 1) return true;
+
+      if(myTabs.size() == 1)  {
+        String title = myTabs.get(0).getContent().getToolwindowTitle();
+        return !StringUtil.isEmpty(title);
+      }
+
+      return false;
   }
 
   static class LayoutData {
@@ -331,11 +339,6 @@ class TabContentLayout extends ContentLayout {
       myTabs.remove(tab);
       myContent2Tabs.remove(event.getContent());
     }
-  }
-
-  @Override
-  public boolean shouldDrawDecorations() {
-    return isToDrawTabs();
   }
 
   @Override

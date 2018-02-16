@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("Promises")
 package org.jetbrains.concurrency
 
@@ -39,7 +25,7 @@ val Promise<*>.isFulfilled: Boolean
 internal val OBSOLETE_ERROR by lazy { createError("Obsolete") }
 
 private val REJECTED: Promise<*> by lazy { RejectedPromise<Any?>(createError("rejected")) }
-private val DONE: Promise<*> by lazy(LazyThreadSafetyMode.NONE) { Promise.DONE }
+private val DONE: Promise<*> by lazy(LazyThreadSafetyMode.NONE) { DonePromise(null) }
 private val CANCELLED_PROMISE: Promise<*> by lazy { RejectedPromise<Any?>(OBSOLETE_ERROR) }
 
 @Suppress("UNCHECKED_CAST")
@@ -47,6 +33,9 @@ fun <T> resolvedPromise(): Promise<T> = DONE as Promise<T>
 
 fun nullPromise(): Promise<*> = DONE
 
+/**
+ * Creates a promise that is resolved with the given value.
+ */
 fun <T> resolvedPromise(result: T): Promise<T> = if (result == null) resolvedPromise() else DonePromise(result)
 
 @Suppress("UNCHECKED_CAST")
@@ -82,10 +71,13 @@ inline fun <T> Promise<T>.done(node: Obsolescent, crossinline handler: (T) -> Un
   override fun consume(param: T) = handler(param)
 })
 
-@Suppress("UNCHECKED_CAST")
-inline fun Promise<*>.processed(node: Obsolescent, crossinline handler: () -> Unit) = (this as Promise<Any?>).processed(object : ObsolescentConsumer<Any?>(node) {
-  override fun consume(param: Any?) = handler()
-})
+inline fun Promise<*>.processed(node: Obsolescent, crossinline handler: () -> Unit): Promise<Any?>? {
+  @Suppress("UNCHECKED_CAST")
+  return (this as Promise<Any?>)
+    .processed(object : ObsolescentConsumer<Any?>(node) {
+      override fun consume(param: Any?) = handler()
+    })
+}
 
 @Suppress("UNCHECKED_CAST")
 inline fun Promise<*>.doneRun(crossinline handler: () -> Unit) = done({ handler() })
@@ -122,7 +114,7 @@ fun <T> collectResults(promises: List<Promise<T>>, ignoreErrors: Boolean = false
     return resolvedPromise(emptyList())
   }
 
-  val results: MutableList<T> = if (promises.size == 1) SmartList<T>() else ArrayList<T>(promises.size)
+  val results: MutableList<T> = if (promises.size == 1) SmartList<T>() else ArrayList(promises.size)
   for (promise in promises) {
     promise.done { results.add(it) }
   }
@@ -167,7 +159,7 @@ internal class MessageError(error: String, log: Boolean) : RuntimeException(erro
 fun Logger.errorIfNotMessage(e: Throwable): Boolean {
   if (e is MessageError) {
     val log = e.log
-    if (log == ThreeState.YES || (log == ThreeState.UNSURE && (ApplicationManager.getApplication()?.isUnitTestMode ?: false))) {
+    if (log == ThreeState.YES || (log == ThreeState.UNSURE && ApplicationManager.getApplication()?.isUnitTestMode == true)) {
       error(e)
       return true
     }
@@ -197,7 +189,7 @@ fun <T> all(promises: Collection<Promise<*>>, totalResult: T?, ignoreErrors: Boo
 
   val totalPromise = AsyncPromise<T>()
   val done = CountDownConsumer(promises.size, totalPromise, totalResult)
-  val rejected = if (ignoreErrors) Consumer<Throwable> { done.consume(null) } else Consumer<Throwable> { totalPromise.setError(it) }
+  val rejected = if (ignoreErrors) Consumer { done.consume(null) } else Consumer<Throwable> { totalPromise.setError(it) }
 
   for (promise in promises) {
     promise.done(done)

@@ -31,8 +31,6 @@ class JavaUQualifiedReferenceExpression(
     JavaUSimpleNameReferenceExpression(psi.referenceNameElement, psi.referenceName ?: "<error>", this, psi)
   }
 
-  override fun convertParent(): UElement? = super.convertParent().let(this::unwrapCompositeQualifiedReference)
-
   override val accessType: UastQualifiedExpressionAccessType
     get() = UastQualifiedExpressionAccessType.SIMPLE
 
@@ -46,12 +44,7 @@ internal fun UElement.unwrapCompositeQualifiedReference(uParent: UElement?): UEl
   is UQualifiedReferenceExpression -> {
     if (uParent.receiver == this || uParent.selector == this)
       uParent
-    else {
-      val selector = uParent.selector
-      if (this is JavaUSimpleNameReferenceExpression || (selector is JavaUCallExpression && selector.valueArgumentCount > 0))
-        selector
-      else uParent.uastParent
-    }
+    else uParent.selector as? JavaUCallExpression ?: uParent.uastParent
   }
   else -> uParent
 }

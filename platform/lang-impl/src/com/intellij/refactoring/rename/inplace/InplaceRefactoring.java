@@ -108,17 +108,25 @@ public abstract class InplaceRefactoring {
   protected String myTitle;
   protected RelativePoint myTarget;
 
-  public InplaceRefactoring(Editor editor, PsiNamedElement elementToRename, Project project) {
+  public InplaceRefactoring(@NotNull Editor editor,
+                            @Nullable PsiNamedElement elementToRename,
+                            @NotNull Project project) {
     this(editor, elementToRename, project, elementToRename != null ? elementToRename.getName() : null,
          elementToRename != null ? elementToRename.getName() : null);
   }
 
-  public InplaceRefactoring(Editor editor, PsiNamedElement elementToRename, Project project, final String oldName) {
+  public InplaceRefactoring(@NotNull Editor editor,
+                            @Nullable PsiNamedElement elementToRename,
+                            @NotNull Project project,
+                            @Nullable String oldName) {
     this(editor, elementToRename, project, elementToRename != null ? elementToRename.getName() : null, oldName);
   }
 
-  public InplaceRefactoring(
-    Editor editor, PsiNamedElement elementToRename, Project project, String initialName, final String oldName) {
+  public InplaceRefactoring(@NotNull Editor editor,
+                            @Nullable PsiNamedElement elementToRename,
+                            @NotNull Project project,
+                            @Nullable String initialName,
+                            @Nullable String oldName) {
     myEditor = /*(editor instanceof EditorWindow)? ((EditorWindow)editor).getDelegate() : */editor;
     myElementToRename = elementToRename;
     myProject = project;

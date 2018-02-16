@@ -383,7 +383,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     return (ChangesBrowserNode<?>)getModel().getRoot();
   }
 
-  private void notifyInclusionListener() {
+  protected void notifyInclusionListener() {
     if (myInclusionListener != null) {
       myInclusionListener.run();
     }
@@ -403,7 +403,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
    * <p>
    * No listener supposed to be called
    */
-  public void setIncludedChanges(final Collection<?> changes) {
+  public void setIncludedChanges(@NotNull Collection<?> changes) {
     myIncludedChanges.clear();
     myIncludedChanges.addAll(changes);
     repaint();
@@ -544,7 +544,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
 
-  private State getNodeStatus(ChangesBrowserNode<?> node) {
+  protected State getNodeStatus(@NotNull ChangesBrowserNode<?> node) {
     boolean hasIncluded = false;
     boolean hasExcluded = false;
 

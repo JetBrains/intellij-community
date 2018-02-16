@@ -7,17 +7,14 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Objects;
 import java.util.Set;
-
-import static com.intellij.util.containers.ContainerUtil.newTroveSet;
 
 /**
  * A lightweight library definition comparing to {@link com.intellij.openapi.roots.libraries.Library}.
@@ -113,84 +110,55 @@ public abstract class SyntheticLibrary {
   public static SyntheticLibrary newImmutableLibrary(@NotNull Collection<VirtualFile> sourceRoots,
                                                      @NotNull Set<VirtualFile> excludedRoots,
                                                      @Nullable Condition<VirtualFile> excludeCondition) {
-    return newImmutableLibrary(Collections.emptySet(), sourceRoots, excludedRoots, excludeCondition);
+    return newImmutableLibrary(sourceRoots, Collections.emptySet(), excludedRoots, excludeCondition);
   }
 
   @NotNull
-  public static SyntheticLibrary newImmutableLibrary(@NotNull Collection<VirtualFile> binaryRoots,
-                                                     @NotNull Collection<VirtualFile> sourceRoots,
+  public static SyntheticLibrary newImmutableLibrary(@NotNull Collection<VirtualFile> sourceRoots,
+                                                     @NotNull Collection<VirtualFile> binaryRoots,
                                                      @NotNull Set<VirtualFile> excludedRoots,
                                                      @Nullable Condition<VirtualFile> excludeCondition) {
-    return new SyntheticLibrary() {
-      @NotNull
-      @Override
-      public Collection<VirtualFile> getSourceRoots() {
-        return sourceRoots;
-      }
-
-      @NotNull
-      @Override
-      public Collection<VirtualFile> getBinaryRoots() {
-        return binaryRoots;
-      }
-
-      @NotNull
-      @Override
-      public Set<VirtualFile> getExcludedRoots() {
-        return excludedRoots;
-      }
-
-      @Nullable
-      @Override
-      public Condition<VirtualFile> getExcludeFileCondition() {
-        return excludeCondition;
-      }
-
-      @Override
-      public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        SyntheticLibrary library = (SyntheticLibrary)o;
-        if (!sourceRoots.equals(library.getSourceRoots())) return false;
-        if (!binaryRoots.equals(library.getBinaryRoots())) return false;
-        if (!excludedRoots.equals(library.getExcludedRoots())) return false;
-        if (!Objects.equals(excludeCondition, library.getExcludeFileCondition())) return false;
-        return true;
-      }
-
-      @Override
-      public int hashCode() {
-        int result = sourceRoots.hashCode();
-        result = 31 * result + binaryRoots.hashCode();
-        result = 31 * result + excludedRoots.hashCode();
-        result = 31 * result + (excludeCondition != null ? excludeCondition.hashCode() : 0);
-        return result;
-      }
-    };
+    return new ImmutableSyntheticLibrary(sourceRoots, binaryRoots, excludedRoots, excludeCondition);
   }
 
   @NotNull
-  public final Set<VirtualFile> getAllRoots() {
+  public final Collection<VirtualFile> getAllRoots() {
     return getRoots(true, true);
   }
 
   @NotNull
-  private Set<VirtualFile> getRoots(boolean includeSources, boolean includeBinaries) {
-    THashSet<VirtualFile> roots = newTroveSet();
+  private Collection<VirtualFile> getRoots(boolean includeSources, boolean includeBinaries) {
+    if (includeSources && includeBinaries) {
+      Collection<VirtualFile> sourceRoots = getSourceRoots();
+      Collection<VirtualFile> binaryRoots = getBinaryRoots();
+      if (binaryRoots.isEmpty()) {
+        return sourceRoots;
+      }
+      if (sourceRoots.isEmpty()) {
+        return binaryRoots;
+      }
+      return ContainerUtil.union(sourceRoots, binaryRoots);
+    }
     if (includeSources) {
-      roots.addAll(getSourceRoots());
+      return getSourceRoots();
     }
     if (includeBinaries) {
-      roots.addAll(getBinaryRoots());
+      return getBinaryRoots();
     }
-    return roots;
+    return Collections.emptySet();
   }
 
   public final boolean contains(@NotNull VirtualFile file, boolean includeSources, boolean includeBinaries) {
-    return VfsUtilCore.isUnder(file, getRoots(includeSources, includeBinaries)) && !VfsUtilCore.isUnder(file, getExcludedRoots());
+    Set<VirtualFile> roots = asSet(getRoots(includeSources, includeBinaries));
+    return VfsUtilCore.isUnder(file, roots) && !VfsUtilCore.isUnder(file, getExcludedRoots());
   }
 
   public final boolean contains(@NotNull VirtualFile file) {
     return contains(file, true, true);
+  }
+
+  @NotNull
+  private static Set<VirtualFile> asSet(@NotNull Collection<VirtualFile> collection) {
+    return collection instanceof Set ? (Set)collection : ContainerUtil.newTroveSet(collection);
   }
 }

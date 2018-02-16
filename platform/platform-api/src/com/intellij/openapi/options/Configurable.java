@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * This interface represents a named configurable component that provides a Swing form
@@ -214,5 +215,16 @@ public interface Configurable extends UnnamedConfigurable {
 
   default boolean isModified(@NotNull JToggleButton toggleButton, boolean value) {
     return toggleButton.isSelected() != value;
+  }
+
+  interface TopComponentController {
+    void setLeftComponent(@Nullable Component component);
+
+    void showProgress(boolean start);
+  }
+
+  interface TopComponentProvider {
+    @NotNull
+    Component getCenterComponent(@NotNull TopComponentController controller);
   }
 }

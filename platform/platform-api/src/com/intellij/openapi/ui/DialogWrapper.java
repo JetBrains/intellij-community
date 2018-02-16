@@ -599,11 +599,8 @@ public abstract class DialogWrapper {
     }
     JComponent doNotAskCheckbox = createDoNotAskCheckbox();
 
-    final JPanel lrButtonsPanel = new NonOpaquePanel(new GridBagLayout());
-    //noinspection UseDPIAwareInsets
-    final Insets insets = SystemInfo.isMacOSLeopard ?
-                          UIUtil.isUnderIntelliJLaF() ? JBUI.insets(0, 8) : JBUI.emptyInsets() :
-                          UIUtil.isUnderWin10LookAndFeel() ? JBUI.emptyInsets() : new Insets(8, 0, 0, 0); //don't wrap to JBInsets
+    JPanel lrButtonsPanel = new NonOpaquePanel(new GridBagLayout());
+    Insets insets = SystemInfo.isMacOSLeopard && UIUtil.isUnderIntelliJLaF() ? JBUI.insets(0, 8) : JBUI.emptyInsets();
 
     if (rightSideButtons.size() > 0 || leftSideButtons.size() > 0) {
       GridBag bag = new GridBag().setDefaultInsets(insets);
@@ -2013,6 +2010,13 @@ public abstract class DialogWrapper {
         }
       }, 300, null);
     }
+  }
+
+  /**
+   * Check if component is in error state validation-wise
+   */
+  protected boolean hasErrors(@NotNull JComponent component) {
+    return myInfo.stream().anyMatch(i -> component.equals(i.component));
   }
 
   private void setErrorTipText(JComponent component, JLabel label, String text) {

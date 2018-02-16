@@ -42,7 +42,7 @@ import static org.junit.Assert.*;
  */
 @Staging //Thread leak breaks all other tests
 public class PythonDebuggerTest extends PyEnvTestCase {
-  private class BreakpointStopAndEvalTask extends PyDebuggerTask {
+  private static class BreakpointStopAndEvalTask extends PyDebuggerTask {
     public BreakpointStopAndEvalTask(String scriptName) {
       super("/debug", scriptName);
     }
