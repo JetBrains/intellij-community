@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.service.fus.beans.FSContent;
 import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsAggregator;
 import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence;
 import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsStateService;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -37,7 +38,7 @@ public class FUStatisticsService extends ConfigurableStatisticsService<FUStatist
     }
 
     Set<String> approvedGroups = mySettingsService.getApprovedGroups();
-    if (approvedGroups.isEmpty()) {
+    if (approvedGroups.isEmpty() && !ApplicationManagerEx.getApplicationEx().isInternal()) {
         throw new StatServiceException("There are no approved collectors or Statistics White List Service is unavailable.");
     }
     FSContent allDataFromCollectors = myAggregator.getUsageCollectorsData(approvedGroups);
