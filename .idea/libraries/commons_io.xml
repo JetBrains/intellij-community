@@ -1,11 +1,11 @@
 <component name="libraryTable">
-  <library name="commons-io-2.4">
+  <library name="commons-io">
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/commons-io-2.4.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/commons-io/commons-io/2.4/commons-io-2.4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/commons-io/commons-io/2.4/commons-io-2.4-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

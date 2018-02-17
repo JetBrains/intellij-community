@@ -241,7 +241,7 @@ java_library(
 )
 
 java_library(
-    name = "commons-io-2.4",
+    name = "commons-io",
     tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/adt/idea/android/lib:commons-io-2.4"],
