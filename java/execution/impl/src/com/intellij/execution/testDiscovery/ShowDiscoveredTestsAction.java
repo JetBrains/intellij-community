@@ -159,10 +159,10 @@ public class ShowDiscoveredTestsAction extends AnAction {
       for (TestDiscoveryConfigurationProducer producer : getProducers(project)) {
         String frameworkPrefix =
           ((JavaTestConfigurationBase)producer.getConfigurationFactory().createTemplateConfiguration(project)).getFrameworkPrefix();
-        TestDiscoveryProducer.consumeTestClassesAndMethods(project, fqn, methodName, frameworkPrefix, (testClassFqn, testMethodName) -> {
+        TestDiscoveryProducer.consumeDiscoveredTests(project, fqn, methodName, frameworkPrefix, test -> {
           PsiMethod psiMethod = ReadAction.compute(() -> {
-            PsiClass cc = testClassFqn == null ? null : javaFacade.findClass(testClassFqn, scope);
-            return cc == null ? null : ArrayUtil.getFirstElement(cc.findMethodsByName(testMethodName, false));
+            PsiClass cc = test.getTestClassQName() == null ? null : javaFacade.findClass(test.getTestClassQName(), scope);
+            return cc == null ? null : ArrayUtil.getFirstElement(cc.findMethodsByName(test.getTestMethodName(), false));
           });
           if (psiMethod != null) {
             loadTestsTask.updateComponent(psiMethod);

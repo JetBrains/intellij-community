@@ -7,29 +7,46 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.function.BiConsumer;
+import java.util.List;
+import java.util.function.Consumer;
 
 @ApiStatus.Experimental
 public interface TestDiscoveryProducer {
   Logger LOG = Logger.getInstance(LocalTestDiscoveryProducer.class);
 
+  class DiscoveredTest {
+    private final String myTestClassQName;
+    private final String myTestMethodName;
+
+    public DiscoveredTest(String testClassQName, String testMethodName) {
+      myTestClassQName = testClassQName;
+      myTestMethodName = testMethodName;
+    }
+
+    public String getTestClassQName() {
+      return myTestClassQName;
+    }
+
+    public String getTestMethodName() {
+      return myTestMethodName;
+    }
+  }
+
   @NotNull
-  Map<String, String> getTestClassesAndMethodNames(Project project,
-                                                   String classFQName,
-                                                   String methodName,
-                                                   String frameworkId);
+  List<DiscoveredTest> getDiscoveredTests(Project project,
+                                          String classFQName,
+                                          String methodName,
+                                          String frameworkId);
 
   ExtensionPointName<TestDiscoveryProducer> EP = ExtensionPointName.create("com.intellij.testDiscoveryProducer");
 
-  static void consumeTestClassesAndMethods(@NotNull Project project,
-                                           @NotNull String classFQName,
-                                           @NotNull String methodName,
-                                           @NotNull String frameworkId,
-                                           @NotNull BiConsumer<String, String> consumer) {
+  static void consumeDiscoveredTests(@NotNull Project project,
+                                     @NotNull String classFQName,
+                                     @NotNull String methodName,
+                                     @NotNull String frameworkId,
+                                     @NotNull Consumer<DiscoveredTest> consumer) {
     for (TestDiscoveryProducer producer : EP.getExtensions()) {
-      producer.getTestClassesAndMethodNames(project, classFQName, methodName, frameworkId).forEach(consumer);
+      producer.getDiscoveredTests(project, classFQName, methodName, frameworkId).forEach(consumer);
     }
   }
 }

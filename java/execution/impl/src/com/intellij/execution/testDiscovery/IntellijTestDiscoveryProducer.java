@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.RequestBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -17,20 +16,19 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
   private static final String INTELLIJ_TEST_DISCOVERY_HOST = "http://intellij-test-discovery";
 
   @NotNull
   @Override
-  public Map<String, String> getTestClassesAndMethodNames(Project project, String classFQName, String methodName, String frameworkId) {
+  public List<DiscoveredTest> getDiscoveredTests(Project project, String classFQName, String methodName, String frameworkId) {
     String methodFqn = classFQName + "." + methodName;
     RequestBuilder r = HttpRequests.request(INTELLIJ_TEST_DISCOVERY_HOST + "/search/tests/by-method/" + methodFqn);
 
     try {
       return r.connect(request -> {
-        Map<String, String> map = ContainerUtil.newLinkedHashMap();
+        List<DiscoveredTest> map = new ArrayList<>();
         ObjectMapper mapper = new ObjectMapper();
         TestsSearchResult result = mapper.readValue(request.getInputStream(), TestsSearchResult.class);
 
@@ -38,7 +36,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
           s = s.length() > 1 && s.charAt(0) == 'j' ? s.substring(1) : s;
           String classFqn = StringUtil.substringBefore(s, "-");
           String testMethodName = StringUtil.substringAfter(s, "-");
-          map.put(classFqn, testMethodName);
+          map.add(new DiscoveredTest(classFqn, testMethodName));
         });
         return map;
       });
@@ -49,7 +47,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
     catch (IOException e) {
       LOG.debug(e);
     }
-    return Collections.emptyMap();
+    return Collections.emptyList();
   }
 
   @JsonInclude(JsonInclude.Include.NON_EMPTY)
