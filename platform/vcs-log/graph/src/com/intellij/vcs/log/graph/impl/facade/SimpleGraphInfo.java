@@ -91,7 +91,7 @@ public class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<CommitId> {
     }
     IntTimestampGetter timestampGetter = PermanentCommitsInfoImpl.createTimestampGetter(graphCommits);
 
-    NotNullFunction<Integer, CommitId> function = createCommitIdMapFunction(commitsIdMap);
+    NotNullFunction<Integer, CommitId> commitIdMapping = createCommitIdMapFunction(commitsIdMap);
     PermanentLinearGraphImpl newLinearGraph = PermanentLinearGraphBuilder.newInstance(graphCommits).build();
 
     int[] layoutIndexes = new int[end - start];
@@ -115,7 +115,7 @@ public class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<CommitId> {
 
     GraphLayoutImpl newLayout = new GraphLayoutImpl(layoutIndexes, headNodeIndexes, starts);
 
-    return new SimpleGraphInfo<>(newLinearGraph, newLayout, function, timestampGetter,
+    return new SimpleGraphInfo<>(newLinearGraph, newLayout, commitIdMapping, timestampGetter,
                                  LinearGraphUtils.convertIdsToNodeIndexes(linearGraph, branchNodeIds));
   }
 
