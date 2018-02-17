@@ -1,7 +1,8 @@
 <component name="libraryTable">
-  <library name="commons-io">
+  <library name="commons-io" type="repository">
+    <properties maven-id="commons-io:commons-io:2.4" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/commons-io-2.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/commons-io/commons-io/2.4/commons-io-2.4.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>

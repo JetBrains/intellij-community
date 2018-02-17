@@ -244,8 +244,8 @@ java_library(
     name = "commons-io",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/adt/idea/android/lib:commons-io-2.4"],
-    runtime_deps = ["//tools/adt/idea/android/lib:commons-io-2.4"],
+    exports = ["//prebuilts/tools/common/m2/repository/commons-io/commons-io/2.4:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/commons-io/commons-io/2.4:jar"],
 )
 
 java_library(
