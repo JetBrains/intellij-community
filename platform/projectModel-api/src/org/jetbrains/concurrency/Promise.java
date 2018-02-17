@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * The Promise represents the eventual completion (or failure) of an asynchronous operation, and its resulting value.
@@ -97,9 +98,9 @@ public interface Promise<T> {
   State getState();
 
   @Nullable
-  T blockingGet(int timeout, @NotNull TimeUnit timeUnit);
+  T blockingGet(int timeout, @NotNull TimeUnit timeUnit) throws TimeoutException;
 
-  default T blockingGet(int timeout) {
+  default T blockingGet(int timeout) throws TimeoutException {
     return blockingGet(timeout, TimeUnit.MILLISECONDS);
   }
 
