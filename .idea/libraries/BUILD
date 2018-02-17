@@ -1158,8 +1158,8 @@ java_library(
     name = "sqlite",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/xerial/sqlite-jdbc/3.16.1:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/xerial/sqlite-jdbc/3.16.1:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/xerial/sqlite-jdbc/3.20.1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/xerial/sqlite-jdbc/3.20.1:jar"],
 )
 
 java_library(
