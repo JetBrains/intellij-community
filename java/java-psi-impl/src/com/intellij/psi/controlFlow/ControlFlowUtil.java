@@ -1487,6 +1487,15 @@ public class ControlFlowUtil {
     return visitor.getResult().intValue();
   }
 
+  private static int findUnprocessed(int startOffset, int endOffset, InstructionClientVisitor<?> visitor) {
+    for (int i = startOffset; i < endOffset; i++) {
+      if (!visitor.processedInstructions[i]) {
+        return i;
+      }
+    }
+    return endOffset;
+  }
+
   private static void depthFirstSearch(ControlFlow flow, InstructionClientVisitor visitor) {
     depthFirstSearch(flow, visitor, 0, flow.getSize());
   }
@@ -1905,9 +1914,16 @@ public class ControlFlowUtil {
 
   @NotNull
   public static Collection<VariableInfo> getInitializedTwice(@NotNull ControlFlow flow, int startOffset, int endOffset) {
-    InitializedTwiceClientVisitor visitor = new InitializedTwiceClientVisitor(flow, startOffset);
-    depthFirstSearch(flow, visitor, startOffset, endOffset);
-    return visitor.getResult();
+    while (startOffset < endOffset) {
+      InitializedTwiceClientVisitor visitor = new InitializedTwiceClientVisitor(flow, startOffset);
+      depthFirstSearch(flow, visitor, startOffset, endOffset);
+      Collection<VariableInfo> result = visitor.getResult();
+      if(!result.isEmpty()) {
+        return result;
+      }
+      startOffset = findUnprocessed(startOffset, endOffset, visitor);
+    }
+    return Collections.emptyList();
   }
 
   private static class InitializedTwiceClientVisitor extends InstructionClientVisitor<Collection<VariableInfo>> {
