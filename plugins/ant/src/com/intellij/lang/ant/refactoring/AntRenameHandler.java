@@ -38,7 +38,7 @@ import java.util.Collection;
  */
 public final class AntRenameHandler extends PsiElementRenameHandler {
   
-  public boolean isAvailableOnDataContext(final DataContext dataContext) {
+  public boolean isAvailableOnDataContext(@NotNull final DataContext dataContext) {
     final PsiElement[] elements = getElements(dataContext);
     return elements != null && elements.length > 1;
   }
