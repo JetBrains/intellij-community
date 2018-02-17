@@ -1114,8 +1114,8 @@ java_library(
     name = "ini4j",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:ini4j-0.5.2-patched"],
-    runtime_deps = ["//tools/idea/lib:ini4j-0.5.2-patched"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/ini4j/0.5.5-2:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/ini4j/0.5.5-2:jar"],
 )
 
 java_library(
