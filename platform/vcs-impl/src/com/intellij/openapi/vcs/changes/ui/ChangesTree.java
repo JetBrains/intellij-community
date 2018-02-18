@@ -293,7 +293,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     int selectedTreeRow = -1;
 
     if (myShowCheckboxes) {
-      if (myIncludedChanges.size() > 0) {
+      if (!getIncludedSet().isEmpty()) {
         ChangesBrowserNode root = getRoot();
         Enumeration enumeration = root.depthFirstEnumeration();
 
