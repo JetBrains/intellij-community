@@ -14,6 +14,9 @@ import java.util.Collections;
 public enum Mutability {
   UNKNOWN, MUTABLE, UNMODIFIABLE, UNMODIFIABLE_VIEW;
 
+  public static final String UNMODIFIABLE_ANNOTATION = "org.jetbrains.annotations.Unmodifiable";
+  public static final String UNMODIFIABLE_VIEW_ANNOTATION = "org.jetbrains.annotations.UnmodifiableView";
+
   public boolean isUnmodifiable() {
     return this == UNMODIFIABLE || this == UNMODIFIABLE_VIEW;
   }
@@ -37,13 +40,13 @@ public enum Mutability {
         return UNKNOWN;
       }
     }
-    if (AnnotationUtil.isAnnotated(owner, Collections.singleton("org.jetbrains.annotations.Unmodifiable"),
+    if (AnnotationUtil.isAnnotated(owner, Collections.singleton(UNMODIFIABLE_ANNOTATION),
                                    AnnotationUtil.CHECK_HIERARCHY |
                                    AnnotationUtil.CHECK_EXTERNAL |
                                    AnnotationUtil.CHECK_INFERRED)) {
       return UNMODIFIABLE;
     }
-    if (AnnotationUtil.isAnnotated(owner, Collections.singleton("org.jetbrains.annotations.UnmodifiableView"),
+    if (AnnotationUtil.isAnnotated(owner, Collections.singleton(UNMODIFIABLE_VIEW_ANNOTATION),
                                    AnnotationUtil.CHECK_HIERARCHY |
                                    AnnotationUtil.CHECK_EXTERNAL |
                                    AnnotationUtil.CHECK_INFERRED)) {
