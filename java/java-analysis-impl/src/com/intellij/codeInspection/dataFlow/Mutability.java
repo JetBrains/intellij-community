@@ -6,6 +6,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,6 +52,13 @@ public enum Mutability {
                                    AnnotationUtil.CHECK_EXTERNAL |
                                    AnnotationUtil.CHECK_INFERRED)) {
       return UNMODIFIABLE_VIEW;
+    }
+    if (owner instanceof PsiField && owner.hasModifierProperty(PsiModifier.FINAL)) {
+      PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(((PsiField)owner).getInitializer());
+      if (initializer instanceof PsiMethodCallExpression) {
+        PsiMethod method = ((PsiMethodCallExpression)initializer).resolveMethod();
+        return method == null ? UNKNOWN : getMutability(method);
+      }
     }
     return UNKNOWN;
   }
