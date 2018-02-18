@@ -163,14 +163,15 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
         List<LineFragment> rangeFragments = newFragments.get(i);
 
         boolean isExcludedFromCommit = localRange.isExcludedFromCommit();
-        boolean isSkipped = !localRange.getChangelistId().equals(myChangelistId) || isExcludedFromCommit;
+        boolean isSkipped = !localRange.getChangelistId().equals(myChangelistId);
+        boolean isExcluded = !localRange.getChangelistId().equals(myChangelistId) || isExcludedFromCommit;
 
         changes.addAll(ContainerUtil.map(rangeFragments, fragment -> {
           if (myAllowExcludeChangesFromCommit) {
-            return new MySimpleDiffChange(this, fragment, isSkipped, localRange.getChangelistId(), isExcludedFromCommit);
+            return new MySimpleDiffChange(this, fragment, isExcluded, isSkipped, localRange.getChangelistId(), isExcludedFromCommit);
           }
           else {
-            return new SimpleDiffChange(this, fragment, isSkipped);
+            return new SimpleDiffChange(this, fragment, isExcluded, isSkipped);
           }
         }));
       }
@@ -196,10 +197,11 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
 
     public MySimpleDiffChange(@NotNull SimpleLocalChangeListDiffViewer viewer,
                               @NotNull LineFragment fragment,
+                              boolean isIncluded,
                               boolean isSkipped,
                               @NotNull String changelistId,
                               boolean isExcludedFromCommit) {
-      super(viewer, fragment, isSkipped);
+      super(viewer, fragment, isIncluded, isSkipped);
       myChangelistId = changelistId;
       myIsExcludedFromCommit = isExcludedFromCommit;
     }
@@ -294,7 +296,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       List<SimpleDiffChange> selectedChanges = getSelectedChanges(side);
 
       String text;
-      if (!selectedChanges.isEmpty() && ContainerUtil.and(selectedChanges, change -> change.isSkipped())) {
+      if (!selectedChanges.isEmpty() && ContainerUtil.and(selectedChanges, change -> change.isExcluded())) {
         String shortChangeListName = StringUtil.trimMiddle(myChangelistName, 40);
         text = String.format("Move to '%s' Changelist", shortChangeListName);
       }
@@ -323,7 +325,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
         selectedLines.set(change.getStartLine(side), change.getEndLine(side));
       }
 
-      if (ContainerUtil.and(selectedChanges, change -> change.isSkipped())) {
+      if (ContainerUtil.and(selectedChanges, change -> change.isExcluded())) {
         LocalChangeList changeList = ChangeListManager.getInstance(getProject()).getChangeList(myChangelistId);
         if (changeList != null) myTracker.moveToChangelist(selectedLines, changeList);
       }
