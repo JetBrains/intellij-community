@@ -646,8 +646,8 @@ java_library(
     name = "winp",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jvnet/winp/winp/1.23:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jvnet/winp/winp/1.23:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jvnet/winp/winp/1.25:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jvnet/winp/winp/1.25:jar"],
 )
 
 java_library(
