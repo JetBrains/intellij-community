@@ -197,11 +197,11 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
 
     public MySimpleDiffChange(@NotNull SimpleLocalChangeListDiffViewer viewer,
                               @NotNull LineFragment fragment,
-                              boolean isIncluded,
+                              boolean isExcluded,
                               boolean isSkipped,
                               @NotNull String changelistId,
                               boolean isExcludedFromCommit) {
-      super(viewer, fragment, isIncluded, isSkipped);
+      super(viewer, fragment, isExcluded, isSkipped);
       myChangelistId = changelistId;
       myIsExcludedFromCommit = isExcludedFromCommit;
     }
