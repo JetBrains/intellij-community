@@ -777,9 +777,9 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @Override
     public void process(@NotNull Handler handler) {
       for (SimpleDiffChange diffChange : myDiffChanges) {
-        if (!handler.processSkippable(diffChange.getStartLine(Side.LEFT), diffChange.getEndLine(Side.LEFT),
-                                      diffChange.getStartLine(Side.RIGHT), diffChange.getEndLine(Side.RIGHT),
-                                      getEditor1(), diffChange.getDiffType(), diffChange.isSkipped())) {
+        if (!handler.processExcludable(diffChange.getStartLine(Side.LEFT), diffChange.getEndLine(Side.LEFT),
+                                       diffChange.getStartLine(Side.RIGHT), diffChange.getEndLine(Side.RIGHT),
+                                       getEditor1(), diffChange.getDiffType(), diffChange.isExcluded())) {
           return;
         }
       }
@@ -793,14 +793,14 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       if (myTextDiffProvider.isHighlightingDisabled()) {
         return DiffBundle.message("diff.highlighting.disabled.text");
       }
-      int skippedChanges = ContainerUtil.count(myDiffChanges, it -> it.isSkipped()) +
-                           ContainerUtil.count(myInvalidDiffChanges, it -> it.isSkipped());
+      int excludedChanges = ContainerUtil.count(myDiffChanges, it -> it.isExcluded()) +
+                            ContainerUtil.count(myInvalidDiffChanges, it -> it.isExcluded());
       int changesCount = myDiffChanges.size() + myInvalidDiffChanges.size();
       if (changesCount == 0 && !myIsContentsEqual) {
         return DiffBundle.message("diff.all.differences.ignored.text");
       }
-      String message = DiffBundle.message("diff.count.differences.status.text", changesCount - skippedChanges);
-      if (skippedChanges > 0) message += " " + DiffBundle.message("diff.inactive.count.differences.status.text", skippedChanges);
+      String message = DiffBundle.message("diff.count.differences.status.text", changesCount - excludedChanges);
+      if (excludedChanges > 0) message += " " + DiffBundle.message("diff.inactive.count.differences.status.text", excludedChanges);
       return message;
     }
   }

@@ -40,6 +40,7 @@ public class SimpleDiffChange {
 
   @NotNull private final LineFragment myFragment;
   @Nullable private final List<DiffFragment> myInnerFragments;
+  private final boolean myIsExcluded;
   private final boolean myIsSkipped;
 
   @NotNull protected final List<RangeHighlighter> myHighlighters = new ArrayList<>();
@@ -51,16 +52,18 @@ public class SimpleDiffChange {
 
   public SimpleDiffChange(@NotNull SimpleDiffViewer viewer,
                           @NotNull LineFragment fragment) {
-    this(viewer, fragment, false);
+    this(viewer, fragment, false, false);
   }
 
   public SimpleDiffChange(@NotNull SimpleDiffViewer viewer,
                           @NotNull LineFragment fragment,
+                          boolean isExcluded,
                           boolean isSkipped) {
     myViewer = viewer;
 
     myFragment = fragment;
     myInnerFragments = fragment.getInnerFragments();
+    myIsExcluded = isExcluded;
     myIsSkipped = isSkipped;
   }
 
@@ -113,7 +116,8 @@ public class SimpleDiffChange {
   }
 
   protected void doInstallActionHighlighters() {
-    if (myIsSkipped) return;
+    if (myIsExcluded) return;
+    
     myOperations.add(new AcceptGutterOperation(Side.LEFT));
     myOperations.add(new AcceptGutterOperation(Side.RIGHT));
   }
@@ -125,11 +129,11 @@ public class SimpleDiffChange {
     int startLine = side.getStartLine(myFragment);
     int endLine = side.getEndLine(myFragment);
 
-    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, ignored, false, myIsSkipped, false, false));
+    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, ignored, false, myIsExcluded, false, false));
   }
 
   private void createInlineHighlighter(@NotNull DiffFragment fragment, @NotNull Side side) {
-    if (myIsSkipped) return;
+    if (myIsExcluded) return;
 
     int start = side.getStartOffset(fragment);
     int end = side.getEndOffset(fragment);
@@ -180,6 +184,10 @@ public class SimpleDiffChange {
   @NotNull
   public TextDiffType getDiffType() {
     return DiffUtil.getLineDiffType(myFragment);
+  }
+
+  public boolean isExcluded() {
+    return myIsExcluded;
   }
 
   public boolean isSkipped() {
