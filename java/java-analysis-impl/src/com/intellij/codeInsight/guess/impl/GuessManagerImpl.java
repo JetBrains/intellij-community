@@ -414,7 +414,7 @@ public class GuessManagerImpl extends GuessManager {
       if (expression == null) return;
       PsiType type = expression.getType();
       PsiType rawType = type instanceof PsiClassType ? ((PsiClassType)type).rawType() : type;
-      if (rawType == null) return;
+      if (rawType == null || rawType.equals(PsiType.NULL)) return;
       if (mySpecificType == null) {
         mySpecificType = rawType;
       }
