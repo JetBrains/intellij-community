@@ -703,12 +703,6 @@
   <item name='java.lang.Thread Thread(java.lang.ThreadGroup, java.lang.Runnable, java.lang.String, long) 2'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name='java.lang.Thread Thread(java.lang.ThreadGroup, java.lang.Runnable, java.lang.String, long, boolean) 0'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
-  </item>
-  <item name='java.lang.Thread Thread(java.lang.ThreadGroup, java.lang.Runnable, java.lang.String, long, boolean) 2'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
   <item name='java.lang.Thread Thread(java.lang.ThreadGroup, java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
