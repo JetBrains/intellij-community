@@ -12,11 +12,11 @@ import com.intellij.find.FindUtil;
 import com.intellij.find.actions.CompositeActiveComponent;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -36,8 +36,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBDimension;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -110,16 +112,20 @@ public class ShowDiscoveredTestsAction extends AnAction {
                            });
     });
 
+    ActionListener pinActionListener = __ -> {
+      PsiElement[] elements = model.getItems().toArray(PsiElement.EMPTY_ARRAY);
+      FindUtil.showInUsageView(null, elements, initTitle, project);
+      JBPopup popup = ref.get();
+      if (popup != null) {
+        popup.cancel();
+      }
+    };
+
+    KeyStroke findUsageKeyStroke = findUsagesKeyStroke();
+    String pinTooltip = "Open Find Usages Toolwindow" + (findUsageKeyStroke == null ? "" : " " + KeymapUtil.getKeystrokeText(findUsageKeyStroke));
     InplaceButton pinButton = new InplaceButton(
-      new IconButton("Pin", AllIcons.General.AutohideOff, AllIcons.General.AutohideOffPressed, AllIcons.General.AutohideOffInactive),
-      __ -> {
-        PsiElement[] elements = model.getItems().toArray(PsiElement.EMPTY_ARRAY);
-        FindUtil.showInUsageView(null, elements, initTitle, project);
-        JBPopup popup = ref.get();
-        if (popup != null) {
-          popup.cancel();
-        }
-      });
+      new IconButton(pinTooltip, AllIcons.General.AutohideOff, AllIcons.General.AutohideOffPressed, AllIcons.General.AutohideOffInactive),
+      pinActionListener);
 
     CompositeActiveComponent component = new CompositeActiveComponent(runButton, pinButton);
 
@@ -130,6 +136,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
         .setResizable(true)
         .setCommandButton(component)
         .setItemChoosenCallback(() -> PsiNavigateUtil.navigate(list.getSelectedValue()))
+        .registerKeyboardAction(findUsageKeyStroke, pinActionListener)
         .setMinSize(new JBDimension(500, 300));
 
     renderer.installSpeedSearch(builder, true);
@@ -175,6 +182,13 @@ public class ShowDiscoveredTestsAction extends AnAction {
         list.setPaintBusy(false);
       });
     });
+  }
+
+  @Nullable
+  protected static KeyStroke findUsagesKeyStroke() {
+    AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_USAGES);
+    ShortcutSet shortcutSet = action == null ? null : action.getShortcutSet();
+    return shortcutSet == null ? null : KeymapUtil.getKeyStroke(shortcutSet);
   }
 
   private static List<TestDiscoveryConfigurationProducer> getProducers(Project project) {
