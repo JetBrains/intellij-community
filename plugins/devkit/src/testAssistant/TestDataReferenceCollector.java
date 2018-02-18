@@ -32,7 +32,6 @@ import org.jetbrains.uast.values.UStringConstant;
 import org.jetbrains.uast.values.UValue;
 import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
-import java.io.File;
 import java.util.*;
 
 /**
@@ -47,8 +46,8 @@ public class TestDataReferenceCollector {
   private boolean myFoundTestDataParameters = false;
 
   public TestDataReferenceCollector(@Nullable String testDataPath, String testName) {
-    if (StringUtil.isNotEmpty(testDataPath) && !StringUtil.endsWithChar(testDataPath, File.separatorChar)) {
-      testDataPath += File.separatorChar;
+    if (StringUtil.isNotEmpty(testDataPath) && !StringUtil.endsWithChar(testDataPath, '/')) {
+      testDataPath += '/';
     }
     myTestDataPath = testDataPath;
     myTestName = testName;

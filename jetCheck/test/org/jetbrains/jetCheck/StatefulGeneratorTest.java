@@ -16,6 +16,7 @@ import static org.jetbrains.jetCheck.Generator.*;
  * @author peter
  */
 public class StatefulGeneratorTest extends PropertyCheckerTestCase {
+  static final String DELETING = "deleting";
 
   public void testShrinkingIntsWithDistributionsDependingOnListSize() {
     Generator<List<InsertChar>> gen = from(data -> {
@@ -29,7 +30,7 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
     });
     List<InsertChar> minCmds = checkGeneratesExample(gen,
                                                      cmds -> InsertChar.performOperations(cmds).contains("ab"),
-                                                     36);
+                                                     17);
     assertEquals(minCmds.toString(), 2, minCmds.size());
   }
 
@@ -56,7 +57,7 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
       };
 
       env.executeCommands(withRecursion(insertStringCmd(sb), replace, deleteStringCmd(sb), checkDoesNotContain(sb, "A")));
-    }), Scenario::ensureSuccessful, 55).getMinimalCounterexample().getExampleValue();
+    }), Scenario::ensureSuccessful, 58).getMinimalCounterexample().getExampleValue();
 
     assertEquals("commands:\n" +
                  "  insert A at 0\n" +
@@ -92,7 +93,7 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
   }
 
   @NotNull
-  private static Generator<ImperativeCommand> withRecursion(ImperativeCommand... commands) {
+  static Generator<ImperativeCommand> withRecursion(ImperativeCommand... commands) {
     return recursive(rec -> {
       ImperativeCommand group = env -> {
         env.logMessage("Group");
@@ -112,7 +113,7 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
   }
 
   @NotNull
-  private static ImperativeCommand insertStringCmd(StringBuilder sb) {
+  static ImperativeCommand insertStringCmd(StringBuilder sb) {
     return env -> {
       int index = env.generateValue(integers(0, sb.length()), null);
       String toInsert = env.generateValue(stringsOf(asciiLetters()), "insert %s at " + index);
@@ -121,10 +122,10 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
   }
 
   @NotNull
-  private static ImperativeCommand deleteStringCmd(StringBuilder sb) {
+  static ImperativeCommand deleteStringCmd(StringBuilder sb) {
     return env -> {
       int start = env.generateValue(integers(0, sb.length()), null);
-      int end = env.generateValue(integers(start, sb.length()), "deleting (" + start + ", %s)");
+      int end = env.generateValue(integers(start, sb.length()), DELETING + " (" + start + ", %s)");
       sb.delete(start, end);
     };
   }

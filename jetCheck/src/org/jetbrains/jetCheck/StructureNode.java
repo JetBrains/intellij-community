@@ -3,10 +3,7 @@ package org.jetbrains.jetCheck;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -90,6 +87,12 @@ class StructureNode extends StructureElement {
     NodeId oldChild = children.get(index).id;
 
     return new ShrinkStep() {
+
+      @Override
+      List<?> getEqualityObjects() {
+        return Collections.singletonList(step);
+      }
+
       @Nullable
       @Override
       StructureNode apply(StructureNode root) {
@@ -110,12 +113,6 @@ class StructureNode extends StructureElement {
       @Override
       ShrinkStep onFailure() {
         return wrapChildShrink(index, step.onFailure());
-      }
-
-      @NotNull
-      @Override
-      NodeId getNodeAfter() {
-        return step.getNodeAfter();
       }
 
       @Override
@@ -205,8 +202,13 @@ class StructureNode extends StructureElement {
   }
 
   @Override
+  public boolean equals(Object obj) {
+    return obj instanceof StructureNode && children.equals(((StructureNode)obj).children);
+  }
+
+  @Override
   public int hashCode() {
-    return children.hashCode() * 3;
+    return children.hashCode();
   }
 
   @Override
@@ -271,6 +273,11 @@ class IntData extends StructureElement {
   @Override
   public String toString() {
     return String.valueOf(value);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof IntData && value == ((IntData)obj).value;
   }
 
   @Override

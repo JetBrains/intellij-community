@@ -128,7 +128,7 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
           });
           Value value = evaluator.evaluate(evalContext);
           TextWithImportsImpl text = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "");
-          WatchItemDescriptor descriptor = new WatchItemDescriptor(element.getProject(), text, value, evalContext);
+          WatchItemDescriptor descriptor = new WatchItemDescriptor(myDebugProcess.getProject(), text, value, evalContext);
           callback.evaluated(JavaValue.create(null, descriptor, evalContext, process.getNodeManager(), true));
         }
         catch (EvaluateException e) {

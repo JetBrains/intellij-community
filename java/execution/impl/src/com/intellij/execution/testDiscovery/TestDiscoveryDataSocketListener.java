@@ -4,15 +4,12 @@ package com.intellij.execution.testDiscovery;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.rt.coverage.data.SocketTestDataReader;
-import com.intellij.rt.coverage.data.SocketTestDiscoveryProtocolDataListener;
-import com.intellij.rt.coverage.data.TestDiscoveryProtocolDataListener;
+import com.intellij.rt.coverage.data.api.TestDiscoveryProtocolUtil;
 import com.intellij.util.TimeoutUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
@@ -26,7 +23,6 @@ public class TestDiscoveryDataSocketListener {
   private final ServerSocket myServer;
   private final int myPort;
   private final TestDiscoveryIndex myTestDiscoveryIndex;
-  private final TIntObjectHashMap<String> myTestExecutionNameEnumerator = new TIntObjectHashMap<>();
   private volatile boolean myCloseForcibly;
   private volatile boolean myStarted;
 
@@ -60,63 +56,25 @@ public class TestDiscoveryDataSocketListener {
       }
 
       try {
-        listenForFinishedTests(socket);
+        InputStream testDataStream = socket.getInputStream();
+        IdeaTestDiscoveryProtocolReader protocolReader = new IdeaTestDiscoveryProtocolReader(myTestDiscoveryIndex, myModuleName, myFrameworkPrefix);
+        TestDiscoveryProtocolUtil.readSequentially(testDataStream, protocolReader);
       }
       catch (IOException e) {
         LOG.error(e);
+      } finally {
+        try {
+          socket.close();
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
       }
     });
 
     while (!myStarted) {
       TimeoutUtil.sleep(10);
     }
-  }
-
-  private void listenForFinishedTests(@NotNull Socket socket) throws IOException {
-    InputStream testDataStream = socket.getInputStream();
-
-    while (true) {
-      byte msgType = (byte)testDataStream.read();
-      switch (msgType) {
-        case TestDiscoveryProtocolDataListener.START_MARKER:
-          int version = testDataStream.read();
-          LOG.assertTrue(version == SocketTestDiscoveryProtocolDataListener.VERSION);
-          LOG.debug("test discovery started");
-          break;
-        case TestDiscoveryProtocolDataListener.FINISH_MARKER:
-          LOG.debug("test discovery finished");
-          socket.close();
-          myServer.close();
-          return;
-        case TestDiscoveryProtocolDataListener.NAMES_DICTIONARY_PART_MARKER:
-          LOG.info("name enumerator part received");
-          SocketTestDataReader.readDictionary(new DataInputStream(testDataStream), new SocketTestDataReader() {
-            @Override
-            protected void processTestName(int testClassId, int testMethodId) {
-              throw new UnsupportedOperationException();
-            }
-
-            @Override
-            protected void processUsedMethod(int classId, int methodId) {
-              throw new UnsupportedOperationException();
-            }
-
-            @Override
-            protected void processEnumeratedName(int id, String name) {
-              String previousName = myTestExecutionNameEnumerator.put(id, name);
-              LOG.assertTrue(previousName == null || name.equals(previousName));
-            }
-          });
-          break;
-        case TestDiscoveryProtocolDataListener.TEST_FINISHED_MARKER:
-          LOG.info("test data received");
-          IdeaSocketTestDiscoveryDataReader reader = new IdeaSocketTestDiscoveryDataReader(myTestExecutionNameEnumerator);
-          SocketTestDataReader.readTestData(new DataInputStream(testDataStream), reader);
-          myTestDiscoveryIndex.updateFromData(reader.getTestName(), reader.getUsedMethods(), myModuleName, myFrameworkPrefix);
-          break;
-      }
-    }
-
   }
 
   public int getPort() {

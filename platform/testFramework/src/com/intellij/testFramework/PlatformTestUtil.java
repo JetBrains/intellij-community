@@ -66,7 +66,6 @@ import org.jetbrains.concurrency.Promise;
 import org.junit.Assert;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -158,46 +157,46 @@ public class PlatformTestUtil {
   }
 
   public static String print(JTree tree, boolean withSelection) {
-    return print(tree, tree.getModel().getRoot(), withSelection, null, null);
+    return print(tree, new TreePath(tree.getModel().getRoot()), withSelection, null, null);
   }
 
-  public static String print(JTree tree, Object root, @Nullable Queryable.PrintInfo printInfo, boolean withSelection) {
-    return print(tree, root,  withSelection, printInfo, null);
+  public static String print(JTree tree, TreePath path, @Nullable Queryable.PrintInfo printInfo, boolean withSelection) {
+    return print(tree, path,  withSelection, printInfo, null);
   }
 
   public static String print(JTree tree, boolean withSelection, @Nullable Condition<String> nodePrintCondition) {
-    return print(tree, tree.getModel().getRoot(), withSelection, null, nodePrintCondition);
+    return print(tree, new TreePath(tree.getModel().getRoot()), withSelection, null, nodePrintCondition);
   }
 
-  private static String print(JTree tree, Object root,
+  private static String print(JTree tree, TreePath path,
                              boolean withSelection,
                              @Nullable Queryable.PrintInfo printInfo,
                              @Nullable Condition<String> nodePrintCondition) {
     StringBuilder buffer = new StringBuilder();
-    final Collection<String> strings = printAsList(tree, root, withSelection, printInfo, nodePrintCondition);
+    final Collection<String> strings = printAsList(tree, path, withSelection, printInfo, nodePrintCondition);
     for (String string : strings) {
       buffer.append(string).append("\n");
     }
     return buffer.toString();
   }
 
-  private static Collection<String> printAsList(JTree tree, Object root, boolean withSelection, @Nullable Queryable.PrintInfo printInfo,
+  private static Collection<String> printAsList(JTree tree, TreePath path, boolean withSelection, @Nullable Queryable.PrintInfo printInfo,
                                                 Condition<String> nodePrintCondition) {
     Collection<String> strings = new ArrayList<>();
-    printImpl(tree, root, strings, 0, withSelection, printInfo, nodePrintCondition);
+    printImpl(tree, path, strings, 0, withSelection, printInfo, nodePrintCondition);
     return strings;
   }
 
   private static void printImpl(JTree tree,
-                                Object root,
+                                TreePath path,
                                 Collection<String> strings,
                                 int level,
                                 boolean withSelection,
                                 @Nullable Queryable.PrintInfo printInfo,
                                 @Nullable Condition<String> nodePrintCondition) {
-    DefaultMutableTreeNode dmt = (DefaultMutableTreeNode)root;
 
-    Object userObject = dmt.getUserObject();
+    Object pathComponent = path.getLastPathComponent();
+    Object userObject = TreeUtil.getUserObject(pathComponent);
     String nodeText = toString(userObject, printInfo);
 
     if (nodePrintCondition != null && !nodePrintCondition.value(nodeText)) return;
@@ -205,12 +204,13 @@ public class PlatformTestUtil {
     StringBuilder buff = new StringBuilder();
     StringUtil.repeatSymbol(buff, ' ', level);
 
-    boolean expanded = tree.isExpanded(new TreePath(dmt.getPath()));
-    if (!dmt.isLeaf() && (tree.isRootVisible() || dmt != tree.getModel().getRoot() || dmt.getChildCount() > 0)) {
+    boolean expanded = tree.isExpanded(path);
+    int childCount = tree.getModel().getChildCount(pathComponent);
+    if (childCount != 0 && (tree.isRootVisible() || pathComponent != tree.getModel().getRoot() || childCount > 0)) {
       buff.append(expanded ? "-" : "+");
     }
 
-    boolean selected = tree.getSelectionModel().isPathSelected(new TreePath(dmt.getPath()));
+    boolean selected = tree.getSelectionModel().isPathSelected(path);
     if (withSelection && selected) {
       buff.append("[");
     }
@@ -223,10 +223,10 @@ public class PlatformTestUtil {
 
     strings.add(buff.toString());
 
-    int childCount = tree.getModel().getChildCount(root);
     if (expanded) {
       for (int i = 0; i < childCount; i++) {
-        printImpl(tree, tree.getModel().getChild(root, i), strings, level + 1, withSelection, printInfo, nodePrintCondition);
+        TreePath childPath = path.pathByAddingChild(tree.getModel().getChild(pathComponent, i));
+        printImpl(tree, childPath, strings, level + 1, withSelection, printInfo, nodePrintCondition);
       }
     }
   }
@@ -236,7 +236,7 @@ public class PlatformTestUtil {
   }
 
   public static void assertTreeEqualIgnoringNodesOrder(JTree tree, @NonNls String expected) {
-    final Collection<String> actualNodesPresentation = printAsList(tree, tree.getModel().getRoot(), false, null, null);
+    final Collection<String> actualNodesPresentation = printAsList(tree, new TreePath(tree.getModel().getRoot()), false, null, null);
     final List<String> expectedNodes = StringUtil.split(expected, "\n");
     UsefulTestCase.assertSameElements(actualNodesPresentation, expectedNodes);
   }

@@ -95,7 +95,7 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
   }
 
   public void initLater() {
-    myDiffPanel.initLater(myTree.getAllDuplicates(), () -> myTree.onSelectionUpdate());
+    myDiffPanel.initLater(myTree.getAllDuplicates(), method -> myTree.updateMethod(method));
   }
 
   @Override

@@ -65,6 +65,10 @@ class TestingOptions {
 
   /**
    * Enables capturing traces with IntelliJ test discovery agent.
+   * This agent captures lightweight coverage during your testing session
+   * and allows to rerun only corresponding tests for desired method or class in your project.
+   *
+   * For the further information please see <a href="https://github.com/jetbrains/intellij-coverage"/>IntelliJ Coverage repository</a>.
    */
   boolean testDiscoveryEnabled = SystemProperties.getBooleanProperty("intellij.build.test.discovery.enabled", false)
 

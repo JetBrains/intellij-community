@@ -33,6 +33,15 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
 
   protected abstract void setPosition(JavaTestConfigurationBase configuration, PsiLocation<PsiMethod> position);
   protected abstract Pair<String, String> getPosition(JavaTestConfigurationBase configuration);
+  protected abstract TestDiscoveryConfigurationProducer createDelegate(PsiMethod position, Module module);
+  
+  protected void setupDiscoveryConfiguration(JavaTestConfigurationBase configuration, PsiMethod sourceMethod, Module targetModule) {
+    setPosition(configuration, new PsiLocation<>(sourceMethod));
+    Pair<String, String> position = getPosition(configuration);
+    configuration.setName("Tests for " + StringUtil.getShortName(position.first) + "." + position.second);
+    configuration.setModule(targetModule);
+  }
+
 
   @Override
   protected boolean setupConfigurationFromContext(final JavaTestConfigurationBase configuration,
@@ -55,49 +64,9 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
         if (ContainerUtil.isEmpty(testsByMethodName)) {
           return false;
         }
-        setPosition(configuration, new PsiLocation<>(sourceMethod));
-        configuration.setName("Tests for " + StringUtil.getShortName(position.first) + "." + position.second);
 
-        final RunnerAndConfigurationSettings template =
-          configurationContext.getRunManager().getConfigurationTemplate(getConfigurationFactory());
-        final Module predefinedModule = ((ModuleBasedConfiguration)template.getConfiguration()).getConfigurationModule().getModule();
-        if (predefinedModule != null) {
-          configuration.setModule(predefinedModule);
-        }
-
-        //potentially this set won't be big, it reflects modules from where user starts his tests
-        final Collection<String> modules = testDiscoveryIndex.getTestModulesByMethodName(position.first,
-                                                                                         position.second,
-                                                                                         configuration.getFrameworkPrefix());
-        if (modules.isEmpty()) return true;
-
-        final List<Module> survivedModules = new ArrayList<>();
-        final ModuleManager moduleManager = ModuleManager.getInstance(project);
-        for (String moduleName : modules) {
-          final Module moduleByName = moduleManager.findModuleByName(moduleName);
-          if (moduleByName != null) {
-            survivedModules.add(moduleByName);
-          }
-        }
-        if (survivedModules.isEmpty()) return true;
-
-        final Set<Module> allModules = new HashSet<>(Arrays.asList(moduleManager.getModules()));
-        survivedModules
-          .forEach(module -> {
-            final List<Module> dependentModules = ModuleUtilCore.getAllDependentModules(module);
-            dependentModules.add(module);
-            allModules.retainAll(dependentModules);
-          });
-        if (!allModules.isEmpty()) {
-          Module aModule = allModules.iterator().next();
-          for (Module module : survivedModules) {
-            if (allModules.contains(module)) {
-              aModule = module;
-            }
-          }
-          configuration.setModule(aModule);
-        }
-
+        Module targetModule = getTargetModule(configuration, configurationContext, position, project, testDiscoveryIndex);
+        setupDiscoveryConfiguration(configuration, sourceMethod, targetModule);
         return true;
       }
       catch (IOException e) {
@@ -105,6 +74,56 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
       }
     }
     return false;
+  }
+
+  private Module getTargetModule(JavaTestConfigurationBase configuration,
+                                 ConfigurationContext configurationContext,
+                                 Pair<String, String> position, Project project, TestDiscoveryIndex testDiscoveryIndex) throws IOException {
+    final RunnerAndConfigurationSettings template =
+      configurationContext.getRunManager().getConfigurationTemplate(getConfigurationFactory());
+    final Module predefinedModule = ((ModuleBasedConfiguration)template.getConfiguration()).getConfigurationModule().getModule();
+    if (predefinedModule != null) {
+      return predefinedModule;
+    }
+
+    //potentially this set won't be big, it reflects modules from where user starts his tests
+    final Collection<String> modules = testDiscoveryIndex.getTestModulesByMethodName(position.first,
+                                                                                     position.second,
+                                                                                     configuration.getFrameworkPrefix());
+    if (modules.isEmpty()) return null;
+
+    final List<Module> survivedModules = new ArrayList<>();
+    final ModuleManager moduleManager = ModuleManager.getInstance(project);
+    for (String moduleName : modules) {
+      final Module moduleByName = moduleManager.findModuleByName(moduleName);
+      if (moduleByName != null) {
+        survivedModules.add(moduleByName);
+      }
+    }
+    if (survivedModules.isEmpty()) return null;
+
+    return detectTargetModule(survivedModules, project);
+  }
+
+  public static Module detectTargetModule(List<Module> survivedModules, Project project) {
+    ModuleManager moduleManager = ModuleManager.getInstance(project);
+    final Set<Module> allModules = new HashSet<>(Arrays.asList(moduleManager.getModules()));
+    survivedModules
+      .forEach(module -> {
+        final List<Module> dependentModules = ModuleUtilCore.getAllDependentModules(module);
+        dependentModules.add(module);
+        allModules.retainAll(dependentModules);
+      });
+    if (!allModules.isEmpty()) {
+      Module aModule = allModules.iterator().next();
+      for (Module module : survivedModules) {
+        if (allModules.contains(module)) {
+          aModule = module;
+        }
+      }
+      return aModule;
+    }
+    return null;
   }
 
   @Override

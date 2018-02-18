@@ -1,30 +1,29 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.annotations.SerializedName;
 import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
+import com.intellij.execution.Executor;
+import com.intellij.execution.JavaTestConfigurationBase;
+import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.find.FindUtil;
 import com.intellij.find.actions.CompositeActiveComponent;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -35,26 +34,18 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PsiNavigateUtil;
-import com.intellij.util.io.HttpRequests;
-import com.intellij.util.io.RequestBuilder;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBDimension;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE;
 
-public class FindTestsInTestDiscoveryServerAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance(FindTestsInTestDiscoveryServerAction.class);
-  private static final String INTELLIJ_TEST_DISCOVERY_HOST = "http://intellij-test-discovery";
-
+public class ShowDiscoveredTestsAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     Editor editor = e.getData(EDITOR);
@@ -80,13 +71,10 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
     PsiMethod method = PsiTreeUtil.getParentOfType(at, PsiMethod.class);
     assert method != null;
     PsiClass c = method.getContainingClass();
-    if (c == null) return;
-    String fqn = c.getQualifiedName();
+    String fqn = c != null ? c.getQualifiedName() : null;
+    if (fqn == null) return;
     String methodName = method.getName();
-    String methodFqn = fqn + "." + methodName;
     String methodPresentationName = c.getName() + "." + methodName;
-
-    String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/tests/by-method/" + methodFqn;
 
     CollectionListModel<PsiElement> model = new CollectionListModel<>();
     final JBList<PsiElement> list = new JBList<>(model);
@@ -97,20 +85,39 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
     String initTitle = "Tests for " + methodPresentationName;
     DefaultPsiElementCellRenderer renderer = new DefaultPsiElementCellRenderer();
 
-    AnAction run = ActionManager.getInstance().getAction(DefaultRunExecutor.getRunExecutorInstance().getContextActionId());
-    // todo: run == null??
-    InplaceButton runButton = new InplaceButton(new IconButton("Run", AllIcons.Actions.Execute), __ ->
-      run.actionPerformed(AnActionEvent.createFromAnAction(run, null, ActionPlaces.UNKNOWN, e.getDataContext())));
-
     Ref<JBPopup> ref = new Ref<>();
+
+    InplaceButton runButton = new InplaceButton(new IconButton("Run All", AllIcons.Actions.Execute), __ -> {
+      Executor executor = DefaultRunExecutor.getRunExecutorInstance();
+      ConfigurationContext context = ConfigurationContext.getFromContext(e.getDataContext());
+      List<Module> containingModules =
+        model.getItems().stream()
+             .map(element -> ModuleUtilCore.findModuleForPsiElement(element))
+             .filter(module -> module != null)
+             .collect(Collectors.toList());
+      Module targetModule = TestDiscoveryConfigurationProducer.detectTargetModule(containingModules, project);
+      //first producer with results will be picked
+      getProducers(project).stream()
+                           .map(producer -> producer.createDelegate(method, targetModule).findOrCreateConfigurationFromContext(context))
+                           .filter(Objects::nonNull)
+                           .findFirst()
+                           .ifPresent(configuration -> {
+                             ExecutionUtil.runConfiguration(configuration.getConfigurationSettings(), executor);
+                             JBPopup popup = ref.get();
+                             if (popup != null) {
+                               popup.cancel();
+                             }
+                           });
+    });
+
     InplaceButton pinButton = new InplaceButton(
       new IconButton("Pin", AllIcons.General.AutohideOff, AllIcons.General.AutohideOffPressed, AllIcons.General.AutohideOffInactive),
       __ -> {
         PsiElement[] elements = model.getItems().toArray(PsiElement.EMPTY_ARRAY);
         FindUtil.showInUsageView(null, elements, initTitle, project);
-        JBPopup pinPopup = ref.get();
-        if (pinPopup != null) {
-          pinPopup.cancel();
+        JBPopup popup = ref.get();
+        if (popup != null) {
+          popup.cancel();
         }
       });
 
@@ -149,113 +156,32 @@ public class FindTestsInTestDiscoveryServerAction extends AnAction {
     loadTestsTask.init((AbstractPopup)popup, list, new Ref<>());
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      try {
-        RequestBuilder r = HttpRequests.request(url);
-        r.connect(
-          request -> {
-            ObjectMapper mapper = new ObjectMapper();
-            TestsSearchResult result = mapper.readValue(request.getInputStream(), TestsSearchResult.class);
-
-            for (String s : result.getTests()) {
-              s = s.length() > 1 && s.charAt(0) == 'j' ? s.substring(1) : s;
-              String classFqn = StringUtil.substringBefore(s, "-");
-              String testMethodName = StringUtil.substringAfter(s, "-");
-
-              PsiMethod psiMethod = ReadAction.compute(() -> {
-                PsiClass cc = classFqn == null ? null : javaFacade.findClass(classFqn, scope);
-                return cc == null ? null : ArrayUtil.getFirstElement(cc.findMethodsByName(testMethodName, false));
-              });
-
-              if (psiMethod != null) {
-                loadTestsTask.updateComponent(psiMethod);
-              }
-            }
-            EdtInvocationManager.getInstance().invokeLater(() -> {
-              popup.pack(true, true);
-              list.setPaintBusy(false);
-            });
-            return null;
+      for (TestDiscoveryConfigurationProducer producer : getProducers(project)) {
+        String frameworkPrefix =
+          ((JavaTestConfigurationBase)producer.getConfigurationFactory().createTemplateConfiguration(project)).getFrameworkPrefix();
+        TestDiscoveryProducer.consumeDiscoveredTests(project, fqn, methodName, frameworkPrefix, test -> {
+          PsiMethod psiMethod = ReadAction.compute(() -> {
+            PsiClass cc = test.getTestClassQName() == null ? null : javaFacade.findClass(test.getTestClassQName(), scope);
+            return cc == null ? null : ArrayUtil.getFirstElement(cc.findMethodsByName(test.getTestMethodName(), false));
+          });
+          if (psiMethod != null) {
+            loadTestsTask.updateComponent(psiMethod);
           }
-        );
+        });
       }
-      catch (HttpRequests.HttpStatusException http) {
-        if (http.getStatusCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-          LOG.debug("No tests found for " + methodFqn);
-        }
-        else {
-          LOG.debug(http);
-        }
-      }
-      catch (IOException io) {
-        LOG.debug(io);
-      }
-      finally {
+
+      EdtInvocationManager.getInstance().invokeLater(() -> {
+        popup.pack(true, true);
         list.setPaintBusy(false);
-      }
+      });
     });
   }
 
-  @JsonInclude(JsonInclude.Include.NON_EMPTY)
-  public static class TestsSearchResult {
-    @Nullable
-    private String method;
-
-    @SerializedName("class")
-    @JsonProperty("class")
-    @Nullable
-    private String className;
-
-    private int found;
-
-    @NotNull
-    private List<String> tests = new ArrayList<>();
-
-    @Nullable
-    private String message;
-
-    @Nullable
-    public String getMethod() {
-      return method;
-    }
-
-    public TestsSearchResult setMethod(String method) {
-      this.method = method;
-      return this;
-    }
-
-    @Nullable
-    public String getClassName() {
-      return className;
-    }
-
-    public TestsSearchResult setClassName(String name) {
-      this.className = name;
-      return this;
-    }
-
-    public int getFound() {
-      return found;
-    }
-
-    @NotNull
-    public List<String> getTests() {
-      return tests;
-    }
-
-    public TestsSearchResult setTests(List<String> tests) {
-      this.tests = tests;
-      this.found = tests.size();
-      return this;
-    }
-
-    @Nullable
-    public String getMessage() {
-      return message;
-    }
-
-    public TestsSearchResult setMessage(String message) {
-      this.message = message;
-      return this;
-    }
+  private static List<TestDiscoveryConfigurationProducer> getProducers(Project project) {
+    return RunConfigurationProducer.getProducers(project)
+                                   .stream()
+                                   .filter(producer -> producer instanceof TestDiscoveryConfigurationProducer)
+                                   .map(producer -> (TestDiscoveryConfigurationProducer)producer)
+                                   .collect(Collectors.toList());
   }
 }

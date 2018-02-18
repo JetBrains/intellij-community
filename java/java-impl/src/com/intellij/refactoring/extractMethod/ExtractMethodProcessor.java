@@ -602,10 +602,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     myNullness = initNullness();
     myArtificialOutputVariable = PsiType.VOID.equals(myReturnType) ? getArtificialOutputVariable() : null;
     final PsiType returnType = myArtificialOutputVariable != null ? myArtificialOutputVariable.getType() : myReturnType;
-    int duplicatesCount = estimateDuplicatesCount();
     return new ExtractMethodDialog(myProject, myTargetClass, myInputVariables, returnType, getTypeParameterList(),
                                    getThrownExceptions(), isStatic(), isCanBeStatic(), myCanBeChainedConstructor,
-                                                         myRefactoringName, myHelpId, myNullness, myElements,duplicatesCount) {
+                                   myRefactoringName, myHelpId, myNullness, myElements,
+                                   () -> estimateDuplicatesCount()) {
       protected boolean areTypesDirected() {
         return direct;
       }
@@ -657,7 +657,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
       @Override
       protected boolean isPreviewSupported() {
-        return myIsPreviewSupported && getDuplicatesCount() != 0;
+        return myIsPreviewSupported;
       }
     };
   }
@@ -2113,10 +2113,16 @@ public class ExtractMethodProcessor implements MatchProvider {
                                               myParametrizedDuplicates.getSize()).showAndGet()) {
 
         myDuplicates = myParametrizedDuplicates.getDuplicates();
-        WriteCommandAction.runWriteCommandAction(myProject, () -> {
+        Runnable replaceMethod = () -> {
           myExtractedMethod = myParametrizedDuplicates.replaceMethod(myExtractedMethod);
           myMethodCall = myParametrizedDuplicates.replaceCall(myMethodCall);
-        });
+        };
+        if (myExtractedMethod.isPhysical()) {
+          WriteCommandAction.runWriteCommandAction(myProject, replaceMethod);
+        }
+        else {
+          replaceMethod.run();
+        }
         myVariableDatum = myParametrizedDuplicates.getVariableDatum();
         return true;
       }

@@ -82,7 +82,7 @@ public class PyTypeHierarchyBrowser extends TypeHierarchyBrowserBase {
     return PyHierarchyUtils.getComparator(myProject);
   }
 
-  protected boolean isInterface(PsiElement psiElement) {
+  protected boolean isInterface(@NotNull PsiElement psiElement) {
     return false;
   }
 

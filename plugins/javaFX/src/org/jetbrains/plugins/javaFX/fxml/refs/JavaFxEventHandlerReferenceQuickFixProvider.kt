@@ -50,11 +50,11 @@ class CreateEventHandlerRequest(element: XmlAttributeValue) : CreateMethodReques
 
   override fun getReturnType() = listOf(expectedType(PsiType.VOID, ExpectedType.Kind.EXACT))
 
-  override fun getParameters(): List<ExpectedParameter> {
+  override fun getParameters(): List<Pair<SuggestedNameInfo, ExpectedTypes>> {
     val eventType = getEventType(myElement)
     val expectedType = expectedType(eventType, ExpectedType.Kind.EXACT)
     val nameInfo = suggestParamName(myProject, eventType)
-    val parameter = ExpectedParameter(nameInfo, listOf(expectedType))
+    val parameter = Pair(nameInfo, listOf(expectedType))
     return listOf(parameter)
   }
 

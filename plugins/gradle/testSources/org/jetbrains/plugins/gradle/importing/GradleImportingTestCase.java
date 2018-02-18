@@ -27,6 +27,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
+import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.io.FileUtil;
@@ -148,7 +149,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   }
 
   @Parameterized.Parameters(name = "{index}: with Gradle-{0}")
-  public static Collection<Object[]> data() throws Throwable {
+  public static Collection<Object[]> data() {
     return Arrays.asList(SUPPORTED_GRADLE_VERSIONS);
   }
 
@@ -275,5 +276,31 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   @NotNull
   private static File wrapperJar() {
     return new File(PathUtil.getJarPathForClass(GradleWrapperMain.class));
+  }
+
+  protected void assertMergedModuleCompileLibDepScope(String moduleName, String depName) {
+    if (isGradleOlderThen_3_4() || isGradleNewerThen_4_5()) {
+      assertModuleLibDepScope(moduleName, depName, DependencyScope.COMPILE);
+    }
+    else {
+      assertModuleLibDepScope(moduleName, depName, DependencyScope.PROVIDED, DependencyScope.TEST, DependencyScope.RUNTIME);
+    }
+  }
+
+  protected void assertMergedModuleCompileModuleDepScope(String moduleName, String depName) {
+    if (isGradleOlderThen_3_4() || isGradleNewerThen_4_5()) {
+      assertModuleModuleDepScope(moduleName, depName, DependencyScope.COMPILE);
+    }
+    else {
+      assertModuleModuleDepScope(moduleName, depName, DependencyScope.PROVIDED, DependencyScope.TEST, DependencyScope.RUNTIME);
+    }
+  }
+
+  protected boolean isGradleOlderThen_3_4() {
+    return GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("3.4")) < 0;
+  }
+
+  protected boolean isGradleNewerThen_4_5() {
+    return GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("4.5")) > 0;
   }
 }

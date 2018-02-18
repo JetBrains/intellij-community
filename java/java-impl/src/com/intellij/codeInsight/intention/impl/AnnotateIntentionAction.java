@@ -9,18 +9,18 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInspection.dataFlow.Mutability;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ClassUtils;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +34,9 @@ public class AnnotateIntentionAction extends BaseIntentionAction implements LowP
   private static final AnnotationProvider[] PROVIDERS = {
     new DeprecationAnnotationProvider(),
     new NullableAnnotationProvider(),
-    new NotNullAnnotationProvider()
+    new NotNullAnnotationProvider(),
+    new UnmodifiableAnnotationProvider(),
+    new UnmodifiableViewAnnotationProvider()
   };
   private AnnotationProvider myAnnotationProvider;
   private boolean mySingleMode;
@@ -201,6 +203,50 @@ public class AnnotateIntentionAction extends BaseIntentionAction implements LowP
     @Override
     public String[] getAnnotationsToRemove(Project project) {
       return NullableNotNullManager.getInstance(project).getNullables().toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+    }
+  }
+
+  static class UnmodifiableAnnotationProvider implements AnnotationProvider {
+
+    @NotNull
+    @Override
+    public String getName(Project project) {
+      return Mutability.UNMODIFIABLE_ANNOTATION;
+    }
+
+    @Override
+    public boolean isAvailable(PsiModifierListOwner owner) {
+      return ApplicationManagerEx.getApplicationEx().isInternal() &&
+             owner instanceof PsiMethod &&
+             !ClassUtils.isImmutable(((PsiMethod)owner).getReturnType());
+    }
+
+    @NotNull
+    @Override
+    public String[] getAnnotationsToRemove(Project project) {
+      return new String[]{Mutability.UNMODIFIABLE_VIEW_ANNOTATION};
+    }
+  }
+
+  static class UnmodifiableViewAnnotationProvider implements AnnotationProvider {
+
+    @NotNull
+    @Override
+    public String getName(Project project) {
+      return Mutability.UNMODIFIABLE_VIEW_ANNOTATION;
+    }
+
+    @Override
+    public boolean isAvailable(PsiModifierListOwner owner) {
+      return ApplicationManagerEx.getApplicationEx().isInternal() &&
+             owner instanceof PsiMethod &&
+             !ClassUtils.isImmutable(((PsiMethod)owner).getReturnType());
+    }
+
+    @NotNull
+    @Override
+    public String[] getAnnotationsToRemove(Project project) {
+      return new String[]{Mutability.UNMODIFIABLE_ANNOTATION};
     }
   }
 }

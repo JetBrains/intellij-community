@@ -200,7 +200,7 @@ public class PsiElementRenameHandler implements RenameHandler {
   }
 
   @Override
-  public boolean isAvailableOnDataContext(DataContext dataContext) {
+  public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
     return !isVetoed(getElement(dataContext));
   }
 
@@ -223,7 +223,7 @@ public class PsiElementRenameHandler implements RenameHandler {
   }
 
   @Override
-  public boolean isRenaming(DataContext dataContext) {
+  public boolean isRenaming(@NotNull DataContext dataContext) {
     return isAvailableOnDataContext(dataContext);
   }
 }

@@ -40,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import static com.intellij.refactoring.extractMethod.ExtractMethodHandler.REFACTORING_NAME;
 
@@ -75,7 +76,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
   public void dispose() {
   }
 
-  public void doExtract(List<DuplicateNode> enabledNodes) {
+  public void doExtract(@NotNull List<DuplicateNode> enabledNodes) {
     PsiElement[] pattern = getPattern();
     if (pattern.length == 0) {
       CommonRefactoringUtil.showErrorHint(myProject, null, "Failed to extract method", REFACTORING_NAME, HelpID.EXTRACT_METHOD);
@@ -91,7 +92,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
                                              () -> doExtractImpl(processor, enabledNodes), pattern[0].getContainingFile());
   }
 
-  public void initLater(@NotNull List<DuplicateNode> allNodes, @NotNull Runnable whenDone) {
+  public void initLater(@NotNull List<DuplicateNode> allNodes, @NotNull Consumer<PsiMethod> whenDone) {
     ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Preparing Diff") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -101,10 +102,10 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
   }
 
   private void initLaterImpl(@NotNull List<DuplicateNode> allNodes,
-                             @NotNull Runnable whenDone,
+                             @NotNull Consumer<PsiMethod> whenDone,
                              @NotNull ProgressIndicator indicator) {
     indicator.setIndeterminate(false);
-    int total = allNodes.size() + 9, count = 0;
+    int total = allNodes.size() + 4, count = 0;
     PsiElement[] patternCopy = ReadAction.compute(() -> {
       PsiElement[] pattern = getPattern();
       PsiFile patternFile = pattern[0].getContainingFile();
@@ -117,28 +118,23 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
       processor.applyFromSnapshot(mySnapshot);
       return processor.prepare(false) ? processor : null;
     });
-    indicator.setFraction(++count / (double)total); // +2
 
-    List<Match> simpleDuplicates = ReadAction.compute(() -> {
+    List<Match> copyDuplicates = ReadAction.compute(() -> {
       copyProcessor.previewRefactoring();
-      return copyProcessor.getDuplicates();
+      return PreviewTreeModel.getDuplicates(copyProcessor);
     });
-    indicator.setFraction(++count / (double)total); // +3
-
-    List<Match> copyDuplicates;
-    copyDuplicates = simpleDuplicates != null ? simpleDuplicates :
-                     ReadAction.compute(() -> copyProcessor.initParametrizedDuplicates(false) ? copyProcessor.getDuplicates() : null);
-    indicator.setFraction(++count / (double)total); // +4
 
     Map<DuplicateNode, Match> allDuplicates = ReadAction.compute(() -> filterSelectedDuplicates(allNodes, copyDuplicates));
-    indicator.setFraction(++count / (double)total); // +5
 
     ElementsRange originalReplacement = ReadAction.compute(() -> {
       Bounds patternBounds = new Bounds(patternCopy[0], patternCopy[patternCopy.length - 1]);
       copyProcessor.doExtract();
       return patternBounds.getElementsRange();
     });
-    indicator.setFraction(++count / (double)total); // +6
+    indicator.setFraction(++count / (double)total); // +2
+
+    ReadAction.run(() -> copyProcessor.initParametrizedDuplicates(false));
+    indicator.setFraction(++count / (double)total); // +3
 
     Map<DuplicateNode, ElementsRange> duplicateReplacements = new TreeMap<>();
     for (Map.Entry<DuplicateNode, Match> entry : allDuplicates.entrySet()) {
@@ -158,40 +154,35 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
       PsiMethod extractedMethod = copyProcessor.getExtractedMethod();
       return (PsiMethod)CodeStyleManager.getInstance(copyProcessor.getProject()).reformat(extractedMethod);
     });
-    indicator.setFraction(++count / (double)total); // +8
 
     Document refactoredDocument = ReadAction.compute(() -> {
       PsiFile refactoredFile = method.getContainingFile();
       if (refactoredFile != null) {
         VirtualFile vFile = refactoredFile.getViewProvider().getVirtualFile();
         vFile.putUserData(DiffUtil.TEMP_FILE_KEY, Boolean.TRUE); // prevent Go To action to non-physical file
-        Document document = FileDocumentManager.getInstance().getDocument(vFile);
-        if (document != null) {
-          PsiDocumentManager.getInstance(copyProcessor.getProject()).doPostponedOperationsAndUnblockDocument(document);
-          return document;
-        }
+        return FileDocumentManager.getInstance().getDocument(vFile);
       }
       return null;
     });
-    indicator.setFraction(++count / (double)total); // +9
+    indicator.setFraction(++count / (double)total); // +4
 
     if (refactoredDocument != null) {
       ApplicationManager.getApplication().invokeLater(() -> {
+        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(copyProcessor.getProject());
+        documentManager.doPostponedOperationsAndUnblockDocument(refactoredDocument);
         myRefactoringResult = new RefactoringResult(method, originalReplacement, duplicateReplacements, refactoredDocument);
-        whenDone.run();
+        whenDone.accept(method);
       });
     }
   }
 
   private static void doExtractImpl(@NotNull JavaDuplicatesExtractMethodProcessor processor,
-                                    List<DuplicateNode> selectedNodes) {
+                                    @NotNull List<DuplicateNode> selectedNodes) {
     processor.previewRefactoring();
-    List<Match> duplicates = processor.getDuplicates();
-    if (duplicates == null && processor.initParametrizedDuplicates(false)) {
-      duplicates = processor.getDuplicates();
-    }
+    List<Match> duplicates = PreviewTreeModel.getDuplicates(processor);
     Map<DuplicateNode, Match> selectedDuplicates = filterSelectedDuplicates(selectedNodes, duplicates);
     processor.doExtract();
+    processor.initParametrizedDuplicates(false);
 
     for (Match duplicate : selectedDuplicates.values()) {
       processor.processMatch(duplicate);
@@ -219,7 +210,10 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
     else if (node instanceof DuplicateNode) {
       DuplicateNode duplicateNode = (DuplicateNode)node;
       ElementsRange selectedReplacement = myRefactoringResult.myDuplicateReplacements.get(duplicateNode);
-      assert selectedReplacement != null : "selectedReplacement";
+      if (selectedReplacement == null) {
+        showDiff(null);
+        return;
+      }
       TextRange patternRange = duplicateNode.getTextRange();
       TextRange refactoredRange = selectedReplacement.getTextRange();
 

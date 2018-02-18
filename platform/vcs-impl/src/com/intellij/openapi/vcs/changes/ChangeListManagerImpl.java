@@ -469,6 +469,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
     final VcsInvalidated invalidated = myDirtyScopeManager.retrieveScopes();
     if (checkScopeIsEmpty(invalidated)) {
+      LOG.debug("[update] - dirty scope is empty");
       myDirtyScopeManager.changesProcessed();
       return;
     }
@@ -542,9 +543,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             if (statusChanged) {
               myDelayedNotificator.unchangedFileStatusChanged();
             }
+            LOG.debug("[update] - success");
           }
           else {
             myModifier.finishUpdate(null);
+            LOG.debug("[update] - aborted");
           }
           myShowLocalChangesInvalidated = false;
         }

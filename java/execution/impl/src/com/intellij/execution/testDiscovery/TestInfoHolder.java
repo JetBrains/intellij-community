@@ -33,7 +33,7 @@ final class TestInfoHolder {
   private boolean myDisposed;
   private final Object myLock;
 
-  private static final int VERSION = 5;
+  private static final int VERSION = 6;
 
   TestInfoHolder(@NotNull Path basePath, boolean readOnly, Object lock) {
     myLock = lock;

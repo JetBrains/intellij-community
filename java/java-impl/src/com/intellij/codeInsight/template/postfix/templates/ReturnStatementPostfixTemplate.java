@@ -14,7 +14,7 @@ public class ReturnStatementPostfixTemplate extends JavaEditablePostfixTemplate 
           "return $EXPR$;$END$",
           "return expr",
           Collections.singleton(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNonVoidExpressionCondition()),
-          LanguageLevel.JDK_1_8, true, provider);
+          LanguageLevel.JDK_1_3, true, provider);
   }
 
   @Override

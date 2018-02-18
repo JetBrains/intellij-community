@@ -14,15 +14,15 @@ import org.fest.swing.timing.Pause
 import org.junit.Assert
 import org.junit.Test
 import java.awt.Container
-import java.awt.KeyboardFocusManager
+import java.awt.Window
 import java.lang.Math.tan
 import java.util.*
 import javax.swing.JLabel
 
-class GoToClassFocusTest: GuiTestCase() {
+class GoToClassFocusTest : GuiTestCase() {
 
   private val typedString = "hefuihwefwehrf;werfwerfw"
-  private val actionKeyStroke by lazy {  ActionManager.getInstance().getKeyboardShortcut("GotoClass")!!.firstKeyStroke }
+  private val actionKeyStroke by lazy { ActionManager.getInstance().getKeyboardShortcut("GotoClass")!!.firstKeyStroke }
 
   @Test
   fun testGoToClassFocus() {
@@ -30,7 +30,7 @@ class GoToClassFocusTest: GuiTestCase() {
     Pause.pause(1000)
     ideFrame {
       focusOnEditor()
-      for(i in 0..10) {
+      for (i in 0..10) {
         openGoToClassSearchAndType(this@GoToClassFocusTest)
         focusOnEditor()
       }
@@ -38,17 +38,21 @@ class GoToClassFocusTest: GuiTestCase() {
   }
 
   private fun startIntensiveCalcOnEdt() {
-    for (i in 0..1000)  ApplicationManager.getApplication().invokeLater{ println(intensiveCpuCalc().toString()) }
+    for (i in 0..1000) ApplicationManager.getApplication().invokeLater { println(intensiveCpuCalc().toString()) }
   }
 
   private fun startIntensiveCalcOnParallel() {
-    ApplicationManager.getApplication().executeOnPooledThread{ for (i in 0..100) ApplicationManager.getApplication().executeOnPooledThread { for(k in 0..1000) println (intensiveCpuCalc().toString()) } }
+    ApplicationManager.getApplication().executeOnPooledThread {
+      for (i in 0..100) ApplicationManager.getApplication().executeOnPooledThread {
+        for (k in 0..1000) println(intensiveCpuCalc().toString())
+      }
+    }
   }
 
   private fun intensiveCpuCalc(): Double {
     val rand = Random()
     val salt = rand.nextDouble()
-    fun f(a: Double): Double = tan(rand.nextDouble()*tan(rand.nextDouble()*tan(rand.nextDouble()*tan(a + 0.001))))
+    fun f(a: Double): Double = tan(rand.nextDouble() * tan(rand.nextDouble() * tan(rand.nextDouble() * tan(a + 0.001))))
     fun g(n: Int, a: Double): Double {
       var res = a
       for (i in 0..n) res = f(res)
@@ -73,17 +77,18 @@ class GoToClassFocusTest: GuiTestCase() {
   }
 
   private fun checkSearchWindow(guiTestCase: GuiTestCase) {
-    val searchWindow = findSearchWindow(guiTestCase)
+    val searchWindow = findSearchWindow()
     with(guiTestCase) {
       val textfield = textfield("", searchWindow, guiTestCase.defaultTimeout)
       Assert.assertEquals(textfield.target().text, typedString)
     }
   }
 
-  private fun findSearchWindow(guiTestCase: GuiTestCase): Container {
-    val windowContainer = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow // it should be a window container for go to class ideally
-    GuiTestUtilKt.findAllWithBFS(windowContainer, JLabel::class.java).firstOrNull { it.text == "Enter class name:" } ?: throw ComponentLookupException("Unable to find GoToClass search window")
-    return windowContainer
+  private fun findSearchWindow(): Container {
+    fun checkWindowContainsEnterClassName(it: Window) = GuiTestUtilKt.findAllWithBFS(it, JLabel::class.java).firstOrNull { it.text == "Enter class name:" } != null
+    return Window.getWindows()
+             .filterNotNull()
+             .firstOrNull { checkWindowContainsEnterClassName(it) } ?: throw ComponentLookupException("Unable to find GoToClass search window")
   }
 
 }

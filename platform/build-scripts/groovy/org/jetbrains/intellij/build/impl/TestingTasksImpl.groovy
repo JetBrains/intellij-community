@@ -134,9 +134,9 @@ class TestingTasksImpl extends TestingTasks {
     if (options.testDiscoveryEnabled) {
       def testDiscovery = "intellij-test-discovery"
       JpsLibrary library = context.projectModel.project.libraryCollection.findLibrary(testDiscovery)
-      if (library == null) throw new RuntimeException("Can't find the $testDiscovery library, but test discovery capturing enabled.")
+      if (library == null) context.messages.error("Can't find the $testDiscovery library, but test discovery capturing enabled.")
       def agentJar = library.getFiles(JpsOrderRootType.COMPILED).find { it.name.startsWith("intellij-test-discovery") && it.name.endsWith(".jar") }
-      if (agentJar == null) throw new RuntimeException("Can't find the agent in $testDiscovery library, but test discovery capturing enabled.")
+      if (agentJar == null) context.messages.error("Can't find the agent in $testDiscovery library, but test discovery capturing enabled.")
 
       additionalJvmOptions.add("-javaagent:${agentJar.absolutePath}" as String)
       additionalSystemProperties.putAll(
@@ -393,7 +393,7 @@ class TestingTasksImpl extends TestingTasks {
   private def setupTestingDependencies() {
     if (!dependenciesInstalled) {
       dependenciesInstalled = true
-//      context.gradle.run('Setting up testing dependencies', 'setupKotlinPlugin')
+      context.gradle.run('Setting up testing dependencies', 'setupKotlinPlugin')
     }
   }
 

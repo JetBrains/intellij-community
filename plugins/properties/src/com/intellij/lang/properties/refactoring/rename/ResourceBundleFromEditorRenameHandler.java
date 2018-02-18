@@ -35,7 +35,7 @@ import java.util.List;
 public class ResourceBundleFromEditorRenameHandler implements RenameHandler {
 
   @Override
-  public boolean isAvailableOnDataContext(DataContext dataContext) {
+  public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return false;
@@ -53,7 +53,7 @@ public class ResourceBundleFromEditorRenameHandler implements RenameHandler {
   }
 
   @Override
-  public boolean isRenaming(DataContext dataContext) {
+  public boolean isRenaming(@NotNull DataContext dataContext) {
     return isAvailableOnDataContext(dataContext);
   }
 

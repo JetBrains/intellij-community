@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.psi.PsiJvmSubstitutor
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
+import com.intellij.psi.codeStyle.SuggestedNameInfo
 
 private class SimpleMethodRequest(
   private val methodName: String,
@@ -21,12 +22,12 @@ private class SimpleMethodRequest(
   override fun getModifiers() = modifiers
   override fun getReturnType() = returnType
   override fun getAnnotations() = emptyList<AnnotationRequest>()
-  override fun getParameters() = emptyList<ExpectedParameter>()
+  override fun getParameters() = emptyList<kotlin.Pair<SuggestedNameInfo, ExpectedTypes>>()
   override fun getTargetSubstitutor() = targetSubstitutor
 }
 
 private class SimpleConstructorRequest(
-  private val parameters: ExpectedParameters,
+  private val parameters: List<kotlin.Pair<SuggestedNameInfo, ExpectedTypes>>,
   private val targetSubstitutor: JvmSubstitutor
 ) : CreateConstructorRequest {
   override fun isValid(): Boolean = true

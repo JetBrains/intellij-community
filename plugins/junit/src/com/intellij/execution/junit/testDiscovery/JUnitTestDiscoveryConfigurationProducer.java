@@ -17,10 +17,14 @@ package com.intellij.execution.junit.testDiscovery;
 
 import com.intellij.execution.JavaTestConfigurationBase;
 import com.intellij.execution.PsiLocation;
+import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitConfigurationType;
 import com.intellij.execution.testDiscovery.TestDiscoveryConfigurationProducer;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 
 public class JUnitTestDiscoveryConfigurationProducer extends TestDiscoveryConfigurationProducer {
@@ -40,5 +44,18 @@ public class JUnitTestDiscoveryConfigurationProducer extends TestDiscoveryConfig
       return Pair.create(data.getMainClassName(), data.getMethodName());
     }
     return null;
+  }
+
+  @Override
+  protected TestDiscoveryConfigurationProducer createDelegate(PsiMethod sourceMethod, Module module) {
+    return new JUnitTestDiscoveryConfigurationProducer() {
+      @Override
+      protected boolean setupConfigurationFromContext(JavaTestConfigurationBase configuration,
+                                                      ConfigurationContext configurationContext,
+                                                      Ref<PsiElement> ref) {
+        setupDiscoveryConfiguration(configuration, sourceMethod, module);
+        return true;
+      }
+    };
   }
 }

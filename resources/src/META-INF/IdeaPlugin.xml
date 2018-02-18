@@ -399,7 +399,7 @@
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
 
-    <action class="com.intellij.execution.testDiscovery.FindTestsInTestDiscoveryServerAction" internal="true" id="FindTestsInTestDiscoveryServer" text="Test Discovery">
+    <action class="com.intellij.execution.testDiscovery.ShowDiscoveredTestsAction" internal="true" id="ShowDiscoveredTests" text="Show Discovered Tests">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
 

@@ -1179,45 +1179,46 @@ public class IdeEventQueue extends EventQueue {
     doPostEvent(event);
   }
 
-  private boolean isPopupLosingFocus (AWTEvent e) {
+  private static boolean isFocusGoesIntoPopup(AWTEvent e) {
 
-    TYPEAHEAD_LOG.debug("Window event: " + e.paramString());
+    if (TYPEAHEAD_LOG.isDebugEnabled() && (e instanceof WindowEvent || e.getClass().getName().contains("SequencedEvent"))) {
+      TYPEAHEAD_LOG.debug("Window event: " + e.paramString());
+    }
 
     if (e.getClass().getName().contains("SequencedEvent")) {
       Field nestedField = ReflectionUtil.getDeclaredField(e.getClass(), "nested");
       try {
         WindowEvent nested = (WindowEvent)nestedField.get(e);
-        if (nested != null && isPopupLosingFocusFromWindowEvent(nested)) return true;
+        if (nested != null && isFocusGoesIntoPopupFromWindowEvent(nested)) return true;
       }
       catch (IllegalAccessException illegalAccessException) {
         TYPEAHEAD_LOG.error(illegalAccessException);
       }
     }
 
-    if (isPopupLosingFocusFromWindowEvent(e)) return true;
-    if (isFrameDeactivation(e)) {
-      TYPEAHEAD_LOG.debug("Clear delayed events because of IdeFrame deactivation");
-      delayKeyEvents.set(false);
-      myDelayedKeyEvents.clear();
-    };
+    if (isFocusGoesIntoPopupFromWindowEvent(e)) return true;
 
     return false;
   }
 
-  private static boolean isFrameDeactivation(AWTEvent e) {
-    return e.getID() == WindowEvent.WINDOW_DEACTIVATED && e.getSource() instanceof IdeFrame;
+  private boolean isTypeaheadTimeoutExceeded(AWTEvent e) {
+    if (!delayKeyEvents.get()) return false;
+    long currentTypeaheadDelay = System.currentTimeMillis() - lastTypeaheadTimestamp;
+    if (currentTypeaheadDelay > Registry.get("action.aware.typeaheadTimout").asDouble()) {
+      TYPEAHEAD_LOG.warn(new RuntimeException("Typeahead timeout is exceeded: " + currentTypeaheadDelay));
+      return true;
+    }
+    return false;
   }
 
-  private static boolean isPopupLosingFocusFromWindowEvent(AWTEvent e) {
+  private static boolean isFocusGoesIntoPopupFromWindowEvent(AWTEvent e) {
     if (e.getID() == WindowEvent.WINDOW_GAINED_FOCUS) {
       WindowEvent windowEvent = (WindowEvent)e;
       Window eventWindow = windowEvent.getWindow();
-      Window oppositeWindow = windowEvent.getOppositeWindow();
-      if (eventWindow.getClass().getName().contains("HeavyWeightWindow")) {
-        if (oppositeWindow instanceof IdeFrame) {
+        if (eventWindow.getClass().getName().contains("HeavyWeightWindow")) {
+          TYPEAHEAD_LOG.debug("Focus goes into HeavyWeightWindow");
           return true;
         }
-      }
     }
     return false;
   }
@@ -1267,27 +1268,37 @@ public class IdeEventQueue extends EventQueue {
         KeyEvent keyEvent = (KeyEvent)event;
         boolean thisShortcutMayShowPopup = getShortcutsShowingPopups().stream().
           filter(s -> s instanceof KeyboardShortcut).map(s -> ((KeyboardShortcut)s).getFirstKeyStroke()).
-          filter(ks -> keyEvent.getKeyCode() == ks.getKeyCode()).
-          anyMatch(ks -> (keyEvent.getModifiersEx() & ks.getModifiers()) != 0);
+          anyMatch(ks -> ks.equals(KeyStroke.getKeyStroke(keyEvent.getKeyCode(), keyEvent.getModifiers())));
 
-        if (thisShortcutMayShowPopup) {
-          TYPEAHEAD_LOG.debug("Delay following events");
+        if (thisShortcutMayShowPopup && KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof IdeFrame) {
+          TYPEAHEAD_LOG.debug("Delay following events; Focused window is " +
+                              KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow().getClass().getName());
           delayKeyEvents.set(true);
+          lastTypeaheadTimestamp = System.currentTimeMillis();
         }
       }
+
+      if (isTypeaheadTimeoutExceeded(event)) {
+        TYPEAHEAD_LOG.debug("Clear delayed events because of IdeFrame deactivation");
+        delayKeyEvents.set(false);
+        myDelayedKeyEvents.clear();
+        lastTypeaheadTimestamp = 0;
+      };
     }
 
     super.postEvent(event);
 
     if (Registry.is("action.aware.typeAhead")) {
-      if (isPopupLosingFocus(event) && !myDelayedKeyEvents.isEmpty()) {
+      if (isFocusGoesIntoPopup(event)) {
         delayKeyEvents.set(false);
         int size = myDelayedKeyEvents.size();
+        TYPEAHEAD_LOG.debug("Stop delaying events. Events to post: " + size);
         for (int keyEventIndex = 0; keyEventIndex < size; keyEventIndex++) {
           KeyEvent theEvent = myDelayedKeyEvents.remove();
           TYPEAHEAD_LOG.debug("Posted after delay: " + theEvent.paramString());
           super.postEvent(theEvent);
         }
+        TYPEAHEAD_LOG.debug("Events after posting: " + myDelayedKeyEvents.size());
       }
     }
 
@@ -1297,6 +1308,7 @@ public class IdeEventQueue extends EventQueue {
   private final Set<Shortcut> shortcutsShowingPopups = new HashSet<>();
 
   private final Set<String> actionsShowingPopupsList = new HashSet<>();
+  private long lastTypeaheadTimestamp = -1;
 
   private Set<Shortcut> getShortcutsShowingPopups () {
     if (KeymapManager.getInstance().getActiveKeymap() != null) {

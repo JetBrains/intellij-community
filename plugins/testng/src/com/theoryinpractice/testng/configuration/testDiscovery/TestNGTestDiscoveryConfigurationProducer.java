@@ -17,9 +17,12 @@ package com.theoryinpractice.testng.configuration.testDiscovery;
 
 import com.intellij.execution.JavaTestConfigurationBase;
 import com.intellij.execution.PsiLocation;
-import com.intellij.execution.configurations.ConfigurationTypeUtil;
+import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.testDiscovery.TestDiscoveryConfigurationProducer;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.configuration.TestNGConfigurationType;
@@ -43,5 +46,18 @@ public class TestNGTestDiscoveryConfigurationProducer extends TestDiscoveryConfi
       return Pair.create(data.getMainClassName(), data.getMethodName());
     }
     return null;
+  }
+
+  @Override
+  protected TestDiscoveryConfigurationProducer createDelegate(PsiMethod sourceMethod, Module module) {
+    return new TestNGTestDiscoveryConfigurationProducer() {
+      @Override
+      protected boolean setupConfigurationFromContext(JavaTestConfigurationBase configuration,
+                                                      ConfigurationContext configurationContext,
+                                                      Ref<PsiElement> ref) {
+        setupDiscoveryConfiguration(configuration, sourceMethod, module);
+        return true;
+      }
+    };
   }
 }

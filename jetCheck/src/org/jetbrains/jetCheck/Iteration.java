@@ -60,7 +60,7 @@ class Iteration<T> {
       catch (Throwable e) {
         throw new GeneratorException(this, e);
       }
-      if (!session.generatedHashes.add(node.hashCode())) continue;
+      if (!session.generatedNodes.add(node)) continue;
 
       return CounterExampleImpl.checkProperty(this, value, node);
     }
@@ -108,7 +108,7 @@ class CheckSession<T> {
   final Generator<T> generator;
   final Predicate<T> property;
   final long globalSeed;
-  final Set<Integer> generatedHashes = new HashSet<>();
+  final Set<StructureNode> generatedNodes = new HashSet<>();
   final StatusNotifier notifier;
   final int iterationCount;
   final IntUnaryOperator sizeHintFun;
