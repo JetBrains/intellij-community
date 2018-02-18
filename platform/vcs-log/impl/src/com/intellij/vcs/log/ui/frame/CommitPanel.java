@@ -184,7 +184,7 @@ public class CommitPanel extends JBPanel {
       if (hasPanelBackground()) {
         return getCommitDetailsBackground();
       }
-      return EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
+      return UIUtil.getTreeBackground();
     }
 
     @Override
