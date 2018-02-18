@@ -554,16 +554,21 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
 
   @NotNull
   public IdeFrameFixture waitForStartingIndexing() {
-    Pause.pause(new Condition("Indexing to start") {
-                  @Override
-                  public boolean test() {
-                    ProgressManager progressManager = ProgressManager.getInstance();
-                    return progressManager.hasModalProgressIndicator() ||
-                           progressManager.hasProgressIndicator() ||
-                           progressManager.hasUnsafeProgressIndicator();
-                  }
-                }
-      , GuiTestUtil.FIFTEEN_MIN_TIMEOUT);
+    return waitForStartingIndexing(15 * 60);
+  }
+
+  @NotNull
+  public IdeFrameFixture waitForStartingIndexing(int secondsToWait) {
+    pause(new Condition("Indexing to start") {
+            @Override
+            public boolean test() {
+              ProgressManager progressManager = ProgressManager.getInstance();
+              return progressManager.hasModalProgressIndicator() ||
+                     progressManager.hasProgressIndicator() ||
+                     progressManager.hasUnsafeProgressIndicator();
+            }
+          }
+      , Timeout.timeout(secondsToWait, TimeUnit.SECONDS));
     robot().waitForIdle();
     return this;
   }

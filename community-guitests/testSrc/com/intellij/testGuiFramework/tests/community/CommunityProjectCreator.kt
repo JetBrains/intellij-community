@@ -1,10 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.tests.community
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
+import org.fest.swing.exception.WaitTimedOutError
 import org.junit.Assert
 
 val GuiTestCase.CommunityProjectCreator by CommunityProjectCreator
@@ -12,6 +14,8 @@ val GuiTestCase.CommunityProjectCreator by CommunityProjectCreator
 class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTestCase) {
 
   companion object : TestUtilsClassCompanion<CommunityProjectCreator>({ it -> CommunityProjectCreator(it) })
+
+  private val LOG = Logger.getInstance(this.javaClass)
 
   private val defaultProjectName = "untitled"
 
@@ -35,7 +39,10 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
         }
       }
       ideFrame {
-        waitForStartingIndexing()
+        val secondToWaitIndexing = 120
+        try {
+          waitForStartingIndexing(secondToWaitIndexing) //let's wait for 2 minutes until indexing bar will appeared
+        } catch (timedOutError: WaitTimedOutError) { LOG.warn("Waiting for indexing has been exceeded $secondToWaitIndexing seconds") }
         waitForBackgroundTasksToFinish()
         if (needToOpenMainJava) {
           projectView {
