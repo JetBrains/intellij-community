@@ -469,7 +469,7 @@ public class GuessManagerImpl extends GuessManager {
 
     public boolean isDfaNeeded() {
       if (myNeedDfa) return true;
-      if (myDeclared || mySpecificType == null) return true;
+      if (myDeclared || mySpecificType == null) return false;
       PsiType type = myPlace.getType();
       PsiType rawType = type instanceof PsiClassType ? ((PsiClassType)type).rawType() : type;
       return !mySpecificType.equals(rawType);
