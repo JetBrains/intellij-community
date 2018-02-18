@@ -33,10 +33,10 @@ public interface TestDiscoveryProducer {
   }
 
   @NotNull
-  List<DiscoveredTest> getDiscoveredTests(Project project,
-                                          String classFQName,
-                                          String methodName,
-                                          String frameworkId);
+  List<DiscoveredTest> getDiscoveredTests(@NotNull Project project,
+                                          @NotNull String classFQName,
+                                          @NotNull String methodName,
+                                          @NotNull String frameworkId);
 
   ExtensionPointName<TestDiscoveryProducer> EP = ExtensionPointName.create("com.intellij.testDiscoveryProducer");
 
