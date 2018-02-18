@@ -25,6 +25,8 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.FileTypeRenderer;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
@@ -118,6 +120,12 @@ public class SearchDialog extends DialogWrapper {
 
     init();
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
+    ProjectManager.getInstance().addProjectManagerListener(searchContext.getProject(), new ProjectManagerListener() {
+      @Override
+      public void projectClosing(Project project) {
+        close(CANCEL_EXIT_CODE);
+      }
+    });
   }
 
   public void setUseLastConfiguration(boolean useLastConfiguration) {
