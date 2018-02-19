@@ -30,15 +30,18 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -155,6 +158,23 @@ public class FormatChangedTextUtil {
   @Nullable
   public ChangedRangesInfo getChangedRangesInfo(@NotNull PsiFile file) throws FilesTooBigForDiffException {
     return null;
+  }
+
+  @NotNull
+  public <T extends PsiElement> List<T> getChangedElements(@NotNull Project project,
+                                                           @NotNull List<Change> changes,
+                                                           @NotNull Convertor<VirtualFile, List<T>> elementsConvertor) {
+    List<T> result = new ArrayList<>();
+    for (Change change : changes) {
+      VirtualFile file = change.getVirtualFile();
+      if (file != null) {
+        List<T> elements = elementsConvertor.convert(file);
+        if (elements != null) {
+          result.addAll(elements);
+        }
+      }
+    }
+    return result;
   }
 
   /**
