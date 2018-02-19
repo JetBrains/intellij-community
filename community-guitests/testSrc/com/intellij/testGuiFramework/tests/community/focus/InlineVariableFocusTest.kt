@@ -43,7 +43,7 @@ public class Test {
 }"""
 
   @Test
-  fun testGoToClassFocus() {
+  fun testInlineVariableFocus() {
     CommunityProjectCreator.createCommandLineProject()
     Pause.pause(1000)
     CommunityProjectCreator.createJavaClass(pasteCode, "Test")
