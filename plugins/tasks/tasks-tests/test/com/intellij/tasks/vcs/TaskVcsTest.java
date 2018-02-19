@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
@@ -460,8 +461,9 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
     ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(getProject());
     vcsManager.registerVcs(myVcs);
-    vcsManager.setDirectoryMapping("", myVcs.getName());
+    vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping("", myVcs.getName())));
     vcsManager.waitForInitialized();
+    assertTrue(vcsManager.hasActiveVcss());
 
     myTaskManager = (TaskManagerImpl)TaskManager.getManager(getProject());
     myRepository = new TestRepository();
