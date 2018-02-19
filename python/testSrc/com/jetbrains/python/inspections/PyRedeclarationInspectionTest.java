@@ -160,6 +160,10 @@ public class PyRedeclarationInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  public void testConditionalExpression() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
