@@ -136,7 +136,8 @@ public class GitLineHandler extends GitTextHandler {
    */
   private void notifyLine(@NotNull String line, @NotNull Key outputType) {
     String lineWithoutSeparator = LineHandlerHelper.trimLineSeparator(line);
-    logOutput(lineWithoutSeparator, outputType);
+    // do not log git remote progress (progress lines are separated with CR by convention)
+    if (!line.endsWith("\r")) logOutput(lineWithoutSeparator, outputType);
     myLineListeners.getMulticaster().onLineAvailable(lineWithoutSeparator, outputType);
   }
 
