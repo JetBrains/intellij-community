@@ -77,7 +77,13 @@ class GoToClassFocusTest : GuiTestCase() {
   }
 
   private fun checkSearchWindow(guiTestCase: GuiTestCase) {
-    val searchWindow = findSearchWindow()
+    val searchWindow = try {
+      findSearchWindow()
+    }
+    catch (cle: ComponentLookupException) {
+      guiTestCase.robot().waitForIdle()
+      findSearchWindow()
+    }
     with(guiTestCase) {
       val textfield = textfield("", searchWindow, guiTestCase.defaultTimeout)
       Assert.assertEquals(textfield.target().text, typedString)
@@ -85,10 +91,12 @@ class GoToClassFocusTest : GuiTestCase() {
   }
 
   private fun findSearchWindow(): Container {
-    fun checkWindowContainsEnterClassName(it: Window) = GuiTestUtilKt.findAllWithBFS(it, JLabel::class.java).firstOrNull { it.text == "Enter class name:" } != null
+    fun checkWindowContainsEnterClassName(it: Window) = GuiTestUtilKt.findAllWithBFS(it,
+                                                                                     JLabel::class.java).firstOrNull { it.text == "Enter class name:" } != null
     return Window.getWindows()
              .filterNotNull()
-             .firstOrNull { checkWindowContainsEnterClassName(it) } ?: throw ComponentLookupException("Unable to find GoToClass search window")
+             .firstOrNull { checkWindowContainsEnterClassName(it) } ?: throw ComponentLookupException(
+      "Unable to find GoToClass search window")
   }
 
 }
