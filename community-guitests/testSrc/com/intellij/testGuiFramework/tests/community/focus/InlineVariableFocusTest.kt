@@ -22,8 +22,6 @@ import java.util.*
 
 class InlineVariableFocusTest : GuiTestCase() {
 
-  private val actionKeyStroke by lazy { ActionManager.getInstance().getKeyboardShortcut("GotoClass")!!.firstKeyStroke }
-
   private val pasteCode = """package com.company;
 
 public class Test {
@@ -54,10 +52,10 @@ public class Test {
       resetCode()
       inlineVariable(firstTime = false)
       val smartRobot = robot() as SmartWaitRobot
-      smartRobot.shortcutAndTypeString(actionKeyStroke, "11", 0)
-      for(i in 0 .. 11) shortcut(LEFT)
-      for(i in 0 .. 3) shortcut(BACK_SPACE)
-      smartRobot.shortcutAndTypeString(actionKeyStroke, "out", 0)
+      smartRobot.fastTyping("11", 0)
+      for(i in 0 .. 10) shortcut(LEFT)
+      for(i in 0 .. 2) shortcut(BACK_SPACE)
+      smartRobot.fastTyping("out", 0)
 
       val editorCode = editor.getCurrentFileContents(false)
       Assert.assertTrue(ComparisonUtil.isEquals(editorCode!!.unifyCode(),
