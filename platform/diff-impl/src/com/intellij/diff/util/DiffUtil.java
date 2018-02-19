@@ -673,7 +673,7 @@ public class DiffUtil {
     Window window = UIUtil.getWindow(component);
     if (window == null) return false;
     Component windowFocusOwner = window.getMostRecentFocusOwner();
-    return SwingUtilities.isDescendingFrom(windowFocusOwner, component);
+    return windowFocusOwner != null && SwingUtilities.isDescendingFrom(windowFocusOwner, component);
   }
 
   public static void requestFocusInWindow(@Nullable Component component) {
