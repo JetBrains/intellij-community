@@ -35,10 +35,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
@@ -47,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static com.intellij.ide.fileTemplates.JavaTemplateUtil.INTERNAL_MODULE_INFO_TEMPLATE_NAME;
 import static com.intellij.psi.PsiJavaModule.*;
@@ -143,7 +144,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
   }
 
   private static boolean mayContainModuleInfo(Module module) {
-    return ReadAction.compute(() -> 
+    return ReadAction.compute(() ->
       EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module).isAtLeast(LanguageLevel.JDK_1_9)
     );
   }
@@ -399,7 +400,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
         VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(false);
         return sourceRoots.length != 0 ? findDescriptor(module, sourceRoots[0]) : null;
       });
-      myName = myDescriptor != null ? myDescriptor.getName() : LightJavaModule.moduleName(myModule.getName());
+      myName = myDescriptor != null ? myDescriptor.getName() : NameConverter.convertModuleName(myModule.getName());
     }
 
     @Nullable
@@ -495,6 +496,59 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
                      .nonNull()
                      .findFirst()
                      .orElse(null);
+    }
+  }
+
+  public static class NameConverter { // "public" is for tests
+    private static final Pattern NON_NAME = Pattern.compile("[^A-Za-z0-9]");
+    private static final Pattern DOT_SEQUENCE = Pattern.compile("\\.{2,}");
+    private static final Pattern SINGLE_DOT = Pattern.compile("\\.");
+    private static final Map<Character, String> DIGIT_WORDS = ContainerUtil.<Character, String>immutableMapBuilder()
+      .put('0', "zero")
+      .put('1', "one")
+      .put('2', "two")
+      .put('3', "three")
+      .put('4', "four")
+      .put('5', "five")
+      .put('6', "six")
+      .put('7', "seven")
+      .put('8', "eight")
+      .put('9', "nine")
+      .build();
+
+    @NotNull
+    public static String convertModuleName(@NotNull String name) {
+      // All non-alphanumeric characters ([^A-Za-z0-9]) are replaced with a dot (".") ...
+      name = NON_NAME.matcher(name).replaceAll(".");
+      // ... all repeating dots are replaced with one dot ...
+      name = DOT_SEQUENCE.matcher(name).replaceAll(".");
+      // ... and all leading and trailing dots are removed.
+      name = StringUtil.trimLeading(StringUtil.trimTrailing(name, '.'), '.');
+      // convert digit-only parts of the name to non-digit text
+      String[] parts = SINGLE_DOT.split(name);
+      for (int i = 0; i < parts.length; i++) {
+        String words = convertDigitsToWords(parts[i]);
+        if (words != null) {
+          parts[i] = words;
+        }
+      }
+      return StringUtil.join(parts, ".");
+    }
+
+    @Nullable
+    private static String convertDigitsToWords(String part) {
+      StringBuilder words = null;
+      for (int i = 0; i < part.length(); i++) {
+        String word = DIGIT_WORDS.get(part.charAt(i));
+        if (word == null) {
+          return null;
+        }
+        if (words == null) {
+          words = new StringBuilder();
+        }
+        words.append(word);
+      }
+      return words != null ? words.toString() : null;
     }
   }
 
