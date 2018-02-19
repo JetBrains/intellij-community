@@ -130,6 +130,36 @@ public class PyRedeclarationInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-19856
+  public void testPossiblyEmptyFor() {
+    doTest();
+  }
+
+  // PY-19856
+  public void testPossiblyEmptyWhile() {
+    doTest();
+  }
+
+  public void testIfFalseElse() {
+    doTest();
+  }
+
+  public void testIfTrue() {
+    doTest();
+  }
+
+  public void testPossiblyFalseIf() {
+    doTest();
+  }
+
+  public void testPossiblyTrueIf() {
+    doTest();
+  }
+
+  public void testAfterIfTrueElse() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
