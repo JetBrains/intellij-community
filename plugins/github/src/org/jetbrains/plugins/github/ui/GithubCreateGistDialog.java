@@ -37,7 +37,6 @@ public class GithubCreateGistDialog extends DialogWrapper {
     myGithubCreateGistPanel = new GithubCreateGistPanel();
     // Use saved settings for controls
     final GithubSettings settings = GithubSettings.getInstance();
-    myGithubCreateGistPanel.setAnonymous(settings.isAnonymousGist());
     myGithubCreateGistPanel.setSecret(settings.isPrivateGist());
     myGithubCreateGistPanel.setOpenInBrowser(settings.isOpenInBrowserGist());
 
@@ -81,7 +80,6 @@ public class GithubCreateGistDialog extends DialogWrapper {
   protected void doOKAction() {
     // Store settings
     final GithubSettings settings = GithubSettings.getInstance();
-    settings.setAnonymousGist(myGithubCreateGistPanel.isAnonymous());
     settings.setOpenInBrowserGist(myGithubCreateGistPanel.isOpenInBrowser());
     settings.setPrivateGist(myGithubCreateGistPanel.isSecret());
     super.doOKAction();
@@ -94,10 +92,6 @@ public class GithubCreateGistDialog extends DialogWrapper {
 
   public boolean isSecret() {
     return myGithubCreateGistPanel.isSecret();
-  }
-
-  public boolean isAnonymous() {
-    return myGithubCreateGistPanel.isAnonymous();
   }
 
   @NotNull

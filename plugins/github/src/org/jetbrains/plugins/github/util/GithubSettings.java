@@ -36,7 +36,6 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     @Nullable public String LOGIN = null;
     @NotNull public String HOST = GithubApiUtil.DEFAULT_GITHUB_HOST;
     @NotNull public AuthType AUTH_TYPE = AuthType.ANONYMOUS;
-    public boolean ANONYMOUS_GIST = false;
     public boolean OPEN_IN_BROWSER_GIST = true;
     // "Secret" in UI, "Public" in API. "Private" here to preserve user settings after refactoring
     public boolean PRIVATE_GIST = true;
@@ -90,10 +89,6 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     myState.AUTH_TYPE = authType;
   }
 
-  public boolean isAnonymousGist() {
-    return myState.ANONYMOUS_GIST;
-  }
-
   public boolean isOpenInBrowserGist() {
     return myState.OPEN_IN_BROWSER_GIST;
   }
@@ -125,10 +120,6 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
 
   public void setCreatePullRequestCreateRemote(@NotNull ThreeState value) {
     myState.CREATE_PULL_REQUEST_CREATE_REMOTE = value;
-  }
-
-  public void setAnonymousGist(final boolean anonymousGist) {
-    myState.ANONYMOUS_GIST = anonymousGist;
   }
 
   public void setPrivateGist(final boolean secretGist) {
