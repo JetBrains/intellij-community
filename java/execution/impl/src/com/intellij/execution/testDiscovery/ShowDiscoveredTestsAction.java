@@ -34,6 +34,7 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.CollectionListModel;
@@ -82,10 +83,11 @@ public class ShowDiscoveredTestsAction extends AnAction {
     PsiMethod method = PsiTreeUtil.getParentOfType(at, PsiMethod.class);
     assert method != null;
 
+    Couple<String> couple = getMethodQualifiedName(method);
     PsiClass c = method.getContainingClass();
-    String fqn = c != null ? c.getQualifiedName() : null;
-    if (fqn == null) return;
-    String methodName = method.getName();
+    String fqn = couple != null ? couple.first : null;
+    if (fqn == null || c == null) return;
+    String methodName = couple.second;
     String methodPresentationName = c.getName() + "." + methodName;
 
     DataContext dataContext = DataManager.getInstance().getDataContext(editor.getContentComponent());
@@ -243,10 +245,8 @@ public class ShowDiscoveredTestsAction extends AnAction {
   @Nullable
   private static Couple<String> getMethodQualifiedName(@NotNull PsiMethod method) {
     PsiClass c = method.getContainingClass();
-    String fqn = c != null ? c.getQualifiedName() : null;
-    if (fqn == null) return null;
-    String methodName = method.getName();
-    return Couple.of(fqn, methodName);
+    String fqn = c != null ? ClassUtil.getJVMClassName(c) : null;
+    return fqn == null ? null : Couple.of(fqn, method.getName());
   }
 
   @Nullable
