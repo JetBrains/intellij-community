@@ -1199,7 +1199,8 @@ public class IdeEventQueue extends EventQueue {
   }
 
   private static boolean isFocusGoesIntoPopupFromWindowEvent(AWTEvent e) {
-    if (e.getID() == WindowEvent.WINDOW_GAINED_FOCUS) {
+    if (e.getID() == WindowEvent.WINDOW_GAINED_FOCUS ||
+        (SystemInfo.isLinux && e.getID() == WindowEvent.WINDOW_OPENED)) {
       WindowEvent windowEvent = (WindowEvent)e;
       Window eventWindow = windowEvent.getWindow();
         if (eventWindow.getClass().getName().contains("HeavyWeightWindow")) {
