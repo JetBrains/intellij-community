@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.*;
@@ -12,7 +13,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -64,6 +64,8 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
              OptionalConfigurable {
   public static final String ID = "preferences.pluginManager2";
   public static final String DISPLAY_NAME = "Plugins (New Design)"; //IdeBundle.message("title.plugins");
+
+  private static final String SELECTION_TAB_KEY = "PluginConfigurable.selectionTab";
 
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MMM dd, yyyy");
   private static final DecimalFormat K_FORMAT = new DecimalFormat("###.#K");
@@ -170,10 +172,11 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
 
     myNameListener = (aSource, data) -> {
       myShowDetailPanel = true;
-      JButton backButton = new JButton(data.second == 0 ? "Trending" : data.second == 1 ? "Installed" : "Updates", AllIcons.Actions.Back);
+      JButton backButton = new JButton("Plugins", AllIcons.Actions.Back);
       backButton.addActionListener(event -> {
         removeDetailsPanel();
         myCardPanel.select(data.second, true);
+        storeSelectionTab(data.second);
         myTabHeaderComponent.setSelection(data.second);
       });
       myTopController.setLeftComponent(backButton);
@@ -214,13 +217,16 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
         removeDetailsPanel();
       }
       myCardPanel.select(index, true);
+      storeSelectionTab(index);
     });
 
     myTabHeaderComponent.addTab("Trending");
     myTabHeaderComponent.addTab("Installed");
     myTabHeaderComponent.addTab(() -> "Updates (" + 5 + ")");
-    myTabHeaderComponent.setSelection(0);
-    myCardPanel.select(0, true);
+
+    int selectionTab = getStoredSelectionTab();
+    myTabHeaderComponent.setSelection(selectionTab);
+    myCardPanel.select(selectionTab, true);
 
     return panel;
   }
@@ -229,6 +235,14 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     myShowDetailPanel = false;
     myTopController.setLeftComponent(null);
     myCardPanel.remove(myCardPanel.getComponentCount() - 1);
+  }
+
+  private static int getStoredSelectionTab() {
+    return PropertiesComponent.getInstance().getInt(SELECTION_TAB_KEY, 0);
+  }
+
+  private static void storeSelectionTab(int value) {
+    PropertiesComponent.getInstance().setValue(SELECTION_TAB_KEY, value, 0);
   }
 
   @Override
@@ -350,13 +364,17 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
 
     JPanel header = new NonOpaquePanel(new BorderLayout(offset, 0));
 
-    JLabel myIconLabel = new JLabel(AllIcons.Nodes.PluginLogo);
+    JLabel myIconLabel = new JLabel(AllIcons.Plugins.PluginLogo_80);
+    myIconLabel.setDisabledIcon(AllIcons.Plugins.PluginLogoDisabled_80);
     myIconLabel.setVerticalAlignment(SwingConstants.TOP);
     myIconLabel.setOpaque(false);
+    myIconLabel.setEnabled(plugin.isEnabled());
     header.add(myIconLabel, BorderLayout.WEST);
 
     JPanel centerPanel = new NonOpaquePanel(new VerticalLayout(offset));
     header.add(centerPanel);
+
+    boolean bundled = plugin.isBundled();
 
     JPanel buttons = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(5)));
     if (update) {
@@ -365,7 +383,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     if (plugin instanceof PluginNode) {
       buttons.add(new JButton("Install"));
     }
-    else if (plugin.isBundled()) {
+    else if (bundled) {
       buttons.add(new JButton(plugin.isEnabled() ? "Disable" : "Enable"));
     }
     else {
@@ -391,15 +409,25 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     }
 
     JPanel nameButtons = new NonOpaquePanel(new BorderLayout(offset, 0));
-    JLabel nameComponent = RelativeFont.BOLD.large().large().large().large().large().install(new JLabel(plugin.getName()));
+    JLabel nameComponent = new JLabel(plugin.getName());
+    Font font = nameComponent.getFont();
+    if (font != null) {
+      nameComponent.setFont(font.deriveFont(Font.BOLD, 30));
+    }
+    if (!plugin.isEnabled()) {
+      nameComponent.setForeground(DarculaButtonUI.getDisabledTextColor());
+    }
     nameButtons.add(nameComponent, BorderLayout.WEST);
     nameButtons.add(buttons, BorderLayout.EAST);
     centerPanel.add(nameButtons, "fill");
 
     Color grayedFg = new JBColor(Gray._130, Gray._120);
 
-    String version = plugin.isBundled() ? "bundled" : plugin.getVersion();
+    String version = bundled ? "bundled" : plugin.getVersion();
     if (!StringUtil.isEmptyOrSpaces(version)) {
+      if (!bundled) {
+        version = "v" + version;
+      }
       JLabel versionComponent = new JLabel(version);
       versionComponent.setOpaque(false);
       versionComponent.setForeground(grayedFg);
@@ -407,7 +435,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
 
       int nameBaseline = nameComponent.getBaseline(nameComponent.getWidth(), nameComponent.getHeight());
       int versionBaseline = versionComponent.getBaseline(versionComponent.getWidth(), versionComponent.getHeight());
-      versionComponent.setBorder(JBUI.Borders.emptyTop(nameBaseline - versionBaseline + JBUI.scale(2)));
+      versionComponent.setBorder(JBUI.Borders.emptyTop(nameBaseline - versionBaseline + JBUI.scale(6)));
     }
 
     List<String> tags = getTags(plugin);
@@ -431,14 +459,14 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
         centerPanel.add(metrics);
 
         if (date != null) {
-          JLabel lastUpdated = new JLabel(date, AllIcons.Actions.Refresh, SwingConstants.CENTER);
+          JLabel lastUpdated = new JLabel(date, AllIcons.Plugins.Updated, SwingConstants.CENTER);
           lastUpdated.setOpaque(false);
           lastUpdated.setForeground(grayedFg);
           metrics.add(lastUpdated);
         }
 
         if (downloads != null) {
-          JLabel downloadsComponent = new JLabel(downloads, AllIcons.Actions.Download, SwingConstants.CENTER);
+          JLabel downloadsComponent = new JLabel(downloads, AllIcons.Plugins.Downloads, SwingConstants.CENTER);
           downloadsComponent.setOpaque(false);
           downloadsComponent.setForeground(grayedFg);
           metrics.add(downloadsComponent);
@@ -455,7 +483,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
     panel.add(header, BorderLayout.NORTH);
 
     String description = plugin.getDescription();
-    String vendor = plugin.isBundled() ? null : plugin.getVendor();
+    String vendor = bundled ? null : plugin.getVendor();
     String size = plugin instanceof PluginNode ? ((PluginNode)plugin).getSize() : null;
 
     if (!StringUtil.isEmptyOrSpaces(description) || !StringUtil.isEmptyOrSpaces(vendor) || !StringUtil.isEmptyOrSpaces(size)) {
@@ -1081,7 +1109,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       int offset = JBUI.scale(5);
       setLayout(new BorderLayout(offset, 0));
 
-      myIconLabel = new JLabel(AllIcons.Nodes.PluginLogo);
+      myIconLabel = new JLabel(AllIcons.Plugins.PluginLogo_40);
       myIconLabel.setVerticalAlignment(SwingConstants.TOP);
       myIconLabel.setOpaque(false);
       add(myIconLabel, BorderLayout.WEST);
@@ -1257,7 +1285,7 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
       nameButtons.add(buttons, BorderLayout.EAST);
       centerPanel.add(nameButtons, "fill");
 
-      myIconLabel.setDisabledIcon(IconLoader.getDisabledIcon(myIconLabel.getIcon()));
+      myIconLabel.setDisabledIcon(AllIcons.Plugins.PluginLogoDisabled_40);
 
       addNameComponent(nameButtons, BorderLayout.WEST);
       addDescriptionComponent(centerPanel, update ? getChangeNotes(plugin) : plugin.getDescription());
@@ -1366,19 +1394,19 @@ public class PluginManagerConfigurableNew extends BaseConfigurable
           centerPanel.add(panel);
 
           if (date != null) {
-            myLastUpdated = new JLabel(date, AllIcons.Actions.Refresh, SwingConstants.CENTER);
+            myLastUpdated = new JLabel(date, AllIcons.Plugins.Updated, SwingConstants.CENTER);
             myLastUpdated.setOpaque(false);
             panel.add(RelativeFont.SMALL.install(myLastUpdated));
           }
 
           if (downloads != null) {
-            myDownloads = new JLabel(downloads, AllIcons.Actions.Download, SwingConstants.CENTER);
+            myDownloads = new JLabel(downloads, AllIcons.Plugins.Downloads, SwingConstants.CENTER);
             myDownloads.setOpaque(false);
             panel.add(RelativeFont.SMALL.install(myDownloads));
           }
 
           if (rating != null) {
-            myRating = new JLabel(rating, AllIcons.Ide.Rating1, SwingConstants.CENTER);
+            myRating = new JLabel(rating, AllIcons.Plugins.Rating, SwingConstants.CENTER);
             myRating.setOpaque(false);
             panel.add(RelativeFont.SMALL.install(myRating));
           }
