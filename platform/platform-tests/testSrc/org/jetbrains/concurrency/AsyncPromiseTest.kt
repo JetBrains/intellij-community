@@ -78,7 +78,7 @@ class AsyncPromiseTest {
   }
 
   @Test
-  fun `ignoreErrors`() {
+  fun `ignore errors`() {
     val a = resolvedPromise("foo")
     val b = rejectedPromise<String>()
     assertThat(collectResults(listOf(a, b), ignoreErrors = true).blockingGet(100, TimeUnit.MILLISECONDS)).containsExactly("foo")
