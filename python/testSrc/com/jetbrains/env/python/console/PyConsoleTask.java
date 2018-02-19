@@ -24,6 +24,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,8 +41,12 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
 
 /**
  * @author traff
@@ -53,12 +58,12 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   protected PydevConsoleCommunication myCommunication;
 
   private boolean shouldPrintOutput = false;
-  private PythonConsoleView myConsoleView;
+  private volatile PythonConsoleView myConsoleView;
   private Semaphore myCommandSemaphore;
   private Semaphore myConsoleInitSemaphore;
   private PythonConsoleExecuteActionHandler myExecuteHandler;
 
-  private Ref<RunContentDescriptor> myContentDescriptorRef = Ref.create();
+  private final Ref<RunContentDescriptor> myContentDescriptorRef = Ref.create();
 
   public PyConsoleTask() {
     super(null);
@@ -90,6 +95,9 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
   @Override
   public void tearDown() throws Exception {
+    // Prevents thread leak, see its doc
+    killRpcThread();
+
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         if (myConsoleView != null) {
@@ -104,10 +112,39 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   }
 
   /**
+   * Kill XML-Rpc thread
+   * Due to stupid bug in {@link LiteXmlRpcTransport#initConnection()} which has <strong>infinite</strong> loop that
+   * tries to connect to already dead process (already closed socket): See "tries" var.
+   */
+  private static void killRpcThread() throws InterruptedException {
+    final Optional<Thread> rpc = Thread.getAllStackTraces().keySet().stream()
+                                       .filter(o -> o.getClass().getName().contains("XmlRpc"))
+                                       .findFirst();
+    if (rpc.isPresent()) {
+      final Thread thread = rpc.get();
+      // There is no way to interrupt this thread with "interrupt": it has infinite loop (bug) which does not check ".isInterrupted()"
+      //noinspection CallToThreadStopSuspendOrResumeManager
+      thread.stop();
+      thread.join();
+    }
+  }
+
+  /**
    * Disposes Python console and waits for Python console server thread to die.
    */
-  private void disposeConsole() throws InterruptedException, ExecutionException, TimeoutException {
-    disposeConsoleAsync().get(30L, TimeUnit.SECONDS);
+  private void disposeConsole() throws InterruptedException, ExecutionException {
+    try {
+      disposeConsoleAsync().get();
+    }
+    finally {
+      // Even if console failed in its side we need
+      if (myConsoleView != null) {
+        UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+          Disposer.dispose(myConsoleView);
+        });
+        myConsoleView = null;
+      }
+    }
   }
 
   @NotNull
@@ -147,7 +184,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   }
 
   @Override
-  public void runTestOn(final String sdkHome) throws Exception {
+  public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws Exception {
     setProcessCanTerminate(false);
 
     PydevConsoleRunner consoleRunner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(getProject(), myFixture.getModule());
@@ -170,6 +207,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     myCommandSemaphore = new Semaphore(1);
 
     myConsoleView = consoleRunner.getConsoleView();
+    Disposer.register(myFixture.getProject(), myConsoleView);
     myProcessHandler = consoleRunner.getProcessHandler();
 
     myExecuteHandler = consoleRunner.getConsoleExecuteActionHandler();

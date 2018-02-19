@@ -29,8 +29,8 @@ import java.util.Map;
  * @since 10/28/2015
  */
 public class GradleTestsExecutionConsole extends SMTRunnerConsoleView {
-  private Map<String, SMTestProxy> testsMap = ContainerUtil.newHashMap();
-  private StringBuilder myBuffer = new StringBuilder();
+  private final Map<String, SMTestProxy> testsMap = ContainerUtil.newHashMap();
+  private final StringBuilder myBuffer = new StringBuilder();
 
   public GradleTestsExecutionConsole(TestConsoleProperties consoleProperties, @Nullable String splitterProperty) {
     super(consoleProperties, splitterProperty);

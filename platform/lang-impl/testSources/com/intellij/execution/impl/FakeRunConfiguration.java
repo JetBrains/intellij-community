@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class FakeRunConfiguration extends LocatableConfigurationBase {
 
-  private static AtomicInteger CREATED_INSTANCES = new AtomicInteger(0);
+  private static final AtomicInteger CREATED_INSTANCES = new AtomicInteger(0);
 
   private final boolean mySurviveSoftKill;
 

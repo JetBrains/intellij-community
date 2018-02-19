@@ -55,7 +55,7 @@ public class FileSetFormatter extends FileSetProcessor {
 
   private final @NotNull String myProjectUID;
   private @Nullable Project myProject;
-  private MessageOutput myMessageOutput;
+  private final MessageOutput myMessageOutput;
   private @NotNull CodeStyleSettings mySettings;
 
   public FileSetFormatter(@NotNull MessageOutput messageOutput) {

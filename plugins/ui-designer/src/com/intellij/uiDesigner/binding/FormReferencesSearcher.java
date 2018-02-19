@@ -18,7 +18,6 @@ package com.intellij.uiDesigner.binding;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -158,16 +157,9 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
                                                     GlobalSearchScope scope1,
                                                     LocalSearchScope filterScope) {
     GlobalSearchScope scope = GlobalSearchScope.projectScope(psiManager.getProject()).intersectWith(scope1);
-    final AccessToken token = ReadAction.start();
-    PsiClass containingClass = field.getContainingClass();
+    PsiClass containingClass = ReadAction.compute(() -> field.getContainingClass());
     if (containingClass == null) return true;
-    String fieldName;
-    try {
-      fieldName = field.getName();
-    }
-    finally {
-      token.finish();
-    }
+    String fieldName = ReadAction.compute(() -> field.getName());
     final List<PsiFile> files = FormClassIndex.findFormsBoundToClass(psiManager.getProject(), containingClass, scope);
     return processReferencesInFiles(files, psiManager, fieldName, field, filterScope, processor);
   }

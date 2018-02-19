@@ -33,7 +33,7 @@ public class LogEntry {
   private final String myMessage;
   private final String myAuthor;
   @NotNull private final Map<String, LogEntryPath> myChangedPaths;
-  private boolean myHasChildren;
+  private final boolean myHasChildren;
 
   public LogEntry(@NotNull LogEntry.Builder builder) {
     myRevision = builder.revision;
@@ -100,10 +100,10 @@ public class LogEntry {
 
     @XmlElementWrapper(name = "paths")
     @XmlElement(name = "path")
-    private List<LogEntryPath.Builder> changedPaths = ContainerUtil.newArrayList();
+    private final List<LogEntryPath.Builder> changedPaths = ContainerUtil.newArrayList();
 
     @XmlElement(name = "logentry")
-    private List<LogEntry.Builder> childEntries = ContainerUtil.newArrayList();
+    private final List<LogEntry.Builder> childEntries = ContainerUtil.newArrayList();
 
     @NotNull
     public List<LogEntry.Builder> getChildEntries() {

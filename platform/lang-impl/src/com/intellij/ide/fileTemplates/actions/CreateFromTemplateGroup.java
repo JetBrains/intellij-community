@@ -45,7 +45,7 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
     super.update(e);
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
-    if (project != null) {
+    if (project != null && !project.isDisposed()) {
       FileTemplate[] allTemplates = FileTemplateManager.getInstance(project).getAllTemplates();
       for (FileTemplate template : allTemplates) {
         if (canCreateFromTemplate(e, template)) {

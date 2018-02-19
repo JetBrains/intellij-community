@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.project;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
@@ -45,14 +46,17 @@ public class ProjectLocatorImpl extends ProjectLocator {
       if (preferredProject != null) {
         return preferredProject;
       }
-      for (Project project : projects) {
-        if (project.isInitialized() && !project.isDisposed() && ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
-          return project;
+      return ReadAction.compute(()->{
+        for (Project project : projects) {
+          if (project.isInitialized() && !project.isDisposed() && ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
+            return project;
+          }
         }
-      }
+        return projects[0].isDisposed() ? null : projects[0];
+      });
     }
 
-    return !projects[0].isDisposed() ? projects[0] : null;
+    return projects[0].isDisposed() ? null : projects[0];
   }
 
   @Override

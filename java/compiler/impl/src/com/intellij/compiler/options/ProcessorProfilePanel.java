@@ -47,25 +47,25 @@ import java.util.List;
 public class ProcessorProfilePanel extends JPanel {
   private final Project myProject;
 
-  private JRadioButton myRbClasspath;
-  private JRadioButton myRbProcessorsPath;
-  private TextFieldWithBrowseButton myProcessorPathField;
-  private JTextField myGeneratedProductionDirField;
-  private JTextField myGeneratedTestsDirField;
-  private JRadioButton myRbRelativeToOutputRoot;
-  private JRadioButton myRbRelativeToContentRoot;
-  private ProcessorTableModel myProcessorsModel;
-  private JCheckBox myCbEnableProcessing;
-  private JBTable myProcessorTable;
-  private JBTable myOptionsTable;
-  private JPanel myProcessorPanel;
-  private JPanel myOptionsPanel;
-  private OptionsTableModel myOptionsModel;
-  private JLabel myStoreGenSourcesLabel;
-  private JLabel myProductionLabel;
-  private JLabel myTestLabel;
-  private JPanel myProcessorTablePanel;
-  private JPanel myOptionsTablePanel;
+  private final JRadioButton myRbClasspath;
+  private final JRadioButton myRbProcessorsPath;
+  private final TextFieldWithBrowseButton myProcessorPathField;
+  private final JTextField myGeneratedProductionDirField;
+  private final JTextField myGeneratedTestsDirField;
+  private final JRadioButton myRbRelativeToOutputRoot;
+  private final JRadioButton myRbRelativeToContentRoot;
+  private final ProcessorTableModel myProcessorsModel;
+  private final JCheckBox myCbEnableProcessing;
+  private final JBTable myProcessorTable;
+  private final JBTable myOptionsTable;
+  private final JPanel myProcessorPanel;
+  private final JPanel myOptionsPanel;
+  private final OptionsTableModel myOptionsModel;
+  private final JLabel myStoreGenSourcesLabel;
+  private final JLabel myProductionLabel;
+  private final JLabel myTestLabel;
+  private final JPanel myProcessorTablePanel;
+  private final JPanel myOptionsTablePanel;
 
 
   public ProcessorProfilePanel(Project project) {

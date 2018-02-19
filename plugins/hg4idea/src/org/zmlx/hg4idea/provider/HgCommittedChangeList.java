@@ -14,7 +14,7 @@ import java.util.Date;
 public class HgCommittedChangeList extends CommittedChangeListForRevision {
 
   @NotNull private final HgVcs myVcs;
-  @NotNull private String myBranch;
+  @NotNull private final String myBranch;
 
   public HgCommittedChangeList(@NotNull HgVcs vcs, @NotNull HgRevisionNumber revision, @NotNull String branch, String comment,
                                String committerName, Date commitDate, Collection<Change> changes) {

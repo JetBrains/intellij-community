@@ -140,11 +140,11 @@ public class JavaCompletionUtil {
 
     T result = new PsiTypeMapper() {
       private final Set<PsiClassType> myVisited = ContainerUtil.newIdentityTroveSet();
-      
+
       @Override
       public PsiType visitClassType(final PsiClassType classType) {
         if (!myVisited.add(classType)) return classType;
-        
+
         final PsiClassType.ClassResolveResult classResolveResult = classType.resolveGenerics();
         final PsiClass psiClass = classResolveResult.getElement();
         final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
@@ -157,7 +157,7 @@ public class JavaCompletionUtil {
         PsiSubstitutor originalSubstitutor = PsiSubstitutor.EMPTY;
         for (final Map.Entry<PsiTypeParameter, PsiType> entry : substitutor.getSubstitutionMap().entrySet()) {
           final PsiType value = entry.getValue();
-          originalSubstitutor = originalSubstitutor.put(CompletionUtil.getOriginalOrSelf(entry.getKey()), 
+          originalSubstitutor = originalSubstitutor.put(CompletionUtil.getOriginalOrSelf(entry.getKey()),
                                                         value == null ? null : mapType(value));
         }
         return originalSubstitutor;
@@ -227,11 +227,11 @@ public class JavaCompletionUtil {
     return subst.get().substitute(rawType);
   }
 
-  public static Set<LookupElement> processJavaReference(final PsiElement element, 
-                                                        final PsiJavaReference javaReference, 
+  public static Set<LookupElement> processJavaReference(final PsiElement element,
+                                                        final PsiJavaReference javaReference,
                                                         final ElementFilter elementFilter,
                                                         final JavaCompletionProcessor.Options options,
-                                                        final PrefixMatcher matcher, 
+                                                        final PrefixMatcher matcher,
                                                         final CompletionParameters parameters) {
     PsiElement elementParent = element.getContext();
     if (elementParent instanceof PsiReferenceExpression) {
@@ -347,7 +347,7 @@ public class JavaCompletionUtil {
             return Collections.singletonList(type);
           }
         }
-        
+
         return GuessManager.getInstance(project).getControlFlowExpressionTypeConjuncts(qualifier);
       }
     }
@@ -366,9 +366,14 @@ public class JavaCompletionUtil {
           PsiClassType.ClassResolveResult plainResult = ((PsiClassType)plainQualifier).resolveGenerics();
           PsiClass plainClass = plainResult.getElement();
           HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
-          if (plainClass != null && StreamEx.ofTree(signature, s -> StreamEx.of(s.getSuperSignatures()))
-            .anyMatch(sig -> MethodSignatureUtil.findMethodBySignature(plainClass, sig, true) != null)) {
-            PsiClass castClass = ((PsiClassType)castType).resolveGenerics().getElement();
+          PsiMethod plainMethod = plainClass == null ? null :
+                                  StreamEx.ofTree(signature, s -> StreamEx.of(s.getSuperSignatures()))
+                                          .map(sig -> MethodSignatureUtil.findMethodBySignature(plainClass, sig, true))
+                                          .filter(Objects::nonNull)
+                                          .findFirst().orElse(null);
+          if (plainMethod != null) {
+            PsiClassType.ClassResolveResult castResult = ((PsiClassType)castType).resolveGenerics();
+            PsiClass castClass = castResult.getElement();
 
             if (castClass == null || !castClass.isInheritor(plainClass, true)) {
               return false;
@@ -376,10 +381,9 @@ public class JavaCompletionUtil {
 
             PsiSubstitutor plainSub = plainResult.getSubstitutor();
             PsiSubstitutor castSub = TypeConversionUtil.getSuperClassSubstitutor(plainClass, (PsiClassType)castType);
-            PsiType returnType = method.getReturnType();
-            if (method.getSignature(plainSub).equals(method.getSignature(castSub))) {
-              PsiType typeAfterCast = toRaw(castSub.substitute(returnType));
-              PsiType typeDeclared = toRaw(plainSub.substitute(returnType));
+            if (plainMethod.getSignature(plainSub).equals(plainMethod.getSignature(castSub))) {
+              PsiType typeAfterCast = toRaw(castResult.getSubstitutor().substitute(method.getReturnType()));
+              PsiType typeDeclared = toRaw(plainSub.substitute(plainMethod.getReturnType()));
               if (typeAfterCast != null && typeDeclared != null &&
                   typeAfterCast.isAssignableFrom(typeDeclared) &&
                   processor.isAccessible(plainClass.findMethodBySignature(method, true))
@@ -391,7 +395,7 @@ public class JavaCompletionUtil {
           }
         }
       }
-      
+
       return containsMember(castType, o, true) && !containsMember(plainQualifier, o, true);
     }
     return false;
@@ -438,7 +442,7 @@ public class JavaCompletionUtil {
     return ContainerUtil.find(castTypeItems, c -> shouldCast(item, c, plainQualifier, processor));
   }
 
-  @Nullable 
+  @Nullable
   private static PsiType toRaw(@Nullable PsiType type) {
     return type instanceof PsiClassType ? ((PsiClassType)type).rawType() : type;
   }
@@ -524,7 +528,7 @@ public class JavaCompletionUtil {
         return JBIterable.from(classItems).flatMap(i -> JavaConstructorCallElement.wrap(i, reference.getElement()));
       }
     }
-    
+
     if (reference instanceof PsiMethodReferenceExpression && completion instanceof PsiMethod && ((PsiMethod)completion).isConstructor()) {
       return Collections.singletonList(JavaLookupElementBuilder.forMethod((PsiMethod)completion, "new", PsiSubstitutor.EMPTY, null));
     }

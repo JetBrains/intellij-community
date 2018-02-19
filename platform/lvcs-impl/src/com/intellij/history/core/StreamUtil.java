@@ -41,7 +41,7 @@ public class StreamUtil {
     throw new IOException("unexpected entry type: " + type);
   }
 
-  public static void writeEntry(DataOutput out, Entry e) throws IOException {
+  public static void writeEntry(@NotNull DataOutput out, Entry e) throws IOException {
     int id = -1;
 
     Class c = e.getClass();

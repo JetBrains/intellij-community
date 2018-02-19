@@ -23,7 +23,9 @@ import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJTableCellReader
 import com.intellij.testGuiFramework.fixtures.*
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedButtonFixture
+import com.intellij.testGuiFramework.fixtures.extended.ExtendedTableFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
+import com.intellij.testGuiFramework.fixtures.extended.RowFixture
 import com.intellij.testGuiFramework.fixtures.newProjectWizard.NewProjectWizardFixture
 import com.intellij.testGuiFramework.framework.GuiTestLocalRunner
 import com.intellij.testGuiFramework.framework.GuiTestUtil
@@ -388,20 +390,24 @@ open class GuiTestCase {
    * @throws ComponentLookupException if component has not been found or timeout exceeded
    */
   fun <S, C : Component> ComponentFixture<S, C>.textfield(textLabel: String?, timeout: Long = defaultTimeout): JTextComponentFixture {
-    if (target() is Container) {
-      val container = target() as Container
-      if (textLabel.isNullOrEmpty()) {
-        val jTextField = waitUntilFound(container, JTextField::class.java, timeout) { jTextField -> jTextField.isShowing }
-        return JTextComponentFixture(guiTestRule.robot(), jTextField)
-      }
-      //wait until label has appeared
-      waitUntilFound(container, Component::class.java, timeout) {
-        it.isShowing && it.isVisible && it.isTextComponent() && it.getComponentText() == textLabel
-      }
-      val jTextComponent = findBoundedComponentByText(guiTestRule.robot(), container, textLabel!!, JTextComponent::class.java)
-      return JTextComponentFixture(guiTestRule.robot(), jTextComponent)
+    val target = target()
+    if (target is Container) {
+      return textfield(textLabel, target, timeout)
     }
     else throw unableToFindComponent("""JTextComponent (JTextField) by label "$textLabel"""")
+  }
+
+  fun textfield(textLabel: String?, container: Container, timeout: Long): JTextComponentFixture {
+    if (textLabel.isNullOrEmpty()) {
+      val jTextField = waitUntilFound(container, JTextField::class.java, timeout) { jTextField -> jTextField.isShowing }
+      return JTextComponentFixture(guiTestRule.robot(), jTextField)
+    }
+    //wait until label has appeared
+    waitUntilFound(container, Component::class.java, timeout) {
+      it.isShowing && it.isVisible && it.isTextComponent() && it.getComponentText() == textLabel
+    }
+    val jTextComponent = findBoundedComponentByText(guiTestRule.robot(), container, textLabel!!, JTextComponent::class.java)
+    return JTextComponentFixture(guiTestRule.robot(), jTextComponent)
   }
 
   /**
@@ -572,7 +578,7 @@ open class GuiTestCase {
    * Context function for IdeFrame: get the tab with specific opened file and create EditorFixture instance as a receiver object. Code block after
    * it call methods on the receiver object (EditorFixture instance).
    */
-  fun IdeFrameFixture.editor(tabName: String, func: EditorFixture.() -> Unit) {
+  fun IdeFrameFixture.editor(tabName: String, func: FileEditorFixture.() -> Unit) {
     val editorFixture = this.editor.selectTab(tabName)
     func(editorFixture)
   }
@@ -591,6 +597,10 @@ open class GuiTestCase {
    */
   fun IdeFrameFixture.navigationBar(func: NavigationBarFixture.() -> Unit) {
     func(this.navigationBar)
+  }
+
+  fun IdeFrameFixture.configurationList(func: RunConfigurationListFixture.() -> Unit) {
+    func(this.runConfigurationList)
   }
 
   /**
@@ -743,5 +753,15 @@ open class GuiTestCase {
     Pause.pause(object : Condition(condition) {
       override fun test() = testFunction()
     }, Timeout.timeout(timeoutSeconds, TimeUnit.SECONDS))
+  }
+
+  fun tableRowValues(table: JTableFixture, rowIndex: Int): List<String> {
+    val fixture = ExtendedTableFixture(guiTestRule.robot(), table.target())
+    return RowFixture(rowIndex, fixture).values()
+  }
+
+  fun tableRowCount(table: JTableFixture): Int {
+    val fixture = ExtendedTableFixture(guiTestRule.robot(), table.target())
+    return fixture.rowCount()
   }
 }

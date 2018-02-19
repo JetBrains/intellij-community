@@ -21,7 +21,7 @@ import com.siyeh.ig.performance.ToArrayCallWithZeroLengthArrayArgumentInspection
 import com.siyeh.ig.performance.ToArrayCallWithZeroLengthArrayArgumentInspection.PreferEmptyArray;
 
 public class ToArrayCallWithZeroLengthArrayArgumentFixTest extends IGQuickFixesTestCase {
-  private ToArrayCallWithZeroLengthArrayArgumentInspection myInspection = new ToArrayCallWithZeroLengthArrayArgumentInspection();
+  private final ToArrayCallWithZeroLengthArrayArgumentInspection myInspection = new ToArrayCallWithZeroLengthArrayArgumentInspection();
 
   @Override
   protected void setUp() throws Exception {
@@ -34,6 +34,10 @@ public class ToArrayCallWithZeroLengthArrayArgumentFixTest extends IGQuickFixesT
   }
 
   public void testPresizedToZero() {
+    doFixTest(PreferEmptyArray.ALWAYS, InspectionGadgetsBundle.message("to.array.call.style.quickfix.make.zero"));
+  }
+
+  public void testPresizedToZeroMap() {
     doFixTest(PreferEmptyArray.ALWAYS, InspectionGadgetsBundle.message("to.array.call.style.quickfix.make.zero"));
   }
 

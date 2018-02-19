@@ -10,14 +10,11 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.tools.sdkTools.PySdkTools;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.Set;
@@ -73,18 +70,17 @@ public class PyEnvTaskRunner {
         else {
           testTask.useNormalTimeout();
         }
-        final String executable = getExecutable(root, testTask);
-        if (executable == null) {
-          throw new RuntimeException("Cannot find Python interpreter in " + root);
-        }
-        final Sdk sdk = createSdkByExecutable(executable);
+        final String executable = PythonSdkType.getPythonExecutable(root);
+        assert executable != null : "No executable in " + root;
+
+        final Sdk sdk = getSdk(executable, testTask);
 
         /*
           Skipping test if {@link PyTestTask} reports it does not support this language level
          */
         final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
         if (testTask.isLanguageLevelSupported(languageLevel)) {
-          testTask.runTestOn(executable);
+          testTask.runTestOn(executable, sdk);
           passedRoots.add(root);
         }
         else {
@@ -137,29 +133,25 @@ public class PyEnvTaskRunner {
     return false;
   }
 
-  /**
-   * Create SDK by path to python exectuable
-   *
-   * @param executable path executable
-   * @return sdk or null if there is no sdk on this path
-   * @throws InvalidSdkException bad sdk
-   */
-  @Nullable
-  private static Sdk createSdkByExecutable(@NotNull final String executable) throws InvalidSdkException, IOException {
-    final URL rootUrl = new URL(String.format("file:///%s", executable));
-    final VirtualFile url = VfsUtil.findFileByURL(rootUrl);
-    if (url == null) {
-      return null;
-    }
-    return PySdkTools.createTempSdk(url, SdkCreationType.EMPTY_SDK, null);
-  }
 
   protected boolean shouldRun(String root, PyTestTask task) {
     return true;
   }
 
-  protected String getExecutable(String root, PyTestTask testTask) {
-    return PythonSdkType.getPythonExecutable(root);
+  /**
+   * Get SDK by executable*
+   */
+  @NotNull
+  protected Sdk getSdk(@NotNull final String executable, @NotNull final PyTestTask testTask) {
+    try {
+      final URL rootUrl = new URL(String.format("file:///%s", executable));
+      final VirtualFile url = VfsUtil.findFileByURL(rootUrl);
+      assert url != null : "No file " + rootUrl;
+      return PySdkTools.createTempSdk(url, SdkCreationType.EMPTY_SDK, null);
+    }
+    catch (Exception ex) {
+      throw new RuntimeException(ex);
+    }
   }
 
   protected String getEnvType() {

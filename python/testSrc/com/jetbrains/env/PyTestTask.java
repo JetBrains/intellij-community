@@ -1,6 +1,7 @@
 package com.jetbrains.env;
 
 import com.google.common.collect.Sets;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,8 +40,9 @@ public abstract class PyTestTask {
    * To create SDK from path, use {@link PyExecutionFixtureTestTask#createTempSdk(String, sdkTools.SdkCreationType)}
    *
    * @param sdkHome sdk path
+   * @param existingSdk If sdk exists already you are encouraged to reuse it. Create one using sdkHome otherwise.
    */
-  public abstract void runTestOn(String sdkHome) throws Exception;
+  public abstract void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception;
 
   public void before() throws Exception {
   }

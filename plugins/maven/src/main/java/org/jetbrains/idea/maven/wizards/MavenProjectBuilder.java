@@ -1,27 +1,13 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -153,7 +139,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     }
   }
 
-  public boolean setRootDirectory(@Nullable Project projectToUpdate, final String root) throws ConfigurationException {
+  public boolean setRootDirectory(@Nullable Project projectToUpdate, final String root) {
     getParameters().myFiles = null;
     getParameters().myProfiles.clear();
     getParameters().myActivatedProfiles.clear();
@@ -230,7 +216,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     // We cannot determinate project in non-EDT thread.
     getParameters().myProjectToUpdate = getProjectOrDefault();
     return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenTask() {
-      public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
+      public void run(MavenProgressIndicator indicator) {
         readMavenProjectTree(indicator);
         indicator.setText2("");
       }
@@ -247,7 +233,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     return true;
   }
 
-  private void readMavenProjectTree(MavenProgressIndicator process) throws MavenProcessCanceledException {
+  private void readMavenProjectTree(MavenProgressIndicator process) {
     MavenProjectsTree tree = new MavenProjectsTree(getProjectOrDefault());
     tree.addManagedFilesWithProfiles(getParameters().myFiles, getParameters().mySelectedProfiles);
     tree.updateAll(false, getGeneralSettings(), process);
@@ -278,26 +264,18 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
 
   public MavenGeneralSettings getGeneralSettings() {
     if (getParameters().myGeneralSettingsCache == null) {
-      AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-      try {
+      ApplicationManager.getApplication().runReadAction(() -> {
         getParameters().myGeneralSettingsCache = getDirectProjectsSettings().generalSettings.clone();
-      }
-      finally {
-        accessToken.finish();
-      }
+      });
     }
     return getParameters().myGeneralSettingsCache;
   }
 
   public MavenImportingSettings getImportingSettings() {
     if (getParameters().myImportingSettingsCache == null) {
-      AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-      try {
+      ApplicationManager.getApplication().runReadAction(() -> {
         getParameters().myImportingSettingsCache = getDirectProjectsSettings().importingSettings.clone();
-      }
-      finally {
-        accessToken.finish();
-      }
+      });
     }
     return getParameters().myImportingSettingsCache;
   }
@@ -351,5 +329,11 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
   public void setFileToImport(String path) {
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     getParameters().myImportRoot = file == null || file.isDirectory() ? file : file.getParent();
+  }
+
+  @Nullable
+  @Override
+  public Project createProject(String name, String path) {
+    return ExternalProjectsManagerImpl.setupCreatedProject(super.createProject(name, path));
   }
 }

@@ -36,8 +36,8 @@ import java.util.Set;
 public class JBTableWithRowHeaders extends JBTable {
   private final JBScrollPane myScrollPane;
   private boolean myAutoResize;
-  private RowHeaderTable myRowHeaderTable;
-  private Set<Integer> myNotAdjustableColumns = ContainerUtil.newHashSet();
+  private final RowHeaderTable myRowHeaderTable;
+  private final Set<Integer> myNotAdjustableColumns = ContainerUtil.newHashSet();
 
   public JBTableWithRowHeaders(boolean autoResize) {
     myAutoResize = autoResize;
@@ -101,7 +101,7 @@ public class JBTableWithRowHeaders extends JBTable {
   }
 
   public class RowHeaderTable extends JBTable implements PropertyChangeListener, TableModelListener {
-    private JTable myMainTable;
+    private final JTable myMainTable;
 
     public RowHeaderTable(JTable table) {
       myMainTable = table;

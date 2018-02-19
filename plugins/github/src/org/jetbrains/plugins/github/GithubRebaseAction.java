@@ -221,8 +221,7 @@ public class GithubRebaseAction extends DumbAwareAction {
                                           @NotNull final GitRepository gitRepository,
                                           @NotNull final ProgressIndicator indicator) {
     final Git git = ServiceManager.getService(project, Git.class);
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
-    try {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, "Rebase")) {
       List<VirtualFile> rootsToSave = Collections.singletonList(gitRepository.getRoot());
       GitPreservingProcess process = new GitPreservingProcess(project, git, rootsToSave, "Rebasing", "upstream/master",
                                                               GitVcsSettings.UpdateChangesPolicy.STASH, indicator,
@@ -230,9 +229,6 @@ public class GithubRebaseAction extends DumbAwareAction {
                                                                 doRebaseCurrentBranch(project, gitRepository.getRoot(), indicator);
                                                               });
       process.execute();
-    }
-    finally {
-      token.finish();
     }
   }
 

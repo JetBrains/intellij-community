@@ -11,7 +11,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
-import com.intellij.ide.ui.laf.intellij.MacIntelliJIconCache;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,6 +25,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.components.BasicOptionButtonUI;
 import com.intellij.ui.mac.MacPopupMenuUI;
 import com.intellij.ui.popup.OurHeavyWeightPopup;
 import com.intellij.util.*;
@@ -434,6 +434,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     fixProgressBar(uiDefaults);
 
+    fixOptionButton(uiDefaults);
+
     for (Frame frame : Frame.getFrames()) {
       // OSX/Aqua fix: Some image caching components like ToolWindowHeader use
       // com.apple.laf.AquaNativeResources$CColorPaintUIResource
@@ -518,6 +520,16 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     if (!UIUtil.isUnderIntelliJLaF() && !UIUtil.isUnderDarcula()) {
       uiDefaults.put("ProgressBarUI", "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI");
       uiDefaults.put("ProgressBar.border", "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarBorder");
+    }
+  }
+
+  /**
+   * NOTE: This code could be removed if {@link com.intellij.ui.components.JBOptionButton} is moved to [platform-impl]
+   * and default UI is created there directly.
+   */
+  private static void fixOptionButton(UIDefaults uiDefaults) {
+    if (!UIUtil.isUnderIntelliJLaF() && !UIUtil.isUnderDarcula()) {
+      uiDefaults.put("OptionButtonUI", BasicOptionButtonUI.class.getCanonicalName());
     }
   }
 
@@ -894,7 +906,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private static class DefaultMenuArrowIcon extends MenuArrowIcon {
-    private static boolean invert = UIUtil.isUnderDarcula();
+    private static final boolean invert = UIUtil.isUnderDarcula();
     private DefaultMenuArrowIcon(Icon icon) {
       super(invert ? IconUtil.brighter(icon, 2) : IconUtil.darker(icon, 2),
             IconUtil.brighter(icon, 8),
@@ -905,9 +917,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private static class Win10MenuArrowIcon extends MenuArrowIcon {
     private static final String NAME = "menuTriangle";
     private Win10MenuArrowIcon() {
-      super(MacIntelliJIconCache.getIcon(NAME, false, false, true),
-            MacIntelliJIconCache.getIcon(NAME, true, false, true),
-            MacIntelliJIconCache.getIcon(NAME, false, false, false));
+      super(IconCache.getIcon(NAME, false, false, true),
+            IconCache.getIcon(NAME, true, false, true),
+            IconCache.getIcon(NAME, false, false, false));
     }
   }
 }

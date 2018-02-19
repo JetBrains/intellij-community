@@ -40,9 +40,9 @@ public class LayoutElementTestUtil {
   }
 
   public static class LayoutElementCreator {
-    private JpsPackagingElementFactory myFactory;
-    private JpsCompositePackagingElement myElement;
-    private LayoutElementCreator myParent;
+    private final JpsPackagingElementFactory myFactory;
+    private final JpsCompositePackagingElement myElement;
+    private final LayoutElementCreator myParent;
     
     public LayoutElementCreator(JpsCompositePackagingElement element, LayoutElementCreator parent) {
       myElement = element;

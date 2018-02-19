@@ -76,8 +76,8 @@ import java.util.zip.ZipInputStream;
 public class TemplateModuleBuilder extends ModuleBuilder {
 
   private final ModuleType myType;
-  private List<WizardInputField> myAdditionalFields;
-  private ArchivedProjectTemplate myTemplate;
+  private final List<WizardInputField> myAdditionalFields;
+  private final ArchivedProjectTemplate myTemplate;
   private boolean myProjectMode;
 
   public TemplateModuleBuilder(ArchivedProjectTemplate template, ModuleType moduleType, List<WizardInputField> additionalFields) {
@@ -207,7 +207,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
       class ExceptionConsumer implements Consumer<VelocityException> {
         private String myPath;
         private String myText;
-        private SmartList<Trinity<String, String, VelocityException>> myFailures = new SmartList<>();
+        private final SmartList<Trinity<String, String, VelocityException>> myFailures = new SmartList<>();
 
         @Override
         public void consume(VelocityException e) {

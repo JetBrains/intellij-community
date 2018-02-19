@@ -18,7 +18,6 @@ package org.jetbrains.idea.eclipse.importer.colors;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.SchemeImportException;
-import java.util.HashMap;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,14 +29,15 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.awt.*;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Map;
 
 @SuppressWarnings("UseJBColor")
 public class EclipseThemeReader extends DefaultHandler implements EclipseColorThemeElements {
-  private @Nullable OptionHandler myOptionHandler;
-  private @Nullable String myThemeName;
+  @Nullable private final OptionHandler myOptionHandler;
+  @Nullable private String myThemeName;
   
-  private final static Map<String,Integer> ECLIPSE_DEFAULT_FONT_STYLES = new HashMap<>();
+  private static final Map<String, Integer> ECLIPSE_DEFAULT_FONT_STYLES = new HashMap<>();
   static {
     ECLIPSE_DEFAULT_FONT_STYLES.put(KEYWORD_TAG, Font.BOLD);
   }
@@ -47,12 +47,11 @@ public class EclipseThemeReader extends DefaultHandler implements EclipseColorTh
   }
 
 
-  protected void readSettings(InputStream input) throws SchemeImportException {
+  void readSettings(InputStream input) throws SchemeImportException {
     SAXParserFactory spf = SAXParserFactory.newInstance();
     spf.setValidating(false);
-    SAXParser parser;
     try {
-      parser = spf.newSAXParser();
+      SAXParser parser = spf.newSAXParser();
       parser.parse(input, this);
     }
     catch (Exception e) {
@@ -66,7 +65,7 @@ public class EclipseThemeReader extends DefaultHandler implements EclipseColorTh
   }
   
   private static class NotAnEclipseThemeException extends Exception {
-    public NotAnEclipseThemeException(String message) {
+    NotAnEclipseThemeException(String message) {
       super(message);
     }
   }
@@ -129,7 +128,7 @@ public class EclipseThemeReader extends DefaultHandler implements EclipseColorTh
   @Nullable
   private static Color getColor(Attributes attributes) throws SAXException {
     String colorString = attributes.getValue(COLOR_ATTR);
-    if (colorString != null && colorString.length() > 0) {
+    if (colorString != null && !colorString.isEmpty()) {
       try {
         int colorValue = Integer.decode(colorString);
         return new Color(colorValue);
@@ -157,21 +156,20 @@ public class EclipseThemeReader extends DefaultHandler implements EclipseColorTh
     return fontStyle;
   }
   
-  @SuppressWarnings("MagicConstant")
   @JdkConstants.FontStyle
   private static int getDefaultFontStyle(@NotNull String tag) {
-    if (ECLIPSE_DEFAULT_FONT_STYLES.containsKey(tag)) return ECLIPSE_DEFAULT_FONT_STYLES.get(tag);
-    return Font.PLAIN;
-  } 
+    //noinspection MagicConstant
+    return ECLIPSE_DEFAULT_FONT_STYLES.getOrDefault(tag, Font.PLAIN);
+  }
   
   @Nullable
   private static EffectType getEffectType(@NotNull Attributes attributes) {
     String strikeThrough = attributes.getValue(STRIKETHROUGH_ATTR);
-    if (strikeThrough != null && Boolean.parseBoolean(strikeThrough)) {
+    if (Boolean.parseBoolean(strikeThrough)) {
       return EffectType.STRIKEOUT;
     }
     String underline = attributes.getValue(UNDERLINE_ATTR);
-    if (underline != null && Boolean.parseBoolean(underline)) {
+    if (Boolean.parseBoolean(underline)) {
       return EffectType.LINE_UNDERSCORE;
     }
     return null;

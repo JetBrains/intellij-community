@@ -116,6 +116,11 @@
             description="Change commit message" />
     <action id="Git.Interactive.Rebase" class="git4idea.rebase.GitInteractiveRebaseAction" text="Interactively Rebase from Here..."
             description="Show the dialog for interactive rebase which allows to squash, fixup, reorder, remove and reword commits" />
+    <action id="Git.Commit.And.Push.Executor" class="git4idea.actions.GitCommitAndPushExecutorAction" text="Commit and &amp;Push...">
+      <add-to-group group-id="Vcs.CommitExecutor.Actions"/>
+      <keyboard-shortcut first-keystroke="control alt K" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="meta alt K" keymap="Xcode" remove="true"/>
+    </action>
 
     <group id="Git.Log.ContextMenu">
       <separator/>
@@ -165,6 +170,7 @@
 
     <projectService serviceImplementation="git4idea.repo.GitRepositoryManager"/>
     <projectService serviceImplementation="git4idea.ui.branch.GitBranchManager"/>
+    <projectService serviceImplementation="git4idea.branch.GitBranchIncomingOutgoingManager"/>
     <projectService
         serviceInterface="git4idea.annotate.GitAnnotationProvider"
         serviceImplementation="git4idea.annotate.GitAnnotationProvider"/>
@@ -197,6 +203,8 @@
     <projectService serviceImplementation="git4idea.GitUserRegistry" />
 
     <projectService serviceImplementation="git4idea.branch.DeepComparatorHolder"/>
+    <projectService serviceInterface="git4idea.config.GitExecutableProblemsNotifier"
+                    serviceImplementation="git4idea.config.GitExecutableProblemsNotifier"/>
 
     <applicationService serviceInterface="git4idea.config.GitVcsApplicationSettings"
                         serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
@@ -226,5 +234,6 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="Git4Idea.GitHttpAuthDataProvider" interface="git4idea.remote.GitHttpAuthDataProvider"/>
+    <extensionPoint qualifiedName="Git4Idea.gitRepositoryHostingService" interface="git4idea.remote.GitRepositoryHostingService"/>
   </extensionPoints>
 </idea-plugin>

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
@@ -80,5 +80,11 @@ public class ShortenCommandLineModeCombo extends ComboBox<ShortenCommandLine> {
       }
     }
     return null;
+  }
+
+  @Nullable
+  @Override
+  public ShortenCommandLine getSelectedItem() {
+    return (ShortenCommandLine)super.getSelectedItem();
   }
 }

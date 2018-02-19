@@ -84,8 +84,7 @@ public class TestPackage extends TestObject {
             LOG.assertTrue(classFilter.getBase() != null);
             long start = System.currentTimeMillis();
             if (Registry.is("junit4.search.4.tests.all.in.scope", true)) {
-              String packageName = getPackageName(data);
-              PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(packageName);
+              PsiPackage aPackage = getPackage(data);
               if (aPackage != null) {
                 collectClassesRecursively(aPackage, GlobalSearchScope.projectScope(myProject).intersectWith(classFilter.getScope()),
                                           aClass -> ReadAction.compute(() -> classFilter.isAccepted(aClass)));

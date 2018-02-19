@@ -20,7 +20,6 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -40,13 +39,6 @@ public abstract class JavaRuntimeConfigurationProducerBase extends RuntimeConfig
 
   protected JavaRuntimeConfigurationProducerBase(final ConfigurationType configurationType) {
     super(configurationType);
-  }
-
-  protected static PsiMethod getContainingMethod(PsiElement element) {
-    while (element != null)
-      if (element instanceof PsiMethod) break;
-      else element = element.getParent();
-    return (PsiMethod) element;
   }
 
   @Nullable
@@ -97,15 +89,6 @@ public abstract class JavaRuntimeConfigurationProducerBase extends RuntimeConfig
   private static boolean isSource(final PsiDirectory directory, final ProjectFileIndex fileIndex) {
     final VirtualFile virtualFile = directory.getVirtualFile();
     return fileIndex.getSourceRootForFile(virtualFile) != null;
-  }
-
-  protected TestSearchScope setupPackageConfiguration(ConfigurationContext context, Project project, ModuleBasedConfiguration configuration, TestSearchScope scope) {
-    if (scope != TestSearchScope.WHOLE_PROJECT) {
-      if (!setupConfigurationModule(context, configuration)) {
-        return TestSearchScope.WHOLE_PROJECT;
-      }
-    }
-    return scope;
   }
 
   protected boolean setupConfigurationModule(@Nullable ConfigurationContext context, ModuleBasedConfiguration configuration) {

@@ -133,7 +133,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
   public PsiElement updateCurrentNode(PsiElement targetNode) {
-    if (targetNode instanceof PsiCodeBlock && ((PsiCodeBlock)targetNode).getStatements().length == 1) {
+    if (targetNode instanceof PsiCodeBlock && ((PsiCodeBlock)targetNode).getStatementCount() == 1) {
       PsiElement targetNodeParent = targetNode.getParent();
       if (targetNodeParent instanceof PsiBlockStatement) {
         targetNodeParent = targetNodeParent.getParent();

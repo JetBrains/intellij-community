@@ -38,7 +38,7 @@ import java.awt.event.InputEvent;
 public class ActionLink extends LinkLabel implements DataProvider {
   private static final EmptyIcon ICON = JBUI.scale(EmptyIcon.create(0, 12));
   private final AnAction myAction;
-  private String myPlace = ActionPlaces.UNKNOWN;
+  private final String myPlace = ActionPlaces.UNKNOWN;
   private InputEvent myEvent;
   private Color myVisitedColor;
   private Color myActiveColor;

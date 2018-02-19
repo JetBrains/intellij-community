@@ -40,7 +40,7 @@ import java.util.List;
  */
 public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiElement> {
   @Nullable private PyType myType;
-  @NotNull private TextRange myFullRange;
+  @NotNull private final TextRange myFullRange;
   @Nullable private final PyImportElement myImportElement;
 
   public DocStringTypeReference(PsiElement element, TextRange range, @NotNull TextRange fullRange, @Nullable PyType type,

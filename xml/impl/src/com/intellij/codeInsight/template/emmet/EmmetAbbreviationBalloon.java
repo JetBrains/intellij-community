@@ -182,7 +182,7 @@ public class EmmetAbbreviationBalloon {
 
   public static class EmmetContextHelp {
     @NotNull
-    private String myDescription;
+    private final String myDescription;
 
     @Nullable
     private String myLinkText = null;

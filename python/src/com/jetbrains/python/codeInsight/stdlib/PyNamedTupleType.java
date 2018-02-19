@@ -6,10 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
-import com.jetbrains.python.psi.PyCallSiteExpression;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -32,12 +29,22 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
   private final DefinitionLevel myDefinitionLevel;
 
   private final boolean myTyped;
+  private final PyTargetExpression myTargetExpression;
 
   public PyNamedTupleType(@NotNull PyClass tupleClass,
                           @NotNull String name,
                           @NotNull LinkedHashMap<String, FieldTypeAndDefaultValue> fields,
                           @NotNull DefinitionLevel definitionLevel,
                           boolean typed) {
+    this(tupleClass, name, fields, definitionLevel, typed, null);
+  }
+
+  public PyNamedTupleType(@NotNull PyClass tupleClass,
+                          @NotNull String name,
+                          @NotNull LinkedHashMap<String, FieldTypeAndDefaultValue> fields,
+                          @NotNull DefinitionLevel definitionLevel,
+                          boolean typed,
+                          @Nullable PyTargetExpression target) {
     super(tupleClass,
           Collections.unmodifiableList(ContainerUtil.map(fields.values(), typeAndValue -> typeAndValue.getType())),
           false,
@@ -47,6 +54,13 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
     myName = name;
     myDefinitionLevel = definitionLevel;
     myTyped = typed;
+    myTargetExpression = target;
+  }
+
+  @NotNull
+  @Override
+  public PyQualifiedNameOwner getDeclarationElement() {
+    return myTargetExpression;
   }
 
   @Override
@@ -74,7 +88,7 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
   @Override
   public PyNamedTupleType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
     if (myDefinitionLevel == DefinitionLevel.NT_FUNCTION) {
-      return new PyNamedTupleType(myClass, myName, myFields, DefinitionLevel.NEW_TYPE, myTyped);
+      return new PyNamedTupleType(myClass, myName, myFields, DefinitionLevel.NEW_TYPE, myTyped, myTargetExpression);
     }
     else if (myDefinitionLevel == DefinitionLevel.NEW_TYPE) {
       return getCallDefinitionType(callSite, context);
@@ -87,7 +101,7 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
   @Override
   public PyNamedTupleType toInstance() {
     return myDefinitionLevel == DefinitionLevel.NEW_TYPE
-           ? new PyNamedTupleType(myClass, myName, myFields, DefinitionLevel.INSTANCE, myTyped)
+           ? new PyNamedTupleType(myClass, myName, myFields, DefinitionLevel.INSTANCE, myTyped, myTargetExpression)
            : this;
   }
 
@@ -96,7 +110,7 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
   public PyNamedTupleType toClass() {
     return myDefinitionLevel == DefinitionLevel.INSTANCE
            ? this
-           : new PyNamedTupleType(myClass, myName, myFields, DefinitionLevel.NEW_TYPE, myTyped);
+           : new PyNamedTupleType(myClass, myName, myFields, DefinitionLevel.NEW_TYPE, myTyped, myTargetExpression);
   }
 
   @Override
@@ -165,7 +179,7 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
         }
       }
 
-      return new PyNamedTupleType(myClass, myName, newFields, myDefinitionLevel, false);
+      return new PyNamedTupleType(myClass, myName, newFields, myDefinitionLevel, false, myTargetExpression);
     }
 
     return this;

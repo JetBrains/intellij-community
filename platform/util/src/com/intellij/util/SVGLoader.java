@@ -39,10 +39,10 @@ import java.util.List;
  * @author tav
  */
 public class SVGLoader {
-  private TranscoderInput input;
+  private final TranscoderInput input;
   private BufferedImage img;
-  private double width;
-  private double height;
+  private final double width;
+  private final double height;
 
   private enum SizeAttr {
     width,

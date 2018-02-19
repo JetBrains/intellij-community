@@ -258,6 +258,19 @@ class MapBinding extends Binding implements MultiNodeBinding {
     return oldAnnotation == null || oldAnnotation.surroundKeyWithTag();
   }
 
+  boolean isBoundToWithoutProperty(@NotNull Element element) {
+    String elementName = element.getName();
+    if (annotation != null) {
+      return elementName.equals(annotation.entryTagName());
+    }
+    else if (oldAnnotation != null && !oldAnnotation.surroundWithTag()) {
+      return elementName.equals(oldAnnotation.entryTagName());
+    }
+    else {
+      return elementName.equals(MAP);
+    }
+  }
+
   @Override
   public boolean isBoundTo(@NotNull Element element) {
     if (oldAnnotation != null && !oldAnnotation.surroundWithTag()) {

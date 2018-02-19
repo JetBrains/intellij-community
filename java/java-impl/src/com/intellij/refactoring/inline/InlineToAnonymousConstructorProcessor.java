@@ -127,7 +127,7 @@ class InlineToAnonymousConstructorProcessor {
     int fieldCount = myClass.getFields().length;
     int processedFields = 0;
     PsiElement token = anonymousClass.getRBrace();
-    if (initializerBlock.getBody().getStatements().length > 0 && fieldCount == 0) {
+    if (!initializerBlock.getBody().isEmpty() && fieldCount == 0) {
       insertInitializerBefore(initializerBlock, anonymousClass, token);
     }
 
@@ -148,7 +148,7 @@ class InlineToAnonymousConstructorProcessor {
           field.setInitializer(initializer);
         }
         processedFields++;
-        if (processedFields == fieldCount && initializerBlock.getBody().getStatements().length > 0) {
+        if (processedFields == fieldCount && !initializerBlock.getBody().isEmpty()) {
           insertInitializerBefore(initializerBlock, anonymousClass, token);
         }
       }
@@ -160,7 +160,7 @@ class InlineToAnonymousConstructorProcessor {
     superNewExpression = (PsiNewExpression)ChangeContextUtil.decodeContextInfo(superNewExpression, superNewExpression.getAnonymousClass(), null);
     PsiAnonymousClass newExpressionAnonymousClass = superNewExpression.getAnonymousClass();
     if (newExpressionAnonymousClass != null && 
-        AnonymousCanBeLambdaInspection.canBeConvertedToLambda(newExpressionAnonymousClass, false, Collections.emptySet())) {
+        AnonymousCanBeLambdaInspection.isLambdaForm(newExpressionAnonymousClass, false, Collections.emptySet())) {
       PsiExpression lambda = AnonymousCanBeLambdaInspection.replaceAnonymousWithLambda(superNewExpression, newExpressionAnonymousClass.getBaseClassType());
       JavaCodeStyleManager.getInstance(newExpressionAnonymousClass.getProject()).shortenClassReferences(superNewExpression.replace(lambda));
     }

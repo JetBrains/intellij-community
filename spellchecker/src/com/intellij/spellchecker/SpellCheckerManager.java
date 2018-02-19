@@ -3,10 +3,10 @@ package com.intellij.spellchecker;
 
 import com.google.common.collect.Maps;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.undo.BasicUndoableAction;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.spellchecker.dictionary.*;
@@ -43,7 +42,6 @@ import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
 import static com.intellij.openapi.util.io.FileUtilRt.toSystemDependentName;
 import static com.intellij.openapi.vfs.VfsUtilCore.visitChildrenRecursively;
 import static com.intellij.project.ProjectKt.getProjectStoreDirectory;
-import static com.intellij.spellchecker.SpellCheckerNotificationUtils.showNotification;
 
 public class SpellCheckerManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.SpellCheckerManager");
@@ -208,39 +206,35 @@ public class SpellCheckerManager implements Disposable {
   }
 
   public void acceptWordAsCorrect(@NotNull String word, Project project) {
-    acceptWordAsCorrect(word, project, DictionaryLevel.PROJECT, true); // TODO: or default
+    acceptWordAsCorrect(word, null, project, DictionaryLevel.PROJECT); // TODO: or default
   }
 
-  public void acceptWordAsCorrect(@NotNull String word, @NotNull Project project, @NotNull DictionaryLevel dictionaryLevel, boolean notify) {
+  public void acceptWordAsCorrect(@NotNull String word,
+                                  @Nullable VirtualFile file,
+                                  @NotNull Project project,
+                                  @NotNull DictionaryLevel dictionaryLevel) {
     if (DictionaryLevel.NOT_SPECIFIED == dictionaryLevel) return;
 
     final String transformed = spellChecker.getTransformation().transform(word);
     final EditableDictionary dictionary = DictionaryLevel.PROJECT == dictionaryLevel ? myProjectDictionary : myAppDictionary;
     if (transformed != null) {
-      dictionary.addToDictionary(word);
-      restartInspections();
-      if(notify) {
-        final String dictionaryName = dictionaryLevel.getName();
-        final String title = SpellCheckerBundle.message("changed.dict.title", StringUtil.capitalize(dictionaryName));
-        final String message = SpellCheckerBundle.message("new.word.description", word, dictionaryName);
-        showNotification(project, title, message, new NotificationAction(SpellCheckerBundle.message("revert.action.title")) {
+      if(file != null) {
+        UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(file) {
           @Override
-          public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-            dictionary.removeFromDictionary(word);
+          public void undo() {
+            dictionary.removeFromDictionary(transformed);
             restartInspections();
-            notification.expire();
           }
-        }
-        // TODO: [bzixilu] hidden option till WI-39681 fix
-        //, new NotificationAction(SpellCheckerBundle.message("show.changes.action.title")) {
-        //  @Override
-        //  public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-        //    openDictionaryInEditor(DictionaryLevel.PROJECT == dictionaryLevel ? getProjectDictionaryPath() : getAppDictionaryPath());
-        //    notification.expire();
-        //  }
-        //}
-        );
+
+          @Override
+          public void redo() {
+            dictionary.addToDictionary(transformed);
+            restartInspections();
+          }
+        });
       }
+      dictionary.addToDictionary(transformed);
+      restartInspections();
     }
   }
 
@@ -339,7 +333,7 @@ public class SpellCheckerManager implements Disposable {
 
   public enum DictionaryLevel {
     APP("application-level"), PROJECT("project-level"), NOT_SPECIFIED("not specified");
-    private String myName;
+    private final String myName;
     private final static Map<String, DictionaryLevel> DICTIONARY_LEVELS =
       Maps.uniqueIndex(EnumSet.allOf(DictionaryLevel.class), DictionaryLevel::getName);
 

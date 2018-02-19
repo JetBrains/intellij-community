@@ -312,7 +312,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
   }
 
   private static class ReplaceWithPrimitiveCompareFix implements LocalQuickFix {
-    private String myClassName;
+    private final String myClassName;
 
     public ReplaceWithPrimitiveCompareFix(String className) {
       myClassName = className;

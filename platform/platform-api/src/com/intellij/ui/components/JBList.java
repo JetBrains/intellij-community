@@ -9,6 +9,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -211,38 +212,39 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
 
         @Override
         public void actionPerformed(ActionEvent e) {
-          ArrayList<String> selected = new ArrayList<>();
-          JBList list = JBList.this;
-          ListCellRenderer renderer = list.getCellRenderer();
-          if (renderer != null) {
-            for (int index : getSelectedIndices()) {
-              Object value = list.getModel().getElementAt(index);
-              //noinspection unchecked
-              Component c = renderer.getListCellRendererComponent(list, value, index, true, true);
-              SimpleColoredComponent coloredComponent = null;
-              if (c instanceof JComponent) {
-                coloredComponent = UIUtil.findComponentOfType((JComponent)c, SimpleColoredComponent.class);
-              }
-              if (coloredComponent != null) {
-                selected.add(coloredComponent.toString());
-              }
-              else if (c instanceof JTextComponent) {
-                selected.add(((JTextComponent)c).getText());
-              }
-              else if (value != null) {
-                selected.add(value.toString());
-              }
-            }
-          }
-
-          if (selected.size() > 0) {
-            String text = StringUtil.join(selected, " ");
-            CopyPasteManager.getInstance().setContents(new StringSelection(text));
-          }
+          doCopyToClipboardAction();
         }
       };
       getActionMap().put("copy", newCopy);
     }
+  }
+
+  protected void doCopyToClipboardAction() {
+    ArrayList<String> selected = new ArrayList<>();
+    for (int index : getSelectedIndices()) {
+      E value = getModel().getElementAt(index);
+      String text = itemToText(index, value);
+      ContainerUtil.addIfNotNull(selected, text);
+    }
+
+    if (selected.size() > 0) {
+      String text = StringUtil.join(selected, "\n");
+      CopyPasteManager.getInstance().setContents(new StringSelection(text));
+    }
+  }
+
+  @Nullable
+  private String itemToText(int index, E value) {
+    ListCellRenderer renderer = getCellRenderer();
+    //noinspection unchecked
+    Component c = renderer == null ? null : renderer.getListCellRendererComponent(this, value, index, true, true);
+    SimpleColoredComponent coloredComponent = null;
+    if (c instanceof JComponent) {
+      coloredComponent = UIUtil.findComponentOfType((JComponent)c, SimpleColoredComponent.class);
+    }
+    return coloredComponent != null ? coloredComponent.getCharSequence(true).toString() :
+           c instanceof JTextComponent ? ((JTextComponent)c).getText() :
+           value != null ? value.toString() : null;
   }
 
   public boolean isEmpty() {
@@ -380,53 +382,5 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
         return UIUtil.invokeAndWaitIfNeeded(() -> super.getAccessibleRole());
       }
     }
-  }
-
-  @Override
-  public Dimension getPreferredScrollableViewportSize() {
-    return getPreferredScrollableViewportSize(this);
-  }
-
-  @NotNull
-  static Dimension getPreferredScrollableViewportSize(@NotNull JList list) {
-    Dimension size = list.getPreferredSize();
-    if (size == null) return new Dimension();
-    if (JList.VERTICAL != list.getLayoutOrientation()) return size;
-
-    int fixedWidth = list.getFixedCellWidth();
-    int fixedHeight = list.getFixedCellHeight();
-
-    ListModel model = list.getModel();
-    int modelRows = model == null ? 0 : model.getSize();
-    if (modelRows <= 0) {
-      if (fixedWidth <= 0) fixedWidth = Registry.intValue("ide.preferred.scrollable.viewport.fixed.width");
-      if (fixedWidth <= 0) fixedWidth = JBUI.scale(256); // scaled value from JDK
-      if (fixedHeight <= 0) fixedHeight = Registry.intValue("ide.preferred.scrollable.viewport.fixed.height");
-      if (fixedHeight <= 0) fixedHeight = JBUI.scale(16); // scaled value from JDK
-    }
-    int visibleRows = list.getVisibleRowCount();
-    if (visibleRows <= 0) visibleRows = Registry.intValue("ide.preferred.scrollable.viewport.visible.rows");
-
-    boolean addExtraSpace = 0 < visibleRows && visibleRows < modelRows && Registry.is("ide.preferred.scrollable.viewport.extra.space");
-    Insets insets = list.getInsets();
-    if (0 < fixedWidth && 0 < fixedHeight) {
-      size.width = insets != null ? insets.left + insets.right + fixedWidth : fixedWidth;
-      size.height = fixedHeight * visibleRows;
-      if (addExtraSpace) size.height += fixedHeight / 2;
-    }
-    else if (addExtraSpace) {
-      Rectangle bounds = list.getCellBounds(visibleRows, visibleRows);
-      size.height = bounds != null ? bounds.y + bounds.height / 2 : 0;
-    }
-    else if (visibleRows > 0) {
-      int lastRow = Math.min(visibleRows, modelRows) - 1;
-      Rectangle bounds = list.getCellBounds(lastRow, lastRow);
-      size.height = bounds != null ? bounds.y + bounds.height : 0;
-    }
-    else {
-      size.height = 0;
-    }
-    if (insets != null) size.height += insets.top + insets.bottom;
-    return size;
   }
 }

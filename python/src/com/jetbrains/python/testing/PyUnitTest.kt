@@ -67,7 +67,7 @@ class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
 
   override fun getCustomRawArgumentsString(forRerun: Boolean): String {
     // Pattern can only be used with folders ("all in folder" in legacy terms)
-    if ((!pattern.isNullOrEmpty()) && target.targetVariant != PyRunTargetVariant.CUSTOM) {
+    if ((!pattern.isNullOrEmpty()) && target.targetType != PyRunTargetVariant.CUSTOM) {
       val path = LocalFileSystem.getInstance().findFileByPath(target.target) ?: return ""
       // "Pattern" works only for "discovery" mode and for "rerun" we are using "python" targets ("concrete" tests)
       return if (path.isDirectory && !forRerun) "-p $pattern" else ""
@@ -82,7 +82,7 @@ class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
    * @return configuration should use runner for setup.py
    */
   internal fun isSetupPyBased(): Boolean {
-    val setupPy = target.targetVariant == PyRunTargetVariant.PATH && target.target.endsWith(PyNames.SETUP_DOT_PY)
+    val setupPy = target.targetType == PyRunTargetVariant.PATH && target.target.endsWith(PyNames.SETUP_DOT_PY)
     return setupPy
   }
 
@@ -91,7 +91,7 @@ class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
 
   override fun checkConfiguration() {
     super.checkConfiguration()
-    if (target.targetVariant == PyRunTargetVariant.PATH && target.target.endsWith(".py") && !pattern.isNullOrEmpty()) {
+    if (target.targetType == PyRunTargetVariant.PATH && target.target.endsWith(".py") && !pattern.isNullOrEmpty()) {
       throw RuntimeConfigurationWarning("Pattern can only be used to match files in folder. Can't use pattern for file.")
     }
   }

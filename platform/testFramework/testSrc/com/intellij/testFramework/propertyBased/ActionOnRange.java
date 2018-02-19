@@ -26,6 +26,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiFileRange;
+import com.intellij.psi.impl.DebugUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,9 +43,11 @@ abstract class ActionOnRange implements MadTestingAction {
     myInitialStart = start;
     myInitialEnd = end;
     myMarker = SmartPointerManager.getInstance(file.getProject()).createSmartPsiFileRangePointer(file, new ProperTextRange(start, end));
-    int length = file.getTextLength();
-    assert length == getDocument().getTextLength() : file + " " + getDocument();
-    assert end <= length : end + " >= " + length;
+    if (!DebugUtil.currentStackTrace().contains("org.jetbrains.jetCheck.ScenarioImpl")) { // should be removed after total migration to ImperativeCommand API
+      int length = file.getTextLength();
+      assert length == getDocument().getTextLength() : file + " " + getDocument();
+      assert end <= length : end + " >= " + length;
+    }
   }
 
   @NotNull
@@ -60,6 +63,10 @@ abstract class ActionOnRange implements MadTestingAction {
   @NotNull
   VirtualFile getVirtualFile() {
     return myMarker.getVirtualFile();
+  }
+
+  String getPath() {
+    return getVirtualFile().getPath();
   }
 
   @NotNull

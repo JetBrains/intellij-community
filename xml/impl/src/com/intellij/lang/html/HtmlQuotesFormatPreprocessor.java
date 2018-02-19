@@ -65,7 +65,7 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
 
 
   public static class HtmlQuotesConverter extends XmlRecursiveElementVisitor implements Runnable {
-    private TextRange myOriginalRange;
+    private final TextRange myOriginalRange;
     private final Document myDocument;
     private final PsiDocumentManager myDocumentManager;
     private final PostFormatProcessorHelper myPostProcessorHelper;

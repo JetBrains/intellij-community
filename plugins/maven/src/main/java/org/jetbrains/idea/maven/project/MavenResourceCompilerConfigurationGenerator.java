@@ -61,7 +61,7 @@ import java.util.regex.Pattern;
  */
 public class MavenResourceCompilerConfigurationGenerator {
 
-  private static Logger LOG = Logger.getInstance(MavenResourceCompilerConfigurationGenerator.class);
+  private static final Logger LOG = Logger.getInstance(MavenResourceCompilerConfigurationGenerator.class);
 
   private static final Pattern SIMPLE_NEGATIVE_PATTERN = Pattern.compile("!\\?(\\*\\.\\w+)");
   private static final String IDEA_MAVEN_DISABLE_MANIFEST = System.getProperty("idea.maven.disable.manifest");
@@ -160,7 +160,7 @@ public class MavenResourceCompilerConfigurationGenerator {
       addResources(resourceConfig.resources, mavenProject.getResources());
       addResources(resourceConfig.testResources, mavenProject.getTestResources());
 
-      addWebResources(resourceConfig, module, projectConfig, mavenProject);
+      addWebResources(module, projectConfig, mavenProject);
       addEjbClientArtifactConfiguration(module, projectConfig, mavenProject);
 
       resourceConfig.filteringExclusions.addAll(MavenProjectsTree.getFilterExclusions(mavenProject));
@@ -334,8 +334,7 @@ public class MavenResourceCompilerConfigurationGenerator {
     }
   }
 
-  private static void addWebResources(@NotNull MavenModuleResourceConfiguration resourceConfig, @NotNull Module module,
-                                      MavenProjectConfiguration projectCfg, MavenProject mavenProject) {
+  private static void addWebResources(@NotNull Module module, MavenProjectConfiguration projectCfg, MavenProject mavenProject) {
     Element warCfg = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-war-plugin");
     if (warCfg == null) return;
 
@@ -356,7 +355,7 @@ public class MavenResourceCompilerConfigurationGenerator {
 
     addSplitAndTrimmed(artifactResourceCfg.packagingIncludes, warCfg.getChildTextTrim("packagingIncludes"));
     addSplitAndTrimmed(artifactResourceCfg.packagingExcludes, warCfg.getChildTextTrim("packagingExcludes"));
-    addConfigValues(resourceConfig.filteringExclusions, "nonFilteredFileExtensions", "nonFilteredFileExtension", warCfg);
+    addConfigValues(artifactResourceCfg.nonFilteredFileExtensions, "nonFilteredFileExtensions", "nonFilteredFileExtension", warCfg);
 
     String warSourceDirectory = warCfg.getChildTextTrim("warSourceDirectory");
     if (warSourceDirectory == null) warSourceDirectory = "src/main/webapp";

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -35,11 +35,17 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(Java8MapApiInspection.class);
   public static final String SHORT_NAME = "Java8MapApi";
 
+  @SuppressWarnings("PublicField")
   public boolean mySuggestMapGetOrDefault = true;
+  @SuppressWarnings("PublicField")
   public boolean mySuggestMapComputeIfAbsent = true;
+  @SuppressWarnings("PublicField")
   public boolean mySuggestMapPutIfAbsent = true;
+  @SuppressWarnings("PublicField")
   public boolean mySuggestMapMerge = true;
+  @SuppressWarnings("PublicField")
   public boolean myTreatGetNullAsContainsKey = false;
+  @SuppressWarnings("PublicField")
   public boolean mySideEffects = false;
 
   @Nullable
@@ -130,10 +136,10 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
             condition.isGetNull() &&
             condition.isMap(putCall.getMethodExpression().getQualifierExpression())) {
           PsiExpression[] putArgs = putCall.getArgumentList().getExpressions();
-          if (putArgs.length != 2 || !condition.isKey(putArgs[0]) || !ExpressionUtils.isSimpleExpression(putArgs[1])) return;
+          if (putArgs.length != 2 || !condition.isKey(putArgs[0]) || !ExpressionUtils.isSafelyRecomputableExpression(putArgs[1])) return;
           register(condition, holder, false, new ReplaceWithSingleMapOperation("putIfAbsent", getCall, putArgs[1], result));
         }
-        if (mySuggestMapGetOrDefault && condition.isContainsKey() && ExpressionUtils.isSimpleExpression(noneExpression) &&
+        if (mySuggestMapGetOrDefault && condition.isContainsKey() && ExpressionUtils.isSafelyRecomputableExpression(noneExpression) &&
             condition.isMapValueType(noneExpression.getType())) {
           register(condition, holder, false, new ReplaceWithSingleMapOperation("getOrDefault", getCall, noneExpression, result));
         }
@@ -149,7 +155,7 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
             }
            */
           PsiExpression rValue = assignment.getRExpression();
-          if (ExpressionUtils.isSimpleExpression(rValue) && condition.isValueReference(assignment.getLExpression()) &&
+          if (ExpressionUtils.isSafelyRecomputableExpression(rValue) && condition.isValueReference(assignment.getLExpression()) &&
               !condition.isValueReference(rValue) && condition.isMapValueType(rValue.getType())) {
             register(condition, holder, false, ReplaceWithSingleMapOperation.fromIf("getOrDefault", condition, rValue));
           }
@@ -171,7 +177,7 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
             if(expression != null) {
               String replacement = null;
               boolean informationLevel = false;
-              if (mySuggestMapPutIfAbsent && ExpressionUtils.isSimpleExpression(expression) && !condition.isValueReference(expression)) {
+              if (mySuggestMapPutIfAbsent && ExpressionUtils.isSafelyRecomputableExpression(expression) && !condition.isValueReference(expression)) {
                 replacement = "putIfAbsent";
               }
               else if (mySuggestMapComputeIfAbsent && !condition.hasVariable()) {

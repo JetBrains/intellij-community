@@ -15,21 +15,22 @@
  */
 package git4idea.config;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.CapturingProcessHandler;
-import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,11 +42,11 @@ import java.util.regex.Pattern;
 public class GitExecutableDetector {
 
   private static final Logger LOG = Logger.getInstance(GitExecutableDetector.class);
-  private static final String[] UNIX_PATHS = { "/usr/local/bin",
-                                               "/usr/bin",
-                                               "/opt/local/bin",
-                                               "/opt/bin",
-                                               "/usr/local/git/bin"};
+  private static final String[] UNIX_PATHS = {"/usr/local/bin",
+    "/usr/bin",
+    "/opt/local/bin",
+    "/opt/bin",
+    "/usr/local/git/bin"};
   private static final String UNIX_EXECUTABLE = "git";
 
   private static final File WIN_ROOT = new File("C:"); // the constant is extracted to be able to create files in "Program Files" in tests
@@ -96,6 +97,7 @@ public class GitExecutableDetector {
 
   /**
    * Looks into the %PATH% and checks Git directories mentioned there.
+   *
    * @return Git executable to be used or null if nothing interesting was found in the PATH.
    */
   @Nullable
@@ -125,7 +127,7 @@ public class GitExecutableDetector {
 
   @Nullable
   private static String checkProgramFiles() {
-    final String[] PROGRAM_FILES = { "Program Files", "Program Files (x86)" };
+    final String[] PROGRAM_FILES = {"Program Files", "Program Files (x86)"};
 
     // collecting all potential msys distributives
     List<File> distrs = new ArrayList<>();
@@ -152,7 +154,7 @@ public class GitExecutableDetector {
 
   @Nullable
   private static String checkCygwin() {
-    final String[] OTHER_WINDOWS_PATHS = { FileUtil.toSystemDependentName("cygwin/bin/git.exe") };
+    final String[] OTHER_WINDOWS_PATHS = {FileUtil.toSystemDependentName("cygwin/bin/git.exe")};
     for (String otherPath : OTHER_WINDOWS_PATHS) {
       File file = new File(WIN_ROOT, otherPath);
       if (file.exists()) {
@@ -176,7 +178,7 @@ public class GitExecutableDetector {
       return null;
     }
 
-    final String[] binDirs = { "cmd", "bin" };
+    final String[] binDirs = {"cmd", "bin"};
     for (String binDir : binDirs) {
       String exec = checkBinDir(new File(gitDir, binDir));
       if (exec != null) {
@@ -193,7 +195,7 @@ public class GitExecutableDetector {
       return null;
     }
 
-    for (String exec : new String[]{ GIT_CMD, GIT_EXE }) {
+    for (String exec : new String[]{GIT_CMD, GIT_EXE}) {
       File fe = new File(binDir, exec);
       if (fe.exists()) {
         return fe.getPath();
@@ -208,15 +210,19 @@ public class GitExecutableDetector {
    * Made protected for tests not to start a process there.
    */
   protected boolean runs(@NotNull String exec) {
-    GeneralCommandLine commandLine = new GeneralCommandLine();
-    commandLine.setExePath(exec);
-    commandLine.setCharset(CharsetToolkit.getDefaultSystemCharset());
+    // using indicator because we dont want to leave some thread forever stuck in while(true) script
+    // and git execution framework does not support Thread.interrupt()
+    ProgressIndicator indicator = new EmptyProgressIndicator();
+    CompletableFuture<Void> future = CompletableFuture
+      .runAsync(() -> ProgressManager.getInstance()
+                                     .runProcess(() -> GitExecutableManager.getInstance().identifyVersion(exec), indicator));
     try {
-      CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
-      ProcessOutput result = handler.runProcess((int)TimeUnit.SECONDS.toMillis(5));
-      return !result.isTimeout();
+      future.get(5, TimeUnit.SECONDS);
+      return true;
     }
-    catch (ExecutionException e) {
+    catch (ExecutionException | TimeoutException | InterruptedException e) {
+      future.cancel(true);
+      indicator.cancel();
       return false;
     }
   }

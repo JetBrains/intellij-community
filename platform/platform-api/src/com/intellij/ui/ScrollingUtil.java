@@ -649,7 +649,7 @@ public class ScrollingUtil {
   static class MoveAction extends AbstractAction {
     private final String myId;
     private final JComponent myComponent;
-    private Boolean myCycleScrolling;
+    private final Boolean myCycleScrolling;
 
     public MoveAction(String id, JComponent component, Boolean cycleScrolling) {
       myId = id;

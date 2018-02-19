@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -569,10 +555,11 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         }
       }
     }
+
+    int checkBoxCount = fileStructureNodeProviders.size() + fileStructureFilters.size();
     JPanel panel = new JPanel(new BorderLayout());
-    JPanel chkPanel = new JPanel();
-    chkPanel.setLayout(new BoxLayout(chkPanel, BoxLayout.X_AXIS));
-    chkPanel.setBorder(JBUI.Borders.empty(0, 10, 1, 0));
+    JPanel chkPanel = new JPanel(new GridLayout(0, checkBoxCount > 0 && checkBoxCount % 4 == 0 ? checkBoxCount / 2 : 3,
+      JBUI.scale(UIUtil.DEFAULT_HGAP), 0));
 
     Shortcut[] F4 = ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet().getShortcuts();
     Shortcut[] ENTER = CustomShortcutSet.fromString("ENTER").getShortcuts();
@@ -623,9 +610,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     panel.add(topPanel, BorderLayout.NORTH);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.BOTTOM));
-    Dimension preferredSize = scrollPane.getPreferredSize();
-    preferredSize.width = Math.max(chkPanel.getPreferredSize().width, JBUI.scale(350));
-    scrollPane.setPreferredSize(preferredSize);
     panel.add(scrollPane, BorderLayout.CENTER);
     //panel.add(createSouthPanel(), BorderLayout.SOUTH);
     DataManager.registerDataProvider(panel, new DataProvider() {
@@ -852,7 +836,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     }
     checkBox.setText(StringUtil.capitalize(StringUtil.trimStart(text.trim(), "Show ")));
     panel.add(checkBox);
-    panel.add(Box.createRigidArea(JBUI.size(16, 0)));
 
     myCheckBoxes.put(action.getClass(), checkBox);
   }

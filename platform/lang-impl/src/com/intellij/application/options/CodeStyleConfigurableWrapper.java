@@ -34,7 +34,7 @@ public class CodeStyleConfigurableWrapper
   protected CodeStyleMainPanel myPanel;
   private final CodeStyleSettingsProvider myProvider;
   private final CodeStyleSettingsPanelFactory myFactory;
-  private CodeStyleSchemesConfigurable myOwner;
+  private final CodeStyleSchemesConfigurable myOwner;
 
   public CodeStyleConfigurableWrapper(@NotNull CodeStyleSettingsProvider provider, @NotNull CodeStyleSettingsPanelFactory factory, CodeStyleSchemesConfigurable owner) {
     myProvider = provider;

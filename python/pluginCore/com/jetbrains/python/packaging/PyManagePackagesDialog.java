@@ -39,7 +39,7 @@ import java.util.List;
  * @author yole
  */
 public class PyManagePackagesDialog extends DialogWrapper {
-  private JPanel myMainPanel;
+  private final JPanel myMainPanel;
 
   public PyManagePackagesDialog(@NotNull final Project project, @NotNull Sdk sdk) {
     super(project, true);

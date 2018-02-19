@@ -178,6 +178,25 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitKeyword(PsiKeyword keyword) {
+    super.visitKeyword(keyword);
+    if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9) && !myLanguageLevel.isAtLeast(LanguageLevel.JDK_10)) {
+      @PsiModifier.ModifierConstant String modifier = keyword.getText();
+      if (PsiKeyword.STATIC.equals(modifier) || PsiKeyword.TRANSITIVE.equals(modifier)) {
+        PsiElement parent = keyword.getParent();
+        if (parent instanceof PsiModifierList) {
+          PsiElement grand = parent.getParent();
+          if (grand instanceof PsiRequiresStatement && PsiJavaModule.JAVA_BASE.equals(((PsiRequiresStatement)grand).getModuleName())) {
+            String message = JavaErrorMessages.message("module.unwanted.modifier");
+            LocalQuickFix fix = QuickFixFactory.getInstance().createModifierListFix((PsiModifierList)parent, modifier, false, false);
+            myHolder.registerProblem(keyword, message, fix);
+          }
+        }
+      }
+    }
+  }
+
+  @Override
   public void visitBinaryExpression(PsiBinaryExpression expression) {
     super.visitBinaryExpression(expression);
     if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_7) && !myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {

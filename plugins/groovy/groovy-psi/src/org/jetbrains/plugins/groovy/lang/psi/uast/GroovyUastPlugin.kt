@@ -5,8 +5,11 @@ import com.intellij.lang.Language
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.parents
 import org.jetbrains.plugins.groovy.GroovyLanguage
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
+import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair
@@ -38,6 +41,8 @@ class GroovyUastPlugin : UastLanguagePlugin {
       is GrTypeDefinition -> GrUClass(element, parentProvider)
       is GrMethod -> GrUMethod(element, parentProvider)
       is GrParameter -> GrUParameter(element, parentProvider)
+      is GrQualifiedReference<*> -> GrUReferenceExpression(element, parentProvider)
+      is LeafPsiElement -> if (element.elementType == GroovyTokenTypes.mIDENT) LazyParentUIdentifier(element, null) else null
       else -> null
     }?.takeIf { requiredType?.isAssignableFrom(it.javaClass) ?: true }
 
@@ -62,8 +67,8 @@ class GroovyUastPlugin : UastLanguagePlugin {
 }
 
 class GrULiteral(val grElement: GrLiteral, val parentProvider: () -> UElement?) : ULiteralExpression, JvmDeclarationUElement {
-  override val value: Any?
-    get() = grElement.value
+  override val value: Any? get() = grElement.value
+  override fun evaluate(): Any? = value
   override val uastParent by lazy(parentProvider)
   override val psi: PsiElement? = grElement
   override val annotations: List<UAnnotation> = emptyList() //not implemented
@@ -80,6 +85,12 @@ class GrUNamedExpression(val grElement: GrAnnotationNameValuePair, val parentPro
   override val psi = grElement
   override val annotations: List<UAnnotation> = emptyList() //not implemented
 
+  override fun equals(other: Any?): Boolean {
+    if (other !is GrUNamedExpression) return false
+    return grElement == other.grElement
+  }
+
+  override fun hashCode(): Int = grElement.hashCode()
 }
 
 class GrUAnnotation(val grElement: GrAnnotation,

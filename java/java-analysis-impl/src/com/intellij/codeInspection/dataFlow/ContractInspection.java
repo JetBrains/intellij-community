@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -26,7 +26,7 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
       @Override
       public void visitMethod(PsiMethod method) {
         for (StandardMethodContract contract : ControlFlowAnalyzer.getMethodContracts(method)) {
-          Map<PsiElement, String> errors = ContractChecker.checkContractClause(method, contract, false);
+          Map<PsiElement, String> errors = ContractChecker.checkContractClause(method, contract);
           for (Map.Entry<PsiElement, String> entry : errors.entrySet()) {
             PsiElement element = entry.getKey();
             holder.registerProblem(element, entry.getValue());
@@ -48,15 +48,26 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
             PsiAnnotationMemberValue value = annotation.findAttributeValue(null);
             assert value != null;
             holder.registerProblem(value, error);
-            return;
           }
         }
+        checkMutationContract(annotation, method);
+      }
 
-        if (Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(annotation, "pure")) &&
-            PsiType.VOID.equals(method.getReturnType())) {
-          PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue("pure");
-          assert value != null;
-          holder.registerProblem(value, "Pure methods must return something, void is not allowed as a return type");
+      private void checkMutationContract(PsiAnnotation annotation, PsiMethod method) {
+        String mutationContract = AnnotationUtil.getStringAttributeValue(annotation, MutationSignature.ATTR_MUTATES);
+        if (StringUtil.isNotEmpty(mutationContract)) {
+          boolean pure = Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(annotation, "pure"));
+          String error;
+          if (pure) {
+            error = "Pure method cannot have mutation contract";
+          } else {
+            error = MutationSignature.checkSignature(mutationContract, method);
+          }
+          if (error != null) {
+            PsiAnnotationMemberValue value = annotation.findAttributeValue(MutationSignature.ATTR_MUTATES);
+            assert value != null;
+            holder.registerProblem(value, error);
+          }
         }
       }
     };

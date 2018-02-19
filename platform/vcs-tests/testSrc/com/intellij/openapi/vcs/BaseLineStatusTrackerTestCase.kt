@@ -29,7 +29,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.changes.LocalChangeListImpl
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.ex.*
 import com.intellij.openapi.vcs.ex.LineStatusTracker.Mode
 import com.intellij.openapi.vfs.VirtualFile
@@ -84,6 +85,7 @@ abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
       task(testHelper)
 
       testHelper.verify()
+      testHelper.destroy()
     }
     finally {
       tracker.release()
@@ -97,6 +99,8 @@ abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
     val vcsDocument: Document = tracker.vcsDocument
     private val documentTracker = tracker.getDocumentTrackerInTestMode()
 
+    open fun destroy() {
+    }
 
     fun assertHelperContentIs(expected: String, helper: PartialLocalLineStatusTracker.PartialCommitHelper) {
       assertEquals(parseInput(expected), helper.content)
@@ -370,64 +374,82 @@ abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
   }
 
   protected class PartialTest(val partialTracker: PartialLocalLineStatusTracker) : Test(partialTracker) {
-    var defaultList: String = "Default"
-    val changelists = mutableSetOf(defaultList)
+    private val clm = ChangeListManagerImpl.getInstanceImpl(getProject())
 
     init {
-      partialTracker.initChangeTracking(defaultList, changelists.toList())
+      resetChangelists()
+      partialTracker.initChangeTracking(defaultChangeListIds(), changeListIds())
+    }
+
+    override fun destroy() {
+      resetChangelists()
+    }
+
+    private fun resetChangelists() {
+      clm.addChangeList(LocalChangeList.DEFAULT_NAME, null)
+      clm.setDefaultChangeList(LocalChangeList.DEFAULT_NAME)
+      for (changeListName in changeListNames()) {
+        if (changeListName != LocalChangeList.DEFAULT_NAME) clm.removeChangeList(changeListName)
+      }
     }
 
 
     fun assertAffectedChangelists(vararg expected: String) {
-      assertSameElements(partialTracker.affectedChangeListsIds, expected.toList())
+      assertSameElements(partialTracker.affectedChangeListsIds, expected.toListId())
     }
 
     fun Range.assertChangelist(list: String) {
       val localRange = this as PartialLocalLineStatusTracker.LocalRange
-      assertEquals(localRange.changelistId, list)
+      assertEquals(localRange.changelistId, list.toListId())
     }
 
 
     fun createChangelist(list: String) {
-      assertDoesntContain(changelists, list)
-      changelists.add(list)
+      assertDoesntContain(changeListNames(), list)
+      clm.addChangeList(list, null)
     }
 
     fun removeChangelist(list: String) {
-      assertFalse(defaultList == list)
-      assertContainsElements(changelists, list)
-      partialTracker.changeListRemoved(list)
-      changelists.remove(list)
+      assertContainsElements(changeListNames(), list)
+      partialTracker.changeListRemoved(list.toListId())
+      clm.removeChangeList(list)
     }
 
     fun setDefaultChangelist(list: String) {
-      changelists.add(list)
-      partialTracker.defaultListChanged(defaultList, list)
-      defaultList = list
+      clm.addChangeList(list, null)
+      partialTracker.defaultListChanged(defaultChangeListIds(), list.toListId())
+      clm.setDefaultChangeList(list)
     }
 
 
     fun moveChanges(fromList: String, toList: String) {
-      assertContainsElements(changelists, fromList)
-      assertContainsElements(changelists, toList)
-      partialTracker.moveChanges(fromList, toList)
+      assertContainsElements(changeListNames(), fromList)
+      assertContainsElements(changeListNames(), toList)
+      partialTracker.moveChanges(fromList.toListId(), toList.toListId())
     }
 
     fun moveAllChangesTo(toList: String) {
-      assertContainsElements(changelists, toList)
-      partialTracker.moveChangesTo(toList)
+      assertContainsElements(changeListNames(), toList)
+      partialTracker.moveChangesTo(toList.toListId())
     }
 
 
     fun Range.moveTo(list: String) {
-      val fakeChangelist = LocalChangeListImpl.createEmptyChangeListImpl(getProject(), list, list)
-      partialTracker.moveToChangelist(this, fakeChangelist)
+      val changeList = clm.addChangeList(list, null)
+      partialTracker.moveToChangelist(this, changeList)
     }
 
     fun moveChangesTo(lines: BitSet, list: String) {
-      val fakeChangelist = LocalChangeListImpl.createEmptyChangeListImpl(getProject(), list, list)
-      partialTracker.moveToChangelist(lines, fakeChangelist)
+      val changeList = clm.addChangeList(list, null)
+      partialTracker.moveToChangelist(lines, changeList)
     }
+
+
+    fun String.toListId(): String = clm.changeLists.find { it.name == this }!!.id
+    private fun Array<out String>.toListId() = this.map { it.toListId() }
+    private fun changeListIds() = clm.changeLists.map { it.id }
+    private fun changeListNames() = clm.changeLists.map { it.name }
+    private fun defaultChangeListIds() = clm.defaultChangeList.id
   }
 
   companion object {

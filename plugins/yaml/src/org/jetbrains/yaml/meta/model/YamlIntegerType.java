@@ -3,11 +3,14 @@
  */
 package org.jetbrains.yaml.meta.model;
 
+import com.intellij.codeInspection.ProblemsHolder;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.yaml.psi.YAMLScalar;
 
 @ApiStatus.Experimental
 public class YamlIntegerType extends YamlScalarType {
-  private static YamlIntegerType SHARED_INSTANCE = new YamlIntegerType();
+  private static final YamlIntegerType SHARED_INSTANCE = new YamlIntegerType();
 
   public static YamlIntegerType getInstance() {
     return SHARED_INSTANCE;
@@ -15,5 +18,17 @@ public class YamlIntegerType extends YamlScalarType {
 
   public YamlIntegerType() {
     super("yaml:integer");
+    setDisplayName("integer");
+  }
+
+  @Override
+  protected void validateScalarValue(@NotNull YAMLScalar scalarValue, @NotNull ProblemsHolder holder) {
+    try {
+      //noinspection ResultOfMethodCallIgnored
+      Integer.parseInt(scalarValue.getTextValue());
+    }
+    catch (NumberFormatException e) {
+      holder.registerProblem(scalarValue, "Integer value expected");
+    }
   }
 }

@@ -54,7 +54,7 @@ import java.util.concurrent.Semaphore;
  * @author traff
  */
 public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
-  private Set<Pair<String, Integer>> myBreakpoints = Sets.newHashSet();
+  private final Set<Pair<String, Integer>> myBreakpoints = Sets.newHashSet();
   protected PyDebugProcess myDebugProcess;
   protected XDebugSession mySession;
   protected Semaphore myPausedSemaphore;

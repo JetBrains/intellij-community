@@ -42,7 +42,7 @@ public class ChooseStacktraceDialog extends DialogWrapper {
   private JList myList;
   private JPanel myPanel;
   private JPanel myEditorPanel;
-  private AnalyzeStacktraceUtil.StacktraceEditorPanel myEditor;
+  private final AnalyzeStacktraceUtil.StacktraceEditorPanel myEditor;
 
   public ChooseStacktraceDialog(Project project, final Task issue) {
     super(project, false);

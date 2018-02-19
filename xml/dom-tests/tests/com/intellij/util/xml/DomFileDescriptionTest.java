@@ -41,7 +41,7 @@ import java.util.Set;
 public class DomFileDescriptionTest extends DomHardCoreTestCase {
   private VirtualFile myFooElementFile;
   private VirtualFile myBarElementFile;
-  private Disposable myDisposable = Disposer.newDisposable();
+  private final Disposable myDisposable = Disposer.newDisposable();
 
   @Override
   protected void setUp() throws Exception {

@@ -1,4 +1,4 @@
-// "Remove 'comparingInt' call and use 'thenComparingInt'" "true"
+// "Remove 'comparingInt()' call and use 'thenComparingInt()'" "true"
 import java.util.*;
 
 class Test {

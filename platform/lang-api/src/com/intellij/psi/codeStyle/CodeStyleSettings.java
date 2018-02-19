@@ -71,7 +71,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
 
   private UnknownElementWriter myUnknownElementWriter = UnknownElementWriter.EMPTY;
 
-  private SoftMargins mySoftMargins = new SoftMargins();
+  private final SoftMargins mySoftMargins = new SoftMargins();
 
   private int myVersion = CURR_VERSION;
 
@@ -292,7 +292,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
   @Deprecated
   public boolean REPEAT_SYNCHRONIZED = true;
 
-  private List<String> myRepeatAnnotations = new ArrayList<>();
+  private final List<String> myRepeatAnnotations = new ArrayList<>();
 
   /** @deprecated Use JavaCodeStyleSettings.getRepeatAnnotations() */
   @Deprecated

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util;
 
@@ -6,7 +6,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -82,7 +85,12 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
         inTestSource = fileIndex.isInTestSourceContent(vFile);
       }
     }
-    myText = module.getName();
+    if (Registry.is("ide.show.folder.name.instead.of.module.name")) {
+      String path = ModuleUtilCore.getModuleDirPath(module);
+      myText = StringUtil.isEmpty(path) ? module.getName() : new File(path).getName();
+    } else {
+      myText = module.getName();
+    }
     if (inTestSource) {
       setIcon(AllIcons.Modules.TestSourceFolder);
     }

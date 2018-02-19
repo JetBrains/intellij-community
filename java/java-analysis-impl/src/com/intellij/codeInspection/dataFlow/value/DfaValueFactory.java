@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.dataFlow.value;
 
@@ -20,9 +6,13 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.containers.FactoryMap;
@@ -30,10 +20,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiMember;
 import static com.intellij.patterns.PsiJavaPatterns.psiParameter;
@@ -44,11 +31,15 @@ public class DfaValueFactory {
   private final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myAssignableCache = ContainerUtil.newHashMap();
   private final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myConvertibleCache = ContainerUtil.newHashMap();
   private final Map<PsiType, DfaPsiType> myDfaTypes = ContainerUtil.newHashMap();
-  private final boolean myHonorFieldInitializers;
   private final boolean myUnknownMembersAreNullable;
+  private final FieldChecker myFieldChecker;
 
-  public DfaValueFactory(boolean honorFieldInitializers, boolean unknownMembersAreNullable) {
-    myHonorFieldInitializers = honorFieldInitializers;
+  /**
+   * @param context                   an item to analyze (code-block, expression, class)
+   * @param unknownMembersAreNullable
+   */
+  public DfaValueFactory(@Nullable PsiElement context, boolean unknownMembersAreNullable) {
+    myFieldChecker = new FieldChecker(context);
     myUnknownMembersAreNullable = unknownMembersAreNullable;
     myValues.add(null);
     myVarFactory = new DfaVariableValue.Factory(this);
@@ -59,8 +50,8 @@ public class DfaValueFactory {
     myFactFactory = new DfaFactMapValue.Factory(this);
   }
 
-  public boolean isHonorFieldInitializers() {
-    return myHonorFieldInitializers;
+  public boolean canTrustFieldInitializer(PsiField field) {
+    return myFieldChecker.canTrustFieldInitializer(field);
   }
 
   private static final ElementPattern<? extends PsiModifierListOwner> MEMBER_OR_METHOD_PARAMETER =
@@ -266,4 +257,66 @@ public class DfaValueFactory {
 
   @NotNull
   public DfaExpressionFactory getExpressionFactory() { return myExpressionFactory;}
+
+  private static boolean canCallMethodsInConstructors(PsiClass aClass, boolean virtual) {
+    for (PsiMethod constructor : aClass.getConstructors()) {
+      if (!constructor.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return true;
+
+      PsiCodeBlock body = constructor.getBody();
+      if (body == null) continue;
+
+      for (PsiMethodCallExpression call : SyntaxTraverser.psiTraverser().withRoot(body).filter(PsiMethodCallExpression.class)) {
+        PsiReferenceExpression methodExpression = call.getMethodExpression();
+        if (methodExpression.textMatches(PsiKeyword.THIS) || methodExpression.textMatches(PsiKeyword.SUPER)) continue;
+        if (!virtual) return true;
+
+        PsiMethod target = call.resolveMethod();
+        if (target != null && PsiUtil.canBeOverridden(target)) return true;
+      }
+    }
+
+    return false;
+  }
+
+  private static class FieldChecker {
+    private final boolean myTrustDirectFieldInitializers;
+    private final boolean myTrustFieldInitializersInConstructors;
+    private final boolean myCanInstantiateItself;
+    private final PsiClass myClass;
+
+    FieldChecker(PsiElement context) {
+      PsiMethod method = context instanceof PsiClass ? null : PsiTreeUtil.getParentOfType(context, PsiMethod.class);
+      myClass = method == null ? null : method.getContainingClass();
+      if (myClass == null) {
+        myTrustDirectFieldInitializers = myTrustFieldInitializersInConstructors = myCanInstantiateItself = false;
+        return;
+      }
+      // Indirect instantiation via other class is still possible, but hopefully unlikely
+      myCanInstantiateItself = StreamEx.of(myClass.getChildren())
+                                       .select(PsiMember.class)
+                                       .filter(member -> member.hasModifierProperty(PsiModifier.STATIC))
+                                       .flatMap(member -> StreamEx.<PsiElement>ofTree(member, e -> StreamEx.of(e.getChildren())))
+                                       .select(PsiNewExpression.class).map(newExpr -> newExpr.getClassReference()).nonNull()
+                                       .anyMatch(classRef -> classRef.isReferenceTo(myClass));
+      if (method.hasModifierProperty(PsiModifier.STATIC) || method.isConstructor()) {
+        myTrustDirectFieldInitializers = true;
+        myTrustFieldInitializersInConstructors = false;
+        return;
+      }
+      boolean superCtorsCallMethods = !InheritanceUtil.processSupers(myClass, false,
+                                                                     psiClass -> !canCallMethodsInConstructors(psiClass, true));
+      boolean thisCtorsCallMethods = canCallMethodsInConstructors(myClass, false);
+      myTrustFieldInitializersInConstructors = !superCtorsCallMethods && !thisCtorsCallMethods;
+      myTrustDirectFieldInitializers = !superCtorsCallMethods;
+    }
+
+    boolean canTrustFieldInitializer(PsiField field) {
+      if (field.hasInitializer()) {
+        boolean staticField = field.hasModifierProperty(PsiModifier.STATIC);
+        if (staticField && myClass != null && field.getContainingClass() != myClass) return true;
+        return myTrustDirectFieldInitializers && (!myCanInstantiateItself || !staticField);
+      }
+      return myTrustFieldInitializersInConstructors;
+    }
+  }
 }

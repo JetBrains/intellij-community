@@ -677,4 +677,12 @@ public class NameUtilMatchingTest extends TestCase {
     assertMatches("pl", "printlnFoo");
     assertDoesntMatch("pl", "printlnx");
   }
+
+  public void testLowerCaseAfterCamels() {
+    assertMatches("LSTMa", "LineStatusTrackerManager");
+  }
+
+  public void testProperties() {
+    assertMatches("*pro", "spring.activemq.pool.configuration.reconnect-on-exception");
+  }
 }

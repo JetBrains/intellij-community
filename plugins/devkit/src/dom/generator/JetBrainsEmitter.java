@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * XSD/DTD Model generator tool
@@ -97,7 +83,7 @@ public class JetBrainsEmitter implements Emitter {
           }
         }
         for (FieldDesc fd : td.fdMap.values()) {
-          if (fd.simpleTypesString != null && fd.simpleTypesString.indexOf(":fully-qualified-classType;") != -1) {
+          if (fd.simpleTypesString != null && fd.simpleTypesString.contains(":fully-qualified-classType;")) {
             externalClasses.add("com.intellij.psi.PsiClass");
           }
           if (fd.contentQualifiedName != null && fd.contentQualifiedName.indexOf('.') > 0) {
@@ -228,11 +214,11 @@ public class JetBrainsEmitter implements Emitter {
       }
       out.println(" {");
 
-      FieldDesc[] fields = td.fdMap.values().toArray(new FieldDesc[td.fdMap.size()]);
+      FieldDesc[] fields = td.fdMap.values().toArray(new FieldDesc[0]);
       if (fields.length == 0) {
         Util.logwarn("no fields in: " + td.xsName);
       }
-      Arrays.sort(fields, (o1, o2) -> o1.realIndex - o2.realIndex);
+      Arrays.sort(fields, Comparator.comparingInt(o -> o.realIndex));
       out.println("");
       for (FieldDesc field : fields) {
         String tagName = field.tagName;
@@ -256,44 +242,44 @@ public class JetBrainsEmitter implements Emitter {
         String newType = field.clType < 0 ? elementType : type;
         String converterString = null;
         if (field.simpleTypesString != null) {
-          if (field.simpleTypesString.indexOf(":fully-qualified-classType;") != -1) { // localType, remoteType, etc.
+          if (field.simpleTypesString.contains(":fully-qualified-classType;")) { // localType, remoteType, etc.
             newType = "PsiClass";
             //converterString = (JB_OFF ? "//" : "")+"\t@Convert (PsiClassReferenceConverter.class)";
           }
-          else if (field.simpleTypesString.indexOf(":ejb-linkType;") != -1) {
+          else if (field.simpleTypesString.contains(":ejb-linkType;")) {
           }
-          else if (field.simpleTypesString.indexOf(":ejb-ref-nameType;") != -1) { // jndi-nameType
+          else if (field.simpleTypesString.contains(":ejb-ref-nameType;")) { // jndi-nameType
           }
-          else if (field.simpleTypesString.indexOf(":pathType;") != -1) {
+          else if (field.simpleTypesString.contains(":pathType;")) {
           }
-          else if (field.simpleTypesString.indexOf(":java-identifierType;") != -1) {
+          else if (field.simpleTypesString.contains(":java-identifierType;")) {
             //out.println((JB_OFF ? "//" : "") +"\t@Convert (JavaIdentifierConverter.class)");
           }
-          else if (field.simpleTypesString.indexOf(":QName;") != -1) {
+          else if (field.simpleTypesString.contains(":QName;")) {
             // ???
           }
-          else if (field.simpleTypesString.indexOf(":integer;") != -1) { // BigDecimal
+          else if (field.simpleTypesString.contains(":integer;")) { // BigDecimal
             newType = REPLACE_TYPES_WITH_INTERFACES ? "Integer" : "int";
           }
-          else if (field.simpleTypesString.indexOf(":int;") != -1) {
+          else if (field.simpleTypesString.contains(":int;")) {
             newType = REPLACE_TYPES_WITH_INTERFACES ? "Integer" : "int";
           }
-          else if (field.simpleTypesString.indexOf(":byte;") != -1) {
+          else if (field.simpleTypesString.contains(":byte;")) {
             newType = REPLACE_TYPES_WITH_INTERFACES ? "Byte" : "byte";
           }
-          else if (field.simpleTypesString.indexOf(":short;") != -1) {
+          else if (field.simpleTypesString.contains(":short;")) {
             newType = REPLACE_TYPES_WITH_INTERFACES ? "Short" : "short";
           }
-          else if (field.simpleTypesString.indexOf(":long;") != -1) {
+          else if (field.simpleTypesString.contains(":long;")) {
             newType = REPLACE_TYPES_WITH_INTERFACES ? "Long" : "long";
           }
-          else if (field.simpleTypesString.indexOf(":float;") != -1) {
+          else if (field.simpleTypesString.contains(":float;")) {
             newType = REPLACE_TYPES_WITH_INTERFACES ? "Float" : "float";
           }
-          else if (field.simpleTypesString.indexOf(":double;") != -1) {
+          else if (field.simpleTypesString.contains(":double;")) {
             newType = REPLACE_TYPES_WITH_INTERFACES ? "Double" : "double";
           }
-          else if (field.simpleTypesString.indexOf(":boolean;") != -1) { // true-falseType
+          else if (field.simpleTypesString.contains(":boolean;")) { // true-falseType
             newType = REPLACE_TYPES_WITH_INTERFACES ? "Boolean" : "boolean";
           }
           for (int idx = 0; idx != -1;) {
@@ -558,7 +544,7 @@ public class JetBrainsEmitter implements Emitter {
 
       for (TypeDesc td : jtList) {
         ArrayList<FieldDesc> fields = new ArrayList<>(td.fdMap.values());
-        Collections.sort(fields, (o1, o2) -> o1.realIndex - o2.realIndex);
+        Collections.sort(fields, Comparator.comparingInt(o -> o.realIndex));
         int guessPriority = 0;
         FieldDesc guessedField = null;
         for (FieldDesc fd : fields) {
@@ -646,7 +632,7 @@ public class JetBrainsEmitter implements Emitter {
   }
 
   public static String toPresentationName(String typeName) {
-    StringBuffer sb = new StringBuffer(typeName.length() + 10);
+    StringBuilder sb = new StringBuilder(typeName.length() + 10);
     boolean prevUp = true;
     for (int i = 0; i < typeName.length(); i++) {
       char c = typeName.charAt(i);

@@ -61,8 +61,8 @@ public class Semaphore {
       }
     }
 
-    private boolean isAcquired() {
-      return getState() != 0;
+    private boolean isUp() {
+      return getState() == 0;
     }
   }
 
@@ -107,5 +107,9 @@ public class Semaphore {
   public boolean waitForUnsafe(long msTimeout) throws InterruptedException {
     if (sync.tryAcquireShared(1) >= 0) return true;
     return sync.tryAcquireSharedNanos(1, TimeUnit.MILLISECONDS.toNanos(msTimeout));
+  }
+
+  public boolean isUp() {
+    return sync.isUp();
   }
 }

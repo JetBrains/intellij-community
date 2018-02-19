@@ -375,9 +375,7 @@ public class ConsoleHistoryController {
         @NotNull
         @Override
         protected List<String> getContents() {
-          List<String> entries = getModel().getEntries();
-          Collections.reverse(entries);
-          return entries;
+          return getModel().getEntries();
         }
 
         @Override
@@ -407,7 +405,7 @@ public class ConsoleHistoryController {
       };
       chooser.setContentIcon(null);
       chooser.setSplitterOrientation(false);
-      chooser.setSelectedIndex(Math.max(0, getModel().getHistorySize() - getModel().getCurrentIndex() - 1));
+      chooser.setSelectedIndex(Math.max(0, getModel().getHistorySize() - 1));
       if (chooser.showAndGet() && myConsole.getCurrentEditor().getComponent().isShowing()) {
         setConsoleText(new Entry(chooser.getSelectedText(), -1), false, true);
       }

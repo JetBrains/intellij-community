@@ -66,7 +66,7 @@ public class ToggleFullScreenAction extends DumbAwareAction {
     Component focusOwner = IdeFocusManager.getGlobalInstance().getFocusOwner();
     if (focusOwner != null) {
       Window window = focusOwner instanceof JFrame ? (Window) focusOwner : SwingUtilities.getWindowAncestor(focusOwner);
-      if (!(window instanceof IdeFrameEx)) {
+      if (window != null && !(window instanceof IdeFrameEx)) {
         window = SwingUtilities.getWindowAncestor(window);
       }
       if (window instanceof IdeFrameEx) {

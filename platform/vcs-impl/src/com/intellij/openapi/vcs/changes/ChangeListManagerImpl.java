@@ -133,9 +133,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         final LocalChangeList oldList = (LocalChangeList)oldDefaultList;
         if (oldDefaultList == null || oldList.hasDefaultName() || oldDefaultList.equals(newDefaultList)) return;
 
-        if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          scheduleAutomaticEmptyChangeListDeletion(oldList);
-        }
+        scheduleAutomaticEmptyChangeListDeletion(oldList);
       }
     });
 
@@ -152,7 +150,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList oldList) {
-    if (oldList.isReadOnly() || !oldList.getChanges().isEmpty()) return;
+    if (ApplicationManager.getApplication().isUnitTestMode() &&
+        myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS == VcsShowConfirmationOption.Value.SHOW_CONFIRMATION) {
+      return;
+    }
 
     invokeAfterUpdate(() -> {
       LocalChangeList actualList = getChangeList(oldList.getId());
@@ -514,12 +515,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         updateIgnoredFiles(dataHolder.getComposite());
       }
 
-      clearCurrentRevisionsCache(invalidated);
       // for the case of project being closed we need a read action here -> to be more consistent
       ApplicationManager.getApplication().runReadAction(() -> {
         if (myProject.isDisposed()) {
           return;
         }
+        clearCurrentRevisionsCache(invalidated);
+
         synchronized (myDataLock) {
           // do same modifications to change lists as was done during update + do delayed notifications
           dataHolder.notifyEnd();
@@ -920,7 +922,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
 
   @Override
-  public void removeChangeList(final String name) {
+  public void removeChangeList(@NotNull String name) {
     ApplicationManager.getApplication().runReadAction(() -> {
       synchronized (myDataLock) {
         myModifier.removeChangeList(name);
@@ -930,7 +932,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public void removeChangeList(LocalChangeList list) {
+  public void removeChangeList(@NotNull LocalChangeList list) {
     removeChangeList(list.getName());
   }
 
@@ -950,7 +952,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public boolean setReadOnly(final String name, final boolean value) {
+  public boolean setReadOnly(@NotNull String name, final boolean value) {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         final boolean result = myModifier.setReadOnly(name, value);
@@ -972,7 +974,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public String editComment(@NotNull final String fromName, final String newComment) {
+  public String editComment(@NotNull String fromName, String newComment) {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         final String oldComment = myModifier.editComment(fromName, StringUtil.notNullize(newComment));
@@ -983,7 +985,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public void moveChangesTo(@NotNull final LocalChangeList list, @NotNull final Change... changes) {
+  public void moveChangesTo(@NotNull LocalChangeList list, @NotNull Change... changes) {
     ApplicationManager.getApplication().runReadAction(() -> {
       synchronized (myDataLock) {
         myModifier.moveChangesTo(list.getName(), changes);

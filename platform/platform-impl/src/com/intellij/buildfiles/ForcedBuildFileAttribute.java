@@ -86,14 +86,8 @@ public class ForcedBuildFileAttribute {
 
   private static void forceBuildFile(VirtualFile file, @Nullable String value) {
     if (file instanceof NewVirtualFile) {
-      final DataOutputStream os = FRAMEWORK_FILE_ATTRIBUTE.writeAttribute(file);
-      try {
-        try {
-          IOUtil.writeString(StringUtil.notNullize(value), os);
-        }
-        finally {
-          os.close();
-        }
+      try (DataOutputStream os = FRAMEWORK_FILE_ATTRIBUTE.writeAttribute(file)) {
+        IOUtil.writeString(StringUtil.notNullize(value), os);
       }
       catch (IOException e) {
         LOG.error(e);

@@ -35,8 +35,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
-
 import com.intellij.util.containers.Stack;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.THashSet;
@@ -958,6 +956,10 @@ public class ExpectedTypesProvider {
         if (element instanceof PsiMethod && helper.isAccessible((PsiMember)element, argumentList, null) && element != toExclude) {
           methodCandidates.add(candidate);
         }
+      }
+      if (methodCandidates.isEmpty()) {
+        Collections.addAll(methodCandidates, allCandidates);
+        methodCandidates.remove(toExclude);
       }
 
       final PsiExpression[] args = argumentList.getExpressions().clone();

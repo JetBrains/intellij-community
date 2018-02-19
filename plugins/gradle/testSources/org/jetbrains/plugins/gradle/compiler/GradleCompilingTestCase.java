@@ -15,8 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.compiler;
 
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -43,13 +42,7 @@ public abstract class GradleCompilingTestCase extends GradleImportingTestCase {
     CompilerManager.getInstance(myProject).addBeforeTask(new CompileTask() {
       @Override
       public boolean execute(CompileContext context) {
-        AccessToken token = ReadAction.start();
-        try {
-          buildConfigurationGenerator.generateBuildConfiguration(context);
-        }
-        finally {
-          token.finish();
-        }
+        ApplicationManager.getApplication().runReadAction(() -> buildConfigurationGenerator.generateBuildConfiguration(context));
         return true;
       }
     });

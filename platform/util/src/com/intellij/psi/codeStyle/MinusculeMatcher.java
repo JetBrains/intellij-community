@@ -315,37 +315,60 @@ public class MinusculeMatcher implements Matcher {
                                               int nameIndex,
                                               boolean allowSpecialChars,
                                               boolean isAsciiName) {
-    boolean star = isPatternChar(patternIndex - 1, '*');
-    final char p = myPattern[patternIndex];
+    boolean wordStartsOnly = !isPatternChar(patternIndex - 1, '*') && !isWordSeparator[patternIndex];
+    
+    int maxFoundLength = 0;
     while (true) {
-      int nextOccurrence = star || isWordSeparator[patternIndex] ?
-                           indexOfIgnoreCase(name, nameIndex + 1, p, patternIndex, isAsciiName) :
-                           indexOfWordStart(name, patternIndex, nameIndex);
-      if (nextOccurrence < 0) {
+      nameIndex = findNextPatternCharOccurrence(name, nameIndex, patternIndex, isAsciiName, allowSpecialChars, wordStartsOnly);
+      if (nameIndex < 0) {
         return null;
       }
-      // pattern humps are allowed to match in words separated by " ()", lowercase characters aren't
-      if (!allowSpecialChars && !myHasSeparators && !myHasHumps && StringUtil.containsAnyChar(name, myHardSeparators, nameIndex, nextOccurrence)) {
-        return null;
-      }
-      // if the user has typed a dot, don't skip other dots between humps
-      // but one pattern dot may match several name dots
-      if (!allowSpecialChars && myHasDots && !isPatternChar(patternIndex - 1, '.') && StringUtil.contains(name, nameIndex, nextOccurrence, '.')) {
-        return null;
-      }
-      // uppercase should match either uppercase or a word start
-      if (!isUpperCase[patternIndex] ||
-          Character.isUpperCase(name.charAt(nextOccurrence)) ||
-          NameUtil.isWordStart(name, nextOccurrence) ||
-          // accept uppercase matching lowercase if the whole prefix is uppercase and case sensitivity allows that
-          !myHasHumps && myOptions != NameUtil.MatchingCaseSensitivity.ALL) {
-        FList<TextRange> ranges = matchFragment(name, patternIndex, nextOccurrence, isAsciiName);
+      int fragmentLength = seemsLikeFragmentStart(name, patternIndex, nameIndex) ? maxMatchingFragment(name, patternIndex, nameIndex) : 0;
+
+      // match the remaining pattern only if we haven't already seen fragment of the same (or bigger) length
+      // because otherwise it means that we already tried to match remaining pattern letters after it with the remaining name and failed
+      // but now we have the same remaining pattern letters and even less remaining name letters, and so will fail as well
+      if (fragmentLength > maxFoundLength) {
+        if (!isMiddleMatch(name, patternIndex, nameIndex)) {
+          maxFoundLength = fragmentLength;
+        }
+        FList<TextRange> ranges = matchInsideFragment(name, patternIndex, nameIndex, isAsciiName, fragmentLength);
         if (ranges != null) {
           return ranges;
         }
       }
-      nameIndex = nextOccurrence;
     }
+  }
+
+  private int findNextPatternCharOccurrence(@NotNull String name,
+                                            int startAt,
+                                            int patternIndex,
+                                            boolean isAsciiName,
+                                            boolean allowSpecialChars, boolean wordStartsOnly) {
+    int next = wordStartsOnly
+               ? indexOfWordStart(name, patternIndex, startAt)
+               : indexOfIgnoreCase(name, startAt + 1, myPattern[patternIndex], patternIndex, isAsciiName);
+
+    // pattern humps are allowed to match in words separated by " ()", lowercase characters aren't
+    if (!allowSpecialChars && !myHasSeparators && !myHasHumps && StringUtil.containsAnyChar(name, myHardSeparators, startAt, next)) {
+      return -1;
+    }
+    // if the user has typed a dot, don't skip other dots between humps
+    // but one pattern dot may match several name dots
+    if (!allowSpecialChars && myHasDots && !isPatternChar(patternIndex - 1, '.') && StringUtil.contains(name, startAt, next, '.')) {
+      return -1;
+    }
+
+    return next;
+  }
+
+  private boolean seemsLikeFragmentStart(@NotNull String name, int patternIndex, int nextOccurrence) {
+    // uppercase should match either uppercase or a word start
+    return !isUpperCase[patternIndex] ||
+           Character.isUpperCase(name.charAt(nextOccurrence)) ||
+           NameUtil.isWordStart(name, nextOccurrence) ||
+           // accept uppercase matching lowercase if the whole prefix is uppercase and case sensitivity allows that
+           !myHasHumps && myOptions != NameUtil.MatchingCaseSensitivity.ALL;
   }
 
   private boolean charEquals(char patternChar, int patternIndex, char c, boolean isIgnoreCase) {
@@ -358,39 +381,66 @@ public class MinusculeMatcher implements Matcher {
                                          int patternIndex,
                                          int nameIndex,
                                          boolean isAsciiName) {
+    int fragmentLength = maxMatchingFragment(name, patternIndex, nameIndex);
+    return fragmentLength == 0 ? null : matchInsideFragment(name, patternIndex, nameIndex, isAsciiName, fragmentLength);
+  }
+
+  private int maxMatchingFragment(@NotNull String name, int patternIndex, int nameIndex) {
     if (!isFirstCharMatching(name, nameIndex, patternIndex)) {
-      return null;
+      return 0;
     }
 
-    // exact middle matches have to be at least of length 3, to prevent too many irrelevant matches
-    int minFragment = isPatternChar(patternIndex - 1, '*') && !isWildcard(patternIndex + 1) &&
-                      Character.isLetterOrDigit(name.charAt(nameIndex)) && !NameUtil.isWordStart(name, nameIndex)
-                      ? 3 : 1;
     int i = 1;
     boolean ignoreCase = myOptions != NameUtil.MatchingCaseSensitivity.ALL;
     while (nameIndex + i < name.length() &&
            patternIndex + i < myPattern.length &&
            charEquals(myPattern[patternIndex+i], patternIndex+i, name.charAt(nameIndex + i), ignoreCase)) {
-      if (isUppercasePatternVsLowercaseNameChar(name, patternIndex + i, nameIndex + i)) {
-        FList<TextRange> ranges = i < minFragment ? null : findUppercaseMatchFurther(name, patternIndex + i, nameIndex + i, isAsciiName);
-        if (ranges != null) {
-          return prependRange(ranges, nameIndex, i);
-        }
-        if (shouldProhibitCaseMismatch(name, patternIndex + i, nameIndex + i)) {
-          return null;
-        }
+      if (isUppercasePatternVsLowercaseNameChar(name, patternIndex + i, nameIndex + i) &&
+          shouldProhibitCaseMismatch(name, patternIndex + i, nameIndex + i)) {
+        break;
       }
       i++;
     }
+    return i;
+  }
 
-    // we've found the longest fragment matching pattern and name
+  // we've found the longest fragment matching pattern and name
+  @Nullable
+  private FList<TextRange> matchInsideFragment(@NotNull String name,
+                                               int patternIndex,
+                                               int nameIndex,
+                                               boolean isAsciiName,
+                                               int fragmentLength) {
+    // exact middle matches have to be at least of length 3, to prevent too many irrelevant matches
+    int minFragment = isMiddleMatch(name, patternIndex, nameIndex)
+                      ? 3 : 1;
 
-    if (patternIndex + i >= myPattern.length) {
-      return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i));
+    FList<TextRange> camelHumpRanges = improveCamelHumps(name, patternIndex, nameIndex, isAsciiName, fragmentLength, minFragment);
+    if (camelHumpRanges != null) {
+      return camelHumpRanges;
+    }
+
+    return findLongestMatchingPrefix(name, patternIndex, nameIndex, isAsciiName, fragmentLength, minFragment);
+  }
+
+  private boolean isMiddleMatch(@NotNull String name, int patternIndex, int nameIndex) {
+    return isPatternChar(patternIndex - 1, '*') && !isWildcard(patternIndex + 1) &&
+                      Character.isLetterOrDigit(name.charAt(nameIndex)) && !NameUtil.isWordStart(name, nameIndex);
+  }
+
+  @Nullable
+  private FList<TextRange> findLongestMatchingPrefix(@NotNull String name,
+                                                     int patternIndex,
+                                                     int nameIndex,
+                                                     boolean isAsciiName,
+                                                     int fragmentLength, int minFragment) {
+    if (patternIndex + fragmentLength >= myPattern.length) {
+      return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, fragmentLength));
     }
 
     // try to match the remainder of pattern with the remainder of name
     // it may not succeed with the longest matching fragment, then try shorter matches
+    int i = fragmentLength;
     while (i >= minFragment || isWildcard(patternIndex + i)) {
       FList<TextRange> ranges = isWildcard(patternIndex + i) ?
                                 matchWildcards(name, patternIndex + i, nameIndex + i, isAsciiName) :
@@ -399,6 +449,27 @@ public class MinusculeMatcher implements Matcher {
         return prependRange(ranges, nameIndex, i);
       }
       i--;
+    }
+    return null;
+  }
+
+  /**
+   * When pattern is "CU" and the name is "CurrentUser", we already have a prefix "Cu" that matches,
+   * but we try to find uppercase "U" later in name for better matching degree
+   */ 
+  private FList<TextRange> improveCamelHumps(@NotNull String name,
+                                             int patternIndex,
+                                             int nameIndex,
+                                             boolean isAsciiName,
+                                             int maxFragment,
+                                             int minFragment) {
+    for (int i = minFragment; i < maxFragment; i++) {
+      if (isUppercasePatternVsLowercaseNameChar(name, patternIndex + i, nameIndex + i)) {
+        FList<TextRange> ranges = findUppercaseMatchFurther(name, patternIndex + i, nameIndex + i, isAsciiName);
+        if (ranges != null) {
+          return prependRange(ranges, nameIndex, i);
+        }
+      }
     }
     return null;
   }

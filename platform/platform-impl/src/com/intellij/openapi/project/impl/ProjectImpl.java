@@ -193,10 +193,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return plugin.getProjectComponents();
   }
 
-  @Override
   @Nullable
-  @SystemIndependent
-  public String getProjectFilePath() {
+  @Override
+  public @SystemIndependent String getProjectFilePath() {
     return isDefault() ? null : getStateStore().getProjectFilePath();
   }
 
@@ -210,10 +209,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return isDefault() ? null : LocalFileSystem.getInstance().findFileByPath(getStateStore().getProjectBasePath());
   }
 
-  @Nullable
   @Override
-  @SystemIndependent
-  public String getBasePath() {
+  @Nullable
+  public @SystemIndependent String getBasePath() {
     return isDefault() ? null : getStateStore().getProjectBasePath();
   }
 
@@ -226,9 +224,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return myName;
   }
 
-  @SystemDependent
   @Override
-  public String getPresentableUrl() {
+  public @SystemDependent String getPresentableUrl() {
     if (isDefault()) {
       return null;
     }
@@ -319,7 +316,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   }
 
   public void save(boolean isForce) {
-    if (ApplicationManagerEx.getApplicationEx().isDoNotSave()) {
+    if (!ApplicationManagerEx.getApplicationEx().isSaveAllowed()) {
       // no need to save
       return;
     }

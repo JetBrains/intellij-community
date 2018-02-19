@@ -38,9 +38,9 @@ public class BuildOutputConsumerImpl implements BuildOutputConsumer {
   private static final Logger LOG = Logger.getInstance(BuildOutputConsumerImpl.class);
   private final BuildTarget<?> myTarget;
   private final CompileContext myContext;
-  private FileGeneratedEvent myFileGeneratedEvent;
-  private Collection<File> myOutputs;
-  private THashSet<String> myRegisteredSources = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+  private final FileGeneratedEvent myFileGeneratedEvent;
+  private final Collection<File> myOutputs;
+  private final THashSet<String> myRegisteredSources = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
 
   public BuildOutputConsumerImpl(BuildTarget<?> target, CompileContext context) {
     myTarget = target;

@@ -123,10 +123,10 @@ class CreateConfigurationMultipleCasesTask<T extends PyAbstractTestConfiguration
       Assert.assertEquals("Bad configuration target", "test_functions.test_test", target.getTarget());
     }
     else if (element instanceof PyFunction && elementName.endsWith("foo")) {
-      Assert.assertEquals("non-test function should lead to level-based test", PyRunTargetVariant.PATH, target.getTargetVariant());
+      Assert.assertEquals("non-test function should lead to level-based test", PyRunTargetVariant.PATH, target.getTargetType());
     }
     else if (element instanceof PyFile && elementName.endsWith("test_foo.py")) {
-      Assert.assertEquals("Wrong path for file-based target", PyRunTargetVariant.PATH, target.getTargetVariant());
+      Assert.assertEquals("Wrong path for file-based target", PyRunTargetVariant.PATH, target.getTargetType());
     }
     else {
       throw new AssertionError("Unexpected configuration " + configuration);

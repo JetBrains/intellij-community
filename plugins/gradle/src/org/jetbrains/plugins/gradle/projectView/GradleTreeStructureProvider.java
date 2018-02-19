@@ -234,8 +234,8 @@ public class GradleTreeStructureProvider implements TreeStructureProvider, DumbA
 
 
   private static class GradleModuleDirectoryNode extends PsiDirectoryNode {
-    private String myModuleShortName;
-    private Module myModule;
+    private final String myModuleShortName;
+    private final Module myModule;
 
     public GradleModuleDirectoryNode(Project project,
                                      PsiDirectory psiDirectory,

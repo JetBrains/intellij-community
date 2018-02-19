@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.hint;
 
@@ -307,10 +305,12 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
     if (elementForUpdating != null) {
       myHandler.updateParameterInfo(elementForUpdating, context);
-      if (mySingleParameterInfo && myComponent.getCurrentParameterIndex() == -1 && myHint.isVisible()) {
+      boolean knownParameter = (myComponent.getObjects().length == 1 || myComponent.getHighlighted() != null) && 
+                               myComponent.getCurrentParameterIndex() != -1;
+      if (mySingleParameterInfo && !knownParameter && myHint.isVisible()) {
         myHint.hide();
       }
-      if (myKeepOnHintHidden && myComponent.getCurrentParameterIndex() != -1 && !myHint.isVisible()) {
+      if (myKeepOnHintHidden && knownParameter && !myHint.isVisible()) {
         AutoPopupController.getInstance(myProject).autoPopupParameterInfo(myEditor, null);
       }
       if (!myDisposed && myHint.isVisible() && !myEditor.isDisposed() &&
@@ -530,22 +530,18 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     boolean p1Ok = p1.y + hintSize.height < layeredPane.getHeight();
     boolean p2Ok = p2.y >= 0;
 
-    if (showLookupHint) {
-      if (p1Ok) return new Pair<>(p1, HintManager.UNDER);
-      if (p2Ok) return new Pair<>(p2, HintManager.ABOVE);
-    }
-    else {
+    if (!showLookupHint) {
       if (preferredPosition != HintManager.DEFAULT) {
         if (preferredPosition == HintManager.ABOVE) {
           if (p2Ok) return new Pair<>(p2, HintManager.ABOVE);
-        } else if (preferredPosition == HintManager.UNDER) {
+        }
+        else if (preferredPosition == HintManager.UNDER) {
           if (p1Ok) return new Pair<>(p1, HintManager.UNDER);
         }
       }
-
-      if (p1Ok) return new Pair<>(p1, HintManager.UNDER);
-      if (p2Ok) return new Pair<>(p2, HintManager.ABOVE);
     }
+    if (p1Ok) return new Pair<>(p1, HintManager.UNDER);
+    if (p2Ok) return new Pair<>(p2, HintManager.ABOVE);
 
     int underSpace = layeredPane.getHeight() - p1.y;
     int aboveSpace = p2.y;

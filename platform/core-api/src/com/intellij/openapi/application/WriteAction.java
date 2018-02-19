@@ -80,7 +80,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
    */
   @Deprecated
   @NotNull
-  public static AccessToken start(@NotNull Class clazz) {
+  private static AccessToken start(@NotNull Class clazz) {
     return ApplicationManager.getApplication().acquireWriteActionLock(clazz);
   }
 

@@ -47,8 +47,8 @@ import java.util.List;
  */
 public class PsiJShellRootClassImpl extends ASTWrapperPsiElement implements PsiJShellRootClass {
 
-  private String myName;
-  private String myQName;
+  private final String myName;
+  private final String myQName;
 
   public PsiJShellRootClassImpl(ASTNode node, int index) {
     super(node);

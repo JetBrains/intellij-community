@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -142,23 +128,7 @@ public class PathEnvironmentVariableUtil {
     return StringUtil.split(pathEnvVarValue, File.pathSeparator, true, true);
   }
 
-  /**
-   * Alters the passed in exe path to increase probability of exe file success finding when
-   * spawning an external process. Modifications are performed iff the passed in exe path is
-   * a basename (i.e. it doesn't contain slashes). E.g. "java", "git" or "node".
-   * <p>
-   * The motivation behind this modification is as follows. When exe path is a basename,
-   * {@link ProcessBuilder#start} searches for the executable file in the original PATH
-   * environment variable (i.e. {@code System.getenv("PATH")}).
-   * The problem is that on MacOSX original PATH value can be different than the PATH
-   * value in Terminal (see {@link EnvironmentUtil#getEnvironmentMap()}.
-   *
-   * @param exePath String path to exe file (basename, relative path or absolute path)
-   * @return if an exe file can be found in {@code EnvironmentUtil.getValue("PATH")} and
-   * nothing found in original PATH (i.e. {@code System.getenv("PATH")}),
-   * return the found exe file absolute path.
-   * Otherwise, return the passed in exe path.
-   */
+  /** @deprecated obsolete; the behavior is incorporated in {@link GeneralCommandLine#createProcess()} (to be removed in IDEA 2019) */
   @NotNull
   public static String toLocatableExePath(@NotNull String exePath) {
     if (SystemInfo.isMac) {

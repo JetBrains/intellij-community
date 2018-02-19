@@ -53,6 +53,7 @@ import com.jetbrains.python.remote.PyRemoteSourceItem;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,14 +74,14 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   private final PyConfigurableInterpreterList myInterpreterList;
   private final ProjectSdksModel myProjectSdksModel;
 
-  private Map<Sdk, SdkModificator> myModificators = FactoryMap.create(sdk -> sdk.getSdkModificator());
-  private Set<SdkModificator> myModifiedModificators = new HashSet<>();
+  private final Map<Sdk, SdkModificator> myModificators = FactoryMap.create(sdk -> sdk.getSdkModificator());
+  private final Set<SdkModificator> myModifiedModificators = new HashSet<>();
   private final Project myProject;
 
-  private boolean myShowOtherProjectVirtualenvs = true;
+  private boolean myHideOtherProjectVirtualenvs = false;
   private final Module myModule;
-  private Runnable mySdkSettingsWereModified;
-  private NullableConsumer<Sdk> myShowMoreCallback;
+  private final Runnable mySdkSettingsWereModified;
+  private final NullableConsumer<Sdk> myShowMoreCallback;
   private SdkModel.Listener myListener;
 
   public PythonSdkDetailsDialog(Project project, NullableConsumer<Sdk> showMoreCallback, Runnable sdkSettingsWereModified) {
@@ -237,12 +238,14 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private void refreshSdkList() {
-    final List<Sdk> pythonSdks = myInterpreterList.getAllPythonSdks(myProject);
+    final List<Sdk> allPythonSdks = myInterpreterList.getAllPythonSdks(myProject);
     Sdk projectSdk = getSdk();
-    if (!myShowOtherProjectVirtualenvs) {
-      VirtualEnvProjectFilter.removeNotMatching(myProject, pythonSdks);
-    }
-    //noinspection unchecked
+    final List<Sdk> notAssociatedWithOtherProjects = StreamEx
+      .of(allPythonSdks)
+      .filter(sdk -> !PySdkExtKt.isAssociatedWithAnotherProject(sdk, myProject))
+      .toList();
+
+    final List<Sdk> pythonSdks = myHideOtherProjectVirtualenvs ? notAssociatedWithOtherProjects : allPythonSdks;
     mySdkList.setModel(new CollectionListModel<>(pythonSdks));
 
     mySdkListChanged = false;
@@ -418,17 +421,17 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private class ToggleVirtualEnvFilterButton extends ToggleActionButton implements DumbAware {
     public ToggleVirtualEnvFilterButton() {
-      super(PyBundle.message("sdk.details.dialog.show.all.virtual.envs"), AllIcons.General.Filter);
+      super(PyBundle.message("sdk.details.dialog.hide.all.virtual.envs"), AllIcons.General.Filter);
     }
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return myShowOtherProjectVirtualenvs;
+      return myHideOtherProjectVirtualenvs;
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      myShowOtherProjectVirtualenvs = state;
+      myHideOtherProjectVirtualenvs = state;
       refreshSdkList();
       updateOkButton();
     }
@@ -480,7 +483,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     private final PyRemoteSdkAdditionalDataBase myRemoteSdkData;
     private final Sdk mySdk;
 
-    private List<PathMappingSettings.PathMapping> myNewMappings = Lists.newArrayList();
+    private final List<PathMappingSettings.PathMapping> myNewMappings = Lists.newArrayList();
 
     public PyRemotePathEditor(Sdk sdk) {
       super("Classes", OrderRootType.CLASSES, FileChooserDescriptorFactory.createAllButJarContentsDescriptor());

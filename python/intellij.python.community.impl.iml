@@ -36,5 +36,6 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.python.helpers" scope="RUNTIME" />
   </component>
 </module>

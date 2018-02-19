@@ -23,7 +23,9 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiParameter
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
 inline fun <reified T : UElement> UElement.getParentOfType(strict: Boolean = true): T? = getParentOfType(T::class.java, strict)
@@ -158,3 +160,45 @@ tailrec fun UElement.getLanguagePlugin(): UastLanguagePlugin {
 }
 
 fun Collection<UElement?>.toPsiElements() = mapNotNull { it?.psi }
+
+/**
+ * A helper function for getting parents for given [PsiElement] that could be considered as identifier.
+ * Useful for working with gutter accorting to recommendations in [com.intellij.codeInsight.daemon.LineMarkerProvider].
+ */
+@ApiStatus.Experimental
+fun getUParentForIdentifier(identifier: PsiElement): UElement? {
+  val uIdentifier = identifier.toUElementOfType<UIdentifier>() ?: return null
+  return uIdentifier.uastParent
+         ?: identifier.parent.toUElement() // a workaround for Kotlin < 1.2.30 which identifiers cant get parents
+
+}
+
+/**
+ * A workaround for IDEA-184046
+ * tries to find parameter in declaration that corresponds to an argument:
+ * considers simple positional calls and Kotlin extension calls.
+ */
+fun guessCorrespondingParameter(callExpression: UCallExpression, arg: UExpression): PsiParameter? {
+  val psiMethod = callExpression.resolve() ?: return null
+  val parameters = psiMethod.parameterList.parameters
+
+  if (callExpression is UCallExpressionEx)
+    return parameters.withIndex().find { (i, _) -> callExpression.getArgumentForParameter(i) == arg }?.value
+
+  // not everyone implements UCallExpressionEx, lets try to guess
+  val indexInArguments = callExpression.valueArguments.indexOf(arg)
+  if (parameters.size == callExpression.valueArguments.count()) {
+    return parameters.getOrNull(indexInArguments)
+  }
+  // probably it is a kotlin extension method
+  if (parameters.size - 1 == callExpression.valueArguments.count()) {
+    val parameter = parameters.firstOrNull() ?: return null
+    val receiverType = callExpression.receiverType ?: return null
+    if (!parameter.type.isAssignableFrom(receiverType)) return null
+    if (!parameters.drop(1).zip(callExpression.valueArguments)
+        .all { (param, arg) -> arg.getExpressionType()?.let { param.type.isAssignableFrom(it) } == true }) return null
+    return parameters.getOrNull(indexInArguments + 1)
+  }
+  //named parameters are not processed
+  return null
+}

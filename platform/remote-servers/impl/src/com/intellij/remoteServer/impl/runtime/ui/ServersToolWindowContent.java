@@ -99,7 +99,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
   private final DefaultTreeModel myTreeModel;
   private TreeBuilderBase myBuilder;
   private AbstractTreeNode<?> myLastSelection;
-  private Set<Object> myCollapsedTreeNodeValues = new HashSet<>();
+  private final Set<Object> myCollapsedTreeNodeValues = new HashSet<>();
 
   private final Project myProject;
   private final RemoteServersViewContribution myContribution;

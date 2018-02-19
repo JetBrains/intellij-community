@@ -166,6 +166,10 @@ public class ChangeListWorker {
     if (change != null) {
       removeChangeMapping(change);
     }
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("[registerChangeTracker] path: %s", filePath));
+    }
   }
 
   public void unregisterChangeTracker(@NotNull FilePath filePath, @NotNull PartialChangeTracker tracker) {
@@ -177,6 +181,10 @@ public class ChangeListWorker {
     Change change = getChangeForAfterPath(filePath);
     if (change != null) {
       putChangeMapping(change, getMainList(oldTracker));
+    }
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("[unregisterChangeTracker] path: %s", filePath));
     }
   }
 
@@ -385,7 +393,7 @@ public class ChangeListWorker {
   }
 
 
-  public boolean setDefaultList(String name) {
+  public boolean setDefaultList(@NotNull String name) {
     ListData newDefault = getDataByName(name);
     if (newDefault == null || newDefault.isDefault) return false;
 
@@ -398,10 +406,14 @@ public class ChangeListWorker {
     fireDefaultListChanged(oldDefault.id, newDefault.id);
     fireChangeListsChanged();
 
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("[setDefaultList %s] name: %s id: %s", myMainWorker ? "" : "- updater", name, newDefault.id));
+    }
+
     return true;
   }
 
-  public boolean setReadOnly(String name, boolean value) {
+  public boolean setReadOnly(@NotNull String name, boolean value) {
     ListData list = getDataByName(name);
     if (list == null || list.isReadOnly) return false;
 
@@ -459,6 +471,10 @@ public class ChangeListWorker {
 
     fireChangeListsChanged();
 
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("[addChangeList %s] name: %s id: %s", myMainWorker ? "" : "- updater", name, list.id));
+    }
+
     return toChangeList(list);
   }
 
@@ -482,11 +498,15 @@ public class ChangeListWorker {
     fireChangeListsChanged();
     myReadOnlyChangesCache = null;
 
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("[removeChangeList %s] name: %s id: %s", myMainWorker ? "" : "- updater", name, removedList.id));
+    }
+
     return true;
   }
 
   @Nullable
-  public MultiMap<LocalChangeList, Change> moveChangesTo(@NotNull String name, @NotNull Change[] changes) {
+  public MultiMap<LocalChangeList, Change> moveChangesTo(@NotNull String name, @NotNull List<Change> changes) {
     final ListData targetList = getDataByName(name);
     if (targetList == null) return null;
 
@@ -537,6 +557,12 @@ public class ChangeListWorker {
     for (Map.Entry<ListData, Collection<Change>> entry : result.entrySet()) {
       notifications.put(toChangeList(entry.getKey()), entry.getValue());
     }
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("[moveChangesTo %s] name: %s id: %s, changes: %s",
+                              myMainWorker ? "" : "- updater", targetList.name, targetList.id, changes));
+    }
+
     return notifications;
   }
 
@@ -595,6 +621,10 @@ public class ChangeListWorker {
     }
 
     fireChangeListsChanged();
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("[applyChangesFromUpdate] %s", this));
+    }
   }
 
   private static boolean notifyPathsChanged(@NotNull ChangeListsIndexes was, @NotNull ChangeListsIndexes became,
@@ -800,9 +830,11 @@ public class ChangeListWorker {
 
   @Override
   public String toString() {
-    return String.format("ChangeListWorker{myMap=%s}", StringUtil.join(myLists, list -> {
-      return String.format("list: %s changes: %s", list.name, StringUtil.join(getChangesIn(list), ", "));
-    }, "\n"));
+    String lists = StringUtil.join(myLists, list -> {
+      return String.format("list: %s (%s) changes: %s", list.name, list.id, StringUtil.join(getChangesIn(list), ", "));
+    }, "\n");
+    String trackers = StringUtil.join(myPartialChangeTrackers.keySet(), ",");
+    return String.format("ChangeListWorker{ lists = {\n%s }\ntrackers = %s\n}", lists, trackers);
   }
 
 

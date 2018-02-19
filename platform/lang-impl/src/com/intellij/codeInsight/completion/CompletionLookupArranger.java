@@ -60,8 +60,7 @@ public class CompletionLookupArranger extends LookupArranger {
   private final int myLimit = Registry.intValue("ide.completion.variant.limit");
   private boolean myOverflow;
 
-  private final CompletionLocation myLocation;
-  private final CompletionParameters myParameters;
+  @Nullable private CompletionLocation myLocation;
   private final CompletionProgressIndicator myProcess;
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
   private final Map<CompletionSorterImpl, Classifier<LookupElement>> myClassifiers = new LinkedHashMap<>();
@@ -69,10 +68,8 @@ public class CompletionLookupArranger extends LookupArranger {
   private final CompletionFinalSorter myFinalSorter = CompletionFinalSorter.newSorter();
   private int myPrefixChanges;
 
-  public CompletionLookupArranger(final CompletionParameters parameters, CompletionProgressIndicator process) {
-    myParameters = parameters;
+  CompletionLookupArranger(CompletionProgressIndicator process) {
     myProcess = process;
-    myLocation = new CompletionLocation(parameters);
   }
 
   private MultiMap<CompletionSorterImpl, LookupElement> groupItemsBySorter(Iterable<LookupElement> source) {
@@ -343,6 +340,8 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   private Iterable<LookupElement> sortByRelevance(MultiMap<CompletionSorterImpl, LookupElement> inputBySorter) {
+    if (inputBySorter.isEmpty()) return Collections.emptyList();
+    
     final List<Iterable<LookupElement>> byClassifier = ContainerUtil.newArrayList();
     for (CompletionSorterImpl sorter : myClassifiers.keySet()) {
       ProcessingContext context = createContext();
@@ -350,7 +349,7 @@ public class CompletionLookupArranger extends LookupArranger {
     }
     //noinspection unchecked
     Iterable<LookupElement> result = ContainerUtil.concat(byClassifier.toArray(new Iterable[0]));
-    return myFinalSorter.sort(result, myParameters);
+    return myFinalSorter.sort(result, Objects.requireNonNull(myProcess.getParameters()));
   }
   
   private ProcessingContext createContext() {
@@ -363,7 +362,7 @@ public class CompletionLookupArranger extends LookupArranger {
 
   @Override
   public LookupArranger createEmptyCopy() {
-    return new CompletionLookupArranger(myParameters, myProcess);
+    return new CompletionLookupArranger(myProcess);
   }
 
   private int getItemToSelect(LookupImpl lookup, List<LookupElement> items, boolean onExplicitAction, @Nullable LookupElement mostRelevant) {
@@ -449,8 +448,12 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   private boolean shouldSkip(CompletionPreselectSkipper[] skippers, LookupElement element) {
+    CompletionLocation location = myLocation;
+    if (location == null) {
+      location = new CompletionLocation(Objects.requireNonNull(myProcess.getParameters()));
+    }
     for (final CompletionPreselectSkipper skipper : skippers) {
-      if (skipper.skipElement(element, myLocation)) {
+      if (skipper.skipElement(element, location)) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Skipped element " + element + " by " + skipper);
         }

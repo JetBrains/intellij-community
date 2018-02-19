@@ -33,7 +33,7 @@ public class PyOverrideTest extends PyTestCase {
   }
 
   private void doTest3k() {
-    runWithLanguageLevel(LanguageLevel.PYTHON32, () -> doTest());
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   private PyClass getTopLevelClass(int index) {

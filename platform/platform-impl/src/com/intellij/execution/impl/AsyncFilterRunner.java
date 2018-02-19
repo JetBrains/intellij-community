@@ -172,7 +172,7 @@ class AsyncFilterRunner {
   }
 
   private class HighlighterJob {
-    private AtomicInteger startLine;
+    private final AtomicInteger startLine;
     private final int endLine;
     private final int initialMarkerOffset;
     private final RangeMarker endMarker;

@@ -43,7 +43,7 @@ import java.util.List;
  */
 public class TerminalSessionEditor extends UserDataHolderBase implements FileEditor {
 
-  private Project myProject;
+  private final Project myProject;
   private final TerminalSessionVirtualFileImpl myFile;
   private final TtyConnectorWaitFor myWaitFor;
 

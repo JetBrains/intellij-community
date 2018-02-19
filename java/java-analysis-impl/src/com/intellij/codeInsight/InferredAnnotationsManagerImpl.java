@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
@@ -130,6 +130,10 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
 
   @Nullable
   private PsiAnnotation getInferredNullityAnnotation(PsiParameter parameter) {
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
+    if (findAnnotation(parameter, manager.getNotNulls(), true) != null || findAnnotation(parameter, manager.getNullables(), true) != null) {
+      return null;
+    }
     PsiElement parent = parameter.getParent();
     if (!(parent instanceof PsiParameterList)) return null;
     PsiElement scope = parent.getParent();

@@ -39,7 +39,7 @@ public class SslSocketFactory extends SSLSocketFactory {
   public static final String SSL_CLIENT_KEY_PATH = "sslClientKeyPath";
   public static final String SSL_TRUST_EVERYBODY = "sslTrustEverybody";
   private static final String END_CERTIFICATE = "-----END CERTIFICATE-----";
-  private SSLSocketFactory myFactory;
+  private final SSLSocketFactory myFactory;
 
   public SslSocketFactory() throws GeneralSecurityException, IOException {
     super();

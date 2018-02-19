@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.resolve;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
@@ -16,6 +17,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.*;
@@ -25,6 +27,7 @@ import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -100,7 +103,7 @@ public class ResolveImportUtil {
 
   @NotNull
   public static List<RatedResolveResult> multiResolveImportElement(PyImportElement importElement, @NotNull final QualifiedName qName) {
-    PyUtil.verboseOnly(() ->PyPsiUtils.assertValid(importElement));
+    PyUtil.verboseOnly(() -> PyPsiUtils.assertValid(importElement));
     final PyStatement importStatement = importElement.getContainingImportStatement();
     if (importStatement instanceof PyFromImportStatement) {
       return resolveNameInFromImport((PyFromImportStatement)importStatement, qName);
@@ -123,17 +126,19 @@ public class ResolveImportUtil {
     PsiFile file = importStatement.getContainingFile().getOriginalFile();
     String name = qName.getComponents().get(0);
 
+    final List<RatedResolveResult> results = new ArrayList<>();
     final List<PsiElement> candidates = importStatement.resolveImportSourceCandidates();
     for (PsiElement candidate : candidates) {
       if (!candidate.isValid()) {
-        throw new PsiInvalidElementAccessException(candidate, "Got an invalid candidate from resolveImportSourceCandidates(): " + candidate.getClass());
+        throw new PsiInvalidElementAccessException(candidate, "Got an invalid candidate from resolveImportSourceCandidates(): " +
+                                                              candidate.getClass());
       }
       if (candidate instanceof PsiDirectory) {
         candidate = PyUtil.getPackageElement((PsiDirectory)candidate, importStatement);
       }
-      return updateRatedResults(resolveChildren(candidate, name, file, false, true, false, false));
+      results.addAll(updateRatedResults(resolveChildren(candidate, name, file, false, true, false, false)));
     }
-    return Collections.emptyList();
+    return results;
   }
 
   @NotNull
@@ -147,11 +152,10 @@ public class ResolveImportUtil {
   /**
    * Resolves a module reference in a general case.
    *
-   *
-   * @param qualifiedName     qualified name of the module reference to resolve
-   * @param sourceFile        where that reference resides; serves as PSI foothold to determine module, project, etc.
-   * @param importIsAbsolute  if false, try old python 2.x's "relative first, absolute next" approach.
-   * @param relativeLevel     if > 0, step back from sourceFile and resolve from there (even if importIsAbsolute is false!).
+   * @param qualifiedName    qualified name of the module reference to resolve
+   * @param sourceFile       where that reference resides; serves as PSI foothold to determine module, project, etc.
+   * @param importIsAbsolute if false, try old python 2.x's "relative first, absolute next" approach.
+   * @param relativeLevel    if > 0, step back from sourceFile and resolve from there (even if importIsAbsolute is false!).
    * @return list of possible candidates
    */
   @NotNull
@@ -189,13 +193,23 @@ public class ResolveImportUtil {
     }
   }
 
+  @NotNull
+  public static List<PsiElement> multiResolveModuleInRoots(@NotNull QualifiedName moduleQualifiedName, @Nullable PsiElement foothold) {
+    if (foothold == null) return Collections.emptyList();
+    return PyResolveImportUtil.resolveQualifiedName(moduleQualifiedName,
+                                                    PyResolveImportUtil.fromFoothold(foothold));
+  }
+
+  /**
+   * @deprecated {@link use {@link #multiResolveModuleInRoots(QualifiedName, PsiElement)}}
+   */
+  @Deprecated
   @Nullable
   public static PsiElement resolveModuleInRoots(@NotNull QualifiedName moduleQualifiedName, @Nullable PsiElement foothold) {
-    if (foothold == null) return null;
-    final List<PsiElement> results = PyResolveImportUtil.resolveQualifiedName(moduleQualifiedName,
-                                                                              PyResolveImportUtil.fromFoothold(foothold));
-    return !results.isEmpty() ? results.get(0) : null;
+    final List<PsiElement> results = multiResolveModuleInRoots(moduleQualifiedName, foothold);
+    return ContainerUtil.getFirstItem(results);
   }
+
 
   @Nullable
   static PythonPathCache getPathCache(PsiElement foothold) {
@@ -261,7 +275,6 @@ public class ResolveImportUtil {
     else {
       return resolveMemberFromReferenceTypeProviders(parent, referencedName);
     }
-
   }
 
   @NotNull
@@ -494,7 +507,7 @@ public class ResolveImportUtil {
     private final boolean myAbsolute;
     private final int myLevel;
 
-    public ResolveModuleParams(@NotNull QualifiedName qualifiedName, @NotNull PsiFile file , boolean importIsAbsolute, int relativeLevel) {
+    public ResolveModuleParams(@NotNull QualifiedName qualifiedName, @NotNull PsiFile file, boolean importIsAbsolute, int relativeLevel) {
       myName = qualifiedName;
       myFile = file;
       myAbsolute = importIsAbsolute;

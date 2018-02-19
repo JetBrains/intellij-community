@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
@@ -166,7 +164,10 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT),
     new AttributesDescriptor(
       OptionsBundle.message("options.java.attribute.descriptor.inline.parameter.hint.highlighted"), 
-      DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED)
+      DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.java.attribute.descriptor.inline.parameter.hint.current"), 
+      DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_CURRENT)
   };
 
   @Nullable
@@ -215,7 +216,7 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       "Function <func_call>call</func_call>(" +
       "<parameter_hint p:>0, <parameter_hint param:>1, <parameter_hint parameterName:>2" +
       ")\n" +
-      "Current function <func_call>call</func_call>(<parameter_hint_highlighted param:>0, <parameter_hint_highlighted currentParam:>1)\n" +
+      "Current function <func_call>call</func_call>(<parameter_hint_highlighted param:>0, <parameter_hint_current currentParam:>1)\n" +
       "Interface <interface>Name</interface>\n" +
       "<metadata>@Metadata</metadata>\n" +
       "Class <class_name>Name</class_name>\n" +

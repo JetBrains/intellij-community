@@ -82,8 +82,8 @@ public class JavacASTAnalyser extends AbstractProcessor{
   }
 
   private static class ImportsCollector extends TreeScanner<Object, Trees> {
-    private Set<String> myImports = new HashSet<>();
-    private Set<String> myStaticImports = new HashSet<>();
+    private final Set<String> myImports = new HashSet<>();
+    private final Set<String> myStaticImports = new HashSet<>();
 
     public Set<String> getImports() {
       return myImports;

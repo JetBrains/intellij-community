@@ -29,8 +29,6 @@ class ExtendedTableFixture(val myRobot: Robot, val myTable: JTable) : JTableFixt
 
   fun row(i: Int): RowFixture = RowFixture(i, this)
   fun row(value: String): RowFixture = RowFixture(cell(value).row(), this)
-
-
 }
 
 class RowFixture(val rowNumber: Int, val tableFixture: ExtendedTableFixture) {
@@ -38,10 +36,9 @@ class RowFixture(val rowNumber: Int, val tableFixture: ExtendedTableFixture) {
   val myTable = tableFixture.myTable
 
   fun hasCheck(): Boolean =
-    (0..myTable.columnCount - 1)
+    (0 until myTable.columnCount)
       .map { myTable.prepareRenderer(myTable.getCellRenderer(rowNumber, it), rowNumber, it) }
       .any { it is JCheckBox }
-
 
   fun isCheck(): Boolean {
     val checkBox = getCheckBox()
@@ -61,13 +58,13 @@ class RowFixture(val rowNumber: Int, val tableFixture: ExtendedTableFixture) {
 
   fun values(): List<String> {
     val cellReader = ExtendedJTableCellReader()
-    return (0..myTable.columnCount - 1)
+    return (0 until myTable.columnCount)
       .map { cellReader.valueAt(myTable, rowNumber, it) ?: "null" }
   }
 
   private fun getCheckBox(): JCheckBox {
     if (!hasCheck()) throw Exception("Unable to find checkbox cell in row: $rowNumber")
-    return (0..myTable.columnCount - 1)
+    return (0 until myTable.columnCount)
       .map { myTable.prepareRenderer(myTable.getCellRenderer(rowNumber, it), rowNumber, it) }
       .find { it is JCheckBox } as JCheckBox
   }

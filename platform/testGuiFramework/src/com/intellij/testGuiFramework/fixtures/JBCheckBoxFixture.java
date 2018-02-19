@@ -33,8 +33,8 @@ import java.awt.*;
  */
 public class JBCheckBoxFixture extends JComponentFixture<JBCheckBoxFixture, JBCheckBox> {
 
-  private Robot myRobot;
-  private JBCheckBox myCheckBox;
+  private final Robot myRobot;
+  private final JBCheckBox myCheckBox;
 
   public JBCheckBoxFixture(@NotNull Class<JBCheckBoxFixture> selfType,
                            @NotNull Robot robot,

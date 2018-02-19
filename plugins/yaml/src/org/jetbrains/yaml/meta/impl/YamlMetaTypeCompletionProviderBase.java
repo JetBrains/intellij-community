@@ -6,7 +6,6 @@ package org.jetbrains.yaml.meta.impl;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -23,7 +22,6 @@ import org.jetbrains.yaml.meta.model.YamlMetaType;
 import org.jetbrains.yaml.meta.model.YamlScalarType;
 import org.jetbrains.yaml.psi.*;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -80,7 +78,7 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       return;
     }
     YamlMetaType metaType = meta.getMetaType();
-    if (metaType instanceof YamlScalarType) {
+    if (params.getCompletionType().equals(CompletionType.BASIC) && metaType instanceof YamlScalarType) {
       YamlScalarType scalarType = (YamlScalarType)metaType;
       if (insertedScalar.getParent() instanceof YAMLKeyValue) {
         PsiElement prevSibling = PsiTreeUtil.skipWhitespacesBackward(insertedScalar);
@@ -164,8 +162,9 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
           final YamlMetaType.ForcedCompletionPath completionPath = YamlMetaType.ForcedCompletionPath.forDeepCompletion(pathToInsert);
           LookupElementBuilder l = LookupElementBuilder
             .create(completionPath, completionPath.getName())
+            .withIcon(lastField.getLookupIcon())
             .withInsertHandler(new YamlKeyInsertHandlerImpl(needsSequenceItemMark, pathToInsert.get(0)))
-            .withTypeText(lastField.getDefaultType().getDisplayName(), getLookupIcon(lastField), true)
+            .withTypeText(lastField.getDefaultType().getDisplayName(), true)
             .withStrikeoutness(lastField.isDeprecated());
           result.addElement(l);
         }
@@ -196,14 +195,6 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
     }
   }
 
-  @Nullable
-  private static Icon getLookupIcon(@NotNull final Field field) {
-    if (field.isMany()) {
-      return AllIcons.Json.Array;
-    }
-    return null;
-  }
-
   @NotNull
   private static Collection<List<Field>> collectPaths(@NotNull final Collection<Field> fields, final int deepness) {
     Collection<List<Field>> result = new ArrayList<>();
@@ -218,11 +209,13 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       return;
     }
 
-    fields.forEach(field -> {
+    fields.stream()
+          .filter(field -> !field.isAnyNameAllowed())
+          .forEach(field -> {
       final List<Field> fieldPath = Stream.concat(currentPath.stream(), Stream.of(field)).collect(Collectors.toList());
       result.add(fieldPath);
       final YamlMetaType metaType = field.getType(field.getDefaultRelation());
-      if (metaType instanceof YamlMetaClass && !field.isAnyNameAllowed()) {
+            if (metaType instanceof YamlMetaClass) {
         doCollectPathsRec(((YamlMetaClass)metaType).getFeatures().stream().filter(Field::isEditable).collect(Collectors.toList()),
                           fieldPath, result, deepness);
       }

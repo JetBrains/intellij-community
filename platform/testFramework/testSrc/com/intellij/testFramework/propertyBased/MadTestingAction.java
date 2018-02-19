@@ -15,13 +15,22 @@
  */
 package com.intellij.testFramework.propertyBased;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jetCheck.ImperativeCommand;
+
 import java.util.List;
 
 /**
  * @author peter
  */
-public interface MadTestingAction {
-  
+public interface MadTestingAction extends ImperativeCommand {
+
+  @Override
+  default void performCommand(@NotNull Environment env) {
+    env.logMessage(toString());
+    performAction();
+  }
+
   void performAction();
 
   default String getConstructorArguments() {

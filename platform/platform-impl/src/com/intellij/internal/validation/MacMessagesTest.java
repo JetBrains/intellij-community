@@ -42,7 +42,7 @@ public class MacMessagesTest extends AnAction {
 
   private static class SimpleDialogWrapper extends DialogWrapper {
 
-    private  JTextArea jbTextField = new JTextArea(1, 30);
+    private final JTextArea jbTextField = new JTextArea(1, 30);
 
     SimpleDialogWrapper(@Nullable Project project) {
       super(project);

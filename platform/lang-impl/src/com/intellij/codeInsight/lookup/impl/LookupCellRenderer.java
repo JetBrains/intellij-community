@@ -20,8 +20,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
 import com.intellij.codeInsight.lookup.RealLookupElementPresentation;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -143,8 +142,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     FontMetrics boldMetrics = getRealFontMetrics(item, true);
     final LookupElementPresentation presentation = new RealLookupElementPresentation(isSelected ? getMaxWidth() : allowedWidth, 
                                                                                      normalMetrics, boldMetrics, myLookup);
-    AccessToken token = ReadAction.start();
-    try {
+    ApplicationManager.getApplication().runReadAction(() -> {
       if (item.isValid()) {
         try {
           item.renderElement(presentation);
@@ -163,14 +161,12 @@ public class LookupCellRenderer implements ListCellRenderer {
         catch (Exception | Error e) {
           LOG.error(e);
         }
-      } else {
+      }
+      else {
         presentation.setItemTextForeground(JBColor.RED);
         presentation.setItemText("Invalid");
       }
-    }
-    finally {
-      token.finish();
-    }
+    });
 
     myNameComponent.clear();
     myNameComponent.setBackground(background);

@@ -63,7 +63,7 @@ public class FrameWrapper implements Disposable, DataProvider {
 
   protected StatusBar myStatusBar;
   private boolean myShown;
-  private boolean myIsDialog;
+  private final boolean myIsDialog;
 
   public FrameWrapper(Project project) {
     this(project, null);

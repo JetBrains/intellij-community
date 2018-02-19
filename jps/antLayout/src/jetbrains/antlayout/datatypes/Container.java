@@ -30,7 +30,7 @@ import java.util.Set;
  * @author max
  */
 public abstract class Container extends Content {
-    private List<Content> children = new ArrayList<Content>();
+    private final List<Content> children = new ArrayList<Content>();
 
     private String excludes = null;
     private String includes = null;

@@ -36,7 +36,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class IgnoredSettingsPanel implements SearchableConfigurable, Configurable.NoScroll {
-  private JBList myList;
+  private final JBList myList;
   private JPanel myPanel;
   private final Project myProject;
   private DefaultListModel myModel;

@@ -714,7 +714,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     private TextAttributes myFallbackAttributes;
     private Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor> myBaseAttributeDescriptor;
-    private boolean myIsInheritedInitial;
+    private final boolean myIsInheritedInitial;
 
     private SchemeTextAttributesDescription(String name,
                                             String group,
@@ -794,7 +794,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     private Color myColor;
     private TextAttributes myFallbackAttributes;
     private Pair<ColorAndFontDescriptorsProvider, ColorDescriptor> myBaseAttributeDescriptor;
-    private boolean myIsInheritedInitial;
+    private final boolean myIsInheritedInitial;
 
     EditorSettingColorDescription(String name,
                                   String group,
@@ -948,7 +948,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     private EditorSchemeAttributeDescriptor[] myDescriptors;
     private String                            myName;
     private boolean myIsNew = false;
-    private RainbowColorsInSchemeState myRainbowState;
+    private final RainbowColorsInSchemeState myRainbowState;
     private final static Predicate<ColorKey> FILE_STATUS_COLORS =
       input -> input != null && input.getExternalName().startsWith(FileStatusFactory.FILESTATUS_COLOR_KEY_PREFIX);
 

@@ -24,7 +24,7 @@ import java.util.concurrent.LinkedBlockingDeque;
  * @author traff
  */
 public class AppendableTerminalDataStream implements TerminalDataStream, Appendable {
-  private LinkedBlockingDeque<Character> myQueue = new LinkedBlockingDeque<>(10000000);
+  private final LinkedBlockingDeque<Character> myQueue = new LinkedBlockingDeque<>(10000000);
 
   @Override
   public char getChar() throws IOException {

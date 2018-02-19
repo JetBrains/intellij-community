@@ -15,23 +15,26 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
  */
 public class LibraryNameAndLevelPanel {
-  private JTextField myLibraryNameField;
-  private JComboBox myLevelComboBox;
+  private final JTextField myLibraryNameField;
+  private final JComboBox myLevelComboBox;
   private String myDefaultLibraryName;
 
   public LibraryNameAndLevelPanel(@NotNull FormBuilder formBuilder, @NotNull String libraryName, @Nullable LibrariesContainer.LibraryLevel level) {

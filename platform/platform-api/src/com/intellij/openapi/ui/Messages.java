@@ -22,6 +22,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.PairFunction;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.*;
@@ -971,11 +972,24 @@ public class Messages {
                                        @Nullable String initialValue,
                                        @Nullable InputValidator validator,
                                        @Nullable TextRange selection) {
+    return showInputDialog(project, message, title, icon, initialValue, validator, selection, null);
+  }
+
+  @Nullable
+  public static String showInputDialog(Project project,
+                                       @Nls String message,
+                                       @Nls(capitalization = Nls.Capitalization.Title) String title,
+                                       @Nullable Icon icon,
+                                       @Nullable String initialValue,
+                                       @Nullable InputValidator validator,
+                                       @Nullable TextRange selection,
+                                       @Nullable String comment) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestInputImplementation.show(message, validator);
     }
     else {
-      InputDialog dialog = new InputDialog(project, message, title, icon, initialValue, validator);
+      InputDialog dialog = new InputDialog(project, message, title, icon, initialValue, validator, new String[]{OK_BUTTON, CANCEL_BUTTON},
+                                           0, comment);
 
       final JTextComponent field = dialog.getTextField();
       if (selection != null) {
@@ -1384,6 +1398,10 @@ public class Messages {
       super(project, false);
     }
 
+    MessageDialog(Project project, boolean canBeParent) {
+      super(project, canBeParent);
+    }
+
     protected void _init(@Nls(capitalization = Nls.Capitalization.Title) String title,
                          String message,
                          @NotNull String[] options,
@@ -1714,6 +1732,24 @@ public class Messages {
   public static class InputDialog extends MessageDialog {
     protected JTextComponent myField;
     private final InputValidator myValidator;
+    private final String myComment;
+
+    public InputDialog(@Nullable Project project,
+                       String message,
+                       @Nls(capitalization = Nls.Capitalization.Title) String title,
+                       @Nullable Icon icon,
+                       @Nullable String initialValue,
+                       @Nullable InputValidator validator,
+                       @NotNull String[] options,
+                       int defaultOption,
+                       @Nullable String comment) {
+      super(project, true);
+      myComment = comment;
+      myValidator = validator;
+      _init(title, message, options, defaultOption, -1, icon, null);
+      myField.setText(initialValue);
+      enableOkAction();
+    }
 
     public InputDialog(@Nullable Project project,
                        String message,
@@ -1723,10 +1759,7 @@ public class Messages {
                        @Nullable InputValidator validator,
                        @NotNull String[] options,
                        int defaultOption) {
-      super(project, message, title, options, defaultOption, icon, true);
-      myValidator = validator;
-      myField.setText(initialValue);
-      enableOkAction();
+      this(project, message, title, icon, initialValue, validator, options, defaultOption, null);
     }
 
     public InputDialog(@Nullable Project project,
@@ -1746,6 +1779,7 @@ public class Messages {
                        @Nullable InputValidator validator) {
       super(parent, message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon, true);
       myValidator = validator;
+      myComment = null;
       myField.setText(initialValue);
       enableOkAction();
     }
@@ -1757,6 +1791,7 @@ public class Messages {
                        @Nullable InputValidator validator) {
       super(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon, true);
       myValidator = validator;
+      myComment = null;
       myField.setText(initialValue);
       enableOkAction();
     }
@@ -1820,7 +1855,12 @@ public class Messages {
       JPanel messagePanel = createMessagePanel();
       panel.add(messagePanel, BorderLayout.CENTER);
 
-      return panel;
+      if (myComment != null) {
+        return UI.PanelFactory.panel(panel).withComment(myComment).createPanel();
+      }
+      else {
+        return panel;
+      }
     }
 
     @Override

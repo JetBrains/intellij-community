@@ -28,7 +28,7 @@ import java.io.File;
  */
 public class PublicSshKeyDialog extends DialogWrapper {
 
-  private PublicSshKeyFilePanel myPanel;
+  private final PublicSshKeyFilePanel myPanel;
 
   public PublicSshKeyDialog(@Nullable Project project) {
     super(project);

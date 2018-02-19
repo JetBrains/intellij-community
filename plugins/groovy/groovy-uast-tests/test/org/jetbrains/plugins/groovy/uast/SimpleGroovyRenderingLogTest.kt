@@ -14,4 +14,7 @@ class SimpleGroovyRenderingLogTest : AbstractGroovyRenderLogTest() {
   @Test
   fun testClassWithInners() = doTest("ClassWithInners.groovy")
 
+  @Test
+  fun testAnnotations() = doTest("Annotations.groovy")
+
 }

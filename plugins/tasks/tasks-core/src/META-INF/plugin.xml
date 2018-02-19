@@ -112,6 +112,7 @@
     <projectService serviceImplementation="com.intellij.tasks.impl.TaskProjectConfiguration"/>
     <applicationService serviceImplementation="com.intellij.tasks.config.RecentTaskRepositories"/>
     <applicationService serviceImplementation="com.intellij.tasks.config.TaskSettings"/>
+    <search.optionContributor implementation="com.intellij.tasks.config.TaskSearchableOptionContributor"/>
 
     <lang.documentationProvider language="TEXT" implementationClass="com.intellij.tasks.doc.TaskDocumentationProvider"/>
 

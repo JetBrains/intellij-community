@@ -30,12 +30,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.io.File;
+
 /**
  * @author Konstantin Bulenkov
  */
 public class PsiUtil {
   private static final Key<Boolean> IDEA_PROJECT = Key.create("idea.internal.inspections.enabled");
   private static final String IDE_PROJECT_MARKER_CLASS = JBList.class.getName();
+  private static final String[] IDEA_PROJECT_MARKER_FILES = {
+    "idea.iml", "community-main.iml", "intellij.idea.community.main.iml", "intellij.idea.ultimate.main.iml"
+  };
 
   private PsiUtil() { }
 
@@ -164,9 +169,10 @@ public class PsiUtil {
       if (dir == null || !dir.isDirectory()) {
         continue;
       }
-      if (dir.findChild("idea.iml") != null || dir.findChild("community-main.iml") != null
-          || dir.findChild("intellij.idea.community.main.iml") != null || dir.findChild("intellij.idea.ultimate.main.iml") != null) {
-        return true;
+      for (String fileName : IDEA_PROJECT_MARKER_FILES) {
+        if (dir.findChild(fileName) != null) {
+          return true;
+        }
       }
     }
 
@@ -194,5 +200,12 @@ public class PsiUtil {
 
   public static boolean isPluginXmlPsiElement(@NotNull PsiElement element) {
     return isPluginProject(element.getProject()) && DescriptorUtil.isPluginXml(element.getContainingFile());
+  }
+
+  public static boolean isPathToIntelliJIdeaSources(String path) {
+    for (String file : IDEA_PROJECT_MARKER_FILES) {
+      if (new File(path, file).isFile()) return true;
+    }
+    return false;
   }
 }

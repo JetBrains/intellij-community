@@ -68,8 +68,10 @@ class DistributionJARsBuilder {
     List<JpsLibrary> projectLibrariesUsedByPlugins = getPluginsByModules(buildContext, enabledPluginModules).collectMany { plugin ->
       plugin.getActualModules(enabledPluginModules).values().collectMany {
         def module = buildContext.findRequiredModule(it)
-        JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll {
-          !(it.createReference().parentReference instanceof JpsModuleReference) && !plugin.includedProjectLibraries.contains(it.name)
+        JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll { library ->
+          !(library.createReference().parentReference instanceof JpsModuleReference) && !plugin.includedProjectLibraries.any {
+            it.libraryName == library.name && it.relativeOutputPath == ""
+          }
         }
       }
     }
@@ -189,7 +191,7 @@ class DistributionJARsBuilder {
       buildContext.messages.progress("Reordering *.jar files in $targetDirectory")
       File ignoredJarsFile = new File(buildContext.paths.temp, "reorder-jars/required_for_dist.txt")
       ignoredJarsFile.parentFile.mkdirs()
-      def moduleJars = platform.moduleJars.entrySet().collect(new HashSet()) { getActualModuleJarPath(it.key, it.value) }
+      def moduleJars = platform.moduleJars.entrySet().collect(new HashSet()) { getActualModuleJarPath(it.key, it.value, platform.explicitlySetJarPaths) }
       ignoredJarsFile.text = new File(buildContext.paths.distAll, "lib").list()
         .findAll {it.endsWith(".jar") && !moduleJars.contains(it)}
         .join("\n")
@@ -329,7 +331,8 @@ class DistributionJARsBuilder {
    * directory name return the old module name to temporary keep layout of plugins unchanged.
    */
   static String getActualPluginDirectoryName(PluginLayout plugin, BuildContext context) {
-    if (plugin.directoryName == plugin.mainModule && context.getOldModuleName(plugin.mainModule) != null) {
+    if (!plugin.directoryNameSetExplicitly && plugin.directoryName == BaseLayout.convertModuleNameToFileName(plugin.mainModule)
+                                           && context.getOldModuleName(plugin.mainModule) != null) {
       context.getOldModuleName(plugin.mainModule)
     }
     else {
@@ -383,9 +386,14 @@ class DistributionJARsBuilder {
    * Returns path to a JAR file in the product distribution where platform/plugin classes will be placed. If the JAR name corresponds to
    * a module name and the module was renamed, return the old name to temporary keep the product layout unchanged.
    */
-  private String getActualModuleJarPath(String relativeJarPath, Collection<String> moduleNames) {
+  private String getActualModuleJarPath(String relativeJarPath, Collection<String> moduleNames, Set<String> explicitlySetJarPaths) {
+    if (explicitlySetJarPaths.contains(relativeJarPath)) {
+      return relativeJarPath
+    }
     for (String moduleName : moduleNames) {
-      if (relativeJarPath == "${moduleName}.jar" && buildContext.getOldModuleName(moduleName) != null) {
+      if (relativeJarPath == "${BaseLayout.convertModuleNameToFileName(moduleName)}.jar" &&
+          buildContext.getOldModuleName(moduleName) !=
+          null) {
         return "${buildContext.getOldModuleName(moduleName)}.jar"
       }
     }
@@ -406,7 +414,7 @@ class DistributionJARsBuilder {
     MultiValuesMap<String, String> actualModuleJars = new MultiValuesMap<>(true)
     moduleJars.entrySet().each {
       def modules = it.value
-      def jarPath = getActualModuleJarPath(it.key, modules)
+      def jarPath = getActualModuleJarPath(it.key, modules, layout.explicitlySetJarPaths)
       actualModuleJars.putAll(jarPath, modules)
     }
     layoutBuilder.layout(targetDirectory) {
@@ -463,8 +471,10 @@ class DistributionJARsBuilder {
             }
           }
         }
-        layout.includedProjectLibraries.each {
-          projectLibrary(it, layout instanceof PlatformLayout && layout.projectLibrariesWithRemovedVersionFromJarNames.contains(it))
+        layout.includedProjectLibraries.each { libraryData ->
+          dir(libraryData.relativeOutputPath) {
+            projectLibrary(libraryData.libraryName, layout instanceof PlatformLayout && layout.projectLibrariesWithRemovedVersionFromJarNames.contains(libraryData.libraryName))
+          }
         }
         layout.includedArtifacts.entrySet().each {
           def artifactName = it.key
@@ -538,7 +548,7 @@ class DistributionJARsBuilder {
                                       "most probably it means that '$module' isn't include into the product distribution so it makes no sense to define excludes for it.")
         }
         if (createFileSet(pattern, moduleOutput).size() == 0) {
-          buildContext.messages.error("Incorrect exludes for module '$module': nothing matches to $pattern in the module output")
+          buildContext.messages.error("Incorrect excludes for module '$module': nothing matches to $pattern in the module output at $moduleOutput")
         }
       }
     }

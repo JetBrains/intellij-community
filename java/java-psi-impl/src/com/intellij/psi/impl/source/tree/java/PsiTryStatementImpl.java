@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
@@ -186,15 +187,7 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
     if (child.getPsi() instanceof PsiResourceList && getCatchBlocks().length == 0 && getFinallyBlock() == null) {
       final PsiCodeBlock tryBlock = getTryBlock();
       if (tryBlock != null) {
-        final PsiCodeBlock block = (PsiCodeBlock)replace(tryBlock);
-        final PsiJavaToken lBrace = block.getLBrace();
-        final PsiJavaToken rBrace = block.getRBrace();
-        if (lBrace != null) {
-          lBrace.delete();
-        }
-        if (rBrace != null) {
-          rBrace.delete();
-        }
+        BlockUtils.unwrapTryBlock(this);
         return;
       }
     }

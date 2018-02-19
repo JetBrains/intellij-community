@@ -93,7 +93,7 @@ public class CreateResourceBundleDialogComponent {
   public static class Dialog extends DialogWrapper {
     @NotNull private final Project myProject;
     @NotNull private final PsiDirectory myDirectory;
-    private CreateResourceBundleDialogComponent myComponent;
+    private final CreateResourceBundleDialogComponent myComponent;
     private PsiElement[] myCreatedFiles;
 
     protected Dialog(@NotNull Project project, @Nullable PsiDirectory directory, @Nullable ResourceBundle resourceBundle) {

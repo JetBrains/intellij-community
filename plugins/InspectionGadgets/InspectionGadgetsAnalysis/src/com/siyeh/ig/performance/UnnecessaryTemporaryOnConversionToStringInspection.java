@@ -122,12 +122,12 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiMethodCallExpression expression = (PsiMethodCallExpression)descriptor.getPsiElement();
+      PsiExpression[] args = expression.getArgumentList().getExpressions();
+      if (args.length == 0) return;
       final String newExpression = calculateReplacementExpression(expression);
-      if (newExpression == null) {
-        return;
-      }
+      if (newExpression == null) return;
       CommentTracker commentTracker = new CommentTracker();
-      commentTracker.markUnchanged(expression.getArgumentList().getExpressions()[0]);
+      commentTracker.markUnchanged(args[0]);
       PsiReplacementUtil.replaceExpression(expression, newExpression, commentTracker);
     }
   }

@@ -5,11 +5,13 @@ package org.jetbrains.yaml.meta.model;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.*;
 
+import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
@@ -24,6 +26,12 @@ public abstract class YamlScalarType extends YamlMetaType {
   @Override
   public Field findFeatureByName(@NotNull String name) {
     return null;
+  }
+
+  @NotNull
+  @Override
+  public Icon getIcon() {
+    return PlatformIcons.PROPERTY_ICON;
   }
 
   @Override

@@ -409,13 +409,15 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
     final List<String> allNames = getDunderAll();
     if (allNames != null && allNames.contains(name)) {
-      final PsiElement allElement = findExportedName(PyNames.ALL);
       final ResolveResultList allFallbackResults = new ResolveResultList();
-      allFallbackResults.poke(allElement, RatedResolveResult.RATE_LOW);
+
 
       PyResolveImportUtil
         .resolveModuleAt(QualifiedName.fromComponents(name), getContainingDirectory(), PyResolveImportUtil.fromFoothold(this))
         .forEach(module -> allFallbackResults.poke(module, RatedResolveResult.RATE_LOW));
+
+      final PsiElement allElement = findExportedName(PyNames.ALL);
+      allFallbackResults.poke(allElement, RatedResolveResult.RATE_LOW);
 
       return allFallbackResults;
     }

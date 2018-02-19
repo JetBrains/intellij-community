@@ -21,8 +21,7 @@ import com.intellij.codeInspection.BatchSuppressManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.codeInspection.SuppressionUtil;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiComment;
@@ -66,9 +65,7 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
   @Nullable
   public static PsiElement getElementToolSuppressedIn(final PsiElement place, @NotNull String toolId) {
     if (place == null) return null;
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-
-    try {
+    return ReadAction.compute(()->{
       final PsiElement statement = PsiUtil.findEnclosingStatement(place);
       if (statement != null) {
         PsiElement prev = statement.getPrevSibling();
@@ -108,10 +105,7 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
       }
 
       return null;
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 
   @NotNull

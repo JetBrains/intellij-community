@@ -413,7 +413,7 @@ public class InjectorUtils {
 
   public static class CommentInjectionData {
     private final String myDisplayName;
-    private Map<String, String> myMap;
+    private final Map<String, String> myMap;
 
     public CommentInjectionData(@NotNull Map<String, String> map, String displayName) {
       myMap = Collections.unmodifiableMap(map);

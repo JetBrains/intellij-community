@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.lang.Language;
@@ -28,76 +26,38 @@ import java.io.File;
  * @author peter
  */
 public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
-  public static final LightProjectDescriptor JAVA_1_4 = new DefaultLightProjectDescriptor() {
+  protected static class ProjectDescriptor extends DefaultLightProjectDescriptor {
+    private final LanguageLevel myLanguageLevel;
+
+    public ProjectDescriptor(@NotNull LanguageLevel languageLevel) {
+      myLanguageLevel = languageLevel;
+    }
+
     @Override
     public Sdk getSdk() {
-      return IdeaTestUtil.getMockJdk14();
+      return IdeaTestUtil.getMockJdk(myLanguageLevel.toJavaVersion());
     }
 
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_4);
+      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLanguageLevel);
     }
-  };
+  }
 
-  public static final LightProjectDescriptor JAVA_1_5 = new DefaultLightProjectDescriptor() {
-    @Override
-    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_5);
-    }
-  };
+  public static final @NotNull LightProjectDescriptor JAVA_1_4 = new ProjectDescriptor(LanguageLevel.JDK_1_4);
+  public static final @NotNull LightProjectDescriptor JAVA_1_5 = new ProjectDescriptor(LanguageLevel.JDK_1_5);
+  public static final @NotNull LightProjectDescriptor JAVA_1_6 = new ProjectDescriptor(LanguageLevel.JDK_1_6);
+  public static final @NotNull LightProjectDescriptor JAVA_1_7 = new ProjectDescriptor(LanguageLevel.JDK_1_7);
+  public static final @NotNull LightProjectDescriptor JAVA_8 = new ProjectDescriptor(LanguageLevel.JDK_1_8);
+  public static final @NotNull LightProjectDescriptor JAVA_9 = new ProjectDescriptor(LanguageLevel.JDK_1_9);
+  public static final @NotNull LightProjectDescriptor JAVA_10 = new ProjectDescriptor(LanguageLevel.JDK_10);
 
-  public static final LightProjectDescriptor JAVA_1_6 = new DefaultLightProjectDescriptor() {
-    @Override
-    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_6);
-    }
-  };
-
-  public static final LightProjectDescriptor JAVA_1_7 = new DefaultLightProjectDescriptor() {
-    @Override
-    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_7);
-    }
-  };
-
-  public static final LightProjectDescriptor JAVA_8 = new DefaultLightProjectDescriptor() {
+  public static final LightProjectDescriptor JAVA_LATEST = new ProjectDescriptor(LanguageLevel.HIGHEST) {
     @Override
     public Sdk getSdk() {
-      return IdeaTestUtil.getMockJdk18();
-    }
-
-    @Override
-    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_8);
+      return IdeaTestUtil.getMockJdk17();
     }
   };
-
-  public static final LightProjectDescriptor JAVA_9 = new DefaultLightProjectDescriptor() {
-    @Override
-    public Sdk getSdk() {
-      return IdeaTestUtil.getMockJdk9();
-    }
-
-    @Override
-    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_9);
-    }
-  };
-
-  public static final LightProjectDescriptor JAVA_X = new DefaultLightProjectDescriptor() {
-    @Override
-    public Sdk getSdk() {
-      return IdeaTestUtil.getMockJdk9();
-    }
-
-    @Override
-    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_X);
-    }
-  };
-
-  public static final LightProjectDescriptor JAVA_LATEST = new DefaultLightProjectDescriptor();
 
   protected JavaCodeInsightTestFixture myFixture;
   protected Module myModule;

@@ -9,6 +9,7 @@
     <ep implementation="NonFix$Ext2"/>
     <ep implementation="ProjectComp"/>
     <ep implementation="ProjectComp"/>
+    <ep forClass="FakeFile" instance="ProjectConfigurable"/>
     <projectService serviceImplementation="ProjectService"/>
     <projectConfigurable instance="ProjectConfigurable"/>
   </extensions>

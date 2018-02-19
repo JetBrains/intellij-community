@@ -37,7 +37,7 @@ public class TreeTableCellRenderer implements TableCellRenderer, ClientPropertyH
   private final TreeTable myTreeTable;
   private final TreeTableTree myTree;
   private TreeCellRenderer myTreeCellRenderer;
-  private TableCellRendererComponent myCellRendererComponent = new TableCellRendererComponent();
+  private final TableCellRendererComponent myCellRendererComponent = new TableCellRendererComponent();
   private Border myDefaultBorder = UIUtil.getTableFocusCellHighlightBorder();
 
 

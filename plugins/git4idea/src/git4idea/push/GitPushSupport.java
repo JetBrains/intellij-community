@@ -21,7 +21,10 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.util.ObjectUtils;
-import git4idea.*;
+import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
+import git4idea.GitStandardRemoteBranch;
+import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.config.GitSharedSettings;
 import git4idea.config.GitVcsSettings;
@@ -30,7 +33,8 @@ import git4idea.repo.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import static git4idea.GitUtil.findRemoteBranch;
+import static git4idea.GitUtil.getDefaultOrFirstRemote;
 
 public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, GitPushTarget> {
 
@@ -83,51 +87,36 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
       return null;
     }
 
-    GitPushTarget persistedTarget = getPersistedTarget(repository, currentBranch);
-    if (persistedTarget != null) {
-      return persistedTarget;
-    }
-
-    GitPushTarget pushSpecTarget = GitPushTarget.getFromPushSpec(repository, currentBranch);
-    if (pushSpecTarget != null) {
-      return pushSpecTarget;
-    }
-
-    GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(repository, currentBranch);
-    if (trackInfo != null) {
-      return new GitPushTarget(trackInfo.getRemoteBranch(), false);
-    }
+    GitPushTarget pushSpecTarget = getPushTargetIfExist(repository, currentBranch);
+    if (pushSpecTarget != null) return pushSpecTarget;
     return proposeTargetForNewBranch(repository, currentBranch);
   }
 
   @Nullable
-  private GitPushTarget getPersistedTarget(@NotNull GitRepository repository, @NotNull GitLocalBranch branch) {
-    GitRemoteBranch target = mySettings.getPushTarget(repository, branch.getName());
-    return target == null ? null : new GitPushTarget(target, !repository.getBranches().getRemoteBranches().contains(target));
+  public static GitPushTarget getPushTargetIfExist(@NotNull GitRepository repository, @NotNull GitLocalBranch localBranch) {
+    GitPushTarget pushSpecTarget = GitPushTarget.getFromPushSpec(repository, localBranch);
+    if (pushSpecTarget != null) {
+      return pushSpecTarget;
+    }
+
+    GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(repository, localBranch);
+    if (trackInfo != null) {
+      return new GitPushTarget(trackInfo.getRemoteBranch(), false);
+    }
+    return null;
   }
 
-  private static GitPushTarget proposeTargetForNewBranch(GitRepository repository, GitLocalBranch currentBranch) {
-    Collection<GitRemote> remotes = repository.getRemotes();
-    if (remotes.isEmpty()) {
-      return null; // TODO need to propose to declare new remote
-    }
-    else if (remotes.size() == 1) {
-      return makeTargetForNewBranch(repository, remotes.iterator().next(), currentBranch);
-    }
-    else {
-      GitRemote remote = GitUtil.getDefaultRemote(remotes);
-      if (remote == null) {
-        remote = remotes.iterator().next();
-      }
-      return makeTargetForNewBranch(repository, remote, currentBranch);
-    }
+  private static GitPushTarget proposeTargetForNewBranch(@NotNull GitRepository repository, @NotNull GitLocalBranch currentBranch) {
+    GitRemote remote = getDefaultOrFirstRemote(repository.getRemotes());
+    if (remote == null) return null; // TODO need to propose to declare new remote
+    return makeTargetForNewBranch(repository, remote, currentBranch);
   }
 
   @NotNull
   private static GitPushTarget makeTargetForNewBranch(@NotNull GitRepository repository,
                                                       @NotNull GitRemote remote,
                                                       @NotNull GitLocalBranch currentBranch) {
-    GitRemoteBranch existingRemoteBranch = GitUtil.findRemoteBranch(repository, remote, currentBranch.getName());
+    GitRemoteBranch existingRemoteBranch = findRemoteBranch(repository, remote, currentBranch.getName());
     if (existingRemoteBranch != null) {
       return new GitPushTarget(existingRemoteBranch, false);
     }

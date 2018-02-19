@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ex;
 
@@ -21,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.TreeTraversal;
@@ -31,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
@@ -174,10 +174,20 @@ public abstract class InspectionRVContentProvider {
   protected static void checkFixClass(InspectionToolPresentation presentation, QuickFix fix, LocalQuickFixWrapper quickFixAction) {
     Class class1 = getFixClass(fix);
     Class class2 = getFixClass(quickFixAction.getFix());
-    LOG.assertTrue(class1.equals(class2),
-                   "QuickFix-es with the same family name (" + fix.getFamilyName() + ") should be the same class instances but actually are " + class1.getName() + " and " + class2.getName() + "instances. " +
-                   "Please assign reported exception for the inspection \"" + presentation.getToolWrapper().getTool().getClass() + "\" (\"" +
-                   presentation.getToolWrapper().getShortName() + "\") developer");
+    if (!class1.equals(class2)) {
+      String message = MessageFormat.format(
+        "QuickFix-es with the same family name ({0}) should be the same class instances but actually are {1} and {2} instances. " +
+        "Please assign reported exception for the inspection \"{3}\" (\"{4}\") developer",
+        fix.getFamilyName(), class1.getName(), class2.getName(), presentation.getToolWrapper().getTool().getClass(),
+        presentation.getToolWrapper().getShortName());
+      AssertionError error = new AssertionError(message);
+      // Hand-craft a stack-trace to make it easier to find the responsible person
+      StackTraceElement[] trace = error.getStackTrace();
+      StackTraceElement crafted = new StackTraceElement(class1.getName(), "getFamilyName", null, -1);
+      trace = ArrayUtil.prepend(crafted, trace);
+      error.setStackTrace(trace);
+      LOG.error(message, error);
+    }
   }
 
 
@@ -387,13 +397,12 @@ public abstract class InspectionRVContentProvider {
               finalContainer.areEqual(object, userObject)) {
             if (firstLevel.get()) {
               result.set(refElementNode);
-              return false;
             }
             else {
               refElementNode.insertByOrder(finalPrevNode, false);
               result.set(nodeToBeAdded);
-              return false;
             }
+            return false;
           }
         }
         return true;
@@ -505,7 +514,7 @@ public abstract class InspectionRVContentProvider {
         }
       }
     }
-    return result == null || result.isEmpty() ? QuickFixAction.EMPTY : result.values().toArray(new QuickFixAction[result.size()]);
+    return result == null || result.isEmpty() ? QuickFixAction.EMPTY : result.values().toArray(QuickFixAction.EMPTY);
   }
 
   private static Class getFixClass(QuickFix fix) {

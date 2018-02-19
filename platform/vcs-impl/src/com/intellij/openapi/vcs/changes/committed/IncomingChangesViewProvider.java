@@ -46,7 +46,7 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
   private final MessageBus myBus;
   private CommittedChangesTreeBrowser myBrowser;
   private MessageBusConnection myConnection;
-  private Consumer<List<CommittedChangeList>> myListConsumer;
+  private final Consumer<List<CommittedChangeList>> myListConsumer;
 
   public IncomingChangesViewProvider(final Project project, final MessageBus bus) {
     myProject = project;

@@ -38,7 +38,7 @@ public class ClientLibraryManagerImpl extends ClientLibraryManager implements Pe
   private static final Logger LOG = Logger.getInstance(ClientLibraryManagerImpl.class);
   private Map<String, List<File>> myFiles = new LinkedHashMap<>();
 
-  private EventDispatcher<CloudClientLibraryManagerListener> myEventDispatcher
+  private final EventDispatcher<CloudClientLibraryManagerListener> myEventDispatcher
     = EventDispatcher.create(CloudClientLibraryManagerListener.class);
 
 

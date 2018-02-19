@@ -42,7 +42,7 @@ import java.util.List;
 
 public class SvnFormatWorker extends Task.Backgroundable {
 
-  private List<Throwable> myExceptions;
+  private final List<Throwable> myExceptions;
   private final Project myProject;
   @NotNull private final WorkingCopyFormat myNewFormat;
   private final List<WCInfo> myWcInfos;

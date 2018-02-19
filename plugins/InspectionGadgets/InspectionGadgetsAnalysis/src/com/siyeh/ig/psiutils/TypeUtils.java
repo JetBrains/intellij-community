@@ -275,4 +275,23 @@ public class TypeUtils {
     if (superClass == null) return false;
     return InheritanceUtil.isInheritorOrSelf(class1, superClass, true) && InheritanceUtil.isInheritorOrSelf(class2, superClass, true);
   }
+
+  /**
+   * Returns true if instances of two given types cannot be equal according to equals method contract
+   * (e.g. {@code java.util.Set} and {@code java.util.List}).
+   *
+   * @param type1 first type
+   * @param type2 second type
+   * @return true if instances of given types cannot be equal
+   */
+  public static boolean cannotBeEqualByContract(PsiType type1, PsiType type2) {
+    // java.util.Set and java.util.List cannot be equal by contract
+    if (InheritanceUtil.isInheritor(type1, CommonClassNames.JAVA_UTIL_SET) && InheritanceUtil.isInheritor(type2, CommonClassNames.JAVA_UTIL_LIST)) {
+      return true;
+    }
+    if (InheritanceUtil.isInheritor(type1, CommonClassNames.JAVA_UTIL_LIST) && InheritanceUtil.isInheritor(type2, CommonClassNames.JAVA_UTIL_SET)) {
+      return true;
+    }
+    return false;
+  }
 }

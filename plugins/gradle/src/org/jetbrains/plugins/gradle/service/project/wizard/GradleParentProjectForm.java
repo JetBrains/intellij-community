@@ -56,7 +56,7 @@ public class GradleParentProjectForm implements Disposable {
   private static final String EMPTY_PARENT = "<none>";
 
   @Nullable
-  private Project myProjectOrNull;
+  private final Project myProjectOrNull;
   @Nullable
   private ProjectData myParent;
   @NotNull

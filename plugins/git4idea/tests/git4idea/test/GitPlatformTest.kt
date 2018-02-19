@@ -34,6 +34,7 @@ import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.commands.Git
 import git4idea.commands.GitHandler
+import git4idea.config.GitExecutableManager
 import git4idea.config.GitVcsSettings
 import git4idea.log.GitLogProvider
 import git4idea.repo.GitRepository
@@ -68,7 +69,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
     settings = GitVcsSettings.getInstance(project)
     settings.appSettings.setPathToGit(gitExecutable())
-    vcs.checkVersion()
+    GitExecutableManager.getInstance().testGitExecutableVersionValid(project)
 
     logProvider = findGitLogProvider(project)
 

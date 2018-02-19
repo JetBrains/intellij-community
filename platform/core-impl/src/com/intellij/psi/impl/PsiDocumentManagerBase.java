@@ -454,12 +454,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       assert !isInUncommittedSet(document) : "Document :" + document;
     };
 
-    if (AbstractFileViewProvider.isFreeThreaded(psiFile.getViewProvider())) {
-      runnable.run();
-    }
-    else {
-      ApplicationManager.getApplication().runWriteAction(runnable);
-    }
+    ApplicationManager.getApplication().runWriteAction(runnable);
   }
 
   // true if the PSI is being modified and events being sent
@@ -1011,7 +1006,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
         ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
         if (indicator == null) indicator = new EmptyProgressIndicator();
         DiffLog log = BlockSupportImpl.makeFullParse(file, node, text, indicator, text).getFirst();
-        DocumentCommitThread.doActualPsiChange(file, log);
+        log.doActualPsiChange(file);
         file.getViewProvider().contentsSynchronized();
       });
     }

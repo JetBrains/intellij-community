@@ -46,7 +46,7 @@ def wrap(
         fix_sentence_endings: bool = ...,
         break_long_words: bool = ...,
         drop_whitespace: bool = ...,
-        break_on_hyphens: bool = ...) -> AnyStr:
+        break_on_hyphens: bool = ...) -> List[AnyStr]:
     ...
 
 def fill(

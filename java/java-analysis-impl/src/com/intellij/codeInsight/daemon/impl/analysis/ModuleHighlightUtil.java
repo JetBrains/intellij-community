@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
@@ -47,6 +47,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.module.ModuleUtilCore.findModuleForFile;
+import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 
 public class ModuleHighlightUtil {
   private static final Attributes.Name MULTI_RELEASE = new Attributes.Name("Multi-Release");
@@ -439,6 +440,24 @@ public class ModuleHighlightUtil {
       String message = JavaErrorMessages.message(
         "module.conflicting.reads", module.getName(), conflict.first, conflict.second.getName(), conflict.third.getName());
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(module)).descriptionAndTooltip(message).create();
+    }
+
+    return null;
+  }
+
+  @Nullable
+  static List<HighlightInfo> checkModifiers(@NotNull PsiRequiresStatement statement) {
+    PsiModifierList modList = statement.getModifierList();
+    if (modList != null && PsiJavaModule.JAVA_BASE.equals(statement.getModuleName())) {
+      return psiTraverser().children(modList)
+          .filter(PsiKeyword.class)
+          .map(keyword -> {
+            @PsiModifier.ModifierConstant String modifier = keyword.getText();
+            String message = JavaErrorMessages.message("modifier.not.allowed", modifier);
+            HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(message).create();
+            QuickFixAction.registerQuickFixAction(info, factory().createModifierListFix(modList, modifier, false, false));
+            return info;
+          }).toList();
     }
 
     return null;

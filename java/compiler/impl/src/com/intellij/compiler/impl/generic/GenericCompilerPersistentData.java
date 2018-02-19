@@ -32,9 +32,9 @@ import java.util.Set;
 public class GenericCompilerPersistentData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.generic.GenericCompilerPersistentData");
   private static final int VERSION = 1;
-  private File myFile;
-  private Map<String, Integer> myTarget2Id = new HashMap<>();
-  private TIntHashSet myUsedIds = new TIntHashSet();
+  private final File myFile;
+  private final Map<String, Integer> myTarget2Id = new HashMap<>();
+  private final TIntHashSet myUsedIds = new TIntHashSet();
   private boolean myVersionChanged;
   private final int myCompilerVersion;
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -676,116 +662,60 @@ public class JBScrollPane extends JScrollPane {
 
     @Override
     public Dimension preferredLayoutSize(Container parent) {
-      /* Sync the (now obsolete) policy fields with the
-         * JScrollPane.
-         */
-      JScrollPane scrollPane = (JScrollPane)parent;
-      vsbPolicy = scrollPane.getVerticalScrollBarPolicy();
-      hsbPolicy = scrollPane.getHorizontalScrollBarPolicy();
+      Dimension result = new Dimension();
 
-      Insets insets = parent.getInsets();
-      int prefWidth = insets.left + insets.right;
-      int prefHeight = insets.top + insets.bottom;
+      JScrollPane pane = (JScrollPane)parent;
+      JBInsets.addTo(result, pane.getInsets());
 
-        /* Note that viewport.getViewSize() is equivalent to
-         * viewport.getView().getPreferredSize() modulo a null
-         * view or a view whose size was explicitly set.
-         */
+      Border border = pane.getViewportBorder();
+      if (border != null) JBInsets.addTo(result, border.getBorderInsets(parent));
 
-      Dimension extentSize = null;
-      Dimension viewSize = null;
-      Component view = null;
-
+      int vsbPolicy = pane.getVerticalScrollBarPolicy();
+      int hsbPolicy = pane.getHorizontalScrollBarPolicy();
       if (viewport != null) {
-        extentSize = viewport.getPreferredSize();
-        view = viewport.getView();
+        Component view = viewport.getView();
         if (view != null) {
-          viewSize = view.getPreferredSize();
-        } else {
-          viewSize = new Dimension(0, 0);
-        }
-      }
-
-        /* If there's a viewport add its preferredSize.
-         */
-
-      if (extentSize != null) {
-        prefWidth += extentSize.width;
-        prefHeight += extentSize.height;
-      }
-
-        /* If there's a JScrollPane.viewportBorder, add its insets.
-         */
-
-      Border viewportBorder = scrollPane.getViewportBorder();
-      if (viewportBorder != null) {
-        Insets vpbInsets = viewportBorder.getBorderInsets(parent);
-        prefWidth += vpbInsets.left + vpbInsets.right;
-        prefHeight += vpbInsets.top + vpbInsets.bottom;
-      }
-
-        /* If a header exists and it's visible, factor its
-         * preferred size in.
-         */
-
-      if ((rowHead != null) && rowHead.isVisible()) {
-        prefWidth += rowHead.getPreferredSize().width;
-      }
-
-      if ((colHead != null) && colHead.isVisible()) {
-        prefHeight += colHead.getPreferredSize().height;
-      }
-
-        /* If a scrollbar is going to appear, factor its preferred size in.
-         * If the scrollbars policy is AS_NEEDED, this can be a little
-         * tricky:
-         *
-         * - If the view is a Scrollable then scrollableTracksViewportWidth
-         * and scrollableTracksViewportHeight can be used to effectively
-         * disable scrolling (if they're true) in their respective dimensions.
-         *
-         * - Assuming that a scrollbar hasn't been disabled by the
-         * previous constraint, we need to decide if the scrollbar is going
-         * to appear to correctly compute the JScrollPanes preferred size.
-         * To do this we compare the preferredSize of the viewport (the
-         * extentSize) to the preferredSize of the view.  Although we're
-         * not responsible for laying out the view we'll assume that the
-         * JViewport will always give it its preferredSize.
-         */
-
-      if ((vsb != null) && (vsbPolicy != VERTICAL_SCROLLBAR_NEVER)) {
-        boolean considerVsbWidth = vsb.isOpaque() || isAlwaysOpaque(view);
-        if (vsbPolicy == VERTICAL_SCROLLBAR_ALWAYS) {
-          if (considerVsbWidth) prefWidth += vsb.getPreferredSize().width;
-        }
-        else if ((viewSize != null) && (extentSize != null)) {
-          boolean canScroll = true;
+          // If the view is tracking the viewports width we don't bother with a horizontal scrollbar.
+          // If the view is tracking the viewports height we don't bother with a vertical scrollbar.
+          boolean viewTracksViewportWidth = false;
+          boolean viewTracksViewportHeight = false;
+          // Don't bother checking the Scrollable methods if there is no room for the viewport,
+          // we aren't going to show any scroll bars in this case anyway.
           if (view instanceof Scrollable) {
-            canScroll = !((Scrollable)view).getScrollableTracksViewportHeight();
+            Scrollable scrollable = (Scrollable)view;
+            viewTracksViewportWidth = scrollable.getScrollableTracksViewportWidth();
+            viewTracksViewportHeight = scrollable.getScrollableTracksViewportHeight();
           }
-          if (canScroll && viewSize.height > extentSize.height && considerVsbWidth) {
-            prefWidth += vsb.getPreferredSize().width;
+          Dimension viewportExtentSize = viewport.getPreferredSize();
+          if (viewportExtentSize == null) viewportExtentSize = new Dimension();
+          Dimension viewPreferredSize = view.getPreferredSize();
+          if (viewPreferredSize == null) viewPreferredSize = new Dimension();
+          if (view instanceof JComponent && !view.isPreferredSizeSet()) {
+            Insets insets = JBViewport.getViewInsets((JComponent)view);
+            JBInsets.removeFrom(viewportExtentSize, insets);
+            JBInsets.removeFrom(viewPreferredSize, insets);
+          }
+          result.width += viewportExtentSize.width;
+          result.height += viewportExtentSize.height;
+          if (!viewTracksViewportHeight && vsbPolicy == VERTICAL_SCROLLBAR_AS_NEEDED) {
+            if (viewPreferredSize.height > viewportExtentSize.height || 0 != view.getY()) {
+              vsbPolicy = VERTICAL_SCROLLBAR_ALWAYS;
+            }
+          }
+          if (!viewTracksViewportWidth && vsbPolicy == HORIZONTAL_SCROLLBAR_AS_NEEDED) {
+            if (viewPreferredSize.width > viewportExtentSize.width || 0 != view.getX()) {
+              vsbPolicy = HORIZONTAL_SCROLLBAR_ALWAYS;
+            }
           }
         }
       }
+      if (vsb != null && vsbPolicy == VERTICAL_SCROLLBAR_ALWAYS) result.width += vsb.getPreferredSize().width;
+      if (hsb != null && hsbPolicy == HORIZONTAL_SCROLLBAR_ALWAYS) result.height += hsb.getPreferredSize().height;
 
-      if ((hsb != null) && (hsbPolicy != HORIZONTAL_SCROLLBAR_NEVER)) {
-        boolean considerHsbHeight = hsb.isOpaque() || isAlwaysOpaque(view);
-        if (hsbPolicy == HORIZONTAL_SCROLLBAR_ALWAYS && considerHsbHeight) {
-          prefHeight += hsb.getPreferredSize().height;
-        }
-        else if ((viewSize != null) && (extentSize != null)) {
-          boolean canScroll = true;
-          if (view instanceof Scrollable) {
-            canScroll = !((Scrollable)view).getScrollableTracksViewportWidth();
-          }
-          if (canScroll && (viewSize.width > extentSize.width) && considerHsbHeight) {
-            prefHeight += hsb.getPreferredSize().height;
-          }
-        }
-      }
+      if (rowHead != null && rowHead.isVisible()) result.width += rowHead.getPreferredSize().width;
+      if (colHead != null && colHead.isVisible()) result.height += colHead.getPreferredSize().height;
 
-      return new Dimension(prefWidth, prefHeight);
+      return result;
     }
 
     private static boolean isAlwaysOpaque(Component view) {

@@ -28,7 +28,6 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
-import java.util.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -41,6 +40,7 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.security.cert.X509Certificate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -65,7 +65,7 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
 
   private Tree myTree;
   private CertificateTreeBuilder myTreeBuilder;
-  private Set<X509Certificate> myCertificates = new HashSet<>();
+  private final Set<X509Certificate> myCertificates = new HashSet<>();
 
   private void initializeUI() {
     myTree = new Tree();

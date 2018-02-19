@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Set;
@@ -75,5 +76,10 @@ public class ModuleGroupNode extends PackageDependenciesNode {
 
   public int hashCode() {
     return myModuleGroup == null ? 0 : myModuleGroup.hashCode();
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
   }
 }

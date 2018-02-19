@@ -244,7 +244,7 @@ public class PyDunderSlotsInspectionTest extends PyInspectionTestCase {
   }
 
   private void doTestPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   @NotNull

@@ -351,10 +351,8 @@ public class PseudoLambdaReplaceTemplate {
           return isSuitableLambdaRole(LambdaUtil.getFunctionalInterfaceReturnType(type), baseMethodReturnType, methodSubstitutor, context);
         }
         }
-      return false;
-    } else {
-      return false;
     }
+    return false;
   }
 
   @NotNull

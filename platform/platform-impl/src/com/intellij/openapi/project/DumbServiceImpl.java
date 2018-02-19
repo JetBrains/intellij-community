@@ -4,6 +4,7 @@ package com.intellij.openapi.project;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -34,16 +35,13 @@ import com.intellij.util.containers.Queue;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Debugger;
+import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -70,11 +68,38 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private final Project myProject;
   private final ThreadLocal<Integer> myAlternativeResolution = new ThreadLocal<>();
   private final StartupManager myStartupManager;
+  private volatile ProgressSuspender myCurrentSuspender;
+  private final List<String> myRequestedSuspensions = ContainerUtil.createEmptyCOWList();
 
   public DumbServiceImpl(Project project, StartupManager startupManager) {
     myProject = project;
     myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
     myStartupManager = startupManager;
+
+    //noinspection SSBasedInspection
+    ApplicationManager.getApplication().getMessageBus().connect(project)
+                      .subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener() {
+                        @SuppressWarnings("UnnecessaryFullyQualifiedName") // synchronized, can be accessed from different threads
+                        java.util.Stack<AccessToken> stack = new Stack<>(); 
+
+                        @Override
+                        public void batchChangeStarted(@NotNull Project project,
+                                                       @Nullable String activityName) {
+                          if (project == myProject) {
+                            stack.push(heavyActivityStarted(activityName != null ? activityName : "file system changes"));
+                          }
+                        }
+
+                        @Override
+                        public void batchChangeCompleted(@NotNull Project project) {
+                          if (project != myProject) return;
+
+                          Stack<AccessToken> tokens = stack;
+                          if (!tokens.isEmpty()) { // just in case
+                            tokens.pop().finish();
+                          }
+                        }
+                      });
   }
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
@@ -114,6 +139,55 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   @Override
+  public void suspendIndexingAndRun(@NotNull String activityName, @NotNull Runnable activity) {
+    try (AccessToken ignore = heavyActivityStarted(activityName)) {
+      activity.run();
+    }
+  }
+
+  @NotNull
+  private AccessToken heavyActivityStarted(@NotNull String activityName) {
+    String reason = "Indexing paused due to " + activityName;
+    synchronized (myRequestedSuspensions) {
+      myRequestedSuspensions.add(reason);
+    }
+
+    suspendCurrentTask(reason);
+    return new AccessToken() {
+      @Override
+      public void finish() {
+        synchronized (myRequestedSuspensions) {
+          myRequestedSuspensions.remove(reason);
+        }
+        resumeAutoSuspendedTask(reason);
+      }
+    };
+  }
+
+  private void suspendCurrentTask(String reason) {
+    ProgressSuspender currentSuspender = myCurrentSuspender;
+    if (currentSuspender != null && !currentSuspender.isSuspended()) {
+      currentSuspender.suspendProcess(reason);
+    }
+  }
+
+  private void resumeAutoSuspendedTask(@NotNull String reason) {
+    ProgressSuspender currentSuspender = myCurrentSuspender;
+    if (currentSuspender != null && currentSuspender.isSuspended() && reason.equals(currentSuspender.getSuspendedText())) {
+      currentSuspender.resumeProcess();
+    }
+  }
+
+  private void suspendIfRequested(ProgressSuspender suspender) {
+    synchronized (myRequestedSuspensions) {
+      String suspendedReason = ContainerUtil.getLastItem(myRequestedSuspensions);
+      if (suspendedReason != null) {
+        suspender.suspendProcess(suspendedReason);
+      }
+    }
+  }
+
+  @Override
   public void setAlternativeResolveEnabled(boolean enabled) {
     Integer oldValue = myAlternativeResolution.get();
     int newValue = (oldValue == null ? 0 : oldValue) + (enabled ? 1 : -1);
@@ -144,7 +218,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   @Override
-  public void runWhenSmart(@Debugger.Capture @NotNull Runnable runnable) {
+  public void runWhenSmart(@Async.Schedule @NotNull Runnable runnable) {
     myStartupManager.runWhenProjectIsInitialized(() -> {
       synchronized (myRunWhenSmartQueue) {
         if (isDumb()) {
@@ -286,7 +360,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   // Extracted to have a capture point
-  private static void doRun(@Debugger.Insert Runnable runnable) {
+  private static void doRun(@Async.Execute Runnable runnable) {
     try {
       runnable.run();
     }
@@ -409,7 +483,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private void runBackgroundProcess(@NotNull final ProgressIndicator visibleIndicator) {
     if (!myState.compareAndSet(State.SCHEDULED_TASKS, State.RUNNING_DUMB_TASKS)) return;
 
-    ProgressSuspender.markSuspendable(visibleIndicator, "Indexing paused");
+    ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, "Indexing paused");
+    myCurrentSuspender = suspender;
+    suspendIfRequested(suspender);
 
     final ShutDownTracker shutdownTracker = ShutDownTracker.getInstance();
     final Thread self = Thread.currentThread();
@@ -446,6 +522,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
     finally {
       shutdownTracker.unregisterStopperThread(self);
+      myCurrentSuspender = null;
     }
   }
 

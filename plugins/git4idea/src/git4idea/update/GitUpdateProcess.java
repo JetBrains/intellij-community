@@ -135,13 +135,9 @@ public class GitUpdateProcess {
       return GitUpdateResult.NOT_READY;
     }
 
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
     GitUpdateResult result;
-    try {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, "VCS Update")) {
       result = updateImpl(updateMethod);
-    }
-    finally {
-      token.finish();
     }
     myProgressIndicator.setText(oldText);
     return result;

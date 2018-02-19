@@ -18,6 +18,7 @@ package git4idea.status;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -100,10 +101,13 @@ public class GitChangeProvider implements ChangeProvider {
         holder.feedBuilder(builder);
       }
     }
+    catch (ProcessCanceledException pce) {
+      if(pce.getCause() != null) throw new VcsException(pce.getCause().getMessage(), pce.getCause());
+      else throw new VcsException("Cannot get changes from Git", pce);
+    }
     catch (VcsException e) {
       LOG.info(e);
-      // most probably the error happened because git is not configured
-      vcs.getExecutableValidator().showNotificationOrThrow(e);
+      throw e;
     }
   }
 
@@ -132,7 +136,7 @@ public class GitChangeProvider implements ChangeProvider {
     inputColl.addAll(existingInScope);
     if (LOG.isDebugEnabled()) LOG.debug("appendNestedVcsRoots. collection to remove ancestors: " + inputColl);
     FileUtil.removeAncestors(inputColl, o -> o.getPath(), (parent, child) -> {
-                               if (! existingInScope.contains(child) && existingInScope.contains(parent)) {
+                               if (!existingInScope.contains(child) && existingInScope.contains(parent)) {
                                  LOG.debug("adding git root for check. child: " + child.getPath() + ", parent: " + parent.getPath());
                                  ((VcsModifiableDirtyScope)dirtyScope).addDirtyDirRecursively(VcsUtil.getFilePath(child));
                                }
@@ -149,8 +153,8 @@ public class GitChangeProvider implements ChangeProvider {
     private final Project myProject;
     private final Set<FilePath> myProcessedPaths;
     private final ChangeListManagerGate myAddGate;
-    private FileDocumentManager myFileDocumentManager;
-    private ProjectLevelVcsManager myVcsManager;
+    private final FileDocumentManager myFileDocumentManager;
+    private final ProjectLevelVcsManager myVcsManager;
 
     private MyNonChangedHolder(final Project project,
                                final ChangeListManagerGate addGate,

@@ -74,6 +74,9 @@ open class UsageViewSettings(
   @get:OptionTag("IS_PREVIEW_USAGES")
   var isPreviewUsages by property(false)
 
+  @get:OptionTag("IS_REPLACE_PREVIEW_USAGES")
+  var isReplacePreviewUsages by property(true)
+
   @get:OptionTag("IS_SORT_MEMBERS_ALPHABETICALLY")
   var isSortAlphabetically by property(false)
 

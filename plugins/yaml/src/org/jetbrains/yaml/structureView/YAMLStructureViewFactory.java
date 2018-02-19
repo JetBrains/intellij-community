@@ -11,6 +11,13 @@ import org.jetbrains.yaml.psi.YAMLFile;
  */
 public class YAMLStructureViewFactory implements PsiStructureViewFactory {
   public StructureViewBuilder getStructureViewBuilder(@NotNull final PsiFile psiFile) {
+    for (YAMLCustomStructureViewFactory extension : YAMLCustomStructureViewFactory.EP_NAME.getExtensions()) {
+      final StructureViewBuilder builder = extension.getStructureViewBuilder((YAMLFile)psiFile);
+      if (builder != null) {
+        return builder;
+      }
+    }
+
     return new YAMLStructureViewBuilder((YAMLFile) psiFile);
   }
 }

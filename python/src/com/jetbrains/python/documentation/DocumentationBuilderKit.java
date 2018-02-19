@@ -88,7 +88,7 @@ class DocumentationBuilderKit {
   // make a first-order curried objects out of wrapInTag()
   static class TagWrapper implements Function<Iterable<String>, Iterable<String>> {
     private final String myTag;
-    private List<Pair<String, String>> myAttributes = Lists.newArrayList();
+    private final List<Pair<String, String>> myAttributes = Lists.newArrayList();
 
     TagWrapper(String tag) {
       myTag = tag;

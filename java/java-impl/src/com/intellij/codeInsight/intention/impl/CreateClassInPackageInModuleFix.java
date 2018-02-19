@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.ui.panel.PanelGridBuilder;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -135,7 +136,7 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
     private final JBTextField myNameTextField = new JBTextField();
     private final ComboBoxWithWidePopup<PsiDirectory> myRootDirCombo = new ComboBoxWithWidePopup<>();
     private final TemplateKindCombo myKindCombo = new TemplateKindCombo();
-    @Nullable private Project myProject;
+    @Nullable private final Project myProject;
 
     protected CreateClassInPackageDialog(@Nullable Project project, @NotNull PsiDirectory[] rootDirs) {
       super(project);
@@ -172,12 +173,12 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
     @Nullable
     @Override
     protected JComponent createNorthPanel() {
-      return UI.PanelFactory.grid()
-        .add(UI.PanelFactory.panel(myNameTextField).withLabel("Name:")
-               .withComment("The class will be created in the package '" + myPackageName + "'"))
-        .add(UI.PanelFactory.panel(myRootDirCombo).withLabel("Source root:"))
-        .add(UI.PanelFactory.panel(myKindCombo).withLabel("Kind:"))
-        .createPanel();
+      PanelGridBuilder builder = UI.PanelFactory.grid();
+      builder.add(UI.PanelFactory.panel(myNameTextField)
+                                 .withLabel("Name:").withComment("The class will be created in the package '" + myPackageName + "'"));
+      if (myRootDirCombo.getModel().getSize() > 1) builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel("Source root:"));
+      builder.add(UI.PanelFactory.panel(myKindCombo).withLabel("Kind:"));
+      return builder.createPanel();
     }
 
     @Nullable

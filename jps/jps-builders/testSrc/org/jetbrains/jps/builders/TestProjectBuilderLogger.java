@@ -18,7 +18,6 @@ package org.jetbrains.jps.builders;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.Function;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import org.jetbrains.jps.builders.impl.logging.ProjectBuilderLoggerBase;
@@ -34,9 +33,9 @@ import java.util.Set;
  * @author nik
  */
 public class TestProjectBuilderLogger extends ProjectBuilderLoggerBase {
-  private MultiMap<String, File> myCompiledFiles = new MultiMap<>();
-  private Set<File> myDeletedFiles = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
-  private List<String> myLogLines = new ArrayList<>();
+  private final MultiMap<String, File> myCompiledFiles = new MultiMap<>();
+  private final Set<File> myDeletedFiles = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+  private final List<String> myLogLines = new ArrayList<>();
   
   @Override
   public void logDeletedFiles(Collection<String> paths) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -47,7 +47,9 @@ import static com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus.UNKN
 public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(StreamApiMigrationInspection.class);
 
+  @SuppressWarnings("PublicField")
   public boolean REPLACE_TRIVIAL_FOREACH;
+  @SuppressWarnings("PublicField")
   public boolean SUGGEST_FOREACH;
   private static final String SHORT_NAME = "Convert2streamapi";
 
@@ -568,7 +570,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       }
       return new MatchMigration(shouldWarn, "anyMatch");
     }
-    if (nextReturnStatement != null && ExpressionUtils.isSimpleExpression(nextReturnStatement.getReturnValue())
+    if (nextReturnStatement != null && ExpressionUtils.isSafelyRecomputableExpression(nextReturnStatement.getReturnValue())
         && (!(tb.getVariable().getType() instanceof PsiPrimitiveType) || ExpressionUtils.isReferenceTo(value, tb.getVariable()))) {
       return new FindFirstMigration(shouldWarn);
     }
@@ -631,12 +633,23 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     PsiExpression dimension = ArrayUtil.getFirstElement(initializer.getArrayDimensions());
     if (dimension == null) return null;
     PsiExpression bound = loop.myBound;
-    if (!PsiEquivalenceUtil.areElementsEquivalent(dimension, bound) &&
-        !ExpressionUtils.isReferenceTo(ExpressionUtils.getArrayFromLengthExpression(bound), arrayVariable)) {
-      return null;
-    }
+    if (!isArrayLength(arrayVariable, dimension, bound)) return null;
     if (VariableAccessUtils.variableIsUsed(arrayVariable, assignment.getRExpression())) return null;
     return arrayVariable;
+  }
+
+  private static boolean isArrayLength(PsiLocalVariable arrayVariable, PsiExpression dimension, PsiExpression bound) {
+    if (ExpressionUtils.isReferenceTo(ExpressionUtils.getArrayFromLengthExpression(bound), arrayVariable)) return true;
+    if (PsiEquivalenceUtil.areElementsEquivalent(dimension, bound)) return true;
+    if (bound instanceof PsiMethodCallExpression) {
+      PsiExpression qualifier = ((PsiMethodCallExpression)bound).getMethodExpression().getQualifierExpression();
+      if (qualifier != null && CollectionUtils.isCollectionOrMapSize(dimension, qualifier)) return true;
+    }
+    if (dimension instanceof PsiMethodCallExpression) {
+      PsiExpression qualifier = ((PsiMethodCallExpression)dimension).getMethodExpression().getQualifierExpression();
+      if (qualifier != null && CollectionUtils.isCollectionOrMapSize(bound, qualifier)) return true;
+    }
+    return false;
   }
 
   /**

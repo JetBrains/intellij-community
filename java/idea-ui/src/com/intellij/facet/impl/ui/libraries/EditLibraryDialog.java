@@ -36,10 +36,10 @@ public class EditLibraryDialog extends DialogWrapper {
   private JPanel myPanel;
   private JPanel myNameAndLevelPanelWrapper;
   private final LibraryNameAndLevelPanel myNameAndLevelPanel;
-  private LibraryCompositionSettings mySettings;
-  private LibraryEditor myLibraryEditor;
-  private LibraryRootsComponent myLibraryRootsComponent;
-  private FormBuilder myBuilder;
+  private final LibraryCompositionSettings mySettings;
+  private final LibraryEditor myLibraryEditor;
+  private final LibraryRootsComponent myLibraryRootsComponent;
+  private final FormBuilder myBuilder;
 
   public EditLibraryDialog(Component parent, LibraryCompositionSettings settings, final LibraryEditor libraryEditor) {
     super(parent, true);

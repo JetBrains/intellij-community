@@ -66,7 +66,7 @@ public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectio
 
   private static class ComputeConstantValueFix implements LocalQuickFix {
     private final String myText;
-    private String myValueText;
+    private final String myValueText;
 
     public ComputeConstantValueFix(PsiExpression expression, String valueText) {
       myText = PsiExpressionTrimRenderer.render(expression);

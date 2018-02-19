@@ -18,6 +18,7 @@ package com.intellij.tasks.vcs;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.*;
@@ -333,7 +334,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
   private List<Change> addChanges(@NotNull LocalChangeList list) {
     VirtualFile file = myFixture.getTempDirFixture().createFile("Test.txt");
     FilePath path = VcsUtil.getFilePath(file);
-    Change change = new Change(new SimpleContentRevision("", path, ""),
+    Change change = new Change(null,
                                new CurrentContentRevision(path));
 
     List<Change> changes = Collections.singletonList(change);
@@ -344,6 +345,8 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
     myChangeListManager.moveChangesTo(list, change);
     myChangeListManager.waitUntilRefreshed();
+
+    LOG.debug(dumpChangeListManager());
 
     return changes;
   }
@@ -428,7 +431,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     OpenTaskDialog dialog = new OpenTaskDialog(getProject(), task);
     try {
       dialog.createTask();
-      assertEquals(activeTask.getSummary(), activeTask.getShelfName());
+      assertEquals(dumpChangeListManager(), activeTask.getSummary(), activeTask.getShelfName());
 
       List<ShelvedChangeList> lists = ShelveChangesManager.getInstance(getProject()).getShelvedChangeLists();
       assertTrue(lists.stream().anyMatch(list -> list.DESCRIPTION.equals(activeTask.getShelfName())));
@@ -476,6 +479,13 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
       super.tearDown();
     }
+  }
+
+  @NotNull
+  private String dumpChangeListManager() {
+    return StringUtil.join(myChangeListManager.getChangeLists(), list -> {
+      return String.format("list: %s (%s) changes: %s", list.getName(), list.getId(), StringUtil.join(list.getChanges(), ", "));
+    }, "\n");
   }
 
   private static class MyMockChangeProvider implements ChangeProvider {

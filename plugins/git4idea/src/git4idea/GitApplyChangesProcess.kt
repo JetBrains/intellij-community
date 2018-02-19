@@ -82,8 +82,7 @@ class GitApplyChangesProcess(private val project: Project,
     val successfulCommits = mutableListOf<VcsFullCommitDetails>()
     val skippedCommits = mutableListOf<VcsFullCommitDetails>()
 
-    val token = DvcsUtil.workingTreeChangeStarted(project)
-    try {
+    DvcsUtil.workingTreeChangeStarted(project, operationName).use {
       for ((repository, value) in commitsInRoots) {
         val result = executeForRepo(repository, value, successfulCommits, skippedCommits)
         repository.update()
@@ -92,9 +91,6 @@ class GitApplyChangesProcess(private val project: Project,
         }
       }
       notifyResult(successfulCommits, skippedCommits)
-    }
-    finally {
-      token.finish()
     }
   }
 

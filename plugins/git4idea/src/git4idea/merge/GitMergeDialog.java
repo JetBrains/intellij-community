@@ -108,9 +108,7 @@ public class GitMergeDialog extends DialogWrapper {
           updateBranches();
         }
         catch (VcsException ex) {
-          if (myVcs.getExecutableValidator().checkExecutableAndShowMessageIfNeeded(getRootPane())) {
-            myVcs.showErrors(Collections.singletonList(ex), GitBundle.getString("merge.retrieving.branches"));
-          }
+          myVcs.showErrors(Collections.singletonList(ex), GitBundle.getString("merge.retrieving.branches"));
         }
       }
     });

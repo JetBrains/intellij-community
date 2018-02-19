@@ -19,6 +19,7 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
@@ -53,6 +54,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -61,6 +63,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.searches.DefinitionsScopedSearch;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
@@ -87,12 +90,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EventObject;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class CtrlMouseHandler extends AbstractProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.CtrlMouseHandler");
-  private static long DOC_GENERATION_TIMEOUT_MS = 5000;
-  private static long DOC_GENERATION_RETRY_DELAY_MS = 100;
+  private static final long DOC_GENERATION_TIMEOUT_MS = 5000;
+  private static final long DOC_GENERATION_RETRY_DELAY_MS = 100;
   private static final AbstractDocumentationTooltipAction[] ourTooltipActions = {new ShowQuickDocAtPinnedWindowFromTooltipAction()};
   private final EditorColorsManager myEditorColorsManager;
 
@@ -928,6 +932,66 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
 
       showHint(hint);
+      if (newTextConsumer != null) {
+        updateOnPsiChanges(hint, info, newTextConsumer, docInfo.text);
+      }
+    }
+
+    private void updateOnPsiChanges(@NotNull LightweightHint hint,
+                                    @NotNull Info info,
+                                    @NotNull Consumer<String> textConsumer,
+                                    @NotNull String oldText) {
+      if (!hint.isVisible()) return;
+      Disposable hintDisposable = Disposer.newDisposable("CtrlMouseHandler.TooltipProvider.updateOnPsiChanges");
+      hint.addHintListener(new HintListener() {
+        @Override
+        public void hintHidden(EventObject event) {
+          Disposer.dispose(hintDisposable);
+        }
+      });
+      AtomicBoolean updating = new AtomicBoolean(false);
+      myProject.getMessageBus().connect(hintDisposable).subscribe(PsiModificationTracker.TOPIC, () -> {
+        if (updating.getAndSet(true)) return;
+        PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> {
+          ProgressIndicatorBase progress = new ProgressIndicatorBase();
+          if (Disposer.isDisposed(hintDisposable)) {
+            progress.cancel();
+          }
+          else {
+            Disposer.register(hintDisposable, () -> progress.cancel());
+          }
+          ProgressIndicatorUtils.scheduleWithWriteActionPriority(progress, new ReadTask() {
+            @NotNull
+            @Override
+            public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+              DocInfo newDocInfo = info.getInfo();
+              return new Continuation(() -> {
+                updating.set(false);
+                if (newDocInfo.text != null && !oldText.equals(newDocInfo.text)) {
+                  updateText(newDocInfo, textConsumer, info, hint);
+                }
+              });
+            }
+
+            @Override
+            public void onCanceled(@NotNull ProgressIndicator indicator) {
+              updating.set(false);
+            }
+          });
+        });
+      });
+    }
+
+    private void updateText(@NotNull DocInfo docInfo,
+                            @NotNull Consumer<String> textConsumer,
+                            @NotNull Info info,
+                            @NotNull LightweightHint hint) {
+      if (docInfo.text == null) return;
+      textConsumer.consume(docInfo.text);
+      if (docInfo.docProvider != null && docInfo.documentationAnchor != null) {
+        fulfillDocInfo(docInfo.text, docInfo.docProvider, info.myElementAtPointer,
+                       docInfo.documentationAnchor, textConsumer, hint);
+      }
     }
 
     public void showHint(@NotNull LightweightHint hint) {

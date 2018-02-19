@@ -1,7 +1,6 @@
 package com.intellij.compiler;
 
 import com.intellij.compiler.server.BuildManager;
-import com.intellij.openapi.compiler.CompilerFilter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -34,7 +33,7 @@ public class ForcedCompilationTest extends BaseCompilerTestCase {
     assertOutput(dep, fs());
     assertOutput(m, fs().file("B.class"));
 
-    compile(getCompilerManager().createProjectCompileScope(myProject), CompilerFilter.ALL, false, true);
+    compile(getCompilerManager().createProjectCompileScope(myProject), false, true);
     assertOutput(dep, fs());
     assertOutput(m, fs());
   }

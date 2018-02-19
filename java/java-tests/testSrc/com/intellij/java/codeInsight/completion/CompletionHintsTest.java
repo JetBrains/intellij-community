@@ -1,56 +1,34 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion;
 
-import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
-import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
-import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider;
 import com.intellij.codeInsight.hints.Option;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.codeInsight.AbstractParameterInfoTestCase;
+import com.intellij.java.codeInsight.JavaExternalDocumentationTest;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.psi.PsiExpressionCodeFragment;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.fixtures.EditorHintFixture;
-import com.intellij.util.ui.UIUtil;
 
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.locks.LockSupport;
-import java.util.stream.Stream;
-
-public class CompletionHintsTest extends LightFixtureCompletionTestCase {
+public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   private boolean myStoredSettingValue;
-  private EditorHintFixture myHintFixture;
-  private int myStoredAutoPopupDelay;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     myStoredSettingValue = CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
     CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION = true;
-    myHintFixture = new EditorHintFixture(getTestRootDisposable());
-    myStoredAutoPopupDelay = CodeInsightSettings.getInstance().PARAMETER_INFO_DELAY;
-    CodeInsightSettings.getInstance().PARAMETER_INFO_DELAY = 100; // speed up tests
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      CodeInsightSettings.getInstance().PARAMETER_INFO_DELAY = myStoredAutoPopupDelay;
       CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION = myStoredSettingValue;
     }
     finally {
@@ -77,9 +55,9 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"value:\"/>) } }");
 
     // test hints remain shown while entering parameter values
-    myFixture.type("\"a");
+    type("\"a");
     next();
-    myFixture.type("\"b");
+    type("\"b");
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { void m() { System.setProperty(<Hint text=\"key:\"/>\"a\", <HINT text=\"value:\"/>\"b<caret>\") } }");
 
@@ -112,9 +90,9 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <Hint text=\"radix:\"/>) } }");
 
     // test hints remain shown while entering parameter values
-    myFixture.type("1");
+    type("1");
     next();
-    myFixture.type("2");
+    type("2");
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { void m() { Character.forDigit(<Hint text=\"digit:\"/>1, <HINT text=\"radix:\"/>2<caret>) } }");
 
@@ -214,7 +192,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     complete("setProperty");
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"value:\"/>) } }");
-    myFixture.type("System.getPro");
+    type("System.getPro");
     complete("getProperty(String key, String def)");
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"def:\"/>), <hint text=\"value:\"/>) } }");
@@ -224,7 +202,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     configureJava("class C { void m() { System.setPro<caret> } }");
     complete("setProperty");
     waitForAllAsyncStuff();
-    myFixture.type("System.getPro");
+    type("System.getPro");
     complete("getProperty(String key, String def)");
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"def:\"/>), <hint text=\"value:\"/>) } }");
@@ -506,9 +484,9 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
       checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <Hint text=\"radix:\"/>) } }");
 
       // test hints remain shown while entering parameter values
-      myFixture.type("1");
+      type("1");
       next();
-      myFixture.type("2");
+      type("2");
       waitForAllAsyncStuff();
       checkResultWithInlays("class C { void m() { Character.forDigit(<Hint text=\"digit:\"/>1, <HINT text=\"radix:\"/>2<caret>) } }");
 
@@ -541,7 +519,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     configureJava("class C { void m() { System.setPro<caret> } }");
     complete("setProperty");
     waitForAllAsyncStuff();
-    myFixture.type("System.getPro");
+    type("System.getPro");
     complete("getProperty(String key, String def)");
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"def:\"/>), <hint text=\"value:\"/>) } }");
@@ -796,8 +774,6 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
   }
 
   public void testBasicScenarioForConstructor() throws Exception {
-    enableConstructorVariantsCompletion();
-
     // check hints appearance on completion
     configureJava("class C { C(int a, int b) {} void m() { new C<caret> } }");
     complete("C(int a, int b)");
@@ -815,9 +791,9 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkResultWithInlays("class C { C(int a, int b) {} void m() { new C(<HINT text=\"a:\"/><caret>, <Hint text=\"b:\"/>) } }");
 
     // test hints remain shown while entering parameter values
-    myFixture.type("1");
+    type("1");
     next();
-    myFixture.type("2");
+    type("2");
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { C(int a, int b) {} void m() { new C(<Hint text=\"a:\"/>1, <HINT text=\"b:\"/>2<caret>) } }");
 
@@ -919,21 +895,23 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     }
   }
 
-  private void enableConstructorVariantsCompletion() {
-    Registry.get("java.completion.show.constructors").setValue(true);
-    Disposer.register(myFixture.getTestRootDisposable(), () -> Registry.get("java.completion.show.constructors").setValue(false));
+  public void testOverloadWithNoParameters() throws Exception {
+    configureJava("class C { void m() { System.out.pr<caret> } }");
+    complete("println(long x)");
+    waitForAllAsyncStuff();
+    checkHintContents("<html><b>long</b>&nbsp;&nbsp;<i>a The <code>long</code> to be printed.</i></html>");
   }
 
-  private void checkResult(String text) {
-    myFixture.checkResult(text);
+  public void testQuickDocForOverloadSelectedOnCompletion() throws Exception {
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key)");
+    checkResult("class C { void m() { System.getProperty(<caret>) } }");
+    String doc = JavaExternalDocumentationTest.getDocumentationText(getEditor());
+    assertTrue(doc.contains("<code>null</code> if there is no property with that key"));
   }
 
   private void checkResultWithInlays(String text) {
     myFixture.checkResultWithInlays(text);
-  }
-
-  private void checkHintContents(String hintText) {
-    assertEquals(hintText, myHintFixture.getCurrentHintText());
   }
 
   private void prev() {
@@ -978,48 +956,5 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
 
   private void escape() {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
-  }
-
-  private void configureJava(String text) {
-    myFixture.configureByText(JavaFileType.INSTANCE, text);
-  }
-
-  private void waitForParameterInfoUpdate() throws TimeoutException {
-    ParameterInfoController.waitForDelayedActions(getEditor(), 1, TimeUnit.MINUTES);
-  }
-
-  private void showParameterInfo() {
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO);
-    UIUtil.dispatchAllInvocationEvents();
-  }
-
-  private void complete(String partOfItemText) {
-    LookupElement[] elements = myFixture.completeBasic();
-    LookupElement element = Stream.of(elements).filter(e -> {
-      LookupElementPresentation p = new LookupElementPresentation();
-      e.renderElement(p);
-      return (p.getItemText() + p.getTailText()).contains(partOfItemText);
-    }).findAny().get();
-    selectItem(element);
-  }
-
-  public static void waitTillAnimationCompletes(Editor editor) {
-    long deadline = System.currentTimeMillis() + 60_000;
-    while (ParameterHintsPresentationManager.getInstance().isAnimationInProgress(editor)) {
-      if (System.currentTimeMillis() > deadline) fail("Too long waiting for animation to finish");
-      LockSupport.parkNanos(10_000_000);
-      UIUtil.dispatchAllInvocationEvents();
-    }
-  }
-
-  private void waitForAutoPopup() throws TimeoutException {
-    AutoPopupController.getInstance(getProject()).waitForDelayedActions(1, TimeUnit.MINUTES);
-  }
-
-  private void waitForAllAsyncStuff() throws TimeoutException {
-    waitForParameterInfoUpdate();
-    myFixture.doHighlighting();
-    waitTillAnimationCompletes(getEditor());
-    waitForAutoPopup();
   }
 }

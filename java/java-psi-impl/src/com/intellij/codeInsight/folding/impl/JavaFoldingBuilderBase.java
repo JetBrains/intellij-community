@@ -92,7 +92,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
   }
 
   private static String getCodeBlockPlaceholder(PsiElement codeBlock) {
-    return codeBlock instanceof PsiCodeBlock && ((PsiCodeBlock)codeBlock).getStatements().length == 0 ? "{}" : "{...}";
+    return codeBlock instanceof PsiCodeBlock && ((PsiCodeBlock)codeBlock).isEmpty() ? "{}" : "{...}";
   }
 
   private static boolean areOnAdjacentLines(@NotNull PsiElement e1, @NotNull PsiElement e2, @NotNull Document document) {

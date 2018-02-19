@@ -28,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.Set;
 
+import static com.intellij.internal.statistic.utils.StatisticsUtilKt.getBooleanUsage;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -62,6 +64,7 @@ class UiInfoUsageCollector extends UsagesCollector {
     add(set, "Tabs Right", tabPlace() == SwingConstants.RIGHT ? 1 : 0);
     add(set, "Retina", UIUtil.isRetina() ? 1 : 0);
     add(set, "Show tips on startup", GeneralSettings.getInstance().isShowTipsOnStartup() ? 1 : 0);
+    set.add(getBooleanUsage("Allow merging buttons", UISettings.getInstance().getAllowMergeButtons()));
 
     return set;
   }

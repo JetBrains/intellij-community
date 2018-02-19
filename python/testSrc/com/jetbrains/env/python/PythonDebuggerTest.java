@@ -39,7 +39,7 @@ import static org.junit.Assert.*;
 /**
  * @author traff
  */
-
+@Staging //Thread leak breaks all other tests
 public class PythonDebuggerTest extends PyEnvTestCase {
   private class BreakpointStopAndEvalTask extends PyDebuggerTask {
     public BreakpointStopAndEvalTask(String scriptName) {
@@ -144,6 +144,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  @Staging // thread leak
   public void testConditionalBreakpoint() {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
       @Override
@@ -646,7 +647,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         toggleBreakpointInEgg(egg, "adder/adder.py", 2);
         PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(getRunConfiguration().getSdkHome());
         if (flavor != null) {
-          flavor.initPythonPath(Lists.newArrayList(egg), getRunConfiguration().getEnvs());
+          flavor.initPythonPath(Lists.newArrayList(egg), true, getRunConfiguration().getEnvs());
         }
         else {
           getRunConfiguration().getEnvs().put("PYTHONPATH", egg);
@@ -683,7 +684,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
         PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(getRunConfiguration().getSdkHome());
         if (flavor != null) {
-          flavor.initPythonPath(Lists.newArrayList(egg), getRunConfiguration().getEnvs());
+          flavor.initPythonPath(Lists.newArrayList(egg), true, getRunConfiguration().getEnvs());
         }
         else {
           getRunConfiguration().getEnvs().put("PYTHONPATH", egg);

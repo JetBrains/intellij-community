@@ -48,7 +48,7 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
   private Image myCurrentOverImg;
   private TabInfo myCurrentOverInfo;
 
-  private boolean myDisposeWhenEmpty;
+  private final boolean myDisposeWhenEmpty;
 
   private boolean myWasEverShown;
 

@@ -1384,7 +1384,7 @@ public abstract class ChooseByNameBase {
 
     private void scheduleIncrementalListUpdate(Set<Object> elements, int lastCount) {
       myUpdateListAlarm.addRequest(() -> {
-        if (myCalcElementsThread != this) return;
+        if (myCalcElementsThread != this || !myProgress.isRunning()) return;
 
         int count = elements.size();
         if (count > lastCount) {

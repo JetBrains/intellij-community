@@ -16,11 +16,11 @@
 package com.intellij.util.treeWithCheckedNodes;
 
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.changes.ui.PlusMinus;
 import com.intellij.openapi.vcs.impl.CollectionsDelta;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairProcessor;
-import com.intellij.openapi.vcs.changes.ui.PlusMinus;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.Nullable;
 
@@ -154,7 +154,7 @@ public class SelectionManager {
   private static class StateWorker {
     private final DefaultMutableTreeNode myNode;
     private final Convertor<DefaultMutableTreeNode, VirtualFile> myConvertor;
-    private VirtualFile myVf;
+    private final VirtualFile myVf;
 
     private StateWorker(DefaultMutableTreeNode node, final Convertor<DefaultMutableTreeNode, VirtualFile> convertor) {
       myNode = node;

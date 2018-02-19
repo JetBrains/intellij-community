@@ -19,19 +19,19 @@ import com.jetbrains.python.run.targetBasedConfiguration.targetAsVirtualFile
 fun TargetWithVariant.asPsiElement(configuration: AbstractPythonRunConfiguration<*>,
                                    workingDirectory: VirtualFile?
                                    = LocalFileSystem.getInstance().findFileByPath(configuration.getWorkingDirectorySafe())) =
-  target?.let { targetAsPsiElement(targetVariant, it, configuration, workingDirectory) }
+  target?.let { targetAsPsiElement(targetType, it, configuration, workingDirectory) }
 
 
 /**
  * @see targetAsVirtualFile
  */
-fun TargetWithVariant.asVirtualFile() = target?.let { targetAsVirtualFile(targetVariant, it) }
+fun TargetWithVariant.asVirtualFile() = target?.let { targetAsVirtualFile(targetType, it) }
 
 /**
  * Sanity check for "target" value. Does not resolve target, only check its syntax
  * CUSTOM type is not checked.
  */
-fun TargetWithVariant.isWellFormed() = when (targetVariant) {
+fun TargetWithVariant.isWellFormed() = when (targetType) {
   PyRunTargetVariant.PYTHON -> Regex("^[a-zA-Z0-9._]+[a-zA-Z0-9_]$").matches(target ?: "")
   PyRunTargetVariant.PATH -> !VfsUtil.isBadName(target)
   else -> true

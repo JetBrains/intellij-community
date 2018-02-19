@@ -52,8 +52,7 @@ public class FieldCanBeLocalInspectionBase extends AbstractBaseJavaLocalInspecti
       }
     }
 
-
-    removeFieldsReferencedFromInitializers(aClass, candidates);
+    removeFieldsReferencedFromInitializers(aClass, aClass, candidates);
     if (candidates.isEmpty()) return;
 
     final Set<PsiField> usedFields = new THashSet<>();
@@ -97,8 +96,8 @@ public class FieldCanBeLocalInspectionBase extends AbstractBaseJavaLocalInspecti
     return null;
   }
 
-  private static void removeFieldsReferencedFromInitializers(final PsiClass aClass, final Set<PsiField> candidates) {
-    aClass.accept(new JavaRecursiveElementVisitor() {
+  private static void removeFieldsReferencedFromInitializers(PsiElement aClass, PsiElement root, Set<PsiField> candidates) {
+    root.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitMethod(PsiMethod method) {
         if (method.isConstructor()) {
@@ -110,7 +109,7 @@ public class FieldCanBeLocalInspectionBase extends AbstractBaseJavaLocalInspecti
               if (expression instanceof PsiMethodCallExpression) {
                 final PsiMethod resolveMethod = ((PsiMethodCallExpression)expression).resolveMethod();
                 if (resolveMethod != null && resolveMethod.isConstructor()) {
-                  visitMethodCallExpression((PsiMethodCallExpression)expression);
+                  removeFieldsReferencedFromInitializers(aClass, expression, candidates);
                 }
               }
             }
@@ -118,7 +117,7 @@ public class FieldCanBeLocalInspectionBase extends AbstractBaseJavaLocalInspecti
         }
         final PsiDocComment docComment = method.getDocComment();
         if (docComment != null) {
-          docComment.accept(this);
+          removeFieldsReferencedFromInitializers(aClass, docComment, candidates);
         }
         //do not go inside method
       }

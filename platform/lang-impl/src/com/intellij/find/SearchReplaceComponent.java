@@ -585,14 +585,14 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     private Runnable myReplaceAction;
     private Runnable myCloseAction;
 
-    private DefaultActionGroup mySearchActions = new DefaultActionGroup("search bar 1", false);
-    private DefaultActionGroup myExtraSearchActions = new DefaultActionGroup("search bar 2", false);
-    private DefaultActionGroup mySearchFieldActions = new DefaultActionGroup("search field actions", false);
+    private final DefaultActionGroup mySearchActions = new DefaultActionGroup("search bar 1", false);
+    private final DefaultActionGroup myExtraSearchActions = new DefaultActionGroup("search bar 2", false);
+    private final DefaultActionGroup mySearchFieldActions = new DefaultActionGroup("search field actions", false);
     private BooleanGetter mySearchToolbarModifiedFlagGetter = BooleanGetter.FALSE;
 
-    private DefaultActionGroup myReplaceActions = new DefaultActionGroup("replace bar 1", false);
-    private DefaultActionGroup myExtraReplaceActions = new DefaultActionGroup("replace bar 1", false);
-    private DefaultActionGroup myReplaceFieldActions = new DefaultActionGroup("replace field actions", false);
+    private final DefaultActionGroup myReplaceActions = new DefaultActionGroup("replace bar 1", false);
+    private final DefaultActionGroup myExtraReplaceActions = new DefaultActionGroup("replace bar 1", false);
+    private final DefaultActionGroup myReplaceFieldActions = new DefaultActionGroup("replace field actions", false);
 
     private Builder(@Nullable Project project, @NotNull JComponent component) {
       myProject = project;

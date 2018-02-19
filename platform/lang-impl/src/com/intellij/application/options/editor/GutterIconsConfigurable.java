@@ -64,7 +64,7 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
   private CheckBoxList<GutterIconDescriptor> myList;
   private JBCheckBox myShowGutterIconsJBCheckBox;
   private List<GutterIconDescriptor> myDescriptors;
-  private Map<GutterIconDescriptor, PluginDescriptor> myFirstDescriptors = new HashMap<>();
+  private final Map<GutterIconDescriptor, PluginDescriptor> myFirstDescriptors = new HashMap<>();
 
   @Nls
   @Override

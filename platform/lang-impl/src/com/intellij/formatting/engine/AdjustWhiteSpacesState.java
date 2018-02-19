@@ -16,7 +16,6 @@
 package com.intellij.formatting.engine;
 
 import com.intellij.formatting.*;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -28,7 +27,7 @@ public class AdjustWhiteSpacesState extends State {
 
   private final FormattingProgressCallback myProgressCallback;
   
-  private WrapBlocksState myWrapBlocksState;
+  private final WrapBlocksState myWrapBlocksState;
 
 
   private LeafBlockWrapper myCurrentBlock;
@@ -39,7 +38,7 @@ public class AdjustWhiteSpacesState extends State {
   private IndentAdjuster myIndentAdjuster;
 
 
-  private boolean myReformatContext;
+  private final boolean myReformatContext;
   private Set<Alignment> myAlignmentsInsideRangesToModify = null;
 
   private final HashSet<WhiteSpace> myAlignAgain = new HashSet<>();

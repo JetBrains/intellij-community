@@ -46,7 +46,7 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiCodeBlock body = mySwitchExpression.getBody();
-    return body != null && body.getStatements().length > 0;
+    return body != null && !body.isEmpty();
   }
 
   @Override

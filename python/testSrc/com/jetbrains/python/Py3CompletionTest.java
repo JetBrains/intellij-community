@@ -2,17 +2,22 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.intellij.openapi.module.Module;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author yole
  */
+@TestDataPath("$CONTENT_ROOT/../testData/completion")
 public class Py3CompletionTest extends PyTestCase {
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
@@ -64,6 +69,26 @@ public class Py3CompletionTest extends PyTestCase {
     myFixture.checkResultByFile(getTestName(true) + "/a.after.py");
   }
 
+
+  protected void doMultiFileTest(@NotNull List<String> sourceRoots) {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
+      myFixture.copyDirectoryToProject(getTestName(true), "");
+      final Module module = myFixture.getModule();
+      for (String root : sourceRoots) {
+        PsiTestUtil.addSourceRoot(module, myFixture.findFileInTempDir(root));
+      }
+      try {
+        myFixture.configureByFile("a.py");
+        myFixture.completeBasic();
+        myFixture.checkResultByFile(getTestName(true) + "/a.after.py");
+      }
+      finally {
+        for (String root : sourceRoots) {
+          PsiTestUtil.removeSourceRoot(module, myFixture.findFileInTempDir(root));
+        }
+      }
+    });
+  }
   @Nullable
   private List<String> doTestByText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
@@ -74,7 +99,7 @@ public class Py3CompletionTest extends PyTestCase {
   // PY-4073
   public void testSpecialFunctionAttributesPy3() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON32,
+      LanguageLevel.PYTHON34,
       () -> {
         List<String> suggested = doTestByText("def func(): pass; func.func_<caret>");
         assertNotNull(suggested);
@@ -150,7 +175,7 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-17828
   public void testDunderPrepare() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-20279
@@ -268,6 +293,17 @@ public class Py3CompletionTest extends PyTestCase {
   public void testDataclassPostInitNoInit() {
     runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
   }
+
+  //PY-28332
+  public void testImportNamespacePackageInMultipleRoots() {
+    doMultiFileTest(Arrays.asList("root1/src", "root2/src"));
+  }
+
+  //PY-28332
+  public void testImportNamespacePackageInMultipleRoots2() {
+    doMultiFileTest(Arrays.asList("root1/src", "root2/src"));
+  }
+
 
   @Override
   protected String getTestDataPath() {

@@ -8,6 +8,7 @@ import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Sergey Evdokimov
@@ -40,6 +42,9 @@ public class MavenWebArtifactConfiguration {
 
   @XCollection(propertyElementName = "war-source-excludes", elementName = "exclude")
   public List<String> warSourceExcludes = new ArrayList<>();
+
+  @XCollection(propertyElementName = "non-filtered-file-extensions", elementName = "extension")
+  public Set<String> nonFilteredFileExtensions = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
 
   @Transient
   private volatile Map<File, ResourceRootConfiguration> myResourceRootsMap;

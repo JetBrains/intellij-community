@@ -18,7 +18,7 @@ import java.util.Properties;
 
 public class EclipseProjectCodeStyleData extends EclipseCodeStylePropertiesImporter {
 
-  private static Logger LOG = Logger.getInstance(EclipseProjectCodeStyleData.class);
+  private static final Logger LOG = Logger.getInstance(EclipseProjectCodeStyleData.class);
 
   public final static String CORE_PREFS_FILE_NAME = "org.eclipse.jdt.core.prefs";
   public final static String UI_PREFS_FILE_NAME = "org.eclipse.jdt.ui.prefs";
@@ -36,7 +36,7 @@ public class EclipseProjectCodeStyleData extends EclipseCodeStylePropertiesImpor
   private final @NotNull String myProjectPath;
   private @Nullable Properties myCorePreferences;
   private @Nullable Properties myUiPreferences;
-  private String myProjectName;
+  private final String myProjectName;
 
   public EclipseProjectCodeStyleData(@NotNull String projectName, @NotNull String projectPath) {
     myProjectName = projectName;
@@ -89,7 +89,7 @@ public class EclipseProjectCodeStyleData extends EclipseCodeStylePropertiesImpor
   @Override
   public String toString() {
     String profileName = getFormatterProfileName();
-    return myProjectName + (profileName != null ? "[" + profileName + "]" : "");
+    return myProjectName + (profileName != null ? ": " + profileName : "");
   }
 
   @Nullable

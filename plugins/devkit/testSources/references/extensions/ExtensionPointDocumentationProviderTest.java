@@ -27,13 +27,9 @@ public class ExtensionPointDocumentationProviderTest extends LightCodeInsightFix
     assertEquals(epDefinition,
                  provider.getQuickNavigateInfo(docElement, null));
 
-    assertEquals("<em>EP Definition</em><br/>" +
-                 epDefinition +
-                 "<br/><br/>" +
-                 "<em>EP Implementation</em>" +
-                 "<html><head>    <style type=\"text/css\">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head>" +
-                 "<body><small><b>bar</b></small><PRE>public interface <b>MyExtensionPoint</b></PRE>\n" +
-                 "   MyExtensionPoint JavaDoc.</body></html>",
+    assertEquals("<em>EP Definition</em><br/>[light_idea_test_case] foo<br/><b>bar</b> (extensionPointDocumentation.xml)<br/><a href=\"psi_element://bar.MyExtensionPoint\"><code>MyExtensionPoint</code></a><br/><br/><em>EP Implementation</em><div class='definition'><pre>bar<br>public interface <b>MyExtensionPoint</b></pre></div><div class='content'>\n" +
+                 "   MyExtensionPoint JavaDoc.\n" +
+                 " </div><table class='sections'><p></table>",
                  provider.generateDoc(docElement, null));
   }
 }

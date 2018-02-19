@@ -24,10 +24,8 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -46,7 +44,7 @@ public class LaterInvocator {
     @NotNull private final Condition<?> expired;
     @Nullable private final ActionCallback callback;
 
-    @Debugger.Capture
+    @Async.Schedule
     RunnableInfo(@NotNull Runnable runnable,
                  @NotNull ModalityState modalityState,
                  @NotNull Condition<?> expired,
@@ -314,7 +312,8 @@ public class LaterInvocator {
     requestFlush();
   }
 
-  public static Object[] getCurrentModalEntitiesForProject(Project project) {
+  @NotNull
+  private static Object[] getCurrentModalEntitiesForProject(Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (project == null || !ourModalEntities.isEmpty()) {
       return ArrayUtil.toObjectArray(ourModalEntities);
@@ -444,7 +443,7 @@ public class LaterInvocator {
     }
 
     // Extracted to have a capture point
-    private static void doRun(@Debugger.Insert RunnableInfo info) {
+    private static void doRun(@Async.Execute RunnableInfo info) {
       info.runnable.run();
     }
 
@@ -455,9 +454,11 @@ public class LaterInvocator {
   }
 
   @TestOnly
-  public static List<RunnableInfo> getLaterInvocatorQueue() {
+  public static Collection<RunnableInfo> getLaterInvocatorQueue() {
+    // used by leak hunter as root, so we must not copy it here to another list 
+    // to avoid walking over obsolete queue 
     synchronized (LOCK) {
-      return ContainerUtil.newArrayList(ourQueue);
+      return ourQueue;
     }
   }
 

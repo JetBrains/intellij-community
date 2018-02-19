@@ -42,7 +42,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
   public static final String POPUP_PLACE = "TabbedPanePopup";
 
   private ContentManager myManager;
-  private TabbedPaneWrapper myTabbedPaneWrapper;
+  private final TabbedPaneWrapper myTabbedPaneWrapper;
 
   /**
    * Creates {@code TabbedPaneContentUI} with bottom tab placement.

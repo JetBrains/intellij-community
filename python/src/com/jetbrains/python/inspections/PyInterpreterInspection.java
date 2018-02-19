@@ -27,6 +27,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.Nls;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class PyInterpreterInspection extends PyInspection {
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
@@ -58,28 +60,39 @@ public class PyInterpreterInspection extends PyInspection {
 
     @Override
     public void visitPyFile(PyFile node) {
-      super.visitPyFile(node);
-      if (PlatformUtils.isPyCharm()) {
-        final Module module = ModuleUtilCore.findModuleForPsiElement(node);
-        if (module != null) {
-          final Sdk sdk = PythonSdkType.findPythonSdk(module);
-          if (sdk == null) {
-            registerProblem(node, "No Python interpreter configured for the project", new ConfigureInterpreterFix());
-          }
-          else if (PythonSdkType.isInvalid(sdk)) {
-            registerProblem(node, "Invalid Python interpreter selected for the project", new ConfigureInterpreterFix());
-          }
+      final Module module = ModuleUtilCore.findModuleForPsiElement(node);
+      if (module == null) return;
+
+      final boolean pyCharm = PlatformUtils.isPyCharm();
+
+      final String interpreterOwner = pyCharm ? "project" : "module";
+      final LocalQuickFix[] fixes = pyCharm ? new LocalQuickFix[]{new ConfigureInterpreterFix()} : LocalQuickFix.EMPTY_ARRAY;
+      final String product = pyCharm ? "PyCharm" : "Python plugin";
+
+      final Sdk sdk = PythonSdkType.findPythonSdk(module);
+
+      if (sdk == null) {
+        registerProblem(node, "No Python interpreter configured for the " + interpreterOwner, fixes);
+      }
+      else if (PythonSdkType.isInvalid(sdk)) {
+        registerProblem(node, "Invalid Python interpreter selected for the " + interpreterOwner, fixes);
+      }
+      else {
+        final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
+        if (!LanguageLevel.SUPPORTED_LEVELS.contains(languageLevel)) {
+          registerProblem(node,
+                          "Python " + languageLevel + " has reached its end-of-life and is no longer supported by " + product,
+                          fixes);
         }
       }
     }
   }
 
-  private static class ConfigureInterpreterFix implements LocalQuickFix {
-
+  public static final class ConfigureInterpreterFix implements LocalQuickFix {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Configure Python Interpreter";
+      return "Configure Python interpreter";
     }
 
     @Override

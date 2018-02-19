@@ -46,8 +46,8 @@ public class SimpleDiffChange {
   @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<>();
 
   private boolean myIsValid = true;
-  private int[] myLineStartShifts = new int[2];
-  private int[] myLineEndShifts = new int[2];
+  private final int[] myLineStartShifts = new int[2];
+  private final int[] myLineEndShifts = new int[2];
 
   public SimpleDiffChange(@NotNull SimpleDiffViewer viewer,
                           @NotNull LineFragment fragment,

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -49,9 +47,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.util.GradleVersion;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder;
@@ -107,7 +105,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   @NotNull
   @Override
   public Module createModule(@NotNull ModifiableModuleModel moduleModel)
-    throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
+    throws InvalidDataException, ConfigurationException {
     LOG.assertTrue(getName() != null);
     final String originModuleFilePath = getModuleFilePath();
     LOG.assertTrue(originModuleFilePath != null);
@@ -270,10 +268,12 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   @Override
   public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
     myWizardContext = wizardContext;
+    GradleProjectSettings settings = getExternalProjectSettings().clone();
+    settings.setStoreProjectFilesExternally(ThreeState.UNSURE);
     return new ModuleWizardStep[]{
       new GradleModuleWizardStep(this, wizardContext),
       new ExternalModuleSettingsStep<>(
-        wizardContext, this, new GradleProjectSettingsControl(getExternalProjectSettings()))
+        wizardContext, this, new GradleProjectSettingsControl(settings))
     };
   }
 
@@ -487,12 +487,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   @Nullable
   @Override
   public Project createProject(String name, String path) {
-    Project project = super.createProject(name, path);
-    if (project != null) {
-      GradleProjectSettings settings = getExternalProjectSettings();
-      ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(settings.isStoreProjectFilesExternally());
-    }
-    return project;
+    return ExternalProjectsManagerImpl.setupCreatedProject(super.createProject(name, path));
   }
 
   public void setUseKotlinDsl(boolean useKotlinDSL) {

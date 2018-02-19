@@ -118,12 +118,13 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
 
   // polls 'subClasses' for more sub classes and call DirectClassInheritorsSearch for them
   // returns true if some classes were found
-  private boolean processMoreSubclasses(@NotNull Iterator<T> subClassIterator) {
+  private void processMoreSubclasses(@NotNull Iterator<T> subClassIterator) {
     while (true) {
       ProgressManager.checkCanceled();
 
       Pair.NonNull<T,V> pair =
         ReadAction.compute(() -> {
+          ProgressManager.checkCanceled();
           synchronized (lock) {
             // Find the classes in subClasses collection to operate on
             // (without advancing the candidatesToFindSubclassesIterator iterator - it will be moved after the class successfully handled - to protect against PCE, INRE, etc)
@@ -143,13 +144,13 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
         synchronized (lock) {
           advanceIteratorOnSuccess(); // to skip unsuitable classes like final etc from the queue
           if (subClassIterator.hasNext()) {
-            return true;
+            return;
           }
         }
 
         boolean producedSomething = waitForOtherThreadsToFinishProcessing(subClassIterator);
         if (producedSomething) {
-          return true;
+          return;
         }
 
         // aaaaaaaa! Other threads were unable to produce anything. That can be because:
@@ -158,7 +159,7 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
         synchronized (lock) {
           advanceIteratorOnSuccess(); // to skip unsuitable classes like final etc from the queue
           if (!candidatesToFindSubclassesIterator.hasNext()) {
-            return false;
+            return;
           }
         }
 
@@ -169,6 +170,7 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
       T anchor = pair.getFirst();
       try {
         myGenerator.generateMoreElementsFor(candidate, generatedElement -> {
+          ProgressManager.checkCanceled();
           synchronized (lock) {
             subClasses.add(generatedElement);
           }
@@ -179,7 +181,7 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
           if (subClassIterator.hasNext()) {
             // we've added something to subClasses so we can return and the iterator can move forward at least once;
             // more elements will be added on the subsequent call to .next()
-            return true;
+            return;
           }
         }
       }
@@ -203,8 +205,11 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
     try {
       ForkJoinPool.managedBlock(new ForkJoinPool.ManagedBlocker() {
         @Override
-        public boolean block() throws InterruptedException {
-          currentlyProcessingClasses.waitFor(); // wait until other threads process their classes before giving up
+        public boolean block() {
+          while (!currentlyProcessingClasses.isUp()) {
+            ProgressManager.checkCanceled();
+            currentlyProcessingClasses.waitFor(1); // wait until other threads process their classes before giving up
+          }
           return isReleasable();
         }
 
@@ -249,6 +254,7 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
   // under lock
   private void advanceIteratorOnSuccess() {
     while (candidatesToFindSubclassesIterator.hasNext()) {
+      ProgressManager.checkCanceled();
       T next = candidatesToFindSubclassesIterator.position().next().peek();
       boolean removed = classesProcessed.remove(next);
       if (removed) {

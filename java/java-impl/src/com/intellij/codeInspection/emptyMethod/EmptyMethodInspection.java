@@ -203,8 +203,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
                 @Override
                 public boolean process(PsiMethod derivedMethod) {
                   PsiCodeBlock body = derivedMethod.getBody();
-                  if (body == null) return true;
-                  if (body.getStatements().length == 0) return true;
+                  if (body == null || body.isEmpty()) return true;
                   if (RefJavaUtil.getInstance().isMethodOnlyCallsSuper(derivedMethod)) return true;
                   descriptionsProcessor.ignoreElement(refMethod);
                   return false;

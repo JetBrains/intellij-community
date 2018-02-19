@@ -77,7 +77,7 @@ public class SocksAuthenticatorManager {
   private static class CvsProxySelector extends ProxySelector {
     private final Map<Pair<String, Integer>, Pair<String, Integer>> myKnownHosts;
     private final Map<Pair<String, Integer>, Pair<String, String>> myAuthMap;
-    private NonStaticAuthenticator myAuthenticator;
+    private final NonStaticAuthenticator myAuthenticator;
 
     private CvsProxySelector() {
       myKnownHosts = Collections.synchronizedMap(new HashMap<Pair<String, Integer>, Pair<String, Integer>>());

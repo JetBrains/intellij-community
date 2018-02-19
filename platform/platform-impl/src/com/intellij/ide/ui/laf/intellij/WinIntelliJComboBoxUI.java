@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.ide.ui.laf.IconCache;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.openapi.editor.Editor;
@@ -212,9 +213,11 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
         Graphics2D g2 = (Graphics2D)g.create();
         try {
+          g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+          g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+
           Rectangle outerRect = new Rectangle(getSize());
-          JBInsets.removeFrom(outerRect, comboBox.getComponentOrientation().isLeftToRight() ?
-                                         JBUI.insets(1, 0, 1, 1) : JBUI.insets(1, 1, 1, 0));
+          JBInsets.removeFrom(outerRect, JBUI.insets(1));
 
           Rectangle innerRect = new Rectangle(outerRect);
           JBInsets.removeFrom(innerRect, JBUI.insets(1));
@@ -246,7 +249,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
             }
           }
 
-          Icon icon = MacIntelliJIconCache.getIcon("comboDropTriangle", false, false, isEnabled());
+          Icon icon = getArrowIcon(this);
           int x = JBUI.scale(5);
           int y = (getHeight() - icon.getIconHeight()) / 2;
           icon.paintIcon(this, g2, x, y);
@@ -258,8 +261,6 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
     button.setOpaque(false);
 
-    button.setBorder(comboBox.getComponentOrientation().isLeftToRight() ?
-                     JBUI.Borders.empty(2, 1, 2, 2) : JBUI.Borders.empty(2, 2, 2, 1));
     buttonReleaseListener = new MouseAdapter() {
       @Override
       public void mouseReleased(MouseEvent e) {
@@ -274,6 +275,10 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     button.addMouseListener(buttonHoverListener);
     button.addMouseListener(buttonReleaseListener);
     return button;
+  }
+
+  public static Icon getArrowIcon(@NotNull JComponent c) {
+    return IconCache.getIcon("comboDropTriangle", false, false, c.isEnabled());
   }
 
   @Override public void unconfigureArrowButton() {

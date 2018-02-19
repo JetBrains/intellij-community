@@ -31,7 +31,7 @@ public final class GitFetchResult {
 
   private final Type myType;
   private Collection<Exception> myErrors = new ArrayList<>();
-  private Collection<String> myPrunedRefs = new ArrayList<>();
+  private final Collection<String> myPrunedRefs = new ArrayList<>();
 
   public enum Type {
     SUCCESS,

@@ -274,7 +274,7 @@ public class Utils {
     private final List<? extends ZipEntry> myEntries;
     private InputStream myStream = null;
     private int myNextEntry = 0;
-    private byte[] myByte = new byte[1];
+    private final byte[] myByte = new byte[1];
 
     private NormalizedZipInputStream(File file) throws IOException {
       myZip = new ZipFile(file);

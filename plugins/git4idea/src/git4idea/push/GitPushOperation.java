@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Ref;
@@ -47,6 +48,7 @@ import git4idea.config.UpdateMethod;
 import git4idea.history.GitHistoryUtils;
 import git4idea.merge.MergeChangeCollector;
 import git4idea.repo.GitBranchTrackInfo;
+import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.update.GitRebaseOverMergeProblem;
@@ -60,6 +62,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.util.containers.ContainerUtil.filter;
+import static git4idea.commands.GitAuthenticationListener.GIT_AUTHENTICATION_SUCCESS;
 import static git4idea.push.GitPushNativeResult.Type.FORCED_UPDATE;
 import static git4idea.push.GitPushNativeResult.Type.NEW_REF;
 import static git4idea.push.GitPushRepoResult.Type.NOT_PUSHED;
@@ -354,8 +357,11 @@ public class GitPushOperation {
     String tagMode = myTagMode == null ? null : myTagMode.getArgument();
 
     String spec = sourceBranch.getFullName() + ":" + targetBranch.getNameForRemoteOperations();
-    GitCommandResult res =
-      myGit.push(repository, targetBranch.getRemote(), spec, myForce, setUpstream, mySkipHook, tagMode, progressListener);
+    GitRemote remote = targetBranch.getRemote();
+    GitCommandResult res = myGit.push(repository, remote, spec, myForce, setUpstream, mySkipHook, tagMode, progressListener);
+    if(res.success()){
+      BackgroundTaskUtil.syncPublisher(myProject, GIT_AUTHENTICATION_SUCCESS).authenticationSucceeded(repository, remote);
+    }
     return new ResultWithOutput(res);
   }
 

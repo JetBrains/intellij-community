@@ -18,6 +18,7 @@ package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -45,6 +46,7 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
     // one action can be shown on multiple toolbars simultaneously
     JCheckBox checkBox = new JCheckBox();
     checkBox.setOpaque(false);
+    checkBox.setBorder(JBUI.Borders.emptyLeft(9));
 
     checkBox.addActionListener(new ActionListener() {
       @Override

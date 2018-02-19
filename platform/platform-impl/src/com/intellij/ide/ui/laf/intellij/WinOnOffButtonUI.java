@@ -30,9 +30,9 @@ import java.awt.*;
 
 @SuppressWarnings("unused")
 public class WinOnOffButtonUI extends BasicToggleButtonUI {
-  private static Dimension TOGGLE_SIZE = new JBDimension(29, 16);
-  private static Dimension BUTTON_SIZE = new JBDimension(46, 18);
-  private static Border BUTTON_BORDER = JBUI.Borders.empty(1, 6);
+  private static final Dimension TOGGLE_SIZE = new JBDimension(29, 16);
+  private static final Dimension BUTTON_SIZE = new JBDimension(46, 18);
+  private static final Border BUTTON_BORDER = JBUI.Borders.empty(1, 6);
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static ComponentUI createUI(JComponent c) {

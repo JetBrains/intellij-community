@@ -29,9 +29,9 @@ public abstract class YamlNonEditableKeysInspectionBase extends YamlMetaTypeInsp
   }
 
   private static class StructureChecker extends SimpleYamlPsiVisitor {
-    private YamlMetaTypeProvider myMetaTypeProvider;
+    private final YamlMetaTypeProvider myMetaTypeProvider;
     private final ProblemsHolder myProblemsHolder;
-    private StripNonEditableKeysQuickFix myQuickFix;
+    private final StripNonEditableKeysQuickFix myQuickFix;
 
     public StructureChecker(@NotNull ProblemsHolder problemsHolder, @NotNull YamlMetaTypeProvider metaTypeProvider) {
       myProblemsHolder = problemsHolder;

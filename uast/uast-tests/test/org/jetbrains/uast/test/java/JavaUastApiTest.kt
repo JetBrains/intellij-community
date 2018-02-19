@@ -70,7 +70,7 @@ class JavaUastApiTest : AbstractJavaUastTest() {
       val literal = PsiTreeUtil.getParentOfType(file.psi.findElementAt(index2), PsiLiteralExpression::class.java)!!
       val uLiteral = literal.toUElement()!!
       UsefulTestCase.assertInstanceOf(uLiteral, ULiteralExpression::class.java)
-      UsefulTestCase.assertInstanceOf(uLiteral.uastParent, UQualifiedReferenceExpression::class.java)
+      UsefulTestCase.assertInstanceOf(uLiteral.uastParent, UCallExpression::class.java)
       UsefulTestCase.assertInstanceOf(uLiteral.getUCallExpression(), UCallExpression::class.java)
     }
   }
@@ -163,6 +163,12 @@ class JavaUastApiTest : AbstractJavaUastTest() {
         }""") as UAnonymousClass
       assertEquals("base classes", listOf("java.lang.Runnable"), testClass.uastSuperTypes.map { it.getQualifiedName() })
     }
+  }
+
+  @Test
+  fun testCanFindAWayFromBrokenSwitch() = doTest("BrokenCode/Switch.java") { name, file ->
+    val testClass = file.findElementByTextFromPsi<UElement>("""return;""")
+    TestCase.assertEquals(7, testClass.withContainingElements.count())
   }
 
 }

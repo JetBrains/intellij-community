@@ -552,7 +552,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     });
   }
 
-  private AtomicBoolean myNotificationsCoolDown = new AtomicBoolean();
+  private final AtomicBoolean myNotificationsCoolDown = new AtomicBoolean();
 
   private void notifySkippedBreakpoints(@Nullable LocatableEvent event) {
     if (event != null && myNotificationsCoolDown.compareAndSet(false, true)) {

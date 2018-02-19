@@ -152,25 +152,17 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
 
   @Override
   public boolean canNavigate() {
-    if (getProject() == null) return false;
     final PsiElement psiElement = getPsiElement();
     if (psiElement == null) return false;
-    final VirtualFile virtualFile = psiElement.getContainingFile().getVirtualFile();
+    PsiFile containingFile = psiElement.getContainingFile();
+    if (containingFile == null) return false;
+    final VirtualFile virtualFile = containingFile.getVirtualFile();
     return virtualFile != null && virtualFile.isValid();
   }
 
   @Override
   public boolean canNavigateToSource() {
     return canNavigate();
-  }
-
-  @Nullable
-  private Project getProject(){
-    final PsiElement psiElement = getPsiElement();
-    if (psiElement == null || psiElement.getContainingFile() == null){
-      return null;
-    }
-    return psiElement.getContainingFile().getProject();
   }
 
   @Override

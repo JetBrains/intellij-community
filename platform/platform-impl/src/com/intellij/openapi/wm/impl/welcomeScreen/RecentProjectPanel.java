@@ -540,7 +540,7 @@ public class RecentProjectPanel extends JPanel {
   private static class FilePathChecker implements Disposable {
     private static final int MIN_AUTO_UPDATE_MILLIS = 2500;
     private final ScheduledExecutorService myService = AppExecutorUtil.createBoundedScheduledExecutorService("CheckRecentProjectPaths service", 2);
-    private Map<String, AtomicBoolean> myStates = ContainerUtil.newHashMap();
+    private final Map<String, AtomicBoolean> myStates = ContainerUtil.newHashMap();
 
     private final Runnable myCallback;
     private final Collection<String> myPaths;

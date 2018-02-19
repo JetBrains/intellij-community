@@ -44,7 +44,7 @@ public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements 
   @NotNull private final InspectionConfigTreeNode myRoot = new InspectionConfigTreeNode.Group("");
   private InspectionProfileModifiableModel myModifiableModel;
   private InspectionsConfigTreeTable myInspectionsTable;
-  private Wrapper myDetailsPanel = new Wrapper() {
+  private final Wrapper myDetailsPanel = new Wrapper() {
     @Override
     public boolean isNull() {
       // make inspections table not to occupy all available width if there is no current details

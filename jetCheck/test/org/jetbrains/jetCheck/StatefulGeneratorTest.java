@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 import static org.jetbrains.jetCheck.Generator.*;
 
@@ -28,7 +29,7 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
     });
     List<InsertChar> minCmds = checkGeneratesExample(gen,
                                                      cmds -> InsertChar.performOperations(cmds).contains("ab"),
-                                                     64);
+                                                     36);
     assertEquals(minCmds.toString(), 2, minCmds.size());
   }
 
@@ -36,7 +37,7 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
     Scenario minHistory = checkFalsified(ImperativeCommand.scenarios(() -> env -> {
       StringBuilder sb = new StringBuilder();
       env.executeCommands(withRecursion(insertStringCmd(sb), deleteStringCmd(sb), checkDoesNotContain(sb, "A")));
-    }), Scenario::ensureSuccessful, 42).getMinimalCounterexample().getExampleValue();
+    }), Scenario::ensureSuccessful, 33).getMinimalCounterexample().getExampleValue();
 
     assertEquals("commands:\n" +
                  "  insert A at 0\n" +
@@ -55,12 +56,39 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
       };
 
       env.executeCommands(withRecursion(insertStringCmd(sb), replace, deleteStringCmd(sb), checkDoesNotContain(sb, "A")));
-    }), Scenario::ensureSuccessful, 76).getMinimalCounterexample().getExampleValue();
+    }), Scenario::ensureSuccessful, 56).getMinimalCounterexample().getExampleValue();
 
     assertEquals("commands:\n" +
                  "  insert A at 0\n" +
                  "  check",
                  minHistory.toString());
+  }
+
+  public void testImperativeCommandRechecking() {
+    AtomicInteger counter = new AtomicInteger();
+    Supplier<ImperativeCommand> command = () -> env -> {
+      List<Integer> list = env.generateValue(listsOf(integers()), "%s");
+      if (list.size() > 5 || counter.incrementAndGet() > 50) {
+        throw new AssertionError();
+      }
+    };
+    try {
+      ImperativeCommand.checkScenarios(command);
+      fail();
+    }
+    catch (PropertyFalsified e) {
+      assertFalse(e.getMessage(), e.getMessage().contains("rechecking"));
+      assertTrue(e.getMessage(), e.getMessage().contains("checkScenario"));
+
+      PropertyFailure<?> failure = e.getFailure();
+      try {
+        ImperativeCommand.checkScenario(failure.getIterationSeed(), failure.getSizeHint(), command);
+        fail();
+      }
+      catch (PropertyFalsified fromRecheck) {
+        assertEquals(e.getBreakingValue(), fromRecheck.getBreakingValue());
+      }
+    }
   }
 
   @NotNull

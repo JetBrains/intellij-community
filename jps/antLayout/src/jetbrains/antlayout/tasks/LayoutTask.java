@@ -15,21 +15,21 @@
  */
 package jetbrains.antlayout.tasks;
 
-import org.apache.tools.ant.Task;
-import org.apache.tools.ant.BuildException;
 import jetbrains.antlayout.datatypes.*;
 import jetbrains.antlayout.util.TempFileFactory;
+import org.apache.tools.ant.BuildException;
+import org.apache.tools.ant.Task;
 import org.apache.tools.ant.types.FileSet;
 
-import java.util.List;
-import java.util.ArrayList;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author max
  */
 public class LayoutTask extends Task {
-    private List<Content> containers = new ArrayList<Content>();
+    private final List<Content> containers = new ArrayList<Content>();
     private File destDir;
 
     public void addDir(DirContainer container) {

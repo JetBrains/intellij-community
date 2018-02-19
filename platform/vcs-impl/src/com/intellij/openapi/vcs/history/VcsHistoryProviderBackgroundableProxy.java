@@ -49,11 +49,11 @@ public class VcsHistoryProviderBackgroundableProxy {
   private final Project myProject;
   private final DiffProvider myDiffProvider;
   private final VcsHistoryProvider myDelegate;
-  private VcsHistoryCache myVcsHistoryCache;
-  private boolean myCachesHistory;
+  private final VcsHistoryCache myVcsHistoryCache;
+  private final boolean myCachesHistory;
   private final HistoryComputerFactory myHistoryComputerFactory;
   private final VcsType myType;
-  private VcsConfiguration myConfiguration;
+  private final VcsConfiguration myConfiguration;
 
   public VcsHistoryProviderBackgroundableProxy(final AbstractVcs vcs, final VcsHistoryProvider delegate, DiffProvider diffProvider) {
     myDelegate = delegate;

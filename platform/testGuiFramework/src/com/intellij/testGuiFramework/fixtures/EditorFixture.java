@@ -18,12 +18,12 @@ package com.intellij.testGuiFramework.fixtures;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.MouseButton;
 import org.fest.swing.core.Robot;
@@ -71,8 +71,6 @@ public class EditorFixture {
    * Performs simulation of user events on <code>{@link #target}</code>
    */
   public final Robot robot;
-  private final IdeFrameFixture myFrame;
-  private final EditorTabsFixture tabs;
   private Editor myEditor;
 
   /**
@@ -81,8 +79,6 @@ public class EditorFixture {
   public EditorFixture(Robot robot, Editor editor) {
     this.robot = robot;
     myEditor = editor;
-    myFrame = null;
-    tabs = null;
   }
 
   /**
@@ -438,8 +434,7 @@ public class EditorFixture {
     Integer offset = execute(new GuiQuery<Integer>() {
       @Override
       protected Integer executeInEDT() throws Throwable {
-        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-        Editor editor = manager.getSelectedTextEditor();
+        Editor editor = getEditor();
         if (editor != null) {
           Document document = editor.getDocument();
           return document.getLineStartOffset(lineNumber - 1);
@@ -460,18 +455,18 @@ public class EditorFixture {
    */
   public EditorFixture moveToAndClick(final int offset, MouseButton button) {
     assertThat(offset).isGreaterThanOrEqualTo(0);
-    execute(new GuiTask() {
+    Editor editor = getEditor();
+    assert editor != null;
+    Component editorComponent = GuiTestUtilKt.INSTANCE.findAllWithBFS(editor.getComponent(), EditorComponentImpl.class).get(0);
+    Point pointToClick = execute(new GuiQuery<Point>() {
       @Override
-      protected void executeInEDT() {
-        Editor editor = getEditor();
-        assert editor != null;
+      protected Point executeInEDT() {
+        editor.getScrollingModel().scrollTo(editor.offsetToLogicalPosition(offset),ScrollType.CENTER);
         VisualPosition visualPosition = editor.offsetToVisualPosition(offset);
-        Point point = editor.visualPositionToXY(visualPosition);
-        Component editorComponent = robot.finder().find(editor.getComponent(), component -> component instanceof EditorComponentImpl);
-        robot.click(editorComponent, point, button, 1);
+        return editor.visualPositionToXY(visualPosition);
       }
     });
-
+    robot.click(editorComponent, pointToClick, button, 1);
     return this;
   }
 
@@ -631,27 +626,6 @@ public class EditorFixture {
     }
     assertTrue("The text segment should have more text than just the caret position", prefix != null || suffix != null);
     return findOffset(prefix, suffix, true);
-  }
-
-
-  /**
-   * Selects the editor with a given tab name.
-   */
-  public EditorFixture selectTab(@NotNull final String tabName) {
-    tabs.waitTab(tabName, 30).selectTab(tabName);
-    return this;
-  }
-
-  /**
-   * Closes the editor with a given tab name.
-   */
-  public EditorFixture closeTab(@NotNull final String tabName) {
-    tabs.closeTab(tabName);
-    return this;
-  }
-
-  public Boolean hasTab(@NotNull final String tabName) {
-    return tabs.hasTab(tabName);
   }
 
 
