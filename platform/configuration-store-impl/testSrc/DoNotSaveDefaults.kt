@@ -82,6 +82,7 @@ class DoNotSaveDefaultsTest {
     // <property name="CommitChangeListDialog.DETAILS_SPLITTER_PROPORTION_2" value="1.0" />
     propertyComponent.unsetValue("CommitChangeListDialog.DETAILS_SPLITTER_PROPORTION_2")
     propertyComponent.unsetValue("ts.lib.d.ts.version")
+    propertyComponent.unsetValue("nodejs_interpreter_path.stuck_in_default_project")
 
     val app = ApplicationManager.getApplication() as ApplicationImpl
     try {
