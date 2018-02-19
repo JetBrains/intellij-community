@@ -51,7 +51,7 @@ public class AddGradleDslDependencyActionTest extends LightPlatformCodeInsightFi
 
   @Override
   protected String getBasePath() {
-    return "/plugins/gradle/testData";
+    return "/plugins/gradle/java/testData";
   }
 
   @Override
