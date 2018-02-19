@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
@@ -22,16 +8,11 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.PathUtil;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 
 /**
@@ -51,7 +32,7 @@ public class ImportOldConfigsPanel extends JDialog {
   private final File myGuessedOldConfig;
   private final ConfigImportSettings mySettings;
 
-  public ImportOldConfigsPanel(final File guessedOldConfig, ConfigImportSettings settings) {
+  public ImportOldConfigsPanel(@Nullable File guessedOldConfig, ConfigImportSettings settings) {
     super((Dialog)null, true);
     myGuessedOldConfig = guessedOldConfig;
     mySettings = settings;
@@ -78,11 +59,7 @@ public class ImportOldConfigsPanel extends JDialog {
       myRbImportAuto.setVisible(false);
     }
 
-    myRbImport.addChangeListener(new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        update();
-      }
-    });
+    myRbImport.addChangeListener(e -> update());
 
     if (myGuessedOldConfig != null) {
       myPrevInstallation.setText(myGuessedOldConfig.getParent());
@@ -97,29 +74,23 @@ public class ImportOldConfigsPanel extends JDialog {
       }
     }
 
-    myPrevInstallation.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        JFileChooser fc = myLastSelection != null ? new JFileChooser(myLastSelection) : new JFileChooser();
+    myPrevInstallation.addActionListener(e -> {
+      JFileChooser fc = myLastSelection != null ? new JFileChooser(myLastSelection) : new JFileChooser();
 
-        fc.setFileSelectionMode(SystemInfo.isMac ? JFileChooser.FILES_AND_DIRECTORIES : JFileChooser.DIRECTORIES_ONLY);
-        fc.setFileHidingEnabled(!SystemInfo.isLinux);
+      fc.setFileSelectionMode(SystemInfo.isMac ? JFileChooser.FILES_AND_DIRECTORIES : JFileChooser.DIRECTORIES_ONLY);
+      fc.setFileHidingEnabled(!SystemInfo.isLinux);
 
-        int returnVal = fc.showOpenDialog(ImportOldConfigsPanel.this);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-          File file = fc.getSelectedFile();
-          if (file != null) {
-            myLastSelection = file;
-            myPrevInstallation.setText(file.getAbsolutePath());
-          }
+      int returnVal = fc.showOpenDialog(this);
+      if (returnVal == JFileChooser.APPROVE_OPTION) {
+        File file = fc.getSelectedFile();
+        if (file != null) {
+          myLastSelection = file;
+          myPrevInstallation.setText(file.getAbsolutePath());
         }
       }
     });
 
-    myOkButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        close();
-      }
-    });
+    myOkButton.addActionListener(e -> close());
 
     CloudConfigProvider configProvider = CloudConfigProvider.getProvider();
     if (configProvider != null) {
@@ -177,10 +148,7 @@ public class ImportOldConfigsPanel extends JDialog {
     IdeInitialConfigButtonUsages.setConfigImport(myRbDoNotImport, myRbImport, myRbImportAuto, myCustomButton);
 
     if (myRbImport.isSelected()) {
-      String instHome = null;
-      if (myPrevInstallation.getText() != null) {
-        instHome = FileUtil.toSystemDependentName(PathUtil.getCanonicalPath(myPrevInstallation.getText()));
-      }
+      String instHome = FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(myPrevInstallation.getText()));
 
       String productWithVendor = mySettings.getProductName(ThreeState.YES);
       if (StringUtil.isEmptyOrSpaces(instHome)) {
@@ -219,13 +187,5 @@ public class ImportOldConfigsPanel extends JDialog {
 
   public File getSelectedFile() {
     return myRbImportAuto.isSelected() ? myGuessedOldConfig : new File(myPrevInstallation.getText());
-  }
-
-  public static void main(String[] args) throws Exception {
-    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-
-    ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(null, new ConfigImportSettings());
-    dialog.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-    dialog.setVisible(true);
   }
 }
