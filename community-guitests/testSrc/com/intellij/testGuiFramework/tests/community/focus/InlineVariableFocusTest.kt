@@ -3,8 +3,8 @@ package com.intellij.testGuiFramework.tests.community.focus
 
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.comparison.ComparisonUtil
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.ui.MultiLineLabelUI
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
@@ -19,6 +19,7 @@ import org.junit.Assert
 import org.junit.Test
 import java.lang.Math.tan
 import java.util.*
+
 
 class InlineVariableFocusTest : GuiTestCase() {
 
@@ -48,8 +49,8 @@ public class Test {
     CommunityProjectCreator.createJavaClass(pasteCode, "Test")
     ideFrame {
       waitForBackgroundTasksToFinish()
-      inlineVariable(firstTime = true)
-      resetCode()
+      val editorSettings = EditorSettingsExternalizable.getInstance()
+      editorSettings.isShowInlineLocalDialog = false
       inlineVariable(firstTime = false)
       val smartRobot = robot() as SmartWaitRobot
       smartRobot.fastTyping("11", 0)
