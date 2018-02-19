@@ -566,4 +566,8 @@ public abstract class DebuggerUtils {
     return Arrays.stream(JavaDebugAware.EP_NAME.getExtensions())
       .anyMatch(provider -> breakpointAware ? provider.isBreakpointAware(file) : provider.isActionAware(file));
   }
+
+  public static boolean isAndroidVM(@NotNull VirtualMachine virtualMachine) {
+    return StringUtil.containsIgnoreCase(virtualMachine.name(), "dalvik");
+  }
 }
