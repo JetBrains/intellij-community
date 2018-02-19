@@ -37,21 +37,19 @@ public class GitExecutableProblemsNotifier {
   public static void showUnsupportedVersionDialog(@NotNull GitVersion version, @Nullable Project project) {
     GuiUtils.invokeLaterIfNeeded(
       () -> Messages.showWarningDialog(project,
-                                       GitBundle.message("git.executable.validation.error.version.subtitle", version.getPresentation())
-                                       + "\n\n" +
                                        GitBundle
                                          .message("git.executable.validation.error.version.message", GitVersion.MIN.getPresentation()),
-                                       GitBundle.getString("git.executable.validation.error.title")), ModalityState.defaultModalityState());
+                                       GitBundle.message("git.executable.validation.error.version.title", version.getPresentation())),
+      ModalityState.defaultModalityState());
   }
 
   @CalledInAny
-  public static void showExecutionErrorDialog(@NotNull Throwable e, @NotNull String pathToExecutable, @Nullable Project project) {
+  public static void showExecutionErrorDialog(@NotNull Throwable e, @Nullable Project project) {
     GuiUtils.invokeLaterIfNeeded(
       () -> Messages.showErrorDialog(project,
-                                     GitBundle.message("git.executable.validation.error.start.subtitle", pathToExecutable)
-                                     + "\n\n" +
                                      getPrettyErrorMessage(e),
-                                     GitBundle.getString("git.executable.validation.error.title")), ModalityState.defaultModalityState());
+                                     GitBundle.getString("git.executable.validation.error.start.title")),
+      ModalityState.defaultModalityState());
   }
 
   @CalledInAny
@@ -62,8 +60,8 @@ public class GitExecutableProblemsNotifier {
   }
 
   @CalledInAny
-  public void notifyExecutionError(@NotNull String pathToExecutable, @NotNull Throwable exception) {
-    BadGitExecutableNotification notification = new ErrorRunningGitNotification(getPrettyErrorMessage(exception), pathToExecutable);
+  public void notifyExecutionError(@NotNull Throwable exception) {
+    BadGitExecutableNotification notification = new ErrorRunningGitNotification(getPrettyErrorMessage(exception));
     notification.addConfigureGitActions(myProject);
     notify(notification);
   }
@@ -116,8 +114,8 @@ public class GitExecutableProblemsNotifier {
   private static class UnsupportedGitVersionNotification extends BadGitExecutableNotification {
     public UnsupportedGitVersionNotification(@NotNull GitVersion unsupportedVersion) {
       super(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.getDisplayId(), null,
-            GitBundle.getString("git.executable.validation.error.title"),
-            GitBundle.message("git.executable.validation.error.version.subtitle", unsupportedVersion.getPresentation()),
+            GitBundle.message("git.executable.validation.error.version.title", unsupportedVersion.getPresentation()),
+            null,
             GitBundle.message("git.executable.validation.error.version.message", GitVersion.MIN.getPresentation()),
             NotificationType.WARNING, null);
     }
@@ -127,10 +125,10 @@ public class GitExecutableProblemsNotifier {
    * Notification about not being able to determine version
    */
   private static class ErrorRunningGitNotification extends BadGitExecutableNotification {
-    public ErrorRunningGitNotification(@NotNull String error, @NotNull String pathToExecutable) {
+    public ErrorRunningGitNotification(@NotNull String error) {
       super(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.getDisplayId(), null,
-            GitBundle.getString("git.executable.validation.error.title"),
-            GitBundle.message("git.executable.validation.error.start.subtitle", pathToExecutable),
+            GitBundle.getString("git.executable.validation.error.start.title"),
+            null,
             error,
             NotificationType.ERROR, null);
     }
