@@ -44,7 +44,7 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
         }
       }
       ideFrame {
-        val secondToWaitIndexing = 120
+        val secondToWaitIndexing = 300
         try {
           waitForStartingIndexing(secondToWaitIndexing) //let's wait for 2 minutes until indexing bar will appeared
         } catch (timedOutError: WaitTimedOutError) { LOG.warn("Waiting for indexing has been exceeded $secondToWaitIndexing seconds") }
@@ -52,6 +52,7 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
         if (needToOpenMainJava) {
           projectView {
             path(project.name, "src", "com.company", "Main").doubleClick()
+            waitForBackgroundTasksToFinish()
           }
         }
       }
