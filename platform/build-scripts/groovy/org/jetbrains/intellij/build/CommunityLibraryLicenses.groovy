@@ -189,7 +189,7 @@ class CommunityLibraryLicenses {
                        url: "http://www.jgoodies.com/freeware/libraries/looks/", licenseUrl: "https://opensource.org/licenses/bsd-license.html"),
     new LibraryLicense(name: "JGoodies Forms", libraryName: "jgoodies-forms", version: "1.1-preview 2006-05-04 11:55:37", license: "BSD",
                        url: "http://www.jgoodies.com/freeware/libraries/forms/", licenseUrl: "https://opensource.org/licenses/bsd-license.html"),
-    new LibraryLicense(name: "jgraphx", libraryName: "jgraphx-3.4.0.1", version: "3.4.0.1", license: "BSD",
+    new LibraryLicense(name: "jgraphx", libraryName: "jgraphx", version: "3.4.1.3", license: "BSD",
                        url: "https://github.com/jgraph/jgraphx"),
     new LibraryLicense(name: "JNA", libraryName: "jna", version: "4.5.0", license: "LGPL 2.1", url: "https://github.com/java-native-access/jna",
                        licenseUrl: "http://www.opensource.org/licenses/lgpl-2.1.php"),
