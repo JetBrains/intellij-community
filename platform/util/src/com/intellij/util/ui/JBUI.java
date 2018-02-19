@@ -744,6 +744,13 @@ public class JBUI {
     }
 
     /**
+     * Creates a context with all scale factors set to 1.
+     */
+    public static BaseScaleContext createIdentity() {
+      return create(USR_SCALE.of(1));
+    }
+
+    /**
      * Creates a context with the provided scale factors (system scale is ignored)
      */
     public static BaseScaleContext create(@NotNull Scale... scales) {
@@ -875,6 +882,18 @@ public class JBUI {
         case PIX_SCALE: pixScale = newScale; break;
       }
       return true;
+    }
+
+    public <T extends BaseScaleContext> T copy() {
+      BaseScaleContext ctx = createIdentity();
+      ctx.updateAll(this);
+      //noinspection unchecked
+      return (T)ctx;
+    }
+
+    @Override
+    public String toString() {
+      return usrScale + ", " + objScale + ", " + pixScale;
     }
   }
 
@@ -1036,6 +1055,19 @@ public class JBUI {
       if (compRef != null) {
         compRef.clear();
       }
+    }
+
+    @Override
+    public <T extends BaseScaleContext> T copy() {
+      ScaleContext ctx = createIdentity();
+      ctx.updateAll(this);
+      //noinspection unchecked
+      return (T)ctx;
+    }
+
+    @Override
+    public String toString() {
+      return usrScale + ", " + sysScale + ", " + objScale + ", " + pixScale;
     }
   }
 
