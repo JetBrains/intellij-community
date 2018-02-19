@@ -323,7 +323,28 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   @NotNull
   private Collection<String> doSuggestNamesByType(@NotNull PsiType type, @NotNull final VariableKind variableKind, boolean skipIndices) {
-    String longTypeName = skipIndices ? type.getCanonicalText():getLongTypeName(type);
+    final Collection<String> fromTypeMap = suggestNamesFromTypeMap(type, variableKind, skipIndices);
+    if (fromTypeMap != null) {
+      return fromTypeMap;
+    }
+
+    if (!(type instanceof PsiClassType) || skipIndices) {
+      return suggestNamesFromTypeName(type, skipIndices);
+    }
+
+    final Collection<String> suggestions = new LinkedHashSet<>();
+    final PsiClassType classType = (PsiClassType)type;
+    suggestNamesForCollectionInheritors(classType, suggestions);
+    suggestFromOptionalContent(variableKind, classType, suggestions);
+    suggestNamesFromGenericParameters(classType, suggestions);
+    suggestions.addAll(suggestNamesFromTypeName(type, false));
+    suggestNamesFromHierarchy(classType, suggestions);
+    return suggestions;
+  }
+
+  @Nullable
+  private Collection<String> suggestNamesFromTypeMap(@NotNull PsiType type, @NotNull VariableKind variableKind, boolean skipIndices) {
+    String longTypeName = skipIndices ? type.getCanonicalText() : getLongTypeName(type);
     CodeStyleSettings.TypeToNameMap map = getMapByVariableKind(variableKind);
     if (map != null && longTypeName != null) {
       if (type.equals(PsiType.NULL)) {
@@ -334,51 +355,57 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         return Collections.singletonList(type instanceof PsiArrayType ? StringUtil.pluralize(name) : name);
       }
     }
-
-    final Collection<String> suggestions = new LinkedHashSet<>();
-
-    final PsiClass psiClass = !skipIndices && type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;
-
-    if (!skipIndices) {
-      suggestNamesForCollectionInheritors(type, suggestions);
-
-      if (psiClass != null && CommonClassNames.JAVA_UTIL_OPTIONAL.equals(psiClass.getQualifiedName()) && ((PsiClassType)type).getParameterCount() == 1) {
-        PsiType optionalContent = ((PsiClassType)type).getParameters()[0];
-        Collection<String> contentSuggestions = doSuggestNamesByType(optionalContent, variableKind, false);
-        suggestions.addAll(contentSuggestions);
-        for (String s : contentSuggestions) {
-          suggestions.add("optional" + StringUtil.capitalize(s));
-        }
-      }
-
-      suggestNamesFromGenericParameters(type, suggestions);
-    }
-
-    String typeName = getTypeName(type, !skipIndices);
-
-    if (typeName != null) {
-      typeName = normalizeTypeName(typeName);
-      suggestions.add(type instanceof PsiArrayType ? StringUtil.pluralize(typeName) : typeName);
-    }
-
-    if (psiClass != null && psiClass.getContainingClass() != null) {
-      InheritanceUtil.processSupers(psiClass, false, superClass -> {
-        if (PsiTreeUtil.isAncestor(superClass, psiClass, true)) {
-          suggestions.add(superClass.getName());
-        }
-        return false;
-      });
-    }
-
-    return suggestions;
+    return null;
   }
 
-  private static void suggestNamesFromGenericParameters(@NotNull PsiType type, @NotNull Collection<String> suggestions) {
-    if (!(type instanceof PsiClassType)) {
-      return;
+  private void suggestFromOptionalContent(@NotNull VariableKind variableKind,
+                                          @NotNull PsiClassType classType,
+                                          @NotNull Collection<String> suggestions) {
+    final PsiType optionalContent = extractOptionalContent(classType);
+    if (optionalContent == null) return;
+
+    final Collection<String> contentSuggestions = doSuggestNamesByType(optionalContent, variableKind, false);
+    suggestions.addAll(contentSuggestions);
+    for (String s : contentSuggestions) {
+      suggestions.add("optional" + StringUtil.capitalize(s));
     }
+  }
+
+  @NotNull
+  private static Collection<String> suggestNamesFromTypeName(@NotNull PsiType type, boolean skipIndices) {
+    String typeName = getTypeName(type, !skipIndices);
+    if (typeName == null) return Collections.emptyList();
+
+    typeName = normalizeTypeName(typeName);
+    return Collections.singletonList(type instanceof PsiArrayType ? StringUtil.pluralize(typeName) : typeName);
+  }
+
+  @Nullable
+  private static PsiType extractOptionalContent(@NotNull PsiClassType classType) {
+    final PsiClass resolved = classType.resolve();
+    if (resolved != null && CommonClassNames.JAVA_UTIL_OPTIONAL.equals(resolved.getQualifiedName())) {
+      if (classType.getParameterCount() == 1) {
+        return classType.getParameters()[0];
+      }
+    }
+    return null;
+  }
+
+  private static void suggestNamesFromHierarchy(@NotNull PsiClassType type, @NotNull Collection<String> suggestions) {
+    final PsiClass resolved = type.resolve();
+    if (resolved == null || resolved.getContainingClass() == null) return;
+
+    InheritanceUtil.processSupers(resolved, false, superClass -> {
+      if (PsiTreeUtil.isAncestor(superClass, resolved, true)) {
+        suggestions.add(superClass.getName());
+      }
+      return false;
+    });
+  }
+
+  private static void suggestNamesFromGenericParameters(@NotNull PsiClassType type, @NotNull Collection<String> suggestions) {
     StringBuilder fullNameBuilder = new StringBuilder();
-    final PsiType[] parameters = ((PsiClassType)type).getParameters();
+    final PsiType[] parameters = type.getParameters();
     for (PsiType parameter : parameters) {
       if (parameter instanceof PsiClassType) {
         final String typeName = normalizeTypeName(getTypeName(parameter));
@@ -394,7 +421,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     }
   }
 
-  private static void suggestNamesForCollectionInheritors(@NotNull PsiType type, @NotNull Collection<String> suggestions) {
+  private static void suggestNamesForCollectionInheritors(@NotNull PsiClassType type, @NotNull Collection<String> suggestions) {
     PsiType componentType = PsiUtil.extractIterableTypeParameter(type, false);
     if (componentType == null || componentType.equals(type)) {
       return;
