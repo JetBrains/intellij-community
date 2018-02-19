@@ -376,6 +376,12 @@ public class PyResolveTest extends PyResolveTestCase {
     assertResolvesTo(PyFunction.class, "foo");
   }
 
+  //PY-28562
+  public void testSuperMetaClassInheritsObject() {
+    assertResolvesTo(PyFunction.class, "__getattribute__");
+  }
+
+
   public void testSuperDunderClass() {  // PY-1190
     assertResolvesTo(PyFunction.class, "foo");
   }
