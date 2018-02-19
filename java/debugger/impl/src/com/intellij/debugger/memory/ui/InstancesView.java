@@ -171,6 +171,7 @@ class InstancesView extends InstancesViewBase {
 
   private void updateInstances() {
     cancelFilteringTask();
+    final XExpression filteringExpression = myFilterConditionEditor.getExpression();
 
     myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(myDebugProcess.getDebuggerContext()) {
       @Override
@@ -198,7 +199,7 @@ class InstancesView extends InstancesViewBase {
           synchronized (myFilteringTaskLock) {
             List<ObjectReference> finalInstances = instances;
             ApplicationManager.getApplication().runReadAction(() -> {
-              myFilteringTask = new MyFilteringWorker(finalInstances, myFilterConditionEditor.getExpression(), evaluationContext);
+              myFilteringTask = new MyFilteringWorker(finalInstances, filteringExpression, evaluationContext);
               myFilteringTask.execute();
             });
           }

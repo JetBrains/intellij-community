@@ -371,7 +371,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
 
       if (!classes.isEmpty()) {
         final VirtualMachine vm = classes.get(0).virtualMachine();
-        if (vm.canGetInstanceInfo()) {
+        if (proxy.canGetInstanceInfo()) {
           final Map<TypeInfo, Long> counts = getInstancesCounts(classes, vm);
           ApplicationManager.getApplication().invokeLater(() -> getMyTable().updateContent(counts));
         }
