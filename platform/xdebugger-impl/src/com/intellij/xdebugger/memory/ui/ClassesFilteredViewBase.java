@@ -115,8 +115,13 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
       }
 
       private void dispatch(KeyEvent e) {
-        if (KeyboardUtils.isUpDownKey(e.getKeyCode()) || KeyboardUtils.isEnterKey(e.getKeyCode())) {
-          getMyTable().dispatchEvent(e);
+        final int keyCode = e.getKeyCode();
+        if (myTable.isInClickableMode() && (KeyboardUtils.isCharacter(keyCode) || KeyboardUtils.isEnterKey(keyCode))) {
+          myTable.exitClickableMode();
+          updateClassesAndCounts(true);
+        }
+        else if (KeyboardUtils.isUpDownKey(keyCode) || KeyboardUtils.isEnterKey(keyCode)) {
+          myTable.dispatchEvent(e);
         }
       }
     });
