@@ -81,6 +81,7 @@ class DoNotSaveDefaultsTest {
     propertyComponent.unsetValue("file.gist.reindex.count")
     // <property name="CommitChangeListDialog.DETAILS_SPLITTER_PROPORTION_2" value="1.0" />
     propertyComponent.unsetValue("CommitChangeListDialog.DETAILS_SPLITTER_PROPORTION_2")
+    propertyComponent.unsetValue("ts.lib.d.ts.version")
 
     val app = ApplicationManager.getApplication() as ApplicationImpl
     try {
