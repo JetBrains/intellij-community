@@ -115,7 +115,8 @@ public class ExtensionPointDocumentationProvider extends DocumentationProviderEx
     return JavaDocUtil.findReferenceTarget(psiManager, link, context);
   }
 
-  private static void generateClassLink(StringBuilder epClassText, PsiClass epClass) {
+  private static void generateClassLink(StringBuilder epClassText, @Nullable PsiClass epClass) {
+    if (epClass == null) return;
     JavaDocInfoGenerator.generateType(epClassText, PsiTypesUtil.getClassType(epClass), epClass, true);
   }
 
