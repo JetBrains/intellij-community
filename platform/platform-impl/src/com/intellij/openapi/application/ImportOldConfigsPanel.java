@@ -19,18 +19,18 @@ import java.io.File;
  * @author max
  */
 public class ImportOldConfigsPanel extends JDialog {
-  private TextFieldWithBrowseButton myPrevInstallation;
-  private JRadioButton myRbDoNotImport;
-  private JRadioButton myRbImport;
   private JPanel myRootPanel;
-  private File myLastSelection = null;
-  private JButton myOkButton;
   private JLabel mySuggestLabel;
   private JRadioButton myRbImportAuto;
+  private JRadioButton myRbImport;
+  private TextFieldWithBrowseButton myPrevInstallation;
   private JRadioButton myCustomButton;
+  private JRadioButton myRbDoNotImport;
+  private JButton myOkButton;
 
   private final File myGuessedOldConfig;
   private final ConfigImportSettings mySettings;
+  private File myLastSelection = null;
 
   public ImportOldConfigsPanel(@Nullable File guessedOldConfig, ConfigImportSettings settings) {
     super((Dialog)null, true);
@@ -43,9 +43,9 @@ public class ImportOldConfigsPanel extends JDialog {
     MnemonicHelper.init(getContentPane());
 
     ButtonGroup group = new ButtonGroup();
-    group.add(myRbDoNotImport);
-    group.add(myRbImport);
     group.add(myRbImportAuto);
+    group.add(myRbImport);
+    group.add(myRbDoNotImport);
     myRbDoNotImport.setSelected(true);
 
     String productName = mySettings.getProductName(ThreeState.UNSURE);
