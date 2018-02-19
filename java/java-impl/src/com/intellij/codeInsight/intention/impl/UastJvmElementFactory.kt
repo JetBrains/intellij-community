@@ -12,6 +12,7 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.JvmPsiConversionHelper
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
+import com.intellij.psi.codeStyle.SuggestedNameInfo
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.uast.*
 import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory as UastJvmCommonIntentionActionsFactory
@@ -44,7 +45,7 @@ class UastJvmElementFactory(val renderer: JavaElementRenderer) : JvmElementActio
     }
   }
 
-  private fun parametersAsUParameters(project: Project, parameters: ExpectedParameters): List<UParameter> {
+  private fun parametersAsUParameters(project: Project, parameters: List<Pair<SuggestedNameInfo, List<ExpectedType>>>): List<UParameter> {
     val helper = JvmPsiConversionHelper.getInstance(project)
     val factory = JavaPsiFacade.getElementFactory(project)
     return parameters.mapIndexed { i, pair ->
