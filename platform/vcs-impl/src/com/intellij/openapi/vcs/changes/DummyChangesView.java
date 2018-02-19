@@ -17,6 +17,9 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
 * @author irengrig
@@ -38,6 +41,10 @@ class DummyChangesView implements ChangesViewI {
   }
 
   @Override
+  public void selectChanges(@NotNull List<Change> changes) {
+  }
+
+  @Override
   public void updateProgressText(String text, boolean isError) {
   }
 
@@ -46,6 +53,6 @@ class DummyChangesView implements ChangesViewI {
   }
 
   @Override
-  public void setShowFlattenMode(boolean state) {
+  public void setGrouping(@NotNull String groupingKey) {
   }
 }

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.hint;
 
@@ -160,8 +158,8 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
     MessageBusConnection connection = project.getMessageBus().connect(this);
     connection.subscribe(ExternalParameterInfoChangesProvider.TOPIC, (e, offset) -> {
-      if (e != myEditor || myLbraceMarker.getStartOffset() != offset) return;
-      rescheduleUpdate();
+      if (e != null && (e != myEditor || myLbraceMarker.getStartOffset() != offset)) return;
+      updateWhenAllCommitted();
     });
 
     PropertyChangeListener lookupListener = new PropertyChangeListener() {
@@ -272,20 +270,21 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
   private void rescheduleUpdate(){
     myAlarm.cancelAllRequests();
-    Runnable request = () -> {
-      if (!myDisposed && !myProject.isDisposed()) {
-        PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
-          try {
-            DumbService.getInstance(myProject).withAlternativeResolveEnabled(this::updateComponent);
-          }
-          catch (IndexNotReadyException e) {
-            LOG.info(e);
-            Disposer.dispose(this);
-          }
-        });
-      }
-    };
-    myAlarm.addRequest(request, DELAY, ModalityState.stateForComponent(myEditor.getComponent()));
+    myAlarm.addRequest(() -> updateWhenAllCommitted(), DELAY, ModalityState.stateForComponent(myEditor.getComponent()));
+  }
+
+  private void updateWhenAllCommitted() {
+    if (!myDisposed && !myProject.isDisposed()) {
+      PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
+        try {
+          DumbService.getInstance(myProject).withAlternativeResolveEnabled(this::updateComponent);
+        }
+        catch (IndexNotReadyException e) {
+          LOG.info(e);
+          Disposer.dispose(this);
+        }
+      });
+    }
   }
 
   public void updateComponent(){
@@ -296,10 +295,8 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
     final PsiFile file =  PsiUtilBase.getPsiFileInEditor(myEditor, myProject);
     CharSequence chars = myEditor.getDocument().getCharsSequence();
-    boolean noDelimiter = myHandler instanceof ParameterInfoHandlerWithTabActionSupport &&
-                          ((ParameterInfoHandlerWithTabActionSupport)myHandler).getActualParameterDelimiterType() == TokenType.WHITE_SPACE;
     int caretOffset = myEditor.getCaretModel().getOffset();
-    final int offset = noDelimiter ? caretOffset :
+    final int offset = myHandler.isWhitespaceSensitive() ? caretOffset :
                        CharArrayUtil.shiftBackward(chars, caretOffset - 1, WHITESPACE) + 1;
 
     final UpdateParameterInfoContext context = new MyUpdateParameterInfoContext(offset, file);
@@ -307,10 +304,12 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
     if (elementForUpdating != null) {
       myHandler.updateParameterInfo(elementForUpdating, context);
-      if (mySingleParameterInfo && myComponent.getCurrentParameterIndex() == -1 && myHint.isVisible()) {
+      boolean knownParameter = (myComponent.getObjects().length == 1 || myComponent.getHighlighted() != null) && 
+                               myComponent.getCurrentParameterIndex() != -1;
+      if (mySingleParameterInfo && !knownParameter && myHint.isVisible()) {
         myHint.hide();
       }
-      if (myKeepOnHintHidden && myComponent.getCurrentParameterIndex() != -1 && !myHint.isVisible()) {
+      if (myKeepOnHintHidden && knownParameter && !myHint.isVisible()) {
         AutoPopupController.getInstance(myProject).autoPopupParameterInfo(myEditor, null);
       }
       if (!myDisposed && myHint.isVisible() && !myEditor.isDisposed() &&
@@ -463,10 +462,6 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     return myComponent.getHighlighted();
   }
 
-  public void resetHighlighted() {
-    myComponent.setHighlightedParameter(null);
-  }
-
   public void setPreservedOnHintHidden(boolean value) {
     myKeepOnHintHidden = value;
   }
@@ -530,22 +525,18 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     boolean p1Ok = p1.y + hintSize.height < layeredPane.getHeight();
     boolean p2Ok = p2.y >= 0;
 
-    if (showLookupHint) {
-      if (p1Ok) return new Pair<>(p1, HintManager.UNDER);
-      if (p2Ok) return new Pair<>(p2, HintManager.ABOVE);
-    }
-    else {
+    if (!showLookupHint) {
       if (preferredPosition != HintManager.DEFAULT) {
         if (preferredPosition == HintManager.ABOVE) {
           if (p2Ok) return new Pair<>(p2, HintManager.ABOVE);
-        } else if (preferredPosition == HintManager.UNDER) {
+        }
+        else if (preferredPosition == HintManager.UNDER) {
           if (p1Ok) return new Pair<>(p1, HintManager.UNDER);
         }
       }
-
-      if (p1Ok) return new Pair<>(p1, HintManager.UNDER);
-      if (p2Ok) return new Pair<>(p2, HintManager.ABOVE);
     }
+    if (p1Ok) return new Pair<>(p1, HintManager.UNDER);
+    if (p2Ok) return new Pair<>(p2, HintManager.ABOVE);
 
     int underSpace = layeredPane.getHeight() - p1.y;
     int aboveSpace = p2.y;
@@ -692,8 +683,12 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
                                                    short preferredPosition) {
       if (list != null) {
         TextRange range = list.getTextRange();
-        if (!range.contains(offset)) {
-          offset = range.getStartOffset() + 1;
+        TextRange rangeWithoutParens = TextRange.from(range.getStartOffset() + 1, Math.max(range.getLength() - 2, 0));
+        if (!rangeWithoutParens.contains(offset)) {
+          if (offset < rangeWithoutParens.getStartOffset())
+            offset = rangeWithoutParens.getStartOffset();
+          else
+            offset = rangeWithoutParens.getEndOffset();
           pos = null;
         }
       }

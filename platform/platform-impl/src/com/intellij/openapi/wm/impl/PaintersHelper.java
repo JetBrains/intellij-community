@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -95,39 +94,31 @@ final class PaintersHelper implements Painter.Listener {
     runAllPainters(g, computeOffsets(g, myRootComponent));
   }
 
-  void runAllPainters(Graphics gg, int[] offsets) {
-    if (myPainters.isEmpty()) return;
+  void runAllPainters(Graphics gg, @Nullable Offsets offsets) {
+    if (myPainters.isEmpty() || offsets == null) return;
     Graphics2D g = (Graphics2D)gg;
     AffineTransform orig = g.getTransform();
     int i = 0;
-    // restore transform at the time of computeOffset()
-    AffineTransform t = new AffineTransform();
-    t.translate(offsets[i++], offsets[i++]);
-
     for (Painter painter : myPainters) {
       if (!painter.needsRepaint()) continue;
       Component cur = myPainter2Component.get(painter);
-
-      g.setTransform(t);
-      g.translate(offsets[i++], offsets[i++]);
-      // paint in the orig graphics scale (note, the offsets are pre-scaled)
-      g.scale(orig.getScaleX(), orig.getScaleY());
+      // restore transform at the time of computeOffset()
+      g.setTransform(offsets.transform);
+      g.translate(offsets.offsets[i++], offsets.offsets[i++]);
       painter.paint(cur, g);
     }
     g.setTransform(orig);
   }
 
-  @NotNull
-  int[] computeOffsets(Graphics gg, @NotNull JComponent component) {
-    if (myPainters.isEmpty()) return ArrayUtil.EMPTY_INT_ARRAY;
+  @Nullable
+  Offsets computeOffsets(Graphics gg, @NotNull JComponent component) {
+    if (myPainters.isEmpty()) return null;
+    Offsets offsets = new Offsets();
     int i = 0;
-    int[] offsets = new int[2 + myPainters.size() * 2];
+    offsets.offsets = new int[myPainters.size() * 2];
     // store current graphics transform
     Graphics2D g = (Graphics2D)gg;
-    AffineTransform tx = g.getTransform();
-    // graphics tx offsets include graphics scale
-    offsets[i++] = (int)tx.getTranslateX();
-    offsets[i++] = (int)tx.getTranslateY();
+    offsets.transform = new AffineTransform(g.getTransform());
     // calculate relative offsets for painters
     Rectangle r = null;
     Component prev = null;
@@ -142,10 +133,15 @@ final class PaintersHelper implements Painter.Listener {
         prev = cur;
       }
       // component offsets don't include graphics scale, so compensate
-      offsets[i++] = (int)(r.x * tx.getScaleX());
-      offsets[i++] = (int)(r.y * tx.getScaleY());
+      offsets.offsets[i++] = r.x;
+      offsets.offsets[i++] = r.y;
     }
     return offsets;
+  }
+  
+  public static class Offsets {
+    AffineTransform transform;
+    int[] offsets;
   }
 
   @Override
@@ -378,11 +374,11 @@ final class PaintersHelper implements Painter.Listener {
             (h - ch) / 2;
       }
 
-      float adjustedAlpha = Boolean.TRUE.equals(g.getRenderingHint(IdeBackgroundUtil.ADJUST_ALPHA)) ? alpha / 2 : alpha;
+      float adjustedAlpha = Boolean.TRUE.equals(g.getRenderingHint(IdeBackgroundUtil.ADJUST_ALPHA)) ? 0.65f * alpha : alpha;
       GraphicsConfig gc = new GraphicsConfig(g).setAlpha(adjustedAlpha);
       Rectangle src = new Rectangle(x, y, cw, ch);
       Rectangle dst = new Rectangle(i.left, i.top, cw, ch);
-      UIUtil.drawImage(g, scaled, dst, src, null);
+      UIUtil.drawImage(g, scaled, dst, src, null, null);
       gc.restore();
     }
 

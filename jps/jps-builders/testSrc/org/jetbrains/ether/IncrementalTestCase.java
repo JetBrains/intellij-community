@@ -156,16 +156,34 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     return addModule(moduleName, new String[]{srcPath}, null, null, getOrCreateJdk());
   }
 
+  /**
+   * If the test changes project model between makes (e.g. module renamed), the descriptor should be re-created before each build session
+   * in order to ensure the project is loaded correctly. If project model is unchanged, teh project descriptor can be reused from the previous build session
+   * @return true if project descriptor from previous session can be reused, false otherwise
+   */
+  protected boolean useCachedProjectDescriptorOnEachMake() {
+    return true;
+  }
+
   protected BuildResult doTestBuild(int makesCount) {
     StringBuilder log = new StringBuilder();
     String rootPath = FileUtil.toSystemIndependentName(workDir.getAbsolutePath()) + "/";
-    final ProjectDescriptor pd = createProjectDescriptor(new BuildLoggingManager(new StringProjectBuilderLogger(rootPath, log)));
+    ProjectDescriptor pd = createProjectDescriptor(new BuildLoggingManager(new StringProjectBuilderLogger(rootPath, log)));
     BuildResult result = null;
     try {
+      final boolean reuseProjectId = useCachedProjectDescriptorOnEachMake();
+
       doBuild(pd, CompileScopeTestBuilder.rebuild().allModules()).assertSuccessful();
 
       for (int idx = 0; idx < makesCount; idx++) {
+        // this will save the current build data state before any changes were done to the project model
+        if (!reuseProjectId) {
+          pd.release();
+        }
         modify(idx);
+        if (!reuseProjectId) {
+          pd = createProjectDescriptor(new BuildLoggingManager(new StringProjectBuilderLogger(rootPath, log)));
+        }
         result = doBuild(pd, CompileScopeTestBuilder.make().allModules());
       }
 
@@ -205,7 +223,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
 
   private static class StringProjectBuilderLogger extends ProjectBuilderLoggerBase {
     private final String myRoot;
-    private StringBuilder myLog;
+    private final StringBuilder myLog;
 
     private StringProjectBuilderLogger(String root, StringBuilder log) {
       myRoot = root;

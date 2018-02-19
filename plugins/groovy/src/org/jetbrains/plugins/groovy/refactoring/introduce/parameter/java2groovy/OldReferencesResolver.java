@@ -354,14 +354,11 @@ public class OldReferencesResolver {
 
   private String getTempVar(GrExpression expr) throws IncorrectOperationException {
     String id = myTempVars.get(expr);
-    if (id != null) {
-      return id;
-    }
-    else {
+    if (id == null) {
       id = GroovyRefactoringUtil.createTempVar(expr, myContext, true);
       myTempVars.put(expr, id);
-      return id;
     }
+    return id;
   }
 
   private static PsiElement replaceFieldWithGetter(PsiElement expr, PsiField psiField) throws IncorrectOperationException {

@@ -36,8 +36,8 @@ public class DfaFactMapValue extends DfaValue {
   }
 
   public static class Factory {
-    private DfaValueFactory myFactory;
-    private Map<DfaFactMap, DfaFactMapValue> myValues = new HashMap<>();
+    private final DfaValueFactory myFactory;
+    private final Map<DfaFactMap, DfaFactMapValue> myValues = new HashMap<>();
 
     Factory(DfaValueFactory factory) {
       myFactory = factory;

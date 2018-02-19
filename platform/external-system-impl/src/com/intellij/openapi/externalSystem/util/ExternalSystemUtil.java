@@ -1041,13 +1041,10 @@ public class ExternalSystemUtil {
   @Nullable
   public static VirtualFile refreshAndFindFileByIoFile(@NotNull final File file) {
     final Application app = ApplicationManager.getApplication();
-    if (app.isDispatchThread()) {
-      return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-    }
-    else {
+    if (!app.isDispatchThread()) {
       assert !((ApplicationEx)app).holdsReadLock();
-      return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     }
+    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
   }
 
   @Nullable

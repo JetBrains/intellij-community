@@ -174,9 +174,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     CompoundRuntimeException.throwIfNotEmpty(errors)
   }
 
-  private fun doSaveComponents(isForce: Boolean,
-                               externalizationSession: ExternalizationSession,
-                               _errors: MutableList<Throwable>?): MutableList<Throwable>? {
+  private fun doSaveComponents(isForce: Boolean, externalizationSession: ExternalizationSession, _errors: MutableList<Throwable>?): MutableList<Throwable>? {
     val isUseModificationCount = Registry.`is`("store.save.use.modificationCount", true)
 
     var errors = _errors
@@ -209,7 +207,7 @@ abstract class ComponentStoreImpl : IComponentStore {
             info.lastSaved = nowInSeconds
           }
           else {
-            LOG.debug { "Skip $name: was already saved in last 4 minutes (lastSaved ${info.lastSaved}, now: $nowInSeconds)" }
+            LOG.debug { "Skip $name: was already saved in last ${TimeUnit.SECONDS.toMinutes(NOT_ROAMABLE_COMPONENT_SAVE_THRESHOLD_DEFAULT.toLong())} minutes (lastSaved ${info.lastSaved}, now: $nowInSeconds)" }
             continue
           }
         }
@@ -239,8 +237,8 @@ abstract class ComponentStoreImpl : IComponentStore {
     return errors
   }
 
-  override @TestOnly
-  fun saveApplicationComponent(component: PersistentStateComponent<*>) {
+  @TestOnly
+  override fun saveApplicationComponent(component: PersistentStateComponent<*>) {
     val externalizationSession = storageManager.startExternalization() ?: return
 
     val stateSpec = StoreUtil.getStateSpec(component)

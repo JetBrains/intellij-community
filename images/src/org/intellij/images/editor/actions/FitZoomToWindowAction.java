@@ -20,6 +20,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.editor.actionSystem.ImageEditorActionUtil;
+import org.intellij.images.options.Options;
+import org.intellij.images.options.OptionsManager;
+import org.intellij.images.options.ZoomOptions;
 import org.intellij.images.ui.ImageComponentDecorator;
 
 public final class FitZoomToWindowAction extends AnAction implements DumbAware {
@@ -32,6 +35,12 @@ public final class FitZoomToWindowAction extends AnAction implements DumbAware {
   }
 
   public void update(AnActionEvent e) {
-    ImageEditorActionUtil.setEnabled(e);
+    if (ImageEditorActionUtil.setEnabled(e)) {
+      Options options = OptionsManager.getInstance().getOptions();
+      ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
+      ImageComponentDecorator decorator = ImageEditorActionUtil.getImageComponentDecorator(e);
+      ImageZoomModel zoomModel = decorator.getZoomModel();
+      e.getPresentation().setEnabled(zoomModel.isZoomLevelChanged() || !zoomOptions.isSmartZooming());
+    }
   }
 }

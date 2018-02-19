@@ -87,6 +87,20 @@ class GroupModulesByQualifiedNamesTest : PlatformTestCase() {
     assertEmpty(parentGroup.childGroups(grouper))
   }
 
+  fun `test names with incorrect chars after dots`() {
+    val module1 = createModule("a.foo-1.2")
+    val module2 = createModule("a.foo-1.3")
+
+    assertEquals("foo-1.2", grouper.getShortenedName(module1))
+    assertEquals("foo-1.3", grouper.getShortenedName(module2))
+
+    val parentGroup = ModuleGroup(listOf("a"))
+    assertSameElements(parentGroup.modulesInGroup(grouper, false), module1, module2)
+    assertSameElements(parentGroup.modulesInGroup(grouper, true), module1, module2)
+
+    assertEmpty(parentGroup.childGroups(grouper))
+  }
+
   private val grouper: ModuleGrouper
     get() = getQualifiedNameModuleGrouper(myProject)
 }

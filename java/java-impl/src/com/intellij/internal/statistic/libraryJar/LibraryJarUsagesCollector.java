@@ -39,6 +39,7 @@ import java.util.regex.Pattern;
 
 /**
  * @author Ivan Chirkov
+ * @Deprecated // To be removed in 2018.1. See {@link FUSLibraryJarUsagesCollector}
  */
 public class LibraryJarUsagesCollector extends AbstractProjectsUsagesCollector {
   private static final GroupDescriptor GROUP = GroupDescriptor.create("Libraries by jars", GroupDescriptor.LOWER_PRIORITY);

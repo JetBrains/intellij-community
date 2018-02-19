@@ -50,7 +50,7 @@ import java.util.concurrent.TimeUnit;
  * @author peter
  */
 public class CompilerTester {
-  private Project myProject;
+  private final Project myProject;
   private List<Module> myModules;
   private TempDirTestFixture myMainOutput;
 

@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.ui.EditorTextField;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
@@ -75,7 +76,7 @@ public class DarculaEditorTextFieldBorder extends DarculaTextBorder {
       }
 
       Rectangle r = new Rectangle(x, y, width, height);
-      //JBInsets.removeFrom(r, JBUI.insets(1, 0));
+      JBInsets.removeFrom(r, JBUI.insets(1));
       g2.translate(r.x, r.y);
 
       float lw = lw(g2);
@@ -95,7 +96,6 @@ public class DarculaEditorTextFieldBorder extends DarculaTextBorder {
       boolean hasFocus = editorTextField.getFocusTarget().hasFocus();
       Object op = editorTextField.getClientProperty("JComponent.outline");
       if (op != null) {
-        g.translate(x, y);
         DarculaUIUtil.paintOutlineBorder(g2, r.width, r.height, 0, true, hasFocus,
                                          DarculaUIUtil.Outline.valueOf(op.toString()));
       } else if (editorTextField.isEnabled() && editorTextField.isVisible() && hasFocus) {
@@ -109,7 +109,7 @@ public class DarculaEditorTextFieldBorder extends DarculaTextBorder {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return isComboBoxEditor(c) ? JBUI.insets(2, 3).asUIResource() : JBUI.insets(4, 8).asUIResource();
+    return isComboBoxEditor(c) ? JBUI.insets(2, 3).asUIResource() : JBUI.insets(7, 12).asUIResource();
   }
 
   @Override

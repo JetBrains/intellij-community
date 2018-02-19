@@ -45,7 +45,11 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testFileScope1() { doTest(8, FILE_SCOPE_KEYWORDS); }
+  public void testFileScope1() { 
+    doTest(8, "package", "public", "import", "final", "class", "interface", "abstract", "enum");
+    assertNotContainItems("private", "default");
+  }
+
   public void testFileScopeAfterComment() { doTest(4, "package", "class", "import", "public", "private"); }
   public void testFileScopeAfterJavaDoc() { doTest(4, "package", "class", "import", "public", "private"); }
   public void testFileScopeAfterJavaDocInsideModifierList() { doTest(2, "class", "public"); }

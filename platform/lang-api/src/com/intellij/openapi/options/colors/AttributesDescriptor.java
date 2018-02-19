@@ -36,6 +36,7 @@ public final class AttributesDescriptor extends AbstractKeyDescriptor<TextAttrib
     super(displayName, key);
   }
 
+  @SuppressWarnings("RedundantMethodOverride") // binary compatibility
   @NotNull
   @Override
   public TextAttributesKey getKey() {

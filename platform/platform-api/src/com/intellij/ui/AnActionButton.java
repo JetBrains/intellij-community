@@ -35,7 +35,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   private boolean myEnabled = true;
   private boolean myVisible = true;
   private ShortcutSet myShortcut;
-  private AnAction myAction = null;
+  private final AnAction myAction = null;
   private JComponent myContextComponent;
   private Set<AnActionButtonUpdater> myUpdaters;
 

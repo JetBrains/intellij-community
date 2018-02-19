@@ -473,11 +473,12 @@ class DataInterpreter extends Interpreter<DataValue> {
       case Opcodes.MULTIANEWARRAY:
         return DataValue.LocalDataValue;
       case Opcodes.INVOKEDYNAMIC:
-        // Lambda creation (w/o invocation) has no side-effect
-        if (LambdaIndy.from((InvokeDynamicInsnNode)insn) == null) {
+        // Lambda creation (w/o invocation) and StringConcatFactory have no side-effect
+        InvokeDynamicInsnNode indy = (InvokeDynamicInsnNode)insn;
+        if (LambdaIndy.from(indy) == null && !ClassDataIndexer.STRING_CONCAT_FACTORY.equals(indy.bsm.getOwner())) {
           effects[insnIndex] = EffectQuantum.TopEffectQuantum;
         }
-        return (ASMUtils.getReturnSizeFast(((InvokeDynamicInsnNode)insn).desc) == 1) ? DataValue.UnknownDataValue1 : DataValue.UnknownDataValue2;
+        return (ASMUtils.getReturnSizeFast((indy).desc) == 1) ? DataValue.UnknownDataValue1 : DataValue.UnknownDataValue2;
       case Opcodes.INVOKEVIRTUAL:
       case Opcodes.INVOKESPECIAL:
       case Opcodes.INVOKESTATIC:
@@ -593,8 +594,8 @@ class DataInterpreter extends Interpreter<DataValue> {
 }
 
 final class PuritySolver {
-  private HashMap<EKey, Effects> solved = new HashMap<>();
-  private HashMap<EKey, Set<EKey>> dependencies = new HashMap<>();
+  private final HashMap<EKey, Effects> solved = new HashMap<>();
+  private final HashMap<EKey, Set<EKey>> dependencies = new HashMap<>();
   private final ArrayDeque<EKey> moving = new ArrayDeque<>();
   HashMap<EKey, Effects> pending = new HashMap<>();
 

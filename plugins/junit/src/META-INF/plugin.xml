@@ -43,7 +43,7 @@
     <testFramework implementation="com.intellij.execution.junit.JUnit4Framework" id="junit4"/>
     <configurationType implementation="com.intellij.execution.junit.JUnitConfigurationType"/>
     <library.dependencyScopeSuggester implementation="com.intellij.execution.junit.JUnitDependencyScopeSuggester"/>
-    <runConfigurationImporter implementation="com.intellij.execution.junit.JUnitRunConfigurationImporter"/>
+    <externalSystem.runConfigurationImporter implementation="com.intellij.execution.junit.JUnitRunConfigurationImporter"/>
 
     <stacktrace.fold substring="at org.junit.internal.runners."/>
     <stacktrace.fold substring="at org.junit.runners."/>
@@ -77,6 +77,8 @@
     <codeInsight.externalLibraryResolver implementation="com.intellij.execution.junit.codeInsight.JUnit5ExternalLibraryResolver"/>
     <junitListener implementation="com.intellij.junit4.JUnitTestDiscoveryListener"/>
     <runConfigurationProducer implementation="com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfigurationProducer"/>
+    <testDiscoveryProducer implementation="com.intellij.execution.testDiscovery.LocalTestDiscoveryProducer"/>
+    <testDiscoveryProducer implementation="com.intellij.execution.testDiscovery.IntellijTestDiscoveryProducer"/>
     <implicitUsageProvider implementation="com.intellij.execution.junit2.inspection.JUnitImplicitUsageProvider"/>
     <predefinedMigrationMapProvider implementation="com.intellij.execution.junit2.refactoring.JUnit5Migration"/>
     <psi.referenceContributor implementation="com.intellij.execution.junit.codeInsight.references.JUnitReferenceContributor"/>
@@ -95,6 +97,7 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.junitListener" interface="com.intellij.rt.execution.junit.IDEAJUnitListener"/>
+    <extensionPoint qualifiedName="com.intellij.testDiscoveryProducer" interface="com.intellij.execution.testDiscovery.TestDiscoveryProducer"/>
   </extensionPoints>
 
   <actions>

@@ -4,7 +4,6 @@ package com.intellij.ide;
 import com.intellij.AppTopics;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -109,17 +108,14 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
       myFilesToCheck.clear();
     }
     final List<VirtualFile> newEditedGeneratedFiles = new ArrayList<>();
-    new ReadAction() {
-      @Override
-      protected void run(final @NotNull Result result) {
-        if (myProject.isDisposed()) return;
-        for (VirtualFile file : files) {
-          if (GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, myProject)) {
-            newEditedGeneratedFiles.add(file);
-          }
+    ReadAction.run(() -> {
+      if (myProject.isDisposed()) return;
+      for (VirtualFile file : files) {
+        if (GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, myProject)) {
+          newEditedGeneratedFiles.add(file);
         }
       }
-    }.execute();
+    });
 
     if (!newEditedGeneratedFiles.isEmpty()) {
       myEditedGeneratedFiles.addAll(newEditedGeneratedFiles);

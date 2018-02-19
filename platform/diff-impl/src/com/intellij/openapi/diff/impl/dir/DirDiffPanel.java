@@ -97,7 +97,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
   private JBLabel myFilterLabel;
   private JPanel myFilesPanel;
   private JPanel myHeaderPanel;
-  private FilterComponent myFilter;
+  private final FilterComponent myFilter;
   private final DirDiffTableModel myModel;
   private final DirDiffWindow myDiffWindow;
   private final MyDiffRequestProcessor myDiffRequestProcessor;

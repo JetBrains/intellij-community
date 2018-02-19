@@ -205,7 +205,7 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
       assertBaseTextContentIs("A_B_C_D_E_F_G_H_")
       assertAffectedChangelists("Default", "Test")
 
-      val helper = partialTracker.handlePartialCommit(Side.LEFT, "Test")
+      val helper = handlePartialCommit(Side.LEFT, "Test")
       helper.applyChanges()
 
       assertHelperContentIs("A_B_C_E_F_G_N_H_", helper)
@@ -228,7 +228,7 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
       assertBaseTextContentIs("A_B_C_D_E_F_G_H_")
       assertAffectedChangelists("Default", "Test")
 
-      val helper = partialTracker.handlePartialCommit(Side.LEFT, "Default")
+      val helper = handlePartialCommit(Side.LEFT, "Default")
       helper.applyChanges()
 
       assertHelperContentIs("A_B1_C_D_E_F_M_G_H_", helper)
@@ -251,7 +251,7 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
       assertBaseTextContentIs("A_B_C_D_E_F_G_H_")
       assertAffectedChangelists("Default", "Test")
 
-      val helper = partialTracker.handlePartialCommit(Side.RIGHT, "Test")
+      val helper = handlePartialCommit(Side.RIGHT, "Test")
       helper.applyChanges()
 
       assertHelperContentIs("A_B1_C_D_E_F_M_G_H_", helper)
@@ -278,7 +278,7 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
         runCommand {
           "B1_".replace("X_Y_Z_")
 
-          val helper = partialTracker.handlePartialCommit(Side.LEFT, "Default")
+          val helper = handlePartialCommit(Side.LEFT, "Default")
           helper.applyChanges()
 
           assertHelperContentIs("A_X_Y_Z_C_D_E_F_M_G_H_", helper)
@@ -307,7 +307,7 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
         runCommand {
           "B1_".replace("X_Y_Z_")
 
-          val helper = partialTracker.handlePartialCommit(Side.LEFT, "Default")
+          val helper = handlePartialCommit(Side.LEFT, "Default")
 
           "N".replace("N2")
           "M".replace("M2")

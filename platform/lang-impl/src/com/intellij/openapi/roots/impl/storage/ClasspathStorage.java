@@ -9,8 +9,7 @@ import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -141,33 +140,30 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
     }
 
     Element element = new Element("component");
-    ModifiableRootModel model = null;
-    AccessToken token = ReadAction.start();
-    try {
-      model = ((ModuleRootManagerImpl)component).getModifiableModel();
-      // IDEA-137969 Eclipse integration: external remove of classpathentry is not synchronized
-      model.clear();
+    ApplicationManager.getApplication().runReadAction(() -> {
+      ModifiableRootModel model = null;
       try {
-        myConverter.readClasspath(model);
+        model = ((ModuleRootManagerImpl)component).getModifiableModel();
+        // IDEA-137969 Eclipse integration: external remove of classpathentry is not synchronized
+        model.clear();
+        try {
+          myConverter.readClasspath(model);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+        ((RootModelImpl)model).writeExternal(element);
       }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-      ((RootModelImpl)model).writeExternal(element);
-    }
-    catch (WriteExternalException e) {
-      LOG.error(e);
-    }
-    finally {
-      try {
-        token.finish();
+      catch (WriteExternalException e) {
+        LOG.error(e);
       }
       finally {
         if (model != null) {
           model.dispose();
         }
       }
-    }
+    });
+
 
     if (myPathMacroSubstitutor != null) {
       myPathMacroSubstitutor.expandPaths(element);

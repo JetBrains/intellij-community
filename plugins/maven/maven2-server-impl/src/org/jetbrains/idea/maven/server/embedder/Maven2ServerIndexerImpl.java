@@ -53,7 +53,7 @@ import java.rmi.RemoteException;
 import java.util.*;
 
 public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenServerIndexer {
-  private Maven2ServerEmbedderImpl myEmbedder;
+  private final Maven2ServerEmbedderImpl myEmbedder;
   private final NexusIndexer myIndexer;
   private final IndexUpdater myUpdater;
   private final ArtifactContextProducer myArtifactContextProducer;

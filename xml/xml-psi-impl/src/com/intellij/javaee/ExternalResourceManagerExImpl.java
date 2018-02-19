@@ -350,6 +350,47 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     }
   }
 
+  public void addIgnoredResources(@NotNull List<String> urls, @Nullable Disposable disposable) {
+    Application app = ApplicationManager.getApplication();
+    if (app.isWriteAccessAllowed()) {
+      doAddIgnoredResources(urls, disposable);
+    }
+    else {
+      app.runWriteAction(() -> {
+        doAddIgnoredResources(urls, disposable);
+      });
+    }
+  }
+
+  private void doAddIgnoredResources(@NotNull List<String> urls, @Nullable Disposable disposable) {
+    long modificationCount = getModificationCount();
+    for (String url : urls) {
+      addIgnoredSilently(url);
+    }
+
+    if (modificationCount != getModificationCount()) {
+      if (disposable != null) {
+        //noinspection CodeBlock2Expr
+        Disposer.register(disposable, () -> {
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            boolean isChanged = false;
+            for (String url : urls) {
+              if (myIgnoredResources.remove(url)) {
+                isChanged = true;
+              }
+            }
+
+            if (isChanged) {
+              fireExternalResourceChanged();
+            }
+          });
+        });
+      }
+
+      fireExternalResourceChanged();
+    }
+  }
+
   private boolean addIgnoredSilently(@NotNull String url) {
     if (myStandardIgnoredResources.contains(url)) {
       return false;

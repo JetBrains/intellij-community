@@ -76,7 +76,7 @@ private fun JavaAbstractUElement.unwrapSwitch(uParent: UElement): UElement {
         }
         val uSwitchExpression = codeBlockParent.uastParent as? JavaUSwitchExpression ?: return uParent
         val psiElement = psi ?: return uParent
-        return findUSwitchClauseBody(uSwitchExpression, psiElement)
+        return findUSwitchClauseBody(uSwitchExpression, psiElement) ?: return codeBlockParent
       }
       if (codeBlockParent is JavaUSwitchExpression) {
         return unwrapSwitch(codeBlockParent)
@@ -126,6 +126,7 @@ abstract class JavaAbstractUExpression(givenParent: UElement?) : JavaAbstractUEl
   override fun getPsiParentForLazyConversion(): PsiElement? = super.getPsiParentForLazyConversion()?.let {
     when (it) {
       is PsiResourceExpression -> it.parent
+      is PsiReferenceExpression -> (it.parent as? PsiMethodCallExpression) ?: it
       else -> it
     }
   }
@@ -135,5 +136,5 @@ abstract class JavaAbstractUExpression(givenParent: UElement?) : JavaAbstractUEl
       is UAnonymousClass -> uParent.uastParent
       else -> uParent
     }
-  }
+  }.let(this::unwrapCompositeQualifiedReference)
 }

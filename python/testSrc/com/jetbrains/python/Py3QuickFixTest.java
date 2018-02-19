@@ -56,31 +56,31 @@ public class Py3QuickFixTest extends PyTestCase {
 
   // PY-15867
   public void testAddCallSuperKeywordOnlyParamInSuperInit() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30,
+    runWithLanguageLevel(LanguageLevel.PYTHON34,
                          () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
   }
 
   // PY-15867
   public void testAddCallSuperKeywordOnlyParamInInit() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30,
+    runWithLanguageLevel(LanguageLevel.PYTHON34,
                          () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
   }
 
   // PY-15867
   public void testAddCallSuperSingleStarParamInSuperInit() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30,
+    runWithLanguageLevel(LanguageLevel.PYTHON34,
                          () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
   }
 
   // PY-15867
   public void testAddCallSuperSingleStarParamInSuperInitAndVarargInInit() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30,
+    runWithLanguageLevel(LanguageLevel.PYTHON34,
                          () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
   }
 
   // PY-11561
   public void testAddCallSuperTypeAnnotationsPreserved() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30,
+    runWithLanguageLevel(LanguageLevel.PYTHON34,
                          () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
   }
 
@@ -91,34 +91,34 @@ public class Py3QuickFixTest extends PyTestCase {
 
   // PY-15867
   public void testAddCallSuperNoRequiredKeywordOnlyParamAfterSingleStarInSuperInit() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30,
+    runWithLanguageLevel(LanguageLevel.PYTHON34,
                          () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
   }
   
   // PY-16421
   public void testAddCallSuperSingleStarParamPreserved() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30,
+    runWithLanguageLevel(LanguageLevel.PYTHON34,
                          () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
   }
   
     // PY-15867
   public void testAddCallSuperRequiredKeywordOnlyParamAfterSingleStarInSuperInitIsMerged() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30,
+    runWithLanguageLevel(LanguageLevel.PYTHON34,
                          () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
   }
   
   // PY-16428 
   public void testAddParameterNotAvailableInsideAnnotation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doInspectionTest(PyUnresolvedReferencesInspection.class,
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doInspectionTest(PyUnresolvedReferencesInspection.class,
                                                                     PyBundle.message("QFIX.unresolved.reference.add.param.$0", "unresolved"), false, false));
   }
 
   // PY-8991
-  public void testRemoveUnicodePrefixFromGluedStringNodesWithSlash() {
-    runWithLanguageLevel(LanguageLevel.PYTHON32, () -> {
+  public void testRemoveUnsupportedPrefixFromGluedStringNodesWithSlash() {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       myFixture.configureByFile(getTestName(false) + ".py");
       myFixture.checkHighlighting(true, false, false);
-      final IntentionAction intentionAction = myFixture.findSingleIntention(PyBundle.message("INTN.remove.leading.$0", "U"));
+      final IntentionAction intentionAction = myFixture.findSingleIntention(PyBundle.message("INTN.remove.leading.$0", "F"));
       assertNotNull(intentionAction);
       myFixture.launchAction(intentionAction);
       myFixture.checkResultByFile(getTestName(false) + "_after.py");
@@ -126,11 +126,11 @@ public class Py3QuickFixTest extends PyTestCase {
   }
 
   // PY-8990
-  public void testRemoveUnicodePrefixFromGluedStringNodesInParenthesis() {
-    runWithLanguageLevel(LanguageLevel.PYTHON32, () -> {
+  public void testRemoveUnsupportedPrefixFromGluedStringNodesInParenthesis() {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       myFixture.configureByFile(getTestName(false) + ".py");
       myFixture.checkHighlighting(true, false, false);
-      final IntentionAction intentionAction = myFixture.findSingleIntention(PyBundle.message("INTN.remove.leading.$0", "U"));
+      final IntentionAction intentionAction = myFixture.findSingleIntention(PyBundle.message("INTN.remove.leading.$0", "F"));
       assertNotNull(intentionAction);
       myFixture.launchAction(intentionAction);
       myFixture.checkResultByFile(getTestName(false) + "_after.py");

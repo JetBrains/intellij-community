@@ -4,13 +4,10 @@ package com.intellij.build.output;
 import com.intellij.build.BuildProgressListener;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -32,10 +29,10 @@ public class BuildOutputInstantReaderImpl implements Appendable, Closeable, Buil
   private final BlockingQueue<String> myQueue = new LinkedTransferQueue<>();
 
   private int myCurrentIndex = -1;
-  private LinkedList<String> myLinesBuffer = new LinkedList<>();
+  private final LinkedList<String> myLinesBuffer = new LinkedList<>();
   public static final String SHUTDOWN_PILL = new String("Poison Pill Shutdown");
 
-  private Thread myThread;
+  private final Thread myThread;
   private final AtomicBoolean myStarted = new AtomicBoolean();
   private final AtomicBoolean myClosed = new AtomicBoolean();
 

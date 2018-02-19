@@ -58,11 +58,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class StartupManagerImpl extends StartupManagerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.impl.StartupManagerImpl");
 
-  private final List<Runnable> myPreStartupActivities = Collections.synchronizedList(new LinkedList<Runnable>());
-  private final List<Runnable> myStartupActivities = Collections.synchronizedList(new LinkedList<Runnable>());
+  private final List<Runnable> myPreStartupActivities = Collections.synchronizedList(new LinkedList<>());
+  private final List<Runnable> myStartupActivities = Collections.synchronizedList(new LinkedList<>());
 
-  private final List<Runnable> myDumbAwarePostStartupActivities = Collections.synchronizedList(new LinkedList<Runnable>());
-  private final List<Runnable> myNotDumbAwarePostStartupActivities = Collections.synchronizedList(new LinkedList<Runnable>());
+  private final List<Runnable> myDumbAwarePostStartupActivities = Collections.synchronizedList(new LinkedList<>());
+  private final List<Runnable> myNotDumbAwarePostStartupActivities = Collections.synchronizedList(new LinkedList<>());
   private boolean myPostStartupActivitiesPassed; // guarded by this
 
   private volatile boolean myPreStartupActivitiesPassed;
@@ -269,7 +269,8 @@ public class StartupManagerImpl extends StartupManagerEx {
         path = PathUtil.getParentPath(path);
       }
 
-      boolean expected = SystemInfo.isFileSystemCaseSensitive, actual = FileUtil.isFileSystemCaseSensitive(path);
+      boolean expected = SystemInfo.isFileSystemCaseSensitive;
+      boolean actual = FileUtil.isFileSystemCaseSensitive(path);
       LOG.info(path + " case-sensitivity: expected=" + expected + " actual=" + actual);
       if (actual != expected) {
         int prefix = expected ? 1 : 0;  // IDE=true -> FS=false -> prefix='in'

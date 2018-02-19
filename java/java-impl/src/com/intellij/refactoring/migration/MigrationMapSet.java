@@ -59,7 +59,7 @@ public class MigrationMapSet {
   @NonNls private static final String[] DEFAULT_MAPS = new  String[] {
     "/com/intellij/refactoring/migration/res/Swing__1_0_3____1_1_.xml",
   };
-  private Set<String> myDeletedMaps = new TreeSet<>();
+  private final Set<String> myDeletedMaps = new TreeSet<>();
 
   public MigrationMapSet() {
   }

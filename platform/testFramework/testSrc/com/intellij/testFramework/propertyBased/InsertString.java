@@ -28,6 +28,13 @@ public class InsertString extends ActionOnRange {
     myToInsert = toInsert;
   }
 
+  @Override
+  public void performCommand(@NotNull Environment env) {
+    int offset = generateDocOffset(env, null);
+    String toInsert = env.generateValue(Generator.stringsOf(Generator.asciiPrintableChars()), "Insert '%s' at " + offset + " in " + getPath());
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> getDocument().insertString(offset, toInsert));
+  }
+
   public static Generator<InsertString> asciiInsertions(@NotNull PsiFile psiFile) {
     return Generator.zipWith(Generator.integers(0, psiFile.getTextLength()).noShrink(), 
                              Generator.stringsOf(Generator.asciiPrintableChars()),

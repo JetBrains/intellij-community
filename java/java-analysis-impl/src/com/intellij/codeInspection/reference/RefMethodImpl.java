@@ -290,7 +290,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     checkForSuperCall(method);
     setOnlyCallsSuper(refUtil.isMethodOnlyCallsSuper(method));
 
-    setBodyEmpty(isOnlyCallsSuper() || !isExternalOverride() && (body == null || body.getStatements().length == 0));
+    setBodyEmpty(isOnlyCallsSuper() || !isExternalOverride() && (body == null || body.isEmpty()));
 
     refUtil.addTypeReference(method, method.getReturnType(), getRefManager(), this);
 

@@ -1428,6 +1428,9 @@
   <item name='java.util.Formatter Formatter(java.lang.String, java.lang.String, java.util.Locale) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.util.Formatter java.lang.String toString()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.util.Formatter java.util.Formatter format(java.lang.String, java.lang.Object...) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>

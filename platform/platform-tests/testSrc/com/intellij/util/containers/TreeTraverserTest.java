@@ -499,6 +499,25 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(Arrays.asList(1, 2, 5, 6, 7, 3, 8, 9, 10, 4, 11, 12, 13), numTraverser(TreeTraversal.PRE_ORDER_DFS).fun(1).toList());
   }
 
+  public void testSimpleBiOrderDfs() {
+    assertEquals(Arrays.asList(1, 2, 5, 5, 6, 6, 7, 7, 2, 3, 8, 8, 9, 9, 10, 10, 3, 4, 11, 11, 12, 12, 13, 13, 4, 1), numTraverser(TreeTraversal.BI_ORDER_DFS).fun(1).toList());
+  }
+
+  public void testSimpleBiOrderDfs2Roots() {
+    assertEquals(Arrays.asList(2, 5, 5, 6, 6, 7, 7, 2, 3, 8, 8, 9, 9, 10, 10, 3, 4, 11, 11, 12, 12, 13, 13, 4), TreeTraversal.BI_ORDER_DFS.traversal(numbers().get(1), Functions.fromMap(numbers())).toList());
+  }
+
+  public void testHarderBiOrderDfs() {
+    StringBuilder sb = new StringBuilder();
+    TreeTraversal.TracingIt<Integer> it = numTraverser(TreeTraversal.BI_ORDER_DFS).fun(1).typedIterator();
+    while (it.advance()) {
+      if (sb.length() != 0) sb.append(", ");
+      it.hasNext();
+      sb.append(it.current()).append(it.isDescending() ? "↓" : "↑");
+    }
+    assertEquals("1↓, 2↓, 5↓, 5↑, 6↓, 6↑, 7↓, 7↑, 2↑, 3↓, 8↓, 8↑, 9↓, 9↑, 10↓, 10↑, 3↑, 4↓, 11↓, 11↑, 12↓, 12↑, 13↓, 13↑, 4↑, 1↑", sb.toString());
+  }
+
   public void testSimpleInterlacedDfs() {
     assertEquals(Arrays.asList(1, 2, 5, 3, 6, 4, 8, 7, 9, 11, 10, 12, 13), numTraverser(TreeTraversal.INTERLEAVED_DFS).fun(1).toList());
   }
@@ -545,6 +564,14 @@ public class TreeTraverserTest extends TestCase {
 
     TreeTraversal.TracingIt<Integer> it3 = postDfs.typedIterator();
     assertEquals(new Integer(37), it3.skipWhile(Conditions.notEqualTo(37)).next());
+
+    assertEquals(Arrays.asList(37, 12, 4, 1), it1.backtrace().toList());
+    assertEquals(Arrays.asList(37, 12, 4, 1), it2.backtrace().toList());
+    assertEquals(Arrays.asList(37, 12, 4, 1), it3.backtrace().toList());
+
+    assertTrue(it1.hasNext());
+    assertFalse(it2.hasNext());
+    assertTrue(it3.hasNext());
 
     assertEquals(Arrays.asList(37, 12, 4, 1), it1.backtrace().toList());
     assertEquals(Arrays.asList(37, 12, 4, 1), it2.backtrace().toList());

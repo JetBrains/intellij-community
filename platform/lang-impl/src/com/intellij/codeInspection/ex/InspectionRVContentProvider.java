@@ -1,13 +1,9 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInspection.ActionClassHolder;
-import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.QuickFix;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefDirectory;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -26,11 +22,13 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
@@ -174,12 +172,30 @@ public abstract class InspectionRVContentProvider {
   protected static void checkFixClass(InspectionToolPresentation presentation, QuickFix fix, LocalQuickFixWrapper quickFixAction) {
     Class class1 = getFixClass(fix);
     Class class2 = getFixClass(quickFixAction.getFix());
-    LOG.assertTrue(class1.equals(class2),
-                   "QuickFix-es with the same family name (" + fix.getFamilyName() + ") should be the same class instances but actually are " + class1.getName() + " and " + class2.getName() + "instances. " +
-                   "Please assign reported exception for the inspection \"" + presentation.getToolWrapper().getTool().getClass() + "\" (\"" +
-                   presentation.getToolWrapper().getShortName() + "\") developer");
+    if (!class1.equals(class2)) {
+      String message = MessageFormat.format(
+        "QuickFix-es with the same family name ({0}) should be the same class instances but actually are {1} and {2} instances. " +
+        "Please assign reported exception for the inspection \"{3}\" (\"{4}\") developer.",
+        fix.getFamilyName(), class1.getName(), class2.getName(), presentation.getToolWrapper().getTool().getClass(),
+        presentation.getToolWrapper().getShortName());
+      AssertionError error = new AssertionError(message);
+      StreamEx.of(presentation.getProblemDescriptors()).select(ProblemDescriptorBase.class)
+              .map(ProblemDescriptorBase::getCreationTrace).nonNull()
+              .map(InspectionRVContentProvider::extractStackTrace).findFirst()
+              .ifPresent(error::setStackTrace);
+      LOG.error(message, error);
+    }
   }
 
+  private static StackTraceElement[] extractStackTrace(Throwable throwable) {
+    // Remove top-of-stack frames which are common for different inspections,
+    // leaving only inspection-specific frames
+    Set<String> classes = StreamEx.of(ProblemDescriptorBase.class, InspectionManagerBase.class, ProblemsHolder.class)
+      .map(Class::getName).toSet();
+    return StreamEx.of(throwable.getStackTrace())
+            .dropWhile(ste -> classes.contains(ste.getClassName()))
+            .toArray(StackTraceElement.class);
+  }
 
   public InspectionNode appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
                                               @NotNull InspectionNode toolNode,
@@ -387,13 +403,12 @@ public abstract class InspectionRVContentProvider {
               finalContainer.areEqual(object, userObject)) {
             if (firstLevel.get()) {
               result.set(refElementNode);
-              return false;
             }
             else {
               refElementNode.insertByOrder(finalPrevNode, false);
               result.set(nodeToBeAdded);
-              return false;
             }
+            return false;
           }
         }
         return true;
@@ -505,7 +520,7 @@ public abstract class InspectionRVContentProvider {
         }
       }
     }
-    return result == null || result.isEmpty() ? QuickFixAction.EMPTY : result.values().toArray(new QuickFixAction[result.size()]);
+    return result == null || result.isEmpty() ? QuickFixAction.EMPTY : result.values().toArray(QuickFixAction.EMPTY);
   }
 
   private static Class getFixClass(QuickFix fix) {

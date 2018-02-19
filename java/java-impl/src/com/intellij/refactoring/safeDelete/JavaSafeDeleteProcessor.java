@@ -774,7 +774,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   private static boolean isTheOnlyEmptyDefaultConstructor(final PsiMethod constructor) {
     if (!constructor.getParameterList().isEmpty()) return false;
     final PsiCodeBlock body = constructor.getBody();
-    if (body != null && body.getStatements().length > 0) return false;
+    if (body != null && !body.isEmpty()) return false;
     return constructor.getContainingClass().getConstructors().length == 1;
   }
 

@@ -29,10 +29,8 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.actions.GitAbstractRebaseAction;
-import git4idea.branch.GitBranchUtil;
-import git4idea.branch.GitBrancher;
-import git4idea.branch.GitBranchesCollection;
-import git4idea.branch.GitNewBranchOptions;
+import git4idea.branch.*;
+import git4idea.config.GitVcsSettings;
 import git4idea.rebase.GitRebaseSpec;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -227,6 +225,8 @@ class GitBranchPopupActions {
     protected final String myBranchName;
     @NotNull private final GitRepository mySelectedRepository;
     private final GitBranchManager myGitBranchManager;
+    @NotNull private final GitVcsSettings myGitVcsSettings;
+    @NotNull private final GitBranchIncomingOutgoingManager myIncomingOutgoingManager;
 
     LocalBranchActions(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
                        @NotNull GitRepository selectedRepository) {
@@ -235,6 +235,8 @@ class GitBranchPopupActions {
       myBranchName = branchName;
       mySelectedRepository = selectedRepository;
       myGitBranchManager = ServiceManager.getService(project, GitBranchManager.class);
+      myGitVcsSettings = GitVcsSettings.getInstance(myProject);
+      myIncomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(myProject);
       getTemplatePresentation().setText(calcBranchText(), false); // no mnemonics
       setFavorite(myGitBranchManager.isFavorite(LOCAL, repositories.size() > 1 ? null : mySelectedRepository, myBranchName));
     }
@@ -281,7 +283,24 @@ class GitBranchPopupActions {
     @Override
     public void toggle() {
       super.toggle();
-      myGitBranchManager.setFavorite(LOCAL, myRepositories.size() > 1 ? null : mySelectedRepository, myBranchName, isFavorite());
+      myGitBranchManager.setFavorite(LOCAL, chooseRepo(), myBranchName, isFavorite());
+    }
+
+    @Nullable
+    private GitRepository chooseRepo() {
+      return myRepositories.size() > 1 ? null : mySelectedRepository;
+    }
+
+    @Override
+    public boolean hasIncomingCommits() {
+      return myGitVcsSettings.shouldUpdateBranchInfo() &&
+             myIncomingOutgoingManager.hasIncomingFor(chooseRepo(), myBranchName);
+    }
+
+    @Override
+    public boolean hasOutgoingCommits() {
+      return myGitVcsSettings.shouldUpdateBranchInfo() &&
+             myIncomingOutgoingManager.hasOutgoingFor(chooseRepo(), myBranchName);
     }
 
     static class CheckoutAction extends DumbAwareAction {

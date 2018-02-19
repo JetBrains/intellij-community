@@ -117,7 +117,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
       if (t != null) return t;
       t = getMappingForHierarchy(originalFile, mappings);
       if (t != null) return t;
-      return getNotInHierarchy(file, mappings);
+      return getNotInHierarchy(originalFile != null ? originalFile : file, mappings);
     }
   }
 

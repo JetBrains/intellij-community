@@ -11,18 +11,26 @@ import java.util.Set;
 
 public class FSGroup {
 
+  private static final String FORBIDDEN_PATTERN = "[,\\s\\n]+";
+  private static final String FORBIDDEN_PATTERN_REPLACEMENT = "[??]";
+
   public String id;
   public Map<String, Integer> metrics ;
 
   private FSGroup(String id, Set<UsageDescriptor> usages) {
     this.id = id;
     for (UsageDescriptor usage : usages) {
-      getMetrics().put(usage.getKey(), usage.getValue());
+      getMetrics().put(replaceForbiddenPattern(usage), usage.getValue());
     }
   }
 
   @NotNull
-  private Map<String, Integer> getMetrics() {
+  private static String replaceForbiddenPattern(@NotNull UsageDescriptor usage) {
+    return usage.getKey().replaceAll(FORBIDDEN_PATTERN, FORBIDDEN_PATTERN_REPLACEMENT);
+  }
+
+  @NotNull
+  public Map<String, Integer> getMetrics() {
     if (metrics == null) {
       metrics = ContainerUtil.newHashMap();
     }
@@ -44,7 +52,6 @@ public class FSGroup {
 
   @Override
   public int hashCode() {
-
     return Objects.hash(id, metrics);
   }
 }

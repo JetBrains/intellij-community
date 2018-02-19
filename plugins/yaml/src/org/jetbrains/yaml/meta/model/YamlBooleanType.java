@@ -46,6 +46,7 @@ public class YamlBooleanType extends YamlEnumType {
 
     public StandardYamlBoolean() {
       super("yaml:boolean");
+      setDisplayName("boolean");
       withLiterals("true", "false");
       /*
       Theoretically, YAML spec allows more exotic variants for boolean values, e.g "ON", "off", "No", or even "Y".
@@ -61,7 +62,7 @@ public class YamlBooleanType extends YamlEnumType {
   }
 
   public static class LiteralBuilder {
-    private Set<String> myResult = new LinkedHashSet<>();
+    private final Set<String> myResult = new LinkedHashSet<>();
 
     public LiteralBuilder withAllCasesOf(@NotNull String... literals) {
       for (String next : literals) {

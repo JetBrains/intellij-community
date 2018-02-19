@@ -19,6 +19,12 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Splitter;
@@ -55,6 +61,7 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 
 
 /**
@@ -92,7 +99,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   public JPanel myParamTable;
   private VariableData[] myInputVariables;
   private TypeSelector mySelector;
-  private int myDuplicatesCount;
+  private final Supplier<Integer> myDuplicatesCountSupplier;
 
   public ExtractMethodDialog(Project project,
                              PsiClass targetClass, final InputVariables inputVariables, PsiType returnType,
@@ -102,7 +109,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
                              String helpId,
                              Nullness nullness,
                              final PsiElement[] elementsToExtract,
-                             int duplicatesCount) {
+                             @Nullable Supplier<Integer> duplicatesCountSupplier) {
     super(project, true);
     myProject = project;
     myTargetClass = targetClass;
@@ -128,8 +135,8 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
       myCbChainedConstructor = new NonFocusableCheckBox(RefactoringBundle.message("extract.chained.constructor.checkbox"));
     }
     myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[0]);
-    myDuplicatesCount = duplicatesCount;
-    setPreviewResults(duplicatesCount != 0);
+    myDuplicatesCountSupplier = duplicatesCountSupplier;
+    setPreviewResults(duplicatesCountSupplier != null);
 
     init();
   }
@@ -173,10 +180,6 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
 
   protected boolean isPreviewSupported() {
     return false;
-  }
-
-  protected int getDuplicatesCount() {
-    return myDuplicatesCount;
   }
 
   @Override
@@ -482,11 +485,29 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     secondPanel.add(createSignaturePanel(), BorderLayout.CENTER);
 
     if (isPreviewSupported()) {
-      JBLabel duplicatesComment = new JBLabel(RefactoringBundle.message("refactoring.extract.method.dialog.comment", getDuplicatesCount()));
-      secondPanel.add(duplicatesComment, BorderLayout.SOUTH);
+      JBLabel duplicatesCount = createDuplicatesCountLabel();
+      secondPanel.add(duplicatesCount, BorderLayout.SOUTH);
     }
     splitter.setSecondComponent(secondPanel);
     return splitter;
+  }
+
+  @NotNull
+  private JBLabel createDuplicatesCountLabel() {
+    JBLabel duplicatesCount = new JBLabel(RefactoringBundle.message("refactoring.extract.method.dialog.duplicates.pending"));
+    if (myDuplicatesCountSupplier != null) {
+      ProgressManager.getInstance().run(
+        new Task.Backgroundable(myProject, RefactoringBundle.message("refactoring.extract.method.dialog.duplicates.progress")) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            int count = ReadAction.compute(() -> myDuplicatesCountSupplier.get());
+            ApplicationManager.getApplication().invokeLater(
+              () -> duplicatesCount.setText(RefactoringBundle.message("refactoring.extract.method.dialog.duplicates.count", count)),
+              ModalityState.any());
+          }
+        });
+    }
+    return duplicatesCount;
   }
 
   protected boolean isOutputVariable(PsiVariable var) {

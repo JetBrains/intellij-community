@@ -30,7 +30,7 @@ import java.util.List;
 public class RenamedFileContainer extends Container {
   private String filePath;
   private String newName;
-  private Copy copyTask;
+  private final Copy copyTask;
 
   public RenamedFileContainer() {
     copyTask = new Copy();

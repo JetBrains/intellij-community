@@ -37,7 +37,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import java.util.HashMap;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -557,6 +557,11 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     }
   }
 
+  @Override
+  protected Graphics getComponentGraphics(Graphics g) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g));
+  }
+
   //@Override
   //protected void paintChildren(final Graphics g) {
   //  if (getUI() instanceof MacStatusBarUI && !MacStatusBarUI.isActive(this)) {
@@ -671,8 +676,12 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
         }
       }.installOn(this);
 
-      setFont(SystemInfo.isMac ? JBUI.Fonts.label(11) : JBUI.Fonts.label());
       setIconOnTheRight(true);
+    }
+
+    @Override
+    public Font getFont() {
+      return SystemInfo.isMac ? JBUI.Fonts.label(11) : JBUI.Fonts.label();
     }
 
     @Override

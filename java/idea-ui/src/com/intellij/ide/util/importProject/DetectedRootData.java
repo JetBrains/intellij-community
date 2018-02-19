@@ -31,7 +31,7 @@ import java.util.Set;
  */
 public class DetectedRootData {
   private final File myDirectory;
-  private MultiMap<DetectedProjectRoot, ProjectStructureDetector> myRoots = MultiMap.createLinked();
+  private final MultiMap<DetectedProjectRoot, ProjectStructureDetector> myRoots = MultiMap.createLinked();
 
   private boolean myIncluded = true;
   private DetectedProjectRoot mySelectedRoot;

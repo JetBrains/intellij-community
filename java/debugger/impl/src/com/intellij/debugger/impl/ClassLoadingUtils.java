@@ -37,6 +37,7 @@ import java.util.List;
  * @author egor
  */
 public class ClassLoadingUtils {
+  private static final int BATCH_SIZE = 4096;
   private ClassLoadingUtils() {}
 
   public static ClassLoaderReference getClassLoader(EvaluationContext context, DebugProcess process) throws EvaluateException {
@@ -144,7 +145,14 @@ public class ClassLoadingUtils {
     for (byte b : bytes) {
       mirrors.add(((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).mirrorOf(b));
     }
-    reference.setValues(mirrors);
+
+    int loaded = 0;
+    while (loaded < mirrors.size()) {
+      int chunkSize = Math.min(BATCH_SIZE, mirrors.size() - loaded);
+      reference.setValues(loaded, mirrors, loaded, chunkSize);
+      loaded += chunkSize;
+    }
+
     return reference;
   }
 }

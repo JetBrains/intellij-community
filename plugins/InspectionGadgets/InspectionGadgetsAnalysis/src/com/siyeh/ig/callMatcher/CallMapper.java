@@ -34,7 +34,7 @@ import java.util.stream.Stream;
  * @author Tagir Valeev
  */
 public class CallMapper<T> {
-  private Map<String, List<CallHandler<T>>> myMap = new HashMap<>();
+  private final Map<String, List<CallHandler<T>>> myMap = new HashMap<>();
 
   public CallMapper() {}
 

@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 public class ExtensionPointDocumentationProviderTest extends LightCodeInsightFixtureTestCase {
+
   @Override
   public String getBasePath() {
     return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/references/extensions";
@@ -27,13 +28,15 @@ public class ExtensionPointDocumentationProviderTest extends LightCodeInsightFix
     assertEquals(epDefinition,
                  provider.getQuickNavigateInfo(docElement, null));
 
-    assertEquals("<em>EP Definition</em><br/>" +
-                 epDefinition +
-                 "<br/><br/>" +
-                 "<em>EP Implementation</em>" +
-                 "<html><head>    <style type=\"text/css\">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head>" +
-                 "<body><small><b>bar</b></small><PRE>public interface <b>MyExtensionPoint</b></PRE>\n" +
-                 "   MyExtensionPoint JavaDoc.</body></html>",
+    assertEquals("<div class='definition'><pre><b>bar</b> [foo]<br>" +
+                 "<a href=\"psi_element://bar.MyExtensionPoint\"><code>MyExtensionPoint</code></a><br>" +
+                 "extensionPointDocumentation.xml" +
+                 "<table class='sections'>" +
+                 "<tr><td valign='top' class='section'><p>attributeName:</td><td><a href=\"psi_element://java.lang.String\"><code>String</code></a></td>" +
+                 "<tr><td valign='top' class='section'><p>&lt;tagName&gt;:</td><td><a href=\"psi_element://java.lang.Integer\"><code>Integer</code></a></td></table>" +
+                 "</pre></div>" +
+                 "<div class='content'><div class='definition'><pre>bar<br>public interface <b>MyExtensionPoint</b></pre></div>" +
+                 "<div class='content'>\n   MyExtensionPoint JavaDoc.\n </div><table class='sections'><p></table></div>",
                  provider.generateDoc(docElement, null));
   }
 }

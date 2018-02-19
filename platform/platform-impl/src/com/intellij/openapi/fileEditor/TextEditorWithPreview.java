@@ -42,7 +42,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
   private Layout myLayout;
   private JComponent myComponent;
   private SplitEditorToolbar myToolbarWrapper;
-  private String myName;
+  private final String myName;
 
   public TextEditorWithPreview(@NotNull TextEditor editor, @NotNull FileEditor preview, @NotNull String editorName) {
     myEditor = editor;
@@ -403,7 +403,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
   }
 
   private class ChangeViewModeAction extends ToggleAction implements DumbAware {
-    private Layout myActionLayout;
+    private final Layout myActionLayout;
 
     public ChangeViewModeAction(Layout layout) {
       super(layout.getName(), layout.getName(), layout.getIcon());

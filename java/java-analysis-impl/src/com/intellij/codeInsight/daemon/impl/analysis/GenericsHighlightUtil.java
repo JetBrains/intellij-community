@@ -354,7 +354,9 @@ public class GenericsHighlightUtil {
       final PsiClass superClass = result.getElement();
       if (superClass == null || visited.contains(superClass)) continue;
       PsiSubstitutor superTypeSubstitutor = result.getSubstitutor();
-      superTypeSubstitutor = MethodSignatureUtil.combineSubstitutors(superTypeSubstitutor, derivedSubstitutor);
+      //JLS 4.8 The superclasses (respectively, superinterfaces) of a raw type are the erasures of the superclasses (superinterfaces) of any of the parameterizations of the generic type.
+      superTypeSubstitutor = PsiUtil.isRawSubstitutor(aClass, derivedSubstitutor) ? JavaPsiFacade.getElementFactory(aClass.getProject()).createRawSubstitutor(superClass)
+                                                                                  : MethodSignatureUtil.combineSubstitutors(superTypeSubstitutor, derivedSubstitutor);
 
       final PsiSubstitutor inheritedSubstitutor = inheritedClasses.get(superClass);
       if (inheritedSubstitutor != null) {
@@ -1297,23 +1299,6 @@ public class GenericsHighlightUtil {
       String description = JavaErrorMessages.message("local.enum");
       TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
-    }
-    return null;
-  }
-
-  static HighlightInfo checkEnumWithoutConstantsCantHaveAbstractMethods(final PsiClass aClass) {
-    if (!aClass.isEnum()) return null;
-    for (PsiField field : aClass.getFields()) {
-      if (field instanceof PsiEnumConstant) {
-        return null;
-      }
-    }
-    for (PsiMethod method : aClass.getMethods()) {
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        final String description = "Enum declaration without enum constants cannot have abstract methods";
-        final TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
-      }
     }
     return null;
   }

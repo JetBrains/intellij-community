@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Mikhail Golubev
  */
 public class JsonBraceMatcher implements PairedBraceMatcher {
-  private static BracePair[] PAIRS = {
+  private static final BracePair[] PAIRS = {
     new BracePair(JsonElementTypes.L_BRACKET, JsonElementTypes.R_BRACKET, true),
     new BracePair(JsonElementTypes.L_CURLY, JsonElementTypes.R_CURLY, true)
   };

@@ -1,26 +1,21 @@
 package com.jetbrains.env;
 
 import com.google.common.collect.Lists;
-import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.LoggingRule;
 import com.jetbrains.TestEnv;
-import com.jetbrains.python.packaging.PyPackage;
-import com.jetbrains.python.packaging.PyPackageManager;
-import com.jetbrains.python.packaging.PyPackageUtil;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +44,15 @@ public abstract class PyEnvTestCase {
 
   @NotNull
   protected static final PyEnvTestSettings SETTINGS = new PyEnvTestSettings();
+
+
+  /**
+   * Rule used to capture debug logging and display it if test failed.
+   * See also {@link PyExecutionFixtureTestTask#getClassesToEnableDebug()} and
+   * {@link PyEnvTaskRunner}
+   */
+  @Rule
+  public LoggingRule myLoggingRule = new LoggingRule();
 
 
   /**
@@ -91,6 +95,9 @@ public abstract class PyEnvTestCase {
 
   protected boolean isStaging(Description description) {
     try {
+      if (description.getTestClass().isAnnotationPresent(Staging.class)) {
+        return true;
+      }
       if (description.getTestClass().getMethod(description.getMethodName()).isAnnotationPresent(Staging.class)) {
         return true;
       }
@@ -120,11 +127,6 @@ public abstract class PyEnvTestCase {
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected PyEnvTestCase(@NotNull final String... requiredTags) {
     myRequiredTags = requiredTags.length > 0 ? requiredTags.clone() : null;
-  }
-
-  @Nullable
-  public static PyPackage getInstalledDjango(@NotNull final Sdk sdk) throws ExecutionException {
-    return PyPackageUtil.findPackage(PyPackageManager.getInstance(sdk).refreshAndGetPackages(false), "django");
   }
 
   public static String norm(String testDataPath) {
@@ -173,15 +175,30 @@ public abstract class PyEnvTestCase {
     return false;
   }
 
+  /**
+   * Runs task on several envs. If you care about exception thrown from task use {@link #runPythonTestWithException(PyTestTask)}
+   */
   public void runPythonTest(final PyTestTask testTask) {
     runTest(testTask, getTestName(false));
+  }
+
+  /**
+   * Like {@link #runPythonTest(PyTestTask)} but for tasks that may throw exception
+   */
+  protected final void runPythonTestWithException(final PyTestTask testTask) throws Exception {
+    try {
+      runPythonTest(testTask);
+    }
+    catch (final PyEnvWrappingException ex) {
+      throw ex.getCauseException();
+    }
   }
 
   protected String getTestName(boolean lowercaseFirstLetter) {
     return UsefulTestCase.getTestName(myTestName.getMethodName(), lowercaseFirstLetter);
   }
 
-  public void runTest(@NotNull PyTestTask testTask, @NotNull String testName) {
+  private void runTest(@NotNull PyTestTask testTask, @NotNull String testName) {
     Assume.assumeFalse("Running under teamcity but not by Env configuration. Test seems to be launched by accident, skip it.",
                        UsefulTestCase.IS_UNDER_TEAMCITY && !SETTINGS.isEnvConfiguration());
     checkStaging();
@@ -208,6 +225,7 @@ public abstract class PyEnvTestCase {
     Assume.assumeFalse(testName +
                        ": environments are not defined. Skipping. \nChecks logs for settings that lead to this situation",
                        roots.isEmpty());
+
     doRunTests(testTask, testName, roots);
   }
 
@@ -222,7 +240,7 @@ public abstract class PyEnvTestCase {
   protected void doRunTests(PyTestTask testTask, String testName, List<String> roots) {
     Assume.assumeFalse("Tests launched in remote SDK mode, and this test is not remote", SETTINGS.useRemoteSdk());
 
-    PyEnvTaskRunner taskRunner = new PyEnvTaskRunner(roots);
+    PyEnvTaskRunner taskRunner = new PyEnvTaskRunner(roots, myLoggingRule);
 
     final EnvTestTagsRequired classAnnotation = getClass().getAnnotation(EnvTestTagsRequired.class);
     EnvTestTagsRequired methodAnnotation = null;
@@ -270,10 +288,6 @@ public abstract class PyEnvTestCase {
     return envTags;
   }
 
-  public static String joinStrings(Collection<String> roots, String rootsName) {
-    return roots.size() > 0 ? rootsName + StringUtil.join(roots, ", ") + "\n" : "";
-  }
-
   /**
    * Capture all messages and error logs and store them to be obtained with {@link #getCapturesMessages()}
    * and stopped with {@link #stopMessageCapture()}
@@ -303,7 +317,7 @@ public abstract class PyEnvTestCase {
     myLogger = null;
   }
 
-  private Disposable myDisposable = Disposer.newDisposable();
+  private final Disposable myDisposable = Disposer.newDisposable();
 
   public Disposable getTestRootDisposable() {
     return myDisposable;

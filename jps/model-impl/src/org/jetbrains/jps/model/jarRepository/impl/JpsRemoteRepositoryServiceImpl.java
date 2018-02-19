@@ -33,7 +33,7 @@ public class JpsRemoteRepositoryServiceImpl extends JpsRemoteRepositoryService {
 
   @NotNull
   @Override
-  public JpsRemoteRepositoriesConfiguration getOrCreateRemoteRepositoriesConfiguration(@NotNull JpsProject project) {
+  public synchronized JpsRemoteRepositoriesConfiguration getOrCreateRemoteRepositoriesConfiguration(@NotNull JpsProject project) {
     JpsRemoteRepositoriesConfiguration config = getRemoteRepositoriesConfiguration(project);
     if (config == null) {
       config = project.getContainer().setChild(JpsRemoteRepositoriesConfigurationImpl.ROLE, new JpsRemoteRepositoriesConfigurationImpl());

@@ -18,7 +18,10 @@ package com.intellij.openapi.options.colors;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
-import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.EditorColorPalette;
+import com.intellij.openapi.editor.colors.EditorColorPaletteFactory;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.options.colors.pages.DefaultLanguageColorsPage;
 import com.intellij.openapi.options.colors.pages.GeneralColorsPage;
 import org.jetbrains.annotations.Contract;
@@ -39,7 +42,7 @@ public class EditorColorPaletteFactoryImpl extends EditorColorPaletteFactory {
 
   private static class ColorPagesPalette extends EditorColorPalette {
 
-    @Nullable private Language myLanguage;
+    @Nullable private final Language myLanguage;
 
     public ColorPagesPalette(@NotNull EditorColorsScheme colorsScheme, @Nullable Language language) {
       super(colorsScheme);

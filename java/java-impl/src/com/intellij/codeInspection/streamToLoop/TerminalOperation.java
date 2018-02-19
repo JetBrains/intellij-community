@@ -344,9 +344,9 @@ abstract class TerminalOperation extends Operation {
   }
 
   static class ReduceTerminalOperation extends TerminalOperation {
-    private PsiExpression myIdentity;
-    private PsiType myType;
-    private FunctionHelper myUpdater;
+    private final PsiExpression myIdentity;
+    private final PsiType myType;
+    private final FunctionHelper myUpdater;
 
     public ReduceTerminalOperation(PsiExpression identity, FunctionHelper updater, PsiType type) {
       myIdentity = identity;
@@ -369,8 +369,8 @@ abstract class TerminalOperation extends Operation {
   }
 
   static class ReduceToOptionalTerminalOperation extends TerminalOperation {
-    private PsiType myType;
-    private FunctionHelper myUpdater;
+    private final PsiType myType;
+    private final FunctionHelper myUpdater;
 
     public ReduceToOptionalTerminalOperation(FunctionHelper updater, PsiType type) {
       myType = type;
@@ -463,7 +463,7 @@ abstract class TerminalOperation extends Operation {
   }
 
   static class ToPrimitiveArrayTerminalOperation extends TerminalOperation {
-    private PsiType myType;
+    private final PsiType myType;
 
     ToPrimitiveArrayTerminalOperation(PsiType type) {
       myType = type;
@@ -510,7 +510,7 @@ abstract class TerminalOperation extends Operation {
   }
 
   static class FindTerminalOperation extends TerminalOperation {
-    private PsiType myType;
+    private final PsiType myType;
 
     public FindTerminalOperation(PsiType type) {
       myType = type;
@@ -633,11 +633,11 @@ abstract class TerminalOperation extends Operation {
   }
 
   static class TemplateBasedOperation extends AccumulatedOperation implements CollectorOperation {
-    private String myAccName;
-    private PsiType myAccType;
-    private String myAccInitializer;
-    private String myUpdateTemplate;
-    private String myFinisherTemplate;
+    private final String myAccName;
+    private final PsiType myAccType;
+    private final String myAccInitializer;
+    private final String myUpdateTemplate;
+    private final String myFinisherTemplate;
 
     /**
      * @param accName desired name for accumulator variable
@@ -748,9 +748,9 @@ abstract class TerminalOperation extends Operation {
   }
 
   static class MinMaxTerminalOperation extends TerminalOperation {
-    private PsiType myType;
-    private String myTemplate;
-    private @Nullable FunctionHelper myComparator;
+    private final PsiType myType;
+    private final String myTemplate;
+    private @Nullable final FunctionHelper myComparator;
 
     public MinMaxTerminalOperation(PsiType type, String template, @Nullable FunctionHelper comparator) {
       myType = type;
@@ -880,7 +880,7 @@ abstract class TerminalOperation extends Operation {
 
   static class GroupByTerminalOperation extends CollectorBasedTerminalOperation {
     private final CollectorOperation myCollector;
-    private FunctionHelper myKeyExtractor;
+    private final FunctionHelper myKeyExtractor;
     private String myKeyVar;
 
     public GroupByTerminalOperation(FunctionHelper keyExtractor, FunctionHelper supplier, PsiType resultType, CollectorOperation collector) {
@@ -928,7 +928,7 @@ abstract class TerminalOperation extends Operation {
   static class PartitionByTerminalOperation extends TerminalOperation {
     private final String myResultType;
     private final CollectorOperation myCollector;
-    private FunctionHelper myPredicate;
+    private final FunctionHelper myPredicate;
 
     public PartitionByTerminalOperation(FunctionHelper predicate, PsiType resultType, CollectorOperation collector) {
       myPredicate = predicate;
@@ -1072,7 +1072,7 @@ abstract class TerminalOperation extends Operation {
   }
 
   static class ForEachTerminalOperation extends TerminalOperation {
-    private FunctionHelper myFn;
+    private final FunctionHelper myFn;
 
     public ForEachTerminalOperation(FunctionHelper fn) {
       myFn = fn;

@@ -202,7 +202,7 @@ public class Splash extends JDialog implements StartupProgress {
     return new Font(name, Font.PLAIN, uiScale(Registry.is("ide.new.about") ? 12 : SystemInfo.isUnix ? 10 : 11));
   }
 
-  private static float JBUI_INIT_SCALE = JBUI.scale(1f);
+  private static final float JBUI_INIT_SCALE = JBUI.scale(1f);
   private static float uiScale(float f) { return f * JBUI_INIT_SCALE; }
   private static int uiScale(int i) { return (int)(i * JBUI_INIT_SCALE); }
 

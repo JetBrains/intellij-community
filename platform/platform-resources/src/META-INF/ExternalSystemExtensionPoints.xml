@@ -7,10 +7,14 @@
                     interface="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService"/>
     <extensionPoint name="externalSystemConfigurationHandler"
                     interface="com.intellij.openapi.externalSystem.service.project.settings.ConfigurationHandler"/>
-    <extensionPoint name="runConfigurationImporter"
+    <extensionPoint name="externalSystem.runConfigurationImporter"
                     interface="com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter"/>
-    <extensionPoint name="facetConfigurationImporter"
+    <extensionPoint name="externalSystem.facetConfigurationImporter"
                     interface="com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationImporter"/>
+    <extensionPoint name="externalSystem.codeStyleConfigurationImporter"
+                    interface="com.intellij.openapi.externalSystem.service.project.settings.CodeStyleConfigurationImporter"/>
+    <extensionPoint name="externalSystem.beforeRunTaskImporter"
+                    interface="com.intellij.openapi.externalSystem.service.project.settings.BeforeRunTaskImporter"/>
     <extensionPoint name="externalSystemConfigLocator"
                     interface="com.intellij.openapi.externalSystem.service.settings.ExternalSystemConfigLocator"/>
     <extensionPoint name="externalSystemNotificationExtension"

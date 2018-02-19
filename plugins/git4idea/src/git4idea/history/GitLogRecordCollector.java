@@ -146,10 +146,6 @@ abstract class GitLogRecordCollector implements Consumer<GitLogRecord> {
     GitLogUtil.sendHashesToStdin(vcs, hashes, handler);
     String output = Git.getInstance().runCommand(handler).getOutputOrThrow();
 
-    if (!handler.errors().isEmpty()) {
-      throw new VcsException(GitUIUtil.stringifyErrors(handler.errors()));
-    }
-
     List<GitLogRecord> hashAndTreeRecords = parser.parse(output);
     return ContainerUtil.map2Map(hashAndTreeRecords, record -> Pair.create(record.getHash(), record.getTreeHash()));
   }

@@ -19,7 +19,7 @@ public abstract class CloudDeploymentConfiguratorBase<D extends DeploymentConfig
   extends DeploymentConfigurator<D, S> {
 
   private final Project myProject;
-  private ServerType<S> myServerType;
+  private final ServerType<S> myServerType;
 
   public CloudDeploymentConfiguratorBase(Project project, ServerType<S> serverType) {
     myProject = project;

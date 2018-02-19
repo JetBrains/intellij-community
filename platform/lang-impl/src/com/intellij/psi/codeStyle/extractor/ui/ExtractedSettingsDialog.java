@@ -275,8 +275,8 @@ public class ExtractedSettingsDialog extends DialogWrapper {
     }
   }
 
-  private static ValueRenderer myValueRenderer = new ValueRenderer();
-  private static ValueEditor myValueEditor = new ValueEditor();
+  private static final ValueRenderer myValueRenderer = new ValueRenderer();
+  private static final ValueEditor myValueEditor = new ValueEditor();
 
   protected static ColumnInfo getValueColumnInfo() {
     return new ColumnInfo("VALUE") {

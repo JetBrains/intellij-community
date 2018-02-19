@@ -20,13 +20,12 @@ import com.intellij.dvcs.branch.DvcsBranchPopup;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.ui.BranchActionGroup;
 import com.intellij.dvcs.ui.RootAction;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.EmptyAction;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.branch.GitBranchIncomingOutgoingManager;
 import git4idea.config.GitVcsSettings;
 import git4idea.rebase.GitRebaseSpec;
 import git4idea.repo.GitRepository;
@@ -101,6 +100,20 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
                          @NotNull Condition<AnAction> preselectActionCondition) {
     super(currentRepository, repositoryManager, new GitMultiRootBranchConfig(repositoryManager.getRepositories()), vcsSettings,
           preselectActionCondition, DIMENSION_SERVICE_KEY);
+
+    final GitBranchIncomingOutgoingManager gitBranchIncomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(myProject);
+    if (gitBranchIncomingOutgoingManager.hasAuthenticationProblems()) {
+      AnAction updateBranchInfoWithAuthenticationAction =
+        new AnAction("Authentication failed. Click to retry", null, AllIcons.General.Warning) {
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            gitBranchIncomingOutgoingManager.forceUpdateBranches(true);
+            myPopup.cancel();
+          }
+        };
+      updateBranchInfoWithAuthenticationAction.getTemplatePresentation().setHoveredIcon(AllIcons.General.Warning);
+      myPopup.addToolbarAction(updateBranchInfoWithAuthenticationAction, false);
+    }
   }
 
   @Override

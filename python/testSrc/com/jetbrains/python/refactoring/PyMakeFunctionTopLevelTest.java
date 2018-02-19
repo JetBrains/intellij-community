@@ -173,13 +173,13 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
 
   // PY-6637
   public void testLocalFunctionNonlocalReferenceToOuterScope() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30,
+    runWithLanguageLevel(LanguageLevel.PYTHON34,
                          () -> doTestFailure(PyBundle.message("refactoring.make.function.top.level.error.nonlocal.writes")));
   }
 
   // PY-6637
   public void testLocalFunctionNonlocalReferencesInInnerFunction() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTestSuccess);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTestSuccess);
   }
 
   // PY-6637
@@ -188,7 +188,7 @@ public class PyMakeFunctionTopLevelTest extends PyTestCase {
   }
 
   public void testMethodNonlocalReferenceToOuterScope() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30,
+    runWithLanguageLevel(LanguageLevel.PYTHON34,
                          () -> doTestFailure(PyBundle.message("refactoring.make.function.top.level.error.nonlocal.writes")));
   }
 

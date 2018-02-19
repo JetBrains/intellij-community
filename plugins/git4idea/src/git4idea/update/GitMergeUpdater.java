@@ -235,7 +235,7 @@ public class GitMergeUpdater extends GitUpdater {
 
   private static class MergeLineListener extends GitLineHandlerAdapter {
     private MergeError myMergeError;
-    private List<String> myOutput = new ArrayList<>();
+    private final List<String> myOutput = new ArrayList<>();
     private boolean myLocalChangesError = false;
 
     @Override

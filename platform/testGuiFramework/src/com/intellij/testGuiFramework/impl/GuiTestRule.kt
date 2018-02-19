@@ -40,6 +40,7 @@ import com.intellij.testGuiFramework.impl.GuiTestUtilKt.runOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
 import com.intellij.testGuiFramework.util.Key
 import com.intellij.ui.Splash
+import com.intellij.util.concurrency.AppExecutorUtil
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
@@ -72,7 +73,6 @@ class GuiTestRule : TestRule {
   private var myProjectPath: File? = null
     set
   private var myTestName: String = "undefined"
-  private var currentTestErrors = 0
   private var currentTestDateStart: Date = Date()
 
   private val myRuleChain = RuleChain.emptyRuleChain()
@@ -112,7 +112,6 @@ class GuiTestRule : TestRule {
               errors.addAll(tearDown())  // shouldn't throw, but called inside a try-finally for defense in depth
             }
             finally {
-              currentTestErrors = errors.size
               //noinspection ThrowFromFinallyBlock; assertEmpty is intended to throw here
               MultipleFailureException.assertEmpty(errors)
             }
@@ -230,11 +229,9 @@ class GuiTestRule : TestRule {
 
     override fun after() {
       try {
-        if (currentTestErrors > 0) {
-          GuiTestUtilKt.waitUntil("fatal errors in message log will sync") {
-            MessagePool.getInstance().getFatalErrors(true, true).size >= currentTestErrors
-          }
-        }
+        val executorService = AppExecutorUtil.getAppExecutorService()
+        //wait 10 second for the termination of all
+        if (!executorService.awaitTermination(10, TimeUnit.SECONDS)) executorService.shutdownNow()
         MessagePool.getInstance().clearFatals()
       }
       catch (e: Exception) {

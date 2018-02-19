@@ -53,8 +53,8 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
   private MavenProjectsNavigatorState myState = new MavenProjectsNavigatorState();
 
   private MavenProjectsManager myProjectsManager;
-  private MavenTasksManager myTasksManager;
-  private MavenShortcutsManager myShortcutsManager;
+  private final MavenTasksManager myTasksManager;
+  private final MavenShortcutsManager myShortcutsManager;
 
   private SimpleTree myTree;
   private MavenProjectsStructure myStructure;

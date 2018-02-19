@@ -67,9 +67,9 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
   protected static final ThemeInfo GTK = new ThemeInfo("GTK+", "GTK", "com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
 
   private boolean myInitial = true;
-  private boolean myColumnMode;
-  private JLabel myPreviewLabel;
-  private Set<ThemeInfo> myThemes = new LinkedHashSet<>();
+  private final boolean myColumnMode;
+  private final JLabel myPreviewLabel;
+  private final Set<ThemeInfo> myThemes = new LinkedHashSet<>();
 
   public CustomizeUIThemeStepPanel() {
     setLayout(createSmallBorderLayout());

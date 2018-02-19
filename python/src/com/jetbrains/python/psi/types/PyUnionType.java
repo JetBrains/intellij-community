@@ -219,4 +219,11 @@ public class PyUnionType implements PyType {
   public String toString() {
     return "PyUnionType: " + getName();
   }
+
+  @Override
+  public void accept(@NotNull PyTypeVisitor visitor) {
+    if (visitor instanceof PyTypeVisitorExt) {
+      ((PyTypeVisitorExt)visitor).visitUnionType(this);
+    }
+  }
 }

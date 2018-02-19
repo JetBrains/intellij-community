@@ -132,6 +132,13 @@ public class WeakestTypeFinder {
           return Collections.emptyList();
         }
       }
+      else if (referenceParent instanceof PsiResourceExpression) {
+        PsiClass closeable = facade.findClass(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, scope);
+        if (closeable == null || variableOrMethodClass.equals(closeable)) {
+          return Collections.emptyList();
+        }
+        weakestTypeClasses.add(closeable);
+      }
       else if (referenceParent instanceof PsiAssignmentExpression) {
         final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)referenceParent;
         if (!findWeakestType(referenceElement, assignmentExpression, useRighthandTypeAsWeakestTypeInAssignments, weakestTypeClasses)) {

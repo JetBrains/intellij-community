@@ -74,6 +74,18 @@ public class UnnecessaryBoxingFixTest extends IGQuickFixesTestCase {
                      "\"a\" + (1L - 2L) + \"b\"");
   }
 
+  public void testHex() {
+    doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
+                 "float f = Float./**/valueOf(0x123);",
+                 "float f = (float) 0x123;");
+  }
+
+  public void testOctal() {
+    doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
+                 "float f = Float.valueOf/**/(0123);",
+                 "float f = (float) 0123;");
+  }
+
   public void testCast() {
     doFixTest();
   }

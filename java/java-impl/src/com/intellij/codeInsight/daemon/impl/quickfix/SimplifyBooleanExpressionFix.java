@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
@@ -219,7 +220,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
 
     if (parent instanceof PsiCodeBlock) {
       if (statement instanceof PsiBlockStatement &&
-          !DeclarationSearchUtils.containsConflictingDeclarations(((PsiBlockStatement)statement).getCodeBlock(), (PsiCodeBlock)parent)) {
+          !BlockUtils.containsConflictingDeclarations(((PsiBlockStatement)statement).getCodeBlock(), (PsiCodeBlock)parent)) {
         inlineBlockStatements(orig, (PsiBlockStatement)statement, parent);
         return;
       }

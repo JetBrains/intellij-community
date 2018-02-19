@@ -57,6 +57,7 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
+import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -81,7 +82,7 @@ public class BuildContentManagerImpl implements BuildContentManager {
   private Project myProject;
   private ToolWindow myToolWindow;
   private final List<Runnable> myPostponedRunnables = new ArrayList<>();
-  private Map<Content, Pair<Icon, AtomicInteger>> liveContentsMap = ContainerUtil.newConcurrentMap();
+  private final Map<Content, Pair<Icon, AtomicInteger>> liveContentsMap = ContainerUtil.newConcurrentMap();
 
   public BuildContentManagerImpl(Project project) {
     init(project);
@@ -284,7 +285,10 @@ public class BuildContentManagerImpl implements BuildContentManager {
       Pair<Icon, AtomicInteger> pair = liveContentsMap.computeIfAbsent(content, c -> Pair.pair(c.getIcon(), new AtomicInteger(0)));
       pair.second.incrementAndGet();
       content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
-      content.setIcon(ExecutionUtil.getLiveIndicator(pair.first));
+      if(pair.first == null) {
+        content.putUserData(Content.TAB_LABEL_ORIENTATION_KEY, ComponentOrientation.RIGHT_TO_LEFT);
+      }
+      content.setIcon(ExecutionUtil.getLiveIndicator(pair.first, 0, 13));
       JComponent component = content.getComponent();
       if (component != null) {
         component.invalidate();

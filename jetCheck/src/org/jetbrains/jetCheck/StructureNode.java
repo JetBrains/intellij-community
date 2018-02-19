@@ -3,10 +3,7 @@ package org.jetbrains.jetCheck;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -69,12 +66,13 @@ class StructureNode extends StructureElement {
   ShrinkStep shrink() {
     if (shrinkProhibited) return null;
 
-    return isList() ? new RemoveListRange(this) : shrinkChild(0);
+    return isList() ? new RemoveListRange(this) : shrinkChild(children.size() - 1);
   }
 
   @Nullable
   ShrinkStep shrinkChild(int index) {
-    for (; index < children.size(); index++) {
+    int minIndex = isList() ? 1 : 0;
+    for (; index >= minIndex; index--) {
       ShrinkStep childShrink = children.get(index).shrink();
       if (childShrink != null) return wrapChildShrink(index, childShrink);
     }
@@ -84,11 +82,17 @@ class StructureNode extends StructureElement {
 
   @Nullable
   private ShrinkStep wrapChildShrink(int index, @Nullable ShrinkStep step) {
-    if (step == null) return shrinkChild(index + 1);
+    if (step == null) return shrinkChild(index - 1);
 
     NodeId oldChild = children.get(index).id;
 
     return new ShrinkStep() {
+
+      @Override
+      List<?> getEqualityObjects() {
+        return Collections.singletonList(step);
+      }
+
       @Nullable
       @Override
       StructureNode apply(StructureNode root) {
@@ -109,12 +113,6 @@ class StructureNode extends StructureElement {
       @Override
       ShrinkStep onFailure() {
         return wrapChildShrink(index, step.onFailure());
-      }
-
-      @NotNull
-      @Override
-      NodeId getNodeAfter() {
-        return step.getNodeAfter();
       }
 
       @Override
@@ -204,6 +202,11 @@ class StructureNode extends StructureElement {
   }
 
   @Override
+  public boolean equals(Object obj) {
+    return obj instanceof StructureNode && children.equals(((StructureNode)obj).children);
+  }
+
+  @Override
   public int hashCode() {
     return children.hashCode();
   }
@@ -229,7 +232,13 @@ class IntData extends StructureElement {
   @Nullable
   @Override
   ShrinkStep shrink() {
-    return value == 0 ? null : tryInt(0, () -> null, this::tryNegation);
+    if (value == 0) return null;
+
+    int minValue = 0;
+    if (distribution instanceof BoundedIntDistribution) {
+      minValue = Math.max(minValue, ((BoundedIntDistribution)distribution).getMin());
+    }
+    return tryInt(minValue, () -> null, this::tryNegation);
   }
 
   private ShrinkStep tryNegation() {
@@ -242,7 +251,7 @@ class IntData extends StructureElement {
   private ShrinkStep divisionLoop(int value) {
     if (value == 0) return null;
     int divided = value / 2;
-    return tryInt(divided, () -> divisionLoop(divided / 2), null);
+    return tryInt(divided, () -> divisionLoop(divided), null);
   }
 
   private ShrinkStep tryInt(int value, @NotNull Supplier<ShrinkStep> success, @Nullable Supplier<ShrinkStep> fail) {
@@ -264,6 +273,11 @@ class IntData extends StructureElement {
   @Override
   public String toString() {
     return String.valueOf(value);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof IntData && value == ((IntData)obj).value;
   }
 
   @Override

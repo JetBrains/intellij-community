@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
@@ -28,7 +15,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
@@ -68,6 +54,11 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static com.intellij.openapi.keymap.KeymapUtil.getKeystrokeText;
+import static com.intellij.util.containers.ContainerUtil.indexOf;
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 /**
  * The standard base class for modal dialog boxes. The dialog wrapper could be used only on event dispatch thread.
@@ -471,7 +462,7 @@ public abstract class DialogWrapper {
    */
   protected JComponent createSouthPanel() {
     List<Action> actions = ContainerUtil.filter(createActions(), Condition.NOT_NULL);
-    List<Action> leftSideActions = ContainerUtil.newArrayList(createLeftSideActions());
+    List<Action> leftSideActions = newArrayList(createLeftSideActions());
 
     if (!ApplicationInfo.contextHelpAvailable()) {
       actions.remove(getHelpAction());
@@ -608,11 +599,8 @@ public abstract class DialogWrapper {
     }
     JComponent doNotAskCheckbox = createDoNotAskCheckbox();
 
-    final JPanel lrButtonsPanel = new NonOpaquePanel(new GridBagLayout());
-    //noinspection UseDPIAwareInsets
-    final Insets insets = SystemInfo.isMacOSLeopard ?
-                          UIUtil.isUnderIntelliJLaF() ? JBUI.insets(0, 8) : JBUI.emptyInsets() :
-                          UIUtil.isUnderWin10LookAndFeel() ? JBUI.emptyInsets() : new Insets(8, 0, 0, 0); //don't wrap to JBInsets
+    JPanel lrButtonsPanel = new NonOpaquePanel(new GridBagLayout());
+    Insets insets = SystemInfo.isMacOSLeopard && UIUtil.isUnderIntelliJLaF() ? JBUI.insets(0, 8) : JBUI.emptyInsets();
 
     if (rightSideButtons.size() > 0 || leftSideButtons.size() > 0) {
       GridBag bag = new GridBag().setDefaultInsets(insets);
@@ -643,7 +631,9 @@ public abstract class DialogWrapper {
       helpButton = createHelpButton(insets);
     }
 
-    if (helpButton != null || doNotAskCheckbox != null) {
+    JPanel eastPanel = createSouthAdditionalPanel();
+
+    if (helpButton != null || doNotAskCheckbox != null || eastPanel != null) {
       JPanel leftPanel = new JPanel(new BorderLayout());
 
       if (helpButton != null) leftPanel.add(helpButton, BorderLayout.WEST);
@@ -651,6 +641,11 @@ public abstract class DialogWrapper {
       if (doNotAskCheckbox != null) {
         doNotAskCheckbox.setBorder(JBUI.Borders.emptyRight(20));
         leftPanel.add(doNotAskCheckbox, BorderLayout.CENTER);
+      }
+
+
+      if(eastPanel != null) {
+        leftPanel.add(eastPanel, BorderLayout.EAST);
       }
 
       panel.add(leftPanel, BorderLayout.WEST);
@@ -675,13 +670,23 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  private JPanel createButtonsPanel(@NotNull List<JButton> buttons) {
+  protected JPanel createButtonsPanel(@NotNull List<JButton> buttons) {
     int hgap = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? 8 : 0 : 5;
-    JPanel buttonsPanel = new NonOpaquePanel(new GridLayout(1, buttons.size(), hgap, 0));
+    JPanel buttonsPanel = new NonOpaquePanel(new DialogWrapperButtonLayout(buttons.size(), hgap));
     for (final JButton button : buttons) {
       buttonsPanel.add(button);
     }
     return buttonsPanel;
+  }
+
+  /**
+   * Additional panel in the lower left part of dialog to the left from additional buttons
+   *
+   * @return panel to be shown or null if it's not required
+   */
+  @Nullable
+  protected JPanel createSouthAdditionalPanel() {
+    return null;
   }
 
   /**
@@ -751,26 +756,9 @@ public abstract class DialogWrapper {
   @NotNull
   private JButton createJOptionsButton(@NotNull OptionAction action) {
     JBOptionButton optionButton = new JBOptionButton(action, action.getOptions());
+    String tooltip = String.format("Show drop-down menu (%s)", getKeystrokeText(SHOW_OPTION_KEYSTROKE));
+    optionButton.setOptionTooltipText(tooltip);
     optionButton.setOkToProcessDefaultMnemonics(false);
-    optionButton.setOptionTooltipText(
-      "Press " + KeymapUtil.getKeystrokeText(SHOW_OPTION_KEYSTROKE) + " to expand or use a mnemonic of a contained action");
-
-    final Set<JBOptionButton.OptionInfo> infos = optionButton.getOptionInfos();
-    for (final JBOptionButton.OptionInfo eachInfo : infos) {
-      if (eachInfo.getMnemonic() >= 0) {
-        final char mnemonic = (char)eachInfo.getMnemonic();
-        JRootPane rootPane = getPeer().getRootPane();
-        if (rootPane != null) {
-          new DumbAwareAction("Show JBOptionButton popup") {
-            @Override
-            public void actionPerformed(AnActionEvent e) {
-              final JBOptionButton buttonToActivate = eachInfo.getButton();
-              buttonToActivate.showPopup(eachInfo.getAction(), true);
-            }
-          }.registerCustomShortcutSet(MnemonicHelper.createShortcut(mnemonic), rootPane, myDisposable);
-        }
-      }
-    }
 
     return optionButton;
   }
@@ -1014,6 +1002,7 @@ public abstract class DialogWrapper {
    * @see #doCancelAction
    */
   public void doCancelAction(AWTEvent source) {
+    recordAction("DialogCancelAction", source);
     doCancelAction();
   }
 
@@ -1361,20 +1350,16 @@ public abstract class DialogWrapper {
   }
 
   private void expandNextOptionButton() {
-    if (myCurrentOptionsButtonIndex > 0) {
+    if (myCurrentOptionsButtonIndex >= 0) {
       myOptionsButtons.get(myCurrentOptionsButtonIndex).closePopup();
-      myCurrentOptionsButtonIndex++;
     }
-    else if (!myOptionsButtons.isEmpty()) {
-      myCurrentOptionsButtonIndex = 0;
-    }
-
-    if (myCurrentOptionsButtonIndex >= 0 && myCurrentOptionsButtonIndex < myOptionsButtons.size()) {
+    myCurrentOptionsButtonIndex = getEnabledIndexCyclic(myOptionsButtons, myCurrentOptionsButtonIndex, true).orElse(-1);
+    if (myCurrentOptionsButtonIndex >= 0) {
       myOptionsButtons.get(myCurrentOptionsButtonIndex).showPopup(null, true);
     }
   }
 
-  void startTrackingValidation() {
+  protected void startTrackingValidation() {
     SwingUtilities.invokeLater(() -> {
       if (!myValidationStarted && !myDisposed) {
         myValidationStarted = true;
@@ -1723,18 +1708,10 @@ public abstract class DialogWrapper {
       rootPane.registerKeyboardAction(helpAction, KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
     }
 
-    rootPane.registerKeyboardAction(new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        focusPreviousButton();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-    rootPane.registerKeyboardAction(new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        focusNextButton();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    rootPane.registerKeyboardAction(e -> focusButton(false), KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0),
+                                    JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    rootPane.registerKeyboardAction(e -> focusButton(true), KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0),
+                                    JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
     if (myYesAction != null) {
       rootPane.registerKeyboardAction(myYesAction, KeyStroke.getKeyStroke(KeyEvent.VK_Y, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -1761,32 +1738,24 @@ public abstract class DialogWrapper {
       };
   }
 
-  private void focusPreviousButton() {
-    JButton[] myButtons = new ArrayList<>(myButtonMap.values()).toArray(new JButton[0]);
-    for (int i = 0; i < myButtons.length; i++) {
-      if (myButtons[i].hasFocus()) {
-        if (i == 0) {
-          myButtons[myButtons.length - 1].requestFocus();
-          return;
-        }
-        myButtons[i - 1].requestFocus();
-        return;
-      }
+  private void focusButton(boolean next) {
+    List<JButton> buttons = newArrayList(myButtonMap.values());
+    int focusedIndex = indexOf(buttons, (Condition<? super Component>)Component::hasFocus);
+
+    if (focusedIndex >= 0) {
+      getEnabledIndexCyclic(buttons, focusedIndex, next).ifPresent(i -> buttons.get(i).requestFocus());
     }
   }
 
-  private void focusNextButton() {
-    JButton[] myButtons = new ArrayList<>(myButtonMap.values()).toArray(new JButton[0]);
-    for (int i = 0; i < myButtons.length; i++) {
-      if (myButtons[i].hasFocus()) {
-        if (i == myButtons.length - 1) {
-          myButtons[0].requestFocus();
-          return;
-        }
-        myButtons[i + 1].requestFocus();
-        return;
-      }
-    }
+  @NotNull
+  private static OptionalInt getEnabledIndexCyclic(@NotNull List<? extends Component> components, int currentIndex, boolean next) {
+    assert -1 <= currentIndex && currentIndex <= components.size();
+    int start = !next && currentIndex == -1 ? components.size() : currentIndex;
+
+    return IntStream.range(0, components.size())
+      .map(i -> (next ? start + i + 1 : start + components.size() - i - 1) % components.size())
+      .filter(i -> components.get(i).isEnabled())
+      .findFirst();
   }
 
   public long getTypeAheadTimeoutMs() {
@@ -1854,6 +1823,7 @@ public abstract class DialogWrapper {
 
     @Override
     protected void doAction(ActionEvent e) {
+      recordAction("DialogOkAction");
       List<ValidationInfo> infoList = doValidateAll();
       if (!infoList.isEmpty()) {
         ValidationInfo info = infoList.get(0);
@@ -1869,6 +1839,17 @@ public abstract class DialogWrapper {
         return;
       }
       doOKAction();
+    }
+  }
+
+  private void recordAction(String name) {
+    recordAction(name, EventQueue.getCurrentEvent());
+  }
+
+  private void recordAction(String name, AWTEvent event) {
+    if (event instanceof KeyEvent) {
+      String shortcut = getKeystrokeText(KeyStroke.getKeyStrokeForEvent((KeyEvent)event));
+      ActionsCollector.getInstance().record(name + " " + shortcut);
     }
   }
 
@@ -2031,6 +2012,13 @@ public abstract class DialogWrapper {
     }
   }
 
+  /**
+   * Check if component is in error state validation-wise
+   */
+  protected boolean hasErrors(@NotNull JComponent component) {
+    return myInfo.stream().anyMatch(i -> component.equals(i.component));
+  }
+
   private void setErrorTipText(JComponent component, JLabel label, String text) {
     Insets insets = UIManager.getInsets("Balloon.error.textInsets");
     int oneLineWidth = SwingUtilities2.stringWidth(label, label.getFontMetrics(label.getFont()), text);
@@ -2105,7 +2093,7 @@ public abstract class DialogWrapper {
 
   private class ErrorText extends JPanel {
     private final JLabel myLabel = new JLabel();
-    private List<String> errors = new ArrayList<>();
+    private final List<String> errors = new ArrayList<>();
 
     private ErrorText(int horizontalAlignment) {
       setLayout(new BorderLayout());

@@ -17,5 +17,6 @@
     <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
     <orderEntry type="module" module-name="intellij.platform.analysis" exported="" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="library" name="JDOM" level="project" />
   </component>
 </module>

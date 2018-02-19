@@ -59,8 +59,9 @@ class Gr {
 }
 new Gr().fo<caret>o()
 ''', '''\
-<html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><small><b><a href="psi_element://Gr"><code>Gr</code></a></b></small><PRE>void&nbsp;<b>foo</b>()</PRE>
-     Use <a href="psi_element://Gr#bar()"><code>bar()</code></a> from class <a href="psi_element://Gr"><code>Gr</code></a> instead</body></html>'''
+<div class='definition'><pre><a href="psi_element://Gr"><code>Gr</code></a><br>void&nbsp;<b>foo</b>()</pre></div><div class='content'>
+     Use <a href="psi_element://Gr#bar()"><code>bar()</code></a> from class <a href="psi_element://Gr"><code>Gr</code></a> instead
+   <p></div><table class='sections'><p></table>'''
   }
 
   void 'test untyped local variable'() {
@@ -68,7 +69,7 @@ new Gr().fo<caret>o()
 def aa = 1
 a<caret>a
 ''', '''\
-<html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><PRE><a href="psi_element://java.lang.Object"><code>Object</code></a> <b>aa</b></PRE><p>[inferred type] <a href="psi_element://java.lang.Integer"><code>Integer</code></a></body></html>'''
+<div class='definition'><pre><a href="psi_element://java.lang.Object"><code>Object</code></a> <b>aa</b></pre></div><table class='sections'></table><p>[inferred type] <a href="psi_element://java.lang.Integer"><code>Integer</code></a>'''
   }
 
   void 'test implicit closure parameter'() {
@@ -76,7 +77,7 @@ a<caret>a
 List<String> ss = []
 ss.collect { i<caret>t }
 ''', '''\
-<html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><PRE><a href="psi_element://java.lang.Object"><code>Object</code></a> <b>it</b></PRE><p>[inferred type] <a href="psi_element://java.lang.String"><code>String</code></a></body></html>'''
+<div class='definition'><pre><a href="psi_element://java.lang.Object"><code>Object</code></a> <b>it</b></pre></div><table class='sections'></table><p>[inferred type] <a href="psi_element://java.lang.String"><code>String</code></a>'''
   }
 
   private void doTest(String text, String doc) {

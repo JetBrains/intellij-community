@@ -40,11 +40,9 @@ import git4idea.commands.*;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.log.GitLogProvider;
 import git4idea.log.GitRefManager;
-import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.OutputStreamWriter;
 import java.util.*;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -296,7 +294,7 @@ public class GitLogUtil {
     StopWatch sw = StopWatch.start("loading details in [" + root.getName() + "]");
 
     GitLogOutputSplitter handlerListener = new GitLogOutputSplitter(handler, parser, converter);
-    Git.getInstance().runCommandWithoutCollectingOutput(handler);
+    Git.getInstance().runCommandWithoutCollectingOutput(handler).getOutputOrThrow();
     handlerListener.reportErrors();
 
     sw.report();
@@ -354,26 +352,15 @@ public class GitLogUtil {
 
     readRecordsFromHandler(project, root, false, true, recordCollector, handler, getNoWalkParameter(vcs), STDIN);
     recordCollector.finish();
-
-    if (!handler.errors().isEmpty()) {
-      throw new VcsException(GitUIUtil.stringifyErrors(handler.errors()));
-    }
   }
 
   public static void sendHashesToStdin(@NotNull GitVcs vcs, @NotNull Collection<String> hashes, @NotNull GitHandler handler) {
-    String separator = getSeparator(vcs);
-    handler.setInputProcessor(stream -> {
-      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-      OutputStreamWriter writer = new OutputStreamWriter(stream, handler.getCharset());
-      // if we close this stream, RunnerMediator won't be able to send ctrl+c to the process in order to softly kill it
-      // see RunnerMediator.sendCtrlEventThroughStream
-      for (String hash : hashes) {
-        writer.write(hash);
-        writer.write(separator);
-      }
-      writer.write(separator);
-      writer.flush();
-    });
+    // if we close this stream, RunnerMediator won't be able to send ctrl+c to the process in order to softly kill it
+    // see RunnerMediator.sendCtrlEventThroughStream
+    handler.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(hashes,
+                                                                      getSeparator(vcs),
+                                                                      handler.getCharset(),
+                                                                      true));
   }
 
   @NotNull

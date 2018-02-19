@@ -26,9 +26,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.FileEditorManagerTestCase;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.editor.UIFormEditor;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * @author Dmitry Avdeev
@@ -47,10 +47,9 @@ public class FormOpeningTest extends FileEditorManagerTestCase {
       assertInstanceOf(editors[0], UIFormEditor.class);
       JComponent component = getEditorComponent();
       assertInstanceOf(component, DumbUnawareHider.class);
-      assertEquals(2, component.getComponentCount());
+      GuiEditor editorComponent = UIUtil.uiTraverser(component).filter(GuiEditor.class).single();
+      assertNotNull("editor not found", editorComponent);
 
-      Component editorComponent = component.getComponents()[0];
-      assertInstanceOf(editorComponent, GuiEditor.class);
       assertFalse(editorComponent.isVisible());
 
       dumbService.setDumb(false);

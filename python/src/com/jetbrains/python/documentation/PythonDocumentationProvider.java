@@ -247,6 +247,14 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   /**
+   * Returns the provided type in PEP 484 compliant format.
+   */
+  @NotNull
+  public static String getTypeHint(@Nullable PyType type, @NotNull TypeEvalContext context) {
+    return buildTypeModel(type, context).asPep484TypeHint();
+  }
+
+  /**
    * @param type    type which description will be calculated.
    *                Description is the same as {@link PythonDocumentationProvider#getTypeDescription(PyType, TypeEvalContext)} gives but
    *                types are converted to links.

@@ -30,6 +30,7 @@ public class TryFinallyCanBeTryWithResourcesFixTest extends IGQuickFixesTestCase
   public void testTryInCatchBlock() { doTest(); }
   public void testJava9() { doTest(); }
   public void testJava9WithParameter() { doTest(); }
+  public void testCatch() { doTest(); }
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {

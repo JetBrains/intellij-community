@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.indices;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.BaseComponent;
@@ -102,17 +101,10 @@ public class MavenProjectIndicesManager extends MavenSimpleProjectComponent impl
         Set<Pair<String, String>> remoteRepositoriesIdsAndUrls;
         File localRepository;
 
-        AccessToken accessToken = ReadAction.start();
 
-        try {
-          if (myProject.isDisposed()) return;
-
-          remoteRepositoriesIdsAndUrls = collectRemoteRepositoriesIdsAndUrls();
-          localRepository = getLocalRepository();
-        }
-        finally {
-          accessToken.finish();
-        }
+        remoteRepositoriesIdsAndUrls = ReadAction.compute(() -> myProject.isDisposed() ? null : collectRemoteRepositoriesIdsAndUrls());
+        localRepository = ReadAction.compute(() -> myProject.isDisposed() ? null : getLocalRepository());
+        if (remoteRepositoriesIdsAndUrls == null || localRepository == null) return;
 
         myProjectIndices = MavenIndicesManager.getInstance().ensureIndicesExist(myProject, localRepository, remoteRepositoriesIdsAndUrls);
         if(consumer != null) {

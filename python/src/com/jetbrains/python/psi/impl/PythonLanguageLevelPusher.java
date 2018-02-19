@@ -204,9 +204,9 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
       }
     }
 
-    final DataOutputStream oStream = PERSISTENCE.writeAttribute(fileOrDir);
-    DataInputOutputUtil.writeINT(oStream, level.ordinal());
-    oStream.close();
+    try (DataOutputStream oStream = PERSISTENCE.writeAttribute(fileOrDir)) {
+      DataInputOutputUtil.writeINT(oStream, level.ordinal());
+    }
 
     if (!areLanguageLevelsCompatible(oldLanguageLevel, level) || !ProjectFileIndex.getInstance(project).isInContent(fileOrDir)) {
       PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(fileOrDir, PythonLanguageLevelPusher::isPythonFile);

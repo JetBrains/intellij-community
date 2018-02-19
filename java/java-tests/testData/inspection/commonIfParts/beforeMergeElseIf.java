@@ -9,12 +9,13 @@ public class IfStatementWithIdenticalBranches {
     return 42;
   }
 
-  void work() {
-    if<caret> (true) {
-      int x = getX();
-    } else if(false) {
-      int x = getX();
-    } else{
+  void work(int i, int j) {
+    if(i != 0) {
+    } else if<caret> (i/*1*/ < j/*2*/) {/*3*/
+      int x = /*4*/ getX();
+    } else if(/*5*/i >/*6*/ j/*7*/) {
+      int x = getX(); // comments ignored
+    } else {
       int y = 12;
     }
   }

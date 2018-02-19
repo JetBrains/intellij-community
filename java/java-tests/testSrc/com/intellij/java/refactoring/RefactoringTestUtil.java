@@ -59,9 +59,9 @@ public class RefactoringTestUtil {
   }
 
   public static class MemberDescriptor {
-    private String myName;
-    private Class<? extends PsiMember> myClass;
-    private boolean myAbstract;
+    private final String myName;
+    private final Class<? extends PsiMember> myClass;
+    private final boolean myAbstract;
 
     public MemberDescriptor(String name, Class<? extends PsiMember> aClass, boolean isAbstract) {
       myName = name;

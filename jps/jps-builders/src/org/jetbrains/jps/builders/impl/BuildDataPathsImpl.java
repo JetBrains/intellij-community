@@ -16,6 +16,7 @@
 package org.jetbrains.jps.builders.impl;
 
 import com.intellij.util.PathUtilRt;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
@@ -49,9 +50,16 @@ public class BuildDataPathsImpl implements BuildDataPaths {
 
   @Override
   public File getTargetDataRoot(BuildTarget<?> target) {
+    BuildTargetType<?> targetType = target.getTargetType();
     final String targetId = target.getId();
+    return getTargetDataRoot(targetType, targetId);
+  }
+
+  @Override
+  @NotNull
+  public File getTargetDataRoot(@NotNull BuildTargetType<?> targetType, @NotNull String targetId) {
     // targetId may diff from another targetId only in case
     // when used as a file name in case-insensitive file systems, both paths for different targets will point to the same dir
-    return new File(getTargetTypeDataRoot(target.getTargetType()), PathUtilRt.suggestFileName(targetId + "_" + Integer.toHexString(targetId.hashCode()), true, false));
+    return new File(getTargetTypeDataRoot(targetType), PathUtilRt.suggestFileName(targetId + "_" + Integer.toHexString(targetId.hashCode()), true, false));
   }
 }

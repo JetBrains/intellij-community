@@ -245,7 +245,7 @@ class MapBinding extends Binding implements MultiNodeBinding {
       }
       else {
         assert binding != null;
-        return Binding.deserializeList(binding, context, children);
+        return Binding.deserializeList(binding, null, children);
       }
     }
     return null;
@@ -256,6 +256,19 @@ class MapBinding extends Binding implements MultiNodeBinding {
       return false;
     }
     return oldAnnotation == null || oldAnnotation.surroundKeyWithTag();
+  }
+
+  boolean isBoundToWithoutProperty(@NotNull Element element) {
+    String elementName = element.getName();
+    if (annotation != null) {
+      return elementName.equals(annotation.entryTagName());
+    }
+    else if (oldAnnotation != null && !oldAnnotation.surroundWithTag()) {
+      return elementName.equals(oldAnnotation.entryTagName());
+    }
+    else {
+      return elementName.equals(MAP);
+    }
   }
 
   @Override

@@ -44,7 +44,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
 
   private static class FullscreenQueue <T extends Runnable> {
     private boolean waitingForAppKit = false;
-    private LinkedList<Runnable> queueModel = new LinkedList<>();
+    private final LinkedList<Runnable> queueModel = new LinkedList<>();
 
     synchronized void runOrEnqueue (final T runnable) {
       if (waitingForAppKit) {
@@ -124,20 +124,20 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
 
   private static boolean SHOWN = false;
 
-  private static Callback SET_VISIBLE_CALLBACK = new Callback() {
+  private static final Callback SET_VISIBLE_CALLBACK = new Callback() {
     public void callback(ID caller, ID selector, ID value) {
       SHOWN = value.intValue() == 1;
       SwingUtilities.invokeLater(CURRENT_SETTER);
     }
   };
 
-  private static Callback IS_VISIBLE = new Callback() {
+  private static final Callback IS_VISIBLE = new Callback() {
     public boolean callback(ID caller) {
       return SHOWN;
     }
   };
 
-  private static AtomicInteger UNIQUE_COUNTER = new AtomicInteger(0);
+  private static final AtomicInteger UNIQUE_COUNTER = new AtomicInteger(0);
 
   public static final Runnable TOOLBAR_SETTER = () -> {
     final UISettings settings = UISettings.getInstance();

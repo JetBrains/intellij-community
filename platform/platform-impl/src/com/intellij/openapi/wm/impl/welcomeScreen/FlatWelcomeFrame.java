@@ -206,7 +206,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   private class FlatWelcomeScreen extends JPanel implements WelcomeScreen {
-    private JBSlidingPanel mySlidingPanel = new JBSlidingPanel();
+    private final JBSlidingPanel mySlidingPanel = new JBSlidingPanel();
     public Consumer<List<NotificationType>> myEventListener;
     public Computable<Point> myEventLocation;
 
@@ -435,7 +435,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
      * Wraps an {@link ActionLink} component and delegates accessibility support to it.
      */
     protected class JActionLinkPanel extends JPanel {
-      @NotNull private ActionLink myActionLink;
+      @NotNull private final ActionLink myActionLink;
 
       public JActionLinkPanel(@NotNull ActionLink actionLink) {
         super(new BorderLayout());

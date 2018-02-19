@@ -85,14 +85,14 @@ public abstract class ConvertIndentsActionBase extends EditorAction {
     return changedLines[0];
   }
 
-  private static IndentBuilder tabIndentBuilder = new IndentBuilder() {
+  private static final IndentBuilder tabIndentBuilder = new IndentBuilder() {
     @Override
     public String buildIndent(int length, int tabSize) {
       return StringUtil.repeatSymbol('\t', length / tabSize) + StringUtil.repeatSymbol(' ', length % tabSize);
     }
   };
 
-  private static IndentBuilder spaceIndentBuilder = new IndentBuilder() {
+  private static final IndentBuilder spaceIndentBuilder = new IndentBuilder() {
     @Override
     public String buildIndent(int length, int tabSize) {
       return StringUtil.repeatSymbol(' ', length);

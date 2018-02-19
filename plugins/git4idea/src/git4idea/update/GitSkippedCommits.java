@@ -65,7 +65,7 @@ public class GitSkippedCommits extends PanelWithActionsAndCloseButton {
   /**
    * Get center component
    */
-  private JBScrollPane myCenterComponent;
+  private final JBScrollPane myCenterComponent;
 
   /**
    * The constructor

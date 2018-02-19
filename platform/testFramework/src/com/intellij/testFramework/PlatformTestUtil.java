@@ -1,8 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
-import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
-import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -68,7 +66,6 @@ import org.jetbrains.concurrency.Promise;
 import org.junit.Assert;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -137,6 +134,13 @@ public class PlatformTestUtil {
     Disposer.register(parentDisposable, () -> extensionPoint.unregisterExtension(t));
   }
 
+  public static <T> void unregisterAllExtensions(@NotNull ExtensionPointName<T> name, @NotNull Disposable parentDisposable) {
+    ExtensionPoint<T> extensionPoint = Extensions.getRootArea().getExtensionPoint(name.getName());
+    T[] extensions = name.getExtensions();
+    Arrays.stream(extensions).forEach(extensionPoint::unregisterExtension);
+    Disposer.register(parentDisposable, () -> Arrays.stream(extensions).forEach(extensionPoint::registerExtension));
+  }
+
   @Nullable
   public static String toString(@Nullable Object node, @Nullable Queryable.PrintInfo printInfo) {
     if (node instanceof AbstractTreeNode) {
@@ -153,46 +157,46 @@ public class PlatformTestUtil {
   }
 
   public static String print(JTree tree, boolean withSelection) {
-    return print(tree, tree.getModel().getRoot(), withSelection, null, null);
+    return print(tree, new TreePath(tree.getModel().getRoot()), withSelection, null, null);
   }
 
-  public static String print(JTree tree, Object root, @Nullable Queryable.PrintInfo printInfo, boolean withSelection) {
-    return print(tree, root,  withSelection, printInfo, null);
+  public static String print(JTree tree, TreePath path, @Nullable Queryable.PrintInfo printInfo, boolean withSelection) {
+    return print(tree, path,  withSelection, printInfo, null);
   }
 
   public static String print(JTree tree, boolean withSelection, @Nullable Condition<String> nodePrintCondition) {
-    return print(tree, tree.getModel().getRoot(), withSelection, null, nodePrintCondition);
+    return print(tree, new TreePath(tree.getModel().getRoot()), withSelection, null, nodePrintCondition);
   }
 
-  private static String print(JTree tree, Object root,
+  private static String print(JTree tree, TreePath path,
                              boolean withSelection,
                              @Nullable Queryable.PrintInfo printInfo,
                              @Nullable Condition<String> nodePrintCondition) {
     StringBuilder buffer = new StringBuilder();
-    final Collection<String> strings = printAsList(tree, root, withSelection, printInfo, nodePrintCondition);
+    final Collection<String> strings = printAsList(tree, path, withSelection, printInfo, nodePrintCondition);
     for (String string : strings) {
       buffer.append(string).append("\n");
     }
     return buffer.toString();
   }
 
-  private static Collection<String> printAsList(JTree tree, Object root, boolean withSelection, @Nullable Queryable.PrintInfo printInfo,
+  private static Collection<String> printAsList(JTree tree, TreePath path, boolean withSelection, @Nullable Queryable.PrintInfo printInfo,
                                                 Condition<String> nodePrintCondition) {
     Collection<String> strings = new ArrayList<>();
-    printImpl(tree, root, strings, 0, withSelection, printInfo, nodePrintCondition);
+    printImpl(tree, path, strings, 0, withSelection, printInfo, nodePrintCondition);
     return strings;
   }
 
   private static void printImpl(JTree tree,
-                                Object root,
+                                TreePath path,
                                 Collection<String> strings,
                                 int level,
                                 boolean withSelection,
                                 @Nullable Queryable.PrintInfo printInfo,
                                 @Nullable Condition<String> nodePrintCondition) {
-    DefaultMutableTreeNode dmt = (DefaultMutableTreeNode)root;
 
-    Object userObject = dmt.getUserObject();
+    Object pathComponent = path.getLastPathComponent();
+    Object userObject = TreeUtil.getUserObject(pathComponent);
     String nodeText = toString(userObject, printInfo);
 
     if (nodePrintCondition != null && !nodePrintCondition.value(nodeText)) return;
@@ -200,12 +204,13 @@ public class PlatformTestUtil {
     StringBuilder buff = new StringBuilder();
     StringUtil.repeatSymbol(buff, ' ', level);
 
-    boolean expanded = tree.isExpanded(new TreePath(dmt.getPath()));
-    if (!dmt.isLeaf() && (tree.isRootVisible() || dmt != tree.getModel().getRoot() || dmt.getChildCount() > 0)) {
+    boolean expanded = tree.isExpanded(path);
+    int childCount = tree.getModel().getChildCount(pathComponent);
+    if (childCount != 0 && (tree.isRootVisible() || pathComponent != tree.getModel().getRoot() || childCount > 0)) {
       buff.append(expanded ? "-" : "+");
     }
 
-    boolean selected = tree.getSelectionModel().isPathSelected(new TreePath(dmt.getPath()));
+    boolean selected = tree.getSelectionModel().isPathSelected(path);
     if (withSelection && selected) {
       buff.append("[");
     }
@@ -218,10 +223,10 @@ public class PlatformTestUtil {
 
     strings.add(buff.toString());
 
-    int childCount = tree.getModel().getChildCount(root);
     if (expanded) {
       for (int i = 0; i < childCount; i++) {
-        printImpl(tree, tree.getModel().getChild(root, i), strings, level + 1, withSelection, printInfo, nodePrintCondition);
+        TreePath childPath = path.pathByAddingChild(tree.getModel().getChild(pathComponent, i));
+        printImpl(tree, childPath, strings, level + 1, withSelection, printInfo, nodePrintCondition);
       }
     }
   }
@@ -231,7 +236,7 @@ public class PlatformTestUtil {
   }
 
   public static void assertTreeEqualIgnoringNodesOrder(JTree tree, @NonNls String expected) {
-    final Collection<String> actualNodesPresentation = printAsList(tree, tree.getModel().getRoot(), false, null, null);
+    final Collection<String> actualNodesPresentation = printAsList(tree, new TreePath(tree.getModel().getRoot()), false, null, null);
     final List<String> expectedNodes = StringUtil.split(expected, "\n");
     UsefulTestCase.assertSameElements(actualNodesPresentation, expectedNodes);
   }
@@ -582,11 +587,11 @@ public class PlatformTestUtil {
   }
 
   /**
-   * example usage: {@code startPerformanceTest("calculating pi",100, testRunnable).cpuBound().assertTiming();}
+   * example usage: {@code startPerformanceTest("calculating pi",100, testRunnable).assertTiming();}
    */
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-  public static TestInfo startPerformanceTest(@NonNls @NotNull String what, int expectedMs, @NotNull ThrowableRunnable test) {
-    return new TestInfo(test, expectedMs, what);
+  public static PerformanceTestInfo startPerformanceTest(@NonNls @NotNull String what, int expectedMs, @NotNull ThrowableRunnable test) {
+    return new PerformanceTestInfo(test, expectedMs, what);
   }
 
   public static void assertPathsEqual(@Nullable String expected, @Nullable String actual) {
@@ -612,178 +617,6 @@ public class PlatformTestUtil {
   public static void saveProject(@NotNull Project project, boolean isForce) {
     ProjectManagerEx.getInstanceEx().flushChangedProjectFileAlarm();
     StoreUtil.save(ServiceKt.getStateStore(project), project, isForce);
-  }
-
-  public static class TestInfo {
-    private final ThrowableRunnable test; // runnable to measure
-    private final int expectedMs;           // millis the test is expected to run
-    private ThrowableRunnable setup;      // to run before each test
-    private int usedReferenceCpuCores = 1;
-    private int attempts = 4;             // number of retries if performance failed
-    private final String what;         // to print on fail
-    private boolean adjustForIO = false;   // true if test uses IO, timings need to be re-calibrated according to this agent disk performance
-    private boolean adjustForCPU = true;  // true if test uses CPU, timings need to be re-calibrated according to this agent CPU speed
-    private boolean useLegacyScaling;
-
-    static {
-      // to use JobSchedulerImpl.getJobPoolParallelism() in tests which don't init application
-      IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
-    }
-
-    private TestInfo(@NotNull ThrowableRunnable test, int expectedMs, @NotNull String what) {
-      this.test = test;
-      this.expectedMs = expectedMs;
-      assert expectedMs > 0 : "Expected must be > 0. Was: "+ expectedMs;
-      this.what = what;
-    }
-
-    @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-    public TestInfo setup(@NotNull ThrowableRunnable setup) { assert this.setup==null; this.setup = setup; return this; }
-
-    /**
-     * Invoke this method if and only if the code under performance tests is using all CPU cores.
-     * The "standard" expected time then should be given for a machine which has 8 CPU cores.
-     * Actual test expected time will be adjusted according to the number of cores the actual computer has.
-     */
-    @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-    public TestInfo usesAllCPUCores() { return usesMultipleCPUCores(8); }
-
-    /**
-     * Invoke this method if and only if the code under performance tests is using {@code maxCores} CPU cores (or less if the computer has less).
-     * The "standard" expected time then should be given for a machine which has {@code maxCores} CPU cores.
-     * Actual test expected time will be adjusted according to the number of cores the actual computer has.
-     */
-    @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-    public TestInfo usesMultipleCPUCores(int maxCores) { assert adjustForCPU : "This test configured to be io-bound, it cannot use all cores"; usedReferenceCpuCores = maxCores; return this; }
-
-    /**
-     * @deprecated tests are CPU-bound by default, so no need to call this method.
-     */
-    @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-    @Deprecated
-    public TestInfo cpuBound() { adjustForIO = false; adjustForCPU = true; return this; }
-    @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-    public TestInfo ioBound() { adjustForIO = true; adjustForCPU = false; return this; }
-    @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-    public TestInfo attempts(int attempts) { this.attempts = attempts; return this; }
-    /**
-     * @deprecated Enables procedure for nonlinear scaling of results between different machines. This was historically enabled, but doesn't
-     * seem to be meaningful, and is known to make results worse in some cases. Consider migration off this setting, recalibrating
-     * expected execution time accordingly.
-     */
-    @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-    public TestInfo useLegacyScaling() { useLegacyScaling = true; return this; }
-
-    public void assertTiming() {
-      assert expectedMs != 0 : "Must call .expect() before run test";
-      if (COVERAGE_ENABLED_BUILD) return;
-      Timings.getStatistics(); // warm-up, measure
-
-      if (attempts == 1) {
-        System.gc();
-      }
-
-      while (true) {
-        attempts--;
-        CpuUsageData data;
-        try {
-          if (setup != null) setup.run();
-          waitForAllBackgroundActivityToCalmDown();
-          data = CpuUsageData.measureCpuUsage(test);
-        }
-        catch (RuntimeException|Error throwable) {
-          throw throwable;
-        }
-        catch (Throwable throwable) {
-          throw new RuntimeException(throwable);
-        }
-        long duration = data.durationMs;
-
-        int expectedOnMyMachine = expectedMs;
-        if (adjustForCPU) {
-          int coreCountUsedHere = usedReferenceCpuCores < 8 ? Math.min(JobSchedulerImpl.getJobPoolParallelism(), usedReferenceCpuCores) : JobSchedulerImpl.getJobPoolParallelism();
-          expectedOnMyMachine *= usedReferenceCpuCores;
-          expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.CPU_TIMING, Timings.REFERENCE_CPU_TIMING, useLegacyScaling);
-          expectedOnMyMachine /= coreCountUsedHere;
-        }
-        if (adjustForIO) {
-          expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.IO_TIMING, Timings.REFERENCE_IO_TIMING, useLegacyScaling);
-        }
-
-        // Allow 10% more in case of test machine is busy.
-        double acceptableChangeFactor = 1.1;
-        int percentage = (int)(100.0 * (duration - expectedOnMyMachine) / expectedOnMyMachine);
-        String colorCode = duration < expectedOnMyMachine ? "32;1m" : // green
-                        duration < expectedOnMyMachine * acceptableChangeFactor ? "33;1m" : // yellow
-                        "31;1m"; // red
-        String logMessage = String.format(
-          "%s took \u001B[%s%d%% %s time\u001B[0m than expected" +
-          "\n  Expected: %sms (%s)" +
-          "\n  Actual:   %sms (%s)" +
-          "\n  Timings:  %s" +
-          "\n  Threads:  %s" +
-          "\n  GC stats: %s",
-          what, colorCode, Math.abs(percentage), percentage > 0 ? "more" : "less",
-          expectedOnMyMachine, StringUtil.formatDuration(expectedOnMyMachine),
-          duration, StringUtil.formatDuration(duration),
-          Timings.getStatistics(),
-          data.getThreadStats(),
-          data.getGcStats());
-
-        if (duration < expectedOnMyMachine) {
-          TeamCityLogger.info(logMessage);
-          System.out.println("\nSUCCESS: " + logMessage);
-        }
-        else if (duration < expectedOnMyMachine * acceptableChangeFactor) {
-          TeamCityLogger.warning(logMessage, null);
-          System.out.println("\nWARNING: " + logMessage);
-        }
-        else {
-          // try one more time
-          if (attempts == 0) {
-            //try {
-            //  Object result = Class.forName("com.intellij.util.ProfilingUtil").getMethod("captureCPUSnapshot").invoke(null);
-            //  System.err.println("CPU snapshot captured in '"+result+"'");
-            //}
-            //catch (Exception e) {
-            //}
-
-            throw new AssertionFailedError(logMessage);
-          }
-          System.gc();
-          System.gc();
-          System.gc();
-          String s = logMessage + "\n  " + attempts + " attempts remain";
-          TeamCityLogger.warning(s, null);
-          if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-            System.err.println(s);
-          }
-          //if (attempts == 1) {
-          //  try {
-          //    Class.forName("com.intellij.util.ProfilingUtil").getMethod("startCPUProfiling").invoke(null);
-          //  }
-          //  catch (Exception e) {
-          //  }
-          //}
-          continue;
-        }
-        break;
-      }
-    }
-
-    private static int adjust(int expectedOnMyMachine, long thisTiming, long referenceTiming, boolean useLegacyScaling) {
-      if (useLegacyScaling) {
-        double speed = 1.0 * thisTiming / referenceTiming;
-        double delta = speed < 1
-                       ? 0.9 + Math.pow(speed - 0.7, 2)
-                       : 0.45 + Math.pow(speed - 0.25, 2);
-        expectedOnMyMachine *= delta;
-        return expectedOnMyMachine;
-      }
-      else {
-        return (int)(expectedOnMyMachine * thisTiming / referenceTiming);
-      }
-    }
   }
 
   static void waitForAllBackgroundActivityToCalmDown() {

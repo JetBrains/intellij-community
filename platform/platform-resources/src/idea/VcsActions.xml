@@ -83,6 +83,12 @@
     <action id="ChangesView.Revert" class="com.intellij.openapi.vcs.changes.actions.RollbackAction"
             icon="AllIcons.Actions.Rollback"/>
 
+    <group id="ChangesView.GroupBy" text="Group By" icon="AllIcons.General.SecondaryGroup" popup="true"
+           class="com.intellij.openapi.vcs.changes.actions.SelectChangesGroupingActionGroup">
+      <action id="ChangesView.GroupBy.Directory" text="Directory"
+              class="com.intellij.openapi.vcs.changes.actions.SetDirectoryChangesGroupingAction"/>
+    </group>
+
     <group id="ChangesViewToolbar">
       <action id="ChangesView.Refresh" class="com.intellij.openapi.vcs.changes.actions.RefreshAction"
               icon="AllIcons.Actions.Refresh"/>
@@ -279,6 +285,8 @@
               icon="AllIcons.General.MessageHistory"/>
     </group>
 
+    <group id="Vcs.CommitExecutor.Actions"/>
+
     <group id="VcsToobarActions">
       <reference ref="Vcs.UpdateProject"/>
       <reference ref="CheckinProject"/>
@@ -304,8 +312,10 @@
     </action>
 
     <action id="Vcs.RollbackChangedLines" class="com.intellij.openapi.vcs.ex.RollbackLineStatusAction" icon="AllIcons.Actions.Rollback"/>
-    <action id="Vcs.MoveChangedLinesToChangelist" class="com.intellij.openapi.vcs.ex.MoveChangesLineStatusAction" icon="AllIcons.Actions.MoveToAnotherChangelist"
-            use-shortcut-of="ChangesView.Move"/>
+    <action id="Vcs.MoveChangedLinesToChangelist" class="com.intellij.openapi.vcs.ex.MoveChangesLineStatusAction" icon="AllIcons.Actions.MoveToAnotherChangelist"/>
+    <action id="Vcs.Diff.ExcludeChangedLinesFromCommit" class="com.intellij.openapi.actionSystem.EmptyAction">
+      <add-to-group group-id="Diff.KeymapGroup" relative-to-action="Diff.ResolveConflict" anchor="after"/>
+    </action>
 
     <action id="WelcomeScreen.GetFromVcs" class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVcsAction"
             icon="AllIcons.Welcome.FromVCS">
@@ -362,6 +372,8 @@
       <reference ref="VcsShowNextChangeMarker"/>
       <reference ref="VcsShowPrevChangeMarker"/>
       <reference ref="VcsShowCurrentChangeMarker"/>
+      <reference ref="Vcs.RollbackChangedLines"/>
+      <reference ref="Vcs.MoveChangedLinesToChangelist"/>
       <separator/>
       <reference ref="Start.Use.Vcs"/>
       <reference ref="Vcs.QuickListPopupAction"/>
@@ -405,7 +417,6 @@
       <separator/>
       <reference ref="Vcs.ShowMessageHistory"/>
       <reference ref="CloseAllUnmodifiedEditors"/>
-      <reference ref="Vcs.RollbackChangedLines"/>
       <reference ref="WelcomeScreen.GetFromVcs"/>
       <reference ref="Vcs.CopyRevisionNumberAction"/>
       <separator/>

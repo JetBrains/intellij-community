@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.util;
 
+import com.intellij.diff.DiffTool;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.merge.MergeResult;
@@ -80,6 +81,7 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   //
 
   Key<JComponent> BOTTOM_PANEL = Key.create("Diff.BottomPanel"); // Could implement Disposable
+  Key<DiffTool> FORCE_DIFF_TOOL = Key.create("Diff.ForceDiffTool");
 
   Key<Boolean> SHOW_READ_ONLY_LOCK = Key.create("Diff.ShowReadOnlyLock");
 

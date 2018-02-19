@@ -223,11 +223,8 @@ public class FavoritesPanel {
               bounds.y+=bounds.height - 2;
             }
             bounds.height = 2;
-            event.setHighlighting(new RelativeRectangle(myTree, bounds), DnDEvent.DropTargetHighlightingType.RECTANGLE);
           }
-          else {
-            event.setHighlighting(new RelativeRectangle(myTree, bounds), DnDEvent.DropTargetHighlightingType.RECTANGLE);
-          }
+          event.setHighlighting(new RelativeRectangle(myTree, bounds), DnDEvent.DropTargetHighlightingType.RECTANGLE);
         }
       }
     }

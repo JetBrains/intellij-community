@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 
 public abstract class AbstractNamingConventionMerger<T extends PsiNameIdentifierOwner> extends InspectionElementsMergerBase {
-  private AbstractNamingConventionInspection<T> myNewInspection;
+  private final AbstractNamingConventionInspection<T> myNewInspection;
 
   public AbstractNamingConventionMerger(AbstractNamingConventionInspection<T> inspection) {
     myNewInspection = inspection;

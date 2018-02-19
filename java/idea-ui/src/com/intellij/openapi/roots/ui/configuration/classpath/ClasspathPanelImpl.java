@@ -97,7 +97,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   private final ClasspathTableModel myModel;
   private final EventDispatcher<OrderPanelListener> myListeners = EventDispatcher.create(OrderPanelListener.class);
   private List<AddItemPopupAction<?>> myPopupActions = null;
-  private AnActionButton myEditButton;
+  private final AnActionButton myEditButton;
   private final ModuleConfigurationState myState;
   private AnActionButton myRemoveButton;
 
@@ -710,7 +710,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
   private static class TableItemRenderer extends ColoredTableCellRenderer {
     private final Border NO_FOCUS_BORDER = BorderFactory.createEmptyBorder(1, 1, 1, 1);
-    private StructureConfigurableContext myContext;
+    private final StructureConfigurableContext myContext;
 
     public TableItemRenderer(StructureConfigurableContext context) {
       myContext = context;

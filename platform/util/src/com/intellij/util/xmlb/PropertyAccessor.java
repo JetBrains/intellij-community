@@ -149,7 +149,7 @@ public class PropertyAccessor implements MutableAccessor {
 
   @Override
   public boolean isFinal() {
-    return false;
+    return myWriteMethod == null;
   }
 
   @NonNls

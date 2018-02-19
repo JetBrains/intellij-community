@@ -18,12 +18,19 @@ package com.jetbrains.env;
 import com.intellij.execution.process.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.xdebugger.XDebuggerTestUtil;
+import com.jetbrains.extensions.ModuleExtKt;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +82,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
   }
 
   @Override
-  public void runTestOn(final String sdkHome) throws Exception {
+  public void runTestOn(@NotNull final String sdkHome, @Nullable final Sdk existingSdk) throws Exception {
 
     //Since this task uses I/O pooled thread, it needs to register such threads as "known offenders" (one that may leak)
     // Generally, this should be done in thread tracker itself, but since ApplicationManager.getApplication() may return null on TC,
@@ -87,7 +94,20 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
                              ProcessIOExecutorService.POOLED_THREAD_PREFIX);
 
 
-    createTempSdk(sdkHome, myRequiredSdkType);
+    if (existingSdk == null) {
+      createTempSdk(sdkHome, myRequiredSdkType);
+    }
+    else {
+      final Module module = myFixture.getModule();
+      if (ModuleExtKt.getSdk(module) == null) {
+        // If sdk is provided and not set for module -- use it
+        EdtTestUtil.runInEdtAndWait(() -> WriteAction.run(() -> {
+          final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+          model.setSdk(existingSdk);
+          model.commit();
+        }));
+      }
+    }
     prepare();
     final T runner = createProcessRunner();
     do {
@@ -142,7 +162,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
         final IllegalStateException exception = new IllegalStateException("Exception thrown while running test", e);
         throw exception;
       }
-    }, ModalityState.NON_MODAL);
+    }, ModalityState.defaultModalityState());
 
 
     final boolean processStarted = processStartedSemaphore.tryAcquire(5, TimeUnit.MINUTES);
@@ -211,7 +231,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
   @NotNull
   public String toFullPath(@NotNull final String scriptName) {
     myLatestUsedScript = myFixture.getTempDirFixture().getFile(scriptName);
-    assert myLatestUsedScript != null: "File not found " + scriptName;
+    assert myLatestUsedScript != null : "File not found " + scriptName;
     return myLatestUsedScript.getPath();
   }
 

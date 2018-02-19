@@ -31,7 +31,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.PriorityQueue;
 
 public class PersistentHashMapValueStorage {
   @Nullable
@@ -773,7 +776,7 @@ public class PersistentHashMapValueStorage {
   }
 
   private static class ReaderOverRandomAccessFileCache implements RAReader {
-    private String myPath;
+    private final String myPath;
 
     private ReaderOverRandomAccessFileCache(String path) {
       myPath = path;

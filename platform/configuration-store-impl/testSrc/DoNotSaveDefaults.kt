@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.ide.util.PropertiesComponent
@@ -75,23 +76,25 @@ class DoNotSaveDefaultsTest {
       })
     }
 
-    // <property name="file.gist.reindex.count" value="54" />
     val propertyComponent = PropertiesComponent.getInstance()
+    // <property name="file.gist.reindex.count" value="54" />
     propertyComponent.unsetValue("file.gist.reindex.count")
     // <property name="CommitChangeListDialog.DETAILS_SPLITTER_PROPORTION_2" value="1.0" />
     propertyComponent.unsetValue("CommitChangeListDialog.DETAILS_SPLITTER_PROPORTION_2")
+    propertyComponent.unsetValue("ts.lib.d.ts.version")
+    propertyComponent.unsetValue("nodejs_interpreter_path.stuck_in_default_project")
 
     val app = ApplicationManager.getApplication() as ApplicationImpl
     try {
       System.setProperty("store.save.use.modificationCount", "false")
-      app.doNotSave(false)
+      app.isSaveAllowed = true
       runInEdtAndWait {
         StoreUtil.save(componentManager.stateStore, null)
       }
     }
     finally {
       System.setProperty("store.save.use.modificationCount", useModCountOldValue ?: "false")
-      app.doNotSave(true)
+      app.isSaveAllowed = false
     }
 
     if (componentManager is Project) {

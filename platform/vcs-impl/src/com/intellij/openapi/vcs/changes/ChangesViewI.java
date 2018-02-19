@@ -16,6 +16,9 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author irengrig
@@ -23,8 +26,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 public interface ChangesViewI {
   void scheduleRefresh();
   void selectFile(VirtualFile vFile);
+  void selectChanges(@NotNull List<Change> changes);
   void refreshChangesViewNodeAsync(VirtualFile file);
   void updateProgressText(final String text, final boolean isError);
   void setBusy(boolean b);
-  void setShowFlattenMode(boolean state);
+
+  void setGrouping(@NotNull String groupingKey);
 }

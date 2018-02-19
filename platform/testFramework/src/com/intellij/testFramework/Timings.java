@@ -28,7 +28,6 @@ public class Timings {
   private static final int IO_PROBES = 42;
 
   public static final long CPU_TIMING;
-  private static final CpuTimings CPU_TIMING_DATA;
   public static final long IO_TIMING;
 
   /**
@@ -38,8 +37,7 @@ public class Timings {
   public static final long REFERENCE_IO_TIMING = 100;
 
   static {
-    CPU_TIMING_DATA = CpuTimings.calcStableCpuTiming();
-    CPU_TIMING = CPU_TIMING_DATA.average;
+    CPU_TIMING = CpuTimings.calcStableCpuTiming();
 
     long start = System.currentTimeMillis();
     for (int i = 0; i < IO_PROBES; i++) {
@@ -85,8 +83,8 @@ public class Timings {
   }
 
   public static String getStatistics() {
-    return String.format("CPU=%d (%d%% reference CPU, sd=%.2f), I/O=%d (%d%% reference IO), %d cores",
-                         CPU_TIMING_DATA.average, CPU_TIMING * 100 / REFERENCE_CPU_TIMING, CPU_TIMING_DATA.stdDev,
+    return String.format("CPU=%d (%d%% reference CPU), I/O=%d (%d%% reference IO), %d cores",
+                         CPU_TIMING, CPU_TIMING * 100 / REFERENCE_CPU_TIMING,
                          IO_TIMING, IO_TIMING * 100 / REFERENCE_IO_TIMING, Runtime.getRuntime().availableProcessors());
   }
 }

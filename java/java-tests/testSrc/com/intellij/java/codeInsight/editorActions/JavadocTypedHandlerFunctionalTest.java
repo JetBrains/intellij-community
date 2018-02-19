@@ -21,25 +21,29 @@ public class JavadocTypedHandlerFunctionalTest extends LightPlatformCodeInsightT
   private static final String BASE_PATH = "/codeInsight/editorActions/javadocTypedHandler/";
 
   public void testEmptyTag() {
-    doTest();
+    doTest('>');
   }
 
   public void testComment() {
-    doTest();
+    doTest('>');
   }
 
   public void testCodeTag() {
-    doTest();
+    doTest('>');
   }
   
   public void testTypeParam() {
-    doTest();
+    doTest('>');
   }
 
-  private void doTest() {
+  public void testDocTagStart() {
+    doTest('@');
+  }
+
+  private void doTest(char typedChar) {
     String testName = getTestName(true);
     configureByFile(BASE_PATH + testName + ".java");
-    type('>');
+    type(typedChar);
     checkResultByFile(BASE_PATH + testName + "_after.java");
   }
 

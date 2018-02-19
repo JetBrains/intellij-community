@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
-import java.util.HashMap;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +34,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 public class DiffFilesTest extends TestSuite {
@@ -65,8 +65,8 @@ public class DiffFilesTest extends TestSuite {
 
   public abstract static class MyIdeaTestCase extends BaseDiffTestCase {
     private static final HashMap<ComparisonPolicy, String> ourPolicyToDirectory = new HashMap<>();
-    private File myResultFile1;
-    private File myResultFile2;
+    private final File myResultFile1;
+    private final File myResultFile2;
     private String myName;
     private final ComparisonPolicy myTestingPolicy;
 

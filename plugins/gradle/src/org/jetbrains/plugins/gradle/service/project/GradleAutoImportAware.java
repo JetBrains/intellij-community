@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.service.project;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
@@ -33,18 +34,17 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import static com.intellij.openapi.util.text.StringUtil.endsWith;
+import java.io.IOException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.*;
 
 /**
  * @author Denis Zhdanov
  * @since 6/8/13 3:49 PM
  */
 public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
+  private static final Logger LOG = Logger.getInstance(GradleAutoImportAware.class);
 
   @Nullable
   @Override
@@ -108,10 +108,22 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
                                   FileUtil.pathsEqual(projectSettings.getExternalProjectPath(), projectPath)
                                   ? projectSettings.getModules() : ContainerUtil.set(projectPath);
     for (String path : subProjectPaths) {
-      File[] gradleScripts =
-        new File(path).listFiles(file -> !file.isDirectory() && endsWith(file.getName(), "." + GradleConstants.EXTENSION));
-      if (gradleScripts == null) continue;
-      ContainerUtil.addAll(files, gradleScripts);
+      try {
+        Files.walkFileTree(Paths.get(path), EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<Path>() {
+          @Override
+          public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+            String fileName = file.getFileName().toString();
+            if (fileName.endsWith('.' + GradleConstants.EXTENSION) ||
+                fileName.endsWith('.' + GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION)) {
+              files.add(file.toFile());
+            }
+            return FileVisitResult.CONTINUE;
+          }
+        });
+      }
+      catch (IOException | InvalidPathException e) {
+        LOG.debug(e);
+      }
     }
 
     return files;

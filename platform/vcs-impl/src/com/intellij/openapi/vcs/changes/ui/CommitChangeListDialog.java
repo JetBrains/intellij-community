@@ -1,24 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.ide.HelpIdProvider;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -36,8 +27,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction;
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
 import com.intellij.openapi.vcs.checkin.*;
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager;
+import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -46,12 +39,13 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SplitterWithSecondHideable;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.intellij.vcsUtil.VcsUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,15 +54,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import static com.intellij.openapi.vcs.VcsBundle.message;
 import static com.intellij.util.ArrayUtil.isEmpty;
 import static com.intellij.util.ArrayUtil.toObjectArray;
 import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.filter;
 import static com.intellij.util.containers.ContainerUtil.isEmpty;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static com.intellij.util.containers.ContainerUtil.map2SetNotNull;
@@ -99,6 +92,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @Nullable private final CommitResultHandler myResultHandler;
 
   @NotNull private final Set<AbstractVcs> myAffectedVcses;
+  @NotNull private final List<CommitExecutor> myExecutors;
   @NotNull private final List<CheckinHandler> myHandlers = newArrayList();
   private final boolean myAllOfDefaultChangeListChangesIncluded;
 
@@ -286,6 +280,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myVcsConfiguration = notNull(VcsConfiguration.getInstance(myProject));
     myShowVcsCommit = showVcsCommit;
     myAffectedVcses = affectedVcses;
+    myExecutors = executors;
     myForceCommitInVcs = forceCommitInVcs;
     myIsAlien = isAlien;
     myResultHandler = customResultHandler;
@@ -334,6 +329,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       browser.getViewer().setKeepTreeState(true);
     }
 
+    LineStatusTrackerManager.getInstanceImpl(myProject).resetExcludedFromCommitMarkers();
+
     myChangesInfoCalculator = new ChangeInfoCalculator();
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
     BorderLayoutPanel legendPanel = JBUI.Panels.simplePanel().addToRight(myLegend.getComponent());
@@ -355,7 +352,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     setTitle(myShowVcsCommit ? TITLE : trimEllipsis(executors.get(0).getActionText()));
     myCommitAction = myShowVcsCommit ? new CommitAction(getCommitActionName()) : null;
-    myExecutorActions = map(executors, CommitExecutorAction::new);
+    myExecutorActions = createExecutorActions(executors);
     if (myCommitAction != null) {
       myCommitAction.setOptions(myExecutorActions);
     }
@@ -454,15 +451,26 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
   }
 
+  @NotNull
+  private List<CommitExecutorAction> createExecutorActions(@NotNull List<CommitExecutor> executors) {
+    List<CommitExecutorAction> result = newArrayList();
+
+    if (myShowVcsCommit && UISettings.getShadowInstance().getAllowMergeButtons()) {
+      ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("Vcs.CommitExecutor.Actions");
+
+      result.addAll(map(group.getChildren(null), CommitExecutorAction::new));
+      result.addAll(map(filter(executors, CommitExecutor::useDefaultAction), CommitExecutorAction::new));
+    }
+    else {
+      result.addAll(map(executors, CommitExecutorAction::new));
+    }
+
+    return result;
+  }
+
   @Nullable
   private static String getHelpId(@NotNull List<CommitExecutor> executors) {
-    for (CommitExecutor executor : executors) {
-      if (executor instanceof CommitExecutorWithHelp) {
-        String helpId = ((CommitExecutorWithHelp)executor).getHelpId();
-        if (helpId != null) return helpId;
-      }
-    }
-    return null;
+    return StreamEx.of(executors).select(HelpIdProvider.class).map(HelpIdProvider::getHelpId).nonNull().findFirst().orElse(null);
   }
 
   private void setComment(@Nullable LocalChangeList initialSelection, @Nullable String comment) {
@@ -597,7 +605,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     });
   }
 
-  private void execute(@NotNull CommitExecutor commitExecutor) {
+  public void execute(@NotNull CommitExecutor commitExecutor) {
     CommitSession session = commitExecutor.createCommitSession();
     if (session == CommitSession.VCS_COMMIT) {
       executeDefaultCommitSession(commitExecutor);
@@ -858,6 +866,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myCommitOptions.saveChangeListComponentsState();
     saveCommentIntoChangeList();
     saveComments(false);
+    LineStatusTrackerManager.getInstanceImpl(myProject).resetExcludedFromCommitMarkers();
     super.doCancelAction();
   }
 
@@ -881,11 +890,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   @NotNull
+  public List<CommitExecutor> getExecutors() {
+    return myExecutors;
+  }
+
+  @NotNull
   @Override
   public Collection<VirtualFile> getRoots() {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
 
-    return map2SetNotNull(myBrowser.getDisplayedChanges(), change -> vcsManager.getVcsRootFor(ChangesUtil.getFilePath(change)));
+    return map2SetNotNull(getDisplayedPaths(), filePath -> vcsManager.getVcsRootFor(filePath));
   }
 
   @NotNull
@@ -902,7 +916,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull
   @Override
   public Collection<VirtualFile> getVirtualFiles() {
-    return mapNotNull(getIncludedChanges(), change -> ChangesUtil.getFilePath(change).getVirtualFile());
+    return mapNotNull(getIncludedPaths(), filePath -> filePath.getVirtualFile());
   }
 
   @NotNull
@@ -914,7 +928,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull
   @Override
   public Collection<File> getFiles() {
-    return map(getIncludedChanges(), change -> ChangesUtil.getFilePath(change).getIOFile());
+    return map(getIncludedPaths(), filePath -> filePath.getIOFile());
   }
 
   @NotNull
@@ -991,6 +1005,30 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return myBrowser.getIncludedChanges();
   }
 
+  @NotNull
+  private List<FilePath> getIncludedPaths() {
+    List<FilePath> paths = new ArrayList<>();
+    for (Change change : myBrowser.getIncludedChanges()) {
+      paths.add(ChangesUtil.getFilePath(change));
+    }
+    for (VirtualFile file : myBrowser.getIncludedUnversionedFiles()) {
+      paths.add(VcsUtil.getFilePath(file));
+    }
+    return paths;
+  }
+
+  @NotNull
+  private List<FilePath> getDisplayedPaths() {
+    List<FilePath> paths = new ArrayList<>();
+    for (Change change : myBrowser.getDisplayedChanges()) {
+      paths.add(ChangesUtil.getFilePath(change));
+    }
+    for (VirtualFile file : myBrowser.getDisplayedUnversionedFiles()) {
+      paths.add(VcsUtil.getFilePath(file));
+    }
+    return paths;
+  }
+
   @Override
   @NonNls
   protected String getDimensionServiceKey() {
@@ -1026,7 +1064,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private class CommitExecutorAction extends AbstractAction {
-    @NotNull private final CommitExecutor myCommitExecutor;
+    @Nullable private final CommitExecutor myCommitExecutor;
+
+    public CommitExecutorAction(@NotNull AnAction anAction) {
+      putValue(OptionAction.AN_ACTION, anAction);
+      myCommitExecutor = null;
+    }
 
     public CommitExecutorAction(@NotNull CommitExecutor commitExecutor) {
       super(commitExecutor.getActionText());
@@ -1035,12 +1078,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      execute(myCommitExecutor);
+      if (myCommitExecutor != null) {
+        execute(myCommitExecutor);
+      }
     }
 
     public void updateEnabled(boolean hasDiffs) {
-      setEnabled(
-        hasDiffs || myCommitExecutor instanceof CommitExecutorBase && !((CommitExecutorBase)myCommitExecutor).areChangesRequired());
+      if (myCommitExecutor != null) {
+        setEnabled(
+          hasDiffs || myCommitExecutor instanceof CommitExecutorBase && !((CommitExecutorBase)myCommitExecutor).areChangesRequired());
+      }
     }
   }
 
@@ -1068,6 +1115,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       super(project, DiffPlaces.COMMIT_DIALOG);
 
       putContextUserData(DiffUserDataKeysEx.SHOW_READ_ONLY_LOCK, true);
+      putContextUserData(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, true);
     }
 
     @NotNull

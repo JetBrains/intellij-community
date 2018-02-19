@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public class DelegatingFontPreferences extends FontPreferences {
-  private Supplier<FontPreferences> myDelegateSupplier;
+  private final Supplier<FontPreferences> myDelegateSupplier;
 
   public DelegatingFontPreferences(@NotNull Supplier<FontPreferences> delegateSupplier) {
     myDelegateSupplier = delegateSupplier;

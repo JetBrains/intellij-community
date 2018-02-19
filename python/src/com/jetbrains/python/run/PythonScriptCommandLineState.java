@@ -248,8 +248,8 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
    */
   public class PythonScriptWithConsoleRunner extends PydevConsoleRunnerImpl {
 
-    private CommandLinePatcher[] myPatchers;
-    private String PYDEV_RUN_IN_CONSOLE_PY = "pydev/pydev_run_in_console.py";
+    private final CommandLinePatcher[] myPatchers;
+    private final String PYDEV_RUN_IN_CONSOLE_PY = "pydev/pydev_run_in_console.py";
 
     public PythonScriptWithConsoleRunner(@NotNull Project project,
                                          @NotNull Sdk sdk,

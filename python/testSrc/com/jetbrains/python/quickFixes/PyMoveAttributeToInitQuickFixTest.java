@@ -57,7 +57,7 @@ public class PyMoveAttributeToInitQuickFixTest extends PyQuickFixTestCase {
   }
 
   public void testPy3K() {
-    doQuickFixTest(PyAttributeOutsideInitInspection.class, PyBundle.message("QFIX.move.attribute"), LanguageLevel.PYTHON33);
+    doQuickFixTest(PyAttributeOutsideInitInspection.class, PyBundle.message("QFIX.move.attribute"), LanguageLevel.PYTHON34);
   }
 
 }

@@ -24,14 +24,17 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
+import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.LocalRange;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.BitSet;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static java.util.Collections.singletonList;
 
 public class MoveChangesLineStatusAction extends LineStatusActionBase {
   @Override
@@ -51,40 +54,50 @@ public class MoveChangesLineStatusAction extends LineStatusActionBase {
   public static void moveToAnotherChangelist(@NotNull PartialLocalLineStatusTracker tracker, @NotNull BitSet selectedLines) {
     Project project = tracker.getProject();
 
-    List<PartialLocalLineStatusTracker.LocalRange> ranges = tracker.getRangesForLines(selectedLines);
+    List<LocalRange> ranges = tracker.getRangesForLines(selectedLines);
     if (ranges == null || ranges.isEmpty()) return;
 
-    Set<String> selectedListIds = ContainerUtil.map2Set(ranges, range -> range.getChangelistId());
-    LocalChangeList targetList = askTargetChangelist(project, selectedListIds);
+    LocalChangeList targetList = askTargetChangelist(project, ranges, tracker);
     if (targetList == null) return;
 
     tracker.moveToChangelist(selectedLines, targetList);
   }
 
-  public static void moveToAnotherChangelist(@NotNull PartialLocalLineStatusTracker tracker, @NotNull PartialLocalLineStatusTracker.LocalRange range) {
+  public static void moveToAnotherChangelist(@NotNull PartialLocalLineStatusTracker tracker, @NotNull LocalRange range) {
     Project project = tracker.getProject();
 
-    Set<String> selectedListIds = Collections.singleton(range.getChangelistId());
-    LocalChangeList targetList = askTargetChangelist(project, selectedListIds);
+    LocalChangeList targetList = askTargetChangelist(project, singletonList(range), tracker);
     if (targetList == null) return;
 
     tracker.moveToChangelist(range, targetList);
   }
 
   @Nullable
-  private static LocalChangeList askTargetChangelist(Project project, @NotNull Set<String> selectedListIds) {
+  private static LocalChangeList askTargetChangelist(@NotNull Project project,
+                                                     @NotNull List<LocalRange> selectedRanges,
+                                                     @NotNull PartialLocalLineStatusTracker tracker) {
+    Set<String> selectedListIds = ContainerUtil.map2Set(selectedRanges, range -> range.getChangelistId());
+
+    Set<String> remainingTrackerListIds = new HashSet<>(tracker.getAffectedChangeListsIds());
+    remainingTrackerListIds.removeAll(selectedListIds);
+
     ChangeListManager clm = ChangeListManager.getInstance(project);
     List<LocalChangeList> allChangelists = clm.getChangeListsCopy();
 
     List<LocalChangeList> nonAffectedLists = ContainerUtil.filter(allChangelists, list -> !selectedListIds.contains(list.getId()));
+    List<LocalChangeList> remainingTrackerLists = ContainerUtil.filter(allChangelists, list -> remainingTrackerListIds.contains(list.getId()));
+
     List<LocalChangeList> suggestedLists = nonAffectedLists.isEmpty()
-                                           ? Collections.singletonList(clm.getDefaultChangeList())
+                                           ? singletonList(clm.getDefaultChangeList())
                                            : nonAffectedLists;
-    ChangeList defaultSelection = MoveChangesToAnotherListAction.guessPreferredList(nonAffectedLists);
+
+    List<LocalChangeList> preferedLists = remainingTrackerLists.isEmpty() ? nonAffectedLists : remainingTrackerLists;
+    ChangeList defaultSelection = MoveChangesToAnotherListAction.guessPreferredList(preferedLists);
+
     ChangeListChooser chooser = new ChangeListChooser(project,
                                                       suggestedLists,
                                                       defaultSelection,
-                                                      ActionsBundle.message("action.ChangesView.Move.text"),
+                                                      ActionsBundle.message("action.Vcs.MoveChangedLinesToChangelist.text"),
                                                       null);
     chooser.show();
 

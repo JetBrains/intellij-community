@@ -38,7 +38,7 @@ public class AnnotationParamListElement extends CompositeElement {
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     IElementType i = child.getElementType();
     if (i == JavaTokenType.COMMA) {
       return ChildRole.COMMA;

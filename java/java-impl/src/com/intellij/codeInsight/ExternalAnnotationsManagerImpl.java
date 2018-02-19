@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -56,7 +42,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -72,7 +57,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.OptionsMessageDialog;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -100,17 +84,14 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
   public ExternalAnnotationsManagerImpl(@NotNull final Project project, final PsiManager psiManager) {
     super(psiManager);
     myBus = project.getMessageBus();
-    final MessageBusConnection connection = myBus.connect(project);
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    myBus.connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         dropCache();
       }
     });
 
-    final MyVirtualFileListener fileListener = new MyVirtualFileListener();
-    VirtualFileManager.getInstance().addVirtualFileListener(fileListener);
-    Disposer.register(myPsiManager.getProject(), () -> VirtualFileManager.getInstance().removeVirtualFileListener(fileListener));
+    VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), project);
   }
 
   private void notifyAfterAnnotationChanging(@NotNull PsiModifierListOwner owner, @NotNull String annotationFQName, boolean successful) {
@@ -489,8 +470,8 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
 
     //choose external place iff USE_EXTERNAL_ANNOTATIONS option is on,
     //otherwise external annotations should be read-only
-    if (CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS) {
-      final PsiFile containingFile = element.getContainingFile();
+    final PsiFile containingFile = element.getContainingFile();
+    if (JavaCodeStyleSettings.getInstance(containingFile).USE_EXTERNAL_ANNOTATIONS) {
       final VirtualFile virtualFile = containingFile.getVirtualFile();
       LOG.assertTrue(virtualFile != null);
       final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(virtualFile);
@@ -761,7 +742,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
   public static boolean areExternalAnnotationsApplicable(@NotNull PsiModifierListOwner owner) {
     if (!owner.isPhysical()) return false;
     if (!owner.getManager().isInProject(owner)) return true;
-    return CodeStyleSettingsManager.getSettings(owner.getProject()).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS;
+    return JavaCodeStyleSettings.getInstance(owner.getContainingFile()).USE_EXTERNAL_ANNOTATIONS;
   }
 
   private static class MyExternalPromptDialog extends OptionsMessageDialog {

@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -39,6 +40,7 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
+import com.jetbrains.env.PyTestTask;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
@@ -60,7 +62,7 @@ import java.util.List;
 
 /**
  * Tasks to run unit test configurations.
- * You should extend it either implementing {@link #after()} and {@link #before()} or implement {@link #runTestOn(String)}
+ * You should extend it either implementing {@link #after()} and {@link #before()} or implement {@link PyTestTask#runTestOn(String, Sdk)}
  * yourself and use {@link #runConfiguration(com.intellij.execution.configurations.ConfigurationFactory, String, com.intellij.openapi.project.Project)}
  * or {@link #runConfiguration(com.intellij.execution.RunnerAndConfigurationSettings, com.intellij.execution.configurations.RunConfiguration)} .
  * Use {@link #myDescriptor} and {@link #myConsoleView} to check output
@@ -73,7 +75,7 @@ import java.util.List;
 public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
 
   protected ProcessHandler myProcessHandler;
-  private boolean shouldPrintOutput = false;
+  private final boolean shouldPrintOutput = false;
   /**
    * Test root node
    */
@@ -145,7 +147,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
   }
 
   @Override
-  public void runTestOn(String sdkHome) throws Exception {
+  public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
     final Project project = getProject();
     final ConfigurationFactory factory = PythonTestConfigurationType.getInstance().LEGACY_UNITTEST_FACTORY;
     runConfiguration(factory, sdkHome, project);

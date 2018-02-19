@@ -22,7 +22,7 @@ import com.intellij.openapi.module.StdModuleTypes;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
 
-import static com.intellij.openapi.roots.DependencyScope.*;
+import static com.intellij.openapi.roots.DependencyScope.COMPILE;
 
 /**
  * @author Vladislav.Soroka
@@ -135,7 +135,7 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                   "runtime",
                   "runtime-mod");
 
-    assertModuleModuleDepScope("app", "runtime-mod", PROVIDED, TEST, RUNTIME);
+    assertMergedModuleCompileModuleDepScope("app", "runtime-mod");
   }
 
 
@@ -177,9 +177,9 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                   "lib1", "lib1-runtime",
                   "lib2", "lib2-runtime");
 
-    assertModuleModuleDepScope("app", "app-runtime", PROVIDED, TEST, RUNTIME);
-    assertModuleModuleDepScope("app", "lib1-runtime", PROVIDED, TEST, RUNTIME);
-    assertModuleModuleDepScope("app", "lib2-runtime", PROVIDED, TEST, RUNTIME);
+    assertMergedModuleCompileModuleDepScope("app", "app-runtime");
+    assertMergedModuleCompileModuleDepScope("app", "lib1-runtime");
+    assertMergedModuleCompileModuleDepScope("app", "lib2-runtime");
   }
 
 

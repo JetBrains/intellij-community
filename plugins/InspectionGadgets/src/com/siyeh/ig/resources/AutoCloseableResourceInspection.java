@@ -33,6 +33,10 @@ import java.util.Arrays;
  */
 public class AutoCloseableResourceInspection extends AutoCloseableResourceInspectionBase {
 
+
+  /**
+   * Warning! This class have to manually save settings to xml using {@code readSettings()} and {@code writeSettings()} of its parent class
+   **/
   @NotNull
   @Override
   public JComponent createOptionsPanel() {
@@ -64,7 +68,6 @@ public class AutoCloseableResourceInspection extends AutoCloseableResourceInspec
     checkBox.addChangeListener(e -> table2.setEnabled(!ignoreFromMethodCall));
     panel.add(checkBox);
     panel.add(new CheckBox(InspectionGadgetsBundle.message("any.method.may.close.resource.argument"), this, "anyMethodMayClose"));
-    panel.add(new CheckBox(InspectionGadgetsBundle.message("show.warning.for.stream.holding.resource"), this, "showWarningForStreamHoldingResource"));
     return panel;
   }
 }

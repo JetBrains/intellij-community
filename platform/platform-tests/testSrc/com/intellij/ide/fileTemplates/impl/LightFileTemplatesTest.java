@@ -4,6 +4,7 @@ package com.intellij.ide.fileTemplates.impl;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplatesScheme;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -236,6 +237,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
   public void tearDown() throws Exception {
     try {
       myTemplateManager.setCurrentScheme(FileTemplatesScheme.DEFAULT);
+      PropertiesComponent.getInstance().unsetValue("FileTemplates.SelectedTemplate");
     }
     finally {
       super.tearDown();

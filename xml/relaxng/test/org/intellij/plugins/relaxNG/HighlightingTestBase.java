@@ -21,7 +21,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.javaee.ExternalResourceManagerEx;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -48,6 +47,7 @@ import org.intellij.plugins.testUtil.ResourceUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 
 public abstract class HighlightingTestBase extends UsefulTestCase implements IdeaCodeInsightTestCase {
   protected CodeInsightTestFixture myTestFixture;
@@ -117,7 +117,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
   public abstract String getTestDataPath();
 
   protected void init() {
-    ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("urn:test:undefined"));
+    ExternalResourceManagerEx.getInstanceEx().addIgnoredResources(Collections.singletonList("urn:test:undefined"), getTestRootDisposable());
   }
 
   @Override

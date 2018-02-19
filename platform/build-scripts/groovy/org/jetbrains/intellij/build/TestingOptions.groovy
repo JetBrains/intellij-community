@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.util.SystemProperties
@@ -76,6 +62,30 @@ class TestingOptions {
    * Specifies path to JRE which will be used to run tests. By default tests run under the same JRE which is used to run the build scripts.
    */
   String customJrePath = System.getProperty("intellij.build.test.jre")
+
+  /**
+   * Enables capturing traces with IntelliJ test discovery agent.
+   * This agent captures lightweight coverage during your testing session
+   * and allows to rerun only corresponding tests for desired method or class in your project.
+   *
+   * For the further information please see <a href="https://github.com/jetbrains/intellij-coverage"/>IntelliJ Coverage repository</a>.
+   */
+  boolean testDiscoveryEnabled = SystemProperties.getBooleanProperty("intellij.build.test.discovery.enabled", false)
+
+  /**
+   * Specifies a path to the trace file for IntelliJ test discovery agent.
+   */
+  String testDiscoveryTraceFilePath = System.getProperty("intellij.build.test.discovery.trace.file")
+
+  /**
+   * Specifies a list of semicolon separated include class patterns for IntelliJ test discovery agent.
+   */
+  String testDiscoveryIncludePatterns = System.getProperty("intellij.build.test.discovery.include.class.patterns")
+
+  /**
+   * Specifies a list of semicolon separated exclude class patterns for IntelliJ test discovery agent.
+   */
+  String testDiscoveryExcludePatterns = System.getProperty("intellij.build.test.discovery.exclude.class.patterns")
 
   public static final String ALL_EXCLUDE_DEFINED_GROUP = "ALL_EXCLUDE_DEFINED"
   private static final String OLD_TEST_GROUP = System.getProperty("idea.test.group", ALL_EXCLUDE_DEFINED_GROUP)

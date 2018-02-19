@@ -38,6 +38,7 @@ import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -153,7 +154,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
           }
         }
         String ideaJdkHome = usedIdeaJdk.getHomePath();
-        boolean fromIdeaProject = IdeaJdk.isFromIDEAProject(ideaJdkHome);
+        boolean fromIdeaProject = PsiUtil.isPathToIntelliJIdeaSources(ideaJdkHome);
 
         if (!fromIdeaProject) {
           String bootPath = "/lib/boot.jar";

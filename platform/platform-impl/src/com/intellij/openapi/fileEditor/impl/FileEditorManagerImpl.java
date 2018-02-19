@@ -879,8 +879,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       FileEditor[] editors = composite.getEditors();
       FileEditorProvider[] providers = composite.getProviders();
 
-      window.setEditor(composite, current, focusEditor);
-
       for (int i = 0; i < editors.length; i++) {
         restoreEditorState(file, providers[i], editors[i], entry, newEditor);
       }
@@ -898,14 +896,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         for (int i = editors.length - 1; i >= 0; i--) {
           final FileEditorProvider provider = providers[i];
           if (provider.equals(selectedProvider)) {
-            composite.setSelectedEditor(i);
+            int editorIndex = i;
+            runChange(splitters -> composite.setSelectedEditor(editorIndex), null);
             break;
           }
         }
       }
 
-      // Notify editors about selection changes
-      window.getOwner().setCurrentWindow(window, focusEditor);
+      window.setEditor(composite, current, focusEditor);
       window.getOwner().afterFileOpen(file);
       addSelectionRecord(file, window);
 

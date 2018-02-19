@@ -24,21 +24,15 @@ import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.ui.components.labels.SwingActionLink;
 
-import javax.swing.Action;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
 /**
  * @author Sergey.Malenkov
  */
-final class Banner extends JPanel {
+final class Banner extends SimpleBanner {
   private final JLabel myProjectIcon = new JLabel();
   private final Breadcrumbs myBreadcrumbs = new Breadcrumbs() {
     protected int getFontStyle(Crumb crumb) {
@@ -47,12 +41,11 @@ final class Banner extends JPanel {
   };
 
   Banner(Action action) {
-    super(new BorderLayout(10, 0));
     myProjectIcon.setMinimumSize(new Dimension(0, 0));
     myProjectIcon.setIcon(AllIcons.General.ProjectConfigurableBanner);
     myProjectIcon.setForeground(JBColor.GRAY);
     myProjectIcon.setVisible(false);
-    add(BorderLayout.WEST, myBreadcrumbs);
+    myLeftPanel.add(myBreadcrumbs, 0);
     add(BorderLayout.CENTER, myProjectIcon);
     add(BorderLayout.EAST, RelativeFont.BOLD.install(new SwingActionLink(action)));
     setComponentPopupMenuTo(myBreadcrumbs);
@@ -78,6 +71,22 @@ final class Banner extends JPanel {
                                                   ? "configurable.default.project.tooltip"
                                                   : "configurable.current.project.tooltip"));
     }
+  }
+
+  @Override
+  void setCenterComponent(Component component) {
+    boolean addProjectIcon = myCenterComponent != null && component == null;
+    super.setCenterComponent(component);
+
+    if (addProjectIcon) {
+      getLayout().addLayoutComponent(BorderLayout.CENTER, myProjectIcon);
+    }
+  }
+
+  @Override
+  void setLeftComponent(Component component) {
+    super.setLeftComponent(component);
+    myBreadcrumbs.setVisible(component == null);
   }
 
   private static void setComponentPopupMenuTo(Breadcrumbs breadcrumbs) {

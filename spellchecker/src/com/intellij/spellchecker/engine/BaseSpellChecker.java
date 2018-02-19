@@ -158,7 +158,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   @NotNull
   public List<String> getSuggestions(@NotNull String word, int maxSuggestions, int quality) {
     String transformed = transform.transform(word);
-    if (transformed == null) return Collections.emptyList();
+    if (transformed == null || maxSuggestions < 1) return Collections.emptyList();
     final MinMaxPriorityQueue<Suggestion> suggestions = MinMaxPriorityQueue.orderedBy(Suggestion::compareTo).maximumSize(maxSuggestions).create();
     for (Dictionary dict : concat(bundledDictionaries, dictionaries)) {
       dict.getSuggestions(transformed, s -> suggestions.add(new Suggestion(s, optimalAlignment(transformed, s, true))));

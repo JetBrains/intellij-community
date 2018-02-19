@@ -41,7 +41,7 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
   private final Iterable<ArtifactRootCopyingHandlerProvider> myCopyingHandlerProviders;
   private int myRootIndex;
   private final IgnoredFileIndex myIgnoredFileIndex;
-  private ArtifactBuildTarget myBuildTarget;
+  private final ArtifactBuildTarget myBuildTarget;
   private final JpsModel myModel;
   private final BuildDataPaths myBuildDataPaths;
 

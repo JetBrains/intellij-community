@@ -4,11 +4,11 @@ package com.intellij.openapi.project
 
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileProvider
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PlatformUtils
@@ -46,19 +46,12 @@ fun displayUrlRelativeToProject(file: VirtualFile, url: String, project: Project
   }
 }
 
-interface ProjectFileStoreOptionManager {
-  val isStoredExternally: Boolean
-}
-
 val Project.isExternalStorageEnabled: Boolean
   get() {
     if (projectFilePath?.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) == true) {
       return false
     }
 
-    val key = "com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager"
-    val manager = picoContainer.getComponentInstance(key) as? ProjectFileStoreOptionManager ?: return false
-    return manager.isStoredExternally || isUseExternalStorage()
+    val manager = ServiceManager.getService(this, ExternalStorageConfigurationManager::class.java) ?: return false
+    return manager.isEnabled() || (ApplicationManager.getApplication()?.isUnitTestMode ?: false)
   }
-
-fun isUseExternalStorage() = (ApplicationManager.getApplication()?.isUnitTestMode ?: false) || Registry.`is`("store.imported.project.elements.separately")

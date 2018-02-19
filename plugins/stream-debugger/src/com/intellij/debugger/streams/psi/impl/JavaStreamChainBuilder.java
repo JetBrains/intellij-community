@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.psi.impl;
 
 import com.intellij.debugger.streams.psi.ChainTransformer;
@@ -6,7 +6,6 @@ import com.intellij.debugger.streams.psi.PsiUtil;
 import com.intellij.debugger.streams.psi.StreamApiUtil;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -120,10 +119,12 @@ public class JavaStreamChainBuilder implements StreamChainBuilder {
   private static String getPackageName(@NotNull PsiMethodCallExpression expression) {
     final PsiMethod psiMethod = expression.resolveMethod();
     if (psiMethod != null) {
-      final PsiClass psiClass = (PsiClass)psiMethod.getParent();
-      final String className = psiClass.getQualifiedName();
-      if (className != null) {
-        return StringUtil.getPackageName(className);
+      final PsiClass topClass = com.intellij.psi.util.PsiUtil.getTopLevelClass(psiMethod);
+      if (topClass != null) {
+        final String packageName = com.intellij.psi.util.PsiUtil.getPackageName(topClass);
+        if (packageName != null) {
+          return packageName;
+        }
       }
     }
     return "";

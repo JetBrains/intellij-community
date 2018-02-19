@@ -14,12 +14,7 @@
             text="Open in terminal"
             description="Open current file location in terminal"
             icon="TerminalIcons.OpenTerminal_13x13">
-      <add-to-group group-id="EditorPopupMenu"/>
-      <add-to-group group-id="ProjectViewPopupMenu"/>
-      <add-to-group group-id="EditorTabPopupMenu"/>
-      <add-to-group group-id="ConsoleEditorPopupMenu"/>
-      <add-to-group group-id="FavoritesViewPopupMenu"/>
-      <add-to-group group-id="NavbarPopupMenu"/>
+      <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
     </action>
   </actions>
 

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.env.ut;
 
+import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.env.ProcessWithConsoleRunner;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -44,7 +45,8 @@ public class PyUnitTestProcessRunner extends PyScriptTestProcessRunner<PyUnitTes
   @Override
   protected void configurationCreatedAndWillLaunch(@NotNull PyUnitTestConfiguration configuration) throws IOException {
     super.configurationCreatedAndWillLaunch(configuration);
-    if (PythonSdkFlavor.getFlavor(configuration.getSdk()) instanceof CPythonSdkFlavor) {
+    final Sdk sdk = configuration.getSdk();
+    if (sdk == null ||  PythonSdkFlavor.getFlavor(sdk) instanceof CPythonSdkFlavor) {
       // -Werror checks we do not use deprecated API in runners, but only works for cpython (not iron nor jython)
       // and we can't use it for pytest/nose, since it is not our responsibility to check them for deprecation api usage
       // while unit is part of stdlib and does not use deprecated api, so only runners are checked
@@ -52,7 +54,7 @@ public class PyUnitTestProcessRunner extends PyScriptTestProcessRunner<PyUnitTes
     }
 
     if (myScriptName.startsWith(TEST_PATTERN_PREFIX)) {
-      configuration.getTarget().setTargetVariant(PyRunTargetVariant.PATH);
+      configuration.getTarget().setTargetType(PyRunTargetVariant.PATH);
       configuration.getTarget().setTarget(".");
       configuration.setPattern(myScriptName.substring(TEST_PATTERN_PREFIX.length()));
     }

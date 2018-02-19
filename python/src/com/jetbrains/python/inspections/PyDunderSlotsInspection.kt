@@ -21,7 +21,7 @@ class PyDunderSlotsInspection : PyInspection() {
     override fun visitPyClass(node: PyClass?) {
       super.visitPyClass(node)
 
-      if (node != null && LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON30)) {
+      if (node != null && !LanguageLevel.forElement(node).isPython2) {
         val slots = findSlotsValue(node)
 
         when (slots) {
@@ -91,7 +91,7 @@ class PyDunderSlotsInspection : PyInspection() {
       Py3+ raises ValueError about conflict between __slots__ and class variable.
       This case is handled above by com.jetbrains.python.inspections.PyDunderSlotsInspection.Visitor.processSlot method.
       */
-      if (LanguageLevel.forElement(cls).isOlderThan(LanguageLevel.PYTHON30)) {
+      if (LanguageLevel.forElement(cls).isPython2) {
         return attributeIsWritableInPy2(cls, name)
       }
       else {

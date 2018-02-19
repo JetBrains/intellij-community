@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public class CompositeLogger extends Logger {
-  private Logger[] myLoggers;
+  private final Logger[] myLoggers;
 
   public CompositeLogger(Logger... loggers) {
     myLoggers = loggers;

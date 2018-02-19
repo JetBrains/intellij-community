@@ -88,8 +88,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
 
     final FileElement templateFileElement = ((PsiFileImpl)templatePsiFile).calcTreeElement();
 
-    DebugUtil.startPsiModification("template language parsing");
-    try {
+    return DebugUtil.performPsiModification("template language parsing", () -> {
       prepareParsedTemplateFile(templateFileElement);
       insertOuters(templateFileElement, sourceCode, collector.myRanges, charTable);
 
@@ -103,10 +102,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
       }
 
       return childNode;
-    }
-    finally {
-      DebugUtil.finishPsiModification();
-    }
+    });
   }
 
   protected void prepareParsedTemplateFile(@NotNull FileElement root) {

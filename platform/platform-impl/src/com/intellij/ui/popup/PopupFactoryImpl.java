@@ -6,7 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltipManager;
-import com.intellij.ide.ui.laf.darcula.DarculaLaf;
+import com.intellij.ide.ui.laf.IconCache;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -40,7 +40,6 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.mock.MockConfirmation;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.StatusText;
@@ -306,16 +305,28 @@ public class PopupFactoryImpl extends JBPopupFactory {
       final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       LOG.assertTrue(component != null, "dataContext has no component for new ListPopupStep");
 
-      final ActionStepBuilder builder =
+      List<ActionItem> items =
+        getActionItems(actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, actionPlace);
+
+      return new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
+                                 preselectActionCondition, autoSelection, showDisabledActions);
+    }
+
+    @NotNull
+    public static List<ActionItem> getActionItems(@NotNull ActionGroup actionGroup,
+                                                  @NotNull DataContext dataContext,
+                                                  boolean showNumbers,
+                                                  boolean useAlphaAsNumbers,
+                                                  boolean showDisabledActions,
+                                                  boolean honorActionMnemonics,
+                                                  @Nullable String actionPlace) {
+      ActionStepBuilder builder =
         new ActionStepBuilder(dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics);
       if (actionPlace != null) {
         builder.setActionPlace(actionPlace);
       }
       builder.buildGroup(actionGroup);
-      final List<ActionItem> items = builder.getItems();
-
-      return new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
-                                 preselectActionCondition, autoSelection, showDisabledActions);
+      return builder.getItems();
     }
 
     @Override
@@ -756,7 +767,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
   }
 
-  private static class ActionPopupStep implements ListPopupStepEx<ActionItem>, MnemonicNavigationFilter<ActionItem>, SpeedSearchFilter<ActionItem> {
+  public static class ActionPopupStep
+    implements ListPopupStepEx<ActionItem>, MnemonicNavigationFilter<ActionItem>, SpeedSearchFilter<ActionItem> {
     private final List<ActionItem> myItems;
     private final String myTitle;
     private final Component myContext;
@@ -767,7 +779,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private Runnable myFinalRunnable;
     @Nullable private final Condition<AnAction> myPreselectActionCondition;
 
-    private ActionPopupStep(@NotNull final List<ActionItem> items, final String title, Component context, boolean enableMnemonics,
+    public ActionPopupStep(@NotNull final List<ActionItem> items, final String title, Component context, boolean enableMnemonics,
                             @Nullable Condition<AnAction> preselectActionCondition, final boolean autoSelection, boolean showDisabledActions) {
       myItems = items;
       myTitle = title;
@@ -1031,7 +1043,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
         }
 
         Icon icon = action.getTemplatePresentation().getIcon();
-        if (icon == null && action instanceof Toggleable) icon = PlatformIcons.CHECK_ICON;
+        if (icon == null && action instanceof Toggleable) icon = EmptyIcon.ICON_16;
         if (icon != null) {
           final int width = icon.getIconWidth();
           final int height = icon.getIconHeight();
@@ -1104,10 +1116,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
             icon = AllIcons.Actions.QuickList;
           }
           else if (action instanceof Toggleable && Boolean.TRUE.equals(presentation.getClientProperty(Toggleable.SELECTED_PROPERTY))) {
-            boolean darcula = UIUtil.isUnderDarcula();
-            icon = DarculaLaf.getCheckmarkIcon(darcula);
-            selectedIcon = DarculaLaf.getCheckmarkSelectedIcon(darcula);
-            disabledIcon = DarculaLaf.getCheckmarkDisabledIcon(darcula);
+            icon = IconCache.getIcon("checkmark", false, false, true);
+            selectedIcon = IconCache.getIcon("checkmark", true, false, true);
+            disabledIcon = IconCache.getIcon("checkmark", false, false, false);
           }
         }
         if (!enabled) {

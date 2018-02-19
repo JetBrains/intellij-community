@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -25,7 +11,6 @@ import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -56,20 +41,15 @@ public class TypeExpression extends Expression {
     if (myItems.isEmpty()) return null;
 
     final PsiType type = myItems.iterator().next().getType();
-    return type == null? null : new PsiTypeResult(type, project) {
+    return type == null ? null : new PsiTypeResult(type, project) {
       @Override
       public void handleRecalc(PsiFile psiFile, Document document, int segmentStart, int segmentEnd) {
         if (myItems.size() <= 1) {
           super.handleRecalc(psiFile, document, segmentStart, segmentEnd);
-        } else {
+        }
+        else {
           JavaTemplateUtil.updateTypeBindings(getType(), psiFile, document, segmentStart, segmentEnd, true);
         }
-      }
-
-      @Override
-      public String toString() {
-        final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(project);
-        return myItems.size() == 1 || settings.isUseFqClassNames() ? super.toString() : type.getPresentableText();
       }
     };
   }

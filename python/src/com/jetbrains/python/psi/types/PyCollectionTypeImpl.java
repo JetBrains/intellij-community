@@ -111,4 +111,11 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
     // TODO: Select the parameter type that matches T in Iterable[T]
     return ContainerUtil.getFirstItem(myElementTypes);
   }
+
+  @Override
+  public void accept(@NotNull PyTypeVisitor visitor) {
+    if (visitor instanceof PyTypeVisitorExt) {
+      ((PyTypeVisitorExt)visitor).visitCollectionType(this);
+    }
+  }
 }

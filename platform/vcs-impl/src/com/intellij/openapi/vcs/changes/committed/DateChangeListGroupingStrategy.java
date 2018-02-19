@@ -26,7 +26,7 @@ public class DateChangeListGroupingStrategy implements ChangeListGroupingStrateg
   @NonNls private final SimpleDateFormat myMonthYearFormat = new SimpleDateFormat("MMMM yyyy", Locale.ENGLISH);
   private long myTimeToRecalculateAfter;
   private Calendar myCurrentCalendar;
-  private Calendar myCalendar;
+  private final Calendar myCalendar;
   private final WeekDayFormatCache myWeekDayFormatCache;
   private final MonthsCache myMonthsCache;
 

@@ -8,23 +8,15 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
-import com.intellij.util.xmlb.annotations.XCollection;
-import git4idea.GitRemoteBranch;
-import git4idea.GitUtil;
 import git4idea.push.GitPushTagMode;
-import git4idea.repo.GitRemote;
-import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-
-import static com.intellij.dvcs.branch.DvcsBranchUtil.find;
 
 /**
  * Git VCS settings
@@ -69,10 +61,8 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public boolean SIGN_OFF_COMMIT = false;
     public boolean SET_USER_NAME_GLOBALLY = true;
     public boolean SWAP_SIDES_IN_COMPARE_BRANCHES = false;
-
-    @XCollection
-    @Tag("push-targets")
-    public List<PushTargetInfo> PUSH_TARGETS = ContainerUtil.newArrayList();
+    public boolean UPDATE_BRANCHES_INFO = false;
+    public int BRANCH_INFO_UPDATE_TIME = 10;
 
     @Property(surroundWithTag = false, flat = true)
     public DvcsBranchSettings FAVORITE_BRANCH_SETTINGS = new DvcsBranchSettings();
@@ -252,6 +242,22 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     myState.SIGN_OFF_COMMIT = state;
   }
 
+  public boolean shouldUpdateBranchInfo() {
+    return false;
+  }
+
+  public void setUpdateBranchInfo(boolean state) {
+    myState.UPDATE_BRANCHES_INFO = state;
+  }
+
+  public int getBranchInfoUpdateTime() {
+    return myState.BRANCH_INFO_UPDATE_TIME;
+  }
+
+  public void setBranchInfoUpdateTime(int time) {
+    myState.BRANCH_INFO_UPDATE_TIME = time;
+  }
+
   /**
    * Provides migration from project settings.
    * This method is to be removed in IDEA 13: it should be moved to {@link GitVcsApplicationSettings}
@@ -262,25 +268,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
       getAppSettings().setIdeaSsh(myState.SSH_EXECUTABLE);
     }
     return getAppSettings().getIdeaSsh() == GitVcsApplicationSettings.SshExecutable.IDEA_SSH;
-  }
-
-  @Nullable
-  public GitRemoteBranch getPushTarget(@NotNull GitRepository repository, @NotNull String sourceBranch) {
-    PushTargetInfo targetInfo = find(myState.PUSH_TARGETS, repository, sourceBranch);
-    if (targetInfo == null) return null;
-    GitRemote remote = GitUtil.findRemoteByName(repository, targetInfo.targetRemoteName);
-    if (remote == null) return null;
-    return GitUtil.findOrCreateRemoteBranch(repository, remote, targetInfo.targetBranchName);
-  }
-
-  public void setPushTarget(@NotNull GitRepository repository, @NotNull String sourceBranch,
-                            @NotNull String targetRemote, @NotNull String targetBranch) {
-    String repositoryPath = repository.getRoot().getPath();
-    PushTargetInfo existingInfo = find(myState.PUSH_TARGETS, repository, sourceBranch);
-    if (existingInfo != null) {
-      myState.PUSH_TARGETS.remove(existingInfo);
-    }
-    myState.PUSH_TARGETS.add(new PushTargetInfo(repositoryPath, sourceBranch, targetRemote, targetBranch));
   }
 
   @NotNull

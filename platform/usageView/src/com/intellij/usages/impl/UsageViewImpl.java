@@ -34,6 +34,7 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.content.Content;
@@ -55,7 +56,9 @@ import com.intellij.util.containers.Queue;
 import com.intellij.util.enumeration.EmptyEnumeration;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.DialogUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
@@ -65,10 +68,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import javax.swing.event.TreeExpansionEvent;
-import javax.swing.event.TreeExpansionListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
+import javax.swing.event.*;
 import javax.swing.plaf.TreeUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
@@ -76,7 +76,10 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -105,6 +108,7 @@ public class UsageViewImpl implements UsageView {
   private final Map<Usage, UsageNode> myUsageNodes = new ConcurrentHashMap<>();
   public static final UsageNode NULL_NODE = new UsageNode(null, NullUsage.INSTANCE);
   private final ButtonPanel myButtonPanel;
+  private boolean myNeedUpdateButtons;
   private final JComponent myAdditionalComponent = new JPanel(new BorderLayout());
   private volatile boolean isDisposed;
   private volatile boolean myChangesDetected;
@@ -269,7 +273,14 @@ public class UsageViewImpl implements UsageView {
               SwingUtilities.invokeLater(() -> {
                 if (isDisposed || myProject.isDisposed()) return;
                 updateOnSelectionChanged();
+                myNeedUpdateButtons = true;
               });
+            }
+          });
+          myModel.addTreeModelListener(new TreeModelAdapter() {
+            @Override
+            protected void process(TreeModelEvent event, EventType type) {
+              myNeedUpdateButtons = true;
             }
           });
 
@@ -339,7 +350,9 @@ public class UsageViewImpl implements UsageView {
 
       @Override
       public void onDone(boolean isExcludeAction) {
-
+         if (myRootPanel.hasNextOccurence()) {
+           myRootPanel.goNextOccurence();
+         }
       }
     };
   }
@@ -506,14 +519,13 @@ public class UsageViewImpl implements UsageView {
     // since the UsageViewTreeCellRenderer ignores invisible nodes (outside the viewport), their preferred size is incorrect
     // and we need to recalculate them when the node scrolled into the visible rectangle
     treePane.getViewport().addChangeListener(__ -> clearRendererCache());
-    myPreviewSplitter = new Splitter(false, 0.5f, 0.1f, 0.9f);
+    myPreviewSplitter = new OnePixelSplitter(false, 0.5f, 0.1f, 0.9f);
     myPreviewSplitter.setFirstComponent(treePane);
 
     myCentralPanel.add(myPreviewSplitter, BorderLayout.CENTER);
 
-    if (getUsageViewSettings().isPreviewUsages()) {
+    if (isPreviewUsages()) {
       myPreviewSplitter.setProportion(getUsageViewSettings().getPreviewUsagesSplitterProportion());
-      treePane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.RIGHT);
       final JBTabbedPane tabbedPane = new JBTabbedPane(SwingConstants.BOTTOM){
         @NotNull
         @Override
@@ -524,6 +536,7 @@ public class UsageViewImpl implements UsageView {
 
       UsageContextPanel.Provider[] extensions = Extensions.getExtensions(UsageContextPanel.Provider.EP_NAME, myProject);
       myUsageContextPanelProviders = ContainerUtil.filter(extensions, provider -> provider.isAvailableFor(this));
+      Map<String, JComponent> components = new LinkedHashMap<>();
       for (UsageContextPanel.Provider provider : myUsageContextPanelProviders) {
         JComponent component;
         if (myCurrentUsageContextProvider == null || myCurrentUsageContextProvider == provider) {
@@ -534,21 +547,26 @@ public class UsageViewImpl implements UsageView {
         else {
           component = new JLabel();
         }
-
-        tabbedPane.addTab(provider.getTabTitle(), component);
+        components.put(provider.getTabTitle(), component);
       }
-      int index = myUsageContextPanelProviders.indexOf(myCurrentUsageContextProvider);
-      tabbedPane.setSelectedIndex(index);
-      tabbedPane.addChangeListener(e -> {
-        int currentIndex = tabbedPane.getSelectedIndex();
-        UsageContextPanel.Provider selectedProvider = myUsageContextPanelProviders.get(currentIndex);
-        if (selectedProvider != myCurrentUsageContextProvider) {
-          tabSelected(selectedProvider);
-        }
-      });
-      tabbedPane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
       JBPanelWithEmptyText panel = new JBPanelWithEmptyText(new BorderLayout());
-      panel.add(tabbedPane, BorderLayout.CENTER);
+      if (components.size() == 1) {
+        panel.add(components.values().iterator().next(), BorderLayout.CENTER);
+      } else {
+        for (Map.Entry<String, JComponent> entry : components.entrySet()) {
+          tabbedPane.addTab(entry.getKey(), entry.getValue());
+        }
+        int index = myUsageContextPanelProviders.indexOf(myCurrentUsageContextProvider);
+        tabbedPane.setSelectedIndex(index);
+        tabbedPane.addChangeListener(e -> {
+          int currentIndex = tabbedPane.getSelectedIndex();
+          UsageContextPanel.Provider selectedProvider = myUsageContextPanelProviders.get(currentIndex);
+          if (selectedProvider != myCurrentUsageContextProvider) {
+            tabSelected(selectedProvider);
+          }
+        });
+        panel.add(tabbedPane, BorderLayout.CENTER);
+      }
       myPreviewSplitter.setSecondComponent(panel);
     }
     else {
@@ -573,6 +591,18 @@ public class UsageViewImpl implements UsageView {
       saveSplitterProportions();
       Disposer.dispose(myCurrentUsageContextPanel);
       myCurrentUsageContextPanel = null;
+    }
+  }
+
+  public boolean isPreviewUsages() {
+    return myPresentation.isReplaceMode() ? getUsageViewSettings().isReplacePreviewUsages() : getUsageViewSettings().isPreviewUsages();
+  }
+
+  public void setPreviewUsages(boolean state) {
+    if (myPresentation.isReplaceMode()) {
+      getUsageViewSettings().setReplacePreviewUsages(state);
+    } else {
+      getUsageViewSettings().setPreviewUsages(state);
     }
   }
 
@@ -1120,7 +1150,8 @@ public class UsageViewImpl implements UsageView {
     }
   }
 
-  void appendUsagesInBulk(@NotNull Collection<Usage> usages) {
+  @SuppressWarnings("WeakerAccess")
+  public void appendUsagesInBulk(@NotNull Collection<Usage> usages) {
     addUpdateRequest(ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
       for (Usage usage : usages) {
         doAppendUsage(usage);
@@ -1154,7 +1185,9 @@ public class UsageViewImpl implements UsageView {
 
   @Override
   public void removeUsagesBulk(@NotNull Collection<Usage> usages) {
-    int selectionRow = myTree.getMinSelectionRow();
+    Usage toSelect = getNextToSelect(usages);
+    UsageNode nodeToSelect = toSelect != null ? myUsageNodes.get(toSelect) : null;
+
     Set<UsageNode> nodes = usagesToNodes(usages.stream()).collect(Collectors.toSet());
     usages.forEach(myUsageNodes::remove);
 
@@ -1163,9 +1196,9 @@ public class UsageViewImpl implements UsageView {
         if (isDisposed) return;
         DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
         ((GroupNode)treeModel.getRoot()).removeUsagesBulk(nodes, treeModel);
-        int rowToSelect = Math.min(myTree.getRowCount() - 1, selectionRow);
-        if (rowToSelect >=0) {
-          myTree.setSelectionRow(rowToSelect);
+        if (nodeToSelect != null) {
+          TreePath path = new TreePath(nodeToSelect.getPath());
+          myTree.addSelectionPath(path);
         }
       });
     }
@@ -1197,6 +1230,12 @@ public class UsageViewImpl implements UsageView {
 
     myTree.setSelectionPaths(paths);
     if (paths.length != 0) myTree.scrollPathToVisible(paths[0]);
+  }
+
+  @NotNull
+  @Override
+  public JComponent getPreferredFocusableComponent() {
+    return myTree != null ? myTree : getComponent();
   }
 
   @Override
@@ -1341,10 +1380,17 @@ public class UsageViewImpl implements UsageView {
   }
 
   private void disposeSmartPointers() {
-    SmartPointerManager pointerManager = SmartPointerManager.getInstance(getProject());
+    List<SmartPsiElementPointer<?>> smartPointers = new ArrayList<>();
     for (Usage usage : myUsageNodes.keySet()) {
       if (usage instanceof UsageInfo2UsageAdapter) {
         SmartPsiElementPointer<?> pointer = ((UsageInfo2UsageAdapter)usage).getUsageInfo().getSmartPointer();
+        smartPointers.add(pointer);
+      }
+    }
+
+    if (smartPointers.size() > 0) {
+      SmartPointerManager pointerManager = SmartPointerManager.getInstance(getProject());
+      for (SmartPsiElementPointer<?> pointer : smartPointers) {
         pointerManager.removePointer(pointer);
       }
     }
@@ -1401,6 +1447,10 @@ public class UsageViewImpl implements UsageView {
     int index = myButtonPanel.getComponentCount();
     if (!SystemInfo.isMac && index > 0 && myPresentation.isShowCancelButton()) index--;
     myButtonPanel.addButtonAction(index, action);
+    Object o = action.getValue(Action.ACCELERATOR_KEY);
+    if (o instanceof KeyStroke) {
+      myTree.registerKeyboardAction(action, (KeyStroke)o, JComponent.WHEN_FOCUSED);
+    }
   }
 
   @Override
@@ -1834,7 +1884,7 @@ public class UsageViewImpl implements UsageView {
 
   private final class ButtonPanel extends JPanel {
     private ButtonPanel() {
-      setLayout(new FlowLayout(FlowLayout.LEFT, 8, 0));
+      setLayout(new FlowLayout(FlowLayout.LEFT, 6, 0));
       getProject().getMessageBus().connect(UsageViewImpl.this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
         @Override
         public void enteredDumbMode() {
@@ -1847,7 +1897,9 @@ public class UsageViewImpl implements UsageView {
         }
       });
     }
-
+    //Here we use
+    // Action.LONG_DESCRIPTION as hint label for button
+    // Action.SHORT_DESCRIPTION as a tooltip for button
     private void addButtonAction(int index, @NotNull Action action) {
       JButton button = new JButton(action);
       add(button, index);
@@ -1856,6 +1908,17 @@ public class UsageViewImpl implements UsageView {
 
       if (getBorder() == null) setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
       update();
+      Object s = action.getValue(Action.LONG_DESCRIPTION);
+      if (s instanceof String) {
+        JBLabel label = new JBLabel((String)s);
+        label.setEnabled(false);
+        label.setFont(JBUI.Fonts.smallFont());
+        add(JBUI.Borders.emptyLeft(-1).wrap(label));
+      }
+      s = action.getValue(Action.SHORT_DESCRIPTION);
+      if (s instanceof String) {
+        button.setToolTipText((String)s);
+      }
       invalidate();
       if (getParent() != null) {
         getParent().validate();
@@ -1863,22 +1926,26 @@ public class UsageViewImpl implements UsageView {
     }
 
     void update() {
+      boolean globallyEnabled = !isSearchInProgress() && !DumbService.isDumb(myProject);
       for (int i = 0; i < getComponentCount(); ++i) {
         Component component = getComponent(i);
         if (component instanceof JButton) {
           final JButton button = (JButton)component;
-          boolean enabled = !isSearchInProgress() && !DumbService.isDumb(myProject);
           Action action = button.getAction();
           if (action != null) {
-            enabled &= action.isEnabled();
+            if (myNeedUpdateButtons) {
+              button.setEnabled(globallyEnabled && action.isEnabled());
+            }
             Object name = action.getValue(Action.NAME);
             if (name instanceof String) {
               DialogUtil.setTextWithMnemonic(button, (String)name);
             }
+          } else {
+            button.setEnabled(globallyEnabled);
           }
-          button.setEnabled(enabled);
         }
       }
+      myNeedUpdateButtons = false;
     }
   }
 
@@ -2015,5 +2082,16 @@ public class UsageViewImpl implements UsageView {
     return node == null ? null : node.getUserObject() instanceof Usage ? (Usage)node.getUserObject() : null;
   }
 
-
+  public Usage getNextToSelect(@NotNull Collection<Usage> toDelete) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    Usage toSelect = null;
+    for (Usage usage : toDelete) {
+      Usage next = getNextToSelect(usage);
+      if (!toDelete.contains(next)) {
+        toSelect = next;
+        break;
+      }
+    }
+    return toSelect;
+  }
 }

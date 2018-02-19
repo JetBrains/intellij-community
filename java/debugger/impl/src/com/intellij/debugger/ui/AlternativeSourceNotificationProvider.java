@@ -132,7 +132,7 @@ public class AlternativeSourceNotificationProvider extends EditorNotifications.P
       myClass = aClass;
     }
 
-    private static JList ourDummyList = new JBList(); // to use ModuleRendererFactory
+    private static final JList ourDummyList = new JBList(); // to use ModuleRendererFactory
 
     @Override
     public String toString() {

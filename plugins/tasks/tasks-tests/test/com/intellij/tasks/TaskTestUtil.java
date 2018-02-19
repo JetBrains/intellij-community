@@ -32,9 +32,9 @@ public class TaskTestUtil {
    * @see #assertTasksEqual(Task, Task)
    */
   public static class TaskBuilder extends Task {
-    private String myId;
-    private String mySummary;
-    private TaskRepository myRepository;
+    private final String myId;
+    private final String mySummary;
+    private final TaskRepository myRepository;
     private String myDescription;
     private String myIssueUrl;
     private Comment[] myComments = Comment.EMPTY_ARRAY;

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.AbstractMatchingVisitor;
@@ -18,10 +18,11 @@ import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
-import java.util.HashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -52,8 +53,9 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     return myResult;
   }
 
-  public void setResult(boolean result) {
-    this.myResult = result;
+  @Contract("true->true;false->false")
+  public boolean setResult(boolean result) {
+    return this.myResult = result;
   }
 
   public MatchContext getMatchContext() {

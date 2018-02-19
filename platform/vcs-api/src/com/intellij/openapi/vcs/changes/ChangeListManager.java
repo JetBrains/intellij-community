@@ -102,6 +102,12 @@ public abstract class ChangeListManager implements ChangeListModification {
   public abstract LocalChangeList getChangeList(String id);
 
 
+  @NotNull
+  public abstract List<LocalChangeList> getChangeLists(@NotNull Change change);
+
+  @NotNull
+  public abstract List<LocalChangeList> getChangeLists(@NotNull VirtualFile file);
+
   @Nullable
   public abstract LocalChangeList getChangeList(@NotNull Change change);
 

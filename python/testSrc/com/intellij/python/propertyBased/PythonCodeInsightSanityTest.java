@@ -16,6 +16,7 @@
 package com.intellij.python.propertyBased;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.SkipSlowTestLocally;
@@ -101,15 +102,15 @@ public class PythonCodeInsightSanityTest extends PyEnvTestCase {
   private void runSanityTest(@NotNull final Consumer<Pair<String, CodeInsightTestFixture>> test) {
 
     final String subfolder = "sanity";
-    runTest(new PyExecutionFixtureTestTask(subfolder) {
+    runPythonTest(new PyExecutionFixtureTestTask(subfolder) {
       @Override
-      public void runTestOn(String sdkHome) {
+      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) {
         ApplicationManager.getApplication().invokeAndWait(() -> {
           final Pair<String, CodeInsightTestFixture> pathAndFixture =
             Pair.create(new File(myFixture.getTestDataPath(), subfolder).getPath(), myFixture);
           test.accept(pathAndFixture);
         });
       }
-    }, getTestName(true));
+    });
   }
 }

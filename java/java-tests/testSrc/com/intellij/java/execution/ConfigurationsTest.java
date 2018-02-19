@@ -34,6 +34,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -181,6 +182,32 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
         "test1.nested.TestWithJunit4",
         "test1.ThirdPartyTest",
         testB.getQualifiedName()},
+      lines);
+  }
+
+
+  public void testRunningAllInDirectory() throws IOException, ExecutionException {
+    Module module1 = getModule1();
+    PsiClass psiClass = findTestA(module1);
+
+    JUnitConfiguration configuration =
+      new JUnitConfiguration("", myProject, JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
+    configuration.getPersistentData().TEST_OBJECT = JUnitConfiguration.TEST_DIRECTORY;
+    configuration.getPersistentData().setDirName(psiClass.getContainingFile().getContainingDirectory().getVirtualFile().getParent().getPath());
+    configuration.setModule(module1);
+    JavaParameters parameters = checkCanRun(configuration);
+    String filePath = ContainerUtil.find(parameters.getProgramParametersList().getArray(),
+                                         value -> StringUtil.startsWithChar(value, '@') && !StringUtil.startsWith(value, "@w@")).substring(1);
+    List<String> lines = readLinesFrom(new File(filePath));
+    lines.remove(0);
+    Assertion.compareUnordered(
+      //category, filters, classNames...
+      new Object[]{"", "", psiClass.getQualifiedName(),
+        "test1.DerivedTest", RT_INNER_TEST_NAME,
+        "test1.nested.TestA",
+        "test1.nested.TestWithJunit4",
+        "test1.ThirdPartyTest",
+        "TestA"},
       lines);
   }
 
@@ -492,17 +519,22 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
       assertNotNull(task);
       Project project = configuration.getProject();
       try {
-        CompilerTester tester = new CompilerTester(project, Arrays.asList(ModuleManager.getInstance(project).getModules()));
-        try {
-          List<CompilerMessage> messages = tester.make();
-          assertFalse(messages.stream().filter(message -> message.getCategory() == CompilerMessageCategory.ERROR)
-                              .map(message -> message.getMessage())
-                              .findFirst().orElse("Compiles fine"),
-                      messages.stream().anyMatch(message -> message.getCategory() == CompilerMessageCategory.ERROR));
+        if (Registry.is("junit4.search.4.tests.all.in.scope")) {
           task.startSearch();
         }
-        finally {
-          tester.tearDown();
+        else {
+          CompilerTester tester = new CompilerTester(project, Arrays.asList(ModuleManager.getInstance(project).getModules()));
+          try {
+            List<CompilerMessage> messages = tester.make();
+            assertFalse(messages.stream().filter(message -> message.getCategory() == CompilerMessageCategory.ERROR)
+                                .map(message -> message.getMessage())
+                                .findFirst().orElse("Compiles fine"),
+                        messages.stream().anyMatch(message -> message.getCategory() == CompilerMessageCategory.ERROR));
+            task.startSearch();
+          }
+          finally {
+            tester.tearDown();
+          }
         }
       }
       catch (Exception e) {

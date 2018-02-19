@@ -145,7 +145,7 @@ public class ScopeToolState {
   }
 
   private static class ConfigPanelState {
-    private static ConfigPanelState EMPTY = new ConfigPanelState(null);
+    private static final ConfigPanelState EMPTY = new ConfigPanelState(null);
 
     private final JComponent myOptionsPanel;
     private final Set<Component> myEnableRequiredComponent = new HashSet<>();

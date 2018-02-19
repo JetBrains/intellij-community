@@ -22,6 +22,7 @@ import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ import java.util.List;
 /**
  * @author konstantin.aleev
  */
-public class StopAction extends RunDashboardTreeLeafAction<RunDashboardRunConfigurationNode> {
+public class StopAction extends RunDashboardTreeLeafAction<RunDashboardRunConfigurationNode> implements DumbAware {
   public StopAction() {
     super(ExecutionBundle.message("run.dashboard.stop.action.name"),
           ExecutionBundle.message("run.dashboard.stop.action.description"),

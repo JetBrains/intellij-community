@@ -6,6 +6,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,8 +15,15 @@ import java.util.Collections;
 public enum Mutability {
   UNKNOWN, MUTABLE, UNMODIFIABLE, UNMODIFIABLE_VIEW;
 
+  public static final String UNMODIFIABLE_ANNOTATION = "org.jetbrains.annotations.Unmodifiable";
+  public static final String UNMODIFIABLE_VIEW_ANNOTATION = "org.jetbrains.annotations.UnmodifiableView";
+
+  public boolean isUnmodifiable() {
+    return this == UNMODIFIABLE || this == UNMODIFIABLE_VIEW;
+  }
+
   @NotNull
-  static Mutability getMutability(PsiModifierListOwner owner) {
+  public static Mutability getMutability(@NotNull PsiModifierListOwner owner) {
     if (owner instanceof PsiParameter && owner.getParent() instanceof PsiParameterList) {
       PsiParameterList list = (PsiParameterList)owner.getParent();
       PsiMethod method = ObjectUtils.tryCast(list.getParent(), PsiMethod.class);
@@ -33,17 +41,24 @@ public enum Mutability {
         return UNKNOWN;
       }
     }
-    if (AnnotationUtil.isAnnotated(owner, Collections.singleton("org.jetbrains.annotations.Unmodifiable"),
+    if (AnnotationUtil.isAnnotated(owner, Collections.singleton(UNMODIFIABLE_ANNOTATION),
                                    AnnotationUtil.CHECK_HIERARCHY |
                                    AnnotationUtil.CHECK_EXTERNAL |
                                    AnnotationUtil.CHECK_INFERRED)) {
       return UNMODIFIABLE;
     }
-    if (AnnotationUtil.isAnnotated(owner, Collections.singleton("org.jetbrains.annotations.UnmodifiableView"),
+    if (AnnotationUtil.isAnnotated(owner, Collections.singleton(UNMODIFIABLE_VIEW_ANNOTATION),
                                    AnnotationUtil.CHECK_HIERARCHY |
                                    AnnotationUtil.CHECK_EXTERNAL |
                                    AnnotationUtil.CHECK_INFERRED)) {
       return UNMODIFIABLE_VIEW;
+    }
+    if (owner instanceof PsiField && owner.hasModifierProperty(PsiModifier.FINAL)) {
+      PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(((PsiField)owner).getInitializer());
+      if (initializer instanceof PsiMethodCallExpression) {
+        PsiMethod method = ((PsiMethodCallExpression)initializer).resolveMethod();
+        return method == null ? UNKNOWN : getMutability(method);
+      }
     }
     return UNKNOWN;
   }

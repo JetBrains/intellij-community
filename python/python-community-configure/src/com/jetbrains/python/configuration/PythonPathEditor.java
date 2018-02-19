@@ -144,11 +144,11 @@ public class PythonPathEditor extends SdkPathEditor {
   private static class PathListModel {
     private Set<VirtualFile> myAdded = Sets.newHashSet();
     private Set<VirtualFile> myExcluded = Sets.newHashSet();
-    private Set<VirtualFile> myFoundFiles = Sets.newHashSet();
-    private List<VirtualFile> myFilteredOut = Lists.newArrayList();
+    private final Set<VirtualFile> myFoundFiles = Sets.newHashSet();
+    private final List<VirtualFile> myFilteredOut = Lists.newArrayList();
     private final DefaultListModel myListModel;
     private final OrderRootType myOrderRootType;
-    private Set<VirtualFile> myUserAddedToRemove = Sets.newHashSet();
+    private final Set<VirtualFile> myUserAddedToRemove = Sets.newHashSet();
 
     public PathListModel(OrderRootType orderRootType, DefaultListModel listModel) {
       myOrderRootType = orderRootType;

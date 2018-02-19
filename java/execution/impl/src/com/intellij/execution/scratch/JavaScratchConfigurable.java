@@ -44,10 +44,10 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
   private final LabeledComponent<JTextField> myMainClass;
   private final LabeledComponent<TextFieldWithBrowseButton> myScratchPathField;
   private final LabeledComponent<ModulesComboBox> myModule;
-  private JPanel myWholePanel;
+  private final JPanel myWholePanel;
 
   private final ConfigurationModuleSelector myModuleSelector;
-  private JrePathEditor myJrePathEditor;
+  private final JrePathEditor myJrePathEditor;
   private JComponent myAnchor;
 
   public JavaScratchConfigurable(final Project project) {

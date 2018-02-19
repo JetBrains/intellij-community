@@ -31,7 +31,7 @@ import static org.fest.swing.data.TableCell.row;
 import static org.fest.swing.finder.WindowFinder.findDialog;
 
 public class ConfigureProjectSubsetDialogFixture {
-  @NotNull private DialogFixture myDialog;
+  @NotNull private final DialogFixture myDialog;
   @NotNull private final JTableFixture myModulesTable;
 
   @NotNull

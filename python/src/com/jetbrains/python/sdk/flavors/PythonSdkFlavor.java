@@ -124,7 +124,7 @@ public abstract class PythonSdkFlavor {
   }
 
   @Nullable
-  public static PythonSdkFlavor getFlavor(Sdk sdk) {
+  public static PythonSdkFlavor getFlavor(@NotNull final Sdk sdk) {
     final SdkAdditionalData data = sdk.getSdkAdditionalData();
     if (data instanceof PythonSdkAdditionalData) {
       PythonSdkFlavor flavor = ((PythonSdkAdditionalData)data).getFlavor();
@@ -220,8 +220,8 @@ public abstract class PythonSdkFlavor {
     return Collections.emptyList();
   }
 
-  public void initPythonPath(GeneralCommandLine cmd, Collection<String> path) {
-    initPythonPath(path, cmd.getEnvironment());
+  public void initPythonPath(GeneralCommandLine cmd, boolean passParentEnvs, Collection<String> path) {
+    initPythonPath(path, passParentEnvs, cmd.getEnvironment());
   }
 
   public static void addToEnv(final String key, String value, Map<String, String> envs) {
@@ -259,8 +259,10 @@ public abstract class PythonSdkFlavor {
     return PythonIcons.Python.Python;
   }
 
-  public void initPythonPath(Collection<String> path, Map<String, String> env) {
-    path = appendSystemPythonPath(path);
+  public void initPythonPath(Collection<String> path, boolean passParentEnvs, Map<String, String> env) {
+    if (passParentEnvs) {
+      path = appendSystemPythonPath(path);
+    }
     addToEnv(PythonEnvUtil.PYTHONPATH, StringUtil.join(path, File.pathSeparator), env);
   }
 

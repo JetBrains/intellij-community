@@ -15,8 +15,6 @@
  */
 package com.jetbrains.python.debugger;
 
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -92,9 +90,9 @@ public class PyLocalPositionConverter implements PyPositionConverter {
     return new PyLocalSourcePosition(filePath, line);
   }
 
-  protected static int convertLocalLineToRemote(VirtualFile file, int line) {
-    AccessToken lock = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
+  protected static int convertLocalLineToRemote(VirtualFile file, int l) {
+    return ReadAction.compute(() -> {
+      int line = l;
       final Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document != null) {
         while (PyDebugSupportUtils.isContinuationLine(document, line)) {
@@ -102,10 +100,7 @@ public class PyLocalPositionConverter implements PyPositionConverter {
         }
       }
       return line + 1;
-    }
-    finally {
-      lock.finish();
-    }
+    });
   }
 
   @Nullable

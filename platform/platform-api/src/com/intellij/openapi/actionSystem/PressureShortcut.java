@@ -21,7 +21,7 @@ import java.awt.event.MouseEvent;
 
 public class PressureShortcut extends MouseShortcut {
 
-  private double myStage;
+  private final double myStage;
 
   public PressureShortcut(double stage) {
     super(MouseEvent.BUTTON1, 0, 1);

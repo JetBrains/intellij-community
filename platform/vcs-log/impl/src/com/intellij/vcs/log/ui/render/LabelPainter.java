@@ -64,7 +64,7 @@ public class LabelPainter {
   public static final int TOP_TEXT_PADDING = JBUI.scale(1);
   public static final int BOTTOM_TEXT_PADDING = JBUI.scale(2);
   public static final int RIGHT_PADDING = JBUI.scale(4);
-  public static final int LEFT_PADDING = JBUI.scale(2);
+  public static final int LEFT_PADDING = JBUI.scale(4);
   public static final int COMPACT_MIDDLE_PADDING = JBUI.scale(2);
   public static final int MIDDLE_PADDING = JBUI.scale(12);
   private static final int MAX_LENGTH = 22;
@@ -120,7 +120,7 @@ public class LabelPainter {
 
     myGreyBackground = calculateGreyBackground(refGroups, background, isSelected, myCompact);
     Pair<List<Pair<String, LabelIcon>>, Integer> presentation =
-      calculatePresentation(refGroups, metrics, myHeight, myGreyBackground != null ? myGreyBackground : myBackground, availableWidth,
+      calculatePresentation(refGroups, metrics, metrics.getHeight(), myGreyBackground != null ? myGreyBackground : myBackground, availableWidth,
                             myCompact);
 
     myLabels = presentation.first;

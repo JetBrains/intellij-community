@@ -41,7 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase {
@@ -145,7 +144,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
       .joining("       ");
     return "Test: " + testFullPath + "\n" +
            "Language level: " + PsiUtil.getLanguageLevel(quickFix.getProject()) + "\n" +
-           (quickFix.getProject().equals(getProject()) ? ("SDK: " + ModuleRootManager.getInstance(getModule()).getSdk() + "\n") : "") +
+           (quickFix.getProject().equals(getProject()) ? "SDK: " + ModuleRootManager.getInstance(getModule()).getSdk() + "\n" : "") +
            "Infos: " + infos;
   }
 
@@ -233,7 +232,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   @NotNull
   protected QuickFixTestCase createWrapper(final String testDataPath) {
     return new QuickFixTestCase() {
-      public String myTestDataPath = testDataPath;
+      String myTestDataPath = testDataPath;
 
       @Override
       public String getBasePath() {
@@ -271,7 +270,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
       }
 
       @Override
-      public void checkResultByFile(@NotNull String message, @NotNull String expectedFilePath, boolean ignoreTrailingSpaces) throws Exception {
+      public void checkResultByFile(@NotNull String message, @NotNull String expectedFilePath, boolean ignoreTrailingSpaces) {
         LightQuickFixTestCase.this.checkResultByFile(message, expectedFilePath, ignoreTrailingSpaces);
       }
 
@@ -303,7 +302,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
       }
 
       @Override
-      public void configureFromFileText(@NotNull String name, @NotNull String contents) throws IOException {
+      public void configureFromFileText(@NotNull String name, @NotNull String contents) {
         LightPlatformCodeInsightTestCase.configureFromFileText(name, contents, true);
       }
 

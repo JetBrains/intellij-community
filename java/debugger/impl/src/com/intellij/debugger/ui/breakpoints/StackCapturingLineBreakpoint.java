@@ -311,13 +311,15 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
       return null;
     }
 
-    Value resArray = process.invokeMethod(evaluationContext, methodPair.first, methodPair.second, Collections.singletonList(key),
+    VirtualMachineProxyImpl virtualMachineProxy = process.getVirtualMachineProxy();
+    List<Value> args = Arrays.asList(key, virtualMachineProxy.mirrorOf(MAX_STACK_LENGTH));
+    Value resArray = process.invokeMethod(evaluationContext, methodPair.first, methodPair.second, args,
                                           ObjectReference.INVOKE_SINGLE_THREADED, true);
     DebuggerUtilsEx.keep(resArray, evaluationContext);
     if (resArray instanceof ArrayReference) {
       List<Value> values = ((ArrayReference)resArray).getValues();
       List<StackFrameItem> res = new ArrayList<>(values.size());
-      ClassesByNameProvider classesByName = ClassesByNameProvider.createCache(process.getVirtualMachineProxy().allClasses());
+      ClassesByNameProvider classesByName = ClassesByNameProvider.createCache(virtualMachineProxy.allClasses());
       for (Value value : values) {
         if (value == null) {
           res.add(null);

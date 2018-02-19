@@ -48,7 +48,7 @@ class JarLoader extends Loader {
   private SoftReference<JarMemoryLoader> myMemoryLoader;
   private volatile SoftReference<ZipFile> myZipFileSoftReference; // Used only when myConfiguration.myCanLockJars==true
   private final Map<Resource.Attribute, String> myAttributes;
-  private volatile SoftReference<Attributes> myCachedManifestAttributes;
+  private final SoftReference<Attributes> myCachedManifestAttributes;
 
   JarLoader(URL url, int index, ClassPath configuration) throws IOException {
     super(new URL("jar", "", -1, url + "!/"), index);

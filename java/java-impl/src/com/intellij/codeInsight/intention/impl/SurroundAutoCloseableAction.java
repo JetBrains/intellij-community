@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -110,7 +108,7 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
   }
 
   private static boolean rightType(PsiType type) {
-    return type != null && InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE);
+    return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE);
   }
 
   private static boolean validExpression(PsiExpression expression) {
@@ -288,7 +286,7 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
   }
 
   public static class Template implements SurroundDescriptor, Surrounder {
-    private Surrounder[] mySurrounders = {this};
+    private final Surrounder[] mySurrounders = {this};
 
     @NotNull
     @Override

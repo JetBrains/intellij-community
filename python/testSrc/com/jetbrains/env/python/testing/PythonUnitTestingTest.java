@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.testframework.sm.ServiceMessageBuilder;
+import com.intellij.execution.testframework.sm.runner.GeneralIdBasedToSMTRunnerEventsConvertor;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,8 +31,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.jetbrains.TestEnv;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
+import com.jetbrains.env.StagingOn;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelper;
@@ -40,15 +43,20 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import com.jetbrains.python.sdk.InvalidSdkException;
-import com.jetbrains.python.testing.*;
+import com.jetbrains.python.testing.ConfigurationTarget;
+import com.jetbrains.python.testing.PyUnitTestConfiguration;
+import com.jetbrains.python.testing.PyUnitTestFactory;
+import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static com.jetbrains.env.ut.PyScriptTestProcessRunner.TEST_TARGET_PREFIX;
@@ -126,7 +134,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
 
     runPythonTest(new PyExecutionFixtureTestTask(null) {
       @Override
-      public void runTestOn(final String sdkHome) throws Exception {
+      public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws Exception {
         final Project project = myFixture.getProject();
         final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
         EdtTestUtil.runInEdtAndWait(() -> {
@@ -173,23 +181,23 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   @Test(expected = RuntimeConfigurationWarning.class)
   public void testValidation() throws Throwable {
 
+    runPythonTestWithException(
+      new CreateConfigurationTestTask.PyConfigurationValidationTask<PyUnitTestConfiguration>() {
+        @NotNull
+        @Override
+        protected PyUnitTestFactory createFactory() {
+          return PyUnitTestFactory.INSTANCE;
+        }
 
-    new CreateConfigurationTestTask.PyConfigurationValidationTask<PyUnitTestConfiguration>() {
-      @NotNull
-      @Override
-      protected PyUnitTestFactory createFactory() {
-        return PyUnitTestFactory.INSTANCE;
-      }
-
-      @Override
-      protected void validateConfiguration() {
-        final PyUnitTestConfiguration configuration = getConfiguration();
-        configuration.setPattern("foo");
-        configuration.getTarget().setTargetVariant(PyRunTargetVariant.PATH);
-        configuration.getTarget().setTarget("foo.py");
-        configuration.checkConfiguration();
-      }
-    }.fetchException(this::runPythonTest);
+        @Override
+        protected void validateConfiguration() {
+          final PyUnitTestConfiguration configuration = getConfiguration();
+          configuration.setPattern("foo");
+          configuration.getTarget().setTargetType(PyRunTargetVariant.PATH);
+          configuration.getTarget().setTarget("foo.py");
+          configuration.checkConfiguration();
+        }
+      });
   }
 
   /**
@@ -258,6 +266,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
 
   // Ensure failed and error subtests work
   @Test
+  @StagingOn(os=TestEnv.WINDOWS) //Flaky
   @EnvTestTagsRequired(tags = "python3")
   public void testSubTestError() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/subtestError", "test_test.py") {
@@ -273,12 +282,13 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
-        assertEquals("subtest error reported as success", "Test tree:\n" +
-                                                          "[root]\n" +
-                                                          ".test_test\n" +
-                                                          "..TestThis\n" +
-                                                          "...test_this\n" +
-                                                          "....[test](-)\n", runner.getFormattedTestTree());
+        final String formattedTestTree = runner.getFormattedTestTree();
+        assertEquals("Bad tree:" + formattedTestTree, "Test tree:\n" +
+                                                      "[root]\n" +
+                                                      ".test_test\n" +
+                                                      "..TestThis\n" +
+                                                      "...test_this\n" +
+                                                      "....[test](-)\n", formattedTestTree);
       }
     });
   }
@@ -287,6 +297,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   // Ensure failed and error subtests work
   @Test
   @EnvTestTagsRequired(tags = "python3")
+  @StagingOn(os=TestEnv.WINDOWS) //Flaky
   public void testSubTestAssertEqualsError() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/subtestError", "test_assert_test.py") {
 
@@ -535,6 +546,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
 
   @EnvTestTagsRequired(tags = "python3") // No subtest in py2
   @Test
+  @StagingOn(os=TestEnv.WINDOWS) //Flaky
   public void testSubtest() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/", "test_subtest.py", 1) {
       @Override
@@ -557,12 +569,14 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                       "....(i=7)(+)\n" +
                                       "....(i=8)(-)\n" +
                                       "....(i=9)(+)\n";
-        Assert.assertEquals("", expectedResult, runner.getFormattedTestTree());
+        final String tree = runner.getFormattedTestTree();
+        Assert.assertEquals("Bad tree:" + tree, expectedResult, tree);
       }
     });
   }
 
   @EnvTestTagsRequired(tags = "python3") // No subtest in py2
+  @StagingOn(os=TestEnv.WINDOWS) //Flaky
   @Test
   public void testSubtestSkipped() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/", "test_skipped_subtest.py", 1) {
@@ -763,11 +777,11 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
         private static final String SOME_RANDOM_DIR = "//some/random/ddir";
 
         @Override
-        public void runTestOn(final String sdkHome) throws InvalidSdkException, IOException {
+        public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws InvalidSdkException, IOException {
           // Set default working directory to some random location before actual exection
           final PyUnitTestConfiguration templateConfiguration = getTemplateConfiguration(PyUnitTestFactory.INSTANCE);
           templateConfiguration.setWorkingDirectory(SOME_RANDOM_DIR);
-          super.runTestOn(sdkHome);
+          super.runTestOn(sdkHome, existingSdk);
           templateConfiguration.setWorkingDirectory("");
         }
 
@@ -811,6 +825,12 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                                 @NotNull String scriptName,
                                                 int rerunFailedTests) {
       super(relativePathToTestData, scriptName, rerunFailedTests, PythonUnitTestingTest.this::createTestRunner);
+    }
+
+    @NotNull
+    @Override
+    public Iterable<Class<?>> getClassesToEnableDebug() {
+      return Collections.singletonList(GeneralIdBasedToSMTRunnerEventsConvertor.class);
     }
   }
 

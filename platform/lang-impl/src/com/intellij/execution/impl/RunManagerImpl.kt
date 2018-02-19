@@ -43,7 +43,7 @@ private const val OPTION = "option"
 private const val RECENT = "recent_temporary"
 
 // open for Upsource (UpsourceRunManager overrides to disable loadState (empty impl))
-@State(name = "RunManager", defaultStateAsResource = true, storages = arrayOf(Storage(value = StoragePathMacros.WORKSPACE_FILE, useSaveThreshold = ThreeState.NO)))
+@State(name = "RunManager", defaultStateAsResource = true, storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE, useSaveThreshold = ThreeState.NO))])
 open class RunManagerImpl(internal val project: Project) : RunManagerEx(), PersistentStateComponent<Element>, Disposable {
   companion object {
     const val CONFIGURATION = "configuration"

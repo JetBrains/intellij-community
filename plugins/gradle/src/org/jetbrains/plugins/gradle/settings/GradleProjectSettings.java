@@ -3,8 +3,8 @@ package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
-import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.util.SmartList;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.*;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +25,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   private boolean resolveModulePerSourceSet = true;
   @Nullable private CompositeBuild myCompositeBuild;
 
-  private boolean storeProjectFilesExternally = ProjectUtilCore.isUseExternalStorage();
+  private ThreeState storeProjectFilesExternally = ThreeState.NO;
 
   @Nullable
   public String getGradleHome() {
@@ -82,7 +82,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
 
   @NotNull
   @Override
-  public ExternalProjectSettings clone() {
+  public GradleProjectSettings clone() {
     GradleProjectSettings result = new GradleProjectSettings();
     copyTo(result);
     result.myGradleHome = myGradleHome;
@@ -95,11 +95,11 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   }
 
   @Transient
-  public boolean isStoreProjectFilesExternally() {
+  public ThreeState getStoreProjectFilesExternally() {
     return storeProjectFilesExternally;
   }
 
-  public void setStoreProjectFilesExternally(boolean value) {
+  public void setStoreProjectFilesExternally(@NotNull ThreeState value) {
     storeProjectFilesExternally = value;
   }
 

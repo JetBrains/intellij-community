@@ -182,17 +182,17 @@ public abstract class LeafElement extends TreeElement {
   }
 
   @Override
-  public void acceptTree(TreeElementVisitor visitor) {
+  public void acceptTree(@NotNull TreeElementVisitor visitor) {
     visitor.visitLeaf(this);
   }
 
   @Override
-  public ASTNode findChildByType(IElementType type) {
+  public ASTNode findChildByType(@NotNull IElementType type) {
     return null;
   }
 
   @Override
-  public ASTNode findChildByType(IElementType type, @Nullable ASTNode anchor) {
+  public ASTNode findChildByType(@NotNull IElementType type, @Nullable ASTNode anchor) {
     return null;
   }
 
@@ -276,7 +276,7 @@ public abstract class LeafElement extends TreeElement {
   }
 
   @Override
-  public void replaceAllChildrenToChildrenOf(ASTNode anotherParent) {
+  public void replaceAllChildrenToChildrenOf(@NotNull ASTNode anotherParent) {
     throw new IncorrectOperationException("Leaf elements cannot have children.");
   }
 
@@ -286,7 +286,7 @@ public abstract class LeafElement extends TreeElement {
   }
 
   @Override
-  public void addChildren(ASTNode firstChild, ASTNode lastChild, ASTNode anchorBefore) {
+  public void addChildren(@NotNull ASTNode firstChild, ASTNode lastChild, ASTNode anchorBefore) {
     throw new IncorrectOperationException("Leaf elements cannot have children.");
   }
 

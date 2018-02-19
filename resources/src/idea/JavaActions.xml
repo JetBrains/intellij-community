@@ -35,6 +35,9 @@
       <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
     </action>
 
+    <action id="GenerateModuleDescriptors" class="com.intellij.codeInspection.java19api.Java9GenerateModuleDescriptorsAction">
+      <add-to-group group-id="CodeMenu" anchor="last"/>
+    </action>
     <action id="StubHierarchy" class="com.intellij.psi.stubsHierarchy.impl.test.BuildStubsHierarchyAction" text="Build Stub Hierarchy" internal="true">
       <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
     </action>
@@ -104,7 +107,7 @@
     </group>
 
     <action id="Hotswap" class="com.intellij.debugger.actions.HotSwapAction">
-      <add-to-group group-id="DebugMainMenu" anchor="before" relative-to-action="StepOver"/>
+      <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="UpdateRunningApplication"/>
     </action>
 
     <action id="Debugger.PopFrame" class="com.intellij.debugger.actions.PopFrameAction" icon="AllIcons.Actions.PopFrame">
@@ -478,5 +481,19 @@
     <action class="com.intellij.compiler.backwardRefs.view.TestCompilerRefFindUsagesAction" id="TestCompilerReferenceServiceFindUsages" internal="true"/>
     <action class="com.intellij.compiler.backwardRefs.view.TestCompilerRefFunctionalExpressionSearchAction" id="TestCompilerReferenceServiceFunctionalExpressionSearch" internal="true"/>
     <action class="com.intellij.compiler.backwardRefs.view.TestCompilerRefInheritanceAction" id="TestCompilerReferenceServiceInheritance" internal="true"/>
+
+    <group id="AnnotationHintsContextMenu" popup="true">
+      <action id="ToggleExternalAnnotationsHintsAction"
+              class="com.intellij.codeInsight.hints.AnnotationHintsPass$ToggleExternalAnnotationsHintsAction"
+              text="Show External Annotations"/>
+      <action id="ToggleInferredAnnotationsHintsAction"
+              class="com.intellij.codeInsight.hints.AnnotationHintsPass$ToggleInferredAnnotationsHintsAction"
+              text="Show Inferred Annotations"/>
+      <separator/>
+      <reference ref="EditorPopupMenu"/>
+    </group>
+
+    <action id="MethodOverloadSwitchUp" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchUpAction"/>
+    <action id="MethodOverloadSwitchDown" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchDownAction" />
   </actions>
 </idea-plugin>

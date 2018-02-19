@@ -104,7 +104,12 @@ public class GithubUrlUtil {
    */
   @NotNull
   public static String getGitHostWithoutProtocol() {
-    return removeTrailingSlash(removeProtocolPrefix(GithubSettings.getInstance().getHost()));
+    return getGitHostWithoutProtocol(GithubSettings.getInstance().getHost());
+  }
+
+  @NotNull
+  public static String getGitHostWithoutProtocol(@NotNull String host) {
+    return removeTrailingSlash(removeProtocolPrefix(host));
   }
 
   /*
@@ -209,11 +214,16 @@ public class GithubUrlUtil {
 
   @NotNull
   public static String getCloneUrl(@NotNull String user, @NotNull String repo) {
+    return getCloneUrl(getGitHostWithoutProtocol(), user, repo);
+  }
+
+  @NotNull
+  public static String getCloneUrl(@NotNull String host, @NotNull String user, @NotNull String repo) {
     if (GithubSettings.getInstance().isCloneGitUsingSsh()) {
-      return "git@" + getGitHostWithoutProtocol() + ":" + user + "/" + repo + ".git";
+      return "git@" + host + ":" + user + "/" + repo + ".git";
     }
     else {
-      return getApiProtocol() + getGitHostWithoutProtocol() + "/" + user + "/" + repo + ".git";
+      return getApiProtocol() + host + "/" + user + "/" + repo + ".git";
     }
   }
 }

@@ -14,7 +14,7 @@ import java.lang.reflect.Proxy;
  * @param <T>
  */
 public class JDKSerializer<T> implements DataNodeSerializer<T> {
-  private static DataNodeSerializer ourInstance = new JDKSerializer();
+  private static final DataNodeSerializer ourInstance = new JDKSerializer();
 
   @Override
   public byte[] getBytes(T data) throws IOException {

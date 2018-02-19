@@ -474,7 +474,7 @@ public class PsiClassImplUtil {
     if (nameHint != null) {
       String name = nameHint.getName(state);
       return processCachedMembersByName(aClass, processor, state, visited, last, place, isRaw, substitutor,
-                                        getValues(aClass).getValue(aClass).get(resolveScope), name,languageLevel);
+                                        getValues(aClass).getValue(aClass).get(resolveScope), name, languageLevel, resolveScope);
     }
     return processDeclarationsInClassNotCached(aClass, processor, state, visited, last, place, isRaw, languageLevel, resolveScope);
   }
@@ -489,9 +489,10 @@ public class PsiClassImplUtil {
                                                     @NotNull final PsiSubstitutor substitutor,
                                                     @NotNull MembersMap value,
                                                     String name,
-                                                    @NotNull final LanguageLevel languageLevel) {
+                                                    @NotNull final LanguageLevel languageLevel,
+                                                    final GlobalSearchScope resolveScope) {
     Function<PsiMember, PsiSubstitutor> finalSubstitutor = new Function<PsiMember, PsiSubstitutor>() {
-      final ScopedClassHierarchy hierarchy = ScopedClassHierarchy.getHierarchy(aClass, place.getResolveScope());
+      final ScopedClassHierarchy hierarchy = ScopedClassHierarchy.getHierarchy(aClass, resolveScope);
       final PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
       @Override
       public PsiSubstitutor fun(PsiMember member) {

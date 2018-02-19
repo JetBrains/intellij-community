@@ -427,7 +427,7 @@ public class NameUtil {
   }
 
   public static class MatcherBuilder {
-    private String pattern;
+    private final String pattern;
     private String separators = "";
     private MatchingCaseSensitivity caseSensitivity = MatchingCaseSensitivity.NONE;
 

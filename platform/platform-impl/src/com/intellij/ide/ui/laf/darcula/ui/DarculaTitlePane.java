@@ -66,14 +66,14 @@ public class DarculaTitlePane extends JComponent {
   private Image mySystemIcon;
   private WindowListener myWindowListener;
   private Window myWindow;
-  private JRootPane myRootPane;
+  private final JRootPane myRootPane;
   private int myState;
-  private DarculaRootPaneUI rootPaneUI;
+  private final DarculaRootPaneUI rootPaneUI;
 
 
-  private Color myInactiveBackground = UIManager.getColor("inactiveCaption");
-  private Color myInactiveForeground = UIManager.getColor("inactiveCaptionText");
-  private Color myInactiveShadow = UIManager.getColor("inactiveCaptionBorder");
+  private final Color myInactiveBackground = UIManager.getColor("inactiveCaption");
+  private final Color myInactiveForeground = UIManager.getColor("inactiveCaptionText");
+  private final Color myInactiveShadow = UIManager.getColor("inactiveCaptionBorder");
   private Color myActiveBackground = null;
   private Color myActiveForeground = null;
   private Color myActiveShadow = null;

@@ -28,7 +28,7 @@ internal class DiffLineMarkerRenderer(
   private val myDiffType: TextDiffType,
   private val myIgnoredFoldingOutline: Boolean,
   private val myResolved: Boolean,
-  private val mySkipped: Boolean,
+  private val myExcluded: Boolean,
   private val myHideWithoutLineNumbers: Boolean,
   private val myEmptyRange: Boolean,
   private val myFirstLine: Boolean,
@@ -74,7 +74,7 @@ internal class DiffLineMarkerRenderer(
       }
     }
 
-    if (mySkipped) {
+    if (myExcluded) {
       val xOutline = gutter.whitespaceSeparatorOffset
       drawMarker(editor, g, xOutline, x2, y1, y2, paintBackground = false, paintBorder = true) // over "editor"
       drawMarker(editor, g, x1, xOutline, y1, y2, paintBackground = true, paintBorder = true, useIgnoredBackgroundColor = true) // over "gutter"

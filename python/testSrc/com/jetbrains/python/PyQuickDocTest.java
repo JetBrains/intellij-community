@@ -339,11 +339,11 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   }
 
   public void testClassWithAllKindSuperClassExpressions() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::checkHTMLOnly);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::checkHTMLOnly);
   }
 
   public void testHoverOverClassWithAllKindSuperClassExpressions() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::checkHover);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::checkHover);
   }
 
   // PY-23247

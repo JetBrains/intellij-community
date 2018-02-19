@@ -61,11 +61,11 @@ import java.lang.ref.WeakReference;
 public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer");
 
-  private DialogWrapper myWrapper;
+  private final DialogWrapper myWrapper;
   private WindowManagerEx myWindowManager;
   private Project myProject;
   private MyDialog myDialog;
-  private boolean myCanBeParent;
+  private final boolean myCanBeParent;
   private String myTitle;
 
   public GlassPaneDialogWrapperPeer(DialogWrapper wrapper, Project project, boolean canBeParent) throws GlasspanePeerUnavailableException {

@@ -26,7 +26,7 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionsBundle.message("inspection.conditional.break.in.infinite.loop.no.conversion.to.do.while"), "noConversionToDoWhile");
+    panel.addCheckbox(InspectionsBundle.message("inspection.conditional.break.in.infinite.loop.no.conversion.with.do.while"), "noConversionToDoWhile");
     return panel;
   }
 
@@ -62,7 +62,8 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
           SetInspectionOptionFix setInspectionOptionFix =
             new SetInspectionOptionFix(ConditionalBreakInInfiniteLoopInspection.this,
                                        "noConversionToDoWhile",
-                                       InspectionsBundle.message("inspection.conditional.break.in.infinite.loop.no.conversion.to.do.while"),
+                                       InspectionsBundle.message(
+                                         "inspection.conditional.break.in.infinite.loop.no.conversion.with.do.while"),
                                        true);
           fixes = new LocalQuickFix[]{new LoopTransformationFix(), setInspectionOptionFix};
         }

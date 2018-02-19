@@ -16,16 +16,14 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.util.Alarm;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -73,18 +71,13 @@ public class Windows {
       return this;
     }
 
-    public ToolWindowProvider handleDeactivatingShortcut(Consumer<String> deactivationShortcutHandler) {
-      this.deactivationShortcutHandler = deactivationShortcutHandler;
-      return this;
-    }
-
     public ToolWindowProvider withEscAction(ActionManager actionManager) {
       myActionManager = actionManager;
       return this;
     }
 
     public static boolean isInActiveToolWindow (Object component) {
-      JComponent source = ((component != null) && (component instanceof JComponent)) ? ((JComponent)component) : null;
+      JComponent source = (component instanceof JComponent ? ((JComponent)component) : null);
 
       ToolWindow activeToolWindow = ToolWindowManager.getActiveToolWindow();
       if (activeToolWindow != null) {
@@ -94,9 +87,10 @@ public class Windows {
             source = ((source.getParent() != null) && (source.getParent() instanceof JComponent)) ? ((JComponent)source.getParent()) : null;
           }
         }
+        return source != null;
       }
 
-      return source != null;
+      return false;
     }
 
     public Shortcut[] findShortcuts (String actionId) {
@@ -129,17 +123,6 @@ public class Windows {
                 }
               }
             }
-
-            if (event.getID() == KeyEvent.KEY_PRESSED && !isHeavyWeightPopup(event) && !("Terminal").equals(id))
-            {
-              if (Arrays.stream(findShortcuts("EditorEscape"))
-                .anyMatch(shortcut -> shortcut.equals(new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent((KeyEvent)event), null))))
-              {
-                if(isInActiveToolWindow(event.getSource())) {
-                  deactivationShortcutHandler.accept(id);
-                }
-              }
-            }
           }
         }
       };
@@ -159,7 +142,7 @@ public class Windows {
     }
   }
 
-  private static String HEAVYWEIGHT_WINDOW_CLASS_NAME = "HeavyWeightWindow";
+  private static final String HEAVYWEIGHT_WINDOW_CLASS_NAME = "HeavyWeightWindow";
 
   private static boolean isHeavyWeightPopup(AWTEvent event) {
     Object source = event.getSource();

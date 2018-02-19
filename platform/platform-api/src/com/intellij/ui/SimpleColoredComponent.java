@@ -59,7 +59,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   private Font myLayoutFont;
   private final List<SimpleTextAttributes> myAttributes;
   private List<Object> myFragmentTags = null;
-  private TIntIntHashMap myFragmentAlignment;
+  private final TIntIntHashMap myFragmentAlignment;
 
   /**
    * Component's icon. It can be {@code null}.

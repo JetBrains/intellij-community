@@ -13,6 +13,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 
 public class ComponentPanelBuilder implements GridBagPanelBuilder {
@@ -125,43 +126,47 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     }
   }
 
-  private int getCommentOffset() {
-    boolean isMacDefault = UIUtil.isUnderDefaultMacTheme();
+  private Border getCommentBorder() {
+    if (StringUtil.isNotEmpty(myComment)) {
+      boolean isMacDefault = UIUtil.isUnderDefaultMacTheme();
+      boolean isWin10 = UIUtil.isUnderWin10LookAndFeel();
 
-    if (myComponent instanceof JRadioButton || myComponent instanceof JCheckBox) {
-      return isMacDefault ? 8 : 13;
-    }
-    else if (myComponent instanceof JTextField || myComponent instanceof TextComponent ||
-             myComponent instanceof JComboBox || myComponent instanceof ComponentWithBrowseButton) {
-      return isMacDefault ? 13 : 14;
+      if (myCommentBelow) {
+        int top = 8, left = 2, bottom = 0;
+
+        if (myComponent instanceof JRadioButton || myComponent instanceof JCheckBox) {
+          top = 0;
+          left = isMacDefault ? 27 : isWin10 ? 17 : 24;
+          bottom = isWin10 ? 10 : isMacDefault ? 8 : 9;
+        }
+        else if (myComponent instanceof JTextField || myComponent instanceof TextComponent ||
+                 myComponent instanceof JComboBox || myComponent instanceof ComponentWithBrowseButton) {
+          top = isWin10 ? 3 : 4;
+          left = isWin10 ? 2 : isMacDefault ? 5 : 4;
+          bottom = isWin10 ? 10 : isMacDefault ? 8 : 9;
+        }
+        else if (myComponent instanceof JButton) {
+          top = isWin10 ? 2 : 4;
+          left = isWin10 ? 2 : isMacDefault ? 5 : 4;
+          bottom = 0;
+        }
+
+        return JBUI.Borders.empty(top, left, bottom, 0);
+      } else {
+        int left = 14;
+
+        if (myComponent instanceof JRadioButton || myComponent instanceof JCheckBox) {
+          left = isMacDefault ? 8 : 13;
+        }
+        else if (myComponent instanceof JTextField || myComponent instanceof TextComponent ||
+                 myComponent instanceof JComboBox || myComponent instanceof ComponentWithBrowseButton) {
+          left = isMacDefault ? 13 : 14;
+        }
+        return JBUI.Borders.emptyLeft(left);
+      }
     } else {
-      return 14;
+      return JBUI.Borders.empty();
     }
-  }
-
-  private Insets getCommentInsets() {
-    boolean isMacDefault = UIUtil.isUnderDefaultMacTheme();
-    boolean isWin10 = UIUtil.isUnderWin10LookAndFeel();
-    int top = 8, left = 2, bottom = 0;
-
-    if (myComponent instanceof JRadioButton || myComponent instanceof JCheckBox) {
-      top = 0;
-      left = isMacDefault ? 27 : isWin10 ? 17 : 24;
-      bottom = isWin10 ? 10 : isMacDefault ? 8 : 9;
-    }
-    else if (myComponent instanceof JTextField || myComponent instanceof TextComponent ||
-             myComponent instanceof JComboBox || myComponent instanceof ComponentWithBrowseButton) {
-      top = isWin10 ? 3 : 4;
-      left = isWin10 ? 2 : isMacDefault ? 5 : 4;
-      bottom = isWin10 ? 10 : isMacDefault ? 8 : 9;
-    }
-    else if (myComponent instanceof JButton) {
-      top = isWin10 ? 2 : 4;
-      left = isWin10 ? 2 : isMacDefault ? 5 : 4;
-      bottom = 0;
-    }
-
-    return JBUI.insets(top, left, bottom, 0);
   }
 
   private class ComponentPanelImpl extends ComponentPanel {
@@ -200,6 +205,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
       Insets i = myComponent.getInsets();
       int maxWidth = myComponent.getWidth() - (i.left + i.right);
       comment.setText(String.format("<html><div width=%d>%s</div></html>", maxWidth, commentText));
+      comment.setBorder(getCommentBorder());
     }
 
     private void addToPanel(JPanel panel, GridBagConstraints gc) {
@@ -238,7 +244,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
         componentPanel.add(lbl);
       }
       else if (!myCommentBelow) {
-        componentPanel.add(Box.createRigidArea(JBUI.size(getCommentOffset(), 0)));
+        comment.setBorder(getCommentBorder());
         componentPanel.add(comment);
       }
 
@@ -249,7 +255,9 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
         gc.gridy++;
         gc.weightx = 0.0;
         gc.anchor = GridBagConstraints.NORTHWEST;
-        gc.insets = getCommentInsets();
+        gc.insets = JBUI.emptyInsets();
+
+        comment.setBorder(getCommentBorder());
         panel.add(comment, gc);
       }
 

@@ -33,7 +33,7 @@ import java.io.File;
 public class TestComparisionFailedState extends TestFailedState {
   private final String myErrorMsgPresentation;
   private final String myStacktracePresentation;
-  private DiffHyperlink myHyperlink;
+  private final DiffHyperlink myHyperlink;
   private boolean myToDeleteExpectedFile;
   private boolean myToDeleteActualFile;
 

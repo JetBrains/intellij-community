@@ -357,12 +357,35 @@ custom_pre_actions:
   SetRegView 32
   StrCmp "${ASSOCIATION}" "NoAssociation" skip_association
   StrCpy $R0 ${INSTALL_OPTION_ELEMENTS}
+  ; start position for association checkboxes
+  StrCpy $R1 0
+  ; space between checkboxes
+  StrCpy $R3 5
+  ; space for one symbol
+  StrCpy $R5 4
   push "${ASSOCIATION}"
 loop:
+  ; get an association from list of associations
   call SplitStr
   Pop $0
   StrCmp $0 "" done
+  ; get length of an association text
+  StrLen $R4 $0
+  IntOp $R4 $R4 * $R5
+  IntOp $R4 $R4 + 20
+  ; increase field number
   IntOp $R0 $R0 + 1
+  StrCmp $R1 0 first_association 0
+  ; calculate  start position for next checkbox of an association using end of previous one.
+  IntOp $R1 $R1 + $R3
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Left" "$R1"
+  Goto calculate_shift
+first_association:
+  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field $R0" "Left"
+  StrCpy $R1 $R2
+calculate_shift:
+  IntOp $R1 $R1 + $R4
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Right" "$R1"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Text" "$0"
   goto loop
 skip_association:

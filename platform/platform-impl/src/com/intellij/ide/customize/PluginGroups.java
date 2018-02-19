@@ -48,10 +48,10 @@ public class PluginGroups {
   private final Map<String, List<IdSet>> myGroups = new LinkedHashMap<>();
   private final Map<String, String> myDescriptions = new LinkedHashMap<>();
   private final List<IdeaPluginDescriptor> myPluginsFromRepository = new ArrayList<>();
-  private Collection<String> myDisabledPluginIds = new HashSet<>();
-  private IdeaPluginDescriptor[] myAllPlugins;
+  private final Collection<String> myDisabledPluginIds = new HashSet<>();
+  private final IdeaPluginDescriptor[] myAllPlugins;
   private boolean myInitialized = false;
-  private Set<String> myFeaturedIds = new HashSet<>();
+  private final Set<String> myFeaturedIds = new HashSet<>();
   private Runnable myLoadingCallback = null;
 
   public PluginGroups() {

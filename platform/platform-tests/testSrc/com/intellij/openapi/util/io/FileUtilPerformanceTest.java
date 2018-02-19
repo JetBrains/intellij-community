@@ -22,9 +22,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class FileUtilPerformanceTest {
-  private String myTestPath = "/a/b/c/./d///e/../f/g/h/i/j/";
-  private String myCanonicalPath = "/a/b/c/d/f/g/h/i/j";
-  private String mySimpleTestPath = "file.txt";
+  private final String myTestPath = "/a/b/c/./d///e/../f/g/h/i/j/";
+  private final String myCanonicalPath = "/a/b/c/d/f/g/h/i/j";
+  private final String mySimpleTestPath = "file.txt";
 
   @Test
   public void toCanonicalPath() {

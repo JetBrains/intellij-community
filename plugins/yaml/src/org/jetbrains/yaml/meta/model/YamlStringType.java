@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Experimental
 public class YamlStringType extends YamlScalarType {
-  private static YamlStringType SHARED_INSTANCE = new YamlStringType();
+  private static final YamlStringType SHARED_INSTANCE = new YamlStringType();
 
   public static YamlStringType getInstance() {
     return SHARED_INSTANCE;
@@ -15,5 +15,6 @@ public class YamlStringType extends YamlScalarType {
 
   public YamlStringType() {
     super("yaml:string");
+    setDisplayName("string");
   }
 }

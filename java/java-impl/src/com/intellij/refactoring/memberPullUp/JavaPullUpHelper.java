@@ -53,7 +53,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
   private final PsiClass myTargetSuperClass;
   private final boolean myIsTargetInterface;
   private final DocCommentPolicy myJavaDocPolicy;
-  private Set<PsiMember> myMembersAfterMove;
+  private final Set<PsiMember> myMembersAfterMove;
   private final Set<PsiMember> myMembersToMove;
   private final Project myProject;
 
@@ -327,6 +327,9 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       PsiExpression qualifierExpression = ((PsiReferenceExpression)element).getQualifierExpression();
       if (qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).resolve() == mySourceClass) {
         ((PsiReferenceExpression)qualifierExpression).bindToElement(myTargetSuperClass);
+      }
+      else if (qualifierExpression == null && myTargetSuperClass.isInterface()) {
+        ((PsiReferenceExpression)element).setQualifierExpression(JavaPsiFacade.getElementFactory(myProject).createReferenceExpression(myTargetSuperClass));
       }
     }
   }

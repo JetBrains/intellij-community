@@ -28,7 +28,6 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -218,10 +217,12 @@ public abstract class GotoActionBase extends AnAction {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     boolean mayRequestOpenInCurrentWindow = model.willOpenEditor() && FileEditorManagerEx.getInstanceEx(project).hasSplitOrUndockedWindows();
     Pair<String, Integer> start = getInitialText(useSelectionFromEditor, e);
+    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, itemProvider, start.first,
+                                                            mayRequestOpenInCurrentWindow,
+                                                            start.second);
+    //UIUtil.typeAheadUntilFocused(e.getInputEvent(), popup.getTextField());
     showNavigationPopup(callback, findUsagesTitle,
-                        ChooseByNamePopup.createPopup(project, model, itemProvider, start.first,
-                                                      mayRequestOpenInCurrentWindow,
-                                                      start.second), allowMultipleSelection);
+                        popup, allowMultipleSelection);
   }
 
   protected <T> void showNavigationPopup(final GotoActionCallback<T> callback,
@@ -329,11 +330,8 @@ public abstract class GotoActionBase extends AnAction {
         myHistoryIndex = myHistoryIndex <= 0 ? strings.size() - 1 : myHistoryIndex - 1;
       }
     }.registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, editor);
-
-    ActionCallback typeAhead = new ActionCallback();
-    IdeFocusManager.getGlobalInstance().typeAheadUntil(typeAhead, "GotoPopup");
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> typeAhead.setDone());
   }
+
 
   private static boolean historyEnabled() {
     return !ContainerUtil.isEmpty(ourHistory.get(myInAction));

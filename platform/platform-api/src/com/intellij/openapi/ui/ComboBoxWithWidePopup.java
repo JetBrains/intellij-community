@@ -93,8 +93,12 @@ public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
     return super.getSize();
   }
 
-  protected Dimension getOriginalPreferredSize() {
-    return getPreferredSize();
+  /**
+   * @return preferred size of JComboBox. To show wide popup, default preferred size of JComboBox is what's needed:
+   *         it's calculated as max of all pref sizes of its items (javax.swing.plaf.basic.BasicComboBoxUI#getDisplaySize()).
+   */
+  private Dimension getOriginalPreferredSize() {
+    return super.getPreferredSize();
   }
 
   private class AdjustingListCellRenderer implements ListCellRenderer<E> {

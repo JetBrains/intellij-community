@@ -20,7 +20,10 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.ComponentWithEmptyText;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +39,7 @@ import java.util.*;
 import java.util.List;
 
 public class MultiStateElementsChooser<T, S> extends JPanel implements ComponentWithEmptyText, ComponentWithExpandableItems<TableCell> {
-  private MarkStateDescriptor<T, S> myMarkStateDescriptor;
+  private final MarkStateDescriptor<T, S> myMarkStateDescriptor;
   private JBTable myTable = null;
   private MyTableModel myTableModel = null;
   private boolean myColorUnmarkedElements = true;

@@ -41,7 +41,7 @@ import java.util.Map;
  */
 public class ColorSelectionComponent extends JPanel {
   private static final String CUSTOM_COLOR_NAME = "Custom";
-  private Map<String, ColorButton> myColorToButtonMap = new LinkedHashMap<>();
+  private final Map<String, ColorButton> myColorToButtonMap = new LinkedHashMap<>();
   private final ButtonGroup myButtonGroup = new ButtonGroup();
   private ChangeListener myChangeListener;
 

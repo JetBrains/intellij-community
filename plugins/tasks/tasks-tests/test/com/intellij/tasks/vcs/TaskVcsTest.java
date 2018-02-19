@@ -18,13 +18,16 @@ package com.intellij.tasks.vcs;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.tasks.*;
@@ -333,17 +336,20 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
   private List<Change> addChanges(@NotNull LocalChangeList list) {
     VirtualFile file = myFixture.getTempDirFixture().createFile("Test.txt");
     FilePath path = VcsUtil.getFilePath(file);
-    Change change = new Change(new SimpleContentRevision("", path, ""),
+    Change change = new Change(null,
                                new CurrentContentRevision(path));
 
     List<Change> changes = Collections.singletonList(change);
     myChangeProvider.setChanges(changes);
 
+    VcsDirtyScopeManager.getInstance(getProject()).markEverythingDirty();
     myChangeListManager.scheduleUpdate();
     myChangeListManager.waitUntilRefreshed();
 
     myChangeListManager.moveChangesTo(list, change);
     myChangeListManager.waitUntilRefreshed();
+
+    LOG.debug(dumpChangeListManager());
 
     return changes;
   }
@@ -428,7 +434,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     OpenTaskDialog dialog = new OpenTaskDialog(getProject(), task);
     try {
       dialog.createTask();
-      assertEquals(activeTask.getSummary(), activeTask.getShelfName());
+      assertEquals(dumpChangeListManager(), activeTask.getSummary(), activeTask.getShelfName());
 
       List<ShelvedChangeList> lists = ShelveChangesManager.getInstance(getProject()).getShelvedChangeLists();
       assertTrue(lists.stream().anyMatch(list -> list.DESCRIPTION.equals(activeTask.getShelfName())));
@@ -451,13 +457,15 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     myVcs = new MockAbstractVcs(getProject());
     myChangeProvider = new MyMockChangeProvider();
     myVcs.setChangeProvider(myChangeProvider);
-    AllVcses.getInstance(getProject()).registerManually(myVcs);
     myChangeListManager = (ChangeListManagerImpl)ChangeListManager.getInstance(getProject());
 
-    myTaskManager = (TaskManagerImpl)TaskManager.getManager(getProject());
+    ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(getProject());
+    vcsManager.registerVcs(myVcs);
+    vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping("", myVcs.getName())));
+    vcsManager.waitForInitialized();
+    assertTrue(vcsManager.hasActiveVcss());
 
-    ProjectLevelVcsManager.getInstance(getProject()).setDirectoryMapping("", myVcs.getName());
-    ProjectLevelVcsManager.getInstance(getProject()).hasActiveVcss();
+    myTaskManager = (TaskManagerImpl)TaskManager.getManager(getProject());
     myRepository = new TestRepository();
     myRepository.setTasks(new MyTask());
     myTaskManager.setRepositories(Collections.singletonList(myRepository));
@@ -476,6 +484,13 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
       super.tearDown();
     }
+  }
+
+  @NotNull
+  private String dumpChangeListManager() {
+    return StringUtil.join(myChangeListManager.getChangeLists(), list -> {
+      return String.format("list: %s (%s) changes: %s", list.getName(), list.getId(), StringUtil.join(list.getChanges(), ", "));
+    }, "\n");
   }
 
   private static class MyMockChangeProvider implements ChangeProvider {

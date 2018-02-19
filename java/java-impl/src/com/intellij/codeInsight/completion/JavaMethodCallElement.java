@@ -332,6 +332,13 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     }
   }
 
+  public static void setCompletionModeIfNotSet(@NotNull PsiCall expression, @NotNull Disposable disposable) {
+    if (!isCompletionMode(expression)) {
+      setCompletionMode(expression, true);
+      Disposer.register(disposable, () -> setCompletionMode(expression, false));
+    }
+  }
+
   public static void setCompletionMode(@NotNull PsiCall expression, boolean value) {
     expression.putUserData(COMPLETION_HINTS, value ? Boolean.TRUE : null);
   }

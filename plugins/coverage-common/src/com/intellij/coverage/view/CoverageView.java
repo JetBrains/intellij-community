@@ -47,9 +47,9 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   @NonNls private static final String ACTION_GO_UP = "GoUp";
   @NonNls public static final String HELP_ID = "reference.toolWindows.Coverage";
 
-  private CoverageTableModel myModel;
-  private JBTable myTable;
-  private CoverageViewBuilder myBuilder;
+  private final CoverageTableModel myModel;
+  private final JBTable myTable;
+  private final CoverageViewBuilder myBuilder;
   private final Project myProject;
   private final CoverageViewManager.StateBean myStateBean;
  

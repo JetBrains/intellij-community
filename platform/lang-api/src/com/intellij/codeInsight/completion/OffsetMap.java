@@ -22,10 +22,12 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * @author peter
@@ -142,5 +144,25 @@ public class OffsetMap implements Disposable {
         rangeMarker.dispose();
       }
     }
+  }
+
+  @NotNull
+  Document getDocument() {
+    return myDocument;
+  }
+
+  @NotNull
+  OffsetMap copyOffsets(@NotNull Document anotherDocument) {
+    assert anotherDocument.getTextLength() == myDocument.getTextLength();
+    return mapOffsets(anotherDocument, Function.identity());
+  }
+
+  @NotNull
+  OffsetMap mapOffsets(@NotNull Document anotherDocument, @NotNull Function<Integer, Integer> mapping) {
+    OffsetMap result = new OffsetMap(anotherDocument);
+    for (OffsetKey key : getAllOffsets()) {
+      result.addOffset(key, mapping.apply(getOffset(key)));
+    }
+    return result;
   }
 }

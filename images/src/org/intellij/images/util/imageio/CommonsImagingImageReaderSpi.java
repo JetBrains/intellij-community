@@ -34,7 +34,7 @@ import java.util.*;
 
 public class CommonsImagingImageReaderSpi extends ImageReaderSpi {
 
-  private ThreadLocal<ImageFormat> myFormat = new ThreadLocal<>();
+  private final ThreadLocal<ImageFormat> myFormat = new ThreadLocal<>();
   private final List<ImageFormat> myFormats;
 
   public CommonsImagingImageReaderSpi() {

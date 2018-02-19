@@ -355,7 +355,7 @@ public final class FastStringBuffer {
     public final static class BackwardCharIterator implements Iterable<Character>{
 
         private int i;
-        private FastStringBuffer fastStringBuffer;
+        private final FastStringBuffer fastStringBuffer;
 
         public BackwardCharIterator(FastStringBuffer fastStringBuffer) {
             this.fastStringBuffer = fastStringBuffer;

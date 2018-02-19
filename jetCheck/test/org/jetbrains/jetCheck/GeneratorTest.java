@@ -23,7 +23,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testListSumMod() {
     checkFalsified(nonEmptyLists(integers()),
                    l -> l.stream().mapToInt(Integer::intValue).sum() % 10 != 0,
-                   390);
+                   301);
   }
 
   public void testListContainsDivisible() {
@@ -35,7 +35,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testStringContains() {
     assertEquals("a", checkGeneratesExample(stringsOf(asciiPrintableChars()),
                                             s -> s.contains("a"),
-                                            8));
+                                            10));
   }
 
   public void testLetterStringContains() {
@@ -47,7 +47,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testIsSorted() {
     PropertyFailure<List<Integer>> failure = checkFalsified(nonEmptyLists(integers()),
                                                             l -> l.stream().sorted().collect(Collectors.toList()).equals(l),
-                                                            22);
+                                                            36);
     List<Integer> value = failure.getMinimalCounterexample().getExampleValue();
     assertEquals(2, value.size());
     assertTrue(value.toString(), value.stream().allMatch(i -> Math.abs(i) < 2));
@@ -60,7 +60,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testSortedDoublesNonDescending() {
     PropertyFailure<List<Double>> failure = checkFalsified(listsOf(doubles()),
                                                            l -> isSorted(l.stream().sorted().collect(Collectors.toList())),
-                                                           41);
+                                                           23);
     assertEquals(2, failure.getMinimalCounterexample().getExampleValue().size());
   }
 
@@ -171,6 +171,11 @@ public class GeneratorTest extends PropertyCheckerTestCase {
     PropertyFailure.CounterExample<List<Integer>> min2 = min.replay();
     assertEquals(goldMin, min2.getExampleValue());
     assertEquals(log, Collections.singletonList(goldMin));
+  }
+
+  public void testShrinkToRangeStart() {
+    PropertyFailure<String> failure = checkFalsified(stringsOf(asciiUppercaseChars()), s -> s.length() < 5, 11);
+    assertEquals("AAAAA", failure.getMinimalCounterexample().getExampleValue());
   }
 
 }

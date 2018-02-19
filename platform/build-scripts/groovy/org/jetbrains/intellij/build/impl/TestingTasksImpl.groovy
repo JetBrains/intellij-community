@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.execution.CommandLineWrapperUtil
@@ -26,6 +12,8 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.TestingOptions
 import org.jetbrains.intellij.build.TestingTasks
+import org.jetbrains.jps.model.library.JpsLibrary
+import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
 
@@ -137,7 +125,29 @@ class TestingTasksImpl extends TestingTasks {
       additionalSystemProperties["exclude.tests.roots.file"] = excludedRootsFile.absolutePath
     }
 
+    loadTestDiscovery(additionalJvmOptions, additionalSystemProperties)
+
     runTestsProcess(mainModule, options.testGroups, options.testPatterns, additionalJvmOptions, additionalSystemProperties, [:], false)
+  }
+
+  private loadTestDiscovery(List<String> additionalJvmOptions, LinkedHashMap<String, String> additionalSystemProperties) {
+    if (options.testDiscoveryEnabled) {
+      def testDiscovery = "intellij-test-discovery"
+      JpsLibrary library = context.projectModel.project.libraryCollection.findLibrary(testDiscovery)
+      if (library == null) context.messages.error("Can't find the $testDiscovery library, but test discovery capturing enabled.")
+      def agentJar = library.getFiles(JpsOrderRootType.COMPILED).find { it.name.startsWith("intellij-test-discovery") && it.name.endsWith(".jar") }
+      if (agentJar == null) context.messages.error("Can't find the agent in $testDiscovery library, but test discovery capturing enabled.")
+
+      additionalJvmOptions.add("-javaagent:${agentJar.absolutePath}" as String)
+      additionalSystemProperties.putAll(
+        [
+          "test.discovery.listener"                 : "com.intellij.InternalTestDiscoveryListenerBase",
+          "test.discovery.data.listener"            : "com.intellij.rt.coverage.data.SingleTrFileDiscoveryProtocolDataListener",
+          "org.jetbrains.instrumentation.trace.file": options.testDiscoveryTraceFilePath ?: "${context.paths.projectHome}/intellij-tracing/td.tr",
+          "test.discovery.include.class.patterns"   : options.testDiscoveryIncludePatterns,
+          "test.discovery.exclude.class.patterns"   : options.testDiscoveryExcludePatterns,
+        ] as Map<String, String>)
+    }
   }
 
   private void debugTests(String remoteDebugJvmOptions, List<String> additionalJvmOptions, String defaultMainModule, Predicate<File> rootExcludeCondition) {
@@ -314,7 +324,7 @@ class TestingTasksImpl extends TestingTasks {
             pathelement(location: it)
           }
         }
-        formatter(classname: "jetbrains.buildServer.ant.junit.AntJUnitFormatter2", usefile: false)
+        formatter(classname: "jetbrains.buildServer.ant.junit.AntJUnitFormatter3", usefile: false)
         context.messages.info("Added TeamCity's formatter to JUnit task")
       }
       if (!underTeamCity) {

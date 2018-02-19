@@ -1,8 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -1109,7 +1110,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
 
     String expectedResult = "class A {\n" +
                             "  public int a = 1;\n" +
-                            "  public int b ;\n" +
+                            "  public int b;\n" +
                             "  private int c = 2;\n" +
                             "}";
 
@@ -1674,6 +1675,62 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                                "    }\n" +
                                "}";
       assertEquals("don't add static import to inaccessible members", expected5, replacer.testReplace(in4, what4, by4, options, true));
+
+      final String in5 = "package cz.ahoj.sample.annotations;\n" +
+                         "/**\n" +
+                         " * @author Ales Holy\n" +
+                         " * @since 18. 7. 2017.\n" +
+                         " */\n" +
+                         "@OuterAnnotation({\n" +
+                         "        @InnerAnnotation(classes = {Integer.class}),\n" +
+                         "        @InnerAnnotation(classes = {String.class}),\n" +
+                         "        @InnerAnnotation(classes = {ReplacementTest.ReplacementTestConfig.class})\n" +
+                         "})\n" +
+                         "public class ReplacementTest {\n" +
+                         "    static class ReplacementTestConfig {\n" +
+                         "    }\n" +
+                         "}\n" +
+                         "@interface InnerAnnotation {\n" +
+                         "    Class<?>[] classes() default {};\n" +
+                         "}\n" +
+                         "@interface OuterAnnotation {\n" +
+                         "\n" +
+                         "    InnerAnnotation[] value();\n" +
+                         "}";
+      configureFromFileText("ReplacementTest.java", in5);
+      this.options.getMatchOptions().setScope(new LocalSearchScope( getFile()));
+
+      final String what5 = "@'_a:[regex( InnerAnnotation )](classes = { String.class })";
+      final String by5 = "@$a$(classes = { Integer.class })\n" +
+                         "@$a$(classes = { String.class })";
+      assertEquals("add import when reference is just outside the class",
+
+                   "package cz.ahoj.sample.annotations;\n" +
+                   "\n" +
+                   "import static cz.ahoj.sample.annotations.ReplacementTest.ReplacementTestConfig;\n" +
+                   "\n" +
+                   "/**\n" +
+                   " * @author Ales Holy\n" +
+                   " * @since 18. 7. 2017.\n" +
+                   " */\n" +
+                   "@OuterAnnotation({\n" +
+                   "        @InnerAnnotation(classes = {Integer.class}),\n" +
+                   "        @InnerAnnotation(classes = { Integer.class }),\n" +
+                   "@InnerAnnotation(classes = { String.class }),\n" +
+                   "        @InnerAnnotation(classes = {ReplacementTestConfig.class})\n" +
+                   "})\n" +
+                   "public class ReplacementTest {\n" +
+                   "    static class ReplacementTestConfig {\n" +
+                   "    }\n" +
+                   "}\n" +
+                   "@interface InnerAnnotation {\n" +
+                   "    Class<?>[] classes() default {};\n" +
+                   "}\n" +
+                   "@interface OuterAnnotation {\n" +
+                   "\n" +
+                   "    InnerAnnotation[] value();\n" +
+                   "}",
+                   replacer.testReplace(null, what5, by5, this.options, true));
     } finally {
       options.setToUseStaticImport(save);
     }
@@ -2046,7 +2103,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     assertEquals("class A {  int i = 1 + 3;}", replacer.testReplace(in1, what2, by5, options, false));
 
     final String by6 = "1 + $a$ + 3";
-    assertEquals("class A {  int i = 1  + 3;}", replacer.testReplace(in1, what2, by6, options, false));
+    assertEquals("class A {  int i = 1 + 3;}", replacer.testReplace(in1, what2, by6, options, false));
 
     final String in2 = "class A {" +
                        "  boolean b = true && true;" +
@@ -2069,7 +2126,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
 
     final String what = "assert '_a > '_b : '_c?;";
     final String by = "assert $b$ < $a$ : $c$;";
-    assertEquals("class A {  void m(int i) {    assert i < 10 ;  }}", replacer.testReplace(in, what, by, options, false));
+    assertEquals("class A {  void m(int i) {    assert i < 10;  }}", replacer.testReplace(in, what, by, options, false));
   }
 
   public void testReplaceMultipleVariablesInOneDeclaration() {
@@ -2085,7 +2142,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
 
     final String what2 = "int '_a, '_b, '_c = '_d?;";
     final String by2 = "float $a$, $b$, $c$ = $d$;";
-    assertEquals("class A {  private float i, j, k ;  void m() {    float i, j, k ;  }}", replacer.testReplace(in, what2, by2, options));
+    assertEquals("class A {  private float i, j, k;  void m() {    float i, j, k;  }}", replacer.testReplace(in, what2, by2, options));
   }
 
   public void testReplaceWithScriptedVariable() {
@@ -2273,6 +2330,35 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     assertEquals("initializer should remain",
                  "class X {" +
                  "  private final long i=1;" +
+                 "}",
+                 replacer.testReplace(in, what, by, options, true));
+  }
+
+  public void testReplaceParentheses() {
+    String in = "public class MyFile {\n" +
+                "    void test(String a, Object b) {\n" +
+                "        if(a.length() == 0) {\n" +
+                "            System.out.println(\"empty\");\n" +
+                "        }\n" +
+                "        if(((String) b).length() == 0) {\n" +
+                "            System.out.println(\"empty\");\n" +
+                "        }\n" +
+                "    }\n" +
+                "}";
+
+    String what = "'_expr:[exprtype( String )].length() == 0";
+    String by = "$expr$.isEmpty()";
+    assertEquals("parentheses should remain",
+
+                 "public class MyFile {\n" +
+                 "    void test(String a, Object b) {\n" +
+                 "        if(a.isEmpty()) {\n" +
+                 "            System.out.println(\"empty\");\n" +
+                 "        }\n" +
+                 "        if(((String) b).isEmpty()) {\n" +
+                 "            System.out.println(\"empty\");\n" +
+                 "        }\n" +
+                 "    }\n" +
                  "}",
                  replacer.testReplace(in, what, by, options, true));
   }

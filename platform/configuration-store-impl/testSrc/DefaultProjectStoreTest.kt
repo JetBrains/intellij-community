@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.externalDependencies.DependencyOnPlugin
@@ -13,6 +14,7 @@ import com.intellij.openapi.vfs.refreshVfs
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.util.SmartList
 import com.intellij.util.io.delete
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.isEmpty
@@ -23,24 +25,24 @@ import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Paths
 
+private const val TEST_COMPONENT_NAME = "DefaultProjectStoreTestComponent"
+
+@State(name = TEST_COMPONENT_NAME, storages = [(Storage(value = "testSchemes", stateSplitter = TestStateSplitter::class))])
+private class TestComponent : PersistentStateComponent<Element> {
+  private var element = Element("state")
+
+  override fun getState() = element.clone()
+
+  override fun loadState(state: Element) {
+    element = state.clone()
+  }
+}
+
 internal class DefaultProjectStoreTest {
   companion object {
     @JvmField
     @ClassRule
     val projectRule = ProjectRule()
-
-    internal const val TEST_COMPONENT_NAME = "Foo"
-
-    @State(name = TEST_COMPONENT_NAME, storages = arrayOf(Storage(value = "testSchemes", stateSplitter = TestStateSplitter::class)))
-    private class TestComponent: PersistentStateComponent<Element> {
-      private var element = Element("state")
-
-      override fun getState() = element.clone()
-
-      override fun loadState(state: Element) {
-        element = state.clone()
-      }
-    }
   }
 
   @JvmField
@@ -59,11 +61,11 @@ internal class DefaultProjectStoreTest {
       // dream about using in memory fs per test as ICS partially does and avoid such hacks
       path.refreshVfs()
 
-      val isDoNotSave = app.isDoNotSave
-      app.doNotSave(false);
+      val isSaveAllowed = app.isSaveAllowed
+      app.isSaveAllowed = true
       {
         try {
-          app.doNotSave(isDoNotSave)
+          app.isSaveAllowed = isSaveAllowed
         }
         finally {
           path.delete()
@@ -104,6 +106,11 @@ internal class DefaultProjectStoreTest {
       }
     }
     finally {
+      // clear state
+      defaultTestComponent.loadState(Element("empty"))
+      runInEdtAndWait {
+        stateStore.save(SmartList())
+      }
       stateStore.removeComponent(TEST_COMPONENT_NAME)
     }
   }

@@ -160,14 +160,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       putClientProperty("styleCombo", Boolean.TRUE);
       Insets margins = getMargin();
       setMargin(JBUI.insets(margins.top, 2, margins.bottom, 2));
-      if (isSmallVariant()) {
-        if (!UIUtil.isUnderWin10LookAndFeel()) {
-          setBorder(JBUI.Borders.empty(0, 2));
-        }
-
-        if (!UIUtil.isUnderGTKLookAndFeel()) {
-          setFont(JBUI.Fonts.label(11));
-        }
+      if (isSmallVariant() && !UIUtil.isUnderGTKLookAndFeel()) {
+        setFont(JBUI.Fonts.label(11));
       }
       addActionListener(
         new ActionListener() {
@@ -356,13 +350,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
       int width = isEmpty ? JBUI.scale(10) : super.getPreferredSize().width;
       width += getArrowIcon(isEnabled()).getIconWidth();
-      if (isSmallVariant()) {
-        int extraWidth = UIUtil.isUnderDefaultMacTheme() || UIUtil.isUnderWin10LookAndFeel() ? 0 : JBUI.scale(4);
-        width += extraWidth;
-      }
-
-      int height = UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(24) : JBUI.scale(19);
-      return new Dimension(width, isSmallVariant() ? height : super.getPreferredSize().height);
+      return new Dimension(width, isSmallVariant() ? JBUI.scale(24) : super.getPreferredSize().height);
     }
 
     @Override

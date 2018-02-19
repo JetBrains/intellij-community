@@ -12,9 +12,9 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" />
     <orderEntry type="module" module-name="intellij.python.psi" />
     <orderEntry type="module" module-name="intellij.python.community.impl" />
-    <orderEntry type="module" module-name="intellij.pycharm.pro" exported="" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python" exported="" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.tools.index" />
+    <orderEntry type="module" module-name="intellij.pycharm.community" exported="" scope="RUNTIME" />
   </component>
 </module>

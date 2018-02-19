@@ -229,7 +229,7 @@ interface SequentialTaskWithFixedIterationsNumber extends SequentialTask {
 }
 
 class CompositeSequentialTask implements SequentialTask {
-  private List<SequentialTaskWithFixedIterationsNumber> myUnfinishedTasks = ContainerUtil.newArrayList();
+  private final List<SequentialTaskWithFixedIterationsNumber> myUnfinishedTasks = ContainerUtil.newArrayList();
   private SequentialTask myCurrentTask = null;
 
   private int myIterationsFinished;

@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -59,13 +46,7 @@ public class ConstructionUtils {
     if (!(construction instanceof PsiNewExpression)) return null;
     final PsiNewExpression newExpression = (PsiNewExpression)construction;
     final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
-    if (classReference == null) return null;
-    final PsiElement target = classReference.resolve();
-    if (!(target instanceof PsiClass)) return null;
-    final PsiClass aClass = (PsiClass)target;
-    final String qualifiedName = aClass.getQualifiedName();
-    if (!CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(qualifiedName) &&
-        !CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(qualifiedName)) {
+    if (!isReferenceTo(classReference, CommonClassNames.JAVA_LANG_STRING_BUILDER, CommonClassNames.JAVA_LANG_STRING_BUFFER)) {
       return null;
     }
     final PsiExpressionList argumentList = newExpression.getArgumentList();
@@ -114,6 +95,57 @@ public class ConstructionUtils {
       }
     }
     return isCustomizedEmptyCollectionInitializer(expression);
+  }
+
+  public static boolean isPrepopulatedCollectionInitializer(PsiExpression expression) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    if (expression instanceof PsiNewExpression) {
+      PsiExpressionList args = ((PsiNewExpression)expression).getArgumentList();
+      if (args == null || args.isEmpty()) return false;
+      PsiMethod ctor = ((PsiNewExpression)expression).resolveMethod();
+      if (ctor == null) return false;
+      PsiClass aClass = ctor.getContainingClass();
+      if (aClass == null) return false;
+      String name = aClass.getQualifiedName();
+      if (name == null || !name.startsWith("java.util.")) return false;
+      for (PsiParameter parameter : ctor.getParameterList().getParameters()) {
+        PsiType type = parameter.getType();
+        if (type instanceof PsiClassType) {
+          PsiClassType rawType = ((PsiClassType)type).rawType();
+          if(rawType.equalsToText(CommonClassNames.JAVA_UTIL_COLLECTION) ||
+             rawType.equalsToText(CommonClassNames.JAVA_UTIL_MAP)) {
+            return true;
+          }
+        }
+      }
+    }
+    if (expression instanceof PsiMethodCallExpression) {
+      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+      String name = call.getMethodExpression().getReferenceName();
+      PsiExpressionList argumentList = call.getArgumentList();
+      if(name != null && name.startsWith("new") && !argumentList.isEmpty()) {
+        PsiMethod method = call.resolveMethod();
+        if (method == null) return false;
+        PsiClass aClass = method.getContainingClass();
+        if (aClass == null) return false;
+        String qualifiedName = aClass.getQualifiedName();
+        if (!GUAVA_UTILITY_CLASSES.contains(qualifiedName)) return false;
+        for (PsiParameter parameter : method.getParameterList().getParameters()) {
+          PsiType type = parameter.getType();
+          if (type instanceof PsiEllipsisType) {
+            return true;
+          }
+          if (type instanceof PsiClassType) {
+            PsiClassType rawType = ((PsiClassType)type).rawType();
+            if(rawType.equalsToText(CommonClassNames.JAVA_LANG_ITERABLE) ||
+               rawType.equalsToText(CommonClassNames.JAVA_UTIL_ITERATOR)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 
   /**
@@ -183,5 +215,22 @@ public class ConstructionUtils {
       if (!"0".equals(dimensionText)) return false;
     }
     return true;
+  }
+
+  public static boolean isReferenceTo(PsiJavaCodeReferenceElement ref, String... classNames) {
+    if(ref == null) return false;
+    String name = ref.getReferenceName();
+    if (name == null) return false;
+    String qualifiedName = null;
+    for (String className : classNames) {
+      if(StringUtil.getShortName(className).equals(name)) {
+        if (qualifiedName == null) {
+          // Defer resolution if possible
+          qualifiedName = ref.getQualifiedName();
+        }
+        if (className.equals(qualifiedName)) return true;
+      }
+    }
+    return false;
   }
 }

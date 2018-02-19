@@ -154,6 +154,18 @@ public class MockChangeListManager extends ChangeListManagerEx {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
+  @Override
+  public List<LocalChangeList> getChangeLists(@NotNull Change change) {
+    throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  @Override
+  public List<LocalChangeList> getChangeLists(@NotNull VirtualFile file) {
+    throw new UnsupportedOperationException();
+  }
+
   @Override
   public String getChangeListNameIfOnlyOne(Change[] changes) {
     throw new UnsupportedOperationException();
@@ -349,12 +361,12 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void removeChangeList(String name) {
+  public void removeChangeList(@NotNull String name) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void removeChangeList(LocalChangeList list) {
+  public void removeChangeList(@NotNull LocalChangeList list) {
     myChangeLists.remove(list.getName());
     if (myActiveChangeList.equals(list)) {
       myActiveChangeList = myDefaultChangeList;
@@ -362,11 +374,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void moveChangesTo(LocalChangeList list, Change... changes) {
+  public void moveChangesTo(@NotNull LocalChangeList list, @NotNull Change... changes) {
   }
 
   @Override
-  public boolean setReadOnly(String name, boolean value) {
+  public boolean setReadOnly(@NotNull String name, boolean value) {
     throw new UnsupportedOperationException();
   }
 

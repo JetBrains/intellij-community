@@ -20,34 +20,30 @@ import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class ReadAction<T> extends BaseActionRunnable<T> {
+  /**
+   * @deprecated use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} instead
+   */
+  @Deprecated
   @NotNull
   @Override
   public RunResult<T> execute() {
     final RunResult<T> result = new RunResult<>(this);
-    return ReadAction.compute(() -> result.run());
+    return compute(() -> result.run());
   }
 
+  /**
+   * @deprecated use {@link #run(ThrowableRunnable)}, {@link #run(Result)} or {@link #compute(ThrowableComputable)} instead
+   */
+  @Deprecated
   public static AccessToken start() {
     return ApplicationManager.getApplication().acquireReadActionLock();
   }
 
   public static <E extends Throwable> void run(@NotNull ThrowableRunnable<E> action) throws E {
-    AccessToken token = start();
-    try {
-      action.run();
-    }
-    finally {
-      token.finish();
-    }
+    compute(() -> {action.run(); return null; });
   }
 
   public static <T, E extends Throwable> T compute(@NotNull ThrowableComputable<T, E> action) throws E {
-    AccessToken token = start();
-    try {
-      return action.compute();
-    }
-    finally {
-      token.finish();
-    }
+    return ApplicationManager.getApplication().runReadAction(action);
   }
 }

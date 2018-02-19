@@ -27,7 +27,7 @@ public class IpnbConfigurationEditor extends SettingsEditor<IpnbRunConfiguration
   private JBLabel myAdditionalOptionsLabel;
   private JTextField myHostTextField;
   private JTextField myPortTextField;
-  private AbstractPyCommonOptionsForm myCommonOptionsForm;
+  private final AbstractPyCommonOptionsForm myCommonOptionsForm;
   private JComponent myAnchor;
 
   public IpnbConfigurationEditor(IpnbRunConfiguration configuration) {

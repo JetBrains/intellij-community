@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.service.fus.FUStatisticsSettingsService;
 import com.intellij.internal.statistic.service.fus.beans.FSContent;
 import com.intellij.internal.statistic.service.fus.beans.FSSession;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -29,6 +30,8 @@ public class FUStatisticsPersistence {
     LOG = Logger.getInstance("com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence");
 
   private static final String FILE_EXTENSION = "json";
+  private static final String PERSISTENCE_STATE_FILE = "fus-previous-state.data";
+  private static final String SENT_DATA_FILE = "fus-sent-data.json";
   public static final String FUS_CACHE_PATH = "fus-sessions";
 
   // 1. this method is regularly  invoked by the statistics scheduler (see StatisticsJobsScheduler) to persist statistics data  for current project.
@@ -36,12 +39,12 @@ public class FUStatisticsPersistence {
   // 3.  method requests actual "approved" usages collectors (see FUStatisticsWhiteListGroupsService) to be invoked.
   //     if FUStatisticsWhiteListGroupsService is OFFLINE the data will NOT collected.
   // 4. collected data are persisted in system cache. one file for one project session. the session is pair: project + IJ build number
-  public static void persistProjectUsages(@NotNull Project project) {
+  public static String persistProjectUsages(@NotNull Project project) {
     Set<String> groups = FUStatisticsSettingsService.getInstance().getApprovedGroups();
-    if (groups.isEmpty()) return;
+    if (groups.isEmpty() && !ApplicationManagerEx.getApplicationEx().isInternal()) return null;
     FUStatisticsAggregator aggregator = FUStatisticsAggregator.create();
     Map<String, Set<UsageDescriptor>> usages = aggregator.getProjectUsages(project, groups);
-    if (usages.isEmpty()) return;
+    if (usages.isEmpty()) return null;
 
     FUSession fuSession = FUSession.create(project);
 
@@ -53,11 +56,8 @@ public class FUStatisticsPersistence {
     String fileName = getFileName(fuSession);
     File directory = getStatisticsSystemCacheDirectory();
 
-    try {
-      FileUtil.writeToFile(new File(directory, "/" + fileName), gsonContent);
-    } catch (IOException e) {
-      LOG.info(e);
-    }
+    persistToFile(gsonContent, new File(directory, "/" + fileName));
+    return fileName;
   }
 
   @NotNull
@@ -69,6 +69,8 @@ public class FUStatisticsPersistence {
       File[] children = statisticsCacheDir.listFiles();
       if (children != null) {
         for (File child : children) {
+          if(PERSISTENCE_STATE_FILE.equals(child.getName())) continue;
+          if(SENT_DATA_FILE.equals(child.getName())) continue;
           if (isSessionCacheName(child.getName())) {
             try {
               mergeContent(persistedSessions, FileUtil.loadFile(child));
@@ -93,6 +95,8 @@ public class FUStatisticsPersistence {
       File[] children = statisticsCacheDir.listFiles();
       if (children != null) {
         for (File child : children) {
+          if(PERSISTENCE_STATE_FILE.equals(child.getName())) continue;
+          if(SENT_DATA_FILE.equals(child.getName())) continue;
           try {
             BasicFileAttributes attr = Files.readAttributes(child.toPath(), BasicFileAttributes.class);
             if (dataTime > attr.creationTime().toMillis()) {
@@ -112,7 +116,7 @@ public class FUStatisticsPersistence {
   }
 
   @Nullable
-  private static File getStatisticsSystemCacheDirectory() {
+  public static File getStatisticsSystemCacheDirectory() {
     return Paths.get(PathManager.getSystemPath()).resolve(FUS_CACHE_PATH).toFile();
   }
 
@@ -128,6 +132,47 @@ public class FUStatisticsPersistence {
     }  catch (Exception e) {
       LOG.info(e);
     }
+  }
+  public static void persistDataFromCollectors(@NotNull String content) {
+    persistToFile(content, getPersistenceStateFile());
+  }
+
+  public static void persistSentData(@NotNull String sentContent) {
+    persistToFile(sentContent, getSentDataFile());
+  }
+
+  public static void persistToFile(@NotNull String sentContent, File file) {
+    try {
+      FileUtil.writeToFile(file, sentContent);
+    } catch (IOException e) {
+      LOG.info(e);
+    }
+  }
+
+  @NotNull
+  public static File getPersistenceStateFile() {
+    return new File(getStatisticsSystemCacheDirectory(), "/" + PERSISTENCE_STATE_FILE);
+  }
+  @NotNull
+  public static File getSentDataFile() {
+    return new File(getStatisticsSystemCacheDirectory(), "/" + SENT_DATA_FILE);
+  }
+
+  @Nullable
+  public static String getPreviousStateContent() {
+    File statisticsCacheDir = getStatisticsSystemCacheDirectory();
+    if (statisticsCacheDir != null) {
+      File stateFile = getPersistenceStateFile();
+      if (stateFile.exists()) {
+        try {
+          return FileUtil.loadFile(stateFile);
+        }
+        catch (IOException e) {
+          LOG.info(e);
+        }
+      }
+    }
+    return null;
   }
 
   private static boolean isSessionCacheName(@NotNull String fileName) {

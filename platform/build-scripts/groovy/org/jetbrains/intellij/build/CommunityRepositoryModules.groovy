@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -202,6 +202,16 @@ class CommunityRepositoryModules {
     plugin("intellij.errorProne") {
       withModule("intellij.errorProne.jps", "jps/error-prone-jps-plugin.jar")
     },
+    plugin("intellij.cucumber.java") {
+      withModule("intellij.cucumber.jvmFormatter")
+      withResource("../../community/lib/cucumber-core-1.2.4.jar", "lib")
+      withResource("../../community/lib/gherkin-2.12.2.jar", "lib")
+      doNotCreateSeparateJarForLocalizableResources()
+    },
+    plugin("intellij.cucumber.groovy") {
+      withResource("../../community/lib/cucumber-core-1.2.4.jar", "lib")//todo[nik] fix dependencies instead
+      doNotCreateSeparateJarForLocalizableResources()
+    },
     plugin("intellij.java.decompiler") {
       directoryName = "java-decompiler"
       mainJarName = "java-decompiler.jar"
@@ -262,8 +272,6 @@ class CommunityRepositoryModules {
       withModule("android.sdktools.draw9patch", "sdk-tools.jar")
       withModule("android.sdktools.instant-run-client", "sdk-tools.jar")
       withModule("android.sdktools.instant-run-common", "sdk-tools.jar")
-      withModule("android.sdktools.lint-api", "sdk-tools.jar")
-      withModule("android.sdktools.lint-checks", "sdk-tools.jar")
       withModule("android.sdktools.ninepatch", "sdk-tools.jar")
       withModule("android.sdktools.perflib", "sdk-tools.jar")
       withModule("android.sdktools.builder-model", "sdk-tools.jar")
@@ -275,7 +283,7 @@ class CommunityRepositoryModules {
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar")
 
       withProjectLibrary("freemarker-2.3.20") //todo[nik] move to module libraries
-      withProjectLibrary("jgraphx-3.4.0.1") //todo[nik] move to module libraries
+      withProjectLibrary("jgraphx") //todo[nik] move to module libraries
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
       withProjectLibrary("lombok-ast") //todo[nik] move to module libraries
       withProjectLibrary("layoutlib") //todo[nik] move to module libraries

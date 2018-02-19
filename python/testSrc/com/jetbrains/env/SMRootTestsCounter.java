@@ -36,7 +36,7 @@ final class SMRootTestsCounter {
   };
 
   @NotNull
-  private SMTestProxy.SMRootTestProxy myTestProxy;
+  private final SMTestProxy.SMRootTestProxy myTestProxy;
 
   /**
    * @param testProxy proxy to wrap

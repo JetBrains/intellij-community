@@ -236,6 +236,6 @@ public class PySmartEnterTest extends PyTestCase {
 
   // PY-19279
   public void testColonAfterReturnTypeAnnotation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 }

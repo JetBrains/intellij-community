@@ -45,7 +45,7 @@ public class RenameProjectHandler implements RenameHandler, TitledHandler {
   private static final Logger LOG = Logger.getInstance(RenameProjectHandler.class);
 
   @Override
-  public boolean isAvailableOnDataContext(DataContext dataContext) {
+  public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
     return isAvailable(dataContext);
   }
 
@@ -55,7 +55,7 @@ public class RenameProjectHandler implements RenameHandler, TitledHandler {
   }
 
   @Override
-  public boolean isRenaming(DataContext dataContext) {
+  public boolean isRenaming(@NotNull DataContext dataContext) {
     return isAvailableOnDataContext(dataContext);
   }
 

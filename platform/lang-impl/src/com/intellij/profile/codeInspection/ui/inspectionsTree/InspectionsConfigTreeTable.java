@@ -26,7 +26,6 @@ import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.Alarm;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
@@ -218,7 +217,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
     private final Runnable myUpdateRunnable;
     private TreeTable myTreeTable;
 
-    private Alarm myUpdateAlarm;
+    private final Alarm myUpdateAlarm;
 
     public InspectionsConfigTreeTableModel(final InspectionsConfigTreeTableSettings settings, @NotNull Disposable parentDisposable) {
       super(settings.getRoot());

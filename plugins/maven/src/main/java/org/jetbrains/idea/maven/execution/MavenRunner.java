@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.*;
@@ -113,16 +112,14 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
 
     if (commands.isEmpty()) return true;
 
-    MavenConsole console;
+    MavenConsole console
 
-    AccessToken accessToken = ReadAction.start();
-    try {
-      if (myProject.isDisposed()) return false;
-      console = createConsole();
-    }
-    finally {
-      accessToken.finish();
-    }
+    =ReadAction.compute(()->{
+
+      if (myProject.isDisposed()) return null;
+      return createConsole();
+    });
+    if (console == null) return false;
 
     try {
       int count = 0;
@@ -131,16 +128,14 @@ public class MavenRunner implements PersistentStateComponent<MavenRunnerSettings
           indicator.setFraction(((double)count++) / commands.size());
         }
 
-        MavenExecutor executor;
+        MavenExecutor executor
 
-        accessToken = ReadAction.start();
-        try {
-          if (myProject.isDisposed()) break;
-          executor = createExecutor(command, coreSettings, runnerSettings, console);
-        }
-        finally {
-          accessToken.finish();
-        }
+        = ReadAction.compute(()-> {
+
+          if (myProject.isDisposed()) return null;
+          return createExecutor(command, coreSettings, runnerSettings, console);
+        });
+        if (executor == null) break;
 
         executor.setAction(action);
         if (!executor.execute(indicator)) {

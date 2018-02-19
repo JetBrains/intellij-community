@@ -23,6 +23,8 @@ import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.NotNull;
 
 
+/** Use {@link WriteAction} */
+@Deprecated
 public abstract class ActionRunner {
   public static  void runInsideWriteAction(@NotNull final InterruptibleRunnable runnable) throws Exception {
     RunResult result = new WriteAction() {
@@ -35,6 +37,7 @@ public abstract class ActionRunner {
     result.throwException();
   }
 
+  @Deprecated
   public static <T> T runInsideWriteAction(@NotNull final InterruptibleRunnableWithResult<T> runnable) throws Exception {
     RunResult<T> result = new WriteAction<T>() {
       @Override
@@ -57,9 +60,11 @@ public abstract class ActionRunner {
     });
   }
 
+  @Deprecated
   public interface InterruptibleRunnable {
     void run() throws Exception;
   }
+  @Deprecated
   public interface InterruptibleRunnableWithResult<T> {
     T run() throws Exception;
   }

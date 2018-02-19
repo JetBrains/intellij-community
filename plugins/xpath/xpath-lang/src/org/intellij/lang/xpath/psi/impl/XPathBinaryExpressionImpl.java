@@ -141,14 +141,12 @@ public class XPathBinaryExpressionImpl extends XPathElementImpl implements XPath
         return rType;
       }
     } else {
-      if (rType.isAbstract()) {
-        return lType;
-      } else {
+      if (!rType.isAbstract()) {
         if (lType.canBePromotedTo(rType)) return rType;
         if (rType.canBePromotedTo(lType)) return lType;
         if (XPathType.isAssignable(lType, rType)) return rType;
-        return lType;
       }
+      return lType;
     }
   }
 

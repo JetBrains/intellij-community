@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -34,7 +20,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
@@ -46,11 +31,7 @@ public class TestDiscoverySearchHelper {
                                    final String frameworkPrefix) {
     final Set<String> patterns = new LinkedHashSet<>();
     if (position != null) {
-      try {
-        collectPatterns(project, patterns, position.first, position.second, frameworkPrefix);
-      }
-      catch (IOException ignore) {
-      }
+      collectPatterns(project, patterns, position.first, position.second, frameworkPrefix);
     }
     final List<VirtualFile> files = getAffectedFiles(changeList, project);
     final PsiManager psiManager = PsiManager.getInstance(project);
@@ -86,7 +67,7 @@ public class TestDiscoverySearchHelper {
                   try {
                     if (classQualifiedName != null &&
                         (position == null && TestFrameworks.detectFramework(containingClass) != null ||
-                         position != null && !discoveryIndex.hasTestTrace(frameworkPrefix + classQualifiedName + "-" + changedMethodName))) {
+                         position != null && !discoveryIndex.hasTestTrace(classQualifiedName + "-" + changedMethodName))) {
                       patterns.add(classQualifiedName + "," + changedMethodName);
                     }
                   }
@@ -106,18 +87,12 @@ public class TestDiscoverySearchHelper {
     return new HashSet<>(ContainerUtil.filter(patterns, fqn -> ReadAction.compute(() -> psiFacade.findClass(StringUtil.getPackageName(fqn, ','), searchScope) != null)));
   }
 
-  private static void collectPatterns(final Project project,
-                                      final Set<String> patterns,
-                                      final String classFQName,
-                                      final String methodName,
-                                      final String frameworkId) throws IOException {
-    final TestDiscoveryIndex discoveryIndex = TestDiscoveryIndex.getInstance(project);
-    final Collection<String> testsByMethodName = discoveryIndex.getTestsByMethodName(classFQName, methodName);
-    if (testsByMethodName != null) {
-      for (String pattern : ContainerUtil.filter(testsByMethodName, s -> s.startsWith(frameworkId))) {
-        patterns.add(pattern.substring(frameworkId.length()).replace('-', ','));
-      }
-    }
+  private static void collectPatterns(@NotNull Project project,
+                                      @NotNull Set<String> patterns,
+                                      @NotNull String classFQName,
+                                      @NotNull String methodName,
+                                      @NotNull String frameworkId) {
+    TestDiscoveryProducer.consumeDiscoveredTests(project, classFQName, methodName, frameworkId, t -> patterns.add(t.getTestClassQName() + "," + t.getTestMethodName()));
   }
 
   @NotNull
@@ -144,19 +119,14 @@ public class TestDiscoverySearchHelper {
     return Collections.emptyList();
   }
 
-  @Nullable
+  @NotNull
   private static LinkedHashSet<String> collectPatterns(PsiMethod psiMethod, String frameworkId) {
     LinkedHashSet<String> patterns = new LinkedHashSet<>();
     final PsiClass containingClass = psiMethod.getContainingClass();
     if (containingClass != null) {
       final String qualifiedName = containingClass.getQualifiedName();
       if (qualifiedName != null) {
-        try {
-          collectPatterns(psiMethod.getProject(), patterns, qualifiedName, psiMethod.getName(), frameworkId);
-        }
-        catch (IOException e) {
-          return null;
-        }
+        collectPatterns(psiMethod.getProject(), patterns, qualifiedName, psiMethod.getName(), frameworkId);
       }
     }
     return patterns;

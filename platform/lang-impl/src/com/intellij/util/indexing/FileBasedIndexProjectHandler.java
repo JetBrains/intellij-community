@@ -45,7 +45,7 @@ public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposabl
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndexProjectHandler");
 
   private final FileBasedIndex myIndex;
-  private FileBasedIndexScanRunnableCollector myCollector;
+  private final FileBasedIndexScanRunnableCollector myCollector;
 
   public FileBasedIndexProjectHandler(@NotNull Project project, FileBasedIndex index, FileBasedIndexScanRunnableCollector collector) {
     myIndex = index;
@@ -170,9 +170,10 @@ public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposabl
             if (filesInProjectToBeIndexed != 0) sampleOfChangedFilePathsToBeIndexed.append(", ");
             
             String filePath = file.getPath();
-            sampleOfChangedFilePathsToBeIndexed.append(
-              projectBasePath != null ? FileUtil.getRelativePath(projectBasePath, filePath, '/') : filePath
-            );
+            String loggedPath = projectBasePath != null ? FileUtil.getRelativePath(projectBasePath, filePath, '/') : null;
+            if (loggedPath == null) loggedPath = filePath;
+            else loggedPath = "%project_path%/" + loggedPath;
+            sampleOfChangedFilePathsToBeIndexed.append(loggedPath);
             
             return ++filesInProjectToBeIndexed < ourMinFilesToStartDumMode;
           }

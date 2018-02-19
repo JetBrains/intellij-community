@@ -1,8 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.streamMigration.CollectMigration.CollectTerminal;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -29,6 +31,9 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
     CallMatcher.anyOf(
       CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toList", "toSet").parameterCount(0),
       CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toCollection").parameterCount(1));
+
+  @SuppressWarnings("PublicField")
+  public boolean myStrictMode = false;
 
   private static class StreamCollectChain extends CollectTerminal {
     final PsiMethodCallExpression myCollector;
@@ -49,7 +54,7 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    String generateTerminal(CommentTracker ct) {
+    String generateTerminal(CommentTracker ct, boolean strictMode) {
       return ".collect(" + ct.text(myCollector) + ")";
     }
 
@@ -107,6 +112,13 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
     }
   }
 
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.fuse.stream.operations.option.strict.mode"), this,
+                                          "myStrictMode");
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -129,7 +141,7 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
               .flatMap(Function.identity()).skip(1).joining();
             holder.registerProblem(nameElement,
                                    InspectionsBundle.message("inspection.fuse.stream.operations.message", fusedSteps),
-                                   new FuseStreamOperationsFix(fusedSteps));
+                                   new FuseStreamOperationsFix(fusedSteps, myStrictMode));
           }
         }
       }
@@ -161,10 +173,12 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
   }
 
   private static class FuseStreamOperationsFix implements LocalQuickFix {
-    private String myFusedSteps;
+    private final String myFusedSteps;
+    private final boolean myStrictMode;
 
-    public FuseStreamOperationsFix(String fusedSteps) {
+    FuseStreamOperationsFix(String fusedSteps, boolean strictMode) {
       myFusedSteps = fusedSteps;
+      myStrictMode = strictMode;
     }
 
     @Nls
@@ -188,7 +202,7 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
       CollectTerminal terminal = extractTerminal(chain);
       if (terminal == null) return;
       CommentTracker ct = new CommentTracker();
-      String stream = terminal.generateIntermediate(ct) + terminal.generateTerminal(ct);
+      String stream = terminal.generateIntermediate(ct) + terminal.generateTerminal(ct, myStrictMode);
       PsiElement toReplace = terminal.getElementToReplace();
       PsiElement result;
       if (toReplace != null) {

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.builders.java;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModuleType;
 
 import java.io.File;
@@ -22,14 +23,23 @@ import java.util.Collections;
 import java.util.Set;
 
 /**
+ * Implement this class to customize how Java files are compiled. Implementations are registered as Java services, by creating
+ * a file META-INF/services/org.jetbrains.jps.builders.java.JavaBuilderExtension containing the qualified name of your implementation class.
+ *
  * @author nik
  */
 public abstract class JavaBuilderExtension {
-
-  public boolean shouldHonorFileEncodingForCompilation(File file) {
+  /**
+   * @return {@code true} if encoding of {@code file} should be taken into account while computing encoding for Java compilation process
+   */
+  public boolean shouldHonorFileEncodingForCompilation(@NotNull File file) {
     return false;
   }
 
+  /**
+   * Override this method to extend set of modules which should be processed by Java compiler.
+   */
+  @NotNull
   public Set<? extends JpsModuleType<?>> getCompilableModuleTypes() {
     return Collections.emptySet();
   }

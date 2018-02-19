@@ -7,6 +7,7 @@ import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
+import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.compiler.server.impl.BuildProcessClasspathManager;
 import com.intellij.concurrency.JobScheduler;
@@ -134,12 +135,13 @@ public class BuildManager implements Disposable {
   private final List<String> myFallbackJdkParams = new SmartList<>();
   private final ProjectManager myProjectManager;
 
-  private final Map<TaskFuture, Project> myAutomakeFutures = Collections.synchronizedMap(new HashMap<TaskFuture, Project>());
-  private final Map<String, RequestFuture> myBuildsInProgress = Collections.synchronizedMap(new HashMap<String, RequestFuture>());
-  private final Map<String, Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>>> myPreloadedBuilds =
-    Collections.synchronizedMap(new HashMap<String, Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>>>());
+  private final Map<TaskFuture, Project> myAutomakeFutures = Collections.synchronizedMap(new HashMap<>());
+  private final Map<String, RequestFuture> myBuildsInProgress = Collections.synchronizedMap(new HashMap<>());
+  private final Map<String, Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>>> myPreloadedBuilds = Collections.synchronizedMap(new HashMap<>());
   private final BuildProcessClasspathManager myClasspathManager = new BuildProcessClasspathManager();
   private final ExecutorService myRequestsProcessor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("BuildManager requestProcessor pool");
+  private final List<VFileEvent> myUnprocessedEvents = new ArrayList<>();
+  private final ExecutorService myAutomakeTrigger = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("BuildManager auto-make trigger");
   private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<String, ProjectData>());
   private volatile int myFileChangeCounter;
 
@@ -229,9 +231,29 @@ public class BuildManager implements Disposable {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         if (!IS_UNIT_TEST_MODE) {
-          application.executeOnPooledThread(() -> {
+          synchronized (myUnprocessedEvents) {
+            myUnprocessedEvents.addAll(events);
+          }
+          myAutomakeTrigger.submit(() -> {
             if (!application.isDisposed()) {
-              ReadAction.run(()->{ if (shouldTriggerMake(events)) scheduleAutoMake(); });
+              ReadAction.run(()->{
+                final List<VFileEvent> snapshot;
+                synchronized (myUnprocessedEvents) {
+                  if (myUnprocessedEvents.isEmpty()) {
+                    return;
+                  }
+                  snapshot = new ArrayList<>(myUnprocessedEvents);
+                  myUnprocessedEvents.clear();
+                }
+                if (shouldTriggerMake(snapshot)) {
+                  scheduleAutoMake();
+                }
+              });
+            }
+            else {
+              synchronized (myUnprocessedEvents) {
+                myUnprocessedEvents.clear();
+              }
             }
           });
         }
@@ -276,15 +298,15 @@ public class BuildManager implements Disposable {
 
     });
 
-    connection.subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener.Adapter() {
+    connection.subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener() {
       @Override
-      public void batchChangeStarted(Project project) {
+      public void batchChangeStarted(@NotNull Project project, @Nullable String activityName) {
         myFileChangeCounter++;
         cancelAutoMakeTasks(project);
       }
 
       @Override
-      public void batchChangeCompleted(Project project) {
+      public void batchChangeCompleted(@NotNull Project project) {
         myFileChangeCounter--;
       }
     });
@@ -1174,7 +1196,28 @@ public class BuildManager implements Disposable {
     if (compilerPath != null) {   // can be null in case of jdk9
       launcherCp.add(compilerPath);
     }
-    ClasspathBootstrap.appendJavaCompilerClasspath(launcherCp, shouldIncludeEclipseCompiler(projectConfig));
+
+    boolean includeBundledEcj = shouldIncludeEclipseCompiler(projectConfig);
+    File customEcjPath = null;
+    if (includeBundledEcj) {
+      final String path = EclipseCompilerConfiguration.getOptions(project, EclipseCompilerConfiguration.class).ECJ_TOOL_PATH;
+      if (!StringUtil.isEmptyOrSpaces(path)) {
+        customEcjPath = new File(path);
+        if (customEcjPath.exists()) {
+          includeBundledEcj = false;
+        }
+        else {
+          throw new ExecutionException("Path to eclipse ecj compiler does not exist: " + customEcjPath.getAbsolutePath());
+          //customEcjPath = null;
+        }
+      }
+    }
+
+    ClasspathBootstrap.appendJavaCompilerClasspath(launcherCp, includeBundledEcj);
+    if (customEcjPath != null) {
+      launcherCp.add(customEcjPath.getAbsolutePath());
+    }
+
     cmdLine.addParameter("-classpath");
     cmdLine.addParameter(classpathToString(launcherCp));
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.find.FindManager;
@@ -25,28 +25,30 @@ public class EscapeHandler extends EditorActionHandler {
 
   @Override
   protected void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext){
-    editor.setHeaderComponent(null);
+    if (editor.getCaretModel().getCaretCount() == 1) {
+      editor.setHeaderComponent(null);
 
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project != null && editor.getCaretModel().getCaretCount() == 1) {
-      HighlightManagerImpl highlightManager = (HighlightManagerImpl)HighlightManager.getInstance(project);
-      if (highlightManager != null && highlightManager.hideHighlights(editor, HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_ANY_KEY)) {
-
-        StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-        if (statusBar != null) {
-          statusBar.setInfo("");
-        }
-
-        FindManager findManager = FindManager.getInstance(project);
-        if (findManager != null) {
-          FindModel model = findManager.getFindNextModel(editor);
-          if (model != null) {
-            model.setSearchHighlighters(false);
-            findManager.setFindNextModel(model);
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
+      if (project != null) {
+        HighlightManagerImpl highlightManager = (HighlightManagerImpl)HighlightManager.getInstance(project);
+        if (highlightManager != null && highlightManager.hideHighlights(editor, HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_ANY_KEY)) {
+  
+          StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+          if (statusBar != null) {
+            statusBar.setInfo("");
           }
+  
+          FindManager findManager = FindManager.getInstance(project);
+          if (findManager != null) {
+            FindModel model = findManager.getFindNextModel(editor);
+            if (model != null) {
+              model.setSearchHighlighters(false);
+              findManager.setFindNextModel(model);
+            }
+          }
+  
+          return;
         }
-
-        return;
       }
     }
 

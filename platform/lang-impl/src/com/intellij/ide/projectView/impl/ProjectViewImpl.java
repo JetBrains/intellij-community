@@ -229,15 +229,14 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         if (window == null) return;
         if (window.isVisible() && !toolWindowVisible) {
           String id = getCurrentViewId();
-          if (isAutoscrollToSource(id)) {
-            AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
-
-            if (currentProjectViewPane != null) {
+          AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
+          if (currentProjectViewPane != null) {
+            if (isAutoscrollToSource(id)) {
               myAutoScrollToSourceHandler.onMouseClicked(currentProjectViewPane.getTree());
             }
-          }
-          if (isAutoscrollFromSource(id)) {
-            myAutoScrollFromSourceHandler.setAutoScrollEnabled(true);
+            if (isAutoscrollFromSource(id)) {
+              myAutoScrollFromSourceHandler.setAutoScrollEnabled(true);
+            }
           }
         }
         toolWindowVisible = window.isVisible();

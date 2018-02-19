@@ -38,7 +38,7 @@ import java.util.List;
  */
 public class SeverityRenderer extends ComboBoxTableRenderer<SeverityState> {
   private final Runnable myOnClose;
-  private Icon myDisabledIcon;
+  private final Icon myDisabledIcon;
 
   public SeverityRenderer(final SeverityState[] values, @Nullable final Runnable onClose) {
     super(values);

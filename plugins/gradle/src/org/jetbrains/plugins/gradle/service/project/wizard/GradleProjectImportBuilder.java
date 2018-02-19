@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.externalSystem.JavaProjectData;
@@ -22,11 +20,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -36,7 +32,6 @@ import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.settings.ImportFromGradleControl;
-import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -45,17 +40,13 @@ import javax.swing.*;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
  * @since 4/15/13 2:29 PM
  */
 public class GradleProjectImportBuilder extends AbstractExternalProjectImportBuilder<ImportFromGradleControl> {
-
-  private static final Pattern JAVA_VERSION = Pattern.compile("java version \"(\\d.*)\"");
-
   /**
    * @deprecated use {@link GradleProjectImportBuilder#GradleProjectImportBuilder(ProjectDataManager)}
    */
@@ -81,40 +72,40 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
   @Nullable
   @Override
   protected Sdk resolveProjectJdk(@NotNull WizardContext context) {
+    JavaSdk javaSdkType = JavaSdk.getInstance();
+    ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
+
     // gradle older than 4.2.1 doesn't support new java the version number format like 9.0.1, see https://github.com/gradle/gradle/issues/2992
-    Condition<Sdk> sdkCondition = sdk -> {
-      String version = getVersion(sdk);
-      return StringUtil.compareVersionNumbers(version, "1.6") > 0 &&
-             StringUtil.compareVersionNumbers(version, "9") < 0 &&
+    Predicate<Sdk> sdkCondition = sdk -> {
+      JavaSdkVersion v = javaSdkType.getVersion(sdk);
+      return v != null && v.isAtLeast(JavaSdkVersion.JDK_1_6) && !v.isAtLeast(JavaSdkVersion.JDK_1_9) &&
              ExternalSystemJdkUtil.isValidJdk(sdk.getHomePath());
     };
 
-    Sdk mostRecentSdk = ProjectJdkTable.getInstance().findMostRecentSdk(
-      sdk -> sdk.getSdkType() == JavaSdk.getInstance() && sdkCondition.value(sdk));
+    Sdk mostRecentSdk = jdkTable.getSdksOfType(javaSdkType).stream().filter(sdkCondition).max(javaSdkType.versionComparator()).orElse(null);
     if (mostRecentSdk != null) {
       return mostRecentSdk;
     }
 
-    Set<String> existingPaths =
-      new THashSet<>(Arrays.stream(ProjectJdkTable.getInstance().getAllJdks()).map(sdk -> sdk.getHomePath()).collect(Collectors.toSet()),
-                     FileUtil.PATH_HASHING_STRATEGY);
-
-    for (String javaHome : JavaSdk.getInstance().suggestHomePaths()) {
+    Set<String> existingPaths = Arrays.stream(jdkTable.getAllJdks())
+                                      .map(sdk -> sdk.getHomePath())
+                                      .collect(Collectors.toCollection(() -> new THashSet<>(FileUtil.PATH_HASHING_STRATEGY)));
+    for (String javaHome : javaSdkType.suggestHomePaths()) {
       if (!existingPaths.contains(FileUtil.toCanonicalPath(javaHome))) {
-        JavaSdk javaSdk = JavaSdk.getInstance();
-        Sdk jdk = javaSdk.createJdk(ObjectUtils.notNull(javaSdk.suggestSdkName(null, javaHome), ""), javaHome);
-        if (sdkCondition.value(jdk)) {
-          ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(jdk));
+        Sdk jdk = javaSdkType.createJdk(ObjectUtils.notNull(javaSdkType.suggestSdkName(null, javaHome), ""), javaHome);
+        if (sdkCondition.test(jdk)) {
+          ApplicationManager.getApplication().runWriteAction(() -> jdkTable.addJdk(jdk));
           return jdk;
         }
       }
     }
 
     Project project = context.getProject() != null ? context.getProject() : ProjectManager.getInstance().getDefaultProject();
-    final Pair<String, Sdk> sdkPair = ExternalSystemJdkUtil.getAvailableJdk(project);
+    Pair<String, Sdk> sdkPair = ExternalSystemJdkUtil.getAvailableJdk(project);
     if (!ExternalSystemJdkUtil.USE_INTERNAL_JAVA.equals(sdkPair.first)) {
       return sdkPair.second;
     }
+
     return null;
   }
 
@@ -216,22 +207,6 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
   @Nullable
   @Override
   public Project createProject(String name, String path) {
-    Project project = super.createProject(name, path);
-    if (project != null) {
-      GradleProjectSettings settings = getControl(project).getProjectSettings();
-      ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(settings.isStoreProjectFilesExternally());
-    }
-    return project;
-  }
-
-  @Nullable
-  private static String getVersion(Sdk sdk) {
-    String versionString = sdk.getVersionString();
-    if (versionString == null) return null;
-    Matcher matcher = JAVA_VERSION.matcher(versionString.trim());
-    if (matcher.matches()) {
-      return matcher.group(1);
-    }
-    return versionString;
+    return ExternalProjectsManagerImpl.setupCreatedProject(super.createProject(name, path));
   }
 }

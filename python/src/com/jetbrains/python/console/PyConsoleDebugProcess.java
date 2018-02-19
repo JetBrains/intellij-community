@@ -97,7 +97,7 @@ public class PyConsoleDebugProcess extends PyDebugProcess {
 
   private static Map<String, String> getDebuggerEnvs(XDebugSession session) {
     Map<String, String> env = Maps.newHashMap();
-    PyDebugRunner.configureDebugEnvironment(session.getProject(), env);
+    PyDebugRunner.configureDebugEnvironment(session.getProject(), env, session.getRunProfile());
     return env;
   }
 

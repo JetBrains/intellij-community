@@ -23,7 +23,7 @@ public class CaptureAgent {
   private static boolean DEBUG = false;
 
   private static Map<String, List<CapturePoint>> myCapturePoints = new HashMap<String, List<CapturePoint>>();
-  private static Map<String, List<InsertPoint>> myInsertPoints = new HashMap<String, List<InsertPoint>>();
+  private static final Map<String, List<InsertPoint>> myInsertPoints = new HashMap<String, List<InsertPoint>>();
 
   public static void premain(String args, Instrumentation instrumentation) {
     ourInstrumentation = instrumentation;

@@ -17,8 +17,8 @@ import org.jetbrains.annotations.Nullable;
   }
 )
 public class JavaCoverageOptionsProvider implements PersistentStateComponent<JavaCoverageOptionsProvider.State> {
-  private State myState = new State();
-  private Project myProject;
+  private final State myState = new State();
+  private final Project myProject;
 
   public JavaCoverageOptionsProvider(Project project) {
     myProject = project;

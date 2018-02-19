@@ -739,11 +739,8 @@ public class DuplicatesFinder {
           if (ArrayUtil.find(methods, method1) != -1) return true;
         }
       }
-      return false;
     }
-    else {
-      return false;
-    }
+    return false;
   }
 
   static boolean isUnder(@Nullable PsiElement element, @NotNull List<PsiElement> parents) {

@@ -72,7 +72,7 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
     List<PsiPackageAccessibilityStatement> exports = ContainerUtil.newArrayList();
 
     VfsUtilCore.visitChildrenRecursively(myJarRoot, new VirtualFileVisitor() {
-      private JavaDirectoryService service = JavaDirectoryService.getInstance();
+      private final JavaDirectoryService service = JavaDirectoryService.getInstance();
 
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {

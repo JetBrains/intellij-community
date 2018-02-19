@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.*;
@@ -16,7 +16,9 @@ import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -27,10 +29,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Pass;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
@@ -515,8 +514,8 @@ public class ExtractMethodProcessor implements MatchProvider {
     });
     for(PsiClass localClass: localClasses) {
       final boolean classExtracted = isExtractedElement(localClass);
-      final List<PsiElement> extractedReferences = Collections.synchronizedList(new ArrayList<PsiElement>());
-      final List<PsiElement> remainingReferences = Collections.synchronizedList(new ArrayList<PsiElement>());
+      final List<PsiElement> extractedReferences = Collections.synchronizedList(new ArrayList<>());
+      final List<PsiElement> remainingReferences = Collections.synchronizedList(new ArrayList<>());
       ReferencesSearch.search(localClass).forEach(psiReference -> {
         final PsiElement element = psiReference.getElement();
         final boolean elementExtracted = isExtractedElement(element);
@@ -603,10 +602,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     myNullness = initNullness();
     myArtificialOutputVariable = PsiType.VOID.equals(myReturnType) ? getArtificialOutputVariable() : null;
     final PsiType returnType = myArtificialOutputVariable != null ? myArtificialOutputVariable.getType() : myReturnType;
-    int duplicatesCount = estimateDuplicatesCount();
     return new ExtractMethodDialog(myProject, myTargetClass, myInputVariables, returnType, getTypeParameterList(),
                                    getThrownExceptions(), isStatic(), isCanBeStatic(), myCanBeChainedConstructor,
-                                                         myRefactoringName, myHelpId, myNullness, myElements,duplicatesCount) {
+                                   myRefactoringName, myHelpId, myNullness, myElements,
+                                   () -> estimateDuplicatesCount()) {
       protected boolean areTypesDirected() {
         return direct;
       }
@@ -658,7 +657,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
       @Override
       protected boolean isPreviewSupported() {
-        return myIsPreviewSupported && getDuplicatesCount() != 0;
+        return myIsPreviewSupported;
       }
     };
   }
@@ -1296,7 +1295,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     return myDuplicates;
   }
 
-  ParametrizedDuplicates getParametrizedDuplicates() {
+  public ParametrizedDuplicates getParametrizedDuplicates() {
     return myParametrizedDuplicates;
   }
 
@@ -1785,39 +1784,36 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (!shouldAcceptCurrentTarget(extractPass, myTargetClass)) {
 
       final LinkedHashMap<PsiClass, List<PsiVariable>> classes = new LinkedHashMap<>();
-      final PsiElementProcessor<PsiClass> processor = new PsiElementProcessor<PsiClass>() {
-        @Override
-        public boolean execute(@NotNull PsiClass selectedClass) {
-          AnonymousTargetClassPreselectionUtil.rememberSelection(selectedClass, myTargetClass);
-          final List<PsiVariable> array = classes.get(selectedClass);
-          myNeedChangeContext = myTargetClass != selectedClass;
-          myTargetClass = selectedClass;
-          if (array != null) {
-            for (PsiVariable variable : array) {
-              if (!inputVariables.contains(variable)) {
-                inputVariables.addAll(array);
-              }
+      final PsiElementProcessor<PsiClass> processor = selectedClass -> {
+        AnonymousTargetClassPreselectionUtil.rememberSelection(selectedClass, myTargetClass);
+        final List<PsiVariable> array = classes.get(selectedClass);
+        myNeedChangeContext = myTargetClass != selectedClass;
+        myTargetClass = selectedClass;
+        if (array != null) {
+          for (PsiVariable variable : array) {
+            if (!inputVariables.contains(variable)) {
+              inputVariables.addAll(array);
             }
-          }
-          try {
-            return applyChosenClassAndExtract(inputVariables, extractPass);
-          }
-          catch (PrepareFailedException e) {
-            if (myShowErrorDialogs) {
-              CommonRefactoringUtil
-                .showErrorHint(myProject, myEditor, e.getMessage(), ExtractMethodHandler.REFACTORING_NAME, HelpID.EXTRACT_METHOD);
-              ExtractMethodHandler.highlightPrepareError(e, e.getFile(), myEditor, myProject);
-            }
-            return false;
           }
         }
+        final Application app = ApplicationManager.getApplication();
+        if (!app.isDispatchThread() && app.isReadAccessAllowed()) {
+          LOG.assertTrue(!myShowErrorDialogs, "in background");
+          return applyChosenClassAndExtractImpl(inputVariables, extractPass);
+        }
+        final Ref<Boolean> result = Ref.create(Boolean.FALSE);
+        TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+          if (applyChosenClassAndExtractImpl(inputVariables, extractPass)) {
+            result.set(Boolean.TRUE);
+          }
+        });
+        return result.get();
       };
 
       classes.put(myTargetClass, null);
       PsiElement target = myTargetClass.getParent();
       PsiElement targetMember = myTargetClass;
-      while (true) {
-        if (target instanceof PsiFile) break;
+      while (!(target instanceof PsiFile)) {
         if (target instanceof PsiClass) {
           boolean success = true;
           final List<PsiVariable> array = new ArrayList<>();
@@ -1839,7 +1835,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
 
       if (classes.size() > 1) {
-        final PsiClass[] psiClasses = classes.keySet().toArray(new PsiClass[classes.size()]);
+        final PsiClass[] psiClasses = classes.keySet().toArray(PsiClass.EMPTY_ARRAY);
         final PsiClass preselection = AnonymousTargetClassPreselectionUtil.getPreselection(classes.keySet(), psiClasses[0]);
         NavigationUtil.getPsiElementPopup(psiClasses, new PsiClassListCellRenderer(), "Choose Destination Class", processor, preselection)
           .showInBestPositionFor(myEditor);
@@ -1848,6 +1844,20 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
 
     return applyChosenClassAndExtract(inputVariables, extractPass);
+  }
+
+  private boolean applyChosenClassAndExtractImpl(List<PsiVariable> inputVariables, Pass<ExtractMethodProcessor> extractPass) {
+    try {
+      return applyChosenClassAndExtract(inputVariables, extractPass);
+    }
+    catch (PrepareFailedException e) {
+      if (myShowErrorDialogs) {
+        CommonRefactoringUtil.showErrorHint(myProject, myEditor, e.getMessage(),
+                                            ExtractMethodHandler.REFACTORING_NAME, HelpID.EXTRACT_METHOD);
+        ExtractMethodHandler.highlightPrepareError(e, e.getFile(), myEditor, myProject);
+      }
+      return false;
+    }
   }
 
   @NotNull
@@ -2080,6 +2090,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     myMethodName = methodName;
   }
 
+  public PsiElement getAnchor() {
+    return myAnchor;
+  }
+
   public Boolean hasDuplicates() {
     List<Match> duplicates = getDuplicates();
     if (duplicates != null && !duplicates.isEmpty()) {
@@ -2090,7 +2104,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     return false;
   }
 
-  boolean initParametrizedDuplicates(boolean showDialog) {
+  public boolean initParametrizedDuplicates(boolean showDialog) {
     if (myExtractedMethod != null && myParametrizedDuplicates != null) {
       if (!showDialog ||
           ApplicationManager.getApplication().isUnitTestMode() ||
@@ -2099,10 +2113,16 @@ public class ExtractMethodProcessor implements MatchProvider {
                                               myParametrizedDuplicates.getSize()).showAndGet()) {
 
         myDuplicates = myParametrizedDuplicates.getDuplicates();
-        WriteCommandAction.runWriteCommandAction(myProject, () -> {
+        Runnable replaceMethod = () -> {
           myExtractedMethod = myParametrizedDuplicates.replaceMethod(myExtractedMethod);
           myMethodCall = myParametrizedDuplicates.replaceCall(myMethodCall);
-        });
+        };
+        if (myExtractedMethod.isPhysical()) {
+          WriteCommandAction.runWriteCommandAction(myProject, replaceMethod);
+        }
+        else {
+          replaceMethod.run();
+        }
         myVariableDatum = myParametrizedDuplicates.getVariableDatum();
         return true;
       }

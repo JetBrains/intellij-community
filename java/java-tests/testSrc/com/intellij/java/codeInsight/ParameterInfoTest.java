@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
@@ -19,14 +19,13 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.EditorHintFixture;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.testFramework.utils.parameterInfo.MockCreateParameterInfoContext;
 import com.intellij.testFramework.utils.parameterInfo.MockParameterInfoUIContext;
 import com.intellij.testFramework.utils.parameterInfo.MockUpdateParameterInfoContext;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
+public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/parameterInfo/";
@@ -361,4 +360,47 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
+  public void testHighlightCurrentParameterAfterTypingFirstArgumentOfThree() throws Exception {
+    configureJava("class A {\n" +
+                  "    void foo() {}\n" +
+                  "    void foo(int a, int b, int c) {}\n" +
+                  "    {\n" +
+                  "        foo(<caret>)\n" +
+                  "    }\n" +
+                  "}");
+    showParameterInfo();
+    checkHintContents("[<html>&lt;no parameters&gt;</html>]\n" +
+                      "-\n" +
+                      "<html><b>int a</b>, int b, int c</html>");
+    type("1, ");
+    waitForAllAsyncStuff();
+    checkHintContents("<html><font color=gray>&lt;no parameters&gt;</font color=gray></html>\n" +
+                      "-\n" +
+                      "<html>int a, <b>int b</b>, int c</html>");
+  }
+
+  public void testOverloadIsChangedAfterCompletion() {
+    configureJava("class C { void m() { System.out.pr<caret> } }");
+    complete("print(int i)");
+    type("'a");
+    checkResult("class C { void m() { System.out.print('a<caret>'); } }");
+    showParameterInfo();
+    checkHintContents("<html><b>boolean b</b></html>\n" +
+                      "-\n" +
+                      "[<html><b>char c</b></html>]\n" +
+                      "-\n" +
+                      "<html><b>int i</b></html>\n" +
+                      "-\n" +
+                      "<html><b>long l</b></html>\n" +
+                      "-\n" +
+                      "<html><b>float v</b></html>\n" +
+                      "-\n" +
+                      "<html><b>double v</b></html>\n" +
+                      "-\n" +
+                      "<html><b>char[] chars</b></html>\n" +
+                      "-\n" +
+                      "<html><b>@Nullable String s</b></html>\n" +
+                      "-\n" +
+                      "<html><b>@Nullable Object o</b></html>");
+  }
 }

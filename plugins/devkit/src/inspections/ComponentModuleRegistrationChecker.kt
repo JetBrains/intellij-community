@@ -155,15 +155,7 @@ fun isIdeaPlatformModule(module: Module?): Boolean {
 }
 
 private fun findMatchingImplModule(module: Module): Module? {
-  if (module.name == "openapi") {
-    return ModuleManager.getInstance(module.project).findModuleByName("intellij.java.impl")
-  }
-
-  if (module.name.endsWith("-api")) {
-    val implName = module.name.substring(0, module.name.length - 4) + "-impl"
-    return ModuleManager.getInstance(module.project).findModuleByName(implName)
-  }
-  return null
+  return ModuleManager.getInstance(module.project).findModuleByName(module.name + ".impl")
 }
 
 private fun findModulePluginXmlFile(module: Module): XmlFile? {

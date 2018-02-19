@@ -369,10 +369,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       //if (!(element instanceof PsiDocCommentOwner)) return null;
     }
 
+    PsiElement finalElement = element;
     final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(project) {
       @Override
       public void updatePopup(Object lookupIteObject) {
         if (lookupIteObject == null) {
+          doShowJavaDocInfo(finalElement, false, this, originalElement, closeCallback, CodeInsightBundle.message("no.documentation.found"));
           return;
         }
         if (lookupIteObject instanceof PsiElement) {
@@ -388,7 +390,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           originalElement
         );
 
-        if (element == null) return;
+        if (element == null) {
+          doShowJavaDocInfo(finalElement, false, this, originalElement, closeCallback, CodeInsightBundle.message("no.documentation.found"));
+          return;
+        }
 
         if (myEditor != null) {
           final PsiFile file = element.getContainingFile();
@@ -1123,10 +1128,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           (NullableComputable<List<String>>)() -> {
             final SmartPsiElementPointer originalElementPtr = myElement.getUserData(ORIGINAL_ELEMENT_KEY);
             final PsiElement originalElement = originalElementPtr != null ? originalElementPtr.getElement() : null;
-            if (((ExternalDocumentationProvider)provider).hasDocumentationFor(myElement, originalElement)) {
-              return provider.getUrlFor(myElement, originalElement);
-            }
-            return null;
+            return provider.getUrlFor(myElement, originalElement);
           }
         );
         LOG.debug("External documentation URLs: ", urls);

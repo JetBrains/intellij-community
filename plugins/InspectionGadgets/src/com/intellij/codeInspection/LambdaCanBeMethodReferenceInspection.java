@@ -554,7 +554,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
   }
 
   private static class ReplaceWithMethodRefFix implements LocalQuickFix {
-    private String mySuffix;
+    private final String mySuffix;
 
     public ReplaceWithMethodRefFix(String suffix) {
       mySuffix = suffix;

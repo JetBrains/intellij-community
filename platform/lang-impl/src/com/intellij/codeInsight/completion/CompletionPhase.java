@@ -57,10 +57,6 @@ public abstract class CompletionPhase implements Disposable {
 
   public abstract int newCompletionStarted(int time, boolean repeated);
 
-  public boolean fillInCommonPrefix() {
-    return false;
-  }
-
   public static class CommittingDocuments extends CompletionPhase {
     boolean replaced;
     private final ActionTracker myTracker;
@@ -165,15 +161,6 @@ public abstract class CompletionPhase implements Disposable {
       indicator.closeAndFinish(false);
       indicator.restorePrefix(() -> indicator.getLookup().restorePrefix());
       return indicator.nextInvocationCount(time, repeated);
-    }
-
-    @Override
-    public boolean fillInCommonPrefix() {
-      if (indicator.isAutopopupCompletion()) {
-        return false;
-      }
-
-      return indicator.fillInCommonPrefix(true);
     }
   }
 

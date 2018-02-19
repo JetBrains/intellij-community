@@ -1,25 +1,13 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.colors.highlighting;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -37,21 +25,24 @@ public class HighlightData {
   private final int myStartOffset;
   private int myEndOffset;
   private final TextAttributesKey myHighlightType;
+  private final ColorKey myAdditionalColorKey;
 
-  public HighlightData(int startOffset, TextAttributesKey highlightType) {
+  public HighlightData(int startOffset, TextAttributesKey highlightType, ColorKey additionalColorKey) {
     myStartOffset = startOffset;
     myHighlightType = highlightType;
+    myAdditionalColorKey = additionalColorKey;
   }
 
-  public HighlightData(int startOffset, int endOffset, TextAttributesKey highlightType) {
+  public HighlightData(int startOffset, int endOffset, TextAttributesKey highlightType, ColorKey additionalColorKey) {
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myHighlightType = highlightType;
+    myAdditionalColorKey = additionalColorKey;
   }
 
   public void addToCollection(@NotNull Collection<HighlightData> list, boolean highlighted) {
     list.add(this);
-    if (highlighted) list.add(new HighlightData(getStartOffset(), getEndOffset(), BLINKING_HIGHLIGHTS_ATTRIBUTES));
+    if (highlighted) list.add(new HighlightData(getStartOffset(), getEndOffset(), BLINKING_HIGHLIGHTS_ATTRIBUTES, getAdditionalColorKey()));
   }
 
   public void addHighlToView(final Editor view, EditorColorsScheme scheme, final Map<TextAttributesKey,String> displayText) {
@@ -75,6 +66,7 @@ public class HighlightData {
           highlighter.setErrorStripeMarkColor(errorStripeColor);
           final String tooltip = displayText.get(myHighlightType);
           highlighter.setErrorStripeTooltip(tooltip);
+          if (highlighter instanceof RangeHighlighterEx) ((RangeHighlighterEx)highlighter).setVisibleIfFolded(true);
         }
         catch (Exception e) {
           throw new RuntimeException(e);
@@ -101,5 +93,9 @@ public class HighlightData {
 
   public TextAttributesKey getHighlightKey() {
     return myHighlightType;
+  }
+  
+  public ColorKey getAdditionalColorKey() {
+    return myAdditionalColorKey;
   }
 }

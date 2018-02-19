@@ -24,7 +24,7 @@ import java.util.Map;
 
 public class MavenLeakDetector {
 
-  private IdentityHashMap<Thread, Thread> markedHooks = new IdentityHashMap<Thread, Thread>();
+  private final IdentityHashMap<Thread, Thread> markedHooks = new IdentityHashMap<Thread, Thread>();
 
   public MavenLeakDetector mark() {
     markShutdownHooks();

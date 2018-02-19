@@ -23,7 +23,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
@@ -69,7 +68,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   private Map<IElementType, Wrap> myPreferredWraps;
   private AbstractJavaBlock myParentBlock;
 
-  private BlockFactory myBlockFactory = new BlockFactory() {
+  private final BlockFactory myBlockFactory = new BlockFactory() {
     @Override
     public Block createBlock(ASTNode node, Indent indent, Alignment alignment, Wrap wrap) {
       return new SimpleJavaBlock(node, wrap, AlignmentStrategy.wrap(alignment), indent, mySettings, myJavaSettings);

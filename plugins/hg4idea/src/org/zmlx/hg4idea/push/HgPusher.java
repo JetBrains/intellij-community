@@ -39,7 +39,7 @@ public class HgPusher extends Pusher<HgRepository, HgPushSource, HgTarget> {
 
   private static final Logger LOG = Logger.getInstance(HgPusher.class);
   private static final String ONE = "one";
-  private static Pattern PUSH_COMMITS_PATTERN = Pattern.compile(".*(?:added|pushed) (\\d+|" + ONE + ") changeset.*");
+  private static final Pattern PUSH_COMMITS_PATTERN = Pattern.compile(".*(?:added|pushed) (\\d+|" + ONE + ") changeset.*");
   // hg push command has definite exit values for some cases:
   // mercurial returns 0 if push was successful, 1 if nothing to push. see hg push --help
   static int PUSH_SUCCEEDED_EXIT_VALUE = 0;
