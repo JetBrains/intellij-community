@@ -46,6 +46,11 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     return myBuilder.build(this, owner);
   }
 
+  @NotNull
+  protected ControlFlowBuilder getBuilder() {
+    return this.myBuilder;
+  }
+
   @Override
   public void visitPyFunction(final PyFunction node) {
     // Create node and stop here
