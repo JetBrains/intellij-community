@@ -13,6 +13,7 @@ import com.intellij.testGuiFramework.tests.community.CommunityProjectCreator
 import com.intellij.testGuiFramework.util.Key.*
 import com.intellij.testGuiFramework.util.Modifier.*
 import com.intellij.testGuiFramework.util.plus
+import org.fest.swing.core.SmartWaitRobot
 import org.fest.swing.timing.Pause
 import org.junit.Assert
 import org.junit.Test
@@ -38,7 +39,7 @@ public class Test {
 public class Test {
 
     public static void main(String[] args) {
-        System.err.println(1);
+        System.out.println(111);
     }
 }"""
 
@@ -48,9 +49,16 @@ public class Test {
     Pause.pause(1000)
     CommunityProjectCreator.createJavaClass(pasteCode, "Test")
     ideFrame {
+      waitForBackgroundTasksToFinish()
       inlineVariable(firstTime = true)
       resetCode()
       inlineVariable(firstTime = false)
+      val smartRobot = robot() as SmartWaitRobot
+      smartRobot.shortcutAndTypeString(actionKeyStroke, "11", 0)
+      for(i in 0 .. 11) shortcut(LEFT)
+      for(i in 0 .. 3) shortcut(BACK_SPACE)
+      smartRobot.shortcutAndTypeString(actionKeyStroke, "out", 0)
+
       val editorCode = editor.getCurrentFileContents(false)
       Assert.assertTrue(ComparisonUtil.isEquals(editorCode!!.unifyCode(),
                                                 destinationCode.unifyCode(),
