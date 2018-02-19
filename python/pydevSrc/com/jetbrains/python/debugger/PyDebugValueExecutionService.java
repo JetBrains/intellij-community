@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,6 +71,13 @@ public final class PyDebugValueExecutionService {
     if (myFrameAccessors.size() == 0 && myAsyncValuesExecutorService != null) {
       myAsyncValuesExecutorService.shutdownNow();
       myAsyncValuesExecutorService = null;
+    }
+  }
+
+  @TestOnly
+  public synchronized void shutDownNow() {
+    if (myAsyncValuesExecutorService != null) {
+      myAsyncValuesExecutorService.shutdownNow();
     }
   }
 }
