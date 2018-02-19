@@ -1205,7 +1205,7 @@ public class IdeEventQueue extends EventQueue {
     if (!delayKeyEvents.get()) return false;
     long currentTypeaheadDelay = System.currentTimeMillis() - lastTypeaheadTimestamp;
     if (currentTypeaheadDelay > Registry.get("action.aware.typeaheadTimout").asDouble()) {
-      TYPEAHEAD_LOG.warn(new RuntimeException("Typeahead timeout is exceeded: " + currentTypeaheadDelay));
+      TYPEAHEAD_LOG.error(new RuntimeException("Typeahead timeout is exceeded: " + currentTypeaheadDelay));
       return true;
     }
     return false;
