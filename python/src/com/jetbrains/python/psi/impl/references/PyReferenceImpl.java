@@ -259,7 +259,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return getResultsFromProcessor(referencedName, processor, realContext, roof);
   }
 
-  protected List<RatedResolveResult> getResultsFromProcessor(@NotNull String referencedName,
+  protected final List<RatedResolveResult> getResultsFromProcessor(@NotNull String referencedName,
                                                              @NotNull PyResolveProcessor processor,
                                                              @Nullable PsiElement realContext,
                                                              @Nullable PsiElement resolveRoof) {
@@ -276,7 +276,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
       if (!resolvedScope.isGlobal(referencedName)) {
         if (resolvedOwner == referenceOwner) {
-          final List<Instruction> instructions = PyDefUseUtil.getLatestDefs(resolvedOwner, referencedName, realContext, false, true);
+          final List<Instruction> instructions = getLatestDefinitions(referencedName, resolvedOwner, realContext);
           // TODO: Use the results from the processor as a cache for resolving to latest defs
           final ResolveResultList latestDefs = resolveToLatestDefs(instructions, realContext, referencedName, typeEvalContext);
           if (!latestDefs.isEmpty()) {
@@ -365,6 +365,13 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
 
     return resolveByReferenceResolveProviders();
+  }
+
+  @NotNull
+  protected List<Instruction> getLatestDefinitions(@NotNull String referencedName,
+                                                   @Nullable ScopeOwner resolvedOwner,
+                                                   @Nullable PsiElement realContext) {
+    return PyDefUseUtil.getLatestDefs(resolvedOwner, referencedName, realContext, false, true);
   }
 
   private boolean skipClassForwardReferences(@Nullable ScopeOwner referenceOwner, @NotNull PsiElement resolved) {
