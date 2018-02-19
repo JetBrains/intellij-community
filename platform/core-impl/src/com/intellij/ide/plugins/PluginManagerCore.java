@@ -232,20 +232,18 @@ public class PluginManagerCore {
     if (!plugins.isFile()) {
       FileUtil.ensureCanCreateFile(plugins);
     }
-    writePluginsList(ids, new BufferedWriter(new FileWriter(plugins, append)));
+    try (BufferedWriter writer = new BufferedWriter(new FileWriter(plugins, append))) {
+      writePluginsList(ids, writer);
+    }
   }
 
   public static void writePluginsList(@NotNull Collection<String> ids, @NotNull Writer writer) throws IOException {
     String[] sortedIds = ArrayUtil.toStringArray(ids);
     Arrays.sort(sortedIds);
-    try {
-      for (String id : sortedIds) {
-        writer.write(id);
-        writer.write(LineSeparator.getSystemLineSeparator().getSeparatorString());
-      }
-    }
-    finally {
-      writer.close();
+    String separator = LineSeparator.getSystemLineSeparator().getSeparatorString();
+    for (String id : sortedIds) {
+      writer.write(id);
+      writer.write(separator);
     }
   }
 

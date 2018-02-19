@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.AbstractBundle
@@ -91,56 +77,34 @@ private class ExportSettingsAction : AnAction(), DumbAware {
 
 // not internal only to test
 fun exportSettings(exportFiles: Set<Path>, out: OutputStream, configPath: String) {
-  val zipOut = MyZipOutputStream(out)
-  try {
+  ZipOutputStream(out).use {
     val writtenItemRelativePaths = THashSet<String>()
     for (file in exportFiles) {
       if (file.exists()) {
         val relativePath = FileUtilRt.getRelativePath(configPath, file.toAbsolutePath().systemIndependentPath, '/')!!
-        ZipUtil.addFileOrDirRecursively(zipOut, null, file.toFile(), relativePath, null, writtenItemRelativePaths)
+        ZipUtil.addFileOrDirRecursively(it, null, file.toFile(), relativePath, null, writtenItemRelativePaths)
       }
     }
 
-    exportInstalledPlugins(zipOut)
+    exportInstalledPlugins(it)
 
-    val zipEntry = ZipEntry(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER)
-    zipOut.putNextEntry(zipEntry)
-    zipOut.closeEntry()
-  }
-  finally {
-    zipOut.doClose()
-  }
-}
-
-private class MyZipOutputStream(out: OutputStream) : ZipOutputStream(out) {
-  override fun close() {
-  }
-
-  fun doClose() {
-    super.close()
+    it.putNextEntry(ZipEntry(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER))
+    it.closeEntry()
   }
 }
 
 data class ExportableItem(val file: Path, val presentableName: String, val roamingType: RoamingType = RoamingType.DEFAULT)
 
-private fun exportInstalledPlugins(zipOut: MyZipOutputStream) {
-  val plugins = ArrayList<String>()
-  for (descriptor in PluginManagerCore.getPlugins()) {
-    if (!descriptor.isBundled && descriptor.isEnabled) {
-      plugins.add(descriptor.pluginId.idString)
+private fun exportInstalledPlugins(zipOut: ZipOutputStream) {
+  val plugins = PluginManagerCore.getPlugins().filter { !it.isBundled && it.isEnabled }.map { it.pluginId.idString }
+  if (!plugins.isEmpty()) {
+    zipOut.putNextEntry(ZipEntry(PluginManager.INSTALLED_TXT))
+    try {
+      PluginManagerCore.writePluginsList(plugins, OutputStreamWriter(zipOut, CharsetToolkit.UTF8_CHARSET))
     }
-  }
-  if (plugins.isEmpty()) {
-    return
-  }
-
-  val e = ZipEntry(PluginManager.INSTALLED_TXT)
-  zipOut.putNextEntry(e)
-  try {
-    PluginManagerCore.writePluginsList(plugins, OutputStreamWriter(zipOut, CharsetToolkit.UTF8_CHARSET))
-  }
-  finally {
-    zipOut.closeEntry()
+    finally {
+      zipOut.closeEntry()
+    }
   }
 }
 
