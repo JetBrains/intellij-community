@@ -18,7 +18,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -44,39 +43,35 @@ public class TestDiscoverySearchHelper {
             final PsiClass[] classes = ((PsiClassOwner)psiFile).getClasses();
             if (classes.length == 0 || TestFrameworks.detectFramework(classes[0]) == null) return;
           }
-          try {
-            final List<TextRange> changedTextRanges = FormatChangedTextUtil.getInstance().getChangedTextRanges(project, psiFile);
-            for (TextRange textRange : changedTextRanges) {
-              final PsiElement start = psiFile.findElementAt(textRange.getStartOffset());
-              final PsiElement end = psiFile.findElementAt(textRange.getEndOffset());
-              final PsiElement parent = PsiTreeUtil.findCommonParent(new PsiElement[]{start, end});
-              final Collection<PsiMethod> methods = new ArrayList<>(PsiTreeUtil.findChildrenOfType(parent, PsiMethod.class));
-              final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
-              if (containingMethod != null) {
-                methods.add(containingMethod);
+          final List<TextRange> changedTextRanges = FormatChangedTextUtil.getInstance().getChangedTextRanges(project, psiFile);
+          for (TextRange textRange : changedTextRanges) {
+            final PsiElement start = psiFile.findElementAt(textRange.getStartOffset());
+            final PsiElement end = psiFile.findElementAt(textRange.getEndOffset());
+            final PsiElement parent = PsiTreeUtil.findCommonParent(new PsiElement[]{start, end});
+            final Collection<PsiMethod> methods = new ArrayList<>(PsiTreeUtil.findChildrenOfType(parent, PsiMethod.class));
+            final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
+            if (containingMethod != null) {
+              methods.add(containingMethod);
+            }
+            for (PsiMethod changedMethod : methods) {
+              final LinkedHashSet<String> detectedPatterns = position == null ? collectPatterns(changedMethod, frameworkPrefix) : null;
+              if (detectedPatterns != null) {
+                patterns.addAll(detectedPatterns);
               }
-              for (PsiMethod changedMethod : methods) {
-                final LinkedHashSet<String> detectedPatterns = position == null ? collectPatterns(changedMethod, frameworkPrefix) : null;
-                if (detectedPatterns != null) {
-                  patterns.addAll(detectedPatterns);
-                }
-                final PsiClass containingClass = changedMethod.getContainingClass();
-                if (containingClass != null && containingClass.getParent() == psiFile) {
-                  final String classQualifiedName = containingClass.getQualifiedName();
-                  final String changedMethodName = changedMethod.getName();
-                  try {
-                    if (classQualifiedName != null &&
-                        (position == null && TestFrameworks.detectFramework(containingClass) != null ||
-                         position != null && !discoveryIndex.hasTestTrace(classQualifiedName + "-" + changedMethodName))) {
-                      patterns.add(classQualifiedName + "," + changedMethodName);
-                    }
+              final PsiClass containingClass = changedMethod.getContainingClass();
+              if (containingClass != null && containingClass.getParent() == psiFile) {
+                final String classQualifiedName = containingClass.getQualifiedName();
+                final String changedMethodName = changedMethod.getName();
+                try {
+                  if (classQualifiedName != null &&
+                      (position == null && TestFrameworks.detectFramework(containingClass) != null ||
+                       position != null && !discoveryIndex.hasTestTrace(classQualifiedName + "-" + changedMethodName))) {
+                    patterns.add(classQualifiedName + "," + changedMethodName);
                   }
-                  catch (IOException ignore) {}
                 }
+                catch (IOException ignore) {}
               }
             }
-          }
-          catch (FilesTooBigForDiffException ignore) {
           }
         }
       });

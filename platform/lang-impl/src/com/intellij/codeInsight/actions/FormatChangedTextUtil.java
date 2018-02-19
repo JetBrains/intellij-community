@@ -23,7 +23,6 @@ import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,7 +129,7 @@ public class FormatChangedTextUtil {
   }
 
   @NotNull
-  public List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) throws FilesTooBigForDiffException {
+  public List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) {
     return ContainerUtil.emptyList();
   }
 
@@ -144,7 +143,7 @@ public class FormatChangedTextUtil {
   
     
   @Nullable
-  public ChangedRangesInfo getChangedRangesInfo(@NotNull PsiFile file) throws FilesTooBigForDiffException {
+  public ChangedRangesInfo getChangedRangesInfo(@NotNull PsiFile file) {
     return null;
   }
 
