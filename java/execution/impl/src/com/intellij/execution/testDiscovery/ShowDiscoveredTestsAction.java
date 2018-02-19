@@ -51,7 +51,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
@@ -105,7 +107,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
       Project project = e.getProject();
       assert project != null;
 
-      List<PsiMethod> methods = FormatChangedTextUtil.getInstance().getChangedElements(project, Arrays.asList(changes), file -> {
+      List<PsiMethod> methods = FormatChangedTextUtil.getInstance().getChangedElements(project, changes, file -> {
         if (file.getFileType() != JavaFileType.INSTANCE) return null;
         PsiFile psiFile = PsiUtilCore.getPsiFile(project, file);
 
@@ -113,17 +115,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
         if (document == null) return null;
         PsiDocumentManager.getInstance(project).commitDocument(document);
 
-        List<PsiMethod> fileMethods = new ArrayList<>();
-        psiFile.accept(new JavaRecursiveElementVisitor() {
-          @Override
-          public void visitMethod(PsiMethod method) {
-            super.visitMethod(method);
-            if (psiFile.equals(method.getContainingFile())) {
-              fileMethods.add(method);
-            }
-          }
-        });
-        return fileMethods;
+        return SyntaxTraverser.psiTraverser(psiFile).filter(PsiMethod.class).toList();
       });
 
       showDiscoveredTests(project, e.getDataContext(), "Selected Changes", methods);
