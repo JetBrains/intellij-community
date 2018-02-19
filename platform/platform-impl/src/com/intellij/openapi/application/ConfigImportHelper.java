@@ -14,7 +14,6 @@ import com.intellij.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
@@ -42,9 +41,6 @@ public class ConfigImportHelper {
 
     File newConfigDir = new File(newConfigPath);
     File oldConfigDir = findOldConfigDir(newConfigDir, settings.getCustomPathsSelector());
-
-    try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
-    catch (Throwable ignore) { }
 
     while (true) {
       ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(oldConfigDir, settings);
