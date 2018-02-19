@@ -343,17 +343,24 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       @Override
       public Dimension getPreferredSize() {
         int width = 0;
+        int buttonWidth = 0;
         Component[] components = getComponents();
         for (Component component : components) {
           Dimension size = component.getPreferredSize();
-          width += size != null ? size.width : 0;
+          int w = size != null ? size.width : 0;
+          if (component instanceof JButton) {
+            buttonWidth = w;
+          }
+          width += w;
         }
         ComboBoxEditor editor = getEditor();
         if (editor != null) {
           Component editorComponent = editor.getEditorComponent();
           if (editorComponent != null) {
+            FontMetrics fontMetrics = editorComponent.getFontMetrics(editorComponent.getFont());
+            width = Math.max(width, fontMetrics.stringWidth(String.valueOf(getSelectedItem())) + buttonWidth);
             //Let's reserve some extra space for just one 'the next' letter
-            width += editorComponent.getFontMetrics(editorComponent.getFont()).stringWidth("m");
+            width += fontMetrics.stringWidth("m");
           }
         }
         Dimension size = super.getPreferredSize();
