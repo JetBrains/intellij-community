@@ -363,14 +363,13 @@ public abstract class DiffRequestProcessor implements Disposable {
     return window != null && window.isFocused();
   }
 
-  protected boolean isFocused() {
-    return DiffUtil.isFocusedComponent(myProject, myContentPanel) ||
-           DiffUtil.isFocusedComponent(myProject, myToolbar.getComponent());
+  private boolean isFocusedInWindow() {
+    return DiffUtil.isFocusedComponentInWindow(myContentPanel) ||
+           DiffUtil.isFocusedComponentInWindow(myToolbar.getComponent());
   }
 
-  private void requestFocusInternal() {
-    JComponent component = getPreferredFocusedComponent();
-    if (component != null) component.requestFocusInWindow();
+  private void requestFocusInWindow() {
+    DiffUtil.requestFocusInWindow(getPreferredFocusedComponent());
   }
 
   @NotNull
@@ -973,8 +972,8 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    public boolean isFocused() {
-      return DiffRequestProcessor.this.isFocused();
+    public boolean isFocusedInWindow() {
+      return DiffRequestProcessor.this.isFocusedInWindow();
     }
 
     @Override
@@ -983,8 +982,8 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    public void requestFocus() {
-      DiffRequestProcessor.this.requestFocusInternal();
+    public void requestFocusInWindow() {
+      DiffRequestProcessor.this.requestFocusInWindow();
     }
 
     @Nullable
