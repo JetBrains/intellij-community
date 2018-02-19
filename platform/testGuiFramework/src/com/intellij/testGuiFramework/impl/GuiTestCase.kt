@@ -631,6 +631,11 @@ open class GuiTestCase {
 
   fun shortcut(shortcut: Shortcut) = shortcut(shortcut.getKeystroke())
 
+  fun shortcut(winShortcut: Shortcut, macShortcut: Shortcut) {
+    if (SystemInfo.isMac()) shortcut(macShortcut)
+    else shortcut(winShortcut)
+  }
+
   fun shortcut(key: Key) = shortcut(key.name)
 
   /**
