@@ -41,7 +41,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
   protected static final List<String> BUNDLED_PLUGIN_MODULES = [
     "intellij.copyright", "intellij.properties", "intellij.terminal", "intellij.editorconfig", "intellij.settingsRepository", "intellij.yaml",
     "intellij.tasks.core", "intellij.tasks.java",
-    "intellij.maven", "intellij.gradle", "intellij.java.gradle",
+    "intellij.maven", "intellij.gradle",
     "intellij.vcs.git", "intellij.platform.remoteServers.git", "intellij.java.remoteServers.git", "intellij.vcs.svn", "intellij.vcs.hg", "intellij.vcs.github", "intellij.vcs.cvs",
     "intellij.groovy", "intellij.junit", "intellij.testng", "intellij.xpath", "intellij.xslt.debugger", "intellij.android.plugin", "intellij.javaFX.community",
     "intellij.java.i18n", "intellij.ant", "intellij.java.guiForms.designer", "intellij.java.byteCodeViewer", "intellij.java.coverage", "intellij.java.decompiler", "intellij.devkit", "intellij.eclipse",
