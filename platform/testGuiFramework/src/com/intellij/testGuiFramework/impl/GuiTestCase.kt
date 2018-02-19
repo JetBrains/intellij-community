@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testGuiFramework.cellReader.ExtendedJComboboxCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
-import com.intellij.testGuiFramework.cellReader.ExtendedJTableCellReader
 import com.intellij.testGuiFramework.fixtures.*
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedButtonFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTableFixture
@@ -443,20 +442,20 @@ open class GuiTestCase {
    * @timeout in seconds to find JTable component
    * @throws ComponentLookupException if component has not been found or timeout exceeded
    */
-  fun <S, C : Component> ComponentFixture<S, C>.table(cellText: String, timeout: Long = defaultTimeout): JTableFixture =
+  fun <S, C : Component> ComponentFixture<S, C>.table(cellText: String, timeout: Long = defaultTimeout): ExtendedTableFixture =
     if (target() is Container) {
-      val jTable = waitUntilFound(target() as Container, JTable::class.java, timeout) {
-        val jTableFixture = JTableFixture(guiTestRule.robot(), it)
-        jTableFixture.replaceCellReader(ExtendedJTableCellReader())
+      var tableFixture: ExtendedTableFixture? = null
+      waitUntilFound(target() as Container, JTable::class.java, timeout) {
+        tableFixture = ExtendedTableFixture(guiTestRule.robot(), it)
         try {
-          jTableFixture.cell(cellText)
-          true
+          tableFixture?.cell(cellText)
+          tableFixture != null
         }
         catch (e: ActionFailedException) {
           false
         }
       }
-      JTableFixture(guiTestRule.robot(), jTable)
+      tableFixture ?: throw unableToFindComponent("""JTable with cell text "$cellText"""")
     }
     else throw unableToFindComponent("""JTable with cell text "$cellText"""")
 
@@ -757,7 +756,7 @@ open class GuiTestCase {
 
   fun tableRowValues(table: JTableFixture, rowIndex: Int): List<String> {
     val fixture = ExtendedTableFixture(guiTestRule.robot(), table.target())
-    return RowFixture(rowIndex, fixture).values()
+    return RowFixture(guiTestRule.robot(), rowIndex, fixture).values()
   }
 
   fun tableRowCount(table: JTableFixture): Int {
