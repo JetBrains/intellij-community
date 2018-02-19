@@ -52,6 +52,8 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
     }
 
     ideProject.createChild(JavaProjectData.KEY, javaProjectData);
+
+    nextResolver.populateProjectExtraModels(gradleProject, ideProject);
   }
 
   @Override
