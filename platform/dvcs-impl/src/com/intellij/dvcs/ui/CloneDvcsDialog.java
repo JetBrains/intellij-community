@@ -536,7 +536,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myRepositoryUrlCombobox;
+    return myRepositoryUrlField;
   }
 
   @NotNull
