@@ -36,9 +36,10 @@ internal class CreatePropertyAction(
 
     if (propertyKind == SETTER && readOnly) return false
 
+    val parameters = request.expectedParameters
     when (propertyKind) {
-      GETTER, BOOLEAN_GETTER -> if (request.parameters.isNotEmpty()) return false
-      SETTER -> if (request.parameters.size != 1) return false
+      GETTER, BOOLEAN_GETTER -> if (parameters.isNotEmpty()) return false
+      SETTER -> if (parameters.size != 1) return false
     }
 
     val counterAccessorName = counterPart(propertyKind).getAccessorName(propertyName)
@@ -49,7 +50,7 @@ internal class CreatePropertyAction(
     return when (propertyKind) {
       GETTER, BOOLEAN_GETTER -> SETTER
       SETTER -> {
-        val expectedType = request.parameters.single().second.singleOrNull()
+        val expectedType = request.expectedParameters.single().expectedTypes.singleOrNull()
         if (expectedType != null && PsiType.BOOLEAN == JvmPsiConversionHelper.getInstance(project).convertType(expectedType.theType)) {
           BOOLEAN_GETTER
         }
