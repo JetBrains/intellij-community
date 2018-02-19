@@ -7,7 +7,7 @@ import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.tests.community.CommunityProjectCreator
-import com.intellij.testGuiFramework.util.Key
+import com.intellij.testGuiFramework.util.Key.ESCAPE
 import org.fest.swing.core.SmartWaitRobot
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.timing.Pause
@@ -73,7 +73,7 @@ class GoToClassFocusTest : GuiTestCase() {
     smartRobot.shortcutAndTypeString(actionKeyStroke, typedString, 100)
     Pause.pause(500)
     checkSearchWindow(guiTestCase)
-    shortcut(Key.ESCAPE)
+    shortcut(ESCAPE)
   }
 
   private fun checkSearchWindow(guiTestCase: GuiTestCase) {

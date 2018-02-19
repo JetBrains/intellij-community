@@ -92,7 +92,7 @@ public class TestDiscoverySearchHelper {
                                       @NotNull String classFQName,
                                       @NotNull String methodName,
                                       @NotNull String frameworkId) {
-    TestDiscoveryProducer.consumeDiscoveredTests(project, classFQName, methodName, frameworkId, t -> patterns.add(t.getTestClassQName() + "," + t.getTestMethodName()));
+    TestDiscoveryProducer.consumeDiscoveredTests(project, classFQName, methodName, frameworkId, (c, m) -> patterns.add(c + "," + m));
   }
 
   @NotNull

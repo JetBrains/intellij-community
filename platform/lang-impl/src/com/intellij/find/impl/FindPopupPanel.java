@@ -244,7 +244,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       Window window = ((AbstractPopup)myBalloon).getPopupWindow();
       Dimension minimumSize = window != null ? window.getMinimumSize() : null;
       myBalloon.setMinimumSize(prefSize);
-      if (minimumSize != null && !Comparing.equal(minimumSize, prefSize)) {
+      if (minimumSize != null && prefSize.width > minimumSize.width) {
         myBalloon.moveToFitScreen();
       }
     }
@@ -984,7 +984,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     }
   }
 
-  void scheduleResultsUpdate() {
+  @SuppressWarnings("WeakerAccess")
+  public void scheduleResultsUpdate() {
     if (myBalloon == null || !myBalloon.isVisible()) return;
     if (mySearchRescheduleOnCancellationsAlarm == null || mySearchRescheduleOnCancellationsAlarm.isDisposed()) return;
     updateControls();

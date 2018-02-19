@@ -1,10 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.CollectionComboBoxModel;
@@ -156,6 +161,31 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
             setExpandable(editor);
           }
           foldNewLines(editor);
+          editor.getFilteredDocumentMarkupModel().addMarkupModelListener(((EditorImpl)editor).getDisposable(), new MarkupModelListener.Adapter() {
+            int errors = 0;
+            @Override
+            public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
+              processHighlighter(highlighter, true);
+            }
+
+            @Override
+            public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+              processHighlighter(highlighter, false);
+            }
+
+            void processHighlighter(@NotNull RangeHighlighterEx highlighter, boolean add) {
+              Object o = highlighter.getErrorStripeTooltip();
+              if (o instanceof HighlightInfo) {
+                if (HighlightSeverity.ERROR.equals(((HighlightInfo)o).getSeverity())) {
+                  errors += add ? 1 : -1;
+                  if (errors == 0 || errors == 1) {
+                    myComboBox.putClientProperty("JComponent.outline", errors > 0 ? "error" : null);
+                    myComboBox.repaint();
+                  }
+                }
+              }
+            }
+          });
         }
       };
       myDelegate.getEditorComponent().setFontInheritedFromLAF(false);

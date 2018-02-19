@@ -189,7 +189,12 @@ fun <T> all(promises: Collection<Promise<*>>, totalResult: T?, ignoreErrors: Boo
 
   val totalPromise = AsyncPromise<T>()
   val done = CountDownConsumer(promises.size, totalPromise, totalResult)
-  val rejected = if (ignoreErrors) Consumer { done.consume(null) } else Consumer<Throwable> { totalPromise.setError(it) }
+  val rejected = if (ignoreErrors) {
+    Consumer { done.consume(null) }
+  }
+  else {
+    Consumer<Throwable> { totalPromise.setError(it) }
+  }
 
   for (promise in promises) {
     promise.done(done)

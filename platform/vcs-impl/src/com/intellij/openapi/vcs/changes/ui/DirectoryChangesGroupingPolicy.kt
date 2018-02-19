@@ -44,7 +44,7 @@ class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTre
       getPathNode(parentPath, subtreeRoot)?.let { return it }
     }
 
-    return subtreeRoot
+    return HIERARCHY_UPPER_BOUND.getRequired(subtreeRoot)
   }
 
   private fun getParentFromInnerPolicy(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
@@ -76,7 +76,7 @@ class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTre
   companion object {
     @JvmField internal val DIRECTORY_POLICY = Key.create<DirectoryChangesGroupingPolicy>("ChangesTree.DirectoryPolicy")
     internal val GRAND_PARENT_CANDIDATE = Key.create<ChangesBrowserNode<*>?>("ChangesTree.GrandParentCandidate")
-    private val HIERARCHY_UPPER_BOUND = Key.create<ChangesBrowserNode<*>?>("ChangesTree.HierarchyUpperBound")
+    internal val HIERARCHY_UPPER_BOUND = Key.create<ChangesBrowserNode<*>?>("ChangesTree.HierarchyUpperBound")
     internal val CACHING_ROOT = Key.create<ChangesBrowserNode<*>?>("ChangesTree.CachingRoot")
 
     internal fun getCachingRoot(subtreeRoot: ChangesBrowserNode<*>) = CACHING_ROOT.get(subtreeRoot) ?: subtreeRoot

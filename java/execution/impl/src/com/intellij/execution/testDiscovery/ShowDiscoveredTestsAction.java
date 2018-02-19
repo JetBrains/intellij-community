@@ -11,6 +11,7 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.find.FindUtil;
 import com.intellij.find.actions.CompositeActiveComponent;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -91,7 +92,8 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
     InplaceButton runButton = new InplaceButton(new IconButton("Run All", AllIcons.Actions.Execute), __ -> {
       Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-      ConfigurationContext context = ConfigurationContext.getFromContext(e.getDataContext());
+      DataContext dataContext = DataManager.getInstance().getDataContext(editor.getContentComponent());
+      ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
       List<Module> containingModules =
         model.getItems().stream()
              .map(element -> ModuleUtilCore.findModuleForPsiElement(element))
@@ -166,10 +168,10 @@ public class ShowDiscoveredTestsAction extends AnAction {
       for (TestDiscoveryConfigurationProducer producer : getProducers(project)) {
         String frameworkPrefix =
           ((JavaTestConfigurationBase)producer.getConfigurationFactory().createTemplateConfiguration(project)).getFrameworkPrefix();
-        TestDiscoveryProducer.consumeDiscoveredTests(project, fqn, methodName, frameworkPrefix, test -> {
+        TestDiscoveryProducer.consumeDiscoveredTests(project, fqn, methodName, frameworkPrefix, (testClass, testMethod) -> {
           PsiMethod psiMethod = ReadAction.compute(() -> {
-            PsiClass cc = test.getTestClassQName() == null ? null : javaFacade.findClass(test.getTestClassQName(), scope);
-            return cc == null ? null : ArrayUtil.getFirstElement(cc.findMethodsByName(test.getTestMethodName(), false));
+            PsiClass cc = testClass == null ? null : javaFacade.findClass(testClass, scope);
+            return cc == null ? null : ArrayUtil.getFirstElement(cc.findMethodsByName(testMethod, false));
           });
           if (psiMethod != null) {
             loadTestsTask.updateComponent(psiMethod);

@@ -144,10 +144,14 @@ class SmartWaitRobot : BasicRobot(null, ExistingHierarchy()) {
   }
 
   fun shortcutAndTypeString(keyStoke: KeyStroke, string: String, delayBetweenShortcutAndTypingMs: Int = 0) {
-    val keyCodeArray = string
+    fastPressAndReleaseKey(keyStoke.keyCode, keyStoke.modifiers)
+    fastTyping(string, delayBetweenShortcutAndTypingMs)
+  }
+
+  fun fastTyping(string: String, delayBetweenShortcutAndTypingMs: Int = 0) {
+    val keyCodeArray: IntArray = string
       .map { KeyStrokeMap.keyStrokeFor(it)?.keyCode ?: throw Exception("Unable to get keystroke for char '$it'") }
       .toIntArray()
-    fastPressAndReleaseKey(keyStoke.keyCode, keyStoke.modifiers)
     if (delayBetweenShortcutAndTypingMs > 0) Pause.pause(delayBetweenShortcutAndTypingMs.toLong())
     keyCodeArray.forEach { fastPressAndReleaseKeyWithoutModifiers(keyCode = it); Pause.pause(10) }
   }

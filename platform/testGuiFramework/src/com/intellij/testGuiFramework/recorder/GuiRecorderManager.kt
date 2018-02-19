@@ -10,7 +10,7 @@ import java.util.concurrent.Future
  */
 object GuiRecorderManager {
 
-  enum class States {IDLE, COMPILING, COMPILATION_ERROR, COMPILATION_DONE, RUNNING, RUNNING_ERROR, TEST_INIT }
+  enum class States { IDLE, COMPILING, COMPILATION_ERROR, COMPILATION_DONE, RUNNING, RUNNING_ERROR, TEST_INIT }
 
   var state: States = States.IDLE
 

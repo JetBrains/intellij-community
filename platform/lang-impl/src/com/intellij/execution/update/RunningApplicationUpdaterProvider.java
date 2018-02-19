@@ -7,6 +7,10 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * {@link UpdateRunningApplicationAction} is intended to perform an update of running application.
+ * Via implementing this extension it's possible to provide an updater and make the action available for particular running application.
+ */
 public interface RunningApplicationUpdaterProvider {
   ExtensionPointName<RunningApplicationUpdaterProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.runningApplicationUpdaterProvider");

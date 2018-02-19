@@ -515,7 +515,8 @@ public int method(int parameter) {
     getSettings().WRAP_LONG_LINES = true
 
     doClassTest(
-      """    /**
+      """
+    /**
      * @return <pre>this is a return value documentation with a very long description
      * that is longer than the right margin.</pre>
      */
@@ -523,8 +524,9 @@ public int method(int parameter) {
         return 0;
     }""",
 
-      """/**
- * @return <pre>this is a return value documentation with a very long
+"\n/**\n" +
+" * @return <pre>this is a return value documentation with a very long " +
+"""
  * description
  * that is longer than the right margin.</pre>
  */
@@ -1144,6 +1146,7 @@ interface Test {
      *     class Foo {
      *         private int x;
      *         private int y;
+     *         // The comment inside pre tag which shouldn't be wrapped despite being long
      *     }
      * </pre>
      * @return Some value
@@ -1163,6 +1166,7 @@ interface Test {
      *     class Foo {
      *         private int x;
      *         private int y;
+     *         // The comment inside pre tag which shouldn't be wrapped despite being long
      *     }
      * </pre>
      *

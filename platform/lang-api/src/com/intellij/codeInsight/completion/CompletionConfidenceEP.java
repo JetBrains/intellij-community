@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public class CompletionConfidenceEP extends LanguageExtensionPoint<CompletionContributor> {
+public class CompletionConfidenceEP extends LanguageExtensionPoint<CompletionConfidence> {
   private static final LanguageExtension<CompletionConfidence> INSTANCE = new LanguageExtension<CompletionConfidence>("com.intellij.completion.confidence") {
     @NotNull
     @Override

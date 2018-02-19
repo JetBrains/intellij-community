@@ -1150,7 +1150,8 @@ public class UsageViewImpl implements UsageView {
     }
   }
 
-  void appendUsagesInBulk(@NotNull Collection<Usage> usages) {
+  @SuppressWarnings("WeakerAccess")
+  public void appendUsagesInBulk(@NotNull Collection<Usage> usages) {
     addUpdateRequest(ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
       for (Usage usage : usages) {
         doAppendUsage(usage);

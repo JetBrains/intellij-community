@@ -16,6 +16,7 @@
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
@@ -146,13 +147,24 @@ public class ClassLoadingUtils {
       mirrors.add(((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).mirrorOf(b));
     }
 
-    int loaded = 0;
-    while (loaded < mirrors.size()) {
-      int chunkSize = Math.min(BATCH_SIZE, mirrors.size() - loaded);
-      reference.setValues(loaded, mirrors, loaded, chunkSize);
-      loaded += chunkSize;
+    if (DebuggerUtils.isAndroidVM(arrayClass.virtualMachine())) {
+      // Android VM has a limited buffer size to receive JDWP data (see https://issuetracker.google.com/issues/73584940)
+      setChuckByChunk(reference, mirrors);
+    }
+    else {
+      reference.setValues(mirrors);
     }
 
     return reference;
+  }
+
+  private static void setChuckByChunk(ArrayReference reference, List<? extends Value> values)
+    throws ClassNotLoadedException, InvalidTypeException {
+    int loaded = 0;
+    while (loaded < values.size()) {
+      int chunkSize = Math.min(BATCH_SIZE, values.size() - loaded);
+      reference.setValues(loaded, values, loaded, chunkSize);
+      loaded += chunkSize;
+    }
   }
 }

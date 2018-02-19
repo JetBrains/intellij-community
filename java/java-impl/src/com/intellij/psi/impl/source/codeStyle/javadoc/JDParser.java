@@ -362,7 +362,7 @@ public class JDParser {
         continue;
       }
       while (true) {
-        if (seq.length() < width) {
+        if (seq.length() < width || isMarked) {
           // keep remaining line and proceed with next paragraph
           seq = isMarked ? seq : seq.trim();
           list.add(seq);

@@ -18,6 +18,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.containers.ContainerUtil;
@@ -155,7 +156,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     if (containingClass == null) {
       return null;
     }
-    final String qualifiedName = containingClass.getQualifiedName();
+    final String qualifiedName = ClassUtil.getJVMClassName(containingClass);
     if (qualifiedName != null) {
       return Pair.create(qualifiedName, method.getName());
     }

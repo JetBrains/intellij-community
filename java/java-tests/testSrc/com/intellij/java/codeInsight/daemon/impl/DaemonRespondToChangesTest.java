@@ -1220,8 +1220,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
 
-  // disabled for now
-  public void _testSOEInEndlessAppendChainPerformance() {
+  public void testSOEInEndlessAppendChainPerformance() {
     StringBuilder text = new StringBuilder("class S { String ffffff =  new StringBuilder()\n");
     for (int i=0; i<2000; i++) {
       text.append(".append(").append(i).append(")\n");
@@ -1229,21 +1228,34 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     text.append(".toString();<caret>}");
     configureByText(StdFileTypes.JAVA, text.toString());
 
-    PlatformTestUtil.startPerformanceTest("tree visitors", 30000, () -> {
+    PlatformTestUtil.startPerformanceTest("highlighting deep call chain", 60_000, () -> {
       List<HighlightInfo> infos = highlightErrors();
       assertEmpty(infos);
-      type("kjhgas");
-      List<HighlightInfo> errors = highlightErrors();
-      assertFalse(errors.isEmpty());
+      type("k");
+      assertNotEmpty(highlightErrors());
       backspace();
+    }).usesAllCPUCores().assertTiming();
+  }
+
+  public void testPerformanceOfHighlightingLongCallChainWithHierarchyAndGenerics() {
+    String text = "class Foo { native Foo foo(); }\n" +
+                  "class Bar<T extends Foo> extends Foo {\n" +
+                  "  native Bar<T> foo();" +
+                  "}\n" +
+                  "class Goo extends Bar<Goo> {}\n" +
+                  "class S { void x(Goo g) { g\n" +
+                  StringUtil.repeat(".foo()\n", 2000) +
+                  ".toString(); } }";
+    configureByText(StdFileTypes.JAVA, text);
+
+    PlatformTestUtil.startPerformanceTest("highlighting deep call chain", 90_000, () -> {
+      assertEmpty(highlightErrors());
+
+      type("k");
+      assertNotEmpty(highlightErrors());
+
       backspace();
-      backspace();
-      backspace();
-      backspace();
-      backspace();
-      infos = highlightErrors();
-      assertEmpty(infos);
-    }).useLegacyScaling().assertTiming();
+    }).usesAllCPUCores().assertTiming();
   }
 
 
