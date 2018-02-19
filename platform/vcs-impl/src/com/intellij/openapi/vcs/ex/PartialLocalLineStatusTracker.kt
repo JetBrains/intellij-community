@@ -144,15 +144,21 @@ class PartialLocalLineStatusTracker(project: Project,
 
   @CalledInAwt
   fun setBaseRevision(vcsContent: CharSequence, changelistId: String?) {
-    currentMarker = if (changelistId != null) ChangeListMarker(changelistId) else null
-    try {
-      setBaseRevision(vcsContent)
-      dropExistingUndoActions()
-    }
-    finally {
-      currentMarker = null
+    setBaseRevision(vcsContent) {
+      if (changelistId != null) {
+        changeListManager.executeUnderDataLock {
+          if (changeListManager.getChangeList(changelistId) != null) {
+            documentTracker.writeLock {
+              currentMarker = ChangeListMarker(changelistId)
+              documentTracker.updateFrozenContentIfNeeded()
+              currentMarker = null
+            }
+          }
+        }
+      }
     }
 
+    dropExistingUndoActions()
     if (isValid()) eventDispatcher.multicaster.onBecomingValid(this)
   }
 
