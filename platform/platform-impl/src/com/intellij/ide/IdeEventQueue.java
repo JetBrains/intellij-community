@@ -35,6 +35,7 @@ import com.intellij.openapi.keymap.impl.KeyState;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -1295,18 +1296,14 @@ public class IdeEventQueue extends EventQueue {
 
   private final Set<Shortcut> shortcutsShowingPopups = new HashSet<>();
 
-  private final Set<String> actionsShowingPopupsList = new HashSet<>();
+  private final List<String> actionsShowingPopupsList = new ArrayList<>();
   private long lastTypeaheadTimestamp = -1;
 
   private Set<Shortcut> getShortcutsShowingPopups () {
     if (KeymapManager.getInstance().getActiveKeymap() != null) {
-      // move to a config
-      actionsShowingPopupsList.add("GotoClass");
-      actionsShowingPopupsList.add("GotoFile");
-      actionsShowingPopupsList.add("GotoSymbol");
-      actionsShowingPopupsList.add("FindInPath");
-      actionsShowingPopupsList.add("ReplaceInPath");
 
+      String actionsAwareTypeaheadActionsList = Registry.get("action.aware.typeahead.actions.list").asString();
+      actionsShowingPopupsList.addAll(StringUtil.split(actionsAwareTypeaheadActionsList, ","));
       actionsShowingPopupsList.forEach(actionId -> {
         List<Shortcut> shortcuts = Arrays.asList(KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId));
         if (TYPEAHEAD_LOG.isDebugEnabled()) {
