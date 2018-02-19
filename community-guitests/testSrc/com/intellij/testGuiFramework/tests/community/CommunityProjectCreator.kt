@@ -4,6 +4,11 @@ package com.intellij.testGuiFramework.tests.community
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
+import com.intellij.testGuiFramework.util.Key.A
+import com.intellij.testGuiFramework.util.Key.V
+import com.intellij.testGuiFramework.util.Modifier.CONTROL
+import com.intellij.testGuiFramework.util.Modifier.META
+import com.intellij.testGuiFramework.util.plus
 import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
 import org.fest.swing.exception.WaitTimedOutError
@@ -48,6 +53,26 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
           projectView {
             path(project.name, "src", "com.company", "Main").doubleClick()
           }
+        }
+      }
+    }
+  }
+
+  fun createJavaClass(fileContent: String, fileName: String = "Test") {
+    with(guiTestCase) {
+      ideFrame {
+        projectView {
+          path(project.name, "src", "com.company").rightClick()
+        }
+        popup("New", "Java Class")
+        dialog("Create New Class") {
+          typeText(fileName)
+          button("OK").click()
+        }
+        editor(fileName + ".java") {
+          shortcut(CONTROL + A, META + A)
+          copyToClipboard(fileContent)
+          shortcut(CONTROL + V, META + V)
         }
       }
     }
