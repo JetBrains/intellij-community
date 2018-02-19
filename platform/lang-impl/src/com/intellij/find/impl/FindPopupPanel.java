@@ -984,7 +984,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     }
   }
 
-  void scheduleResultsUpdate() {
+  @SuppressWarnings("WeakerAccess")
+  public void scheduleResultsUpdate() {
     if (myBalloon == null || !myBalloon.isVisible()) return;
     if (mySearchRescheduleOnCancellationsAlarm == null || mySearchRescheduleOnCancellationsAlarm.isDisposed()) return;
     updateControls();
