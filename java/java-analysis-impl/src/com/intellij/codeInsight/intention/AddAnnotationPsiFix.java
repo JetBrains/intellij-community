@@ -98,7 +98,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Add '" + StringUtil.getShortName(myAnnotation) + "' Annotation";
+    return CodeInsightBundle.message("intention.add.annotation.family");
   }
 
   @Override
