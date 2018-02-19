@@ -27,13 +27,17 @@ public class PropertyFalsified extends RuntimeException {
   private String calcMessage() {
     StringBuilder traceBuilder = new StringBuilder();
 
+    String exampleString = valueToString(failure.getMinimalCounterexample(), traceBuilder);
+
     Throwable failureReason = failure.getMinimalCounterexample().getExceptionCause();
-    String msg = "Falsified on " + valueToString(failure.getMinimalCounterexample(), traceBuilder) + "\n" +
-                 getMinimizationStats() +
-                 failure.iteration.printToReproduce(failureReason);
+    Throwable rootCause = failureReason == null ? null : getRootCause(failureReason);
+    String msg = rootCause != null ? "Failed with " + rootCause + "\nOn " + exampleString : "Falsified on " + exampleString;
+
+    msg += "\n" + 
+           getMinimizationStats() +
+           failure.iteration.printToReproduce(failureReason);
 
     if (failureReason != null) {
-      Throwable rootCause = getRootCause(failureReason);
       appendTrace(traceBuilder, 
                   rootCause == failureReason ? "Property failure reason: " : "Property failure reason, innermost exception (see full trace below): ", 
                   rootCause);
