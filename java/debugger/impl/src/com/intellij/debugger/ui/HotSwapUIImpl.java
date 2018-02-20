@@ -341,9 +341,6 @@ public class HotSwapUIImpl extends HotSwapUI {
         return;
       }
 
-      CompileScope compileScope = compileContext.getCompileScope();
-      HotSwapStatusListener callback = compileScope != null ? compileScope.getUserData(HOT_SWAP_CALLBACK_KEY) : null;
-
       if (errors == 0 && !aborted && myPerformHotswapAfterThisCompilation) {
         for (HotSwapVetoableListener listener : myListeners) {
           if (!listener.shouldHotSwap(compileContext)) {
@@ -353,6 +350,9 @@ public class HotSwapUIImpl extends HotSwapUI {
 
         List<DebuggerSession> sessions = getHotSwappableDebugSessions();
         if (!sessions.isEmpty()) {
+          CompileScope compileScope = compileContext.getCompileScope();
+          HotSwapStatusListener callback = compileScope != null ? compileScope.getUserData(HOT_SWAP_CALLBACK_KEY) : null;
+
           hotSwapSessions(sessions, generated, callback);
         }
       }
