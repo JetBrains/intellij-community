@@ -598,15 +598,23 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
           if (classAttrs == null) {
             return null;
           }
-          return StreamEx.of(classAttrs)
-            .map(RatedResolveResult::getElement)
-            .select(PyTargetExpression.class)
-            .filter(x -> ScopeUtil.getScopeOwner(x) instanceof PyClass)
-            .map(x -> getTypeFromTargetExpressionAnnotation(x, context))
-            .nonNull()
-            .map(Ref::get)
-            .foldLeft(PyUnionType::union)
-            .orElse(null);
+          final Ref<PyType> combined = StreamEx.of(classAttrs)
+                                               .map(RatedResolveResult::getElement)
+                                               .select(PyTargetExpression.class)
+                                               .filter(x -> ScopeUtil.getScopeOwner(x) instanceof PyClass)
+                                               .map(x -> getTypeFromTargetExpressionAnnotation(x, context))
+                                               .foldLeft(null, (accType, hintType) -> {
+                                                 if (hintType == null) {
+                                                   return accType;
+                                                 }
+                                                 else if (accType == null) {
+                                                   return hintType;
+                                                 }
+                                                 else {
+                                                   return Ref.create(PyUnionType.union(accType.get(), hintType.get()));
+                                                 }
+                                               });
+          return Ref.deref(combined);
         }
       }
       else {
