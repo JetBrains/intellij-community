@@ -11,12 +11,9 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.TailTypeDecorator
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
-import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
-import com.jetbrains.python.psi.PyTypedElement
-import com.jetbrains.python.psi.resolve.PyResolveContext
-import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import icons.PythonIcons
 
@@ -46,27 +43,36 @@ fun CompletionParameters.getTypeEvalContext() = TypeEvalContext.codeCompletion(o
 
 
 /**
- * Add method completion to to result.
+ * Add method completion to result.
  * @param result destination
- * @param element if provided will check if method does not exist already
+ * @param pyClass if provided will check if method does not exist already
  * @param builderPostprocessor function to be used to tune lookup builder
  */
 fun addMethodToResult(result: CompletionResultSet,
-                      element: PyTypedElement?,
+                      pyClass: PyClass?,
                       typeEvalContext: TypeEvalContext,
                       methodName: String,
                       methodParentheses: String = "(self)",
                       builderPostprocessor: ((LookupElementBuilder) -> LookupElementBuilder)? = null) {
-  val type = if (element != null) typeEvalContext.getType(element) else null
-  if (type != null) {
-    val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext)
+  if (pyClass?.findMethodByName(methodName, false, typeEvalContext) != null) return
 
-    if (type.resolveMember(methodName, null, AccessDirection.READ, resolveContext)?.firstOrNull()?.element != null) {
-      return
-    }
-  }
+  val item = LookupElementBuilder.create(methodName + methodParentheses).withIcon(PythonIcons.Python.Nodes.Cyan_dot)
+  result.addElement(TailTypeDecorator.withTail(builderPostprocessor?.invoke(item) ?: item, TailType.CASE_COLON))
+}
 
-  val item = LookupElementBuilder.create(methodName + methodParentheses)
-    .withIcon(PythonIcons.Python.Nodes.Cyan_dot)
+/**
+ * Add function completion to result.
+ * @param result destination
+ * @param pyFile if provided will check if function does not exist already
+ * @param builderPostprocessor function to be used to tune lookup builder
+ */
+fun addFunctionToResult(result: CompletionResultSet,
+                        pyFile: PyFile?,
+                        functionName: String,
+                        functionParentheses: String = "()",
+                        builderPostprocessor: ((LookupElementBuilder) -> LookupElementBuilder)? = null) {
+  if (pyFile?.findTopLevelFunction(functionName) != null) return
+
+  val item = LookupElementBuilder.create(functionName + functionParentheses).withIcon(PythonIcons.Python.Nodes.Cyan_dot)
   result.addElement(TailTypeDecorator.withTail(builderPostprocessor?.invoke(item) ?: item, TailType.CASE_COLON))
 }
