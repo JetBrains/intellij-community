@@ -68,13 +68,4 @@ public class ExceptionTest extends PropertyCheckerTestCase {
     }
   }
 
-  public void testRecommendReplay() {
-    PropertyFalsified e = checkFails(forAllStable(integers()), i -> {
-      throw new AssertionError("fail");
-    });
-
-    assertTrue(e.getMessage().contains("replayMinimalExample"));
-    assertNotNull(e.replayMinimalExample());
-  }
-
 }

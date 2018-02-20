@@ -36,13 +36,18 @@ abstract class PropertyCheckerTestCase extends TestCase {
     System.out.println("Value: " + e.getBreakingValue());
     System.out.println("Data: " + e.getData());
     */
-    assertEquals(minimizationSteps, failure.getTotalMinimizationExampleCount()); // to track if framework changes don't increase shrinking time significantly on average
-    assertEquals(e.getBreakingValue(), generator.getGeneratorFunction().apply(e.getData()));
+    assertEquals(minimizationSteps, failure.getTotalMinimizationExampleCount()); // to track that framework changes don't increase shrinking time significantly on average
+    assertEquals(e.getBreakingValue(), generator.getGeneratorFunction().apply(((CounterExampleImpl)failure.getMinimalCounterexample()).createReplayData()));
+    
+    String strData = failure.getMinimalCounterexample().getSerializedData();
+    //noinspection deprecation
+    assertNotNull(checkFails(PropertyChecker.forAll(generator).rechecking(strData), predicate));
 
     return failure;
   }
 
   protected static <T> PropertyChecker<T> forAllStable(Generator<T> generator) {
+    //noinspection deprecation
     return PropertyChecker.forAll(generator).withSeed(0);
   }
 }

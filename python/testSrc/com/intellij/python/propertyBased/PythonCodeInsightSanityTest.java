@@ -93,7 +93,7 @@ public class PythonCodeInsightSanityTest extends PyEnvTestCase {
 
       PropertyChecker<FileWithActions> checker = PropertyChecker.forAll(actionsOnPyFiles(fileActions, fixture, pathAndFixture.first));
       if (seedToRepeat != null) {
-        checker = checker.rechecking(seedToRepeat.first, seedToRepeat.second);
+        checker = checker.recheckingIteration(seedToRepeat.first, seedToRepeat.second);
       }
       checker.shouldHold(FileWithActions::runActions);
     });

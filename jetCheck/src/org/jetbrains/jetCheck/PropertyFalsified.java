@@ -35,7 +35,7 @@ public class PropertyFalsified extends RuntimeException {
 
     msg += "\n" + 
            getMinimizationStats() +
-           failure.iteration.printToReproduce(failureReason);
+           "\n" + failure.iteration.printToReproduce(failureReason, failure.getMinimalCounterexample()) + "\n";
 
     if (failureReason != null) {
       appendTrace(traceBuilder, 
@@ -126,16 +126,4 @@ public class PropertyFalsified extends RuntimeException {
     return failure.getMinimalCounterexample().getExampleValue();
   }
 
-  public DataStructure getData() {
-    return failure.getMinimalCounterexample().createReplayData();
-  }
-
-  /**
-   * Re-invoke the generator and the property check on the minimal counter-example found after testing and shrinking. Useful for debugging.<p/>
-   * 
-   * The same as {@code getFailure().getMinimalCounterexample().replay()}.
-   */
-  public PropertyFailure.CounterExample<?> replayMinimalExample() {
-    return failure.getMinimalCounterexample().replay();
-  }
 }
