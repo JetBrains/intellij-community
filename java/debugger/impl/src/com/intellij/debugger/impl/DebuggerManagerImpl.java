@@ -606,6 +606,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       properties.setProperty((point.isCapture() ? "capture" : "insert") + idx++,
                              point.myClassName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
                              point.myMethodName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
+                             point.myMethodDesc + CaptureSettingsProvider.AgentPoint.SEPARATOR +
                              point.myKey.asString());
     }
     try {
