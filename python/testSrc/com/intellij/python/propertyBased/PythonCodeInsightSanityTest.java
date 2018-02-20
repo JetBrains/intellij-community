@@ -25,14 +25,17 @@ import com.intellij.testFramework.propertyBased.*;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import org.jetbrains.jetCheck.Generator;
+import org.jetbrains.jetCheck.ImperativeCommand;
 import org.jetbrains.jetCheck.PropertyChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jetCheck.Scenario;
 import org.junit.Test;
 
 import java.io.File;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * @author Ilya.Kazakevich
@@ -67,16 +70,15 @@ public class PythonCodeInsightSanityTest extends PyEnvTestCase {
   public void testReparse() {
     runSanityTest(pathAndFixture -> {
       final CodeInsightTestFixture fixture = pathAndFixture.second;
-      PropertyChecker.forAll(actionsOnPyFiles(MadTestingUtil::randomEditsWithReparseChecks, fixture,
-                                              new File(fixture.getTestDataPath(), "sanity").getPath()))
-        .shouldHold(FileWithActions::runActions);
+      ImperativeCommand.checkScenarios(actionsOnPyFiles(MadTestingUtil::randomEditsWithReparseChecks, fixture,
+                                              new File(fixture.getTestDataPath(), "sanity").getPath()));
     });
   }
 
   @NotNull
-  private static Generator<FileWithActions> actionsOnPyFiles(@NotNull final Function<PsiFile, Generator<? extends MadTestingAction>> fileActions,
-                                                             @NotNull final CodeInsightTestFixture fixture,
-                                                             @NotNull final String testDataPath) {
+  private static Supplier<ImperativeCommand> actionsOnPyFiles(@NotNull final Function<PsiFile, Generator<? extends MadTestingAction>> fileActions,
+                                                              @NotNull final CodeInsightTestFixture fixture,
+                                                              @NotNull final String testDataPath) {
 
     return MadTestingUtil.actionsOnFileContents(fixture, testDataPath, f -> f.getName().endsWith(".py"), fileActions);
   }
@@ -91,11 +93,12 @@ public class PythonCodeInsightSanityTest extends PyEnvTestCase {
                         Generator.constant(new StripTestDataMarkup(file)),
                         DeleteRange.psiRangeDeletions(file));
 
-      PropertyChecker<FileWithActions> checker = PropertyChecker.forAll(actionsOnPyFiles(fileActions, fixture, pathAndFixture.first));
+      //todo use ImperativeCommand.checkScenarios like in other tests
+      PropertyChecker<Scenario> checker = PropertyChecker.forAll(ImperativeCommand.scenarios(actionsOnPyFiles(fileActions, fixture, pathAndFixture.first)));
       if (seedToRepeat != null) {
         checker = checker.recheckingIteration(seedToRepeat.first, seedToRepeat.second);
       }
-      checker.shouldHold(FileWithActions::runActions);
+      checker.shouldHold(Scenario::ensureSuccessful);
     });
   }
 

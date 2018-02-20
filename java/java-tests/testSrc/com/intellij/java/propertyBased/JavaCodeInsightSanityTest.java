@@ -60,7 +60,8 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
                       InvokeCompletion.completions(file, new JavaCompletionPolicy()),
                       Generator.constant(new StripTestDataMarkup(file)),
                       DeleteRange.psiRangeDeletions(file));
-    ImperativeCommand.checkScenarios(actionsOnJavaFiles(fileActions));
+    ImperativeCommand.checkScenarios(
+      actionsOnJavaFiles(fileActions));
   }
 
   public void testPreserveComments() {
@@ -71,7 +72,8 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
       Function<PsiFile, Generator<? extends MadTestingAction>> fileActions = file ->
         Generator.anyOf(InvokeIntention.randomIntentions(file, new JavaCommentingStrategy()),
                         InsertLineComment.insertComment(file, "//simple end comment\n"));
-      ImperativeCommand.checkScenarios(actionsOnJavaFiles(fileActions));
+      ImperativeCommand.checkScenarios(
+        actionsOnJavaFiles(fileActions));
     }
     finally {
       AbstractJavaFormatterTest.getJavaSettings().ENABLE_JAVADOC_FORMATTING = oldSettings;
@@ -80,7 +82,7 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
 
   @NotNull
   private Supplier<ImperativeCommand> actionsOnJavaFiles(Function<PsiFile, Generator<? extends MadTestingAction>> fileActions) {
-    return MadTestingUtil.commandsOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"), fileActions);
+    return MadTestingUtil.actionsOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"), fileActions);
   }
 
   public void testReparse() {

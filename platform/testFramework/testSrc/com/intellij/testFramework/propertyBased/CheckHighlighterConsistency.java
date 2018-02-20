@@ -23,8 +23,10 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LexerTestCase;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
 import org.jetbrains.jetCheck.Generator;
+import org.junit.Assert;
+
+import java.util.function.Function;
 
 /**
  * Checks that incrementally updated editor highlighter produces the same result as it would
@@ -78,16 +80,12 @@ public class CheckHighlighterConsistency implements MadTestingAction {
     return tokens.toString();
   }
 
-  public static boolean runActionsInEditor(FileWithActions actions) {
-    FileEditorManager.getInstance(actions.getPsiFile().getProject()).openFile(actions.getPsiFile().getVirtualFile(), true);
-    return actions.runActions();
-  }
-
   @NotNull
-  public static Generator<MadTestingAction> randomEditsWithHighlighterChecks(PsiFile file) {
+  public static final Function<PsiFile, Generator<? extends MadTestingAction>> randomEditsWithHighlighterChecks = file -> {
+    FileEditorManager.getInstance(file.getProject()).openFile(file.getVirtualFile(), true);
     return Generator.anyOf(Generator.constant(new CheckHighlighterConsistency(file)),
                            InsertString.asciiInsertions(file),
                            DeleteRange.psiRangeDeletions(file));
-  }
+  };
 
 }
