@@ -1006,27 +1006,25 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     String title = myManager.getTitle(element);
     final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
     if (myEffectiveExternalUrl == null) {
-      if (!isExternalHandler(provider)) {
-        final PsiElement originalElement = DocumentationManager.getOriginalElement(element);
-        List<String> urls = provider.getUrlFor(element, originalElement);
-        if (urls != null) {
-          boolean hasBadUrl = false;
-          StringBuilder result = new StringBuilder();
-          for (String url : urls) {
-            String link = getLink(title, url);
-            if (link == null) {
-              hasBadUrl = true;
-              break;
-            }
-
-            if (result.length() > 0) result.append("<p>");
-            result.append(link);
+      final PsiElement originalElement = DocumentationManager.getOriginalElement(element);
+      List<String> urls = provider.getUrlFor(element, originalElement);
+      if (urls != null) {
+        boolean hasBadUrl = false;
+        StringBuilder result = new StringBuilder();
+        for (String url : urls) {
+          String link = getLink(title, url);
+          if (link == null) {
+            hasBadUrl = true;
+            break;
           }
-          if (!hasBadUrl) return result.toString();
+
+          if (result.length() > 0) result.append("<p>");
+          result.append(link);
         }
-        else {
-          return null;
-        }
+        if (!hasBadUrl) return result.toString();
+      }
+      else {
+        return null;
       }
     } else {
       String link = getLink(title, myEffectiveExternalUrl);
@@ -1049,16 +1047,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     result.append(title.substring(4)).append(" on ").append(hostname);
     result.append("</a>");
     return result.toString();
-  }
-
-  private static boolean isExternalHandler(DocumentationProvider provider) {
-    if (provider instanceof CompositeDocumentationProvider) {
-      for (DocumentationProvider documentationProvider : ((CompositeDocumentationProvider)provider).getProviders()) {
-        if (documentationProvider instanceof ExternalDocumentationHandler) return true;
-      }
-      return false;
-    }
-    return provider instanceof ExternalDocumentationHandler;
   }
 
   private static String getHostname(String url) {
