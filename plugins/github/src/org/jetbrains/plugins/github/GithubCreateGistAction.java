@@ -38,10 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent;
 import org.jetbrains.plugins.github.ui.GithubCreateGistDialog;
-import org.jetbrains.plugins.github.util.AuthLevel;
-import org.jetbrains.plugins.github.util.GithubAuthDataHolder;
-import org.jetbrains.plugins.github.util.GithubNotifications;
-import org.jetbrains.plugins.github.util.GithubUtil;
+import org.jetbrains.plugins.github.util.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -101,11 +98,17 @@ public class GithubCreateGistAction extends DumbAwareAction {
                                        @Nullable final VirtualFile file,
                                        @Nullable final VirtualFile[] files) {
 
+    GithubSettings settings = GithubSettings.getInstance();
     // Ask for description and other params
-    final GithubCreateGistDialog dialog = new GithubCreateGistDialog(project, editor, files, file);
+    GithubCreateGistDialog dialog = new GithubCreateGistDialog(project,
+                                                               getFileName(editor, files),
+                                                               settings.isPrivateGist(),
+                                                               settings.isOpenInBrowserGist());
     if (!dialog.showAndGet()) {
       return;
     }
+    settings.setPrivateGist(dialog.isSecret());
+    settings.setOpenInBrowserGist(dialog.isOpenInBrowser());
 
     final Ref<String> url = new Ref<>();
     new Task.Backgroundable(project, "Creating Gist...") {
@@ -132,6 +135,17 @@ public class GithubCreateGistAction extends DumbAwareAction {
         }
       }
     }.queue();
+  }
+
+  @Nullable
+  private static String getFileName(@Nullable Editor editor, @Nullable VirtualFile[] files) {
+    if (files != null && files.length == 1 && !files[0].isDirectory()) {
+      return files[0].getName();
+    }
+    if (editor != null) {
+      return "";
+    }
+    return null;
   }
 
   @NotNull
