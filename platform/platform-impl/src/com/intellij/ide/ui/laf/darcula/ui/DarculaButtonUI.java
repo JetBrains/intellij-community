@@ -96,7 +96,7 @@ public class DarculaButtonUI extends BasicButtonUI {
 
         g2.translate(r.x, r.y);
 
-        float arc = isSquare(c) ? JBUI.scale(2.0f) : DarculaUIUtil.arc();
+        float arc = DarculaUIUtil.buttonArc();
         float bw = DarculaUIUtil.bw();
 
         if (c.isEnabled()) {
