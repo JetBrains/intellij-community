@@ -181,6 +181,12 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     assertEquals("this", myItems[1].getLookupString());
   }
 
+  public void testAfterPackageAnnotation() {
+    configureFromFileText("package-info.java", "@Anno <caret>");
+    complete();
+    testByCount(1, "package");
+  }
+
   private void doTest() {
     configureByTestName();
     checkResultByTestName();
