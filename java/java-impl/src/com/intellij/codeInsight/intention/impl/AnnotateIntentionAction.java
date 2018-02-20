@@ -177,7 +177,7 @@ public class AnnotateIntentionAction extends BaseIntentionAction implements LowP
 
     @Override
     public boolean isAvailable(PsiModifierListOwner owner) {
-      return AddNullableNotNullAnnotationFix.canAnnotate(owner);
+      return AddAnnotationPsiFix.isNullabilityAnnotationApplicable(owner);
     }
 
     @NotNull
@@ -196,7 +196,7 @@ public class AnnotateIntentionAction extends BaseIntentionAction implements LowP
 
     @Override
     public boolean isAvailable(PsiModifierListOwner owner) {
-      return AddNullableNotNullAnnotationFix.canAnnotate(owner);
+      return AddAnnotationPsiFix.isNullabilityAnnotationApplicable(owner);
     }
 
     @NotNull
