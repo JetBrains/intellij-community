@@ -603,17 +603,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
                                                .select(PyTargetExpression.class)
                                                .filter(x -> ScopeUtil.getScopeOwner(x) instanceof PyClass)
                                                .map(x -> getTypeFromTargetExpressionAnnotation(x, context))
-                                               .foldLeft(null, (accType, hintType) -> {
-                                                 if (hintType == null) {
-                                                   return accType;
-                                                 }
-                                                 else if (accType == null) {
-                                                   return hintType;
-                                                 }
-                                                 else {
-                                                   return Ref.create(PyUnionType.union(accType.get(), hintType.get()));
-                                                 }
-                                               });
+                                               .collect(PyTypeUtil.toUnionFromRef());
           return Ref.deref(combined);
         }
       }
