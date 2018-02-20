@@ -20,7 +20,6 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import java.util.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.inspections.quickfix.PyRemoveDictKeyQuickFix;
 import com.jetbrains.python.psi.*;
@@ -28,6 +27,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -63,13 +63,13 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
         final Map<String, PyElement> map = new HashMap<>();
         for (PyExpression exp : elements) {
           final PyExpression key = ((PyKeyValueExpression)exp).getKey();
-          if (key instanceof PyNumericLiteralExpression
-                  || key instanceof PyStringLiteralExpression || key instanceof PyReferenceExpression) {
-            if (map.keySet().contains(key.getText())) {
-              registerProblem(key, "Dictionary contains duplicate keys " + key.getText(), new PyRemoveDictKeyQuickFix());
-              registerProblem(map.get(key.getText()), "Dictionary contains duplicate keys " + key.getText(), new PyRemoveDictKeyQuickFix());
+          final String keyValue = getKeyValue(key);
+          if (keyValue != null) {
+            if (map.keySet().contains(keyValue)) {
+              registerProblem(key, "Dictionary contains duplicate keys " + keyValue, new PyRemoveDictKeyQuickFix());
+              registerProblem(map.get(keyValue), "Dictionary contains duplicate keys " + keyValue, new PyRemoveDictKeyQuickFix());
             }
-            map.put(key.getText(), key);
+            map.put(keyValue, key);
           }
         }
       }
@@ -99,11 +99,22 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
       }
     }
 
+    @Nullable
+    private static String getKeyValue(@NotNull PsiElement node) {
+      final PsiElement parent = node.getParent();
+      if (parent instanceof PyKeywordArgument && ((PyKeywordArgument)parent).getKeywordNode() == node) {
+        return ((PyKeywordArgument)parent).getKeyword();
+      }
+      return node instanceof PyStringLiteralExpression
+             ? ((PyStringLiteralExpression)node).getStringValue()
+             : node instanceof PyLiteralExpression || node instanceof PyReferenceExpression
+               ? node.getText()
+               : null;
+    }
+
     private void checkKey(final Map<String, PsiElement> map, final PsiElement node) {
       if (node == null) return;
-      String key = node.getText();
-      if (node instanceof PyStringLiteralExpression)
-        key = ((PyStringLiteralExpression)node).getStringValue();
+      String key = getKeyValue(node);
       if (map.keySet().contains(key)) {
         registerProblem(node, "Dictionary contains duplicate keys " + key);
         registerProblem(map.get(key), "Dictionary contains duplicate keys " + key);
