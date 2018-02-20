@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy
 
 import com.intellij.codeInsight.navigation.CtrlMouseHandler
@@ -62,6 +48,23 @@ new Gr().fo<caret>o()
 <div class='definition'><pre><a href="psi_element://Gr"><code>Gr</code></a><br>void&nbsp;<b>foo</b>()</pre></div><div class='content'>
      Use <a href="psi_element://Gr#bar()"><code>bar()</code></a> from class <a href="psi_element://Gr"><code>Gr</code></a> instead
    <p></div><table class='sections'><p></table>'''
+  }
+
+  void 'test link with label'() {
+    doTest '''\
+/**
+ * check this out {@link java.lang.CharSequence character sequences}
+ */
+def docs() {}
+
+<caret>docs()
+''', '''<div class='definition'><pre>\
+<a href="psi_element://_"><code>_</code></a><br>\
+<a href="psi_element://java.lang.Object"><code>Object</code></a>&nbsp;<b>docs</b>()</pre></div>\
+<div class='content'>
+   check this out <a href="psi_element://java.lang.CharSequence"><code>character sequences</code></a>
+ <p></div>\
+<table class='sections'><p></table>'''
   }
 
   void 'test untyped local variable'() {
