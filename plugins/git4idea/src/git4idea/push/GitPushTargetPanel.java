@@ -282,9 +282,9 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer, boolean isSelected, boolean isActive, @Nullable String forceRenderedText) {
 
-    SimpleTextAttributes targetTextAttributes = PushLogTreeUtil.addTransparencyIfNeeded(SimpleTextAttributes.REGULAR_ATTRIBUTES, isActive);
+    SimpleTextAttributes targetTextAttributes = PushLogTreeUtil.addTransparencyIfNeeded(renderer, SimpleTextAttributes.REGULAR_ATTRIBUTES, isActive);
     if (myError != null) {
-      renderer.append(myError, PushLogTreeUtil.addTransparencyIfNeeded(SimpleTextAttributes.ERROR_ATTRIBUTES, isActive));
+      renderer.append(myError, PushLogTreeUtil.addTransparencyIfNeeded(renderer, SimpleTextAttributes.ERROR_ATTRIBUTES, isActive));
     }
     else {
       Collection<GitRemote> remotes = myRepository.getRemotes();
