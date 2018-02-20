@@ -206,7 +206,8 @@ public class PlatformTestUtil {
 
     boolean expanded = tree.isExpanded(path);
     int childCount = tree.getModel().getChildCount(pathComponent);
-    if (childCount != 0 && (tree.isRootVisible() || pathComponent != tree.getModel().getRoot() || childCount > 0)) {
+    boolean isRoot = pathComponent == tree.getModel().getRoot();
+    if (isRoot && tree.isRootVisible() || childCount > 0) {
       buff.append(expanded ? "-" : "+");
     }
 
