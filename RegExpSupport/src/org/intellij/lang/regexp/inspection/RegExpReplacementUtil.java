@@ -39,11 +39,13 @@ public class RegExpReplacementUtil {
       // use element manipulator to process escape sequences correctly for all supported languages
       PsiElement copy = context.copy(); // create a copy to avoid original element modifications
       PsiElement newElement = manipulator.handleContentChange(copy, text);
-      String newElementText = newElement.getText();
-      TextRange newRange = manipulator.getRangeInElement(newElement);
-      return newElementText.substring(newRange.getStartOffset(), newRange.getEndOffset());
+      if (newElement != null) {
+        String newElementText = newElement.getText();
+        TextRange newRange = manipulator.getRangeInElement(newElement);
+        return newElementText.substring(newRange.getStartOffset(), newRange.getEndOffset());
+      }
     }
-    else if (RegExpElementImpl.isLiteralExpression(context)) {
+    if (RegExpElementImpl.isLiteralExpression(context)) {
       // otherwise, just pretend it is a Java-style string
       return StringUtil.escapeStringCharacters(text);
     }
