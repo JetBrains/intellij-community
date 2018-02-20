@@ -35,6 +35,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -191,8 +192,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
         return new InvertedIndexValueIterator<Value>() {
           private Value current;
           private Object currentValue;
-          private final THashMap<Value, Object> myMapping = ((THashMap<Value, Object>)myInputIdMapping);
-          private final Iterator<Value> iterator = myMapping.keySet().iterator();
+          private final Iterator<Map.Entry<Value, Object>> iterator = ((THashMap<Value, Object>)myInputIdMapping).entrySet().iterator();
 
           @Override
           public boolean hasNext() {
@@ -201,9 +201,10 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
           @Override
           public Value next() {
-            current = iterator.next();
+            Map.Entry<Value, Object> entry = iterator.next();
+            current = entry.getKey();
             Value next = current;
-            currentValue = myMapping.get(next);
+            currentValue = entry.getValue();
             if (next == myNullValue) next = null;
             return next;
           }
