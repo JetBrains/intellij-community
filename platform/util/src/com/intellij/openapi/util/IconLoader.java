@@ -567,9 +567,10 @@ public final class IconLoader {
        * Retrieves the orig icon scaled by the provided scale.
        */
       ImageIcon getOrScaleIcon(final float scale) {
-        updateScale(OBJ_SCALE.of(scale));
+        final ScaleContext ctx = (scale == 1 ? getScaleContext() : (ScaleContext)getScaleContext().copy()); // not modifying this scale context
+        if (scale != 1) ctx.update(OBJ_SCALE.of(scale));
 
-        ImageIcon icon = SoftReference.dereference(scaledIconsCache.get(getScale(PIX_SCALE)));
+        ImageIcon icon = SoftReference.dereference(scaledIconsCache.get(ctx.getScale(PIX_SCALE)));
         if (icon != null) {
           return icon;
         }
@@ -578,17 +579,17 @@ public final class IconLoader {
           image = doWithTmpRegValue("ide.svg.icon", true, new Callable<Image>() {
             @Override
             public Image call() {
-              return loadFromUrl(getScaleContext());
+              return loadFromUrl(ctx);
             }
           });
         }
         else {
-          image = loadFromUrl(getScaleContext());
+          image = loadFromUrl(ctx);
         }
         icon = checkIcon(image, myUrl);
 
         if (icon != null && icon.getIconWidth() * icon.getIconHeight() * 4 < ImageLoader.CACHED_IMAGE_MAX_SIZE) {
-          scaledIconsCache.put(getScale(PIX_SCALE), new SoftReference<ImageIcon>(icon));
+          scaledIconsCache.put(ctx.getScale(PIX_SCALE), new SoftReference<ImageIcon>(icon));
         }
         return icon;
       }

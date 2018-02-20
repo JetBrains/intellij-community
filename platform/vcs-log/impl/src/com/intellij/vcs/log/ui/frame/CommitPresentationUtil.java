@@ -42,6 +42,7 @@ public class CommitPresentationUtil {
   @NotNull static final String SHOW_HIDE_BRANCHES = "show-hide-branches";
   private static final String ELLIPSIS = "...";
   private static final int BIG_CUT_SIZE = 10;
+  private static final double EPSILON = 1.5;
 
   @NotNull
   private static String escapeMultipleSpaces(@NotNull String text) {
@@ -118,7 +119,7 @@ public class CommitPresentationUtil {
 
     if (isSubjectMarginEnabled(project)) {
       int margin = CommitMessageInspectionProfile.getSubjectRightMargin(project);
-      if (subject.length() > margin) {
+      if (subject.length() > margin * EPSILON) {
         int placeToCut = margin - ELLIPSIS.length();
         for (int i = placeToCut; i >= Math.max(margin - BIG_CUT_SIZE, BIG_CUT_SIZE); i--) {
           if (subject.charAt(i) == ' ') {

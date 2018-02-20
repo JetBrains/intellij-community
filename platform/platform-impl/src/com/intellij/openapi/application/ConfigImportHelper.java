@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
@@ -28,7 +14,6 @@ import com.intellij.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
@@ -41,7 +26,6 @@ import java.util.PropertyResourceBundle;
 public class ConfigImportHelper {
   private static final String FIRST_SESSION_KEY = "intellij.first.ide.session";
   private static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
-
   private static final String BUILD_NUMBER_FILE = SystemInfo.isMac ? "/Resources/build.txt" : "build.txt";
   private static final String PLUGINS_PATH = "plugins";
   private static final String BIN_FOLDER = "bin";
@@ -57,9 +41,6 @@ public class ConfigImportHelper {
 
     File newConfigDir = new File(newConfigPath);
     File oldConfigDir = findOldConfigDir(newConfigDir, settings.getCustomPathsSelector());
-
-    try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
-    catch (Throwable ignore) { }
 
     while (true) {
       ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(oldConfigDir, settings);
@@ -120,28 +101,27 @@ public class ConfigImportHelper {
 
   @Nullable
   private static File findOldConfigDir(@NotNull File configDir, @Nullable String customPathSelector) {
-    final File selectorDir = CONFIG_RELATED_PATH.isEmpty() ? configDir : configDir.getParentFile();
-    final File parent = selectorDir.getParentFile();
+    File selectorDir = CONFIG_RELATED_PATH.isEmpty() ? configDir : configDir.getParentFile();
+    File parent = selectorDir.getParentFile();
     if (parent == null || !parent.exists()) {
       return null;
     }
+
     File maxFile = null;
     long lastModified = 0;
-    final String selector = PathManager.getPathsSelector() != null ? PathManager.getPathsSelector() : selectorDir.getName();
-
-    final String prefix = getPrefixFromSelector(selector);
-    final String customPrefix = customPathSelector != null ? getPrefixFromSelector(customPathSelector) : null;
-    for (File file : parent.listFiles((file1, name) -> StringUtil.startsWithIgnoreCase(name, prefix) ||
-           customPrefix != null && StringUtil.startsWithIgnoreCase(name, customPrefix))) {
+    String selector = PathManager.getPathsSelector() != null ? PathManager.getPathsSelector() : selectorDir.getName();
+    String prefix = getPrefixFromSelector(selector);
+    String customPrefix = customPathSelector != null ? getPrefixFromSelector(customPathSelector) : null;
+    FilenameFilter filter = (file, name) ->
+      StringUtil.startsWithIgnoreCase(name, prefix) || customPrefix != null && StringUtil.startsWithIgnoreCase(name, customPrefix);
+    for (File file : ObjectUtils.notNull(parent.listFiles(filter), ArrayUtil.EMPTY_FILE_ARRAY)) {
       File options = new File(file, CONFIG_RELATED_PATH + OPTIONS_XML);
-      if (!options.exists()) {
-        continue;
-      }
-
-      long modified = options.lastModified();
-      if (modified > lastModified) {
-        lastModified = modified;
-        maxFile = file;
+      if (options.exists()) {
+        long modified = options.lastModified();
+        if (modified > lastModified) {
+          lastModified = modified;
+          maxFile = file;
+        }
       }
     }
     return maxFile != null ? new File(maxFile, CONFIG_RELATED_PATH) : null;
@@ -213,13 +193,10 @@ public class ConfigImportHelper {
       File newPluginsDir = new File(PathManager.getPluginsPath());
       FileUtil.copyDir(oldPluginsDir, newPluginsDir);
     }
-    loadOldPlugins(oldPluginsDir, dest);
-  }
 
-  private static boolean loadOldPlugins(File plugins, File dest) throws IOException {
-    if (plugins.exists()) {
+    if (oldPluginsDir.exists()) {
       List<IdeaPluginDescriptorImpl> descriptors = new SmartList<>();
-      PluginManagerCore.loadDescriptors(plugins, descriptors, null, 0);
+      PluginManagerCore.loadDescriptors(oldPluginsDir, descriptors, null, 0);
       List<String> oldPlugins = new SmartList<>();
       for (IdeaPluginDescriptorImpl descriptor : descriptors) {
         // check isBundled also - probably plugin is bundled in new IDE version
@@ -230,9 +207,7 @@ public class ConfigImportHelper {
       if (!oldPlugins.isEmpty()) {
         PluginManagerCore.savePluginsList(oldPlugins, false, new File(dest, PluginManager.INSTALLED_TXT));
       }
-      return true;
     }
-    return false;
   }
 
   @Nullable
@@ -344,12 +319,13 @@ public class ConfigImportHelper {
       }
     }
 
-    final String fileContent = getContent(file);
-
     // try to find custom config path
-    final String propertyValue = findProperty(propertyName, fileContent);
-    if (!StringUtil.isEmpty(propertyValue)) {
-      return propertyValue;
+    String fileContent = getContent(file);
+    if (fileContent != null) {
+      String propertyValue = findProperty(propertyName, fileContent);
+      if (!StringUtil.isEmpty(propertyValue)) {
+        return propertyValue;
+      }
     }
 
     return null;
@@ -366,34 +342,37 @@ public class ConfigImportHelper {
       idx = fileContent.indexOf("<string>", idx);
       if (idx == -1) return null;
       idx += "<string>".length();
-      return fixDirName(fileContent.substring(idx, fileContent.indexOf("</string>", idx)), true);
+      return fixDirName(fileContent.substring(idx, fileContent.indexOf("</string>", idx)));
     }
     else {
-      String configDir = "";
+      StringBuilder configDir = new StringBuilder();
       idx += param.length();
       if (fileContent.length() > idx) {
         if (fileContent.charAt(idx) == '"') {
           idx++;
-          while ((fileContent.length() > idx) && (fileContent.charAt(idx) != '"') && (fileContent.charAt(idx) != '\n') &&
-                 (fileContent.charAt(idx) != '\r')) {
-            configDir += fileContent.charAt(idx);
+          while (fileContent.length() > idx &&
+                 fileContent.charAt(idx) != '"' &&
+                 fileContent.charAt(idx) != '\n' &&
+                 fileContent.charAt(idx) != '\r') {
+            configDir.append(fileContent.charAt(idx));
             idx++;
           }
         }
         else {
-          while ((fileContent.length() > idx) && (!Character.isSpaceChar(fileContent.charAt(idx))) &&
-                 (fileContent.charAt(idx) != '\n') &&
-                 (fileContent.charAt(idx) != '\r')) {
-            configDir += fileContent.charAt(idx);
+          while (fileContent.length() > idx &&
+                 !Character.isSpaceChar(fileContent.charAt(idx)) &&
+                 fileContent.charAt(idx) != '\n' &&
+                 fileContent.charAt(idx) != '\r') {
+            configDir.append(fileContent.charAt(idx));
             idx++;
           }
         }
       }
-      configDir = fixDirName(configDir, true);
+      configDir = new StringBuilder(fixDirName(configDir.toString()));
       if (configDir.length() > 0) {
-        configDir = (new File(configDir)).getPath();
+        configDir = new StringBuilder(new File(configDir.toString()).getPath());
       }
-      return configDir;
+      return configDir.toString();
     }
   }
 
@@ -407,13 +386,11 @@ public class ConfigImportHelper {
     }
   }
 
-  private static String fixDirName(String dir, boolean replaceUserHome) {
+  private static String fixDirName(String dir) {
     if (StringUtil.startsWithChar(dir, '\"') && StringUtil.endsWithChar(dir, '\"')) {
       dir = dir.substring(1, dir.length() - 1);
     }
-    if (replaceUserHome) {
-      dir = FileUtil.expandUserHome(dir);
-    }
+    dir = FileUtil.expandUserHome(dir);
     return dir;
   }
 
@@ -449,7 +426,7 @@ public class ConfigImportHelper {
     installDirectory = installDirectory.getAbsoluteFile();
 
     File buildTxt = new File(installDirectory, BUILD_NUMBER_FILE);
-    if ((!buildTxt.exists()) || (buildTxt.isDirectory())) {
+    if (!buildTxt.exists() || buildTxt.isDirectory()) {
       buildTxt = new File(new File(installDirectory, BIN_FOLDER), BUILD_NUMBER_FILE);
     }
 

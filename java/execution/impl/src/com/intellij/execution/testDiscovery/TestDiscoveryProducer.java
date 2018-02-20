@@ -4,39 +4,26 @@ package com.intellij.execution.testDiscovery;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 @ApiStatus.Experimental
 public interface TestDiscoveryProducer {
   Logger LOG = Logger.getInstance(LocalTestDiscoveryProducer.class);
 
-  class DiscoveredTest {
-    private final String myTestClassQName;
-    private final String myTestMethodName;
-
-    public DiscoveredTest(String testClassQName, String testMethodName) {
-      myTestClassQName = testClassQName;
-      myTestMethodName = testMethodName;
-    }
-
-    public String getTestClassQName() {
-      return myTestClassQName;
-    }
-
-    public String getTestMethodName() {
-      return myTestMethodName;
-    }
-  }
 
   @NotNull
-  List<DiscoveredTest> getDiscoveredTests(Project project,
-                                          String classFQName,
-                                          String methodName,
-                                          String frameworkId);
+  MultiMap<String, String> getDiscoveredTests(@NotNull Project project,
+                                              @NotNull String classFQName,
+                                              @NotNull String methodName,
+                                              @NotNull String frameworkId);
 
   ExtensionPointName<TestDiscoveryProducer> EP = ExtensionPointName.create("com.intellij.testDiscoveryProducer");
 
@@ -44,9 +31,15 @@ public interface TestDiscoveryProducer {
                                      @NotNull String classFQName,
                                      @NotNull String methodName,
                                      @NotNull String frameworkId,
-                                     @NotNull Consumer<DiscoveredTest> consumer) {
+                                     @NotNull BiConsumer<String, String> consumer) {
     for (TestDiscoveryProducer producer : EP.getExtensions()) {
-      producer.getDiscoveredTests(project, classFQName, methodName, frameworkId).forEach(consumer);
+      for (Map.Entry<String, Collection<String>> entry : producer.getDiscoveredTests(project, classFQName, methodName, frameworkId)
+                                                                 .entrySet()) {
+        String cName = entry.getKey();
+        for (String mName : entry.getValue()) {
+          consumer.accept(cName, mName);
+        }
+      }
     }
   }
 }

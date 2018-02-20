@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -166,7 +167,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   public State getState() {
     synchronized (myStateLock) {
       if (myState.pid == null) {
-        myState.pid = ApplicationManager.getApplicationPid();
+        myState.pid = OSProcessUtil.getApplicationPid();
       }
       updateLastProjectPath();
       myState.validateRecentProjects();

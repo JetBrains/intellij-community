@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPresele
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
-import com.intellij.codeInsight.intention.impl.AddNullableNotNullAnnotationFix;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.instructions.BranchingInstruction;
@@ -1060,14 +1059,13 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (myNullness != null &&
         PsiUtil.resolveClassInType(newMethod.getReturnType()) != null &&
         PropertiesComponent.getInstance(myProject).getBoolean(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, true)) {
-      final NullableNotNullManager notNullManager = NullableNotNullManager.getInstance(myProject);
-      AddNullableNotNullAnnotationFix annotationFix;
+      AddAnnotationPsiFix annotationFix;
       switch (myNullness) {
         case NOT_NULL:
-          annotationFix = new AddNullableNotNullAnnotationFix(notNullManager.getDefaultNotNull(), newMethod);
+          annotationFix = AddAnnotationPsiFix.createAddNotNullFix(newMethod);
           break;
         case NULLABLE:
-          annotationFix = new AddNullableNotNullAnnotationFix(notNullManager.getDefaultNullable(), newMethod);
+          annotationFix = AddAnnotationPsiFix.createAddNullableFix(newMethod);
           break;
         default:
           annotationFix = null;

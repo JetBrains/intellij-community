@@ -23,11 +23,14 @@ import com.intellij.testGuiFramework.generators.ComponentCodeGenerator
 import com.intellij.testGuiFramework.generators.ComponentSelectionCodeGenerator
 import com.intellij.testGuiFramework.generators.Generators
 import com.intellij.testGuiFramework.recorder.ui.KeyUtil
+import com.intellij.testGuiFramework.util.Key
+import com.intellij.testGuiFramework.util.Modifier
 import com.intellij.ui.KeyStrokeAdapter
 import java.awt.Component
 import java.awt.Point
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import javax.swing.KeyStroke
 import javax.swing.KeyStroke.getKeyStrokeForEvent
 
 object ScriptGenerator {
@@ -49,7 +52,7 @@ object ScriptGenerator {
     val keyStroke = getKeyStrokeForEvent(keyEvent)
     val keyStrokeStr = KeyStrokeAdapter.toString(keyStroke)
     if (ignore(keyStrokeStr)) return
-    addToScript("""shortcut("$keyStrokeStr")""")
+    addToScript("""shortcut(${convertKeyStrokeToEnums(keyStroke)})""")
   }
 
   fun clickComponent(component: Component, convertedPoint: Point, mouseEvent: MouseEvent) {
@@ -104,6 +107,21 @@ object ScriptGenerator {
       addToScript(code)
     }
   }
+}
+
+private fun convertKeyStrokeToEnums(keyStroke: KeyStroke): String {
+  val hasModifiers = keyStroke.modifiers != 0
+  val modifiersAndKeys = KeyStrokeAdapter.toString(keyStroke).toUpperCase().split(" ")
+  val modifiers = arrayListOf<Modifier>()
+  var key: Key? = null
+  modifiersAndKeys.forEach {
+    if (hasModifiers) try { modifiers.add(Modifier.valueOf(it)) } catch (e: IllegalArgumentException) {}
+    try { key = Key.valueOf(it) } catch (e: IllegalArgumentException) {}
+  }
+  val sb = StringBuffer()
+  modifiers.forEach { sb.append(it.name); sb.append(" + ") }
+  sb.append(key ?: "NULL")
+  return sb.toString()
 }
 
 private object Typer {

@@ -144,7 +144,8 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
       PsiReferenceExpression methodExpression = call.getMethodExpression();
       PsiType theOnly = null;
       final JavaResolveResult[] results = methodExpression.multiResolve(false);
-      LanguageLevel languageLevel = PsiUtil.getLanguageLevel(call);
+      PsiFile file = call.getContainingFile();
+      LanguageLevel languageLevel = PsiUtil.getLanguageLevel(file);
 
       final PsiElement callParent = PsiUtil.skipParenthesizedExprUp(call.getParent());
       final PsiExpressionList parentArgList;
@@ -181,7 +182,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
         }
       }
 
-      return PsiClassImplUtil.correctType(theOnly, call.getResolveScope());
+      return PsiClassImplUtil.correctType(theOnly, file.getResolveScope());
     }
 
     @Nullable

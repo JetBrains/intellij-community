@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.RequestBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -16,27 +17,29 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
   private static final String INTELLIJ_TEST_DISCOVERY_HOST = "http://intellij-test-discovery";
 
   @NotNull
   @Override
-  public List<DiscoveredTest> getDiscoveredTests(Project project, String classFQName, String methodName, String frameworkId) {
+  public MultiMap<String, String> getDiscoveredTests(@NotNull Project project,
+                                                     @NotNull String classFQName,
+                                                     @NotNull String methodName,
+                                                     @NotNull String frameworkId) {
     String methodFqn = classFQName + "." + methodName;
     RequestBuilder r = HttpRequests.request(INTELLIJ_TEST_DISCOVERY_HOST + "/search/tests/by-method/" + methodFqn);
 
     try {
       return r.connect(request -> {
-        List<DiscoveredTest> map = new ArrayList<>();
-        ObjectMapper mapper = new ObjectMapper();
-        TestsSearchResult result = mapper.readValue(request.getInputStream(), TestsSearchResult.class);
-
+        MultiMap<String, String> map = new MultiMap<>();
+        TestsSearchResult result = new ObjectMapper().readValue(request.getInputStream(), TestsSearchResult.class);
         result.getTests().forEach(s -> {
-          s = s.length() > 1 && s.charAt(0) == 'j' ? s.substring(1) : s;
-          String classFqn = StringUtil.substringBefore(s, "-");
-          String testMethodName = StringUtil.substringAfter(s, "-");
-          map.add(new DiscoveredTest(classFqn, testMethodName));
+          String str = s.length() > 1 && s.charAt(0) == 'j' ? s.substring(1) : s;
+          String classFqn = StringUtil.substringBefore(str, "-");
+          String testMethodName = StringUtil.substringAfter(str, "-");
+          map.putValue(classFqn, testMethodName);
         });
         return map;
       });
@@ -47,7 +50,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
     catch (IOException e) {
       LOG.debug(e);
     }
-    return Collections.emptyList();
+    return MultiMap.empty();
   }
 
   @JsonInclude(JsonInclude.Include.NON_EMPTY)

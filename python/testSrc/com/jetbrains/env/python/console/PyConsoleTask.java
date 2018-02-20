@@ -305,7 +305,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
       if (count > 10) {
         Assert.fail("Console is not ready");
       }
-      Thread.sleep(300);
+      Thread.sleep(2000);
       count++;
     }
   }

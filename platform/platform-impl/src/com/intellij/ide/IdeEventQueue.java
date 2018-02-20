@@ -35,6 +35,7 @@ import com.intellij.openapi.keymap.impl.KeyState;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -1205,14 +1206,15 @@ public class IdeEventQueue extends EventQueue {
     if (!delayKeyEvents.get()) return false;
     long currentTypeaheadDelay = System.currentTimeMillis() - lastTypeaheadTimestamp;
     if (currentTypeaheadDelay > Registry.get("action.aware.typeaheadTimout").asDouble()) {
-      TYPEAHEAD_LOG.warn(new RuntimeException("Typeahead timeout is exceeded: " + currentTypeaheadDelay));
+      TYPEAHEAD_LOG.error(new RuntimeException("Typeahead timeout is exceeded: " + currentTypeaheadDelay));
       return true;
     }
     return false;
   }
 
   private static boolean isFocusGoesIntoPopupFromWindowEvent(AWTEvent e) {
-    if (e.getID() == WindowEvent.WINDOW_GAINED_FOCUS) {
+    if (e.getID() == WindowEvent.WINDOW_GAINED_FOCUS ||
+        (SystemInfo.isLinux && e.getID() == WindowEvent.WINDOW_OPENED)) {
       WindowEvent windowEvent = (WindowEvent)e;
       Window eventWindow = windowEvent.getWindow();
         if (eventWindow.getClass().getName().contains("HeavyWeightWindow")) {
@@ -1307,18 +1309,13 @@ public class IdeEventQueue extends EventQueue {
 
   private final Set<Shortcut> shortcutsShowingPopups = new HashSet<>();
 
-  private final Set<String> actionsShowingPopupsList = new HashSet<>();
+  private final List<String> actionsShowingPopupsList = new ArrayList<>();
   private long lastTypeaheadTimestamp = -1;
 
   private Set<Shortcut> getShortcutsShowingPopups () {
-    if (KeymapManager.getInstance().getActiveKeymap() != null) {
-      // move to a config
-      actionsShowingPopupsList.add("GotoClass");
-      actionsShowingPopupsList.add("GotoFile");
-      actionsShowingPopupsList.add("GotoSymbol");
-      actionsShowingPopupsList.add("FindInPath");
-      actionsShowingPopupsList.add("ReplaceInPath");
-
+    if (shortcutsShowingPopups.isEmpty() && KeymapManager.getInstance().getActiveKeymap() != null) {
+      String actionsAwareTypeaheadActionsList = Registry.get("action.aware.typeahead.actions.list").asString();
+      actionsShowingPopupsList.addAll(StringUtil.split(actionsAwareTypeaheadActionsList, ","));
       actionsShowingPopupsList.forEach(actionId -> {
         List<Shortcut> shortcuts = Arrays.asList(KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId));
         if (TYPEAHEAD_LOG.isDebugEnabled()) {

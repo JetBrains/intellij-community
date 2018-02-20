@@ -13,9 +13,10 @@ class ModuleChangesGroupingPolicy(val project: Project, val model: DefaultTreeMo
 
   override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
     val file = resolveVirtualFile(nodePath)
+    val nextPolicyParent = nextPolicy?.getParentNodeFor(nodePath, subtreeRoot)
 
     file?.let { myIndex.getModuleForFile(file, HIDE_EXCLUDED_FILES) }?.let { module ->
-      val grandParent = nextPolicy?.getParentNodeFor(nodePath, subtreeRoot) ?: subtreeRoot
+      val grandParent = nextPolicyParent ?: subtreeRoot
       val cachingRoot = getCachingRoot(grandParent, subtreeRoot)
 
       MODULE_CACHE.getValue(cachingRoot)[module]?.let { return it }
@@ -34,7 +35,7 @@ class ModuleChangesGroupingPolicy(val project: Project, val model: DefaultTreeMo
       }
     }
 
-    return null
+    return nextPolicyParent
   }
 
   class Factory(val project: Project) : ChangesGroupingPolicyFactory() {

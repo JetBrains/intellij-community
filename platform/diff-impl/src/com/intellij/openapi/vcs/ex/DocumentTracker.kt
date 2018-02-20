@@ -184,7 +184,7 @@ class DocumentTracker : Disposable {
     }
   }
 
-  private fun updateFrozenContentIfNeeded() {
+  fun updateFrozenContentIfNeeded() {
     // ensure blocks are up to date
     updateFrozenContentIfNeeded(Side.LEFT)
     updateFrozenContentIfNeeded(Side.RIGHT)

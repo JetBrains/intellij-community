@@ -475,6 +475,7 @@ public final class GuiTestUtil {
       robot.type(text.charAt(i));
       Pause.pause(delayAfterEachCharacterMillis, TimeUnit.MILLISECONDS);
     }
+    Pause.pause(300, TimeUnit.MILLISECONDS);
   }
 
   @Nullable

@@ -1013,23 +1013,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  @Override
-  @NotNull
-  public Collection<LocalChangeList> getAffectedLists(@NotNull Collection<Change> changes) {
-    synchronized (myDataLock) {
-      return myWorker.getAffectedLists(changes);
-    }
-  }
-
-  @Override
-  @Nullable
-  public LocalChangeList getChangeList(@NotNull Change change) {
-    synchronized (myDataLock) {
-      List<LocalChangeList> lists = myWorker.getAffectedLists(change);
-      return ContainerUtil.getFirstItem(lists);
-    }
-  }
-
   public void notifyChangelistsChanged() {
     myWorker.notifyChangelistsChanged();
   }
@@ -1056,12 +1039,39 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public LocalChangeList getChangeList(@NotNull VirtualFile file) {
+  @NotNull
+  public List<LocalChangeList> getAffectedLists(@NotNull Collection<Change> changes) {
+    synchronized (myDataLock) {
+      return myWorker.getAffectedLists(changes);
+    }
+  }
+
+  @NotNull
+  @Override
+  public List<LocalChangeList> getChangeLists(@NotNull Change change) {
+    return getAffectedLists(Collections.singletonList(change));
+  }
+
+  @NotNull
+  @Override
+  public List<LocalChangeList> getChangeLists(@NotNull VirtualFile file) {
     synchronized (myDataLock) {
       Change change = myWorker.getChangeForPath(VcsUtil.getFilePath(file));
-      if (change == null) return null;
-      return getChangeList(change);
+      if (change == null) return Collections.emptyList();
+      return getChangeLists(change);
     }
+  }
+
+  @Override
+  @Nullable
+  public LocalChangeList getChangeList(@NotNull Change change) {
+    return ContainerUtil.getFirstItem(getChangeLists(change));
+  }
+
+  @Override
+  @Nullable
+  public LocalChangeList getChangeList(@NotNull VirtualFile file) {
+    return ContainerUtil.getFirstItem(getChangeLists(file));
   }
 
   @Override

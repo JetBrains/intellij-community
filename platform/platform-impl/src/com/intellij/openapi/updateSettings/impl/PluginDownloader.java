@@ -188,17 +188,12 @@ public class PluginDownloader {
   }
 
   public void install() throws IOException {
-    LOG.assertTrue(myFile != null, "Cannot install plugin '" + getPluginName()+"'");
-
     if (myFile == null) {
-      throw new IOException("Cannot find file for plugin '" + getPluginName()+"'");
+      throw new IOException("Plugin '" + getPluginName() + "' was not successfully downloaded");
     }
 
-    if (myOldFile != null) {
-      StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(myOldFile));
-    }
+    PluginInstaller.install(myFile, true, myOldFile, myDescriptor);
 
-    PluginInstaller.install(myFile, getPluginName(), true, myDescriptor);
     InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
     if (state != null) {
       state.onPluginInstall(myDescriptor);

@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -34,8 +35,13 @@ public class PsiPolyExpressionUtil {
       return isInAssignmentOrInvocationContext(expression);
     }
     else if (expression instanceof PsiMethodCallExpression) {
-      final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(((PsiMethodCallExpression)expression).getArgumentList());
-      return isMethodCallPolyExpression(expression, candidateProperties != null ? candidateProperties.getMethod() : ((PsiMethodCallExpression)expression).resolveMethod());
+      if (isInAssignmentOrInvocationContext(expression) && ((PsiCallExpression)expression).getTypeArguments().length == 0) {
+        final MethodCandidateInfo.CurrentCandidateProperties candidateProperties =
+          MethodCandidateInfo.getCurrentMethod(((PsiMethodCallExpression)expression).getArgumentList());
+        final PsiMethod method =
+          candidateProperties != null ? candidateProperties.getMethod() : ((PsiMethodCallExpression)expression).resolveMethod();
+        return method == null || isMethodCallTypeDependsOnInference(expression, method);
+      }
     }
     else if (expression instanceof PsiConditionalExpression) {
       final ConditionalKind conditionalKind = isBooleanOrNumeric(expression);
@@ -74,7 +80,7 @@ public class PsiPolyExpressionUtil {
   public static Boolean mentionsTypeParameters(@Nullable PsiType returnType, final Set<PsiTypeParameter> typeParameters) {
     if (returnType == null) return false;
     return returnType.accept(new PsiTypeVisitor<Boolean>() {
-      @Nullable
+      @NotNull
       @Override
       public Boolean visitType(PsiType type) {
         return false;
@@ -90,7 +96,7 @@ public class PsiPolyExpressionUtil {
         return false;
       }
 
-      @Nullable
+      @NotNull
       @Override
       public Boolean visitClassType(PsiClassType classType) {
         PsiClassType.ClassResolveResult result = classType.resolveGenerics();

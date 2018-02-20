@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.PluginException;
@@ -137,9 +123,9 @@ public class PluginManagerCore {
   }
 
   public static void loadDisabledPlugins(@NotNull String configPath, @NotNull Collection<String> disabledPlugins) {
-    final File file = new File(configPath, DISABLED_PLUGINS_FILENAME);
-    List<String> requiredPlugins = StringUtil.split(System.getProperty("idea.required.plugins.id", ""), ",");
+    File file = new File(configPath, DISABLED_PLUGINS_FILENAME);
     if (file.isFile()) {
+      List<String> requiredPlugins = StringUtil.split(System.getProperty("idea.required.plugins.id", ""), ",");
       try {
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
           String id;
@@ -176,8 +162,7 @@ public class PluginManagerCore {
 
   public static boolean isBrokenPlugin(@NotNull IdeaPluginDescriptor descriptor) {
     PluginId pluginId = descriptor.getPluginId();
-    if (pluginId == null) return true;
-    return getBrokenPluginVersions().get(pluginId.getIdString()).contains(descriptor.getVersion());
+    return pluginId == null || getBrokenPluginVersions().get(pluginId.getIdString()).contains(descriptor.getVersion());
   }
 
   @NotNull
@@ -247,50 +232,44 @@ public class PluginManagerCore {
     if (!plugins.isFile()) {
       FileUtil.ensureCanCreateFile(plugins);
     }
-    writePluginsList(ids, new BufferedWriter(new FileWriter(plugins, append)));
+    try (BufferedWriter writer = new BufferedWriter(new FileWriter(plugins, append))) {
+      writePluginsList(ids, writer);
+    }
   }
 
   public static void writePluginsList(@NotNull Collection<String> ids, @NotNull Writer writer) throws IOException {
     String[] sortedIds = ArrayUtil.toStringArray(ids);
     Arrays.sort(sortedIds);
-    try {
-      for (String id : sortedIds) {
-        writer.write(id);
-        writer.write(LineSeparator.getSystemLineSeparator().getSeparatorString());
-      }
-    }
-    finally {
-      writer.close();
+    String separator = LineSeparator.getSystemLineSeparator().getSeparatorString();
+    for (String id : sortedIds) {
+      writer.write(id);
+      writer.write(separator);
     }
   }
 
   public static boolean disablePlugin(@NotNull String id) {
     List<String> disabledPlugins = getDisabledPlugins();
-    if (disabledPlugins.contains(id)) {
-      return false;
-    }
+    if (disabledPlugins.contains(id)) return false;
     disabledPlugins.add(id);
-    try {
-      saveDisabledPlugins(disabledPlugins, false);
-    }
-    catch (IOException e) {
-      LOG.warn("Unable to save disabled plugins list", e);
-      return false;
-    }
-    return true;
+    return trySaveDisabledPlugins(disabledPlugins);
   }
 
   public static boolean enablePlugin(@NotNull String id) {
-    if (!getDisabledPlugins().contains(id)) return false;
-    getDisabledPlugins().remove(id);
+    List<String> disabledPlugins = getDisabledPlugins();
+    if (!disabledPlugins.contains(id)) return false;
+    disabledPlugins.remove(id);
+    return trySaveDisabledPlugins(disabledPlugins);
+  }
+
+  private static boolean trySaveDisabledPlugins(List<String> disabledPlugins) {
     try {
-      saveDisabledPlugins(getDisabledPlugins(), false);
+      saveDisabledPlugins(disabledPlugins, false);
+      return true;
     }
     catch (IOException e) {
       LOG.warn("Unable to save disabled plugins list", e);
       return false;
     }
-    return true;
   }
 
   public static void saveDisabledPlugins(@NotNull Collection<String> ids, boolean append) throws IOException {
@@ -389,7 +368,7 @@ public class PluginManagerCore {
   private static boolean isDependent(@NotNull IdeaPluginDescriptor descriptor,
                                      @NotNull PluginId on,
                                      @NotNull Map<PluginId, IdeaPluginDescriptor> map,
-                                     final boolean checkModuleDependencies) {
+                                     boolean checkModuleDependencies) {
     for (PluginId id: descriptor.getDependentPluginIds()) {
       if (ArrayUtil.contains(id, (Object[])descriptor.getOptionalDependentPluginIds())) {
         continue;
@@ -400,7 +379,7 @@ public class PluginManagerCore {
       if (id.equals(on)) {
         return true;
       }
-      final IdeaPluginDescriptor depDescriptor = map.get(id);
+      IdeaPluginDescriptor depDescriptor = map.get(id);
       if (depDescriptor != null && isDependent(depDescriptor, on, map, checkModuleDependencies)) {
         return true;
       }
@@ -409,7 +388,7 @@ public class PluginManagerCore {
   }
 
   private static boolean hasModuleDependencies(@NotNull IdeaPluginDescriptor descriptor) {
-    final PluginId[] dependentPluginIds = descriptor.getDependentPluginIds();
+    PluginId[] dependentPluginIds = descriptor.getDependentPluginIds();
     for (PluginId dependentPluginId : dependentPluginIds) {
       if (isModuleDependency(dependentPluginId)) {
         return true;
@@ -426,7 +405,7 @@ public class PluginManagerCore {
     catch (ClassNotFoundException e) {
       return false;
     }
-    final String loadPlugins = System.getProperty("idea.load.plugins");
+    String loadPlugins = System.getProperty("idea.load.plugins");
     return loadPlugins == null || Boolean.TRUE.toString().equals(loadPlugins);
   }
 
@@ -493,29 +472,24 @@ public class PluginManagerCore {
   }
 
   private static void logPlugins() {
-    List<String> loadedBundled = new ArrayList<>();
-    List<String> disabled = new ArrayList<>();
-    List<String> loadedCustom = new ArrayList<>();
+    List<String> bundled = new ArrayList<>(), disabled = new ArrayList<>(), custom = new ArrayList<>();
 
     for (IdeaPluginDescriptor descriptor : ourPlugins) {
-      final String version = descriptor.getVersion();
+      String version = descriptor.getVersion();
       String s = descriptor.getName() + (version != null ? " (" + version + ")" : "");
-      if (descriptor.isEnabled()) {
-        if (descriptor.isBundled() || SPECIAL_IDEA_PLUGIN.equals(descriptor.getName())) loadedBundled.add(s);
-        else loadedCustom.add(s);
-      }
-      else {
-        disabled.add(s);
-      }
+
+      if (!descriptor.isEnabled()) disabled.add(s);
+      else if (SPECIAL_IDEA_PLUGIN.equals(descriptor.getName()) || descriptor.isBundled()) bundled.add(s);
+      else custom.add(s);
     }
 
-    Collections.sort(loadedBundled);
-    Collections.sort(loadedCustom);
+    Collections.sort(bundled);
+    Collections.sort(custom);
     Collections.sort(disabled);
 
-    getLogger().info("Loaded bundled plugins: " + StringUtil.join(loadedBundled, ", "));
-    if (!loadedCustom.isEmpty()) {
-      getLogger().info("Loaded custom plugins: " + StringUtil.join(loadedCustom, ", "));
+    getLogger().info("Loaded bundled plugins: " + StringUtil.join(bundled, ", "));
+    if (!custom.isEmpty()) {
+      getLogger().info("Loaded custom plugins: " + StringUtil.join(custom, ", "));
     }
     if (!disabled.isEmpty()) {
       getLogger().info("Disabled plugins: " + StringUtil.join(disabled, ", "));
@@ -582,7 +556,8 @@ public class PluginManagerCore {
   }
 
   @NotNull
-  private static Comparator<IdeaPluginDescriptor> getPluginDescriptorComparator(@NotNull final Map<PluginId, ? extends IdeaPluginDescriptor> idToDescriptorMap, @NotNull List<String> errors) {
+  private static Comparator<IdeaPluginDescriptor> getPluginDescriptorComparator(@NotNull Map<PluginId, ? extends IdeaPluginDescriptor> idToDescriptorMap,
+                                                                                @NotNull List<String> errors) {
     final Graph<PluginId> graph = createPluginIdGraph(idToDescriptorMap);
     final DFSTBuilder<PluginId> builder = new DFSTBuilder<>(graph);
     if (!builder.isAcyclic()) {
@@ -637,7 +612,8 @@ public class PluginManagerCore {
           // check for missing optional dependency
           IdeaPluginDescriptor dep = idToDescriptorMap.get(dependentPluginId);
           if (dep != null) {
-            //if 'dep' refers to a module we need to add the real plugin containing this module only if it's still enabled, otherwise the graph will be inconsistent
+            // if 'dep' refers to a module we need to add the real plugin containing this module only if it's still enabled,
+            // otherwise the graph will be inconsistent
             PluginId realPluginId = dep.getPluginId();
             if (idToDescriptorMap.containsKey(realPluginId)) {
               plugins.add(realPluginId);
@@ -670,14 +646,12 @@ public class PluginManagerCore {
     return null;
   }
 
-  private static IdeaPluginDescriptorImpl loadDescriptorFromJar(@NotNull File file,
-                                                                @NotNull String pathName,
-                                                                @NotNull JDOMXIncluder.PathResolver pathResolver) {
+  private static IdeaPluginDescriptorImpl loadDescriptorFromJar(@NotNull File file, @NotNull String pathName) {
     try (LoadingContext context = new LoadingContext()) {
-      return loadDescriptorFromJar(file, pathName, pathResolver, context);
+      return loadDescriptorFromJar(file, pathName, JDOMXIncluder.DEFAULT_PATH_RESOLVER, context);
     }
   }
-  
+
   @Nullable
   private static IdeaPluginDescriptorImpl loadDescriptorFromJar(@NotNull File file,
                                                                 @NotNull String fileName,
@@ -688,8 +662,8 @@ public class PluginManagerCore {
 
       ZipFile zipFile = context.myOpenedFiles.get(file);
       if (zipFile == null) {
+        //noinspection IOResourceOpenedButNotSafelyClosed
         context.myOpenedFiles.put(file, zipFile = new ZipFile(file));
-        //getLogger().info("Looking for " + fileName + " in " + file);
       }
       ZipEntry entry = zipFile.getEntry(META_INF + '/' + fileName);
       if (entry != null) {
@@ -712,33 +686,30 @@ public class PluginManagerCore {
   }
 
   @Nullable
-  public static IdeaPluginDescriptorImpl loadDescriptor(@NotNull final File file, @NotNull String fileName) {
+  public static IdeaPluginDescriptorImpl loadDescriptor(@NotNull File file, @NotNull String fileName) {
     try (LoadingContext context = new LoadingContext()) {
       return loadDescriptor(file, fileName, context);
     }
   }
 
   private static class LoadingContext implements AutoCloseable {
-    final Map<File, ZipFile> myOpenedFiles = new THashMap<>();
-    File myLastZipFileContainingDescriptor;
+    private final Map<File, ZipFile> myOpenedFiles = new THashMap<>();
+    private File myLastZipFileContainingDescriptor;
 
     @Override
     public void close() {
-      for(ZipFile file:myOpenedFiles.values()) {
-        try {
-          file.close();
-        } catch (IOException ignore) {}
+      for (ZipFile file : myOpenedFiles.values()) {
+        try { file.close(); }
+        catch (IOException ignore) { }
       }
     }
   }
-  
+
   @Nullable
-  private static IdeaPluginDescriptorImpl loadDescriptor(@NotNull File file,
-                                                         @NotNull String pathName,
-                                                         @NotNull LoadingContext context) {
+  private static IdeaPluginDescriptorImpl loadDescriptor(@NotNull File file, @NotNull String pathName, @NotNull LoadingContext context) {
     IdeaPluginDescriptorImpl descriptor = null;
 
-    final boolean directory = file.isDirectory();
+    boolean directory = file.isDirectory();
     if (directory) {
       descriptor = loadDescriptorFromDir(file, pathName);
 
@@ -747,15 +718,15 @@ public class PluginManagerCore {
         if (!libDir.isDirectory()) {
           return null;
         }
-        final File[] files = libDir.listFiles();
+        File[] files = libDir.listFiles();
         if (files == null || files.length == 0) {
           return null;
         }
- 
+
         putMoreLikelyPluginJarsFirst(file, files);
-        
+
         PluginXmlPathResolver pathResolver = new PluginXmlPathResolver(files);
-        for (final File f : files) {
+        for (File f : files) {
           if (FileUtil.isJarOrZip(f)) {
             descriptor = loadDescriptorFromJar(f, pathName, pathResolver, context);
             if (descriptor != null) {
@@ -791,9 +762,9 @@ public class PluginManagerCore {
           optionalDescriptor = loadDescriptor(file, optPathName, context);
         }
         if (optionalDescriptor == null && (directory || resolveDescriptorsInResources())) {
-          // JDOMXIncluder can find included descriptor files via classloading in URLUtil.openResourceStream 
-          // and here code supports the same behavior. 
-          // Note that this code is meant for IDE development / testing purposes  
+          // JDOMXIncluder can find included descriptor files via classloading in URLUtil.openResourceStream
+          // and here code supports the same behavior.
+          // Note that this code is meant for IDE development / testing purposes
           URL resource = PluginManagerCore.class.getClassLoader().getResource(META_INF + '/' + optPathName);
           if (resource != null) {
             optionalDescriptor = loadDescriptorFromResource(resource, optPathName);
@@ -806,18 +777,18 @@ public class PluginManagerCore {
     return descriptor;
   }
 
-  private static boolean resolveDescriptorsInResources() {  
+  private static boolean resolveDescriptorsInResources() {
     return System.getProperty("resolve.descriptors.in.resources") != null;
   }
 
   /*
-  Sort the files heuristically to load the plugin jar containing plugin descriptors without extra ZipFile accesses
-  File name preference: 
-  a) last order for files with resources in name, like resources_en.jar
-  b) last order for files that have -digit suffix is the name e.g. completion-ranking.jar is before gson-2.8.0.jar or junit-m5.jar
-  c) jar with name close to plugin's directory name, e.g. kotlin-XXX.jar is before allopen-XXX.jar
-  d) shorter name, e.g. android.jar is before android-base-common.jar
-  */
+   * Sort the files heuristically to load the plugin jar containing plugin descriptors without extra ZipFile accesses
+   * File name preference:
+   * a) last order for files with resources in name, like resources_en.jar
+   * b) last order for files that have -digit suffix is the name e.g. completion-ranking.jar is before gson-2.8.0.jar or junit-m5.jar
+   * c) jar with name close to plugin's directory name, e.g. kotlin-XXX.jar is before allopen-XXX.jar
+   * d) shorter name, e.g. android.jar is before android-base-common.jar
+   */
   private static void putMoreLikelyPluginJarsFirst(File pluginDir, File[] filesInLibUnderPluginDir) {
     String pluginDirName = pluginDir.getName();
 
@@ -836,14 +807,14 @@ public class PluginManagerCore {
       if (o2IsVersioned != o1IsVersioned) {
         return o2IsVersioned ? -1 : 1;
       }
-      
+
       boolean o2StartsWithNeededName = StringUtil.startsWithIgnoreCase(o2Name, pluginDirName);
       boolean o1StartsWithNeededName = StringUtil.startsWithIgnoreCase(o1Name, pluginDirName);
       if (o2StartsWithNeededName != o1StartsWithNeededName) {
         return o2StartsWithNeededName ? 1 : -1;
       }
 
-      
+
       return o1Name.length() - o2Name.length();
     });
   }
@@ -894,13 +865,13 @@ public class PluginManagerCore {
                                      @NotNull List<IdeaPluginDescriptorImpl> result,
                                      @Nullable StartupProgress progress,
                                      int pluginsCount) {
-    final File[] files = pluginsHome.listFiles();
+    File[] files = pluginsHome.listFiles();
     if (files != null) {
       int i = result.size();
       Collection<IdeaPluginDescriptorImpl> existingResults = ContainerUtil.newHashSet(result);
-      
+
       for (File file : files) {
-        final IdeaPluginDescriptorImpl descriptor = loadDescriptor(file, PLUGIN_XML);
+        IdeaPluginDescriptorImpl descriptor = loadDescriptor(file, PLUGIN_XML);
         if (descriptor == null) continue;
         if (descriptor.getName() == null) {
           getLogger().warn("Skipped plugin without name: " + descriptor);
@@ -910,7 +881,7 @@ public class PluginManagerCore {
         }
         int oldIndex = !existingResults.add(descriptor) ? result.indexOf(descriptor) : -1;
         if (oldIndex >= 0) {
-          final IdeaPluginDescriptorImpl oldDescriptor = result.get(oldIndex);
+          IdeaPluginDescriptorImpl oldDescriptor = result.get(oldIndex);
           if (StringUtil.compareVersionNumbers(oldDescriptor.getVersion(), descriptor.getVersion()) < 0) {
             result.set(oldIndex, descriptor);
           }
@@ -923,8 +894,8 @@ public class PluginManagerCore {
   }
 
   private static void filterBadPlugins(@NotNull List<? extends IdeaPluginDescriptor> result,
-                                       @NotNull final Map<String, String> disabledPluginNames,
-                                       @NotNull final List<String> errors) {
+                                       @NotNull Map<String, String> disabledPluginNames,
+                                       @NotNull List<String> errors) {
     final Map<PluginId, IdeaPluginDescriptor> idToDescriptorMap = new THashMap<>();
     boolean pluginsWithoutIdFound = false;
     for (Iterator<? extends IdeaPluginDescriptor> it = result.iterator(); it.hasNext();) {
@@ -983,7 +954,7 @@ public class PluginManagerCore {
         error += idToDescriptorMap.containsKey(pluginId2Disable) ? idToDescriptorMap.get(pluginId2Disable).getName() : pluginId2Disable.getIdString();
       }
       else {
-        error +="not loaded plugins";
+        error += "not loaded plugins";
       }
       errors.add(error + "</a>");
       boolean possibleToEnable = true;
@@ -994,7 +965,8 @@ public class PluginManagerCore {
         }
       }
       if (possibleToEnable) {
-        errors.add("<a href=\"" + ENABLE + "\">Enable " + (faultyDescriptors.size() == 1 ? disabledPluginNames.get(faultyDescriptors.iterator().next()) : " all necessary plugins") + "</a>");
+        String name = faultyDescriptors.size() == 1 ? disabledPluginNames.get(faultyDescriptors.iterator().next()) : " all necessary plugins";
+        errors.add("<a href=\"" + ENABLE + "\">Enable " + name + "</a>");
       }
       errors.add("<a href=\"" + EDIT + "\">Open plugin manager</a>");
     }
@@ -1034,7 +1006,7 @@ public class PluginManagerCore {
     }
 
     Collection<IdeaPluginDescriptorImpl> existingResults = ContainerUtil.newHashSet(result);
-    
+
     int i = 0;
     for (URL url : urls.keySet()) {
       IdeaPluginDescriptorImpl descriptor = loadDescriptorFromResource(url, urls.get(url));
@@ -1049,8 +1021,7 @@ public class PluginManagerCore {
   }
 
   @Nullable
-  private static IdeaPluginDescriptorImpl loadDescriptorFromResource(@NotNull URL resource,
-                                                                     @NotNull String pathName) {
+  private static IdeaPluginDescriptorImpl loadDescriptorFromResource(@NotNull URL resource, @NotNull String pathName) {
     try {
       if (URLUtil.FILE_PROTOCOL.equals(resource.getProtocol())) {
         File descriptorFile = urlToFile(resource);
@@ -1247,8 +1218,7 @@ public class PluginManagerCore {
     }
 
     try {
-      return isIncompatible(buildNumber, descriptor.getSinceBuild(), descriptor.getUntilBuild(), 
-                            descriptor.getName(), descriptor.toString());
+      return isIncompatible(buildNumber, descriptor.getSinceBuild(), descriptor.getUntilBuild(), descriptor.getName(), descriptor.toString());
     }
     catch (RuntimeException e) {
       LOG.error(e);
@@ -1470,7 +1440,7 @@ public class PluginManagerCore {
       descriptor = loadDescriptorFromDir(pluginRoot, fileName);
     }
     else {
-      descriptor = loadDescriptorFromJar(pluginRoot, fileName, JDOMXIncluder.DEFAULT_PATH_RESOLVER);
+      descriptor = loadDescriptorFromJar(pluginRoot, fileName);
     }
     if (descriptor != null) {
       registerExtensionPointsAndExtensions(area, Collections.singletonList(descriptor));

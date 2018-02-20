@@ -106,14 +106,31 @@ public class HotSwapUIImpl extends HotSwapUI {
     final String runHotswap = settings.RUN_HOTSWAP_AFTER_COMPILE;
     final boolean shouldDisplayHangWarning = shouldDisplayHangWarning(settings, sessions);
 
-    HotSwapStatusListener callbackWrapper = (aborted, errors, warnings, hotSwappedSessions) -> {
-      if (callback != null) {
-        callback.hotSwapFinished(aborted, errors, warnings, hotSwappedSessions);
+    HotSwapStatusListener callbackWrapper = new HotSwapStatusListener() {
+      @Override
+      public void onCancel(List<DebuggerSession> sessions) {
+        if (callback != null) {
+          callback.onCancel(sessions);
+        }
+      }
+
+      @Override
+      public void onSuccess(List<DebuggerSession> sessions) {
+        if (callback != null) {
+          callback.onSuccess(sessions);
+        }
+      }
+
+      @Override
+      public void onFailure(List<DebuggerSession> sessions) {
+        if (callback != null) {
+          callback.onFailure(sessions);
+        }
       }
     };
 
     if (shouldAskBeforeHotswap && DebuggerSettings.RUN_HOTSWAP_NEVER.equals(runHotswap)) {
-      callbackWrapper.hotSwapFinished(true, 0, 0, sessions);
+      callbackWrapper.onCancel(sessions);
       return;
     }
 
@@ -131,7 +148,7 @@ public class HotSwapUIImpl extends HotSwapUI {
       findClassesProgress.addProgressListener(new HotSwapProgressImpl.HotSwapProgressListener() {
         @Override
         public void onCancel() {
-          callbackWrapper.hotSwapFinished(true, 0, 0, sessions);
+          callbackWrapper.onCancel(sessions);
         }
       });
     }
@@ -161,7 +178,7 @@ public class HotSwapUIImpl extends HotSwapUI {
       if (modifiedClasses.isEmpty()) {
         final String message = DebuggerBundle.message("status.hotswap.uptodate");
         HotSwapProgressImpl.NOTIFICATION_GROUP.createNotification(message, NotificationType.INFORMATION).notify(myProject);
-        callbackWrapper.hotSwapFinished(false, 0, 0, sessions);
+        callbackWrapper.onSuccess(sessions);
         return;
       }
 
@@ -172,7 +189,7 @@ public class HotSwapUIImpl extends HotSwapUI {
             for (DebuggerSession session : modifiedClasses.keySet()) {
               session.setModifiedClassesScanRequired(true);
             }
-            callbackWrapper.hotSwapFinished(true, 0, 0, sessions);
+            callbackWrapper.onCancel(sessions);
             return;
           }
           final Set<DebuggerSession> toReload = new HashSet<>(dialog.getSessionsToReload());
@@ -200,7 +217,7 @@ public class HotSwapUIImpl extends HotSwapUI {
               for (DebuggerSession session : modifiedClasses.keySet()) {
                 session.setModifiedClassesScanRequired(true);
               }
-              callbackWrapper.hotSwapFinished(true, 0, 0, sessions);
+              callbackWrapper.onCancel(sessions);
               return;
             }
           }
@@ -215,12 +232,17 @@ public class HotSwapUIImpl extends HotSwapUI {
           progress.addProgressListener(new HotSwapProgressImpl.HotSwapProgressListener() {
             @Override
             public void onCancel() {
-              notifyStatusListener(callbackWrapper, progress, sessions, true);
+              callbackWrapper.onCancel(sessions);
             }
 
             @Override
             public void onFinish() {
-              notifyStatusListener(callbackWrapper, progress, sessions, false);
+              if (progress.getMessages(MessageCategory.ERROR).isEmpty()) {
+                callbackWrapper.onSuccess(sessions);
+              }
+              else {
+                callbackWrapper.onFailure(sessions);
+              }
             }
           });
           application.executeOnPooledThread(() -> reloadModifiedClasses(modifiedClasses, progress));
@@ -272,6 +294,9 @@ public class HotSwapUIImpl extends HotSwapUI {
     else {
       if (session.isAttached()) {
         hotSwapSessions(Collections.singletonList(session), null, callback);
+      }
+      else if (callback != null) {
+        callback.onFailure(ContainerUtil.newSmartList(session));
       }
     }
   }
@@ -337,15 +362,5 @@ public class HotSwapUIImpl extends HotSwapUI {
     return DebuggerManagerEx.getInstanceEx(myProject).getSessions().stream()
       .filter(HotSwapUIImpl::canHotSwap)
       .collect(Collectors.toCollection(SmartList::new));
-  }
-
-  private static void notifyStatusListener(HotSwapStatusListener listener,
-                                           HotSwapProgressImpl progress,
-                                           List<DebuggerSession> sessions,
-                                           boolean aborted) {
-    listener.hotSwapFinished(aborted,
-                             progress.getMessages(MessageCategory.ERROR).size(),
-                             progress.getMessages(MessageCategory.WARNING).size(),
-                             sessions);
   }
 }

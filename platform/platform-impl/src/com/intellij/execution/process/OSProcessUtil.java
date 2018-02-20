@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.process;
 
@@ -10,8 +10,11 @@ import com.pty4j.windows.WinPtyProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jvnet.winp.WinProcess;
 
+import java.lang.management.ManagementFactory;
+
 public class OSProcessUtil {
   private static final Logger LOG = Logger.getInstance(OSProcessUtil.class);
+  private static String ourPid;
 
   @NotNull
   public static ProcessInfo[] getProcessList() {
@@ -101,5 +104,23 @@ public class OSProcessUtil {
   @NotNull
   private static WinProcess createWinProcess(int pid) {
     return new WinProcess(pid);
+  }
+
+  private static String getCurrentProcessId() {
+    try {
+      String name = ManagementFactory.getRuntimeMXBean().getName();
+      return name.split("@")[0];
+    }
+    catch (Exception e) {
+      return "-1";
+    }
+  }
+
+  public static String getApplicationPid() {
+    if (ourPid == null) {
+      ourPid = getCurrentProcessId();
+    }
+
+    return String.valueOf(ourPid);
   }
 }

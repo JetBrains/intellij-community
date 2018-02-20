@@ -3,7 +3,10 @@
  */
 package org.jetbrains.yaml.meta.model;
 
+import com.intellij.codeInspection.ProblemsHolder;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.yaml.psi.YAMLScalar;
 
 @ApiStatus.Experimental
 public class YamlNumberType extends YamlScalarType {
@@ -16,5 +19,16 @@ public class YamlNumberType extends YamlScalarType {
   public YamlNumberType() {
     super("yaml:number");
     setDisplayName("number");
+  }
+
+  @Override
+  protected void validateScalarValue(@NotNull YAMLScalar scalarValue, @NotNull ProblemsHolder holder) {
+    try {
+      //noinspection ResultOfMethodCallIgnored
+      Float.parseFloat(scalarValue.getTextValue());
+    }
+    catch (NumberFormatException e) {
+      holder.registerProblem(scalarValue, "Numeric value expected");
+    }
   }
 }

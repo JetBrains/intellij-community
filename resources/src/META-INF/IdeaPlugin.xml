@@ -402,6 +402,9 @@
     <action class="com.intellij.execution.testDiscovery.ShowDiscoveredTestsAction" internal="true" id="ShowDiscoveredTests" text="Show Discovered Tests">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
+    <action class="com.intellij.execution.testDiscovery.ShowDiscoveredTestsAction$FromChangeList" internal="true" id="ShowDiscoveredTestsFromChangeList" text="Show Discovered Tests">
+      <add-to-group group-id="ChangesViewPopupMenu" anchor="last"/>
+    </action>
 
     <action id="JShell.Console"
             class="com.intellij.execution.jshell.LaunchJShellConsoleAction"

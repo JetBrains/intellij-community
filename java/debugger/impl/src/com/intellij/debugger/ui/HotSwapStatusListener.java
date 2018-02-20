@@ -5,6 +5,16 @@ import com.intellij.debugger.impl.DebuggerSession;
 
 import java.util.List;
 
+/**
+ * Defines contract for callback to listen hot swap status.
+ */
 public interface HotSwapStatusListener {
-  void hotSwapFinished(boolean aborted, int errors, int warnings, List<DebuggerSession> sessions);
+  default void onCancel(List<DebuggerSession> sessions) {
+  }
+
+  default void onSuccess(List<DebuggerSession> sessions) {
+  }
+
+  default void onFailure(List<DebuggerSession> sessions) {
+  }
 }
