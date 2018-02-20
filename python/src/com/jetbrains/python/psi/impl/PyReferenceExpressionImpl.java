@@ -524,17 +524,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         .select(ReadWriteInstruction.class)
         .map(instr -> instr.getType(context, anchor))
         // don't use foldLeft(BiFunction) here, as it doesn't support null results
-        .foldLeft(null, (accType, defType) -> {
-          if (defType == null) {
-            return accType;
-          }
-          else if (accType == null) {
-            return defType;
-          }
-          else {
-            return Ref.create(PyUnionType.union(accType.get(), defType.get()));
-          }
-        });
+        .collect(PyTypeUtil.toUnionFromRef());
       return Ref.deref(combinedType);
     }
     catch (PyDefUseUtil.InstructionNotFoundException ignored) {
