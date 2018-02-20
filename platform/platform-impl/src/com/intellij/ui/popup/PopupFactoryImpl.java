@@ -34,6 +34,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SizedIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -1125,6 +1126,12 @@ public class PopupFactoryImpl extends JBPopupFactory {
           icon = disabledIcon != null ? disabledIcon : IconLoader.getDisabledIcon(icon);
           selectedIcon = disabledIcon != null ? disabledIcon : IconLoader.getDisabledIcon(selectedIcon);
         }
+
+        if (myMaxIconWidth != -1 && myMaxIconHeight != -1) {
+          if (icon != null) icon = new SizedIcon(icon, myMaxIconWidth, myMaxIconHeight);
+          if (selectedIcon != null) selectedIcon = new SizedIcon(selectedIcon, myMaxIconWidth, myMaxIconHeight);
+        }
+
         if (icon == null) icon = selectedIcon != null ? selectedIcon : myEmptyIcon;
         boolean prependSeparator = (!myListModel.isEmpty() || mySeparatorText != null) && myPrependWithSeparator;
         assert text != null : action + " has no presentation";
