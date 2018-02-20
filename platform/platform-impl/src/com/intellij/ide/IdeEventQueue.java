@@ -1182,24 +1182,39 @@ public class IdeEventQueue extends EventQueue {
 
   private static boolean isFocusGoesIntoPopup(AWTEvent e) {
 
+    AWTEvent unwrappedEvent = unwrapWindowEvent(e);
+
     if (TYPEAHEAD_LOG.isDebugEnabled() && (e instanceof WindowEvent || e.getClass().getName().contains("SequencedEvent"))) {
       TYPEAHEAD_LOG.debug("Window event: " + e.paramString());
     }
 
-    if (e.getClass().getName().contains("SequencedEvent")) {
-      Field nestedField = ReflectionUtil.getDeclaredField(e.getClass(), "nested");
-      try {
-        WindowEvent nested = (WindowEvent)nestedField.get(e);
-        if (nested != null && isFocusGoesIntoPopupFromWindowEvent(nested)) return true;
-      }
-      catch (IllegalAccessException illegalAccessException) {
-        TYPEAHEAD_LOG.error(illegalAccessException);
-      }
-    }
-
-    if (isFocusGoesIntoPopupFromWindowEvent(e)) return true;
+    if (isFocusGoesIntoPopupFromWindowEvent(unwrappedEvent)) return true;
 
     return false;
+  }
+
+  private static Field nestedField;
+
+  private static @NotNull Field getSequencedEventNestedField (AWTEvent e) {
+    if (nestedField == null) {
+      nestedField = ReflectionUtil.getDeclaredField(e.getClass(), "nested");
+    }
+    TYPEAHEAD_LOG.assertTrue(nestedField != null);
+    return nestedField;
+  }
+
+  private static @NotNull  AWTEvent unwrapWindowEvent(@NotNull AWTEvent e) {
+    AWTEvent unwrappedEvent = e;
+      if (e.getClass().getName().contains("SequencedEvent")) {
+        try {
+          unwrappedEvent = (AWTEvent)getSequencedEventNestedField(e).get(e);
+          TYPEAHEAD_LOG.assertTrue(unwrappedEvent != null);
+        }
+        catch (IllegalAccessException illegalAccessException) {
+          TYPEAHEAD_LOG.error(illegalAccessException);
+        }
+      }
+    return unwrappedEvent;
   }
 
   private boolean isTypeaheadTimeoutExceeded(AWTEvent e) {
