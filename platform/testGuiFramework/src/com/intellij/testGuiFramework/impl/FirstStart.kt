@@ -176,7 +176,7 @@ abstract class FirstStart(val ideType: IdeType) {
 
       LOG.info("Click OK on 'Do not import settings'")
       radioButton("Do not import settings").select()
-      button("OK").click()
+      button("  OK  ").click()
     }
   }
 
