@@ -22,12 +22,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
+import com.intellij.performance.IntervalCounter
 import com.intellij.sorting.SortingTimeStatistics
 import com.intellij.stats.experiment.WebServiceStatus
-import com.intellij.performance.IntervalCounter
-import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
+import com.intellij.util.ui.JBUI
 import java.awt.event.ActionEvent
 import javax.swing.BoxLayout
 import javax.swing.JComponent
@@ -61,7 +61,7 @@ class PluginSettingsConfigurable : Configurable {
 
     override fun createComponent(): JComponent? {
         val manualControlPanel = manualControlCheckBoxPanel().apply {
-            border = IdeBorderFactory.createEmptyBorder(5, 0, 0, 0)
+            border = JBUI.Borders.empty(5, 0, 0, 0)
         }
         val timingPanel = timingPanel()
         val autoExperimentPanel = autoExperimentStatusPanel()
@@ -92,7 +92,7 @@ class PluginSettingsConfigurable : Configurable {
 
     private fun manualControlCheckBoxPanel(): JPanel {
         manualControlCb = JBCheckBox("Control experiment manually", ManualExperimentControl.isOn).apply { 
-            border = IdeBorderFactory.createEmptyBorder()
+            border = JBUI.Borders.empty()
         }
         
         val panel = JPanel()
@@ -108,13 +108,13 @@ class PluginSettingsConfigurable : Configurable {
         val text = "(can be changed by \"${action.templatePresentation.text}\" action$shortcuts)"
         
         manualSortingCb = JBCheckBox("Enable sorting $text", ManualMlSorting.isOn).apply { 
-            border = IdeBorderFactory.createEmptyBorder()
+            border = JBUI.Borders.empty()
         }
         
         val panel = JPanel()
         return panel.apply {
             layout = BoxLayout(this, BoxLayout.Y_AXIS)
-            border = IdeBorderFactory.createEmptyBorder(5, 0, 0, 0)
+            border = JBUI.Borders.empty(5, 0, 0, 0)
             add(manualSortingCb)
         }
     }
@@ -127,7 +127,7 @@ class PluginSettingsConfigurable : Configurable {
         val avgTime: List<String> = stats.state.getAvgTimeByElementsSortedDistribution()
         
         return panel.apply {
-            border = IdeBorderFactory.createEmptyBorder(5)
+            border = JBUI.Borders.empty(5)
             layout = BoxLayout(panel, BoxLayout.Y_AXIS)
             
             if (time.isNotEmpty()) {
@@ -136,7 +136,7 @@ class PluginSettingsConfigurable : Configurable {
             }
             if (avgTime.isNotEmpty()) {
                 val label = JBLabel("<html><b>Elements Count to Avg Sorting Time:</b></html>")
-                label.border = IdeBorderFactory.createEmptyBorder(5, 0, 0, 0)
+                label.border = JBUI.Borders.empty(5, 0, 0, 0)
                 add(label)
                 avgTime.forEach { add(JBLabel(it)) }
             }
@@ -151,8 +151,7 @@ class PluginSettingsConfigurable : Configurable {
 
         return JPanel().apply {
             layout = BoxLayout(this, BoxLayout.Y_AXIS)
-            border = IdeBorderFactory.createEmptyBorder(5)
-
+            border = JBUI.Borders.empty(5)
             add(JBLabel("<html><b>Contributors Time:</b></html><br/>"))
             stats.languages().forEach {
                 add(JBLabel("<html><b>${it.displayName}:</b></html>"))
@@ -176,7 +175,7 @@ class PluginSettingsConfigurable : Configurable {
         val panel = JPanel()
         return panel.apply {
             layout = BoxLayout(this, BoxLayout.Y_AXIS)
-            border = IdeBorderFactory.createEmptyBorder(5)
+            border = JBUI.Borders.empty(5)
             add(JBLabel("<html><b>Is experiment going on now:</b> $isExperimentGoingOnNow</html>"))
             add(JBLabel("<html><b>Is experiment on current IDE:</b> $isExperimentOnCurrentIDE</html>"))
         }
