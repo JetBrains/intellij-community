@@ -1194,7 +1194,7 @@ public class IdeEventQueue extends EventQueue {
       TYPEAHEAD_LOG.debug("Window event: " + e.paramString());
     }
 
-    if (doesFocusGoeIntoPopupFromWindowEvent(unwrappedEvent)) return true;
+    if (doesFocusGoIntoPopupFromWindowEvent(unwrappedEvent)) return true;
 
     return false;
   }
@@ -1233,7 +1233,7 @@ public class IdeEventQueue extends EventQueue {
     return false;
   }
 
-  private static boolean doesFocusGoeIntoPopupFromWindowEvent(AWTEvent e) {
+  private static boolean doesFocusGoIntoPopupFromWindowEvent(AWTEvent e) {
     if (e.getID() == WindowEvent.WINDOW_GAINED_FOCUS ||
         (SystemInfo.isLinux && e.getID() == WindowEvent.WINDOW_OPENED)) {
       WindowEvent windowEvent = (WindowEvent)e;
