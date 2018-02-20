@@ -56,11 +56,6 @@ public class XmlTagTest extends LightCodeInsightTestCase {
     assertEquals("bar", createTag("bar").getValue().getText());
   }
 
-  public void testNotClosedQuoteInValue() { final XmlTag tag = createTag("foo.html", "<p id=\"");
-    XmlTagValueImpl value = (XmlTagValueImpl)tag.getValue();
-    value.getText();
-  }
-
   public void testCharRefs() {
     String[] names = XmlTagUtil.getCharacterEntityNames();
     for (String name : names) {
