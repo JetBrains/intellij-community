@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.sdk.add
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogWrapper
@@ -22,6 +23,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.JBCardLayout
 import com.intellij.ui.components.JBList
@@ -72,12 +74,13 @@ class PyAddSdkDialog private constructor(private val project: Project?,
                                            createAnacondaPanel(project),
                                            PyAddSystemWideInterpreterPanel(existingSdks))
     val extendedPanels = PyAddSdkProvider.EP_NAME.extensions
-      .map { it.createView(project = project, newProjectPath = newProjectPath, existingSdks = existingSdks) }
-      .mapNotNull { it }
+      .mapNotNull { it.createView(project = project, newProjectPath = newProjectPath, existingSdks = existingSdks).registerIfDisposable() }
     panels.addAll(extendedPanels)
     mainPanel.add(SPLITTER_COMPONENT_CARD_PANE, createCardSplitter(panels))
     return mainPanel
   }
+
+  private fun <T> T.registerIfDisposable(): T = apply { (this as? Disposable)?.let { Disposer.register(disposable, it) } }
 
   private var navigationPanelCardLayout: CardLayout? = null
 
