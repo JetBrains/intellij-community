@@ -264,6 +264,6 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       .replace(' ', '-')
       .replace("intellij-idea", "idea").replace("android-studio", "studio")
       .replace("-community-edition", "-ce").replace("-ultimate-edition", "").replace("-professional-edition", "")
-    "jetbrains-" + name
+    name.startsWith("jetbrains-") ? name : "jetbrains-" + name
   }
 }
