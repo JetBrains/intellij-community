@@ -788,6 +788,19 @@ public class PyTypingTest extends PyTestCase {
            "    expr = var\n");
   }
 
+  // PY-28032
+  public void testClassAttributeAnnotationExplicitAny() {
+    doTest("Any",
+           "from typing import Any\n" +
+           "\n" +
+           "class C:\n" +
+           "    attr: Any = None\n" +
+           "    \n" +
+           "    def m(self, x):\n" +
+           "        self.attr = x\n" +
+           "        expr = self.attr");
+  }
+
   // PY-21864
   public void testClassAttributeAnnotationAheadOfTimeInAnotherFile() {
     doMultiFileStubAwareTest("int",
