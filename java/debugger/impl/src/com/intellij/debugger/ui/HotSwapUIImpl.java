@@ -17,10 +17,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.compiler.CompilationStatusListener;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.compiler.CompilerTopics;
+import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -28,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -47,6 +45,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 public class HotSwapUIImpl extends HotSwapUI {
+  private static final Key<HotSwapStatusListener> HOT_SWAP_CALLBACK_KEY = Key.create("hot_swap_callback");
+
   private final List<HotSwapVetoableListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myAskBeforeHotswap = true;
   private final Project myProject;
@@ -276,20 +276,24 @@ public class HotSwapUIImpl extends HotSwapUI {
 
   @Override
   public void reloadChangedClasses(@NotNull DebuggerSession session, boolean compileBeforeHotswap) {
-    reloadChangedClasses(session, null, compileBeforeHotswap);
+    reloadChangedClasses(session, compileBeforeHotswap, null);
   }
 
   @Override
-  public void reloadChangedClasses(@NotNull DebuggerSession session, @Nullable HotSwapStatusListener callback) {
-    reloadChangedClasses(session, callback, false);
-  }
-
-  private void reloadChangedClasses(@NotNull DebuggerSession session,
-                                    @Nullable HotSwapStatusListener callback,
-                                    boolean compileBeforeHotswap) {
+  public void reloadChangedClasses(@NotNull DebuggerSession session,
+                                   boolean compileBeforeHotswap,
+                                   @Nullable HotSwapStatusListener callback) {
     dontAskHotswapAfterThisCompilation();
     if (compileBeforeHotswap) {
-      CompilerManager.getInstance(session.getProject()).make(null);
+      CompilerManager compilerManager = CompilerManager.getInstance(session.getProject());
+      if (callback == null) {
+        compilerManager.make(null);
+      }
+      else {
+        CompileScope compileScope = compilerManager.createProjectCompileScope(session.getProject());
+        compileScope.putUserData(HOT_SWAP_CALLBACK_KEY, callback);
+        compilerManager.make(compileScope, null);
+      }
     }
     else {
       if (session.isAttached()) {
@@ -337,6 +341,9 @@ public class HotSwapUIImpl extends HotSwapUI {
         return;
       }
 
+      CompileScope compileScope = compileContext.getCompileScope();
+      HotSwapStatusListener callback = compileScope != null ? compileScope.getUserData(HOT_SWAP_CALLBACK_KEY) : null;
+
       if (errors == 0 && !aborted && myPerformHotswapAfterThisCompilation) {
         for (HotSwapVetoableListener listener : myListeners) {
           if (!listener.shouldHotSwap(compileContext)) {
@@ -346,7 +353,7 @@ public class HotSwapUIImpl extends HotSwapUI {
 
         List<DebuggerSession> sessions = getHotSwappableDebugSessions();
         if (!sessions.isEmpty()) {
-          hotSwapSessions(sessions, generated, null);
+          hotSwapSessions(sessions, generated, callback);
         }
       }
       myPerformHotswapAfterThisCompilation = true;

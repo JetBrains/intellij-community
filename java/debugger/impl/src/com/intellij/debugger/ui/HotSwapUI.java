@@ -31,7 +31,8 @@ public abstract class HotSwapUI {
 
   public abstract void reloadChangedClasses(@NotNull DebuggerSession session, boolean compileBeforeHotswap);
 
-  public abstract void reloadChangedClasses(@NotNull DebuggerSession session, @Nullable HotSwapStatusListener callback);
+  public abstract void reloadChangedClasses(@NotNull DebuggerSession session, boolean compileBeforeHotswap,
+                                            @Nullable HotSwapStatusListener callback);
 
   public abstract void dontPerformHotswapAfterThisCompilation();
 
