@@ -41,7 +41,6 @@ import javax.swing.tree.TreePath;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.Predicate;
 
 import static com.intellij.ide.util.treeView.TreeState.expand;
 import static java.util.Collections.singletonList;
@@ -152,7 +151,7 @@ class AsyncProjectViewSupport {
     }
     PsiElement element = object instanceof PsiElement ? (PsiElement)object : null;
     LOG.debug("select object: ", object, " in file: ", file);
-    TreeVisitor visitor = createVisitor(element, file, null);
+    TreeVisitor visitor = AbstractProjectViewPane.createVisitor(element, file);
     if (visitor != null) {
       expand(tree, promise -> myAsyncTreeModel.accept(visitor).processed(path -> {
         if (selectPath(tree, path) || element == null || file == null || Registry.is("async.project.view.support.extra.select.disabled")) {
@@ -161,7 +160,7 @@ class AsyncProjectViewSupport {
         else {
           // try to search the specified file instead of element,
           // because Kotlin files cannot represent containing functions
-          myAsyncTreeModel.accept(createVisitor(null, file, null)).processed(path2 -> {
+          myAsyncTreeModel.accept(AbstractProjectViewPane.createVisitor(file)).processed(path2 -> {
             selectPath(tree, path2);
             promise.setResult(null);
           });
@@ -202,7 +201,7 @@ class AsyncProjectViewSupport {
 
   private void update(PsiElement element, VirtualFile file, boolean structure) {
     SmartList<TreePath> list = new SmartList<>();
-    acceptAndUpdate(createVisitor(element, file, path -> !list.add(path)), list, structure);
+    acceptAndUpdate(AbstractProjectViewPane.createVisitor(element, file, path -> !list.add(path)), list, structure);
   }
 
   private void acceptAndUpdate(TreeVisitor visitor, List<TreePath> list, boolean structure) {
@@ -255,31 +254,18 @@ class AsyncProjectViewSupport {
     }
   }
 
-  static TreeVisitor createVisitor(Object object) {
-    if (object instanceof AbstractTreeNode) {
-      AbstractTreeNode node = (AbstractTreeNode)object;
-      object = node.getValue();
-    }
-    return object instanceof PsiElement
-           ? createVisitor((PsiElement)object, null, null)
-           : null;
-  }
-
   static List<TreeVisitor> createVisitors(Iterable<Object> iterable) {
     if (iterable == null) return Collections.emptyList();
     List<TreeVisitor> visitors = new SmartList<>();
     for (Object object : iterable) {
-      TreeVisitor visitor = createVisitor(object);
+      if (object instanceof AbstractTreeNode) {
+        AbstractTreeNode node = (AbstractTreeNode)object;
+        object = node.getValue();
+      }
+      TreeVisitor visitor = AbstractProjectViewPane.createVisitor(object);
       if (visitor != null) visitors.add(visitor);
     }
     return visitors;
-  }
-
-  private static TreeVisitor createVisitor(PsiElement element, VirtualFile file, Predicate<TreePath> predicate) {
-    if (element != null && element.isValid()) return new ProjectViewNodeVisitor(element, file, predicate);
-    if (file != null) return new ProjectViewFileVisitor(file, predicate);
-    LOG.warn(element != null ? "element invalidated: " + element : "cannot create visitor without element and/or file");
-    return null;
   }
 
   private static void setModel(@NotNull JTree tree, @NotNull AsyncTreeModel model) {
