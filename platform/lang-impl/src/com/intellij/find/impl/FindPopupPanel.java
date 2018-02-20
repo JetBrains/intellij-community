@@ -1174,7 +1174,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       @Override
       public void onCanceled(@NotNull ProgressIndicator indicator) {
         if (isShowing() && progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress) {
-          scheduleResultsUpdate();
+          onStop(System.identityHashCode(myResultsPreviewSearchProgress));
         }
       }
     });
