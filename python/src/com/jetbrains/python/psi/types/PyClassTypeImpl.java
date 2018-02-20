@@ -901,9 +901,4 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       return (instance != target);
     }
   }
-
-  @Override
-  public void accept(@NotNull PyTypeVisitor visitor) {
-    visitor.visitClassType(this);
-  }
 }
