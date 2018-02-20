@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.xml.XmlTagValueImpl;
 import com.intellij.psi.xml.*;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.ArrayUtil;
@@ -53,6 +54,11 @@ public class XmlTagTest extends LightCodeInsightTestCase {
 
   public void testGetTextValue() {
     assertEquals("bar", createTag("bar").getValue().getText());
+  }
+
+  public void testNotClosedQuoteInValue() { final XmlTag tag = createTag("foo.html", "<p id=\"");
+    XmlTagValueImpl value = (XmlTagValueImpl)tag.getValue();
+    value.getText();
   }
 
   public void testCharRefs() {
