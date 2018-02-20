@@ -56,7 +56,7 @@ abstract class ValueNodeAsyncFunction<PARAM, RESULT>(private val node: Obsolesce
   override fun isObsolete() = node.isObsolete
 }
 
-abstract class ObsolescentConsumer<T>(private val obsolescent: Obsolescent) : Obsolescent, Consumer<T> {
+abstract class ObsolescentConsumer<T>(private val obsolescent: Obsolescent) : Obsolescent, java.util.function.Consumer<T> {
   override fun isObsolete() = obsolescent.isObsolete
 }
 
@@ -67,20 +67,20 @@ inline fun <T, SUB_RESULT> Promise<T>.then(obsolescent: Obsolescent, crossinline
 })
 
 
-inline fun <T> Promise<T>.done(node: Obsolescent, crossinline handler: (T) -> Unit) = done(object : ObsolescentConsumer<T>(node) {
-  override fun consume(param: T) = handler(param)
+inline fun <T> Promise<T>.onSuccess(node: Obsolescent, crossinline handler: (T) -> Unit) = onSuccess(object : ObsolescentConsumer<T>(node) {
+  override fun accept(param: T) = handler(param)
 })
 
 inline fun Promise<*>.processed(node: Obsolescent, crossinline handler: () -> Unit): Promise<Any?>? {
   @Suppress("UNCHECKED_CAST")
   return (this as Promise<Any?>)
-    .processed(object : ObsolescentConsumer<Any?>(node) {
-      override fun consume(param: Any?) = handler()
+    .onProcessed(object : ObsolescentConsumer<Any?>(node) {
+      override fun accept(param: Any?) = handler()
     })
 }
 
 @Suppress("UNCHECKED_CAST")
-inline fun Promise<*>.doneRun(crossinline handler: () -> Unit) = done({ handler() })
+inline fun Promise<*>.doneRun(crossinline handler: () -> Unit) = onSuccess { handler() }
 
 @Suppress("UNCHECKED_CAST")
 inline fun <T> Promise<*>.thenRun(crossinline handler: () -> T): Promise<T> = (this as Promise<Any?>).then({ handler() })
@@ -94,9 +94,11 @@ inline fun <T, SUB_RESULT> Promise<T>.thenAsync(node: Obsolescent, crossinline h
 })
 
 @Suppress("UNCHECKED_CAST")
-inline fun <T> Promise<T>.thenAsyncAccept(node: Obsolescent, crossinline handler: (T) -> Promise<*>) = thenAsync(object : ValueNodeAsyncFunction<T, Any?>(node) {
-  override fun `fun`(param: T) = handler(param) as Promise<Any?>
-})
+inline fun <T> Promise<T>.thenAsyncAccept(node: Obsolescent, crossinline handler: (T) -> Promise<*>): Promise<Any?> {
+  return thenAsync(object : ValueNodeAsyncFunction<T, Any?>(node) {
+    override fun `fun`(param: T) = handler(param) as Promise<Any?>
+  })
+}
 
 inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>) = thenAsync(Function<T, Promise<Any?>> { param ->
   @Suppress("UNCHECKED_CAST")
@@ -104,8 +106,8 @@ inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>
 })
 
 
-inline fun Promise<*>.rejected(node: Obsolescent, crossinline handler: (Throwable) -> Unit) = rejected(object : ObsolescentConsumer<Throwable>(node) {
-  override fun consume(param: Throwable) = handler(param)
+inline fun Promise<*>.onError(node: Obsolescent, crossinline handler: (Throwable) -> Unit) = onError(object : ObsolescentConsumer<Throwable>(node) {
+  override fun accept(param: Throwable) = handler(param)
 })
 
 @JvmOverloads
@@ -116,7 +118,7 @@ fun <T> collectResults(promises: List<Promise<T>>, ignoreErrors: Boolean = false
 
   val results: MutableList<T> = if (promises.size == 1) SmartList<T>() else ArrayList(promises.size)
   for (promise in promises) {
-    promise.done { results.add(it) }
+    promise.onSuccess { results.add(it) }
   }
   return all(promises, results, ignoreErrors)
 }
@@ -125,10 +127,15 @@ fun <T> collectResults(promises: List<Promise<T>>, ignoreErrors: Boolean = false
 fun createError(error: String, log: Boolean = false): RuntimeException = MessageError(error, log)
 
 inline fun <T> AsyncPromise<T>.compute(runnable: () -> T) {
-  val result = catchError(runnable)
-  if (!isRejected) {
-    setResult(result)
+  val result = try {
+    runnable()
   }
+  catch (e: Throwable) {
+    setError(e)
+    return
+  }
+
+  setResult(result)
 }
 
 inline fun <T> runAsync(crossinline runnable: () -> T): Promise<T> {
@@ -172,16 +179,17 @@ fun Logger.errorIfNotMessage(e: Throwable): Boolean {
   return false
 }
 
-fun ActionCallback.toPromise(): Promise<Void> {
-  val promise = AsyncPromise<Void>()
-  doWhenDone { promise.setResult(null) }.doWhenRejected { error -> promise.setError(createError(error ?: "Internal error")) }
+fun ActionCallback.toPromise(): Promise<Void?> {
+  val promise = AsyncPromise<Void?>()
+  doWhenDone { promise.setResult(null) }
+    .doWhenRejected { error -> promise.setError(createError(error ?: "Internal error")) }
   return promise
 }
 
 fun all(promises: Collection<Promise<*>>): Promise<*> = if (promises.size == 1) promises.first() else all(promises, null)
 
 @JvmOverloads
-fun <T> all(promises: Collection<Promise<*>>, totalResult: T?, ignoreErrors: Boolean = false): Promise<T> {
+fun <T: Any?> all(promises: Collection<Promise<*>>, totalResult: T, ignoreErrors: Boolean = false): Promise<T> {
   if (promises.isEmpty()) {
     @Suppress("UNCHECKED_CAST")
     return DONE as Promise<T>
@@ -190,21 +198,21 @@ fun <T> all(promises: Collection<Promise<*>>, totalResult: T?, ignoreErrors: Boo
   val totalPromise = AsyncPromise<T>()
   val done = CountDownConsumer(promises.size, totalPromise, totalResult)
   val rejected = if (ignoreErrors) {
-    Consumer { done.consume(null) }
+    Consumer { done.accept(null) }
   }
   else {
     Consumer<Throwable> { totalPromise.setError(it) }
   }
 
   for (promise in promises) {
-    promise.done(done)
+    promise.onSuccess(done)
     promise.rejected(rejected)
   }
   return totalPromise
 }
 
-private class CountDownConsumer<T>(@Volatile private var countDown: Int, private val promise: AsyncPromise<T>, private val totalResult: T?) : Consumer<Any?> {
-  override fun consume(t: Any?) {
+private class CountDownConsumer<T : Any?>(@Volatile private var countDown: Int, private val promise: AsyncPromise<T>, private val totalResult: T) : java.util.function.Consumer<Any?> {
+  override fun accept(t: Any?) {
     if (--countDown == 0) {
       promise.setResult(totalResult)
     }
@@ -221,11 +229,11 @@ fun <T> any(promises: Collection<Promise<T>>, totalError: String): Promise<T> {
   }
 
   val totalPromise = AsyncPromise<T>()
-  val done = Consumer<T> { result -> totalPromise.setResult(result) }
-  val rejected = object : Consumer<Throwable> {
+  val done = java.util.function.Consumer<T> { result -> totalPromise.setResult(result) }
+  val rejected = object : java.util.function.Consumer<Throwable> {
     @Volatile private var toConsume = promises.size
 
-    override fun consume(throwable: Throwable) {
+    override fun accept(throwable: Throwable) {
       if (--toConsume <= 0) {
         totalPromise.setError(totalError)
       }
@@ -233,8 +241,8 @@ fun <T> any(promises: Collection<Promise<T>>, totalError: String): Promise<T> {
   }
 
   for (promise in promises) {
-    promise.done(done)
-    promise.rejected(rejected)
+    promise.onSuccess(done)
+    promise.onError(rejected)
   }
   return totalPromise
 }

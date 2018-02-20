@@ -35,10 +35,9 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 
-import javax.swing.JTree;
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -207,7 +206,10 @@ class AsyncProjectViewSupport {
   }
 
   private void acceptAndUpdate(TreeVisitor visitor, List<TreePath> list, boolean structure) {
-    if (visitor != null) myAsyncTreeModel.accept(visitor, false).done(path -> update(list, structure));
+    if (visitor != null) {
+      myAsyncTreeModel.accept(visitor, false)
+                      .onSuccess(path -> update(list, structure));
+    }
   }
 
   private void updatePresentationsFromRootTo(@NotNull VirtualFile file) {
@@ -238,15 +240,17 @@ class AsyncProjectViewSupport {
   void accept(List<TreeVisitor> visitors, Consumer<List<TreePath>> consumer) {
     if (visitors != null && !visitors.isEmpty()) {
       if (1 == visitors.size()) {
-        myAsyncTreeModel.accept(visitors.get(0)).done(path -> {
-          if (path != null) consumer.consume(singletonList(path));
-        });
+        myAsyncTreeModel.accept(visitors.get(0))
+                        .onSuccess(path -> {
+                          if (path != null) consumer.consume(singletonList(path));
+                        });
       }
       else {
         List<Promise<TreePath>> promises = visitors.stream().map(visitor -> myAsyncTreeModel.accept(visitor)).collect(toList());
-        collectResults(promises, true).done(list -> {
-          if (list != null && !list.isEmpty()) consumer.consume(list);
-        });
+        collectResults(promises, true)
+          .onSuccess(list -> {
+            if (list != null && !list.isEmpty()) consumer.consume(list);
+          });
       }
     }
   }

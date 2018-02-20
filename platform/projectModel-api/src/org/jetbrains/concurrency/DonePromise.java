@@ -2,7 +2,6 @@
 package org.jetbrains.concurrency;
 
 import com.intellij.openapi.util.Getter;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,6 +10,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
 import static org.jetbrains.concurrency.Promises.resolvedPromise;
@@ -24,9 +24,9 @@ class DonePromise<T> implements Getter<T>, Promise<T>, Future<T> {
 
   @NotNull
   @Override
-  public Promise<T> done(@NotNull Consumer<? super T> done) {
+  public Promise<T> onSuccess(@NotNull Consumer<? super T> done) {
     if (!AsyncPromiseKt.isObsolete(done)) {
-      done.consume(result);
+      done.accept(result);
     }
     return this;
   }
@@ -43,14 +43,14 @@ class DonePromise<T> implements Getter<T>, Promise<T>, Future<T> {
 
   @NotNull
   @Override
-  public Promise<T> processed(@NotNull Consumer<? super T> processed) {
-    done(processed);
+  public Promise<T> onProcessed(@NotNull Consumer<? super T> processed) {
+    onSuccess(processed);
     return this;
   }
 
   @NotNull
   @Override
-  public Promise<T> rejected(@NotNull Consumer<Throwable> rejected) {
+  public Promise<T> onError(@NotNull Consumer<Throwable> rejected) {
     return this;
   }
 

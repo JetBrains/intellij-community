@@ -1,16 +1,16 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.concurrency
 
-import com.intellij.util.Consumer
 import com.intellij.util.Function
 import java.util.concurrent.Future
 
 import java.util.concurrent.TimeUnit
+import java.util.function.Consumer
 
 internal class RejectedPromise<T>(private val error: Throwable) : Promise<T>, Future<T> {
   override fun getState() = Promise.State.REJECTED
 
-  override fun done(done: Consumer<in T>) = this
+  override fun onSuccess(done: Consumer<in T>) = this
 
   override fun processed(child: Promise<in T>): Promise<T> {
     if (child is AsyncPromise) {
@@ -19,15 +19,15 @@ internal class RejectedPromise<T>(private val error: Throwable) : Promise<T>, Fu
     return this
   }
 
-  override fun rejected(rejected: Consumer<Throwable>): Promise<T> {
-    if (!isObsolete(rejected)) {
-      rejected.consume(error)
+  override fun onError(action: Consumer<Throwable>): Promise<T> {
+    if (!isObsolete(action)) {
+      action.accept(error)
     }
     return this
   }
 
-  override fun processed(processed: Consumer<in T>): RejectedPromise<T> {
-    processed.consume(null)
+  override fun onProcessed(processed: Consumer<in T?>): RejectedPromise<T> {
+    processed.accept(null)
     return this
   }
 

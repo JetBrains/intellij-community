@@ -3,7 +3,6 @@ package org.jetbrains.concurrency
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Getter
-import com.intellij.util.Consumer
 import com.intellij.util.Function
 import org.jetbrains.concurrency.Promise.State
 import java.util.*
@@ -11,12 +10,13 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Consumer
 
 private val LOG = Logger.getInstance(AsyncPromise::class.java)
 
 private data class PromiseValue<out T>(val result: T? = null, val error: Throwable? = null)
 
-open class AsyncPromise<T> : Promise<T>, Getter<T>, CancellablePromise<T> {
+open class AsyncPromise<T : Any?> : Promise<T>, Getter<T>, CancellablePromise<T> {
   private val doneRef = AtomicReference<Consumer<in T>?>()
   private val rejectedRef = AtomicReference<Consumer<in Throwable>?>()
 
@@ -31,13 +31,18 @@ open class AsyncPromise<T> : Promise<T>, Getter<T>, CancellablePromise<T> {
     }
   }
 
-  override fun done(done: Consumer<in T>): Promise<T> {
+  override fun onSuccess(done: Consumer<in T>): Promise<T> {
     setHandler(doneRef, done, State.FULFILLED)
     return this
   }
 
-  override fun rejected(rejected: Consumer<Throwable>): Promise<T> {
-    setHandler(rejectedRef, rejected, State.REJECTED)
+  override fun rejected(rejected: com.intellij.util.Consumer<Throwable>): Promise<T> {
+    setHandler(rejectedRef, Consumer { rejected.consume(it) }, State.REJECTED)
+    return this
+  }
+
+  override fun onError(errorHandler: Consumer<Throwable>): Promise<T> {
+    setHandler(rejectedRef, errorHandler, State.REJECTED)
     return this
   }
 
@@ -83,8 +88,8 @@ open class AsyncPromise<T> : Promise<T>, Getter<T>, CancellablePromise<T> {
     addHandlers(Consumer({
                            promise.catchError {
                              handler.`fun`(it)
-                                 .done { promise.catchError { promise.setResult(it) } }
-                                 .rejected(rejectedHandler)
+                                 .onSuccess { promise.catchError { promise.setResult(it) } }
+                                 .onError(rejectedHandler)
                            }
                          }), rejectedHandler)
     return promise
@@ -96,9 +101,10 @@ open class AsyncPromise<T> : Promise<T>, Getter<T>, CancellablePromise<T> {
     }
 
     val value = valueRef.get()
+    @Suppress("UNCHECKED_CAST")
     when {
       value == null -> addHandlers(Consumer({ child.catchError { child.setResult(it) } }), Consumer({ child.setError(it) }))
-      value.error == null -> child.setResult(value.result)
+      value.error == null -> child.setResult(value.result as T)
       else -> child.setError(value.error)
     }
     return this
@@ -109,7 +115,7 @@ open class AsyncPromise<T> : Promise<T>, Getter<T>, CancellablePromise<T> {
     setHandler(rejectedRef, rejected, State.REJECTED)
   }
 
-  fun setResult(result: T?) {
+  fun setResult(result: T) {
     if (!valueRef.compareAndSet(null, PromiseValue(result = result))) {
       return
     }
@@ -118,7 +124,7 @@ open class AsyncPromise<T> : Promise<T>, Getter<T>, CancellablePromise<T> {
     rejectedRef.set(null)
 
     if (done != null && !isObsolete(done)) {
-      done.consume(result)
+      done.accept(result)
     }
   }
 
@@ -141,14 +147,14 @@ open class AsyncPromise<T> : Promise<T>, Getter<T>, CancellablePromise<T> {
       LOG.errorIfNotMessage(error)
     }
     else if (!isObsolete(rejected)) {
-      rejected.consume(error)
+      rejected.accept(error)
     }
     return true
   }
 
-  override fun processed(processed: Consumer<in T>): Promise<T> {
-    done(processed)
-    rejected { processed.consume(null) }
+  override fun onProcessed(action: Consumer<in T?>): Promise<T> {
+    onSuccess { action.accept(it) }
+    onError { action.accept(null) }
     return this
   }
 
@@ -223,11 +229,11 @@ open class AsyncPromise<T> : Promise<T>, Getter<T>, CancellablePromise<T> {
     }
   }
 
-  private fun <C_T> callConsumerIfTargeted(targetState: State, newConsumer: Consumer<in C_T>, value: PromiseValue<T>) {
+  private fun <C_T : Any?> callConsumerIfTargeted(targetState: State, newConsumer: Consumer<in C_T>, value: PromiseValue<T>) {
     val currentState = if (value.error == null) State.FULFILLED else State.REJECTED
     if (currentState == targetState) {
       @Suppress("UNCHECKED_CAST")
-      newConsumer.consume(if (currentState == State.FULFILLED) value.result as C_T? else value.error as C_T)
+      newConsumer.accept(if (currentState == State.FULFILLED) value.result as C_T else value.error as C_T)
     }
   }
 
@@ -260,7 +266,7 @@ private class CompoundConsumer<T>(c1: Consumer<in T>, c2: Consumer<in T>) : Cons
     }
   }
 
-  override fun consume(t: T) {
+  override fun accept(t: T) {
     val list = synchronized(this) {
       val list = consumers
       consumers = null
@@ -269,13 +275,13 @@ private class CompoundConsumer<T>(c1: Consumer<in T>, c2: Consumer<in T>) : Cons
 
     for (consumer in list) {
       if (!isObsolete(consumer)) {
-        consumer.consume(t)
+        consumer.accept(t)
       }
     }
   }
 }
 
-internal fun isObsolete(consumer: Consumer<*>?) = consumer is Obsolescent && consumer.isObsolete
+internal fun isObsolete(consumer: Any) = consumer is Obsolescent && consumer.isObsolete
 
 inline fun <T> AsyncPromise<*>.catchError(runnable: () -> T): T? {
   try {

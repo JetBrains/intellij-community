@@ -71,13 +71,30 @@ public interface Promise<T> {
    * Execute passed handler on promise resolve.
    */
   @NotNull
-  Promise<T> done(@NotNull Consumer<? super T> done);
+  Promise<T> onSuccess(@NotNull java.util.function.Consumer<? super T> done);
+
+  /**
+   * Execute passed handler on promise resolve.
+   * @deprecated Use {@link #onSuccess(java.util.function.Consumer)}
+   */
+  @NotNull
+  default Promise<T> done(@NotNull Consumer<? super T> done) {
+    return onSuccess(it -> done.consume(it));
+  }
 
   /**
    * Execute passed handler on promise reject.
    */
   @NotNull
-  Promise<T> rejected(@NotNull Consumer<Throwable> rejected);
+  Promise<T> onError(@NotNull java.util.function.Consumer<Throwable> rejected);
+
+  /**
+   * Execute passed handler on promise reject.
+   */
+  @NotNull
+  default Promise<T> rejected(@NotNull Consumer<Throwable> rejected) {
+    return onError(it -> rejected.consume(it));
+  }
 
   /**
    * Resolve or reject passed promise as soon as this promise resolved or rejected.
@@ -89,7 +106,15 @@ public interface Promise<T> {
    * Execute passed handler on promise resolve (result value will be passed),
    * or on promise reject (null as result value will be passed).
    */
-  Promise<T> processed(@NotNull Consumer<? super T> processed);
+  Promise<T> onProcessed(@NotNull java.util.function.Consumer<? super T> processed);
+
+  /**
+   * Execute passed handler on promise resolve (result value will be passed),
+   * or on promise reject (null as result value will be passed).
+   */
+  default Promise<T> processed(@NotNull Consumer<? super T> action) {
+    return onProcessed(it -> action.consume(it));
+  }
 
   /**
    * Get promise state.
