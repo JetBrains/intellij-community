@@ -9,6 +9,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.ui.GuiUtils;
 import git4idea.GitVcs;
@@ -45,10 +46,15 @@ public class GitExecutableProblemsNotifier {
 
   @CalledInAny
   public static void showExecutionErrorDialog(@NotNull Throwable e, @Nullable Project project) {
+    boolean xcodeLicenseError = isXcodeLicenseError(e);
     GuiUtils.invokeLaterIfNeeded(
       () -> Messages.showErrorDialog(project,
-                                     getPrettyErrorMessage(e),
-                                     GitBundle.getString("git.executable.validation.error.start.title")),
+                                     xcodeLicenseError
+                                     ? GitBundle.getString("git.executable.validation.error.xcode.message")
+                                     : getPrettyErrorMessage(e),
+                                     xcodeLicenseError
+                                     ? GitBundle.getString("git.executable.validation.error.xcode.title")
+                                     : GitBundle.getString("git.executable.validation.error.start.title")),
       ModalityState.defaultModalityState());
   }
 
@@ -61,9 +67,14 @@ public class GitExecutableProblemsNotifier {
 
   @CalledInAny
   public void notifyExecutionError(@NotNull Throwable exception) {
-    BadGitExecutableNotification notification = new ErrorRunningGitNotification(getPrettyErrorMessage(exception));
-    notification.addConfigureGitActions(myProject);
-    notify(notification);
+    if (isXcodeLicenseError(exception)) {
+      notify(new XcodeLicenseNotAcceptedNotification());
+    }
+    else {
+      BadGitExecutableNotification notification = new ErrorRunningGitNotification(getPrettyErrorMessage(exception));
+      notification.addConfigureGitActions(myProject);
+      notify(notification);
+    }
   }
 
   private void notify(@NotNull BadGitExecutableNotification notification) {
@@ -134,6 +145,19 @@ public class GitExecutableProblemsNotifier {
     }
   }
 
+  /**
+   * Notification about not accepted xcode license
+   */
+  private static class XcodeLicenseNotAcceptedNotification extends BadGitExecutableNotification {
+    public XcodeLicenseNotAcceptedNotification() {
+      super(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.getDisplayId(), null,
+            GitBundle.getString("git.executable.validation.error.xcode.title"),
+            null,
+            GitBundle.getString("git.executable.validation.error.xcode.message"),
+            NotificationType.ERROR, null);
+    }
+  }
+
   private abstract static class BadGitExecutableNotification extends Notification {
     public BadGitExecutableNotification(@NotNull String groupDisplayId,
                                         @Nullable Icon icon,
@@ -179,5 +203,23 @@ public class GitExecutableProblemsNotifier {
       }
     }
     return errorMessage;
+  }
+
+  /**
+   * Check is validation failed because of not accepted xcode license
+   */
+  public static boolean isXcodeLicenseError(@NotNull Throwable exception) {
+    String message;
+    if (exception instanceof GitVersionIdentificationException) {
+      Throwable cause = exception.getCause();
+      message = cause != null ? cause.getMessage() : null;
+    }
+    else {
+      message = exception.getMessage();
+    }
+
+    return message != null
+           && SystemInfo.isMac
+           && message.contains("Agreeing to the Xcode/iOS license");
   }
 }
