@@ -152,8 +152,10 @@ class PluginSettingsConfigurable : Configurable {
         return JPanel().apply {
             layout = BoxLayout(this, BoxLayout.Y_AXIS)
             border = JBUI.Borders.empty(5)
-            add(JBLabel("<html><b>Contributors Time:</b></html><br/>"))
-            stats.languages().forEach {
+
+            val languages = stats.languages()
+            if (languages.isNotEmpty()) add(JBLabel("<html><b>Contributors Time:</b></html><br/>"))
+            languages.forEach {
                 add(JBLabel("<html><b>${it.displayName}:</b></html>"))
                 add(JBLabel("<html>Initial completion</html>"))
                 stats.intervals(it)?.presentation()?.forEach {
