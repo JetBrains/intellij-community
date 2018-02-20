@@ -17,7 +17,7 @@ import java.util.function.Consumer;
 import static org.jetbrains.concurrency.InternalPromiseUtil.isHandlerObsolete;
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
-class DonePromise<T> implements Getter<T>, Promise<T>, Future<T> {
+class DonePromise<T> implements Getter<T>, Promise<T>, Future<T>, InternalPromiseUtil.PromiseImpl<T> {
   private final PromiseValue<T> value;
 
   public DonePromise(@NotNull PromiseValue<T> value) {
@@ -40,16 +40,8 @@ class DonePromise<T> implements Getter<T>, Promise<T>, Future<T> {
   @NotNull
   @Override
   public Promise<T> processed(@NotNull Promise<? super T> child) {
-    if (child instanceof AsyncPromise) {
-      if (value.error == null) {
-        //noinspection unchecked
-        ((AsyncPromise<? super T>)child).setResult(value.result);
-      }
-      else {
-        //noinspection unchecked
-        ((AsyncPromise<? super T>)child).setError(value.error);
-      }
-    }
+    //noinspection unchecked
+    ((InternalPromiseUtil.PromiseImpl<T>)child)._setValue(value);
     return this;
   }
 
@@ -150,5 +142,9 @@ class DonePromise<T> implements Getter<T>, Promise<T>, Future<T> {
   @Override
   public T get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
     return value.result;
+  }
+
+  @Override
+  public void _setValue(@NotNull PromiseValue<T> value) {
   }
 }

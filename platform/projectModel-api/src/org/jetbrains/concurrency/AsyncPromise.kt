@@ -15,20 +15,13 @@ import java.util.function.Consumer
 
 private val LOG = Logger.getInstance(AsyncPromise::class.java)
 
-open class AsyncPromise<T : Any?> : Promise<T>, Getter<T>, CancellablePromise<T> {
+open class AsyncPromise<T : Any?> : Promise<T>, Getter<T>, CancellablePromise<T>, InternalPromiseUtil.PromiseImpl<T> {
   private val doneRef = AtomicReference<Consumer<in T>?>()
   private val rejectedRef = AtomicReference<Consumer<in Throwable>?>()
 
   private val valueRef = AtomicReference<PromiseValue<T>?>(null)
 
-  override fun getState(): State {
-    val value = valueRef.get()
-    return when {
-      value == null -> State.PENDING
-      value.error == null -> State.FULFILLED
-      else -> State.REJECTED
-    }
-  }
+  override fun getState() = valueRef.get()?.state ?: State.PENDING
 
   override fun onSuccess(done: Consumer<in T>): Promise<T> {
     setHandler(doneRef, done, State.FULFILLED)
@@ -254,6 +247,16 @@ open class AsyncPromise<T : Any?> : Promise<T>, Getter<T>, CancellablePromise<T>
 
   override fun isCancelled(): Boolean {
     return valueRef.get()?.error == OBSOLETE_ERROR
+  }
+
+  @Suppress("FunctionName")
+  override fun _setValue(value: PromiseValue<T>) {
+    if (value.error == null) {
+      setResult(value.result)
+    }
+    else {
+      setError(value.error)
+    }
   }
 }
 
