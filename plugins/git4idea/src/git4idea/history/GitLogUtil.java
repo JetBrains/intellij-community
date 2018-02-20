@@ -61,6 +61,7 @@ public class GitLogUtil {
 
   @NotNull
   public static List<? extends VcsShortCommitDetails> collectShortDetails(@NotNull Project project,
+                                                                          @NotNull GitVcs vcs,
                                                                           @NotNull VirtualFile root,
                                                                           @NotNull List<String> hashes)
     throws VcsException {
@@ -74,10 +75,12 @@ public class GitLogUtil {
                                            AUTHOR_EMAIL, COMMIT_TIME, SUBJECT, COMMITTER_NAME, COMMITTER_EMAIL, AUTHOR_TIME);
     h.setSilent(true);
     // git show can show either -p, or --name-status, or --name-only, but we need nothing, just details => using git log --no-walk
-    h.addParameters("--no-walk");
+    h.addParameters(getNoWalkParameter(vcs));
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters(new ArrayList<>(hashes));
+    h.addParameters(STDIN);
     h.endOptions();
+
+    sendHashesToStdin(vcs, hashes, h);
 
     String output = Git.getInstance().runCommand(h).getOutputOrThrow();
     List<GitLogRecord> records = parser.parse(output);
