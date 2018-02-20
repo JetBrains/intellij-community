@@ -1167,7 +1167,13 @@ public class IdeEventQueue extends EventQueue {
     doPostEvent(event);
   }
 
-  private static boolean isFocusGoesIntoPopup(AWTEvent e) {
+  /**
+   * Checks if focus is being transferred from IDE frame to a heavyweight popup.
+   * For this, we use {@link WindowEvent}s that notify us about opened or focused windows.
+   * We assume that by this moment AWT has enabled its typeahead machinery, so
+   * after this check, it is safe to dequeue all postponed key events
+   */
+  private static boolean doesFocusGoIntoPopup(AWTEvent e) {
 
     AWTEvent unwrappedEvent = unwrapWindowEvent(e);
 
@@ -1175,7 +1181,7 @@ public class IdeEventQueue extends EventQueue {
       TYPEAHEAD_LOG.debug("Window event: " + e.paramString());
     }
 
-    if (isFocusGoesIntoPopupFromWindowEvent(unwrappedEvent)) return true;
+    if (doesFocusGoeIntoPopupFromWindowEvent(unwrappedEvent)) return true;
 
     return false;
   }
@@ -1192,15 +1198,15 @@ public class IdeEventQueue extends EventQueue {
 
   private static @NotNull  AWTEvent unwrapWindowEvent(@NotNull AWTEvent e) {
     AWTEvent unwrappedEvent = e;
-      if (e.getClass().getName().contains("SequencedEvent")) {
-        try {
-          unwrappedEvent = (AWTEvent)getSequencedEventNestedField(e).get(e);
-          TYPEAHEAD_LOG.assertTrue(unwrappedEvent != null);
-        }
-        catch (IllegalAccessException illegalAccessException) {
-          TYPEAHEAD_LOG.error(illegalAccessException);
-        }
+    if (e.getClass().getName().contains("SequencedEvent")) {
+      try {
+        unwrappedEvent = (AWTEvent)getSequencedEventNestedField(e).get(e);
       }
+      catch (IllegalAccessException illegalAccessException) {
+        TYPEAHEAD_LOG.error(illegalAccessException);
+      }
+    }
+    TYPEAHEAD_LOG.assertTrue(unwrappedEvent != null);
     return unwrappedEvent;
   }
 
@@ -1214,7 +1220,7 @@ public class IdeEventQueue extends EventQueue {
     return false;
   }
 
-  private static boolean isFocusGoesIntoPopupFromWindowEvent(AWTEvent e) {
+  private static boolean doesFocusGoeIntoPopupFromWindowEvent(AWTEvent e) {
     if (e.getID() == WindowEvent.WINDOW_GAINED_FOCUS ||
         (SystemInfo.isLinux && e.getID() == WindowEvent.WINDOW_OPENED)) {
       WindowEvent windowEvent = (WindowEvent)e;
@@ -1293,7 +1299,7 @@ public class IdeEventQueue extends EventQueue {
     super.postEvent(event);
 
     if (Registry.is("action.aware.typeAhead")) {
-      if (isFocusGoesIntoPopup(event)) {
+      if (doesFocusGoIntoPopup(event)) {
         delayKeyEvents.set(false);
         int size = myDelayedKeyEvents.size();
         TYPEAHEAD_LOG.debug("Stop delaying events. Events to post: " + size);
