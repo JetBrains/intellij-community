@@ -24,6 +24,7 @@ import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -58,6 +59,7 @@ import java.util.function.Function;
  * @author peter
  */
 public class InvokeCompletion extends ActionOnRange {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.propertyBased.InvokeCompletion");
   private final int myItemIndexRaw;
   private final char myCompletionChar;
   private final CompletionPolicy myPolicy;
@@ -108,6 +110,8 @@ public class InvokeCompletion extends ActionOnRange {
 
     editor.getCaretModel().moveToOffset(offset);
 
+    CharSequence textBefore = editor.getDocument().getImmutableCharSequence();
+
     MadTestingUtil.restrictChangesToDocument(editor.getDocument(), () -> {
       Disposable raiseCompletionLimit = Disposer.newDisposable();
       Registry.get("ide.completion.variant.limit").setValue(100_000, raiseCompletionLimit);
@@ -117,6 +121,10 @@ public class InvokeCompletion extends ActionOnRange {
         Editor caretEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, getFile());
         performCompletion(caretEditor, PsiUtilBase.getPsiFileInEditor(caretEditor, project), completionChar, itemChooser, logger);
         PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
+      }
+      catch (Throwable e) {
+        LOG.debug("Error occurred in " + this + ", text before:\n" + textBefore);
+        logger.accept("Error happened, file 'text before' printed to the debug log");
       }
       finally {
         Disposer.dispose(raiseCompletionLimit);

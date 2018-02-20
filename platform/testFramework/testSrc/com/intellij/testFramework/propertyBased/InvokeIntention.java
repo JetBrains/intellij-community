@@ -85,7 +85,7 @@ public class InvokeIntention extends ActionOnRange {
       IntentionAction result = env.generateValue(Generator.sampledFrom(actions).noShrink(), null);
       env.logMessage("Invoke intention '" + result.getText() + "'");
       return result;
-    });
+    }, env);
   }
 
   public void performAction() {
@@ -102,10 +102,10 @@ public class InvokeIntention extends ActionOnRange {
       IntentionAction result = actions.get(myIntentionIndex % actions.size());
       myInvocationLog += ", invoked '" + result.getText() + "'";
       return result;
-    });
+    }, null);
   }
 
-  private void doInvokeIntention(int offset, Function<List<IntentionAction>, IntentionAction> intentionChooser) {
+  private void doInvokeIntention(int offset, Function<List<IntentionAction>, IntentionAction> intentionChooser, @Nullable Environment env) {
     Project project = getProject();
     Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, getVirtualFile(), offset), true);
 
@@ -166,6 +166,9 @@ public class InvokeIntention extends ActionOnRange {
     }
     catch (Throwable error) {
       LOG.debug("Error occurred in " + this + ", text before:\n" + textBefore);
+      if (env != null) {
+        env.logMessage("Error happened, file 'text before' printed to the debug log");
+      }
       throw error;
     }
   }
