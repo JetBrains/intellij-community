@@ -145,7 +145,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myHeadlessMode = isHeadless;
     myCommandLineMode = isCommandLine;
 
-    mySaveAllowed = (isUnitTestMode || isHeadless) && !isOnAir();
+    mySaveAllowed = (!isUnitTestMode && !isHeadless) || isOnAir();
 
     if (!isUnitTestMode && !isHeadless) {
       Disposer.register(this, Disposer.newDisposable(), "ui");
