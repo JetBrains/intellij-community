@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -868,6 +868,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   @Override
+  public void addDocumentListenerIfNotExist(@NotNull DocumentListener listener) {
+    if (!ArrayUtil.contains(listener, getListeners())) {
+      addDocumentListener(listener);
+    }
+  }
+
+  @Override
   public void addDocumentListener(@NotNull final DocumentListener listener, @NotNull Disposable parentDisposable) {
     addDocumentListener(listener);
     Disposer.register(parentDisposable, new DocumentListenerDisposable(myDocumentListeners, listener));
@@ -894,6 +901,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     boolean success = myDocumentListeners.remove(listener);
     if (!success) {
       LOG.error("Can't remove document listener (" + listener + "). Registered listeners: " + Arrays.toString(getListeners()));
+    }
+  }
+
+  @Override
+  public void removeDocumentListenerIfExist(@NotNull DocumentListener listener) {
+    if (ArrayUtil.contains(listener, getListeners())) {
+      removeDocumentListener(listener);
     }
   }
 

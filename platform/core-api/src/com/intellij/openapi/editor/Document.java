@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -217,6 +217,14 @@ public interface Document extends UserDataHolder {
   default void addDocumentListener(@NotNull DocumentListener listener) {
   }
 
+  /**
+   * Adds a listener for receiving notifications about changes in the document content if a listener is not registered
+   *
+   * @param listener the listener instance.
+   */
+  default void addDocumentListenerIfNotExist(@NotNull DocumentListener listener) {
+  }
+
   default void addDocumentListener(@NotNull DocumentListener listener, @NotNull Disposable parentDisposable) {
   }
 
@@ -226,6 +234,14 @@ public interface Document extends UserDataHolder {
    * @param listener the listener instance.
    */
   default void removeDocumentListener(@NotNull DocumentListener listener) {
+  }
+
+  /**
+   * Removes a listener for receiving notifications about changes in the document content if a listener is registered
+   *
+   * @param listener the listener instance.
+   */
+  default void removeDocumentListenerIfExist(@NotNull DocumentListener listener) {
   }
 
   /**
