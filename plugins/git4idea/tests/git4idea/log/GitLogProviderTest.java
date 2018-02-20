@@ -235,7 +235,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
   }
 
   public void test_short_details() throws Exception {
-    prepareLongHistory(VcsFileUtil.FILE_PATH_LIMIT * 2 / 40);
+    prepareLongHistory(15);
     List<VcsCommitMetadata> log = log();
 
     final List<String> hashes = ContainerUtil.newArrayList();
@@ -248,7 +248,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
   }
 
   public void test_full_details() throws Exception {
-    prepareLongHistory(VcsFileUtil.FILE_PATH_LIMIT * 2 / 40);
+    prepareLongHistory(15);
     List<VcsCommitMetadata> log = log();
 
     final List<String> hashes = ContainerUtil.newArrayList();
