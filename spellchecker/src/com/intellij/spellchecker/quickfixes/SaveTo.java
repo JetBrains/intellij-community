@@ -36,7 +36,7 @@ public class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
 
   public static final String FIX_NAME = SpellCheckerBundle.message("save.0.to.1", "", DOTS);
 
-  private SaveTo(DictionaryLevel level) {
+  private SaveTo(@NotNull DictionaryLevel level) {
     myLevel = level;
   }
 
@@ -44,7 +44,7 @@ public class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
     myWord = word;
   }
 
-  public SaveTo(String word, DictionaryLevel level) {
+  public SaveTo(String word, @NotNull DictionaryLevel level) {
     myWord = word;
     myLevel = level;
   }
