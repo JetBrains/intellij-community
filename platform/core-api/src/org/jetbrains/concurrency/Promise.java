@@ -6,6 +6,7 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -35,7 +36,8 @@ public interface Promise<T> {
    */
   @NotNull
   static <T> Promise<T> resolve(T result) {
-    return Promises.resolvedPromise(result);
+    throw new RuntimeException("TODO PROMISE");
+    //return Promises.resolvedPromise(result);
   }
 
   /**
@@ -123,17 +125,9 @@ public interface Promise<T> {
   State getState();
 
   @Nullable
-  T blockingGet(int timeout, @NotNull TimeUnit timeUnit) throws TimeoutException;
+  T blockingGet(int timeout, @NotNull TimeUnit timeUnit) throws TimeoutException, ExecutionException;
 
-  default T blockingGet(int timeout) throws TimeoutException {
+  default T blockingGet(int timeout) throws TimeoutException, ExecutionException {
     return blockingGet(timeout, TimeUnit.MILLISECONDS);
-  }
-
-  /**
-   * @deprecated Use {@link #processed(Promise)}
-   */
-  @Deprecated
-  default void notify(@NotNull AsyncPromise<? super T> child) {
-    processed(child);
   }
 }

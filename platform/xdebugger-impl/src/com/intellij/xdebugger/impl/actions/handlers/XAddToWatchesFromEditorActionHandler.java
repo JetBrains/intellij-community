@@ -14,6 +14,7 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -35,7 +36,7 @@ public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler
     try {
       return textPromise.blockingGet(0) != null;
     }
-    catch (TimeoutException e) {
+    catch (TimeoutException | ExecutionException e) {
       return false;
     }
   }
@@ -61,14 +62,15 @@ public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler
 
   @Override
   protected void perform(@NotNull XDebugSession session, DataContext dataContext) {
-    getTextToEvaluate(dataContext, session).done(text -> {
-      if (text == null) return;
-      UIUtil.invokeLaterIfNeeded(() -> {
-        XDebugSessionTab tab = ((XDebugSessionImpl)session).getSessionTab();
-        if (tab != null) {
-          tab.getWatchesView().addWatchExpression(XExpressionImpl.fromText(text), -1, true);
-        }
+    getTextToEvaluate(dataContext, session)
+      .onSuccess(text -> {
+        if (text == null) return;
+        UIUtil.invokeLaterIfNeeded(() -> {
+          XDebugSessionTab tab = ((XDebugSessionImpl)session).getSessionTab();
+          if (tab != null) {
+            tab.getWatchesView().addWatchExpression(XExpressionImpl.fromText(text), -1, true);
+          }
+        });
       });
-    });
   }
 }

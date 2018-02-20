@@ -2,9 +2,11 @@
 package org.jetbrains.concurrency;
 
 import com.intellij.openapi.util.Getter;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.InternalPromiseUtil.PromiseValue;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -12,21 +14,25 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
+import static org.jetbrains.concurrency.InternalPromiseUtil.isHandlerObsolete;
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
-import static org.jetbrains.concurrency.Promises.resolvedPromise;
 
 class DonePromise<T> implements Getter<T>, Promise<T>, Future<T> {
-  private final T result;
+  private final PromiseValue<T> value;
 
-  public DonePromise(T result) {
-    this.result = result;
+  public DonePromise(@NotNull PromiseValue<T> value) {
+    this.value = value;
   }
 
   @NotNull
   @Override
-  public Promise<T> onSuccess(@NotNull Consumer<? super T> done) {
-    if (!AsyncPromiseKt.isObsolete(done)) {
-      done.accept(result);
+  public Promise<T> onSuccess(@NotNull Consumer<? super T> handler) {
+    if (value.error != null) {
+      return this;
+    }
+
+    if (!isHandlerObsolete(handler)) {
+      handler.accept(value.result);
     }
     return this;
   }
@@ -35,62 +41,98 @@ class DonePromise<T> implements Getter<T>, Promise<T>, Future<T> {
   @Override
   public Promise<T> processed(@NotNull Promise<? super T> child) {
     if (child instanceof AsyncPromise) {
-      //noinspection unchecked
-      ((AsyncPromise<? super T>)child).setResult(result);
+      if (value.error == null) {
+        //noinspection unchecked
+        ((AsyncPromise<? super T>)child).setResult(value.result);
+      }
+      else {
+        //noinspection unchecked
+        ((AsyncPromise<? super T>)child).setError(value.error);
+      }
     }
     return this;
   }
 
   @NotNull
   @Override
-  public Promise<T> onProcessed(@NotNull Consumer<? super T> processed) {
-    onSuccess(processed);
+  public Promise<T> onProcessed(@NotNull Consumer<? super T> handler) {
+    if (value.error == null) {
+      onSuccess(handler);
+    }
+    else if (!isHandlerObsolete(handler)) {
+      handler.accept(null);
+    }
     return this;
   }
 
   @NotNull
   @Override
-  public Promise<T> onError(@NotNull Consumer<Throwable> rejected) {
+  public Promise<T> onError(@NotNull Consumer<Throwable> handler) {
+    if (value.error != null && !isHandlerObsolete(handler)) {
+      handler.accept(value.error);
+    }
     return this;
   }
 
   @NotNull
   @Override
   public <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull Function<? super T, ? extends SUB_RESULT> done) {
-    if (done instanceof Obsolescent && ((Obsolescent)done).isObsolete()) {
+    if (value.error != null) {
+      //noinspection unchecked
+      return (Promise<SUB_RESULT>)this;
+    }
+    else if (isHandlerObsolete(done)) {
       return rejectedPromise("obsolete");
     }
     else {
-      return resolvedPromise(done.fun(result));
+      return new DonePromise<>(PromiseValue.createFulfilled(done.fun(value.result)));
     }
   }
 
   @NotNull
   @Override
   public <SUB_RESULT> Promise<SUB_RESULT> thenAsync(@NotNull Function<? super T, Promise<SUB_RESULT>> done) {
-    return done.fun(result);
+    if (value.error == null) {
+      return done.fun(value.result);
+    }
+    else {
+      //noinspection unchecked
+      return (Promise<SUB_RESULT>)this;
+    }
   }
 
   @NotNull
   @Override
   public State getState() {
-    return State.FULFILLED;
+    return value.getState();
   }
 
   @Nullable
   @Override
-  public T blockingGet(int timeout, @NotNull TimeUnit timeUnit) {
-    return result;
+  public T blockingGet(int timeout, @NotNull TimeUnit timeUnit) throws ExecutionException, TimeoutException {
+    Throwable error = value.error;
+    if (error == null) {
+      return value.result;
+    }
+
+    ExceptionUtil.rethrowUnchecked(error);
+    if (error instanceof ExecutionException) {
+      throw ((ExecutionException)error);
+    }
+    if (error instanceof TimeoutException) {
+      throw ((TimeoutException)error);
+    }
+    throw new ExecutionException(error);
   }
 
   @Override
   public boolean isDone() {
-    return getState() != State.PENDING;
+    return true;
   }
 
   @Override
   public T get() {
-    return result;
+    return value.result;
   }
 
   @Override
@@ -100,11 +142,13 @@ class DonePromise<T> implements Getter<T>, Promise<T>, Future<T> {
 
   @Override
   public boolean isCancelled() {
+    // TODO PROMISE
+    // error == OBSOLETE_ERROR
     return false;
   }
 
   @Override
   public T get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-    return result;
+    return value.result;
   }
 }

@@ -24,9 +24,9 @@ val Promise<*>.isFulfilled: Boolean
 
 internal val OBSOLETE_ERROR by lazy { createError("Obsolete") }
 
-private val REJECTED: Promise<*> by lazy { RejectedPromise<Any?>(createError("rejected")) }
-private val DONE: Promise<*> by lazy(LazyThreadSafetyMode.NONE) { DonePromise(null) }
-private val CANCELLED_PROMISE: Promise<*> by lazy { RejectedPromise<Any?>(OBSOLETE_ERROR) }
+private val REJECTED: Promise<*> by lazy { DonePromise<Any?>(InternalPromiseUtil.PromiseValue.createRejected(createError("rejected"))) }
+private val DONE: Promise<*> by lazy(LazyThreadSafetyMode.NONE) { DonePromise(InternalPromiseUtil.PromiseValue.createFulfilled(null)) }
+private val CANCELLED_PROMISE: Promise<*> by lazy { DonePromise<Any?>(InternalPromiseUtil.PromiseValue.createRejected(OBSOLETE_ERROR)) }
 
 @Suppress("UNCHECKED_CAST")
 fun <T> resolvedPromise(): Promise<T> = DONE as Promise<T>
@@ -36,14 +36,19 @@ fun nullPromise(): Promise<*> = DONE
 /**
  * Creates a promise that is resolved with the given value.
  */
-fun <T> resolvedPromise(result: T): Promise<T> = if (result == null) resolvedPromise() else DonePromise(result)
+fun <T> resolvedPromise(result: T): Promise<T> = if (result == null) resolvedPromise() else DonePromise(InternalPromiseUtil.PromiseValue.createFulfilled(result))
 
 @Suppress("UNCHECKED_CAST")
 fun <T> rejectedPromise(): Promise<T> = REJECTED as Promise<T>
 
-fun <T> rejectedPromise(error: String): Promise<T> = RejectedPromise(createError(error, true))
+fun <T> rejectedPromise(error: String): Promise<T> = DonePromise(InternalPromiseUtil.PromiseValue.createRejected(createError(error, true)))
 
-fun <T> rejectedPromise(error: Throwable?): Promise<T> = if (error == null) rejectedPromise() else RejectedPromise(error)
+fun <T> rejectedPromise(error: Throwable?): Promise<T> {
+  return when (error) {
+    null -> rejectedPromise()
+    else -> DonePromise(InternalPromiseUtil.PromiseValue.createRejected(error))
+  }
+}
 
 @Suppress("UNCHECKED_CAST")
 fun <T> cancelledPromise(): Promise<T> = CANCELLED_PROMISE as Promise<T>
