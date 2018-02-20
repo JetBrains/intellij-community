@@ -6,7 +6,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.InternalPromiseUtil.PromiseValue;
+import org.jetbrains.concurrency.InternalPromiseUtil.*;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -14,8 +14,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
-import static org.jetbrains.concurrency.InternalPromiseUtil.isHandlerObsolete;
-import static org.jetbrains.concurrency.Promises.rejectedPromise;
+import static org.jetbrains.concurrency.InternalPromiseUtil.*;
 
 class DonePromise<T> implements Getter<T>, Promise<T>, Future<T>, InternalPromiseUtil.PromiseImpl<T> {
   private final PromiseValue<T> value;
@@ -74,7 +73,8 @@ class DonePromise<T> implements Getter<T>, Promise<T>, Future<T>, InternalPromis
       return (Promise<SUB_RESULT>)this;
     }
     else if (isHandlerObsolete(done)) {
-      return rejectedPromise("obsolete");
+      //noinspection unchecked
+      return (Promise<SUB_RESULT>)CANCELLED_PROMISE.getValue();
     }
     else {
       return new DonePromise<>(PromiseValue.createFulfilled(done.fun(value.result)));
@@ -134,9 +134,7 @@ class DonePromise<T> implements Getter<T>, Promise<T>, Future<T>, InternalPromis
 
   @Override
   public boolean isCancelled() {
-    // TODO PROMISE
-    // error == OBSOLETE_ERROR
-    return false;
+    return value.error == OBSOLETE_ERROR;
   }
 
   @Override

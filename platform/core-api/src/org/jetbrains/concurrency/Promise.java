@@ -35,9 +35,14 @@ public interface Promise<T> {
    * Create a promise that is resolved with the given value.
    */
   @NotNull
-  static <T> Promise<T> resolve(T result) {
-    throw new RuntimeException("TODO PROMISE");
-    //return Promises.resolvedPromise(result);
+  static <T> Promise<T> resolve(@Nullable T result) {
+    if (result == null) {
+      //noinspection unchecked
+      return (Promise<T>)InternalPromiseUtil.FULFILLED_PROMISE.getValue();
+    }
+    else {
+      return new DonePromise<>(InternalPromiseUtil.PromiseValue.createFulfilled(result));
+    }
   }
 
   /**

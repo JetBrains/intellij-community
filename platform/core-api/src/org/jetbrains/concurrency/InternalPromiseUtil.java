@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.concurrency;
 
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -8,13 +10,23 @@ import org.jetbrains.annotations.Nullable;
  * Only internal usage.
  */
 public class InternalPromiseUtil {
-  //public static NotNullLazyValue<Promise<Object>> CANCELLED_PROMISE = new NotNullLazyValue<>() {
-  //  @NotNull
-  //  @Override
-  //  protected Object compute() {
-  //    return null;
-  //  }
-  //}
+  public static final RuntimeException OBSOLETE_ERROR = new MessageError("Obsolete", false);
+
+  public static final NotNullLazyValue<Promise<Object>> CANCELLED_PROMISE = new NotNullLazyValue<Promise<Object>>() {
+    @NotNull
+    @Override
+    protected Promise<Object> compute() {
+      return new DonePromise<>(PromiseValue.createRejected(OBSOLETE_ERROR));
+    }
+  };
+
+  public static final NotNullLazyValue<Promise<Object>> FULFILLED_PROMISE = new NotNullLazyValue<Promise<Object>>() {
+    @NotNull
+    @Override
+    protected Promise<Object> compute() {
+      return new DonePromise<>(PromiseValue.createFulfilled(null));
+    }
+  };
 
   public static boolean isHandlerObsolete(@NotNull Object handler) {
     return handler instanceof Obsolescent && ((Obsolescent)handler).isObsolete();
@@ -22,6 +34,22 @@ public class InternalPromiseUtil {
 
   public interface PromiseImpl<T> {
     void _setValue(@NotNull PromiseValue<T> value);
+  }
+
+  @SuppressWarnings("ExceptionClassNameDoesntEndWithException")
+  public static class MessageError extends RuntimeException {
+    public final ThreeState log;
+
+    public MessageError(@NotNull String message, boolean isLog) {
+      super(message);
+
+      log = ThreeState.fromBoolean(isLog);
+    }
+
+    @Override
+    public synchronized Throwable fillInStackTrace() {
+      return this;
+    }
   }
 
   public static class PromiseValue<T> {

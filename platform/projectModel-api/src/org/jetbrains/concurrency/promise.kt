@@ -11,6 +11,7 @@ import com.intellij.util.Function
 import com.intellij.util.SmartList
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
+import org.jetbrains.concurrency.InternalPromiseUtil.MessageError
 import java.util.*
 
 val Promise<*>.isRejected: Boolean
@@ -22,21 +23,17 @@ val Promise<*>.isPending: Boolean
 val Promise<*>.isFulfilled: Boolean
   get() = state == Promise.State.FULFILLED
 
-internal val OBSOLETE_ERROR by lazy { createError("Obsolete") }
-
 private val REJECTED: Promise<*> by lazy { DonePromise<Any?>(InternalPromiseUtil.PromiseValue.createRejected(createError("rejected"))) }
-private val DONE: Promise<*> by lazy(LazyThreadSafetyMode.NONE) { DonePromise(InternalPromiseUtil.PromiseValue.createFulfilled(null)) }
-private val CANCELLED_PROMISE: Promise<*> by lazy { DonePromise<Any?>(InternalPromiseUtil.PromiseValue.createRejected(OBSOLETE_ERROR)) }
 
 @Suppress("UNCHECKED_CAST")
-fun <T> resolvedPromise(): Promise<T> = DONE as Promise<T>
+fun <T> resolvedPromise(): Promise<T> = InternalPromiseUtil.FULFILLED_PROMISE.value as Promise<T>
 
-fun nullPromise(): Promise<*> = DONE
+fun nullPromise(): Promise<*> = InternalPromiseUtil.FULFILLED_PROMISE.value
 
 /**
  * Creates a promise that is resolved with the given value.
  */
-fun <T> resolvedPromise(result: T): Promise<T> = if (result == null) resolvedPromise() else DonePromise(InternalPromiseUtil.PromiseValue.createFulfilled(result))
+fun <T> resolvedPromise(result: T): Promise<T> = Promise.resolve(result)
 
 @Suppress("UNCHECKED_CAST")
 fun <T> rejectedPromise(): Promise<T> = REJECTED as Promise<T>
@@ -51,7 +48,7 @@ fun <T> rejectedPromise(error: Throwable?): Promise<T> {
 }
 
 @Suppress("UNCHECKED_CAST")
-fun <T> cancelledPromise(): Promise<T> = CANCELLED_PROMISE as Promise<T>
+fun <T> cancelledPromise(): Promise<T> = InternalPromiseUtil.CANCELLED_PROMISE.value as Promise<T>
 
 
 // only internal usage
@@ -158,13 +155,6 @@ inline fun <T> runAsync(crossinline runnable: () -> T): Promise<T> {
   return promise
 }
 
-@SuppressWarnings("ExceptionClassNameDoesntEndWithException")
-internal class MessageError(error: String, log: Boolean) : RuntimeException(error) {
-  internal val log = ThreeState.fromBoolean(log)
-
-  fun fillInStackTrace() = this
-}
-
 /**
  * Log error if not a message error
  */
@@ -196,8 +186,7 @@ fun all(promises: Collection<Promise<*>>): Promise<*> = if (promises.size == 1) 
 @JvmOverloads
 fun <T: Any?> all(promises: Collection<Promise<*>>, totalResult: T, ignoreErrors: Boolean = false): Promise<T> {
   if (promises.isEmpty()) {
-    @Suppress("UNCHECKED_CAST")
-    return DONE as Promise<T>
+    return resolvedPromise()
   }
 
   val totalPromise = AsyncPromise<T>()
@@ -226,8 +215,7 @@ private class CountDownConsumer<T : Any?>(@Volatile private var countDown: Int, 
 
 fun <T> any(promises: Collection<Promise<T>>, totalError: String): Promise<T> {
   if (promises.isEmpty()) {
-    @Suppress("UNCHECKED_CAST")
-    return DONE as Promise<T>
+    return resolvedPromise()
   }
   else if (promises.size == 1) {
     return promises.first()

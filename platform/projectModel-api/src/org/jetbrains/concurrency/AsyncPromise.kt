@@ -125,7 +125,7 @@ open class AsyncPromise<T : Any?> : Promise<T>, Getter<T>, CancellablePromise<T>
   fun setError(error: String) = setError(createError(error))
 
   override fun cancel() {
-    setError(OBSOLETE_ERROR)
+    setError(InternalPromiseUtil.OBSOLETE_ERROR)
   }
 
   open fun setError(error: Throwable): Boolean {
@@ -246,7 +246,7 @@ open class AsyncPromise<T : Any?> : Promise<T>, Getter<T>, CancellablePromise<T>
   }
 
   override fun isCancelled(): Boolean {
-    return valueRef.get()?.error == OBSOLETE_ERROR
+    return valueRef.get()?.error == InternalPromiseUtil.OBSOLETE_ERROR
   }
 
   @Suppress("FunctionName")
