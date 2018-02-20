@@ -275,6 +275,15 @@ public class PyTypingTest extends PyTestCase {
            "    pass\n");
   }
 
+  // PY-28032
+  public void testOptionalOfAny() {
+    doTest("Optional[Any]",
+           "from typing import Optional, Any\n" +
+           "\n" +
+           "x = None  # type: Optional[Any]\n" +
+           "expr = x\n");
+  }
+
   public void testOptionalFromDefaultNone() {
     doTest("Optional[int]",
            "def foo(expr: int = None):\n" +
