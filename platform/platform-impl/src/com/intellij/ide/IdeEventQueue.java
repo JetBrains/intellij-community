@@ -1313,8 +1313,7 @@ public class IdeEventQueue extends EventQueue {
   private long lastTypeaheadTimestamp = -1;
 
   private Set<Shortcut> getShortcutsShowingPopups () {
-    if (KeymapManager.getInstance().getActiveKeymap() != null) {
-
+    if (shortcutsShowingPopups.isEmpty() && KeymapManager.getInstance().getActiveKeymap() != null) {
       String actionsAwareTypeaheadActionsList = Registry.get("action.aware.typeahead.actions.list").asString();
       actionsShowingPopupsList.addAll(StringUtil.split(actionsAwareTypeaheadActionsList, ","));
       actionsShowingPopupsList.forEach(actionId -> {
