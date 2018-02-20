@@ -398,7 +398,7 @@ public final class IdeMouseEventDispatcher {
 
   private static boolean isDiagramViewComponent(@Nullable Component component) {
     // in production yfiles classes is obfuscated
-    return UIUtil.isClientPropertyTrue(component, "y.view.Graph2DView");
+    return UIUtil.isClientPropertyTrue(component, "Diagram-View-Component-Key");
   }
 
   public void blockNextEvents(@NotNull MouseEvent e, @NotNull IdeEventQueue.BlockMode blockMode) {
