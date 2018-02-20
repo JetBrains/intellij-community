@@ -592,8 +592,14 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
     public void trySetChildPath(@NotNull String child) {
       if (!myModifiedByUser) {
-        setText(myDefaultParentPath.resolve(child).toString());
-        myModifiedByUser = false;
+        try {
+          setText(myDefaultParentPath.resolve(child).toString());
+        }
+        catch (InvalidPathException ignored) {
+        }
+        finally {
+          myModifiedByUser = false;
+        }
       }
     }
   }
