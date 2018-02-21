@@ -337,4 +337,9 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
   public void testInitializingImportedTypingNamedTupleInheritor() {
     runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
   }
+
+  // PY-25497
+  public void testObjectMethodInPossiblyInheritanceChain() {
+    doTest();
+  }
 }
