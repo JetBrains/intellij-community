@@ -28,6 +28,7 @@ import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.impl.BuildOutputConsumerImpl;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase;
+import org.jetbrains.jps.builders.java.ConstantSearchProvider;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
@@ -50,6 +51,7 @@ import org.jetbrains.jps.javac.JavacMain;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 import org.jetbrains.jps.util.JpsPathUtil;
 
@@ -91,7 +93,7 @@ public class IncProjectBuilder {
   private final BuilderRegistry myBuilderRegistry;
   private final Map<String, String> myBuilderParams;
   private final CanceledStatus myCancelStatus;
-  @Nullable private final Callbacks.ConstantAffectionResolver myConstantSearch;
+  @Nullable private final Callbacks.ConstantAffectionResolver myJavaConstantResolver;
   private final List<MessageHandler> myMessageHandlers = new ArrayList<>();
   private final MessageHandler myMessageDispatcher = new MessageHandler() {
     public void processMessage(BuildMessage msg) {
@@ -110,12 +112,12 @@ public class IncProjectBuilder {
   private final ConcurrentMap<Builder, AtomicInteger> myNumberOfSourcesProcessedByBuilder = ContainerUtil.newConcurrentMap();
 
   public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry, Map<String, String> builderParams, CanceledStatus cs,
-                           @Nullable Callbacks.ConstantAffectionResolver constantSearch, final boolean isTestMode) {
+                           @Nullable Callbacks.ConstantAffectionResolver javaConstantResolver, final boolean isTestMode) {
     myProjectDescriptor = pd;
     myBuilderRegistry = builderRegistry;
     myBuilderParams = builderParams;
     myCancelStatus = cs;
-    myConstantSearch = constantSearch;
+    myJavaConstantResolver = javaConstantResolver;
     myTotalTargetsWork = pd.getBuildTargetIndex().getAllTargets().size();
     myTotalModuleLevelBuilderCount = builderRegistry.getModuleLevelBuilderCount();
     myIsTestMode = isTestMode;
@@ -426,14 +428,30 @@ public class IncProjectBuilder {
   }
 
   private CompileContextImpl createContext(CompileScope scope) throws ProjectBuildException {
-    final CompileContextImpl context = new CompileContextImpl(scope, myProjectDescriptor, myMessageDispatcher,
-                                                              myBuilderParams, myCancelStatus);
+    final CompileContextImpl context = new CompileContextImpl(scope, myProjectDescriptor, myMessageDispatcher, myBuilderParams, myCancelStatus);
 
     // in project rebuild mode performance gain is hard to observe, so it is better to save memory
     // in make mode it is critical to traverse file system as fast as possible, so we choose speed over memory savings
     myProjectDescriptor.setFSCache(context.isProjectRebuild() ? FSCache.NO_CACHE : new FSCache());
-    JavaBuilderUtil.CONSTANT_SEARCH_SERVICE.set(context, myConstantSearch);
+    
+    final Callbacks.ConstantAffectionResolver javaResolver = myJavaConstantResolver;
+    if (javaResolver == null) {
+      JavaBuilderUtil.CONSTANT_SEARCH_SERVICE.set(context, null);
+    }
+    else {
+      final List<Callbacks.ConstantAffectionResolver> resolvers = getResolvers();
+      resolvers.add(javaResolver);
+      for (ConstantSearchProvider provider : JpsServiceManager.getInstance().getExtensions(ConstantSearchProvider.class)) {
+        resolvers.add(provider.getConstantSearch(context));
+      }
+      JavaBuilderUtil.CONSTANT_SEARCH_SERVICE.set(context, resolvers.size() == 1? resolvers.get(0) : new CompositeConstantResolver(resolvers));
+    }
     return context;
+  }
+
+  @NotNull
+  private SmartList<Callbacks.ConstantAffectionResolver> getResolvers() {
+    return new SmartList<>();
   }
 
   private void cleanOutputRoots(CompileContext context, boolean cleanCaches) throws ProjectBuildException {
