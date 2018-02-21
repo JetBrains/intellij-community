@@ -12,7 +12,7 @@ import one.util.streamex.StreamEx;
 
 public class ControlFlowPerformanceTest extends LightCodeInsightTestCase {
   public void testHugeMethodChainControlFlow() {
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 30_000, () -> {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 15_000, () -> {
       int size = 2500;
       String source = StreamEx.constant(".toString()", size).joining("", "\"\"", "");
       PsiExpression expression = JavaPsiFacade.getElementFactory(getProject()).createExpressionFromText(source, null);
