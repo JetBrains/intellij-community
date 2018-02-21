@@ -227,7 +227,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   }
 
   private void dispatchMatched(final List<PsiElement> matchedNodes, MatchResultImpl result) {
-    if (!matchContext.getOptions().isResultIsContextMatch() && doDispatch(result, result)) return;
+    if (!matchContext.getOptions().isResultIsContextMatch() && doDispatch(result)) return;
 
     // There is no substitutions so show the context
 
@@ -235,15 +235,14 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     matchContext.getSink().newMatch(result);
   }
 
-  private boolean doDispatch(final MatchResult result, MatchResultImpl context) {
+  private boolean doDispatch(final MatchResult result) {
     boolean ret = false;
 
-    for (MatchResult r : result.getAllSons()) {
+    for (MatchResult r : result.getChildren()) {
       if ((r.isScopeMatch() && !r.isTarget()) || r.isMultipleMatch()) {
-        ret |= doDispatch(r, context);
+        ret |= doDispatch(r);
       }
       else if (r.isTarget()) {
-        ((MatchResultImpl)r).setContext(context);
         matchContext.getSink().newMatch(r);
         ret = true;
       }
@@ -260,23 +259,12 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
       result.setMatchImage(match.getText());
     }
     else {
-
       for (final PsiElement matchStatement : matchedNodes) {
-        result.getMatches().add(new MatchResultImpl(
-            MatchResult.LINE_MATCH,
-            matchStatement.getText(),
-            new SmartPsiPointer(matchStatement),
-            true
-          )
-        );
+        result.addChild(new MatchResultImpl(MatchResult.LINE_MATCH, matchStatement.getText(), new SmartPsiPointer(matchStatement), true));
       }
 
-      result.setMatchRef(
-        new SmartPsiPointer(match)
-      );
-      result.setMatchImage(
-        match.getText()
-      );
+      result.setMatchRef(new SmartPsiPointer(match));
+      result.setMatchImage(match.getText());
       result.setName(MatchResult.MULTI_LINE_MATCH);
     }
   }

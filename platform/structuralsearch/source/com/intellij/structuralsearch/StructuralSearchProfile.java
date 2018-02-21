@@ -210,11 +210,11 @@ public abstract class StructuralSearchProfile {
     if (info.getName().equals(match.getName())) {
       String replacementString = match.getMatchImage();
       boolean removeSemicolon = false;
-      if (match.hasSons() && !match.isScopeMatch()) {
+      if (match.hasChildren() && !match.isScopeMatch()) {
         // compound matches
         StringBuilder buf = new StringBuilder();
 
-        for (final MatchResult matchResult : match.getAllSons()) {
+        for (final MatchResult matchResult : match.getChildren()) {
           final PsiElement currentElement = matchResult.getMatch();
 
           if (buf.length() > 0) {

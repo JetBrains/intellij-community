@@ -1,26 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
+import com.intellij.util.SmartList;
 
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Collections;
 import java.util.List;
 
 public final class MatchResultImpl extends MatchResult {
@@ -29,12 +15,11 @@ public final class MatchResultImpl extends MatchResult {
   private int start;
   private int end = -1;
   private String matchImage;
-  private List<MatchResult> matches;
+  private final List<MatchResult> myChildren = new SmartList<>();
   private boolean target;
 
   private boolean myScopeMatch;
   private boolean myMultipleMatch;
-  private MatchResultImpl myContext;
 
   MatchResultImpl() {
   }
@@ -83,19 +68,8 @@ public final class MatchResultImpl extends MatchResult {
     this.name = name;
   }
 
-  public List<MatchResult> getMatches() {
-    if (matches==null) matches = new ArrayList<>();
-    return matches;
-  }
-
-  @Override
-  public List<MatchResult> getAllSons() {
-    return getMatches();
-  }
-
-  @Override
-  public boolean hasSons() {
-    return matches!=null && matches.size() > 0;
+  public List<MatchResult> getChildren() {
+    return Collections.unmodifiableList(myChildren);
   }
 
   @Override
@@ -114,19 +88,25 @@ public final class MatchResultImpl extends MatchResult {
       matchRef = null;
     }
 
-    if (matches != null) {
-      for (final MatchResult match : matches) {
-        ((MatchResultImpl)match).clear();
-      }
-      matches = null;
+    for (final MatchResult match : myChildren) {
+      ((MatchResultImpl)match).clear();
     }
+    myChildren.clear();
 
     name = null;
     matchImage = null;
   }
 
-  public void clearMatches() {
-    matches = null;
+  public boolean hasChildren() {
+    return !myChildren.isEmpty();
+  }
+
+  public void removeChildren() {
+    myChildren.clear();
+  }
+
+  public MatchResult removeLastChild() {
+    return myChildren.remove(myChildren.size() - 1);
   }
 
   public void setScopeMatch(final boolean scopeMatch) {
@@ -137,37 +117,33 @@ public final class MatchResultImpl extends MatchResult {
     myMultipleMatch = multipleMatch;
   }
 
-  public MatchResultImpl findSon(String name) {
-    if (matches!=null) {
-      // @todo this could be performance bottleneck, replace with hash lookup!
-      for (final MatchResult match : matches) {
-        final MatchResultImpl res = (MatchResultImpl)match;
-
-        if (name.equals(res.getName())) {
-          return res;
-        }
-      }
-    }
-    return null;
-  }
-
-  public MatchResultImpl removeSon(String typedVar) {
-    if (matches == null) return null;
-
+  public MatchResultImpl findChild(String name) {
     // @todo this could be performance bottleneck, replace with hash lookup!
-    for(Iterator<MatchResult> i=matches.iterator();i.hasNext();) {
-      final MatchResultImpl res = (MatchResultImpl)i.next();
-      if (typedVar.equals(res.getName())) {
-        i.remove();
+    for (final MatchResult match : myChildren) {
+      final MatchResultImpl res = (MatchResultImpl)match;
+
+      if (name.equals(res.getName())) {
         return res;
       }
     }
+    return null;
+  }
+
+  public MatchResult removeChild(String typedVar) {
+    // @todo this could be performance bottleneck, replace with hash lookup!
+    for (int i = 0, size = myChildren.size(); i < size; i++) {
+      final MatchResult child = myChildren.get(i);
+      if (typedVar.equals(child.getName())) {
+        myChildren.remove(i);
+        return child;
+      }
+    }
 
     return null;
   }
 
-  public void addSon(MatchResultImpl result) {
-    getMatches().add(result);
+  public void addChild(MatchResult result) {
+    myChildren.add(result);
   }
 
   public void setMatchImage(String matchImage) {
@@ -199,14 +175,6 @@ public final class MatchResultImpl extends MatchResult {
 
   public void setEnd(int end) {
     this.end = end;
-  }
-
-  public void setContext(final MatchResultImpl context) {
-    myContext = context;
-  }
-
-  public MatchResultImpl getContext() {
-    return myContext;
   }
 
   @Override

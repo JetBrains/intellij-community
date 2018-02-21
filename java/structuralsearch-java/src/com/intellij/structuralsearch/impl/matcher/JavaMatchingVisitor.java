@@ -666,11 +666,9 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     return (referenceElement != null) ? referenceElement : getInnermostComponentTypeElement(typeElement);
   }
 
-  private void copyResults(final MatchResultImpl ourResult) {
-    if (ourResult.hasSons()) {
-      for (MatchResult son : ourResult.getAllSons()) {
-        myMatchingVisitor.getMatchContext().getResult().addSon((MatchResultImpl)son);
-      }
+  private void copyResults(final MatchResult ourResult) {
+    for (MatchResult son : ourResult.getChildren()) {
+      myMatchingVisitor.getMatchContext().getResult().addChild(son);
     }
   }
   private static PsiTypeElement[] getTypeParameters(PsiJavaCodeReferenceElement referenceElement, boolean replaceDiamondWithExplicitTypes) {
@@ -971,7 +969,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
   }
 
-  private boolean matchImplicitQualifier(MatchingHandler matchingHandler, PsiElement target, MatchContext context) {
+  private static boolean matchImplicitQualifier(MatchingHandler matchingHandler, PsiElement target, MatchContext context) {
     if (!(matchingHandler instanceof SubstitutionHandler)) {
       return false;
     }
