@@ -2078,6 +2078,11 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "  @SuppressWarnings({\"unused\", \"other\"}) String s;" +
                  "}", replacer.testReplace(in2, what2, by3, options, false));
 
+    final String what3 = "@'_Anno('_v) String '_s;";
+    final String by4 = "@$Anno$($v$) String $s$ = \"undoubtedly\";";
+    assertEquals("class X {" +
+                 "  @SuppressWarnings(\"unused\") String s = \"undoubtedly\";" +
+                 "}", replacer.testReplace(in2, what3, by4, options, false));
   }
 
   public void testReplacePolyadicExpression() {

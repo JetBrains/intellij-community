@@ -98,15 +98,14 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiModifierList list2 = (PsiModifierList)myMatchingVisitor.getElement();
 
     for (@PsiModifier.ModifierConstant String modifier : MODIFIERS) {
-      if (list.hasModifierProperty(modifier) && !list2.hasModifierProperty(modifier)) {
-        myMatchingVisitor.setResult(false);
+      if (!myMatchingVisitor.setResult(!list.hasModifierProperty(modifier) || list2.hasModifierProperty(modifier))) {
         return;
       }
     }
 
     final PsiAnnotation[] annotations = list.getAnnotations();
     if (annotations.length > 0) {
-      HashSet<PsiAnnotation> set = new HashSet<>(Arrays.asList(annotations));
+      final HashSet<PsiAnnotation> annotationSet = new HashSet<>(Arrays.asList(annotations));
 
       for (PsiAnnotation annotation : annotations) {
         final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
@@ -142,12 +141,23 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
             }
           }
 
-          set.remove(annotation);
+          annotationSet.remove(annotation);
         }
       }
 
-      myMatchingVisitor.setResult(set.isEmpty() ||
-                                  myMatchingVisitor.matchInAnyOrder(set.toArray(PsiAnnotation.EMPTY_ARRAY), list2.getAnnotations()));
+      if (!annotationSet.isEmpty()) {
+        final MatchContext.MatchedElementsListener oldListener = myMatchingVisitor.getMatchContext().getMatchedElementsListener();
+        try {
+          final PsiAnnotation[] otherAnnotations = list2.getAnnotations();
+          final List<PsiElement> unmatchedElements = new SmartList<>(otherAnnotations);
+          myMatchingVisitor.getMatchContext().setMatchedElementsListener(elements -> unmatchedElements.removeAll(elements));
+          myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(annotationSet.toArray(PsiAnnotation.EMPTY_ARRAY), otherAnnotations));
+          list2.putUserData(GlobalMatchingVisitor.UNMATCHED_ELEMENTS_KEY, unmatchedElements);
+        }
+        finally {
+          myMatchingVisitor.getMatchContext().setMatchedElementsListener(oldListener);
+        }
+      }
     }
     else {
       myMatchingVisitor.setResult(true);
