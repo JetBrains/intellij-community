@@ -8,18 +8,17 @@ import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated Use Promise
+ * @param <T>
+ */
+@Deprecated
 public class AsyncResult<T> extends ActionCallback {
   private static final Logger LOG = Logger.getInstance(AsyncResult.class);
 
   protected T myResult;
 
   public AsyncResult() {
-  }
-
-  AsyncResult(int countToDone, @Nullable T result) {
-    super(countToDone);
-
-    myResult = result;
   }
 
   @NotNull
@@ -104,31 +103,6 @@ public class AsyncResult<T> extends ActionCallback {
   @Deprecated
   public interface Handler<T> {
     void run(T t);
-  }
-
-  /**
-   * @deprecated Don't use AsyncResult - use Promise instead.
-   */
-  @Deprecated
-  public static class Rejected<T> extends AsyncResult<T> {
-    public Rejected() {
-      setRejected();
-    }
-
-    public Rejected(T value) {
-      setRejected(value);
-    }
-  }
-
-  /**
-   * @deprecated Don't use AsyncResult - use Promise instead.
-   */
-  @NotNull
-  @Deprecated
-  public static <R> AsyncResult<R> rejected(@NotNull String errorMessage) {
-    AsyncResult<R> result = new AsyncResult<>();
-    result.reject(errorMessage);
-    return result;
   }
 
   @NotNull
