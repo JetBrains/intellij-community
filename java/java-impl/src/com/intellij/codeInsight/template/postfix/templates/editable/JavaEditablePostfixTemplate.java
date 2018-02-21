@@ -10,13 +10,12 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -139,10 +138,11 @@ public class JavaEditablePostfixTemplate extends EditablePostfixTemplate {
   @NotNull
   @Override
   protected PsiElement getElementToRemove(@NotNull PsiElement element) {
-    if (element instanceof PsiLiteralExpression) {
-      return element;
+    PsiElement parent = element.getParent();
+    if (parent instanceof PsiExpressionStatement) {
+      return parent;
     }
-    return ObjectUtils.notNull(element.getParent(), element);
+    return element;
   }
 
   @NotNull
