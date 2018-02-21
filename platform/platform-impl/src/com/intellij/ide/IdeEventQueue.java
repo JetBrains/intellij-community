@@ -1277,7 +1277,10 @@ public class IdeEventQueue extends EventQueue {
       if (event.getID() == KeyEvent.KEY_PRESSED) {
         KeyEvent keyEvent = (KeyEvent)event;
         boolean thisShortcutMayShowPopup = getShortcutsShowingPopups().stream().
-          filter(s -> s instanceof KeyboardShortcut).map(s -> ((KeyboardShortcut)s).getFirstKeyStroke()).
+          filter(s -> s instanceof KeyboardShortcut).
+          map(s -> (KeyboardShortcut)s).
+          filter(s -> s.getSecondKeyStroke() == null).
+          map(s -> s.getFirstKeyStroke()).
           anyMatch(ks -> ks.equals(KeyStroke.getKeyStroke(keyEvent.getKeyCode(), keyEvent.getModifiers())));
 
         if (thisShortcutMayShowPopup && KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof IdeFrame) {
@@ -1286,6 +1289,24 @@ public class IdeEventQueue extends EventQueue {
           delayKeyEvents.set(true);
           lastTypeaheadTimestamp = System.currentTimeMillis();
         }
+      } else if (event.getID() == KeyEvent.KEY_RELEASED && Registry.is("action.aware.typeAhead.searchEverywhere")) {
+        KeyEvent keyEvent = (KeyEvent)event;
+        if (keyEvent.getKeyCode() == KeyEvent.VK_SHIFT
+
+          ) {
+          switch (mySearchEverywhereTypeaheadState) {
+            case DEACTIVATED:
+              mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.TRIGGERED;
+              break;
+            case TRIGGERED:
+              delayKeyEvents.set(true);
+              lastTypeaheadTimestamp = System.currentTimeMillis();
+              mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DETECTED;
+              break;
+          }
+        } else if (mySearchEverywhereTypeaheadState == SearchEverywhereTypeaheadState.TRIGGERED) {
+          mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DEACTIVATED;
+        }
       }
 
       if (isTypeaheadTimeoutExceeded(event)) {
@@ -1293,6 +1314,9 @@ public class IdeEventQueue extends EventQueue {
         delayKeyEvents.set(false);
         myDelayedKeyEvents.clear();
         lastTypeaheadTimestamp = 0;
+        if (Registry.is("action.aware.typeAhead.searchEverywhere")) {
+          mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DEACTIVATED;
+        }
       };
     }
 
@@ -1308,11 +1332,32 @@ public class IdeEventQueue extends EventQueue {
           TYPEAHEAD_LOG.debug("Posted after delay: " + theEvent.paramString());
           super.postEvent(theEvent);
         }
+        if (Registry.is("action.aware.typeAhead.searchEverywhere")) {
+          mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DEACTIVATED;
+        }
         TYPEAHEAD_LOG.debug("Events after posting: " + myDelayedKeyEvents.size());
       }
     }
 
     return true;
+  }
+
+  private SearchEverywhereTypeaheadState mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DEACTIVATED;
+
+  private enum SearchEverywhereTypeaheadState {
+    DEACTIVATED,
+    TRIGGERED,
+    DETECTED
+  }
+
+  private static class KeyMaskUtil {
+    static boolean thisModifierOnly (int maskToCheck, int oldStyleModifier, int newStyleModifier) {
+      int fullBitSetForModifier = oldStyleModifier | newStyleModifier;
+      int invertedFullBitSet = ~fullBitSetForModifier;
+      boolean noOtherModifiersPressed = (invertedFullBitSet & maskToCheck) == 0;
+      boolean isModifierSet = (maskToCheck & fullBitSetForModifier) != 0;
+      return noOtherModifiersPressed && isModifierSet;
+    }
   }
 
   private final Set<Shortcut> shortcutsShowingPopups = new HashSet<>();
