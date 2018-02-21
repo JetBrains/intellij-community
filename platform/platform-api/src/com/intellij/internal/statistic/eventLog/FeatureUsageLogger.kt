@@ -5,7 +5,7 @@ import com.intellij.openapi.util.registry.Registry
 import java.io.File
 
 object FeatureUsageLogger {
-  private val ourLogger = if (isEnabled()) FeatureUsageFileEventLogger() else FeatureUsageEmptyEventLogger()
+  private val ourLogger = if (isEnabled()) getLogger() else FeatureUsageEmptyEventLogger()
 
   fun log(recorderId: String, action: String) {
     return ourLogger.log(recorderId, action)
@@ -17,20 +17,5 @@ object FeatureUsageLogger {
 
   fun isEnabled() : Boolean {
     return Registry.`is`("feature.usage.event.log.collect.and.upload")
-  }
-}
-
-interface FeatureUsageEventLogger {
-  fun log(recorderId: String, action: String)
-
-  fun getLogFiles(): List<File>
-}
-
-class FeatureUsageEmptyEventLogger : FeatureUsageEventLogger {
-  override fun log(recorderId: String, action: String) {
-  }
-
-  override fun getLogFiles() : List<File> {
-    return emptyList()
   }
 }
