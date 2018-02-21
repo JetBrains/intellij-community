@@ -86,5 +86,7 @@ iml_module(
         "//tools/idea/.idea/libraries:pty4j",
         "//tools/idea/.idea/libraries:StreamEx",
         "//tools/idea/.idea/libraries:jediterm-pty",
+        "//tools/idea/.idea/libraries:kotlinx-coroutines-core",
+        "//tools/idea/.idea/libraries:kotlinx-coroutines-jdk8",
     ],
 )

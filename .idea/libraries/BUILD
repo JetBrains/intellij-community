@@ -1193,3 +1193,19 @@ java_library(
     exports = ["//prebuilts/tools/common/m2/repository/org/codehaus/gant/gant_groovy2.3/1.9.11:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/codehaus/gant/gant_groovy2.3/1.9.11:jar"],
 )
+
+java_library(
+    name = "kotlinx-coroutines-core",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlinx/kotlinx-coroutines-core/0.20:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlinx/kotlinx-coroutines-core/0.20:jar"],
+)
+
+java_library(
+    name = "kotlinx-coroutines-jdk8",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlinx/kotlinx-coroutines-jdk8/0.20:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlinx/kotlinx-coroutines-jdk8/0.20:jar"],
+)
