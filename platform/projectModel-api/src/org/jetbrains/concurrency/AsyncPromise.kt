@@ -14,21 +14,14 @@ import java.util.function.Consumer
 
 private val LOG = Logger.getInstance(AsyncPromise::class.java)
 
-open class AsyncPromise<T : Any?> : Promise<T>, CancellablePromise<T>, InternalPromiseUtil.PromiseImpl<T> {
+open class AsyncPromise<T : Any?> : InternalPromiseUtil.BasePromise<T>(), CancellablePromise<T> {
   private val doneRef = AtomicReference<Consumer<in T>?>()
   private val rejectedRef = AtomicReference<Consumer<in Throwable>?>()
 
   private val valueRef = AtomicReference<PromiseValue<T>?>(null)
 
-  override fun getState() = valueRef.get()?.state ?: State.PENDING
-
-  override fun onSuccess(done: Consumer<in T>): Promise<T> {
-    setHandler(doneRef, done, State.FULFILLED)
-    return this
-  }
-
-  override fun rejected(rejected: com.intellij.util.Consumer<Throwable>): Promise<T> {
-    setHandler(rejectedRef, Consumer { rejected.consume(it) }, State.REJECTED)
+  override fun onSuccess(handler: Consumer<in T>): Promise<T> {
+    setHandler(doneRef, handler, State.FULFILLED)
     return this
   }
 
@@ -36,8 +29,6 @@ open class AsyncPromise<T : Any?> : Promise<T>, CancellablePromise<T>, InternalP
     setHandler(rejectedRef, errorHandler, State.REJECTED)
     return this
   }
-
-  override fun get() = valueRef.get()?.resultOrThrowError
 
   override fun <SUB_RESULT> then(handler: Function<in T, out SUB_RESULT>): Promise<SUB_RESULT> {
     val value = valueRef.get()
@@ -152,7 +143,10 @@ open class AsyncPromise<T : Any?> : Promise<T>, CancellablePromise<T>, InternalP
     if (value == null) {
       val latch = CountDownLatch(1)
       processed { latch.countDown() }
-      if (!latch.await(timeout.toLong(), timeUnit)) {
+      if (timeout == -1) {
+        latch.await()
+      }
+      else if (!latch.await(timeout.toLong(), timeUnit)) {
         throw TimeoutException()
       }
 
@@ -220,22 +214,6 @@ open class AsyncPromise<T : Any?> : Promise<T>, CancellablePromise<T>, InternalP
     }
   }
 
-  override fun get(timeout: Long, unit: TimeUnit) = blockingGet(timeout.toInt(), unit)
-
-  override fun cancel(mayInterruptIfRunning: Boolean): Boolean {
-    if (state == State.PENDING) {
-      cancel()
-      return true
-    }
-    else {
-      return false
-    }
-  }
-
-  override fun isCancelled(): Boolean {
-    return valueRef.get()?.isCancelled ?: false
-  }
-
   @Suppress("FunctionName")
   override fun _setValue(value: PromiseValue<T>) {
     if (value.error == null) {
@@ -245,6 +223,8 @@ open class AsyncPromise<T : Any?> : Promise<T>, CancellablePromise<T>, InternalP
       setError(value.error)
     }
   }
+
+  override fun getValue() = valueRef.get()
 }
 
 private class CompoundConsumer<T>(c1: Consumer<in T>, c2: Consumer<in T>) : Consumer<T> {

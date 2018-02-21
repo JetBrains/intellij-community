@@ -78,7 +78,7 @@ public interface Promise<T> {
    * Execute passed handler on promise resolve.
    */
   @NotNull
-  Promise<T> onSuccess(@NotNull java.util.function.Consumer<? super T> done);
+  Promise<T> onSuccess(@NotNull java.util.function.Consumer<? super T> handler);
 
   /**
    * Execute passed handler on promise resolve.

@@ -4,7 +4,6 @@ package org.jetbrains.concurrency;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
@@ -48,14 +47,23 @@ public abstract class AsyncValueLoader<T> {
   }
 
   private void rejectAndDispose(@NotNull AsyncPromise<T> asyncResult) {
-    try {
-      asyncResult.setError("rejected");
+    if (asyncResult.setError("rejected")) {
+      return;
     }
-    finally {
-      T result = asyncResult.get();
-      if (result != null) {
-        disposeResult(result);
-      }
+
+    T result;
+    try {
+      result = asyncResult.blockingGet(0);
+    }
+    catch (TimeoutException e) {
+      throw new RuntimeException(e);
+    }
+    catch (ExecutionException e) {
+      throw new RuntimeException(e.getCause());
+    }
+
+    if (result != null) {
+      disposeResult(result);
     }
   }
 
@@ -81,13 +89,8 @@ public abstract class AsyncValueLoader<T> {
       }
       else if (state == Promise.State.FULFILLED) {
         //noinspection unchecked
-        try {
-          if (!checkFreshness || isUpToDate(promise.blockingGet(0))) {
-            return promise;
-          }
-        }
-        catch (ExecutionException | TimeoutException e) {
-          throw new RuntimeException(e);
+        if (!checkFreshness || isUpToDate()) {
+          return promise;
         }
 
         if (!ref.compareAndSet(promise, promise = new AsyncPromise<>())) {
@@ -146,7 +149,7 @@ public abstract class AsyncValueLoader<T> {
   @NotNull
   protected abstract Promise<T> load(@NotNull AsyncPromise<T> result) throws IOException;
 
-  protected boolean isUpToDate(@Nullable T result) {
+  private boolean isUpToDate() {
     return loadedModificationCount == modificationCount;
   }
 

@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -116,6 +118,55 @@ public class InternalPromiseUtil {
       int result1 = result != null ? result.hashCode() : 0;
       result1 = 31 * result1 + (error != null ? error.hashCode() : 0);
       return result1;
+    }
+  }
+
+  public abstract static class BasePromise<T> implements Promise<T>, Future<T>, InternalPromiseUtil.PromiseImpl<T>, CancellablePromise<T> {
+    @Nullable
+    protected abstract PromiseValue<T> getValue();
+
+    @Override
+    public final boolean isDone() {
+      return getValue() != null;
+    }
+
+    @NotNull
+    @Override
+    public final State getState() {
+      PromiseValue<T> value = getValue();
+      return value == null ? State.PENDING : value.getState();
+    }
+
+    @Override
+    public final boolean isCancelled() {
+      PromiseValue<T> value = getValue();
+      return value != null && value.isCancelled();
+    }
+
+    @Override
+    public final T get() throws ExecutionException {
+      try {
+        return blockingGet(-1);
+      }
+      catch (TimeoutException e) {
+        throw new ExecutionException(e);
+      }
+    }
+
+    @Override
+    public final T get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+      return blockingGet((int)timeout, unit);
+    }
+
+    @Override
+    public final boolean cancel(boolean mayInterruptIfRunning) {
+      if (getState() == State.PENDING) {
+        cancel();
+        return true;
+      }
+      else {
+        return false;
+      }
     }
   }
 }

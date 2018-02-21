@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.InternalPromiseUtil.PromiseValue;
 
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
@@ -15,7 +14,7 @@ import java.util.function.Consumer;
 import static org.jetbrains.concurrency.InternalPromiseUtil.CANCELLED_PROMISE;
 import static org.jetbrains.concurrency.InternalPromiseUtil.isHandlerObsolete;
 
-class DonePromise<T> implements Promise<T>, Future<T>, InternalPromiseUtil.PromiseImpl<T> {
+class DonePromise<T> extends InternalPromiseUtil.BasePromise<T> {
   private final PromiseValue<T> value;
 
   public DonePromise(@NotNull PromiseValue<T> value) {
@@ -92,12 +91,6 @@ class DonePromise<T> implements Promise<T>, Future<T>, InternalPromiseUtil.Promi
     }
   }
 
-  @NotNull
-  @Override
-  public State getState() {
-    return value.getState();
-  }
-
   @Nullable
   @Override
   public T blockingGet(int timeout, @NotNull TimeUnit timeUnit) throws ExecutionException, TimeoutException {
@@ -105,31 +98,16 @@ class DonePromise<T> implements Promise<T>, Future<T>, InternalPromiseUtil.Promi
   }
 
   @Override
-  public boolean isDone() {
-    return true;
-  }
-
-  @Override
-  public T get() {
-    return value.result;
-  }
-
-  @Override
-  public boolean cancel(boolean mayInterruptIfRunning) {
-    return false;
-  }
-
-  @Override
-  public boolean isCancelled() {
-    return value.isCancelled();
-  }
-
-  @Override
-  public T get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-    return value.result;
-  }
-
-  @Override
   public void _setValue(@NotNull PromiseValue<T> value) {
+  }
+
+  @Nullable
+  @Override
+  protected PromiseValue<T> getValue() {
+    return value;
+  }
+
+  @Override
+  public void cancel() {
   }
 }
