@@ -53,7 +53,7 @@
         </constraints>
         <properties>
           <selected value="true"/>
-          <text value="Show command line afterwards"/>
+          <text value="Run with Python console"/>
         </properties>
       </component>
       <component id="f3803" class="com.intellij.ui.components.JBComboBoxLabel" binding="myTargetComboBox" custom-create="true">
