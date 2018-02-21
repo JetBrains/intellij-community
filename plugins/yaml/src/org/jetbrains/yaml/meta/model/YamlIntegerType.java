@@ -3,6 +3,7 @@
  */
 package org.jetbrains.yaml.meta.model;
 
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,7 @@ public class YamlIntegerType extends YamlScalarType {
       Integer.parseInt(scalarValue.getTextValue());
     }
     catch (NumberFormatException e) {
-      holder.registerProblem(scalarValue, "Integer value expected");
+      holder.registerProblem(scalarValue, "Integer value expected", ProblemHighlightType.ERROR);
     }
   }
 }
