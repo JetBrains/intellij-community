@@ -39,17 +39,17 @@ import java.util.function.Function;
  * 
  * @author peter
  */
-public class CheckHighlighterConsistency implements MadTestingAction {
-  private final PsiFile myFile;
+public class CheckHighlighterConsistency extends ActionOnFile {
 
   public CheckHighlighterConsistency(PsiFile file) {
-    myFile = file;
+    super(file);
   }
 
   @Override
-  public void performAction() {
-    Editor editor = FileEditorManager.getInstance(myFile.getProject()).getSelectedTextEditor();
-    assert editor.getDocument() == myFile.getViewProvider().getDocument();
+  public void performCommand(@NotNull Environment env) {
+    env.logMessage(toString());
+    Editor editor = FileEditorManager.getInstance(getProject()).getSelectedTextEditor();
+    assert editor.getDocument() == getDocument();
 
     performCheck(editor);
   }
@@ -83,9 +83,9 @@ public class CheckHighlighterConsistency implements MadTestingAction {
   @NotNull
   public static final Function<PsiFile, Generator<? extends MadTestingAction>> randomEditsWithHighlighterChecks = file -> {
     FileEditorManager.getInstance(file.getProject()).openFile(file.getVirtualFile(), true);
-    return Generator.anyOf(Generator.constant(new CheckHighlighterConsistency(file)),
-                           InsertString.asciiInsertions(file),
-                           DeleteRange.psiRangeDeletions(file));
+    return Generator.sampledFrom(new CheckHighlighterConsistency(file),
+                                 new InsertString(file),
+                                 new DeleteRange(file));
   };
 
 }

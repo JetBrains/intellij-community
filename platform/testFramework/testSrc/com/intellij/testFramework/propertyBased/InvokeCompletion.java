@@ -25,7 +25,6 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -46,40 +45,22 @@ import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
-import org.jetbrains.jetCheck.IntDistribution;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * @author peter
  */
-public class InvokeCompletion extends ActionOnRange {
+public class InvokeCompletion extends ActionOnFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.propertyBased.InvokeCompletion");
-  private final int myItemIndexRaw;
-  private final char myCompletionChar;
   private final CompletionPolicy myPolicy;
-  private String myLog = "not invoked";
 
-  public InvokeCompletion(PsiFile file, int offset, int itemIndexRaw, char completionChar, CompletionPolicy policy) {
-    super(file, offset, offset);
-    myItemIndexRaw = itemIndexRaw;
-    myCompletionChar = completionChar;
+  public InvokeCompletion(PsiFile file, CompletionPolicy policy) {
+    super(file);
     myPolicy = policy;
-  }
-
-  @Override
-  public String toString() {
-    return "InvokeCompletion{" + getPath() + ", " + myLog + "}";
-  }
-
-  @Override
-  public String getConstructorArguments() {
-    return "file, " + myInitialStart + ", " + myItemIndexRaw + ", '" + StringUtil.escapeStringCharacters(String.valueOf(myCompletionChar)) + "', completionPolicy";
   }
 
   @Override
@@ -87,20 +68,10 @@ public class InvokeCompletion extends ActionOnRange {
     int offset = generateDocOffset(env, "Invoke basic completion at offset %s");
     String selectionCharacters = myPolicy.getPossibleSelectionCharacters();
     char c = selectionCharacters.charAt(env.generateValue(Generator.integers(0, selectionCharacters.length() - 1), null));
-    performActionAt(offset, c, items -> env.generateValue(Generator.sampledFrom(items), null), env::logMessage);
+    performActionAt(offset, c, env);
   }
 
-  @Override
-  public void performAction() {
-    int offset = getFinalStartOffset();
-    if (offset < 0) return;
-
-    myLog = "offset=" + offset;
-
-    performActionAt(offset, myCompletionChar, items -> items.get(myItemIndexRaw % items.size()), s -> myLog += ", " + s);
-  }
-
-  private void performActionAt(int offset, char completionChar, Function<List<LookupElement>, LookupElement> itemChooser, Consumer<String> logger) {
+  private void performActionAt(int offset, char completionChar, Environment env) {
     Project project = getProject();
     Editor editor =
       FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, getVirtualFile(), 0), true);
@@ -119,12 +90,12 @@ public class InvokeCompletion extends ActionOnRange {
         PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
         //noinspection deprecation
         Editor caretEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, getFile());
-        performCompletion(caretEditor, PsiUtilBase.getPsiFileInEditor(caretEditor, project), completionChar, itemChooser, logger);
+        performCompletion(caretEditor, PsiUtilBase.getPsiFileInEditor(caretEditor, project), completionChar, env);
         PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
       }
       catch (Throwable e) {
-        LOG.debug("Error occurred in " + this + ", text before:\n" + textBefore);
-        logger.accept("Error happened, the file's text before invoking printed to the debug log, search for 'text before' there");
+        LOG.debug("Text before completion:\n" + textBefore);
+        env.logMessage("Error happened, the file's text before invoking printed to the debug log, search for 'Text before completion' there");
       }
       finally {
         Disposer.dispose(raiseCompletionLimit);
@@ -137,8 +108,7 @@ public class InvokeCompletion extends ActionOnRange {
   private void performCompletion(@NotNull Editor editor,
                                  @NotNull PsiFile file,
                                  char completionChar,
-                                 Function<List<LookupElement>, LookupElement> itemChooser,
-                                 Consumer<String> logger) {
+                                 Environment env) {
     int caretOffset = editor.getCaretModel().getOffset();
     int adjustedOffset = TargetElementUtil.adjustOffset(file, getDocument(), caretOffset);
 
@@ -158,10 +128,10 @@ public class InvokeCompletion extends ActionOnRange {
     LookupEx lookup = LookupManager.getActiveLookup(editor);
     if (lookup == null) {
       if (editor.getCaretModel().getOffset() != caretOffset || getDocument().getModificationStamp() != stampBefore) {
-        logger.accept("auto-inserted");
+        env.logMessage("Completion item was auto-inserted");
         return;
       }
-      logger.accept("no lookup");
+      env.logMessage("No lookup");
       if (expectedVariant == null || prefixEqualsExpected) return;
       TestCase.fail("No lookup, but expected '" + expectedVariant + "' among completion variants" + notFound);
     }
@@ -176,8 +146,8 @@ public class InvokeCompletion extends ActionOnRange {
       checkNoDuplicates(items);
     }
 
-    LookupElement item = itemChooser.apply(items);
-    logger.accept("Select '" + item + "' with '" + StringUtil.escapeStringCharacters(String.valueOf(completionChar)) + "'");
+    LookupElement item = env.generateValue(Generator.sampledFrom(items), null);
+    env.logMessage("Select '" + item + "' with '" + StringUtil.escapeStringCharacters(String.valueOf(completionChar)) + "'");
     ((LookupImpl)lookup).finishLookup(completionChar, item);
   }
 
@@ -213,16 +183,4 @@ public class InvokeCompletion extends ActionOnRange {
     return text != null && text.contains("...");
   }
 
-  @NotNull
-  public static Generator<InvokeCompletion> completions(PsiFile psiFile, CompletionPolicy policy) {
-    return Generator.from(data -> {
-      Document document = psiFile.getViewProvider().getDocument();
-      assert document != null;
-      int offset = data.drawInt(IntDistribution.uniform(0, document.getTextLength()));
-      int itemIndex = data.drawInt(IntDistribution.uniform(0, 100));
-      String selectionCharacters = policy.getPossibleSelectionCharacters();
-      char c = selectionCharacters.charAt(data.drawInt(IntDistribution.uniform(0, selectionCharacters.length() - 1)));
-      return new InvokeCompletion(psiFile, offset, itemIndex, c, policy);
-    });
-  }
 }

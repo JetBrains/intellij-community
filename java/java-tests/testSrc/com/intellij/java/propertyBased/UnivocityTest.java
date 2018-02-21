@@ -44,7 +44,7 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
     AtomicLong rebuildStamp = new AtomicLong();
 
     Generator<MadTestingAction> genIntention = psiJavaFiles().flatMap(
-      file -> Generator.frequency(5, InvokeIntention.randomIntentions(file, new JavaGreenIntentionPolicy()),
+      file -> Generator.frequency(5, Generator.constant(new InvokeIntention(file, new JavaGreenIntentionPolicy())),
                                   1, Generator.constant(new InvalidateAllPsi(myProject)),
                                   10, Generator.constant(new FilePropertiesChanged(file))));
     PropertyChecker.forAll(ImperativeCommand.scenarios(() -> env -> {
@@ -68,13 +68,14 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
       MadTestingUtil.changeAndRevert(myProject, () ->
         env.executeCommands(Generator.constant(env1 -> {
           PsiJavaFile file = env1.generateValue(psiJavaFiles(), "Working with %s");
-          Generator<MadTestingAction> mutations = Generator.anyOf(DeleteRange.psiRangeDeletions(file),
-                                                                  Generator.constant(new AddNullArgument(file)),
-                                                                  Generator.constant(new DeleteForeachInitializers(file)),
-                                                                  Generator.constant(new DeleteSecondArgument(file)),
-                                                                  InvokeCompletion.completions(file, new JavaCompletionPolicy()),
-                                                                  Generator.constant(new MakeAllMethodsVoid(file)));
-          Generator<MadTestingAction> allActions = Generator.frequency(2, InvokeIntention.randomIntentions(file, new JavaIntentionPolicy()),
+          Generator<MadTestingAction> mutations = Generator.sampledFrom(new DeleteRange(file),
+                                                                        new AddNullArgument(file),
+                                                                        new DeleteForeachInitializers(file),
+                                                                        new DeleteSecondArgument(file),
+                                                                        new InvokeCompletion(file, new JavaCompletionPolicy()),
+                                                                        new MakeAllMethodsVoid(file));
+          Generator<MadTestingAction> allActions = Generator.frequency(2, Generator
+                                                                         .constant(new InvokeIntention(file, new JavaIntentionPolicy())),
                                                                        1, Generator.constant(new RehighlightAllEditors(myProject)),
                                                                        1, mutations);
 

@@ -44,32 +44,13 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class InvokeIntention extends ActionOnRange {
+public class InvokeIntention extends ActionOnFile {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.propertyBased.InvokeIntention");
-  private final int myIntentionIndex;
   private final IntentionPolicy myPolicy;
-  private String myInvocationLog = "not invoked";
 
-  public InvokeIntention(PsiFile file, int offset, int intentionIndex, IntentionPolicy policy) {
-    super(file, offset, offset);
-    myIntentionIndex = intentionIndex;
+  public InvokeIntention(PsiFile file, IntentionPolicy policy) {
+    super(file);
     myPolicy = policy;
-  }
-
-  @NotNull
-  public static Generator<InvokeIntention> randomIntentions(@NotNull PsiFile psiFile, @NotNull IntentionPolicy policy) {
-    return Generator.zipWith(Generator.integers(0, psiFile.getTextLength()), Generator.integers(0, 100),
-                             (offset, index) -> new InvokeIntention(psiFile, offset, index, policy)).noShrink();
-  }
-
-  @Override
-  public String toString() {
-    return "InvokeIntention{" + getPath() + ", " + myInvocationLog + "}";
-  }
-
-  @Override
-  public String getConstructorArguments() {
-    return "file, " + myInitialStart + "," + myIntentionIndex + ", intentionPolicy";
   }
 
   @Override
@@ -86,23 +67,6 @@ public class InvokeIntention extends ActionOnRange {
       env.logMessage("Invoke intention '" + result.getText() + "'");
       return result;
     }, env);
-  }
-
-  public void performAction() {
-    int offset = getFinalStartOffset();
-    myInvocationLog = "offset " + offset;
-    if (offset < 0) return;
-
-    doInvokeIntention(offset, actions -> {
-      if (actions.isEmpty()) {
-        myInvocationLog += ", no intentions found after highlighting";
-        return null;
-      }
-
-      IntentionAction result = actions.get(myIntentionIndex % actions.size());
-      myInvocationLog += ", invoked '" + result.getText() + "'";
-      return result;
-    }, null);
   }
 
   private void doInvokeIntention(int offset, Function<List<IntentionAction>, IntentionAction> intentionChooser, @Nullable Environment env) {
@@ -165,9 +129,9 @@ public class InvokeIntention extends ActionOnRange {
       }
     }
     catch (Throwable error) {
-      LOG.debug("Error occurred in " + this + ", text before:\n" + textBefore);
+      LOG.debug("Error occurred, text before intention invocation:\n" + textBefore);
       if (env != null) {
-        env.logMessage("Error happened, the file's text before invoking printed to the debug log, search for 'text before' there");
+        env.logMessage("Error happened, the file's text before invoking printed to the debug log, search for 'text before intention invocation' there");
       }
       throw error;
     }

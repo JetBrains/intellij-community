@@ -48,7 +48,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jetCheck.DataStructure;
 import org.jetbrains.jetCheck.Generator;
-import org.jetbrains.jetCheck.ImperativeCommand;
 import org.jetbrains.jetCheck.IntDistribution;
 
 import java.io.File;
@@ -209,7 +208,7 @@ public class MadTestingUtil {
    * @return
    */
   @NotNull
-  public static Supplier<ImperativeCommand> actionsOnFileContents(CodeInsightTestFixture fixture, String rootPath,
+  public static Supplier<MadTestingAction> actionsOnFileContents(CodeInsightTestFixture fixture, String rootPath,
                                                                   FileFilter fileFilter,
                                                                   Function<PsiFile, Generator<? extends MadTestingAction>> actions) {
     Generator<File> randomFiles = randomFiles(rootPath, fileFilter);
@@ -271,9 +270,9 @@ public class MadTestingUtil {
    */
   @NotNull
   public static Generator<MadTestingAction> randomEditsWithReparseChecks(PsiFile file) {
-    return Generator.anyOf(DeleteRange.psiRangeDeletions(file),
-                           Generator.constant(new CheckPsiTextConsistency(file)),
-                           InsertString.asciiInsertions(file));
+    return Generator.sampledFrom(new DeleteRange(file),
+                                 new CheckPsiTextConsistency(file),
+                                 new InsertString(file));
   }
 
   public static boolean isAfterError(PsiFile file, int offset) {

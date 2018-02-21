@@ -76,7 +76,7 @@ public class PythonCodeInsightSanityTest extends PyEnvTestCase {
   }
 
   @NotNull
-  private static Supplier<ImperativeCommand> actionsOnPyFiles(@NotNull final Function<PsiFile, Generator<? extends MadTestingAction>> fileActions,
+  private static Supplier<MadTestingAction> actionsOnPyFiles(@NotNull final Function<PsiFile, Generator<? extends MadTestingAction>> fileActions,
                                                               @NotNull final CodeInsightTestFixture fixture,
                                                               @NotNull final String testDataPath) {
 
@@ -87,11 +87,11 @@ public class PythonCodeInsightSanityTest extends PyEnvTestCase {
     runSanityTest(pathAndFixture -> {
       final CodeInsightTestFixture fixture = pathAndFixture.second;
       MadTestingUtil.enableAllInspections(fixture.getProject(), fixture.getProject());
-      Function<PsiFile, Generator<? extends MadTestingAction>> fileActions = file ->
-        Generator.anyOf(InvokeIntention.randomIntentions(file, new IntentionPolicy()),
-                        InvokeCompletion.completions(file, new CompletionPolicy()),
-                        Generator.constant(new StripTestDataMarkup(file)),
-                        DeleteRange.psiRangeDeletions(file));
+      Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
+        file -> Generator.sampledFrom(new InvokeIntention(file, new IntentionPolicy()),
+                                      new InvokeCompletion(file, new CompletionPolicy()),
+                                      new StripTestDataMarkup(file),
+                                      new DeleteRange(file));
 
       //todo use ImperativeCommand.checkScenarios like in other tests
       PropertyChecker<Scenario> checker = PropertyChecker.forAll(ImperativeCommand.scenarios(actionsOnPyFiles(fileActions, fixture, pathAndFixture.first)));
