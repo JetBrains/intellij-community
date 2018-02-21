@@ -765,22 +765,22 @@ public class ControlFlowUtils {
   }
 
   /**
-   * Checks whether variable can be referenced between start and loop entry. Back-edges are also considered, so the actual place
-   * where it referenced might be outside of (start, loop entry) interval.
+   * Checks whether variable can be referenced between start and given statement entry.
+   * Back-edges are also considered, so the actual place where it referenced might be outside of
+   * (start, loop entry) interval.
    *
    * @param flow ControlFlow to analyze
    * @param start start point
-   * @param loop loop to check
+   * @param statement loop to check
    * @param variable variable to analyze
-   * @return true if variable can be referenced between start and stop points
+   * @return true if variable can be referenced between start point and statement entry
    */
-  private static boolean isVariableReferencedBeforeLoopEntry(final ControlFlow flow,
-                                                             final int start,
-                                                             final PsiStatement loop,
-                                                             final PsiVariable variable) {
-    final int loopStart = flow.getStartOffset(loop);
-    final int loopEnd = flow.getEndOffset(loop);
-    if(start == loopStart) return false;
+  private static boolean isVariableReferencedBeforeStatementEntry(final ControlFlow flow,
+                                                                  final int start,
+                                                                  final PsiStatement statement,
+                                                                  final PsiVariable variable) {
+    final int statementStart = flow.getStartOffset(statement);
+    final int statementEnd = flow.getEndOffset(statement);
 
     List<ControlFlowUtil.ControlFlowEdge> edges = ControlFlowUtil.getEdges(flow, start);
     // DFS visits instructions mainly in backward direction while here visiting in forward direction
@@ -796,7 +796,7 @@ public class ControlFlowUtils {
         int to = edge.myTo;
         if(referenced.get(from)) {
           // jump to the loop start from within the loop is not considered as loop entry
-          if(to == loopStart && (from < loopStart || from >= loopEnd)) {
+          if(to == statementStart && (from < statementStart || from >= statementEnd)) {
             return true;
           }
           if(!referenced.get(to)) {
@@ -808,7 +808,7 @@ public class ControlFlowUtils {
         if(ControlFlowUtil.isVariableAccess(flow, from, variable)) {
           referenced.set(from);
           referenced.set(to);
-          if(to == loopStart) return true;
+          if(to == statementStart) return true;
           changed = true;
         }
       }
@@ -841,7 +841,7 @@ public class ControlFlowUtils {
     }
     int start = controlFlow.getEndOffset(var.getInitializer())+1;
     int stop = controlFlow.getStartOffset(statement);
-    if(isVariableReferencedBeforeLoopEntry(controlFlow, start, statement, var)) return UNKNOWN;
+    if(isVariableReferencedBeforeStatementEntry(controlFlow, start, statement, var)) return UNKNOWN;
     if (!ControlFlowUtil.isValueUsedWithoutVisitingStop(controlFlow, start, stop, var)) return AT_WANTED_PLACE_ONLY;
     return var.hasModifierProperty(PsiModifier.FINAL) ? UNKNOWN : AT_WANTED_PLACE;
   }
