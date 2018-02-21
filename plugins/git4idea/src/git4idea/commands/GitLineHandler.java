@@ -177,7 +177,7 @@ public class GitLineHandler extends GitTextHandler {
 
   /**
    * Will not react to {@link com.intellij.util.io.BaseOutputReader.Options}
-   * other then {@link com.intellij.util.io.BaseOutputReader.Options#policy()} because we do not negotiate with terrorists
+   * other than {@link com.intellij.util.io.BaseOutputReader.Options#policy()} because we do not negotiate with terrorists
    */
   private static class LineReader extends BaseDataReader {
     @NotNull private final Reader myReader;
