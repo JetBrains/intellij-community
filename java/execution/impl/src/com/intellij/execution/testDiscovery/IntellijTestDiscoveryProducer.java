@@ -27,7 +27,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
   public MultiMap<String, String> getDiscoveredTests(@NotNull Project project,
                                                      @NotNull String classFQName,
                                                      @NotNull String methodName,
-                                                     @NotNull String frameworkId) {
+                                                     byte frameworkId) {
     String methodFqn = classFQName + "." + methodName;
     RequestBuilder r = HttpRequests.request(INTELLIJ_TEST_DISCOVERY_HOST + "/search/tests/by-method/" + methodFqn);
 
@@ -51,6 +51,11 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
       LOG.debug(e);
     }
     return MultiMap.empty();
+  }
+
+  @Override
+  public boolean isRemote() {
+    return true;
   }
 
   @JsonInclude(JsonInclude.Include.NON_EMPTY)

@@ -42,6 +42,7 @@ import java.util.*;
 
 public class JUnitConfiguration extends JavaTestConfigurationBase {
   public static final String DEFAULT_PACKAGE_NAME = ExecutionBundle.message("default.package.presentable.name");
+  public static final byte FRAMEWORK_ID = 0x0;
 
   @NonNls public static final String TEST_CLASS = "class";
   @NonNls public static final String TEST_PACKAGE = "package";
@@ -543,10 +544,9 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     return new JUnitConsoleProperties(this, executor);
   }
 
-  @NotNull
   @Override
-  public String getFrameworkPrefix() {
-    return "j";
+  public byte getTestFrameworkId() {
+    return FRAMEWORK_ID;
   }
 
   public static class Data implements Cloneable {

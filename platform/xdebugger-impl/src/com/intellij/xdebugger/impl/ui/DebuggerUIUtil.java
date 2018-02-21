@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -52,6 +51,8 @@ import org.jetbrains.concurrency.Promise;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
@@ -373,11 +374,12 @@ public class DebuggerUIUtil {
    */
   public static boolean hasEvaluationExpression(@NotNull XValue value) {
     Promise<XExpression> promise = value.calculateEvaluationExpression();
-    if (promise.getState() == Promise.State.PENDING) return true;
-    if (promise instanceof Getter) {
-      return ((Getter)promise).get() != null;
+    try {
+      return promise.getState() == Promise.State.PENDING || promise.blockingGet(0) != null;
     }
-    return true;
+    catch (ExecutionException | TimeoutException e) {
+      return true;
+    }
   }
 
   public static void registerActionOnComponent(String name, JComponent component, Disposable parentDisposable) {

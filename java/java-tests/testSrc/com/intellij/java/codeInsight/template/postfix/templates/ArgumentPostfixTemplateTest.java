@@ -6,6 +6,14 @@ import org.jetbrains.annotations.NotNull;
 
 public class ArgumentPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testSimple() {
+    doArgTest();
+  }
+  
+  public void testLocalVariable() {
+    doArgTest();
+  }
+
+  private void doArgTest() {
     TemplateManagerImpl.setTemplateTesting(myFixture.getProject(), getTestRootDisposable());
     myFixture.configureByFile(getTestName(true) + ".java");
     myFixture.type("\tfunctionCall\t");

@@ -18,14 +18,14 @@ class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, Te
   @NotNull
   private final TestDiscoveryIndex myIndex;
   private final String myModuleName;
-  private final String myFrameworkPrefix;
+  private final byte myFrameworkId;
 
   IdeaTestDiscoveryProtocolReader(@NotNull TestDiscoveryIndex index,
                                   @Nullable String moduleName,
-                                  @NotNull String frameworkPrefix) {
+                                  byte frameworkId) {
     myIndex = index;
     myModuleName = moduleName;
-    myFrameworkPrefix = frameworkPrefix;
+    myFrameworkId = frameworkId;
   }
 
   @Override
@@ -56,7 +56,8 @@ class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, Te
   @Override
   public TestDataReader createTestDataReader(int testClassId, int testMethodId) {
     return new TestDataReader() {
-      private final String myTestName = myTestExecutionNameEnumerator.get(testClassId) + "-" + myTestExecutionNameEnumerator.get(testMethodId);
+      private final String myTestClassName = myTestExecutionNameEnumerator.get(testClassId);
+      private final String myTestMethodName = myTestExecutionNameEnumerator.get(testMethodId);
       private final MultiMap<String, String> myUsedMethods = new MultiMap<>();
       private int myCurrentClassId;
 
@@ -85,7 +86,7 @@ class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, Te
       @Override
       public void testDataProcessed() {
         try {
-          myIndex.updateFromData(myTestName, myUsedMethods, myModuleName, myFrameworkPrefix);
+          myIndex.updateFromData(myTestClassName, myTestMethodName, myUsedMethods, myModuleName, myFrameworkId);
         }
         catch (IOException e) {
           LOG.error(e);

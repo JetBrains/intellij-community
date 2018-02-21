@@ -440,7 +440,9 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
   private static boolean isMethodType(@NotNull PyClassType type) {
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(type.getPyClass());
-    return type.equals(builtinCache.getClassMethodType()) || type.equals(builtinCache.getStaticMethodType());
+    return type.equals(builtinCache.getClassMethodType()) ||
+           type.equals(builtinCache.getStaticMethodType()) ||
+           type.equals(builtinCache.getObjectType(PyNames.FUNCTION));
   }
 
   @Nullable
@@ -898,10 +900,5 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     public boolean value(final PsiElement target) {
       return (instance != target);
     }
-  }
-
-  @Override
-  public void accept(@NotNull PyTypeVisitor visitor) {
-    visitor.visitClassType(this);
   }
 }

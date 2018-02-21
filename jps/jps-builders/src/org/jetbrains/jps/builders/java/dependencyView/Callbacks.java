@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.builders.java.dependencyView;
 
+import com.intellij.util.SmartList;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.File;
@@ -53,6 +54,25 @@ public class Callbacks {
 
     public Collection<File> getAffectedFiles (){
       return myAffectedFiles;
+    }
+
+    public static ConstantAffection compose(final Collection<ConstantAffection> affections) {
+      if (affections.isEmpty()) {
+        return EMPTY;
+      }
+      if (affections.size() == 1) {
+        return affections.iterator().next();
+      }
+      for (ConstantAffection a : affections) {
+        if (!a.isKnown()) {
+          return EMPTY;
+        }
+      }
+      final Collection<File> affected = new SmartList<>();
+      for (ConstantAffection affection : affections) {
+        affected.addAll(affection.getAffectedFiles());
+      }
+      return new ConstantAffection(affected);
     }
   }
 

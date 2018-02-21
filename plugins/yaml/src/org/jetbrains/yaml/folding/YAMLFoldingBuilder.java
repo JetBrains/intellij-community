@@ -67,6 +67,16 @@ public class YAMLFoldingBuilder extends FoldingBuilderEx implements DumbAware {
 
   @NotNull
   private static String getPlaceholderText(@Nullable PsiElement psiElement) {
+
+    if (psiElement instanceof YAMLPsiElement) {
+      for (YAMLCustomFoldingInfoProvider extension : YAMLCustomFoldingInfoProvider.EP_NAME.getExtensions()) {
+        final String text = extension.getPlaceholderText((YAMLPsiElement)psiElement);
+        if (text != null) {
+          return text;
+        }
+      }
+    }
+
     if (psiElement instanceof YAMLDocument) {
       return "---";
     }
@@ -106,6 +116,17 @@ public class YAMLFoldingBuilder extends FoldingBuilderEx implements DumbAware {
   }
 
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
+    final PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(node);
+
+    if (psiElement instanceof YAMLPsiElement) {
+      for (YAMLCustomFoldingInfoProvider extension : YAMLCustomFoldingInfoProvider.EP_NAME.getExtensions()) {
+        final Boolean collapsed = extension.isCollapsedByDefault((YAMLPsiElement)psiElement);
+        if (collapsed != null) {
+          return collapsed;
+        }
+      }
+    }
+
     return false;
   }
 

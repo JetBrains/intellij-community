@@ -8,6 +8,7 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import static com.intellij.ui.tree.TreeTestUtil.node;
@@ -427,7 +428,7 @@ public class AbstractTreeWalkerTest {
     try {
       assertEquals("unexpected result", expected, walker.promise().blockingGet(1));
     }
-    catch (TimeoutException e) {
+    catch (TimeoutException | ExecutionException e) {
       throw new AssertionError(e);
     }
   }

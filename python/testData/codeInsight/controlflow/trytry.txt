@@ -40,7 +40,7 @@
 39(45) WRITE ACCESS: f
 40(41,45) element: PyFinallyPart
 41(42,45) element: PyAssignmentStatement
-42(43,45) WRITE ACCESS: f
+42(43,45,48) WRITE ACCESS: f
 43(44,45) element: PyAssignmentStatement
 44(45,48) WRITE ACCESS: g
 45(46,55) element: PyFinallyPart
@@ -48,7 +48,7 @@
 47(55) WRITE ACCESS: h
 48(49,55) element: PyFinallyPart
 49(50,55) element: PyAssignmentStatement
-50(51,55) WRITE ACCESS: h
+50(51,53,55) WRITE ACCESS: h
 51(52,55) element: PyAssignmentStatement
 52(8,53,55) WRITE ACCESS: i
 53(54,55) element: PyAssignmentStatement

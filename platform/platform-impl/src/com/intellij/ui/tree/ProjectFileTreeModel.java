@@ -35,7 +35,15 @@ import static com.intellij.openapi.vfs.VirtualFileManager.VFS_CHANGES;
 import static com.intellij.ui.tree.TreePathUtil.pathToCustomNode;
 import static java.util.Collections.emptyList;
 
-public final class ProjectFileTreeModel extends BaseTreeModel<Object> implements InvokerSupplier {
+public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileTreeModel.Child> implements InvokerSupplier {
+  public interface Child {
+    @NotNull
+    Module getModule();
+
+    @NotNull
+    VirtualFile getVirtualFile();
+  }
+
   private final Invoker invoker = new Invoker.BackgroundThread(this);
   private final ProjectNode root;
 
@@ -118,22 +126,25 @@ public final class ProjectFileTreeModel extends BaseTreeModel<Object> implements
 
   @NotNull
   @Override
-  public List<Object> getChildren(Object object) {
+  public List<Child> getChildren(Object object) {
     Node node = object instanceof Node && isValidThread() ? (Node)object : null;
     if (node == null) return emptyList();
     List<?> children = node.getChildren();
     if (children.isEmpty()) return emptyList();
-    List<Object> result = new SmartList<>();
+    List<Child> result = new SmartList<>();
     VirtualFileFilter filter = root.filter;
     for (Object child : children) {
-      if (filter == null || child instanceof FileNode && isVisible((FileNode)child, filter)) {
-        result.add(child);
+      if (child instanceof FileNode && isVisible((FileNode)child, filter)) {
+        result.add((FileNode)child);
       }
     }
     return result;
   }
 
-  private static boolean isVisible(@NotNull FileNode node, @NotNull VirtualFileFilter filter) {
+  private static boolean isVisible(@NotNull FileNode node, @Nullable VirtualFileFilter filter) {
+    if (node.module.isDisposed()) return false; // ignore disposed module
+    if (!node.file.isValid()) return false; // ignore removed file
+    if (filter == null) return true;
     ThreeState visibility = node.visibility;
     if (visibility == ThreeState.NO) return false;
     if (visibility == ThreeState.YES) return true;
@@ -149,18 +160,6 @@ public final class ProjectFileTreeModel extends BaseTreeModel<Object> implements
     }
     node.visibility = ThreeState.fromBoolean(visible);
     return visible;
-  }
-
-  @Nullable
-  public static Module getModule(@Nullable Object object) {
-    FileNode node = object instanceof FileNode ? (FileNode)object : null;
-    return node == null ? null : node.module;
-  }
-
-  @Nullable
-  public static VirtualFile getVirtualFile(@Nullable Object object) {
-    FileNode node = object instanceof FileNode ? (FileNode)object : null;
-    return node == null ? null : node.file;
   }
 
   public void invalidate(VirtualFile file) {
@@ -291,13 +290,23 @@ public final class ProjectFileTreeModel extends BaseTreeModel<Object> implements
   }
 
 
-  private static class FileNode extends Node<FileNode> {
+  private static class FileNode extends Node<FileNode> implements Child {
     final VirtualFile file;
     final Module module;
 
     FileNode(@NotNull VirtualFile file, @NotNull Module module) {
       this.file = file;
       this.module = module;
+    }
+
+    @NotNull
+    public Module getModule() {
+      return module;
+    }
+
+    @NotNull
+    public VirtualFile getVirtualFile() {
+      return file;
     }
 
     @Override

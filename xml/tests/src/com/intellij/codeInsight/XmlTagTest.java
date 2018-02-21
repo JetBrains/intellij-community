@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.xml.XmlTagValueImpl;
 import com.intellij.psi.xml.*;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.ArrayUtil;

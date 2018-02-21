@@ -36,7 +36,8 @@ class AsyncPromiseTest {
     val count = AtomicInteger()
 
     val r = {
-      promise.done { count.incrementAndGet() }
+      promise
+        .onSuccess { count.incrementAndGet() }
     }
 
     val s = {
@@ -101,10 +102,10 @@ class AsyncPromiseTest {
 
     val r = {
       if (reject) {
-        promise.rejected { count.incrementAndGet() }
+        promise.onError { count.incrementAndGet() }
       }
       else {
-        promise.done { count.incrementAndGet() }
+        promise.onSuccess { count.incrementAndGet() }
       }
     }
 

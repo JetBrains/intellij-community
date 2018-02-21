@@ -1,13 +1,13 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.uast.UastPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.testFramework.TestDataFile;
-import com.intellij.util.PathUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,12 +40,10 @@ public class TestDataFilesReferencesContributor extends PsiReferenceContributor 
               return PsiReference.EMPTY_ARRAY;
             }
 
-            String testDataFilePath = getTestDataFilePath(expression, call);
-            if (testDataFilePath == null) {
+            String directory = getTestDataDirectory(expression, call);
+            if (directory == null) {
               return PsiReference.EMPTY_ARRAY;
             }
-
-            String directory = PathUtil.getParentPath(testDataFilePath);
 
             PsiLanguageInjectionHost host = UastLiteralUtils.getPsiLanguageInjectionHost(expression);
             if (host == null) return PsiReference.EMPTY_ARRAY;
@@ -78,8 +76,8 @@ public class TestDataFilesReferencesContributor extends PsiReferenceContributor 
   }
 
   @Nullable
-  private static String getTestDataFilePath(@NotNull ULiteralExpression expression,
-                                            @NotNull UCallExpression methodCallExpression) {
+  private static String getTestDataDirectory(@NotNull ULiteralExpression expression,
+                                             @NotNull UCallExpression methodCallExpression) {
     Object value = expression.getValue();
     if (!(value instanceof String)) {
       return null;
@@ -95,6 +93,7 @@ public class TestDataFilesReferencesContributor extends PsiReferenceContributor 
     if (filePaths.size() != 1) {
       return null;
     }
-    return filePaths.get(0);
+
+    return StringUtil.trimEnd(filePaths.get(0), relativePath);
   }
 }

@@ -48,7 +48,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jetCheck.DataStructure;
 import org.jetbrains.jetCheck.Generator;
-import org.jetbrains.jetCheck.ImperativeCommand;
 import org.jetbrains.jetCheck.IntDistribution;
 
 import java.io.File;
@@ -209,28 +208,9 @@ public class MadTestingUtil {
    * @return
    */
   @NotNull
-  public static Generator<FileWithActions> actionsOnFileContents(CodeInsightTestFixture fixture, String rootPath,
-                                                                 FileFilter fileFilter,
-                                                                 Function<PsiFile, Generator<? extends MadTestingAction>> actions) {
-    Generator<File> randomFiles = randomFiles(rootPath, fileFilter);
-    return randomFiles.flatMap(ioFile -> {
-      VirtualFile vFile = copyFileToProject(ioFile, fixture, rootPath);
-      PsiDocumentManager.getInstance(fixture.getProject()).commitAllDocuments();
-      PsiFile file = PsiManager.getInstance(fixture.getProject()).findFile(vFile);
-      if (file instanceof PsiBinaryFile || file instanceof PsiPlainTextFile) {
-        System.err.println("Can't check " + vFile + " due to incorrect file type: " + file + " of " + file.getClass());
-        // no operations, but the just created file needs to be deleted (in FileWithActions#runActions)
-        // todo a side-effect-free generator
-        return Generator.constant(new FileWithActions(file, Collections.emptyList()));
-      }
-      return Generator.nonEmptyLists(actions.apply(file)).map(a -> new FileWithActions(file, a));
-    });
-  }
-
-  @NotNull
-  public static Supplier<ImperativeCommand> commandsOnFileContents(CodeInsightTestFixture fixture, String rootPath,
-                                                                   FileFilter fileFilter,
-                                                                   Function<PsiFile, Generator<? extends MadTestingAction>> actions) {
+  public static Supplier<MadTestingAction> actionsOnFileContents(CodeInsightTestFixture fixture, String rootPath,
+                                                                  FileFilter fileFilter,
+                                                                  Function<PsiFile, Generator<? extends MadTestingAction>> actions) {
     Generator<File> randomFiles = randomFiles(rootPath, fileFilter);
     return () -> env -> new RunAll()
       .append(() -> {
@@ -241,7 +221,7 @@ public class MadTestingUtil {
           System.err.println("Can't check " + vFile + " due to incorrect file type: " + psiFile + " of " + psiFile.getClass());
           return;
         }
-        env.executeCommands(actions.apply(psiFile));
+        env.executeCommands(Generator.from(data -> data.generate(actions.apply(fixture.getPsiManager().findFile(vFile)))));
       })
       .append(() -> WriteAction.run(() -> {
         for (VirtualFile file : fixture.getTempDirFixture().getFile("").getChildren()) {
@@ -290,9 +270,9 @@ public class MadTestingUtil {
    */
   @NotNull
   public static Generator<MadTestingAction> randomEditsWithReparseChecks(PsiFile file) {
-    return Generator.anyOf(DeleteRange.psiRangeDeletions(file),
-                           Generator.constant(new CheckPsiTextConsistency(file)),
-                           InsertString.asciiInsertions(file));
+    return Generator.sampledFrom(new DeleteRange(file),
+                                 new CheckPsiTextConsistency(file),
+                                 new InsertString(file));
   }
 
   public static boolean isAfterError(PsiFile file, int offset) {

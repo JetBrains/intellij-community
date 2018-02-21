@@ -8,13 +8,12 @@ package com.intellij.internal.statistic.eventLog
 import com.intellij.util.containers.ContainerUtil
 import java.util.*
 
-open class LogEvent(val session: String, val bucket: String,
-                    recorderId: String,
-                    recorderVersion: String,
-                    type: String) {
+open class LogEvent(session: String, bucket: String, recorderId: String, recorderVersion: String, type: String) {
+  val session = escape(session)
+  val bucket = escape(bucket)
   val time = System.currentTimeMillis()
-  val recorder: LogEventRecorder = LogEventRecorder(removeTabsOrSpaces(recorderId), recorderVersion)
-  val action: LogEventAction = LogEventAction(removeTabsOrSpaces(type))
+  val recorder: LogEventRecorder = LogEventRecorder(escape(recorderId), escape(recorderVersion))
+  val action: LogEventAction = LogEventAction(escape(type))
 
   fun shouldMerge(next: LogEvent): Boolean {
     if (session != next.session) return false
@@ -24,10 +23,6 @@ open class LogEvent(val session: String, val bucket: String,
     if (action.id != next.action.id) return false
     if (action.data != next.action.data) return false
     return true
-  }
-
-  private fun removeTabsOrSpaces(str : String) : String {
-    return str.replace(" ", "_").replace("\t", "_")
   }
 
   override fun equals(other: Any?): Boolean {
@@ -82,7 +77,9 @@ class LogEventAction(val id: String) {
     if (data.isEmpty()) {
       data = ContainerUtil.newHashMap()
     }
-    data.put(key, value)
+
+    val escapedValue = if (value is String) escape(value) else value
+    data.put(escape(key), escapedValue)
   }
 
   override fun equals(other: Any?): Boolean {
@@ -99,4 +96,8 @@ class LogEventAction(val id: String) {
   override fun hashCode(): Int {
     return 31 * id.hashCode() + data.hashCode()
   }
+}
+
+private fun escape(str: String): String {
+  return str.replace(" ", "_").replace("\t", "_").replace("\"", "")
 }

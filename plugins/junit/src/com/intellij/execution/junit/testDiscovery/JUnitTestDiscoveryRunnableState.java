@@ -78,7 +78,7 @@ abstract class JUnitTestDiscoveryRunnableState extends TestObject {
 
       @Override
       protected void search() {
-        myPatterns = TestDiscoverySearchHelper.search(getProject(), getPosition(), getChangeList(), getConfiguration().getFrameworkPrefix());
+        myPatterns = TestDiscoverySearchHelper.search(getProject(), getPosition(), getChangeList(), getConfiguration().getTestFrameworkId());
       }
 
       @Override

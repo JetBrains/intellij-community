@@ -22,8 +22,8 @@ public class CaptureAgent {
   private static Instrumentation ourInstrumentation;
   private static boolean DEBUG = false;
 
-  private static Map<String, List<CapturePoint>> myCapturePoints = new HashMap<String, List<CapturePoint>>();
-  private static final Map<String, List<InsertPoint>> myInsertPoints = new HashMap<String, List<InsertPoint>>();
+  private static Map<String, List<InstrumentPoint>> myCapturePoints = new HashMap<String, List<InstrumentPoint>>();
+  private static final Map<String, List<InstrumentPoint>> myInsertPoints = new HashMap<String, List<InstrumentPoint>>();
 
   public static void premain(String args, Instrumentation instrumentation) {
     ourInstrumentation = instrumentation;
@@ -157,8 +157,8 @@ public class CaptureAgent {
                             ProtectionDomain protectionDomain,
                             byte[] classfileBuffer) {
       if (className != null) {
-        List<CapturePoint> capturePoints = getNotNull(myCapturePoints.get(className));
-        List<InsertPoint> insertPoints = getNotNull(myInsertPoints.get(className));
+        List<InstrumentPoint> capturePoints = getNotNull(myCapturePoints.get(className));
+        List<InstrumentPoint> insertPoints = getNotNull(myInsertPoints.get(className));
         if (!capturePoints.isEmpty() || !insertPoints.isEmpty()) {
           try {
             ClassReader reader = new ClassReader(classfileBuffer);
@@ -194,12 +194,12 @@ public class CaptureAgent {
   }
 
   private static class CaptureInstrumentor extends ClassVisitor {
-    private final List<CapturePoint> myCapturePoints;
-    private final List<InsertPoint> myInsertPoints;
+    private final List<InstrumentPoint> myCapturePoints;
+    private final List<InstrumentPoint> myInsertPoints;
     private final Map<String, String> myFields = new HashMap<String, String>();
     private String mySuperName;
 
-    public CaptureInstrumentor(int api, ClassVisitor cv, List<CapturePoint> capturePoints, List<InsertPoint> insertPoints) {
+    public CaptureInstrumentor(int api, ClassVisitor cv, List<InstrumentPoint> capturePoints, List<InstrumentPoint> insertPoints) {
       super(api, cv);
       this.myCapturePoints = capturePoints;
       this.myInsertPoints = insertPoints;
@@ -228,8 +228,8 @@ public class CaptureAgent {
     @Override
     public MethodVisitor visitMethod(final int access, String name, final String desc, String signature, String[] exceptions) {
       if ((access & Opcodes.ACC_BRIDGE) == 0) {
-        for (final CapturePoint capturePoint : myCapturePoints) {
-          if (capturePoint.myMethodName.equals(name)) {
+        for (final InstrumentPoint capturePoint : myCapturePoints) {
+          if (capturePoint.matchesMethod(name, desc)) {
             final String methodDisplayName = getMethodDisplayName(capturePoint.myClassName, name, desc);
             if (DEBUG) {
               System.out.println("Capture agent: instrumented capture point at " + methodDisplayName);
@@ -263,8 +263,8 @@ public class CaptureAgent {
           }
         }
 
-        for (InsertPoint insertPoint : myInsertPoints) {
-          if (insertPoint.myMethodName.equals(name)) {
+        for (InstrumentPoint insertPoint : myInsertPoints) {
+          if (insertPoint.matchesMethod(name, desc)) {
             String methodDisplayName = getMethodDisplayName(insertPoint.myClassName, name, desc);
             if (DEBUG) {
               System.out.println("Capture agent: instrumented insert point at " + methodDisplayName);
@@ -282,7 +282,7 @@ public class CaptureAgent {
                                  String desc,
                                  String signature,
                                  String[] exceptions,
-                                 InsertPoint insertPoint,
+                                 InstrumentPoint insertPoint,
                                  String methodDisplayName) {
       MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 
@@ -361,27 +361,26 @@ public class CaptureAgent {
     }
   }
 
-  static class CapturePoint {
+  private static class InstrumentPoint {
+    final static String ANY = "*";
+
     final String myClassName;
     final String myMethodName;
+    final String myMethodDesc;
     final KeyProvider myKeyProvider;
 
-    public CapturePoint(String className, String methodName, KeyProvider keyProvider) {
-      this.myClassName = className;
-      this.myMethodName = methodName;
-      this.myKeyProvider = keyProvider;
+    public InstrumentPoint(String className, String methodName, String methodDesc, KeyProvider keyProvider) {
+      myClassName = className;
+      myMethodName = methodName;
+      myMethodDesc = methodDesc;
+      myKeyProvider = keyProvider;
     }
-  }
 
-  static class InsertPoint {
-    final String myClassName;
-    final String myMethodName;
-    final KeyProvider myKeyProvider;
-
-    public InsertPoint(String className, String methodName, KeyProvider keyProvider) {
-      this.myClassName = className;
-      this.myMethodName = methodName;
-      this.myKeyProvider = keyProvider;
+    boolean matchesMethod(String name, String desc) {
+      if (!myMethodName.equals(name)) {
+        return false;
+      }
+      return myMethodDesc.equals(ANY) || myMethodDesc.equals(desc);
     }
   }
 
@@ -390,13 +389,13 @@ public class CaptureAgent {
   public static void setCapturePoints(Object[][] capturePoints) throws UnmodifiableClassException {
     Set<String> classNames = new HashSet<String>(myCapturePoints.keySet());
 
-    Map<String, List<CapturePoint>> points = new HashMap<String, List<CapturePoint>>();
+    Map<String, List<InstrumentPoint>> points = new HashMap<String, List<InstrumentPoint>>();
     for (Object[] capturePoint : capturePoints) {
       String className = (String)capturePoint[0];
       classNames.add(className);
-      List<CapturePoint> currentPoints = points.get(className);
+      List<InstrumentPoint> currentPoints = points.get(className);
       if (currentPoints == null) {
-        currentPoints = new ArrayList<CapturePoint>();
+        currentPoints = new ArrayList<InstrumentPoint>();
         points.put(className, currentPoints);
       }
       //currentPoints.add(new CapturePoint(className, (String)capturePoint[1], (int)capturePoint[2]));
@@ -418,31 +417,18 @@ public class CaptureAgent {
 
   private static void addPoint(boolean capture, String line) {
     String[] split = line.split(" ");
-    KeyProvider keyProvider = createKeyProvider(Arrays.copyOfRange(split, 2, split.length));
-    if (capture) {
-      addCapturePoint(split[0], split[1], keyProvider);
-    }
-    else {
-      addInsertPoint(split[0], split[1], keyProvider);
-    }
+    KeyProvider keyProvider = createKeyProvider(Arrays.copyOfRange(split, 3, split.length));
+    addCapturePoint(capture, split[0], split[1], split[2], keyProvider);
   }
 
-  private static void addCapturePoint(String className, String methodName, KeyProvider keyProvider) {
-    List<CapturePoint> points = myCapturePoints.get(className);
+  private static void addCapturePoint(boolean capture, String className, String methodName, String methodDesc, KeyProvider keyProvider) {
+    Map<String, List<InstrumentPoint>> map = capture ? myCapturePoints : myInsertPoints;
+    List<InstrumentPoint> points = map.get(className);
     if (points == null) {
-      points = new ArrayList<CapturePoint>();
-      myCapturePoints.put(className, points);
+      points = new ArrayList<InstrumentPoint>(1);
+      map.put(className, points);
     }
-    points.add(new CapturePoint(className, methodName, keyProvider));
-  }
-
-  private static void addInsertPoint(String className, String methodName, KeyProvider keyProvider) {
-    List<InsertPoint> points = myInsertPoints.get(className);
-    if (points == null) {
-      points = new ArrayList<InsertPoint>();
-      myInsertPoints.put(className, points);
-    }
-    points.add(new InsertPoint(className, methodName, keyProvider));
+    points.add(new InstrumentPoint(className, methodName, methodDesc, keyProvider));
   }
 
   static final KeyProvider THIS_KEY_PROVIDER = new KeyProvider() {

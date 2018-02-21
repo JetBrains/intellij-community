@@ -422,10 +422,9 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
     return new TestNGConsoleProperties(this, executor);
   }
 
-  @NotNull
   @Override
-  public String getFrameworkPrefix() {
-    return "g";
+  public byte getTestFrameworkId() {
+    return 0x1;
   }
 
   @Nullable

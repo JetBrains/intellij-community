@@ -41,8 +41,8 @@ import java.nio.file.Path;
 public class TestDiscoveryExtension extends RunConfigurationExtension {
   public static final String TEST_DISCOVERY_REGISTRY_KEY = "testDiscovery.enabled";
 
-  private static final boolean USE_SOCKET = SystemProperties.getBooleanProperty("test.discovery.use.socket", false);
-  private static final Key<TestDiscoveryDataSocketListener> SOCKET_LISTENER_KEY = Key.create("test.discovery.socket.data.listener");
+  private static final boolean USE_SOCKET = SystemProperties.getBooleanProperty("test.discovery.use.socket", true);
+  public static final Key<TestDiscoveryDataSocketListener> SOCKET_LISTENER_KEY = Key.create("test.discovery.socket.data.listener");
 
   private static final Logger LOG = Logger.getInstance(TestDiscoveryExtension.class);
 
@@ -58,26 +58,23 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
                                  @Nullable RunnerSettings runnerSettings) {
     if (runnerSettings == null && isApplicableFor(configuration)) {
       Disposable disposable = Disposer.newDisposable();
-      final Alarm processTracesAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable);
       final MessageBusConnection connection = configuration.getProject().getMessageBus().connect();
-
       TestDiscoveryDataSocketListener listener = SOCKET_LISTENER_KEY.get(configuration);
-      connection.subscribe(SMTRunnerEventsListener.TEST_STATUS, new SMTRunnerEventsAdapter() {
-        @Override
-        public void onTestingFinished(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
-          if (testsRoot.getHandler() != handler) return;
-          if (listener == null) {
+      if (listener == null) {
+        final Alarm processTracesAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable);
+        connection.subscribe(SMTRunnerEventsListener.TEST_STATUS, new SMTRunnerEventsAdapter() {
+          @Override
+          public void onTestingFinished(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
+            if (testsRoot.getHandler() != handler) return;
             processTracesAlarm.cancelAllRequests();
-            processTracesAlarm.addRequest(() -> {
-              processTracesFile((JavaTestConfigurationBase)configuration);
-              Disposer.dispose(disposable);
-            }, 0);
+            processTracesAlarm.addRequest(() -> processTracesFile((JavaTestConfigurationBase)configuration), 0);
             connection.disconnect();
-          } else {
-            listener.closeForcibly();
+            Disposer.dispose(disposable);
           }
-        }
-      });
+        });
+      } else {
+        listener.attach(handler);
+      }
     }
   }
 
@@ -133,11 +130,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
 
   @Override
   public void cleanUserData(RunConfigurationBase runConfigurationBase) {
-    TestDiscoveryDataSocketListener listener = runConfigurationBase.getUserData(SOCKET_LISTENER_KEY);
-    if (listener != null) {
-      listener.closeForcibly();
-      runConfigurationBase.putUserData(SOCKET_LISTENER_KEY, null);
-    }
+    runConfigurationBase.putUserData(SOCKET_LISTENER_KEY, null);
   }
 
   private static final Object ourTracesLock = new Object();
@@ -146,19 +139,19 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     final String tracesFilePath = getTraceFilePath(configuration);
     final TestDiscoveryIndex testDiscoveryIndex = TestDiscoveryIndex.getInstance(configuration.getProject());
     String moduleName = getConfigurationModuleName(configuration);
-    String frameworkPrefix = configuration.getFrameworkPrefix();
-    processTracesFile(tracesFilePath, moduleName, frameworkPrefix, testDiscoveryIndex);
+    byte frameworkId = configuration.getTestFrameworkId();
+    processTracesFile(tracesFilePath, moduleName, frameworkId, testDiscoveryIndex);
   }
 
   @SuppressWarnings("WeakerAccess")  // called via reflection from com.intellij.InternalTestDiscoveryListener.flushCurrentTraces()
   public static void processTracesFile(String tracesFilePath,
                                        String moduleName,
-                                       String frameworkPrefix,
+                                       byte frameworkId,
                                        TestDiscoveryIndex discoveryIndex) {
     final File tracesFile = new File(tracesFilePath);
     synchronized (ourTracesLock) {
       try {
-        TestDiscoveryProtocolUtil.readFile(tracesFile, new IdeaTestDiscoveryProtocolReader(discoveryIndex, moduleName, frameworkPrefix));
+        TestDiscoveryProtocolUtil.readFile(tracesFile, new IdeaTestDiscoveryProtocolReader(discoveryIndex, moduleName, frameworkId));
       }
       catch (IOException e) {
         LOG.error("Can not load " + tracesFilePath, e);
@@ -179,7 +172,9 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     if (USE_SOCKET) {
       try {
         JavaTestConfigurationBase javaTestConfigurationBase = (JavaTestConfigurationBase)configuration;
-        listener = new TestDiscoveryDataSocketListener(configuration.getProject(), getConfigurationModuleName(javaTestConfigurationBase), javaTestConfigurationBase.getFrameworkPrefix());
+        listener = new TestDiscoveryDataSocketListener(configuration.getProject(),
+                                                       getConfigurationModuleName(javaTestConfigurationBase),
+                                                       javaTestConfigurationBase.getTestFrameworkId());
         configuration.putUserData(SOCKET_LISTENER_KEY, listener);
       } catch (IOException e) {
         LOG.error(e);

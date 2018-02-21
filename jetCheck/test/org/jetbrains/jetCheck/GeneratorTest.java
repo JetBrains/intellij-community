@@ -122,6 +122,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
     assertEquals(2, list.size());
   }
 
+  @SuppressWarnings("deprecation")
   public void testRecheckWithGivenSeeds() {
     Generator<List<Integer>> gen = nonEmptyLists(integers(0, 100));
     Predicate<List<Integer>> property = l -> !l.contains(42);
@@ -131,7 +132,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
 
     PropertyFalsified e;
 
-    e = checkFails(PropertyChecker.forAll(gen).rechecking(failure.getIterationSeed(), failure.getSizeHint()), property);
+    e = checkFails(PropertyChecker.forAll(gen).recheckingIteration(failure.getIterationSeed(), failure.getSizeHint()), property);
     assertEquals(1, e.getFailure().getIterationNumber());
 
     e = checkFails(PropertyChecker.forAll(gen).withSeed(failure.getGlobalSeed()), property);

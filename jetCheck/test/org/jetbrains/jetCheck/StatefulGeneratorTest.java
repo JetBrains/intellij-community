@@ -78,12 +78,13 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
       fail();
     }
     catch (PropertyFalsified e) {
-      assertFalse(e.getMessage(), e.getMessage().contains("rechecking"));
-      assertTrue(e.getMessage(), e.getMessage().contains("checkScenario"));
+      assertFalse(e.getMessage(), e.getMessage().contains("rechecking("));
+      assertTrue(e.getMessage(), e.getMessage().contains("checkScenario("));
 
       PropertyFailure<?> failure = e.getFailure();
       try {
-        ImperativeCommand.checkScenario(failure.getIterationSeed(), failure.getSizeHint(), command);
+        //noinspection deprecation
+        ImperativeCommand.checkScenario(failure.getMinimalCounterexample().getSerializedData(), command);
         fail();
       }
       catch (PropertyFalsified fromRecheck) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import com.intellij.openapi.Disposable;
@@ -36,7 +22,6 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.IntFunction;
@@ -165,8 +150,8 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       onValidThread(() -> async.setError("rejected"));
     }
     else {
-      promise.rejected(onValidThread(async::setError));
-      promise.done(onValidThread(path -> resolve(async, path)));
+      promise.onError(onValidThread(async::setError));
+      promise.onSuccess(onValidThread(path -> resolve(async, path)));
     }
     return async;
   }
@@ -182,13 +167,14 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       async.setError("path is wrong");
       return;
     }
-    accept(new TreeVisitor.ByTreePath<>(path, o -> o)).processed(result -> {
-      if (result == null) {
-        async.setError("path not found");
-        return;
-      }
-      async.setResult(result);
-    });
+    accept(new TreeVisitor.ByTreePath<>(path, o -> o))
+      .onProcessed(result -> {
+        if (result == null) {
+          async.setError("path not found");
+          return;
+        }
+        async.setResult(result);
+      });
   }
 
   @Override
@@ -256,13 +242,15 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       @Override
       protected Collection<Node> getChildren(@NotNull Node node) {
         if (node.leaf || !allowLoading) return node.getChildren();
-        promiseChildren(node).done(parent -> setChildren(parent.getChildren())).rejected(this::setError);
+        promiseChildren(node)
+          .onSuccess(parent -> setChildren(parent.getChildren()))
+          .onError(this::setError);
         return null;
       }
     };
     if (allowLoading) {
       // start visiting on the background thread to ensure that root node is already invalidated
-      processor.background.invokeLater(() -> onValidThread(() -> promiseRootEntry().done(walker::start).rejected(walker::setError)));
+      processor.background.invokeLater(() -> onValidThread(() -> promiseRootEntry().onSuccess(walker::start).rejected(walker::setError)));
     }
     else {
       onValidThread(() -> walker.start(tree.root));
@@ -288,7 +276,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
   }
 
   @NotNull
-  private <T> Consumer<T> onValidThread(Consumer<T> consumer) {
+  private <T> java.util.function.Consumer<T> onValidThread(Consumer<T> consumer) {
     return value -> onValidThread(() -> consumer.consume(value));
   }
 

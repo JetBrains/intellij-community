@@ -52,7 +52,8 @@ class Iteration<T> {
       StructureNode node = new StructureNode(new NodeId(session.generator));
       T value;
       try {
-        value = session.generator.getGeneratorFunction().apply(new GenerativeDataStructure(random, node, sizeHint));
+        IntSource source = session.serializedData != null ? session.serializedData : d -> d.generateInt(random);
+        value = session.generator.getGeneratorFunction().apply(new GenerativeDataStructure(source, node, sizeHint));
       }
       catch (CannotSatisfyCondition e) {
         continue;
@@ -67,13 +68,13 @@ class Iteration<T> {
     throw new GeneratorException(this, new CannotSatisfyCondition(DATA_IS_DIFFERENT));
   }
 
-  String printToReproduce(@Nullable Throwable failureReason) {
+  String printToReproduce(@Nullable Throwable failureReason, CounterExampleImpl<?> minimalCounterExample) {
+    String data = minimalCounterExample.getSerializedData();
     String rechecking = failureReason != null && StatusNotifier.printStackTrace(failureReason).contains("ImperativeCommand.checkScenario") ?
-      "ImperativeCommand.checkScenario(" + iterationSeed + "L, " + sizeHint + ", ...))\n" :
-      "PropertyChecker.forAll(...).rechecking(" + iterationSeed + "L, " + sizeHint + ").shouldHold(...)\n";
-    return "To reproduce the last iteration, run " + rechecking +
-           "To debug the minimal failing example, catch this exception and invoke 'replayMinimalExample' on it.\n" +
-           "Global seed: " + session.globalSeed + "L";
+      "ImperativeCommand.checkScenario(\n    \"" + data + "\", \n    ...))\n" :
+      "PropertyChecker.forAll(...)\n    .rechecking(\"" + data + "\")\n    .shouldHold(...)\n";
+    return "To reproduce the minimal failing case, run\n  " + rechecking +
+           "To re-run the test with all intermediate minimization steps, use `recheckingIteration("  + iterationSeed + "L, " + sizeHint + ")` instead for last iteration, or `withSeed(" + session.globalSeed + "L)` for all iterations";
   }
 
   String printSeeds() {
@@ -112,13 +113,16 @@ class CheckSession<T> {
   final StatusNotifier notifier;
   final int iterationCount;
   final IntUnaryOperator sizeHintFun;
+  @Nullable final IntSource serializedData;
 
-  CheckSession(Generator<T> generator, Predicate<T> property, long globalSeed, int iterationCount, IntUnaryOperator sizeHintFun, boolean silent) {
+  CheckSession(Generator<T> generator, Predicate<T> property, long globalSeed, int iterationCount, IntUnaryOperator sizeHintFun, boolean silent,
+               @Nullable IntSource serializedData) {
     this.generator = generator;
     this.property = property;
     this.globalSeed = globalSeed;
     this.iterationCount = iterationCount;
     this.sizeHintFun = sizeHintFun;
+    this.serializedData = serializedData;
     notifier = silent ? StatusNotifier.SILENT : new StatusNotifier(iterationCount);
   }
 

@@ -38,6 +38,9 @@
     <extensionPoint qualifiedName="com.intellij.yaml.customStructureViewFactory"
                     interface="org.jetbrains.yaml.structureView.YAMLCustomStructureViewFactory">
     </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.yaml.customFoldingInfoProvider"
+                    interface="org.jetbrains.yaml.folding.YAMLCustomFoldingInfoProvider">
+    </extensionPoint>
   </extensionPoints>
 
 </idea-plugin>

@@ -6,11 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
- * Instance of {@link RunningApplicationUpdater} may be provided to {@link UpdateRunningApplicationAction}
- * by {@link RunningApplicationUpdaterProvider}.
- * {@link UpdateRunningApplicationAction} will be available for user if at least one updater is provided.
- * {@link #performUpdate()} will be called on performing the action.
- * Popup with available updaters will be shown at first if there more then one available updater.
+ * Instance of {@link RunningApplicationUpdater} may be provided by {@link RunningApplicationUpdaterProvider}.
  */
 public interface RunningApplicationUpdater {
   String getDescription();
@@ -24,5 +20,8 @@ public interface RunningApplicationUpdater {
     return true;
   }
 
+  /**
+   * Performs an update of running application. The method is called on performing update running application action.
+   */
   void performUpdate();
 }

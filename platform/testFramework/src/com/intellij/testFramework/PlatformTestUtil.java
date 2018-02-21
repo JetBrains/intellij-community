@@ -206,7 +206,7 @@ public class PlatformTestUtil {
 
     boolean expanded = tree.isExpanded(path);
     int childCount = tree.getModel().getChildCount(pathComponent);
-    if (childCount != 0 && (tree.isRootVisible() || pathComponent != tree.getModel().getRoot() || childCount > 0)) {
+    if (childCount > 0) {
       buff.append(expanded ? "-" : "+");
     }
 
@@ -314,7 +314,7 @@ public class PlatformTestUtil {
   public static <T> T waitForPromise(@NotNull Promise<T> promise) {
     assertDispatchThreadWithoutWriteAccess();
     AtomicBoolean complete = new AtomicBoolean(false);
-    promise.processed(ignore -> complete.set(true));
+    promise.onProcessed(ignore -> complete.set(true));
     T result = null;
     long start = System.currentTimeMillis();
     do {

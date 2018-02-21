@@ -12,5 +12,9 @@ import org.junit.runners.Suite
 @RunWith(GuiTestSuite::class)
 @RunWithIde(CommunityIde::class)
 @FirstStartWith(CommunityIdeFirstStart::class)
-@Suite.SuiteClasses(TypeAheadTest::class, GoToClassFocusTest::class, InlineVariableFocusTest::class)
+@Suite.SuiteClasses(TypeAheadTest::class,
+                    GoToClassFocusTest::class,
+                    GoToClassTwiceFocusTest::class,
+                    InlineVariableFocusTest::class,
+                    KeyMapSettingsTestFocusTest::class)
 class FocusIssuesSuite

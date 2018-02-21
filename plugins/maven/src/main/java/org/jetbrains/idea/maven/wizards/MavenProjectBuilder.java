@@ -29,6 +29,7 @@ import org.jetbrains.idea.maven.utils.*;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
@@ -122,7 +123,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
       try {
         return promise.blockingGet(0);
       }
-      catch (TimeoutException e) {
+      catch (TimeoutException | ExecutionException e) {
         throw new RuntimeException(e);
       }
     }

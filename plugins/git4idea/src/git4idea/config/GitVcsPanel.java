@@ -124,7 +124,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
 
       @Override
       public void onThrowable(@NotNull Throwable error) {
-        GitExecutableProblemsNotifier.showExecutionErrorDialog(error, pathToGit, myProject);
+        GitExecutableProblemsNotifier.showExecutionErrorDialog(error, myProject);
       }
 
       @Override
