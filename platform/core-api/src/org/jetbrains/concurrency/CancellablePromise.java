@@ -3,6 +3,6 @@ package org.jetbrains.concurrency;
 
 import java.util.concurrent.Future;
 
-interface CancellablePromise<T> extends Promise<T>, Future<T> {
+public interface CancellablePromise<T> extends Promise<T>, Future<T> {
   void cancel();
 }
