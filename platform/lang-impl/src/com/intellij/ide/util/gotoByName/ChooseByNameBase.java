@@ -866,7 +866,8 @@ public abstract class ChooseByNameBase {
     JLayeredPane layeredPane;
     final Window window = WindowManager.getInstance().suggestParentWindow(myProject);
 
-    Component parent = UIUtil.findUltimateParent(window);
+    //Component parent = UIUtil.findUltimateParent(window);
+    Component parent= window;
 
     if (parent instanceof JFrame) {
       layeredPane = ((JFrame)parent).getLayeredPane();
