@@ -1034,7 +1034,7 @@ class PyDB:
                 # sys.path.insert(0, os.getcwd())
                 # Changed: it's not the local directory, but the directory of the file launched
                 # The file being run must be in the pythonpath (even if it was not before)
-                sys.path.insert(0, os.path.split(file)[0])
+                sys.path.insert(0, os.path.split(os.path.realpath(file))[0])
 
             while not self.ready_to_run:
                 time.sleep(0.1)  # busy wait until we receive run command
