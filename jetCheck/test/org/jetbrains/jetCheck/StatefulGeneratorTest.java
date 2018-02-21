@@ -83,6 +83,7 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
 
       PropertyFailure<?> failure = e.getFailure();
       try {
+        //noinspection deprecation
         ImperativeCommand.checkScenario(failure.getMinimalCounterexample().getSerializedData(), command);
         fail();
       }
