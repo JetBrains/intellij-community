@@ -11,19 +11,21 @@ import com.intellij.rt.coverage.data.api.TestDiscoveryProtocolUtil;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-class TestDiscoveryDataSocketListener {
+public class TestDiscoveryDataSocketListener {
   private static final Logger LOG = Logger.getInstance(TestDiscoveryDataSocketListener.class);
 
   @Nullable
   private final String myModuleName;
   private final byte myFrameworkId;
   private volatile boolean myClosed;
+  private volatile boolean myFinished;
   private final ServerSocket myServer;
   private final int myPort;
   private final TestDiscoveryIndex myTestDiscoveryIndex;
@@ -61,6 +63,7 @@ class TestDiscoveryDataSocketListener {
         IdeaTestDiscoveryProtocolReader protocolReader = new IdeaTestDiscoveryProtocolReader(myTestDiscoveryIndex, myModuleName,
                                                                                              myFrameworkId);
         TestDiscoveryProtocolUtil.readSequentially(testDataStream, protocolReader);
+        myFinished = true;
       }
       catch (IOException e) {
         if (!myClosed) {
@@ -93,5 +96,12 @@ class TestDiscoveryDataSocketListener {
         myClosed = true;
       }
     });
+  }
+
+  @TestOnly
+  public void awaitTermination() {
+    while (!myFinished) {
+      TimeoutUtil.sleep(100);
+    }
   }
 }

@@ -4,8 +4,10 @@ package com.intellij.testDiscovery;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitConfigurationType;
+import com.intellij.execution.testDiscovery.TestDiscoveryDataSocketListener;
 import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
 import com.intellij.execution.testDiscovery.TestDiscoveryIndex;
 import com.intellij.junit4.JUnitAbstractIntegrationTest;
@@ -98,7 +100,11 @@ public class TestDiscoveryJUnitIntegrationTest extends JUnitAbstractIntegrationT
   }
 
   private void runTestConfiguration(@NotNull PsiElement psiElement) throws ExecutionException {
-    ProcessOutput processOutput = doStartTestsProcess(createConfiguration(psiElement));
+    RunConfiguration configuration = createConfiguration(psiElement);
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+    TestDiscoveryDataSocketListener socketListener = ((RunConfigurationBase)configuration).getUserData(TestDiscoveryExtension.SOCKET_LISTENER_KEY);
+    socketListener.awaitTermination();
+    ((RunConfigurationBase)configuration).putUserData(TestDiscoveryExtension.SOCKET_LISTENER_KEY, null);
     assertEmpty(processOutput.err);
   }
 
