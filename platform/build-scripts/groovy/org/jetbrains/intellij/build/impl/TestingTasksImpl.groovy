@@ -58,11 +58,16 @@ class TestingTasksImpl extends TestingTasks {
     if (remoteDebugJvmOptions != null) {
       debugTests(remoteDebugJvmOptions, additionalJvmOptions, defaultMainModule, rootExcludeCondition)
     }
-    else if (runConfigurations != null) {
-      runTestsFromRunConfigurations(additionalJvmOptions, runConfigurations)
-    }
     else {
-      runTestsFromGroupsAndPatterns(additionalJvmOptions, defaultMainModule, rootExcludeCondition)
+      Map<String, String> additionalSystemProperties = [:]
+      loadTestDiscovery(additionalJvmOptions, additionalSystemProperties)
+
+      if (runConfigurations != null) {
+        runTestsFromRunConfigurations(additionalJvmOptions, runConfigurations, additionalSystemProperties)
+      }
+      else {
+        runTestsFromGroupsAndPatterns(additionalJvmOptions, defaultMainModule, rootExcludeCondition, additionalSystemProperties)
+      }
     }
   }
 
@@ -83,19 +88,23 @@ class TestingTasksImpl extends TestingTasks {
     }
   }
 
-  private void runTestsFromRunConfigurations(List<String> additionalJvmOptions, List<JUnitRunConfigurationProperties> runConfigurations) {
+  private void runTestsFromRunConfigurations(List<String> additionalJvmOptions,
+                                             List<JUnitRunConfigurationProperties> runConfigurations,
+                                             Map<String, String> additionalSystemProperties) {
     runConfigurations.each { configuration ->
       context.messages.block("Run '${configuration.name}' run configuration") {
-        runTestsFromRunConfiguration(configuration, additionalJvmOptions)
+        runTestsFromRunConfiguration(configuration, additionalJvmOptions, additionalSystemProperties)
       }
     }
   }
 
-  private void runTestsFromRunConfiguration(JUnitRunConfigurationProperties runConfigurationProperties, List<String> additionalJvmOptions) {
+  private void runTestsFromRunConfiguration(JUnitRunConfigurationProperties runConfigurationProperties,
+                                            List<String> additionalJvmOptions,
+                                            Map<String, String> additionalSystemProperties) {
     context.messages.progress("Running '${runConfigurationProperties.name}' run configuration")
     List<String> filteredVmOptions = removeStandardJvmOptions(runConfigurationProperties.vmParameters)
     runTestsProcess(runConfigurationProperties.moduleName, null, runConfigurationProperties.testClassPatterns.join(";"),
-                    filteredVmOptions + additionalJvmOptions, [:], runConfigurationProperties.envVariables, false)
+                    filteredVmOptions + additionalJvmOptions, additionalSystemProperties, runConfigurationProperties.envVariables, false)
   }
 
   private static List<String> removeStandardJvmOptions(List<String> vmOptions) {
@@ -108,8 +117,10 @@ class TestingTasksImpl extends TestingTasks {
     vmOptions.findAll { option -> ignoredPrefixes.every { !option.startsWith(it) } }
   }
 
-  private void runTestsFromGroupsAndPatterns(List<String> additionalJvmOptions, String defaultMainModule, Predicate<File> rootExcludeCondition) {
-    Map<String, String> additionalSystemProperties = [:]
+  private void runTestsFromGroupsAndPatterns(List<String> additionalJvmOptions,
+                                             String defaultMainModule,
+                                             Predicate<File> rootExcludeCondition,
+                                             Map<String, String> additionalSystemProperties) {
     def mainModule = options.mainModule ?: defaultMainModule
     if (rootExcludeCondition != null) {
       List<JpsModule> excludedModules = context.project.modules.findAll {
@@ -124,8 +135,6 @@ class TestingTasksImpl extends TestingTasks {
       excludedRootsFile.text = excludedRoots.findAll { new File(it).exists() }.join('\n')
       additionalSystemProperties["exclude.tests.roots.file"] = excludedRootsFile.absolutePath
     }
-
-    loadTestDiscovery(additionalJvmOptions, additionalSystemProperties)
 
     runTestsProcess(mainModule, options.testGroups, options.testPatterns, additionalJvmOptions, additionalSystemProperties, [:], false)
   }
