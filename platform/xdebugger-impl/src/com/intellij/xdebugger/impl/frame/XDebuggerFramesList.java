@@ -50,17 +50,17 @@ public class XDebuggerFramesList extends DebuggerFramesList {
       TextTransferable.ColoredStringBuilder coloredTextContainer = new TextTransferable.ColoredStringBuilder();
       htmlBuf.append("<html>\n<body>\n<ul>\n");
       for (Object value : items) {
+        if (value instanceof ItemWithSeparatorAbove) {
+          ItemWithSeparatorAbove item = (ItemWithSeparatorAbove)value;
+          if (item.hasSeparatorAbove()) {
+            String caption = " - " + StringUtil.notNullize(item.getCaptionAboveOf());
+            plainBuf.append(caption).append('\n');
+            htmlBuf.append("  <li>").append(caption).append("</li>\n");
+          }
+        }
+
         htmlBuf.append("  <li>");
         if (value != null) {
-          if (value instanceof ItemWithSeparatorAbove) {
-            ItemWithSeparatorAbove item = (ItemWithSeparatorAbove)value;
-            if (item.hasSeparatorAbove()) {
-              String caption = " - " + StringUtil.notNullize(item.getCaptionAboveOf());
-              plainBuf.append(caption).append('\n');
-              htmlBuf.append(caption).append("</li>\n");
-            }
-          }
-
           if (value instanceof XStackFrame) {
             ((XStackFrame)value).customizePresentation(coloredTextContainer);
             coloredTextContainer.appendTo(plainBuf, htmlBuf);
