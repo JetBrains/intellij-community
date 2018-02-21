@@ -315,7 +315,7 @@ public class PlatformTestUtil {
   public static <T> T waitForPromise(@NotNull Promise<T> promise) {
     assertDispatchThreadWithoutWriteAccess();
     AtomicBoolean complete = new AtomicBoolean(false);
-    promise.processed(ignore -> complete.set(true));
+    promise.onProcessed(ignore -> complete.set(true));
     T result = null;
     long start = System.currentTimeMillis();
     do {

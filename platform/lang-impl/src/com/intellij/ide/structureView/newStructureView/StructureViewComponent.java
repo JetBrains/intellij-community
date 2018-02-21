@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.structureView.newStructureView;
 
@@ -25,7 +23,10 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
@@ -303,8 +304,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   public static JBIterable<Object> getSelectedValues(JTree tree) {
     return traverser()
       .withRoots(JBIterable.of(tree.getSelectionPaths())
-                   .map(TreePath::getLastPathComponent)
-                   .filterMap(StructureViewComponent::unwrapValue))
+                           .map(TreePath::getLastPathComponent)
+                           .filterMap(StructureViewComponent::unwrapValue))
       .traverse();
   }
 
@@ -315,7 +316,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   private void addTreeKeyListener() {
     getTree().addKeyListener(
-        new KeyAdapter() {
+      new KeyAdapter() {
         @Override
         public void keyPressed(KeyEvent e) {
           if (KeyEvent.VK_ENTER == e.getKeyCode()) {
@@ -405,13 +406,9 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     }
   }
 
-  public AsyncResult<AbstractTreeNode> expandPathToElement(Object element) {
-    AsyncResult<AbstractTreeNode> result = new AsyncResult<>();
-    expandSelectFocusInner(element, false, false).processed(p -> {
-      if (p == null) result.setRejected();
-      else result.setDone(ObjectUtils.tryCast(TreeUtil.getUserObject(p.getLastPathComponent()), AbstractTreeNode.class));
-    });
-    return result;
+  public Promise<AbstractTreeNode> expandPathToElement(Object element) {
+    return expandSelectFocusInner(element, false, false)
+      .then(p -> ObjectUtils.tryCast(TreeUtil.getUserObject(p.getLastPathComponent()), AbstractTreeNode.class));
   }
 
   @NotNull
@@ -440,8 +437,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       });
       return result;
     }
-    int[] stage = { 1, 0 }; // 1 - first pass, 2 - optimization applied, 3 - retry w/o optimization
-    TreePath[] deepestPath = { null };
+    int[] stage = {1, 0}; // 1 - first pass, 2 - optimization applied, 3 - retry w/o optimization
+    TreePath[] deepestPath = {null};
     TreeVisitor visitor = path -> {
       if (myCurrentFocusPromise != result) {
         result.setError("rejected");
@@ -470,8 +467,12 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       return TreeVisitor.Action.CONTINUE;
     };
     Function<TreePath, Promise<TreePath>> action = path -> {
-      if (select) TreeUtil.selectPath(myTree, path);
-      else myTree.expandPath(path);
+      if (select) {
+        TreeUtil.selectPath(myTree, path);
+      }
+      else {
+        myTree.expandPath(path);
+      }
       if (requestFocus) {
         IdeFocusManager.getInstance(myProject).requestFocus(myTree, false);
       }
@@ -692,9 +693,9 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     }
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       List<Object> list = JBIterable.of(getTree().getSelectionPaths())
-        .map(TreePath::getLastPathComponent)
-        .map(StructureViewComponent::unwrapNavigatable)
-        .toList();
+                                    .map(TreePath::getLastPathComponent)
+                                    .map(StructureViewComponent::unwrapNavigatable)
+                                    .toList();
       Object[] selectedElements = list.isEmpty() ? null : ArrayUtil.toObjectArray(list);
       if (selectedElements == null || selectedElements.length == 0) return null;
       if (selectedElements[0] instanceof Navigatable) {
@@ -1067,16 +1068,19 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return result;
   }
 
-  private static boolean addToPath(AbstractTreeNode<?> rootElement, Object element, ArrayList<AbstractTreeNode> result, Collection<Object> processedElements) {
+  private static boolean addToPath(AbstractTreeNode<?> rootElement,
+                                   Object element,
+                                   ArrayList<AbstractTreeNode> result,
+                                   Collection<Object> processedElements) {
     Object value = rootElement.getValue();
     if (value instanceof StructureViewTreeElement) {
-      value = ((StructureViewTreeElement) value).getValue();
+      value = ((StructureViewTreeElement)value).getValue();
     }
-    if (!processedElements.add(value)){
-        return false;
+    if (!processedElements.add(value)) {
+      return false;
     }
 
-    if (Comparing.equal(value, element)){
+    if (Comparing.equal(value, element)) {
       result.add(0, rootElement);
       return true;
     }
