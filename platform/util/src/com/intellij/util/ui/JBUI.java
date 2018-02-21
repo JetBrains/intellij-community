@@ -486,6 +486,7 @@ public class JBUI {
   }
 
   @NotNull
+  @SuppressWarnings("unchecked")
   public static <T extends JBIcon> T scale(@NotNull T icon) {
     return (T)icon.withIconPreScaled(false);
   }
@@ -1132,6 +1133,28 @@ public class JBUI {
       myScaler.setPreScaled(preScaled);
     }
 
+    /**
+     * The pre-scaled state of the icon indicates whether the initial size of the icon
+     * is pre-scaled (by the global user scale) or not. If the size is not pre-scaled,
+     * then there're two approaches to deal with it:
+     * 1) scale its initial size right away and store;
+     * 2) scale its initial size every time it's requested.
+     * The 2nd approach is preferable because of the the following. Scaling of the icon may
+     * involve not only USR_SCALE but OBJ_SCALE as well. In which case applying all the scale
+     * factors and then rounding (the size is integer, the scale factors are not) gives more
+     * accurate result than rounding and then scaling.
+     * <p>
+     * For example, say we have an icon of 15x15 initial size, USR_SCALE is 1.5f, OBJ_SCALE is 1,5f.
+     * Math.round(Math.round(15 * USR_SCALE) * OBJ_SCALE) = 35
+     * Math.round(15 * USR_SCALE * OBJ_SCALE) = 34
+     * <p>
+     * Thus, JBUI.scale(MyIcon.create(w, h)) is preferable to MyIcon.create(JBUI.scale(w), JBUI.scale(h)).
+     * Here [w, h] is "raw" unscaled size.
+     *
+     * @param preScaled whether the icon is pre-scaled
+     * @return the icon in the provided pre-scaled state
+     * @see JBUI#scale(JBIcon)
+     */
     @NotNull
     public JBIcon withIconPreScaled(boolean preScaled) {
       setIconPreScaled(preScaled);

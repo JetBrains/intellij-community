@@ -34,10 +34,10 @@ public class LinePainter2DTest extends AbstractPainter2DTest {
   public void testAlign() {
     JBUI.setUserScaleFactor(1);
 
-    PaintUtilTest.overrideJreHiDPIEnabled(false);
+    overrideJreHiDPIEnabled(false);
     supplyGraphics(1, 1, 1, this::testAlign);
 
-    PaintUtilTest.overrideJreHiDPIEnabled(true);
+    overrideJreHiDPIEnabled(true);
     supplyGraphics(2, 1, 1, this::testAlign);
   }
 

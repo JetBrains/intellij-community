@@ -3,10 +3,6 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.RetinaImage;
-import com.intellij.util.ui.paint.AbstractPainter2DTest.ScaleState;
-import com.intellij.util.ui.paint.PaintUtilTest;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.awt.*;
@@ -23,7 +19,7 @@ import static junit.framework.TestCase.assertEquals;
  *
  * @author tav
  */
-public class DrawImageTest {
+public class DrawImageTest extends TestScaleHelper {
   private final static int IMAGE_SIZE = 4;
   private final static int IMAGE_QUARTER_SIZE = IMAGE_SIZE / 2;
 
@@ -93,24 +89,14 @@ public class DrawImageTest {
     }
   }
 
-  @Before
-  public void setState() {
-    ScaleState.set();
-  }
-
-  @After
-  public void restoreState() {
-    ScaleState.restore();
-  }
-
   @Test
   public void test() {
     for (double scale : new double[] {1, 2, 2.5}) {
-      PaintUtilTest.overrideJreHiDPIEnabled(true);
+      overrideJreHiDPIEnabled(true);
       JBUI.setUserScaleFactor(1);
       test(scale);
 
-      PaintUtilTest.overrideJreHiDPIEnabled(false);
+      overrideJreHiDPIEnabled(false);
       JBUI.setUserScaleFactor((float)scale);
       test(scale);
     }

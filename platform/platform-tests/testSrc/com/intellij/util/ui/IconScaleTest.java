@@ -8,8 +8,6 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI.ScaleContext;
-import com.intellij.util.ui.paint.AbstractPainter2DTest;
-import com.intellij.util.ui.paint.PaintUtilTest;
 import junit.framework.TestCase;
 import org.junit.After;
 import org.junit.Before;
@@ -27,24 +25,26 @@ import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
  *
  * @author tav
  */
-public class IconScaleTest {
+public class IconScaleTest extends TestScaleHelper {
 
   private static boolean initialSvgProp;
 
   @Before
+  @Override
   public void setState() {
+    super.setState();
+
     RegistryValue rv = Registry.get("ide.svg.icon");
     initialSvgProp = rv.asBoolean();
     rv.setValue(true);
-
-    AbstractPainter2DTest.ScaleState.set();
   }
 
   @After
+  @Override
   public void restoreState() {
-    Registry.get("ide.svg.icon").setValue(initialSvgProp);
+    super.restoreState();
 
-    AbstractPainter2DTest.ScaleState.restore();
+    Registry.get("ide.svg.icon").setValue(initialSvgProp);
   }
 
   @Test
@@ -54,7 +54,7 @@ public class IconScaleTest {
     //
     // 1) JRE-HiDPI
     //
-    PaintUtilTest.overrideJreHiDPIEnabled(true);
+    overrideJreHiDPIEnabled(true);
     if (!SystemInfo.isLinux) { // Linux doesn't support JRE-HiDPI yet
       for (double s : SCALES) test(1, s);
     }
@@ -62,7 +62,7 @@ public class IconScaleTest {
     //
     // 2) IDE-HiDPI
     //
-    PaintUtilTest.overrideJreHiDPIEnabled(false);
+    overrideJreHiDPIEnabled(false);
     for (double s : SCALES) test(s, 1);
   }
 
