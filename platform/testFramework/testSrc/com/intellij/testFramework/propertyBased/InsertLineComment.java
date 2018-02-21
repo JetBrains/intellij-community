@@ -29,7 +29,7 @@ public class InsertLineComment extends ActionOnRange {
     PsiElement leaf = getFile().findElementAt(randomOffset);
     TextRange leafRange = leaf != null ? leaf.getTextRange() : null;
     int insertOffset = leafRange != null ? leafRange.getEndOffset() : 0;
-    env.logMessage("Inserting '" + StringUtil.escapeStringCharacters(myToInsert) + "' at " + insertOffset + " in " + getPath());
+    env.logMessage("Inserting '" + StringUtil.escapeStringCharacters(myToInsert) + "' at " + insertOffset);
     WriteCommandAction.runWriteCommandAction(getProject(), () -> getDocument().insertString(insertOffset, myToInsert));
   }
 

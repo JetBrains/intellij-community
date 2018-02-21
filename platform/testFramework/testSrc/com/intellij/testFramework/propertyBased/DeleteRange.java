@@ -49,7 +49,7 @@ public class DeleteRange extends ActionOnRange {
 
     TextRange range = commonParent.getTextRange().intersection(TextRange.from(0, getDocument().getTextLength()));
     if (range != null && !range.isEmpty()) {
-      env.logMessage("Deleting " + range + " in " + getPath());
+      env.logMessage("Delete " + range);
       WriteCommandAction.runWriteCommandAction(getProject(), () -> getDocument().deleteString(range.getStartOffset(), range.getEndOffset()));
     }
   }

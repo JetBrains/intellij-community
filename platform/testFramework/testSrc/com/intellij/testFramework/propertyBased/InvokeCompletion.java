@@ -84,7 +84,7 @@ public class InvokeCompletion extends ActionOnRange {
 
   @Override
   public void performCommand(@NotNull Environment env) {
-    int offset = generateDocOffset(env, "Invoke basic completion at offset %s (" + getPath() + ")");
+    int offset = generateDocOffset(env, "Invoke basic completion at offset %s");
     String selectionCharacters = myPolicy.getPossibleSelectionCharacters();
     char c = selectionCharacters.charAt(env.generateValue(Generator.integers(0, selectionCharacters.length() - 1), null));
     performActionAt(offset, c, items -> env.generateValue(Generator.sampledFrom(items), null), env::logMessage);
@@ -124,7 +124,7 @@ public class InvokeCompletion extends ActionOnRange {
       }
       catch (Throwable e) {
         LOG.debug("Error occurred in " + this + ", text before:\n" + textBefore);
-        logger.accept("Error happened, file 'text before' printed to the debug log");
+        logger.accept("Error happened, the file's text before invoking printed to the debug log, search for 'text before' there");
       }
       finally {
         Disposer.dispose(raiseCompletionLimit);
@@ -177,7 +177,7 @@ public class InvokeCompletion extends ActionOnRange {
     }
 
     LookupElement item = itemChooser.apply(items);
-    logger.accept("selected '" + item + "' with '" + StringUtil.escapeStringCharacters(String.valueOf(completionChar)) + "'");
+    logger.accept("Select '" + item + "' with '" + StringUtil.escapeStringCharacters(String.valueOf(completionChar)) + "'");
     ((LookupImpl)lookup).finishLookup(completionChar, item);
   }
 

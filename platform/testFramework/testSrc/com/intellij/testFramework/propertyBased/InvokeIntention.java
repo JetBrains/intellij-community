@@ -74,7 +74,7 @@ public class InvokeIntention extends ActionOnRange {
 
   @Override
   public void performCommand(@NotNull Environment env) {
-    int offset = generateDocOffset(env, "Go to offset %s and run daemon (" + getPath() + ")");
+    int offset = generateDocOffset(env, "Go to offset %s and run daemon");
 
     doInvokeIntention(offset, actions -> {
       if (actions.isEmpty()) {
@@ -167,7 +167,7 @@ public class InvokeIntention extends ActionOnRange {
     catch (Throwable error) {
       LOG.debug("Error occurred in " + this + ", text before:\n" + textBefore);
       if (env != null) {
-        env.logMessage("Error happened, file 'text before' printed to the debug log");
+        env.logMessage("Error happened, the file's text before invoking printed to the debug log, search for 'text before' there");
       }
       throw error;
     }
