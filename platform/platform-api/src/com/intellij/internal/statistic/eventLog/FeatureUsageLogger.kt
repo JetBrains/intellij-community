@@ -11,6 +11,10 @@ object FeatureUsageLogger {
     return ourLogger.log(recorderId, action)
   }
 
+  fun log(recorderId: String, action: String, data: Map<String, Any>) {
+    return ourLogger.log(recorderId, action, data)
+  }
+
   fun getLogFiles() : List<File> {
     return ourLogger.getLogFiles()
   }
