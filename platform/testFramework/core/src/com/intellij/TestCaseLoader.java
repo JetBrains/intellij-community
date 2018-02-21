@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij;
 
@@ -52,6 +38,7 @@ public class TestCaseLoader {
    * An implicit group which includes all tests from all defined groups and tests which don't belong to any group.
    */
   private static final String ALL_TESTS_GROUP = "ALL";
+  private static final String PLATFORM_LITE_FIXTURE_NAME = "com.intellij.testFramework.PlatformLiteFixture";
 
   private final List<Class> myClassList = new ArrayList<>();
   private final List<Throwable> myClassLoadingErrors = new ArrayList<>();
@@ -219,6 +206,17 @@ public class TestCaseLoader {
       return moveToStart(aClass) ? 0 : 1;
     }
 
+    // PlatformLiteFixture is the very special test case because it doesn't load all the XMLs with component/extension declarations
+    // (that is, uses a mock application). Instead, it allows to declare them manually using its registerComponent/registerExtension 
+    // methods. The goal is to make tests which extend PlatformLiteFixture extremely fast. The problem appears when such tests are invoked 
+    // together with other tests which rely on declarations in XML files (that is, use a real application). The nature of the IDEA 
+    // application is such that static final fields are often used to cache extensions. While having a positive effect on performance,
+    // it creates problems during testing. Simply speaking, if the instance of PlatformLiteFixture is the first one in a suite, it pollutes
+    // static final fields (and all other kinds of caches) with invalid values. To avoid it, such tests should always be the last.
+    if (isPlatformLiteFixture(aClass)) {
+      return ourRankList.size() + 1;
+    }
+
     int i = ourRankList.indexOf(aClass.getName());
     if (i != -1) {
       return i;
@@ -228,6 +226,18 @@ public class TestCaseLoader {
 
   private static boolean moveToStart(Class testClass) {
     return testClass.getAnnotation(JITSensitive.class) != null;
+  }
+
+  private static boolean isPlatformLiteFixture(Class aClass) {
+    while (aClass != null) {
+      if (PLATFORM_LITE_FIXTURE_NAME.equals(aClass.getName())) {
+        return true;
+      }
+      else {
+        aClass = aClass.getSuperclass();
+      }
+    }
+    return false;
   }
 
   public List<Class> getClasses() {
