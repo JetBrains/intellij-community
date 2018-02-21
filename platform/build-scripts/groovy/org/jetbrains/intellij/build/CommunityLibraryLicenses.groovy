@@ -396,6 +396,8 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Java Poet", libraryName: "javapoet-1.8.0", version: "1.8.0", license: "Apache 2.0",
                        url: "https://github.com/square/javapoet"),
 
+    jetbrainsLibrary("kotlin-stdlib-jre8"),  // Android Studio: added by Change If94a51ef / commit e8d58c9
+
     jetbrainsLibrary("Coverage"),
     jetbrainsLibrary("CoverageReport"),
     jetbrainsLibrary("intellij-markdown.jar"),
@@ -404,9 +406,6 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("Maven Embedder"),
     jetbrainsLibrary("tcServiceMessages"),
     jetbrainsLibrary("optimizedFileManager.jar"),
-    /* Android Studio: added by Change If94a51ef / commit e8d58c9 */
-    jetbrainsLibrary("KotlinJavaRuntime"),
-    jetbrainsLibrary("kotlin-stdlib-jre7"),
-    jetbrainsLibrary("kotlin-stdlib-jre8")
+    jetbrainsLibrary("KotlinJavaRuntime")
   ] as List<LibraryLicense>
 }
