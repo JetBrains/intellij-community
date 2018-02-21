@@ -56,7 +56,8 @@ class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, Te
   @Override
   public TestDataReader createTestDataReader(int testClassId, int testMethodId) {
     return new TestDataReader() {
-      private final String myTestName = myTestExecutionNameEnumerator.get(testClassId) + "-" + myTestExecutionNameEnumerator.get(testMethodId);
+      private final String myTestClassName = myTestExecutionNameEnumerator.get(testClassId);
+      private final String myTestMethodName = myTestExecutionNameEnumerator.get(testMethodId);
       private final MultiMap<String, String> myUsedMethods = new MultiMap<>();
       private int myCurrentClassId;
 
@@ -85,7 +86,7 @@ class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, Te
       @Override
       public void testDataProcessed() {
         try {
-          myIndex.updateFromData(myTestName, myUsedMethods, myModuleName, myFrameworkPrefix);
+          myIndex.updateFromData(myTestClassName, myTestMethodName, myUsedMethods, myModuleName, myFrameworkPrefix);
         }
         catch (IOException e) {
           LOG.error(e);

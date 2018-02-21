@@ -65,7 +65,7 @@ public class TestDiscoverySearchHelper {
                 try {
                   if (classQualifiedName != null &&
                       (position == null && TestFrameworks.detectFramework(containingClass) != null ||
-                       position != null && !discoveryIndex.hasTestTrace(classQualifiedName + "-" + changedMethodName))) {
+                       position != null && !discoveryIndex.hasTestTrace(classQualifiedName, changedMethodName, frameworkPrefix))) {
                     patterns.add(classQualifiedName + "," + changedMethodName);
                   }
                 }

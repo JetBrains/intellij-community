@@ -46,7 +46,8 @@ public class TestDiscoveryIndex implements Disposable {
     }
   }
 
-  public boolean hasTestTrace(@NotNull String testName) throws IOException {
+  public boolean hasTestTrace(@NotNull String testClassName, @NotNull String testMethodName, @NotNull String frameworkPrefix) throws IOException {
+    String testName = testClassName + "-" + testMethodName;
     Boolean result = myLocalTestRunDataController.withTestDataHolder(localHolder -> {          // todo: remote run data
       final int testNameId = localHolder.myTestNameEnumerator.tryEnumerate(testName);
       if (testNameId == 0) {
@@ -60,7 +61,8 @@ public class TestDiscoveryIndex implements Disposable {
     return result == Boolean.TRUE;
   }
 
-  public void removeTestTrace(@NotNull String testName) throws IOException {
+  public void removeTestTrace(@NotNull String testClassName, @NotNull String testMethodName, @NotNull String frameworkPrefix) throws IOException {
+    String testName = testClassName + "-" + testMethodName;
     myLocalTestRunDataController.withTestDataHolder((ThrowableConvertor<TestInfoHolder, Void, IOException>)localHolder -> {
       final int testNameId = localHolder.myTestNameEnumerator.tryEnumerate(testName);  // todo remove remote data isn't possible
       if (testNameId != 0) {
@@ -80,7 +82,7 @@ public class TestDiscoveryIndex implements Disposable {
     // todo: should we remove our local run data ?
   }
 
-  public Collection<String> getTestsByMethodName(@NotNull String classFQName, @NotNull String methodName, String frameworkPrefix) throws IOException {
+  public Collection<String> getTestsByMethodName(@NotNull String classFQName, @NotNull String methodName, @NotNull String frameworkPrefix) throws IOException {
     //TODO support framework prefix again
     return myLocalTestRunDataController.withTestDataHolder(new ThrowableConvertor<TestInfoHolder, Collection<String>, IOException>() {
       @Override
@@ -247,38 +249,30 @@ public class TestDiscoveryIndex implements Disposable {
     myRemoteTestRunDataController.dispose();
   }
 
-  public void updateFromData(@NotNull String testName,
+  public void updateFromData(@NotNull String testClassName,
+                             @NotNull String testMethodName,
                              @NotNull MultiMap<String, String> usedMethods,
                              @Nullable String moduleName,
                              @NotNull String frameworkPrefix) throws IOException {
-    doUpdateFromTestTrace(testName, holder -> {
+    String testName = testClassName + "-" + testMethodName;
+    myLocalTestRunDataController.withTestDataHolder(localHolder -> {
+      final int testNameId = localHolder.myTestNameEnumerator.enumerate(testName);
       TIntObjectHashMap<TIntArrayList> result = new TIntObjectHashMap<>();
       for (Map.Entry<String, Collection<String>> e : usedMethods.entrySet()) {
-        int classId = holder.myClassEnumeratorCache.enumerate(e.getKey());
+        int classId = localHolder.myClassEnumeratorCache.enumerate(e.getKey());
         TIntArrayList methodIds = new TIntArrayList();
         result.put(classId, methodIds);
         for (String methodName : e.getValue()) {
-          methodIds.add(holder.myMethodEnumeratorCache.enumerate(methodName));
+          methodIds.add(localHolder.myMethodEnumeratorCache.enumerate(methodName));
         }
       }
-      return result;
-    }, moduleName, frameworkPrefix);
-  }
-
-  private void doUpdateFromTestTrace(@NotNull String testName,
-                                     @NotNull ThrowableNotNullFunction<TestInfoHolder, TIntObjectHashMap<TIntArrayList>, IOException> classDataExtractor,
-                                     @Nullable String moduleName,
-                                     @NotNull String frameworkPrefix) throws IOException {
-    myLocalTestRunDataController.withTestDataHolder(localHolder -> {
-      final int testNameId = localHolder.myTestNameEnumerator.enumerate(testName);
-      TIntObjectHashMap<TIntArrayList> classData = classDataExtractor.fun(localHolder);
       TIntObjectHashMap<TIntArrayList> previousClassData = localHolder.myTestNameToUsedClassesAndMethodMap.get(testNameId);
       if (previousClassData == null) {
         previousClassData = myRemoteTestRunDataController.withTestDataHolder(
           remoteDataHolder -> {
             TIntObjectHashMap<TIntArrayList> remoteClassData = remoteDataHolder.myTestNameToUsedClassesAndMethodMap.get(testNameId);
             if (remoteClassData == null) return null;
-            TIntObjectHashMap<TIntArrayList> result = new TIntObjectHashMap<>(remoteClassData.size());
+            TIntObjectHashMap<TIntArrayList> result1 = new TIntObjectHashMap<>(remoteClassData.size());
             Ref<IOException> exceptionRef = new Ref<>();
             boolean processingResult = remoteClassData.forEachEntry((remoteClassKey, remoteClassMethodIds) -> {
               try {
@@ -289,7 +283,7 @@ public class TestDiscoveryIndex implements Disposable {
                   localClassIds
                     .add(localHolder.myMethodEnumeratorCache.enumerate(remoteDataHolder.myMethodEnumeratorCache.valueOf(methodId)));
                 }
-                result.put(localClassKey, localClassIds);
+                result1.put(localClassKey, localClassIds);
                 return true;
               } catch (IOException ex) {
                 exceptionRef.set(ex);
@@ -297,12 +291,12 @@ public class TestDiscoveryIndex implements Disposable {
               }
             });
             if (!processingResult) throw exceptionRef.get();
-            return result;
+            return result1;
           });
       }
 
       String moduleId = moduleName == null ? null : frameworkPrefix + moduleName;
-      localHolder.doUpdateFromDiff(testNameId, classData, previousClassData, moduleId != null ? localHolder.myModuleNameEnumerator.enumerate(moduleId) : null);
+      localHolder.doUpdateFromDiff(testNameId, result, previousClassData, moduleId != null ? localHolder.myModuleNameEnumerator.enumerate(moduleId) : null);
       return null;
     });
   }
