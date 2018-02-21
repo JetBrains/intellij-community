@@ -6,6 +6,8 @@ import com.intellij.codeInspection.AbstractDependencyVisitor;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,10 +37,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ObjectIntHashMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
@@ -96,7 +100,12 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     generate(project);
   }
 
-  private static void generate(Project project) {
+  private static void generate(@NotNull Project project) {
+    DumbService.getInstance(project).smartInvokeLater(
+      () -> generateWhenSmart(project, new UniqueModuleNames(project)));
+  }
+
+  private static void generateWhenSmart(@NotNull Project project, @NotNull UniqueModuleNames uniqueModuleNames) {
     ProgressManager.getInstance().run(
       new Task.Backgroundable(project, TITLE, true) {
         @Override
@@ -104,7 +113,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
           THashMap<Module, List<File>> classFiles = new THashMap<>();
           int totalFiles = collectClassFiles(project, classFiles);
           if (totalFiles != 0) {
-            new DescriptorsGenerator(project).generate(classFiles, totalFiles);
+            new DescriptorsGenerator(project, uniqueModuleNames).generate(classFiles, indicator, totalFiles);
           }
         }
       });
@@ -162,7 +171,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
   }
 
   private static class ProgressTracker {
-    ProgressIndicator myIndicator = ProgressManager.getInstance().getProgressIndicator();
+    ProgressIndicator myIndicator;
 
     int myCount;
     int mySize;
@@ -172,9 +181,6 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
 
     public ProgressTracker(double... phases) {
       myPhases = phases;
-
-      myIndicator.setFraction(0);
-      myIndicator.setIndeterminate(false);
     }
 
     void startPhase(String text, int size) {
@@ -191,6 +197,12 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       myIndicator.setFraction(myUpToNow + myPhases[myPhase] * ++myCount / (double)mySize);
     }
 
+    public void init(ProgressIndicator indicator) {
+      myIndicator = indicator;
+      myIndicator.setFraction(0);
+      myIndicator.setIndeterminate(false);
+    }
+
     public void dispose() {
       myIndicator = null;
     }
@@ -198,17 +210,20 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
 
   private static class DescriptorsGenerator {
     private final Project myProject;
+    private final UniqueModuleNames myUniqueModuleNames;
 
     private final List<ModuleNode> myModuleNodes = new ArrayList<>();
     private final Set<String> myUsedExternallyPackages = new THashSet<>();
 
     private final ProgressTracker myProgressTracker = new ProgressTracker(0.5, 0.3, 0.2);
 
-    public DescriptorsGenerator(Project project) {
+    public DescriptorsGenerator(@NotNull Project project, @NotNull UniqueModuleNames uniqueModuleNames) {
       myProject = project;
+      myUniqueModuleNames = uniqueModuleNames;
     }
 
-    void generate(THashMap<Module, List<File>> classFiles, int totalFiles) {
+    void generate(THashMap<Module, List<File>> classFiles, ProgressIndicator indicator, int totalFiles) {
+      myProgressTracker.init(indicator);
       List<ModuleInfo> moduleInfos;
       try {
         myProgressTracker.startPhase(RefactoringBundle.message("generate.module.descriptors.collecting.message"), totalFiles);
@@ -262,7 +277,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
         requiredPackages.removeAll(declaredPackages);
 
         myUsedExternallyPackages.addAll(requiredPackages);
-        ModuleNode moduleNode = new ModuleNode(module, declaredPackages, requiredPackages);
+        ModuleNode moduleNode = new ModuleNode(module, declaredPackages, requiredPackages, myUniqueModuleNames);
         myModuleNodes.add(moduleNode);
         for (String declaredPackage : declaredPackages) {
           packagesDeclaredInModules.computeIfAbsent(declaredPackage, __ -> new THashSet<>()).add(moduleNode);
@@ -344,27 +359,29 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     }
 
     private static void createFile(FileTemplate template, ModuleInfo moduleInfo) {
+      if (moduleInfo.fileAlreadyExists()) {
+        return;
+      }
       Project project = moduleInfo.myRootDir.getProject();
       Properties properties = FileTemplateManager.getInstance(project).getDefaultProperties();
       FileTemplateUtil.fillDefaultProperties(properties, moduleInfo.myRootDir);
       properties.setProperty(FileTemplate.ATTRIBUTE_NAME, MODULE_INFO_CLASS);
       try {
-        PsiJavaFile moduleInfoFile =
+        PsiJavaFile moduleInfoFile = // this is done to copy the file header to the output
           (PsiJavaFile)FileTemplateUtil.createFromTemplate(template, MODULE_INFO_FILE, properties, moduleInfo.myRootDir);
         PsiJavaModule javaModule = moduleInfoFile.getModuleDeclaration();
         LOG.assertTrue(javaModule != null, "module-info file should contain module declaration");
 
-        javaModule.setName(moduleInfo.myName);
-        for (String export : moduleInfo.myExports) {
-          PsiUtil.addModuleStatement(javaModule, PsiKeyword.EXPORTS + ' ' + export);
-        }
-        for (String dependency : moduleInfo.myRequires) {
-          PsiUtil.addModuleStatement(javaModule, PsiKeyword.REQUIRES + ' ' + dependency);
-        }
+        CharSequence moduleText = moduleInfo.createModuleText();
+        PsiJavaFile dummyFile = (PsiJavaFile)PsiFileFactory.getInstance(project)
+                                                           .createFileFromText(MODULE_INFO_FILE, JavaLanguage.INSTANCE, moduleText);
+        PsiJavaModule actualModule = dummyFile.getModuleDeclaration();
+        LOG.assertTrue(actualModule != null, "module declaration wasn't created");
+        javaModule.replace(actualModule);
         CodeStyleManager.getInstance(project).reformat(moduleInfoFile);
       }
       catch (Exception e) {
-        LOG.info("Failed to create module-info.java in " + moduleInfo.myRootDir.getVirtualFile().getPath() + ": " + e.getMessage());
+        LOG.error("Failed to create module-info.java in " + moduleInfo.myRootDir.getVirtualFile().getPath() + ": " + e.getMessage());
       }
     }
 
@@ -391,7 +408,10 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     private final PsiJavaModule myDescriptor;
     private final String myName;
 
-    public ModuleNode(@NotNull Module module, @NotNull Set<String> declaredPackages, @NotNull Set<String> requiredPackages) {
+    public ModuleNode(@NotNull Module module,
+                      @NotNull Set<String> declaredPackages,
+                      @NotNull Set<String> requiredPackages,
+                      @NotNull UniqueModuleNames uniqueModuleNames) {
       myModule = module;
       myDeclaredPackages = declaredPackages;
       myRequiredPackages = requiredPackages;
@@ -400,12 +420,12 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
         VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(false);
         return sourceRoots.length != 0 ? findDescriptor(module, sourceRoots[0]) : null;
       });
-      myName = myDescriptor != null ? myDescriptor.getName() : NameConverter.convertModuleName(myModule.getName());
+      myName = myDescriptor != null ? myDescriptor.getName() : uniqueModuleNames.getUniqueName(myModule);
     }
 
     @Nullable
     private static PsiJavaModule findDescriptor(@NotNull Module module, VirtualFile root) {
-      return JavaModuleGraphUtil.findDescriptorByElement(PsiManager.getInstance(module.getProject()).findDirectory(root));
+      return JavaModuleGraphUtil.findDescriptorByFile(root, module.getProject());
     }
 
     public ModuleNode(@NotNull PsiJavaModule descriptor) {
@@ -503,18 +523,6 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     private static final Pattern NON_NAME = Pattern.compile("[^A-Za-z0-9]");
     private static final Pattern DOT_SEQUENCE = Pattern.compile("\\.{2,}");
     private static final Pattern SINGLE_DOT = Pattern.compile("\\.");
-    private static final Map<Character, String> DIGIT_WORDS = ContainerUtil.<Character, String>immutableMapBuilder()
-      .put('0', "zero")
-      .put('1', "one")
-      .put('2', "two")
-      .put('3', "three")
-      .put('4', "four")
-      .put('5', "five")
-      .put('6', "six")
-      .put('7', "seven")
-      .put('8', "eight")
-      .put('9', "nine")
-      .build();
 
     @NotNull
     public static String convertModuleName(@NotNull String name) {
@@ -524,31 +532,67 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       name = DOT_SEQUENCE.matcher(name).replaceAll(".");
       // ... and all leading and trailing dots are removed.
       name = StringUtil.trimLeading(StringUtil.trimTrailing(name, '.'), '.');
-      // convert digit-only parts of the name to non-digit text
-      String[] parts = SINGLE_DOT.split(name);
-      for (int i = 0; i < parts.length; i++) {
-        String words = convertDigitsToWords(parts[i]);
-        if (words != null) {
-          parts[i] = words;
+
+      // sanitize keywords and leading digits
+      String[] parts = splitByDots(name);
+      StringBuilder builder = new StringBuilder();
+      boolean first = true;
+      for (String part : parts) {
+        if (part.length() == 0) {
+          continue;
         }
+        if (Character.isJavaIdentifierStart(part.charAt(0))) {
+          if (!first) {
+            builder.append('.');
+          }
+          builder.append(part);
+          if (JavaLexer.isKeyword(part, LanguageLevel.JDK_1_9)) {
+            builder.append('x');
+          }
+        }
+        else { // it's a leading digit
+          if (first) {
+            builder.append("module");
+          }
+          builder.append(part);
+        }
+        first = false;
       }
-      return StringUtil.join(parts, ".");
+      return builder.toString();
     }
 
-    @Nullable
-    private static String convertDigitsToWords(String part) {
-      StringBuilder words = null;
-      for (int i = 0; i < part.length(); i++) {
-        String word = DIGIT_WORDS.get(part.charAt(i));
-        if (word == null) {
-          return null;
+    @NotNull
+    static String[] splitByDots(@NotNull String text) {
+      return SINGLE_DOT.split(text);
+    }
+  }
+
+  private static class UniqueModuleNames {
+    private final ObjectIntHashMap<String> myCounts = new ObjectIntHashMap<>();
+
+    public UniqueModuleNames(@NotNull Project project) {
+      LOG.assertTrue(!DumbService.isDumb(project), "Module name index should be ready");
+
+      JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
+      GlobalSearchScope scope = ProjectScope.getAllScope(project);
+
+      for (String key : index.getAllKeys(project)) {
+        for (PsiJavaModule module : index.get(key, project, scope)) {
+          String name = ReadAction.compute(() -> module.getName());
+          myCounts.put(name, 1);
         }
-        if (words == null) {
-          words = new StringBuilder();
-        }
-        words.append(word);
       }
-      return words != null ? words.toString() : null;
+    }
+
+    @NotNull
+    public String getUniqueName(@NotNull Module module) {
+      String name = NameConverter.convertModuleName(module.getName());
+      int count = myCounts.get(name, 0);
+      myCounts.put(name, count + 1);
+      if (count != 0) {
+        name += count;
+      }
+      return name;
     }
   }
 
@@ -627,6 +671,35 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       myName = name;
       myRequires = requires;
       myExports = exports;
+    }
+
+    boolean fileAlreadyExists() {
+      return StreamEx.of(myRootDir.getChildren())
+                     .select(PsiFile.class)
+                     .map(PsiFileSystemItem::getName)
+                     .anyMatch(MODULE_INFO_FILE::equals);
+    }
+
+    @NotNull
+    CharSequence createModuleText() {
+      StringBuilder text = new StringBuilder();
+      text.append("module ").append(myName).append(" {");
+      for (String dependency : myRequires) {
+        if ("java.base".equals(dependency)) {
+          continue;
+        }
+        boolean isBadSyntax = StreamEx.of(NameConverter.splitByDots(dependency))
+                                      .anyMatch(part -> JavaLexer.isKeyword(part, LanguageLevel.JDK_1_9));
+        text.append('\n').append(isBadSyntax ? "// " : " ").append(PsiKeyword.REQUIRES).append(' ').append(dependency).append(";");
+      }
+      if (!myRequires.isEmpty() && !myExports.isEmpty()) {
+        text.append('\n');
+      }
+      for (String packageName : myExports) {
+        text.append("\n ").append(PsiKeyword.EXPORTS).append(' ').append(packageName).append(";");
+      }
+      text.append("\n}");
+      return text;
     }
   }
 }

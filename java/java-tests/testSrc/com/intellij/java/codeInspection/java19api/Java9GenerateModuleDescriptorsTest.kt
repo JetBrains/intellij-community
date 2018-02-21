@@ -17,13 +17,14 @@ class Java9GenerateModuleDescriptorsTest : TestCase() {
     doTestName("foo.bar", "foo.bar")
     doTestName("foo.bar", ".foo.bar...")
 
-    doTestName("zero", "0")
-    doTestName("one.foo", "1.foo")
-    doTestName("foo.two", "foo.2")
-    doTestName("foo.three.bar", "foo.3.bar")
-    doTestName("foo.fourfive.bar", "foo.45.bar")
-    doTestName("foo.six.seven.bar", "foo.6.7.bar")
-    doTestName("eight.foo.bar.nine", "8.foo.bar.9")
+    doTestName("module0", "0")
+    doTestName("module1.foo", "1.foo")
+    doTestName("foo2", "foo.2")
+    doTestName("foo3.bar", "foo.3.bar")
+    doTestName("foo45.bar", "foo.45.bar")
+    doTestName("foo67.bar", "foo.6.7.bar")
+    doTestName("module8.foo.bar9", "8.foo.bar.9")
+    doTestName("forx.intx.open", "for.int.open")
   }
 
   private fun doTestName(expected:String, name:String) {
