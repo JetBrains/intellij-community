@@ -150,7 +150,7 @@ class TestingTasksImpl extends TestingTasks {
       additionalJvmOptions.add("-javaagent:${agentJar.absolutePath}" as String)
       additionalSystemProperties.putAll(
         [
-          "test.discovery.listener"                 : "com.intellij.InternalTestDiscoveryListenerBase",
+          "test.discovery.listener"                 : "com.intellij.TestDiscoveryBasicListener",
           "test.discovery.data.listener"            : "com.intellij.rt.coverage.data.SingleTrFileDiscoveryProtocolDataListener",
           "org.jetbrains.instrumentation.trace.file": options.testDiscoveryTraceFilePath ?: "${context.paths.projectHome}/intellij-tracing/td.tr",
           "test.discovery.include.class.patterns"   : options.testDiscoveryIncludePatterns,
