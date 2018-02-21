@@ -1,9 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,8 +12,6 @@ import org.jetbrains.annotations.Nullable;
  */
 @Deprecated
 public class AsyncResult<T> extends ActionCallback {
-  private static final Logger LOG = Logger.getInstance(AsyncResult.class);
-
   protected T myResult;
 
   public AsyncResult() {
@@ -33,18 +29,6 @@ public class AsyncResult<T> extends ActionCallback {
     myResult = result;
     setRejected();
     return this;
-  }
-
-  @NotNull
-  public <DependentResult> AsyncResult<DependentResult> subResult(@NotNull Function<T, DependentResult> doneHandler) {
-    return subResult(new AsyncResult<>(), doneHandler);
-  }
-
-  @NotNull
-  public <SubResult, SubAsyncResult extends AsyncResult<SubResult>> SubAsyncResult subResult(@NotNull SubAsyncResult subResult,
-                                                                                             @NotNull Function<T, SubResult> doneHandler) {
-    doWhenDone(new SubResultDoneCallback<>(subResult, doneHandler)).notifyWhenRejected(subResult);
-    return subResult;
   }
 
   /**
@@ -90,13 +74,6 @@ public class AsyncResult<T> extends ActionCallback {
     return myResult;
   }
 
-  @NotNull
-  public final ActionCallback doWhenProcessed(@NotNull final Consumer<T> consumer) {
-    doWhenDone(consumer);
-    doWhenRejected((result, error) -> consumer.consume(result));
-    return this;
-  }
-
   /**
    * @deprecated Use {@link Consumer} (to remove in IDEA 16)
    */
@@ -108,30 +85,5 @@ public class AsyncResult<T> extends ActionCallback {
   @NotNull
   public static <R> AsyncResult<R> done(@Nullable R result) {
     return new AsyncResult<R>().setDone(result);
-  }
-
-  // we don't use inner class, avoid memory leak, we don't want to hold this result while dependent is computing
-  private static class SubResultDoneCallback<Result, SubResult, AsyncSubResult extends AsyncResult<SubResult>> implements Consumer<Result> {
-    private final AsyncSubResult subResult;
-    private final Function<Result, SubResult> doneHandler;
-
-    public SubResultDoneCallback(AsyncSubResult subResult, Function<Result, SubResult> doneHandler) {
-      this.subResult = subResult;
-      this.doneHandler = doneHandler;
-    }
-
-    @Override
-    public void consume(Result result) {
-      SubResult v;
-      try {
-        v = doneHandler.fun(result);
-      }
-      catch (Throwable e) {
-        subResult.reject(e.getMessage());
-        LOG.error(e);
-        return;
-      }
-      subResult.setDone(v);
-    }
   }
 }
