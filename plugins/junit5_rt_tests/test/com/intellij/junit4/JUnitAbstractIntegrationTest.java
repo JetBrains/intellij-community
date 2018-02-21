@@ -1,27 +1,41 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.junit4;
 
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
+import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.impl.DefaultJavaProgramRunner;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.TestObject;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.java.execution.BaseConfigurationTestCase;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Key;
@@ -29,8 +43,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.TimeoutUtil;
-import com.intellij.util.ui.UIUtil;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
@@ -57,10 +69,27 @@ public abstract class JUnitAbstractIntegrationTest extends BaseConfigurationTest
 
     JavaParameters parameters = state.getJavaParameters();
     parameters.setUseDynamicClasspath(project);
-    ExecutionResult result = state.execute(new DefaultRunExecutor(), DefaultJavaProgramRunner.getInstance());
-    ProcessHandler handler = result.getProcessHandler();
+    GeneralCommandLine commandLine = parameters.toCommandLine();
+
+    OSProcessHandler process = new OSProcessHandler(commandLine);
+    final SearchForTestsTask searchForTestsTask = state.createSearchingForTestsTask();
+    if (searchForTestsTask != null) {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+                                                                          searchForTestsTask.run(new EmptyProgressIndicator());
+                                                                          searchForTestsTask.onSuccess();
+                                                                        },
+                                                                        "", false, project, null);
+    }
+
     ProcessOutput processOutput = new ProcessOutput();
-    handler.addProcessListener(new ProcessAdapter() {
+    process.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void startNotified(@NotNull ProcessEvent event) {
+        if (searchForTestsTask != null) {
+          searchForTestsTask.finish();
+        }
+      }
+
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         String text = event.getText();
@@ -89,11 +118,10 @@ public abstract class JUnitAbstractIntegrationTest extends BaseConfigurationTest
         }
       }
     });
-    handler.startNotify();
-    while (!handler.waitFor(100)) {
-      UIUtil.dispatchAllInvocationEvents();
-    }
-    handler.destroyProcess();
+    process.startNotify();
+    process.waitFor();
+    process.destroyProcess();
+
     return processOutput;
   }
 
@@ -123,9 +151,9 @@ public abstract class JUnitAbstractIntegrationTest extends BaseConfigurationTest
   }
 
   public static class ProcessOutput {
-    public List<String> out = new ArrayList<>();
+    List<String> out = new ArrayList<>();
     public List<String> err = new ArrayList<>();
-    public List<String> sys = new ArrayList<>();
-    public List<ServiceMessage> messages = new ArrayList<>();
+    List<String> sys = new ArrayList<>();
+    List<ServiceMessage> messages = new ArrayList<>();
   }
 }

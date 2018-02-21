@@ -51,8 +51,24 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
   }
 
   public void startSearch() {
-    myProcessIndicator = new BackgroundableProcessIndicator(this);
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(this, myProcessIndicator);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      try {
+        search();
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+      try {
+        onFound();
+      }
+      catch (ExecutionException e) {
+        LOG.error(e);
+      }
+    }
+    else {
+      myProcessIndicator = new BackgroundableProcessIndicator(this);
+      ProgressManager.getInstance().runProcessWithProgressAsynchronously(this, myProcessIndicator);
+    }
   }
 
   public void attachTaskToProcess(final OSProcessHandler handler) {
