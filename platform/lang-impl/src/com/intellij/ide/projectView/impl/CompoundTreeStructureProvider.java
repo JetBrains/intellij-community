@@ -36,7 +36,7 @@ public class CompoundTreeStructureProvider implements TreeStructureProvider {
         for (TreeStructureProvider provider : providers) {
           try {
             children = provider.modify(parent, children, settings);
-            if (children.stream().allMatch(Objects::nonNull)) {
+            if (children.stream().anyMatch(Objects::isNull)) {
               LOG.warn("null child provided by " + provider);
               children = StreamEx.of(children).filter(Objects::nonNull).toImmutableList();
             }
