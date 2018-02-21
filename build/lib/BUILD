@@ -12,13 +12,6 @@ filegroup(
 )
 
 java_import(
-    name = "gant/lib/gant-1.9.11_groovy-2.3.0",
-    jars = ["gant/lib/gant-1.9.11_groovy-2.3.0.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
     name = "jps",
     jars = [
         "jps/jps-builders.jar",

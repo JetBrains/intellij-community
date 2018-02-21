@@ -26,7 +26,7 @@ iml_module(
         "//tools/idea/jps/model-api:jps-model-api",
         "//tools/idea/jps/standalone-builder:jps-standalone-builder",
         "//tools/idea/platform/util",
-        "//tools/idea/build/lib:gant/lib/gant-1.9.11_groovy-2.3.0",
+        "//tools/idea/.idea/libraries:gant-groovy",
     ],
     # do not sort: must match IML order
     runtime_deps = [
@@ -52,7 +52,7 @@ iml_module(
         "//tools/idea/jps/model-api:jps-model-api[module]",
         "//tools/idea/jps/standalone-builder:jps-standalone-builder[module]",
         "//tools/idea/platform/util[module]",
-        "//tools/idea/build/lib:gant/lib/gant-1.9.11_groovy-2.3.0",
+        "//tools/idea/.idea/libraries:gant-groovy",
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/.idea/libraries:commons-compress",
     ],

@@ -1,27 +1,6 @@
 java_import(
-    name = "guava-21.0",
-    jars = ["guava-21.0.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "trove4j",
-    jars = ["trove4j.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
     name = "jsr305",
     jars = ["jsr305.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "junit",
-    jars = ["junit.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
@@ -188,13 +167,6 @@ java_import(
 )
 
 java_import(
-    name = "nanoxml-2.2.3",
-    jars = ["nanoxml-2.2.3.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
     name = "pty4j-0.7.1",
     jars = ["pty4j-0.7.1.jar"],
     tags = ["managed"],
@@ -281,13 +253,6 @@ java_import(
 java_import(
     name = "slf4j-log4j12-1.7.10",
     jars = ["slf4j-log4j12-1.7.10.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "jsch-0.1.54",
-    jars = ["jsch-0.1.54.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )

@@ -86,8 +86,8 @@ java_library(
     name = "Trove4j",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:trove4j"],
-    runtime_deps = ["//tools/idea/lib:trove4j"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/trove4j/1.0.20160824:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/trove4j/1.0.20160824:jar"],
 )
 
 java_library(
@@ -104,8 +104,8 @@ java_library(
     name = "JUnit3",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:junit"],
-    runtime_deps = ["//tools/idea/lib:junit"],
+    exports = ["//prebuilts/tools/common/m2/repository/junit/junit/3.8.1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/junit/junit/3.8.1:jar"],
 )
 
 java_library(
@@ -236,8 +236,8 @@ java_library(
     name = "Guava",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:guava-21.0"],
-    runtime_deps = ["//tools/idea/lib:guava-21.0"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/google/guava/guava/21.0:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/guava/guava/21.0:jar"],
 )
 
 java_library(
@@ -452,8 +452,8 @@ java_library(
     name = "NanoXML",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:nanoxml-2.2.3"],
-    runtime_deps = ["//tools/idea/lib:nanoxml-2.2.3"],
+    exports = ["//prebuilts/tools/common/m2/repository/be/cyberelf/nanoxml/nanoxml/2.2.3:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/be/cyberelf/nanoxml/nanoxml/2.2.3:jar"],
 )
 
 java_library(
@@ -914,8 +914,8 @@ java_library(
     name = "JSch",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:jsch-0.1.54"],
-    runtime_deps = ["//tools/idea/lib:jsch-0.1.54"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/jcraft/jsch/0.1.54:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/jcraft/jsch/0.1.54:jar"],
 )
 
 java_library(
@@ -1184,4 +1184,12 @@ java_library(
     visibility = ["//visibility:public"],
     exports = ["//tools/base/sdk-common/aia-manifest-jar-generator:jarjar"],
     runtime_deps = ["//tools/base/sdk-common/aia-manifest-jar-generator:jarjar"],
+)
+
+java_library(
+    name = "gant-groovy",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/codehaus/gant/gant_groovy2.3/1.9.11:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/codehaus/gant/gant_groovy2.3/1.9.11:jar"],
 )

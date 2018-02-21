@@ -30,7 +30,7 @@ iml_module(
         "//tools/idea/.idea/libraries:cli-parser",
         "//tools/idea/.idea/libraries:Ant",
         "//tools/idea/jps/model-serialization:jps-model-serialization[module]",
-        "//tools/idea/build/lib:gant/lib/gant-1.9.11_groovy-2.3.0",
+        "//tools/idea/.idea/libraries:gant-groovy",
         "//tools/idea/.idea/libraries:Log4J",
     ],
 )
