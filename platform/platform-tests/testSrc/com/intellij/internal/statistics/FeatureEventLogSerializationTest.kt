@@ -33,6 +33,25 @@ class FeatureEventLogSerializationTest {
   }
 
   @Test
+  fun testEventActionWithQuotes() {
+    testEventSerialization(LogEvent("session-id", "-1", "recorder-id", "1", "event\"type"))
+  }
+
+  @Test
+  fun testEventActionWithTagInDataKey() {
+    val event = LogEvent("session-id", "-1", "recorder-id", "1", "event-type")
+    event.action.addData("my key", "value")
+    testEventSerialization(event, "my_key")
+  }
+
+  @Test
+  fun testEventActionWithTagInDataValue() {
+    val event = LogEvent("session-id", "-1", "recorder-id", "1", "event-type")
+    event.action.addData("key", "my value")
+    testEventSerialization(event, "key")
+  }
+
+  @Test
   fun testEventContent() {
     val events = ArrayList<LogEvent>()
     events.add(LogEvent("session-id", "-1", "recorder-id", "1", "first-type"))
@@ -66,30 +85,32 @@ class FeatureEventLogSerializationTest {
     assert(json.get("time").isJsonPrimitive)
 
     assert(json.get("session").isJsonPrimitive)
-    assert(noTabsOrSpaces(json.get("session").asString))
+    assert(noTabsOrSpacesOrQuotes(json.get("session").asString))
 
     assert(json.get("bucket").isJsonPrimitive)
-    assert(noTabsOrSpaces(json.get("bucket").asString))
+    assert(noTabsOrSpacesOrQuotes(json.get("bucket").asString))
 
     assert(json.get("recorder").isJsonObject)
     assert(json.getAsJsonObject("recorder").get("id").isJsonPrimitive)
     assert(json.getAsJsonObject("recorder").get("version").isJsonPrimitive)
-    assert(noTabsOrSpaces(json.getAsJsonObject("recorder").get("id").asString))
-    assert(noTabsOrSpaces(json.getAsJsonObject("recorder").get("version").asString))
+    assert(noTabsOrSpacesOrQuotes(json.getAsJsonObject("recorder").get("id").asString))
+    assert(noTabsOrSpacesOrQuotes(json.getAsJsonObject("recorder").get("version").asString))
 
     assert(json.get("action").isJsonObject)
     assert(json.getAsJsonObject("action").get("id").isJsonPrimitive)
     assert(json.getAsJsonObject("action").get("data").isJsonObject)
-    assert(noTabsOrSpaces(json.getAsJsonObject("action").get("id").asString))
+    assert(noTabsOrSpacesOrQuotes(json.getAsJsonObject("action").get("id").asString))
 
     val obj = json.getAsJsonObject("action").get("data").asJsonObject
     for (option in dataOptions) {
+      assert(noTabsOrSpacesOrQuotes(option))
       assert(obj.get(option).isJsonPrimitive)
+      assert(noTabsOrSpacesOrQuotes(obj.get(option).asString))
     }
   }
 
-  private fun noTabsOrSpaces(str : String) : Boolean {
-    return str.indexOf(" ") == -1 && str.indexOf("\t") == -1
+  private fun noTabsOrSpacesOrQuotes(str : String) : Boolean {
+    return str.indexOf(" ") == -1 && str.indexOf("\t") == -1 && str.indexOf("\"") == -1
   }
 
   @Suppress("unused")
