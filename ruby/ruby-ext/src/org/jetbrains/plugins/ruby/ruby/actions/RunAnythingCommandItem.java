@@ -414,31 +414,9 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
         }
 
         @Override
-        protected void destroyProcessImpl() {
-          super.destroyProcessImpl();
-          if (!isProcessTerminated()) {
-            print("exit\n", ConsoleViewContentType.USER_INPUT);
-          }
-        }
-
-        @Override
-        public boolean isSilentlyDestroyOnClose() {
-          try {
-            return RunAnythingCommandHandler.isSilentlyDestroyOnClose(myOriginalCommand);
-          }
-          catch (RuntimeException e) {
-            return super.isSilentlyDestroyOnClose();
-          }
-        }
-
-        @Override
         public final boolean shouldKillProcessSoftly() {
-          try {
-            return RunAnythingCommandHandler.shouldKillProcessSoftly(myOriginalCommand);
-          }
-          catch (RuntimeException e) {
-            return super.shouldKillProcessSoftly();
-          }
+          RunAnythingCommandHandler handler = RunAnythingCommandHandler.getMatchedHandler(myOriginalCommand);
+          return handler != null ? handler.shouldKillProcessSoftly() : super.shouldKillProcessSoftly();
         }
       };
 

@@ -5,11 +5,6 @@ package org.jetbrains.plugins.ruby.ruby.actions.handlers;
  */
 public abstract class RubyCommandHandler extends RunAnythingCommandHandler {
   @Override
-  public boolean isSilentlyDestroyOnClose() {
-    return true;
-  }
-
-  @Override
   public final boolean shouldKillProcessSoftly() {
     return false;
   }
