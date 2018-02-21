@@ -1,12 +1,15 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
@@ -14,7 +17,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
-import java.util.HashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -26,7 +29,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.datatransfer.Transferable;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -35,27 +39,28 @@ import java.util.Map;
 public class XDebuggerFramesList extends DebuggerFramesList {
   private final Project myProject;
   private final Map<VirtualFile, Color> myFileColors = new HashMap<>();
+  private static final DataKey<Runnable> COPY_HANDLER = DataKey.create("STACK_FRAMES_COPY_HANDLER");
 
-  private static final TransferHandler DEFAULT_TRANSFER_HANDLER = new TransferHandler() {
-    @Override
-    protected Transferable createTransferable(JComponent c) {
-      if (!(c instanceof XDebuggerFramesList)) {
-        return null;
-      }
-      XDebuggerFramesList list = (XDebuggerFramesList)c;
-      //noinspection deprecation
-      Object[] values = list.getSelectedValues();
-      if (values == null || values.length == 0) {
-        return null;
-      }
-
+  private void copyStack() {
+    List items = getModel().getItems();
+    //noinspection unchecked
+    if (!ContainerUtil.isEmpty(items)) {
       StringBuilder plainBuf = new StringBuilder();
       StringBuilder htmlBuf = new StringBuilder();
       TextTransferable.ColoredStringBuilder coloredTextContainer = new TextTransferable.ColoredStringBuilder();
       htmlBuf.append("<html>\n<body>\n<ul>\n");
-      for (Object value : values) {
+      for (Object value : items) {
         htmlBuf.append("  <li>");
         if (value != null) {
+          if (value instanceof ItemWithSeparatorAbove) {
+            ItemWithSeparatorAbove item = (ItemWithSeparatorAbove)value;
+            if (item.hasSeparatorAbove()) {
+              String caption = " - " + StringUtil.notNullize(item.getCaptionAboveOf());
+              plainBuf.append(caption).append('\n');
+              htmlBuf.append(caption).append("</li>\n");
+            }
+          }
+
           if (value instanceof XStackFrame) {
             ((XStackFrame)value).customizePresentation(coloredTextContainer);
             coloredTextContainer.appendTo(plainBuf, htmlBuf);
@@ -73,14 +78,9 @@ public class XDebuggerFramesList extends DebuggerFramesList {
       // remove the last newline
       plainBuf.setLength(plainBuf.length() - 1);
       htmlBuf.append("</ul>\n</body>\n</html>");
-      return new TextTransferable(htmlBuf.toString(), plainBuf.toString());
+      CopyPasteManager.getInstance().setContents(new TextTransferable(htmlBuf.toString(), plainBuf.toString()));
     }
-
-    @Override
-    public int getSourceActions(@NotNull JComponent c) {
-      return COPY;
-    }
-  };
+  }
 
   private XStackFrame mySelectedFrame;
 
@@ -88,7 +88,6 @@ public class XDebuggerFramesList extends DebuggerFramesList {
     myProject = project;
 
     doInit();
-    setTransferHandler(DEFAULT_TRANSFER_HANDLER);
     setDataProvider(new DataProvider() {
       @Nullable
       @Override
@@ -102,6 +101,9 @@ public class XDebuggerFramesList extends DebuggerFramesList {
             if (file != null && file.isValid()) {
               return PsiManager.getInstance(myProject).findFile(file);
             }
+          }
+          else if (COPY_HANDLER.is(dataId)) {
+            return (Runnable)(XDebuggerFramesList.this::copyStack);
           }
         }
         return null;
@@ -251,5 +253,20 @@ public class XDebuggerFramesList extends DebuggerFramesList {
   public interface ItemWithCustomBackgroundColor {
     @Nullable
     Color getBackgroundColor();
+  }
+
+  public static class CopyStackAction extends DumbAwareAction {
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(e.getData(COPY_HANDLER) != null);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      Runnable copyHandler = e.getData(COPY_HANDLER);
+      if (copyHandler != null) {
+        copyHandler.run();
+      }
+    }
   }
 }
