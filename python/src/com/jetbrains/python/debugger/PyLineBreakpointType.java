@@ -96,6 +96,11 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
       if (PyDebugSupportUtils.isContinuationLine(document, line - 1)) {
         stoppable.set(false);
       }
+      else
+        // Non-Pythonfiles may be debuggable, too, as python allows to provide
+        // custom module importers that import non-python source code and compile them to
+        // to (debuggable) python vm code.
+        return true;
     }
   }
 
