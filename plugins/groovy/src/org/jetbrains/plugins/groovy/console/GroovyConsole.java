@@ -77,7 +77,6 @@ public class GroovyConsole {
 
   public void stop() {
     myProcessHandler.destroyProcess(); // use force
-    ExecutionManager.getInstance(myProject).getContentManager().removeRunContent(defaultExecutor, myContentDescriptor);
   }
 
   private static void send(@NotNull ProcessHandler processHandler, @NotNull String command) {
