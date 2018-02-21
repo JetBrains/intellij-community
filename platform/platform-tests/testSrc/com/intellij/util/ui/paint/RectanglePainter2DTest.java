@@ -106,7 +106,7 @@ public class RectanglePainter2DTest extends AbstractPainter2DTest {
   }
 
   private void testRectOutline(ImageComparator comparator, double scale, boolean jreHiDPIEnabled, StrokeType strokeType) {
-    PaintUtilTest.overrideJreHiDPIEnabled(jreHiDPIEnabled);
+    overrideJreHiDPIEnabled(jreHiDPIEnabled);
     JBUI.setUserScaleFactor(jreHiDPIEnabled ? 1 : (float)scale);
 
     BufferedImage rect = supplyGraphics(scale, 15, 15,

@@ -6,10 +6,9 @@ import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.util.ui.TestScaleHelper;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.paint.ImageComparator.GreyscaleAASmoother;
-import org.junit.After;
-import org.junit.Before;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -26,32 +25,7 @@ import static junit.framework.TestCase.assertTrue;
  *
  * @author tav
  */
-public abstract class AbstractPainter2DTest {
-  public static class ScaleState {
-    private static float originalUserScale;
-    private static boolean originalJreHiDPIEnabled;
-
-    public static void set() {
-      originalUserScale = scale(1f);
-      originalJreHiDPIEnabled = UIUtil.isJreHiDPIEnabled();
-    }
-
-    public static void restore() {
-      JBUI.setUserScaleFactor(originalUserScale);
-      PaintUtilTest.overrideJreHiDPIEnabled(originalJreHiDPIEnabled);
-    }
-  }
-
-  @Before
-  public void setState() {
-    ScaleState.set();
-  }
-
-  @After
-  public void restoreState() {
-    ScaleState.restore();
-  }
-
+public abstract class AbstractPainter2DTest extends TestScaleHelper {
   public void testGoldenImages() {
     ImageComparator comparator = new ImageComparator(
       new GreyscaleAASmoother(0.15f, 0.5f));
@@ -67,7 +41,7 @@ public abstract class AbstractPainter2DTest {
   }
 
   private void testGolden(ImageComparator comparator, int scale, boolean jreHiDPIEnabled) {
-    PaintUtilTest.overrideJreHiDPIEnabled(jreHiDPIEnabled);
+    overrideJreHiDPIEnabled(jreHiDPIEnabled);
     JBUI.setUserScaleFactor(jreHiDPIEnabled ? 1 : scale);
 
     BufferedImage image = supplyGraphics(scale, getImageSize().width, getImageSize().height, this::paint);
