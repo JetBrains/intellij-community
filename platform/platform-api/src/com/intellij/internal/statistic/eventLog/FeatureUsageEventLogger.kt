@@ -13,14 +13,22 @@ private val EP_NAME = ExtensionPointName.create<FeatureUsageEventLogger>("com.in
 interface FeatureUsageEventLogger {
 
   fun log(recorderId: String, action: String)
+
+  fun log(recorderId: String, action: String, data: Map<String, Any>)
+
   fun getLogFiles(): List<File>
 
 }
+
 class FeatureUsageEmptyEventLogger : FeatureUsageEventLogger {
 
   override fun log(recorderId: String, action: String) {
   }
-  override fun getLogFiles() : List<File> {
+
+  override fun log(recorderId: String, action: String, data: Map<String, Any>) {
+  }
+
+  override fun getLogFiles(): List<File> {
     return emptyList()
   }
 }
