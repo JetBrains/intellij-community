@@ -98,15 +98,16 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
  * Resolves a qualified [name] to the list of packages and modules with Python semantics according to the [context].
  */
 private fun resolveModuleFromRoots(name: QualifiedName, context: PyQualifiedNameResolveContext): List<PsiElement> {
-  val qualifier = name.removeLastComponent()
-  val nameWithoutQualifier = name.removeHead(name.componentCount - 1)
-  return if (qualifier.componentCount != 0) {
-    findFirstResults(resolveQualifiedName(qualifier, context), context.module)
-      .map { it as? PsiDirectory }
-      .flatMap { resolveModuleAt(nameWithoutQualifier, it, context) }
-  } else {
-    resultsFromRoots(name, context)
-  }
+  val head = name.removeTail(name.componentCount - 1)
+  val nameNoHead = name.removeHead(1)
+  return nameNoHead.components
+    .fold(resultsFromRoots(head, context), {
+      results, component -> findFirstResults(results, context.module)
+      .asSequence()
+      .filterIsInstance<PsiDirectory>()
+      .flatMap { resolveModuleAt(QualifiedName.fromComponents(component), it, context).asSequence() }
+      .toList()
+    })
 }
 
 /**
