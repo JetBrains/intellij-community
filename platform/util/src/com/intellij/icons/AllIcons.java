@@ -1153,6 +1153,7 @@ public class AllIcons {
     public static final Icon Hibernate = IconLoader.getIcon("/providers/hibernate.png"); // 16x16
     public static final Icon Hsqldb = IconLoader.getIcon("/providers/hsqldb.png"); // 16x16
     public static final Icon Ibm = IconLoader.getIcon("/providers/ibm.png"); // 16x16
+    public static final Icon Mariadb = IconLoader.getIcon("/providers/mariadb.png"); // 16x16
     public static final Icon Microsoft = IconLoader.getIcon("/providers/microsoft.png"); // 16x16
     public static final Icon Mysql = IconLoader.getIcon("/providers/mysql.png"); // 16x16
     public static final Icon Oracle = IconLoader.getIcon("/providers/oracle.png"); // 16x16
