@@ -13,10 +13,20 @@ import java.util.List;
 public abstract class ConsoleFolding {
   public static final ExtensionPointName<ConsoleFolding> EP_NAME = ExtensionPointName.create("com.intellij.console.folding");
 
+  /**
+   * @param project current project
+   * @param line    line to check whether it should be folded or not
+   * @return true is line should be folded, false if not
+   */
   public boolean shouldFoldLine(@NotNull Project project, @NotNull String line) {
     return shouldFoldLine(line);
   }
 
+  /**
+   * @param project current project
+   * @param lines   lines to be folded
+   * @return placeholder for lines
+   */
   @Nullable
   public String getPlaceholderText(@NotNull Project project, @NotNull List<String> lines) {
     return getPlaceholderText(lines);
