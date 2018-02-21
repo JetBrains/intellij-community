@@ -3,13 +3,14 @@ package org.jetbrains.concurrency;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 public abstract class AsyncValueLoader<T> {
   private final AtomicReference<Promise<T>> ref = new AtomicReference<>();
@@ -19,7 +20,7 @@ public abstract class AsyncValueLoader<T> {
 
   private final Consumer<T> doneHandler = new Consumer<T>() {
     @Override
-    public void consume(T o) {
+    public void accept(T o) {
       loadedModificationCount = modificationCount;
     }
   };
@@ -29,9 +30,14 @@ public abstract class AsyncValueLoader<T> {
     return get(true);
   }
 
-  public final T getResult() {
-    //noinspection unchecked
-    return ((Getter<T>)get(true)).get();
+  public final T getResultIfFullFilled() {
+    Promise<T> result = ref.get();
+    try {
+      return (result != null && result.getState() == Promise.State.FULFILLED) ? result.blockingGet(0) : null;
+    }
+    catch (TimeoutException | ExecutionException e) {
+      return null;
+    }
   }
 
   public final void reset() {
@@ -59,12 +65,6 @@ public abstract class AsyncValueLoader<T> {
     }
   }
 
-  public final boolean has() {
-    Promise<T> result = ref.get();
-    //noinspection unchecked
-    return result != null && result.getState() == Promise.State.FULFILLED && ((Getter<T>)result).get() != null;
-  }
-
   @NotNull
   public final Promise<T> get(boolean checkFreshness) {
     Promise<T> promise = ref.get();
@@ -81,8 +81,13 @@ public abstract class AsyncValueLoader<T> {
       }
       else if (state == Promise.State.FULFILLED) {
         //noinspection unchecked
-        if (!checkFreshness || isUpToDate(((Getter<T>)promise).get())) {
-          return promise;
+        try {
+          if (!checkFreshness || isUpToDate(promise.blockingGet(0))) {
+            return promise;
+          }
+        }
+        catch (ExecutionException | TimeoutException e) {
+          throw new RuntimeException(e);
         }
 
         if (!ref.compareAndSet(promise, promise = new AsyncPromise<>())) {
@@ -127,7 +132,7 @@ public abstract class AsyncValueLoader<T> {
       throw e instanceof RuntimeException ? ((RuntimeException)e) : new RuntimeException(e);
     }
 
-    effectivePromise.done(doneHandler);
+    effectivePromise.onSuccess(doneHandler);
     if (isCancelOnReject()) {
       effectivePromise.rejected(throwable -> ref.compareAndSet(effectivePromise, null));
     }

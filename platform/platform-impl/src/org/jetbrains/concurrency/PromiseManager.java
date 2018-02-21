@@ -1,10 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.concurrency;
 
-import com.intellij.openapi.util.Getter;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 public abstract class PromiseManager<HOST, VALUE> {
   private final AtomicFieldUpdater<HOST, Promise<VALUE>> fieldUpdater;
@@ -76,8 +78,13 @@ public abstract class PromiseManager<HOST, VALUE> {
       }
       else if (state == Promise.State.FULFILLED) {
         //noinspection unchecked
-        if (!checkFreshness || isUpToDate(host, ((Getter<VALUE>)promise).get())) {
-          return promise;
+        try {
+          if (!checkFreshness || isUpToDate(host, promise.blockingGet(0))) {
+            return promise;
+          }
+        }
+        catch (ExecutionException | TimeoutException e) {
+          throw new RuntimeException(e);
         }
 
         if (!fieldUpdater.compareAndSet(host, promise, promise = new AsyncPromise<>())) {

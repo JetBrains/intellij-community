@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.concurrency;
 
-import com.intellij.openapi.util.Getter;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +15,7 @@ import java.util.function.Consumer;
 import static org.jetbrains.concurrency.InternalPromiseUtil.CANCELLED_PROMISE;
 import static org.jetbrains.concurrency.InternalPromiseUtil.isHandlerObsolete;
 
-class DonePromise<T> implements Getter<T>, Promise<T>, Future<T>, InternalPromiseUtil.PromiseImpl<T> {
+class DonePromise<T> implements Promise<T>, Future<T>, InternalPromiseUtil.PromiseImpl<T> {
   private final PromiseValue<T> value;
 
   public DonePromise(@NotNull PromiseValue<T> value) {

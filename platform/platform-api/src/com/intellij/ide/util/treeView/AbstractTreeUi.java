@@ -42,6 +42,8 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
@@ -732,7 +734,7 @@ public class AbstractTreeUi {
 
     if (bgLoading) {
       queueToBackground(build, update)
-        .done(new TreeConsumer<Void>("AbstractTreeUi.initRootNodeNowIfNeeded: on processed queueToBackground") {
+        .onSuccess(new TreeConsumer<Void>("AbstractTreeUi.initRootNodeNowIfNeeded: on processed queueToBackground") {
           @Override
           public void perform() {
             invokeLaterIfNeeded(false, new TreeRunnable("AbstractTreeUi.initRootNodeNowIfNeeded: on processed queueToBackground later") {
@@ -887,7 +889,7 @@ public class AbstractTreeUi {
       }
     }
 
-    promise.done(changes -> {
+    promise.onSuccess(changes -> {
       if (!changes) {
         return;
       }
@@ -1080,7 +1082,7 @@ public class AbstractTreeUi {
               @Override
               public Promise<?> run() {
                 return update(descriptor, false)
-                  .done(new TreeConsumer<Boolean>("AbstractTreeUi.updateRow: inner") {
+                  .onSuccess(new TreeConsumer<Boolean>("AbstractTreeUi.updateRow: inner") {
                     @Override
                     public void perform() {
                       updateRow(row + 1, pass);
@@ -1257,7 +1259,7 @@ public class AbstractTreeUi {
       else {
         if (!descriptorIsReady) {
           update(descriptor, false)
-            .done(new TreeConsumer<Boolean>("AbstractTreeUi.doUpdateChildren") {
+            .onSuccess(new TreeConsumer<Boolean>("AbstractTreeUi.doUpdateChildren") {
               @Override
               public void perform() {
                 if (processAlwaysLeaf(node) || !updateChildren) return;
@@ -1360,7 +1362,7 @@ public class AbstractTreeUi {
 
     //noinspection unchecked
     processExistingNodes(node, elementToIndexMap, pass, canSmartExpand(node, toSmartExpand), forceUpdate, wasExpanded, preloadedChildren)
-      .done(new TreeConsumer("AbstractTreeUi.updateNodeChildrenNow: on done processExistingNodes") {
+      .onSuccess(new TreeConsumer("AbstractTreeUi.updateNodeChildrenNow: on done processExistingNodes") {
         @Override
         public void perform() {
           if (isDisposed(node)) {
@@ -1420,7 +1422,7 @@ public class AbstractTreeUi {
           });
         }
       })
-      .rejected(new TreeConsumer<Throwable>("AbstractTreeUi.updateNodeChildrenNow: on reject processExistingNodes") {
+      .onError(new TreeConsumer<Throwable>("AbstractTreeUi.updateNodeChildrenNow: on reject processExistingNodes") {
       @Override
       public void perform() {
         removeFromUpdatingChildren(node);
@@ -2694,10 +2696,12 @@ public class AbstractTreeUi {
           execute(new TreeRunnable("AbstractTreeUi.queueBackgroundUpdate") {
             @Override
             public void perform() {
-              Promise<Boolean> promise = update(eachChildDescriptor, true);
-              LOG.assertTrue(promise instanceof Getter);
-              //noinspection unchecked
-              loaded.putDescriptor(each, eachChildDescriptor, ((Getter<Boolean>)promise).get());
+              try {
+                loaded.putDescriptor(each, eachChildDescriptor, update(eachChildDescriptor, true).blockingGet(0));
+              }
+              catch (TimeoutException | ExecutionException e) {
+                LOG.error(e);
+              }
             }
           });
         }
@@ -2765,8 +2769,8 @@ public class AbstractTreeUi {
       }
     };
     queueToBackground(buildRunnable, updateRunnable)
-      .done(finalizeRunnable)
-      .rejected(new TreeConsumer<Throwable>("AbstractTreeUi.queueBackgroundUpdate: on rejected") {
+      .onSuccess(finalizeRunnable)
+      .onError(new TreeConsumer<Throwable>("AbstractTreeUi.queueBackgroundUpdate: on rejected") {
         @Override
         public void perform() {
           updateInfo.getPass().expire();
@@ -3044,7 +3048,7 @@ public class AbstractTreeUi {
         }
 
         promise
-          .done(new TreeConsumer<Boolean>("AbstractTreeUi.processExistingNode: on done index updating after update") {
+          .onSuccess(new TreeConsumer<Boolean>("AbstractTreeUi.processExistingNode: on done index updating after update") {
             @Override
             public void perform() {
               if (childDesc.get().getIndex() != index.intValue()) {
@@ -3056,7 +3060,7 @@ public class AbstractTreeUi {
       }
 
       promise
-        .done(new TreeConsumer<Boolean>("AbstractTreeUi.processExistingNode: on done index updating") {
+        .onSuccess(new TreeConsumer<Boolean>("AbstractTreeUi.processExistingNode: on done index updating") {
           @Override
           public void perform() {
             if (!oldElement.equals(newElement.get()) || forceRemapping.get()) {

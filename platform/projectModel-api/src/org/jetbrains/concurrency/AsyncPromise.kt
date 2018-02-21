@@ -2,7 +2,6 @@
 package org.jetbrains.concurrency
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.Getter
 import com.intellij.util.Function
 import org.jetbrains.concurrency.InternalPromiseUtil.PromiseValue
 import org.jetbrains.concurrency.Promise.State
@@ -15,7 +14,7 @@ import java.util.function.Consumer
 
 private val LOG = Logger.getInstance(AsyncPromise::class.java)
 
-open class AsyncPromise<T : Any?> : Promise<T>, Getter<T>, CancellablePromise<T>, InternalPromiseUtil.PromiseImpl<T> {
+open class AsyncPromise<T : Any?> : Promise<T>, CancellablePromise<T>, InternalPromiseUtil.PromiseImpl<T> {
   private val doneRef = AtomicReference<Consumer<in T>?>()
   private val rejectedRef = AtomicReference<Consumer<in Throwable>?>()
 
