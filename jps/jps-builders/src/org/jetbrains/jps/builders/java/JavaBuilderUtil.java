@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -188,7 +189,7 @@ public class JavaBuilderUtil {
           final ModulesBasedFileFilter moduleBasedFilter = new ModulesBasedFileFilter(context, chunk);
           final boolean incremental = globalMappings.differentiateOnIncrementalMake(
             delta, removedPaths, filesToCompile, compiledWithErrors, allCompiledFiles, allAffectedFiles, moduleBasedFilter,
-            CONSTANT_SEARCH_SERVICE.get(context)
+            getConstantSearches(context)
           );
 
           if (LOG.isDebugEnabled()) {
@@ -329,6 +330,23 @@ public class JavaBuilderUtil {
     finally {
       context.processMessage(new ProgressMessage("")); // clean progress messages
     }
+  }
+
+  @Nullable
+  private static Collection<Callbacks.ConstantAffectionResolver> getConstantSearches(@NotNull CompileContext context) {
+    Callbacks.ConstantAffectionResolver mainConstantSearch = CONSTANT_SEARCH_SERVICE.get(context);
+    if (mainConstantSearch == null) return null;
+
+    List<Callbacks.ConstantAffectionResolver> constantSearches = new SmartList<>();
+    constantSearches.add(mainConstantSearch);
+
+    Iterable<ConstantSearchProvider> constantSearchProvider =
+      JpsServiceManager.getInstance().getExtensions(ConstantSearchProvider.class);
+    for (ConstantSearchProvider provider : constantSearchProvider) {
+      constantSearches.add(provider.getConstantSearch(context));
+    }
+
+    return constantSearches;
   }
 
   @Nullable

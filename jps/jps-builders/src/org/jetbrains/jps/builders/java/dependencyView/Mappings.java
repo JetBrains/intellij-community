@@ -19,10 +19,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.io.IntInlineKeyDescriptor;
 import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.builders.java.ConstantSearchProvider;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.incremental.storage.FileKeyDescriptor;
 import org.jetbrains.jps.service.JpsServiceManager;
@@ -954,7 +956,7 @@ public class Mappings {
     final Collection<File> myAffectedFiles;
     @Nullable
     final DependentFilesFilter myFilter;
-    @Nullable final Callbacks.ConstantAffectionResolver myConstantSearch;
+    @Nullable final Collection<Callbacks.ConstantAffectionResolver> myConstantSearches;
     final DelayedWorks myDelayedWorks;
 
     final Util myFuture;
@@ -991,16 +993,18 @@ public class Mappings {
       final Collection<Triple> myQueue = new LinkedList<>();
 
       void addConstantWork(final int ownerClass, final FieldRepr changedField, final boolean isRemoved, boolean accessChanged) {
-        final Future<Callbacks.ConstantAffection> future;
-        if (myConstantSearch == null) {
-          future = null;
+        if (myConstantSearches == null) {
+          myQueue.add(new Triple(ownerClass, changedField, null));
+          return;
         }
-        else {
-          final String className = myContext.getValue(ownerClass);
-          final String fieldName = myContext.getValue(changedField.name);
-          future = myConstantSearch.request(className.replace('/', '.'), fieldName, changedField.access, isRemoved, accessChanged);
+
+        final String className = myContext.getValue(ownerClass).replace('/', '.');
+        final String fieldName = myContext.getValue(changedField.name);
+
+        for (Callbacks.ConstantAffectionResolver constantSearch : myConstantSearches) {
+          Future<Callbacks.ConstantAffection> future = constantSearch.request(className, fieldName, changedField.access, isRemoved, accessChanged);
+          myQueue.add(new Triple(ownerClass, changedField, future));
         }
-        myQueue.add(new Triple(ownerClass, changedField, future));
       }
 
       boolean doWork(@NotNull final Collection<File> affectedFiles) {
@@ -1014,7 +1018,7 @@ public class Mappings {
             debug("Field: ", t.field.name);
 
             if (!affection.isKnown()) {
-              if (myConstantSearch != null) {
+              if (myConstantSearches != null) {
                 debug("No external dependency information available.");
               }
               else {
@@ -1090,7 +1094,7 @@ public class Mappings {
       this.myCompiledWithErrors = null;
       this.myAffectedFiles = null;
       this.myFilter = null;
-      this.myConstantSearch = null;
+      this.myConstantSearches = null;
 
       myDelayedWorks = null;
 
@@ -1111,7 +1115,7 @@ public class Mappings {
       this.myCompiledWithErrors = null;
       this.myAffectedFiles = null;
       this.myFilter = null;
-      this.myConstantSearch = null;
+      this.myConstantSearches = null;
 
       myDelayedWorks = null;
 
@@ -1127,7 +1131,7 @@ public class Mappings {
                          final Collection<File> compiledFiles,
                          final Collection<File> affectedFiles,
                          @NotNull final DependentFilesFilter filter,
-                         @Nullable final Callbacks.ConstantAffectionResolver constantSearch) {
+                         @Nullable final Collection<Callbacks.ConstantAffectionResolver> constantSearches) {
       delta.myRemovedFiles = removed;
 
       this.myDelta = delta;
@@ -1136,7 +1140,7 @@ public class Mappings {
       this.myCompiledWithErrors = compiledWithErrors;
       this.myAffectedFiles = affectedFiles;
       this.myFilter = filter;
-      this.myConstantSearch = constantSearch;
+      this.myConstantSearches = constantSearches;
 
       myDelayedWorks = new DelayedWorks();
 
@@ -1675,7 +1679,7 @@ public class Mappings {
 
         if (!f.isPrivate() && (f.access & DESPERATE_MASK) == DESPERATE_MASK && f.hasValue()) {
           debug("Field had value and was (non-private) final static => a switch to non-incremental mode requested");
-          if (myConstantSearch != null) {
+          if (myConstantSearches != null) {
             assert myDelayedWorks != null;
             myDelayedWorks.addConstantWork(it.name, f, true, false);
           }
@@ -1719,7 +1723,7 @@ public class Mappings {
 
           if (harmful || valueChanged || becameLessAccessible) {
             debug("Inline field changed it's access or value => a switch to non-incremental mode requested");
-            if (myConstantSearch != null) {
+            if (myConstantSearches != null) {
               assert myDelayedWorks != null;
               myDelayedWorks.addConstantWork(it.name, field, false, accessChanged);
             }
@@ -2489,8 +2493,8 @@ public class Mappings {
      final Collection<File> compiledFiles,
      final Collection<File> affectedFiles,
      @NotNull final DependentFilesFilter filter,
-     @Nullable final Callbacks.ConstantAffectionResolver constantSearch) {
-    return new Differential(delta, removed, filesToCompile, compiledWithErrors, compiledFiles, affectedFiles, filter, constantSearch).differentiate();
+     @Nullable final Collection<Callbacks.ConstantAffectionResolver> constantSearches) {
+    return new Differential(delta, removed, filesToCompile, compiledWithErrors, compiledFiles, affectedFiles, filter, constantSearches).differentiate();
   }
 
   private void cleanupBackDependency(final int className, @Nullable Set<UsageRepr.Usage> usages, final IntIntMultiMaplet buffer) {
