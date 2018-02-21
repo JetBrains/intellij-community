@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.ruby.RBundle;
 import org.jetbrains.plugins.ruby.gem.bundler.actions.AbstractBundlerAction;
 
 import java.util.stream.Stream;
@@ -27,7 +28,7 @@ public class RunAnythingBundlerActionGroup extends RunAnythingActionGroup {
   @NotNull
   @Override
   public String getTitle() {
-    return "Bundler actions";
+    return RBundle.message("run.anything.group.title.bundler");
   }
 
   @Override

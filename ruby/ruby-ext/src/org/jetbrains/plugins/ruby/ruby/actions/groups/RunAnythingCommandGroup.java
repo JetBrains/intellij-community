@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ruby.RBundle;
 import org.jetbrains.plugins.ruby.ruby.actions.*;
 
 public class RunAnythingCommandGroup extends RunAnythingGroup {
@@ -13,7 +14,7 @@ public class RunAnythingCommandGroup extends RunAnythingGroup {
   @NotNull
   @Override
   public String getTitle() {
-    return "Recent commands";
+    return RBundle.message("run.anything.group.title.recent");
   }
 
   @NotNull

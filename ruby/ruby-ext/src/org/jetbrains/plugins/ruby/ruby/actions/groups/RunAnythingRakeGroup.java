@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ruby.RBundle;
 import org.jetbrains.plugins.ruby.rails.facet.RailsFacetUtil;
 import org.jetbrains.plugins.ruby.tasks.rake.RakeAction;
 import org.jetbrains.plugins.ruby.tasks.rake.RakeTaskModuleCache;
@@ -37,7 +38,7 @@ public class RunAnythingRakeGroup extends RunAnythingActionGroup<RakeAction> {
   @NotNull
   @Override
   public String getTitle() {
-    return "Rake tasks";
+    return RBundle.message("run.anything.group.title.rake");
   }
 
   @Override

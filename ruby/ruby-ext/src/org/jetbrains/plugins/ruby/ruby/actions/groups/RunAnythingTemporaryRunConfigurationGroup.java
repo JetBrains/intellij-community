@@ -3,12 +3,13 @@ package org.jetbrains.plugins.ruby.ruby.actions.groups;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.ruby.RBundle;
 
 public class RunAnythingTemporaryRunConfigurationGroup extends RunAnythingRunConfigurationGroup {
   @NotNull
   @Override
   public String getTitle() {
-    return "Temporary Configurations";
+    return RBundle.message("run.anything.group.title.temporary");
   }
 
   @NotNull

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.ruby.ruby.actions.groups;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.ruby.RBundle;
 import org.jetbrains.plugins.ruby.rails.actions.generators.actions.GeneratorsActionGroup;
 
 public class RunAnythingGeneratorGroup extends RunAnythingActionGroup<AnAction> {
@@ -23,7 +24,7 @@ public class RunAnythingGeneratorGroup extends RunAnythingActionGroup<AnAction> 
   @NotNull
   @Override
   public String getTitle() {
-    return "Generators";
+    return RBundle.message("run.anything.group.title.generators");
   }
 
   @Override
