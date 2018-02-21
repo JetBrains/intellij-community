@@ -809,6 +809,7 @@
     </group>
 
     <group id="XDebugger.Frames.Tree.Popup">
+      <action id="Debugger.CopyStack" class="com.intellij.xdebugger.impl.frame.XDebuggerFramesList$CopyStackAction" text="Copy Stack"/>
     </group>
 
     <group id="XDebugger.Frames.TopToolbar">
