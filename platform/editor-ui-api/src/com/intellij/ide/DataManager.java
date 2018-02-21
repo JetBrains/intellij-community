@@ -38,12 +38,16 @@ public abstract class DataManager {
     return result;
   }
 
+  /**
+   * @return {@link DataContext} constructed by the specified {@code component}
+   */
   @NotNull
   public abstract Promise<DataContext> getDataContextFromFocusAsync();
 
   /**
-   * @return {@link DataContext} constructed by the specified {@code component}
+   * @deprecated Use {@link #getDataContextFromFocusAsync()}
    */
+  @Deprecated
   public abstract DataContext getDataContext(Component component);
 
   /**
