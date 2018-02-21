@@ -681,6 +681,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  // PY-18629
+  public void testPreferImportedModuleOverNamespacePackage() {
+    doMultiFileTest();
+  }
+
   // PY-22221
   public void testFunctionInIgnoredIdentifiers() {
     myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
