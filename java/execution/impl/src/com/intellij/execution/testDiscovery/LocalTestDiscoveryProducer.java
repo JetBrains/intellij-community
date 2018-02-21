@@ -18,23 +18,14 @@ public class LocalTestDiscoveryProducer implements TestDiscoveryProducer {
   public MultiMap<String, String> getDiscoveredTests(@NotNull Project project,
                                                      @NotNull String classFQName,
                                                      @NotNull String methodName,
-                                                     @NotNull String frameworkId) {
+                                                     byte frameworkId) {
     try {
-      TestDiscoveryIndex discoveryIndex = TestDiscoveryIndex.getInstance(project);
-      Collection<String> testsByMethodName = discoveryIndex.getTestsByMethodName(classFQName, methodName, frameworkId);
-      if (testsByMethodName != null) {
-        // todo[batkovich]: filter by framework id
-        MultiMap<String, String> result = new MultiMap<>();
-        testsByMethodName.stream()
-                         .map(pattern -> StringUtil.split(pattern, "-")).filter(split -> split.size() == 2)
-                         .forEach(split -> result.putValue(split.get(0), split.get(1)));
-        return result;
-      }
+      return TestDiscoveryIndex.getInstance(project).getTestsByMethodName(classFQName, methodName, frameworkId);
     }
-    catch (IOException io) {
-      TestDiscoveryProducer.LOG.warn(io);
+    catch (IOException e) {
+      TestDiscoveryProducer.LOG.error(e);
+      return MultiMap.empty();
     }
-    return MultiMap.empty();
   }
 
   @Override

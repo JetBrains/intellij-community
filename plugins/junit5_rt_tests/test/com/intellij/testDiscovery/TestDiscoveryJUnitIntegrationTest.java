@@ -23,6 +23,7 @@ import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
@@ -87,11 +88,8 @@ public class TestDiscoveryJUnitIntegrationTest extends JUnitAbstractIntegrationT
   }
 
   private void assertTestDiscoveryIndex(String className, String methodName, Pair<String, String>... expectedTests) throws IOException {
-    Collection<String> rawActualTests = TestDiscoveryIndex.getInstance(myProject).getTestsByMethodName(className, methodName, "j");
-    Set<Pair<String, String>> actualTests = rawActualTests.stream().map(test -> {
-      int separatorIndex = test.lastIndexOf('-');
-      return Pair.create(test.substring(0, separatorIndex), test.substring(separatorIndex + 1));
-    }).collect(Collectors.toSet());
+    MultiMap<String, String> rawActualTests = TestDiscoveryIndex.getInstance(myProject).getTestsByMethodName(className, methodName, JUnitConfiguration.FRAMEWORK_ID);
+    Set<Pair<String, String>> actualTests = rawActualTests.entrySet().stream().flatMap(e -> e.getValue().stream().map(m -> Pair.create(e.getKey(), m))).collect(Collectors.toSet());
     assertEquals(ContainerUtil.newHashSet(expectedTests), actualTests);
   }
 

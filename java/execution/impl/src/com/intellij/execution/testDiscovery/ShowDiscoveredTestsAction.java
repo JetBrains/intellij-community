@@ -221,9 +221,9 @@ public class ShowDiscoveredTestsAction extends AnAction {
         String methodName = methodFqnName.second;
 
         for (TestDiscoveryConfigurationProducer producer : getProducers(project)) {
-          String frameworkPrefix =
-            ((JavaTestConfigurationBase)producer.getConfigurationFactory().createTemplateConfiguration(project)).getFrameworkPrefix();
-          TestDiscoveryProducer.consumeDiscoveredTests(project, fqn, methodName, frameworkPrefix, (testClass, testMethod) -> {
+          byte frameworkId =
+            ((JavaTestConfigurationBase)producer.getConfigurationFactory().createTemplateConfiguration(project)).getTestFrameworkId();
+          TestDiscoveryProducer.consumeDiscoveredTests(project, fqn, methodName, frameworkId, (testClass, testMethod) -> {
             PsiMethod psiMethod = ReadAction.compute(() -> {
               PsiClass cc = testClass == null ? null : javaFacade.findClass(testClass, scope);
               return cc == null ? null : ArrayUtil.getFirstElement(cc.findMethodsByName(testMethod, false));

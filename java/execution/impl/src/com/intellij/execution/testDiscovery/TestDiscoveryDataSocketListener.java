@@ -22,8 +22,7 @@ class TestDiscoveryDataSocketListener {
 
   @Nullable
   private final String myModuleName;
-  @NotNull
-  private final String myFrameworkPrefix;
+  private final byte myFrameworkId;
   private volatile boolean myClosed;
   private final ServerSocket myServer;
   private final int myPort;
@@ -31,10 +30,10 @@ class TestDiscoveryDataSocketListener {
 
   public TestDiscoveryDataSocketListener(@NotNull Project project,
                                          @Nullable String moduleName,
-                                         @NotNull String frameworkPrefix) throws IOException {
+                                         byte frameworkPrefix) throws IOException {
     myTestDiscoveryIndex = TestDiscoveryIndex.getInstance(project);
     myModuleName = moduleName;
-    myFrameworkPrefix = frameworkPrefix;
+    myFrameworkId = frameworkPrefix;
     myServer = new ServerSocket(0);
     myPort = myServer.getLocalPort();
 
@@ -59,7 +58,8 @@ class TestDiscoveryDataSocketListener {
 
       try {
         InputStream testDataStream = socket.getInputStream();
-        IdeaTestDiscoveryProtocolReader protocolReader = new IdeaTestDiscoveryProtocolReader(myTestDiscoveryIndex, myModuleName, myFrameworkPrefix);
+        IdeaTestDiscoveryProtocolReader protocolReader = new IdeaTestDiscoveryProtocolReader(myTestDiscoveryIndex, myModuleName,
+                                                                                             myFrameworkId);
         TestDiscoveryProtocolUtil.readSequentially(testDataStream, protocolReader);
       }
       catch (IOException e) {

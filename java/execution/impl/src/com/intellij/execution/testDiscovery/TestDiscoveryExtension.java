@@ -139,19 +139,19 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     final String tracesFilePath = getTraceFilePath(configuration);
     final TestDiscoveryIndex testDiscoveryIndex = TestDiscoveryIndex.getInstance(configuration.getProject());
     String moduleName = getConfigurationModuleName(configuration);
-    String frameworkPrefix = configuration.getFrameworkPrefix();
-    processTracesFile(tracesFilePath, moduleName, frameworkPrefix, testDiscoveryIndex);
+    byte frameworkId = configuration.getTestFrameworkId();
+    processTracesFile(tracesFilePath, moduleName, frameworkId, testDiscoveryIndex);
   }
 
   @SuppressWarnings("WeakerAccess")  // called via reflection from com.intellij.InternalTestDiscoveryListener.flushCurrentTraces()
   public static void processTracesFile(String tracesFilePath,
                                        String moduleName,
-                                       String frameworkPrefix,
+                                       byte frameworkId,
                                        TestDiscoveryIndex discoveryIndex) {
     final File tracesFile = new File(tracesFilePath);
     synchronized (ourTracesLock) {
       try {
-        TestDiscoveryProtocolUtil.readFile(tracesFile, new IdeaTestDiscoveryProtocolReader(discoveryIndex, moduleName, frameworkPrefix));
+        TestDiscoveryProtocolUtil.readFile(tracesFile, new IdeaTestDiscoveryProtocolReader(discoveryIndex, moduleName, frameworkId));
       }
       catch (IOException e) {
         LOG.error("Can not load " + tracesFilePath, e);
@@ -174,7 +174,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
         JavaTestConfigurationBase javaTestConfigurationBase = (JavaTestConfigurationBase)configuration;
         listener = new TestDiscoveryDataSocketListener(configuration.getProject(),
                                                        getConfigurationModuleName(javaTestConfigurationBase),
-                                                       javaTestConfigurationBase.getFrameworkPrefix());
+                                                       javaTestConfigurationBase.getTestFrameworkId());
         configuration.putUserData(SOCKET_LISTENER_KEY, listener);
       } catch (IOException e) {
         LOG.error(e);

@@ -61,8 +61,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
       try {
         final Project project = configuration.getProject();
         final TestDiscoveryIndex testDiscoveryIndex = TestDiscoveryIndex.getInstance(project);
-        final Collection<String> testsByMethodName = testDiscoveryIndex.getTestsByMethodName(position.first, position.second, configuration.getFrameworkPrefix());
-        if (ContainerUtil.isEmpty(testsByMethodName)) {
+        if (testDiscoveryIndex.getTestsByMethodName(position.first, position.second, configuration.getTestFrameworkId()).isEmpty()) {
           return false;
         }
 
@@ -90,7 +89,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     //potentially this set won't be big, it reflects modules from where user starts his tests
     final Collection<String> modules = testDiscoveryIndex.getTestModulesByMethodName(position.first,
                                                                                      position.second,
-                                                                                     configuration.getFrameworkPrefix());
+                                                                                     configuration.getTestFrameworkId());
     if (modules.isEmpty()) return null;
 
     final List<Module> survivedModules = new ArrayList<>();

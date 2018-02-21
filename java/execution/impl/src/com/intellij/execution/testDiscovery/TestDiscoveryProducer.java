@@ -24,7 +24,7 @@ public interface TestDiscoveryProducer {
   MultiMap<String, String> getDiscoveredTests(@NotNull Project project,
                                               @NotNull String classFQName,
                                               @NotNull String methodName,
-                                              @NotNull String frameworkId);
+                                              byte frameworkId);
 
   boolean isRemote();
 
@@ -33,7 +33,7 @@ public interface TestDiscoveryProducer {
   static void consumeDiscoveredTests(@NotNull Project project,
                                      @NotNull String classFQName,
                                      @NotNull String methodName,
-                                     @NotNull String frameworkId,
+                                     byte frameworkId,
                                      @NotNull BiConsumer<String, String> consumer) {
     for (TestDiscoveryProducer producer : EP.getExtensions()) {
       for (Map.Entry<String, Collection<String>> entry : producer.getDiscoveredTests(project, classFQName, methodName, frameworkId)

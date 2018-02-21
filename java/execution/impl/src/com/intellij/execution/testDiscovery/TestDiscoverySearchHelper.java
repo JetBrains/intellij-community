@@ -27,10 +27,10 @@ public class TestDiscoverySearchHelper {
   public static Set<String> search(final Project project,
                                    final Pair<String, String> position,
                                    final String changeList,
-                                   final String frameworkPrefix) {
+                                   byte frameworkId) {
     final Set<String> patterns = new LinkedHashSet<>();
     if (position != null) {
-      collectPatterns(project, patterns, position.first, position.second, frameworkPrefix);
+      collectPatterns(project, patterns, position.first, position.second, frameworkId);
     }
     final List<VirtualFile> files = getAffectedFiles(changeList, project);
     final PsiManager psiManager = PsiManager.getInstance(project);
@@ -54,7 +54,7 @@ public class TestDiscoverySearchHelper {
               methods.add(containingMethod);
             }
             for (PsiMethod changedMethod : methods) {
-              final LinkedHashSet<String> detectedPatterns = position == null ? collectPatterns(changedMethod, frameworkPrefix) : null;
+              final LinkedHashSet<String> detectedPatterns = position == null ? collectPatterns(changedMethod, frameworkId) : null;
               if (detectedPatterns != null) {
                 patterns.addAll(detectedPatterns);
               }
@@ -65,7 +65,7 @@ public class TestDiscoverySearchHelper {
                 try {
                   if (classQualifiedName != null &&
                       (position == null && TestFrameworks.detectFramework(containingClass) != null ||
-                       position != null && !discoveryIndex.hasTestTrace(classQualifiedName, changedMethodName, frameworkPrefix))) {
+                       position != null && !discoveryIndex.hasTestTrace(classQualifiedName, changedMethodName, frameworkId))) {
                     patterns.add(classQualifiedName + "," + changedMethodName);
                   }
                 }
@@ -86,7 +86,7 @@ public class TestDiscoverySearchHelper {
                                       @NotNull Set<String> patterns,
                                       @NotNull String classFQName,
                                       @NotNull String methodName,
-                                      @NotNull String frameworkId) {
+                                      byte frameworkId) {
     TestDiscoveryProducer.consumeDiscoveredTests(project, classFQName, methodName, frameworkId, (c, m) -> patterns.add(c + "," + m));
   }
 
@@ -115,7 +115,7 @@ public class TestDiscoverySearchHelper {
   }
 
   @NotNull
-  private static LinkedHashSet<String> collectPatterns(PsiMethod psiMethod, String frameworkId) {
+  private static LinkedHashSet<String> collectPatterns(PsiMethod psiMethod, byte frameworkId) {
     LinkedHashSet<String> patterns = new LinkedHashSet<>();
     final PsiClass containingClass = psiMethod.getContainingClass();
     if (containingClass != null) {
