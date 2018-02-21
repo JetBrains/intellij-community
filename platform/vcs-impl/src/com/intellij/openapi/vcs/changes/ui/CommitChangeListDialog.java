@@ -305,6 +305,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myCommitMessageArea.setChangeList(changeList);
     }
     else {
+      LineStatusTrackerManager.getInstanceImpl(myProject).resetExcludedFromCommitMarkers();
+
       MultipleLocalChangeListsBrowser browser = new MultipleLocalChangeListsBrowser(project, true, true, myShowVcsCommit);
       myBrowser = browser;
 
@@ -328,8 +330,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       browser.getViewer().addSelectionListener(() -> SwingUtilities.invokeLater(() -> changeDetails()));
       browser.getViewer().setKeepTreeState(true);
     }
-
-    LineStatusTrackerManager.getInstanceImpl(myProject).resetExcludedFromCommitMarkers();
 
     myChangesInfoCalculator = new ChangeInfoCalculator();
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
