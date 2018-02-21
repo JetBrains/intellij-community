@@ -72,7 +72,7 @@ private fun promise(state: AsyncPromiseTest2.State, `when`: When): AsyncPromise<
   }
 
   log("add processing handlers")
-  promise.processed { log("promise is processed") }
+  promise.onProcessed { log("promise is processed") }
   try {
     log("wait for task completion")
     latch.await(100, TimeUnit.MILLISECONDS)

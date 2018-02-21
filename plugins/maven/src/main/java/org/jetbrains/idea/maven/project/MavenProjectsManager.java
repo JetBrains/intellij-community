@@ -1158,7 +1158,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     else {
       MavenUtil.runInBackground(myProject, ProjectBundle.message("maven.project.importing"), false, new MavenTask() {
         @Override
-        public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
+        public void run(MavenProgressIndicator indicator) {
           r.run();
         }
       }).waitFor();

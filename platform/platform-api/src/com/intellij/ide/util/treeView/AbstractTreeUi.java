@@ -2245,7 +2245,7 @@ public class AbstractTreeUi {
       final ActionCallback update = new ActionCallback();
       if (needToUpdate) {
         update(childDescr, false)
-          .done(changes -> {
+          .onSuccess(changes -> {
             loadedChildren.putDescriptor(child, childDescr, changes);
             update.setDone();
           });
@@ -3004,108 +3004,109 @@ public class AbstractTreeUi {
     final AsyncPromise<Void> result = new AsyncPromise<>();
     final Ref<NodeDescriptor> childDesc = new Ref<>(childDescriptor);
 
-    update.done(isChanged -> {
-      final AtomicBoolean changes = new AtomicBoolean(isChanged);
-      final AtomicBoolean forceRemapping = new AtomicBoolean();
-      final Ref<Object> newElement = new Ref<>(getElementFromDescriptor(childDesc.get()));
+    update
+      .onSuccess(isChanged -> {
+        final AtomicBoolean changes = new AtomicBoolean(isChanged);
+        final AtomicBoolean forceRemapping = new AtomicBoolean();
+        final Ref<Object> newElement = new Ref<>(getElementFromDescriptor(childDesc.get()));
 
-      final Integer index = newElement.get() == null ? null : elementToIndexMap.getValue(getElementFromDescriptor(childDesc.get()));
-      Promise<Boolean> promise;
-      if (index == null) {
-        promise = Promise.resolve(false);
-      }
-      else {
-        final Object elementFromMap = elementToIndexMap.getKey(index);
-        if (elementFromMap != newElement.get() && elementFromMap.equals(newElement.get())) {
-          if (isInStructure(elementFromMap) && isInStructure(newElement.get())) {
-            final AsyncPromise<Boolean> updateIndexDone = new AsyncPromise<>();
-            promise = updateIndexDone;
-            NodeDescriptor parentDescriptor = getDescriptorFrom(parentNode);
-            if (parentDescriptor != null) {
-              childDesc.set(getTreeStructure().createDescriptor(elementFromMap, parentDescriptor));
-              NodeDescriptor oldDesc = getDescriptorFrom(childNode);
-              if (isValid(oldDesc)) {
-                childDesc.get().applyFrom(oldDesc);
+        final Integer index = newElement.get() == null ? null : elementToIndexMap.getValue(getElementFromDescriptor(childDesc.get()));
+        Promise<Boolean> promise;
+        if (index == null) {
+          promise = Promise.resolve(false);
+        }
+        else {
+          final Object elementFromMap = elementToIndexMap.getKey(index);
+          if (elementFromMap != newElement.get() && elementFromMap.equals(newElement.get())) {
+            if (isInStructure(elementFromMap) && isInStructure(newElement.get())) {
+              final AsyncPromise<Boolean> updateIndexDone = new AsyncPromise<>();
+              promise = updateIndexDone;
+              NodeDescriptor parentDescriptor = getDescriptorFrom(parentNode);
+              if (parentDescriptor != null) {
+                childDesc.set(getTreeStructure().createDescriptor(elementFromMap, parentDescriptor));
+                NodeDescriptor oldDesc = getDescriptorFrom(childNode);
+                if (isValid(oldDesc)) {
+                  childDesc.get().applyFrom(oldDesc);
+                }
+
+                childNode.setUserObject(childDesc.get());
+                newElement.set(elementFromMap);
+                forceRemapping.set(true);
+                update(childDesc.get(), false)
+                  .onSuccess(isChanged1 -> {
+                    changes.set(isChanged1);
+                    updateIndexDone.setResult(isChanged1);
+                  });
               }
-
-              childNode.setUserObject(childDesc.get());
-              newElement.set(elementFromMap);
-              forceRemapping.set(true);
-              update(childDesc.get(), false)
-                .done(isChanged1 -> {
-                  changes.set(isChanged1);
-                  updateIndexDone.setResult(isChanged1);
-                });
+              // todo why we don't process promise here?
             }
-            // todo why we don't process promise here?
+            else {
+              promise = Promise.resolve(changes.get());
+            }
           }
           else {
             promise = Promise.resolve(changes.get());
           }
-        }
-        else {
-          promise = Promise.resolve(changes.get());
+
+          promise
+            .onSuccess(new TreeConsumer<Boolean>("AbstractTreeUi.processExistingNode: on done index updating after update") {
+              @Override
+              public void perform() {
+                if (childDesc.get().getIndex() != index.intValue()) {
+                  changes.set(true);
+                }
+                childDesc.get().setIndex(index.intValue());
+              }
+            });
         }
 
         promise
-          .onSuccess(new TreeConsumer<Boolean>("AbstractTreeUi.processExistingNode: on done index updating after update") {
+          .onSuccess(new TreeConsumer<Boolean>("AbstractTreeUi.processExistingNode: on done index updating") {
             @Override
             public void perform() {
-              if (childDesc.get().getIndex() != index.intValue()) {
-                changes.set(true);
-              }
-              childDesc.get().setIndex(index.intValue());
-            }
-          });
-      }
-
-      promise
-        .onSuccess(new TreeConsumer<Boolean>("AbstractTreeUi.processExistingNode: on done index updating") {
-          @Override
-          public void perform() {
-            if (!oldElement.equals(newElement.get()) || forceRemapping.get()) {
-              removeMapping(oldElement, childNode, newElement.get());
-              Object newE = newElement.get();
-              if (!isNodeNull(newE)) {
-                createMapping(newE, childNode);
-              }
-              NodeDescriptor parentDescriptor = getDescriptorFrom(parentNode);
-              if (parentDescriptor != null) {
-                parentDescriptor.setChildrenSortingStamp(-1);
-            }
-          }
-
-          if (index == null) {
-            int selectedIndex = -1;
-            if (TreeBuilderUtil.isNodeOrChildSelected(myTree, childNode)) {
-              selectedIndex = parentNode.getIndex(childNode);
-            }
-
-            if (childNode.getParent() instanceof DefaultMutableTreeNode) {
-              final DefaultMutableTreeNode parent = (DefaultMutableTreeNode)childNode.getParent();
-              if (myTree.isExpanded(new TreePath(parent.getPath()))) {
-                if (parent.getChildCount() == 1 && parent.getChildAt(0) == childNode) {
-                  insertLoadingNode(parent, false);
+              if (!oldElement.equals(newElement.get()) || forceRemapping.get()) {
+                removeMapping(oldElement, childNode, newElement.get());
+                Object newE = newElement.get();
+                if (!isNodeNull(newE)) {
+                  createMapping(newE, childNode);
+                }
+                NodeDescriptor parentDescriptor = getDescriptorFrom(parentNode);
+                if (parentDescriptor != null) {
+                  parentDescriptor.setChildrenSortingStamp(-1);
                 }
               }
+
+              if (index == null) {
+                int selectedIndex = -1;
+                if (TreeBuilderUtil.isNodeOrChildSelected(myTree, childNode)) {
+                  selectedIndex = parentNode.getIndex(childNode);
+                }
+
+                if (childNode.getParent() instanceof DefaultMutableTreeNode) {
+                  final DefaultMutableTreeNode parent = (DefaultMutableTreeNode)childNode.getParent();
+                  if (myTree.isExpanded(new TreePath(parent.getPath()))) {
+                    if (parent.getChildCount() == 1 && parent.getChildAt(0) == childNode) {
+                      insertLoadingNode(parent, false);
+                    }
+                  }
+                }
+
+                Object disposedElement = getElementFor(childNode);
+
+                removeNodeFromParent(childNode, selectedIndex >= 0);
+                disposeNode(childNode);
+
+                adjustSelectionOnChildRemove(parentNode, selectedIndex, disposedElement);
+                result.setResult(null);
+              }
+              else {
+                elementToIndexMap.remove(getElementFromDescriptor(childDesc.get()));
+                updateNodeChildren(childNode, pass, null, false, canSmartExpand, forceUpdate, true, true)
+                  .doWhenDone(() -> result.setResult(null));
+              }
             }
-
-            Object disposedElement = getElementFor(childNode);
-
-            removeNodeFromParent(childNode, selectedIndex >= 0);
-            disposeNode(childNode);
-
-            adjustSelectionOnChildRemove(parentNode, selectedIndex, disposedElement);
-            result.setResult(null);
-          }
-          else {
-            elementToIndexMap.remove(getElementFromDescriptor(childDesc.get()));
-            updateNodeChildren(childNode, pass, null, false, canSmartExpand, forceUpdate, true, true)
-              .doWhenDone(() -> result.setResult(null));
-          }
-        }
+          });
       });
-    });
     return result;
   }
 

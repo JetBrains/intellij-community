@@ -435,8 +435,10 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         }
       }
     };
-    myAsyncTreeModel.accept(visitor).thenAsync(fallback).processed(result);
-    return result;
+
+    return myAsyncTreeModel
+      .accept(visitor)
+      .thenAsync(fallback);
   }
 
   @TestOnly

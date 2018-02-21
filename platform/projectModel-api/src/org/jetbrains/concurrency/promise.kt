@@ -88,7 +88,9 @@ inline fun Promise<*>.doneRun(crossinline handler: () -> Unit) = onSuccess { han
 inline fun <T> Promise<*>.thenRun(crossinline handler: () -> T): Promise<T> = (this as Promise<Any?>).then({ handler() })
 
 @Suppress("UNCHECKED_CAST")
-inline fun Promise<*>.processedRun(crossinline handler: () -> Unit): Promise<*> = (this as Promise<Any?>).processed({ handler() })
+inline fun Promise<*>.processedRun(crossinline handler: () -> Unit): Promise<*> {
+  return (this as Promise<Any?>).onProcessed({ handler() })
+}
 
 
 inline fun <T, SUB_RESULT> Promise<T>.thenAsync(node: Obsolescent, crossinline handler: (T) -> Promise<SUB_RESULT>) = thenAsync(object : ValueNodeAsyncFunction<T, SUB_RESULT>(node) {

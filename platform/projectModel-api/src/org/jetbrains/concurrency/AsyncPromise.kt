@@ -142,7 +142,7 @@ open class AsyncPromise<T : Any?> : InternalPromiseUtil.BasePromise<T>(), Cancel
     var value = valueRef.get()
     if (value == null) {
       val latch = CountDownLatch(1)
-      processed { latch.countDown() }
+      onProcessed { latch.countDown() }
       if (timeout == -1) {
         latch.await()
       }
