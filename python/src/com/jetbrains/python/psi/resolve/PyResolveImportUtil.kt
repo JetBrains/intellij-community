@@ -64,16 +64,6 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
     return emptyList()
   }
 
-  val qualifier = name.removeLastComponent()
-  val nameWithoutQualifier = name.removeHead(name.componentCount - 1)
-  val resultsFromRoots = if (qualifier.componentCount != 0) {
-    findFirstResults(resolveQualifiedName(qualifier, context), context.module)
-      .map { it as? PsiDirectory }
-      .flatMap { resolveModuleAt(nameWithoutQualifier, it, context) }
-  } else {
-    resultsFromRoots(name, context)
-  }
-
   val relativeDirectory = context.containingDirectory
   val relativeResults = resolveWithRelativeLevel(name, context)
   val foundRelativeImport = relativeDirectory != null &&
@@ -92,7 +82,7 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
 
   val foreignResults = foreignResults(name, context)
   val pythonResults = listOf(relativeResults,
-                             resultsFromRoots,
+                             resolveModuleFromRoots(name, context),
                              relativeResultsFromSkeletons(name, context)).flatten().distinct()
   val allResults = pythonResults + foreignResults
   val results = if (name.componentCount > 0) findFirstResults(pythonResults, context.module) + foreignResults else allResults
@@ -102,6 +92,21 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
   }
 
   return results
+}
+
+/**
+ * Resolves a qualified [name] to the list of packages and modules with Python semantics according to the [context].
+ */
+private fun resolveModuleFromRoots(name: QualifiedName, context: PyQualifiedNameResolveContext): List<PsiElement> {
+  val qualifier = name.removeLastComponent()
+  val nameWithoutQualifier = name.removeHead(name.componentCount - 1)
+  return if (qualifier.componentCount != 0) {
+    findFirstResults(resolveQualifiedName(qualifier, context), context.module)
+      .map { it as? PsiDirectory }
+      .flatMap { resolveModuleAt(nameWithoutQualifier, it, context) }
+  } else {
+    resultsFromRoots(name, context)
+  }
 }
 
 /**
@@ -258,6 +263,12 @@ private fun resolveWithRelativeLevel(name: QualifiedName, context : PyQualifiedN
   return emptyList()
 }
 
+/**
+ * Collects resolve results from all roots available.
+ *
+ * The retuning {@code List<PsiElement>} contains all elements {@code name} references
+ * and does not take into account root order.
+ */
 private fun resultsFromRoots(name: QualifiedName, context: PyQualifiedNameResolveContext): List<PsiElement> {
   if (context.withoutRoots) {
     return emptyList()
