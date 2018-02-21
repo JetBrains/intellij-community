@@ -367,7 +367,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     String messageFile = "message.txt";
     touch(messageFile, "");
 
-    int commitCount = 100;
+    int commitCount = 20;
     for (int i = 0; i < commitCount; i++) {
       echo("file.txt", "content number " + i);
       add(repo);
