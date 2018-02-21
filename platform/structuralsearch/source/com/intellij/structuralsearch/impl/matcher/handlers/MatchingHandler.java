@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
@@ -172,8 +172,8 @@ public abstract class MatchingHandler {
           // passed of elements and does not found the match
           if (startMatching == matchedNodes.current()) {
             final boolean result = validateSatisfactionOfHandlers(patternNodes,context);
-            if (result && matchedElements != null && context.getMatchedElementsListener() != null) {
-              context.getMatchedElementsListener().matchedElements(matchedElements);
+            if (result && matchedElements != null) {
+              context.notifyMatchedElements(matchedElements);
             }
             return result;
           }
@@ -185,8 +185,8 @@ public abstract class MatchingHandler {
       }
 
       final boolean result = validateSatisfactionOfHandlers(patternNodes, context);
-      if (result && matchedElements != null && context.getMatchedElementsListener() != null) {
-        context.getMatchedElementsListener().matchedElements(matchedElements);
+      if (result && matchedElements != null) {
+        context.notifyMatchedElements(matchedElements);
       }
       return result;
     } finally {

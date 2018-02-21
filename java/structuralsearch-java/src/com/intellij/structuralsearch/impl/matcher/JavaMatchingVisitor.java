@@ -146,16 +146,15 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       }
 
       if (!annotationSet.isEmpty()) {
-        final MatchContext.MatchedElementsListener oldListener = myMatchingVisitor.getMatchContext().getMatchedElementsListener();
+        final PsiAnnotation[] otherAnnotations = list2.getAnnotations();
+        final List<PsiElement> unmatchedElements = new SmartList<>(otherAnnotations);
+        myMatchingVisitor.getMatchContext().pushMatchedElementsListener(elements -> unmatchedElements.removeAll(elements));
         try {
-          final PsiAnnotation[] otherAnnotations = list2.getAnnotations();
-          final List<PsiElement> unmatchedElements = new SmartList<>(otherAnnotations);
-          myMatchingVisitor.getMatchContext().setMatchedElementsListener(elements -> unmatchedElements.removeAll(elements));
           myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(annotationSet.toArray(PsiAnnotation.EMPTY_ARRAY), otherAnnotations));
           list2.putUserData(GlobalMatchingVisitor.UNMATCHED_ELEMENTS_KEY, unmatchedElements);
         }
         finally {
-          myMatchingVisitor.getMatchContext().setMatchedElementsListener(oldListener);
+          myMatchingVisitor.getMatchContext().popMatchedElementsListener();
         }
       }
     }
@@ -399,11 +398,11 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   private boolean compareClasses(final PsiClass clazz, final PsiClass clazz2) {
     final PsiClass saveClazz = this.myClazz;
     this.myClazz = clazz2;
-    final JavaCompiledPattern javaPattern = (JavaCompiledPattern)myMatchingVisitor.getMatchContext().getPattern();
+    final MatchContext context = myMatchingVisitor.getMatchContext();
+    final JavaCompiledPattern javaPattern = (JavaCompiledPattern)context.getPattern();
 
     final Set<PsiElement> matchedElements = new THashSet<>();
-    final MatchContext.MatchedElementsListener oldListener = myMatchingVisitor.getMatchContext().getMatchedElementsListener();
-    myMatchingVisitor.getMatchContext().setMatchedElementsListener(es -> matchedElements.addAll(es));
+    context.pushMatchedElementsListener(elements -> matchedElements.addAll(elements));
     try {
       final boolean templateIsInterface = clazz.isInterface();
       if (templateIsInterface && !clazz2.isInterface()) return false;
@@ -484,14 +483,14 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       MatchingHandler unmatchedSubstitutionHandler = null;
       for (PsiElement element = clazz.getFirstChild(); element != null; element = element.getNextSibling()) {
         if (element instanceof PsiTypeElement && element.getNextSibling() instanceof PsiErrorElement) {
-          unmatchedSubstitutionHandler = myMatchingVisitor.getMatchContext().getPattern().getHandler(element);
+          unmatchedSubstitutionHandler = javaPattern.getHandler(element);
           break;
         }
       }
       if (unmatchedSubstitutionHandler instanceof SubstitutionHandler) {
         final SubstitutionHandler handler = (SubstitutionHandler)unmatchedSubstitutionHandler;
         for (PsiElement element : unmatchedElements) {
-          handler.handle(element, myMatchingVisitor.getMatchContext());
+          handler.handle(element, context);
         }
       } else {
         clazz2.putUserData(GlobalMatchingVisitor.UNMATCHED_ELEMENTS_KEY, unmatchedElements);
@@ -501,7 +500,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
     finally {
       this.myClazz = saveClazz;
-      myMatchingVisitor.getMatchContext().setMatchedElementsListener(oldListener);
+      context.popMatchedElementsListener();
     }
   }
 
@@ -1309,7 +1308,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiCatchSection[] catches2 = try2.getCatchSections();
     final PsiCodeBlock finally2 = try2.getFinallyBlock();
 
-    if (!myMatchingVisitor.getMatchContext().getOptions().isLooseMatching() &&
+    final MatchContext context = myMatchingVisitor.getMatchContext();
+    if (!context.getOptions().isLooseMatching() &&
         ((catches1.length == 0 && catches2.length != 0) ||
          (finally1 == null && finally2 != null) ||
          (resourceList1 == null && resourceList2 != null)) ||
@@ -1337,8 +1337,12 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       }
 
       ContainerUtil.addAll(unmatchedElements, catches2);
-      myMatchingVisitor.getMatchContext().setMatchedElementsListener(matchedElements -> unmatchedElements.removeAll(matchedElements));
-      myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(catches1, catches2));
+      context.pushMatchedElementsListener(elements -> unmatchedElements.removeAll(elements));
+      try {
+        myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(catches1, catches2));
+      } finally {
+        context.popMatchedElementsListener();
+      }
 
       if (finally1 != null) {
         myMatchingVisitor.setResult(myMatchingVisitor.matchSons(finally1, finally2));
