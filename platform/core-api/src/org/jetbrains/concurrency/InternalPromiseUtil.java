@@ -2,9 +2,13 @@
 package org.jetbrains.concurrency;
 
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Only internal usage.
@@ -72,6 +76,26 @@ public class InternalPromiseUtil {
     @NotNull
     public Promise.State getState() {
       return error == null ? Promise.State.FULFILLED : Promise.State.REJECTED;
+    }
+
+    public boolean isCancelled() {
+      return error == OBSOLETE_ERROR;
+    }
+
+    @Nullable
+    public T getResultOrThrowError() throws ExecutionException, TimeoutException {
+      if (error == null) {
+        return result;
+      }
+
+      ExceptionUtil.rethrowUnchecked(error);
+      if (error instanceof ExecutionException) {
+        throw ((ExecutionException)error);
+      }
+      if (error instanceof TimeoutException) {
+        throw ((TimeoutException)error);
+      }
+      throw new ExecutionException(error);
     }
 
     @Override

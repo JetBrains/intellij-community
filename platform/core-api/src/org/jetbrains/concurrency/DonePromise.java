@@ -2,11 +2,10 @@
 package org.jetbrains.concurrency;
 
 import com.intellij.openapi.util.Getter;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.InternalPromiseUtil.*;
+import org.jetbrains.concurrency.InternalPromiseUtil.PromiseValue;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -14,7 +13,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
-import static org.jetbrains.concurrency.InternalPromiseUtil.*;
+import static org.jetbrains.concurrency.InternalPromiseUtil.CANCELLED_PROMISE;
+import static org.jetbrains.concurrency.InternalPromiseUtil.isHandlerObsolete;
 
 class DonePromise<T> implements Getter<T>, Promise<T>, Future<T>, InternalPromiseUtil.PromiseImpl<T> {
   private final PromiseValue<T> value;
@@ -102,19 +102,7 @@ class DonePromise<T> implements Getter<T>, Promise<T>, Future<T>, InternalPromis
   @Nullable
   @Override
   public T blockingGet(int timeout, @NotNull TimeUnit timeUnit) throws ExecutionException, TimeoutException {
-    Throwable error = value.error;
-    if (error == null) {
-      return value.result;
-    }
-
-    ExceptionUtil.rethrowUnchecked(error);
-    if (error instanceof ExecutionException) {
-      throw ((ExecutionException)error);
-    }
-    if (error instanceof TimeoutException) {
-      throw ((TimeoutException)error);
-    }
-    throw new ExecutionException(error);
+    return value.getResultOrThrowError();
   }
 
   @Override
@@ -134,7 +122,7 @@ class DonePromise<T> implements Getter<T>, Promise<T>, Future<T>, InternalPromis
 
   @Override
   public boolean isCancelled() {
-    return value.error == OBSOLETE_ERROR;
+    return value.isCancelled();
   }
 
   @Override

@@ -38,10 +38,7 @@ open class AsyncPromise<T : Any?> : Promise<T>, Getter<T>, CancellablePromise<T>
     return this
   }
 
-  override fun get(): T? {
-    val value = valueRef.get()
-    return if (value != null && value.error == null) value.result else null
-  }
+  override fun get() = valueRef.get()?.resultOrThrowError
 
   override fun <SUB_RESULT> then(handler: Function<in T, out SUB_RESULT>): Promise<SUB_RESULT> {
     val value = valueRef.get()
@@ -49,7 +46,7 @@ open class AsyncPromise<T : Any?> : Promise<T>, Getter<T>, CancellablePromise<T>
     when {
       value == null -> {
       }
-      value.error == null -> return resolvedPromise(handler.`fun`(value.result))
+      value.error == null -> return Promise.resolve(handler.`fun`(value.result))
       else -> return this as Promise<SUB_RESULT>
     }
 
@@ -95,7 +92,6 @@ open class AsyncPromise<T : Any?> : Promise<T>, Getter<T>, CancellablePromise<T>
     }
 
     val value = valueRef.get()
-    @Suppress("UNCHECKED_CAST")
     when {
       value == null -> addHandlers(Consumer({ child.catchError { child.setResult(it) } }), Consumer({ child.setError(it) }))
       value.error == null -> child.setResult(value.result as T)
@@ -164,13 +160,7 @@ open class AsyncPromise<T : Any?> : Promise<T>, Getter<T>, CancellablePromise<T>
       value = valueRef.get()!!
     }
 
-    val error = value.error
-    if (error == null) {
-      return value.result
-    }
-    else {
-      throw error
-    }
+    return value.resultOrThrowError
   }
 
   private fun <T> setHandler(ref: AtomicReference<Consumer<in T>?>, newConsumer: Consumer<in T>, targetState: State) {
@@ -224,16 +214,14 @@ open class AsyncPromise<T : Any?> : Promise<T>, Getter<T>, CancellablePromise<T>
   }
 
   private fun <C_T : Any?> callConsumerIfTargeted(targetState: State, newConsumer: Consumer<in C_T>, value: PromiseValue<T>) {
-    val currentState = if (value.error == null) State.FULFILLED else State.REJECTED
+    val currentState = value.state
     if (currentState == targetState) {
       @Suppress("UNCHECKED_CAST")
       newConsumer.accept(if (currentState == State.FULFILLED) value.result as C_T else value.error as C_T)
     }
   }
 
-  override fun get(timeout: Long, unit: TimeUnit): T? {
-    return blockingGet(timeout.toInt(), unit)
-  }
+  override fun get(timeout: Long, unit: TimeUnit) = blockingGet(timeout.toInt(), unit)
 
   override fun cancel(mayInterruptIfRunning: Boolean): Boolean {
     if (state == State.PENDING) {
@@ -246,7 +234,7 @@ open class AsyncPromise<T : Any?> : Promise<T>, Getter<T>, CancellablePromise<T>
   }
 
   override fun isCancelled(): Boolean {
-    return valueRef.get()?.error == InternalPromiseUtil.OBSOLETE_ERROR
+    return valueRef.get()?.isCancelled ?: false
   }
 
   @Suppress("FunctionName")
