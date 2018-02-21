@@ -125,6 +125,10 @@ public class InternalPromiseUtil {
     @Nullable
     protected abstract PromiseValue<T> getValue();
 
+    /**
+     * The same as @{link Future{@link Future#isDone()}}.
+     * Completion may be due to normal termination, an exception, or cancellation -- in all of these cases, this method will return true.
+     */
     @Override
     public final boolean isDone() {
       return getValue() != null;
@@ -154,7 +158,7 @@ public class InternalPromiseUtil {
     }
 
     @Override
-    public final T get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    public final T get(long timeout, @NotNull TimeUnit unit) throws ExecutionException, TimeoutException {
       return blockingGet((int)timeout, unit);
     }
 
