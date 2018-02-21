@@ -21,6 +21,9 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -46,26 +49,24 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
   @NotNull
   @Override
-  public AsyncResult<Object> revalidateElement(Object element) {
-    final AsyncResult<Object> result = new AsyncResult<>();
+  public Promise<Object> revalidateElement(Object element) {
+    if (!(element instanceof AbstractTreeNode)) {
+      return Promises.rejectedPromise();
+    }
 
-    if (element instanceof AbstractTreeNode) {
-      AbstractTreeNode node = (AbstractTreeNode)element;
-      final Object value = node.getValue();
-      final ActionCallback callback = new ActionCallback();
-      final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(ObjectUtils.tryCast(value, PsiElement.class));
-      batch(indicator -> {
-        final Ref<Object> target = new Ref<>();
-        _select(element, virtualFile, true, Conditions.alwaysTrue());
-        callback.doWhenDone(() -> result.setDone(target.get())).doWhenRejected(() -> result.setRejected());
-      });
-    }
-    else {
-      result.setRejected();
-    }
+    final AsyncPromise<Object> result = new AsyncPromise<>();
+    AbstractTreeNode node = (AbstractTreeNode)element;
+    final Object value = node.getValue();
+    final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(ObjectUtils.tryCast(value, PsiElement.class));
+    batch(indicator -> {
+      final Ref<Object> target = new Ref<>();
+      ActionCallback callback = _select(element, virtualFile, true, Conditions.alwaysTrue());
+      callback
+        .doWhenDone(() -> result.setResult(target.get()))
+        .doWhenRejected(s -> result.setError(s));
+    });
     return result;
   }
-
 
   @Override
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {

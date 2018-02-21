@@ -3998,13 +3998,15 @@ public class AbstractTreeUi {
     }
 
     myRevalidatedObjects.add(element);
-    getBuilder().revalidateElement(element)
-      .doWhenDone((Consumer<Object>)o -> invokeLaterIfNeeded(false, new TreeRunnable("AbstractTreeUi.checkPathAndMaybeRevalidate: on done revalidateElement") {
+    getBuilder()
+      .revalidateElement(element)
+      .onSuccess(o -> invokeLaterIfNeeded(false, new TreeRunnable("AbstractTreeUi.checkPathAndMaybeRevalidate: on done revalidateElement") {
         @Override
         public void perform() {
           _expand(o, onDone, parentsOnly, checkIfInStructure, canSmartExpand);
         }
-      })).doWhenRejected(wrapDone(onDone, "AbstractTreeUi.checkPathAndMaybeRevalidate: on rejected revalidateElement"));
+      }))
+      .onError(throwable -> wrapDone(onDone, "AbstractTreeUi.checkPathAndMaybeRevalidate: on rejected revalidateElement").run());
   }
 
   public void scrollSelectionToVisible(@Nullable final Runnable onDone, final boolean shouldBeCentered) {
