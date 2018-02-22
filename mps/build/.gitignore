@@ -9,3 +9,9 @@
 
 # Ignore modules.xml because it is copied & modified by ant script
 /.idea/modules.xml
+
+# Ignore jarRepositories.xml because it is copied & modified by ant script
+/.idea/jarRepositories.xml
+
+# Ignore kotlinc.xml because it is copied & modified by ant script
+/.idea/kotlinc.xml
