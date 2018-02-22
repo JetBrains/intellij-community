@@ -48,9 +48,7 @@ public class GroovyConsoleUtil {
   }
 
   public static void selectModuleAndRun(Project project, Consumer<Module> consumer) {
-    ModuleChooserUtil.selectModule(project,
-                                   getApplicableModules(project),
-                                   GroovyConsoleUtil::getTitle, consumer);
+    ModuleChooserUtil.selectModule(project, getApplicableModules(project), GroovyConsoleUtil::getDisplayGroovyVersion, consumer);
   }
 
   @NotNull
