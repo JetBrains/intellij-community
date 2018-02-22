@@ -22,9 +22,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyModifiersUtil;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 import org.jetbrains.plugins.groovy.template.expressions.ParameterNameExpression;
 import org.jetbrains.plugins.groovy.template.expressions.StringParameterNameExpression;
@@ -137,6 +139,10 @@ public class IntentionUtils {
               }
               if (hasNoReturnType) {
                 ((GrMethod)method1).setReturnType(null);
+              }
+
+              if (method1 instanceof GrMethod && GroovyModifiersUtil.isDefUnnecessary((GrMethod)method1)) {
+                ((GrMethod)method1).getModifierList().setModifierProperty(GrModifier.DEF, false);
               }
             }
             catch (IncorrectOperationException e) {

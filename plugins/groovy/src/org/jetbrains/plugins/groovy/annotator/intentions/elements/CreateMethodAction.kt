@@ -14,9 +14,9 @@ import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
-import com.intellij.psi.util.PsiUtil.setModifierProperty
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils.createTemplateForMethod
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint
@@ -67,7 +67,6 @@ private class MethodRenderer(
 ) {
 
   val factory = GroovyPsiElementFactory.getInstance(project)
-  val requestedModifiers = request.modifiers
 
   fun execute() {
     var method = renderMethod()
@@ -91,7 +90,7 @@ private class MethodRenderer(
   private fun renderMethod(): GrMethod {
     val method = factory.createMethod(request.methodName, PsiType.VOID)
 
-    val modifiersToRender = requestedModifiers.toMutableList()
+    val modifiersToRender = request.modifiers.toMutableList()
     if (targetClass.isInterface) {
       modifiersToRender -= (visibilityModifiers + JvmModifier.ABSTRACT)
     }
@@ -103,12 +102,15 @@ private class MethodRenderer(
     }
     modifiersToRender -= JvmModifier.PUBLIC //public by default
 
+    val modifierList = method.modifierList
     for (modifier in modifiersToRender) {
-      setModifierProperty(method, modifier.toPsiModifier(), true)
+      modifierList.setModifierProperty(modifier.toPsiModifier(), true)
     }
 
+    modifierList.setModifierProperty(GrModifier.DEF, true)
+
     for (annotation in request.annotations) {
-      method.modifierList.addAnnotation(annotation.qualifiedName)
+      modifierList.addAnnotation(annotation.qualifiedName)
     }
 
     if (abstract) method.body?.delete()
@@ -138,7 +140,7 @@ private class MethodRenderer(
   }
 
   private fun setupTypeElement(method: GrMethod, constraints: List<TypeConstraint>): ChooseTypeExpression {
-    return ChooseTypeExpression(constraints.toTypedArray(), method.manager, method.resolveScope, true)
+    return ChooseTypeExpression(constraints.toTypedArray(), method.manager, method.resolveScope, false)
   }
 
 
