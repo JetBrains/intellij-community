@@ -536,7 +536,7 @@ final class TestInfoHolder {
       return Objects.hash(myClassId, myMethodId, myFrameworkId);
     }
 
-    private static KeyDescriptor<TestId> DESCRIPTOR = new KeyDescriptor<TestId>() {
+    private static final KeyDescriptor<TestId> DESCRIPTOR = new KeyDescriptor<TestId>() {
       @Override
       public int getHashCode(TestId id) {
         return id.hashCode();
