@@ -37,7 +37,6 @@ import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
-import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
@@ -139,7 +138,6 @@ public class CommitHelper {
           delegateCommitToVcsThread();
         }
         finally {
-          LineStatusTrackerManager.getInstanceImpl(myProject).resetExcludedFromCommitMarkers();
           vcsManager.stopBackgroundVcsOperation();
         }
       }
