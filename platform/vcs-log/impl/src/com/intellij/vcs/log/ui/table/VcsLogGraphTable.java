@@ -79,6 +79,7 @@ import javax.swing.plaf.basic.BasicTableHeaderUI;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.util.*;
@@ -880,7 +881,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
 
     private boolean isDraggingEnabled(@NotNull MouseEvent e) {
-      if (isOnBorder(e) || isOnRootColumn(e)) return false;
+      if (isOnBorder(e) || isOnRootColumn(e) || ((e.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) == 0)) return false;
       // can not check for getDragged/Resized column here since they can be set in mousePressed method
       // their presence does not necessarily means something is being dragged or resized
       if (header.getCursor() == Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR) ||
