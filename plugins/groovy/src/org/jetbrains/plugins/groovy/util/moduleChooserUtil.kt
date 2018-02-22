@@ -15,7 +15,6 @@ import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.util.Condition
 import com.intellij.util.Consumer
 import com.intellij.util.Function
-import java.util.*
 
 private const val GROOVY_LAST_MODULE = "Groovy.Last.Module.Chosen"
 
@@ -27,7 +26,6 @@ fun selectModule(project: Project,
     consumer.consume(it)
     return
   }
-  Collections.sort(modules, ModulesAlphaComparator.INSTANCE)
   createSelectModulePopup(project, modules, { titleProvider.`fun`(it) }, { consumer.consume(it) }).showCenteredInCurrentWindow(project)
 }
 
@@ -35,7 +33,7 @@ fun createSelectModulePopup(project: Project,
                             modules: List<Module>,
                             titleProvider: (Module) -> String,
                             consumer: (Module) -> Unit): ListPopup {
-  val step = createSelectModulePopupStep(project, modules, titleProvider, consumer)
+  val step = createSelectModulePopupStep(project, modules.sortedWith(ModulesAlphaComparator.INSTANCE), titleProvider, consumer)
   return JBPopupFactory.getInstance().createListPopup(step)
 }
 
