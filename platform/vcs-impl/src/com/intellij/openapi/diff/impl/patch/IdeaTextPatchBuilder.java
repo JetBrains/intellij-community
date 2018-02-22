@@ -72,6 +72,8 @@ public class IdeaTextPatchBuilder {
                                         @NotNull List<BeforeAfter<AirContentRevision>> result,
                                         @Nullable VcsOutgoingChangesProvider<?> provider) {
     List<Change> otherChanges = PartialChangesUtil.processPartialChanges(project, changes, false, (partialChanges, tracker) -> {
+      if (!tracker.hasPartialChangesToCommit()) return false;
+
       List<String> changelistIds = ContainerUtil.map(partialChanges, ChangeListChange::getChangeListId);
       Change change = partialChanges.get(0).getChange();
 
