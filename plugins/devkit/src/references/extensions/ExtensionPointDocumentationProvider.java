@@ -102,6 +102,8 @@ public class ExtensionPointDocumentationProvider extends DocumentationProviderEx
       sb.append(DocumentationMarkup.DEFINITION_END);
 
       sb.append(DocumentationMarkup.CONTENT_START);
+      String epDocumentationType = DomUtil.hasXml(extensionPoint.getBeanClass()) ? "Bean Class" : "Implementation Class";
+      sb.append("<em>Extension Point ").append(epDocumentationType).append("</em>");
       sb.append(JavaDocumentationProvider.generateExternalJavadoc(epClass));
       sb.append(DocumentationMarkup.CONTENT_END);
 
