@@ -23,6 +23,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,46 +40,41 @@ import java.util.Map;
 public class XDebuggerFramesList extends DebuggerFramesList {
   private final Project myProject;
   private final Map<VirtualFile, Color> myFileColors = new HashMap<>();
-  private static final DataKey<Runnable> COPY_HANDLER = DataKey.create("STACK_FRAMES_COPY_HANDLER");
+  private static final DataKey<XDebuggerFramesList> FRAMES_LIST = DataKey.create("FRAMES_LIST");
 
   private void copyStack() {
     List items = getModel().getItems();
     //noinspection unchecked
-    if (!ContainerUtil.isEmpty(items)) {
+    if (!items.isEmpty()) {
       StringBuilder plainBuf = new StringBuilder();
-      StringBuilder htmlBuf = new StringBuilder();
       TextTransferable.ColoredStringBuilder coloredTextContainer = new TextTransferable.ColoredStringBuilder();
-      htmlBuf.append("<html>\n<body>\n<ul>\n");
       for (Object value : items) {
         if (value instanceof ItemWithSeparatorAbove) {
           ItemWithSeparatorAbove item = (ItemWithSeparatorAbove)value;
           if (item.hasSeparatorAbove()) {
             String caption = " - " + StringUtil.notNullize(item.getCaptionAboveOf());
             plainBuf.append(caption).append('\n');
-            htmlBuf.append("  <li>").append(caption).append("</li>\n");
           }
         }
 
-        htmlBuf.append("  <li>");
         if (value != null) {
           if (value instanceof XStackFrame) {
             ((XStackFrame)value).customizePresentation(coloredTextContainer);
-            coloredTextContainer.appendTo(plainBuf, htmlBuf);
+            coloredTextContainer.appendTo(plainBuf);
           }
           else {
             String text = value.toString();
             plainBuf.append(text);
-            htmlBuf.append(text);
           }
         }
         plainBuf.append('\n');
-        htmlBuf.append("</li>\n");
       }
 
       // remove the last newline
       plainBuf.setLength(plainBuf.length() - 1);
-      htmlBuf.append("</ul>\n</body>\n</html>");
-      CopyPasteManager.getInstance().setContents(new TextTransferable(htmlBuf.toString(), plainBuf.toString()));
+      String plainText = plainBuf.toString();
+      CopyPasteManager.getInstance().setContents(
+        new TextTransferable("<html><body><pre>\n" + XmlStringUtil.escapeString(plainText) + "\n</pre></body></html>", plainText));
     }
   }
 
@@ -102,9 +98,9 @@ public class XDebuggerFramesList extends DebuggerFramesList {
               return PsiManager.getInstance(myProject).findFile(file);
             }
           }
-          else if (COPY_HANDLER.is(dataId)) {
-            return (Runnable)(XDebuggerFramesList.this::copyStack);
-          }
+        }
+        if (FRAMES_LIST.is(dataId)) {
+          return XDebuggerFramesList.this;
         }
         return null;
       }
@@ -258,14 +254,16 @@ public class XDebuggerFramesList extends DebuggerFramesList {
   public static class CopyStackAction extends DumbAwareAction {
     @Override
     public void update(AnActionEvent e) {
-      e.getPresentation().setEnabledAndVisible(e.getData(COPY_HANDLER) != null);
+      XDebuggerFramesList framesList = e.getData(FRAMES_LIST);
+      //noinspection unchecked
+      e.getPresentation().setEnabledAndVisible(framesList != null && ContainerUtil.getLastItem(framesList.getModel().getItems()) != null);
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      Runnable copyHandler = e.getData(COPY_HANDLER);
-      if (copyHandler != null) {
-        copyHandler.run();
+      XDebuggerFramesList framesList = e.getData(FRAMES_LIST);
+      if (framesList != null) {
+        framesList.copyStack();
       }
     }
   }
