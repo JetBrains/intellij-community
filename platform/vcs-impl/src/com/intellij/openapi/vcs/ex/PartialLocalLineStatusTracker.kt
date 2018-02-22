@@ -808,22 +808,5 @@ class PartialLocalLineStatusTracker(project: Project,
                       mode: Mode): PartialLocalLineStatusTracker {
       return PartialLocalLineStatusTracker(project, document, virtualFile, mode)
     }
-
-    @JvmStatic
-    fun createTracker(project: Project,
-                      document: Document,
-                      virtualFile: VirtualFile,
-                      mode: Mode,
-                      events: List<DocumentEvent>): PartialLocalLineStatusTracker {
-      val tracker = createTracker(project, document, virtualFile, mode)
-
-      for (event in events.reversed()) {
-        tracker.updateDocument(Side.LEFT) { vcsDocument ->
-          vcsDocument.replaceString(event.offset, event.offset + event.newLength, event.oldFragment)
-        }
-      }
-
-      return tracker
-    }
   }
 }
