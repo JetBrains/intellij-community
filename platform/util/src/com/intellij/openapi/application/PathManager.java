@@ -257,7 +257,7 @@ public class PathManager {
       ourPluginsPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_PLUGINS_PATH)));
     }
     else if (SystemInfo.isMac && PATHS_SELECTOR != null) {
-      ourPluginsPath = SystemProperties.getUserHome() + File.separator + "Library/Application Support" + File.separator + PATHS_SELECTOR;
+      ourPluginsPath = platformPath(PATHS_SELECTOR, "Library/Application Support", "");
     }
     else {
       ourPluginsPath = getConfigPath() + File.separatorChar + PLUGINS_FOLDER;
@@ -268,7 +268,12 @@ public class PathManager {
 
   @NotNull
   public static String getDefaultPluginPathFor(@NotNull String selector) {
-    return platformPath(selector, "Library/Application Support", PLUGINS_FOLDER);
+    if (SystemInfo.isMac) {
+      return platformPath(selector, "Library/Application Support", "");
+    }
+    else {
+      return getDefaultConfigPathFor(selector) + File.separatorChar + PLUGINS_FOLDER;
+    }
   }
 
   @Nullable
