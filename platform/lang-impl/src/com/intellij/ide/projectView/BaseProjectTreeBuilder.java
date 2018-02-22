@@ -60,10 +60,10 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(ObjectUtils.tryCast(value, PsiElement.class));
     batch(indicator -> {
       final Ref<Object> target = new Ref<>();
-      ActionCallback callback = _select(element, virtualFile, true, Conditions.alwaysTrue());
+      Promise<Object> callback = _select(element, virtualFile, true, Conditions.alwaysTrue());
       callback
-        .doWhenDone(() -> result.setResult(target.get()))
-        .doWhenRejected(s -> result.setError(s));
+        .onSuccess(it -> result.setResult(target.get()))
+        .onError(e -> result.setError(e));
     });
     return result;
   }
@@ -123,34 +123,31 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
   @NotNull
   public ActionCallback select(Object element, VirtualFile file, final boolean requestFocus) {
-    return _select(element, file, requestFocus, Conditions.alwaysTrue());
+    return Promises.toActionCallback(_select(element, file, requestFocus, Conditions.alwaysTrue()));
   }
 
   public ActionCallback selectInWidth(final Object element,
                                       final boolean requestFocus,
                                       final Condition<AbstractTreeNode> nonStopCondition) {
-    return _select(element, null, requestFocus, nonStopCondition);
+    return Promises.toActionCallback(_select(element, null, requestFocus, nonStopCondition));
   }
 
   @NotNull
-  private ActionCallback _select(final Object element,
+  private Promise<Object> _select(final Object element,
                                  final VirtualFile file,
                                  final boolean requestFocus,
                                  final Condition<AbstractTreeNode> nonStopCondition) {
-
     AbstractTreeUpdater updater = getUpdater();
-    if (updater == null) return ActionCallback.REJECTED;
+    if (updater == null) {
+      return Promises.rejectedPromise();
+    }
 
-    final ActionCallback result = new ActionCallback();
-
+    final AsyncPromise<Object> result = new AsyncPromise<>();
     UiActivityMonitor.getInstance().addActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"), updater.getModalityState());
     batch(indicator -> {
       _select(element, file, requestFocus, nonStopCondition, result, indicator, null, null, false);
       UiActivityMonitor.getInstance().removeActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"));
     });
-
-
-
     return result;
   }
 
@@ -158,7 +155,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
                        final VirtualFile file,
                        final boolean requestFocus,
                        final Condition<AbstractTreeNode> nonStopCondition,
-                       final ActionCallback result,
+                       final AsyncPromise<Object> result,
                        @NotNull final ProgressIndicator indicator,
                        @Nullable final Ref<Object> virtualSelectTarget,
                        final FocusRequestor focusRequestor,
@@ -171,10 +168,10 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
         tree.requestFocus();
       }
 
-      result.setDone();
+      result.setResult(null);
     };
 
-    final Condition<AbstractTreeNode> condition = abstractTreeNode -> !result.isProcessed() && nonStopCondition.value(abstractTreeNode);
+    final Condition<AbstractTreeNode> condition = abstractTreeNode -> result.getState() != Promise.State.PENDING && nonStopCondition.value(abstractTreeNode);
 
     if (alreadySelected == null) {
       expandPathTo(file, (AbstractTreeNode)getTreeStructure().getRootElement(), element, condition, indicator, virtualSelectTarget)
@@ -187,7 +184,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
           }
         }).doWhenRejected(() -> {
           if (isSecondAttempt) {
-            result.setRejected();
+            result.cancel();
           } else {
             _select(file, file, requestFocus, nonStopCondition, result, indicator, virtualSelectTarget, focusRequestor, true);
           }
