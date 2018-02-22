@@ -5,11 +5,11 @@
   <vendor email="vitaliy.bibaev@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
 
   <description><![CDATA[
-      This plugin collects data about your usage of code completion, anonymises and sends it to us. Note, the plugin doesn’t send any of your personal data or code. All we send is just numbers calculated based on your completion usage patterns
+      This plugin collects data about your usage of code completion, anonymises and sends it to us. Note, the plugin doesn't send any of your personal data or code. All we send is just numbers calculated based on your completion usage patterns
     ]]></description>
 
   <change-notes><![CDATA[
-        Completion items from subsequent code completion invokations are added automatically on typing, no need to invoke completion multiple times now.
+        Collect data to discover long-term patterns in completion usage.
     ]]>
   </change-notes>
 
