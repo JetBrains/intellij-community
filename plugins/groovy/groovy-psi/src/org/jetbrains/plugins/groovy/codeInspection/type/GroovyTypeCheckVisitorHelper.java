@@ -15,11 +15,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.CallInfo;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.ParameterCastFix;
-import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.ext.spock.SpockUtils;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -273,13 +271,5 @@ public class GroovyTypeCheckVisitorHelper {
       ContainerUtil.addAll(args, ((GrMethodCallExpression)parent).getClosureArguments());
     }
     return args;
-  }
-
-  static boolean isImplicitReturnStatement(@NotNull GrExpression expression) {
-    GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(expression);
-    return flowOwner != null &&
-        PsiUtil.isExpressionStatement(expression) &&
-        ControlFlowUtils.isReturnValue(expression, flowOwner) &&
-        !PsiUtil.isVoidMethodCall(expression);
   }
 }

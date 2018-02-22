@@ -524,6 +524,14 @@ public class ControlFlowUtils {
     return applicable.get(0);
   }
 
+  public static boolean isImplicitReturnStatement(@NotNull GrExpression expression) {
+    GrControlFlowOwner flowOwner = findControlFlowOwner(expression);
+    return flowOwner != null &&
+           PsiUtil.isExpressionStatement(expression) &&
+           isReturnValue(expression, flowOwner) &&
+           !PsiUtil.isVoidMethodCall(expression);
+  }
+
   private static class ReturnFinder extends GroovyRecursiveElementVisitor {
     private boolean m_found = false;
 
