@@ -18,5 +18,6 @@
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="library" name="de.ruedigermoeller:fst" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
+    <orderEntry type="library" name="javassist" level="project" />
   </component>
 </module>
