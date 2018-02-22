@@ -103,6 +103,7 @@
     <!-- Preparations for build:                               -->
     <!-- Copy list of modules                                  -->
     <!-- Copy Kotlin compiler settings                         -->
+    <!-- Copy list of external jar repositories                -->
     <!-- Copy list of libraries                                -->
     <!-- Apply MPS patches                                     -->
     <!-- ===================================================== -->
@@ -127,6 +128,13 @@
         <echo message="Copy IDEA Community Kotlin compiler settings"/>
         <delete file="${basedir}/../.idea/kotlinc.xml"/>
         <copy file="${community.folder}/.idea/kotlinc.xml" todir="${basedir}/../.idea"/>
+    </target>
+
+    <target name="jar-repositories"
+            description="Copy IDEA Community external jar repositories settings">
+        <echo message="Copy IDEA Community external jar repositories settings"/>
+        <delete file="${basedir}/../.idea/jarRepositories.xml"/>
+        <copy file="${community.folder}/.idea/jarRepositories.xml" todir="${basedir}/../.idea"/>
     </target>
 
     <target name="libraries" description="Copy IDEA Community libraries and update paths (add community folder)">
@@ -163,7 +171,7 @@
     <!-- ===================================================== -->
 
     <!-- Exists as standalone task for TeamCity build -->
-    <target name="prepare" depends="patch,modules,kotlinc,libraries" description="Make all build preparation tasks"/>
+    <target name="prepare" depends="patch,modules,kotlinc,jar-repositories,libraries" description="Make all build preparation tasks"/>
 
     <!-- Exists as standalone task for TeamCity build -->
     <target name="compile" description="Runs building script.">
