@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.config.AbstractConfigUtils;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
@@ -19,7 +18,8 @@ import static org.jetbrains.plugins.groovy.util.ModuleChooserUtil.formatModuleVe
 
 public class GroovyConsoleUtil {
 
-  private static final Function<Module, String> MODULE_VERSION = module -> {
+  @NotNull
+  public static String getDisplayGroovyVersion(@NotNull Module module) {
     final String moduleGroovyHomePath = LibrariesUtil.getGroovyHomePath(module);
     boolean bundled = moduleGroovyHomePath == null || !hasGroovyAll(module);
     final String version;
@@ -37,7 +37,7 @@ public class GroovyConsoleUtil {
       result.append(" ").append(version);
     }
     return result.toString();
-  };
+  }
 
   static boolean hasGroovyAll(Module module) {
     final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
@@ -55,6 +55,6 @@ public class GroovyConsoleUtil {
 
   @NotNull
   public static String getTitle(@NotNull Module module) {
-    return formatModuleVersion(module, MODULE_VERSION.fun(module));
+    return formatModuleVersion(module, getDisplayGroovyVersion(module));
   }
 }
