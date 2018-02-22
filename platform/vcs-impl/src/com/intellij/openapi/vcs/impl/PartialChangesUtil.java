@@ -18,7 +18,10 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public class PartialChangesUtil {
   @Nullable
@@ -78,12 +81,6 @@ public class PartialChangesUtil {
         PartialLocalLineStatusTracker tracker = ObjectUtils.tryCast(lstManager.getLineStatusTracker(virtualFile),
                                                                     PartialLocalLineStatusTracker.class);
         if (tracker == null) {
-          otherChanges.add(actualChange);
-          continue;
-        }
-
-        Set<String> selectedIds = ContainerUtil.map2Set(partialChanges, change -> change.getChangeListId());
-        if (selectedIds.containsAll(tracker.getAffectedChangeListsIds())) {
           otherChanges.add(actualChange);
           continue;
         }

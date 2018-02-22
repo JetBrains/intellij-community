@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.rollback.DefaultRollbackEnvironment;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.util.WaitForProgressToShow;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +39,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -129,6 +131,9 @@ public class RollbackWorker {
     return PartialChangesUtil.processPartialChanges(
       myProject, changes, true,
       (partialChanges, tracker) -> {
+        Set<String> selectedIds = ContainerUtil.map2Set(partialChanges, change -> change.getChangeListId());
+        if (selectedIds.containsAll(tracker.getAffectedChangeListsIds())) return false;
+
         for (ChangeListChange change : partialChanges) {
           tracker.rollbackChangelistChanges(change.getChangeListId());
         }
