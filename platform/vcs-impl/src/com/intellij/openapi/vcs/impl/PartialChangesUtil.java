@@ -56,16 +56,13 @@ public class PartialChangesUtil {
         if (change instanceof ChangeListChange) {
           ChangeListChange changelistChange = (ChangeListChange)change;
 
-          ContentRevision afterRevision = change.getAfterRevision();
-          if (afterRevision instanceof CurrentContentRevision) {
-            VirtualFile virtualFile = ((CurrentContentRevision)afterRevision).getVirtualFile();
-            if (virtualFile != null) {
-              partialChangesMap.putValue(virtualFile, changelistChange);
-              continue;
-            }
+          VirtualFile virtualFile = getVirtualFile(change);
+          if (virtualFile != null) {
+            partialChangesMap.putValue(virtualFile, changelistChange);
           }
-
-          otherChanges.add((changelistChange).getChange());
+          else {
+            otherChanges.add((changelistChange).getChange());
+          }
         }
         else {
           otherChanges.add(change);
