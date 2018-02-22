@@ -50,6 +50,8 @@ import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictFileStatusProvider
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
 import com.intellij.openapi.vcs.ex.LineStatusTracker
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
@@ -707,6 +709,24 @@ class LineStatusTrackerManager(
       if (CommandProcessor.getInstance().currentCommand == null &&
           !filesWithDamagedInactiveRanges.isEmpty()) {
         showInactiveRangesDamagedNotification()
+      }
+    }
+  }
+
+  class CheckinFactory : CheckinHandlerFactory() {
+    override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
+      return object : CheckinHandler() {
+        override fun checkinSuccessful() {
+          runInEdt {
+            getInstanceImpl(panel.project).resetExcludedFromCommitMarkers()
+          }
+        }
+
+        override fun checkinFailed(exception: MutableList<VcsException>?) {
+          runInEdt {
+            getInstanceImpl(panel.project).resetExcludedFromCommitMarkers()
+          }
+        }
       }
     }
   }
