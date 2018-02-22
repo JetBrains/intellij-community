@@ -291,7 +291,7 @@ public class PathManager {
       ourSystemPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_SYSTEM_PATH)));
     }
     else if (PATHS_SELECTOR != null) {
-      ourSystemPath = platformPath(PATHS_SELECTOR, "Library/Caches", SYSTEM_FOLDER);
+      ourSystemPath = getDefaultSystemPathFor(PATHS_SELECTOR);
     }
     else {
       ourSystemPath = getHomePath() + File.separator + SYSTEM_FOLDER;
@@ -299,6 +299,11 @@ public class PathManager {
 
     FileUtil.createDirectory(new File(ourSystemPath));
     return ourSystemPath;
+  }
+
+  @NotNull
+  public static String getDefaultSystemPathFor(@NotNull String selector) {
+    return platformPath(selector, "Library/Caches", SYSTEM_FOLDER);
   }
 
   @NotNull
