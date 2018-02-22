@@ -1103,4 +1103,24 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertEquals(expectedModuleName, model.getModuleName());
     assertEquals(shouldBeCustomScope, model.isCustomScope());
   }
+
+  public void testSearchInImlsIfRequestedExplicitly() throws Exception {
+    createFile("a.iml", "foo");
+    FindModel findModel = FindManagerTestUtils.configureFindModel("foo");
+    assertEmpty(findUsages(findModel)); // skipped by default
+
+    findModel.setFileFilter("*.iml");
+    assertSize(1, findUsages(findModel));
+  }
+
+  public void testSearchInDotIdeaIfRequestedExplicitly() throws Exception {
+    VirtualFile dotIdea = createChildDirectory(createTempVfsDirectory(), Project.DIRECTORY_STORE_FOLDER);
+    createFile(myModule, dotIdea, "a.iml", "foo");
+    FindModel findModel = FindManagerTestUtils.configureFindModel("foo");
+    assertEmpty(findUsages(findModel)); // skipped by default
+
+    findModel.setDirectoryName(dotIdea.getPath());
+    assertSize(1, findUsages(findModel));
+  }
+
 }
