@@ -387,6 +387,9 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Jackson", libraryName: "jackson", version: "2.9.5", license: "Apache 2.0",
                                licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0", url: "https://github.com/FasterXML/jackson"),
 
+    new LibraryLicense(name: "Javassist", libraryName: "javassist", version: "3.21.0-GA", license: "Apache 2.0",
+                           url: "https://github.com/jboss-javassist/javassist", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
+
     jetbrainsLibrary("Coverage"),
     jetbrainsLibrary("CoverageReport"),
     jetbrainsLibrary("intellij-markdown.jar"),
