@@ -503,9 +503,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
 
     void generate(StringBuilder sb, boolean isLastInRow, boolean isLast) {
       sb.append(myExpression.getText());
-      for (PsiElement element : myBeforeSeparator) {
-        sb.append(element.getText());
-      }
+      handleElementsBeforeSeparator(sb, isLast);
       if (!isLast) {
         sb.append(",");
       }
@@ -513,7 +511,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       for (PsiComment comment : myAfterSeparator) {
         sb.append(" ")
           .append(comment.getText());
-        if (comment.getText().contains("//")) {
+        if (comment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
           sb.append("\n");
           newLineSet = true;
         }
@@ -523,6 +521,23 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       }
       if (isLastInRow && !newLineSet && !isLast) {
         sb.append("\n");
+      }
+    }
+
+    private void handleElementsBeforeSeparator(StringBuilder sb, boolean isLast) {
+      boolean newLineNeed = false;
+      for (PsiElement element : myBeforeSeparator) {
+        if (newLineNeed) {
+          sb.append('\n');
+          newLineNeed = false;
+        }
+        sb.append(element.getText());
+        if (element instanceof PsiComment && ((PsiComment)element).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
+          newLineNeed = true;
+        }
+      }
+      if (!isLast && newLineNeed) {
+        sb.append('\n');
       }
     }
   }
