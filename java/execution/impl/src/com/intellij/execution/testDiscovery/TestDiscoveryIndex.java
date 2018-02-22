@@ -25,24 +25,24 @@ import java.util.*;
 public class TestDiscoveryIndex implements Disposable {
   static final Logger LOG = Logger.getInstance(TestDiscoveryIndex.class);
 
-  private final TestDataController myLocalTestRunDataController;
+  private final TestDataController myDataController;
 
   public TestDiscoveryIndex(Project project) {
     this(project, TestDiscoveryExtension.baseTestDiscoveryPathForProject(project));
   }
 
   public TestDiscoveryIndex(final Project project, @NotNull Path basePath) {
-    myLocalTestRunDataController = new TestDataController(basePath, false);
+    myDataController = new TestDataController(basePath, false);
 
     if (Files.exists(basePath)) {
       StartupManager.getInstance(project).registerPostStartupActivity(() -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        myLocalTestRunDataController.getHolder(); // proactively init with maybe io costly compact
+        myDataController.getHolder(); // proactively init with maybe io costly compact
       }));
     }
   }
 
   public boolean hasTestTrace(@NotNull String testClassName, @NotNull String testMethodName, byte frameworkId) throws IOException {
-    Boolean result = myLocalTestRunDataController.withTestDataHolder(localHolder -> {
+    Boolean result = myDataController.withTestDataHolder(localHolder -> {
       TestInfoHolder.TestId testId = localHolder.createTestId(testClassName, testMethodName, frameworkId);
       final int testNameId = localHolder.myTestEnumerator.tryEnumerate(testId);
       return testNameId != 0 && localHolder.myTestNameToUsedClassesAndMethodMap.get(testNameId) != null;
@@ -51,7 +51,7 @@ public class TestDiscoveryIndex implements Disposable {
   }
 
   public void removeTestTrace(@NotNull String testClassName, @NotNull String testMethodName, byte frameworkId) throws IOException {
-    myLocalTestRunDataController.withTestDataHolder((ThrowableConvertor<TestInfoHolder, Void, IOException>)localHolder -> {
+    myDataController.withTestDataHolder((ThrowableConvertor<TestInfoHolder, Void, IOException>)localHolder -> {
       TestInfoHolder.TestId testId = localHolder.createTestId(testClassName, testMethodName, frameworkId);
       final int testNameId = localHolder.myTestEnumerator.tryEnumerate(testId);
       if (testNameId != 0) {
@@ -65,7 +65,7 @@ public class TestDiscoveryIndex implements Disposable {
 
   @NotNull
   public MultiMap<String, String> getTestsByMethodName(@NotNull String classFQName, @NotNull String methodName, byte frameworkId) throws IOException {
-    return myLocalTestRunDataController.withTestDataHolder(new ThrowableConvertor<TestInfoHolder, MultiMap<String, String>, IOException>() {
+    return myDataController.withTestDataHolder(new ThrowableConvertor<TestInfoHolder, MultiMap<String, String>, IOException>() {
       @Override
       public MultiMap<String, String> convert(TestInfoHolder localHolder) throws IOException {
         Collection<TestInfoHolder.TestId> ids = getTestIdsByMethod(localHolder);
@@ -103,7 +103,7 @@ public class TestDiscoveryIndex implements Disposable {
   }
 
   public Collection<String> getTestModulesByMethodName(@NotNull String classFQName, @NotNull String methodName, byte frameworkId) throws IOException {
-    return myLocalTestRunDataController.withTestDataHolder(new ThrowableConvertor<TestInfoHolder, Collection<String>, IOException>() {
+    return myDataController.withTestDataHolder(new ThrowableConvertor<TestInfoHolder, Collection<String>, IOException>() {
       @Override
       public Collection<String> convert(TestInfoHolder localHolder) throws IOException {
         final TIntArrayList list = localHolder.myTestNameToNearestModule.get(
@@ -196,7 +196,7 @@ public class TestDiscoveryIndex implements Disposable {
 
   @Override
   public void dispose() {
-    myLocalTestRunDataController.dispose();
+    myDataController.dispose();
   }
 
   public void updateFromData(@NotNull String testClassName,
@@ -204,7 +204,7 @@ public class TestDiscoveryIndex implements Disposable {
                              @NotNull MultiMap<String, String> usedMethods,
                              @Nullable String moduleName,
                              byte frameworkId) throws IOException {
-    myLocalTestRunDataController.withTestDataHolder(localHolder -> {
+    myDataController.withTestDataHolder(localHolder -> {
       final int testNameId = localHolder.myTestEnumerator.enumerate(localHolder.createTestId(testClassName, testMethodName, frameworkId));
       TIntObjectHashMap<TIntArrayList> result = new TIntObjectHashMap<>();
       for (Map.Entry<String, Collection<String>> e : usedMethods.entrySet()) {
