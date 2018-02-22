@@ -18,6 +18,6 @@ import org.jetbrains.intellij.build.BuildTasks
 
 target("default": "Default") {
   BuildTasks.buildProduct("org.jetbrains.intellij.build.IdeaEduProperties",
-                          ["edu/idea/build/groovy"], "", this)
+                          ["edu/idea/build/groovy", "edu/dependencies/groovy"], "", this)
 }
 
