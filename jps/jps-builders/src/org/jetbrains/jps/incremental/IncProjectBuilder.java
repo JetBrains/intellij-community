@@ -28,7 +28,7 @@ import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.impl.BuildOutputConsumerImpl;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase;
-import org.jetbrains.jps.builders.java.ConstantSearchProvider;
+import org.jetbrains.jps.builders.java.JavaBuilderExtension;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
@@ -441,8 +441,11 @@ public class IncProjectBuilder {
     else {
       final List<Callbacks.ConstantAffectionResolver> resolvers = getResolvers();
       resolvers.add(javaResolver);
-      for (ConstantSearchProvider provider : JpsServiceManager.getInstance().getExtensions(ConstantSearchProvider.class)) {
-        resolvers.add(provider.getConstantSearch(context));
+      for (JavaBuilderExtension provider : JpsServiceManager.getInstance().getExtensions(JavaBuilderExtension.class)) {
+        final Callbacks.ConstantAffectionResolver extResolver = provider.getConstantSearch(context);
+        if (extResolver != null) {
+          resolvers.add(extResolver);
+        }
       }
       JavaBuilderUtil.CONSTANT_SEARCH_SERVICE.set(context, resolvers.size() == 1? resolvers.get(0) : new CompositeConstantResolver(resolvers));
     }
