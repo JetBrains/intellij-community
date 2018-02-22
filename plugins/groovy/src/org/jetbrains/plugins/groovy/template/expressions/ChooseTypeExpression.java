@@ -49,7 +49,7 @@ public class ChooseTypeExpression extends Expression {
 
   protected final SmartTypePointer myTypePointer;
   private final List<SmartTypePointer> myItems;
-  private final boolean myForGroovy;
+  private final boolean myAddDefType;
   private final boolean mySelectDef;
 
   public ChooseTypeExpression(@NotNull TypeConstraint[] constraints, PsiManager manager, GlobalSearchScope resolveScope) {
@@ -59,16 +59,16 @@ public class ChooseTypeExpression extends Expression {
   public ChooseTypeExpression(TypeConstraint[] constraints,
                               PsiManager manager,
                               GlobalSearchScope resolveScope,
-                              boolean forGroovy) {
-    this(constraints, manager, resolveScope, forGroovy, false);
+                              boolean addDefType) {
+    this(constraints, manager, resolveScope, addDefType, false);
   }
 
   public ChooseTypeExpression(TypeConstraint[] constraints,
                               PsiManager manager,
                               GlobalSearchScope resolveScope,
-                              boolean forGroovy,
+                              boolean addDefType,
                               boolean selectDef) {
-    myForGroovy = forGroovy;
+    myAddDefType = addDefType;
 
     SmartTypePointerManager typePointerManager = SmartTypePointerManager.getInstance(manager.getProject());
     myTypePointer = typePointerManager.createSmartTypePointer(chooseType(constraints, resolveScope, manager));
@@ -113,7 +113,7 @@ public class ChooseTypeExpression extends Expression {
     PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
     PsiType type = myTypePointer.getType();
     if (type != null) {
-      if (myForGroovy && (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || mySelectDef)) {
+      if (myAddDefType && (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || mySelectDef)) {
         return new TextResult(GrModifier.DEF);
       }
 
@@ -160,7 +160,7 @@ public class ChooseTypeExpression extends Expression {
       result.add(lookupItem);
     }
 
-    if (myForGroovy) {
+    if (myAddDefType) {
       LookupElementBuilder def = LookupElementBuilder.create(GrModifier.DEF).bold();
       if (mySelectDef) {
         result.add(0, def);

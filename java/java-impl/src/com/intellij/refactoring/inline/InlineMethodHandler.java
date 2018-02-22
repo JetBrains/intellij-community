@@ -167,6 +167,10 @@ class InlineMethodHandler extends JavaInlineActionHandler {
       if (method.equals(refMethod)) return true;
     }
 
+    if (scope instanceof PsiMethodReferenceExpression) {
+      if (method.equals(((PsiMethodReferenceExpression)scope).resolve())) return true;
+    }
+
     for(PsiElement child = scope.getFirstChild(); child != null; child = child.getNextSibling()){
       if (checkCalls(child, method)) return true;
     }

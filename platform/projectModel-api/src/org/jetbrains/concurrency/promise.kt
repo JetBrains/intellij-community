@@ -183,6 +183,13 @@ fun ActionCallback.toPromise(): Promise<Void?> {
   return promise
 }
 
+fun Promise<Any?>.toActionCallback(): ActionCallback {
+  val result = ActionCallback()
+  onSuccess { result.setDone() }
+  onError { result.setRejected() }
+  return result
+}
+
 fun all(promises: Collection<Promise<*>>): Promise<*> = if (promises.size == 1) promises.first() else all(promises, null)
 
 @JvmOverloads

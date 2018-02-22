@@ -35,7 +35,9 @@ public class ExtensionPointDocumentationProviderTest extends LightCodeInsightFix
                  "<tr><td valign='top' class='section'><p>attributeName:</td><td><a href=\"psi_element://java.lang.String\"><code>String</code></a></td>" +
                  "<tr><td valign='top' class='section'><p>&lt;tagName&gt;:</td><td><a href=\"psi_element://java.lang.Integer\"><code>Integer</code></a></td></table>" +
                  "</pre></div>" +
-                 "<div class='content'><div class='definition'><pre>bar<br>public interface <b>MyExtensionPoint</b></pre></div>" +
+                 "<div class='content'>" +
+                 "<em>Extension Point Implementation Class</em>" +
+                 "<div class='definition'><pre>bar<br>public interface <b>MyExtensionPoint</b></pre></div>" +
                  "<div class='content'>\n   MyExtensionPoint JavaDoc.\n </div><table class='sections'><p></table></div>",
                  provider.generateDoc(docElement, null));
   }

@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,12 +36,22 @@ public interface TestDiscoveryProducer {
                                      @NotNull String methodName,
                                      byte frameworkId,
                                      @NotNull BiConsumer<String, String> consumer) {
+    MultiMap<String, String> visitedTests = new MultiMap<String, String>() {
+      @NotNull
+      @Override
+      protected Collection<String> createCollection() {
+        return new THashSet<>();
+      }
+    };
     for (TestDiscoveryProducer producer : EP.getExtensions()) {
       for (Map.Entry<String, Collection<String>> entry : producer.getDiscoveredTests(project, classFQName, methodName, frameworkId)
                                                                  .entrySet()) {
         String cName = entry.getKey();
         for (String mName : entry.getValue()) {
-          consumer.accept(cName, mName);
+          if (!visitedTests.get(classFQName).contains(mName)) {
+            visitedTests.putValue(cName, mName);
+            consumer.accept(cName, mName);
+          }
         }
       }
     }

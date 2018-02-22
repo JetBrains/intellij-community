@@ -85,7 +85,7 @@ public class TestPackage extends TestObject {
             LOG.assertTrue(classFilter.getBase() != null);
             long start = System.currentTimeMillis();
             if (Registry.is("junit4.search.4.tests.all.in.scope", true)) {
-              Condition<PsiClass> acceptClassCondition = aClass -> ReadAction.compute(() -> classFilter.isAccepted(aClass));
+              Condition<PsiClass> acceptClassCondition = aClass -> ReadAction.compute(() -> aClass.isValid() && classFilter.isAccepted(aClass));
               collectClassesRecursively(classFilter, acceptClassCondition, myClasses);
             }
             else if (Registry.is("junit4.search.4.tests.in.classpath", false)) {

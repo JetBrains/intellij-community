@@ -15,7 +15,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class LazyInitializer<T> {
   private volatile @Nullable T value;
-  private volatile Initializer<T> initializer;
+  private volatile Initializer<T> initializer; // dropped when the value is initialized
 
   private static class Initializer<T> {
     private final Callable<T> initializer;
@@ -37,7 +37,7 @@ public class LazyInitializer<T> {
   }
 
   public LazyInitializer(@NotNull Callable<T> initializer) {
-    this.initializer = new Initializer(initializer);
+    this.initializer = new Initializer<T>(initializer);
   }
 
   /**
@@ -58,9 +58,15 @@ public class LazyInitializer<T> {
         initializer = null;
         init.lock.unlock();
       }
-      onInitialized();
+      onInitialized(value);
     }
     return value;
+  }
+
+  @SuppressWarnings("ConstantConditions")
+  public @NotNull T getNotNull() {
+    if (isSet()) return value;
+    throw new NullPointerException();
   }
 
   /**
@@ -68,7 +74,7 @@ public class LazyInitializer<T> {
    *
    * @return true if the value is initialized to non-null
    */
-  public boolean isSet() {
+  public final boolean isSet() {
     Initializer init = initializer;
     if (init == null) {
       return get() != null; // already initialized, just get
@@ -86,13 +92,15 @@ public class LazyInitializer<T> {
   }
 
   /**
-   * Called right after the value is initialized.
+   * Called on the initialization completion.
+   *
+   * @param value the initialized value
    */
-  protected void onInitialized() {
+  protected void onInitialized(@Nullable T value) {
   }
 
   @Override
   public String toString() {
-    return value != null ? value.toString() : "null";
+    return String.valueOf(value);
   }
 }

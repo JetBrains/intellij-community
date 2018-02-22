@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.icons.AllIcons;
@@ -36,7 +22,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.content.*;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -71,7 +56,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
   protected abstract String getTitle(PsiElement element);
   protected abstract String getToolwindowId();
-  
+
   public Content recreateToolWindow(PsiElement element, PsiElement originalElement) {
     if (myToolWindow == null) {
       createToolWindow(element, originalElement);
@@ -192,10 +177,12 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   public void updateComponent() {
     if (myProject.isDisposed()) return;
 
-    DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext -> {
-      if (!myProject.isOpen()) return;
-      updateComponentInner(dataContext);
-    });
+    DataManager.getInstance()
+               .getDataContextFromFocusAsync()
+               .onSuccess(dataContext -> {
+                 if (!myProject.isOpen()) return;
+                 updateComponentInner(dataContext);
+               });
   }
 
   private void updateComponentInner(@NotNull DataContext dataContext) {
