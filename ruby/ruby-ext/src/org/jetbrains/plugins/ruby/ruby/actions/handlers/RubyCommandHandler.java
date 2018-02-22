@@ -1,7 +1,9 @@
 package org.jetbrains.plugins.ruby.ruby.actions.handlers;
 
+import org.jetbrains.plugins.ruby.ruby.run.RubyProcessHandler;
+
 /**
- * See {@code RubyProcessHandler} for similar methods implementation
+ * See {@link RubyProcessHandler} for similar methods implementation
  */
 public abstract class RubyCommandHandler extends RunAnythingCommandHandler {
   @Override
