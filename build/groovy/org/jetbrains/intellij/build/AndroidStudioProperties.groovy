@@ -78,7 +78,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
                                                 "analytics-protos",
                                                 "analytics-shared",
                                                 "analytics-tracker",
-                                                "analytics-publisher")
+                                                "analytics-publisher",
+                                                "analytics-crash")
 
     productLayout.bundledPluginModules = BUNDLED_PLUGIN_MODULES +
                                          [
