@@ -68,6 +68,7 @@ class TestingTasksImpl extends TestingTasks {
       else {
         runTestsFromGroupsAndPatterns(additionalJvmOptions, defaultMainModule, rootExcludeCondition, additionalSystemProperties)
       }
+      publishTestDiscovery()
     }
   }
 
@@ -150,12 +151,48 @@ class TestingTasksImpl extends TestingTasks {
       additionalJvmOptions.add("-javaagent:${agentJar.absolutePath}" as String)
       additionalSystemProperties.putAll(
         [
-          "test.discovery.listener"                 : "com.intellij.InternalTestDiscoveryListenerBase",
+          "test.discovery.listener"                 : "com.intellij.TestDiscoveryBasicListener",
           "test.discovery.data.listener"            : "com.intellij.rt.coverage.data.SingleTrFileDiscoveryProtocolDataListener",
-          "org.jetbrains.instrumentation.trace.file": options.testDiscoveryTraceFilePath ?: "${context.paths.projectHome}/intellij-tracing/td.tr",
+          "org.jetbrains.instrumentation.trace.file": getTestDiscoveryTraceFilePath(),
           "test.discovery.include.class.patterns"   : options.testDiscoveryIncludePatterns,
           "test.discovery.exclude.class.patterns"   : options.testDiscoveryExcludePatterns,
         ] as Map<String, String>)
+    }
+  }
+
+  private String getTestDiscoveryTraceFilePath() {
+    options.testDiscoveryTraceFilePath ?: "${context.paths.projectHome}/intellij-tracing/td.tr"
+  }
+
+  private publishTestDiscovery() {
+    if (options.testDiscoveryEnabled) {
+      def file = getTestDiscoveryTraceFilePath()
+      def serverUrl = System.getProperty("intellij.test.discovery.url")
+      context.messages.info("Trying to upload $file into $serverUrl.")
+      if (file != null && new File(file).exists()) {
+        if (serverUrl == null) {
+          context.messages.warning("Test discovery server url is not defined, but test discovery capturing enabled. \n" +
+                                   "Will not upload to remote server. Please set 'intellij.test.discovery.url' system property.")
+          return
+        }
+        def uploader = new TraceFileUploader(serverUrl) {
+          @Override
+          protected void log(String message) {
+            context.messages.info(message)
+          }
+        }
+        try {
+          uploader.upload(new File(file), [
+            'teamcity-build-number'            : System.getProperty('build.number'),
+            'teamcity-build-type-id'           : System.getProperty('teamcity.buildType.id'),
+            'teamcity-build-configuration-name': System.getenv('TEAMCITY_BUILDCONF_NAME'),
+            'teamcity-build-project-name'      : System.getenv('TEAMCITY_PROJECT_NAME'),
+          ])
+        }
+        catch (Exception e) {
+          context.messages.error(e.message, e)
+        }
+      }
     }
   }
 

@@ -246,9 +246,8 @@ public class SideEffectChecker {
    * @return true if the method has exceptional side effect
    */
   public static boolean mayHaveExceptionalSideEffect(PsiMethod method) {
-    if (method.getName().startsWith("assert") || method.getName().startsWith("check")) {
-      return true;
-    }
+    String name = method.getName();
+    if (name.startsWith("assert") || name.startsWith("check") || name.startsWith("require")) return true;
     return ControlFlowAnalyzer.getMethodCallContracts(method, null).stream()
       .filter(mc -> mc.getConditions().stream().noneMatch(cv -> cv.isBoundCheckingCondition()))
       .anyMatch(mc -> mc.getReturnValue() == MethodContract.ValueConstraint.THROW_EXCEPTION);

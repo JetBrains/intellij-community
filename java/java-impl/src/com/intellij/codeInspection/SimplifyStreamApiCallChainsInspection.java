@@ -34,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
@@ -755,25 +754,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       PsiMethod ctor = tryCast(methodRef.resolve(), PsiMethod.class);
       if (ctor == null || !ctor.getParameterList().isEmpty()) return null;
       PsiClass aClass = ctor.getContainingClass();
-      if (aClass == null) return null;
-      String name = aClass.getQualifiedName();
-      if (name != null && name.startsWith("java.util.") &&
-          Stream.of(aClass.getConstructors()).anyMatch(SimplifyCollectionCreationFix::isCollectionConstructor)) {
-        return name;
-      }
-      return null;
-    }
-
-    @Contract("null -> false")
-    private static boolean isCollectionConstructor(PsiMethod ctor) {
-      if (ctor == null || !ctor.getModifierList().hasExplicitModifier(PsiModifier.PUBLIC)) return false;
-      PsiParameterList list = ctor.getParameterList();
-      if (list.getParametersCount() != 1) return false;
-      PsiTypeElement typeElement = list.getParameters()[0].getTypeElement();
-      if (typeElement == null) return false;
-      PsiType type = typeElement.getType();
-      PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
-      return aClass != null && CommonClassNames.JAVA_UTIL_COLLECTION.equals(aClass.getQualifiedName());
+      return ConstructionUtils.isCollectionWithCopyConstructor(aClass) ? aClass.getQualifiedName() : null;
     }
   }
 
