@@ -176,8 +176,8 @@ fun Logger.errorIfNotMessage(e: Throwable): Boolean {
   return false
 }
 
-fun ActionCallback.toPromise(): Promise<Void?> {
-  val promise = AsyncPromise<Void?>()
+fun ActionCallback.toPromise(): Promise<Any?> {
+  val promise = AsyncPromise<Any?>()
   doWhenDone { promise.setResult(null) }
     .doWhenRejected { error -> promise.setError(createError(error ?: "Internal error")) }
   return promise
