@@ -9,10 +9,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.util.Condition
+import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.Consumer
 import com.intellij.util.Function
 
@@ -20,31 +20,29 @@ private const val GROOVY_LAST_MODULE = "Groovy.Last.Module.Chosen"
 
 fun selectModule(project: Project,
                  modules: List<Module>,
-                 titleProvider: Function<Module, String>,
+                 version: Function<Module, String>,
                  consumer: Consumer<Module>) {
   modules.singleOrNull()?.let {
     consumer.consume(it)
     return
   }
-  createSelectModulePopup(project, modules, { titleProvider.`fun`(it) }, { consumer.consume(it) }).showCenteredInCurrentWindow(project)
+  createSelectModulePopup(project, modules, version::`fun`, consumer::consume).showCenteredInCurrentWindow(project)
 }
 
 fun createSelectModulePopup(project: Project,
                             modules: List<Module>,
-                            titleProvider: (Module) -> String,
+                            version: (Module) -> String,
                             consumer: (Module) -> Unit): ListPopup {
-  val step = createSelectModulePopupStep(project, modules.sortedWith(ModulesAlphaComparator.INSTANCE), titleProvider, consumer)
-  return JBPopupFactory.getInstance().createListPopup(step)
+  val step = createSelectModulePopupStep(project, modules.sortedWith(ModulesAlphaComparator.INSTANCE), consumer)
+  return object : ListPopupImpl(step) {
+    override fun getListElementRenderer() = RightTextCellRenderer(super.getListElementRenderer(), version)
+  }
 }
 
-
-fun createSelectModulePopupStep(project: Project,
-                                modules: List<Module>,
-                                titleProvider: (Module) -> String,
-                                consumer: (Module) -> Unit): ListPopupStep<Module> {
+private fun createSelectModulePopupStep(project: Project, modules: List<Module>, consumer: (Module) -> Unit): ListPopupStep<Module> {
   val propertiesComponent = PropertiesComponent.getInstance(project)
 
-  val step = GroovySelectModuleStep(modules, titleProvider) {
+  val step = GroovySelectModuleStep(modules) {
     propertiesComponent.setValue(GROOVY_LAST_MODULE, it.name)
     consumer(it)
   }
