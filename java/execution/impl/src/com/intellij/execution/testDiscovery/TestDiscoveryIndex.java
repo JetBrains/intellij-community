@@ -80,8 +80,8 @@ public class TestDiscoveryIndex implements Disposable {
         MultiMap<String, String> result = new MultiMap<>();
         for (TestInfoHolder.TestId id : ids) {
           if (id.getFrameworkId() == frameworkId) {
-            result.putValue(localHolder.myClassEnumeratorCache.valueOf(id.getClassId()),
-                            localHolder.myMethodEnumeratorCache.valueOf(id.getMethodId()));
+            result.putValue(localHolder.myClassEnumerator.valueOf(id.getClassId()),
+                            localHolder.myMethodEnumerator.valueOf(id.getMethodId()));
           }
         }
         return result;
@@ -151,11 +151,11 @@ public class TestDiscoveryIndex implements Disposable {
       final int testNameId = localHolder.myTestEnumerator.enumerate(localHolder.createTestId(testClassName, testMethodName, frameworkId));
       TIntObjectHashMap<TIntArrayList> result = new TIntObjectHashMap<>();
       for (Map.Entry<String, Collection<String>> e : usedMethods.entrySet()) {
-        int classId = localHolder.myClassEnumeratorCache.enumerate(e.getKey());
+        int classId = localHolder.myClassEnumerator.enumerate(e.getKey());
         TIntArrayList methodIds = new TIntArrayList();
         result.put(classId, methodIds);
         for (String methodName : e.getValue()) {
-          methodIds.add(localHolder.myMethodEnumeratorCache.enumerate(methodName));
+          methodIds.add(localHolder.myMethodEnumerator.enumerate(methodName));
         }
       }
       TIntObjectHashMap<TIntArrayList> previousClassData = localHolder.myTestNameToUsedClassesAndMethodMap.get(testNameId);
