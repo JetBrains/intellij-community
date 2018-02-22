@@ -165,7 +165,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
         boolean isExcludedFromCommit = localRange.isExcludedFromCommit();
         boolean isFromActiveChangelist = localRange.getChangelistId().equals(myChangelistId);
         boolean isSkipped = !isFromActiveChangelist;
-        boolean isExcluded = !isFromActiveChangelist || isExcludedFromCommit;
+        boolean isExcluded = !isFromActiveChangelist || (myAllowExcludeChangesFromCommit && isExcludedFromCommit);
 
         changes.addAll(ContainerUtil.map(rangeFragments, fragment -> {
           return new MySimpleDiffChange(fragment, isExcluded, isSkipped, localRange.getChangelistId(), isExcludedFromCommit);
