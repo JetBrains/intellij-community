@@ -2,10 +2,12 @@
 package com.intellij.idea;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
+import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.startupWizard.StartupWizard;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -130,6 +132,9 @@ public class StartupUtil {
     if (newConfigFolder) {
       appStarter.beforeImportConfigs();
       ConfigImportHelper.importConfigsTo(PathManager.getConfigPath());
+    }
+    else {
+      installPluginUpdates();
     }
 
     if (!Main.isHeadless()) {
@@ -375,6 +380,23 @@ public class StartupUtil {
     }
 
     log.info("JNU charset: " + System.getProperty("sun.jnu.encoding"));
+  }
+
+  private static void installPluginUpdates() {
+    if (!Main.isCommandLine() && !ClassUtilCore.isLoadingOfExternalPluginsDisabled()) {
+      try {
+        StartupActionScriptManager.executeActionScript();
+      }
+      catch (IOException e) {
+        String message =
+          "The IDE failed to install some plugins.\n" +
+          "Most probably, this happened because of a change in a serialization format.\n" +
+          "Please try again, and if the problem persists, please report it\n" +
+          "to http://jb.gg/ide/critical-startup-errors" +
+          "\n\nThe cause: " + e.getMessage();
+        Main.showMessage("Plugin Installation Error", message, false);
+      }
+    }
   }
 
   static void runStartupWizard() {
