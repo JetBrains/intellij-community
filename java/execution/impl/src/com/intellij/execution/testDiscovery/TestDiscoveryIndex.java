@@ -25,24 +25,30 @@ import java.util.*;
 public class TestDiscoveryIndex implements Disposable {
   static final Logger LOG = Logger.getInstance(TestDiscoveryIndex.class);
 
-  private final TestDataController myDataController;
+  private volatile TestInfoHolder myHolder;
+  private final Object myLock = new Object();
+  private final Path myBasePath;
+
+  public static TestDiscoveryIndex getInstance(Project project) {
+    return project.getComponent(TestDiscoveryIndex.class);
+  }
 
   public TestDiscoveryIndex(Project project) {
     this(project, TestDiscoveryExtension.baseTestDiscoveryPathForProject(project));
   }
 
   public TestDiscoveryIndex(final Project project, @NotNull Path basePath) {
-    myDataController = new TestDataController(basePath, false);
+    myBasePath = basePath;
 
     if (Files.exists(basePath)) {
       StartupManager.getInstance(project).registerPostStartupActivity(() -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        myDataController.getHolder(); // proactively init with maybe io costly compact
+        getHolder(); // proactively init with maybe io costly compact
       }));
     }
   }
 
   public boolean hasTestTrace(@NotNull String testClassName, @NotNull String testMethodName, byte frameworkId) throws IOException {
-    Boolean result = myDataController.withTestDataHolder(localHolder -> {
+    Boolean result = withTestDataHolder(localHolder -> {
       TestInfoHolder.TestId testId = localHolder.createTestId(testClassName, testMethodName, frameworkId);
       final int testNameId = localHolder.myTestEnumerator.tryEnumerate(testId);
       return testNameId != 0 && localHolder.myTestNameToUsedClassesAndMethodMap.get(testNameId) != null;
@@ -51,7 +57,7 @@ public class TestDiscoveryIndex implements Disposable {
   }
 
   public void removeTestTrace(@NotNull String testClassName, @NotNull String testMethodName, byte frameworkId) throws IOException {
-    myDataController.withTestDataHolder((ThrowableConvertor<TestInfoHolder, Void, IOException>)localHolder -> {
+    withTestDataHolder(localHolder -> {
       TestInfoHolder.TestId testId = localHolder.createTestId(testClassName, testMethodName, frameworkId);
       final int testNameId = localHolder.myTestEnumerator.tryEnumerate(testId);
       if (testNameId != 0) {
@@ -65,7 +71,7 @@ public class TestDiscoveryIndex implements Disposable {
 
   @NotNull
   public MultiMap<String, String> getTestsByMethodName(@NotNull String classFQName, @NotNull String methodName, byte frameworkId) throws IOException {
-    return myDataController.withTestDataHolder(new ThrowableConvertor<TestInfoHolder, MultiMap<String, String>, IOException>() {
+    MultiMap<String, String> map = withTestDataHolder(new ThrowableConvertor<TestInfoHolder, MultiMap<String, String>, IOException>() {
       @Override
       public MultiMap<String, String> convert(TestInfoHolder localHolder) throws IOException {
         Collection<TestInfoHolder.TestId> ids = getTestIdsByMethod(localHolder);
@@ -100,103 +106,40 @@ public class TestDiscoveryIndex implements Disposable {
         return result;
       }
     });
+    return map == null ? MultiMap.empty() : map;
   }
 
+  @NotNull
   public Collection<String> getTestModulesByMethodName(@NotNull String classFQName, @NotNull String methodName, byte frameworkId) throws IOException {
-    return myDataController.withTestDataHolder(new ThrowableConvertor<TestInfoHolder, Collection<String>, IOException>() {
-      @Override
-      public Collection<String> convert(TestInfoHolder localHolder) throws IOException {
-        final TIntArrayList list = localHolder.myTestNameToNearestModule.get(
-          TestInfoHolder.createKey(
-            localHolder.myClassEnumerator.enumerate(classFQName),
-            localHolder.myMethodEnumerator.enumerate(methodName)
-          )
-        );
-        if (list == null) return Collections.emptyList();
-        final ArrayList<String> result = new ArrayList<>(list.size());
-        for (int moduleNameId : list.toNativeArray()) {
-          final TestInfoHolder.ModuleId moduleNameWithPrefix = localHolder.myModuleEnumerator.valueOf(moduleNameId);
-          if (moduleNameWithPrefix != null && moduleNameWithPrefix.getFrameworkId() == frameworkId) {
-            result.add(moduleNameWithPrefix.getModuleName());
-          }
+    List<String> modules = withTestDataHolder(localHolder -> {
+      final TIntArrayList list = localHolder.myTestNameToNearestModule.get(
+        TestInfoHolder.createKey(
+          localHolder.myClassEnumerator.enumerate(classFQName),
+          localHolder.myMethodEnumerator.enumerate(methodName)
+        )
+      );
+      if (list == null) return Collections.emptyList();
+      final ArrayList<String> result = new ArrayList<>(list.size());
+      for (int moduleNameId : list.toNativeArray()) {
+        final TestInfoHolder.ModuleId moduleNameWithPrefix = localHolder.myModuleEnumerator.valueOf(moduleNameId);
+        if (moduleNameWithPrefix != null && moduleNameWithPrefix.getFrameworkId() == frameworkId) {
+          result.add(moduleNameWithPrefix.getModuleName());
         }
-        return result;
       }
+      return result;
     });
-  }
-
-  static class TestDataController {
-    private final Object myLock = new Object();
-    private Path myBasePath;
-    private final boolean myReadOnly;
-    private volatile TestInfoHolder myHolder;
-
-    TestDataController(Path basePath, boolean readonly) {
-      myReadOnly = readonly;
-      init(basePath);
-    }
-
-    void init(Path basePath) {
-      if (myHolder != null) dispose();
-
-      synchronized (myLock) {
-        myBasePath = basePath;
-      }
-    }
-
-    private TestInfoHolder getHolder() {
-      TestInfoHolder holder = myHolder;
-
-      if (holder == null) {
-        synchronized (myLock) {
-          holder = myHolder;
-          if (holder == null && myBasePath != null) myHolder = holder = new TestInfoHolder(myBasePath, myReadOnly, myLock);
-        }
-      }
-      return holder;
-    }
-
-    private void dispose() {
-      synchronized (myLock) {
-        TestInfoHolder holder = myHolder;
-        if (holder != null) {
-          holder.dispose();
-          myHolder = null;
-        }
-      }
-    }
-
-    private void thingsWentWrongLetsReinitialize(@Nullable TestInfoHolder holder, Throwable throwable) throws IOException {
-      LOG.error("Unexpected problem", throwable);
-      if (holder != null) holder.dispose();
-      PathKt.delete(TestInfoHolder.getVersionFile(myBasePath));
-
-      myHolder = null;
-      if (throwable instanceof IOException) throw (IOException) throwable;
-    }
-
-    public <R> R withTestDataHolder(ThrowableConvertor<TestInfoHolder, R, IOException> action) throws IOException {
-      synchronized (myLock) {
-        TestInfoHolder holder = getHolder();
-        if (holder == null || holder.isDisposed()) return null;
-        try {
-          return action.convert(holder);
-        } catch (Throwable throwable) {
-          if (!myReadOnly) thingsWentWrongLetsReinitialize(holder, throwable);
-          else LOG.error(throwable);
-        }
-        return null;
-      }
-    }
-  }
-
-  public static TestDiscoveryIndex getInstance(Project project) {
-    return project.getComponent(TestDiscoveryIndex.class);
+    return modules == null ? Collections.emptySet() : modules;
   }
 
   @Override
   public void dispose() {
-    myDataController.dispose();
+    synchronized (myLock) {
+      TestInfoHolder holder = myHolder;
+      if (holder != null) {
+        holder.dispose();
+        myHolder = null;
+      }
+    }
   }
 
   public void updateFromData(@NotNull String testClassName,
@@ -204,7 +147,7 @@ public class TestDiscoveryIndex implements Disposable {
                              @NotNull MultiMap<String, String> usedMethods,
                              @Nullable String moduleName,
                              byte frameworkId) throws IOException {
-    myDataController.withTestDataHolder(localHolder -> {
+    withTestDataHolder(localHolder -> {
       final int testNameId = localHolder.myTestEnumerator.enumerate(localHolder.createTestId(testClassName, testMethodName, frameworkId));
       TIntObjectHashMap<TIntArrayList> result = new TIntObjectHashMap<>();
       for (Map.Entry<String, Collection<String>> e : usedMethods.entrySet()) {
@@ -219,5 +162,40 @@ public class TestDiscoveryIndex implements Disposable {
       localHolder.doUpdateFromDiff(testNameId, result, previousClassData, moduleName != null ? localHolder.myModuleEnumerator.enumerate(new TestInfoHolder.ModuleId(moduleName, frameworkId)) : null);
       return null;
     });
+  }
+
+  private TestInfoHolder getHolder() {
+    TestInfoHolder holder = myHolder;
+
+    if (holder == null) {
+      synchronized (myLock) {
+        holder = myHolder;
+        if (holder == null && myBasePath != null) myHolder = holder = new TestInfoHolder(myBasePath, false, myLock);
+      }
+    }
+    return holder;
+  }
+
+  private void thingsWentWrongLetsReinitialize(@Nullable TestInfoHolder holder, Throwable throwable) throws IOException {
+    LOG.error("Unexpected problem", throwable);
+    if (holder != null) holder.dispose();
+    PathKt.delete(TestInfoHolder.getVersionFile(myBasePath));
+
+    myHolder = null;
+    if (throwable instanceof IOException) throw (IOException)throwable;
+  }
+
+  private <R> R withTestDataHolder(ThrowableConvertor<TestInfoHolder, R, IOException> action) throws IOException {
+    synchronized (myLock) {
+      TestInfoHolder holder = getHolder();
+      if (holder == null || holder.isDisposed()) return null;
+      try {
+        return action.convert(holder);
+      }
+      catch (Throwable throwable) {
+        thingsWentWrongLetsReinitialize(holder, throwable);
+      }
+      return null;
+    }
   }
 }
