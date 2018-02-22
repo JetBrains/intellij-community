@@ -86,7 +86,7 @@ public class ParameterInfoComponent extends JPanel {
     super(new BorderLayout());
     myRequestFocus = requestFocus;
 
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       JComponent editorComponent = editor.getComponent();
       JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
       myWidthLimit = layeredPane.getWidth();
