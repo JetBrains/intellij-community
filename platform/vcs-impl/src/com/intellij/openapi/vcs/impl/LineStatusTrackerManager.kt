@@ -57,7 +57,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.testFramework.LightVirtualFile
-import com.intellij.ui.GuiUtils
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.vcsUtil.VcsUtil
@@ -509,7 +508,7 @@ class LineStatusTrackerManager(
             val state = fileStatesAwaitingRefresh.remove(virtualFile)
             if (state == null) return
 
-            edt {
+            runInEdt(ModalityState.any()) {
               val tracker = getLineStatusTracker(document)
               if (tracker is PartialLocalLineStatusTracker) {
                 tracker.restoreState(state)
@@ -519,9 +518,9 @@ class LineStatusTrackerManager(
           }
         }
         is Result.Error -> {
-          edt {
+          runInEdt(ModalityState.any()) {
             synchronized(LOCK) {
-              val data = trackers[document] ?: return@edt
+              val data = trackers[document] ?: return@runInEdt
 
               data.tracker.dropBaseRevision()
               data.contentInfo = null
@@ -531,7 +530,7 @@ class LineStatusTrackerManager(
           }
         }
         is Result.Success -> {
-          edt {
+          runInEdt(ModalityState.any()) {
             val virtualFile = fileDocumentManager.getFile(document)!!
             val refreshData = result.data
 
@@ -539,11 +538,11 @@ class LineStatusTrackerManager(
               val data = trackers[document]
               if (data == null) {
                 log("Loading finished: tracker already released", virtualFile)
-                return@edt
+                return@runInEdt
               }
               if (!shouldBeUpdated(data.contentInfo, refreshData.info)) {
                 log("Loading finished: no need to update", virtualFile)
-                return@edt
+                return@runInEdt
               }
 
               data.contentInfo = refreshData.info
@@ -689,7 +688,7 @@ class LineStatusTrackerManager(
 
   private inner class MyChangeListListener : ChangeListAdapter() {
     override fun defaultListChanged(oldDefaultList: ChangeList?, newDefaultList: ChangeList?) {
-      edt {
+      runInEdt(ModalityState.any()) {
         expireInactiveRangesDamagedNotifications()
 
         EditorFactory.getInstance().allEditors
@@ -734,10 +733,6 @@ class LineStatusTrackerManager(
 
   private class RefreshData(val text: String, val info: ContentInfo)
 
-
-  private fun edt(task: () -> Unit) {
-    GuiUtils.invokeLaterIfNeeded(task, ModalityState.any())
-  }
 
   private fun log(message: String, file: VirtualFile?) {
     if (LOG.isDebugEnabled) {
@@ -990,7 +985,7 @@ private abstract class SingleThreadLoader<Request, T>(private val project: Proje
     val updateScheduled = putRunnableIfUpdateScheduled(task)
     if (updateScheduled) return
 
-    edt {
+    runInEdt(ModalityState.any()) {
       if (!putRunnableIfUpdateScheduled(task)) {
         task.run()
       }
@@ -1047,7 +1042,7 @@ private abstract class SingleThreadLoader<Request, T>(private val project: Proje
       Result.Error()
     }
 
-    edt {
+    runInEdt(ModalityState.any()) {
       handleResult(request, result)
       notifyTrackerRefreshed(request)
     }
@@ -1083,10 +1078,6 @@ private abstract class SingleThreadLoader<Request, T>(private val project: Proje
   }
 
   private fun isDisposed() = project.isDisposed
-
-  private fun edt(task: () -> Unit) {
-    GuiUtils.invokeLaterIfNeeded(task, ModalityState.any())
-  }
 }
 
 private sealed class Result<T> {
