@@ -46,6 +46,7 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     public boolean myIgnoreWhitespacesInAnnotations = true;
     public String RECENT_HG_ROOT_PATH = null;
     public Value ROOT_SYNC = Value.NOT_DECIDED;
+    public boolean SWAP_SIDES_IN_COMPARE_BRANCHES = false;
     
     @Property(surroundWithTag = false, flat = true)
     public DvcsBranchSettings FAVORITE_BRANCH_SETTINGS = new DvcsBranchSettings();
@@ -110,6 +111,14 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
 
   public void setSyncSetting(@NotNull Value syncSetting) {
     myState.ROOT_SYNC = syncSetting;
+  }
+
+  public boolean shouldSwapSidesInCompareBranches() {
+    return myState.SWAP_SIDES_IN_COMPARE_BRANCHES;
+  }
+
+  public void setSwapSidesInCompareBranches(boolean value) {
+    myState.SWAP_SIDES_IN_COMPARE_BRANCHES = value;
   }
 
   public boolean isWhitespacesIgnoredInAnnotations() {
