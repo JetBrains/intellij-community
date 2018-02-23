@@ -94,21 +94,9 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
-  @Contract(pure = true)
-  public static <K, V> THashMap<K, V> newTroveMap(int initialCapacity) {
-    return new THashMap<K, V>(initialCapacity);
-  }
-
-  @NotNull
   @Contract(pure=true)
   public static <K, V> THashMap<K, V> newTroveMap(@NotNull TObjectHashingStrategy<K> strategy) {
     return new THashMap<K, V>(strategy);
-  }
-
-  @NotNull
-  @Contract(pure = true)
-  public static <K, V> THashMap<K, V> newTroveMap(int initialCapacity, @NotNull TObjectHashingStrategy<K> strategy) {
-    return new THashMap<K, V>(initialCapacity, strategy);
   }
 
   @NotNull
@@ -344,21 +332,9 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
-  @Contract(pure = true)
-  public static <T> THashSet<T> newTroveSet(int initialCapacity) {
-    return new THashSet<T>(initialCapacity);
-  }
-
-  @NotNull
   @Contract(pure=true)
   public static <T> THashSet<T> newTroveSet(@NotNull TObjectHashingStrategy<T> strategy) {
     return new THashSet<T>(strategy);
-  }
-
-  @NotNull
-  @Contract(pure = true)
-  public static <T> THashSet<T> newTroveSet(int initialCapacity, @NotNull TObjectHashingStrategy<T> strategy) {
-    return new THashSet<T>(initialCapacity, strategy);
   }
 
   @NotNull
