@@ -1,5 +1,8 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -25,6 +28,7 @@ import java.util.stream.Collectors;
 public class JsonSchemaObject {
   @NonNls public static final String DEFINITIONS = "definitions";
   @NonNls public static final String PROPERTIES = "properties";
+  @NonNls public static final String X_INTELLIJ_HTML_DESCRIPTION = "x-intellij-html-description";
   @NotNull private final JsonObject myJsonObject;
   private Map<String, JsonSchemaObject> myDefinitionsMap;
   private Map<String, JsonSchemaObject> myProperties;
@@ -34,9 +38,10 @@ public class JsonSchemaObject {
 
   private String myId;
   private String mySchema;
-  private String myDescription;
 
   private String myTitle;
+  private String myDescription;
+  private String myHtmlDescription;
 
   private JsonSchemaType myType;
   private Object myDefault;
@@ -101,6 +106,9 @@ public class JsonSchemaObject {
     if (!StringUtil.isEmptyOrSpaces(other.myDescription)) {
       myDescription = other.myDescription;
     }
+    if (!StringUtil.isEmptyOrSpaces(other.myHtmlDescription)) {
+      myHtmlDescription = other.myHtmlDescription;
+    }
 
     if (other.myType != null) myType = other.myType;
     if (other.myDefault != null) myDefault = other.myDefault;
@@ -109,9 +117,9 @@ public class JsonSchemaObject {
     myTypeVariants = copyList(myTypeVariants, other.myTypeVariants);
     if (other.myMultipleOf != null) myMultipleOf = other.myMultipleOf;
     if (other.myMaximum != null) myMaximum = other.myMaximum;
-    if (other.myExclusiveMaximum) myExclusiveMaximum = other.myExclusiveMaximum;
+    myExclusiveMaximum |= other.myExclusiveMaximum;
     if (other.myMinimum != null) myMinimum = other.myMinimum;
-    if (other.myExclusiveMinimum) myExclusiveMinimum = other.myExclusiveMinimum;
+    myExclusiveMinimum |= other.myExclusiveMinimum;
     if (other.myMaxLength != null) myMaxLength = other.myMaxLength;
     if (other.myMinLength != null) myMinLength = other.myMinLength;
     if (other.myPattern != null) myPattern = other.myPattern;
@@ -468,7 +476,15 @@ public class JsonSchemaObject {
   }
 
   public void setDescription(String description) {
-    myDescription = description;
+    myDescription = unescapeJsonString(description);
+  }
+
+  public String getHtmlDescription() {
+    return myHtmlDescription;
+  }
+
+  public void setHtmlDescription(String htmlDescription) {
+    myHtmlDescription = unescapeJsonString(htmlDescription);
   }
 
   public String getTitle() {
@@ -476,7 +492,16 @@ public class JsonSchemaObject {
   }
 
   public void setTitle(String title) {
-    myTitle = title;
+    myTitle = unescapeJsonString(title);
+  }
+
+  private static String unescapeJsonString(@NotNull final String text) {
+    try {
+      final String object = String.format("{\"prop\": \"%s\"}", text);
+      return new Gson().fromJson(object, com.google.gson.JsonObject.class).get("prop").getAsString();
+    } catch (JsonParseException e) {
+      return text;
+    }
   }
 
   @Nullable

@@ -1,7 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.documentation.PlatformDocumentationUtil;
@@ -45,15 +46,11 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProviderKt;
 
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Maxim.Mossienko
@@ -508,7 +505,8 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
       originalElement = null;
     }
     if (element instanceof PsiMethodCallExpression) {
-      PsiMethod method = CompletionMemory.getChosenMethod((PsiMethodCallExpression)element);
+      PsiMethod method = CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION
+                         ? CompletionMemory.getChosenMethod((PsiMethodCallExpression)element) : null;
       if (method == null) return getMethodCandidateInfo((PsiMethodCallExpression)element);
       else element = method;
     }

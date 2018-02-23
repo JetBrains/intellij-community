@@ -130,7 +130,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
       @Override
       public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
         if (getProperty("filterNewlines") == Boolean.TRUE && str.indexOf('\n')>=0) {
-          str = StringUtil.replace(str, "\n", "");
+          str = StringUtil.replace(str, "\n", " ");
         }
         if (!StringUtil.isEmpty(str)) super.insertString(offs, str, a);
       }

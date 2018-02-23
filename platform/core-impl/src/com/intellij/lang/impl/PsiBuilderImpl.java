@@ -68,6 +68,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private final IElementType[] myLexTypes;
   private int myCurrentLexeme;
 
+  private final ParserDefinition myParserDefinition;
   private final Lexer myLexer;
   private final TokenSet myWhitespaces;
   private TokenSet myComments;
@@ -143,6 +144,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
                          @Nullable Object parentCachingNode) {
     myProject = project;
     myFile = containingFile;
+    myParserDefinition = parserDefinition;
 
     myText = text;
     myTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
@@ -933,10 +935,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   @NotNull
   private TreeElement createRootAST(@NotNull StartMarker rootMarker) {
-    final IElementType type = rootMarker.getTokenType();
-    @SuppressWarnings("NullableProblems")
-    final TreeElement rootNode = type instanceof ILazyParseableElementType ?
-                             ASTFactory.lazy((ILazyParseableElementType)type, null) : createComposite(rootMarker);
+    IElementType type = rootMarker.getTokenType();
+    TreeElement rootNode = type instanceof ILazyParseableElementType ?
+                           createLazy((ILazyParseableElementType)type, null, getASTFactory()) :
+                           createComposite(rootMarker, getASTFactory());
     if (myCharTable == null) {
       myCharTable = rootNode instanceof FileElement ? ((FileElement)rootNode).getCharTable() : new CharTableImpl();
     }
@@ -946,13 +948,20 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return rootNode;
   }
 
+  @Nullable
+  private ASTFactory getASTFactory() {
+    return myParserDefinition instanceof ASTFactory ? (ASTFactory)myParserDefinition : null;
+  }
+
   private static class ConvertFromTokensToASTBuilder implements DiffTreeChangeBuilder<ASTNode, LighterASTNode> {
     private final DiffTreeChangeBuilder<ASTNode, ASTNode> myDelegate;
     private final ASTConverter myConverter;
 
-    private ConvertFromTokensToASTBuilder(@NotNull StartMarker rootNode, @NotNull DiffTreeChangeBuilder<ASTNode, ASTNode> delegate) {
+    private ConvertFromTokensToASTBuilder(@NotNull StartMarker rootNode,
+                                          @NotNull DiffTreeChangeBuilder<ASTNode, ASTNode> delegate,
+                                          @Nullable ASTFactory astFactory) {
       myDelegate = delegate;
-      myConverter = new ASTConverter(rootNode);
+      myConverter = new ASTConverter(rootNode, astFactory);
     }
 
     @Override
@@ -979,7 +988,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   @NotNull
   private DiffLog merge(@NotNull final ASTNode oldRoot, @NotNull StartMarker newRoot, @NotNull CharSequence lastCommittedText) {
     DiffLog diffLog = new DiffLog();
-    DiffTreeChangeBuilder<ASTNode, LighterASTNode> builder = new ConvertFromTokensToASTBuilder(newRoot, diffLog);
+    DiffTreeChangeBuilder<ASTNode, LighterASTNode> builder = new ConvertFromTokensToASTBuilder(newRoot, diffLog, getASTFactory());
     MyTreeStructure treeStructure = new MyTreeStructure(newRoot, null);
     final List<CustomLanguageASTComparator> customLanguageASTComparators = CustomLanguageASTComparator.getMatchingComparators(myFile);
     ShallowNodeComparator<ASTNode, LighterASTNode> comparator =
@@ -1166,6 +1175,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private void bind(@NotNull StartMarker rootMarker, @NotNull CompositeElement rootNode) {
+    ASTFactory astFactory = getASTFactory();
     StartMarker curMarker = rootMarker;
     CompositeElement curNode = rootNode;
 
@@ -1188,7 +1198,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         else if (!myOptionalData.isCollapsed(marker.markerId)) {
           curMarker = marker;
 
-          final CompositeElement childNode = createComposite(marker);
+          CompositeElement childNode = createComposite(marker, astFactory);
           curNode.rawAddChildrenWithoutNotifications(childNode);
           curNode = childNode;
 
@@ -1255,7 +1265,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   @NotNull
-  private static CompositeElement createComposite(@NotNull StartMarker marker) {
+  private static CompositeElement createComposite(@NotNull StartMarker marker, @Nullable ASTFactory astFactory) {
     final IElementType type = marker.myType;
     if (type == TokenType.ERROR_ELEMENT) {
       return Factory.createErrorElement(marker.myBuilder.myOptionalData.getDoneError(marker.markerId));
@@ -1265,7 +1275,20 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       throw new RuntimeException(UNBALANCED_MESSAGE);
     }
 
+    if (astFactory != null) {
+      CompositeElement composite = astFactory.createComposite(marker.getTokenType());
+      if (composite != null) return composite;
+    }
     return ASTFactory.composite(type);
+  }
+
+  @NotNull
+  private static LazyParseableElement createLazy(@NotNull ILazyParseableElementType type, @Nullable CharSequence text, @Nullable ASTFactory astFactory) {
+    if (astFactory != null) {
+      LazyParseableElement element = astFactory.createLazy(type, text);
+      if (element != null) return element;
+    }
+    return ASTFactory.lazy(type, text);
   }
 
   @Nullable
@@ -1630,10 +1653,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   }
 
   private static class ASTConverter implements Convertor<Node, ASTNode> {
-    @NotNull private final StartMarker myRoot;
+    private final StartMarker myRoot;
+    private final ASTFactory myASTFactory;
 
-    private ASTConverter(@NotNull StartMarker root) {
+    private ASTConverter(@NotNull StartMarker root, @Nullable ASTFactory astFactory) {
       myRoot = root;
+      myASTFactory = astFactory;
     }
 
     @Override
@@ -1648,7 +1673,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       else {
         final StartMarker startMarker = (StartMarker)n;
         final CompositeElement composite = n == myRoot ? (CompositeElement)myRoot.myBuilder.createRootAST(myRoot)
-                                                         : createComposite(startMarker);
+                                                         : createComposite(startMarker, myASTFactory);
         startMarker.myBuilder.bind(startMarker, composite);
         return composite;
       }
@@ -1676,8 +1701,14 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       return (TreeElement)((ICustomParsingType)type).parse(text, myCharTable);
     }
 
+    ASTFactory astFactory = getASTFactory();
     if (type instanceof ILazyParseableElementType) {
-      return ASTFactory.lazy((ILazyParseableElementType)type, text);
+      return createLazy((ILazyParseableElementType)type, text, astFactory);
+    }
+
+    if (astFactory != null) {
+      TreeElement element = astFactory.createLeaf(type, text);
+      if (element != null) return element;
     }
 
     return ASTFactory.leaf(type, text);

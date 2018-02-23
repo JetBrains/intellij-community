@@ -184,7 +184,7 @@ class DocumentTracker : Disposable {
     }
   }
 
-  private fun updateFrozenContentIfNeeded() {
+  fun updateFrozenContentIfNeeded() {
     // ensure blocks are up to date
     updateFrozenContentIfNeeded(Side.LEFT)
     updateFrozenContentIfNeeded(Side.RIGHT)
@@ -403,12 +403,15 @@ class DocumentTracker : Disposable {
     fun isFrozen() = isFrozen(Side.LEFT) || isFrozen(Side.RIGHT)
 
     fun freeze(side: Side) {
+      val wasFrozen = isFrozen()
+
       var data = getData(side)
       if (data == null) {
         data = FreezeData(side[document1, document2])
         setData(side, data)
         data.counter++
 
+        if (wasFrozen) handler.onFreeze()
         handler.onFreeze(side)
       }
       else {
@@ -431,6 +434,7 @@ class DocumentTracker : Disposable {
         setData(side, null)
         refreshDirty(fastRefresh = false)
         handler.onUnfreeze(side)
+        if (!isFrozen()) handler.onUnfreeze()
       }
     }
 
@@ -487,6 +491,9 @@ class DocumentTracker : Disposable {
 
     fun onFreeze(side: Side) {}
     fun onUnfreeze(side: Side) {}
+
+    fun onFreeze() {}
+    fun onUnfreeze() {}
   }
 
 

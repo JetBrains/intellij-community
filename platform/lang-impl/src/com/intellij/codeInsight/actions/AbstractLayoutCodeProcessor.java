@@ -328,7 +328,7 @@ public abstract class AbstractLayoutCodeProcessor {
 
     final Ref<FutureTask<Boolean>> writeActionRunnable = new Ref<>();
     Runnable readAction = () -> {
-      if (!checkFileWritable(file)) return;
+      if (!file.isValid() || !checkFileWritable(file)) return;
       try{
         FutureTask<Boolean> writeTask = preprocessFile(file, myProcessChangedTextOnly);
         writeActionRunnable.set(writeTask);

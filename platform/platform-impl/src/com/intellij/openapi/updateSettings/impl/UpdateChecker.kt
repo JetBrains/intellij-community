@@ -40,6 +40,9 @@ import java.io.File
 import java.io.IOException
 import java.lang.IllegalStateException
 import java.util.*
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.set
 
 /**
  * See XML file by [ApplicationInfoEx.getUpdateUrls] for reference.
@@ -511,28 +514,32 @@ object UpdateChecker {
   }
 
   /** A helper method for manually testing platform updates (see [com.intellij.internal.ShowUpdateInfoDialogAction]). */
-  fun testPlatformUpdate(updateInfoText: String, patchFilePath: String?) {
+  fun testPlatformUpdate(updateInfoText: String, patchFilePath: String?, forceUpdate: Boolean) {
     if (!ApplicationManager.getApplication().isInternal) {
       throw IllegalStateException()
     }
 
-    val updateInfo: UpdatesInfo
-    try {
-      updateInfo = UpdatesInfo(loadElement(updateInfoText))
+    val channel: UpdateChannel?
+    val newBuild: BuildInfo?
+    val patch: PatchInfo?
+    if (forceUpdate) {
+      val node = loadElement(updateInfoText).getChild("product")?.getChild("channel") ?: throw IllegalArgumentException("//channel missing")
+      channel = UpdateChannel(node)
+      newBuild = channel.builds.firstOrNull() ?: throw IllegalArgumentException("//build missing")
+      patch = newBuild.patches.firstOrNull()
     }
-    catch (e: JDOMException) {
-      LOG.error(e)
-      return
+    else {
+      val updateInfo = UpdatesInfo(loadElement(updateInfoText))
+      val strategy = UpdateStrategy(ApplicationInfo.getInstance().build, updateInfo, UpdateSettings.getInstance())
+      val checkForUpdateResult = strategy.checkForUpdates()
+      channel = checkForUpdateResult.updatedChannel
+      newBuild = checkForUpdateResult.newBuild
+      patch = checkForUpdateResult.findPatchForBuild(ApplicationInfo.getInstance().build)
     }
 
-    val strategy = UpdateStrategy(ApplicationInfo.getInstance().build, updateInfo, UpdateSettings.getInstance())
-    val checkForUpdateResult = strategy.checkForUpdates()
-    val updatedChannel = checkForUpdateResult.updatedChannel
-    val newBuild = checkForUpdateResult.newBuild
-    if (updatedChannel != null && newBuild != null) {
-      val patch = checkForUpdateResult.findPatchForBuild(ApplicationInfo.getInstance().build)
+    if (channel != null && newBuild != null) {
       val patchFile = if (patchFilePath != null) File(FileUtil.toSystemDependentName(patchFilePath)) else null
-      UpdateInfoDialog(updatedChannel, newBuild, patch, patchFile).show()
+      UpdateInfoDialog(channel, newBuild, patch, patchFile).show()
     }
     else {
       NoUpdatesDialog(true).show()

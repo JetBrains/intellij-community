@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
+import com.intellij.lang.java.beans.PropertyKind;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
@@ -25,7 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.PropertyKind;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt;
 
 import java.util.Arrays;
@@ -102,12 +102,12 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     }
     if (myIsLValue) {
       return Collections.singletonList(
-        new PropertyProcessor(myThisType, myName, PropertyKind.SETTER, myArgumentTypes.getValue(), myRef)
+        new PropertyProcessor(myThisType, myName, PropertyKind.SETTER, () -> myArgumentTypes.getValue(), myRef)
       );
     }
     return ContainerUtil.newArrayList(
-      new PropertyProcessor(myThisType, myName, PropertyKind.GETTER, PsiType.EMPTY_ARRAY, myRef),
-      new PropertyProcessor(myThisType, myName, PropertyKind.BOOLEAN_GETTER, PsiType.EMPTY_ARRAY, myRef)
+      new PropertyProcessor(myThisType, myName, PropertyKind.GETTER, () -> PsiType.EMPTY_ARRAY, myRef),
+      new PropertyProcessor(myThisType, myName, PropertyKind.BOOLEAN_GETTER, () -> PsiType.EMPTY_ARRAY, myRef)
     );
   }
 

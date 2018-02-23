@@ -422,6 +422,10 @@ abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
     }
 
 
+    fun handlePartialCommit(side: Side, list: String): PartialLocalLineStatusTracker.PartialCommitHelper {
+      return partialTracker.handlePartialCommit(side, listOf(list.toListId()))
+    }
+
     fun moveChanges(fromList: String, toList: String) {
       assertContainsElements(changeListNames(), fromList)
       assertContainsElements(changeListNames(), toList)

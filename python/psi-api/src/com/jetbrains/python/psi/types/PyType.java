@@ -91,7 +91,4 @@ public interface PyType {
   boolean isBuiltin();
 
   void assertValid(String message);
-
-  default void accept(@NotNull PyTypeVisitor visitor) {
-  }
 }

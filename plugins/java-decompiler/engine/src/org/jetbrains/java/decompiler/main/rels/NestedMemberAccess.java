@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.rels;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -394,6 +394,11 @@ public class NestedMemberAccess {
           ret.replaceExprent(ret.getRight(), invexpr.getLstParameters().get(1));
           fexpr.replaceExprent(fexpr.getInstance(), invexpr.getLstParameters().get(0));
         }
+
+        // do not use copied bytecodes
+        ret.getLeft().bytecode = null;
+        ret.getRight().bytecode = null;
+
         retexprent = ret;
         break;
       case FUNCTION:
@@ -421,6 +426,10 @@ public class NestedMemberAccess {
 
 
     if (retexprent != null) {
+      // preserve original bytecodes
+      retexprent.bytecode = null;
+      retexprent.addBytecodeOffsets(invexpr.bytecode);
+
       // hide synthetic access method
       boolean hide = true;
 

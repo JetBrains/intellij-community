@@ -1,24 +1,13 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.vcs.changes.FilePathsHelper;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
 
 public class StaticFilePath {
   private final String myKey;
@@ -61,5 +50,14 @@ public class StaticFilePath {
     final int idx = myKey.lastIndexOf('/');
     if (idx == -1 || idx == 0) return null;
     return new StaticFilePath(true, myPath.substring(0, idx), myKey.substring(0, idx), myVf == null ? null : myVf.getParent());
+  }
+
+  @Nullable
+  public VirtualFile resolve() {
+    VirtualFile result = getVf();
+    if (result == null) {
+      result = LocalFileSystem.getInstance().findFileByIoFile(new File(getPath()));
+    }
+    return result;
   }
 }

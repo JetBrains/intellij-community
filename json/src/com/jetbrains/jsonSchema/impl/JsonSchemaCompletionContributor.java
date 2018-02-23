@@ -217,9 +217,9 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       key = !myWrapInQuotes ? key : StringUtil.wrapWithDoubleQuote(key);
       LookupElementBuilder builder = LookupElementBuilder.create(key);
 
-      final String typeText = StringUtil.replaceUnicodeEscapeSequences(jsonSchemaObject.getDocumentation(true));
+      final String typeText = JsonSchemaDocumentationProvider.getBestDocumentation(true, jsonSchemaObject);
       if (!StringUtil.isEmptyOrSpaces(typeText)) {
-        builder = builder.withTypeText(typeText, true);
+        builder = builder.withTypeText(StringUtil.removeHtmlTags(typeText), true);
       }
 
       final JsonSchemaType type = jsonSchemaObject.getType();

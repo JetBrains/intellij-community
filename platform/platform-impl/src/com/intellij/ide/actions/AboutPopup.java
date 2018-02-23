@@ -310,7 +310,7 @@ public class AboutPopup {
       ApplicationInfo appInfo = ApplicationInfo.getInstance();
       Rectangle aboutLogoRect = appInfo.getAboutLogoRect();
       if (aboutLogoRect != null) {
-        myLinks.add(new Link(aboutLogoRect, appInfo.getCompanyURL()));
+        myLinks.add(new Link(new JBRectangle(aboutLogoRect), appInfo.getCompanyURL()));
       }
 
       if (appInfo instanceof ApplicationInfoImpl) {
@@ -349,11 +349,11 @@ public class AboutPopup {
     @NotNull
     protected String getCopyrightText() {
       ApplicationInfo applicationInfo = ApplicationInfo.getInstance();
-      return "Copyright \u00A9 " + 
-             ((ApplicationInfoImpl)applicationInfo).getCopyrightStart() + 
-             "\u2013" + 
-             Calendar.getInstance(Locale.US).get(Calendar.YEAR) + 
-             " " + 
+      return "Copyright \u00A9 " +
+             ((ApplicationInfoImpl)applicationInfo).getCopyrightStart() +
+             "\u2013" +
+             Calendar.getInstance(Locale.US).get(Calendar.YEAR) +
+             " " +
              applicationInfo.getCompanyName();
     }
 

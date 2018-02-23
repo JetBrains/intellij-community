@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -32,7 +33,7 @@ import java.util.*;
 
 @State(
   name = "ProjectJdkTable",
-  storages = @Storage(value = "jdk.table.xml", roamingType = RoamingType.DISABLED)
+  storages = @Storage(value = "jdk.table.xml", roamingType = RoamingType.DISABLED, useSaveThreshold = ThreeState.NO)
 )
 public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableComponent, PersistentStateComponent<Element> {
   private final List<Sdk> mySdks = new ArrayList<>();

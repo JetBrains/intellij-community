@@ -133,35 +133,10 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
   public void onEvent(BuildEvent event) {
     List<Runnable> runOnEdt = new SmartList<>();
     if (event instanceof StartBuildEvent) {
-      if (isInitializeStarted.get()) {
-        long currentTime = System.currentTimeMillis();
-        DefaultListModel<AbstractViewManager.BuildInfo> listModel =
-          (DefaultListModel<AbstractViewManager.BuildInfo>)myBuildsList.getModel();
-        boolean shouldBeCleared = !listModel.isEmpty();
-        for (int i = 0; i < listModel.getSize(); i++) {
-          AbstractViewManager.BuildInfo info = listModel.getElementAt(i);
-          if (info.endTime == -1 || currentTime - info.endTime < TimeUnit.SECONDS.toMillis(1)) {
-            shouldBeCleared = false;
-            break;
-          }
-        }
-        if (shouldBeCleared) {
-          myBuildsMap.clear();
-          SmartList<BuildView> viewsToDispose = new SmartList<>(myViewMap.values());
-          runOnEdt.add(() -> viewsToDispose.forEach(Disposer::dispose));
-
-          myViewMap.clear();
-          listModel.clear();
-          myBuildsList.setVisible(false);
-          runOnEdt.add(() -> {
-            myThreeComponentsSplitter.setFirstComponent(null);
-            myThreeComponentsSplitter.setLastComponent(null);
-          });
-          myToolbarActions.removeAll();
-        }
-      }
-
       StartBuildEvent startBuildEvent = (StartBuildEvent)event;
+      if (isInitializeStarted.get()) {
+        clearOldBuilds(runOnEdt, startBuildEvent);
+      }
       AbstractViewManager.BuildInfo buildInfo = new AbstractViewManager.BuildInfo(
         event.getId(), startBuildEvent.getBuildTitle(), startBuildEvent.getWorkingDir(), event.getEventTime());
       myBuildsMap.put(event.getId(), buildInfo);
@@ -287,7 +262,12 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
               int lastSize = myThreeComponentsSplitter.getLastSize();
               if (firstSize == 0 && lastSize == 0) {
                 EdtInvocationManager.getInstance().invokeLater(() -> {
-                  int width = Math.round(myThreeComponentsSplitter.getWidth() / 4f);
+                  Container container = myThreeComponentsSplitter;
+                  int containerWidth = 0;
+                  while (container != null && (containerWidth = container.getWidth()) == 0) {
+                    container = container.getParent();
+                  }
+                  int width = Math.round(containerWidth / 4f);
                   myThreeComponentsSplitter.setFirstSize(width);
                 });
               }
@@ -324,6 +304,48 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
           runnable.run();
         }
       });
+    }
+  }
+
+  private void clearOldBuilds(List<Runnable> runOnEdt, StartBuildEvent startBuildEvent) {
+    long currentTime = System.currentTimeMillis();
+    DefaultListModel<AbstractViewManager.BuildInfo> listModel = (DefaultListModel<AbstractViewManager.BuildInfo>)myBuildsList.getModel();
+    boolean shouldBeCleared = !listModel.isEmpty();
+    List<AbstractViewManager.BuildInfo> sameBuildsToClear = new SmartList<>();
+    for (int i = 0; i < listModel.getSize(); i++) {
+      AbstractViewManager.BuildInfo info = listModel.getElementAt(i);
+      boolean sameBuild = info.getWorkingDir().equals(startBuildEvent.getWorkingDir());
+      if (info.endTime != -1 && sameBuild) {
+        sameBuildsToClear.add(info);
+      }
+      if (shouldBeCleared && info.endTime == -1 || !sameBuild && currentTime - info.endTime < TimeUnit.SECONDS.toMillis(1)) {
+        shouldBeCleared = false;
+      }
+    }
+    if (shouldBeCleared) {
+      myBuildsMap.clear();
+      SmartList<BuildView> viewsToDispose = new SmartList<>(myViewMap.values());
+      runOnEdt.add(() -> viewsToDispose.forEach(Disposer::dispose));
+
+      myViewMap.clear();
+      listModel.clear();
+      myBuildsList.setVisible(false);
+      runOnEdt.add(() -> {
+        myThreeComponentsSplitter.setFirstComponent(null);
+        myThreeComponentsSplitter.setLastComponent(null);
+      });
+      myToolbarActions.removeAll();
+    }
+    else {
+      for (AbstractViewManager.BuildInfo info : sameBuildsToClear) {
+        runOnEdt.add(() -> {
+          BuildView buildView = myViewMap.remove(info);
+          if (buildView != null) {
+            Disposer.dispose(buildView);
+          }
+        });
+        listModel.removeElement(info);
+      }
     }
   }
 

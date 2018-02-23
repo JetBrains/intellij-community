@@ -94,6 +94,11 @@ abstract class LineStatusTrackerBase<R : Range> {
 
   @CalledInAwt
   fun setBaseRevision(vcsContent: CharSequence) {
+    setBaseRevision(vcsContent, null)
+  }
+
+  @CalledInAwt
+  protected fun setBaseRevision(vcsContent: CharSequence, beforeUnfreeze: (() -> Unit)?) {
     application.assertIsDispatchThread()
     if (isReleased) return
 
@@ -101,6 +106,8 @@ abstract class LineStatusTrackerBase<R : Range> {
       updateDocument(Side.LEFT) {
         vcsDocument.setText(vcsContent)
       }
+
+      beforeUnfreeze?.invoke()
     }
 
     if (!isInitialized) {

@@ -356,6 +356,8 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Diff = IconLoader.getIcon("/diff/Diff.png"); // 16x16
+    public static final Icon GutterCheckBox = IconLoader.getIcon("/diff/gutterCheckBox.png"); // 11x11
+    public static final Icon GutterCheckBoxSelected = IconLoader.getIcon("/diff/gutterCheckBoxSelected.png"); // 11x11
     public static final Icon MagicResolve = IconLoader.getIcon("/diff/magicResolve.png"); // 12x12
     public static final Icon MagicResolveToolbar = IconLoader.getIcon("/diff/magicResolveToolbar.png"); // 16x16
     public static final Icon Remove = IconLoader.getIcon("/diff/remove.png"); // 11x11
@@ -1151,6 +1153,7 @@ public class AllIcons {
     public static final Icon Hibernate = IconLoader.getIcon("/providers/hibernate.png"); // 16x16
     public static final Icon Hsqldb = IconLoader.getIcon("/providers/hsqldb.png"); // 16x16
     public static final Icon Ibm = IconLoader.getIcon("/providers/ibm.png"); // 16x16
+    public static final Icon Mariadb = IconLoader.getIcon("/providers/mariadb.png"); // 16x16
     public static final Icon Microsoft = IconLoader.getIcon("/providers/microsoft.png"); // 16x16
     public static final Icon Mysql = IconLoader.getIcon("/providers/mysql.png"); // 16x16
     public static final Icon Oracle = IconLoader.getIcon("/providers/oracle.png"); // 16x16

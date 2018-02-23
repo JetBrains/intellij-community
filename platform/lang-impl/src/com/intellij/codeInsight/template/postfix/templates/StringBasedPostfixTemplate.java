@@ -30,7 +30,7 @@ public abstract class StringBasedPostfixTemplate extends PostfixTemplateWithExpr
   }
 
   @Override
-  public final void expandForChooseExpression(@NotNull PsiElement expr, @NotNull Editor editor) {
+  public void expandForChooseExpression(@NotNull PsiElement expr, @NotNull Editor editor) {
     Project project = expr.getProject();
     Document document = editor.getDocument();
     PsiElement elementForRemoving = getElementToRemove(expr);

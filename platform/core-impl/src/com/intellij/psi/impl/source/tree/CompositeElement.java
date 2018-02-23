@@ -181,7 +181,7 @@ public class CompositeElement extends TreeElement {
   @Override
   public ASTNode findChildByType(IElementType type) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
-      ApplicationManager.getApplication().assertReadAccessAllowed();
+      assertReadAccessAllowed();
     }
 
     for(ASTNode element = getFirstChildNode(); element != null; element = element.getTreeNext()){
@@ -193,7 +193,7 @@ public class CompositeElement extends TreeElement {
   @Override
   public ASTNode findChildByType(IElementType type, ASTNode anchor) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
-      ApplicationManager.getApplication().assertReadAccessAllowed();
+      assertReadAccessAllowed();
     }
 
     return TreeUtil.findSibling(anchor, type);
@@ -203,7 +203,7 @@ public class CompositeElement extends TreeElement {
   @Nullable
   public ASTNode findChildByType(@NotNull TokenSet types) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
-      ApplicationManager.getApplication().assertReadAccessAllowed();
+      assertReadAccessAllowed();
     }
     for(ASTNode element = getFirstChildNode(); element != null; element = element.getTreeNext()){
       if (types.contains(element.getElementType())) return element;
@@ -215,7 +215,7 @@ public class CompositeElement extends TreeElement {
   @Nullable
   public ASTNode findChildByType(@NotNull TokenSet typesSet, ASTNode anchor) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
-      ApplicationManager.getApplication().assertReadAccessAllowed();
+      assertReadAccessAllowed();
     }
     return TreeUtil.findSibling(anchor, typesSet);
   }
@@ -253,7 +253,7 @@ public class CompositeElement extends TreeElement {
   @Override
   @NotNull
   public char[] textToCharArray() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    assertReadAccessAllowed();
 
     final int len = getTextLength();
     char[] buffer = new char[len];
@@ -407,7 +407,7 @@ public class CompositeElement extends TreeElement {
 
   @NotNull
   public <T extends PsiElement> T[] getChildrenAsPsiElements(@Nullable TokenSet filter, ArrayFactory<T> constructor) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    assertReadAccessAllowed();
     int count = countChildren(filter);
     T[] result = constructor.create(count);
     if (count == 0) {
@@ -426,7 +426,7 @@ public class CompositeElement extends TreeElement {
 
   @NotNull
   public <T extends PsiElement> T[] getChildrenAsPsiElements(@NotNull IElementType type, ArrayFactory<T> constructor) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    assertReadAccessAllowed();
     int count = countChildren(type);
     T[] result = constructor.create(count);
     if (count == 0) {
@@ -494,7 +494,7 @@ public class CompositeElement extends TreeElement {
     int cachedLength = myCachedLength;
     if (cachedLength >= 0) return cachedLength;
 
-    ApplicationManager.getApplication().assertReadAccessAllowed(); //otherwise a write action can modify the tree while we're walking it
+    assertReadAccessAllowed(); //otherwise a write action can modify the tree while we're walking it
     try {
       return walkCachingLength();
     }

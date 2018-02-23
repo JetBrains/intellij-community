@@ -23,14 +23,19 @@ import java.util.*;
 public class PartialChangesUtil {
   @Nullable
   public static PartialLocalLineStatusTracker getPartialTracker(@NotNull Project project, @NotNull Change change) {
-    ContentRevision revision = change.getAfterRevision();
-    if (!(revision instanceof CurrentContentRevision)) return null;
-
-    VirtualFile file = ((CurrentContentRevision)revision).getVirtualFile();
+    VirtualFile file = getVirtualFile(change);
     if (file == null) return null;
 
     LineStatusTracker<?> tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(file);
     return ObjectUtils.tryCast(tracker, PartialLocalLineStatusTracker.class);
+  }
+
+  @Nullable
+  public static VirtualFile getVirtualFile(@NotNull Change change) {
+    ContentRevision revision = change.getAfterRevision();
+    if (!(revision instanceof CurrentContentRevision)) return null;
+
+    return ((CurrentContentRevision)revision).getVirtualFile();
   }
 
   @NotNull

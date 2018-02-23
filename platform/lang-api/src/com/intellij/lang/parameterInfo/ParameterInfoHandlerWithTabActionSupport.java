@@ -17,6 +17,7 @@
 package com.intellij.lang.parameterInfo;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,4 +40,9 @@ public interface ParameterInfoHandlerWithTabActionSupport<ParameterOwner extends
   Set<? extends Class> getArgListStopSearchClasses();
 
   @NotNull Class<ParameterOwner> getArgumentListClass();
+
+  @Override
+  default boolean isWhitespaceSensitive() {
+    return getActualParameterDelimiterType() == TokenType.WHITE_SPACE;
+  }
 }

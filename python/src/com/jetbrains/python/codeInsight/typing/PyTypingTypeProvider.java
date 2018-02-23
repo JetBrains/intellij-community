@@ -598,15 +598,13 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
           if (classAttrs == null) {
             return null;
           }
-          return StreamEx.of(classAttrs)
-            .map(RatedResolveResult::getElement)
-            .select(PyTargetExpression.class)
-            .filter(x -> ScopeUtil.getScopeOwner(x) instanceof PyClass)
-            .map(x -> getTypeFromTargetExpressionAnnotation(x, context))
-            .nonNull()
-            .map(Ref::get)
-            .foldLeft(PyUnionType::union)
-            .orElse(null);
+          final Ref<PyType> combined = StreamEx.of(classAttrs)
+                                               .map(RatedResolveResult::getElement)
+                                               .select(PyTargetExpression.class)
+                                               .filter(x -> ScopeUtil.getScopeOwner(x) instanceof PyClass)
+                                               .map(x -> getTypeFromTargetExpressionAnnotation(x, context))
+                                               .collect(PyTypeUtil.toUnionFromRef());
+          return Ref.deref(combined);
         }
       }
       else {
@@ -953,9 +951,9 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (operandNames.contains(OPTIONAL)) {
         final PyExpression indexExpr = subscriptionExpr.getIndexExpression();
         if (indexExpr != null) {
-          final PyType type = Ref.deref(getType(indexExpr, context));
-          if (type != null) {
-            return Ref.create(PyUnionType.union(type, PyNoneType.INSTANCE));
+          final Ref<PyType> typeRef = getType(indexExpr, context);
+          if (typeRef != null) {
+            return Ref.create(PyUnionType.union(typeRef.get(), PyNoneType.INSTANCE));
           }
         }
         return Ref.create();

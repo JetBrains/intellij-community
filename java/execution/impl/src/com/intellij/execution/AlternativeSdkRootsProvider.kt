@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
+import com.intellij.openapi.roots.JavaSyntheticLibrary
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
@@ -14,7 +15,6 @@ import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.AppUIUtil
-import java.util.*
 
 /**
  * @author egor
@@ -28,20 +28,17 @@ class AlternativeSdkRootsProvider : AdditionalLibraryRootsProvider() {
         .mapNotNull { it.alternativeJrePath }
         .mapNotNull { ProjectJdkTable.getInstance().findJdk(it) }
         .distinct()
-        .map { SdkSyntheticLibrary(it) }
+        .map { createSdkLibrary(it) }
         .toList()
     }
     return emptyList()
   }
 
-  class SdkSyntheticLibrary(val sdk: Sdk) : SyntheticLibrary() {
-    override fun getSourceRoots(): Collection<VirtualFile> = sdk.rootProvider.getFiles(OrderRootType.SOURCES).toList()
-
-    override fun getBinaryRoots(): Collection<VirtualFile> = sdk.rootProvider.getFiles(OrderRootType.CLASSES).toList()
-
-    override fun equals(other: Any?) = other is SdkSyntheticLibrary && sourceRoots == other.sourceRoots && binaryRoots == other.binaryRoots
-
-    override fun hashCode() = Objects.hash(sourceRoots, binaryRoots)
+  private fun createSdkLibrary(sdk: Sdk): JavaSyntheticLibrary {
+    return JavaSyntheticLibrary(sdk.rootProvider.getFiles(OrderRootType.SOURCES).toList(),
+                                sdk.rootProvider.getFiles(OrderRootType.CLASSES).toList(),
+                                emptySet<VirtualFile>(),
+                                null)
   }
 
   companion object {

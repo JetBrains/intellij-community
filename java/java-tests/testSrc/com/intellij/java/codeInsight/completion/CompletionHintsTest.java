@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider;
 import com.intellij.codeInsight.hints.Option;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.java.codeInsight.AbstractParameterInfoTestCase;
+import com.intellij.java.codeInsight.JavaExternalDocumentationTest;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.util.registry.Registry;
@@ -899,6 +900,14 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     complete("println(long x)");
     waitForAllAsyncStuff();
     checkHintContents("<html><b>long</b>&nbsp;&nbsp;<i>a The <code>long</code> to be printed.</i></html>");
+  }
+
+  public void testQuickDocForOverloadSelectedOnCompletion() throws Exception {
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key)");
+    checkResult("class C { void m() { System.getProperty(<caret>) } }");
+    String doc = JavaExternalDocumentationTest.getDocumentationText(getEditor());
+    assertTrue(doc.contains("<code>null</code> if there is no property with that key"));
   }
 
   private void checkResultWithInlays(String text) {

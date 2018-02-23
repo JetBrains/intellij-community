@@ -222,7 +222,7 @@ public abstract class GotoActionBase extends AnAction {
     ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, itemProvider, start.first,
                                                             mayRequestOpenInCurrentWindow,
                                                             start.second);
-    UIUtil.typeAheadUntilFocused(e.getInputEvent(), popup.getTextField());
+    //UIUtil.typeAheadUntilFocused(e.getInputEvent(), popup.getTextField());
     showNavigationPopup(callback, findUsagesTitle,
                         popup, allowMultipleSelection);
   }

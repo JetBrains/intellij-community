@@ -50,7 +50,7 @@ class UElementAsPsiInspection : DevKitUastInspectionBase() {
     private fun checkArguments(node: UCallExpression) {
       for (valueArgument in node.valueArguments) {
         if (!isUElementType(valueArgument.getExpressionType())) continue
-        val parameter = guessCorrespondingParameter(node, valueArgument) ?: continue
+        val parameter = node.getParameterForArgument(valueArgument) ?: continue
         if (isPsiElementType(parameter.type)) {
           valueArgument.sourcePsiElement?.let { reportedElements.add(it) }
         }

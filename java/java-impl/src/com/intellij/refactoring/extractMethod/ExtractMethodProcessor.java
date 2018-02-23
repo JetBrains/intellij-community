@@ -603,7 +603,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     myNullness = initNullness();
     myArtificialOutputVariable = PsiType.VOID.equals(myReturnType) ? getArtificialOutputVariable() : null;
     final PsiType returnType = myArtificialOutputVariable != null ? myArtificialOutputVariable.getType() : myReturnType;
-    int duplicatesCount = estimateDuplicatesCount();
+    int duplicatesCount = 0; //estimateDuplicatesCount();
     return new ExtractMethodDialog(myProject, myTargetClass, myInputVariables, returnType, getTypeParameterList(),
                                    getThrownExceptions(), isStatic(), isCanBeStatic(), myCanBeChainedConstructor,
                                                          myRefactoringName, myHelpId, myNullness, myElements,duplicatesCount) {

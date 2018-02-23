@@ -124,13 +124,6 @@ public class PyImportedModuleType implements PyType {
   }
 
   @Override
-  public void accept(@NotNull PyTypeVisitor visitor) {
-    if (visitor instanceof PyTypeVisitorExt) {
-      ((PyTypeVisitorExt)visitor).visitImportedModuleType(this);
-    }
-  }
-
-  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;

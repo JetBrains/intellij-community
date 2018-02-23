@@ -34,6 +34,7 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.content.Content;
@@ -55,6 +56,7 @@ import com.intellij.util.containers.Queue;
 import com.intellij.util.enumeration.EmptyEnumeration;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.DialogUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -348,7 +350,9 @@ public class UsageViewImpl implements UsageView {
 
       @Override
       public void onDone(boolean isExcludeAction) {
-
+         if (myRootPanel.hasNextOccurence()) {
+           myRootPanel.goNextOccurence();
+         }
       }
     };
   }
@@ -515,14 +519,13 @@ public class UsageViewImpl implements UsageView {
     // since the UsageViewTreeCellRenderer ignores invisible nodes (outside the viewport), their preferred size is incorrect
     // and we need to recalculate them when the node scrolled into the visible rectangle
     treePane.getViewport().addChangeListener(__ -> clearRendererCache());
-    myPreviewSplitter = new Splitter(false, 0.5f, 0.1f, 0.9f);
+    myPreviewSplitter = new OnePixelSplitter(false, 0.5f, 0.1f, 0.9f);
     myPreviewSplitter.setFirstComponent(treePane);
 
     myCentralPanel.add(myPreviewSplitter, BorderLayout.CENTER);
 
     if (isPreviewUsages()) {
       myPreviewSplitter.setProportion(getUsageViewSettings().getPreviewUsagesSplitterProportion());
-      treePane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.RIGHT);
       final JBTabbedPane tabbedPane = new JBTabbedPane(SwingConstants.BOTTOM){
         @NotNull
         @Override
@@ -533,6 +536,7 @@ public class UsageViewImpl implements UsageView {
 
       UsageContextPanel.Provider[] extensions = Extensions.getExtensions(UsageContextPanel.Provider.EP_NAME, myProject);
       myUsageContextPanelProviders = ContainerUtil.filter(extensions, provider -> provider.isAvailableFor(this));
+      Map<String, JComponent> components = new LinkedHashMap<>();
       for (UsageContextPanel.Provider provider : myUsageContextPanelProviders) {
         JComponent component;
         if (myCurrentUsageContextProvider == null || myCurrentUsageContextProvider == provider) {
@@ -543,21 +547,26 @@ public class UsageViewImpl implements UsageView {
         else {
           component = new JLabel();
         }
-
-        tabbedPane.addTab(provider.getTabTitle(), component);
+        components.put(provider.getTabTitle(), component);
       }
-      int index = myUsageContextPanelProviders.indexOf(myCurrentUsageContextProvider);
-      tabbedPane.setSelectedIndex(index);
-      tabbedPane.addChangeListener(e -> {
-        int currentIndex = tabbedPane.getSelectedIndex();
-        UsageContextPanel.Provider selectedProvider = myUsageContextPanelProviders.get(currentIndex);
-        if (selectedProvider != myCurrentUsageContextProvider) {
-          tabSelected(selectedProvider);
-        }
-      });
-      tabbedPane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
       JBPanelWithEmptyText panel = new JBPanelWithEmptyText(new BorderLayout());
-      panel.add(tabbedPane, BorderLayout.CENTER);
+      if (components.size() == 1) {
+        panel.add(components.values().iterator().next(), BorderLayout.CENTER);
+      } else {
+        for (Map.Entry<String, JComponent> entry : components.entrySet()) {
+          tabbedPane.addTab(entry.getKey(), entry.getValue());
+        }
+        int index = myUsageContextPanelProviders.indexOf(myCurrentUsageContextProvider);
+        tabbedPane.setSelectedIndex(index);
+        tabbedPane.addChangeListener(e -> {
+          int currentIndex = tabbedPane.getSelectedIndex();
+          UsageContextPanel.Provider selectedProvider = myUsageContextPanelProviders.get(currentIndex);
+          if (selectedProvider != myCurrentUsageContextProvider) {
+            tabSelected(selectedProvider);
+          }
+        });
+        panel.add(tabbedPane, BorderLayout.CENTER);
+      }
       myPreviewSplitter.setSecondComponent(panel);
     }
     else {
@@ -1867,7 +1876,7 @@ public class UsageViewImpl implements UsageView {
 
   private final class ButtonPanel extends JPanel {
     private ButtonPanel() {
-      setLayout(new FlowLayout(FlowLayout.LEFT, 8, 0));
+      setLayout(new FlowLayout(FlowLayout.LEFT, 6, 0));
       getProject().getMessageBus().connect(UsageViewImpl.this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
         @Override
         public void enteredDumbMode() {
@@ -1880,7 +1889,9 @@ public class UsageViewImpl implements UsageView {
         }
       });
     }
-
+    //Here we use
+    // Action.LONG_DESCRIPTION as hint label for button
+    // Action.SHORT_DESCRIPTION as a tooltip for button
     private void addButtonAction(int index, @NotNull Action action) {
       JButton button = new JButton(action);
       add(button, index);
@@ -1889,6 +1900,17 @@ public class UsageViewImpl implements UsageView {
 
       if (getBorder() == null) setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
       update();
+      Object s = action.getValue(Action.LONG_DESCRIPTION);
+      if (s instanceof String) {
+        JBLabel label = new JBLabel((String)s);
+        label.setEnabled(false);
+        label.setFont(JBUI.Fonts.smallFont());
+        add(JBUI.Borders.emptyLeft(-1).wrap(label));
+      }
+      s = action.getValue(Action.SHORT_DESCRIPTION);
+      if (s instanceof String) {
+        button.setToolTipText((String)s);
+      }
       invalidate();
       if (getParent() != null) {
         getParent().validate();

@@ -97,7 +97,7 @@ public class MoveChangesLineStatusAction extends LineStatusActionBase {
     ChangeListChooser chooser = new ChangeListChooser(project,
                                                       suggestedLists,
                                                       defaultSelection,
-                                                      ActionsBundle.message("action.ChangesView.Move.text"),
+                                                      ActionsBundle.message("action.Vcs.MoveChangedLinesToChangelist.text"),
                                                       null);
     chooser.show();
 
