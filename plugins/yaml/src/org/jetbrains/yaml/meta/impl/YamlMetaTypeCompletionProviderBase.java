@@ -172,8 +172,8 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
     }
     else {
       fieldList.stream()
-        .filter(childField -> !existingByKey.containsKey(childField.getName()))
-        .forEach(childField -> registerBasicKeyCompletion(childField, result, insertedScalar, needsSequenceItemMark));
+               .filter(childField -> !existingByKey.containsKey(childField.getName()))
+               .forEach(childField -> registerBasicKeyCompletion(metaClass, childField, result, insertedScalar, needsSequenceItemMark));
     }
   }
 
@@ -182,11 +182,12 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
            !parentField.hasRelationSpecificType(Field.Relation.OBJECT_CONTENTS);
   }
 
-  private static void registerBasicKeyCompletion(@NotNull Field toBeInserted,
+  private static void registerBasicKeyCompletion(@NotNull YamlMetaClass metaClass,
+                                                 @NotNull Field toBeInserted,
                                                  @NotNull CompletionResultSet result,
                                                  @NotNull PsiElement insertedScalar,
                                                  boolean needsSequenceItemMark) {
-    List<LookupElementBuilder> lookups = toBeInserted.getKeyLookups(insertedScalar);
+    List<LookupElementBuilder> lookups = toBeInserted.getKeyLookups(metaClass, insertedScalar);
     if (!lookups.isEmpty()) {
       InsertHandler<LookupElement> keyInsertHandler = new YamlKeyInsertHandlerImpl(needsSequenceItemMark, toBeInserted);
       lookups.stream()
