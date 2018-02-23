@@ -32,6 +32,10 @@ function set_java_home() {
     esac
 }
 
+function get_absolute_path() {
+  ( unset CDPATH; cd "$1" && pwd ) 2> /dev/null
+}
+
 ASWB=
 ASWB_PROPERTY=
 while [[ -n "$1" ]]; do
@@ -51,7 +55,7 @@ while [[ -n "$1" ]]; do
 done
 
 # Set defaults for OUT, DIST, BNUM if necessary
-[[ -z "$OUT" ]] && OUT="$PROG_DIR/out/studio"
+[[ -z "$OUT" ]] && OUT="out/studio"
 [[ -z "$DIST" ]] && DIST="$OUT/dist"
 [[ -z "$BNUM" ]] && BNUM=SNAPSHOT
 
@@ -59,8 +63,8 @@ cd "$PROG_DIR"
 mkdir -p "$OUT"
 mkdir -p "$DIST"
 # ensure OUT and DIST are absolute paths
-OUT="$(readlink -e "$OUT")"
-DIST="$(readlink -e "$DIST")"
+OUT="$(get_absolute_path "$OUT")"
+DIST="$(get_absolute_path "$DIST")"
 
 ANT="java -jar lib/ant/lib/ant-launcher.jar -f build.xml"
 
