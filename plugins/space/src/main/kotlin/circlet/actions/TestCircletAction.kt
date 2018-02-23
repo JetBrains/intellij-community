@@ -23,7 +23,7 @@ class TestCircletAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         async {
             val project = e.project!!
-            val result = project.connection.loginModel!!.client.service<Me>().info()
+            val result = project.connection.loginModel!!.client.me.info()
 
             application.invokeLater {
                 Notification(
