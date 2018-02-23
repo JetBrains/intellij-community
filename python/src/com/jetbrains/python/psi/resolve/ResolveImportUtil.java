@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.resolve;
 
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
@@ -27,11 +26,7 @@ import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.jetbrains.python.psi.FutureFeature.ABSOLUTE_IMPORT;
 
@@ -339,8 +334,10 @@ public class ResolveImportUtil {
           }
         }
       }
-      if (!withoutForeign && parent instanceof PsiFile) {
-        final PsiElement foreign = resolveForeignImports((PsiFile)parent, referencedName);
+
+      PsiFile packageInit = PyUtil.as(PyUtil.turnDirIntoInit(parentDir), PsiFile.class);
+      if (!withoutForeign && (packageInit != null)) {
+        final PsiElement foreign = resolveForeignImports(packageInit, referencedName);
         if (foreign != null) {
           final ResolveResultList results = new ResolveResultList();
           results.addAll(resolved);
