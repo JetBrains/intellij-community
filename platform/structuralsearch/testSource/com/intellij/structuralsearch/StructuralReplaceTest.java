@@ -196,7 +196,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     assertEquals("Expression replacement", expectedResult3, replacer.testReplace(expectedResult1,str5,str6,options));
 
     String str7 = "try { a.doSomething(); b.doSomething(); } catch(IOException ex) {  ex.printStackTrace(); throw new RuntimeException(ex); }";
-    String str8 = "try { 'Statements+; } catch('_ '_) { 'HandlerStatements+; }";
+    String str8 = "try { '_Statements+; } catch('_ '_) { '_HandlerStatements+; }";
     String str9 = "$Statements$;";
     String expectedResult4 = "a.doSomething(); b.doSomething();";
 
@@ -1056,9 +1056,9 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "\n" +
                  "}";
 
-    String s35 = "public interface 'MessageInterface {\n" +
+    String s35 = "public interface '_MessageInterface {\n" +
                  "    public static final String '_X = '_VALUE;\n" +
-                 "    'blah*" +
+                 "    '_blah*" +
                  "}";
     String s36 = "public interface $MessageInterface$ {\n" +
                  "    public static final String HEADER = $VALUE$;\n" +
