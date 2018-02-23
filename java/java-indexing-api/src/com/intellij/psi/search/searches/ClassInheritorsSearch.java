@@ -44,6 +44,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     private final boolean myCheckInheritance;
     private final boolean myIncludeAnonymous;
     @NotNull private final Condition<String> myNameCondition;
+    private final Project myProject;
 
     public SearchParameters(@NotNull final PsiClass aClass, @NotNull SearchScope scope, final boolean checkDeep, final boolean checkInheritance, boolean includeAnonymous) {
       this(aClass, scope, checkDeep, checkInheritance, includeAnonymous, Conditions.alwaysTrue());
@@ -58,6 +59,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
       assert checkInheritance;
       myIncludeAnonymous = includeAnonymous;
       myNameCondition = nameCondition;
+      myProject = myClass.getProject();
     }
 
     @NotNull
@@ -68,7 +70,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     @Nullable
     @Override
     public Project getProject() {
-      return myClass.getProject();
+      return myProject;
     }
 
     @Override
