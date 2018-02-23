@@ -6,10 +6,9 @@ import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
@@ -48,14 +47,10 @@ public class GrNewConsoleAction extends AnAction {
     Project project = e.getProject();
     if (project == null) return null;
 
-    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    if (file != null) {
-      Module module = ModuleUtilCore.findModuleForFile(file, project);
-      if (GroovyFacetUtil.isSuitableModule(module)) {
-        return module;
-      }
+    Module module = e.getData(LangDataKeys.MODULE);
+    if (!GroovyFacetUtil.isSuitableModule(module)) {
+      module =  getAnyApplicableModule(project);
     }
-
-    return getAnyApplicableModule(project);
+    return module;
   }
 }
