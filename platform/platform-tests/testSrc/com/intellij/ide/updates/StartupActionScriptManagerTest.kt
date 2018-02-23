@@ -4,6 +4,7 @@ package com.intellij.ide.updates
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.TempDirectory
 import org.junit.After
@@ -56,6 +57,19 @@ class StartupActionScriptManagerTest : BareTestFixtureTestCase() {
     assertFalse(scriptFile.exists())
   }
 
+  @Test fun `executing "unzip" command`() {
+    val source = IoTestUtil.createTestJar(tempDir.newFile("source.zip"), "zip/file.txt", "")
+    val destination = tempDir.newFolder("dir")
+    val unpacked = File(destination, "zip/file.txt")
+    assertTrue(source.exists())
+    assertFalse(unpacked.exists())
+    StartupActionScriptManager.addActionCommand(StartupActionScriptManager.UnzipCommand(source, destination))
+    StartupActionScriptManager.executeActionScript()
+    assertTrue(unpacked.exists())
+    assertTrue(source.exists())
+    assertFalse(scriptFile.exists())
+  }
+
   @Test fun `executing "delete" command`() {
     val tempFile = tempDir.newFile("temp.txt")
     assertTrue(tempFile.exists())
@@ -69,18 +83,24 @@ class StartupActionScriptManagerTest : BareTestFixtureTestCase() {
     val oldTarget = tempDir.newFolder("old/plugins")
     val newTarget = tempDir.newFolder("new/plugins")
     val copySource = tempDir.newFile("source.txt")
-    val copyDestinationInOld = File(tempDir.root, "old/plugins/destination.txt")
-    val copyDestinationInNew = File(tempDir.root, "new/plugins/destination.txt")
+    val copyDestinationInOld = File(oldTarget, "destination.txt")
+    val copyDestinationInNew = File(newTarget, "destination.txt")
+    val unzipSource = IoTestUtil.createTestJar(tempDir.newFile("source.zip"), "zip/file.txt", "")
+    val unpackedInOld = File(oldTarget, "zip/file.txt")
+    val unpackedInNew = File(newTarget, "zip/file.txt")
     val deleteInOld = tempDir.newFile("old/plugins/to_delete.txt")
     val deleteInNew = tempDir.newFile("new/plugins/to_delete.txt")
 
     StartupActionScriptManager.addActionCommands(listOf(
       StartupActionScriptManager.CopyCommand(copySource, copyDestinationInOld),
+      StartupActionScriptManager.UnzipCommand(unzipSource, oldTarget),
       StartupActionScriptManager.DeleteCommand(deleteInOld)))
     StartupActionScriptManager.executeActionScript(scriptFile, oldTarget, newTarget)
 
     assertFalse(copyDestinationInOld.exists())
     assertTrue(copyDestinationInNew.exists())
+    assertFalse(unpackedInOld.exists())
+    assertTrue(unpackedInNew.exists())
     assertTrue(deleteInOld.exists())
     assertFalse(deleteInNew.exists())
     assertTrue(scriptFile.exists())

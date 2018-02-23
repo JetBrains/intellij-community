@@ -97,7 +97,7 @@ public class ConfigImportHelper {
   @Nullable
   private static File findRecentConfigDirectory(File newConfigDir) {
     // looks for the most recent existing config directory in the vicinity of the new one, assuming standard layout
-    // ("~/Library/<selector><version>" on macOS, "~/.<selector><version>/config" on other OSes)
+    // ("~/Library/<selector_prefix><selector_version>" on macOS, "~/.<selector_prefix><selector_version>/config" on other OSes)
 
     File configsHome = (SystemInfo.isMac ? newConfigDir : newConfigDir.getParentFile()).getParentFile();
     if (configsHome == null || !configsHome.isDirectory()) {
@@ -298,6 +298,7 @@ public class ConfigImportHelper {
       // on macOS, plugins are normally not under the config directory
       File oldPluginsDir = new File(oldConfigDir, PLUGINS);
       if (SystemInfo.isMac && !oldPluginsDir.isDirectory()) {
+        oldPluginsDir = null;
         if (oldIdeHome != null) {
           oldPluginsDir = getSettingsPath(oldIdeHome, PathManager.PROPERTY_PLUGINS_PATH, PathManager::getDefaultPluginPathFor);
         }

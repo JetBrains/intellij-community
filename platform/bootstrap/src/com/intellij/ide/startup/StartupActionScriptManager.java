@@ -136,8 +136,16 @@ public class StartupActionScriptManager {
   }
 
   private static File mapPath(String path, File oldTarget, File newTarget) {
-    String prefix = oldTarget.getPath() + File.separatorChar;
-    return path.startsWith(prefix) ? new File(newTarget, path.substring(prefix.length(), path.length())) : null;
+    String oldTargetPath = oldTarget.getPath();
+    if (path.startsWith(oldTargetPath)) {
+      if (path.length() == oldTargetPath.length()) {
+        return newTarget;
+      }
+      if (path.charAt(oldTargetPath.length()) == File.separatorChar) {
+        return new File(newTarget, path.substring(oldTargetPath.length() + 1, path.length()));
+      }
+    }
+    return null;
   }
 
 
