@@ -56,7 +56,6 @@ import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.SimpleGraphCellPainter;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
@@ -66,6 +65,7 @@ import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +79,6 @@ import javax.swing.plaf.basic.BasicTableHeaderUI;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.util.*;
@@ -881,7 +880,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
 
     private boolean isDraggingEnabled(@NotNull MouseEvent e) {
-      if (isOnBorder(e) || isOnRootColumn(e) || ((e.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) == 0)) return false;
+      if (isOnBorder(e) || isOnRootColumn(e) || !SwingUtilities.isLeftMouseButton(e)) return false;
       // can not check for getDragged/Resized column here since they can be set in mousePressed method
       // their presence does not necessarily means something is being dragged or resized
       if (header.getCursor() == Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR) ||
