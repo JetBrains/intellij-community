@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.github;
 
+import com.intellij.dvcs.ui.CompareBranchesDialog;
+import com.intellij.dvcs.util.CommitCompareInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,16 +34,17 @@ import com.intellij.vcs.log.VcsCommitMetadata;
 import git4idea.DialogManager;
 import git4idea.GitCommit;
 import git4idea.GitLocalBranch;
+import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
+import git4idea.config.GitVcsSettings;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
-import git4idea.ui.branch.GitCompareBranchesDialog;
+import git4idea.ui.branch.GitCompareBranchesHelper;
 import git4idea.update.GitFetchResult;
 import git4idea.update.GitFetcher;
-import git4idea.util.GitCommitCompareInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiTaskExecutor;
@@ -370,9 +373,9 @@ public class GithubCreatePullRequestWorker {
     List<GitCommit> commits1 = GitHistoryUtils.history(myProject, myGitRepository.getRoot(), ".." + targetBranch);
     List<GitCommit> commits2 = GitHistoryUtils.history(myProject, myGitRepository.getRoot(), targetBranch + "..");
     Collection<Change> diff = GitChangeUtils.getDiff(myProject, myGitRepository.getRoot(), targetBranch, myCurrentBranch, null);
-    GitCommitCompareInfo info = new GitCommitCompareInfo(GitCommitCompareInfo.InfoType.BRANCH_TO_HEAD);
+    CommitCompareInfo info = new CommitCompareInfo(CommitCompareInfo.InfoType.BRANCH_TO_HEAD);
     info.put(myGitRepository, diff);
-    info.put(myGitRepository, Couple.of(commits1, commits2));
+    info.put(myGitRepository, commits1, commits2);
 
     return new DiffInfo(info, myCurrentBranch, targetBranch);
   }
@@ -548,8 +551,8 @@ public class GithubCreatePullRequestWorker {
       return;
     }
 
-    GitCompareBranchesDialog dialog =
-      new GitCompareBranchesDialog(myProject, info.getTo(), info.getFrom(), info.getInfo(), myGitRepository, true);
+    CompareBranchesDialog dialog =
+      new CompareBranchesDialog(new GitCompareBranchesHelper(myProject), info.getTo(), info.getFrom(), info.getInfo(), myGitRepository, true);
     dialog.show();
   }
 
@@ -761,18 +764,18 @@ public class GithubCreatePullRequestWorker {
   }
 
   public static class DiffInfo {
-    @NotNull private final GitCommitCompareInfo myInfo;
+    @NotNull private final CommitCompareInfo myInfo;
     @NotNull private final String myFrom;
     @NotNull private final String myTo;
 
-    private DiffInfo(@NotNull GitCommitCompareInfo info, @NotNull String from, @NotNull String to) {
+    private DiffInfo(@NotNull CommitCompareInfo info, @NotNull String from, @NotNull String to) {
       myInfo = info;
       myFrom = from; // HEAD
       myTo = to;     // BASE
     }
 
     @NotNull
-    public GitCommitCompareInfo getInfo() {
+    public CommitCompareInfo getInfo() {
       return myInfo;
     }
 

@@ -15,11 +15,13 @@
  */
 package git4idea.branch;
 
+import com.intellij.dvcs.repo.Repository;
+import com.intellij.dvcs.ui.CompareBranchesDialog;
+import com.intellij.dvcs.util.CommitCompareInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,8 +33,7 @@ import git4idea.commands.Git;
 import git4idea.history.GitHistoryUtils;
 import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitRepository;
-import git4idea.ui.branch.GitCompareBranchesDialog;
-import git4idea.util.GitCommitCompareInfo;
+import git4idea.ui.branch.GitCompareBranchesHelper;
 import git4idea.util.GitLocalCommitCompareInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -141,7 +142,7 @@ public final class GitBranchWorker {
 
   public void compare(@NotNull final String branchName, @NotNull final List<GitRepository> repositories,
                       @NotNull final GitRepository selectedRepository) {
-    final GitCommitCompareInfo myCompareInfo = loadCommitsToCompare(repositories, branchName);
+    final CommitCompareInfo myCompareInfo = loadCommitsToCompare(repositories, branchName);
     if (myCompareInfo == null) {
       LOG.error("The task to get compare info didn't finish. Repositories: \n" + repositories + "\nbranch name: " + branchName);
       return;
@@ -150,11 +151,10 @@ public final class GitBranchWorker {
       () -> displayCompareDialog(branchName, GitBranchUtil.getCurrentBranchOrRev(repositories), myCompareInfo, selectedRepository));
   }
 
-  private GitCommitCompareInfo loadCommitsToCompare(List<GitRepository> repositories, String branchName) {
-    GitCommitCompareInfo compareInfo = new GitLocalCommitCompareInfo(branchName);
+  private CommitCompareInfo loadCommitsToCompare(List<GitRepository> repositories, String branchName) {
+    CommitCompareInfo compareInfo = new GitLocalCommitCompareInfo();
     for (GitRepository repository: repositories) {
-      compareInfo.put(repository, loadCommitsToCompare(repository, branchName));
-
+      loadCommitsToCompare(repository, branchName, compareInfo);
       try {
         compareInfo.put(repository, loadTotalDiff(repository, branchName));
       }
@@ -167,13 +167,13 @@ public final class GitBranchWorker {
   }
 
   @NotNull
-  public static Collection<Change> loadTotalDiff(@NotNull GitRepository repository, @NotNull String branchName) throws VcsException {
+  public static Collection<Change> loadTotalDiff(@NotNull Repository repository, @NotNull String branchName) throws VcsException {
     // return git diff between current working directory and branchName: working dir should be displayed as a 'left' one (base)
     return GitChangeUtils.getDiffWithWorkingDir(repository.getProject(), repository.getRoot(), branchName, null, true);
   }
 
-  @NotNull
-  private Couple<List<GitCommit>> loadCommitsToCompare(@NotNull GitRepository repository, @NotNull final String branchName) {
+  private void loadCommitsToCompare(@NotNull GitRepository repository, @NotNull final String branchName,
+                                                       @NotNull CommitCompareInfo compareInfo) {
     final List<GitCommit> headToBranch;
     final List<GitCommit> branchToHead;
     try {
@@ -184,17 +184,18 @@ public final class GitBranchWorker {
       // we treat it as critical and report an error
       throw new GitExecutionException("Couldn't get [git log .." + branchName + "] on repository [" + repository.getRoot() + "]", e);
     }
-    return Couple.of(headToBranch, branchToHead);
+    compareInfo.put(repository, headToBranch, branchToHead);
   }
   
-  private void displayCompareDialog(@NotNull String branchName, @NotNull String currentBranch, @NotNull GitCommitCompareInfo compareInfo,
+  private void displayCompareDialog(@NotNull String branchName, @NotNull String currentBranch, @NotNull CommitCompareInfo compareInfo,
                                     @NotNull GitRepository selectedRepository) {
     if (compareInfo.isEmpty()) {
       Messages.showInfoMessage(myProject, String.format("<html>There are no changes between <code>%s</code> and <code>%s</code></html>",
                                                         currentBranch, branchName), "No Changes Detected");
     }
     else {
-      new GitCompareBranchesDialog(myProject, branchName, currentBranch, compareInfo, selectedRepository).show();
+      new CompareBranchesDialog(new GitCompareBranchesHelper(myProject),
+                                branchName, currentBranch, compareInfo, selectedRepository, false).show();
     }
   }
 
