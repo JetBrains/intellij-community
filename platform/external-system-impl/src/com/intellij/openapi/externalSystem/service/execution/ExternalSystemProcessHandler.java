@@ -69,7 +69,7 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
   }
 
   @Override
-  protected void destroyProcessImpl() {
+  protected synchronized void destroyProcessImpl() {
     if (myTask != null) {
       myTask.cancel();
     }
@@ -89,7 +89,7 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
 
   @Nullable
   @Override
-  public OutputStream getProcessInput() {
+  public synchronized OutputStream getProcessInput() {
     return myProcessInput;
   }
 
@@ -104,7 +104,7 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
     super.notifyTextAvailable(text, attributes);
   }
 
-  protected void closeInput() {
+  protected synchronized void closeInput() {
     if (myTask instanceof UserDataHolder) {
       ((UserDataHolder)myTask).putUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY, null);
     }
@@ -113,7 +113,7 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
   }
 
   @Override
-  public void dispose() {
+  public synchronized void dispose() {
     myTask = null;
     detachProcessImpl();
   }
