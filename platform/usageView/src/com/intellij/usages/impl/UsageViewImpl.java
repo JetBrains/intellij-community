@@ -83,6 +83,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.intellij.util.containers.Queue;
+
 /**
  * @author max
  */
@@ -1189,7 +1191,17 @@ public class UsageViewImpl implements UsageView {
     UsageNode nodeToSelect = toSelect != null ? myUsageNodes.get(toSelect) : null;
 
     Set<UsageNode> nodes = usagesToNodes(usages.stream()).collect(Collectors.toSet());
-    usages.forEach(myUsageNodes::remove);
+    NotNullLazyValue<Set<UsageInfo>> mergedInfos = new NotNullLazyValue<Set<UsageInfo>>() {
+      @NotNull
+      @Override
+      protected Set<UsageInfo> compute() {
+        return usages.stream().filter(usage -> usage instanceof UsageInfo2UsageAdapter)
+                     .flatMap(usage -> Arrays.stream(((UsageInfo2UsageAdapter)usage).getMergedInfos()))
+                     .collect(Collectors.toSet());
+      }
+    };
+    myUsageNodes.keySet().removeIf(usage -> usages.contains(usage) || 
+                                            usage instanceof UsageInfo2UsageAdapter && mergedInfos.getValue().contains(((UsageInfo2UsageAdapter)usage).getUsageInfo()));
 
     if (!nodes.isEmpty() && !myPresentation.isDetachedMode()) {
       UIUtil.invokeLaterIfNeeded(() -> {
