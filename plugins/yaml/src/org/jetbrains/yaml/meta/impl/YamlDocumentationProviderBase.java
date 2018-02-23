@@ -57,7 +57,10 @@ public abstract class YamlDocumentationProviderBase extends AbstractDocumentatio
     if (object instanceof ForcedCompletionPath) {  // deep completion
       return createFromCompletionPath((ForcedCompletionPath)object, contextElement);
     }
-    else if (object instanceof String) {  // basic completion
+    else if (object instanceof YamlMetaTypeProvider.MetaTypeProxy) {  // basic completion with Field object
+      return createFromField((YamlMetaTypeProvider.MetaTypeProxy)object, contextElement);
+    }
+    else if (object instanceof String) {  // basic completion with plain string
       return createFromString((String)object, contextElement);
     }
     else {
@@ -179,6 +182,12 @@ public abstract class YamlDocumentationProviderBase extends AbstractDocumentatio
 
     return new DocumentationElement(contextElement.getManager(), proxy.getMetaType(), field);
   }
+
+  @NotNull
+  private DocumentationElement createFromField(YamlMetaTypeProvider.MetaTypeProxy field, @NotNull PsiElement contextElement) {
+    return new DocumentationElement(contextElement.getManager(), field.getMetaType(), field.getField());
+  }
+
 
 
   private class DocumentationElement extends LightElement {
