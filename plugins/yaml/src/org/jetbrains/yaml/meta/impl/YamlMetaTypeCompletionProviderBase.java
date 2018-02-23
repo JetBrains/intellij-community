@@ -99,13 +99,13 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
 
         Map<String, YAMLScalar> siblingValues =
           siblingItems.stream()
-            .filter(i -> i.getKeysValues().isEmpty()) // we only need are interested in literal siblings
+            .filter(i -> i.getKeysValues().isEmpty()) // we only are interested in literal siblings
             .filter(i -> !currentItem.equals(i))
             .map(YAMLSequenceItem::getValue)
             .filter(Objects::nonNull)
             .filter(YAMLScalar.class::isInstance)
             .map(YAMLScalar.class::cast)
-            .collect(Collectors.toMap(scalar -> scalar.getText().trim(), scalar -> scalar));
+            .collect(Collectors.toMap(scalar -> scalar.getText().trim(), scalar -> scalar, (oldVal, newVal) -> newVal));
 
         addValueCompletions(insertedScalar, scalarType, result, siblingValues);
         return;
