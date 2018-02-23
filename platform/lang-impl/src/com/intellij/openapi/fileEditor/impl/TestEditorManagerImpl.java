@@ -379,7 +379,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   @Override
   @NotNull
   public FileEditor[] getSelectedEditors() {
-    return new FileEditor[0];
+    return myActiveFile == null ? new FileEditor[0] : getEditors(myActiveFile);
   }
 
   @Override
