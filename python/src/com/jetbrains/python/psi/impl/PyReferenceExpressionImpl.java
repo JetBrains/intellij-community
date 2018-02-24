@@ -523,7 +523,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       final @Nullable Ref<PyType> combinedType = StreamEx.of(defs)
         .select(ReadWriteInstruction.class)
         .map(instr -> instr.getType(context, anchor))
-        // don't use foldLeft(BiFunction) here, as it doesn't support null results
         .collect(PyTypeUtil.toUnionFromRef());
       return Ref.deref(combinedType);
     }
