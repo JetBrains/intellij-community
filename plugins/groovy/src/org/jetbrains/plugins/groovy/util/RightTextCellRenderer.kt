@@ -20,6 +20,22 @@ class RightTextCellRenderer<T>(
   private val text: (T) -> String?
 ) : ListCellRenderer<T> {
 
+  private val label = JBLabel().apply {
+    isOpaque = true
+    border = JBUI.Borders.emptyRight(UIUtil.getListCellHPadding())
+  }
+
+  private val spacer = JPanel().apply {
+    border = JBUI.Borders.empty(0, 2)
+  }
+
+  private val layout = BorderLayout()
+
+  private val rendererComponent = JPanel(layout).apply {
+    add(spacer, BorderLayout.CENTER)
+    add(label, BorderLayout.EAST)
+  }
+
   override fun getListCellRendererComponent(list: JList<out T>?,
                                             value: T?,
                                             index: Int,
@@ -32,22 +48,15 @@ class RightTextCellRenderer<T>(
 
     val bg = if (isSelected) UIUtil.getListSelectionBackground() else originalComponent.background
 
-    val labelComponent = JBLabel(text).apply {
-      isOpaque = true
-      border = JBUI.Borders.emptyRight(UIUtil.getListCellHPadding())
-      background = bg
-      foreground = if (isSelected) UIUtil.getListSelectionForeground() else UIUtil.getInactiveTextColor()
-    }
+    label.text = text
+    label.background = bg
+    label.foreground = if (isSelected) UIUtil.getListSelectionForeground() else UIUtil.getInactiveTextColor()
 
-    val spacer = JPanel().apply {
-      border = JBUI.Borders.empty(0, 2)
-      background = bg
-    }
+    spacer.background = bg
 
-    return JPanel(BorderLayout()).apply {
-      add(originalComponent, BorderLayout.WEST)
-      add(spacer, BorderLayout.CENTER)
-      add(labelComponent, BorderLayout.EAST)
-    }
+    layout.getLayoutComponent(BorderLayout.WEST)?.let(rendererComponent::remove)
+    rendererComponent.add(originalComponent, BorderLayout.WEST)
+
+    return rendererComponent
   }
 }
