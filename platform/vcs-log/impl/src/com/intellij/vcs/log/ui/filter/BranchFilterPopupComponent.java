@@ -115,7 +115,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
     @NotNull
     @Override
     protected AnAction createCollapsedAction(String actionName) {
-      return new PredefinedValueAction(actionName);
+      return new PredefinedValueAction(actionName, false);
     }
   }
 }
