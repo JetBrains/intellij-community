@@ -227,7 +227,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   }
 
   private void dispatchMatched(final List<PsiElement> matchedNodes, MatchResultImpl result) {
-    if (!matchContext.getOptions().isResultIsContextMatch() && doDispatch(result)) return;
+    if (doDispatch(result)) return;
 
     // There is no substitutions so show the context
 
@@ -260,7 +260,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     }
     else {
       for (final PsiElement matchStatement : matchedNodes) {
-        result.addChild(new MatchResultImpl(MatchResult.LINE_MATCH, matchStatement.getText(), new SmartPsiPointer(matchStatement), true));
+        result.addChild(new MatchResultImpl(MatchResult.LINE_MATCH, matchStatement.getText(), new SmartPsiPointer(matchStatement), false));
       }
 
       result.setMatchRef(new SmartPsiPointer(match));

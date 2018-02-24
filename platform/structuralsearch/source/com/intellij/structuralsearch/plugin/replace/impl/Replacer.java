@@ -116,12 +116,10 @@ public class Replacer {
         lastElement = parent.getLastChild();
       }
 
-      matchOptions.setResultIsContextMatch(true);
       CollectingMatchResultSink sink = new CollectingMatchResultSink();
       matcher.testFindMatches(sink, matchOptions);
 
       final List<ReplacementInfo> resultPtrList = new SmartList<>();
-
       for (final MatchResult result : sink.getMatches()) {
         resultPtrList.add(buildReplacement(result));
       }
@@ -217,7 +215,7 @@ public class Replacer {
 
     if (element==null || !element.isWritable() || !element.isValid()) return null;
 
-    final PsiElement elementParent = element.getParent();
+    final PsiElement elementParent = StructuralSearchUtil.getPresentableElement(element).getParent();
 
     CodeStyleManager.getInstance(project).performActionWithFormatterDisabled(
       (Runnable)() -> {
@@ -353,7 +351,7 @@ public class Replacer {
   public ReplacementInfo buildReplacement(MatchResult result) {
     final ReplacementInfoImpl replacementInfo = new ReplacementInfoImpl(result, project);
 
-    if (replacementBuilder==null) {
+    if (replacementBuilder == null) {
       replacementBuilder = new ReplacementBuilder(project, options);
     }
     replacementInfo.setReplacement(replacementBuilder.process(result, replacementInfo, options.getMatchOptions().getFileType()));

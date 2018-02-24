@@ -24,5 +24,7 @@ public abstract class MatchResult {
   public abstract boolean hasChildren();
   public abstract boolean isScopeMatch();
   public abstract boolean isMultipleMatch();
+
+  public abstract MatchResult getRoot();
   public abstract boolean isTarget();
 }

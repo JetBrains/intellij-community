@@ -30,7 +30,7 @@ class ReplacementInfoImpl implements ReplacementInfo {
 
   private void init(Project project) {
     fillPointerList(project);
-    fillVariableMap(matchResult);
+    fillVariableMap(matchResult.getRoot());
     for(Map.Entry<String, MatchResult> entry : variableMap.entrySet()) {
       fillElementToVariableNameMap(entry.getKey(), entry.getValue());
     }

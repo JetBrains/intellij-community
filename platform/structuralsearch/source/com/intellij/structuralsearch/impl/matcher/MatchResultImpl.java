@@ -20,6 +20,7 @@ public final class MatchResultImpl extends MatchResult {
 
   private boolean myScopeMatch;
   private boolean myMultipleMatch;
+  private MatchResultImpl parent = null;
 
   MatchResultImpl() {
   }
@@ -143,7 +144,20 @@ public final class MatchResultImpl extends MatchResult {
   }
 
   public void addChild(MatchResult result) {
+    if (result instanceof MatchResultImpl) {
+      ((MatchResultImpl)result).parent = this;
+    }
     myChildren.add(result);
+  }
+
+  @Override
+  public MatchResult getRoot() {
+    if (parent == null) return this;
+    MatchResultImpl root = parent;
+    while (root.parent != null) {
+      root = root.parent;
+    }
+    return root;
   }
 
   public void setMatchImage(String matchImage) {

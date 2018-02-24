@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -39,7 +39,7 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
                 "      <separator/>\n" +
                 "      <reference id=\"ExternalToolsGroup\"/>\n" +
                 "</group>";
-    String s5 = "<reference id=\"'Value\"/>";
+    String s5 = "<reference id=\"'_Value\"/>";
     String s6 = "<reference ref=\"$Value$\"/>";
 
     actualResult = replacer.testReplace(s4,s5,s6,options);
@@ -60,7 +60,7 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
 
     String s7 = "<h4 class=\"a\">My title<aaa>ZZZZ</aaa> My title 3</h4>\n" +
                 "<h4>My title 2</h4>";
-    String s8 = "<h4 class=\"a\">'Content*</h4>";
+    String s8 = "<h4 class=\"a\">'_Content*</h4>";
     String s9 = "<h5>$Content$</h5>";
 
     actualResult = replacer.testReplace(s7,s8,s9,options);
@@ -77,14 +77,14 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
                      "<h4>My title 2</h4>";
     assertEquals("Delete tag", expectedResult, replacer.testReplace(s7, s8, "", options));
 
-    String what = "<'H:h4 class=\"a\">'_Content*</'H>";
+    String what = "<'_H:h4 class=\"a\">'_Content*</'_H>";
     String by = "<$H$>$Content$</$H$>";
     expectedResult = "<h4>My title <aaa>ZZZZ</aaa>  My title 3</h4>\n" +
                      "<h4>My title 2</h4>";
     assertEquals("Replace with variable", expectedResult, replacer.testReplace(s7, what, by, options));
 
     String in = "<b>Cry 'Havoc!', and <i>let slip the<br> dogs of war</i></b>";
-    what = "<'Tag:b >'_Content2*</'Tag>";
+    what = "<'_Tag:b >'_Content2*</'_Tag>";
     by = "<$Tag$ id=\"unique\">$Content2$</$Tag$>";
     expectedResult = "<b id=\"unique\">Cry 'Havoc!', and  <i>let slip the<br> dogs of war</i></b>";
     assertEquals("Replace complex content with variable", expectedResult, replacer.testReplace(in, what, by, options));
@@ -104,7 +104,7 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
 
   public void testHtmlAddAttribute() {
     String in = "<input class=\"other\" type=\"text\" ng-model=\"someModel\" placeholder=\"Some placeholder\" />";
-    String what = "<input 'a* />";
+    String what = "<input '_a* />";
     String by = "<input $a$ id=\"someId1\" />";
     String expected = "<input class=\"other\" type=\"text\" ng-model=\"someModel\" placeholder=\"Some placeholder\" id=\"someId1\" />";
 
