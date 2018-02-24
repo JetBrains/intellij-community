@@ -85,7 +85,6 @@ public class GitRefManager implements VcsLogRefManager {
   public List<RefGroup> groupForBranchFilter(@NotNull Collection<VcsRef> refs) {
     List<RefGroup> simpleGroups = ContainerUtil.newArrayList();
     List<VcsRef> localBranches = ContainerUtil.newArrayList();
-    List<VcsRef> trackedBranches = ContainerUtil.newArrayList();
     MultiMap<GitRemote, VcsRef> remoteRefGroups = MultiMap.create();
 
     MultiMap<VirtualFile, VcsRef> refsByRoot = groupRefsByRoot(refs);
@@ -100,7 +99,6 @@ public class GitRefManager implements VcsLogRefManager {
       }
 
       Set<String> locals = getLocalBranches(repository);
-      Set<String> tracked = getTrackedRemoteBranches(repository);
       Map<String, GitRemote> allRemote = getAllRemoteBranches(repository);
 
       for (VcsRef ref : refsInRoot) {
@@ -115,9 +113,6 @@ public class GitRefManager implements VcsLogRefManager {
         }
         else if (allRemote.containsKey(refName)) {
           remoteRefGroups.putValue(allRemote.get(refName), ref);
-          if (tracked.contains(refName)) {
-            trackedBranches.add(ref);
-          }
         }
         else {
           LOG.debug("Didn't find ref neither in local nor in remote branches: " + ref);
@@ -128,11 +123,8 @@ public class GitRefManager implements VcsLogRefManager {
     List<RefGroup> result = ContainerUtil.newArrayList();
     result.addAll(simpleGroups);
     if (!localBranches.isEmpty()) result.add(new LogicalRefGroup("Local", localBranches));
-    if (!trackedBranches.isEmpty()) result.add(new LogicalRefGroup("Tracked", trackedBranches));
     for (Map.Entry<GitRemote, Collection<VcsRef>> entry : remoteRefGroups.entrySet()) {
-      final GitRemote remote = entry.getKey();
-      final Collection<VcsRef> branches = entry.getValue();
-      result.add(new RemoteRefGroup(remote, branches));
+      result.add(new RemoteRefGroup(entry.getKey(), entry.getValue()));
     }
     return result;
   }
@@ -259,19 +251,6 @@ public class GitRefManager implements VcsLogRefManager {
   }
 
   @NotNull
-  private static Set<String> getTrackedRemoteBranches(@NotNull GitRepository repository) {
-    Set<GitRemoteBranch> all = new HashSet<>(repository.getBranches().getRemoteBranches());
-    Set<String> tracked = new HashSet<>();
-    for (GitBranchTrackInfo info : repository.getBranchTrackInfos()) {
-      GitRemoteBranch trackedRemoteBranch = info.getRemoteBranch();
-      if (all.contains(trackedRemoteBranch)) { // check that this branch really exists, not just written in .git/config
-        tracked.add(trackedRemoteBranch.getName());
-      }
-    }
-    return tracked;
-  }
-
-  @NotNull
   private static Map<String, GitRemote> getAllRemoteBranches(@NotNull GitRepository repository) {
     Set<GitRemoteBranch> all = new HashSet<>(repository.getBranches().getRemoteBranches());
     Map<String, GitRemote> allRemote = ContainerUtil.newHashMap();
@@ -279,10 +258,6 @@ public class GitRefManager implements VcsLogRefManager {
       allRemote.put(remoteBranch.getName(), remoteBranch.getRemote());
     }
     return allRemote;
-  }
-
-  private static Set<String> getTrackedRemoteBranchesFromConfig(GitRepository repository) {
-    return ContainerUtil.map2Set(repository.getBranchTrackInfos(), trackInfo -> trackInfo.getRemoteBranch().getName());
   }
 
   @NotNull
