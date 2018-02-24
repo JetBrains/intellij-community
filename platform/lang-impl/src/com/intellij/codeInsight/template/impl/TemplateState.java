@@ -688,6 +688,10 @@ public class TemplateState implements Disposable {
 
   // Hours spent fixing code : 3
   void calcResults(final boolean isQuick) {
+    if (mySegments.isInvalid()) {
+      finishTemplateEditing();
+    }
+    
     if (myProcessor != null && myCurrentVariableNumber >= 0) {
       final String variableName = myTemplate.getVariableNameAt(myCurrentVariableNumber);
       final TextResult value = getVariableValue(variableName);
