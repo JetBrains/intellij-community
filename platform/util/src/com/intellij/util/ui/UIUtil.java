@@ -1184,6 +1184,10 @@ public class UIUtil {
     return UIManager.getColor("Table.selectionBackground");
   }
 
+  public static Color getActiveTextColor(boolean isActive) {
+    return isActive ? getActiveTextColor() : getInactiveTextColor();
+  }
+
   public static Color getActiveTextColor() {
     return UIManager.getColor("textActiveText");
   }
