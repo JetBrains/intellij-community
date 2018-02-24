@@ -18,7 +18,6 @@ package com.intellij.vcs.log.ui.filter;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -105,12 +104,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
     @NotNull
     @Override
     public AnAction createAction(@NotNull String name) {
-      return new PredefinedValueAction(name) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          myFilterModel.setFilter(myFilterModel.createFilter(myValues)); // does not add to recent
-        }
-      };
+      return new PredefinedValueAction(name, false);
     }
 
     @Override
@@ -121,7 +115,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
     @NotNull
     @Override
     protected AnAction createCollapsedAction(String actionName) {
-      return new PredefinedValueAction(actionName); // adds to recent
+      return new PredefinedValueAction(actionName);
     }
   }
 }
