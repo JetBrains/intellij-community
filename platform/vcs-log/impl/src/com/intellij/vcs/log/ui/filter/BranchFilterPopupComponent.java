@@ -72,8 +72,8 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
     actionGroup.add(createAllAction());
     actionGroup.add(createSelectMultipleValuesAction());
 
-    actionGroup.add(
-      new MyBranchPopupBuilder(myFilterModel.getDataPack(), myBranchFilterModel.getVisibleRoots(), getRecentValuesFromSettings()).build());
+    actionGroup.add(new MyBranchPopupBuilder(myFilterModel.getDataPack(), myBranchFilterModel.getVisibleRoots(),
+                                             getRecentValuesFromSettings()).build());
     return actionGroup;
   }
 
@@ -108,8 +108,8 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
     }
 
     @Override
-    protected void createRecentAction(@NotNull DefaultActionGroup actionGroup, @NotNull List<String> recentItem) {
-      actionGroup.add(new PredefinedValueAction(recentItem));
+    protected void createRecentAction(@NotNull DefaultActionGroup actionGroup, @NotNull List<String> recentItems) {
+      actionGroup.add(new PredefinedValueAction(recentItems));
     }
 
     @NotNull
