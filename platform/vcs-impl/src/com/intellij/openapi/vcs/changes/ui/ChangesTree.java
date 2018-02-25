@@ -442,7 +442,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   @NotNull
   public Set<Object> getIncludedSet() {
-    return Collections.unmodifiableSet(myIncludedChanges);
+    return new HashSet<>(myIncludedChanges);
   }
 
   public void expandAll() {
