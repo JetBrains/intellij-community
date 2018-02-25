@@ -36,9 +36,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithoutContent;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.PathUtil;
@@ -363,7 +361,8 @@ public class ExternalDiffToolUtil {
 
     @Override
     public void apply() throws IOException {
-      myFile.setBinaryContent(FileUtil.loadFileBytes(myLocalFile));
+      FileUtil.copy(myLocalFile, VfsUtilCore.virtualToIoFile(myFile));
+      VfsUtil.markDirty(false, false, myFile);
     }
   }
 
