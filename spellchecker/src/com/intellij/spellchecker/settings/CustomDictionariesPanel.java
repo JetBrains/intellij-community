@@ -8,14 +8,17 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.dictionary.CustomDictionaryProvider;
-import com.intellij.spellchecker.dictionary.location.LocalDictionaryLocation;
-import com.intellij.spellchecker.dictionary.location.RepositoryDictionaryLocation;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.Consumer;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -33,6 +36,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.ide.plugins.PluginManager.isPluginInstalled;
 import static com.intellij.openapi.extensions.PluginId.getId;
+import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
 import static com.intellij.ui.SimpleTextAttributes.GRAY_ATTRIBUTES;
 import static com.intellij.util.containers.ContainerUtil.concat;
 import static java.util.Arrays.asList;
@@ -59,16 +63,19 @@ public class CustomDictionariesPanel extends JPanel {
         @Override
         public void run(AnActionButton button) {
           myCustomDictionariesTableView.stopEditing();
-          new LocalDictionaryLocation(project).findAndAddNewDictionary(dictionary -> accept(dictionary));
+          doChooseFiles(project, files -> files.stream()
+            .map(VirtualFile::getPath)
+            .map(PathUtil::toSystemDependentName)
+            .filter(path -> !myCustomDictionariesTableView.getItems().contains(path))
+            .forEach(path -> myCustomDictionariesTableView.getListTableModel().addRow(path)));
         }
-
-      }) 
+      })
       
       .addExtraAction(new AnActionButton(SpellCheckerBundle.message("download.custom.dictionaries"), AllIcons.ToolbarDecorator.AddLink) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           myCustomDictionariesTableView.stopEditing();
-          new RepositoryDictionaryLocation(project).findAndAddNewDictionary(dictionary -> accept(dictionary));
+          new DownloadDictionaryDialog(project, dictionary -> accept(dictionary)).showAndGet();
         }
 
         @Override
@@ -115,6 +122,17 @@ public class CustomDictionariesPanel extends JPanel {
     myCustomDictionariesTableView.getEmptyText().setText((SpellCheckerBundle.message("no.custom.dictionaries")));
     this.setLayout(new BorderLayout());
     this.add(decorator.createPanel(), BorderLayout.CENTER);
+  }
+
+  private void doChooseFiles(@NotNull Project project, @NotNull Consumer<List<VirtualFile>> consumer) {
+    final FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, true) {
+      @Override
+      public boolean isFileSelectable(VirtualFile file) {
+        return extensionEquals(file.getPath(), "dic");
+      }
+    };
+
+    FileChooser.chooseFiles(fileChooserDescriptor, project, this.getParent(), project.getBaseDir(), consumer);
   }
 
   private void accept(String dictionary) {
