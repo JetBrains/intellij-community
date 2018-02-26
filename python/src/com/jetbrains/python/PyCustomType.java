@@ -24,7 +24,6 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
-import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -33,6 +32,7 @@ import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +49,7 @@ import java.util.*;
 public class PyCustomType implements PyClassLikeType {
 
   @NotNull
-  private final List<PyClassLikeType> myTypesToMimic = new ArrayList<>();
+  private final List<PyClassLikeType> myTypesToMimic;
 
   @Nullable
   private final Processor<PyElement> myFilter;
@@ -72,8 +72,12 @@ public class PyCustomType implements PyClassLikeType {
                       @NotNull final PyClassLikeType... typesToMimic) {
     myQualifiedName = qualifiedName;
     myFilter = filter;
-    myTypesToMimic.addAll(Collections2.filter(Arrays.asList(typesToMimic), NotNullPredicate.INSTANCE));
     myInstanceType = instanceType;
+    myTypesToMimic = StreamEx
+      .of(typesToMimic)
+      .nonNull()
+      .map(t -> instanceType ? t.toInstance() : t.toClass())
+      .toImmutableList();
   }
 
   /**
@@ -81,7 +85,7 @@ public class PyCustomType implements PyClassLikeType {
    */
   @NotNull
   public final List<PyClassLikeType> getTypesToMimic() {
-    return Collections.unmodifiableList(myTypesToMimic);
+    return myTypesToMimic;
   }
 
   @Override
@@ -115,7 +119,7 @@ public class PyCustomType implements PyClassLikeType {
   @NotNull
   @Override
   public final List<PyClassLikeType> getSuperClassTypes(@NotNull final TypeEvalContext context) {
-    return Collections.emptyList();
+    return myTypesToMimic;
   }
 
   @NotNull
@@ -129,8 +133,7 @@ public class PyCustomType implements PyClassLikeType {
 
     // Delegate calls to classes, we mimic but filter if filter is set.
     for (final PyClassLikeType typeToMimic : myTypesToMimic) {
-      final List<? extends RatedResolveResult> results =
-        typeToMimic.toInstance().resolveMember(name, location, direction, resolveContext, inherited);
+      final List<? extends RatedResolveResult> results = typeToMimic.resolveMember(name, location, direction, resolveContext, inherited);
 
       if (results != null) {
         globalResult.addAll(Collections2.filter(results, new ResolveFilter()));
@@ -195,7 +198,9 @@ public class PyCustomType implements PyClassLikeType {
   @Override
   public final List<PyClassLikeType> getAncestorTypes(@NotNull final TypeEvalContext context) {
     final Collection<PyClassLikeType> result = new LinkedHashSet<>();
+
     for (final PyClassLikeType type : myTypesToMimic) {
+      result.add(type);
       result.addAll(type.getAncestorTypes(context));
     }
 
