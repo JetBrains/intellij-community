@@ -2,6 +2,7 @@
 package com.intellij.spellchecker.dictionary.location;
 
 import com.google.common.collect.ImmutableMap;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
@@ -25,6 +26,8 @@ import java.util.function.Consumer;
 
 import static com.intellij.openapi.ui.TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT;
 import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
+import static com.intellij.project.ProjectKt.getProjectStoreDirectory;
+import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.PathUtil.toSystemDependentName;
 import static java.util.Arrays.asList;
 
@@ -55,7 +58,9 @@ public class DownloadDictionaryDialog extends DialogWrapper {
     model.setAll(namesToPaths.keySet());
     model.setSelectedItem(ENGLISH_USA);
     myDictionaryCombobox.setModel(model);
-    myDirectoryTextField.setText(myProject.getBasePath());
+    myDirectoryTextField.setText(myProject.getBasePath() != null ?
+                                 chooseNotNull(getProjectStoreDirectory(myProject.getBaseDir()), myProject.getBaseDir()).getPath():
+                                 PathManager.getConfigPath());
     FileChooserDescriptor singleFileDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     myDirectoryTextField.addActionListener(new ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>(
       SpellCheckerBundle.message("choose.directory.to.save.dictionary.title"),
