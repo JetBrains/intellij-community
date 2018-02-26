@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -72,7 +72,8 @@ class CommunityLibraryLicenses {
                        license: "Apache 2.0", url: "http://xmlgraphics.apache.org/commons/",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "ASM Bytecode Manipulation Framework", libraryName: "ASM", version: "6.0 (with patches by JetBrains)",
-                       license: "BSD", url: "http://asm.objectweb.org/", licenseUrl: "http://asm.objectweb.org/license.html"),
+                       license: "BSD", url: "http://asm.objectweb.org/", licenseUrl: "http://asm.objectweb.org/license.html",
+                       additionalLibraryNames: ["asm-capture"]),
     new LibraryLicense(name: "ASM Tools", libraryName: "asm-tools",
                        license: "BSD", url: "http://asm.objectweb.org/", licenseUrl: "http://asm.objectweb.org/license.html"),
     new LibraryLicense(name: "Automaton", libraryName: "automaton", version: "1.11", license: "BSD", url: "http://www.brics.dk/automaton/",
