@@ -689,4 +689,11 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     doMethodTest("for (  var  path  :  paths) ;", "for (var path : paths) ;");
     doMethodTest("try ( @A  var  r  =  open()) { }", "try (@A var r = open()) {\n}");
   }
+
+  public void testSpacingBeforeColonInForeach() {
+    getJavaSettings().SPACE_BEFORE_COLON_IN_FOREACH = false;
+    doMethodTest("for (int i:arr) ;", "for (int i: arr) ;");
+    getJavaSettings().SPACE_BEFORE_COLON_IN_FOREACH = true;
+    doMethodTest("for (int i:arr) ;", "for (int i : arr) ;");
+  }
 }
