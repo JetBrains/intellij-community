@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class NamedElementTokenizer<T extends PsiNamedElement> extends Tokenizer<T> {
   private final Tokenizer<PsiIdentifier> myIdentifierTokenizer = new PsiIdentifierTokenizer();
-  private final PsiTypeTokenizer myTypeTokenizer = new PsiTypeTokenizer();
+  //private final PsiTypeTokenizer myTypeTokenizer = new PsiTypeTokenizer();
 
   @Override
    public void tokenize(@NotNull T element, TokenConsumer consumer) {
@@ -51,9 +51,9 @@ public class NamedElementTokenizer<T extends PsiNamedElement> extends Tokenizer<
     if (type == null || !type.equalsIgnoreCase(identifier)) {
       myIdentifierTokenizer.tokenize(psiIdentifier, consumer);      
     }
-    if (psiType != null) {
-      myTypeTokenizer.tokenize(psiType, consumer);
-    }
+    //if (psiType != null) {
+    //  myTypeTokenizer.tokenize(psiType, consumer);
+    //}
   }
 }
 
