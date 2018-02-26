@@ -2,21 +2,19 @@
 package com.intellij.spellchecker.settings;
 
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.dictionary.CustomDictionaryProvider;
-import com.intellij.spellchecker.dictionary.location.DictionaryLocation;
 import com.intellij.spellchecker.dictionary.location.LocalDictionaryLocation;
 import com.intellij.spellchecker.dictionary.location.RepositoryDictionaryLocation;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -38,7 +36,6 @@ import static com.intellij.openapi.extensions.PluginId.getId;
 import static com.intellij.ui.SimpleTextAttributes.GRAY_ATTRIBUTES;
 import static com.intellij.util.containers.ContainerUtil.concat;
 import static java.util.Arrays.asList;
-import static javax.swing.ListSelectionModel.SINGLE_SELECTION;
 
 public class CustomDictionariesPanel extends JPanel {
   private final SpellCheckerSettings mySettings;
@@ -62,41 +59,23 @@ public class CustomDictionariesPanel extends JPanel {
         @Override
         public void run(AnActionButton button) {
           myCustomDictionariesTableView.stopEditing();
-          final PluginId hunspellId = getId("hunspell");
-          final IdeaPluginDescriptor ideaPluginDescriptor = PluginManager.getPlugin(hunspellId);
-          if (isPluginInstalled(hunspellId) && ideaPluginDescriptor != null && ideaPluginDescriptor.isEnabled()) {
-            JBList<DictionaryLocation> locationList = new JBList<>();
-            locationList.setListData(new DictionaryLocation[]{
-              new RepositoryDictionaryLocation(project), new LocalDictionaryLocation(project)
-            });
-            locationList.getSelectionModel().setSelectionMode(SINGLE_SELECTION);
-            locationList.setCellRenderer(new ColoredListCellRenderer<DictionaryLocation>() {
-              @Override
-              protected void customizeCellRenderer(@NotNull JList<? extends DictionaryLocation> list,
-                                                   DictionaryLocation value,
-                                                   int index,
-                                                   boolean selected,
-                                                   boolean hasFocus) {
-                append(value.getName());
-              }
-            });
-            JBPopupFactory.getInstance().createListPopupBuilder(locationList)
-                          .setTitle(SpellCheckerBundle.message("dictionary.location.choose"))
-                          .setItemChoosenCallback(() -> locationList.getSelectedValue().findAndAddNewDictionary(this::accept))
-                          .setMovable(false)
-                          .setResizable(false)
-                          .createPopup()
-                          .show(button.getPreferredPopupPoint());
-          }
-          else {
-            new LocalDictionaryLocation(project).findAndAddNewDictionary(this::accept);
-          }
+          new LocalDictionaryLocation(project).findAndAddNewDictionary(dictionary -> accept(dictionary));
         }
 
-        private void accept(String dictionary) {
-          if (!myCustomDictionariesTableView.getItems().contains(dictionary)) {
-            myCustomDictionariesTableView.getListTableModel().addRow(dictionary);
-          }
+      }) 
+      
+      .addExtraAction(new AnActionButton(SpellCheckerBundle.message("download.custom.dictionaries"), AllIcons.ToolbarDecorator.AddLink) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          myCustomDictionariesTableView.stopEditing();
+          new RepositoryDictionaryLocation(project).findAndAddNewDictionary(dictionary -> accept(dictionary));
+        }
+
+        @Override
+        public boolean isVisible() {
+          final PluginId hunspellId = getId("hunspell");
+          final IdeaPluginDescriptor ideaPluginDescriptor = PluginManager.getPlugin(hunspellId);
+          return isPluginInstalled(hunspellId) && ideaPluginDescriptor != null && ideaPluginDescriptor.isEnabled();
         }
       })
 
@@ -128,12 +107,21 @@ public class CustomDictionariesPanel extends JPanel {
         }
       })
 
+      .setButtonComparator(SpellCheckerBundle.message("add.custom.dictionaries"),
+                           SpellCheckerBundle.message("download.custom.dictionaries"),
+                           SpellCheckerBundle.message("remove.custom.dictionaries"), 
+                           SpellCheckerBundle.message("edit.custom.dictionary"))
       .disableUpDownActions();
     myCustomDictionariesTableView.getEmptyText().setText((SpellCheckerBundle.message("no.custom.dictionaries")));
     this.setLayout(new BorderLayout());
     this.add(decorator.createPanel(), BorderLayout.CENTER);
   }
 
+  private void accept(String dictionary) {
+    if (!myCustomDictionariesTableView.getItems().contains(dictionary)) {
+      myCustomDictionariesTableView.getListTableModel().addRow(dictionary);
+    }
+  }
 
   public List<String> getRemovedDictionaries() {
     return removedDictionaries;
