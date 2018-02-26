@@ -20,6 +20,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.SearchScopeProvider;
 import com.intellij.execution.configurations.SimpleJavaParameters;
+import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemConfigurableAware;
@@ -376,9 +377,9 @@ public class GradleManager
 
   @Nullable
   @Override
-  public Object createTestConsoleProperties(@NotNull Project project,
-                                            @NotNull Executor executor,
-                                            @NotNull RunConfiguration runConfiguration) {
+  public SMTRunnerConsoleProperties createTestConsoleProperties(@NotNull Project project,
+                                                                @NotNull Executor executor,
+                                                                @NotNull RunConfiguration runConfiguration) {
     return GradleIdeManager.getInstance().createTestConsoleProperties(project, executor, runConfiguration);
   }
 
