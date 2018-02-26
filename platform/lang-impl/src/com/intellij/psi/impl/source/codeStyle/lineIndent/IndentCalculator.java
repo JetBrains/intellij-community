@@ -90,12 +90,19 @@ public class IndentCalculator {
         !fileOptions.isOverrideLanguageOptions() && language != null && !(language.is(file.getLanguage()) || language.is(Language.ANY)) ?
         CodeStyle.getLanguageSettings(file, language).getIndentOptions() :
         fileOptions;
-      return
-        baseIndent + new IndentInfo(0, indentToSize(myIndent, options), 0, false).generateNewWhiteSpace(options);
+      if (options != null) {
+        return calculateIndentString(baseIndent, indentToSize(myIndent, options), options);
+      }
     }
     return null;
   }
 
+  @NotNull
+  protected String calculateIndentString(@NotNull String baseIndent,
+                                         int relativeIndentSize, 
+                                         @NotNull CommonCodeStyleSettings.IndentOptions options) {
+    return baseIndent + new IndentInfo(0, relativeIndentSize, 0, false).generateNewWhiteSpace(options);
+  }
 
   @NotNull
   private String getBaseIndent(@NotNull SemanticEditorPosition currPosition) {
