@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.undo.UndoConstants
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider.ABSENT_LINE_NUMBER
@@ -116,16 +115,6 @@ abstract class LineStatusTrackerBase<R : Range> {
       updateHighlighters()
     }
   }
-
-  fun initFromDocumentEvents(events: List<DocumentEvent>) {
-    if (events.isEmpty()) return
-    updateDocument(Side.LEFT) { vcsDocument ->
-      for (event in events.reversed()) {
-        vcsDocument.replaceString(event.offset, event.offset + event.newLength, event.oldFragment)
-      }
-    }
-  }
-
 
   @CalledInAwt
   fun dropBaseRevision() {
