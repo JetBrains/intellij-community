@@ -39,7 +39,7 @@ internal class CreateMethodAction(
   override fun getText(): String {
     val what = request.methodName
     val where = getNameForClass(target, false)
-    return if (abstract) {
+    return if (abstract && !target.isInterface) {
       message("create.abstract.method.from.usage.full.text", what, where)
     }
     else {
