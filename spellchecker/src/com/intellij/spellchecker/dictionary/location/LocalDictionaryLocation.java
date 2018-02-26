@@ -20,12 +20,6 @@ public class LocalDictionaryLocation implements DictionaryLocation {
     myProject = project;
   }
 
-  @NotNull
-  @Override
-  public String getName() {
-    return SpellCheckerBundle.message("dictionary.location.computer");
-  }
-
   @Override
   public void findAndAddNewDictionary(@NotNull Consumer<String> consumer) {
     final FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, true) {

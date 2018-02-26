@@ -15,12 +15,6 @@ public class RepositoryDictionaryLocation implements DictionaryLocation {
     myProject = project;
   }
 
-  @NotNull
-  @Override
-  public String getName() {
-    return SpellCheckerBundle.message("dictionary.location.web");
-  }
-
   @Override
   public void findAndAddNewDictionary(@NotNull Consumer<String> consumer) {
     new DownloadDictionaryDialog(myProject, consumer).showAndGet();
