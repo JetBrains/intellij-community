@@ -1106,8 +1106,18 @@ java_library(
     name = "trilead-ssh2",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:trilead-ssh2"],
-    runtime_deps = ["//tools/idea/lib:trilead-ssh2"],
+    # do not sort: must match IML order
+    exports = [
+        "//prebuilts/tools/common/m2/repository/net/i2p/crypto/eddsa/0.2.0:jar",
+        "//prebuilts/tools/common/m2/repository/org/connectbot/jbcrypt/jbcrypt/1.0.0:jar",
+        "//prebuilts/tools/common/m2/repository/org/jenkins-ci/trilead-ssh2/build-217-jenkins-11:jar",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//prebuilts/tools/common/m2/repository/net/i2p/crypto/eddsa/0.2.0:jar",
+        "//prebuilts/tools/common/m2/repository/org/connectbot/jbcrypt/jbcrypt/1.0.0:jar",
+        "//prebuilts/tools/common/m2/repository/org/jenkins-ci/trilead-ssh2/build-217-jenkins-11:jar",
+    ],
 )
 
 java_library(

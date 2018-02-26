@@ -395,13 +395,6 @@ java_import(
 )
 
 java_import(
-    name = "trilead-ssh2",
-    jars = ["trilead-ssh2.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
     name = "proxy-vole-1.0.3",
     jars = ["proxy-vole-1.0.3.jar"],
     tags = ["managed"],
