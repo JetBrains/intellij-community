@@ -1,5 +1,5 @@
 class Usage {
   void usage() {
-    II.bar<caret>;
+    II.BAR<caret>;
   }
 }
