@@ -9,7 +9,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
@@ -20,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -28,7 +31,6 @@ import static com.intellij.openapi.ui.TextComponentAccessor.TEXT_FIELD_WHOLE_TEX
 import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
 import static com.intellij.project.ProjectKt.getProjectStoreDirectory;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
-import static com.intellij.util.PathUtil.toSystemDependentName;
 import static java.util.Arrays.asList;
 
 public class DownloadDictionaryDialog extends DialogWrapper {
@@ -108,6 +110,27 @@ public class DownloadDictionaryDialog extends DialogWrapper {
   @NotNull
   private static String getUrl(@NotNull String name, @NotNull String extension) {
     return PATH + namesToPaths.get(name) + extension;
+  }
+
+  @Nullable
+  @Override
+  protected ValidationInfo doValidate() {
+    if (!this.isVisible()) {
+      return null;
+    }
+    final String path = myDirectoryTextField.getText();
+    final JComponent component = myDirectoryTextField.getChildComponent();
+    if (StringUtil.isEmptyOrSpaces(path)) {
+      return new ValidationInfo(SpellCheckerBundle.message("empty.path.to.download.location"), component);
+    }
+    final File file = new File(path);
+    if (!file.exists()) {
+      return new ValidationInfo(SpellCheckerBundle.message("download.location.does.not.exist"), component);
+    }
+    if (!file.isDirectory()) {
+      return new ValidationInfo(SpellCheckerBundle.message("download.location.is.not.directory"), component);
+    }
+    return null;
   }
 
   private static final Map<String, String> namesToPaths = ImmutableMap.<String, String>builder()
