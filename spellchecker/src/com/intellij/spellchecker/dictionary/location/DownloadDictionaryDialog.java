@@ -70,13 +70,9 @@ public class DownloadDictionaryDialog extends DialogWrapper {
       @Nullable
       @Override
       protected VirtualFile getInitialFile() {
-        String text = myDirectoryTextField.getText();
-        if (StringUtil.isEmpty(text)) {
-          VirtualFile file =
-            LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemDependentName(myDirectoryTextField.getText()));
-          if (file != null) {
-            return file;
-          }
+        final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(myDirectoryTextField.getText());
+        if (file != null) {
+          return file;
         }
         return super.getInitialFile();
       }
