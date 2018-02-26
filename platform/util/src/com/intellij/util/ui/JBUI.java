@@ -234,7 +234,9 @@ public class JBUI {
     if (SYSTEM_SCALE_FACTOR != null) {
       return SYSTEM_SCALE_FACTOR;
     }
-
+    if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
+      return 1.0f;
+    }
     if (UIUtil.isJreHiDPIEnabled()) {
       GraphicsDevice gd = null;
       try {
@@ -243,10 +245,6 @@ public class JBUI {
       if (gd != null && gd.getDefaultConfiguration() != null) {
         return sysScale(gd.getDefaultConfiguration());
       }
-      return 1.0f;
-    }
-
-    if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
       return 1.0f;
     }
 
