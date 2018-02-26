@@ -38,9 +38,9 @@ internal fun JvmModifier.toPsiModifier(): String = when (this) {
 }
 
 /**
- * Compiled classes, type parameters are not considered classes.
+ * Compiled classes, type parameters, light classes(except GroovyScriptClass) are not considered classes.
  *
- * @return Java PsiClass or `null` if the receiver is not a Java PsiClass
+ * @return GrTypeDefinition or `null` if the receiver is not a Groovy type definition.
  */
 internal fun JvmClass.toGroovyClassOrNull(): GrTypeDefinition? {
   if (this !is GrTypeDefinition) return null
