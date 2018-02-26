@@ -11,7 +11,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.yaml.meta.impl.YamlMetaTypeProvider;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 
 import javax.swing.*;
@@ -223,21 +222,7 @@ public class Field {
       return Collections.emptyList();
     }
 
-    final YamlMetaTypeProvider.MetaTypeProxy lookupObject = new YamlMetaTypeProvider.MetaTypeProxy() {
-      @NotNull
-      @Override
-      public YamlMetaType getMetaType() {
-        return ownerClass;
-      }
-
-      @NotNull
-      @Override
-      public Field getField() {
-        return Field.this;
-      }
-    };
-
-    LookupElementBuilder lookup = LookupElementBuilder.create(lookupObject, getName())
+    LookupElementBuilder lookup = LookupElementBuilder.create(new TypeFieldPair(ownerClass, this), getName())
                                                       .withTypeText(myMainType.getDisplayName(), true)
                                                       .withIcon(getLookupIcon())
                                                       .withStrikeoutness(isDeprecated());
