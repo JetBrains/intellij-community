@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -928,6 +926,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     }
     if (ApplicationManager.getApplication().getCurrentModalityState() != ModalityState.NON_MODAL) {
       return activeTextEditors;
+    }
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      // Daemon is started manually in tests
+      return Collections.emptyList();
     }
 
     // Editors in tabs.
