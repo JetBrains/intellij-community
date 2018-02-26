@@ -85,9 +85,9 @@ abstract class ProductProperties {
   boolean reassignAltClickToMultipleCarets = false
 
   /**
-   * If {@code true} a txt file containing information (in Atlassian Confluence format) about third-party libraries used in the product
-   * will be generated.
+   * @deprecated Now file containing information about third-party libraries is bundled and shown inside IDE.
    */
+  @Deprecated
   boolean generateLibrariesLicensesTable = true
 
   /**
