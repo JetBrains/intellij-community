@@ -3,6 +3,7 @@ package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.XmlContextType;
+import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
@@ -110,6 +111,34 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
       return StdFileTypes.HTML;
     }
     return StdFileTypes.XML;
+  }
+
+  @Override
+  public void checkSearchPattern(CompiledPattern pattern) {
+    final ValidatingVisitor visitor = new ValidatingVisitor();
+    final NodeIterator nodes = pattern.getNodes();
+    while (nodes.hasNext()) {
+      nodes.current().accept(visitor);
+      nodes.advance();
+    }
+    nodes.reset();
+  }
+
+  static class ValidatingVisitor extends PsiRecursiveElementWalkingVisitor {
+
+    @Override
+    public void visitErrorElement(PsiErrorElement element) {
+      super.visitErrorElement(element);
+      final String errorDescription = element.getErrorDescription();
+      final PsiElement parent = element.getParent();
+      if (parent instanceof XmlAttribute && "'=' expected".equals(errorDescription)) {
+        return;
+      }
+      else if (parent instanceof XmlTag && errorDescription.startsWith("Element") && errorDescription.endsWith(" is not closed")) {
+        return;
+      }
+      throw new MalformedPatternException(errorDescription);
+    }
   }
 
   @Override
