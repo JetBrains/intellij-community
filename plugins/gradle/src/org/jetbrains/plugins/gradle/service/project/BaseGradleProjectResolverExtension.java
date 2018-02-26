@@ -761,7 +761,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       "gradle.taskGraph.beforeTask { Task task ->",
       " if (task instanceof JavaForkOptions) {",
       "  def jvmArgs = task.jvmArgs.findAll{!it?.startsWith('-agentlib:jdwp') && !it?.startsWith('-Xrunjdwp')}",
-      "  vmArgs << com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.setupDebugger(task.path, " + debugPort + ")",
+      "  jvmArgs << com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.setupDebugger(task.path, " + debugPort + ")",
       "  task.jvmArgs = jvmArgs",
       " }",
       "}",
