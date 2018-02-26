@@ -335,8 +335,8 @@ public class ResolveImportUtil {
         }
       }
 
-      PsiFile packageInit = PyUtil.as(PyUtil.turnDirIntoInit(parentDir), PsiFile.class);
-      if (!withoutForeign && (packageInit != null)) {
+      final PsiFile packageInit = PyUtil.as(PyUtil.turnDirIntoInit(parentDir), PsiFile.class);
+      if (!withoutForeign && packageInit != null) {
         final PsiElement foreign = resolveForeignImports(packageInit, referencedName);
         if (foreign != null) {
           final ResolveResultList results = new ResolveResultList();
