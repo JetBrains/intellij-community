@@ -6,6 +6,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import one.util.streamex.StreamEx;
@@ -17,6 +18,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -52,8 +54,13 @@ public abstract class PyAbstractPackageCache {
       cache = ourGson.fromJson(reader, classToken);
       LOG.info("Loaded " + cache.getPackageNames().size() + " packages from " + cacheFilePath);
     }
+    catch (NoSuchFileException exception) {
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.info("Package cache " + cacheFilePath + " was not found");
+      }
+    }
     catch (IOException exception) {
-      LOG.warn("Cannot load " + cacheFilePath + " package cache from the filesystem", exception);
+      LOG.warn("Cannot load package cache " + cacheFilePath, exception);
     }
     return cache;
   }

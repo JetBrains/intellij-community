@@ -164,6 +164,11 @@ public class PyRedeclarationInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-28593
+  public void testRedeclarationInExcept() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

@@ -16,7 +16,9 @@
 from __future__ import print_function
 
 import os
+import sys
 import codeop
+import traceback
 
 from IPython.core.error import UsageError
 from IPython.core.completer import IPCompleter
@@ -139,14 +141,24 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
     # Things related to exceptions
     #-------------------------------------------------------------------------
 
-    def showtraceback(self, *args, **kwargs):
+    def showtraceback(self, exc_tuple=None, *args, **kwargs):
         # IPython does a lot of clever stuff with Exceptions. However mostly
         # it is related to IPython running in a terminal instead of an IDE.
         # (e.g. it prints out snippets of code around the stack trace)
         # PyDev does a lot of clever stuff too, so leave exception handling
         # with default print_exc that PyDev can parse and do its clever stuff
         # with (e.g. it puts links back to the original source code)
-        import traceback;traceback.print_exc()
+        try:
+            if exc_tuple is None:
+                etype, value, tb = sys.exc_info()
+            else:
+                etype, value, tb = exc_tuple
+        except ValueError:
+            return
+
+        if tb is not None:
+            traceback.print_exception(etype, value, tb)
+
 
 
     #-------------------------------------------------------------------------

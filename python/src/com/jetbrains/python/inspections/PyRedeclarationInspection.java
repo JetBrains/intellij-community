@@ -172,7 +172,7 @@ public class PyRedeclarationInspection extends PyInspection {
       final PsiElement element = instruction.getElement();
       if (element == null) return false;
 
-      if (element instanceof PyTryExceptStatement || element instanceof PyConditionalExpression) return true;
+      if (element instanceof PyTryPart || element instanceof PyExceptPart || element instanceof PyConditionalExpression) return true;
 
       if (element instanceof PyForStatement) {
         final PyForPart forPart = ((PyForStatement)element).getForPart();
