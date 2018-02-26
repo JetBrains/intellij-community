@@ -52,7 +52,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.org.objectweb.asm.MethodVisitor;
 
 import javax.swing.*;
 import java.io.File;
@@ -597,7 +596,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
 
   private static String generateAgentSettings() {
     Properties properties = new Properties();
-    properties.setProperty("asm-lib", PathUtil.getJarPathForClass(MethodVisitor.class));
     if (Registry.is("debugger.capture.points.agent.debug")) {
       properties.setProperty("debug", "true");
     }
