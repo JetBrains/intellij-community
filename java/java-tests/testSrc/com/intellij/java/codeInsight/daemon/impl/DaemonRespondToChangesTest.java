@@ -1861,9 +1861,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     model.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener.Adapter() {
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
-        Object tt = highlighter.getErrorStripeTooltip();
-        if (!(tt instanceof HighlightInfo)) return;
-        String description = ((HighlightInfo)tt).getDescription();
+        HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+        if (info == null) return;
+        String description = info.getDescription();
         if (errorDescription.equals(description)) {
           errorRemoved[0] = true;
 

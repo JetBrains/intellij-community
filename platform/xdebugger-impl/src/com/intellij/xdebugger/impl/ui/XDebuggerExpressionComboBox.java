@@ -174,14 +174,12 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
             }
 
             void processHighlighter(@NotNull RangeHighlighterEx highlighter, boolean add) {
-              Object o = highlighter.getErrorStripeTooltip();
-              if (o instanceof HighlightInfo) {
-                if (HighlightSeverity.ERROR.equals(((HighlightInfo)o).getSeverity())) {
-                  errors += add ? 1 : -1;
-                  if (errors == 0 || errors == 1) {
-                    myComboBox.putClientProperty("JComponent.outline", errors > 0 ? "error" : null);
-                    myComboBox.repaint();
-                  }
+              HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+              if (info != null && HighlightSeverity.ERROR.equals(info.getSeverity())) {
+                errors += add ? 1 : -1;
+                if (errors == 0 || errors == 1) {
+                  myComboBox.putClientProperty("JComponent.outline", errors > 0 ? "error" : null);
+                  myComboBox.repaint();
                 }
               }
             }
