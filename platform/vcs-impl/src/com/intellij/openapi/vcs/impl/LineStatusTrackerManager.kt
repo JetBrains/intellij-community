@@ -300,25 +300,53 @@ class LineStatusTrackerManager(
 
   private fun registerTrackerInCLM(data: TrackerData) {
     val tracker = data.tracker
-    if (tracker is PartialLocalLineStatusTracker) {
-      val filePath = VcsUtil.getFilePath(tracker.virtualFile)
-      changeListManager.registerChangeTracker(filePath, tracker)
+    if (tracker !is PartialLocalLineStatusTracker) return
+
+    val filePath = VcsUtil.getFilePath(tracker.virtualFile)
+    if (data.clmFilePath != null) {
+      LOG.error("[registerTrackerInCLM] tracker already registered")
+      return
     }
+
+    changeListManager.registerChangeTracker(filePath, tracker)
+    data.clmFilePath = filePath
   }
 
   private fun unregisterTrackerInCLM(data: TrackerData) {
     val tracker = data.tracker
-    if (tracker is PartialLocalLineStatusTracker) {
-      val filePath = VcsUtil.getFilePath(tracker.virtualFile)
-      changeListManager.unregisterChangeTracker(filePath, tracker)
+    if (tracker !is PartialLocalLineStatusTracker) return
+
+    val filePath = data.clmFilePath
+    if (filePath == null) {
+      LOG.error("[unregisterTrackerInCLM] tracker is not registered")
+      return
+    }
+
+    changeListManager.unregisterChangeTracker(filePath, tracker)
+    data.clmFilePath = null
+
+    val actualFilePath = VcsUtil.getFilePath(tracker.virtualFile)
+    if (filePath != actualFilePath) {
+      LOG.error("[unregisterTrackerInCLM] unexpected file path: expected: $filePath, actual: $actualFilePath")
     }
   }
 
-  private fun reregisterTrackerInCLM(data: TrackerData, oldPath: FilePath, newPath: FilePath) {
+  private fun reregisterTrackerInCLM(data: TrackerData) {
     val tracker = data.tracker
-    if (tracker is PartialLocalLineStatusTracker) {
-      changeListManager.unregisterChangeTracker(oldPath, tracker)
-      changeListManager.registerChangeTracker(newPath, tracker)
+    if (tracker !is PartialLocalLineStatusTracker) return
+
+    val oldFilePath = data.clmFilePath
+    val newFilePath = VcsUtil.getFilePath(tracker.virtualFile)
+
+    if (oldFilePath == null) {
+      LOG.error("[reregisterTrackerInCLM] tracker is not registered")
+      return
+    }
+
+    if (oldFilePath != newFilePath) {
+      changeListManager.unregisterChangeTracker(oldFilePath, tracker)
+      changeListManager.registerChangeTracker(newFilePath, tracker)
+      data.clmFilePath = newFilePath
     }
   }
 
@@ -610,36 +638,26 @@ class LineStatusTrackerManager(
       if (VirtualFile.PROP_ENCODING == event.propertyName) {
         onFileChanged(event.file)
       }
+    }
+
+    override fun propertyChanged(event: VirtualFilePropertyEvent) {
       if (VirtualFile.PROP_NAME == event.propertyName) {
-        val file = event.file
-        val parent = event.parent
-        if (parent != null) {
-          handleFileMovement(file) {
-            Pair(VcsUtil.getFilePath(parent, event.oldValue as String),
-                 VcsUtil.getFilePath(parent, event.newValue as String))
-          }
-        }
+        handleFileMovement(event.file)
       }
     }
 
-    override fun beforeFileMovement(event: VirtualFileMoveEvent) {
-      val file = event.file
-      handleFileMovement(file) {
-        Pair(VcsUtil.getFilePath(event.oldParent, file.name),
-             VcsUtil.getFilePath(event.newParent, file.name))
-      }
+    override fun fileMoved(event: VirtualFileMoveEvent) {
+      handleFileMovement(event.file)
     }
 
-    private fun handleFileMovement(file: VirtualFile, getPaths: () -> Pair<FilePath, FilePath>) {
+    private fun handleFileMovement(file: VirtualFile) {
       if (!partialChangeListsEnabled) return
 
       synchronized(LOCK) {
         val document = fileDocumentManager.getCachedDocument(file) ?: return
-        val data = trackers[document]
-        if (data != null) {
-          val (oldPath, newPath) = getPaths()
-          reregisterTrackerInCLM(data, oldPath, newPath)
-        }
+        val data = trackers[document] ?: return
+
+        reregisterTrackerInCLM(data)
       }
     }
   }
@@ -746,7 +764,8 @@ class LineStatusTrackerManager(
   }
 
   private class TrackerData(val tracker: LineStatusTracker<*>,
-                            var contentInfo: ContentInfo? = null)
+                            var contentInfo: ContentInfo? = null,
+                            var clmFilePath: FilePath? = null)
 
   private class ContentInfo(val revision: VcsRevisionNumber, val charset: Charset)
 
