@@ -94,6 +94,38 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
     assertEquals(expected, actual);
   }
 
+  public void testRemoveAttribute() {
+    String in = "<input class=\"other\" placeholder=\"Some placeholder\">";
+    String what = "<input 'a:[regex( placeholder )]>";
+    String by = "";
+    String expected = "<input class=\"other\">";
+
+    assertEquals(expected, Replacer.testReplace(in, what, by, options, getProject()));
+  }
+
+  public void testRemoveTag() {
+    String in = "<a>\n" +
+                "  <b>liberation</b>\n" +
+                "  <c>remuneration</c>\n" +
+                "</a>";
+    String what = "<'tag:[regex( c )]>'_text</'tag>";
+    String by = "";
+    String expected = "<a>\n" +
+                      "  <b>liberation</b>\n" +
+                      "</a>";
+
+    assertEquals(expected, Replacer.testReplace(in, what, by, options, getProject()));
+  }
+
+  public void testReplaceAttributeValue() {
+    String in = "<input id=\"one\" class=\"no\">";
+    String what = "<'_tag '_attr:[regex( id )]=\\''value\\'>";
+    String by = "\"two\"";
+    String expected = "<input id=\"two\" class=\"no\">";
+
+    assertEquals(expected, Replacer.testReplace(in, what, by, options, getProject()));
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.lang.Language;
@@ -46,13 +46,11 @@ public class StructuralSearchUtil {
     return !isIdentifier(element) ? element : element.getParent();
   }
 
-  @NotNull
-  public static PsiElement getPresentableElement(@NotNull PsiElement element) {
+  @Contract("!null -> !null")
+  public static PsiElement getPresentableElement(PsiElement element) {
+    if (element == null) return null;
     final StructuralSearchProfile profile = getProfileByPsiElement(element);
-    if (profile == null) {
-      return element;
-    }
-    return profile.getPresentableElement(element);
+    return profile == null ? element : profile.getPresentableElement(element);
   }
 
   private static StructuralSearchProfile[] getNewStyleProfiles() {
