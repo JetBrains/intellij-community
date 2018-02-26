@@ -57,10 +57,10 @@ public class StreamChainInliner implements CallInliner {
   private static final CallMatcher COUNTING_COLLECTOR =
     staticCall(JAVA_UTIL_STREAM_COLLECTORS, "counting").parameterCount(0);
   private static final CallMatcher COLLECTION_COLLECTOR =
-    anyOf(staticCall(JAVA_UTIL_STREAM_COLLECTORS, "toList", "toSet", "toImmutableList", "toImmutableSet").parameterCount(0),
+    anyOf(staticCall(JAVA_UTIL_STREAM_COLLECTORS, "toList", "toSet", "toUnmodifiableList", "toUnmodifiableSet").parameterCount(0),
           staticCall(JAVA_UTIL_STREAM_COLLECTORS, "toCollection").parameterCount(1));
   private static final CallMatcher MAP_COLLECTOR =
-    staticCall(JAVA_UTIL_STREAM_COLLECTORS, "toMap", "toConcurrentMap", "toImmutableMap");
+    staticCall(JAVA_UTIL_STREAM_COLLECTORS, "toMap", "toConcurrentMap", "toUnmodifiableMap");
 
   private static final CallMatcher SKIP_STEP =
     instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "unordered", "parallel", "sequential").parameterCount(0);
@@ -773,7 +773,7 @@ public class StreamChainInliner implements CallInliner {
     if (COLLECTION_COLLECTOR.matches(collectorCall)) {
       String name = Objects.requireNonNull(collectorCall.getMethodExpression().getReferenceName());
       return new ToCollectionStep(call, ArrayUtil.getFirstElement(collectorCall.getArgumentList().getExpressions()),
-                                  name.startsWith("toImmutable"));
+                                  name.startsWith("toUnmodifiable"));
     }
     if (MAP_COLLECTOR.matches(collectorCall)) {
       PsiExpression[] args = collectorCall.getArgumentList().getExpressions();
@@ -783,7 +783,7 @@ public class StreamChainInliner implements CallInliner {
         PsiExpression merger = args.length >= 3 ? args[2] : null;
         PsiExpression supplier = args.length >= 4 ? args[3] : null;
         return new ToMapStep(call, keyExtractor, valueExtractor, merger, supplier,
-                             "toImmutableMap".equals(collectorCall.getMethodExpression().getReferenceName()));
+                             "toUnmodifiableMap".equals(collectorCall.getMethodExpression().getReferenceName()));
       }
     }
     return new UnknownTerminalStep(call);

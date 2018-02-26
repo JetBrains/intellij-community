@@ -10,9 +10,9 @@ import java.util.stream.*;
 // Mock
 class Collectors {
   public static <T> Collector<T, ?, List<T>> toList() {<error descr="Missing return statement">}</error>
-  public static <T> Collector<T, ?, List<T>> toImmutableList() {<error descr="Missing return statement">}</error>
-  public static <T> Collector<T, ?, Set<T>> toImmutableSet() {<error descr="Missing return statement">}</error>
-  public static <T, K, U> Collector<T, ?, Map<K,U>> toImmutableMap(Function<? super T, ? extends K> keyMapper, Function<? super T, ? extends U> valueMapper) {<error descr="Missing return statement">}</error>
+  public static <T> Collector<T, ?, List<T>> toUnmodifiableList() {<error descr="Missing return statement">}</error>
+  public static <T> Collector<T, ?, Set<T>> toUnmodifiableSet() {<error descr="Missing return statement">}</error>
+  public static <T, K, U> Collector<T, ?, Map<K,U>> toUnmodifiableMap(Function<? super T, ? extends K> keyMapper, Function<? super T, ? extends U> valueMapper) {<error descr="Missing return statement">}</error>
 }
 
 public class StreamCollector10Inlining {
@@ -30,20 +30,20 @@ public class StreamCollector10Inlining {
   void testToImmutableList() {
     List<String> list = Stream.of("foo", "bar", "baz")
                               .map(<warning descr="Function may return null, but it's not allowed here">this::convert</warning>)
-                              .collect(Collectors.toImmutableList());
+                              .collect(Collectors.toUnmodifiableList());
     list.<warning descr="Immutable object is modified">sort</warning>(null);
   }
 
   void testToImmutableSet() {
     Set<String> set = Stream.of("foo", "bar", "baz")
                             .map(<warning descr="Function may return null, but it's not allowed here">this::convert</warning>)
-                            .collect(Collectors.toImmutableSet());
+                            .collect(Collectors.toUnmodifiableSet());
     set.<warning descr="Immutable object is modified">add</warning>("qux");
   }
 
   void testToImmutableMap() {
     Map<String, String> map = Stream.of("foo", "bar", "baz", "")
-      .collect(Collectors.toImmutableMap(<warning descr="Function may return null, but it's not allowed here">this::convert</warning>, <warning descr="Function may return null, but it's not allowed here">this::convert</warning>));
+      .collect(Collectors.toUnmodifiableMap(<warning descr="Function may return null, but it's not allowed here">this::convert</warning>, <warning descr="Function may return null, but it's not allowed here">this::convert</warning>));
     map.<warning descr="Immutable object is modified">put</warning>("qux", "qux");
   }
 }
