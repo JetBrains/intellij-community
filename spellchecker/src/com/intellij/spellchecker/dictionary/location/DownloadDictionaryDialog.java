@@ -37,7 +37,7 @@ public class DownloadDictionaryDialog extends DialogWrapper {
   @NotNull private final Consumer<String> myConsumer;
   private static final String DIC = ".dic";
   private static final String AFF = ".aff";
-  private static final String PATH = "https://raw.githubusercontent.com/bzixilu/dictionaries/master/";
+  private static final String PATH = "https://raw.githubusercontent.com/JetBrains/dictionaries/master/";
 
 
   protected DownloadDictionaryDialog(@NotNull Project project, @NotNull Consumer<String> consumer) {
