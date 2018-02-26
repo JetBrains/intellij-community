@@ -656,7 +656,9 @@ class LineStatusTrackerManager(
         log("Tracker install from DocumentListener: ", virtualFile)
 
         val tracker = installTracker(virtualFile, document, changeList.id)
-        tracker?.initFromDocumentEvents(listOf(event))
+        if (tracker is PartialLocalLineStatusTracker) {
+          tracker.replayChangesFromDocumentEvents(listOf(event))
+        }
         return
       }
 

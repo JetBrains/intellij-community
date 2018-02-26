@@ -162,6 +162,16 @@ class PartialLocalLineStatusTracker(project: Project,
     if (isValid()) eventDispatcher.multicaster.onBecomingValid(this)
   }
 
+  @CalledInAwt
+  fun replayChangesFromDocumentEvents(events: List<DocumentEvent>) {
+    if (events.isEmpty() || !blocks.isEmpty()) return
+    updateDocument(Side.LEFT) { vcsDocument ->
+      for (event in events.reversed()) {
+        vcsDocument.replaceString(event.offset, event.offset + event.newLength, event.oldFragment)
+      }
+    }
+  }
+
 
   override fun initChangeTracking(defaultId: String, changelistsIds: List<String>) {
     documentTracker.writeLock {
