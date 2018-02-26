@@ -100,14 +100,13 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
 private fun resolveModuleFromRoots(name: QualifiedName, context: PyQualifiedNameResolveContext): List<PsiElement> {
   val head = name.removeTail(name.componentCount - 1)
   val nameNoHead = name.removeHead(1)
-  return nameNoHead.components
-    .fold(resultsFromRoots(head, context), {
-      results, component -> findFirstResults(results, context.module)
+  return nameNoHead.components.fold(resultsFromRoots(head, context)) { results, component ->
+    findFirstResults(results, context.module)
       .asSequence()
       .filterIsInstance<PsiDirectory>()
       .flatMap { resolveModuleAt(QualifiedName.fromComponents(component), it, context).asSequence() }
       .toList()
-    })
+  }
 }
 
 /**
