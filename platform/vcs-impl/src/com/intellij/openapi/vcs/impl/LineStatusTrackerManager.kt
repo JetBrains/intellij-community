@@ -654,10 +654,11 @@ class LineStatusTrackerManager(
       if (!partialChangeListsEnabled) return
 
       synchronized(LOCK) {
-        val document = fileDocumentManager.getCachedDocument(file) ?: return
-        val data = trackers[document] ?: return
-
-        reregisterTrackerInCLM(data)
+        for (data in trackers.values) {
+          if (VfsUtil.isAncestor(file, data.tracker.virtualFile, false)) {
+            reregisterTrackerInCLM(data)
+          }
+        }
       }
     }
   }
