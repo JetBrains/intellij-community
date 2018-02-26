@@ -81,8 +81,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private final LookupOffsets myOffsets;
   private final Project myProject;
   private final Editor myEditor;
-  private final Object myLock = new Object();
-  private final JBList myList = new JBList(new CollectionListModel<LookupElement>()) {
+  private final Object myArrangerLock = new Object();
+  private final Object myUiLock = new Object();
+  private final JBList myList = new JBList<LookupElement>(new CollectionListModel<>()) {
     @Override
     protected void processKeyEvent(@NotNull final KeyEvent e) {
       final char keyChar = e.getKeyChar();
@@ -404,12 +405,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myOffsets.checkMinPrefixLengthChanges(items, this);
     List<LookupElement> oldModel = listModel.toList();
 
-    listModel.removeAll();
-    if (!items.isEmpty()) {
-      listModel.add(items);
-    }
-    else {
-      addEmptyItem(listModel);
+    synchronized (myUiLock) {
+      listModel.removeAll();
+      if (!items.isEmpty()) {
+        listModel.add(items);
+      }
+      else {
+        addEmptyItem(listModel);
+      }
     }
 
     updateListHeight(listModel);
@@ -805,8 +808,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   @Override
   @Nullable
   public LookupElement getCurrentItem(){
-    LookupElement item = (LookupElement)myList.getSelectedValue();
-    return item instanceof EmptyLookupItem ? null : item;
+    synchronized (myUiLock) {
+      LookupElement item = (LookupElement)myList.getSelectedValue();
+      return item instanceof EmptyLookupItem ? null : item;
+    }
   }
 
   @Override
@@ -1185,7 +1190,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     if (ApplicationManager.getApplication().isDispatchThread()) {
       HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
     }
-    synchronized (myLock) {
+    synchronized (myArrangerLock) {
       return computable.compute();
     }
   }
