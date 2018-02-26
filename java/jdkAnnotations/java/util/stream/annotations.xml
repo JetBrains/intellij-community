@@ -17,4 +17,223 @@
     <item name='java.util.stream.BaseStream java.util.Spliterator&lt;T&gt; spliterator()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+  <item
+      name='java.util.stream.DoubleStream java.util.stream.DoubleStream concat(java.util.stream.DoubleStream, java.util.stream.DoubleStream)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+      name='java.util.stream.DoubleStream java.util.stream.DoubleStream concat(java.util.stream.DoubleStream, java.util.stream.DoubleStream) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+      name='java.util.stream.DoubleStream java.util.stream.DoubleStream concat(java.util.stream.DoubleStream, java.util.stream.DoubleStream) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.DoubleStream java.util.stream.DoubleStream empty()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.DoubleStream java.util.stream.DoubleStream generate(java.util.function.DoubleSupplier)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.DoubleStream java.util.stream.DoubleStream iterate(double, java.util.function.DoubleUnaryOperator)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.DoubleStream java.util.stream.DoubleStream of(double)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.DoubleStream java.util.stream.DoubleStream of(double...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.IntStream java.util.stream.IntStream concat(java.util.stream.IntStream, java.util.stream.IntStream)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.IntStream java.util.stream.IntStream concat(java.util.stream.IntStream, java.util.stream.IntStream) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.IntStream java.util.stream.IntStream concat(java.util.stream.IntStream, java.util.stream.IntStream) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.IntStream java.util.stream.IntStream empty()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.stream.IntStream java.util.stream.IntStream generate(java.util.function.IntSupplier)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.IntStream java.util.stream.IntStream iterate(int, java.util.function.IntUnaryOperator)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.IntStream java.util.stream.IntStream of(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.IntStream java.util.stream.IntStream of(int...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.IntStream java.util.stream.IntStream range(int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.IntStream java.util.stream.IntStream rangeClosed(int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.LongStream java.util.stream.LongStream concat(java.util.stream.LongStream, java.util.stream.LongStream)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.LongStream java.util.stream.LongStream concat(java.util.stream.LongStream, java.util.stream.LongStream) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.LongStream java.util.stream.LongStream concat(java.util.stream.LongStream, java.util.stream.LongStream) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.LongStream java.util.stream.LongStream empty()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.LongStream java.util.stream.LongStream generate(java.util.function.LongSupplier)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.LongStream java.util.stream.LongStream iterate(long, java.util.function.LongUnaryOperator)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.LongStream java.util.stream.LongStream of(long)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.LongStream java.util.stream.LongStream of(long...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.LongStream java.util.stream.LongStream range(long, long)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.LongStream java.util.stream.LongStream rangeClosed(long, long)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.Stream A[] toArray(java.util.function.IntFunction&lt;A[]&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.Stream java.lang.Object[] toArray()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.Stream java.util.Optional&lt;T&gt; findAny()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.Stream java.util.Optional&lt;T&gt; findFirst()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.Stream java.util.Optional&lt;T&gt; max(java.util.Comparator&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.Stream java.util.Optional&lt;T&gt; min(java.util.Comparator&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.Stream java.util.Optional&lt;T&gt; reduce(java.util.function.BinaryOperator&lt;T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+      name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; concat(java.util.stream.Stream&lt;? extends T&gt;, java.util.stream.Stream&lt;? extends T&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+      name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; concat(java.util.stream.Stream&lt;? extends T&gt;, java.util.stream.Stream&lt;? extends T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+      name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; concat(java.util.stream.Stream&lt;? extends T&gt;, java.util.stream.Stream&lt;? extends T&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; empty()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; generate(java.util.function.Supplier&lt;T&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; iterate(T, java.util.function.UnaryOperator&lt;T&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; of(T)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; of(T...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
 </root>
