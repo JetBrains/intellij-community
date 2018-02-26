@@ -67,6 +67,7 @@
     <projectTaskRunner implementation="org.jetbrains.plugins.gradle.execution.build.GradleProjectTaskRunner" id="gradle" order="first"/>
     <buildProcess.parametersProvider implementation="org.jetbrains.plugins.gradle.compiler.GradleBuildProcessParametersProvider"/>
     <resolveScopeEnlarger implementation="org.jetbrains.plugins.gradle.config.GradleBuildClasspathResolveScopeEnlarger"/>
+    <externalSystemNotificationExtension implementation="org.jetbrains.plugins.gradle.service.notification.GradleNotificationJavaExtension"/>
     <externalSystemOutputParserProvider implementation="org.jetbrains.plugins.gradle.execution.build.output.GradleOutputParserProvider"
                                         id="gradle-jvm"/>
     <library.presentationProvider implementation="org.jetbrains.plugins.gradle.config.GradleLibraryPresentationProvider" order="last"/>
