@@ -2,10 +2,10 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.elements
 
 import com.intellij.openapi.util.Computable
-import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression
@@ -28,7 +28,7 @@ internal fun setupParameters(method: GrMethod, parameters: ExpectedParameters): 
     val dummyParameter = factory.createParameter(names.first(), PsiType.INT)
     postprocessReformattingAspect.postponeFormattingInside(Computable {
       parameterList.add(dummyParameter)
-    }) as PsiParameter
+    }) as GrParameter
 
     paramTypesExpressions += setupTypeElement(method, createConstraints(project, parameterInfo.second))
   }

@@ -67,7 +67,7 @@ class CreateMethodFromJavaUsageTest extends GrHighlightingTestBase {
   }
 
   void testAbstractInInterface() {
-    doTest(CREATE_ABSTRACT_METHOD)
+    doTest()
   }
 
   void testArrayParam() {
