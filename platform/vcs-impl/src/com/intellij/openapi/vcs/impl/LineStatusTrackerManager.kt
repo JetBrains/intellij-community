@@ -147,7 +147,7 @@ class LineStatusTrackerManager(
       forcedDocuments.clear()
 
       for (data in trackers.values) {
-        unregisterTrackerInCLM(data.tracker)
+        unregisterTrackerInCLM(data)
         data.tracker.release()
       }
       trackers.clear()
@@ -298,21 +298,24 @@ class LineStatusTrackerManager(
     }
   }
 
-  private fun registerTrackerInCLM(tracker: LineStatusTracker<*>) {
+  private fun registerTrackerInCLM(data: TrackerData) {
+    val tracker = data.tracker
     if (tracker is PartialLocalLineStatusTracker) {
       val filePath = VcsUtil.getFilePath(tracker.virtualFile)
       changeListManager.registerChangeTracker(filePath, tracker)
     }
   }
 
-  private fun unregisterTrackerInCLM(tracker: LineStatusTracker<*>) {
+  private fun unregisterTrackerInCLM(data: TrackerData) {
+    val tracker = data.tracker
     if (tracker is PartialLocalLineStatusTracker) {
       val filePath = VcsUtil.getFilePath(tracker.virtualFile)
       changeListManager.unregisterChangeTracker(filePath, tracker)
     }
   }
 
-  private fun reregisterTrackerInCLM(tracker: LineStatusTracker<*>, oldPath: FilePath, newPath: FilePath) {
+  private fun reregisterTrackerInCLM(data: TrackerData, oldPath: FilePath, newPath: FilePath) {
+    val tracker = data.tracker
     if (tracker is PartialLocalLineStatusTracker) {
       changeListManager.unregisterChangeTracker(oldPath, tracker)
       changeListManager.registerChangeTracker(newPath, tracker)
@@ -383,9 +386,10 @@ class LineStatusTrackerManager(
         SimpleLocalLineStatusTracker.createTracker(project, document, virtualFile, getTrackingMode())
       }
 
-      trackers.put(document, TrackerData(tracker))
+      val data = TrackerData(tracker)
+      trackers.put(document, data)
 
-      registerTrackerInCLM(tracker)
+      registerTrackerInCLM(data)
       refreshTracker(tracker, changelistId = oldChangesChangelistId)
       eventDispatcher.multicaster.onTrackerAdded(tracker)
 
@@ -401,7 +405,7 @@ class LineStatusTrackerManager(
       val data = trackers.remove(document) ?: return
 
       eventDispatcher.multicaster.onTrackerRemoved(data.tracker)
-      unregisterTrackerInCLM(data.tracker)
+      unregisterTrackerInCLM(data)
       data.tracker.release()
 
       log("Tracker released", data.tracker.virtualFile)
@@ -630,10 +634,11 @@ class LineStatusTrackerManager(
       if (!partialChangeListsEnabled) return
 
       synchronized(LOCK) {
-        val tracker = getLineStatusTracker(file)
-        if (tracker != null) {
+        val document = fileDocumentManager.getCachedDocument(file) ?: return
+        val data = trackers[document]
+        if (data != null) {
           val (oldPath, newPath) = getPaths()
-          reregisterTrackerInCLM(tracker, oldPath, newPath)
+          reregisterTrackerInCLM(data, oldPath, newPath)
         }
       }
     }
@@ -827,7 +832,8 @@ class LineStatusTrackerManager(
 
           if (!canCreatePartialTrackerFor(virtualFile)) continue
 
-          val oldTracker = trackers[document]?.tracker
+          val oldData = trackers[document]
+          val oldTracker = oldData?.tracker
           if (oldTracker is PartialLocalLineStatusTracker) {
             val stateRestored = state is PartialLocalLineStatusTracker.FullState &&
                                 oldTracker.restoreState(state)
@@ -848,16 +854,18 @@ class LineStatusTrackerManager(
           }
           else {
             val tracker = PartialLocalLineStatusTracker.createTracker(project, document, virtualFile, getTrackingMode())
-            trackers.put(document, TrackerData(tracker))
+
+            val data = TrackerData(tracker)
+            trackers.put(document, data)
 
             if (oldTracker != null) {
               eventDispatcher.multicaster.onTrackerRemoved(tracker)
-              unregisterTrackerInCLM(oldTracker)
+              unregisterTrackerInCLM(oldData)
               oldTracker.release()
               log("Tracker restore: removed existing", virtualFile)
             }
 
-            registerTrackerInCLM(tracker)
+            registerTrackerInCLM(data)
             refreshTracker(tracker)
             eventDispatcher.multicaster.onTrackerAdded(tracker)
 
