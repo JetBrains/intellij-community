@@ -380,7 +380,7 @@ public class GitLogUtil {
   }
 
   @NotNull
-  private static GitLineHandler createGitHandler(@NotNull Project project, @NotNull VirtualFile root) {
+  public static GitLineHandler createGitHandler(@NotNull Project project, @NotNull VirtualFile root) {
     return createGitHandler(project, root, Collections.emptyList());
   }
 

@@ -393,4 +393,12 @@
   <action id="RunDashboard.ShowConfigurations">
     <keyboard-shortcut first-keystroke="shift meta T"/>
   </action>
+
+  <action id="GotoNextElementUnderCaretUsage">
+    <keyboard-shortcut first-keystroke="ctrl alt DOWN"/>
+  </action>
+
+  <action id="GotoPrevElementUnderCaretUsage">
+    <keyboard-shortcut first-keystroke="ctrl alt UP"/>
+  </action>
 </keymap>

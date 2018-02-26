@@ -18,7 +18,6 @@ package com.intellij.vcs.log.ui.filter;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -73,8 +72,8 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
     actionGroup.add(createAllAction());
     actionGroup.add(createSelectMultipleValuesAction());
 
-    actionGroup.add(
-      new MyBranchPopupBuilder(myFilterModel.getDataPack(), myBranchFilterModel.getVisibleRoots(), getRecentValuesFromSettings()).build());
+    actionGroup.add(new MyBranchPopupBuilder(myFilterModel.getDataPack(), myBranchFilterModel.getVisibleRoots(),
+                                             getRecentValuesFromSettings()).build());
     return actionGroup;
   }
 
@@ -105,23 +104,18 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
     @NotNull
     @Override
     public AnAction createAction(@NotNull String name) {
-      return new PredefinedValueAction(name) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          myFilterModel.setFilter(myFilterModel.createFilter(myValues)); // does not add to recent
-        }
-      };
+      return new PredefinedValueAction(name, false);
     }
 
     @Override
-    protected void createRecentAction(@NotNull DefaultActionGroup actionGroup, @NotNull List<String> recentItem) {
-      actionGroup.add(new PredefinedValueAction(recentItem));
+    protected void createRecentAction(@NotNull DefaultActionGroup actionGroup, @NotNull List<String> recentItems) {
+      actionGroup.add(new PredefinedValueAction(recentItems));
     }
 
     @NotNull
     @Override
     protected AnAction createCollapsedAction(String actionName) {
-      return new PredefinedValueAction(actionName); // adds to recent
+      return new PredefinedValueAction(actionName, false);
     }
   }
 }

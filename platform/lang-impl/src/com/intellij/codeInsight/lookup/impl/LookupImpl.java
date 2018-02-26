@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.lookup.impl;
 
@@ -81,8 +67,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private final LookupOffsets myOffsets;
   private final Project myProject;
   private final Editor myEditor;
-  private final Object myLock = new Object();
-  private final JBList myList = new JBList(new CollectionListModel<LookupElement>()) {
+  private final Object myArrangerLock = new Object();
+  private final Object myUiLock = new Object();
+  private final JBList myList = new JBList<LookupElement>(new CollectionListModel<>()) {
     @Override
     protected void processKeyEvent(@NotNull final KeyEvent e) {
       final char keyChar = e.getKeyChar();
@@ -404,12 +391,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myOffsets.checkMinPrefixLengthChanges(items, this);
     List<LookupElement> oldModel = listModel.toList();
 
-    listModel.removeAll();
-    if (!items.isEmpty()) {
-      listModel.add(items);
-    }
-    else {
-      addEmptyItem(listModel);
+    synchronized (myUiLock) {
+      listModel.removeAll();
+      if (!items.isEmpty()) {
+        listModel.add(items);
+      }
+      else {
+        addEmptyItem(listModel);
+      }
     }
 
     updateListHeight(listModel);
@@ -748,17 +737,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       }
     };
 
-    myEditor.getCaretModel().addCaretListener(caretListener);
-    myEditor.getSelectionModel().addSelectionListener(selectionListener);
-    myEditor.addEditorMouseListener(mouseListener);
-    Disposer.register(this, new Disposable() {
-      @Override
-      public void dispose() {
-        myEditor.getCaretModel().removeCaretListener(caretListener);
-        myEditor.getSelectionModel().removeSelectionListener(selectionListener);
-        myEditor.removeEditorMouseListener(mouseListener);
-      }
-    });
+    myEditor.getCaretModel().addCaretListener(caretListener, this);
+    myEditor.getSelectionModel().addSelectionListener(selectionListener, this);
+    myEditor.addEditorMouseListener(mouseListener, this);
 
     JComponent editorComponent = myEditor.getContentComponent();
     if (editorComponent.isShowing()) {
@@ -805,8 +786,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   @Override
   @Nullable
   public LookupElement getCurrentItem(){
-    LookupElement item = (LookupElement)myList.getSelectedValue();
-    return item instanceof EmptyLookupItem ? null : item;
+    synchronized (myUiLock) {
+      LookupElement item = (LookupElement)myList.getSelectedValue();
+      return item instanceof EmptyLookupItem ? null : item;
+    }
   }
 
   @Override
@@ -1185,7 +1168,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     if (ApplicationManager.getApplication().isDispatchThread()) {
       HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
     }
-    synchronized (myLock) {
+    synchronized (myArrangerLock) {
       return computable.compute();
     }
   }

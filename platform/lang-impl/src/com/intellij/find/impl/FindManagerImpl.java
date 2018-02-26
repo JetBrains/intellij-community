@@ -215,6 +215,7 @@ public class FindManagerImpl extends FindManager {
     myFindInProjectModel.setFromCursor(false);
     myFindInProjectModel.setForward(true);
     myFindInProjectModel.setGlobal(true);
+    myFindInProjectModel.setSearchInProjectFiles(false);
     return myFindInProjectModel;
   }
 

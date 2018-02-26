@@ -21,6 +21,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.SettingsImpl;
 import com.intellij.openapi.fileTypes.UnknownFileType;
@@ -40,6 +42,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -448,7 +451,10 @@ public abstract class ChooseByNameBase {
       .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY).getShortcutSet(), myTextField);
 
     myTextFieldPanel.add(myTextField);
-    Font editorFont = EditorUtil.getEditorFont();
+    // [tav] todo: UIUtil.getFontWithFallback() doesn't display Japanese on OSX
+    Font editorFont = SystemInfo.isMac ?
+                      EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN) :
+                      EditorUtil.getEditorFont();
     myTextField.setFont(editorFont);
     myTextField.putClientProperty("caretWidth", JBUI.scale(new SettingsImpl().getLineCursorWidth()));
 
@@ -838,7 +844,7 @@ public abstract class ChooseByNameBase {
       myTextPopup = null;
       close(false);
       return Boolean.TRUE;
-    }).setFocusable(true).setRequestFocus(true).setModalContext(false).setCancelOnClickOutside(false);
+    }).setFocusable(true).setRequestFocus(true).setModalContext(false);
 
     Point point = new Point(x, y);
     SwingUtilities.convertPointToScreen(point, layeredPane);

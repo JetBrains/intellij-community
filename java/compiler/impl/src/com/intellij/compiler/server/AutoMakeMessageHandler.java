@@ -4,6 +4,7 @@ package com.intellij.compiler.server;
 import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.ProblemsView;
 import com.intellij.notification.Notification;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -119,7 +120,7 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
         final CompilerMessage msg = myContext.createAndAddMessage(category, message.getText(), url, (int)line, (int)column, null);
         if (kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.ERROR || kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.JPS_INFO) {
           if (kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.ERROR) {
-            informWolf(myProject, message);
+            ReadAction.run(() -> informWolf(myProject, message));
           }
           if (msg != null) {
             ProblemsView.SERVICE.getInstance(myProject).addMessage(msg, sessionId);

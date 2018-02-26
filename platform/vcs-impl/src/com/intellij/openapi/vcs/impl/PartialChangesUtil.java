@@ -18,7 +18,10 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public class PartialChangesUtil {
   @Nullable
@@ -53,16 +56,13 @@ public class PartialChangesUtil {
         if (change instanceof ChangeListChange) {
           ChangeListChange changelistChange = (ChangeListChange)change;
 
-          ContentRevision afterRevision = change.getAfterRevision();
-          if (afterRevision instanceof CurrentContentRevision) {
-            VirtualFile virtualFile = ((CurrentContentRevision)afterRevision).getVirtualFile();
-            if (virtualFile != null) {
-              partialChangesMap.putValue(virtualFile, changelistChange);
-              continue;
-            }
+          VirtualFile virtualFile = getVirtualFile(change);
+          if (virtualFile != null) {
+            partialChangesMap.putValue(virtualFile, changelistChange);
           }
-
-          otherChanges.add((changelistChange).getChange());
+          else {
+            otherChanges.add((changelistChange).getChange());
+          }
         }
         else {
           otherChanges.add(change);
@@ -78,12 +78,6 @@ public class PartialChangesUtil {
         PartialLocalLineStatusTracker tracker = ObjectUtils.tryCast(lstManager.getLineStatusTracker(virtualFile),
                                                                     PartialLocalLineStatusTracker.class);
         if (tracker == null) {
-          otherChanges.add(actualChange);
-          continue;
-        }
-
-        Set<String> selectedIds = ContainerUtil.map2Set(partialChanges, change -> change.getChangeListId());
-        if (selectedIds.containsAll(tracker.getAffectedChangeListsIds())) {
           otherChanges.add(actualChange);
           continue;
         }

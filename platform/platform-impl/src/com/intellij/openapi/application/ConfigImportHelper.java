@@ -2,6 +2,7 @@
 package com.intellij.openapi.application;
 
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
+import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.Main;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -96,7 +97,7 @@ public class ConfigImportHelper {
   @Nullable
   private static File findRecentConfigDirectory(File newConfigDir) {
     // looks for the most recent existing config directory in the vicinity of the new one, assuming standard layout
-    // ("~/Library/<selector><version>" on macOS, "~/.<selector><version>/config" on other OSes)
+    // ("~/Library/<selector_prefix><selector_version>" on macOS, "~/.<selector_prefix><selector_version>/config" on other OSes)
 
     File configsHome = (SystemInfo.isMac ? newConfigDir : newConfigDir.getParentFile()).getParentFile();
     if (configsHome == null || !configsHome.isDirectory()) {
@@ -295,8 +296,9 @@ public class ConfigImportHelper {
       FileUtil.delete(new File(newConfigDir, "user.web.token"));
 
       // on macOS, plugins are normally not under the config directory
-      if (SystemInfo.isMac && !new File(oldConfigDir, PLUGINS).isDirectory()) {
-        File oldPluginsDir = null;
+      File oldPluginsDir = new File(oldConfigDir, PLUGINS);
+      if (SystemInfo.isMac && !oldPluginsDir.isDirectory()) {
+        oldPluginsDir = null;
         if (oldIdeHome != null) {
           oldPluginsDir = getSettingsPath(oldIdeHome, PathManager.PROPERTY_PLUGINS_PATH, PathManager::getDefaultPluginPathFor);
         }
@@ -306,6 +308,23 @@ public class ConfigImportHelper {
         if (oldPluginsDir.isDirectory()) {
           File newPluginsDir = new File(PathManager.getPluginsPath());
           FileUtil.copyDir(oldPluginsDir, newPluginsDir);
+        }
+      }
+
+      // apply stale plugin updates
+      if (oldPluginsDir.isDirectory()) {
+        File oldSystemDir = null;
+        if (oldIdeHome != null) {
+          oldSystemDir = getSettingsPath(oldIdeHome, PathManager.PROPERTY_SYSTEM_PATH, PathManager::getDefaultSystemPathFor);
+        }
+        if (oldSystemDir == null) {
+          String selector = SystemInfo.isMac ? oldConfigDir.getName() : StringUtil.trimLeading(oldConfigDir.getParentFile().getName(), '.');
+          oldSystemDir = new File(PathManager.getDefaultSystemPathFor(selector));
+        }
+        File script = new File(oldSystemDir, PLUGINS + '/' + StartupActionScriptManager.ACTION_SCRIPT_FILE);  // PathManager#getPluginTempPath
+        if (script.isFile()) {
+          File newPluginsDir = new File(PathManager.getPluginsPath());
+          StartupActionScriptManager.executeActionScript(script, oldPluginsDir, newPluginsDir);
         }
       }
     }

@@ -205,6 +205,9 @@ public class JBUI {
   private static final LazyInitializer<Float> SYSTEM_SCALE_FACTOR = new LazyInitializer<Float>(new Callable<Float>() {
     @Override
     public Float call() {
+      if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
+        return 1f;
+      }
       if (UIUtil.isJreHiDPIEnabled()) {
         GraphicsDevice gd = null;
         try {
@@ -215,9 +218,6 @@ public class JBUI {
         }
         return 1f;
       }
-      if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
-        return 1f;
-      }
       UIUtil.initSystemFontData();
       Pair<String, Integer> fdata = UIUtil.getSystemFontData();
 
@@ -226,8 +226,8 @@ public class JBUI {
     }})
   {
     @Override
-    protected void onInitialized() {
-      LOG.info("System scale factor: " + this + " (" + (UIUtil.isJreHiDPIEnabled() ? "JRE" : "IDE") + "-managed HiDPI)");
+    protected void onInitialized(Float scale) {
+      LOG.info("System scale factor: " + scale + " (" + (UIUtil.isJreHiDPIEnabled() ? "JRE" : "IDE") + "-managed HiDPI)");
     }
   };
 
@@ -253,15 +253,15 @@ public class JBUI {
     }})
   {
     @Override
-    protected void onInitialized() {
-      if (isSet()) setUserScaleFactor(get());
+    protected void onInitialized(Float scale) {
+      if (isSet()) setUserScaleFactor(scale);
     }
   };
 
   /**
    * The user scale factor, see {@link ScaleType#USR_SCALE}.
    */
-  private static float userScaleFactor = setUserScaleFactor(UIUtil.isJreHiDPIEnabled() ? 1f : SYSTEM_SCALE_FACTOR.get());
+  private static float userScaleFactor = setUserScaleFactor(UIUtil.isJreHiDPIEnabled() ? 1f : SYSTEM_SCALE_FACTOR.getNotNull());
 
   /**
    * Adds property change listener. Supported properties:
@@ -282,7 +282,7 @@ public class JBUI {
    * Returns the system scale factor, corresponding to the default monitor device.
    */
   public static float sysScale() {
-    return SYSTEM_SCALE_FACTOR.get();
+    return SYSTEM_SCALE_FACTOR.getNotNull();
   }
 
   /**
@@ -407,14 +407,14 @@ public class JBUI {
    * ide.ui.scale.override=[boolean]
    * ide.ui.scale=[float]
    *
-   * @returns the result
+   * @return the result
    */
   public static float setUserScaleFactor(float scale) {
     if (DEBUG_USER_SCALE_FACTOR.isSet()) {
-      if (scale == DEBUG_USER_SCALE_FACTOR.get()) {
+      if (scale == DEBUG_USER_SCALE_FACTOR.getNotNull()) {
         setUserScaleFactorProperty(scale); // set the debug value as is, or otherwise ignore
       }
-      return DEBUG_USER_SCALE_FACTOR.get();
+      return DEBUG_USER_SCALE_FACTOR.getNotNull();
     }
 
     if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {

@@ -162,6 +162,16 @@ class PartialLocalLineStatusTracker(project: Project,
     if (isValid()) eventDispatcher.multicaster.onBecomingValid(this)
   }
 
+  @CalledInAwt
+  fun replayChangesFromDocumentEvents(events: List<DocumentEvent>) {
+    if (events.isEmpty() || !blocks.isEmpty()) return
+    updateDocument(Side.LEFT) { vcsDocument ->
+      for (event in events.reversed()) {
+        vcsDocument.replaceString(event.offset, event.offset + event.newLength, event.oldFragment)
+      }
+    }
+  }
+
 
   override fun initChangeTracking(defaultId: String, changelistsIds: List<String>) {
     documentTracker.writeLock {
@@ -807,23 +817,6 @@ class PartialLocalLineStatusTracker(project: Project,
                       virtualFile: VirtualFile,
                       mode: Mode): PartialLocalLineStatusTracker {
       return PartialLocalLineStatusTracker(project, document, virtualFile, mode)
-    }
-
-    @JvmStatic
-    fun createTracker(project: Project,
-                      document: Document,
-                      virtualFile: VirtualFile,
-                      mode: Mode,
-                      events: List<DocumentEvent>): PartialLocalLineStatusTracker {
-      val tracker = createTracker(project, document, virtualFile, mode)
-
-      for (event in events.reversed()) {
-        tracker.updateDocument(Side.LEFT) { vcsDocument ->
-          vcsDocument.replaceString(event.offset, event.offset + event.newLength, event.oldFragment)
-        }
-      }
-
-      return tracker
     }
   }
 }

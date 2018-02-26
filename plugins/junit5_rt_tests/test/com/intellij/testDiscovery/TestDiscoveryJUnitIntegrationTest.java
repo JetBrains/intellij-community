@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 // TODO parametrize by 1) junit version 2) TD protocol
+// TODO get agent from sources
 public class TestDiscoveryJUnitIntegrationTest extends JUnitAbstractIntegrationTest {
   private static final String myJUnitVersion = "4.12";
   private CompilerTester myCompilerTester;
@@ -82,6 +83,11 @@ public class TestDiscoveryJUnitIntegrationTest extends JUnitAbstractIntegrationT
   public void testFewTestClasses() throws Exception {
     runTestConfiguration(myJavaFacade.findPackage(""));
     assertTestDiscoveryIndex("Person", "getName", t("PersonTest1", "testPersonName"), t("PersonTest2", "testPersonName"));
+  }
+
+  public void testClassLoaderMagic() throws Exception {
+    runTestConfiguration(findClass(myModule, "Test"));
+    assertTestDiscoveryIndex("Magic", "abracadabra", t("Test", "testClassLoaderMagic"));
   }
 
   public void _testConstructor() throws Exception {

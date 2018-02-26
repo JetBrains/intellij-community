@@ -1302,11 +1302,10 @@ public class IdeEventQueue extends EventQueue {
           delayKeyEvents.set(true);
           lastTypeaheadTimestamp = System.currentTimeMillis();
         }
-      } else if (event.getID() == KeyEvent.KEY_RELEASED && Registry.is("action.aware.typeAhead.searchEverywhere")) {
+      } else if (event.getID() == KeyEvent.KEY_RELEASED && Registry.is("action.aware.typeAhead.searchEverywhere")
+                 && KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof IdeFrame) {
         KeyEvent keyEvent = (KeyEvent)event;
-        if (keyEvent.getKeyCode() == KeyEvent.VK_SHIFT
-
-          ) {
+        if (keyEvent.getKeyCode() == KeyEvent.VK_SHIFT) {
           switch (mySearchEverywhereTypeaheadState) {
             case DEACTIVATED:
               mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.TRIGGERED;

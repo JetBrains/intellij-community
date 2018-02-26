@@ -7,12 +7,10 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileChooserFactory
+import com.intellij.openapi.fileChooser.FileTextField
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.LabeledComponent
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.*
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.util.loadElement
@@ -20,6 +18,8 @@ import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
+import java.awt.event.ActionEvent
+import javax.swing.AbstractAction
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JTextArea
@@ -31,13 +31,19 @@ class ShowUpdateInfoDialogAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val dialog = MyDialog(e.project)
     if (dialog.showAndGet()) {
-      UpdateChecker.testPlatformUpdate(dialog.updateXmlText(), dialog.patchFilePath())
+      try {
+        UpdateChecker.testPlatformUpdate(dialog.updateXmlText(), dialog.patchFilePath(), dialog.forceUpdate())
+      }
+      catch (ex: Exception) {
+        Messages.showErrorDialog(e.project, "${ex.javaClass.name}: ${ex.message}", "Something Went Wrong")
+      }
     }
   }
 
   private class MyDialog(private val project: Project?) : DialogWrapper(project, true) {
-    private val textArea = JTextArea(40, 100)
-    private val fileField = FileChooserFactory.getInstance().createFileTextField(BrowseFilesListener.SINGLE_FILE_DESCRIPTOR, disposable)
+    private lateinit var textArea: JTextArea
+    private lateinit var fileField: FileTextField
+    private var forceUpdate = false
 
     init {
       title = "Updates.xml <channel> Text"
@@ -45,10 +51,12 @@ class ShowUpdateInfoDialogAction : DumbAwareAction() {
     }
 
     override fun createCenterPanel(): JComponent? {
+      textArea = JTextArea(40, 100)
       UIUtil.addUndoRedoActions(textArea)
       textArea.wrapStyleWord = true
       textArea.lineWrap = true
 
+      fileField = FileChooserFactory.getInstance().createFileTextField(BrowseFilesListener.SINGLE_FILE_DESCRIPTOR, disposable)
       val fileCombo = TextFieldWithBrowseButton(fileField.field)
       val fileDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
       fileCombo.addBrowseFolderListener("Patch File", "Patch file", project, fileDescriptor)
@@ -58,6 +66,21 @@ class ShowUpdateInfoDialogAction : DumbAwareAction() {
       panel.add(LabeledComponent.create(fileCombo, "Patch file:"), BorderLayout.SOUTH)
       return panel
     }
+
+    override fun createActions() = arrayOf(
+      object : AbstractAction("&Check Updates") {
+        override fun actionPerformed(e: ActionEvent?) {
+          forceUpdate = false
+          doOKAction()
+        }
+      },
+      object : AbstractAction("&Show Dialog") {
+        override fun actionPerformed(e: ActionEvent?) {
+          forceUpdate = true
+          doOKAction()
+        }
+      },
+      cancelAction)
 
     override fun doValidate(): ValidationInfo? {
       val text = textArea.text?.trim() ?: ""
@@ -77,6 +100,7 @@ class ShowUpdateInfoDialogAction : DumbAwareAction() {
     override fun getDimensionServiceKey() = "TEST_UPDATE_INFO_DIALOG"
 
     internal fun updateXmlText() = completeUpdateInfoXml(textArea.text?.trim() ?: "")
+    internal fun forceUpdate() = forceUpdate
     internal fun patchFilePath() = fileField.field.text.nullize(nullizeSpaces = true)
 
     private fun completeUpdateInfoXml(text: String) =

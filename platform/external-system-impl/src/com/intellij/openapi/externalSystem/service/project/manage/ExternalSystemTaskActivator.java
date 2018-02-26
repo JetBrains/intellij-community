@@ -19,6 +19,7 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -107,8 +108,9 @@ public class ExternalSystemTaskActivator {
   }
 
   private boolean doExecuteCompileTasks(boolean myBefore, @NotNull CompileContext context) {
-    final List<String> modules = ContainerUtil.map(context.getCompileScope().getAffectedModules(),
-                                                   module -> ExternalSystemApiUtil.getExternalProjectPath(module));
+    List<String> modules = ReadAction.compute(
+      () -> ContainerUtil.mapNotNull(context.getCompileScope().getAffectedModules(),
+                                     module -> ExternalSystemApiUtil.getExternalProjectPath(module)));
 
     final Collection<Phase> phases = ContainerUtil.newArrayList();
     if (myBefore) {

@@ -27,7 +27,9 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.StreamApiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.function.UnaryOperator;
 
 import static com.intellij.psi.CommonClassNames.*;
@@ -49,6 +51,16 @@ public class StreamChainInliner implements CallInliner {
           instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "findFirst", "findAny").parameterCount(0));
   private static final CallMatcher MIN_MAX_TERMINAL =
     instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "min", "max", "reduce").parameterCount(1);
+  private static final CallMatcher COLLECT_TERMINAL =
+    instanceCall(JAVA_UTIL_STREAM_STREAM, "collect").parameterTypes("java.util.stream.Collector");
+
+  private static final CallMatcher COUNTING_COLLECTOR =
+    staticCall(JAVA_UTIL_STREAM_COLLECTORS, "counting").parameterCount(0);
+  private static final CallMatcher COLLECTION_COLLECTOR =
+    anyOf(staticCall(JAVA_UTIL_STREAM_COLLECTORS, "toList", "toSet", "toUnmodifiableList", "toUnmodifiableSet").parameterCount(0),
+          staticCall(JAVA_UTIL_STREAM_COLLECTORS, "toCollection").parameterCount(1));
+  private static final CallMatcher MAP_COLLECTOR =
+    staticCall(JAVA_UTIL_STREAM_COLLECTORS, "toMap", "toConcurrentMap", "toUnmodifiableMap");
 
   private static final CallMatcher SKIP_STEP =
     instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "unordered", "parallel", "sequential").parameterCount(0);
@@ -101,7 +113,8 @@ public class StreamChainInliner implements CallInliner {
     .register(MATCH_TERMINAL, MatchTerminalStep::new)
     .register(SUM_TERMINAL, SumTerminalStep::new)
     .register(MIN_MAX_TERMINAL, MinMaxTerminalStep::new)
-    .register(OPTIONAL_TERMINAL, OptionalTerminalStep::new);
+    .register(OPTIONAL_TERMINAL, OptionalTerminalStep::new)
+    .register(COLLECT_TERMINAL, StreamChainInliner::createTerminalFromCollector);
 
   private static final Step NULL_TERMINAL_STEP = new Step(null, null, null) {
     @Override
@@ -221,6 +234,9 @@ public class StreamChainInliner implements CallInliner {
     @Override
     protected void pushInitialValue(CFGBuilder builder) {
       PsiType type = myCall.getType();
+      if (!(type instanceof PsiPrimitiveType)) {
+        type = PsiPrimitiveType.getUnboxedType(type);
+      }
       Object value = PsiTypesUtil.getDefaultValue(type);
       builder.push(builder.getFactory().getConstFactory().createFromValue(value, type, null));
     }
@@ -498,6 +514,94 @@ public class StreamChainInliner implements CallInliner {
     }
   }
 
+  abstract static class AbstractCollectionStep extends TerminalStep {
+    final boolean myImmutable;
+
+    AbstractCollectionStep(@NotNull PsiMethodCallExpression call, @Nullable PsiExpression supplier, boolean immutable) {
+      super(call, supplier);
+      myImmutable = immutable;
+    }
+
+    @Override
+    protected void pushInitialValue(CFGBuilder builder) {
+      if (myFunction != null) {
+        builder.invokeFunction(0, myFunction, Nullness.NOT_NULL);
+      }
+      else {
+        DfaValue value = builder.getFactory().createTypeValue(myCall.getType(), Nullness.NOT_NULL);
+        if (myImmutable) {
+          value = builder.getFactory().withFact(value, DfaFactType.MUTABILITY, Mutability.UNMODIFIABLE);
+        }
+        builder.push(value);
+      }
+    }
+  }
+
+  static class ToCollectionStep extends AbstractCollectionStep {
+    ToCollectionStep(@NotNull PsiMethodCallExpression call, @Nullable PsiExpression supplier, boolean immutable) {
+      super(call, supplier, immutable);
+    }
+
+    @Override
+    void iteration(CFGBuilder builder) {
+      // do nothing currently: we can emulate calling collection.add,
+      // but it's unnecessary for current analysis
+      builder.pop();
+    }
+
+    @Override
+    boolean expectNotNull() {
+      return myImmutable;
+    }
+  }
+
+  static class ToMapStep extends AbstractCollectionStep {
+    private final @NotNull PsiExpression myKeyExtractor;
+    private final @NotNull PsiExpression myValueExtractor;
+    private final @Nullable PsiExpression myMerger;
+
+    ToMapStep(@NotNull PsiMethodCallExpression call,
+              @NotNull PsiExpression keyExtractor,
+              @NotNull PsiExpression valueExtractor,
+              @Nullable PsiExpression merger,
+              @Nullable PsiExpression supplier,
+              boolean immutable) {
+      super(call, supplier, immutable);
+      myKeyExtractor = keyExtractor;
+      myValueExtractor = valueExtractor;
+      myMerger = merger;
+    }
+
+    @Override
+    void before(CFGBuilder builder) {
+      builder.evaluateFunction(myKeyExtractor)
+             .evaluateFunction(myValueExtractor);
+      if (myMerger != null) {
+        builder.evaluateFunction(myMerger);
+      }
+      super.before(builder);
+    }
+
+    @Override
+    void iteration(CFGBuilder builder) {
+      // Null values are not tolerated
+      // Null keys are not tolerated for immutable maps
+      builder.dup()
+             .invokeFunction(1, myKeyExtractor, myImmutable ? Nullness.NOT_NULL : Nullness.NULLABLE)
+             .pop()
+             .invokeFunction(1, myValueExtractor, Nullness.NOT_NULL);
+      if (myMerger != null) {
+        builder.pushUnknown()
+               .ifConditionIs(true)
+               .push(builder.getFactory().getFactValue(DfaFactType.CAN_BE_NULL, false))
+               .invokeFunction(2, myMerger)
+               .endIf();
+      }
+      // Actual addition of Map element is unnecessary for current analysis
+      builder.pop();
+    }
+  }
+
   @Override
   public boolean tryInlineCall(@NotNull CFGBuilder builder, @NotNull PsiMethodCallExpression call) {
     if (TERMINAL_CALL.test(call)) {
@@ -658,5 +762,30 @@ public class StreamChainInliner implements CallInliner {
   private static Step createTerminalStep(PsiMethodCallExpression call) {
     Step step = TERMINAL_STEP_MAPPER.mapFirst(call);
     return step == null ? new UnknownTerminalStep(call) : step;
+  }
+
+  private static Step createTerminalFromCollector(PsiMethodCallExpression call) {
+    PsiMethodCallExpression collectorCall =
+      ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(call.getArgumentList().getExpressions()[0]), PsiMethodCallExpression.class);
+    if (COUNTING_COLLECTOR.matches(collectorCall)) {
+      return new SumTerminalStep(call);
+    }
+    if (COLLECTION_COLLECTOR.matches(collectorCall)) {
+      String name = Objects.requireNonNull(collectorCall.getMethodExpression().getReferenceName());
+      return new ToCollectionStep(call, ArrayUtil.getFirstElement(collectorCall.getArgumentList().getExpressions()),
+                                  name.startsWith("toUnmodifiable"));
+    }
+    if (MAP_COLLECTOR.matches(collectorCall)) {
+      PsiExpression[] args = collectorCall.getArgumentList().getExpressions();
+      if (args.length >= 2 && args.length <= 4) {
+        PsiExpression keyExtractor = args[0];
+        PsiExpression valueExtractor = args[1];
+        PsiExpression merger = args.length >= 3 ? args[2] : null;
+        PsiExpression supplier = args.length >= 4 ? args[3] : null;
+        return new ToMapStep(call, keyExtractor, valueExtractor, merger, supplier,
+                             "toUnmodifiableMap".equals(collectorCall.getMethodExpression().getReferenceName()));
+      }
+    }
+    return new UnknownTerminalStep(call);
   }
 }

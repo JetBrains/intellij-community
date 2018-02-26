@@ -524,6 +524,10 @@
 
     <projectService serviceImplementation="com.intellij.tasks.context.WorkingContextManager"/>
 
+    <projectService
+        serviceInterface="com.intellij.psi.availability.PsiAvailabilityService"
+        serviceImplementation="com.intellij.psi.availability.PsiAvailabilityServiceImpl"/>
+
     <!--context providers-->
     <tasks.contextProvider implementation="com.intellij.tasks.context.OpenEditorsContextProvider"/>
     <tasks.contextProvider implementation="com.intellij.tasks.context.ProjectViewContextProvider"/>

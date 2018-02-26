@@ -18,6 +18,7 @@ package com.intellij.stats.events.completion
 import com.google.gson.Gson
 import com.google.gson.internal.LinkedTreeMap
 import java.lang.reflect.Field
+import java.lang.reflect.Modifier
 
 object JsonSerializer {
     private val gson = Gson()
@@ -28,7 +29,7 @@ object JsonSerializer {
     fun toJson(obj: Any): String = gson.toJson(obj)
 
     fun <T> fromJson(json: String, clazz: Class<T>): DeserializationResult<T> {
-        val declaredFields = allFields(clazz).map { it.name }.filter { it !in ignoredFields }
+        val declaredFields = allFields(clazz).filter { !Modifier.isTransient(it.modifiers) }.map { it.name }.filter { it !in ignoredFields }
         val jsonFields = gson.fromJson(json, LinkedTreeMap::class.java).keys.map { it.toString() }.toSet()
         val value = gson.fromJson(json, clazz)
 

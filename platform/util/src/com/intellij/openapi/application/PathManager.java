@@ -186,7 +186,6 @@ public class PathManager {
     return getHomePath() + File.separator + LIB_FOLDER;
   }
 
-  @SuppressWarnings("MethodNamesDifferingOnlyByCase")
   @NotNull
   public static String getPreInstalledPluginsPath() {
     return getHomePath() + File.separatorChar + PLUGINS_FOLDER;
@@ -257,7 +256,7 @@ public class PathManager {
       ourPluginsPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_PLUGINS_PATH)));
     }
     else if (SystemInfo.isMac && PATHS_SELECTOR != null) {
-      ourPluginsPath = SystemProperties.getUserHome() + File.separator + "Library/Application Support" + File.separator + PATHS_SELECTOR;
+      ourPluginsPath = platformPath(PATHS_SELECTOR, "Library/Application Support", "");
     }
     else {
       ourPluginsPath = getConfigPath() + File.separatorChar + PLUGINS_FOLDER;
@@ -268,7 +267,12 @@ public class PathManager {
 
   @NotNull
   public static String getDefaultPluginPathFor(@NotNull String selector) {
-    return platformPath(selector, "Library/Application Support", PLUGINS_FOLDER);
+    if (SystemInfo.isMac) {
+      return platformPath(selector, "Library/Application Support", "");
+    }
+    else {
+      return getDefaultConfigPathFor(selector) + File.separatorChar + PLUGINS_FOLDER;
+    }
   }
 
   @Nullable
@@ -287,7 +291,7 @@ public class PathManager {
       ourSystemPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_SYSTEM_PATH)));
     }
     else if (PATHS_SELECTOR != null) {
-      ourSystemPath = platformPath(PATHS_SELECTOR, "Library/Caches", SYSTEM_FOLDER);
+      ourSystemPath = getDefaultSystemPathFor(PATHS_SELECTOR);
     }
     else {
       ourSystemPath = getHomePath() + File.separator + SYSTEM_FOLDER;
@@ -295,6 +299,11 @@ public class PathManager {
 
     FileUtil.createDirectory(new File(ourSystemPath));
     return ourSystemPath;
+  }
+
+  @NotNull
+  public static String getDefaultSystemPathFor(@NotNull String selector) {
+    return platformPath(selector, "Library/Caches", SYSTEM_FOLDER);
   }
 
   @NotNull
@@ -513,8 +522,8 @@ public class PathManager {
 
     final String annotationsRoot = getJarPathForClass(Flow.class);
     if (annotationsRoot != null && !annotationsRoot.endsWith(".jar")) {
-      // We're running IDEA built from sources. Flow.class is under intellij.platform.annotations.common, and NotNull.class is under intellij.platform.annotations.java5. Add both
-      // roots to classpath.
+      // We're running IDEA built from sources. Flow.class is under intellij.platform.annotations.common,
+      // and NotNull.class is under intellij.platform.annotations.java5. Add both roots to classpath.
       final File notNullRoot = new File(new File(annotationsRoot).getParentFile(), "intellij.platform.annotations.java5");
       if (notNullRoot.exists()) {
         classPath.add(notNullRoot.getAbsolutePath());
@@ -562,8 +571,10 @@ public class PathManager {
                                      @Nullable String xdgVar,
                                      @Nullable String xdgDir,
                                      @NotNull String fallback) {
+    String userHome = SystemProperties.getUserHome();
+
     if (macPart != null && SystemInfo.isMac) {
-      return SystemProperties.getUserHome() + File.separator + macPart + File.separator + selector;
+      return userHome + File.separator + macPart + File.separator + selector;
     }
 
     if (winVar != null && SystemInfo.isWindows) {
@@ -575,11 +586,11 @@ public class PathManager {
 
     if (xdgVar != null && xdgDir != null && SystemInfo.hasXdgOpen()) {
       String dir = System.getenv(xdgVar);
-      if (dir == null) dir = SystemProperties.getUserHome() + File.separator + xdgDir;
+      if (dir == null) dir = userHome + File.separator + xdgDir;
       return dir + File.separator + selector;
     }
 
-    return SystemProperties.getUserHome() + File.separator + "." + selector + (!fallback.isEmpty() ? File.separator + fallback : "");
+    return userHome + File.separator + "." + selector + (!fallback.isEmpty() ? File.separator + fallback : "");
   }
 
   private static String canonicalPath(String path) {

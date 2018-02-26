@@ -23,9 +23,7 @@ final class TestInfoHolder {
   final PersistentHashMap<Integer, TIntObjectHashMap<TIntArrayList>> myTestNameToUsedClassesAndMethodMap;
   final PersistentHashMap<Long, TIntArrayList> myTestNameToNearestModule;
   final PersistentStringEnumerator myClassEnumerator;
-  final CachingEnumerator<String> myClassEnumeratorCache;
   final PersistentStringEnumerator myMethodEnumerator;
-  final CachingEnumerator<String> myMethodEnumeratorCache;
   final PersistentEnumeratorDelegate<TestId> myTestEnumerator;
   final PersistentEnumeratorDelegate<ModuleId> myModuleEnumerator;
   final List<PersistentEnumeratorDelegate> myConstructedDataFiles = new ArrayList<>(6);
@@ -108,10 +106,10 @@ final class TestInfoHolder {
                                                             new TestNamesExternalizer());
           myConstructedDataFiles.add(testNameToNearestModule);
 
-          classNameEnumerator = new PersistentStringEnumerator(classNameEnumeratorFile);
+          classNameEnumerator = new PersistentStringEnumerator(classNameEnumeratorFile, true);
           myConstructedDataFiles.add(classNameEnumerator);
 
-          methodEnumerator = new PersistentStringEnumerator(methodNameEnumeratorFile);
+          methodEnumerator = new PersistentStringEnumerator(methodNameEnumeratorFile, true);
           myConstructedDataFiles.add(methodEnumerator);
 
           moduleNameEnumerator = new PersistentEnumeratorDelegate<>(moduleNameEnumeratorFile, ModuleId.DESCRIPTOR, 64);
@@ -146,8 +144,6 @@ final class TestInfoHolder {
       myMethodEnumerator = methodEnumerator;
       myTestEnumerator = testEnumerator;
       myModuleEnumerator = moduleNameEnumerator;
-      myMethodEnumeratorCache = new CachingEnumerator<>(methodEnumerator, EnumeratorStringDescriptor.INSTANCE);
-      myClassEnumeratorCache = new CachingEnumerator<>(classNameEnumerator, EnumeratorStringDescriptor.INSTANCE);
 
       myFlushingFuture = FlushingDaemon.everyFiveSeconds(() -> {
         synchronized (myLock) {
@@ -160,8 +156,6 @@ final class TestInfoHolder {
               dataFile.force();
             }
           }
-          myClassEnumeratorCache.clear();
-          myMethodEnumeratorCache.clear();
         }
       });
     }
@@ -438,7 +432,7 @@ final class TestInfoHolder {
 
   @NotNull
   TestId createTestId(String className, String methodName, byte frameworkPrefix) throws IOException {
-    return new TestId(myClassEnumeratorCache.enumerate(className), myMethodEnumeratorCache.enumerate(methodName), frameworkPrefix);
+    return new TestId(myClassEnumerator.enumerate(className), myMethodEnumerator.enumerate(methodName), frameworkPrefix);
   }
 
   static class ModuleId {
@@ -536,7 +530,7 @@ final class TestInfoHolder {
       return Objects.hash(myClassId, myMethodId, myFrameworkId);
     }
 
-    private static KeyDescriptor<TestId> DESCRIPTOR = new KeyDescriptor<TestId>() {
+    private static final KeyDescriptor<TestId> DESCRIPTOR = new KeyDescriptor<TestId>() {
       @Override
       public int getHashCode(TestId id) {
         return id.hashCode();

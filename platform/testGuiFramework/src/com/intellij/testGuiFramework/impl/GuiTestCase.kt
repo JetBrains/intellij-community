@@ -607,8 +607,7 @@ open class GuiTestCase {
    *
    * @path items like: popup("New", "File")
    */
-  fun IdeFrameFixture.popup(vararg path: String)
-    = this.invokeMenuPath(*path)
+  fun IdeFrameFixture.popup(vararg path: String) = this.invokeMenuPath(*path)
 
 
   fun CustomToolWindowFixture.ContentFixture.editor(func: EditorFixture.() -> Unit) {
@@ -768,4 +767,36 @@ open class GuiTestCase {
     val fixture = ExtendedTableFixture(guiTestRule.robot(), table.target())
     return fixture.rowCount()
   }
+
+  fun waitForPanelToDisappear(panelTitle: String, timeout: Long = 300000) {
+    Pause.pause(object : Condition("Wait for $panelTitle panel appears") {
+      override fun test(): Boolean {
+        try {
+          robot().finder().find(guiTestRule.findIdeFrame().target()) {
+            it is JLabel && it.text == panelTitle
+          }
+        }
+        catch (cle: ComponentLookupException) {
+          return false
+        }
+        return true
+      }
+    }, timeout)
+
+    Pause.pause(object : Condition("Wait for $panelTitle panel disappears") {
+      override fun test(): Boolean {
+        try {
+          robot().finder().find(guiTestRule.findIdeFrame().target()) {
+            it is JLabel && it.text == panelTitle
+          }
+        }
+        catch (cle: ComponentLookupException) {
+          return true
+        }
+        return false
+      }
+    })
+
+  }
+
 }

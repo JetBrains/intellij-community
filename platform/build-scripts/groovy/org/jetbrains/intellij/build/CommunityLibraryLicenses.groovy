@@ -36,6 +36,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Android Layout Library", libraryName: "layoutlib", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Lint Checks", libraryName: "com.android.tools.lint:lint-checks:26.0.0", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Lint Api", libraryName: "com.android.tools.lint:lint-api:26.0.0", license: "Apache 2.0", url: "http://source.android.com/"),
+    new LibraryLicense(name: "Android Manifest Merger", libraryName: "com.android.tools.build:manifest-merger:26.0.0", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android DEX library", libraryName: "dexlib2", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Sherpa library", libraryName: "sherpa-solver", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Jimfs library", libraryName: "jimfs", license: "Apache 2.0", url: "https://github.com/google/jimfs"),
@@ -381,6 +382,10 @@ class CommunityLibraryLicenses {
                        url: "https://github.com/RuedigerMoeller/fast-serialization", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "xml-resolver", libraryName: "xml-resolver", version: "1.2.0", license: "Apache 2.0",
                            url: "http://xml.apache.org/commons/components/resolver/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
+    new LibraryLicense(name: "Javassist", libraryName: "javassist", version: "3.21.0-GA", license: "Apache 2.0",
+                       url: "https://github.com/jboss-javassist/javassist", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
+    new LibraryLicense(name: "Objenesis", libraryName: "Objenesis", version: "2.5.1", license: "Apache 2.0",
+                       url: "http://objenesis.org/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
 
     jetbrainsLibrary("intellij-coverage"),
     jetbrainsLibrary("intellij-test-discovery"),

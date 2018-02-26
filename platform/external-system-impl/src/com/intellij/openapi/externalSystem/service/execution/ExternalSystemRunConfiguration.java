@@ -79,6 +79,8 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.util.List;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.convert;
@@ -92,9 +94,11 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
                                                                                           SMRunnerConsolePropertiesProvider {
   public static final Key<InputStream> RUN_INPUT_KEY = Key.create("RUN_INPUT_KEY");
   public static final Key<Class<? extends BuildProgressListener>> PROGRESS_LISTENER_KEY = Key.create("PROGRESS_LISTENER_KEY");
+  public static final String DEBUG_SETUP_PREFIX = "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=";
 
   private static final Logger LOG = Logger.getInstance(ExternalSystemRunConfiguration.class);
   private ExternalSystemTaskExecutionSettings mySettings = new ExternalSystemTaskExecutionSettings();
+  private static final boolean DISABLE_FORK_DEBUGGER = Boolean.getBoolean("external.system.disable.fork.debugger.");
 
   public ExternalSystemRunConfiguration(@NotNull ProjectSystemId externalSystemId,
                                         Project project,
@@ -219,6 +223,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     @Nullable private RunContentDescriptor myContentDescriptor;
 
     private final int myDebugPort;
+    private ServerSocket myForkSocket = null;
 
     public MyRunnableState(@NotNull ExternalSystemTaskExecutionSettings settings,
                            @NotNull Project project,
@@ -250,6 +255,19 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     }
 
     @Nullable
+    public ServerSocket getForkSocket() {
+      if (myForkSocket == null && !DISABLE_FORK_DEBUGGER) {
+        try {
+          myForkSocket = new ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"));
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+      return myForkSocket;
+    }
+
+    @Nullable
     @Override
     public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
       if (myProject.isDisposed()) return null;
@@ -266,7 +284,10 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
 
       String jvmAgentSetup;
       if (myDebugPort > 0) {
-        jvmAgentSetup = "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=" + myDebugPort;
+        jvmAgentSetup = DEBUG_SETUP_PREFIX + myDebugPort;
+        if (getForkSocket() != null) {
+          jvmAgentSetup += " -forkSocket" + getForkSocket().getLocalPort();
+        }
       }
       else {
         ParametersList parametersList = extensionsJP.getVMParametersList();
