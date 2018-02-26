@@ -10,11 +10,11 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.ui.SortedComboBoxModel;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,13 +37,13 @@ public class DownloadDictionaryDialog extends DialogWrapper {
   private TextFieldWithBrowseButton myDirectoryTextField;
   private JPanel myMainPanel;
   private final Project myProject;
-  @NotNull private final Consumer<String> myConsumer;
+  @NotNull private final Consumer<VirtualFile> myConsumer;
   private static final String DIC = ".dic";
   private static final String AFF = ".aff";
   private static final String PATH = "https://raw.githubusercontent.com/JetBrains/dictionaries/master/";
 
 
-  protected DownloadDictionaryDialog(@NotNull Project project, @NotNull Consumer<String> consumer) {
+  protected DownloadDictionaryDialog(@NotNull Project project, @NotNull Consumer<VirtualFile> consumer) {
     super(project, true);
     myProject = project;
     myConsumer = consumer;
@@ -100,10 +100,7 @@ public class DownloadDictionaryDialog extends DialogWrapper {
                                                                 name)
                                               .downloadFilesWithProgress((dir).getPath(), myProject, null);
     if (files != null && files.size() == 2) {
-      files.stream()
-           .map(file -> toSystemDependentName(file.getPath()))
-           .filter(path -> extensionEquals(path, "dic"))
-           .forEach(myConsumer);
+      myConsumer.accept(ContainerUtil.find(files, file -> extensionEquals(file.getPath(), "dic")));
     }
   }
 

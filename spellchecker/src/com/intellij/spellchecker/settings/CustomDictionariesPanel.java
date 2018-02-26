@@ -38,6 +38,7 @@ import static com.intellij.ide.plugins.PluginManager.isPluginInstalled;
 import static com.intellij.openapi.extensions.PluginId.getId;
 import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
 import static com.intellij.ui.SimpleTextAttributes.GRAY_ATTRIBUTES;
+import static com.intellij.util.PathUtil.toSystemDependentName;
 import static com.intellij.util.containers.ContainerUtil.concat;
 import static java.util.Arrays.asList;
 
@@ -56,6 +57,12 @@ public class CustomDictionariesPanel extends JPanel {
     myCustomDictionariesTableView = new CustomDictionariesTableView(new ArrayList<>(settings.getCustomDictionariesPaths()),
                                                                     defaultDictionaries,
                                                                     new ArrayList<>(settings.getDisabledDictionariesPaths()));
+    final java.util.function.Consumer<VirtualFile> dictionaryConsumer = dictionary -> {
+      final String path = toSystemDependentName(dictionary.getPath());
+      if (!myCustomDictionariesTableView.getItems().contains(path)) {
+        myCustomDictionariesTableView.getListTableModel().addRow(path);
+      }
+    };
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myCustomDictionariesTableView)
 
       .setAddActionName(SpellCheckerBundle.message("add.custom.dictionaries"))
@@ -63,11 +70,7 @@ public class CustomDictionariesPanel extends JPanel {
         @Override
         public void run(AnActionButton button) {
           myCustomDictionariesTableView.stopEditing();
-          doChooseFiles(project, files -> files.stream()
-            .map(VirtualFile::getPath)
-            .map(PathUtil::toSystemDependentName)
-            .filter(path -> !myCustomDictionariesTableView.getItems().contains(path))
-            .forEach(path -> myCustomDictionariesTableView.getListTableModel().addRow(path)));
+          doChooseFiles(project, files -> files.forEach(dictionaryConsumer));
         }
       })
       
@@ -75,7 +78,7 @@ public class CustomDictionariesPanel extends JPanel {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           myCustomDictionariesTableView.stopEditing();
-          new DownloadDictionaryDialog(project, dictionary -> accept(dictionary)).showAndGet();
+          new DownloadDictionaryDialog(project, dictionaryConsumer).showAndGet();
         }
 
         @Override
@@ -133,12 +136,6 @@ public class CustomDictionariesPanel extends JPanel {
     };
 
     FileChooser.chooseFiles(fileChooserDescriptor, project, this.getParent(), project.getBaseDir(), consumer);
-  }
-
-  private void accept(String dictionary) {
-    if (!myCustomDictionariesTableView.getItems().contains(dictionary)) {
-      myCustomDictionariesTableView.getListTableModel().addRow(dictionary);
-    }
   }
 
   public List<String> getRemovedDictionaries() {
