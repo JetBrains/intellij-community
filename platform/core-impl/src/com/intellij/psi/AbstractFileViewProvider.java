@@ -93,7 +93,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     virtualFile.putUserData(FREE_THREADED, isFreeThreaded(this));
     myFileType = type;
     if (virtualFile instanceof VirtualFileWindow && !(this instanceof FreeThreadedFileViewProvider)) {
-      LOG.warn("Must not create "+getClass()+" for injected file "+virtualFile+"; InjectedFileViewProvider must be used instead");
+      throw new IllegalArgumentException("Must not create "+getClass()+" for injected file "+virtualFile+"; InjectedFileViewProvider must be used instead");
     }
   }
 
