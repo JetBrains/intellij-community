@@ -46,6 +46,7 @@ import com.intellij.remote.ext.LanguageCaseCollector;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -735,14 +736,15 @@ public final class PythonSdkType extends SdkType {
   }
 
   public static boolean isStdLib(@NotNull VirtualFile vFile, @Nullable Sdk pythonSdk) {
+    final VirtualFile resolved = ObjectUtils.notNull(vFile.getCanonicalFile(), vFile);
     if (pythonSdk != null) {
       final VirtualFile libDir = PyProjectScopeBuilder.findLibDir(pythonSdk);
-      if (libDir != null && VfsUtilCore.isAncestor(libDir, vFile, false)) {
-        return isNotSitePackages(vFile, libDir);
+      if (libDir != null && VfsUtilCore.isAncestor(libDir, resolved, false)) {
+        return isNotSitePackages(resolved, libDir);
       }
       final VirtualFile venvLibDir = PyProjectScopeBuilder.findVirtualEnvLibDir(pythonSdk);
-      if (venvLibDir != null && VfsUtilCore.isAncestor(venvLibDir, vFile, false)) {
-        return isNotSitePackages(vFile, venvLibDir);
+      if (venvLibDir != null && VfsUtilCore.isAncestor(venvLibDir, resolved, false)) {
+        return isNotSitePackages(resolved, venvLibDir);
       }
       final VirtualFile skeletonsDir = PySdkUtil.findSkeletonsDir(pythonSdk);
       if (skeletonsDir != null &&
