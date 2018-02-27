@@ -117,7 +117,8 @@ public class PsiReplacementUtil {
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiElementFactory factory = psiFacade.getElementFactory();
     final PsiReferenceExpression newExpression = (PsiReferenceExpression)factory.createExpressionFromText("xxx", expression);
-    final PsiReferenceExpression replacementExpression = (PsiReferenceExpression)expression.replace(newExpression);
+    CommentTracker tracker = new CommentTracker();
+    final PsiReferenceExpression replacementExpression = (PsiReferenceExpression)tracker.replaceAndRestoreComments(expression, newExpression);
     final PsiElement element = replacementExpression.bindToElement(target);
     final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
     styleManager.shortenClassReferences(element);
