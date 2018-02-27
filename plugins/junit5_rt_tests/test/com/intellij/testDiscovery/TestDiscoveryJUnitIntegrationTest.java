@@ -90,7 +90,7 @@ public class TestDiscoveryJUnitIntegrationTest extends JUnitAbstractIntegrationT
     assertTestDiscoveryIndex("Magic", "abracadabra", t("Test", "testClassLoaderMagic"));
   }
 
-  public void _testConstructor() throws Exception {
+  public void testConstructor() throws Exception {
     runTestConfiguration(findClass(myModule, "PersonTest"));
     assertTestDiscoveryIndex("Person", "<init>", t("PersonTest", "testPerson"));
   }
