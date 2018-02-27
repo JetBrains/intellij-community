@@ -151,23 +151,58 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     if (footHold == null) {
       return;
     }
+
     final List<QualifiedName> myQnames = QualifiedNameFinder.findImportableQNames(footHold, anchor.getVirtualFile());
     final Set<String> seen = Sets.newHashSet();
     for (PyImportElement importElement : importElements) {
       for (QualifiedName packageQName : myQnames) {
         for (QualifiedName importedQname : getImportedQNames(importElement)) {
-          if (importedQname.matchesPrefix(packageQName) && importedQname.getComponentCount() > packageQName.getComponentCount()) {
-            final String directChild = importedQname.removeHead(packageQName.getComponentCount()).getFirstComponent();
-            if (directChild != null && seen.add(directChild) && filter.test(directChild)) {
-              final List<RatedResolveResult> results =
-                ResolveImportUtil.resolveChildren(anchor, directChild, module, true, true, false, false);
-              if (!resultProcessor.process(ResolveResultList.asImportedResults(results, importElement))) {
-                return;
-              }
+          final String directChild = findFirstComponentAfterPrefix(importedQname, packageQName);
+          if (directChild != null && seen.add(directChild) && filter.test(directChild)) {
+            final List<RatedResolveResult> results =
+              ResolveImportUtil.resolveChildren(anchor, directChild, module, true, true, false, false);
+            if (!resultProcessor.process(ResolveResultList.asImportedResults(results, importElement))) {
+              return;
             }
           }
         }
       }
+    }
+
+    final List<QualifiedName> locationQnames;
+    if (location != null && location.getContainingFile().getVirtualFile() != null) {
+      locationQnames = QualifiedNameFinder.findImportableQNames(location, location.getContainingFile().getVirtualFile());
+    }
+    else {
+      locationQnames = Collections.emptyList();
+    }
+    for (QualifiedName locationQname : locationQnames) {
+      for (QualifiedName packageQName : myQnames) {
+        final String directChild = findFirstComponentAfterPrefix(locationQname, packageQName);
+        if (directChild != null && seen.add(directChild) && filter.test(directChild)) {
+          final QualifiedName mainPackage = QualifiedName.fromComponents(locationQname.getFirstComponent());
+          final PyImportElement packageImportElement =
+            importElements.stream().filter(el -> getImportedQNames(el).stream().anyMatch(qname -> qname.matchesPrefix(mainPackage)))
+                          .findFirst().orElse(null);
+
+          if (packageImportElement != null) {
+            final List<RatedResolveResult> results =
+              ResolveImportUtil.resolveChildren(anchor, directChild, module, true, true, false, false);
+            if (!resultProcessor.process(ResolveResultList.asImportedResults(results, packageImportElement))) {
+              return;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private static String findFirstComponentAfterPrefix(QualifiedName qualifiedName, QualifiedName prefix) {
+    if (qualifiedName.matchesPrefix(prefix) && qualifiedName.getComponentCount() > prefix.getComponentCount()) {
+      return qualifiedName.removeHead(prefix.getComponentCount()).getFirstComponent();
+    }
+    else {
+      return null;
     }
   }
 
@@ -494,5 +529,4 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   public static Set<String> getPossibleInstanceMembers() {
     return MODULE_MEMBERS;
   }
-
 }
