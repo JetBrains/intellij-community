@@ -76,8 +76,6 @@ class JavaPropertyDetectionTest : LightCodeInsightFixtureTestCase() {
                             }""", PropertyMemberType.GETTER)
   }
 
-
-
   // setter field test
 
   fun testSimpleSetter() {
@@ -140,7 +138,7 @@ class JavaPropertyDetectionTest : LightCodeInsightFixtureTestCase() {
           }
         }
       }
-    """.trimIndent(), mapOf(Pair(0, PropertyIndexValue("name", true)), Pair(2, PropertyIndexValue("Foo.this.getName()", true))))
+    """.trimIndent(), mapOf(Pair(0, PropertyIndexValue("name", true))))
   }
 
   private fun assertPropertyMember(text: String, memberType: PropertyMemberType) {
