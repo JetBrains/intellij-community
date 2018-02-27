@@ -9,6 +9,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.structureView.*;
+import com.intellij.ide.structureView.customRegions.CustomRegionTreeElement;
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.ui.customization.CustomizationUtil;
@@ -76,6 +77,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.structureView.newStructureView.StructureViewComponent");
 
   private static final Key<TreeState> STRUCTURE_VIEW_STATE_KEY = Key.create("STRUCTURE_VIEW_STATE");
+  private static final Key<Boolean> STRUCTURE_VIEW_STATE_RESTORED_KEY = Key.create("STRUCTURE_VIEW_STATE_RESTORED_KEY");
   private static AtomicInteger ourSettingsModificationCount = new AtomicInteger();
   private final boolean myUseATM = Registry.is("structure.view.async.tree.model");
 
@@ -95,7 +97,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   private volatile AsyncPromise<TreePath> myCurrentFocusPromise;
 
-  private TreeState myStructureViewState;
   private boolean myAutoscrollFeedback;
   private boolean myDisposed;
 
@@ -106,7 +107,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   private final AutoScrollFromSourceHandler myAutoScrollFromSourceHandler;
 
 
-  public StructureViewComponent(FileEditor editor,
+  public StructureViewComponent(@Nullable FileEditor editor,
                                 @NotNull StructureViewModel structureViewModel,
                                 @NotNull Project project,
                                 boolean showRootNode) {
@@ -235,9 +236,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     myTree.setCellRenderer(new NodeRenderer());
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
     myTree.setShowsRootHandles(true);
-    MyPsiTreeChangeListener psiListener = new MyPsiTreeChangeListener(
-      PsiManager.getInstance(myProject).getModificationTracker(), this::queueUpdate);
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(psiListener, this);
+    registerPsiListener(myProject, this, this::queueUpdate);
 
     myAutoScrollToSourceHandler.install(myTree);
     myAutoScrollFromSourceHandler.install();
@@ -252,6 +251,12 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     addTreeKeyListener();
     addTreeMouseListeners();
     restoreState();
+  }
+
+  public static void registerPsiListener(@NotNull Project project, @NotNull Disposable disposable, @NotNull Runnable onChange) {
+    MyPsiTreeChangeListener psiListener = new MyPsiTreeChangeListener(
+      PsiManager.getInstance(project).getModificationTracker(), onChange);
+    PsiManager.getInstance(project).addPsiTreeChangeListener(psiListener, disposable);
   }
 
   @NotNull
@@ -335,20 +340,27 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     if (isDisposed()) return;
     Object root = myTree.getModel().getRoot();
     if (root == null) return;
-    myStructureViewState = TreeState.createOn(myTree, new TreePath(root));
-    myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, myStructureViewState);
+    TreeState state = TreeState.createOn(myTree, new TreePath(root));
+    if (myFileEditor != null) {
+      myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, state);
+    }
+    UIUtil.putClientProperty(myTree, STRUCTURE_VIEW_STATE_RESTORED_KEY, null);
   }
 
   @Override
   public void restoreState() {
-    myStructureViewState = myFileEditor.getUserData(STRUCTURE_VIEW_STATE_KEY);
-    if (myStructureViewState == null) {
-      TreeUtil.expand(getTree(), 2);
+    TreeState state = myFileEditor == null ? null : myFileEditor.getUserData(STRUCTURE_VIEW_STATE_KEY);
+    if (state == null) {
+      if (!Boolean.TRUE.equals(UIUtil.getClientProperty(myTree, STRUCTURE_VIEW_STATE_RESTORED_KEY))) {
+        TreeUtil.expand(getTree(), 2);
+      }
     }
     else {
-      myStructureViewState.applyTo(myTree);
-      myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, null);
-      myStructureViewState = null;
+      UIUtil.putClientProperty(myTree, STRUCTURE_VIEW_STATE_RESTORED_KEY, true);
+      state.applyTo(myTree);
+      if (myFileEditor != null) {
+        myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, null);
+      }
     }
   }
 
@@ -1001,17 +1013,20 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     @Override
     public void treeNodesInserted(TreeModelEvent e) {
+      TreePath parentPath = e.getTreePath();
+      if (Boolean.TRUE.equals(UIUtil.getClientProperty(tree, STRUCTURE_VIEW_STATE_RESTORED_KEY))) return;
+      if (parentPath == null || !tree.isVisible(parentPath) || !tree.isExpanded(parentPath)) return;
       Object[] children = e.getChildren();
       if (smartExpand && children.length == 1) {
         ApplicationManager.getApplication().invokeLater(
-          () -> tree.expandPath(e.getTreePath().pathByAddingChild(children[0])));
+          () -> tree.expandPath(parentPath.pathByAddingChild(children[0])));
       }
       else {
         for (Object o : children) {
           Object userObject = TreeUtil.getUserObject(o);
           if (userObject instanceof NodeDescriptor && isAutoExpandNode((NodeDescriptor)userObject)) {
             ApplicationManager.getApplication().invokeLater(
-              () -> tree.expandPath(e.getTreePath().pathByAddingChild(o)));
+              () -> tree.expandPath(parentPath.pathByAddingChild(o)));
           }
         }
       }
@@ -1020,7 +1035,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
       if (provider != null) {
         Object value = unwrapWrapper(nodeDescriptor.getElement());
-        if (value instanceof StructureViewTreeElement) {
+        if (value instanceof CustomRegionTreeElement) {
+          return true;
+        }
+        else if (value instanceof StructureViewTreeElement) {
           return provider.isAutoExpand((StructureViewTreeElement)value);
         }
         else if (value instanceof GroupWrapper) {
