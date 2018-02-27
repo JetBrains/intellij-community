@@ -172,6 +172,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
                   document != null && psiDocumentManager.isCommitted(document) &&
                   isIncompatibleParameterCount(chosenMethod, currentNumberOfParameters)) {
                 JavaMethodCallElement.setCompletionMode((PsiCall)parent, false);
+                ParameterHintsPass.syncUpdate(parent, context.getEditor()); // make sure the statement above takes effect
                 highlightHints(context.getEditor(), null, -1, context.getCustomContext());
               }
               else {

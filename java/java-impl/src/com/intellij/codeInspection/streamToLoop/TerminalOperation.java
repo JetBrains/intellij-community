@@ -100,6 +100,12 @@ abstract class TerminalOperation extends Operation {
     if(name.equals("toSet") && args.length == 0) {
       return ToCollectionTerminalOperation.toSet(resultType);
     }
+    if(name.equals("toImmutableList") && args.length == 0) {
+      return new WrappedCollectionTerminalOperation(ToCollectionTerminalOperation.toList(resultType), "unmodifiableList");
+    }
+    if(name.equals("toImmutableSet") && args.length == 0) {
+      return new WrappedCollectionTerminalOperation(ToCollectionTerminalOperation.toSet(resultType), "unmodifiableSet");
+    }
     if((name.equals("anyMatch") || name.equals("allMatch") || name.equals("noneMatch")) && args.length == 1) {
       FunctionHelper fn = FunctionHelper.create(args[0], 1);
       return fn == null ? null : new MatchTerminalOperation(fn, name);
@@ -174,13 +180,20 @@ abstract class TerminalOperation extends Operation {
       case "toList":
         if (collectorArgs.length != 0) return null;
         return ToCollectionTerminalOperation.toList(resultType);
+      case "toUnmodifiableList":
+        if (collectorArgs.length != 0) return null;
+        return new WrappedCollectionTerminalOperation(ToCollectionTerminalOperation.toList(resultType), "unmodifiableList");
       case "toSet":
         if (collectorArgs.length != 0) return null;
         return ToCollectionTerminalOperation.toSet(resultType);
+      case "toUnmodifiableSet":
+        if (collectorArgs.length != 0) return null;
+        return new WrappedCollectionTerminalOperation(ToCollectionTerminalOperation.toSet(resultType), "unmodifiableSet");
       case "toCollection":
         if (collectorArgs.length != 1) return null;
         fn = FunctionHelper.create(collectorArgs[0], 0);
         return fn == null ? null : new ToCollectionTerminalOperation(resultType, fn, null);
+      case "toUnmodifiableMap":
       case "toMap": {
         if (collectorArgs.length < 2 || collectorArgs.length > 4) return null;
         FunctionHelper key = FunctionHelper.create(collectorArgs[0], 1);
@@ -191,7 +204,10 @@ abstract class TerminalOperation extends Operation {
                    ? FunctionHelper.create(collectorArgs[3], 0)
                    : FunctionHelper.newObjectSupplier(resultType, CommonClassNames.JAVA_UTIL_HASH_MAP);
         if(supplier == null) return null;
-        return new ToMapTerminalOperation(key, value, merger, supplier, resultType);
+        CollectorBasedTerminalOperation operation = new ToMapTerminalOperation(key, value, merger, supplier, resultType);
+        return collectorName.equals("toUnmodifiableMap")
+               ? new WrappedCollectionTerminalOperation(operation, "unmodifiableMap")
+               : operation;
       }
       case "reducing":
         switch (collectorArgs.length) {
@@ -605,10 +621,14 @@ abstract class TerminalOperation extends Operation {
 
     @Override
     String initAccumulator(StreamVariable inVar, StreamToLoopReplacementContext context) {
+      return initAccumulator(inVar, context, true);
+    }
+
+    String initAccumulator(StreamVariable inVar, StreamToLoopReplacementContext context, boolean canBeFinal) {
       transform(context, inVar.getName());
       PsiType resultType = correctReturnType(myType);
-      return context
-        .declareResult(myAccNameSupplier.apply(context), resultType, myMostAbstractAllowedType, getSupplier(), ResultKind.FINAL);
+      return context.declareResult(myAccNameSupplier.apply(context), resultType, myMostAbstractAllowedType, getSupplier(),
+                                   canBeFinal ? ResultKind.FINAL : ResultKind.UNKNOWN);
     }
 
     @Override
@@ -708,6 +728,33 @@ abstract class TerminalOperation extends Operation {
     @NotNull
     static TemplateBasedOperation counting() {
       return new TemplateBasedOperation("count", PsiType.LONG, "0L", "{acc}++;");
+    }
+  }
+
+  static class WrappedCollectionTerminalOperation extends TerminalOperation {
+    private final CollectorBasedTerminalOperation myDelegate;
+    private final String myWrapper;
+
+    public WrappedCollectionTerminalOperation(CollectorBasedTerminalOperation delegate, String wrapper) {
+      myDelegate = delegate;
+      myWrapper = wrapper;
+    }
+
+    @Override
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      myDelegate.registerReusedElements(consumer);
+    }
+
+    @Override
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      myDelegate.preprocessVariables(context, inVar, outVar);
+    }
+
+    @Override
+    String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
+      String acc = myDelegate.initAccumulator(inVar, context, false);
+      context.setFinisher(CommonClassNames.JAVA_UTIL_COLLECTIONS + "." + myWrapper + "(" + acc + ")");
+      return myDelegate.getAccumulatorUpdater(inVar, acc);
     }
   }
 

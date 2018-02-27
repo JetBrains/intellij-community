@@ -450,6 +450,34 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     });
   }
 
+  // PY-28321
+  public void testImportManySourceRoots() {
+    myFixture.copyDirectoryToProject("importManySourceRoots", "");
+    withSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root2"), myFixture.findFileInTempDir("root1")), () -> {
+      final PsiFile psiFile = myFixture.configureByFile("root1/pkg/a.py");
+      final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
+      assertInstanceOf(ref, PsiPolyVariantReference.class);
+      final List<PsiElement> elements = PyUtil.multiResolveTopPriority((PsiPolyVariantReference)ref);
+      assertEquals(1, elements.size());
+      final PsiElement element = elements.get(0);
+      assertInstanceOf(element, PyFile.class);
+      final VirtualFile file = ((PyFile)element).getVirtualFile();
+      assertEquals("m1.py", file.getName());
+    });
+  }
+
+  // PY-28321
+  public void testImportManySourceRootsReverseRootOrder() {
+    myFixture.copyDirectoryToProject("importManySourceRoots", "");
+    withSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root1"), myFixture.findFileInTempDir("root2")), () -> {
+      final PsiFile psiFile = myFixture.configureByFile("root1/pkg/a.py");
+      final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
+      assertInstanceOf(ref, PsiPolyVariantReference.class);
+      final List<PsiElement> elements = PyUtil.multiResolveTopPriority((PsiPolyVariantReference)ref);
+      assertEquals(0, elements.size());
+    });
+  }
+
   // PY-22522
   public void testBothForeignAndSourceRootImportResultsReturned() {
     myFixture.copyDirectoryToProject("bothForeignAndSourceRootImportResultsReturned", "");

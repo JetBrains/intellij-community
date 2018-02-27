@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.SettingsImpl;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -155,6 +156,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
       myDelegate = new EditorComboBoxEditor(getProject(), getEditorsProvider().getFileType()) {
         @Override
         protected void onEditorCreate(EditorEx editor) {
+          editor.getSettings().setLineCursorWidth(new SettingsImpl().getLineCursorWidth());
           editor.putUserData(DebuggerCopyPastePreprocessor.REMOVE_NEWLINES_ON_PASTE, true);
           prepareEditor(editor);
           if (showMultiline) {
@@ -174,14 +176,12 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
             }
 
             void processHighlighter(@NotNull RangeHighlighterEx highlighter, boolean add) {
-              Object o = highlighter.getErrorStripeTooltip();
-              if (o instanceof HighlightInfo) {
-                if (HighlightSeverity.ERROR.equals(((HighlightInfo)o).getSeverity())) {
-                  errors += add ? 1 : -1;
-                  if (errors == 0 || errors == 1) {
-                    myComboBox.putClientProperty("JComponent.outline", errors > 0 ? "error" : null);
-                    myComboBox.repaint();
-                  }
+              HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+              if (info != null && HighlightSeverity.ERROR.equals(info.getSeverity())) {
+                errors += add ? 1 : -1;
+                if (errors == 0 || errors == 1) {
+                  myComboBox.putClientProperty("JComponent.outline", errors > 0 ? "error" : null);
+                  myComboBox.repaint();
                 }
               }
             }

@@ -90,15 +90,17 @@ public class IndentCalculator {
         !fileOptions.isOverrideLanguageOptions() && language != null && !(language.is(file.getLanguage()) || language.is(Language.ANY)) ?
         CodeStyle.getLanguageSettings(file, language).getIndentOptions() :
         fileOptions;
-      return
-        baseIndent + new IndentInfo(0, indentToSize(myIndent, options), 0, false).generateNewWhiteSpace(options);
+      if (options != null) {
+        return baseIndent 
+               + new IndentInfo(0, indentToSize(myIndent, options), 0, false)
+                 .generateNewWhiteSpace(options);
+      }
     }
     return null;
   }
 
-
   @NotNull
-  private String getBaseIndent(@NotNull SemanticEditorPosition currPosition) {
+  protected String getBaseIndent(@NotNull SemanticEditorPosition currPosition) {
     CharSequence docChars = myEditor.getDocument().getCharsSequence();
     int offset = currPosition.getStartOffset();
     if (offset > 0) {

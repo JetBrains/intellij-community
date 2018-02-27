@@ -18,6 +18,7 @@ package com.intellij.openapi.options.newEditor;
 import com.intellij.CommonBundle;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
+import com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -42,6 +43,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -84,6 +86,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       if (myConfigurable != null) {
         ConfigurableCardPanel.reset(myConfigurable);
         updateCurrent(myConfigurable, true);
+        FeatureUsageUiEvents.INSTANCE.logResetConfigurable(getConfigurableEventId(myConfigurable));
       }
     }
   };
@@ -257,6 +260,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       myConfigurable = configurable;
       updateCurrent(configurable, false);
       postUpdateCurrent(configurable);
+      FeatureUsageUiEvents.INSTANCE.logSelectConfigurable(getConfigurableEventId(configurable));
     });
     return callback;
   }
@@ -326,12 +330,19 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     if (configurable != null) {
       try {
         configurable.apply();
-        UsageTrigger.trigger("ide.settings." + ConvertUsagesUtil.escapeDescriptorName(configurable.getDisplayName()));
+        final String key = getConfigurableEventId(configurable);
+        FeatureUsageUiEvents.INSTANCE.logApplyConfigurable(key);
+        UsageTrigger.trigger(key);
       }
       catch (ConfigurationException exception) {
         return exception;
       }
     }
     return null;
+  }
+
+  @NotNull
+  private static String getConfigurableEventId(Configurable configurable) {
+    return "ide.settings." + ConvertUsagesUtil.escapeDescriptorName(configurable.getDisplayName());
   }
 }

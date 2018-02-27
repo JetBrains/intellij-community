@@ -278,7 +278,6 @@ class CommunityRepositoryModules {
       withModule("android.sdktools.android-annotations", "sdk-tools.jar")
       withModule("intellij.android.layoutInspector", "sdk-tools.jar")
 
-      withModule("intellij.android.gradle.jps", "jps/android-gradle-jps.jar")
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar")
 
       withProjectLibrary("freemarker-2.3.20") //todo[nik] move to module libraries

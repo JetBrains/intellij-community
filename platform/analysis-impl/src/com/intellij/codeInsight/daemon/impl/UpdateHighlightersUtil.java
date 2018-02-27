@@ -476,11 +476,8 @@ public class UpdateHighlightersUtil {
     RangeHighlighter[] allHighlighters = markup.getAllHighlighters();
     for (RangeHighlighter highlighter : allHighlighters) {
       if (!highlighter.isValid()) continue;
-      Object tooltip = highlighter.getErrorStripeTooltip();
-      if (!(tooltip instanceof HighlightInfo)) {
-        continue;
-      }
-      final HighlightInfo info = (HighlightInfo)tooltip;
+      HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+      if (info == null) continue;
       boolean contains = !DaemonCodeAnalyzerEx
         .processHighlights(document, project, null, info.getActualStartOffset(), info.getActualEndOffset(),
                            highlightInfo -> BY_START_OFFSET_NODUPS.compare(highlightInfo, info) != 0);

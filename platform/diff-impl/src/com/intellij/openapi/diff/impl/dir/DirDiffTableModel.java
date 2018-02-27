@@ -72,6 +72,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   private static final Logger LOG = Logger.getInstance(DirDiffTableModel.class);
 
   public static final Key<JBLoadingPanel> DECORATOR_KEY = Key.create("DIFF_TABLE_DECORATOR");
+  public static final String COLUMN_OPERATION = "*";
   public static final String COLUMN_NAME = "Name";
   public static final String COLUMN_SIZE = "Size";
   public static final String COLUMN_DATE = "Date";
@@ -538,7 +539,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   @Override
   public String getColumnName(int column) {
     final int count = (getColumnCount() - 1) / 2;
-    if (column == count) return "*";
+    if (column == count) return COLUMN_OPERATION;
     if (column > count) {
       column = getColumnCount() - 1 - column;
     }
