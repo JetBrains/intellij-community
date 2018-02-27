@@ -171,7 +171,7 @@ public class PsiAvailabilityServiceImpl extends PsiAvailabilityService {
       }
 
       for (PsiFile file : baseFile.getViewProvider().getAllFiles()) {
-        if (!file.getNode().isParsed()) {
+        if (file.getNode() != null && !file.getNode().isParsed()) {
           return ParsedState.NotParsed;
         }
       }
