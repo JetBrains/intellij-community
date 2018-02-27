@@ -999,8 +999,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
             result.setResult(myTempDirFixture.createFile(relativePath, fileText));
           }
-          else {
+          else if (myProjectFixture instanceof HeavyIdeaTestFixture){
             result.setResult(((HeavyIdeaTestFixture)myProjectFixture).addFileToProject(rootPath, relativePath, fileText).getViewProvider().getVirtualFile());
+          }
+          else {
+            result.setResult(myTempDirFixture.createFile(relativePath, fileText));
           }
         }
         catch (IOException e) {
