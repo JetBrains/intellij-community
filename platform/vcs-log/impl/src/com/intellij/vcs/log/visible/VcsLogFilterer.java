@@ -159,6 +159,10 @@ public class VcsLogFilterer {
     return new FilterByDetailsResult(matchingCommits, matchingCommits.size() >= commitCount.getCount(), commitCount);
   }
 
+  public boolean canBuildFromEmpty() {
+    return false;
+  }
+
   private static <T> boolean matchesNothing(@Nullable Collection<T> matchingSet) {
     return matchingSet != null && matchingSet.isEmpty();
   }

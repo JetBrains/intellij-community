@@ -139,6 +139,11 @@ class FileHistoryFilterer extends VcsLogFilterer {
     }
   }
 
+  @Override
+  public boolean canBuildFromEmpty() {
+    return !myFilePath.isDirectory();
+  }
+
   @NotNull
   private VisiblePack filterWithProvider(@NotNull AbstractVcs vcs, @NotNull VcsHistoryProvider provider,
                                          @NotNull DataPack dataPack,
@@ -165,6 +170,8 @@ class FileHistoryFilterer extends VcsLogFilterer {
     }
 
     List<VcsFileRevision> revisions = session.getRevisionList();
+    if (revisions.isEmpty()) return VisiblePack.EMPTY;
+
     Map<Integer, FilePath> pathsMap = ContainerUtil.newHashMap();
     VisibleGraph<Integer> visibleGraph;
 
