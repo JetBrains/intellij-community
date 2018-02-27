@@ -303,6 +303,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
       myTestFileName = null;
     }
   }
+
   // PY-2813
   public void testFromNamespacePackageImport() {
     assertResolvesTo(PyFunction.class, "foo");
@@ -495,8 +496,8 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
       final List<PsiElement> elements = PyUtil.multiResolveTopPriority((PsiPolyVariantReference)ref);
       assertEquals(2, elements.size());
       final Set<String> parentNames = elements.stream()
-        .filter(e -> e instanceof PyFile)
-        .map(e -> ((PyFile)e).getVirtualFile().getParent().getName()).collect(Collectors.toSet());
+                                              .filter(e -> e instanceof PyFile)
+                                              .map(e -> ((PyFile)e).getVirtualFile().getParent().getName()).collect(Collectors.toSet());
       assertContainsElements(parentNames, "root", "ext");
     });
   }
@@ -543,10 +544,9 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
       fileSystemItems = Stream.of(PyPsiUtils.getFileSystemItem(reference.resolve()));
     }
     return fileSystemItems.map(f -> VfsUtilCore.getRelativeLocation(f.getVirtualFile(), root)).collect(Collectors.toList());
-    
   }
 
-  public void testCustomMemberTargetClass(){
+  public void testCustomMemberTargetClass() {
     prepareTestDirectory();
 
     final PyCustomMember customMember = new PyCustomMember("Clazz").resolvesToClass("pkg.mod1.Clazz");
@@ -558,11 +558,17 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     final PsiElement resolved = customMember.resolve(context, resolveContext);
     assertInstanceOf(resolved, PyTypedElement.class);
 
-    final PyType type = typeEvalContext.getType((PyTypedElement) resolved);
+    final PyType type = typeEvalContext.getType((PyTypedElement)resolved);
     assertInstanceOf(type, PyClassType.class);
   }
 
   public void testImportAliasTargetReference() {
     assertResolvesTo(PyTargetExpression.class, "bar");
+  }
+
+  //PY-28685
+  public void testImplicitImportSelf() {
+    prepareTestDirectory();
+    assertSameElements(doMultiResolveAndGetFileUrls("pkg1/pkg2/mod1.py"), "pkg1/pkg2/mod1.py");
   }
 }
