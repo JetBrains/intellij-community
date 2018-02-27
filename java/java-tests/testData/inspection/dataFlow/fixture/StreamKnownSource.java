@@ -103,9 +103,13 @@ public class StreamKnownSource {
     if(res == null && <warning descr="Condition 'empty' is always 'true' when reached">empty</warning>) {
       System.out.println("res == null -> empty list");
     }
+  }
+
+  void testListSize2(List<String> list) {
+    boolean empty = list.isEmpty();
     Optional<String> first = list.stream().filter(Objects::nonNull).findFirst();
     if (empty) {
-      System.out.println(first.<warning descr="'Optional.get()' without 'isPresent()' check">get</warning>());
+      System.out.println(first.<warning descr="The call to 'get' always fails, according to its method contracts">get</warning>());
     }
   }
 
