@@ -2,7 +2,7 @@
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.codeInsight.actions.FormatChangedTextUtil;
-import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
+import com.intellij.codeInsight.navigation.BackgroundUpdaterTask;
 import com.intellij.execution.Executor;
 import com.intellij.execution.JavaTestConfigurationBase;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -25,6 +25,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.JBListUpdater;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
@@ -40,7 +41,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PsiNavigateUtil;
@@ -204,14 +204,14 @@ public class ShowDiscoveredTestsAction extends AnAction {
     GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
     list.setCellRenderer(renderer);
 
-    ListBackgroundUpdaterTask loadTestsTask = new ListBackgroundUpdaterTask(project, "Load tests", renderer.getComparator()) {
+    BackgroundUpdaterTask loadTestsTask = new BackgroundUpdaterTask(project, "Load tests", renderer.getComparator()) {
       @Override
       public String getCaption(int size) {
         return "Found " + size + " Tests for " + title;
       }
     };
 
-    loadTestsTask.init((AbstractPopup)popup, list, new Ref<>());
+    loadTestsTask.init(popup, new JBListUpdater(list), new Ref<>());
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       for (PsiMethod method : methods) {
