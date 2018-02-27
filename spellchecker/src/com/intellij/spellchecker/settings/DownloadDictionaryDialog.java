@@ -15,7 +15,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
+import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.SortedComboBoxModel;
+import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileService;
 import org.jetbrains.annotations.NotNull;
@@ -60,6 +62,7 @@ public class DownloadDictionaryDialog extends DialogWrapper {
     model.setAll(namesToPaths.keySet());
     model.setSelectedItem(ENGLISH_USA);
     myDictionaryCombobox.setModel(model);
+    new ComboboxSpeedSearch(myDictionaryCombobox).setComparator(new SpeedSearchComparator(true)); 
     myDirectoryTextField.setText(myProject.getBasePath() != null ?
                                  chooseNotNull(getProjectStoreDirectory(myProject.getBaseDir()), myProject.getBaseDir()).getPath():
                                  PathManager.getConfigPath());
