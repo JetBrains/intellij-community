@@ -50,7 +50,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
   // To quickly filter out most of the non-interesting method calls
   private static final Set<String> SUPPORTED_TERMINALS = ContainerUtil.set(
     "count", "sum", "summaryStatistics", "reduce", "collect", "findFirst", "findAny", "anyMatch", "allMatch", "noneMatch", "toArray",
-    "average", "forEach", "forEachOrdered", "min", "max", "toList", "toSet");
+    "average", "forEach", "forEachOrdered", "min", "max", "toList", "toSet", "toImmutableList", "toImmutableSet");
 
   @SuppressWarnings("PublicField")
   public boolean SUPPORT_UNKNOWN_SOURCES = false;
