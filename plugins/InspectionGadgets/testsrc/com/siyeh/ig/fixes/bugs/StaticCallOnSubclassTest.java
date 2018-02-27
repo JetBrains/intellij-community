@@ -33,6 +33,10 @@ public class StaticCallOnSubclassTest extends IGQuickFixesTestCase {
   public void testMethodReference() {
     doTest("methodRef", InspectionGadgetsBundle.message("static.method.via.subclass.rationalize.quickfix"));
   }
+  
+  public void testOnInterface() {
+    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("static.method.via.subclass.rationalize.quickfix"));
+  }
 
   @Override
   protected String getRelativePath() {

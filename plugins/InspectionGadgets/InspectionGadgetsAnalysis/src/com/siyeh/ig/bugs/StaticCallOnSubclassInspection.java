@@ -156,7 +156,7 @@ public class StaticCallOnSubclassInspection extends BaseInspection implements Cl
       if (declaringClass == null) {
         return;
       }
-      if (declaringClass.equals(referencedClass)) {
+      if (declaringClass.equals(referencedClass) || declaringClass.isInterface()) {
         return;
       }
       final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(methodExpression.getProject()).getResolveHelper();
