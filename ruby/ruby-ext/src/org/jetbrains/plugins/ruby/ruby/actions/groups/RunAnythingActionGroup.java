@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ruby.RBundle;
 import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingAction;
 import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingActionItem;
 import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingSearchListModel;
@@ -37,7 +38,7 @@ public abstract class RunAnythingActionGroup<T extends AnAction> extends RunAnyt
     for (T action : getActions(module)) {
       String actionText = getActionText(action);
       RunAnythingActionItem actionItem = new RunAnythingActionItem(action, actionText == null ? ObjectUtils
-        .notNull(action.getTemplatePresentation().getText(), "Undefined action") : actionText);
+        .notNull(action.getTemplatePresentation().getText(), RBundle.message("run.anything.acton.group.title")) : actionText);
 
       if (addToList(listModel, result, pattern, actionItem, getPrefix() + " " + RunAnythingUtil.getPresentationText(action), isMore)) break;
       check.run();
