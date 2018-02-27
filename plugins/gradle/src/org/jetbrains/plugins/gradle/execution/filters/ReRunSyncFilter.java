@@ -26,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.*;
+
 /**
  * @author Vladislav.Soroka
  */
@@ -46,7 +48,7 @@ public class ReRunSyncFilter extends GradleReRunBuildFilter {
       ImportSpec importSpec = new ImportSpecBuilder(myProject, myTask.getExternalSystemId())
         .withArguments(StringUtil.join(options, " "))
         .build();
-      ExternalSystemUtil.refreshProject(myTask.getExternalProjectPath(), importSpec);
+      refreshProject(myTask.getExternalProjectPath(), importSpec, ShowFinishMessage.YES);
     };
   }
 }

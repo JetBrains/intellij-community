@@ -22,6 +22,7 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
@@ -434,7 +435,8 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
         .use(ProgressExecutionMode.MODAL_SYNC)
         .callback(new ExternalProjectRefreshCallback() {
           @Override
-          public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
+          public void onSuccess(@NotNull ExternalSystemTaskId id,
+                                @Nullable final DataNode<ProjectData> externalProject) {
             if (externalProject == null) {
               System.err.println("Got null External project after import");
               return;
@@ -470,6 +472,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     }
   }
 
+  @Override
   protected Sdk setupJdkForModule(final String moduleName) {
     final Sdk sdk = true ? JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk() : createJdk("Java 1.5");
     ModuleRootModificationUtil.setModuleSdk(getModule(moduleName), sdk);

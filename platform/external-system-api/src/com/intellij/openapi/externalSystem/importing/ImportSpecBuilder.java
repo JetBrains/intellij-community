@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
@@ -119,7 +120,8 @@ public class ImportSpecBuilder {
     if (myUseDefaultCallback) {
       mySpec.setCallback(new ExternalProjectRefreshCallback() {
         @Override
-        public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
+        public void onSuccess(@NotNull ExternalSystemTaskId id,
+                              @Nullable final DataNode<ProjectData> externalProject) {
           if (externalProject == null) {
             return;
           }
