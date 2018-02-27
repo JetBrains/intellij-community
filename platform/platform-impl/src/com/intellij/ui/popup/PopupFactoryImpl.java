@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.ScrollPaneFactory;
@@ -82,7 +83,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @Override
   public <T> IPopupChooserBuilder<T> createPopupChooserBuilder(List<T> list) {
-    return new PopupChooserBuilder<>(new JBList<>(list));
+    return new PopupChooserBuilder<>(new JBList<>(new CollectionListModel<>(list)));
   }
 
   @NotNull

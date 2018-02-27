@@ -20,7 +20,7 @@ import com.intellij.codeInsight.daemon.impl.GutterIconTooltipHelper;
 import com.intellij.codeInsight.daemon.impl.LineMarkerNavigator;
 import com.intellij.codeInsight.daemon.impl.MarkerType;
 import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator;
-import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
+import com.intellij.codeInsight.navigation.BackgroundUpdaterTask;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -321,7 +321,7 @@ public class GroovyMarkerTypes {
     return result;
   }
 
-  private static class OverridingMethodsUpdater extends ListBackgroundUpdaterTask {
+  private static class OverridingMethodsUpdater extends BackgroundUpdaterTask {
     private final GrMethod myMethod;
 
     public OverridingMethodsUpdater(GrMethod method, PsiElementListCellRenderer renderer) {

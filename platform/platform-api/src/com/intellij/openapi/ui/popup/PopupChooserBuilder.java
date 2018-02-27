@@ -4,6 +4,8 @@ package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.ui.ListComponentUpdater;
+import com.intellij.openapi.ui.JBListUpdater;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -11,6 +13,7 @@ import com.intellij.ui.ActiveComponent;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.speedSearch.ListWithFilter;
@@ -96,7 +99,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   private JScrollPane myScrollPane;
 
   public PopupChooserBuilder(@NotNull JList list) {
-    myChooserComponent = list;
+    myChooserComponent = ListWithFilter.wrap(list, new MyListWrapper(list), myItemsNamer);
   }
 
   public PopupChooserBuilder(@NotNull JTable table) {
@@ -129,6 +132,10 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       ((ListWithFilter)myChooserComponent).getList().setCellRenderer(renderer);
     }
     return this;
+  }
+
+  public JComponent getChooserComponent() {
+    return myChooserComponent;
   }
 
   @NotNull
@@ -256,9 +263,8 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   public JBPopup createPopup() {
     final JList list;
     BooleanFunction<KeyEvent> keyEventHandler = null;
-    if (myChooserComponent instanceof JList) {
-      list = (JList)myChooserComponent;
-      myChooserComponent = ListWithFilter.wrap(list, new MyListWrapper(list), myItemsNamer);
+    if (myChooserComponent instanceof ListWithFilter) {
+      list = ((ListWithFilter)myChooserComponent).getList();
       keyEventHandler = keyEvent -> keyEvent.isConsumed();
     }
     else {
@@ -667,5 +673,13 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   public IPopupChooserBuilder<T> setFont(Font f) {
     myChooserComponent.setFont(f);
     return this;
+  }
+
+  @Override
+  public ListComponentUpdater getBackgroundUpdater() {
+    if (myChooserComponent instanceof ListWithFilter) {
+      return new JBListUpdater((JBList)((ListWithFilter)myChooserComponent).getList());
+    }
+    return null;
   }
 }

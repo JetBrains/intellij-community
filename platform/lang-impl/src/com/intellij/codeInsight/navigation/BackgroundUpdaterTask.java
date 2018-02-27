@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ListComponentUpdater;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
@@ -34,13 +35,14 @@ import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.*;
 
-public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
+public abstract class BackgroundUpdaterTask extends Task.Backgroundable {
   protected JBPopup myPopup;
-  protected T myComponent;
+  private ListComponentUpdater myUpdater;
   private Ref<UsageView> myUsageView;
   private final Collection<PsiElement> myData;
 
@@ -64,14 +66,26 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
     myData = comparator == null ? ContainerUtil.newSmartList() : new TreeSet<>(comparator);
   }
 
-  public void init(@NotNull JBPopup popup, @NotNull T component, @NotNull Ref<UsageView> usageView) {
+  @TestOnly
+  public ListComponentUpdater getUpdater() {
+    return myUpdater;
+  }
+
+  public void init(@NotNull JBPopup popup, @NotNull ListComponentUpdater updater, @NotNull Ref<UsageView> usageView) {
     myPopup = popup;
-    myComponent = component;
+    myUpdater = updater;
     myUsageView = usageView;
   }
 
   public abstract String getCaption(int size);
-  protected abstract void replaceModel(@NotNull List<PsiElement> data);
+
+  protected void replaceModel(@NotNull List<PsiElement> data) {
+    myUpdater.replaceModel(data);
+  }
+
+  protected void paintBusy(boolean paintBusy) {
+    myUpdater.paintBusy(paintBusy);
+  }
 
   protected static Comparator<PsiElement> createComparatorWrapper(@NotNull Comparator comparator) {
     return (o1, o2) -> {
@@ -82,8 +96,6 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
       return diff;
     };
   }
-
-  protected abstract void paintBusy(boolean paintBusy);
 
   private boolean setCanceled() {
     boolean canceled = myCanceled;

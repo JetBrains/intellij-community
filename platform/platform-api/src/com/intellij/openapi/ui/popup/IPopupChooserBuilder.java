@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.ui.popup;
 
+import com.intellij.openapi.ui.ListComponentUpdater;
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.ActiveComponent;
 import com.intellij.util.Consumer;
@@ -125,4 +126,6 @@ public interface IPopupChooserBuilder<T> {
   IPopupChooserBuilder<T> withHintUpdateSupply();
 
   IPopupChooserBuilder<T> setFont(Font f);
+
+  ListComponentUpdater getBackgroundUpdater();
 }
