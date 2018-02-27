@@ -750,8 +750,7 @@ class PyDB:
 
             if curr_func_name == func_name:
                 line = next_line
-                if frame.f_trace is None:
-                    frame.f_trace = self.trace_dispatch
+                frame.f_trace = self.trace_dispatch
                 frame.f_lineno = line
                 stop = True
             else:
@@ -866,7 +865,7 @@ class PyDB:
                     info.pydev_state = STATE_SUSPEND
                     thread.stop_reason = CMD_THREAD_SUSPEND
                     # return to the suspend state and wait for other command
-                    self.do_wait_suspend(thread, frame, event, arg, "trace", send_suspend_message=False)
+                    self.do_wait_suspend(thread, frame, event, arg, suspend_type, send_suspend_message=False)
                     return
 
         elif info.pydev_step_cmd == CMD_STEP_RETURN:
