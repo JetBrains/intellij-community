@@ -91,21 +91,16 @@ public class IndentCalculator {
         CodeStyle.getLanguageSettings(file, language).getIndentOptions() :
         fileOptions;
       if (options != null) {
-        return calculateIndentString(baseIndent, indentToSize(myIndent, options), options);
+        return baseIndent 
+               + new IndentInfo(0, indentToSize(myIndent, options), 0, false)
+                 .generateNewWhiteSpace(options);
       }
     }
     return null;
   }
 
   @NotNull
-  protected String calculateIndentString(@NotNull String baseIndent,
-                                         int relativeIndentSize, 
-                                         @NotNull CommonCodeStyleSettings.IndentOptions options) {
-    return baseIndent + new IndentInfo(0, relativeIndentSize, 0, false).generateNewWhiteSpace(options);
-  }
-
-  @NotNull
-  private String getBaseIndent(@NotNull SemanticEditorPosition currPosition) {
+  protected String getBaseIndent(@NotNull SemanticEditorPosition currPosition) {
     CharSequence docChars = myEditor.getDocument().getCharsSequence();
     int offset = currPosition.getStartOffset();
     if (offset > 0) {
