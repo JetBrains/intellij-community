@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.connect.StatServiceException;
 import com.intellij.internal.statistic.connect.StatisticsResult;
 import com.intellij.internal.statistic.connect.StatisticsResult.ResultCode;
 import com.intellij.internal.statistic.connect.StatisticsService;
+import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.diagnostic.Logger;
@@ -80,6 +81,7 @@ public class EventLogStatisticsService implements StatisticsService {
 
       cleanupSentFiles(toRemove);
 
+      UsageStatisticsPersistenceComponent.getInstance().setEventLogSentTime(System.currentTimeMillis());
       if (logs.isEmpty()) {
         return new StatisticsResult(ResultCode.NOTHING_TO_SEND, "No files to upload.");
       }
