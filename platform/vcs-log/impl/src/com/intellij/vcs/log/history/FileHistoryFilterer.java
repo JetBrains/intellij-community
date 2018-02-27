@@ -95,15 +95,15 @@ class FileHistoryFilterer extends VcsLogFilterer {
 
     checkDetailsFilter(filters);
 
-    if (!myIndex.isIndexed(myRoot) && myFilePath.isDirectory()) {
-      return super.filter(dataPack, sortType, filters, commitCount);
-    }
-
     if (myIndex.isIndexed(myRoot) && (dataPack.isFull() || myFilePath.isDirectory())) {
       VisiblePack visiblePack = filterWithIndex(dataPack, sortType, filters);
       LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for computing history for " + myFilePath + " with index");
       checkNotEmpty(dataPack, visiblePack, true);
       return Pair.create(visiblePack, commitCount);
+    }
+
+    if (myFilePath.isDirectory()) {
+      return super.filter(dataPack, sortType, filters, commitCount);
     }
 
     AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(myRoot);
