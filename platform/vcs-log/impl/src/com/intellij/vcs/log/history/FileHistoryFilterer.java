@@ -190,12 +190,26 @@ class FileHistoryFilterer extends VcsLogFilterer {
         commits.add(GraphCommitImpl.createCommit(index, Collections.emptyList(), revision.getRevisionDate().getTime()));
       }
 
-      dataPack = DataPack.build(commits, dataPack.getRefsModel().getAllRefsByRoot(), dataPack.getLogProviders(), myStorage, false);
+      Map<VirtualFile, CompressedRefs> refs = getFilteredRefs(dataPack);
+      Map<VirtualFile, VcsLogProvider> providers = ContainerUtil.newHashMap(Pair.create(myRoot, myLogProviders.get(myRoot)));
+
+      dataPack = DataPack.build(commits, refs, providers, myStorage, false);
       visibleGraph = createVisibleGraph(dataPack, sortType, null,
                                         null/*no need to filter here, since we do not have any extra commits in this pack*/);
     }
 
     return new FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, pathsMap);
+  }
+
+  @NotNull
+  private Map<VirtualFile, CompressedRefs> getFilteredRefs(@NotNull DataPack dataPack) {
+    Map<VirtualFile, CompressedRefs> refs = ContainerUtil.newHashMap();
+    CompressedRefs compressedRefs = dataPack.getRefsModel().getAllRefsByRoot().get(myRoot);
+    if (compressedRefs == null) {
+      compressedRefs = new CompressedRefs(ContainerUtil.newHashSet(), myStorage);
+    }
+    refs.put(myRoot, compressedRefs);
+    return refs;
   }
 
   private int getIndex(@NotNull VcsFileRevision revision) {

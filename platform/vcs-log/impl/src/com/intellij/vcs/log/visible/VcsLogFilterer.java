@@ -43,7 +43,7 @@ public class VcsLogFilterer {
   @NotNull protected final VcsLogStorage myStorage;
   @NotNull private final TopCommitsCache myTopCommitsDetailsCache;
   @NotNull private final DataGetter<VcsFullCommitDetails> myCommitDetailsGetter;
-  @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
+  @NotNull protected final Map<VirtualFile, VcsLogProvider> myLogProviders;
   @NotNull protected final VcsLogIndex myIndex;
 
   public VcsLogFilterer(@NotNull Map<VirtualFile, VcsLogProvider> providers,
