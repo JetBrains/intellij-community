@@ -99,8 +99,13 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
   }
 
   @Override
-  public void setValid(boolean validate) {
-    myTaskController.request(new ValidateRequest(validate));
+  public void setValid(boolean validate, boolean refresh) {
+    if (refresh) {
+      myTaskController.request(new RefreshRequest(), new ValidateRequest(validate));
+    }
+    else {
+      myTaskController.request(new ValidateRequest(validate));
+    }
   }
 
   @Override

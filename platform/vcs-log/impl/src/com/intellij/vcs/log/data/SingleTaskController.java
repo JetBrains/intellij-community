@@ -27,6 +27,7 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -73,15 +74,15 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
   }
 
   /**
-   * Posts a request into a queue. <br/>
+   * Posts requests into a queue. <br/>
    * If there is no active task, starts a new one. <br/>
-   * Otherwise just remembers the request in the queue. Later it can be achieved by {@link #popRequests()}.
+   * Otherwise just remembers requests in the queue. Later they can be retrieved by {@link #popRequests()}.
    */
-  public final void request(@NotNull Request requests) {
+  public final void request(@NotNull Request ... requests) {
     synchronized (LOCK) {
       if (myIsClosed) return;
-      myAwaitingRequests.add(requests);
-      debug("Added requests: " + requests);
+      myAwaitingRequests.addAll(Arrays.asList(requests));
+      debug("Added requests: " + Arrays.toString(requests));
       if (myRunningTask != null && myCancelRunning) {
         cancelTask(myRunningTask);
       }
