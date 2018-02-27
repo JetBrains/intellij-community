@@ -253,13 +253,16 @@ public class OptionalChainInliner implements CallInliner {
   private static void inlineOf(CFGBuilder builder, PsiType optionalElementType, PsiMethodCallExpression qualifierCall) {
     PsiExpression argument = qualifierCall.getArgumentList().getExpressions()[0];
     builder.pushExpression(argument)
-      .boxUnbox(argument, optionalElementType)
-      .pushUnknown() // ... arg, ?
-      .splice(2, 1, 0, 1) // ... arg, ?, arg
-      .invoke(qualifierCall) // ... arg, opt -- keep original call in CFG so some warnings like "ofNullable for null" can work
-      .pop(); // ... arg
+           .boxUnbox(argument, optionalElementType);
     if ("of".equals(qualifierCall.getMethodExpression().getReferenceName())) {
       builder.checkNotNull(argument, NullabilityProblemKind.passingNullableToNotNullParameter);
+    }
+    else {
+      // ... arg, opt -- keep original call in CFG so some warnings like "ofNullable for null" can work
+      builder.pushUnknown() // ... arg, ?
+             .splice(2, 1, 0, 1) // ... arg, ?, arg
+             .invoke(qualifierCall)
+             .pop(); // ... arg
     }
   }
 }
