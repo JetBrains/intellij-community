@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.psi.YAMLScalar;
 
 @ApiStatus.Experimental
@@ -25,11 +26,18 @@ public class YamlNumberType extends YamlScalarType {
   @Override
   protected void validateScalarValue(@NotNull YAMLScalar scalarValue, @NotNull ProblemsHolder holder) {
     try {
+      final String textValue = scalarValue.getTextValue();
+
+      // Float.parseFloat() successfully parses values like " 1.0 ", i.e. starting or ending with spaces,
+      // which is not valid for typed schema
+      if (textValue.startsWith(" ") || textValue.endsWith(" ")) {
+        throw new NumberFormatException("contains spaces");
+      }
       //noinspection ResultOfMethodCallIgnored
-      Float.parseFloat(scalarValue.getTextValue());
+      Float.parseFloat(textValue);
     }
     catch (NumberFormatException e) {
-      holder.registerProblem(scalarValue, "Numeric value expected", ProblemHighlightType.ERROR);
+      holder.registerProblem(scalarValue, YAMLBundle.message("YamlNumberType.error.numeric.value"), ProblemHighlightType.ERROR);
     }
   }
 }
