@@ -72,7 +72,7 @@ public abstract class FileIndexBase implements FileIndex {
   }
 
   @NotNull
-  protected DirectoryInfo getInfoForFileOrDirectory(@NotNull VirtualFile file) {
+  public DirectoryInfo getInfoForFileOrDirectory(@NotNull VirtualFile file) {
     if (file instanceof VirtualFileWindow) {
       file = ((VirtualFileWindow)file).getDelegate();
     }

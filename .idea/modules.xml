@@ -395,7 +395,6 @@
       <module fileurl="file://$PROJECT_DIR$/android/designer/intellij.android.designer.iml" filepath="$PROJECT_DIR$/android/designer/intellij.android.designer.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/designer/intellij.android.designer.tests.iml" filepath="$PROJECT_DIR$/android/designer/intellij.android.designer.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/flags/intellij.android.flags.iml" filepath="$PROJECT_DIR$/android/tools-base/flags/intellij.android.flags.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/android-gradle-jps/intellij.android.gradle.jps.iml" filepath="$PROJECT_DIR$/android/android-gradle-jps/intellij.android.gradle.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/uitest-framework/intellij.android.guiTestFramework.iml" filepath="$PROJECT_DIR$/android/uitest-framework/intellij.android.guiTestFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-uitests/intellij.android.guiTests.iml" filepath="$PROJECT_DIR$/android/android-uitests/intellij.android.guiTests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/build-system/java-lib-plugin/java-lib-model/intellij.android.javaLibModel.iml" filepath="$PROJECT_DIR$/android/tools-base/build-system/java-lib-plugin/java-lib-model/intellij.android.javaLibModel.iml" />

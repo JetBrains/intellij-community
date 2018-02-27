@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.richcopy;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -683,9 +683,8 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
           continue; // overlapping ranges withing document markup model are not supported currently
         }
         TextAttributes attributes = null;
-        Object tooltip = highlighter.getErrorStripeTooltip();
-        if (tooltip instanceof HighlightInfo) {
-          HighlightInfo info = (HighlightInfo)tooltip;
+        HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+        if (info != null) {
           TextAttributesKey key = info.forcedTextAttributesKey;
           if (key == null) {
             HighlightInfoType type = info.type;

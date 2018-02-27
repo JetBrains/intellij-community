@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -95,7 +96,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
 
     myAfterEndOfLine = isAfterEndOfLine;
     myTextRangeInElement = rangeInElement;
-    myCreationTrace = onTheFly ? null : new Throwable();
+    myCreationTrace = onTheFly ? null : ThrowableInterner.intern(new Throwable());
   }
 
   @Nullable

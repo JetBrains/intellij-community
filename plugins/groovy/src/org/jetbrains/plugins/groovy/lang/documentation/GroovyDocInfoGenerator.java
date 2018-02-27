@@ -25,6 +25,7 @@ public class GroovyDocInfoGenerator extends JavaDocInfoGenerator {
             type == mGDOC_TAG_VALUE_RPAREN ||
             type == mGDOC_TAG_VALUE_SHARP_TOKEN ||
             type == mGDOC_TAG_VALUE_TOKEN ||
+            type == mGDOC_TAG_VALUE_COMMA ||
             type == mGDOC_COMMENT_DATA) {
           buffer.append(element.getText());
         }

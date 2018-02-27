@@ -928,23 +928,21 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       return activeTextEditors;
     }
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      // Daemon is started manually in tests
-      return Collections.emptyList();
-    }
-
-    // Editors in tabs.
     Collection<FileEditor> result = new THashSet<>();
     Collection<VirtualFile> files = new THashSet<>(activeTextEditors.size());
-    final FileEditor[] tabEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
-    for (FileEditor tabEditor : tabEditors) {
-      if (!tabEditor.isValid()) continue;
-      VirtualFile file = ((FileEditorManagerEx)FileEditorManager.getInstance(myProject)).getFile(tabEditor);
-      if (file != null) {
-        files.add(file);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      // Editors in tabs.
+      final FileEditor[] tabEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
+      for (FileEditor tabEditor : tabEditors) {
+        if (!tabEditor.isValid()) continue;
+        VirtualFile file = ((FileEditorManagerEx)FileEditorManager.getInstance(myProject)).getFile(tabEditor);
+        if (file != null) {
+          files.add(file);
+        }
+        result.add(tabEditor);
       }
-      result.add(tabEditor);
     }
+
     // do not duplicate documents
     for (FileEditor fileEditor : activeTextEditors) {
       VirtualFile file = ((FileEditorManagerEx)FileEditorManager.getInstance(myProject)).getFile(fileEditor);

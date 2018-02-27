@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.find.FindManager;
@@ -17,7 +18,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.*;
-import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
@@ -130,7 +130,7 @@ public class SearchCommand {
           int end = -1;
           PsiElement parent = result.getMatch().getParent();
 
-          for (final MatchResult matchResult : ((MatchResultImpl)result).getMatches()) {
+          for (final MatchResult matchResult : result.getChildren()) {
             PsiElement el = matchResult.getMatch();
             final int elementStart = el.getTextRange().getStartOffset();
 

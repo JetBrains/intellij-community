@@ -1861,9 +1861,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     model.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener.Adapter() {
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
-        Object tt = highlighter.getErrorStripeTooltip();
-        if (!(tt instanceof HighlightInfo)) return;
-        String description = ((HighlightInfo)tt).getDescription();
+        HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+        if (info == null) return;
+        String description = info.getDescription();
         if (errorDescription.equals(description)) {
           errorRemoved[0] = true;
 
@@ -2239,8 +2239,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         UIUtil.dispatchAllInvocationEvents();
         caretLeft();
         DaemonProgressIndicator updateProgress = myDaemonCodeAnalyzer.getUpdateProgress();
-        while (myDaemonCodeAnalyzer.getUpdateProgress() == updateProgress) { // wait until daemon started
+        long waitForDaemonStart = System.currentTimeMillis();
+        while (myDaemonCodeAnalyzer.getUpdateProgress() == updateProgress && System.currentTimeMillis() < waitForDaemonStart + 5000) { // wait until daemon started
           UIUtil.dispatchAllInvocationEvents();
+        }
+        if (myDaemonCodeAnalyzer.getUpdateProgress() == updateProgress) {
+          throw new RuntimeException("Daemon failed to start in 5000 ms");
         }
         long start = System.currentTimeMillis();
         while (myDaemonCodeAnalyzer.isRunning() && System.currentTimeMillis() < start + 500) {

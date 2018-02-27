@@ -585,13 +585,13 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         handleMethodParameter(buf, info, replacementInfo);
         replacementString = buf.toString();
       }
-      else if (match.hasSons() && !match.isScopeMatch()) {
+      else if (match.hasChildren() && !match.isScopeMatch()) {
         // compound matches
         final StringBuilder buf = new StringBuilder();
 
         MatchResult previous = null;
         boolean stripSemicolon = false;
-        for (final MatchResult matchResult : match.getAllSons()) {
+        for (final MatchResult matchResult : match.getChildren()) {
           final PsiElement currentElement = matchResult.getMatch();
           stripSemicolon = !(currentElement instanceof PsiField);
 
@@ -760,7 +760,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     if (matchResult == null) return;
 
     if (matchResult.isMultipleMatch()) {
-      for (MatchResult result : matchResult.getAllSons()) {
+      for (MatchResult result : matchResult.getChildren()) {
         if (buf.length() > 0) {
           buf.append(',');
         }
@@ -773,7 +773,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   private static void appendParameter(final StringBuilder buf, final MatchResult matchResult) {
-    final List<MatchResult> sons = matchResult.getAllSons();
+    final List<MatchResult> sons = matchResult.getChildren();
     assert sons.size() == 1;
     buf.append(sons.get(0).getMatchImage()).append(' ').append(matchResult.getMatchImage());
   }
@@ -791,7 +791,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
               match.getMatch() instanceof PsiComment
             ) ||
             ( match.isMultipleMatch() &&                                                 // ; in comment
-              match.getAllSons().get( match.getAllSons().size() - 1 ).getMatch() instanceof PsiComment
+              match.getChildren().get( match.getChildren().size() - 1 ).getMatch() instanceof PsiComment
             )
           )
         ) {

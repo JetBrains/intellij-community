@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.debugger.agent;
 
-import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.capture.org.objectweb.asm.*;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -12,7 +12,6 @@ import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
 import java.security.ProtectionDomain;
 import java.util.*;
-import java.util.jar.JarFile;
 
 /**
  * @author egor
@@ -28,26 +27,7 @@ public class CaptureAgent {
   public static void premain(String args, Instrumentation instrumentation) {
     ourInstrumentation = instrumentation;
     try {
-      String asmPath = readSettings(args);
-
-      if (asmPath == null) {
-        return;
-      }
-
-      try {
-        instrumentation.appendToSystemClassLoaderSearch(new JarFile(asmPath));
-      }
-      catch (Exception e) {
-        String report = "Capture agent: unable to use the provided asm lib";
-        try {
-          Class.forName("org.jetbrains.org.objectweb.asm.MethodVisitor");
-          System.out.println(report + ", will use asm from the classpath");
-        }
-        catch (ClassNotFoundException e1) {
-          System.out.println(report + ", exiting");
-          return;
-        }
-      }
+      readSettings(args);
 
       instrumentation.addTransformer(new CaptureTransformer());
 
@@ -87,7 +67,7 @@ public class CaptureAgent {
     System.setProperty(modulesKey, property);
   }
 
-  private static String readSettings(String path) {
+  private static void readSettings(String path) {
     FileReader reader = null;
     try {
       reader = new FileReader(path);
@@ -105,12 +85,6 @@ public class CaptureAgent {
 
       boolean deleteSettings = Boolean.parseBoolean(properties.getProperty("deleteSettings", "true"));
 
-      String asmPath = properties.getProperty("asm-lib");
-      if (asmPath == null) {
-        System.out.println("Capture agent: asm path is not specified, exiting");
-        return null;
-      }
-
       Enumeration<?> propNames = properties.propertyNames();
       while (propNames.hasMoreElements()) {
         String propName = (String)propNames.nextElement();
@@ -126,7 +100,6 @@ public class CaptureAgent {
       if (deleteSettings) {
         new File(path).delete();
       }
-      return asmPath;
     }
     catch (IOException e) {
       System.out.println("Capture agent: unable to read settings");
@@ -142,7 +115,6 @@ public class CaptureAgent {
         }
       }
     }
-    return null;
   }
 
   private static <T> List<T> getNotNull(List<T> list) {

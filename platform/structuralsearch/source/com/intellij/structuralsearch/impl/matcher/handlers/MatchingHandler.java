@@ -1,10 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
@@ -13,6 +14,7 @@ import com.intellij.structuralsearch.impl.matcher.filters.DefaultFilter;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -172,8 +174,8 @@ public abstract class MatchingHandler {
           // passed of elements and does not found the match
           if (startMatching == matchedNodes.current()) {
             final boolean result = validateSatisfactionOfHandlers(patternNodes,context);
-            if (result && matchedElements != null && context.getMatchedElementsListener() != null) {
-              context.getMatchedElementsListener().matchedElements(matchedElements);
+            if (result && matchedElements != null) {
+              context.notifyMatchedElements(matchedElements);
             }
             return result;
           }
@@ -185,14 +187,17 @@ public abstract class MatchingHandler {
       }
 
       final boolean result = validateSatisfactionOfHandlers(patternNodes, context);
-      if (result && matchedElements != null && context.getMatchedElementsListener() != null) {
-        context.getMatchedElementsListener().matchedElements(matchedElements);
+      if (result && matchedElements != null) {
+        context.notifyMatchedElements(matchedElements);
       }
       return result;
     } finally {
-      if (saveResult!=null) {
+      if (saveResult != null) {
         if (context.hasResult()) {
-          saveResult.getMatches().addAll(context.getResult().getMatches());
+          final List<MatchResult> children = context.getResult().getChildren();
+          for (MatchResult child : children) {
+            saveResult.addChild(child);
+          }
         }
         context.setResult(saveResult);
       }

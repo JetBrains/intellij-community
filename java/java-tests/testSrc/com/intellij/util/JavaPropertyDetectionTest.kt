@@ -17,10 +17,17 @@ package com.intellij.util
 
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.impl.JavaSimplePropertyIndex
+import com.intellij.psi.impl.PropertyIndexValue
+import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
 import com.intellij.psi.util.PropertyMemberType
 import com.intellij.psi.util.PropertyUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileContentImpl
+import com.intellij.util.indexing.IndexingDataKeys
+import junit.framework.TestCase
 import kotlin.test.assertNotEquals
 
 class JavaPropertyDetectionTest : LightCodeInsightFixtureTestCase() {
@@ -69,8 +76,6 @@ class JavaPropertyDetectionTest : LightCodeInsightFixtureTestCase() {
                             }""", PropertyMemberType.GETTER)
   }
 
-
-
   // setter field test
 
   fun testSimpleSetter() {
@@ -110,6 +115,32 @@ class JavaPropertyDetectionTest : LightCodeInsightFixtureTestCase() {
       |public void set<caret>Name(String name) { this.name = name; }}}""".trimMargin(), PropertyMemberType.SETTER)
   }
 
+  // index data test
+
+  fun testAddToIndexOnlyMethodCallsWithoutArguments() {
+    assertJavaSimplePropertyIndex("""
+      public class Foo {
+        public String getName() {
+          return name;
+        }
+
+        public String getName(int x) {
+          return name;
+        }
+
+        public class Bar {
+          public String getName() {
+            return Foo.this.getName();
+          }
+
+          public String getName1() {
+            return Foo.this.getName(100);
+          }
+        }
+      }
+    """.trimIndent(), mapOf(Pair(0, PropertyIndexValue("name", true))))
+  }
+
   private fun assertPropertyMember(text: String, memberType: PropertyMemberType) {
     doTest(text, memberType, true)
   }
@@ -127,5 +158,14 @@ class JavaPropertyDetectionTest : LightCodeInsightFixtureTestCase() {
     assertEquals(expectedDecision, if (memberType == PropertyMemberType.GETTER) PropertyUtil.isSimpleGetter(method) else PropertyUtil.isSimpleSetter(method))
     //use ast
     assertEquals(expectedDecision, if (memberType == PropertyMemberType.GETTER) PropertyUtil.isSimpleGetter(method, false) else PropertyUtil.isSimpleSetter(method, false))
+  }
+
+  private fun assertJavaSimplePropertyIndex(text: String, expected: Map<Int, PropertyIndexValue>) {
+    val file = myFixture.configureByText(JavaFileType.INSTANCE, text)
+    val content = FileContentImpl.createByFile(file.virtualFile)
+    content.putUserData(IndexingDataKeys.PROJECT, project)
+    val data = JavaSimplePropertyIndex().indexer.map(content)
+
+    assertEquals(expected, data)
   }
 }
