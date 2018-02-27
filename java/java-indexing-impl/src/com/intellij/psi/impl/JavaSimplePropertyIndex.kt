@@ -171,7 +171,24 @@ class JavaSimplePropertyIndex : FileBasedIndexExtension<Int, PropertyIndexValue>
         .singleOrNull { ElementType.JAVA_STATEMENT_BIT_SET.contains(it.tokenType) }
         ?.takeIf { it.tokenType == JavaElementType.RETURN_STATEMENT}
         ?.let { LightTreeUtil.firstChildOfType(tree, it, ElementType.EXPRESSION_BIT_SET) }
+        ?.takeIf(this::containsOnlySimpleMethodCalls)
         ?.let { LightTreeUtil.toFilteredString(tree, it, null) }
+
+      private fun containsOnlySimpleMethodCalls(expression: LighterASTNode): Boolean {
+        if (expression.tokenType == JavaElementType.METHOD_CALL_EXPRESSION) {
+          val expressionList = LightTreeUtil.firstChildOfType(tree, expression, JavaElementType.EXPRESSION_LIST)
+          if (expressionList == null || !isEmptyExpressionList(expressionList)) {
+            return false
+          }
+        }
+        val qualifier = JavaLightTreeUtil.findExpressionChild(tree, expression)
+        return qualifier == null || containsOnlySimpleMethodCalls(qualifier)
+      }
+
+      private fun isEmptyExpressionList(expressionList: LighterASTNode): Boolean {
+        val children = tree.getChildren(expressionList)
+        return children.size == 2 && children[0].tokenType == JavaTokenType.LPARENTH && children[1].tokenType == JavaTokenType.RPARENTH
+      }
 
     }.visitNode(tree.root)
     result
@@ -197,5 +214,5 @@ class JavaSimplePropertyIndex : FileBasedIndexExtension<Int, PropertyIndexValue>
 
   override fun dependsOnFileContent(): Boolean = true
 
-  override fun getVersion(): Int = 0
+  override fun getVersion(): Int = 1
 }
