@@ -60,7 +60,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     myVisiblePackBuilder = builder;
     myState = new State(initialSortType);
 
-    myTaskController = new SingleTaskController<Request, State>(project, state -> {
+    myTaskController = new SingleTaskController<Request, State>(project, "visible", state -> {
       boolean hasChanges = myState.getVisiblePack() != state.getVisiblePack();
       myState = state;
       if (hasChanges) {

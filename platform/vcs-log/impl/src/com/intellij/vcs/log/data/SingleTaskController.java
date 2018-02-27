@@ -48,6 +48,7 @@ import java.util.concurrent.TimeoutException;
 public abstract class SingleTaskController<Request, Result> implements Disposable {
   private static final Logger LOG = Logger.getInstance(SingleTaskController.class);
 
+  @NotNull private final String myName;
   @NotNull private final Consumer<Result> myResultHandler;
   @NotNull private final Object LOCK = new Object();
   private final boolean myCancelRunning;
@@ -58,9 +59,11 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
   private boolean myIsClosed = false;
 
   public SingleTaskController(@NotNull Project project,
+                              @NotNull String name,
                               @NotNull Consumer<Result> handler,
                               boolean cancelRunning,
                               @NotNull Disposable parent) {
+    myName = name;
     myResultHandler = handler;
     myAwaitingRequests = ContainerUtil.newLinkedList();
     myCancelRunning = cancelRunning;
@@ -78,21 +81,25 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
     synchronized (LOCK) {
       if (myIsClosed) return;
       myAwaitingRequests.add(requests);
-      LOG.debug("Added requests: " + requests);
+      debug("Added requests: " + requests);
       if (myRunningTask != null && myCancelRunning) {
         cancelTask(myRunningTask);
       }
       if (myRunningTask == null) {
         myRunningTask = startNewBackgroundTask();
-        LOG.debug("Started a new bg task " + myRunningTask);
+        debug("Started a new bg task " + myRunningTask);
       }
     }
+  }
+
+  private void debug(@NotNull String message) {
+    LOG.debug("[" + myName + "] " + message);
   }
 
   private void cancelTask(@NotNull SingleTask t) {
     if (t.isRunning()) {
       t.cancel();
-      LOG.debug("Canceled task " + myRunningTask);
+      debug("Canceled task " + myRunningTask);
     }
   }
 
@@ -112,7 +119,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
     synchronized (LOCK) {
       List<Request> requests = myAwaitingRequests;
       myAwaitingRequests = ContainerUtil.newLinkedList();
-      LOG.debug("Popped requests: " + requests);
+      debug("Popped requests: " + requests);
       return requests;
     }
   }
@@ -121,7 +128,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
   public final List<Request> peekRequests() {
     synchronized (LOCK) {
       List<Request> requests = ContainerUtil.newArrayList(myAwaitingRequests);
-      LOG.debug("Peeked requests: " + requests);
+      debug("Peeked requests: " + requests);
       return requests;
     }
   }
@@ -129,7 +136,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
   public final void removeRequests(@NotNull List<Request> requests) {
     synchronized (LOCK) {
       myAwaitingRequests.removeAll(requests);
-      LOG.debug("Removed requests: " + requests);
+      debug("Removed requests: " + requests);
     }
   }
 
@@ -138,7 +145,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
     synchronized (LOCK) {
       if (myAwaitingRequests.isEmpty()) return null;
       Request request = myAwaitingRequests.remove(0);
-      LOG.debug("Popped request: " + request);
+      debug("Popped request: " + request);
       return request;
     }
   }
@@ -152,16 +159,16 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
   public final void taskCompleted(@Nullable Result result) {
     if (result != null) {
       myResultHandler.consume(result);
-      LOG.debug("Handled result: " + result);
+      debug("Handled result: " + result);
     }
     synchronized (LOCK) {
       if (myAwaitingRequests.isEmpty()) {
         myRunningTask = null;
-        LOG.debug("No more requests");
+        debug("No more requests");
       }
       else {
         myRunningTask = startNewBackgroundTask();
-        LOG.debug("Restarted a bg task " + myRunningTask);
+        debug("Restarted a bg task " + myRunningTask);
       }
     }
   }
