@@ -1295,20 +1295,23 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         Pair<Boolean, String> pair = setNextStatement(7);
         waitForPause();
         assertTrue(pair.first);
-        eval("x").hasValue("1");
+        eval("x").hasValue("0");
         // try to jump into a loop
         pair = setNextStatement(9);
         // do not wait for pause here, because we don't refresh suspension for incorrect jumps
         assertFalse(pair.first);
         assertTrue(pair.second.startsWith("Error:"));
+        stepOver();
+        waitForPause();
+        eval("x").hasValue("2");
         resume();
         waitForPause();
-        eval("a").hasValue("3");
+        eval("a").hasValue("2");
         // jump inside a function
         pair = setNextStatement(2);
         waitForPause();
         assertTrue(pair.first);
-        eval("a").hasValue("6");
+        eval("a").hasValue("2");
         resume();
       }
     });
