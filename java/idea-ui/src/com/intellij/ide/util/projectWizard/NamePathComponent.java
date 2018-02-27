@@ -192,7 +192,7 @@ public class NamePathComponent extends JPanel{
     boolean isPathChangedByUser = myIsPathChangedByUser;
     setPathNameSyncEnabled(false);
     try {
-      myTfPath.setText(FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(path))));
+      myTfPath.setText(FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(path)));
     }
     finally {
       myIsPathChangedByUser = isPathChangedByUser;
@@ -310,6 +310,9 @@ public class NamePathComponent extends JPanel{
           final int lastSeparatorIndex = path.lastIndexOf(File.separator);
           if (lastSeparatorIndex >= 0) {
             setPath(path.substring(0, lastSeparatorIndex + 1) + name);
+          }
+          else if (!path.isEmpty()) {
+            setPath(path + File.separatorChar + name);
           }
         }
         catch (BadLocationException e) {
