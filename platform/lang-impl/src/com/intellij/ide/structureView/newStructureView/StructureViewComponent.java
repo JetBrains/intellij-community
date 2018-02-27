@@ -74,6 +74,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.structureView.newStructureView.StructureViewComponent");
 
   private static final Key<TreeState> STRUCTURE_VIEW_STATE_KEY = Key.create("STRUCTURE_VIEW_STATE");
+  private static final Key<Boolean> STRUCTURE_VIEW_STATE_RESTORED_KEY = Key.create("STRUCTURE_VIEW_STATE_RESTORED_KEY");
   private static final AtomicInteger ourSettingsModificationCount = new AtomicInteger();
 
   private FileEditor myFileEditor;
@@ -91,7 +92,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   private volatile AsyncPromise<TreePath> myCurrentFocusPromise;
 
-  private TreeState myStructureViewState;
   private boolean myAutoscrollFeedback;
   private boolean myDisposed;
 
@@ -308,21 +308,24 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     if (isDisposed()) return;
     Object root = myTree.getModel().getRoot();
     if (root == null) return;
-    myStructureViewState = TreeState.createOn(myTree, new TreePath(root));
+    TreeState state = TreeState.createOn(myTree, new TreePath(root));
     if (myFileEditor != null) {
-      myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, myStructureViewState);
+      myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, state);
     }
+    UIUtil.putClientProperty(myTree, STRUCTURE_VIEW_STATE_RESTORED_KEY, null);
   }
 
   @Override
   public void restoreState() {
-    myStructureViewState = myFileEditor == null ? null : myFileEditor.getUserData(STRUCTURE_VIEW_STATE_KEY);
-    if (myStructureViewState == null) {
-      TreeUtil.expand(getTree(), 2);
+    TreeState state = myFileEditor == null ? null : myFileEditor.getUserData(STRUCTURE_VIEW_STATE_KEY);
+    if (state == null) {
+      if (!Boolean.TRUE.equals(UIUtil.getClientProperty(myTree, STRUCTURE_VIEW_STATE_RESTORED_KEY))) {
+        TreeUtil.expand(getTree(), 2);
+      }
     }
     else {
-      myStructureViewState.applyTo(myTree);
-      myStructureViewState = null;
+      UIUtil.putClientProperty(myTree, STRUCTURE_VIEW_STATE_RESTORED_KEY, true);
+      state.applyTo(myTree);
       if (myFileEditor != null) {
         myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, null);
       }
@@ -956,17 +959,20 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     @Override
     public void treeNodesInserted(TreeModelEvent e) {
+      TreePath parentPath = e.getTreePath();
+      if (Boolean.TRUE.equals(UIUtil.getClientProperty(tree, STRUCTURE_VIEW_STATE_RESTORED_KEY))) return;
+      if (parentPath == null || !tree.isVisible(parentPath) || !tree.isExpanded(parentPath)) return;
       Object[] children = e.getChildren();
       if (smartExpand && children.length == 1) {
         ApplicationManager.getApplication().invokeLater(
-          () -> tree.expandPath(e.getTreePath().pathByAddingChild(children[0])));
+          () -> tree.expandPath(parentPath.pathByAddingChild(children[0])));
       }
       else {
         for (Object o : children) {
           Object userObject = TreeUtil.getUserObject(o);
           if (userObject instanceof NodeDescriptor && isAutoExpandNode((NodeDescriptor)userObject)) {
             ApplicationManager.getApplication().invokeLater(
-              () -> tree.expandPath(e.getTreePath().pathByAddingChild(o)));
+              () -> tree.expandPath(parentPath.pathByAddingChild(o)));
           }
         }
       }
