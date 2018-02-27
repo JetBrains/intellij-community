@@ -32,7 +32,6 @@ import com.intellij.execution.testframework.sm.runner.*;
 import com.intellij.execution.testframework.sm.runner.history.ImportedTestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
-import com.intellij.execution.testframework.ui.TestStatusLine;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.DataManager;
@@ -781,10 +780,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myIgnoredTestCount++;
     updateProgressOnTestDone();
     updateStatusLabel(false);
-  }
-
-  public void setStatusLine(TestStatusLine statusLine) {
-    myStatusLine = statusLine;
   }
 
   private boolean isModeConsistent(boolean isCustomMessage) {
