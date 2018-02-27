@@ -150,9 +150,9 @@ public abstract class JUnitAbstractIntegrationTest extends BaseConfigurationTest
     );
   }
 
-  static class ProcessOutput {
+  public static class ProcessOutput {
     List<String> out = new ArrayList<>();
-    List<String> err = new ArrayList<>();
+    public List<String> err = new ArrayList<>();
     List<String> sys = new ArrayList<>();
     List<ServiceMessage> messages = new ArrayList<>();
   }

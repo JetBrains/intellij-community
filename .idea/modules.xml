@@ -140,7 +140,6 @@
     <module old-name="instant-run-annotations" new-name="android.sdktools.instant-run-annotations" />
     <module old-name="instant-run-client" new-name="android.sdktools.instant-run-client" />
     <module old-name="instant-run-common" new-name="android.sdktools.instant-run-common" />
-    <module old-name="instant-run-runtime" new-name="android.sdktools.instant-run-runtime" />
     <module old-name="instrumentation-util" new-name="intellij.java.compiler.instrumentationUtil" />
     <module old-name="instrumentation-util-8" new-name="intellij.java.compiler.instrumentationUtil.java8" />
     <module old-name="intellilang-jps-plugin" new-name="intellij.java.langInjection.jps" />
@@ -205,7 +204,6 @@
     <module old-name="main_pycharm_ce" new-name="intellij.pycharm.community.main" />
     <module old-name="main_pycharm_edu" new-name="intellij.pycharm.edu.main" />
     <module old-name="manifest" new-name="intellij.java.manifest" />
-    <module old-name="manifest-merger" new-name="android.sdktools.manifest-merger" />
     <module old-name="maven" new-name="intellij.maven" />
     <module old-name="maven-artifact-resolver-common" new-name="intellij.maven.artifactResolver.common" />
     <module old-name="maven-artifact-resolver-m2" new-name="intellij.maven.artifactResolver.m2" />
@@ -376,7 +374,6 @@
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/instant-run/instant-run-annotations/android.sdktools.instant-run-annotations.iml" filepath="$PROJECT_DIR$/android/tools-base/instant-run/instant-run-annotations/android.sdktools.instant-run-annotations.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/instant-run/instant-run-client/android.sdktools.instant-run-client.iml" filepath="$PROJECT_DIR$/android/tools-base/instant-run/instant-run-client/android.sdktools.instant-run-client.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/instant-run/instant-run-common/android.sdktools.instant-run-common.iml" filepath="$PROJECT_DIR$/android/tools-base/instant-run/instant-run-common/android.sdktools.instant-run-common.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/tools-base/instant-run/instant-run-runtime/android.sdktools.instant-run-runtime.iml" filepath="$PROJECT_DIR$/android/tools-base/instant-run/instant-run-runtime/android.sdktools.instant-run-runtime.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/layoutlib-api/android.sdktools.layoutlib-api.iml" filepath="$PROJECT_DIR$/android/tools-base/layoutlib-api/android.sdktools.layoutlib-api.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/android.sdktools.layoutlib-resources.iml" filepath="$PROJECT_DIR$/android/tools-base/android.sdktools.layoutlib-resources.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/build-system/manifest-merger/android.sdktools.manifest-merger.iml" filepath="$PROJECT_DIR$/android/tools-base/build-system/manifest-merger/android.sdktools.manifest-merger.iml" />
@@ -398,7 +395,6 @@
       <module fileurl="file://$PROJECT_DIR$/android/designer/intellij.android.designer.iml" filepath="$PROJECT_DIR$/android/designer/intellij.android.designer.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/designer/intellij.android.designer.tests.iml" filepath="$PROJECT_DIR$/android/designer/intellij.android.designer.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/flags/intellij.android.flags.iml" filepath="$PROJECT_DIR$/android/tools-base/flags/intellij.android.flags.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/android-gradle-jps/intellij.android.gradle.jps.iml" filepath="$PROJECT_DIR$/android/android-gradle-jps/intellij.android.gradle.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/uitest-framework/intellij.android.guiTestFramework.iml" filepath="$PROJECT_DIR$/android/uitest-framework/intellij.android.guiTestFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-uitests/intellij.android.guiTests.iml" filepath="$PROJECT_DIR$/android/android-uitests/intellij.android.guiTests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/build-system/java-lib-plugin/java-lib-model/intellij.android.javaLibModel.iml" filepath="$PROJECT_DIR$/android/tools-base/build-system/java-lib-plugin/java-lib-model/intellij.android.javaLibModel.iml" />

@@ -37,7 +37,9 @@ import java.awt.*;
 public class SmartElementDescriptor extends NodeDescriptor{
   private final SmartPsiElementPointer mySmartPointer;
 
-  public SmartElementDescriptor(@NotNull Project project, NodeDescriptor parentDescriptor, @NotNull PsiElement element) {
+  public SmartElementDescriptor(@NotNull Project project,
+                                @Nullable NodeDescriptor parentDescriptor,
+                                @NotNull PsiElement element) {
     super(project, parentDescriptor);
     mySmartPointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(element);
   }
@@ -65,16 +67,8 @@ public class SmartElementDescriptor extends NodeDescriptor{
   public boolean update() {
     PsiElement element = mySmartPointer.getElement();
     if (element == null) return true;
-    int flags = Iconable.ICON_FLAG_VISIBILITY;
-    if (isMarkReadOnly()){
-      flags |= Iconable.ICON_FLAG_READ_STATUS;
-    }
-    Icon icon = null;
-    try {
-      icon = element.getIcon(flags);
-    }
-    catch (IndexNotReadyException ignored) {
-    }
+
+    Icon icon = getIcon(element);
     Color color = null;
 
     if (isMarkModified() ){
@@ -91,5 +85,20 @@ public class SmartElementDescriptor extends NodeDescriptor{
     setIcon(icon);
     myColor = color;
     return changes;
+  }
+
+  @Nullable
+  protected Icon getIcon(@NotNull PsiElement element) {
+    int flags = Iconable.ICON_FLAG_VISIBILITY;
+    if (isMarkReadOnly()) {
+      flags |= Iconable.ICON_FLAG_READ_STATUS;
+    }
+
+    try {
+      return element.getIcon(flags);
+    }
+    catch (IndexNotReadyException ignored) {
+      return null;
+    }
   }
 }

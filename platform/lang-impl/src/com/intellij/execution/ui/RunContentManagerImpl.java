@@ -336,7 +336,12 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       contentManager.addContent(content);
       new CloseListener(content, executor);
     }
-    content.getManager().setSelectedContent(content);
+
+    if (descriptor.isSelectContentWhenAdded()
+        /* also update selection when reused content is already selected  */
+        || oldDescriptor != null && contentManager.isSelected(content)) {
+      content.getManager().setSelectedContent(content);
+    }
 
     if (!descriptor.isActivateToolWindowWhenAdded()) {
       return;
@@ -395,6 +400,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
         descriptor.setActivateToolWindowWhenAdded(contentToReuse.isActivateToolWindowWhenAdded());
       }
       descriptor.setContentToolWindowId(contentToReuse.getContentToolWindowId());
+      descriptor.setSelectContentWhenAdded(contentToReuse.isSelectContentWhenAdded());
     }
   }
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
+import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.openapi.editor.Document;
@@ -9,13 +10,12 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +38,7 @@ public class JavaEditablePostfixTemplate extends EditablePostfixTemplate {
                                      @NotNull LanguageLevel minimumLanguageLevel,
                                      boolean useTopmostExpression,
                                      @NotNull PostfixTemplateProvider provider) {
-    this(templateName, templateName, templateText, example, expressionConditions, minimumLanguageLevel, useTopmostExpression, provider);
+    this(templateName, templateName, createTemplate(templateText), example, expressionConditions, minimumLanguageLevel, useTopmostExpression, provider);
   }
 
   public JavaEditablePostfixTemplate(@NotNull String templateId,
@@ -49,7 +49,29 @@ public class JavaEditablePostfixTemplate extends EditablePostfixTemplate {
                                      @NotNull LanguageLevel minimumLanguageLevel,
                                      boolean useTopmostExpression,
                                      @NotNull PostfixTemplateProvider provider) {
-    super(templateId, templateName, templateText, example, provider);
+    super(templateId, templateName, createTemplate(templateText), example, provider);
+    myExpressionConditions = expressionConditions;
+    myMinimumLanguageLevel = minimumLanguageLevel;
+    myUseTopmostExpression = useTopmostExpression;
+  }
+
+  @NotNull
+  private static TemplateImpl createTemplate(@NotNull String templateText) {
+    TemplateImpl template = new TemplateImpl("fakeKey", templateText, "");
+    template.setToReformat(true);
+    template.parseSegments();
+    return template;
+  }
+
+  public JavaEditablePostfixTemplate(@NotNull String templateId,
+                                     @NotNull String templateName,
+                                     @NotNull TemplateImpl liveTemplate,
+                                     @NotNull String example,
+                                     @NotNull Set<JavaPostfixTemplateExpressionCondition> expressionConditions,
+                                     @NotNull LanguageLevel minimumLanguageLevel,
+                                     boolean useTopmostExpression,
+                                     @NotNull PostfixTemplateProvider provider) {
+    super(templateId, templateName, liveTemplate, example, provider);
     myExpressionConditions = expressionConditions;
     myMinimumLanguageLevel = minimumLanguageLevel;
     myUseTopmostExpression = useTopmostExpression;
@@ -116,10 +138,11 @@ public class JavaEditablePostfixTemplate extends EditablePostfixTemplate {
   @NotNull
   @Override
   protected PsiElement getElementToRemove(@NotNull PsiElement element) {
-    if (element instanceof PsiLiteralExpression) {
-      return element;
+    PsiElement parent = element.getParent();
+    if (parent instanceof PsiExpressionStatement) {
+      return parent;
     }
-    return ObjectUtils.notNull(element.getParent(), element);
+    return element;
   }
 
   @NotNull

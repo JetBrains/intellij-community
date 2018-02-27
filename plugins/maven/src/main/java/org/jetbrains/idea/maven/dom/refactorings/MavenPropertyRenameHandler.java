@@ -30,7 +30,7 @@ import static com.intellij.refactoring.rename.RenameDialog2Kt.showTestAware;
 
 public class MavenPropertyRenameHandler extends PsiElementRenameHandler {
   @Override
-  public boolean isAvailableOnDataContext(DataContext context) {
+  public boolean isAvailableOnDataContext(@NotNull DataContext context) {
     return findTarget(context) != null;
   }
 

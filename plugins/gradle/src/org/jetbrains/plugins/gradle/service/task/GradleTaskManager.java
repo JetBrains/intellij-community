@@ -21,6 +21,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEventUnsupportedImpl;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.Key;
@@ -85,6 +86,10 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
 
     GradleExecutionSettings effectiveSettings =
       settings == null ? new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false) : settings;
+
+    if (getForkedDebuggerSetup(jvmAgentSetup) != -1) {
+      effectiveSettings.withVmOption(jvmAgentSetup);
+    }
     Function<ProjectConnection, Void> f = connection -> {
       try {
         appendInitScriptArgument(taskNames, jvmAgentSetup, effectiveSettings);
@@ -125,6 +130,20 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       }
     };
     myHelper.execute(projectPath, effectiveSettings, f);
+  }
+
+  public static int getForkedDebuggerSetup(@Nullable String jvmAgentSetup) {
+    if (jvmAgentSetup != null && jvmAgentSetup.startsWith(ExternalSystemRunConfiguration.DEBUG_SETUP_PREFIX)) {
+      int forkSocketIndex = jvmAgentSetup.indexOf("-forkSocket");
+      if (forkSocketIndex > 0) {
+        try {
+          return Integer.parseInt(jvmAgentSetup.substring(forkSocketIndex + "-forkSocket".length()));
+        }
+        catch (NumberFormatException ignore) {
+        }
+      }
+    }
+    return -1;
   }
 
   public static void appendInitScriptArgument(@NotNull List<String> taskNames,

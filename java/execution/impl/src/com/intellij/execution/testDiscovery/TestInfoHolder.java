@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
@@ -29,6 +15,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ScheduledFuture;
 
 final class TestInfoHolder {
@@ -36,18 +23,16 @@ final class TestInfoHolder {
   final PersistentHashMap<Integer, TIntObjectHashMap<TIntArrayList>> myTestNameToUsedClassesAndMethodMap;
   final PersistentHashMap<Long, TIntArrayList> myTestNameToNearestModule;
   final PersistentStringEnumerator myClassEnumerator;
-  final CachingEnumerator<String> myClassEnumeratorCache;
   final PersistentStringEnumerator myMethodEnumerator;
-  final CachingEnumerator<String> myMethodEnumeratorCache;
-  final PersistentStringEnumerator myTestNameEnumerator;
-  final PersistentStringEnumerator myModuleNameEnumerator;
+  final PersistentEnumeratorDelegate<TestId> myTestEnumerator;
+  final PersistentEnumeratorDelegate<ModuleId> myModuleEnumerator;
   final List<PersistentEnumeratorDelegate> myConstructedDataFiles = new ArrayList<>(6);
 
   private ScheduledFuture<?> myFlushingFuture;
   private boolean myDisposed;
   private final Object myLock;
 
-  private static final int VERSION = 4;
+  private static final int VERSION = 7;
 
   TestInfoHolder(@NotNull Path basePath, boolean readOnly, Object lock) {
     myLock = lock;
@@ -64,8 +49,10 @@ final class TestInfoHolder {
     try {
       int version = readVersion(versionFile);
       if (version != VERSION) {
+        TestDiscoveryIndex.LOG.info(version != -1
+                                    ? "TestDiscoveryIndex was rewritten due to version change"
+                                    : "TestDiscoveryIndex is not exist. Empty index is created");
         assert !readOnly;
-        TestDiscoveryIndex.LOG.info("TestDiscoveryIndex was rewritten due to version change");
         deleteAllIndexDataFiles(methodQNameToTestNameFile,
                                 testNameToUsedClassesAndMethodMapFile,
                                 classNameEnumeratorFile,
@@ -80,9 +67,9 @@ final class TestInfoHolder {
       PersistentHashMap<Integer, TIntObjectHashMap<TIntArrayList>> testNameToUsedClassesAndMethodMap;
       PersistentHashMap<Long, TIntArrayList> testNameToNearestModule;
       PersistentStringEnumerator classNameEnumerator;
-      PersistentStringEnumerator methodNameEnumerator;
-      PersistentStringEnumerator testNameEnumerator;
-      PersistentStringEnumerator moduleNameEnumerator;
+      PersistentStringEnumerator methodEnumerator;
+      PersistentEnumeratorDelegate<TestId> testEnumerator;
+      PersistentEnumeratorDelegate<ModuleId> moduleNameEnumerator;
 
       int iterations = 0;
 
@@ -119,17 +106,17 @@ final class TestInfoHolder {
                                                             new TestNamesExternalizer());
           myConstructedDataFiles.add(testNameToNearestModule);
 
-          classNameEnumerator = new PersistentStringEnumerator(classNameEnumeratorFile);
+          classNameEnumerator = new PersistentStringEnumerator(classNameEnumeratorFile, true);
           myConstructedDataFiles.add(classNameEnumerator);
 
-          methodNameEnumerator = new PersistentStringEnumerator(methodNameEnumeratorFile);
-          myConstructedDataFiles.add(methodNameEnumerator);
+          methodEnumerator = new PersistentStringEnumerator(methodNameEnumeratorFile, true);
+          myConstructedDataFiles.add(methodEnumerator);
 
-          moduleNameEnumerator = new PersistentStringEnumerator(moduleNameEnumeratorFile);
+          moduleNameEnumerator = new PersistentEnumeratorDelegate<>(moduleNameEnumeratorFile, ModuleId.DESCRIPTOR, 64);
           myConstructedDataFiles.add(moduleNameEnumerator);
 
-          testNameEnumerator = new PersistentStringEnumerator(testNameEnumeratorFile);
-          myConstructedDataFiles.add(testNameEnumerator);
+          testEnumerator = new PersistentEnumeratorDelegate<>(testNameEnumeratorFile, TestId.DESCRIPTOR, 1024 * 4);
+          myConstructedDataFiles.add(testEnumerator);
 
           break;
         }
@@ -154,11 +141,9 @@ final class TestInfoHolder {
       myTestNameToUsedClassesAndMethodMap = testNameToUsedClassesAndMethodMap;
       myTestNameToNearestModule = testNameToNearestModule;
       myClassEnumerator = classNameEnumerator;
-      myMethodEnumerator = methodNameEnumerator;
-      myTestNameEnumerator = testNameEnumerator;
-      myModuleNameEnumerator = moduleNameEnumerator;
-      myMethodEnumeratorCache = new CachingEnumerator<>(methodNameEnumerator, EnumeratorStringDescriptor.INSTANCE);
-      myClassEnumeratorCache = new CachingEnumerator<>(classNameEnumerator, EnumeratorStringDescriptor.INSTANCE);
+      myMethodEnumerator = methodEnumerator;
+      myTestEnumerator = testEnumerator;
+      myModuleEnumerator = moduleNameEnumerator;
 
       myFlushingFuture = FlushingDaemon.everyFiveSeconds(() -> {
         synchronized (myLock) {
@@ -171,8 +156,6 @@ final class TestInfoHolder {
               dataFile.force();
             }
           }
-          myClassEnumeratorCache.clear();
-          myMethodEnumeratorCache.clear();
         }
       });
     }
@@ -207,7 +190,7 @@ final class TestInfoHolder {
   private static int readVersion(@NotNull Path versionFile) throws IOException {
     InputStream inputStream = PathKt.inputStreamIfExists(versionFile);
     if (inputStream == null) {
-      return 0;
+      return -1;
     }
     try (DataInputStream versionInput = new DataInputStream(inputStream)) {
       return DataInputOutputUtil.readINT(versionInput);
@@ -445,5 +428,130 @@ final class TestInfoHolder {
     public boolean hasAddedDelta() {
       return myAddedOrChangedClassData != null && !myAddedOrChangedClassData.isEmpty();
     }
+  }
+
+  @NotNull
+  TestId createTestId(String className, String methodName, byte frameworkPrefix) throws IOException {
+    return new TestId(myClassEnumerator.enumerate(className), myMethodEnumerator.enumerate(methodName), frameworkPrefix);
+  }
+
+  static class ModuleId {
+    @NotNull
+    private final String myModuleName;
+    private final byte myFrameworkId;
+
+    ModuleId(@NotNull String name, byte id) {
+      myModuleName = name;
+      myFrameworkId = id;
+    }
+
+    @NotNull
+    String getModuleName() {
+      return myModuleName;
+    }
+
+    byte getFrameworkId() {
+      return myFrameworkId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      ModuleId id = (ModuleId)o;
+      return myFrameworkId == id.myFrameworkId &&
+             Objects.equals(myModuleName, id.myModuleName);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myModuleName, myFrameworkId);
+    }
+
+    private static final KeyDescriptor<ModuleId> DESCRIPTOR = new KeyDescriptor<ModuleId>() {
+      @Override
+      public int getHashCode(ModuleId id) {
+        return id.hashCode();
+      }
+
+      @Override
+      public boolean isEqual(ModuleId id1, ModuleId id2) {
+        return id1.equals(id2);
+      }
+
+      @Override
+      public void save(@NotNull DataOutput out, ModuleId id) throws IOException {
+        IOUtil.writeUTF(out, id.getModuleName());
+        out.writeByte(id.getFrameworkId());
+      }
+
+      @Override
+      public ModuleId read(@NotNull DataInput in) throws IOException {
+        return new ModuleId(IOUtil.readUTF(in), in.readByte());
+      }
+    };
+  }
+
+  static class TestId {
+    private final int myClassId;
+    private final int myMethodId;
+    private final byte myFrameworkId;
+
+    TestId(int classId, int methodId, byte id) {
+      myClassId = classId;
+      myMethodId = methodId;
+      myFrameworkId = id;
+    }
+
+    int getClassId() {
+      return myClassId;
+    }
+
+    int getMethodId() {
+      return myMethodId;
+    }
+
+    byte getFrameworkId() {
+      return myFrameworkId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      TestId id = (TestId)o;
+      return myClassId == id.myClassId &&
+             myMethodId == id.myMethodId &&
+             myFrameworkId == id.myFrameworkId;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myClassId, myMethodId, myFrameworkId);
+    }
+
+    private static final KeyDescriptor<TestId> DESCRIPTOR = new KeyDescriptor<TestId>() {
+      @Override
+      public int getHashCode(TestId id) {
+        return id.hashCode();
+      }
+
+      @Override
+      public boolean isEqual(TestId id1, TestId id2) {
+        return id1.equals(id2);
+      }
+
+      @Override
+      public void save(@NotNull DataOutput out, TestId id) throws IOException {
+        DataInputOutputUtil.writeINT(out, id.getClassId());
+        DataInputOutputUtil.writeINT(out, id.getMethodId());
+        out.writeByte(id.getFrameworkId());
+      }
+
+      @Override
+      public TestId read(@NotNull DataInput in) throws IOException {
+        return new TestId(DataInputOutputUtil.readINT(in), DataInputOutputUtil.readINT(in), in.readByte());
+      }
+    };
   }
 }

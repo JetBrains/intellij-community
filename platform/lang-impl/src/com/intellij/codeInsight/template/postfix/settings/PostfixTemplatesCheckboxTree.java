@@ -7,14 +7,14 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils
 import com.intellij.codeInsight.template.postfix.templates.editable.DefaultPostfixTemplateEditor;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixChangedBuiltinTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateEditor;
-import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateWrapper;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
@@ -66,21 +66,30 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     };
     getSelectionModel().addTreeSelectionListener(selectionListener);
     Disposer.register(this, () -> getSelectionModel().removeTreeSelectionListener(selectionListener));
-
     DoubleClickListener doubleClickListener = new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent event) {
-        if (canEditSelectedTemplate()) {
-          editSelectedTemplate();
-          return true;
-        }
-        return false;
+        TreePath location = getClosestPathForLocation(event.getX(), event.getY());
+        return location != null && doubleClick(location.getLastPathComponent());
       }
     };
     doubleClickListener.installOn(this);
     Disposer.register(this, () -> doubleClickListener.uninstall(this));
     setRootVisible(false);
     setShowsRootHandles(true);
+  }
+
+  @Override
+  protected void onDoubleClick(CheckedTreeNode node) {
+    doubleClick(node);
+  }
+
+  private boolean doubleClick(@Nullable Object node) {
+    if (node instanceof PostfixTemplateCheckedTreeNode && isEditable(((PostfixTemplateCheckedTreeNode)node).getTemplate())) {
+      editTemplate((PostfixTemplateCheckedTreeNode)node);
+      return true;
+    }
+    return false;
   }
 
   @Override
@@ -240,8 +249,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
       group.add(new DumbAwareAction(providerName) {
         @Override
         public void actionPerformed(AnActionEvent e) {
-          Project project = getProject();
-          PostfixTemplateEditor editor = provider.createEditor(project, null);
+          PostfixTemplateEditor editor = provider.createEditor(null);
           if (editor != null) {
             PostfixEditTemplateDialog dialog = new PostfixEditTemplateDialog(PostfixTemplatesCheckboxTree.this, editor, providerName, null);
             if (dialog.showAndGet()) {
@@ -272,15 +280,20 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
 
   public void editSelectedTemplate() {
     TreePath path = getSelectionModel().getSelectionPath();
-    if (!(path.getLastPathComponent() instanceof PostfixTemplateCheckedTreeNode)) return;
-    PostfixTemplateCheckedTreeNode lastPathComponent = (PostfixTemplateCheckedTreeNode)path.getLastPathComponent();
+    Object lastPathComponent = path.getLastPathComponent();
+    if (lastPathComponent instanceof PostfixTemplateCheckedTreeNode) {
+      editTemplate((PostfixTemplateCheckedTreeNode)lastPathComponent);
+    }
+  }
+
+  private void editTemplate(@NotNull PostfixTemplateCheckedTreeNode lastPathComponent) {
     PostfixTemplate template = lastPathComponent.getTemplate();
     PostfixTemplateProvider provider = lastPathComponent.getTemplateProvider();
     if (isEditable(template)) {
-      PostfixTemplate templateToEdit = template instanceof PostfixTemplateWrapper ? ((PostfixTemplateWrapper)template).getDelegate()
-                                                                                  : template;
-      Project project = getProject();
-      PostfixTemplateEditor editor = provider.createEditor(project, templateToEdit);
+      PostfixTemplate templateToEdit =
+        template instanceof PostfixChangedBuiltinTemplate ? ((PostfixChangedBuiltinTemplate)template).getDelegate()
+                                                          : template;
+      PostfixTemplateEditor editor = provider.createEditor(templateToEdit);
       if (editor == null) {
         editor = new DefaultPostfixTemplateEditor(provider, templateToEdit);
       }
@@ -288,7 +301,10 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
       PostfixEditTemplateDialog dialog = new PostfixEditTemplateDialog(this, editor, providerName, templateToEdit);
       if (dialog.showAndGet()) {
         PostfixTemplate newTemplate = editor.createTemplate(template.getId(), dialog.getTemplateName());
-        if (templateToEdit.isBuiltin()) {
+        if (newTemplate.equals(template)) {
+          return;
+        }
+        if (template.isBuiltin()) {
           PostfixTemplate builtin = template instanceof PostfixChangedBuiltinTemplate
                                     ? ((PostfixChangedBuiltinTemplate)template).getBuiltinTemplate()
                                     : templateToEdit;
@@ -334,13 +350,6 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
         TreeUtil.removeLastPathComponent(this, path);
       }
     }
-  }
-
-  @Nullable
-  private Project getProject() {
-    // todo: retrieve proper project
-    DataProvider dataProvider = DataManager.getDataProvider(this);
-    return dataProvider != null ? CommonDataKeys.PROJECT.getData(dataProvider) : null;
   }
 
   private static boolean isEditable(@Nullable PostfixTemplate template) {

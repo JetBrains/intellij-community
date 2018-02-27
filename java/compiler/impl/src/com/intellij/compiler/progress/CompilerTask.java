@@ -14,6 +14,7 @@ import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
@@ -279,7 +280,7 @@ public class CompilerTask extends CompilerTaskBase {
     }
     else if (CompilerMessageCategory.ERROR.equals(messageCategory)) {
       myErrorCount += 1;
-      informWolf(message);
+      ReadAction.run(() -> informWolf(message));
     }
 
     if (ApplicationManager.getApplication().isDispatchThread()) {

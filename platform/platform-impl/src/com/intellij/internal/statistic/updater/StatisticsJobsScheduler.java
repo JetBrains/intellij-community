@@ -18,8 +18,9 @@ package com.intellij.internal.statistic.updater;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.FrameStateManager;
-import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.internal.statistic.connect.StatisticsService;
+import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
@@ -47,6 +48,7 @@ import java.util.concurrent.TimeUnit;
 import static com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence.*;
 
 public class StatisticsJobsScheduler implements ApplicationComponent {
+  private static final int SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS = 10 * 60 * 1000;
   private static final int SEND_STATISTICS_DELAY_IN_MIN = 10;
 
   public static final int PERSIST_SESSIONS_INITIAL_DELAY_IN_MIN = 30;
@@ -86,25 +88,32 @@ public class StatisticsJobsScheduler implements ApplicationComponent {
   }
 
   private void runStatisticsService() {
-    final StatisticsService statisticsService = StatisticsUploadAssistant.getApprovedGroupsStatisticsService();
-
     if (StatisticsUploadAssistant.isShouldShowNotification()) {
       myFrameStateManager.addListener(new FrameStateListener.Adapter() {
         @Override
         public void onFrameActivated() {
           if (isEmpty(((WindowManagerEx)WindowManager.getInstance()).getMostRecentFocusedWindow())) {
+            final StatisticsService statisticsService = StatisticsUploadAssistant.getApprovedGroupsStatisticsService();
             ApplicationManager.getApplication().invokeLater(() -> StatisticsNotificationManager.showNotification(statisticsService));
             myFrameStateManager.removeListener(this);
           }
         }
       });
     }
-    else if (StatisticsUploadAssistant.isSendAllowed() && StatisticsUploadAssistant.isTimeToSend()) {
-      runStatisticsServiceWithDelay(statisticsService, SEND_STATISTICS_DELAY_IN_MIN);
 
-      // TODO: to be removed in 2018.1
-      runStatisticsServiceWithDelay(StatisticsUploadAssistant.getOldStatisticsService(), 2 * SEND_STATISTICS_DELAY_IN_MIN);
-    }
+    JobScheduler.getScheduler().scheduleWithFixedDelay(() -> {
+      final StatisticsService statisticsService = StatisticsUploadAssistant.getApprovedGroupsStatisticsService();
+      if (StatisticsUploadAssistant.isSendAllowed() && StatisticsUploadAssistant.isTimeToSend()) {
+        runStatisticsServiceWithDelay(statisticsService, SEND_STATISTICS_DELAY_IN_MIN);
+
+        // TODO: to be removed in 2018.1
+        runStatisticsServiceWithDelay(StatisticsUploadAssistant.getOldStatisticsService(), 2 * SEND_STATISTICS_DELAY_IN_MIN);
+      }
+
+      if (FeatureUsageLogger.INSTANCE.isEnabled() && StatisticsUploadAssistant.isTimeToSendEventLog()) {
+        runStatisticsServiceWithDelay(StatisticsUploadAssistant.getEventLogStatisticsService(), 3 * SEND_STATISTICS_DELAY_IN_MIN);
+      }
+    }, SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS, StatisticsUploadAssistant.getSendPeriodInMillis(), TimeUnit.MILLISECONDS);
   }
 
   private static void runStatisticsServiceWithDelay(@NotNull final StatisticsService statisticsService, int delayInMin) {

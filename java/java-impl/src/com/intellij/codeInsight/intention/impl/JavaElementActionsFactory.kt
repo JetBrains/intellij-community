@@ -87,6 +87,8 @@ class JavaElementActionsFactory(private val renderer: JavaElementRenderer) : Jvm
     }
     if (!javaClass.isInterface) {
       result += CreatePropertyAction(javaClass, request)
+      result += CreateGetterWithFieldAction(javaClass, request)
+      result += CreateSetterWithFieldAction(javaClass, request)
     }
     return result
   }

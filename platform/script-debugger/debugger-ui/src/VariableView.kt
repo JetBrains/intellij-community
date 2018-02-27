@@ -63,7 +63,7 @@ class VariableView(override val variableName: String, private val variable: Vari
     if (variable !is ObjectProperty || variable.getter == null) {
       // it is "used" expression (WEB-6779 Debugger/Variables: Automatically show used variables)
       evaluateContext.evaluate(variable.name)
-        .done(node) {
+        .onSuccess(node) {
           if (it.wasThrown) {
             setEvaluatedValue(viewSupport.transformErrorOnGetUsedReferenceValue(it.value, null), null, node)
           }
@@ -72,7 +72,7 @@ class VariableView(override val variableName: String, private val variable: Vari
             computePresentation(it.value, node)
           }
         }
-        .rejected(node) { setEvaluatedValue(viewSupport.transformErrorOnGetUsedReferenceValue(null, it.message), it.message, node) }
+        .onError(node) { setEvaluatedValue(viewSupport.transformErrorOnGetUsedReferenceValue(null, it.message), it.message, node) }
       return
     }
 
@@ -90,7 +90,7 @@ class VariableView(override val variableName: String, private val variable: Vari
           nonProtoContext = nonProtoContext.parent
         }
         valueModifier!!.evaluateGet(variable, evaluateContext)
-          .done(node) {
+          .onSuccess(node) {
             callback.evaluated("")
             setEvaluatedValue(it, null, node)
           }
@@ -318,9 +318,9 @@ class VariableView(override val variableName: String, private val variable: Vari
   override fun computeSourcePosition(navigatable: XNavigatable) {
     if (value is FunctionValue) {
       (value as FunctionValue).resolve()
-        .done { function ->
+        .onSuccess { function ->
           vm!!.scriptManager.getScript(function)
-            .done {
+            .onSuccess {
               navigatable.setSourcePosition(it?.let { viewSupport.getSourceInfo(null, it, function.openParenLine, function.openParenColumn) }?.let {
                 object : XSourcePositionWrapper(it) {
                   override fun createNavigatable(project: Project): Navigatable {
@@ -394,12 +394,12 @@ class VariableView(override val variableName: String, private val variable: Vari
 
       val evaluated = AtomicBoolean()
       value.fullString
-        .done {
+        .onSuccess {
           if (!callback.isObsolete && evaluated.compareAndSet(false, true)) {
             callback.evaluated(value.valueString!!)
           }
         }
-        .rejected { callback.errorOccurred(it.message!!) }
+        .onError { callback.errorOccurred(it.message!!) }
     }
   }
 
@@ -425,8 +425,8 @@ class VariableView(override val variableName: String, private val variable: Vari
       }
       else {
         context.evaluateContext.evaluate("a.length", Collections.singletonMap<String, Any>("a", value), false)
-          .done(node) { node.setPresentation(icon, null, "Array[${it.value.valueString}]", true) }
-          .rejected(node) {
+          .onSuccess(node) { node.setPresentation(icon, null, "Array[${it.value.valueString}]", true) }
+          .onError(node) {
             logger<VariableView>().error("Failed to evaluate array length: $it")
             node.setPresentation(icon, null, valueString ?: "Array", true)
           }

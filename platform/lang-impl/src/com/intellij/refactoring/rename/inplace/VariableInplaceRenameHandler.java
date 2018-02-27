@@ -26,7 +26,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandler;
@@ -39,7 +42,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler");
 
   @Override
-  public final boolean isAvailableOnDataContext(final DataContext dataContext) {
+  public final boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
     final PsiElement element = PsiElementRenameHandler.getElement(dataContext);
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
@@ -51,7 +54,9 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     return isAvailable(element, editor, file);
   }
 
-  protected boolean isAvailable(PsiElement element, Editor editor, PsiFile file) {
+  protected boolean isAvailable(@Nullable PsiElement element,
+                                @NotNull Editor editor,
+                                @NotNull PsiFile file) {
     final PsiElement nameSuggestionContext = file.findElementAt(editor.getCaretModel().getOffset());
 
     RefactoringSupportProvider supportProvider =
@@ -62,7 +67,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
   }
 
   @Override
-  public final boolean isRenaming(final DataContext dataContext) {
+  public final boolean isRenaming(@NotNull DataContext dataContext) {
     return isAvailableOnDataContext(dataContext);
   }
 
@@ -92,12 +97,15 @@ public class VariableInplaceRenameHandler implements RenameHandler {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
+  public void invoke(@NotNull Project project,
+                     @NotNull PsiElement[] elements,
+                     @NotNull DataContext dataContext) {
     PsiElement element = elements.length == 1 ? elements[0] : null;
     if (element == null) element = PsiElementRenameHandler.getElement(dataContext);
     LOG.assertTrue(element != null);
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (checkAvailable(element, editor, dataContext)) {
+      assert editor != null;
       doRename(element, editor, dataContext);
     }
   }
@@ -105,7 +113,10 @@ public class VariableInplaceRenameHandler implements RenameHandler {
   protected boolean checkAvailable(final PsiElement elementToRename, final Editor editor, final DataContext dataContext) {
     if (!isAvailableOnDataContext(dataContext)) {
       LOG.error("Recursive invocation");
-      RenameHandlerRegistry.getInstance().getRenameHandler(dataContext).invoke(
+      RenameHandler handler = RenameHandlerRegistry.getInstance().getRenameHandler(dataContext);
+      if (handler == null) return false;
+
+      handler.invoke(
         elementToRename.getProject(),
         editor,
         elementToRename.getContainingFile(), dataContext
@@ -116,18 +127,16 @@ public class VariableInplaceRenameHandler implements RenameHandler {
   }
 
   @Nullable
-  public InplaceRefactoring doRename(final @NotNull PsiElement elementToRename, final Editor editor, final DataContext dataContext) {
+  public InplaceRefactoring doRename(@NotNull PsiElement elementToRename,
+                                     @NotNull Editor editor,
+                                     @Nullable DataContext dataContext) {
     VariableInplaceRenamer renamer = createRenamer(elementToRename, editor);
-    boolean startedRename = renamer == null ? false : renamer.performInplaceRename();
+    boolean startedRename = renamer != null && renamer.performInplaceRename();
 
     if (!startedRename) {
       performDialogRename(elementToRename, editor, dataContext, renamer != null ? renamer.myInitialName : null);
     }
     return renamer;
-  }
-
-  protected static void performDialogRename(PsiElement elementToRename, Editor editor, DataContext dataContext) {
-    performDialogRename(elementToRename, editor, dataContext, null);
   }
 
   protected static void performDialogRename(PsiElement elementToRename, Editor editor, DataContext dataContext, String initialName) {
@@ -152,7 +161,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
   }
 
   @Nullable
-  protected VariableInplaceRenamer createRenamer(@NotNull PsiElement elementToRename, Editor editor) {
+  protected VariableInplaceRenamer createRenamer(@NotNull PsiElement elementToRename, @NotNull Editor editor) {
     return new VariableInplaceRenamer((PsiNamedElement)elementToRename, editor);
   }
 }

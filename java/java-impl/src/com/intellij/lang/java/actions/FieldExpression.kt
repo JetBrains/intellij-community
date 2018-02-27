@@ -12,7 +12,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
 import com.intellij.psi.util.createSmartPointer
 import com.intellij.ui.LayeredIcon
 import javax.swing.Icon
@@ -20,7 +19,6 @@ import javax.swing.Icon
 internal class FieldExpression(
   project: Project,
   target: PsiClass,
-  typeContext: PsiElement,
   private val fieldName: String,
   private val typeText: () -> String
 ) : Expression() {
@@ -30,7 +28,6 @@ internal class FieldExpression(
   }
 
   private val myClassPointer = target.createSmartPointer(project)
-  private val myTypeContextPointer = typeContext.createSmartPointer(project)
   private val myFactory = JavaPsiFacade.getElementFactory(project)
 
   override fun calculateResult(context: ExpressionContext): Result? = TextResult(fieldName)
@@ -39,9 +36,8 @@ internal class FieldExpression(
 
   override fun calculateLookupItems(context: ExpressionContext): Array<LookupElement> {
     val psiClass = myClassPointer.element ?: return LookupElement.EMPTY_ARRAY
-    val typeContext = myTypeContextPointer.element ?: return LookupElement.EMPTY_ARRAY
 
-    val userType = myFactory.createTypeFromText(typeText(), typeContext)
+    val userType = myFactory.createTypeFromText(typeText(), psiClass)
     val result = LinkedHashSet<LookupElement>()
     if (psiClass.findFieldByName(fieldName, false) == null) {
       result += LookupElementBuilder.create(fieldName).withIcon(newFieldIcon).withTypeText(userType.presentableText)

@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.SizedIcon;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NonNls;
@@ -171,6 +172,12 @@ public class ActionStepBuilder extends PresentationFactory {
         icon = disabledIcon != null ? disabledIcon : IconLoader.getDisabledIcon(icon);
         selectedIcon = disabledIcon != null ? disabledIcon : IconLoader.getDisabledIcon(selectedIcon);
       }
+
+      if (myMaxIconWidth != -1 && myMaxIconHeight != -1) {
+        if (icon != null) icon = new SizedIcon(icon, myMaxIconWidth, myMaxIconHeight);
+        if (selectedIcon != null) selectedIcon = new SizedIcon(selectedIcon, myMaxIconWidth, myMaxIconHeight);
+      }
+
       if (icon == null) icon = selectedIcon != null ? selectedIcon : myEmptyIcon;
       boolean prependSeparator = (!myListModel.isEmpty() || mySeparatorText != null) && myPrependWithSeparator;
       assert text != null : action + " has no presentation";

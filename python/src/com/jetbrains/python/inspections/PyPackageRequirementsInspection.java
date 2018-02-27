@@ -228,16 +228,33 @@ public class PyPackageRequirementsInspection extends PyInspection {
     final Sdk sdk = PythonSdkType.findPythonSdk(module);
     if (sdk == null) return null;
 
-    final List<PyRequirement> requirements = PyPackageManager.getInstance(sdk).getRequirements(module);
+    final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
+
+    final List<PyRequirement> requirements = getListedRequirements(module, packageManager);
     if (requirements == null) return null;
     if (requirements.isEmpty()) return Collections.emptySet();
 
-    final List<PyPackage> packages = PyPackageManager.getInstance(sdk).getPackages();
+    final List<PyPackage> packages = packageManager.getPackages();
     if (packages == null) return null;
 
     final Set<PyRequirement> result = new HashSet<>(requirements);
     result.addAll(getTransitiveRequirements(packages, requirements, new HashSet<>()));
     return result;
+  }
+
+  @Nullable
+  private static List<PyRequirement> getListedRequirements(@NotNull Module module, @NotNull PyPackageManager packageManager) {
+    final List<PyRequirement> requirements = packageManager.getRequirements(module);
+    final List<PyRequirement> extrasRequirements = getExtrasRequirements(module);
+    if (requirements == null) return extrasRequirements;
+    if (extrasRequirements == null) return requirements;
+    return ContainerUtil.concat(requirements, extrasRequirements);
+  }
+
+  @Nullable
+  private static List<PyRequirement> getExtrasRequirements(@NotNull Module module) {
+    final Map<String, List<PyRequirement>> extrasRequire = PyPackageUtil.findSetupPyExtrasRequire(module);
+    return extrasRequire == null ? null : ContainerUtil.flatten(extrasRequire.values());
   }
 
   @NotNull
@@ -430,7 +447,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     public String getName() {
       return PyBundle.message("QFIX.NAME.install.and.import.package", myPackageName);
     }
-    
+
     @Override
     @NotNull
     public String getFamilyName() {

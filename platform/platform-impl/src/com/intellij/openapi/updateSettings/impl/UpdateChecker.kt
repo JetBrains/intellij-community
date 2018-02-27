@@ -40,6 +40,9 @@ import java.io.File
 import java.io.IOException
 import java.lang.IllegalStateException
 import java.util.*
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.set
 
 /**
  * See XML file by [ApplicationInfoEx.getUpdateUrls] for reference.
@@ -133,7 +136,7 @@ object UpdateChecker {
     val externalUpdates: Collection<ExternalUpdate>?
     try {
       updatedPlugins = checkPluginsUpdate(updateSettings, indicator, incompatiblePlugins, buildNumber)
-      externalUpdates = updateExternal(manualCheck, updateSettings, indicator)
+      externalUpdates = checkExternalUpdates(manualCheck, updateSettings, indicator)
     }
     catch (e: IOException) {
       showErrorMessage(manualCheck, IdeBundle.message("updates.error.connection.failed", e.message))
@@ -191,7 +194,6 @@ object UpdateChecker {
     return strategy.checkForUpdates()
   }
 
-  @JvmStatic
   private fun checkPluginsUpdate(updateSettings: UpdateSettings,
                                  indicator: ProgressIndicator?,
                                  incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?,
@@ -199,12 +201,10 @@ object UpdateChecker {
     val updateable = collectUpdateablePlugins()
     if (updateable.isEmpty()) return null
 
-    // check custom repositories and the main one for updates
     val toUpdate = ContainerUtil.newTroveMap<PluginId, PluginDownloader>()
 
     val hosts = RepositoryHelper.getPluginHosts()
     val state = InstalledPluginsState.getInstance()
-
     outer@ for (host in hosts) {
       try {
         val forceHttps = host == null && updateSettings.canUseSecureConnection()
@@ -274,7 +274,7 @@ object UpdateChecker {
     return updateable
   }
 
-  private fun updateExternal(manualCheck: Boolean, updateSettings: UpdateSettings, indicator: ProgressIndicator?) : Collection<ExternalUpdate> {
+  private fun checkExternalUpdates(manualCheck: Boolean, updateSettings: UpdateSettings, indicator: ProgressIndicator?) : Collection<ExternalUpdate> {
     val result = arrayListOf<ExternalUpdate>()
     val manager = ExternalComponentManager.getInstance()
     indicator?.text = IdeBundle.message("updates.external.progress")
@@ -331,7 +331,7 @@ object UpdateChecker {
         descriptor = oldDownloader.descriptor
       }
 
-      if (descriptor != null && PluginManagerCore.isCompatible(descriptor, downloader.buildNumber) && !state.wasUpdated(descriptor.pluginId)) {
+      if (PluginManagerCore.isCompatible(descriptor, downloader.buildNumber) && !state.wasUpdated(descriptor.pluginId)) {
         toUpdate[PluginId.getId(pluginId)] = downloader
       }
     }
@@ -339,8 +339,8 @@ object UpdateChecker {
     // collect plugins which were not updated and would be incompatible with new version
     if (incompatiblePlugins != null && installedPlugin != null && installedPlugin.isEnabled &&
         !toUpdate.containsKey(installedPlugin.pluginId) &&
-        PluginManagerCore.isIncompatible(installedPlugin, downloader.buildNumber)) {
-      incompatiblePlugins.add(installedPlugin)
+        !PluginManagerCore.isCompatible(installedPlugin, downloader.buildNumber)) {
+      incompatiblePlugins += installedPlugin
     }
   }
 
@@ -511,28 +511,32 @@ object UpdateChecker {
   }
 
   /** A helper method for manually testing platform updates (see [com.intellij.internal.ShowUpdateInfoDialogAction]). */
-  fun testPlatformUpdate(updateInfoText: String, patchFilePath: String?) {
+  fun testPlatformUpdate(updateInfoText: String, patchFilePath: String?, forceUpdate: Boolean) {
     if (!ApplicationManager.getApplication().isInternal) {
       throw IllegalStateException()
     }
 
-    val updateInfo: UpdatesInfo
-    try {
-      updateInfo = UpdatesInfo(loadElement(updateInfoText))
+    val channel: UpdateChannel?
+    val newBuild: BuildInfo?
+    val patch: PatchInfo?
+    if (forceUpdate) {
+      val node = loadElement(updateInfoText).getChild("product")?.getChild("channel") ?: throw IllegalArgumentException("//channel missing")
+      channel = UpdateChannel(node)
+      newBuild = channel.builds.firstOrNull() ?: throw IllegalArgumentException("//build missing")
+      patch = newBuild.patches.firstOrNull()
     }
-    catch (e: JDOMException) {
-      LOG.error(e)
-      return
+    else {
+      val updateInfo = UpdatesInfo(loadElement(updateInfoText))
+      val strategy = UpdateStrategy(ApplicationInfo.getInstance().build, updateInfo, UpdateSettings.getInstance())
+      val checkForUpdateResult = strategy.checkForUpdates()
+      channel = checkForUpdateResult.updatedChannel
+      newBuild = checkForUpdateResult.newBuild
+      patch = checkForUpdateResult.findPatchForBuild(ApplicationInfo.getInstance().build)
     }
 
-    val strategy = UpdateStrategy(ApplicationInfo.getInstance().build, updateInfo, UpdateSettings.getInstance())
-    val checkForUpdateResult = strategy.checkForUpdates()
-    val updatedChannel = checkForUpdateResult.updatedChannel
-    val newBuild = checkForUpdateResult.newBuild
-    if (updatedChannel != null && newBuild != null) {
-      val patch = checkForUpdateResult.findPatchForBuild(ApplicationInfo.getInstance().build)
+    if (channel != null && newBuild != null) {
       val patchFile = if (patchFilePath != null) File(FileUtil.toSystemDependentName(patchFilePath)) else null
-      UpdateInfoDialog(updatedChannel, newBuild, patch, patchFile).show()
+      UpdateInfoDialog(channel, newBuild, patch, patchFile).show()
     }
     else {
       NoUpdatesDialog(true).show()

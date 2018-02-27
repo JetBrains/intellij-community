@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util.gotoByName;
 
@@ -35,7 +21,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.SettingsImpl;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -53,6 +42,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -461,8 +451,12 @@ public abstract class ChooseByNameBase {
       .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY).getShortcutSet(), myTextField);
 
     myTextFieldPanel.add(myTextField);
-    Font editorFont = EditorUtil.getEditorFont();
+    // [tav] todo: UIUtil.getFontWithFallback() doesn't display Japanese on OSX
+    Font editorFont = SystemInfo.isMac ?
+                      EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN) :
+                      EditorUtil.getEditorFont();
     myTextField.setFont(editorFont);
+    myTextField.putClientProperty("caretWidth", JBUI.scale(new SettingsImpl().getLineCursorWidth()));
 
     if (checkBoxName != null) {
       if (myCheckBoxShortcut != null) {
@@ -850,7 +844,7 @@ public abstract class ChooseByNameBase {
       myTextPopup = null;
       close(false);
       return Boolean.TRUE;
-    }).setFocusable(true).setRequestFocus(true).setModalContext(false).setCancelOnClickOutside(false);
+    }).setFocusable(true).setRequestFocus(true).setModalContext(false);
 
     Point point = new Point(x, y);
     SwingUtilities.convertPointToScreen(point, layeredPane);
@@ -878,7 +872,8 @@ public abstract class ChooseByNameBase {
     JLayeredPane layeredPane;
     final Window window = WindowManager.getInstance().suggestParentWindow(myProject);
 
-    Component parent = UIUtil.findUltimateParent(window);
+    //Component parent = UIUtil.findUltimateParent(window);
+    Component parent= window;
 
     if (parent instanceof JFrame) {
       layeredPane = ((JFrame)parent).getLayeredPane();

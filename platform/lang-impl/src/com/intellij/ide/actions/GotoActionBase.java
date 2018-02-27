@@ -28,7 +28,6 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,7 +39,6 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -222,7 +220,7 @@ public abstract class GotoActionBase extends AnAction {
     ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, itemProvider, start.first,
                                                             mayRequestOpenInCurrentWindow,
                                                             start.second);
-    UIUtil.typeAheadUntilFocused(e.getInputEvent(), popup.getTextField());
+    //UIUtil.typeAheadUntilFocused(e.getInputEvent(), popup.getTextField());
     showNavigationPopup(callback, findUsagesTitle,
                         popup, allowMultipleSelection);
   }

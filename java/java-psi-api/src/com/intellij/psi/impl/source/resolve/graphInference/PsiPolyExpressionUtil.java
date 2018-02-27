@@ -6,11 +6,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class PsiPolyExpressionUtil {
   public static boolean hasStandaloneForm(PsiExpression expression) {
@@ -34,8 +37,11 @@ public class PsiPolyExpressionUtil {
       return isInAssignmentOrInvocationContext(expression);
     }
     else if (expression instanceof PsiMethodCallExpression) {
-      final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(((PsiMethodCallExpression)expression).getArgumentList());
-      return isMethodCallPolyExpression(expression, candidateProperties != null ? candidateProperties.getMethod() : ((PsiMethodCallExpression)expression).resolveMethod());
+      return isMethodCallPolyExpression(expression, expr -> {
+        final MethodCandidateInfo.CurrentCandidateProperties candidateProperties =
+          MethodCandidateInfo.getCurrentMethod(((PsiMethodCallExpression)expr).getArgumentList());
+        return candidateProperties != null ? candidateProperties.getMethod() : ((PsiMethodCallExpression)expr).resolveMethod();
+      });
     }
     else if (expression instanceof PsiConditionalExpression) {
       final ConditionalKind conditionalKind = isBooleanOrNumeric(expression);
@@ -46,13 +52,14 @@ public class PsiPolyExpressionUtil {
     return false;
   }
 
-   public static boolean isMethodCallPolyExpression(PsiExpression expression, final PsiMethod method) {
+  public static boolean isMethodCallPolyExpression(PsiExpression expression, final PsiMethod method) {
+    return isMethodCallPolyExpression(expression, e -> method);
+  }
+
+  private static boolean isMethodCallPolyExpression(PsiExpression expression, Function<PsiExpression, PsiMethod> methodResolver) {
     if (isInAssignmentOrInvocationContext(expression) && ((PsiCallExpression)expression).getTypeArguments().length == 0) {
-      if (method != null) {
-        return isMethodCallTypeDependsOnInference(expression, method);
-      } else {
-        return true;
-      }
+      PsiMethod method = methodResolver.apply(expression);
+      return method == null || isMethodCallTypeDependsOnInference(expression, method);
     }
     return false;
   }
@@ -74,7 +81,7 @@ public class PsiPolyExpressionUtil {
   public static Boolean mentionsTypeParameters(@Nullable PsiType returnType, final Set<PsiTypeParameter> typeParameters) {
     if (returnType == null) return false;
     return returnType.accept(new PsiTypeVisitor<Boolean>() {
-      @Nullable
+      @NotNull
       @Override
       public Boolean visitType(PsiType type) {
         return false;
@@ -90,7 +97,7 @@ public class PsiPolyExpressionUtil {
         return false;
       }
 
-      @Nullable
+      @NotNull
       @Override
       public Boolean visitClassType(PsiClassType classType) {
         PsiClassType.ClassResolveResult result = classType.resolveGenerics();

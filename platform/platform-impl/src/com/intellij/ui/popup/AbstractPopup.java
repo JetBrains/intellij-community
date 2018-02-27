@@ -881,7 +881,6 @@ public class AbstractPopup implements JBPopup {
           if (myCursor != cursor || myCursor != Cursor.getDefaultCursor()) {
             glass.setCursor(cursor, this);
             myCursor = cursor;
-            super.setCursor(content, cursor);
           }
         }
       };
@@ -930,7 +929,7 @@ public class AbstractPopup implements JBPopup {
     if ("TRUE".equals(getContent().getClientProperty("BookmarkPopup"))) {
       window.setType(Window.Type.NORMAL);
     } else if (SystemInfo.isJetBrainsJvm) {
-      window.setType(Window.Type.POPUP);
+      //window.setType(Window.Type.POPUP);
     }
 
     // Swing popup default always on top state is set in true

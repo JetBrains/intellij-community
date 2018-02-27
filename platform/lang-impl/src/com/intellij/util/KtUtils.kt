@@ -8,10 +8,7 @@ import com.intellij.openapi.util.Pair as JBPair
 operator fun <A> JBPair<A, *>.component1(): A = first
 operator fun <A> JBPair<*, A>.component2(): A = second
 
-// This function helps to get rid of platform types.
-fun <A : Any, B : Any> JBPair<A?, B?>.toNotNull(): JBPair<A, B> {
-  requireNotNull(first)
-  requireNotNull(second)
-  @Suppress("UNCHECKED_CAST")
-  return this as JBPair<A, B>
+// This function helps to get rid of platform types
+fun <A : Any, B : Any> JBPair<A?, B?>.toNotNull(): Pair<A, B> {
+  return requireNotNull(first) to requireNotNull(second)
 }

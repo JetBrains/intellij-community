@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,12 +79,7 @@ class ParameterClassCheckVisitor extends JavaRecursiveElementWalkingVisitor {
   private boolean isGetClassCall(PsiMethodCallExpression methodCallExpression) {
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
     final String methodName = methodExpression.getReferenceName();
-    if (!HardcodedMethodConstants.GET_CLASS.equals(methodName)) {
-      return false;
-    }
-    final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
-    final PsiExpression[] arguments = argumentList.getExpressions();
-    if (arguments.length != 0) {
+    if (!HardcodedMethodConstants.GET_CLASS.equals(methodName) || !methodCallExpression.getArgumentList().isEmpty()) {
       return false;
     }
     final PsiMethod method = methodCallExpression.resolveMethod();

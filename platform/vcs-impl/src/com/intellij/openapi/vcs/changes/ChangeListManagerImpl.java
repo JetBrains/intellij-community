@@ -133,9 +133,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         final LocalChangeList oldList = (LocalChangeList)oldDefaultList;
         if (oldDefaultList == null || oldList.hasDefaultName() || oldDefaultList.equals(newDefaultList)) return;
 
-        if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          scheduleAutomaticEmptyChangeListDeletion(oldList);
-        }
+        scheduleAutomaticEmptyChangeListDeletion(oldList);
       }
     });
 
@@ -152,6 +150,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList oldList) {
+    if (ApplicationManager.getApplication().isUnitTestMode() &&
+        myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS == VcsShowConfirmationOption.Value.SHOW_CONFIRMATION) {
+      return;
+    }
+
     invokeAfterUpdate(() -> {
       LocalChangeList actualList = getChangeList(oldList.getId());
       if (actualList == null || actualList.isDefault() || !actualList.getChanges().isEmpty()) {
@@ -466,6 +469,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
     final VcsInvalidated invalidated = myDirtyScopeManager.retrieveScopes();
     if (checkScopeIsEmpty(invalidated)) {
+      LOG.debug("[update] - dirty scope is empty");
       myDirtyScopeManager.changesProcessed();
       return;
     }
@@ -539,9 +543,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             if (statusChanged) {
               myDelayedNotificator.unchangedFileStatusChanged();
             }
+            LOG.debug("[update] - success");
           }
           else {
             myModifier.finishUpdate(null);
+            LOG.debug("[update] - aborted");
           }
           myShowLocalChangesInvalidated = false;
         }
@@ -1007,23 +1013,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  @Override
-  @NotNull
-  public Collection<LocalChangeList> getAffectedLists(@NotNull Collection<Change> changes) {
-    synchronized (myDataLock) {
-      return myWorker.getAffectedLists(changes);
-    }
-  }
-
-  @Override
-  @Nullable
-  public LocalChangeList getChangeList(@NotNull Change change) {
-    synchronized (myDataLock) {
-      List<LocalChangeList> lists = myWorker.getAffectedLists(change);
-      return ContainerUtil.getFirstItem(lists);
-    }
-  }
-
   public void notifyChangelistsChanged() {
     myWorker.notifyChangelistsChanged();
   }
@@ -1050,12 +1039,39 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public LocalChangeList getChangeList(@NotNull VirtualFile file) {
+  @NotNull
+  public List<LocalChangeList> getAffectedLists(@NotNull Collection<Change> changes) {
+    synchronized (myDataLock) {
+      return myWorker.getAffectedLists(changes);
+    }
+  }
+
+  @NotNull
+  @Override
+  public List<LocalChangeList> getChangeLists(@NotNull Change change) {
+    return getAffectedLists(Collections.singletonList(change));
+  }
+
+  @NotNull
+  @Override
+  public List<LocalChangeList> getChangeLists(@NotNull VirtualFile file) {
     synchronized (myDataLock) {
       Change change = myWorker.getChangeForPath(VcsUtil.getFilePath(file));
-      if (change == null) return null;
-      return getChangeList(change);
+      if (change == null) return Collections.emptyList();
+      return getChangeLists(change);
     }
+  }
+
+  @Override
+  @Nullable
+  public LocalChangeList getChangeList(@NotNull Change change) {
+    return ContainerUtil.getFirstItem(getChangeLists(change));
+  }
+
+  @Override
+  @Nullable
+  public LocalChangeList getChangeList(@NotNull VirtualFile file) {
+    return ContainerUtil.getFirstItem(getChangeLists(file));
   }
 
   @Override
@@ -1294,16 +1310,16 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     doCommit(changeList, changes, false);
   }
 
-  private boolean doCommit(final LocalChangeList changeList, final List<Change> changes, final boolean synchronously) {
+  private void doCommit(final LocalChangeList changeList, final List<Change> changes, final boolean synchronously) {
     FileDocumentManager.getInstance().saveAllDocuments();
-    return new CommitHelper(myProject, changeList, changes, changeList.getName(),
-                            StringUtil.isEmpty(changeList.getComment()) ? changeList.getName() : changeList.getComment(), new ArrayList<>(),
-                            false, synchronously, FunctionUtil.nullConstant(), null, false, null).doCommit();
+    new CommitHelper(myProject, changeList, changes, changeList.getName(),
+                     StringUtil.isEmpty(changeList.getComment()) ? changeList.getName() : changeList.getComment(), new ArrayList<>(),
+                     false, synchronously, FunctionUtil.nullConstant(), null, false, null).doCommit();
   }
 
   @TestOnly
-  public boolean commitChangesSynchronouslyWithResult(@NotNull LocalChangeList changeList, @NotNull List<Change> changes) {
-    return doCommit(changeList, changes, true);
+  public void commitChangesSynchronouslyWithResult(@NotNull LocalChangeList changeList, @NotNull List<Change> changes) {
+    doCommit(changeList, changes, true);
   }
 
   @Override

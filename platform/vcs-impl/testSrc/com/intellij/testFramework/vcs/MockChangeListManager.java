@@ -154,6 +154,18 @@ public class MockChangeListManager extends ChangeListManagerEx {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
+  @Override
+  public List<LocalChangeList> getChangeLists(@NotNull Change change) {
+    throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  @Override
+  public List<LocalChangeList> getChangeLists(@NotNull VirtualFile file) {
+    throw new UnsupportedOperationException();
+  }
+
   @Override
   public String getChangeListNameIfOnlyOne(Change[] changes) {
     throw new UnsupportedOperationException();

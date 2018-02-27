@@ -143,3 +143,76 @@ class TX {
     (<error descr="Variable 'k' might not have been initialized">k</error>)++;
   }
 }
+// IDEA-186321
+class ForLoop {
+  private final int i;
+  {
+    i = 1;
+    for(;;i = 2, <error descr="Variable 'i' might already have been assigned to">i</error> = 3) {
+      break;
+    }
+  }
+
+  private final int j;
+  {
+    for(;;j = 2) {
+      <error descr="Variable 'j' might already have been assigned to">j</error> = 1;
+      break;
+    }
+  }
+}
+// IDEA-186305
+class Asserts {
+  final int x;
+  {
+    x = 1;
+    assert true : x = 2;
+  }
+
+  final int x1;
+  {
+    x1 = 1;
+    assert false : <error descr="Variable 'x1' might already have been assigned to">x1</error> = 2;
+  }
+
+  final int y;
+  {
+    try {
+      assert true : y = 2;
+    }
+    catch (Throwable t) {}
+    // javac accepts this, though this looks strange
+    <error descr="Variable 'y' might already have been assigned to">y</error> = 1;
+  }
+
+  final int y1;
+  {
+    try {
+      assert false : y1 = 2;
+    }
+    catch (Throwable t) {}
+    <error descr="Variable 'y1' might already have been assigned to">y1</error> = 1;
+  }
+}
+// IDEA-186304
+class IncrementInUnreachableBranch {
+  private final int i;
+  {
+    if (true) {
+      i = 2;
+    } else {
+      System.out.println(i); // unreachable
+      i++;
+    }
+  }
+
+  private final int j;
+  {
+    if (true) {
+      j = 2;
+    } else {
+      System.out.println(j); // unreachable
+      j = j + 1;
+    }
+  }
+}

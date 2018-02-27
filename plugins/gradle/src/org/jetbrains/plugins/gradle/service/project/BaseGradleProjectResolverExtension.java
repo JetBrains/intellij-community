@@ -60,7 +60,6 @@ import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleModuleVersion;
 import org.gradle.tooling.model.GradleTask;
 import org.gradle.tooling.model.UnsupportedMethodException;
-import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.tooling.model.idea.*;
 import org.gradle.util.GradleVersion;
@@ -70,7 +69,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataService;
 import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
@@ -94,6 +92,7 @@ import static com.intellij.openapi.util.Pair.pair;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.CONFIGURATION_ARTIFACTS;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.MODULES_OUTPUTS;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.*;
+import static org.jetbrains.plugins.gradle.service.task.GradleTaskManager.getForkedDebuggerSetup;
 
 /**
  * {@link BaseGradleProjectResolverExtension} provides base implementation of Gradle project resolver.
@@ -729,19 +728,51 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
                                     @Nullable String jvmAgentSetup,
                                     @NotNull Consumer<String> initScriptConsumer) {
     if (!StringUtil.isEmpty(jvmAgentSetup)) {
-      final String names = "[\"" + StringUtil.join(taskNames, "\", \"") + "\"]";
-      final String[] lines = {
-        "gradle.taskGraph.beforeTask { Task task ->",
-        "    if (task instanceof JavaForkOptions && (" + names + ".contains(task.name) || " + names + ".contains(task.path))) {",
-        "        def jvmArgs = task.jvmArgs.findAll{!it?.startsWith('-agentlib:jdwp') && !it?.startsWith('-Xrunjdwp')}",
-        "        jvmArgs << '" + jvmAgentSetup.trim().replace("\\", "\\\\") + '\'',
-        "        task.jvmArgs = jvmArgs",
-        "    }" +
-        "}",
-      };
-      final String script = StringUtil.join(lines, SystemProperties.getLineSeparator());
-      initScriptConsumer.consume(script);
+      int debugPort = getForkedDebuggerSetup(jvmAgentSetup);
+      if (debugPort != -1) {
+        setupDebugForAllJvmForkedTasks(initScriptConsumer, debugPort);
+      }
+      else {
+        final String names = "[\"" + StringUtil.join(taskNames, "\", \"") + "\"]";
+        final String[] lines = {
+          "gradle.taskGraph.beforeTask { Task task ->",
+          "    if (task instanceof JavaForkOptions && (" + names + ".contains(task.name) || " + names + ".contains(task.path))) {",
+          "        def jvmArgs = task.jvmArgs.findAll{!it?.startsWith('-agentlib:jdwp') && !it?.startsWith('-Xrunjdwp')}",
+          "        jvmArgs << '" + jvmAgentSetup.trim().replace("\\", "\\\\") + '\'',
+          "        task.jvmArgs = jvmArgs",
+          "    }" +
+          "}",
+        };
+        final String script = StringUtil.join(lines, SystemProperties.getLineSeparator());
+        initScriptConsumer.consume(script);
+      }
     }
+  }
+
+  public void setupDebugForAllJvmForkedTasks(@NotNull Consumer<String> initScriptConsumer, int debugPort) {
+    // external-system-rt.jar
+    String esRtJarPath = PathUtil.getCanonicalPath(PathManager.getJarPathForClass(ExternalSystemSourceType.class));
+    final String[] lines = {
+      "initscript {",
+      "  dependencies {",
+      "    classpath files(\"" + esRtJarPath + "\")",
+      "  }",
+      "}",
+      "gradle.taskGraph.beforeTask { Task task ->",
+      " if (task instanceof JavaForkOptions) {",
+      "  def jvmArgs = task.jvmArgs.findAll{!it?.startsWith('-agentlib:jdwp') && !it?.startsWith('-Xrunjdwp')}",
+      "  jvmArgs << com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.setupDebugger(task.path, " + debugPort + ")",
+      "  task.jvmArgs = jvmArgs",
+      " }",
+      "}",
+      "gradle.taskGraph.afterTask { Task task ->",
+      "    if (task instanceof JavaForkOptions) {",
+      "        com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.processFinished(task.path, " + debugPort + ")",
+      "    }",
+      "}",
+    };
+    final String script = StringUtil.join(lines, SystemProperties.getLineSeparator());
+    initScriptConsumer.consume(script);
   }
 
   @Override
@@ -885,18 +916,16 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     throws IllegalStateException {
 
     final GradleExecutionSettings gradleExecutionSettings = resolverContext.getSettings();
-    if (gradleExecutionSettings != null) {
-      final BuildEnvironment environment = GradleExecutionHelper.getBuildEnvironment(resolverContext);
-      if (environment != null) {
-        final GradleVersion projectGradleVersion = GradleVersion.version(environment.getGradle().getGradleVersion());
-        if (projectGradleVersion.compareTo(GradleVersion.version("4.0")) < 0) {
-          final IdeaModule dependencyModule = dependency.getDependencyModule();
-          if (dependencyModule != null) {
-            final ModuleData moduleData =
-              gradleExecutionSettings.getExecutionWorkspace().findModuleDataByModule(resolverContext, dependencyModule);
-            if (moduleData != null) {
-              return new ModuleDependencyData(ownerModule.getData(), moduleData);
-            }
+    final String projectGradleVersionString = resolverContext.getProjectGradleVersion();
+    if (gradleExecutionSettings != null && projectGradleVersionString != null) {
+      final GradleVersion projectGradleVersion = GradleVersion.version(projectGradleVersionString);
+      if (projectGradleVersion.compareTo(GradleVersion.version("4.0")) < 0) {
+        final IdeaModule dependencyModule = dependency.getDependencyModule();
+        if (dependencyModule != null) {
+          final ModuleData moduleData =
+            gradleExecutionSettings.getExecutionWorkspace().findModuleDataByModule(resolverContext, dependencyModule);
+          if (moduleData != null) {
+            return new ModuleDependencyData(ownerModule.getData(), moduleData);
           }
         }
       }

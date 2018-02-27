@@ -681,6 +681,31 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  // PY-18629
+  public void testPreferImportedModuleOverNamespacePackage() {
+    doMultiFileTest();
+  }
+
+  // PY-22221
+  public void testFunctionInIgnoredIdentifiers() {
+    myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
+    final PsiFile currentFile = myFixture.configureFromTempProjectFile("a.py");
+
+    final PyUnresolvedReferencesInspection inspection = new PyUnresolvedReferencesInspection();
+    inspection.ignoredIdentifiers.add("mock.patch.*");
+
+    myFixture.enableInspections(inspection);
+    myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
+
+    assertProjectFilesNotParsed(currentFile);
+    assertSdkRootsNotParsed(currentFile);
+  }
+
+  // PY-23632
+  public void testMockPatchObject() {
+    doMultiFileTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

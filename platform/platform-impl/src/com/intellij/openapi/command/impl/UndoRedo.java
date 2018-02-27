@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.CommonBundle;
@@ -188,11 +188,6 @@ abstract class UndoRedo {
     final boolean[] isOk = new boolean[1];
     TransactionGuard.getInstance().submitTransactionAndWait(() -> {
       String actionText = getActionName(myUndoableGroup.getCommandName());
-
-      if (actionText.length() > 80) {
-        actionText = actionText.substring(0, 80) + "... ";
-      }
-
       isOk[0] = Messages.showOkCancelDialog(myManager.getProject(), actionText + "?", getActionName(),
                                             Messages.getQuestionIcon()) == Messages.OK;
     });

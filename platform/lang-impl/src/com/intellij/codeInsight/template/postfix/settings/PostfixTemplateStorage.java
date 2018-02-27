@@ -77,7 +77,9 @@ public class PostfixTemplateStorage extends SimpleModificationTracker implements
         String builtinId = templateElement.getAttributeValue(BUILTIN_ATTR_NAME);
         PostfixTemplate builtinTemplate = findBuiltinTemplate(builtinId, provider);
         if (builtinTemplate != null) {
-          PostfixTemplate delegate = externalTemplate != null ? externalTemplate : new PostfixTemplateWrapper(builtinTemplate);
+          PostfixTemplate delegate = externalTemplate != null
+                                     ? externalTemplate
+                                     : new PostfixTemplateWrapper(templateId, templateName, "." + templateName, builtinTemplate, provider);
           myTemplates.putValue(provider.getId(), new PostfixChangedBuiltinTemplate(delegate, builtinTemplate));
         }
         else if (externalTemplate != null) {

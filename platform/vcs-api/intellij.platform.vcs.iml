@@ -13,5 +13,6 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.core" exported="" />
     <orderEntry type="module" module-name="intellij.platform.diff" exported="" />
     <orderEntry type="library" name="StreamEx" level="project" />
+    <orderEntry type="library" name="JDOM" level="project" />
   </component>
 </module>

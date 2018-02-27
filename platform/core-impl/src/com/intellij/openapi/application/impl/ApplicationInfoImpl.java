@@ -17,7 +17,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBRectangle;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -100,6 +99,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myFUStatisticsSettingsUrl;
   private String myStatisticsServiceUrl;
   private String myStatisticsServiceKey;
+  private String myEventLogSettingsUrl;
   private String myThirdPartySoftwareUrl;
   private String myJetbrainsTvUrl;
   private String myEvalLicenseUrl = "https://www.jetbrains.com/store/license.html";
@@ -185,6 +185,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_FU_STATISTICS_SETTINGS = "fus-settings";
   private static final String ATTRIBUTE_STATISTICS_SERVICE = "service";
   private static final String ATTRIBUTE_STATISTICS_SERVICE_KEY = "service-key";
+  private static final String ATTRIBUTE_EVENT_LOG_STATISTICS_SETTINGS = "event-log-settings";
   private static final String ELEMENT_THIRD_PARTY = "third-party";
   private static final String ELEMENT_JB_TV = "jetbrains-tv";
   private static final String CUSTOMIZE_IDE_WIZARD_STEPS = "customize-ide-wizard";
@@ -546,6 +547,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return myStatisticsServiceKey;
   }
 
+  public String getEventLogSettingsUrl() {
+    return myEventLogSettingsUrl;
+  }
+
   @Override
   public String getThirdPartySoftwareURL() {
     return myThirdPartySoftwareUrl;
@@ -742,12 +747,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       String logoH = aboutLogoElement.getAttributeValue("logoH");
       if (logoX != null && logoY != null && logoW != null && logoH != null) {
         try {
-          myAboutLogoRect =
-            new JBRectangle(Integer.parseInt(logoX), Integer.parseInt(logoY), Integer.parseInt(logoW), Integer.parseInt(logoH));
+          myAboutLogoRect = new Rectangle(Integer.parseInt(logoX), Integer.parseInt(logoY), Integer.parseInt(logoW), Integer.parseInt(logoH));
         }
-        catch (NumberFormatException nfe) {
-          // ignore
-        }
+        catch (NumberFormatException ignored) { }
       }
     }
 
@@ -884,12 +886,14 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myFUStatisticsSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_FU_STATISTICS_SETTINGS);
       myStatisticsServiceUrl  = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SERVICE);
       myStatisticsServiceKey  = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SERVICE_KEY);
+      myEventLogSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_EVENT_LOG_STATISTICS_SETTINGS);
     }
     else {
       myStatisticsSettingsUrl = "https://www.jetbrains.com/idea/statistics/stat-assistant.xml";
       myFUStatisticsSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-assistant.xml";
       myStatisticsServiceUrl  = "https://www.jetbrains.com/idea/statistics/index.jsp";
       myStatisticsServiceKey  = null;
+      myEventLogSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-lion-assistant.xml";
     }
 
     Element thirdPartyElement = getChild(parentNode, ELEMENT_THIRD_PARTY);

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -261,7 +261,6 @@ class CommunityRepositoryModules {
       withModule("android.sdktools.sdk-common", "sdk-common.jar")
       withModule("android.sdktools.layoutlib-api", "layoutlib-api.jar")
       withModule("intellij.android.layoutlib", "layoutlib-loader.jar")
-      withModule("android.sdktools.manifest-merger", "manifest-merger.jar")
       withModule("android.sdktools.chunkio", "pixelprobe.jar")
       withModule("android.sdktools.pixelprobe", "pixelprobe.jar")
 
@@ -279,11 +278,10 @@ class CommunityRepositoryModules {
       withModule("android.sdktools.android-annotations", "sdk-tools.jar")
       withModule("intellij.android.layoutInspector", "sdk-tools.jar")
 
-      withModule("intellij.android.gradle.jps", "jps/android-gradle-jps.jar")
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar")
 
       withProjectLibrary("freemarker-2.3.20") //todo[nik] move to module libraries
-      withProjectLibrary("jgraphx-3.4.0.1") //todo[nik] move to module libraries
+      withProjectLibrary("jgraphx") //todo[nik] move to module libraries
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
       withProjectLibrary("lombok-ast") //todo[nik] move to module libraries
       withProjectLibrary("layoutlib") //todo[nik] move to module libraries

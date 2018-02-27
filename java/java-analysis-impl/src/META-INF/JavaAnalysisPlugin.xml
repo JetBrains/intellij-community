@@ -17,7 +17,6 @@
   <project-components>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.JavaSoftKeywordHighlightingPassFactory</implementation-class>
-      <skipForDefaultProject/>
     </component>
   </project-components>
 
@@ -46,9 +45,6 @@
                     interface="com.intellij.codeInspection.inheritance.ImplicitSubclassProvider"/>
     <extensionPoint qualifiedName="com.intellij.codeInsight.changeVariableTypeQuickFixProvider"
                     interface="com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider"/>
-    <extensionPoint qualifiedName="com.intellij.codeInsight.intention.jvmCommonIntentionActionsFactory" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory"/>
-    </extensionPoint>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

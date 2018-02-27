@@ -1,13 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
+import com.intellij.ide.ClassUtilCore;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.startupWizard.StartupWizard;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -27,6 +27,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.ui.UIUtil;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
@@ -117,16 +118,24 @@ public class StartupUtil {
       System.exit(Main.INSTANCE_CHECK_FAILED);
     }
 
-    if (newConfigFolder) {
-      appStarter.beforeImportConfigs();
-      ConfigImportHelper.importConfigsTo(PathManager.getConfigPath());
-    }
-
+    // the log initialization should happen only after locking the system directory
     Logger.setFactory(LoggerFactory.class);
     Logger log = Logger.getInstance(Main.class);
     startLogging(log);
     loadSystemLibraries(log);
     fixProcessEnvironment(log);
+
+    if (!Main.isHeadless()) {
+      UIUtil.initDefaultLAF();
+    }
+
+    if (newConfigFolder) {
+      appStarter.beforeImportConfigs();
+      ConfigImportHelper.importConfigsTo(PathManager.getConfigPath());
+    }
+    else {
+      installPluginUpdates();
+    }
 
     if (!Main.isHeadless()) {
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
@@ -143,18 +152,18 @@ public class StartupUtil {
   private static boolean checkJdkVersion() {
     if ("true".equals(System.getProperty("idea.jre.check"))) {
       try {
-        // try to find a class from tools.jar
+        // try to find a JDK class
         Class.forName("com.sun.jdi.Field", false, StartupUtil.class.getClassLoader());
       }
       catch (ClassNotFoundException e) {
-        String message = "'tools.jar' seems to be not in " + ApplicationNamesInfo.getInstance().getProductName() + " classpath.\n" +
-                         "Please ensure JAVA_HOME points to JDK rather than JRE.";
+        String message = "JDK classes seem to be not on " + ApplicationNamesInfo.getInstance().getProductName() + " classpath.\n" +
+                         "Please ensure you run the IDE on JDK rather than JRE.";
         Main.showMessage("JDK Required", message, true);
         return false;
       }
       catch (LinkageError e) {
-        String message = "Cannot load a class from 'tools.jar': " + e.getMessage() + "\n" +
-                         "Please ensure JAVA_HOME points to JDK rather than JRE.";
+        String message = "Cannot load a JDK class: " + e.getMessage() + "\n" +
+                         "Please ensure you run the IDE on JDK rather than JRE.";
         Main.showMessage("JDK Required", message, true);
         return false;
       }
@@ -371,6 +380,23 @@ public class StartupUtil {
     }
 
     log.info("JNU charset: " + System.getProperty("sun.jnu.encoding"));
+  }
+
+  private static void installPluginUpdates() {
+    if (!Main.isCommandLine() && !ClassUtilCore.isLoadingOfExternalPluginsDisabled()) {
+      try {
+        StartupActionScriptManager.executeActionScript();
+      }
+      catch (IOException e) {
+        String message =
+          "The IDE failed to install some plugins.\n" +
+          "Most probably, this happened because of a change in a serialization format.\n" +
+          "Please try again, and if the problem persists, please report it\n" +
+          "to http://jb.gg/ide/critical-startup-errors" +
+          "\n\nThe cause: " + e.getMessage();
+        Main.showMessage("Plugin Installation Error", message, false);
+      }
+    }
   }
 
   static void runStartupWizard() {

@@ -116,7 +116,7 @@ class ExportToHTMLManager {
         int firstLine = editor.getDocument().getLineNumber(editor.getSelectionModel().getSelectionStart());
         textPainter.setSegment(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd(), firstLine);
       }
-      textPainter.paint(null, psiFile.getFileType());
+      textPainter.paint(null, psiFile);
       if (exportToHTMLSettings.OPEN_IN_BROWSER) {
         BrowserUtil.browse(textPainter.getHTMLFileName());
       }
@@ -157,7 +157,7 @@ class ExportToHTMLManager {
       String dirName = constructOutputDirectory(psiFile, outputDirectoryName);
       HTMLTextPainter textPainter = new HTMLTextPainter(psiFile, project, dirName, exportToHTMLSettings.PRINT_LINE_NUMBERS);
       try {
-        textPainter.paint(refMap, psiFile.getFileType());
+        textPainter.paint(refMap, psiFile);
       }
       catch (FileNotFoundException e) {
         myLastException = e;

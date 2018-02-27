@@ -48,7 +48,7 @@ public abstract class YamlNonEditableKeysInspectionBase extends YamlMetaTypeInsp
       YamlMetaTypeProvider.MetaTypeProxy meta = myMetaTypeProvider.getKeyValueMetaType(keyValue);
       if (meta != null && !meta.getField().isEditable()) {
         String msg = YAMLBundle.message("YamlNonEditableKeysInspectionBase.noneditable.key", keyValue.getKeyText());
-        myProblemsHolder.registerProblem(keyValue, msg, ProblemHighlightType.WEAK_WARNING,
+        myProblemsHolder.registerProblem(keyValue.getKey(), msg, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                          myQuickFix);
       }
     }

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectView;
 
 import com.intellij.ide.projectView.*;
@@ -42,7 +40,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
     myProjectView.addProjectPane(myPane);
     myOriginalManualOrder = myProjectView.isManualOrder(myPane.getId());
     myOriginalSortByType = myProjectView.isSortByType(myPane.getId());
-    myOriginalFoldersAlwaysOnTop = ((ProjectViewImpl)myProjectView).isFoldersAlwaysOnTop();
+    myOriginalFoldersAlwaysOnTop = myProjectView.isFoldersAlwaysOnTop(myPane.getId());
 
     TreeUtil.expand(myPane.getTree(), 2);
   }
@@ -240,7 +238,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
     PlatformTestUtil.waitWhileBusy(myPane.getTree());
     Object element = path.getLastPathComponent();
     assertNotNull("Element for " + getContentDirectory() + " not found", element);
-    assertEquals(expected, PlatformTestUtil.print(myPane.getTree(), element, new Queryable.PrintInfo(), false));
+    assertEquals(expected, PlatformTestUtil.print(myPane.getTree(), path, new Queryable.PrintInfo(), false));
   }
 
   static class MyOrderProvider implements TreeStructureProvider {

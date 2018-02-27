@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("Promises")
 package org.jetbrains.concurrency
 
@@ -25,6 +11,7 @@ import com.intellij.util.Function
 import com.intellij.util.SmartList
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
+import org.jetbrains.concurrency.InternalPromiseUtil.MessageError
 import java.util.*
 
 val Promise<*>.isRejected: Boolean
@@ -36,28 +23,32 @@ val Promise<*>.isPending: Boolean
 val Promise<*>.isFulfilled: Boolean
   get() = state == Promise.State.FULFILLED
 
-internal val OBSOLETE_ERROR by lazy { createError("Obsolete") }
-
-private val REJECTED: Promise<*> by lazy { RejectedPromise<Any?>(createError("rejected")) }
-private val DONE: Promise<*> by lazy(LazyThreadSafetyMode.NONE) { Promise.DONE }
-private val CANCELLED_PROMISE: Promise<*> by lazy { RejectedPromise<Any?>(OBSOLETE_ERROR) }
+private val REJECTED: Promise<*> by lazy { DonePromise<Any?>(InternalPromiseUtil.PromiseValue.createRejected(createError("rejected"))) }
 
 @Suppress("UNCHECKED_CAST")
-fun <T> resolvedPromise(): Promise<T> = DONE as Promise<T>
+fun <T> resolvedPromise(): Promise<T> = InternalPromiseUtil.FULFILLED_PROMISE.value as Promise<T>
 
-fun nullPromise(): Promise<*> = DONE
+fun nullPromise(): Promise<*> = InternalPromiseUtil.FULFILLED_PROMISE.value
 
-fun <T> resolvedPromise(result: T): Promise<T> = if (result == null) resolvedPromise() else DonePromise(result)
+/**
+ * Creates a promise that is resolved with the given value.
+ */
+fun <T> resolvedPromise(result: T): Promise<T> = Promise.resolve(result)
 
 @Suppress("UNCHECKED_CAST")
 fun <T> rejectedPromise(): Promise<T> = REJECTED as Promise<T>
 
-fun <T> rejectedPromise(error: String): Promise<T> = RejectedPromise(createError(error, true))
+fun <T> rejectedPromise(error: String): Promise<T> = DonePromise(InternalPromiseUtil.PromiseValue.createRejected(createError(error, true)))
 
-fun <T> rejectedPromise(error: Throwable?): Promise<T> = if (error == null) rejectedPromise() else RejectedPromise(error)
+fun <T> rejectedPromise(error: Throwable?): Promise<T> {
+  return when (error) {
+    null -> rejectedPromise()
+    else -> DonePromise(InternalPromiseUtil.PromiseValue.createRejected(error))
+  }
+}
 
 @Suppress("UNCHECKED_CAST")
-fun <T> cancelledPromise(): Promise<T> = CANCELLED_PROMISE as Promise<T>
+fun <T> cancelledPromise(): Promise<T> = InternalPromiseUtil.CANCELLED_PROMISE.value as Promise<T>
 
 
 // only internal usage
@@ -67,7 +58,7 @@ abstract class ValueNodeAsyncFunction<PARAM, RESULT>(private val node: Obsolesce
   override fun isObsolete() = node.isObsolete
 }
 
-abstract class ObsolescentConsumer<T>(private val obsolescent: Obsolescent) : Obsolescent, Consumer<T> {
+abstract class ObsolescentConsumer<T>(private val obsolescent: Obsolescent) : Obsolescent, java.util.function.Consumer<T> {
   override fun isObsolete() = obsolescent.isObsolete
 }
 
@@ -78,23 +69,28 @@ inline fun <T, SUB_RESULT> Promise<T>.then(obsolescent: Obsolescent, crossinline
 })
 
 
-inline fun <T> Promise<T>.done(node: Obsolescent, crossinline handler: (T) -> Unit) = done(object : ObsolescentConsumer<T>(node) {
-  override fun consume(param: T) = handler(param)
+inline fun <T> Promise<T>.onSuccess(node: Obsolescent, crossinline handler: (T) -> Unit) = onSuccess(object : ObsolescentConsumer<T>(node) {
+  override fun accept(param: T) = handler(param)
 })
 
-@Suppress("UNCHECKED_CAST")
-inline fun Promise<*>.processed(node: Obsolescent, crossinline handler: () -> Unit) = (this as Promise<Any?>).processed(object : ObsolescentConsumer<Any?>(node) {
-  override fun consume(param: Any?) = handler()
-})
+inline fun Promise<*>.processed(node: Obsolescent, crossinline handler: () -> Unit): Promise<Any?>? {
+  @Suppress("UNCHECKED_CAST")
+  return (this as Promise<Any?>)
+    .onProcessed(object : ObsolescentConsumer<Any?>(node) {
+      override fun accept(param: Any?) = handler()
+    })
+}
 
 @Suppress("UNCHECKED_CAST")
-inline fun Promise<*>.doneRun(crossinline handler: () -> Unit) = done({ handler() })
+inline fun Promise<*>.doneRun(crossinline handler: () -> Unit) = onSuccess { handler() }
 
 @Suppress("UNCHECKED_CAST")
 inline fun <T> Promise<*>.thenRun(crossinline handler: () -> T): Promise<T> = (this as Promise<Any?>).then({ handler() })
 
 @Suppress("UNCHECKED_CAST")
-inline fun Promise<*>.processedRun(crossinline handler: () -> Unit): Promise<*> = (this as Promise<Any?>).processed({ handler() })
+inline fun Promise<*>.processedRun(crossinline handler: () -> Unit): Promise<*> {
+  return (this as Promise<Any?>).onProcessed({ handler() })
+}
 
 
 inline fun <T, SUB_RESULT> Promise<T>.thenAsync(node: Obsolescent, crossinline handler: (T) -> Promise<SUB_RESULT>) = thenAsync(object : ValueNodeAsyncFunction<T, SUB_RESULT>(node) {
@@ -102,9 +98,11 @@ inline fun <T, SUB_RESULT> Promise<T>.thenAsync(node: Obsolescent, crossinline h
 })
 
 @Suppress("UNCHECKED_CAST")
-inline fun <T> Promise<T>.thenAsyncAccept(node: Obsolescent, crossinline handler: (T) -> Promise<*>) = thenAsync(object : ValueNodeAsyncFunction<T, Any?>(node) {
-  override fun `fun`(param: T) = handler(param) as Promise<Any?>
-})
+inline fun <T> Promise<T>.thenAsyncAccept(node: Obsolescent, crossinline handler: (T) -> Promise<*>): Promise<Any?> {
+  return thenAsync(object : ValueNodeAsyncFunction<T, Any?>(node) {
+    override fun `fun`(param: T) = handler(param) as Promise<Any?>
+  })
+}
 
 inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>) = thenAsync(Function<T, Promise<Any?>> { param ->
   @Suppress("UNCHECKED_CAST")
@@ -112,8 +110,8 @@ inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>
 })
 
 
-inline fun Promise<*>.rejected(node: Obsolescent, crossinline handler: (Throwable) -> Unit) = rejected(object : ObsolescentConsumer<Throwable>(node) {
-  override fun consume(param: Throwable) = handler(param)
+inline fun Promise<*>.onError(node: Obsolescent, crossinline handler: (Throwable) -> Unit) = onError(object : ObsolescentConsumer<Throwable>(node) {
+  override fun accept(param: Throwable) = handler(param)
 })
 
 @JvmOverloads
@@ -122,9 +120,9 @@ fun <T> collectResults(promises: List<Promise<T>>, ignoreErrors: Boolean = false
     return resolvedPromise(emptyList())
   }
 
-  val results: MutableList<T> = if (promises.size == 1) SmartList<T>() else ArrayList<T>(promises.size)
+  val results: MutableList<T> = if (promises.size == 1) SmartList<T>() else ArrayList(promises.size)
   for (promise in promises) {
-    promise.done { results.add(it) }
+    promise.onSuccess { results.add(it) }
   }
   return all(promises, results, ignoreErrors)
 }
@@ -133,10 +131,15 @@ fun <T> collectResults(promises: List<Promise<T>>, ignoreErrors: Boolean = false
 fun createError(error: String, log: Boolean = false): RuntimeException = MessageError(error, log)
 
 inline fun <T> AsyncPromise<T>.compute(runnable: () -> T) {
-  val result = catchError(runnable)
-  if (!isRejected) {
-    setResult(result)
+  val result = try {
+    runnable()
   }
+  catch (e: Throwable) {
+    setError(e)
+    return
+  }
+
+  setResult(result)
 }
 
 inline fun <T> runAsync(crossinline runnable: () -> T): Promise<T> {
@@ -154,20 +157,13 @@ inline fun <T> runAsync(crossinline runnable: () -> T): Promise<T> {
   return promise
 }
 
-@SuppressWarnings("ExceptionClassNameDoesntEndWithException")
-internal class MessageError(error: String, log: Boolean) : RuntimeException(error) {
-  internal val log = ThreeState.fromBoolean(log)
-
-  fun fillInStackTrace() = this
-}
-
 /**
  * Log error if not a message error
  */
 fun Logger.errorIfNotMessage(e: Throwable): Boolean {
   if (e is MessageError) {
     val log = e.log
-    if (log == ThreeState.YES || (log == ThreeState.UNSURE && (ApplicationManager.getApplication()?.isUnitTestMode ?: false))) {
+    if (log == ThreeState.YES || (log == ThreeState.UNSURE && ApplicationManager.getApplication()?.isUnitTestMode == true)) {
       error(e)
       return true
     }
@@ -180,34 +176,46 @@ fun Logger.errorIfNotMessage(e: Throwable): Boolean {
   return false
 }
 
-fun ActionCallback.toPromise(): Promise<Void> {
-  val promise = AsyncPromise<Void>()
-  doWhenDone { promise.setResult(null) }.doWhenRejected { error -> promise.setError(createError(error ?: "Internal error")) }
+fun ActionCallback.toPromise(): Promise<Any?> {
+  val promise = AsyncPromise<Any?>()
+  doWhenDone { promise.setResult(null) }
+    .doWhenRejected { error -> promise.setError(createError(error ?: "Internal error")) }
   return promise
+}
+
+fun Promise<Any?>.toActionCallback(): ActionCallback {
+  val result = ActionCallback()
+  onSuccess { result.setDone() }
+  onError { result.setRejected() }
+  return result
 }
 
 fun all(promises: Collection<Promise<*>>): Promise<*> = if (promises.size == 1) promises.first() else all(promises, null)
 
 @JvmOverloads
-fun <T> all(promises: Collection<Promise<*>>, totalResult: T?, ignoreErrors: Boolean = false): Promise<T> {
+fun <T: Any?> all(promises: Collection<Promise<*>>, totalResult: T, ignoreErrors: Boolean = false): Promise<T> {
   if (promises.isEmpty()) {
-    @Suppress("UNCHECKED_CAST")
-    return DONE as Promise<T>
+    return resolvedPromise()
   }
 
   val totalPromise = AsyncPromise<T>()
   val done = CountDownConsumer(promises.size, totalPromise, totalResult)
-  val rejected = if (ignoreErrors) Consumer<Throwable> { done.consume(null) } else Consumer<Throwable> { totalPromise.setError(it) }
+  val rejected = if (ignoreErrors) {
+    Consumer { done.accept(null) }
+  }
+  else {
+    Consumer<Throwable> { totalPromise.setError(it) }
+  }
 
   for (promise in promises) {
-    promise.done(done)
+    promise.onSuccess(done)
     promise.rejected(rejected)
   }
   return totalPromise
 }
 
-private class CountDownConsumer<T>(@Volatile private var countDown: Int, private val promise: AsyncPromise<T>, private val totalResult: T?) : Consumer<Any?> {
-  override fun consume(t: Any?) {
+private class CountDownConsumer<T : Any?>(@Volatile private var countDown: Int, private val promise: AsyncPromise<T>, private val totalResult: T) : java.util.function.Consumer<Any?> {
+  override fun accept(t: Any?) {
     if (--countDown == 0) {
       promise.setResult(totalResult)
     }
@@ -216,19 +224,18 @@ private class CountDownConsumer<T>(@Volatile private var countDown: Int, private
 
 fun <T> any(promises: Collection<Promise<T>>, totalError: String): Promise<T> {
   if (promises.isEmpty()) {
-    @Suppress("UNCHECKED_CAST")
-    return DONE as Promise<T>
+    return resolvedPromise()
   }
   else if (promises.size == 1) {
     return promises.first()
   }
 
   val totalPromise = AsyncPromise<T>()
-  val done = Consumer<T> { result -> totalPromise.setResult(result) }
-  val rejected = object : Consumer<Throwable> {
+  val done = java.util.function.Consumer<T> { result -> totalPromise.setResult(result) }
+  val rejected = object : java.util.function.Consumer<Throwable> {
     @Volatile private var toConsume = promises.size
 
-    override fun consume(throwable: Throwable) {
+    override fun accept(throwable: Throwable) {
       if (--toConsume <= 0) {
         totalPromise.setError(totalError)
       }
@@ -236,8 +243,8 @@ fun <T> any(promises: Collection<Promise<T>>, totalError: String): Promise<T> {
   }
 
   for (promise in promises) {
-    promise.done(done)
-    promise.rejected(rejected)
+    promise.onSuccess(done)
+    promise.onError(rejected)
   }
   return totalPromise
 }

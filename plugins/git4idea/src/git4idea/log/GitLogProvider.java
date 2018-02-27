@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -362,15 +361,7 @@ public class GitLogProvider implements VcsLogProvider {
   @Override
   public List<? extends VcsShortCommitDetails> readShortDetails(@NotNull final VirtualFile root, @NotNull List<String> hashes)
     throws VcsException {
-    //noinspection Convert2Lambda
-    return VcsFileUtil.foreachChunk(hashes,
-                                    new ThrowableNotNullFunction<List<String>, List<? extends VcsShortCommitDetails>, VcsException>() {
-                                      @NotNull
-                                      @Override
-                                      public List<? extends VcsShortCommitDetails> fun(@NotNull List<String> hashes) throws VcsException {
-                                        return GitLogUtil.collectShortDetails(myProject, root, hashes);
-                                      }
-                                    });
+    return GitLogUtil.collectShortDetails(myProject, myVcs, root, hashes);
   }
 
   @NotNull

@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitExecutableManager;
@@ -132,7 +131,7 @@ abstract class GitImplBase implements Git {
         version = GitExecutableManager.getInstance().identifyVersion(executablePath);
       }
       catch (Exception e) {
-        return handlePreValidationException(handler.project(), executablePath, e);
+        return handlePreValidationException(handler.project(), e);
       }
     }
 
@@ -222,21 +221,18 @@ abstract class GitImplBase implements Git {
   }
 
   @NotNull
-  private static GitCommandResult handlePreValidationException(@Nullable Project project,
-                                                               @NotNull String executablePath,
-                                                               @NotNull Exception e) {
+  private static GitCommandResult handlePreValidationException(@Nullable Project project, @NotNull Exception e) {
     // Show notification if it's a project non-modal task and cancel the task
     ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (project != null
         && progressIndicator != null
         && !progressIndicator.getModalityState().dominates(ModalityState.NON_MODAL)) {
-      GitExecutableProblemsNotifier.getInstance(project).notifyExecutionError(executablePath, e);
+      GitExecutableProblemsNotifier.getInstance(project).notifyExecutionError(e);
       throw new ProcessCanceledException(e);
     }
     else {
       return GitCommandResult.startError(
-        GitBundle.getString("git.executable.validation.error.title") + " \n" +
-        GitBundle.message("git.executable.validation.error.start.subtitle", executablePath) + ": " +
+        GitBundle.getString("git.executable.validation.error.start.title") + ": \n" +
         GitExecutableProblemsNotifier.getPrettyErrorMessage(e)
       );
     }

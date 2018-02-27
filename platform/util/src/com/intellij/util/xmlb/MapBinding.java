@@ -245,7 +245,7 @@ class MapBinding extends Binding implements MultiNodeBinding {
       }
       else {
         assert binding != null;
-        return Binding.deserializeList(binding, context, children);
+        return Binding.deserializeList(binding, null, children);
       }
     }
     return null;

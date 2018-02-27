@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -21,6 +22,7 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.WindowManager;
@@ -426,6 +428,7 @@ public abstract class DialogWrapper {
   }
 
   public final void close(int exitCode) {
+    logCloseDialogEvent(exitCode);
     close(exitCode, exitCode != CANCEL_EXIT_CODE);
   }
 
@@ -599,11 +602,8 @@ public abstract class DialogWrapper {
     }
     JComponent doNotAskCheckbox = createDoNotAskCheckbox();
 
-    final JPanel lrButtonsPanel = new NonOpaquePanel(new GridBagLayout());
-    //noinspection UseDPIAwareInsets
-    final Insets insets = SystemInfo.isMacOSLeopard ?
-                          UIUtil.isUnderIntelliJLaF() ? JBUI.insets(0, 8) : JBUI.emptyInsets() :
-                          UIUtil.isUnderWin10LookAndFeel() ? JBUI.emptyInsets() : new Insets(8, 0, 0, 0); //don't wrap to JBInsets
+    JPanel lrButtonsPanel = new NonOpaquePanel(new GridBagLayout());
+    Insets insets = SystemInfo.isMacOSLeopard && UIUtil.isUnderIntelliJLaF() ? JBUI.insets(0, 8) : JBUI.emptyInsets();
 
     if (rightSideButtons.size() > 0 || leftSideButtons.size() > 0) {
       GridBag bag = new GridBag().setDefaultInsets(insets);
@@ -674,7 +674,7 @@ public abstract class DialogWrapper {
 
   @NotNull
   protected JPanel createButtonsPanel(@NotNull List<JButton> buttons) {
-    int hgap = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? 8 : 0 : 5;
+    int hgap = JBUI.scale(UIUtil.isUnderWin10LookAndFeel() ? 10 : 6);
     JPanel buttonsPanel = new NonOpaquePanel(new DialogWrapperButtonLayout(buttons.size(), hgap));
     for (final JButton button : buttons) {
       buttonsPanel.add(button);
@@ -1624,6 +1624,7 @@ public abstract class DialogWrapper {
    * @see #showAndGetOk()
    */
   public void show() {
+    logShowDialogEvent();
     invokeShow();
   }
 
@@ -1776,6 +1777,20 @@ public abstract class DialogWrapper {
       return wrapper != null && wrapper.getPeer().getCurrentModalEntities().length > 1;
     }
     return false;
+  }
+
+  private void logCloseDialogEvent(int exitCode) {
+    final String title = getTitle();
+    if (StringUtil.isNotEmpty(title)) {
+      FeatureUsageUiEvents.INSTANCE.logCloseDialog(title, exitCode);
+    }
+  }
+
+  private void logShowDialogEvent() {
+    final String title = getTitle();
+    if (StringUtil.isNotEmpty(title)) {
+      FeatureUsageUiEvents.INSTANCE.logShowDialog(title);
+    }
   }
 
   /**
@@ -2013,6 +2028,13 @@ public abstract class DialogWrapper {
         }
       }, 300, null);
     }
+  }
+
+  /**
+   * Check if component is in error state validation-wise
+   */
+  protected boolean hasErrors(@NotNull JComponent component) {
+    return myInfo.stream().anyMatch(i -> component.equals(i.component));
   }
 
   private void setErrorTipText(JComponent component, JLabel label, String text) {

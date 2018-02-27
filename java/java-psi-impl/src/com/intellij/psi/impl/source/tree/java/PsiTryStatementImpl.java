@@ -135,7 +135,7 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == TRY_KEYWORD) {

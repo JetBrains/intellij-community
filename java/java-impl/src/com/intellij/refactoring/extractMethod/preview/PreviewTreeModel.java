@@ -2,9 +2,13 @@
 package com.intellij.refactoring.extractMethod.preview;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
+import com.intellij.refactoring.extractMethod.ParametrizedDuplicates;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -18,21 +22,23 @@ import java.util.List;
  */
 class PreviewTreeModel extends DefaultTreeModel {
   private DefaultMutableTreeNode myDuplicatesGroup;
+  private final DefaultMutableTreeNode myMethodGroup;
 
-  public PreviewTreeModel(ExtractMethodProcessor processor) {
+  public PreviewTreeModel(@NotNull ExtractMethodProcessor processor) {
     super(new DefaultMutableTreeNode(""));
     DefaultMutableTreeNode root = (DefaultMutableTreeNode)getRoot();
 
-    DefaultMutableTreeNode methodGroup = new DefaultMutableTreeNode("Method to extract");
-    root.add(methodGroup);
-    methodGroup.add(new MethodNode(processor.generateEmptyMethod(processor.getMethodName(), processor.getTargetClass())));
+    myMethodGroup = new DefaultMutableTreeNode("Method to extract");
+    root.add(myMethodGroup);
+    PsiMethod emptyMethod = processor.generateEmptyMethod(processor.getMethodName(), processor.getTargetClass());
+    myMethodGroup.add(new MethodNode(emptyMethod)); // will be replaced in updateMethod()
 
     DefaultMutableTreeNode originalGroup = new DefaultMutableTreeNode("Original code fragment");
     root.add(originalGroup);
     PsiElement[] elements = processor.getElements();
     originalGroup.add(new OriginalNode(elements));
 
-    List<Match> duplicates = processor.getDuplicates();
+    List<Match> duplicates = getDuplicates(processor);
     if (!ContainerUtil.isEmpty(duplicates)) {
       myDuplicatesGroup = new DefaultMutableTreeNode("Duplicate code fragments");
       root.add(myDuplicatesGroup);
@@ -40,6 +46,12 @@ class PreviewTreeModel extends DefaultTreeModel {
         myDuplicatesGroup.add(new DuplicateNode(duplicate));
       }
     }
+  }
+
+  void updateMethod(PsiMethod method) {
+    myMethodGroup.removeAllChildren();
+    myMethodGroup.add(new MethodNode(method));
+    reload(myMethodGroup);
   }
 
   public List<DuplicateNode> getEnabledDuplicates() {
@@ -71,5 +83,17 @@ class PreviewTreeModel extends DefaultTreeModel {
       return duplicates;
     }
     return Collections.emptyList();
+  }
+
+  @Nullable
+  public static List<Match> getDuplicates(@NotNull ExtractMethodProcessor processor) {
+    List<Match> duplicates = processor.getDuplicates();
+    if (ContainerUtil.isEmpty(duplicates)) {
+      ParametrizedDuplicates parametrizedDuplicates = processor.getParametrizedDuplicates();
+      if (parametrizedDuplicates != null) {
+        duplicates = parametrizedDuplicates.getDuplicates();
+      }
+    }
+    return duplicates;
   }
 }

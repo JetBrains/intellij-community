@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.Disposable;
@@ -65,6 +51,7 @@ import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_CHANGES_FROM
  * Change browser for commits in the Log. For merge commits, can display changes to commits parents in separate groups.
  */
 class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
+  @NotNull private static final String EMPTY_SELECTION_TEXT = "Select commit to view details";
   @NotNull private final Project myProject;
   @NotNull private final MainVcsLogUiProperties myUiProperties;
   @NotNull private final Function<CommitId, VcsShortCommitDetails> myDataGetter;
@@ -102,6 +89,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
     init();
 
     getViewerScrollPane().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+    myViewer.setEmptyText(EMPTY_SELECTION_TEXT);
     myViewer.rebuildTree();
   }
 
@@ -145,7 +133,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
     myRoots.addAll(ContainerUtil.map(detailsList, detail -> detail.getRoot()));
 
     if (detailsList.isEmpty()) {
-      myViewer.setEmptyText("No commits selected");
+      myViewer.setEmptyText(EMPTY_SELECTION_TEXT);
     }
     else if (detailsList.size() == 1) {
       VcsFullCommitDetails detail = notNull(getFirstItem(detailsList));
@@ -183,8 +171,8 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
 
   @NotNull
   @Override
-  protected DefaultTreeModel buildTreeModel(boolean showFlatten) {
-    MyTreeModelBuilder builder = new MyTreeModelBuilder(showFlatten);
+  protected DefaultTreeModel buildTreeModel() {
+    MyTreeModelBuilder builder = new MyTreeModelBuilder();
     builder.setChanges(myChanges, null);
 
     if (isShowChangesFromParents() && !myChangesToParents.isEmpty()) {
@@ -267,8 +255,8 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
   }
 
   private class MyTreeModelBuilder extends TreeModelBuilder {
-    public MyTreeModelBuilder(boolean showFlatten) {
-      super(VcsLogChangesBrowser.this.myProject, showFlatten);
+    public MyTreeModelBuilder() {
+      super(VcsLogChangesBrowser.this.myProject, VcsLogChangesBrowser.this.getGrouping());
     }
 
     public void addEmptyTextNode(@NotNull String text) {

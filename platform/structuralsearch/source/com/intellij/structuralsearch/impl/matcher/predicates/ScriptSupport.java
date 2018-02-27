@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -71,10 +72,8 @@ public class ScriptSupport {
         throw new AssertionError();
       }
     }
-    if (result.hasSons()) {
-      for (MatchResult son : result.getAllSons()) {
-        buildVariableMap(son, out);
-      }
+    for (MatchResult son : result.getChildren()) {
+      buildVariableMap(son, out);
     }
     return out;
   }

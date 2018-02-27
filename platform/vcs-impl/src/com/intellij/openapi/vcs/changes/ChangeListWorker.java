@@ -759,7 +759,11 @@ public class ChangeListWorker {
   private HashSet<ListData> getAffectedLists(@NotNull PartialChangeTracker tracker) {
     HashSet<ListData> data = new HashSet<>();
     for (String listId : tracker.getAffectedChangeListsIds()) {
-      ListData partialList = getDataByIdVerify(listId);
+      ListData partialList = getDataById(listId);
+      if (myMainWorker && partialList == null) {
+        LOG.error(String.format("Unknown changelist %s", listId));
+        tracker.initChangeTracking(myDefault.id, ContainerUtil.map(myLists, list -> list.id));
+      }
       data.add(partialList != null ? partialList : myDefault);
     }
     return data;

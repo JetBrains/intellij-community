@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -862,6 +860,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       public void stopIfRunning() {
         super.stopIfRunning();
         myProject.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC).daemonFinished();
+        HighlightingSessionImpl.clearProgressIndicator(this);
       }
     };
     progress.setModalityProgress(null);
@@ -900,18 +899,21 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       return activeTextEditors;
     }
 
-    // Editors in tabs.
     Collection<FileEditor> result = new THashSet<>();
     Collection<VirtualFile> files = new THashSet<>(activeTextEditors.size());
-    final FileEditor[] tabEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
-    for (FileEditor tabEditor : tabEditors) {
-      if (!tabEditor.isValid()) continue;
-      VirtualFile file = ((FileEditorManagerEx)FileEditorManager.getInstance(myProject)).getFile(tabEditor);
-      if (file != null) {
-        files.add(file);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      // Editors in tabs.
+      final FileEditor[] tabEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
+      for (FileEditor tabEditor : tabEditors) {
+        if (!tabEditor.isValid()) continue;
+        VirtualFile file = ((FileEditorManagerEx)FileEditorManager.getInstance(myProject)).getFile(tabEditor);
+        if (file != null) {
+          files.add(file);
+        }
+        result.add(tabEditor);
       }
-      result.add(tabEditor);
     }
+
     // do not duplicate documents
     for (FileEditor fileEditor : activeTextEditors) {
       VirtualFile file = ((FileEditorManagerEx)FileEditorManager.getInstance(myProject)).getFile(fileEditor);

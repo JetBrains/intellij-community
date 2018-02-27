@@ -16,6 +16,7 @@
 
 package com.intellij.codeEditor.printing;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,7 +27,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -34,7 +34,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
@@ -109,7 +108,7 @@ class HTMLTextPainter {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public void paint(TreeMap refMap, FileType fileType) throws FileNotFoundException {
+  public void paint(TreeMap refMap, @NotNull PsiFile psiFile) throws FileNotFoundException {
     HighlighterIterator hIterator = myHighlighter.createIterator(myOffset);
     if(hIterator.atEnd()) return;
     OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(myHTMLFileName), CharsetToolkit.UTF8_CHARSET);
@@ -154,7 +153,7 @@ class HTMLTextPainter {
         }
         if (!haveNonWhiteSpace) {
           // don't write separate spans for whitespace-only text fragments
-          writeString(writer, myText, hStart, hEnd - hStart, fileType);
+          writeString(writer, myText, hStart, hEnd - hStart, psiFile);
           hIterator.advance();
           continue;
         }
@@ -171,7 +170,7 @@ class HTMLTextPainter {
           prevAttributes = textAttributes;
         }
 
-        writeString(writer, myText, hStart, hEnd - hStart, fileType);
+        writeString(writer, myText, hStart, hEnd - hStart, psiFile);
 //        if(closeTag != null) {
 //          writer.write(closeTag);
 //        }
@@ -254,7 +253,7 @@ class HTMLTextPainter {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private void writeString(Writer writer, CharSequence charArray, int start, int length, FileType fileType) throws IOException {
+  private void writeString(Writer writer, CharSequence charArray, int start, int length, @NotNull PsiFile psiFile) throws IOException {
     for(int i=start; i<start+length; i++) {
       char c = charArray.charAt(i);
       if(c=='<') {
@@ -270,7 +269,7 @@ class HTMLTextPainter {
         writeChar(writer, "&quot;");
       }
       else if (c == '\t') {
-        int tabSize = CodeStyleSettingsManager.getSettings(myProject).getTabSize(fileType);
+        int tabSize = CodeStyle.getIndentOptions(psiFile).TAB_SIZE;
         if (tabSize <= 0) tabSize = 1;
         int nSpaces = tabSize - myColumn % tabSize;
         for (int j = 0; j < nSpaces; j++) {

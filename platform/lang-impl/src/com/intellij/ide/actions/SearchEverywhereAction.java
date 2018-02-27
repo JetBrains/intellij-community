@@ -631,7 +631,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       Disposer.dispose(myPopupField);
     }
     myPopupField = new MySearchTextField();
-    UIUtil.typeAheadUntilFocused(e.getInputEvent(), myPopupField.getTextEditor());
+    //UIUtil.typeAheadUntilFocused(e.getInputEvent(), myPopupField.getTextEditor());
     myPopupField.getTextEditor().addKeyListener(new KeyAdapter() {
       @Override
       public void keyTyped(KeyEvent e) {
@@ -731,7 +731,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       .setCancelOnClickOutside(true)
       .setModalContext(false)
       .setRequestFocus(true)
-      .setCancelCallback(() -> !mySkipFocusGain)
       .createPopup();
     myBalloon.getContent().setBorder(JBUI.Borders.empty());
     final Window window = WindowManager.getInstance().suggestParentWindow(project);

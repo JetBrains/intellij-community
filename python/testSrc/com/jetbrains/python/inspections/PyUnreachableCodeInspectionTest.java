@@ -38,6 +38,11 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-22184
+  public void testWhileTrueTryBreakFinally() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.openapi.module.Module
@@ -303,6 +301,28 @@ class CC implements somepackage.TT {
       fixture.lookupElementStrings,
       "someMethod", "someAbstractMethod", "someStaticMethod"
     )
+  }
+
+  void 'test static trait method with @DelegatesTo(type)'() {
+    configureTraitInheritor()
+    def method = resolveByText '''\
+def usage(ExternalConcrete ec) {
+  ec.delegatesTo { <caret>toUpperCase() }
+}
+''', PsiMethod
+    assert method.name == 'toUpperCase'
+    assert method.containingClass.qualifiedName == 'java.lang.String'
+  }
+
+  void 'test static trait method with @ClosureParams(FromString)'() {
+    configureTraitInheritor()
+    def method = resolveByText '''\
+def usage(ExternalConcrete ec) {
+  ec.closureParams { it.<caret>toUpperCase() }
+}
+''', PsiMethod
+    assert method.name == 'toUpperCase'
+    assert method.containingClass.qualifiedName == 'java.lang.String'
   }
 
   private PsiClass configureTraitInheritor() {

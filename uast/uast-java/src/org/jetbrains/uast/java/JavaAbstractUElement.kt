@@ -126,6 +126,7 @@ abstract class JavaAbstractUExpression(givenParent: UElement?) : JavaAbstractUEl
   override fun getPsiParentForLazyConversion(): PsiElement? = super.getPsiParentForLazyConversion()?.let {
     when (it) {
       is PsiResourceExpression -> it.parent
+      is PsiReferenceExpression -> (it.parent as? PsiMethodCallExpression) ?: it
       else -> it
     }
   }
@@ -135,5 +136,5 @@ abstract class JavaAbstractUExpression(givenParent: UElement?) : JavaAbstractUEl
       is UAnonymousClass -> uParent.uastParent
       else -> uParent
     }
-  }
+  }.let(this::unwrapCompositeQualifiedReference)
 }

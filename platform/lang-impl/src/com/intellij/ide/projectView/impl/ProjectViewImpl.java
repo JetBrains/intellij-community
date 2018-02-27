@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView.impl;
 
@@ -229,15 +227,14 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         if (window == null) return;
         if (window.isVisible() && !toolWindowVisible) {
           String id = getCurrentViewId();
-          if (isAutoscrollToSource(id)) {
-            AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
-
-            if (currentProjectViewPane != null) {
+          AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
+          if (currentProjectViewPane != null) {
+            if (isAutoscrollToSource(id)) {
               myAutoScrollToSourceHandler.onMouseClicked(currentProjectViewPane.getTree());
             }
-          }
-          if (isAutoscrollFromSource(id)) {
-            myAutoScrollFromSourceHandler.setAutoScrollEnabled(true);
+            if (isAutoscrollFromSource(id)) {
+              myAutoScrollFromSourceHandler.setAutoScrollEnabled(true);
+            }
           }
         }
         toolWindowVisible = window.isVisible();
@@ -1572,6 +1569,14 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     setPaneOption(myFlattenPackages, flattenPackages, paneId, true);
   }
 
+  @Override
+  public boolean isFoldersAlwaysOnTop(String paneId) {
+    //noinspection deprecation
+    return isFoldersAlwaysOnTop();
+  }
+
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public boolean isFoldersAlwaysOnTop() {
     if (isGlobalOptions()) {
       return getGlobalOptions().getFoldersAlwaysOnTop();
@@ -2054,7 +2059,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     @Override
     public boolean isSelected(AnActionEvent event) {
-      return isFoldersAlwaysOnTop();
+      return isFoldersAlwaysOnTop(getCurrentViewId());
     }
 
     @Override

@@ -10,9 +10,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.containers.FactoryMap;
@@ -20,7 +18,10 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiMember;
 import static com.intellij.patterns.PsiJavaPatterns.psiParameter;
@@ -258,24 +259,43 @@ public class DfaValueFactory {
   @NotNull
   public DfaExpressionFactory getExpressionFactory() { return myExpressionFactory;}
 
-  private static boolean canCallMethodsInConstructors(PsiClass aClass, boolean virtual) {
-    for (PsiMethod constructor : aClass.getConstructors()) {
-      if (!constructor.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return true;
+  private static class ClassInitializationInfo {
+    final boolean myCanInstantiateItself;
+    final boolean myCtorsCallMethods;
+    final boolean mySuperCtorsCallMethods;
 
-      PsiCodeBlock body = constructor.getBody();
-      if (body == null) continue;
-
-      for (PsiMethodCallExpression call : SyntaxTraverser.psiTraverser().withRoot(body).filter(PsiMethodCallExpression.class)) {
-        PsiReferenceExpression methodExpression = call.getMethodExpression();
-        if (methodExpression.textMatches(PsiKeyword.THIS) || methodExpression.textMatches(PsiKeyword.SUPER)) continue;
-        if (!virtual) return true;
-
-        PsiMethod target = call.resolveMethod();
-        if (target != null && PsiUtil.canBeOverridden(target)) return true;
-      }
+    ClassInitializationInfo(@NotNull PsiClass psiClass) {
+      // Indirect instantiation via other class is still possible, but hopefully unlikely
+      myCanInstantiateItself = StreamEx.of(psiClass.getChildren())
+                                       .select(PsiMember.class)
+                                       .filter(member -> member.hasModifierProperty(PsiModifier.STATIC))
+                                       .flatMap(member -> StreamEx.<PsiElement>ofTree(member, e -> StreamEx.of(e.getChildren())))
+                                       .select(PsiNewExpression.class).map(newExpr -> newExpr.getClassReference()).nonNull()
+                                       .anyMatch(classRef -> classRef.isReferenceTo(psiClass));
+      mySuperCtorsCallMethods =
+        !InheritanceUtil.processSupers(psiClass, false, superClass -> !canCallMethodsInConstructors(superClass, true));
+      myCtorsCallMethods = canCallMethodsInConstructors(psiClass, false);
     }
 
-    return false;
+    private static boolean canCallMethodsInConstructors(@NotNull PsiClass aClass, boolean virtual) {
+      for (PsiMethod constructor : aClass.getConstructors()) {
+        if (!constructor.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return true;
+
+        PsiCodeBlock body = constructor.getBody();
+        if (body == null) continue;
+
+        for (PsiMethodCallExpression call : SyntaxTraverser.psiTraverser().withRoot(body).filter(PsiMethodCallExpression.class)) {
+          PsiReferenceExpression methodExpression = call.getMethodExpression();
+          if (methodExpression.textMatches(PsiKeyword.THIS) || methodExpression.textMatches(PsiKeyword.SUPER)) continue;
+          if (!virtual) return true;
+
+          PsiMethod target = call.resolveMethod();
+          if (target != null && PsiUtil.canBeOverridden(target)) return true;
+        }
+      }
+
+      return false;
+    }
   }
 
   private static class FieldChecker {
@@ -292,22 +312,16 @@ public class DfaValueFactory {
         return;
       }
       // Indirect instantiation via other class is still possible, but hopefully unlikely
-      myCanInstantiateItself = StreamEx.of(myClass.getChildren())
-                                       .select(PsiMember.class)
-                                       .filter(member -> member.hasModifierProperty(PsiModifier.STATIC))
-                                       .flatMap(member -> StreamEx.<PsiElement>ofTree(member, e -> StreamEx.of(e.getChildren())))
-                                       .select(PsiNewExpression.class).map(newExpr -> newExpr.getClassReference()).nonNull()
-                                       .anyMatch(classRef -> classRef.isReferenceTo(myClass));
+      ClassInitializationInfo info = CachedValuesManager.getCachedValue(myClass, () -> CachedValueProvider.Result
+        .create(new ClassInitializationInfo(myClass), PsiModificationTracker.MODIFICATION_COUNT));
+      myCanInstantiateItself = info.myCanInstantiateItself;
       if (method.hasModifierProperty(PsiModifier.STATIC) || method.isConstructor()) {
         myTrustDirectFieldInitializers = true;
         myTrustFieldInitializersInConstructors = false;
         return;
       }
-      boolean superCtorsCallMethods = !InheritanceUtil.processSupers(myClass, false,
-                                                                     psiClass -> !canCallMethodsInConstructors(psiClass, true));
-      boolean thisCtorsCallMethods = canCallMethodsInConstructors(myClass, false);
-      myTrustFieldInitializersInConstructors = !superCtorsCallMethods && !thisCtorsCallMethods;
-      myTrustDirectFieldInitializers = !superCtorsCallMethods;
+      myTrustFieldInitializersInConstructors = !info.mySuperCtorsCallMethods && !info.myCtorsCallMethods;
+      myTrustDirectFieldInitializers = !info.mySuperCtorsCallMethods;
     }
 
     boolean canTrustFieldInitializer(PsiField field) {

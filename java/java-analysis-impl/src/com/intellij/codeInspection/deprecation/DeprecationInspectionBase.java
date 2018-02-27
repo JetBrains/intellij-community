@@ -13,7 +13,6 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
@@ -353,7 +352,6 @@ abstract class DeprecationInspectionBase extends AbstractBaseJavaLocalInspection
       .map(resolved -> (PsiMethod)(resolved instanceof PsiMethod ? resolved : null))
       .filter(Objects::nonNull)
       .filter(tagMethod -> !tagMethod.isDeprecated())
-      .filter(tagMethod -> !StringUtil.equals(tagMethod.getName(), method.getName()))
       .filter(tagMethod -> !tagMethod.isEquivalentTo(method))
       .filter(tagMethod -> areReplaceable(method, tagMethod, call))
       .collect(MoreCollectors.onlyOne())

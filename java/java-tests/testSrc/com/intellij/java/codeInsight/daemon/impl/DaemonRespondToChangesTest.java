@@ -1220,8 +1220,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
 
-  // disabled for now
-  public void _testSOEInEndlessAppendChainPerformance() {
+  public void testSOEInEndlessAppendChainPerformance() {
     StringBuilder text = new StringBuilder("class S { String ffffff =  new StringBuilder()\n");
     for (int i=0; i<2000; i++) {
       text.append(".append(").append(i).append(")\n");
@@ -1229,21 +1228,34 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     text.append(".toString();<caret>}");
     configureByText(StdFileTypes.JAVA, text.toString());
 
-    PlatformTestUtil.startPerformanceTest("tree visitors", 30000, () -> {
+    PlatformTestUtil.startPerformanceTest("highlighting deep call chain", 60_000, () -> {
       List<HighlightInfo> infos = highlightErrors();
       assertEmpty(infos);
-      type("kjhgas");
-      List<HighlightInfo> errors = highlightErrors();
-      assertFalse(errors.isEmpty());
+      type("k");
+      assertNotEmpty(highlightErrors());
       backspace();
+    }).usesAllCPUCores().assertTiming();
+  }
+
+  public void testPerformanceOfHighlightingLongCallChainWithHierarchyAndGenerics() {
+    String text = "class Foo { native Foo foo(); }\n" +
+                  "class Bar<T extends Foo> extends Foo {\n" +
+                  "  native Bar<T> foo();" +
+                  "}\n" +
+                  "class Goo extends Bar<Goo> {}\n" +
+                  "class S { void x(Goo g) { g\n" +
+                  StringUtil.repeat(".foo()\n", 2000) +
+                  ".toString(); } }";
+    configureByText(StdFileTypes.JAVA, text);
+
+    PlatformTestUtil.startPerformanceTest("highlighting deep call chain", 90_000, () -> {
+      assertEmpty(highlightErrors());
+
+      type("k");
+      assertNotEmpty(highlightErrors());
+
       backspace();
-      backspace();
-      backspace();
-      backspace();
-      backspace();
-      infos = highlightErrors();
-      assertEmpty(infos);
-    }).useLegacyScaling().assertTiming();
+    }).usesAllCPUCores().assertTiming();
   }
 
 
@@ -1849,9 +1861,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     model.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener.Adapter() {
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
-        Object tt = highlighter.getErrorStripeTooltip();
-        if (!(tt instanceof HighlightInfo)) return;
-        String description = ((HighlightInfo)tt).getDescription();
+        HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+        if (info == null) return;
+        String description = info.getDescription();
         if (errorDescription.equals(description)) {
           errorRemoved[0] = true;
 
@@ -2227,8 +2239,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         UIUtil.dispatchAllInvocationEvents();
         caretLeft();
         DaemonProgressIndicator updateProgress = myDaemonCodeAnalyzer.getUpdateProgress();
-        while (myDaemonCodeAnalyzer.getUpdateProgress() == updateProgress) { // wait until daemon started
+        long waitForDaemonStart = System.currentTimeMillis();
+        while (myDaemonCodeAnalyzer.getUpdateProgress() == updateProgress && System.currentTimeMillis() < waitForDaemonStart + 5000) { // wait until daemon started
           UIUtil.dispatchAllInvocationEvents();
+        }
+        if (myDaemonCodeAnalyzer.getUpdateProgress() == updateProgress) {
+          throw new RuntimeException("Daemon failed to start in 5000 ms");
         }
         long start = System.currentTimeMillis();
         while (myDaemonCodeAnalyzer.isRunning() && System.currentTimeMillis() < start + 500) {

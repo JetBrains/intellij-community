@@ -1,14 +1,17 @@
 <component name="libraryTable">
-  <library name="Netty">
+  <library name="Netty" type="repository">
+    <properties maven-id="io.netty:netty-all:4.1.21.Final" />
     <ANNOTATIONS>
-      <root url="file://$PROJECT_DIR$/lib/annotations/netty"/>
+      <root url="file://$PROJECT_DIR$/lib/annotations/netty" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/netty-all-4.1.13.Final.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-all/4.1.21.Final/netty-all-4.1.21.Final.jar!/" />
     </CLASSES>
-    <JAVADOC />
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-all/4.1.21.Final/netty-all-4.1.21.Final-javadoc.jar!/" />
+    </JAVADOC>
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/netty-all-4.1.13.Final-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-all/4.1.21.Final/netty-all-4.1.21.Final-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

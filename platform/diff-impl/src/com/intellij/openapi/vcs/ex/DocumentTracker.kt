@@ -184,7 +184,7 @@ class DocumentTracker : Disposable {
     }
   }
 
-  private fun updateFrozenContentIfNeeded() {
+  fun updateFrozenContentIfNeeded() {
     // ensure blocks are up to date
     updateFrozenContentIfNeeded(Side.LEFT)
     updateFrozenContentIfNeeded(Side.RIGHT)
@@ -288,6 +288,11 @@ class DocumentTracker : Disposable {
     val lineOffset1 = content1.lineOffsets
     val lineOffset2 = content2.lineOffsets
 
+    if (lineRanges.any { !isValidLineRange(lineOffset1, it.start1, it.end1) ||
+                         !isValidLineRange(lineOffset2, it.start2, it.end2) }) {
+      return false
+    }
+
     val iterable = DiffIterableUtil.create(lineRanges, lineOffset1.lineCount, lineOffset2.lineCount)
     for (range in iterable.unchanged()) {
       val lines1 = DiffUtil.getLines(content1, lineOffset1, range.start1, range.end1)
@@ -297,6 +302,9 @@ class DocumentTracker : Disposable {
     return true
   }
 
+  private fun isValidLineRange(lineOffsets: LineOffsets, start: Int, end: Int): Boolean {
+    return start >= 0 && start <= end && end <= lineOffsets.lineCount
+  }
 
 
   private inner class MyDocumentBulkUpdateListener : DocumentBulkUpdateListener {
@@ -403,12 +411,15 @@ class DocumentTracker : Disposable {
     fun isFrozen() = isFrozen(Side.LEFT) || isFrozen(Side.RIGHT)
 
     fun freeze(side: Side) {
+      val wasFrozen = isFrozen()
+
       var data = getData(side)
       if (data == null) {
         data = FreezeData(side[document1, document2])
         setData(side, data)
         data.counter++
 
+        if (wasFrozen) handler.onFreeze()
         handler.onFreeze(side)
       }
       else {
@@ -431,6 +442,7 @@ class DocumentTracker : Disposable {
         setData(side, null)
         refreshDirty(fastRefresh = false)
         handler.onUnfreeze(side)
+        if (!isFrozen()) handler.onUnfreeze()
       }
     }
 
@@ -487,6 +499,9 @@ class DocumentTracker : Disposable {
 
     fun onFreeze(side: Side) {}
     fun onUnfreeze(side: Side) {}
+
+    fun onFreeze() {}
+    fun onUnfreeze() {}
   }
 
 

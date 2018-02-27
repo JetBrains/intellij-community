@@ -17,6 +17,7 @@ package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -167,7 +168,7 @@ public class SuspiciousMethodCallUtil {
     PsiElement element = resolveResult.getElement();
     if (!(element instanceof PsiMethod)) return null;
     PsiMethod calleeMethod = (PsiMethod)element;
-    PsiMethod contextMethod = PsiTreeUtil.getParentOfType(methodExpression, PsiMethod.class);
+    NullableLazyValue<PsiMethod> lazyContextMethod = NullableLazyValue.createValue(() -> PsiTreeUtil.getParentOfType(methodExpression, PsiMethod.class));
 
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (patternMethods) {
@@ -182,6 +183,7 @@ public class SuspiciousMethodCallUtil {
       int index = indices.get(i);
 
       //we are in collections method implementation
+      PsiMethod contextMethod = lazyContextMethod.getValue();
       if (contextMethod != null && isInheritorOrSelf(contextMethod, patternMethod)) return null;
 
       final PsiClass calleeClass = calleeMethod.getContainingClass();

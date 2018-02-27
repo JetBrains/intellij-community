@@ -19,6 +19,7 @@ import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assume;
 import org.junit.Test;
 
 import java.io.File;
@@ -37,10 +38,8 @@ import static org.junit.Assert.*;
 public class PyPackagingTest extends PyEnvTestCase {
   @Override
   public void runPythonTest(PyTestTask testTask) {
-    if (UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
-      return; //Don't run under Windows as after deleting from created virtualenvs original interpreter got spoiled
-    }
-
+    Assume.assumeFalse("Don't run under Windows as after deleting from created virtualenvs original interpreter got spoiled",
+                       UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
     super.runPythonTest(testTask);
   }
 

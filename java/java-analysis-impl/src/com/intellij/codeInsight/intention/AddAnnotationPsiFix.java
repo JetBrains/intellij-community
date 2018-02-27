@@ -4,6 +4,7 @@ package com.intellij.codeInsight.intention;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.lang.findUsages.FindUsagesProvider;
@@ -11,17 +12,18 @@ import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.RetentionPolicy;
+import java.util.List;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
@@ -98,7 +100,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Add '" + StringUtil.getShortName(myAnnotation) + "' Annotation";
+    return CodeInsightBundle.message("intention.add.annotation.family");
   }
 
   @Override
@@ -189,5 +191,44 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
   @NotNull
   protected String[] getAnnotationsToRemove() {
     return myAnnotationsToRemove;
+  }
+
+  public static boolean isNullabilityAnnotationApplicable(@NotNull PsiModifierListOwner owner) {
+    if (owner instanceof PsiMethod) {
+      PsiType returnType = ((PsiMethod)owner).getReturnType();
+      return returnType != null && !(returnType instanceof PsiPrimitiveType);
+    }
+    return !(owner instanceof PsiClass);
+  }
+
+  /**
+   * Creates a fix which will add default "Nullable" annotation to the given element.
+   *
+   * @param owner an element to add the annotation
+   * @return newly created fix or null if adding nullability annotation is impossible for the specified element.
+   */
+  @Nullable
+  public static AddAnnotationPsiFix createAddNullableFix(PsiModifierListOwner owner) {
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
+    return createAddNullableNotNullFix(owner, manager.getDefaultNullable(), manager.getNotNulls());
+  }
+
+  /**
+   * Creates a fix which will add default "NotNull" annotation to the given element.
+   *
+   * @param owner an element to add the annotation
+   * @return newly created fix or null if adding nullability annotation is impossible for the specified element.
+   */
+  @Nullable
+  public static AddAnnotationPsiFix createAddNotNullFix(PsiModifierListOwner owner) {
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
+    return createAddNullableNotNullFix(owner, manager.getDefaultNotNull(), manager.getNullables());
+  }
+
+  @Nullable
+  private static AddAnnotationPsiFix createAddNullableNotNullFix(PsiModifierListOwner owner, String annotationToAdd,
+                                                                 List<String> annotationsToRemove) {
+    if (!isNullabilityAnnotationApplicable(owner)) return null;
+    return new AddAnnotationPsiFix(annotationToAdd, owner, PsiNameValuePair.EMPTY_ARRAY, ArrayUtil.toStringArray(annotationsToRemove));
   }
 }

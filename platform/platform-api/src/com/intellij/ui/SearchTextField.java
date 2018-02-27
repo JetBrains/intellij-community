@@ -122,6 +122,16 @@ public class SearchTextField extends JPanel {
 
         super.setUI(ui);
       }
+
+      @Override
+      protected Rectangle getEmptyTextComponentBounds(Rectangle bounds) {
+        if (isSearchControlUISupported()) {
+          int offset = JBUI.scale(15);
+          bounds.x += offset;
+          bounds.width -= 2 * offset;
+        }
+        return bounds;
+      }
     };
     myTextField.setColumns(15);
     myTextField.addFocusListener(new FocusAdapter() {

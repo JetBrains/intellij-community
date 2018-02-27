@@ -928,4 +928,20 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     PsiElement firstChild = psiFile.getFirstChild();
     assertTrue(firstChild instanceof PsiComment);
   }
+
+  public void testAutoCommitDoesNotGetStuckForDocumentsWithIgnoredFileName() throws IOException {
+    VirtualFile vFile = getVirtualFile(createTempFile("a.txt~", "text"));
+    assertNotNull(getPsiManager().findViewProvider(vFile));
+    assertNull(getPsiManager().findFile(vFile)); // because it's ignored
+
+    Document document = FileDocumentManager.getInstance().getDocument(vFile);
+    ApplicationManager.getApplication().runWriteAction(() -> document.setText("// things"));
+
+    boolean[] calledPerformWhenAllCommitted = new boolean[1];
+    getPsiDocumentManager().performWhenAllCommitted(() -> calledPerformWhenAllCommitted[0] = true);
+    waitForCommits();
+
+    assertTrue(getPsiDocumentManager().isCommitted(document));
+    assertTrue(calledPerformWhenAllCommitted[0]);
+  }
 }

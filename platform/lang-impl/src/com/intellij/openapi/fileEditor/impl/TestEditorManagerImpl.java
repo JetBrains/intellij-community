@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
@@ -32,7 +18,10 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -41,6 +30,8 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
@@ -118,7 +109,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   private void modifyTabWell(Runnable tabWellModification) {
     if (myProject.isDisposed()) return;
-    
+
     FileEditor lastFocusedEditor = myTestEditorSplitter.getFocusedFileEditor();
     VirtualFile lastFocusedFile  = myTestEditorSplitter.getFocusedFile();
     FileEditorProvider oldProvider = myTestEditorSplitter.getProviderFromFocused();
@@ -290,8 +281,8 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @NotNull
   @Override
-  public AsyncResult<EditorWindow> getActiveWindow() {
-    return AsyncResult.done(null);
+  public Promise<EditorWindow> getActiveWindow() {
+    return Promises.resolvedPromise();
   }
 
   @Override
@@ -388,7 +379,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   @Override
   @NotNull
   public FileEditor[] getSelectedEditors() {
-    return new FileEditor[0];
+    return myActiveFile == null ? new FileEditor[0] : getEditors(myActiveFile);
   }
 
   @Override

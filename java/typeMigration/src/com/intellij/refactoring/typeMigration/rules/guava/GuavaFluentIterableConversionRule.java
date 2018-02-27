@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.codeInspection.java18StreamApi.PseudoLambdaReplaceTemplate;
@@ -137,9 +123,9 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     PsiType conversionType = null;
     boolean needSpecifyType = true;
     if (methodName.equals("of")) {
-      descriptorBase = new TypeConversionDescriptor("'FluentIterable*.of($arr$)", "java.util.Arrays.stream($arr$)");
+      descriptorBase = new TypeConversionDescriptor("'_FluentIterable?.of($arr$)", "java.util.Arrays.stream($arr$)");
     } else if (methodName.equals("from")) {
-      descriptorBase = new TypeConversionDescriptor("'FluentIterable*.from($it$)", null) {
+      descriptorBase = new TypeConversionDescriptor("'_FluentIterable?.from($it$)", null) {
         @Override
         public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {
           final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
@@ -277,7 +263,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     if (list.getParametersCount() != 1) return null;
     final PsiType parameterType = list.getParameters()[0].getType();
     if (parameterType instanceof PsiEllipsisType) {
-      return new TypeConversionDescriptor("$q$.append('params*)", "java.util.stream.Stream.concat($q$, java.util.Arrays.asList($params$).stream())");
+      return new TypeConversionDescriptor("$q$.append('_params*)", "java.util.stream.Stream.concat($q$, java.util.Arrays.asList($params$).stream())");
     }
     else if (parameterType instanceof PsiClassType) {
       final PsiClass psiClass = PsiTypesUtil.getPsiClass(parameterType);

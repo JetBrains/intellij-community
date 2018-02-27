@@ -67,6 +67,8 @@ import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -237,22 +239,22 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   }
 
   @NotNull
-  private AsyncResult<EditorsSplitters> getActiveSplittersAsync() {
-    final AsyncResult<EditorsSplitters> result = new AsyncResult<>();
+  private Promise<EditorsSplitters> getActiveSplittersAsync() {
+    final AsyncPromise<EditorsSplitters> result = new AsyncPromise<>();
     final IdeFocusManager fm = IdeFocusManager.getInstance(myProject);
     TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
     fm.doWhenFocusSettlesDown(() -> {
       if (myProject.isDisposed()) {
-        result.setRejected();
+        result.cancel();
         return;
       }
       Component focusOwner = fm.getFocusOwner();
       DockContainer container = myDockManager.getContainerFor(focusOwner);
       if (container instanceof DockableEditorTabbedContainer) {
-        result.setDone(((DockableEditorTabbedContainer)container).getSplitters());
+        result.setResult(((DockableEditorTabbedContainer)container).getSplitters());
       }
       else {
-        result.setDone(getMainSplitters());
+        result.setResult(getMainSplitters());
       }
     }, ModalityState.defaultModalityState());
     return result;
@@ -580,8 +582,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   @NotNull
-  public AsyncResult<EditorWindow> getActiveWindow() {
-    return getActiveSplittersAsync().subResult(EditorsSplitters::getCurrentWindow);
+  public Promise<EditorWindow> getActiveWindow() {
+    return getActiveSplittersAsync()
+      .then(EditorsSplitters::getCurrentWindow);
   }
 
   @Override

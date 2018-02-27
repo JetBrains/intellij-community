@@ -6,7 +6,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.util.LazyInitializer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import gnu.trove.TDoubleObjectHashMap;
@@ -25,6 +27,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import static com.intellij.util.ui.JBUI.ScaleType.*;
 
@@ -199,18 +202,66 @@ public class JBUI {
   /**
    * The system scale factor, corresponding to the default monitor device.
    */
-  private static final Float SYSTEM_SCALE_FACTOR = sysScale();
+  private static final LazyInitializer<Float> SYSTEM_SCALE_FACTOR = new LazyInitializer<Float>(new Callable<Float>() {
+    @Override
+    public Float call() {
+      if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
+        return 1f;
+      }
+      if (UIUtil.isJreHiDPIEnabled()) {
+        GraphicsDevice gd = null;
+        try {
+          gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        } catch (HeadlessException ignore) {}
+        if (gd != null && gd.getDefaultConfiguration() != null) {
+          return sysScale(gd.getDefaultConfiguration());
+        }
+        return 1f;
+      }
+      UIUtil.initSystemFontData();
+      Pair<String, Integer> fdata = UIUtil.getSystemFontData();
+
+      int size = fdata == null ? Fonts.label().getSize() : fdata.getSecond();
+      return getFontScale(size);
+    }})
+  {
+    @Override
+    protected void onInitialized(Float scale) {
+      LOG.info("System scale factor: " + scale + " (" + (UIUtil.isJreHiDPIEnabled() ? "JRE" : "IDE") + "-managed HiDPI)");
+    }
+  };
 
   /**
-   * The user space scale factor.
+   * For internal usage.
    */
-  private static float userScaleFactor;
+  public static final LazyInitializer<Float> DEBUG_USER_SCALE_FACTOR = new LazyInitializer<Float>(new Callable<Float>() {
+    @Override
+    public Float call() {
+      String prop = System.getProperty("ide.ui.scale");
+      if (prop != null) {
+        try {
+          return Float.parseFloat(prop);
+        }
+        catch (NumberFormatException e) {
+          LOG.error("ide.ui.scale system property is not a float value: " + prop);
+        }
+      }
+      else if (Registry.is("ide.ui.scale.override")) {
+        return Float.valueOf((float)Registry.get("ide.ui.scale").asDouble());
+      }
+      return null;
+    }})
+  {
+    @Override
+    protected void onInitialized(Float scale) {
+      if (isSet()) setUserScaleFactor(scale);
+    }
+  };
 
-  static {
-    setUserScaleFactor(UIUtil.isJreHiDPIEnabled() ? 1f : SYSTEM_SCALE_FACTOR);
-    LOG.info("System scale factor: " + SYSTEM_SCALE_FACTOR + " (" +
-             (UIUtil.isJreHiDPIEnabled() ? "JRE-managed" : "IDE-managed") + " HiDPI)");
-  }
+  /**
+   * The user scale factor, see {@link ScaleType#USR_SCALE}.
+   */
+  private static float userScaleFactor = setUserScaleFactor(UIUtil.isJreHiDPIEnabled() ? 1f : SYSTEM_SCALE_FACTOR.getNotNull());
 
   /**
    * Adds property change listener. Supported properties:
@@ -231,30 +282,7 @@ public class JBUI {
    * Returns the system scale factor, corresponding to the default monitor device.
    */
   public static float sysScale() {
-    if (SYSTEM_SCALE_FACTOR != null) {
-      return SYSTEM_SCALE_FACTOR;
-    }
-
-    if (UIUtil.isJreHiDPIEnabled()) {
-      GraphicsDevice gd = null;
-      try {
-        gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-      } catch (HeadlessException ignore) {}
-      if (gd != null && gd.getDefaultConfiguration() != null) {
-        return sysScale(gd.getDefaultConfiguration());
-      }
-      return 1.0f;
-    }
-
-    if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
-      return 1.0f;
-    }
-
-    UIUtil.initSystemFontData();
-    Pair<String, Integer> fdata = UIUtil.getSystemFontData();
-
-    int size = fdata == null ? Fonts.label().getSize() : fdata.getSecond();
-    return getFontScale(size);
+    return SYSTEM_SCALE_FACTOR.getNotNull();
   }
 
   /**
@@ -365,6 +393,7 @@ public class JBUI {
   }
 
   private static void setUserScaleFactorProperty(float scale) {
+    if (userScaleFactor == scale) return;
     PCS.firePropertyChange(USER_SCALE_FACTOR_PROPERTY, userScaleFactor, userScaleFactor = scale);
     LOG.info("User scale factor: " + userScaleFactor);
   }
@@ -372,14 +401,25 @@ public class JBUI {
   /**
    * Sets the user scale factor.
    * The method is used by the IDE, it's not recommended to call the method directly from the client code.
-   * For debugging purposes, the following registry keys can be used:
+   * For debugging purposes, the following JVM system property can be used:
+   * ide.ui.scale=[float]
+   * or the IDE registry keys (for backward compatibility):
    * ide.ui.scale.override=[boolean]
    * ide.ui.scale=[float]
+   *
+   * @return the result
    */
-  public static void setUserScaleFactor(float scale) {
+  public static float setUserScaleFactor(float scale) {
+    if (DEBUG_USER_SCALE_FACTOR.isSet()) {
+      if (scale == DEBUG_USER_SCALE_FACTOR.getNotNull()) {
+        setUserScaleFactorProperty(scale); // set the debug value as is, or otherwise ignore
+      }
+      return DEBUG_USER_SCALE_FACTOR.getNotNull();
+    }
+
     if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
-      setUserScaleFactorProperty(1.0f);
-      return;
+      setUserScaleFactorProperty(1f);
+      return 1f;
     }
 
     scale = discreteScale(scale);
@@ -393,10 +433,8 @@ public class JBUI {
       //Default UI font size for Unity and Gnome is 15. Scaling factor 1.25f works badly on Linux
       scale = 1f;
     }
-    if (userScaleFactor == scale) {
-      return;
-    }
     setUserScaleFactorProperty(scale);
+    return scale;
   }
 
   static float discreteScale(float scale) {
@@ -486,6 +524,7 @@ public class JBUI {
   }
 
   @NotNull
+  @SuppressWarnings("unchecked")
   public static <T extends JBIcon> T scale(@NotNull T icon) {
     return (T)icon.withIconPreScaled(false);
   }
@@ -706,6 +745,13 @@ public class JBUI {
     }
 
     /**
+     * Creates a context with all scale factors set to 1.
+     */
+    public static BaseScaleContext createIdentity() {
+      return create(USR_SCALE.of(1));
+    }
+
+    /**
      * Creates a context with the provided scale factors (system scale is ignored)
      */
     public static BaseScaleContext create(@NotNull Scale... scales) {
@@ -837,6 +883,18 @@ public class JBUI {
         case PIX_SCALE: pixScale = newScale; break;
       }
       return true;
+    }
+
+    public <T extends BaseScaleContext> T copy() {
+      BaseScaleContext ctx = createIdentity();
+      ctx.updateAll(this);
+      //noinspection unchecked
+      return (T)ctx;
+    }
+
+    @Override
+    public String toString() {
+      return usrScale + ", " + objScale + ", " + pixScale;
     }
   }
 
@@ -999,6 +1057,19 @@ public class JBUI {
         compRef.clear();
       }
     }
+
+    @Override
+    public <T extends BaseScaleContext> T copy() {
+      ScaleContext ctx = createIdentity();
+      ctx.updateAll(this);
+      //noinspection unchecked
+      return (T)ctx;
+    }
+
+    @Override
+    public String toString() {
+      return usrScale + ", " + sysScale + ", " + objScale + ", " + pixScale;
+    }
   }
 
   /**
@@ -1100,6 +1171,28 @@ public class JBUI {
       myScaler.setPreScaled(preScaled);
     }
 
+    /**
+     * The pre-scaled state of the icon indicates whether the initial size of the icon
+     * is pre-scaled (by the global user scale) or not. If the size is not pre-scaled,
+     * then there're two approaches to deal with it:
+     * 1) scale its initial size right away and store;
+     * 2) scale its initial size every time it's requested.
+     * The 2nd approach is preferable because of the the following. Scaling of the icon may
+     * involve not only USR_SCALE but OBJ_SCALE as well. In which case applying all the scale
+     * factors and then rounding (the size is integer, the scale factors are not) gives more
+     * accurate result than rounding and then scaling.
+     * <p>
+     * For example, say we have an icon of 15x15 initial size, USR_SCALE is 1.5f, OBJ_SCALE is 1,5f.
+     * Math.round(Math.round(15 * USR_SCALE) * OBJ_SCALE) = 35
+     * Math.round(15 * USR_SCALE * OBJ_SCALE) = 34
+     * <p>
+     * Thus, JBUI.scale(MyIcon.create(w, h)) is preferable to MyIcon.create(JBUI.scale(w), JBUI.scale(h)).
+     * Here [w, h] is "raw" unscaled size.
+     *
+     * @param preScaled whether the icon is pre-scaled
+     * @return the icon in the provided pre-scaled state
+     * @see JBUI#scale(JBIcon)
+     */
     @NotNull
     public JBIcon withIconPreScaled(boolean preScaled) {
       setIconPreScaled(preScaled);

@@ -24,11 +24,11 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 
 import static com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.HELP_BUTTON_DIAMETER;
@@ -54,9 +54,19 @@ public class DarculaButtonPainter implements Border, UIResource {
       g2.translate(r.x, r.y);
 
       int diam = JBUI.scale(HELP_BUTTON_DIAMETER);
-      float arc = JBUI.scale(2.0f);
+      float arc = DarculaUIUtil.buttonArc();
       float lw = DarculaUIUtil.lw(g2);
       float bw = DarculaUIUtil.bw();
+
+      if (c.hasFocus()) {
+        if (UIUtil.isHelpButton(c)) {
+          DarculaUIUtil.paintFocusOval(g2, (r.width - diam) / 2 + lw, (r.height - diam) / 2 + lw, diam - lw, diam - lw);
+        } else {
+          DarculaUIUtil.paintFocusBorder(g2, r.width, r.height, arc, true);
+        }
+      } else {
+        paintShadow(g2, r);
+      }
 
       g2.setPaint(getBorderColor(c));
 
@@ -70,22 +80,32 @@ public class DarculaButtonPainter implements Border, UIResource {
 
         g2.fill(border);
       }
-
-      if (c.hasFocus()) {
-        if (UIUtil.isHelpButton(c)) {
-          DarculaUIUtil.paintFocusOval(g2, (r.width - diam) / 2 + lw, (r.height - diam) / 2 + lw, diam - lw, diam - lw);
-        } else {
-          DarculaUIUtil.paintFocusBorder(g2, r.width, r.height, arc, true);
-        }
-      }
     } finally {
       g2.dispose();
     }
   }
 
   public Color getBorderColor(Component button) {
-    return button.isEnabled() && DarculaButtonUI.isDefaultButton((JComponent)button) ?
-           new ColorUIResource(0x3B608A) : new ColorUIResource(0x5E6060);
+    return button.isEnabled() ?
+      button.hasFocus() ?
+        UIManager.getColor(DarculaButtonUI.isDefaultButton((JComponent)button) ?
+         "Button.darcula.defaultFocusedBorderColor" : "Button.darcula.focusedBorderColor") :
+        UIManager.getColor(button.isEnabled() && DarculaButtonUI.isDefaultButton((JComponent)button) ?
+         "Button.darcula.defaultBorderColor" : "Button.darcula.borderColor")
+      : UIManager.getColor("Button.darcula.disabledBorderColor");
+  }
+
+  protected void paintShadow(Graphics2D g2, Rectangle r) {
+    if (UIManager.getBoolean("Button.darcula.paintShadow")) {
+      g2.setColor(UIManager.getColor("Button.darcula.shadowColor"));
+      Composite composite = g2.getComposite();
+      g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
+
+      float bw = DarculaUIUtil.bw();
+      g2.fill(new Rectangle2D.Float(bw, r.height - bw, r.width - bw * 2, JBUI.scale(2)));
+
+      g2.setComposite(composite);
+    }
   }
 
   @Override

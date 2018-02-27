@@ -98,6 +98,7 @@ public class PyNames {
   public static final String TRUE = "True";
   public static final String FALSE = "False";
   public static final String ELLIPSIS = "...";
+  public static final String FUNCTION = "function";
 
   public static final String TYPES_FUNCTION_TYPE = "types.FunctionType";
   public static final String TYPES_METHOD_TYPE = "types.UnboundMethodType";

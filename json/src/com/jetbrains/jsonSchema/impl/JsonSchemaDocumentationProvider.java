@@ -59,10 +59,32 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     if (position == null) return null;
     final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(rootSchema, true, position).resolve();
 
-    final String text = schemas.stream().filter(schema -> !StringUtil.isEmptyOrSpaces(schema.getDocumentation(preferShort)))
-      .findFirst().map(schema -> schema.getDocumentation(preferShort)).orElse(null);
-    // replace already-escaped back slash (\\n) instead of just \n
-    return text == null ? null : StringUtil.escapeXml(StringUtil.replaceUnicodeEscapeSequences(text)).replace("\\n", "<br/>");
+    for (JsonSchemaObject schema : schemas) {
+      final String htmlDescription = getBestDocumentation(preferShort, schema);
+      if (htmlDescription != null) return htmlDescription;
+    }
+
+    return null;
+  }
+
+  @Nullable
+  public static String getBestDocumentation(boolean preferShort, @NotNull final JsonSchemaObject schema) {
+    final String htmlDescription = schema.getHtmlDescription();
+    final String description = schema.getDescription();
+    final String title = schema.getTitle();
+    if (preferShort && !StringUtil.isEmptyOrSpaces(title)) {
+      return plainTextPostProcess(title);
+    } else if (!StringUtil.isEmptyOrSpaces(htmlDescription)) {
+      return htmlDescription;
+    } else if (!StringUtil.isEmptyOrSpaces(description)) {
+      return plainTextPostProcess(description);
+    }
+    return null;
+  }
+
+  @NotNull
+  private static String plainTextPostProcess(String text) {
+    return StringUtil.escapeXml(text).replace("\\n", "<br/>");
   }
 
   @Nullable

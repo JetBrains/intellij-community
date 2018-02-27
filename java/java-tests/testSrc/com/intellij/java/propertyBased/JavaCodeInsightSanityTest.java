@@ -55,12 +55,13 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
 
   public void testRandomActivity() {
     MadTestingUtil.enableAllInspections(getProject(), getTestRootDisposable());
-    Function<PsiFile, Generator<? extends MadTestingAction>> fileActions = file ->
-      Generator.anyOf(InvokeIntention.randomIntentions(file, new JavaIntentionPolicy()),
-                      InvokeCompletion.completions(file, new JavaCompletionPolicy()),
-                      Generator.constant(new StripTestDataMarkup(file)),
-                      DeleteRange.psiRangeDeletions(file));
-    ImperativeCommand.checkScenarios(actionsOnJavaFiles(fileActions));
+    Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
+      file -> Generator.sampledFrom(new InvokeIntention(file, new JavaIntentionPolicy()),
+                                    new InvokeCompletion(file, new JavaCompletionPolicy()),
+                                    new StripTestDataMarkup(file),
+                                    new DeleteRange(file));
+    ImperativeCommand.checkScenarios(
+      actionsOnJavaFiles(fileActions));
   }
 
   public void testPreserveComments() {
@@ -68,10 +69,11 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
     try {
       AbstractJavaFormatterTest.getJavaSettings().ENABLE_JAVADOC_FORMATTING = false;
       MadTestingUtil.enableAllInspections(getProject(), getTestRootDisposable());
-      Function<PsiFile, Generator<? extends MadTestingAction>> fileActions = file ->
-        Generator.anyOf(InvokeIntention.randomIntentions(file, new JavaCommentingStrategy()),
-                        InsertLineComment.insertComment(file, "//simple end comment\n"));
-      ImperativeCommand.checkScenarios(actionsOnJavaFiles(fileActions));
+      Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
+        file -> Generator.sampledFrom(new InvokeIntention(file, new JavaCommentingStrategy()),
+                                      new InsertLineComment(file, "//simple end comment\n"));
+      ImperativeCommand.checkScenarios(
+        actionsOnJavaFiles(fileActions));
     }
     finally {
       AbstractJavaFormatterTest.getJavaSettings().ENABLE_JAVADOC_FORMATTING = oldSettings;
@@ -79,8 +81,8 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
   }
 
   @NotNull
-  private Supplier<ImperativeCommand> actionsOnJavaFiles(Function<PsiFile, Generator<? extends MadTestingAction>> fileActions) {
-    return MadTestingUtil.commandsOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"), fileActions);
+  private Supplier<MadTestingAction> actionsOnJavaFiles(Function<PsiFile, Generator<? extends MadTestingAction>> fileActions) {
+    return MadTestingUtil.actionsOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"), fileActions);
   }
 
   public void testReparse() {

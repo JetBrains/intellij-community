@@ -24,10 +24,12 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -172,8 +174,11 @@ public class PyProjectScopeBuilder extends ProjectScopeBuilderImpl {
       if (root != null) {
         File libRoot = new File(root, "lib");
         File[] versionRoots = libRoot.listFiles();
-        if (versionRoots != null && versionRoots.length == 1) {
-          libRoot = versionRoots[0];
+        if (versionRoots != null && !SystemInfo.isWindows) {
+          final File versionRoot = ContainerUtil.find(versionRoots, file -> file.isDirectory() && file.getName().startsWith("python"));
+          if (versionRoot != null) {
+            libRoot = versionRoot;
+          }
         }
         for (VirtualFile file : classVFiles) {
           if (FileUtil.pathsEqual(file.getPath(), libRoot.getPath())) {

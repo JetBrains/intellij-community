@@ -16,7 +16,6 @@
     <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.usageView" exported="" />
-    <orderEntry type="library" name="xpp3-1.1.4-min" level="project" />
     <orderEntry type="library" exported="" name="cli-parser" level="project" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" exported="" />
@@ -32,5 +31,6 @@
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer" />
     <orderEntry type="library" name="Groovy" level="project" />
+    <orderEntry type="library" name="XStream" level="project" />
   </component>
 </module>

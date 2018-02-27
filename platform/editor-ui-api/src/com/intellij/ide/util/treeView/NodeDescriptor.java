@@ -27,7 +27,7 @@ public abstract class NodeDescriptor<E> {
   private final NodeDescriptor myParentDescriptor;
 
   protected String myName;
-  protected Icon myClosedIcon;
+  @Nullable protected Icon myClosedIcon;
 
   /**
    * Unused. It's there only for API compatibility.
@@ -61,6 +61,11 @@ public abstract class NodeDescriptor<E> {
     myIndex = index;
   }
 
+  /**
+   * Make sure the descriptor is up to date with its content
+   *
+   * @return true if any descriptor's properties changed during the update
+   */
   public abstract boolean update();
 
   public abstract E getElement();
@@ -88,6 +93,7 @@ public abstract class NodeDescriptor<E> {
     return getIcon();
   }
 
+  @Nullable
   public final Icon getIcon() {
     return myClosedIcon;
   }
@@ -144,7 +150,7 @@ public abstract class NodeDescriptor<E> {
     myColor = desc.myColor;
   }
 
-  public void setIcon(Icon closedIcon) {
+  public void setIcon(@Nullable Icon closedIcon) {
     myClosedIcon = closedIcon;
   }
 

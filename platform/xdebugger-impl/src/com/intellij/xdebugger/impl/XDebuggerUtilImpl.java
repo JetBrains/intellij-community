@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.execution.ui.ConsoleView;
@@ -52,6 +50,7 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupingRule;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
+import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -541,7 +540,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   public void logStack(@NotNull XSuspendContext suspendContext, @NotNull XDebugSession session) {
     XExecutionStack activeExecutionStack = suspendContext.getActiveExecutionStack();
     if (activeExecutionStack != null) {
-      activeExecutionStack.computeStackFrames(0, new XExecutionStack.XStackFrameContainer() {
+      activeExecutionStack.computeStackFrames(0, new XStackFrameContainerEx() {
         List<XStackFrame> myFrames = new ArrayList<>();
 
         @Override
@@ -550,6 +549,11 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
           if (last) {
             print(null);
           }
+        }
+
+        @Override
+        public void addStackFrames(@NotNull List<? extends XStackFrame> stackFrames, @Nullable XStackFrame toSelect, boolean last) {
+          addStackFrames(stackFrames, last);
         }
 
         @Override

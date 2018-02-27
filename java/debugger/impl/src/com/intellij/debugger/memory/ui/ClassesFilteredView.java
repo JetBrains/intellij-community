@@ -461,7 +461,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     }
 
     private Map<ReferenceType, Long> getInstancesCounts(@NotNull List<ReferenceType> classes, @NotNull VirtualMachine vm) {
-      final int batchSize = AndroidUtil.isAndroidVM(vm)
+      final int batchSize = DebuggerUtils.isAndroidVM(vm)
                             ? AndroidUtil.ANDROID_COUNT_BY_CLASSES_BATCH_SIZE
                             : DEFAULT_BATCH_SIZE;
 

@@ -1,6 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.ide.IdeTooltip;
+import com.intellij.ide.IdeTooltipManager;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ActiveIcon;
 import com.intellij.ui.EngravedTextGraphics;
 import com.intellij.ui.Gray;
@@ -10,6 +15,7 @@ import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,6 +24,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 class ContentTabLabel extends BaseLabel {
   private final ActiveIcon closeIcon = new ActiveIcon(JBUI.CurrentTheme.ToolWindow.closeTabIcon(true),
@@ -30,6 +37,8 @@ class ContentTabLabel extends BaseLabel {
   private final List<AdditionalIcon> additionalIcon = new ArrayList<>();
 
   private final AdditionalIcon closeTabIcon = new AdditionalIcon(closeIcon) {
+    private static final String ACTION_NAME = "Close tab";
+
     @NotNull
     @Override
     public Rectangle getRectangle() {
@@ -45,7 +54,44 @@ class ContentTabLabel extends BaseLabel {
     public boolean getAvailable() {
       return canBeClosed();
     }
+
+    @Nullable
+    @Override
+    public String getTooltip() {
+      String text =
+        KeymapUtil.getShortcutsText(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_CLOSE_ACTIVE_TAB));
+
+      return text.isEmpty() || !isSelected() ? ACTION_NAME : ACTION_NAME + " (" + text + ")";
+    }
   };
+
+  private CurrentTooltip currentIconTooltip;
+
+  private void showTooltip(AdditionalIcon icon) {
+
+    if (currentIconTooltip != null) {
+      if (currentIconTooltip.icon == icon) {
+        IdeTooltipManager.getInstance().show(currentIconTooltip.currentTooltip, false, false);
+        return;
+      }
+
+      hideCurrentTooltip();
+    }
+
+    String toolText = icon.getTooltip();
+
+    if (toolText != null && !toolText.isEmpty()) {
+      IdeTooltip tooltip = new IdeTooltip(this, icon.getCenterPoint(), new JLabel(toolText));
+      currentIconTooltip = new CurrentTooltip(IdeTooltipManager.getInstance().show(tooltip, false, false), icon);
+    }
+  }
+
+  private void hideCurrentTooltip() {
+    if (currentIconTooltip == null) return;
+
+    currentIconTooltip.currentTooltip.hide();
+    currentIconTooltip = null;
+  }
 
   BaseButtonBehavior behavior = new BaseButtonBehavior(this) {
     protected void execute(final MouseEvent e) {
@@ -59,7 +105,7 @@ class ContentTabLabel extends BaseLabel {
   };
 
   protected final boolean mouseOverIcon(AdditionalIcon icon) {
-    if (!isHovered()) return false;
+    if (!isHovered() || !icon.getAvailable()) return false;
 
     Point point = MouseInfo.getPointerInfo().getLocation();
     SwingUtilities.convertPointFromScreen(point, this);
@@ -95,9 +141,22 @@ class ContentTabLabel extends BaseLabel {
   protected void processMouseMotionEvent(MouseEvent event) {
     super.processMouseMotionEvent(event);
 
-    if (isHovered() && invalid()) {
-      repaint();
+    boolean hovered = isHovered();
+
+    if (hovered) {
+      if (invalid()) {
+        repaint();
+      }
+
+      Optional<AdditionalIcon> first = additionalIcon.stream().filter(icon -> mouseOverIcon(icon)).findFirst();
+
+      if (first.isPresent()) {
+        showTooltip(first.get());
+        return;
+      }
     }
+
+    hideCurrentTooltip();
   }
 
   protected boolean invalid() {
@@ -123,7 +182,7 @@ class ContentTabLabel extends BaseLabel {
     else {
       if (additionalIcon.stream().anyMatch(icon -> icon.getAvailable())) {
         setHorizontalAlignment(SwingConstants.LEFT);
-        setBorder(JBUI.Borders.empty(0, 12, 0, 7));
+        setBorder(JBUI.Borders.empty(0, 12, 0, 3));
       }
       else {
         setHorizontalAlignment(SwingConstants.CENTER);
@@ -166,7 +225,7 @@ class ContentTabLabel extends BaseLabel {
   @Override
   protected Color getPassiveFg(boolean selected) {
     if (contentManager().getContentCount() > 1) {
-      return JBUI.CurrentTheme.Label.disabledForeground(selected);
+      return JBUI.CurrentTheme.Label.foreground(selected);
     }
 
     return super.getPassiveFg(selected);
@@ -210,5 +269,15 @@ class ContentTabLabel extends BaseLabel {
   @Override
   public Content getContent() {
     return myContent;
+  }
+
+  private static class CurrentTooltip {
+    final IdeTooltip currentTooltip;
+    final AdditionalIcon icon;
+
+    public CurrentTooltip(IdeTooltip currentTooltip, AdditionalIcon icon) {
+      this.currentTooltip = currentTooltip;
+      this.icon = icon;
+    }
   }
 }

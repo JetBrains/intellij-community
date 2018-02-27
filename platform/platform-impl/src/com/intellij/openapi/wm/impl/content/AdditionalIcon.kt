@@ -15,7 +15,10 @@ import javax.swing.Icon
 abstract class AdditionalIcon(val myIcon: ActiveIcon) {
   constructor(icon: Icon) : this(ActiveIcon(icon))
 
-  var x : Int = 0
+  open val tooltip: String? = null
+  var x: Int = 0
+  val centerPoint: Point
+    get() = Point(x + (getIconWidth() / 2), getIconY())
 
   fun paintIcon(c: Component, g: Graphics) {
     myIcon.setActive(active)
@@ -31,9 +34,9 @@ abstract class AdditionalIcon(val myIcon: ActiveIcon) {
     return myIcon.iconHeight
   }
 
-  abstract val rectangle : Rectangle
-  abstract val active : Boolean
-  abstract val available : Boolean
+  abstract val rectangle: Rectangle
+  abstract val active: Boolean
+  abstract val available: Boolean
 
   private fun getIconY(): Int {
     return rectangle.y + rectangle.height / 2 - getIconHeight() / 2 + 1

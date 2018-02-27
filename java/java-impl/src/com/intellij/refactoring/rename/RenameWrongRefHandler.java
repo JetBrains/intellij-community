@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 public class RenameWrongRefHandler implements RenameHandler {
 
 
-  public final boolean isAvailableOnDataContext(final DataContext dataContext) {
+  public final boolean isAvailableOnDataContext(@NotNull final DataContext dataContext) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -45,7 +45,7 @@ public class RenameWrongRefHandler implements RenameHandler {
     return reference instanceof PsiReferenceExpression && new RenameWrongRefFix((PsiReferenceExpression)reference, true).isAvailable(project, editor, file);
   }
 
-  public final boolean isRenaming(final DataContext dataContext) {
+  public final boolean isRenaming(@NotNull final DataContext dataContext) {
     return isAvailableOnDataContext(dataContext);
   }
 

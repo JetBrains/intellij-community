@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.NotNullProducer;
+import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -290,5 +291,36 @@ public class JBColor extends Color {
         return UIUtil.getBorderColor();
       }
     });
+  }
+
+  private static final HashMap<String, Color> currentThemeColors = new HashMap<String, Color>();
+  private static final HashMap<String, Color> defaultThemeColors = new HashMap<String, Color>();
+
+  public static Color get(@NotNull final String colorId, @NotNull final Color defaultColor) {
+    return new JBColor(new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        Color color = currentThemeColors.get(colorId);
+        if (color != null) {
+          return color;
+        }
+        color = defaultThemeColors.get(colorId);
+        if (color != null) {
+          return color;
+        }
+
+        defaultThemeColors.put(colorId, defaultColor);
+        return defaultColor;
+      }
+    });
+  }
+
+  public static void setCurrentThemeColor(@NotNull String colorId, @NotNull Color color) {
+    currentThemeColors.put(colorId, color);
+  }
+
+  public static void clearCurrentThemeColors() {
+    currentThemeColors.clear();
   }
 }

@@ -15,7 +15,8 @@ public class DefaultPostfixTemplateEditor implements PostfixTemplateEditor {
 
   public DefaultPostfixTemplateEditor(@NotNull PostfixTemplateProvider templateProvider, @NotNull PostfixTemplate templateToEdit) {
     myTemplateProvider = templateProvider;
-    myTemplateToEdit = templateToEdit;
+    myTemplateToEdit = templateToEdit instanceof PostfixTemplateWrapper ? ((PostfixTemplateWrapper)templateToEdit).getDelegate()
+                                                                        : templateToEdit;
   }
 
   @NotNull

@@ -7,8 +7,7 @@ import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInsight.intention.impl.AddNotNullAnnotationFix;
-import com.intellij.codeInsight.intention.impl.AddNullableAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind.NullabilityProblem;
 import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
@@ -441,7 +440,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     assert annoName != null;
     String msg = "@" + NullableStuffInspectionBase.getPresentableAnnoName(nullableAnno) +
                  " method '" + method.getName() + "' always returns a non-null value";
-    LocalQuickFix[] fixes = {new AddNotNullAnnotationFix(method)};
+    LocalQuickFix[] fixes = {AddAnnotationPsiFix.createAddNotNullFix(method)};
     if (holder.isOnTheFly()) {
       fixes = ArrayUtil.append(fixes, new SetInspectionOptionFix(this, "REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL",
                                                                  InspectionsBundle
@@ -578,7 +577,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
             if (psiMethod != null && psiMethod.getManager().isInProject(psiMethod) && AnnotationUtil.isAnnotatingApplicable(psiMethod)) {
               final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
               if (idx < parameters.length) {
-                fixes.add(new AddNullableAnnotationFix(parameters[idx]));
+                fixes.add(AddAnnotationPsiFix.createAddNullableFix(parameters[idx]));
                 holder.registerProblem(expr, text, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
                 reportedAnchors.add(expr);
               }
@@ -602,7 +601,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       List<LocalQuickFix> fixes = createNPEFixes((PsiExpression)expr, (PsiExpression)expr, holder.isOnTheFly());
       PsiField field = getAssignedField(expr);
       if (field != null) {
-        fixes.add(new AddNullableAnnotationFix(field));
+        fixes.add(AddAnnotationPsiFix.createAddNullableFix(field));
         holder.registerProblem(expr, text, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         reportedAnchors.add(expr);
       }

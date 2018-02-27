@@ -122,7 +122,7 @@ public class PerformanceTestInfo {
       int expectedOnMyMachine = getExpectedTimeOnThisMachine();
 
       // Allow 10% more in case of test machine is busy.
-      double acceptableChangeFactor = attempts == 1 ? 1.1 : 1.0;
+      double acceptableChangeFactor = attempts == 0 ? 1.1 : 1.0;
       int percentage = (int)(100.0 * (duration - expectedOnMyMachine) / expectedOnMyMachine);
       String colorCode = duration < expectedOnMyMachine ? "32;1m" : // green
                          duration < expectedOnMyMachine * acceptableChangeFactor ? "33;1m" : // yellow

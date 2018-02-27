@@ -470,8 +470,8 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
 
     //choose external place iff USE_EXTERNAL_ANNOTATIONS option is on,
     //otherwise external annotations should be read-only
-    if (CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS) {
-      final PsiFile containingFile = element.getContainingFile();
+    final PsiFile containingFile = element.getContainingFile();
+    if (JavaCodeStyleSettings.getInstance(containingFile).USE_EXTERNAL_ANNOTATIONS) {
       final VirtualFile virtualFile = containingFile.getVirtualFile();
       LOG.assertTrue(virtualFile != null);
       final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(virtualFile);
@@ -742,7 +742,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
   public static boolean areExternalAnnotationsApplicable(@NotNull PsiModifierListOwner owner) {
     if (!owner.isPhysical()) return false;
     if (!owner.getManager().isInProject(owner)) return true;
-    return CodeStyleSettingsManager.getSettings(owner.getProject()).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS;
+    return JavaCodeStyleSettings.getInstance(owner.getContainingFile()).USE_EXTERNAL_ANNOTATIONS;
   }
 
   private static class MyExternalPromptDialog extends OptionsMessageDialog {

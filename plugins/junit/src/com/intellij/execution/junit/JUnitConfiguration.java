@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.junit;
 
@@ -8,6 +6,7 @@ import com.intellij.codeInsight.MetaAnnotationUtil;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -43,6 +42,7 @@ import java.util.*;
 
 public class JUnitConfiguration extends JavaTestConfigurationBase {
   public static final String DEFAULT_PACKAGE_NAME = ExecutionBundle.message("default.package.presentable.name");
+  public static final byte FRAMEWORK_ID = 0x0;
 
   @NonNls public static final String TEST_CLASS = "class";
   @NonNls public static final String TEST_PACKAGE = "package";
@@ -264,7 +264,9 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
 
   @Override
   public void setAlternativeJrePathEnabled(boolean enabled) {
+    boolean changed = ALTERNATIVE_JRE_PATH_ENABLED != enabled;
     ALTERNATIVE_JRE_PATH_ENABLED = enabled;
+    ApplicationConfiguration.onAlternativeJreChanged(changed, getProject());
   }
 
   @Override
@@ -274,7 +276,9 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
 
   @Override
   public void setAlternativeJrePath(String path) {
+    boolean changed = !Objects.equals(ALTERNATIVE_JRE_PATH, path);
     ALTERNATIVE_JRE_PATH = path;
+    ApplicationConfiguration.onAlternativeJreChanged(changed, getProject());
   }
 
   @Override
@@ -540,10 +544,9 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     return new JUnitConsoleProperties(this, executor);
   }
 
-  @NotNull
   @Override
-  public String getFrameworkPrefix() {
-    return "j";
+  public byte getTestFrameworkId() {
+    return FRAMEWORK_ID;
   }
 
   public static class Data implements Cloneable {

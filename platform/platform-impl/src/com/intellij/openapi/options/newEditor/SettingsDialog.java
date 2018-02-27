@@ -37,7 +37,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   public SettingsDialog(Project project, String key, @NotNull Configurable configurable, boolean showApplyButton, boolean showResetButton) {
     super(project, true);
     myDimensionServiceKey = key;
-    myEditor = new ConfigurableEditor(myDisposable, configurable);
+    myEditor = new SingleSettingEditor(myDisposable, configurable);
     myApplyButtonNeeded = showApplyButton;
     myResetButtonNeeded = showResetButton;
     init(configurable, project);
@@ -46,7 +46,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   public SettingsDialog(@NotNull Component parent, String key, @NotNull Configurable configurable, boolean showApplyButton, boolean showResetButton) {
     super(parent, true);
     myDimensionServiceKey = key;
-    myEditor = new ConfigurableEditor(myDisposable, configurable);
+    myEditor = new SingleSettingEditor(myDisposable, configurable);
     myApplyButtonNeeded = showApplyButton;
     myResetButtonNeeded = showResetButton;
     init(configurable, null);

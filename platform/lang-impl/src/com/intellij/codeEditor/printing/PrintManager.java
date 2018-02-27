@@ -16,6 +16,7 @@
 package com.intellij.codeEditor.printing;
 
 import com.intellij.CommonBundle;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -232,7 +233,7 @@ class PrintManager {
                            psiFile, psiFile.getFileType());
   }
 
-  private static TextPainter initTextPainter(@NotNull final DocumentEx doc, final Project project) {
+  private static TextPainter initTextPainter(@NotNull final DocumentEx doc, final @NotNull Project project) {
     final TextPainter[] res = new TextPainter[1];
     ApplicationManager.getApplication().runReadAction(
       () -> {
@@ -242,9 +243,9 @@ class PrintManager {
     return res[0];
   }
 
-  private static TextPainter doInitTextPainter(@NotNull final DocumentEx doc, Project project) {
+  private static TextPainter doInitTextPainter(@NotNull final DocumentEx doc, @NotNull Project project) {
     EditorHighlighter highlighter = HighlighterFactory.createHighlighter(project, "unknown");
     highlighter.setText(doc.getCharsSequence());
-    return new TextPainter(doc, highlighter, "unknown", "unknown", project, FileTypes.PLAIN_TEXT, null);
+    return new TextPainter(doc, highlighter, "unknown", "unknown", FileTypes.PLAIN_TEXT, null, CodeStyle.getSettings(project));
   }
 }

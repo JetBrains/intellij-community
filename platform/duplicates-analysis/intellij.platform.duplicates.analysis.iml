@@ -14,5 +14,6 @@
     <orderEntry type="module" module-name="intellij.platform.indexing" exported="" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" exported="" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" exported="" />
+    <orderEntry type="library" name="XStream" level="project" />
   </component>
 </module>

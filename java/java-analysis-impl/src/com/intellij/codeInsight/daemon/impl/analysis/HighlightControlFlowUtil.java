@@ -20,7 +20,9 @@ import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.BitUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -569,7 +571,7 @@ public class HighlightControlFlowUtil {
     Collection<ControlFlowUtil.VariableInfo> codeBlockProblems = finalVarProblems.get(codeBlock);
     if (codeBlockProblems == null) {
       try {
-        final ControlFlow controlFlow = getControlFlowNoConstantEvaluate(codeBlock);
+        final ControlFlow controlFlow = getControlFlow(codeBlock);
         codeBlockProblems = ControlFlowUtil.getInitializedTwice(controlFlow);
       }
       catch (AnalysisCanceledException e) {
@@ -597,45 +599,31 @@ public class HighlightControlFlowUtil {
 
   @Nullable
   static HighlightInfo checkCannotWriteToFinal(@NotNull PsiExpression expression, @NotNull PsiFile containingFile) {
-    PsiReferenceExpression reference = null;
-    boolean readBeforeWrite = false;
+    PsiExpression operand = null;
     if (expression instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
-      final PsiExpression left = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getLExpression());
-      if (left instanceof PsiReferenceExpression) {
-        reference = (PsiReferenceExpression)left;
-      }
-      readBeforeWrite = assignmentExpression.getOperationTokenType() != JavaTokenType.EQ;
+      operand = ((PsiAssignmentExpression)expression).getLExpression();
     }
-    else if (expression instanceof PsiUnaryExpression) {
-      final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(((PsiUnaryExpression)expression).getOperand());
-      final IElementType sign = ((PsiUnaryExpression)expression).getOperationTokenType();
-      if (operand instanceof PsiReferenceExpression && (sign == JavaTokenType.PLUSPLUS || sign == JavaTokenType.MINUSMINUS)) {
-        reference = (PsiReferenceExpression)operand;
-      }
-      readBeforeWrite = true;
+    else if (PsiUtil.isIncrementDecrementOperation(expression)) {
+      operand = ((PsiUnaryExpression)expression).getOperand();
     }
-    final PsiElement resolved = reference == null ? null : reference.resolve();
-    PsiVariable variable = resolved instanceof PsiVariable ? (PsiVariable)resolved : null;
+    PsiReferenceExpression reference = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(operand), PsiReferenceExpression.class);
+    PsiVariable variable = reference == null ? null : ObjectUtils.tryCast(reference.resolve(), PsiVariable.class);
     if (variable == null || !variable.hasModifierProperty(PsiModifier.FINAL)) return null;
     final boolean canWrite = canWriteToFinal(variable, expression, reference, containingFile) && checkWriteToFinalInsideLambda(variable, reference) == null;
-    if (readBeforeWrite || !canWrite) {
-      final String name = variable.getName();
-      String description = JavaErrorMessages.message(canWrite ? "variable.not.initialized" : "assignment.to.final.variable", name);
-      final HighlightInfo highlightInfo =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(reference.getTextRange()).descriptionAndTooltip(description).create();
-      final PsiElement innerClass = getInnerClassVariableReferencedFrom(variable, expression);
-      if (innerClass == null || variable instanceof PsiField) {
-        QuickFixAction.registerQuickFixAction(highlightInfo,
-                                              QUICK_FIX_FACTORY.createModifierListFix(variable, PsiModifier.FINAL, false, false));
-      }
-      else {
-        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, innerClass));
-      }
-      return highlightInfo;
+    if (canWrite) return null;
+    final String name = variable.getName();
+    String description = JavaErrorMessages.message("assignment.to.final.variable", name);
+    final HighlightInfo highlightInfo =
+      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(reference.getTextRange()).descriptionAndTooltip(description).create();
+    final PsiElement innerClass = getInnerClassVariableReferencedFrom(variable, expression);
+    if (innerClass == null || variable instanceof PsiField) {
+      QuickFixAction.registerQuickFixAction(highlightInfo,
+                                            QUICK_FIX_FACTORY.createModifierListFix(variable, PsiModifier.FINAL, false, false));
     }
-
-    return null;
+    else {
+      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createVariableAccessFromInnerClassFix(variable, innerClass));
+    }
+    return highlightInfo;
   }
 
   private static boolean canWriteToFinal(@NotNull PsiVariable variable,

@@ -3,10 +3,8 @@ package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.IconProvider;
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
-import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.extensions.Extensions;
@@ -293,8 +291,8 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
 
   @Override
   public int getWeight() {
-    final ProjectView projectView = ProjectView.getInstance(myProject);
-    if (projectView instanceof ProjectViewImpl && !((ProjectViewImpl)projectView).isFoldersAlwaysOnTop()) {
+    ViewSettings settings = getSettings();
+    if (settings == null || settings.isFoldersAlwaysOnTop()) {
       return 20;
     }
     return isFQNameShown() ? 70 : 0;

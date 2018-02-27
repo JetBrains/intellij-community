@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testGuiFramework.cellReader.ExtendedJComboboxCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
-import com.intellij.testGuiFramework.cellReader.ExtendedJTableCellReader
 import com.intellij.testGuiFramework.fixtures.*
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedButtonFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTableFixture
@@ -443,20 +442,20 @@ open class GuiTestCase {
    * @timeout in seconds to find JTable component
    * @throws ComponentLookupException if component has not been found or timeout exceeded
    */
-  fun <S, C : Component> ComponentFixture<S, C>.table(cellText: String, timeout: Long = defaultTimeout): JTableFixture =
+  fun <S, C : Component> ComponentFixture<S, C>.table(cellText: String, timeout: Long = defaultTimeout): ExtendedTableFixture =
     if (target() is Container) {
-      val jTable = waitUntilFound(target() as Container, JTable::class.java, timeout) {
-        val jTableFixture = JTableFixture(guiTestRule.robot(), it)
-        jTableFixture.replaceCellReader(ExtendedJTableCellReader())
+      var tableFixture: ExtendedTableFixture? = null
+      waitUntilFound(target() as Container, JTable::class.java, timeout) {
+        tableFixture = ExtendedTableFixture(guiTestRule.robot(), it)
         try {
-          jTableFixture.cell(cellText)
-          true
+          tableFixture?.cell(cellText)
+          tableFixture != null
         }
         catch (e: ActionFailedException) {
           false
         }
       }
-      JTableFixture(guiTestRule.robot(), jTable)
+      tableFixture ?: throw unableToFindComponent("""JTable with cell text "$cellText"""")
     }
     else throw unableToFindComponent("""JTable with cell text "$cellText"""")
 
@@ -608,8 +607,7 @@ open class GuiTestCase {
    *
    * @path items like: popup("New", "File")
    */
-  fun IdeFrameFixture.popup(vararg path: String)
-    = this.invokeMenuPath(*path)
+  fun IdeFrameFixture.popup(vararg path: String) = this.invokeMenuPath(*path)
 
 
   fun CustomToolWindowFixture.ContentFixture.editor(func: EditorFixture.() -> Unit) {
@@ -631,6 +629,11 @@ open class GuiTestCase {
   fun shortcut(keyStroke: String) = GuiTestUtil.invokeActionViaShortcut(guiTestRule.robot(), keyStroke)
 
   fun shortcut(shortcut: Shortcut) = shortcut(shortcut.getKeystroke())
+
+  fun shortcut(winShortcut: Shortcut, macShortcut: Shortcut) {
+    if (SystemInfo.isMac()) shortcut(macShortcut)
+    else shortcut(winShortcut)
+  }
 
   fun shortcut(key: Key) = shortcut(key.name)
 
@@ -757,11 +760,43 @@ open class GuiTestCase {
 
   fun tableRowValues(table: JTableFixture, rowIndex: Int): List<String> {
     val fixture = ExtendedTableFixture(guiTestRule.robot(), table.target())
-    return RowFixture(rowIndex, fixture).values()
+    return RowFixture(guiTestRule.robot(), rowIndex, fixture).values()
   }
 
   fun tableRowCount(table: JTableFixture): Int {
     val fixture = ExtendedTableFixture(guiTestRule.robot(), table.target())
     return fixture.rowCount()
   }
+
+  fun waitForPanelToDisappear(panelTitle: String, timeout: Long = 300000) {
+    Pause.pause(object : Condition("Wait for $panelTitle panel appears") {
+      override fun test(): Boolean {
+        try {
+          robot().finder().find(guiTestRule.findIdeFrame().target()) {
+            it is JLabel && it.text == panelTitle
+          }
+        }
+        catch (cle: ComponentLookupException) {
+          return false
+        }
+        return true
+      }
+    }, timeout)
+
+    Pause.pause(object : Condition("Wait for $panelTitle panel disappears") {
+      override fun test(): Boolean {
+        try {
+          robot().finder().find(guiTestRule.findIdeFrame().target()) {
+            it is JLabel && it.text == panelTitle
+          }
+        }
+        catch (cle: ComponentLookupException) {
+          return true
+        }
+        return false
+      }
+    })
+
+  }
+
 }

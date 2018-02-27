@@ -50,7 +50,7 @@ public class MakeAnnotationExternal extends BaseIntentionAction {
       PsiModifierListOwner modifierListOwner = PsiTreeUtil.getParentOfType(annotation, PsiModifierListOwner.class);
       if (modifierListOwner != null) {
         VirtualFile virtualFile = PsiUtilCore.getVirtualFile(modifierListOwner);
-        if (CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS ||
+        if (JavaCodeStyleSettings.getInstance(file).USE_EXTERNAL_ANNOTATIONS ||
             virtualFile != null && ExternalAnnotationsManager.getInstance(project).hasAnnotationRootsForFile(virtualFile)) {
           setText("Annotate externally");
           return true;

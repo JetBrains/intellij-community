@@ -193,7 +193,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     JUnitConfiguration configuration =
       new JUnitConfiguration("", myProject, JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
     configuration.getPersistentData().TEST_OBJECT = JUnitConfiguration.TEST_DIRECTORY;
-    configuration.getPersistentData().setDirName(psiClass.getContainingFile().getContainingDirectory().getVirtualFile().getPath());
+    configuration.getPersistentData().setDirName(psiClass.getContainingFile().getContainingDirectory().getVirtualFile().getParent().getPath());
     configuration.setModule(module1);
     JavaParameters parameters = checkCanRun(configuration);
     String filePath = ContainerUtil.find(parameters.getProgramParametersList().getArray(),
@@ -206,7 +206,8 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
         "test1.DerivedTest", RT_INNER_TEST_NAME,
         "test1.nested.TestA",
         "test1.nested.TestWithJunit4",
-        "test1.ThirdPartyTest"},
+        "test1.ThirdPartyTest",
+        "TestA"},
       lines);
   }
 

@@ -59,18 +59,13 @@ public class UseDPIAwareEmptyBorderInspection extends DevKitInspectionBase {
   private static ProblemDescriptor checkMethodCallCanBeSimplified(PsiMethodCallExpression expression,
                                                                   InspectionManager manager,
                                                                   boolean isOnTheFly) {
-    String text = expression.getText();
-    if (text.contains("empty(")) {
-      PsiType type = expression.getType();
-      PsiType[] arguments = expression.getTypeArguments();
-      if (type != null
-          && JBEmptyBorder.class.getName().equals(type.getCanonicalText())
-          && ConvertToJBBorderQuickFix.canSimplify(expression)) {
-
-          return manager.createProblemDescriptor(expression, "Simplify", new ConvertToJBBorderQuickFix("Simplify"),
-                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
-
-      }
+    PsiType type = expression.getType();
+    if (type != null
+        && JBEmptyBorder.class.getName().equals(type.getCanonicalText())
+        && expression.getText().contains("empty(")
+        && ConvertToJBBorderQuickFix.canSimplify(expression)) {
+      return manager.createProblemDescriptor(expression, "Simplify", new ConvertToJBBorderQuickFix("Simplify"),
+                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
     }
     return null;
   }

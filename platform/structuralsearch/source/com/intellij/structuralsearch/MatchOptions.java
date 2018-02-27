@@ -146,14 +146,6 @@ public class MatchOptions implements JDOMExternalizable {
     StringToConstraintsTransformer.transformCriteria(criteria, this);
   }
 
-  public boolean isResultIsContextMatch() {
-    return resultIsContextMatch;
-  }
-
-  public void setResultIsContextMatch(boolean resultIsContextMatch) {
-    this.resultIsContextMatch = resultIsContextMatch;
-  }
-
   public SearchScope getScope() {
     return scope;
   }

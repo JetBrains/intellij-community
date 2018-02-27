@@ -51,7 +51,6 @@ import org.fest.swing.edt.GuiTask;
 import org.fest.swing.exception.ComponentLookupException;
 import org.fest.swing.exception.WaitTimedOutError;
 import org.fest.swing.timing.Condition;
-import org.fest.swing.timing.Pause;
 import org.fest.swing.timing.Timeout;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -538,7 +537,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
 
   @NotNull
   public IdeFrameFixture waitForBackgroundTasksToFinish() {
-    Pause.pause(new Condition("Background tasks to finish") {
+    pause(new Condition("Background tasks to finish") {
                   @Override
                   public boolean test() {
                     ProgressManager progressManager = ProgressManager.getInstance();
@@ -554,16 +553,21 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
 
   @NotNull
   public IdeFrameFixture waitForStartingIndexing() {
-    Pause.pause(new Condition("Indexing to start") {
-                  @Override
-                  public boolean test() {
-                    ProgressManager progressManager = ProgressManager.getInstance();
-                    return progressManager.hasModalProgressIndicator() ||
-                           progressManager.hasProgressIndicator() ||
-                           progressManager.hasUnsafeProgressIndicator();
-                  }
-                }
-      , GuiTestUtil.FIFTEEN_MIN_TIMEOUT);
+    return waitForStartingIndexing(15 * 60);
+  }
+
+  @NotNull
+  public IdeFrameFixture waitForStartingIndexing(int secondsToWait) {
+    pause(new Condition("Indexing to start") {
+            @Override
+            public boolean test() {
+              ProgressManager progressManager = ProgressManager.getInstance();
+              return progressManager.hasModalProgressIndicator() ||
+                     progressManager.hasProgressIndicator() ||
+                     progressManager.hasUnsafeProgressIndicator();
+            }
+          }
+      , Timeout.timeout(secondsToWait, TimeUnit.SECONDS));
     robot().waitForIdle();
     return this;
   }

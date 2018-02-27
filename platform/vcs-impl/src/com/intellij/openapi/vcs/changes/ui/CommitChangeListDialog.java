@@ -27,8 +27,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction;
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
 import com.intellij.openapi.vcs.checkin.*;
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager;
+import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
@@ -303,12 +305,15 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       myCommitMessageArea.setChangeList(changeList);
     }
     else {
+      LineStatusTrackerManager.getInstanceImpl(myProject).resetExcludedFromCommitMarkers();
+
       MultipleLocalChangeListsBrowser browser = new MultipleLocalChangeListsBrowser(project, true, true, myShowVcsCommit);
       myBrowser = browser;
 
-      browser.getViewer().setIncludedChanges(included);
       if (initialSelection != null) browser.setSelectedChangeList(initialSelection);
       myCommitMessageArea.setChangeList(browser.getSelectedChangeList());
+
+      browser.getViewer().setIncludedChanges(included);
 
       DiffCommitMessageEditor commitMessageEditor = new DiffCommitMessageEditor(myProject, myCommitMessageArea);
       browser.setBottomDiffComponent(commitMessageEditor);
@@ -862,6 +867,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myCommitOptions.saveChangeListComponentsState();
     saveCommentIntoChangeList();
     saveComments(false);
+    LineStatusTrackerManager.getInstanceImpl(myProject).resetExcludedFromCommitMarkers();
     super.doCancelAction();
   }
 
@@ -1110,6 +1116,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       super(project, DiffPlaces.COMMIT_DIALOG);
 
       putContextUserData(DiffUserDataKeysEx.SHOW_READ_ONLY_LOCK, true);
+      putContextUserData(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, true);
     }
 
     @NotNull

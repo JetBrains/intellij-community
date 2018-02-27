@@ -324,6 +324,8 @@
     <search.optionContributor implementation="com.intellij.notification.impl.NotificationSearchableOptionContributor"/>
 
     <!-- Plugins -->
+    <applicationConfigurable groupId="root" groupWeight="55" instance="com.intellij.ide.plugins.PluginManagerConfigurableNew" id="preferences.pluginManagerNew"
+                             displayName="Plugins (New Design)"/>
     <applicationConfigurable groupId="root" groupWeight="55" instance="com.intellij.ide.plugins.PluginManagerConfigurable" id="preferences.pluginManager"
                              displayName="Plugins"/>
     <actionFromOptionDescriptorProvider implementation="com.intellij.ide.plugins.InstalledPluginsManagerMain$PluginsActionFromOptionDescriptorProvider"/>
@@ -431,6 +433,8 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ideSettings.IdeInitialConfigUsageCollectors$DownloadedPlugins"/>
     <statistics.usagesCollector implementation="com.intellij.openapi.editor.colors.impl.EditorColorSchemesUsagesCollector"/>
 
+    <statistic.eventLog.featureUsageEventLogger implementation="com.intellij.internal.statistic.eventLog.FeatureUsageFileEventLogger"/>
+
     <vfs.local.pluggableFileWatcher implementation="com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl" />
 
     <virtualFileSystem key="dummy" implementationClass="com.intellij.openapi.vfs.ex.dummy.DummyFileSystem"/>
@@ -531,6 +535,10 @@
     <credentialStore implementation="com.intellij.credentialStore.LinuxSecretCredentialStoreFactory" os="linux"/>
 
     <projectService serviceImplementation="com.intellij.tasks.context.WorkingContextManager"/>
+
+    <projectService
+        serviceInterface="com.intellij.psi.availability.PsiAvailabilityService"
+        serviceImplementation="com.intellij.psi.availability.PsiAvailabilityServiceImpl"/>
 
     <!--context providers-->
     <tasks.contextProvider implementation="com.intellij.tasks.context.OpenEditorsContextProvider"/>

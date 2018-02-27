@@ -30,6 +30,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public final class ObjectTree<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectTree");
+  
+  private static final ThreadLocal<Throwable> ourTopmostDisposeTrace = new ThreadLocal<Throwable>();
 
   private final List<ObjectTreeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -134,14 +136,25 @@ public final class ObjectTree<T> {
     synchronized (treeLock) {
       node = getNode(object);
     }
-    if (node == null) {
-      if (processUnregistered) {
-        rememberDisposedTrace(object);
-        executeUnregistered(object, action);
+    boolean needTrace = (node != null || processUnregistered) && Disposer.isDebugMode() && ourTopmostDisposeTrace.get() == null;
+    if (needTrace) {
+      ourTopmostDisposeTrace.set(ThrowableInterner.intern(new Throwable()));
+    }
+    try {
+      if (node == null) {
+        if (processUnregistered) {
+          rememberDisposedTrace(object);
+          executeUnregistered(object, action);
+        }
+      }
+      else {
+        node.execute(action);
       }
     }
-    else {
-      node.execute(action);
+    finally {
+      if (needTrace) {
+        ourTopmostDisposeTrace.remove();
+      }
     }
   }
 
@@ -279,7 +292,8 @@ public final class ObjectTree<T> {
 
   private void rememberDisposedTrace(@NotNull Object object) {
     synchronized (treeLock) {
-      myDisposedObjects.put(object, Disposer.isDebugMode() ? ThrowableInterner.intern(new Throwable()) : Boolean.TRUE);
+      Throwable trace = ourTopmostDisposeTrace.get();
+      myDisposedObjects.put(object, trace != null ? trace : Boolean.TRUE);
     }
   }
 

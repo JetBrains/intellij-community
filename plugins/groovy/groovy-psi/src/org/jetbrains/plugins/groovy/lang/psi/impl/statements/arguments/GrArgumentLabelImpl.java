@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments;
 
 import com.intellij.lang.ASTNode;
@@ -137,14 +136,15 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
   @Override
   @Nullable
   public String getName() {
-    final PsiElement element = getNameElement();
-    if (element instanceof GrExpression) {
-      final Object value = JavaPsiFacade.getInstance(getProject()).getConstantEvaluationHelper().computeConstantExpression(element);
+    final PsiElement expression = PsiUtil.skipParentheses(getNameElement(), false);
+    if (expression instanceof GrLiteral) {
+      final Object value = ((GrLiteral)expression).getValue();
       if (value instanceof String) {
         return (String)value;
       }
     }
 
+    final PsiElement element = getNameElement();
     final IElementType elemType = element.getNode().getElementType();
     if (GroovyTokenTypes.mIDENT == elemType || TokenSets.KEYWORDS.contains(elemType)) {
       return element.getText();
