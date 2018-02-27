@@ -101,7 +101,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     indicator.checkCanceled();
     started = System.currentTimeMillis();
     List<MatchResult> results = (List<MatchResult>)collect.getResult();
-    sortNamesList(namePattern, results, preferStartMatches);
+    sortNamesList(namePattern, pattern, results, preferStartMatches);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("sorted:"+ (System.currentTimeMillis() - started) + ",results:" + results.size());
@@ -176,13 +176,13 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     return new PathProximityComparator(myContext == null ? null : myContext.getElement());
   }
 
-  private static void sortNamesList(@NotNull String namePattern, @NotNull List<MatchResult> namesList, boolean preferStartMatches) {
-    Collections.sort(namesList, (mr1, mr2) -> {
-      boolean exactPrefix1 = namePattern.equalsIgnoreCase(mr1.elementName);
-      boolean exactPrefix2 = namePattern.equalsIgnoreCase(mr2.elementName);
-      if (exactPrefix1 != exactPrefix2) return exactPrefix1 ? -1 : 1;
-      return mr1.compareWith(mr2, preferStartMatches);
-    });
+  private static void sortNamesList(@NotNull String namePattern,
+                                    @NotNull String fullPattern, 
+                                    @NotNull List<MatchResult> namesList, 
+                                    boolean preferStartMatches) {
+    Collections.sort(namesList, Comparator.comparing((MatchResult mr) -> !fullPattern.equalsIgnoreCase(mr.elementName))
+                                          .thenComparing((MatchResult mr) -> !namePattern.equalsIgnoreCase(mr.elementName))
+                                          .thenComparing((mr1, mr2) -> mr1.compareWith(mr2, preferStartMatches)));
   }
 
   @NotNull
