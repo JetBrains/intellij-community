@@ -2239,8 +2239,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         UIUtil.dispatchAllInvocationEvents();
         caretLeft();
         DaemonProgressIndicator updateProgress = myDaemonCodeAnalyzer.getUpdateProgress();
-        while (myDaemonCodeAnalyzer.getUpdateProgress() == updateProgress) { // wait until daemon started
+        long waitForDaemonStart = System.currentTimeMillis();
+        while (myDaemonCodeAnalyzer.getUpdateProgress() == updateProgress && System.currentTimeMillis() < waitForDaemonStart + 5000) { // wait until daemon started
           UIUtil.dispatchAllInvocationEvents();
+        }
+        if (myDaemonCodeAnalyzer.getUpdateProgress() == updateProgress) {
+          throw new RuntimeException("Daemon failed to start in 5000 ms");
         }
         long start = System.currentTimeMillis();
         while (myDaemonCodeAnalyzer.isRunning() && System.currentTimeMillis() < start + 500) {
