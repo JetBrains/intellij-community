@@ -4,21 +4,18 @@ package com.intellij.spellchecker.settings;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.ui.ComponentWithBrowseButton.BrowseFolderActionListener;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.SortedComboBoxModel;
 import com.intellij.ui.SpeedSearchComparator;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,10 +26,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import static com.intellij.openapi.fileChooser.FileChooserDescriptorFactory.createSingleFolderDescriptor;
 import static com.intellij.openapi.ui.TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT;
+import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
+import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.project.ProjectKt.getProjectStoreDirectory;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
+import static com.intellij.util.containers.ContainerUtil.find;
 import static java.util.Arrays.asList;
 
 public class DownloadDictionaryDialog extends DialogWrapper {
@@ -66,8 +67,8 @@ public class DownloadDictionaryDialog extends DialogWrapper {
     myDirectoryTextField.setText(myProject.getBasePath() != null ?
                                  chooseNotNull(getProjectStoreDirectory(myProject.getBaseDir()), myProject.getBaseDir()).getPath():
                                  PathManager.getConfigPath());
-    final FileChooserDescriptor singleFileDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    myDirectoryTextField.addActionListener(new ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>(
+    final FileChooserDescriptor singleFileDescriptor = createSingleFolderDescriptor();
+    myDirectoryTextField.addActionListener(new BrowseFolderActionListener<JTextField>(
       SpellCheckerBundle.message("choose.directory.to.save.dictionary.title"),
       SpellCheckerBundle.message("choose.directory.to.save.dictionary"), myDirectoryTextField, myProject, singleFileDescriptor,
       TEXT_FIELD_WHOLE_TEXT) {
@@ -89,7 +90,7 @@ public class DownloadDictionaryDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     final String dictionaryName = (String)myDictionaryCombobox.getSelectedItem();
-    final VirtualFile directory = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemDependentName(myDirectoryTextField.getText()));
+    final VirtualFile directory = LocalFileSystem.getInstance().refreshAndFindFileByPath(toSystemDependentName(myDirectoryTextField.getText()));
 
     if (dictionaryName != null && directory != null) {
       downloadDictionary(dictionaryName, directory);
@@ -100,12 +101,13 @@ public class DownloadDictionaryDialog extends DialogWrapper {
   private void downloadDictionary(@NotNull String name, @NotNull VirtualFile dir) {
 
     final DownloadableFileService downloader = DownloadableFileService.getInstance();
-    final List<VirtualFile> files = downloader.createDownloader(asList(downloader.createFileDescription(getUrl(name, DIC), name + DIC),
-                                                                       downloader.createFileDescription(getUrl(name, AFF), name + AFF)),
-                                                                name)
+    final DownloadableFileDescription affFile = downloader.createFileDescription(getUrl(name, DIC), name + DIC);
+    final DownloadableFileDescription dicFile = downloader.createFileDescription(getUrl(name, AFF), name + AFF);
+
+    final List<VirtualFile> files = downloader.createDownloader(asList(affFile, dicFile), name)
                                               .downloadFilesWithProgress((dir).getPath(), myProject, null);
     if (files != null && files.size() == 2) {
-      myConsumer.accept(ContainerUtil.find(files, file -> extensionEquals(file.getPath(), "dic")));
+      myConsumer.accept(find(files, file -> extensionEquals(file.getPath(), "dic")));
     }
   }
 
@@ -123,7 +125,7 @@ public class DownloadDictionaryDialog extends DialogWrapper {
     }
     final String path = myDirectoryTextField.getText();
     final JComponent component = myDirectoryTextField.getChildComponent();
-    if (StringUtil.isEmptyOrSpaces(path)) {
+    if (isEmptyOrSpaces(path)) {
       return new ValidationInfo(SpellCheckerBundle.message("empty.path.to.download.location"), component);
     }
     final File file = new File(path);
