@@ -40,6 +40,7 @@ public class CachedIntentions {
     ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
   private final Set<IntentionActionWithTextCaching> myCachedNotifications =
     ConcurrentCollectionFactory.createConcurrentSet(ACTION_TEXT_AND_CLASS_EQUALS);
+  private int myOffset;
 
   public Set<IntentionActionWithTextCaching> getIntentions() {
     return myCachedIntentions;
@@ -79,6 +80,10 @@ public class CachedIntentions {
     return myProject;
   }
 
+  public int getOffset() {
+    return myOffset;
+  }
+
   public static CachedIntentions create(Project project, PsiFile file, Editor editor, @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
     CachedIntentions res = new CachedIntentions(project, file, editor);
     res.wrapAndUpdateActions(intentions, false);
@@ -113,6 +118,7 @@ public class CachedIntentions {
 
 
   public boolean wrapAndUpdateActions(@NotNull ShowIntentionsPass.IntentionsInfo newInfo, boolean callUpdate) {
+    myOffset = newInfo.getOffset();
     boolean changed = wrapActionsTo(newInfo.errorFixesToShow, myCachedErrorFixes, callUpdate);
     changed |= wrapActionsTo(newInfo.inspectionFixesToShow, myCachedInspectionFixes, callUpdate);
     changed |= wrapActionsTo(newInfo.intentionsToShow, myCachedIntentions, callUpdate);

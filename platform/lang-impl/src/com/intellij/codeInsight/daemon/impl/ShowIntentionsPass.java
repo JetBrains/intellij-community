@@ -193,6 +193,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     public final List<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow = ContainerUtil.createLockFreeCopyOnWriteList();
     public final List<HighlightInfo.IntentionActionDescriptor> guttersToShow = ContainerUtil.createLockFreeCopyOnWriteList();
     public final List<HighlightInfo.IntentionActionDescriptor> notificationActionsToShow = ContainerUtil.createLockFreeCopyOnWriteList();
+    private int myOffset;
 
     void filterActions(@Nullable PsiFile psiFile) {
       IntentionActionFilter[] filters = IntentionActionFilter.EXTENSION_POINT_NAME.getExtensions();
@@ -201,6 +202,14 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       filter(inspectionFixesToShow, psiFile, filters);
       filter(guttersToShow, psiFile, filters);
       filter(notificationActionsToShow, psiFile, filters);
+    }
+
+    public void setOffset(int offset) {
+      myOffset = offset;
+    }
+
+    public int getOffset() {
+      return myOffset;
     }
 
     private static void filter(@NotNull List<HighlightInfo.IntentionActionDescriptor> descriptors,
@@ -236,7 +245,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !myEditor.getContentComponent().hasFocus()) return;
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !myEditor.getContentComponent().hasFocus()) return;
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
     if (state != null && !state.isFinished()) return;
     getActionsToShow(myEditor, myFile, myIntentionsInfo, myPassIdToShowIntentionsFor);
@@ -272,7 +281,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     final PsiElement psiElement = hostFile.findElementAt(hostEditor.getCaretModel().getOffset());
     if (psiElement != null) PsiUtilCore.ensureValid(psiElement);
 
-    int offset = hostEditor.getCaretModel().getOffset();
+    final int offset = hostEditor.getCaretModel().getOffset();
+    intentions.setOffset(offset);
     final Project project = hostFile.getProject();
 
     List<HighlightInfo.IntentionActionDescriptor> fixes = getAvailableFixes(hostEditor, hostFile, passIdToShowIntentionsFor);
@@ -300,13 +310,15 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     for (final IntentionAction action : IntentionManager.getInstance().getAvailableIntentionActions()) {
       Pair<PsiFile, Editor> place =
         ShowIntentionActionsHandler.chooseBetweenHostAndInjected(hostFile, hostEditor,
-                                                                 (psiFile, editor) -> ShowIntentionActionsHandler.availableFor(psiFile, editor, action));
+                                                                 (psiFile, editor) -> ShowIntentionActionsHandler
+                                                                   .availableFor(psiFile, editor, action));
 
       if (place != null) {
         List<IntentionAction> enableDisableIntentionAction = new ArrayList<>();
         enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
         enableDisableIntentionAction.add(new IntentionHintComponent.EditIntentionSettingsAction(action));
-        HighlightInfo.IntentionActionDescriptor descriptor = new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null);
+        HighlightInfo.IntentionActionDescriptor descriptor =
+          new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null);
         if (!fixes.contains(descriptor)) {
           intentions.intentionsToShow.add(descriptor);
         }
@@ -342,7 +354,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     if (!cleanup) {
       appendCleanupCode(intentions.errorFixesToShow, hostFile);
     }
-    
+
     EditorNotificationActions.collectDescriptorsForEditor(hostEditor, intentions.notificationActionsToShow);
 
     intentions.filterActions(hostFile);
