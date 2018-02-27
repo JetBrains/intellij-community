@@ -43,7 +43,7 @@ public abstract class RunAnythingGroup {
     return false;
   }
 
-  public synchronized void buildToList(@NotNull Project project,
+  public final synchronized void buildToList(@NotNull Project project,
                                        @Nullable Module module,
                                        @NotNull RunAnythingSearchListModel listModel,
                                        @NotNull String pattern,
