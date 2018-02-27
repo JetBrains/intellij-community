@@ -199,19 +199,24 @@ public class DirDiffPanel implements Disposable, DataProvider {
       }
     });
     final TableColumnModel columnModel = myTable.getColumnModel();
-    final TableColumn operationColumn = columnModel.getColumn((columnModel.getColumnCount() - 1) / 2);
-    operationColumn.setMaxWidth(JBUI.scale(25));
-    operationColumn.setMinWidth(JBUI.scale(25));
     for (int i = 0; i < columnModel.getColumnCount(); i++) {
       final String name = myModel.getColumnName(i);
       final TableColumn column = columnModel.getColumn(i);
       if (DirDiffTableModel.COLUMN_DATE.equals(name)) {
-        column.setMaxWidth(JBUI.scale(90));
+        column.setPreferredWidth(JBUI.scale(90));
         column.setMinWidth(JBUI.scale(90));
       }
       else if (DirDiffTableModel.COLUMN_SIZE.equals(name)) {
-        column.setMaxWidth(JBUI.scale(120));
+        column.setPreferredWidth(JBUI.scale(120));
+        column.setMinWidth(JBUI.scale(90));
+      }
+      else if (DirDiffTableModel.COLUMN_NAME.equals(name)) {
+        column.setPreferredWidth(JBUI.scale(800));
         column.setMinWidth(JBUI.scale(120));
+      }
+      else if (DirDiffTableModel.COLUMN_OPERATION.equals(name)) {
+        column.setMaxWidth(JBUI.scale(25));
+        column.setMinWidth(JBUI.scale(25));
       }
     }
     final DirDiffToolbarActions actions = new DirDiffToolbarActions(myModel, myDiffPanel);
