@@ -563,10 +563,12 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   private static String handleSpacesInPath(String agentPath) {
     if (agentPath.contains(" ")) {
       File targetDir = new File(PathManager.getSystemPath(), "captureAgent");
-      if (targetDir.getAbsolutePath().contains(" ")) {
+      String res = copyAgent(agentPath, targetDir);
+      if (res == null) {
         try {
           targetDir = FileUtil.createTempDirectory("capture", "jars");
-          if (targetDir.getAbsolutePath().contains(" ")) {
+          res = copyAgent(agentPath, targetDir);
+          if (res == null && targetDir.getAbsolutePath().contains(" ")) {
             LOG.info("Capture agent was not used since the agent path contained spaces: " + agentPath);
             return null;
           }
@@ -577,7 +579,16 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
         }
       }
 
+      return res;
+    }
+    return agentPath;
+  }
+
+  @Nullable
+  private static String copyAgent(String agentPath, File targetDir) {
+    if (!targetDir.getAbsolutePath().contains(" ")) {
       try {
+        //noinspection ResultOfMethodCallIgnored
         targetDir.mkdirs();
         Path source = Paths.get(agentPath);
         Path target = targetDir.toPath().resolve(AGENT_FILE_NAME);
@@ -588,10 +599,9 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       }
       catch (IOException e) {
         LOG.info(e);
-        return null;
       }
     }
-    return agentPath;
+    return null;
   }
 
   private static String generateAgentSettings() {
