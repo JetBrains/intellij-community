@@ -1,5 +1,3 @@
-from types import CodeType
-
 import sys
 
 from _pydev_bundle import pydev_log
@@ -8,7 +6,7 @@ from _pydevd_bundle.pydevd_comm import get_global_debugger, CMD_SET_BREAK, CMD_S
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
 from _pydevd_bundle.pydevd_frame import handle_breakpoint_condition, handle_breakpoint_expression
 
-import opcode
+
 class DummyTracingHolder:
     dummy_trace_func = None
 
@@ -90,26 +88,3 @@ def pydev_trace_code_wrapper():
     # import this module again, because it's inserted inside user's code
     global _pydev_stop_at_break
     return _pydev_stop_at_break()
-
-
-
-def create_code_wrapper(offset):
-    co = pydev_trace_code_wrapper.__code__
-    # 0 + offset LOAD_GLOBAL              0 (_pydev_stop_at_break)
-    # 2 + offset CALL_FUNCTION            0
-    # 4 + offset POP_JUMP_IF_TRUE         offset
-    byte_code = [116, 0, 131, 0]
-    if offset > 0xFF:
-        byte_code += [opcode.EXTENDED_ARG, offset >> 8]
-    byte_code += [115, offset & 0xFF]
-
-    #below code is just function trailer and gets removed
-    byte_code += [100, 0, 83, 0]
-    return CodeType(
-        co.co_argcount, co.co_kwonlyargcount, co.co_nlocals,
-        co.co_stacksize,
-        co.co_flags,
-        bytes(byte_code),
-        co.co_consts, co.co_names, co.co_varnames, co.co_filename,
-        co.co_name, co.co_firstlineno, co.co_lnotab, co.co_freevars,
-        co.co_cellvars)
