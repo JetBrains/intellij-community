@@ -219,6 +219,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
         column.setMinWidth(JBUI.scale(25));
       }
     }
+
     final DirDiffToolbarActions actions = new DirDiffToolbarActions(myModel, myDiffPanel);
     final ActionManager actionManager = ActionManager.getInstance();
     final ActionToolbar toolbar = actionManager.createActionToolbar("DirDiff", actions, true);
@@ -467,6 +468,8 @@ public class DirDiffPanel implements Disposable, DataProvider {
   }
 
   private void createUIComponents() {
+    myTable = new MyJBTable();
+
     mySourceDirField = new TextFieldWithBrowseButton(null, this);
     myTargetDirField = new TextFieldWithBrowseButton(null, this);
 
@@ -522,6 +525,23 @@ public class DirDiffPanel implements Disposable, DataProvider {
       if (navigatable2 != null) navigatables.add(navigatable2);
     }
     return toObjectArray(navigatables, Navigatable.class);
+  }
+
+  private static class MyJBTable extends JBTable {
+    @Override
+    public void doLayout() {
+      super.doLayout();
+
+      for (int i = 0; i < (columnModel.getColumnCount() - 1) / 2; i++) {
+        TableColumn column1 = columnModel.getColumn(i);
+        TableColumn column2 = columnModel.getColumn(columnModel.getColumnCount() - i - 1);
+        int delta = (column2.getWidth() - column1.getWidth()) / 2;
+        if (Math.abs(delta) > 0) {
+          column1.setWidth(column1.getWidth() + delta);
+          column2.setWidth(column2.getWidth() - delta);
+        }
+      }
+    }
   }
 
   private class MyPrevNextDifferenceIterable implements PrevNextDifferenceIterable {
