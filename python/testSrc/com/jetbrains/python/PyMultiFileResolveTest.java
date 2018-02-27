@@ -528,6 +528,11 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     assertNull(doResolve());
   }
 
+  // PY-28560
+  public void testNameDuplicatesInDifferentScopes() {
+    assertResolvesTo(PyFunction.class, "m1");
+  }
+
   @NotNull
   private List<String> doMultiResolveAndGetFileUrls(@NotNull String currentFilePath) {
     myFixture.configureByFile(currentFilePath);
