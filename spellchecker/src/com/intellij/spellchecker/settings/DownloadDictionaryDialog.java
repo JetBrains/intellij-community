@@ -66,7 +66,7 @@ public class DownloadDictionaryDialog extends DialogWrapper {
     myDirectoryTextField.setText(myProject.getBasePath() != null ?
                                  chooseNotNull(getProjectStoreDirectory(myProject.getBaseDir()), myProject.getBaseDir()).getPath():
                                  PathManager.getConfigPath());
-    FileChooserDescriptor singleFileDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+    final FileChooserDescriptor singleFileDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     myDirectoryTextField.addActionListener(new ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>(
       SpellCheckerBundle.message("choose.directory.to.save.dictionary.title"),
       SpellCheckerBundle.message("choose.directory.to.save.dictionary"), myDirectoryTextField, myProject, singleFileDescriptor,
