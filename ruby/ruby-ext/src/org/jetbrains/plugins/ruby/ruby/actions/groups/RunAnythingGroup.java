@@ -66,6 +66,11 @@ public abstract class RunAnythingGroup {
     }
   }
 
+  /**
+   * Adds limited number of matched items into the list.
+   *
+   * @return true if limit exceeded
+   */
   boolean addToList(@NotNull RunAnythingSearchListModel listModel,
                     @NotNull SearchResult result,
                     @NotNull String pattern,
