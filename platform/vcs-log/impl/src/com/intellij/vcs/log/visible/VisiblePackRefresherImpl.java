@@ -33,7 +33,7 @@ import com.intellij.vcs.log.data.SingleTaskController;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.graph.PermanentGraph;
-import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
+import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,9 +56,17 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
                                   @NotNull VcsLogData logData,
                                   @NotNull PermanentGraph.SortType initialSortType,
                                   @NotNull VcsLogFilterer builder) {
+    this(project, logData, new VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder().build(), initialSortType, builder);
+  }
+
+  public VisiblePackRefresherImpl(@NotNull Project project,
+                                  @NotNull VcsLogData logData,
+                                  @NotNull VcsLogFilterCollection filters,
+                                  @NotNull PermanentGraph.SortType sortType,
+                                  @NotNull VcsLogFilterer builder) {
     myLogData = logData;
     myVisiblePackBuilder = builder;
-    myState = new State(initialSortType);
+    myState = new State(filters, sortType);
 
     myTaskController = new SingleTaskController<Request, State>(project, "visible", state -> {
       boolean hasChanges = myState.getVisiblePack() != state.getVisiblePack();
@@ -271,9 +279,8 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     @NotNull private final VisiblePack myVisiblePack;
     private final boolean myIsValid;
 
-    public State(@NotNull PermanentGraph.SortType sortType) {
-      this(new VcsLogFilterCollectionBuilder().build(), sortType, CommitCountStage.INITIAL, ContainerUtil.newArrayList(), VisiblePack.EMPTY,
-           true);
+    public State(@NotNull VcsLogFilterCollection filters, @NotNull PermanentGraph.SortType sortType) {
+      this(filters, sortType, CommitCountStage.INITIAL, ContainerUtil.newArrayList(), VisiblePack.EMPTY, true);
     }
 
     public State(@NotNull VcsLogFilterCollection filters,

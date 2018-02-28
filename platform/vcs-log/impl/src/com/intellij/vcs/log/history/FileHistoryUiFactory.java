@@ -46,9 +46,12 @@ public class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileH
   public FileHistoryUi createLogUi(@NotNull Project project, @NotNull VcsLogData logData) {
     FileHistoryUiProperties properties = ServiceManager.getService(project, FileHistoryUiProperties.class);
     VirtualFile root = ObjectUtils.assertNotNull(VcsUtil.getVcsRootFor(project, myFilePath));
+    FileHistoryFilterer filterer = new FileHistoryFilterer(logData, myFilePath, myHash, root);
     return new FileHistoryUi(logData, new VcsLogColorManagerImpl(Collections.singleton(root)), properties,
-                             new VisiblePackRefresherImpl(project, logData, PermanentGraph.SortType.Normal,
-                                                          new FileHistoryFilterer(logData, myFilePath, myHash)) {
+                             new VisiblePackRefresherImpl(project, logData,
+                                                          filterer.createFilters(properties.get(FileHistoryUiProperties.SHOW_ALL_BRANCHES)),
+                                                          PermanentGraph.SortType.Normal,
+                                                          filterer) {
                                @Override
                                public void onRefresh() {
                                  // this is a hack here:
@@ -58,6 +61,6 @@ public class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileH
                                  if (!myFilePath.isDirectory() && pack != DataPack.EMPTY && !pack.isFull()) return;
                                  super.onRefresh();
                                }
-                             }, myFilePath, myHash);
+                             }, myFilePath, myHash, root);
   }
 }
