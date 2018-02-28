@@ -7,8 +7,6 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeEventQueue;
@@ -263,7 +261,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   @Nullable
-  Font getCustomFont(LookupElement item, boolean bold) {
+  public Font getCustomFont(LookupElement item, boolean bold) {
     Font font = item.getUserData(CUSTOM_FONT_KEY);
     return font == null ? null : bold ? font.deriveFont(Font.BOLD) : font;
   }
@@ -631,8 +629,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       hideLookup(false);
       return false;
     }
-    if (isVisible()) {
-      HintManagerImpl.updateLocation(this, myEditor, myUi.calculatePosition().getLocation());
+    if (myUi != null) {
+      myUi.updateLocation();
     }
     checkValid();
     return true;
@@ -644,10 +642,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public boolean isAvailableToUser() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return myShown;
-    }
-    return isVisible();
+    return myUi != null && myUi.isAvailableToUser();
   }
 
   public boolean isShown() {
@@ -666,7 +661,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     if (ApplicationManager.getApplication().isUnitTestMode()) return true;
 
-    if (!myEditor.getContentComponent().isShowing()) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !myEditor.getContentComponent().isShowing()) {
       hideLookup(false);
       return false;
     }
@@ -675,19 +670,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     if (Boolean.TRUE.equals(myEditor.getUserData(AutoPopupController.NO_ADS))) {
       myAdComponent.clearAdvertisements();
     }
-
-    myUi = new LookupUi(this, myAdComponent, myList, myProject);
+    myUi = LookupUiFactory.getInstance().createLookupUi(this, myAdComponent, myList, myProject);
     myUi.setCalculating(myCalculating);
-    Point p = myUi.calculatePosition().getLocation();
-    try {
-      HintManagerImpl.getInstanceImpl().showEditorHint(this, myEditor, p, HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING, 0, false,
-                                                       HintManagerImpl.createHintHint(myEditor, p, this, HintManager.UNDER).setAwtTooltip(false));
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
+    myUi.show();
 
-    if (!isVisible() || !myList.isShowing()) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && (!isVisible() || !myList.isShowing())) {
       hideLookup(false);
       return false;
     }
@@ -1049,6 +1036,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         super.hide();
 
         Disposer.dispose(this);
+        if (myUi != null) {
+          myUi.lookupDisposed();
+        }
 
         assert myDisposed;
       }
@@ -1100,8 +1090,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       final boolean reused = mayCheckReused && checkReused();
       boolean selectionVisible = isSelectionVisible();
       boolean itemsChanged = updateList(onExplicitAction, reused);
-      if (isVisible()) {
-        LOG.assertTrue(!ApplicationManager.getApplication().isUnitTestMode());
+      if (myUi != null) {
         myUi.refreshUi(selectionVisible, itemsChanged, reused, onExplicitAction);
       }
     }

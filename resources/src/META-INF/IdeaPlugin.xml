@@ -138,6 +138,8 @@
 
     <extensionPoint name="vetoSPICondition" interface="com.intellij.openapi.util.Condition"/>
 
+    <extensionPoint name="codeInsight.lookupUiFactory" interface="com.intellij.codeInsight.lookup.impl.LookupUiFactory"/>
+
     <extensionPoint name="library.javaSourceRootDetector" interface="com.intellij.openapi.roots.libraries.ui.RootDetector"/>
 
   </extensionPoints>

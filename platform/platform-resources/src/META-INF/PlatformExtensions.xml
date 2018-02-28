@@ -139,6 +139,8 @@
                         serviceImplementation="com.intellij.codeInsight.hint.HintManagerImpl"/>
     <applicationService serviceInterface="com.intellij.codeInsight.hint.TooltipController"
                         serviceImplementation="com.intellij.codeInsight.hint.TooltipController"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.lookup.impl.LookupUiFactory"
+                        serviceImplementation="com.intellij.codeInsight.lookup.impl.LookupUiFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.actionSystem.EditorActionManager"
                         serviceImplementation="com.intellij.openapi.editor.impl.EditorActionManagerImpl"/>
 
