@@ -458,8 +458,11 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
   @CalledInAwt
-  fun rollbackChangelistChanges(changelistId: String) {
-    runBulkRollback { it.marker.changelistId == changelistId }
+  fun rollbackChangelistChanges(changelistsIds: List<String>, rollbackRangesExcludedFromCommit: Boolean) {
+    val idsSet = changelistsIds.toSet()
+    runBulkRollback {
+      idsSet.contains(it.marker.changelistId) && (rollbackRangesExcludedFromCommit || !it.excludedFromCommit)
+    }
   }
 
 
