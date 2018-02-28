@@ -23,7 +23,9 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.propertyBased.*;
 import com.intellij.util.SystemProperties;
-import org.jetbrains.jetCheck.*;
+import org.jetbrains.jetCheck.Generator;
+import org.jetbrains.jetCheck.IntDistribution;
+import org.jetbrains.jetCheck.PropertyChecker;
 
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -47,7 +49,7 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
       file -> Generator.frequency(5, Generator.constant(new InvokeIntention(file, new JavaGreenIntentionPolicy())),
                                   1, Generator.constant(new InvalidateAllPsi(myProject)),
                                   10, Generator.constant(new FilePropertiesChanged(file))));
-    PropertyChecker.forAll(ImperativeCommand.scenarios(() -> env -> {
+    PropertyChecker.customized().withIterationCount(30).checkScenarios(() -> env -> {
       long startModCount = tracker.getModificationCount();
       if (rebuildStamp.getAndSet(startModCount) != startModCount) {
         checkCompiles(myCompilerTester.rebuild());
@@ -60,11 +62,11 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
           checkCompiles(myCompilerTester.make());
         }
       });
-    })).withIterationCount(30).shouldHold(Scenario::ensureSuccessful);
+    });
   }
 
   public void testRandomActivity() {
-    PropertyChecker.forAll(ImperativeCommand.scenarios(() -> env ->
+    PropertyChecker.customized().withIterationCount(30).checkScenarios(() -> env ->
       MadTestingUtil.changeAndRevert(myProject, () ->
         env.executeCommands(Generator.constant(env1 -> {
           PsiJavaFile file = env1.generateValue(psiJavaFiles(), "Working with %s");
@@ -80,7 +82,7 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
                                                                        1, mutations);
 
           env1.executeCommands(IntDistribution.uniform(1, 5), allActions.noShrink());
-        }))))).withIterationCount(30).shouldHold(Scenario::ensureSuccessful);
+        }))));
   }
 
   @Override

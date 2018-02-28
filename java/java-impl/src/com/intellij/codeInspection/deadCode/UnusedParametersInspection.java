@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.deadCode;
 
@@ -80,7 +78,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
       processor.ignoreElement(entryPoint);
     }
 
-    final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(project);
+    final PsiSearchHelper helper = PsiSearchHelper.getInstance(project);
     final AnalysisScope scope = manager.getScope();
     manager.iterate(new RefJavaVisitor() {
       @Override

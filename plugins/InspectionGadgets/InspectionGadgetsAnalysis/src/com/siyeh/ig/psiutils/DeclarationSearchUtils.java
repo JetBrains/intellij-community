@@ -86,7 +86,7 @@ public class DeclarationSearchUtils {
       return true;
     }
     final ProgressManager progressManager = ProgressManager.getInstance();
-    final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(element.getProject());
+    final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(element.getProject());
     final SearchScope useScope = element.getUseScope();
     if (!(useScope instanceof GlobalSearchScope)) {
       return zeroResult;

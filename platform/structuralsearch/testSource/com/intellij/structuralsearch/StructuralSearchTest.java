@@ -2375,6 +2375,11 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                                "System.out.println(");
       fail("malformed pattern warning expected");
     } catch (MalformedPatternException ignored) {}
+
+    try {
+      findMatchesCount(source, "get'_property()");
+      fail("malformed pattern warning expected");
+    } catch (MalformedPatternException ignored) {}
   }
 
   public void testFindInnerClass() {

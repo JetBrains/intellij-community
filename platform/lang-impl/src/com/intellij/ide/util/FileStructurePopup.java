@@ -558,6 +558,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     topPanel.add(chkPanel, BorderLayout.WEST);
 
     topPanel.add(createSettingsButton(), BorderLayout.EAST);
+    topPanel.setBorder(JBUI.Borders.emptyLeft(UIUtil.DEFAULT_HGAP));
 
     panel.add(topPanel, BorderLayout.NORTH);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);

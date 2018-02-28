@@ -255,4 +255,30 @@ class B<T>
 }
 '''
   }
+
+  void 'test create property in invalid class'() {
+    configureFromFileText 'InvalidClass.java', '''\
+public class InvalidClass {
+    void usage() {
+        <caret>getFoo();
+    }
+'''
+
+    TemplateManagerImpl.setTemplateTesting project, testRootDisposable
+    doAction "Create read-only property 'foo' in 'InvalidClass'"
+    TemplateManagerImpl.getTemplateState editor gotoEnd false
+
+    checkResultByText '''\
+public class InvalidClass {
+    private Object foo;
+
+    void usage() {
+        getFoo();
+    }
+
+    public Object getFoo() {<caret>
+        return foo;
+    }
+'''
+  }
 }

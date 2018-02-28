@@ -38,7 +38,7 @@ public class SubSequenceTest extends PropertyCheckerTestCase{
 
   @Test
   public void checkGeneratesSubSequence() {
-    PropertyFailure.CounterExample<Scenario> example = checkFalsified(ImperativeCommand.scenarios(() -> env -> {
+    PropertyFailure.CounterExample<Scenario> example = checkFalsified(Scenario.scenarios(() -> env -> {
       StringBuilder sb = new StringBuilder();
       env.executeCommands(withRecursion(insertStringCmd(sb), deleteStringCmd(sb), e -> {
         if (containsSubSequence(sb.toString(), subSequence)) {

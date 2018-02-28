@@ -53,7 +53,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
 
   protected final List<Balloon> myBalloons = new ArrayList<>();
   private final Map<Balloon, BalloonLayoutData> myLayoutData = new HashMap<>();
-  private Integer myWidth;
+  private GetInt myWidth;
 
   private final Alarm myRelayoutAlarm = new Alarm();
   private final Runnable myRelayoutRunnable = () -> {
@@ -266,9 +266,9 @@ public class BalloonLayoutImpl implements BalloonLayout {
     BalloonLayoutData layoutData = myLayoutData.get(balloon);
     if (layoutData == null) {
       Dimension size = balloon.getPreferredSize();
-      return myWidth == null ? size : new Dimension(myWidth, size.height);
+      return myWidth == null ? size : new Dimension(myWidth.i(), size.height);
     }
-    return new Dimension(myWidth, layoutData.height);
+    return new Dimension(myWidth.i(), layoutData.height);
   }
 
   public boolean isEmpty() {
@@ -290,7 +290,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
       }
     }
 
-    myWidth = BalloonLayoutConfiguration.FixedWidth;
+    myWidth = BalloonLayoutConfiguration::FixedWidth;
   }
 
   private void relayout() {
@@ -349,5 +349,9 @@ public class BalloonLayoutImpl implements BalloonLayout {
       eachColumnHeight += eachSize.height;
     }
     return columns;
+  }
+
+  private interface GetInt {
+    int i();
   }
 }

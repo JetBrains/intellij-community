@@ -1138,11 +1138,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   @Nullable
   public AbstractVcs getVcsFor(@NotNull Change change) {
-    VcsKey key;
     synchronized (myDataLock) {
-      key = myWorker.getVcsFor(change);
+      return myWorker.getVcsFor(change);
     }
-    return key != null ? ProjectLevelVcsManager.getInstance(myProject).findVcsByName(key.getName()) : null;
   }
 
   @Override
@@ -1616,10 +1614,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
     @Nullable
     private AbstractVcs getVcs(@NotNull BaseRevision baseRevision) {
-      VcsKey vcsKey = baseRevision.getVcs();
-      if (vcsKey != null) {
-        return myVcsManager.findVcsByName(vcsKey.getName());
-      }
+      AbstractVcs vcs = baseRevision.getVcs();
+      if (vcs != null) return vcs;
       return myVcsManager.getVcsFor(baseRevision.getFilePath());
     }
   }

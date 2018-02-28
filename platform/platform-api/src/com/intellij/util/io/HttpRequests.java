@@ -34,6 +34,7 @@ import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.net.ssl.UntrustedCertificateStrategy;
+import org.apache.http.HttpStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -508,15 +509,19 @@ public final class HttpRequests {
 
       if (connection instanceof HttpURLConnection) {
         HttpURLConnection httpURLConnection = (HttpURLConnection)connection;
+        assert httpURLConnection.getRequestMethod().equals("GET") : "Please use this class for GET requests only";
 
         if (LOG.isDebugEnabled()) LOG.debug("connecting to " + url);
         int responseCode = httpURLConnection.getResponseCode();
         if (LOG.isDebugEnabled()) LOG.debug("response: " + responseCode);
 
-        if (responseCode < 200 || responseCode >= 300 && responseCode != HttpURLConnection.HTTP_NOT_MODIFIED) {
+        if (responseCode < 200 || responseCode >= 300 && responseCode != HttpStatus.SC_NOT_MODIFIED) {
           httpURLConnection.disconnect();
 
-          if (responseCode == HttpURLConnection.HTTP_MOVED_PERM || responseCode == HttpURLConnection.HTTP_MOVED_TEMP) {
+          if (responseCode == HttpStatus.SC_MOVED_PERMANENTLY
+              || responseCode == HttpStatus.SC_MOVED_TEMPORARILY
+              || responseCode == HttpStatus.SC_SEE_OTHER
+              || responseCode == HttpStatus.SC_TEMPORARY_REDIRECT) {
             request.myUrl = url = connection.getHeaderField("Location");
             if (url != null) {
               continue;

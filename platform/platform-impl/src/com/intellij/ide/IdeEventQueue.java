@@ -412,7 +412,7 @@ public class IdeEventQueue extends EventQueue {
   @Override
   public void dispatchEvent(@NotNull AWTEvent e) {
 
-    if (skipTypedKeyEventsIfFocusReturnsToOwner(e)) return;
+    if (Registry.is("skip.typed.event") && skipTypedKeyEventsIfFocusReturnsToOwner(e)) return;
 
     if (isMetaKeyPressedOnLinux(e)) return;
 

@@ -376,7 +376,6 @@
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/instant-run/instant-run-common/android.sdktools.instant-run-common.iml" filepath="$PROJECT_DIR$/android/tools-base/instant-run/instant-run-common/android.sdktools.instant-run-common.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/layoutlib-api/android.sdktools.layoutlib-api.iml" filepath="$PROJECT_DIR$/android/tools-base/layoutlib-api/android.sdktools.layoutlib-api.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/android.sdktools.layoutlib-resources.iml" filepath="$PROJECT_DIR$/android/tools-base/android.sdktools.layoutlib-resources.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/tools-base/build-system/manifest-merger/android.sdktools.manifest-merger.iml" filepath="$PROJECT_DIR$/android/tools-base/build-system/manifest-merger/android.sdktools.manifest-merger.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/ninepatch/android.sdktools.ninepatch.iml" filepath="$PROJECT_DIR$/android/tools-base/ninepatch/android.sdktools.ninepatch.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/perflib/android.sdktools.perflib.iml" filepath="$PROJECT_DIR$/android/tools-base/perflib/android.sdktools.perflib.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/pixelprobe/android.sdktools.pixelprobe.iml" filepath="$PROJECT_DIR$/android/tools-base/pixelprobe/android.sdktools.pixelprobe.iml" />

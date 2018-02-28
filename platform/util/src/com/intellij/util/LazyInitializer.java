@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -13,94 +12,101 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  * @author tav
  */
-public class LazyInitializer<T> {
-  private volatile @Nullable T value;
-  private volatile Initializer<T> initializer; // dropped when the value is initialized
+public class LazyInitializer {
+  public abstract static class NullableValue<T> {
+    private class Initializer {
+      private final ReentrantLock lock = new ReentrantLock();
 
-  private static class Initializer<T> {
-    private final Callable<T> initializer;
-    private final ReentrantLock lock = new ReentrantLock();
-
-    Initializer(Callable<T> initializer) {
-      this.initializer = initializer;
+      T init() {
+        try {
+          return initialize();
+        }
+        catch (Exception e) {
+          Logger.getInstance(LazyInitializer.class).error(e);
+        }
+        return null;
+      }
     }
 
-    T init() {
-      try {
-        return this.initializer.call();
+    private volatile T value;
+    private volatile Initializer initializer = new Initializer(); // dropped when initialized
+
+    @Nullable
+    public abstract T initialize();
+
+    /**
+     * Initializes the value if necessary and returns it.
+     *
+     * @return the initialized value
+     */
+    @Nullable
+    public T get() {
+      Initializer init = initializer;
+      if (init != null) {
+        init.lock.lock();
+        try {
+          if (init.lock.getHoldCount() > 1) {
+            return null;
+          }
+          if (initializer != null) {
+            value = initializer.init();
+          }
+        }
+        finally {
+          initializer = null;
+          init.lock.unlock();
+        }
+        onInitialized(value);
       }
-      catch (Exception e) {
-        Logger.getInstance(LazyInitializer.class).error(e);
-      }
-      return null;
+      return value;
     }
-  }
 
-  public LazyInitializer(@NotNull Callable<T> initializer) {
-    this.initializer = new Initializer<T>(initializer);
-  }
-
-  /**
-   * Initializes the value if necessary and returns it.
-   *
-   * @return the initialized value
-   */
-  public @Nullable T get() {
-    Initializer init = initializer;
-    if (init != null) {
+    /**
+     * Checks if the value is initialized to not-null, forces initialization if necessary.
+     *
+     * @return true if the value is initialized to not-null
+     */
+    public final boolean isNotNull() {
+      Initializer init = initializer;
+      if (init == null) {
+        return get() != null; // already initialized, just get
+      }
       init.lock.lock();
       try {
-        if (initializer != null) {
-          value = initializer.init();
+        if (init.lock.getHoldCount() > 1) {
+          return false;
         }
+        return get() != null; // initialize and get
       }
       finally {
-        initializer = null;
         init.lock.unlock();
       }
-      onInitialized(value);
     }
-    return value;
-  }
 
-  @SuppressWarnings("ConstantConditions")
-  public @NotNull T getNotNull() {
-    if (isSet()) return value;
-    throw new NullPointerException();
-  }
+    /**
+     * Called on the initialization completion.
+     *
+     * @param value the initialized value
+     */
+    protected void onInitialized(T value) {
+    }
 
-  /**
-   * Checks if the value is initialized to non-null, forces initialization if necessary.
-   *
-   * @return true if the value is initialized to non-null
-   */
-  public final boolean isSet() {
-    Initializer init = initializer;
-    if (init == null) {
-      return get() != null; // already initialized, just get
-    }
-    init.lock.lock();
-    try {
-      if (init.lock.getHoldCount() > 1) {
-        return false; // called from inside Initializer.init()
-      }
-      return get() != null; // get and init if necessary
-    }
-    finally {
-      init.lock.unlock();
+    @Override
+    public String toString() {
+      return String.valueOf(value);
     }
   }
 
-  /**
-   * Called on the initialization completion.
-   *
-   * @param value the initialized value
-   */
-  protected void onInitialized(@Nullable T value) {
-  }
+  public static abstract class NotNullValue<T> extends NullableValue<T> {
+    @NotNull
+    @Override
+    public T get() {
+      //noinspection ConstantConditions
+      return super.get();
+    }
 
-  @Override
-  public String toString() {
-    return String.valueOf(value);
+    @NotNull
+    @Override
+    public abstract T initialize();
   }
 }
