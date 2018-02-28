@@ -9,8 +9,9 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="annotations" />
     <orderEntry type="module" module-name="util-rt" />
-    <orderEntry type="library" name="trilead-ssh2" level="project" />
     <orderEntry type="library" name="XmlRPC" level="project" />
+    <orderEntry type="library" name="trilead-ssh2" level="project" />
+    <orderEntry type="library" name="eddsa" level="project" />
+    <orderEntry type="library" name="jbcrypt" level="project" />
   </component>
 </module>
-

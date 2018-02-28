@@ -39,7 +39,9 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="jsch-agent-proxy" level="project" />
-    <orderEntry type="library" name="trilead-ssh2" level="project" />
     <orderEntry type="module" module-name="vcs-tests" scope="TEST" />
+    <orderEntry type="library" name="trilead-ssh2" level="project" />
+    <orderEntry type="library" name="eddsa" level="project" />
+    <orderEntry type="library" name="jbcrypt" level="project" />
   </component>
 </module>

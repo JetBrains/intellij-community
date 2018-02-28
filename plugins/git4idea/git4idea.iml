@@ -12,7 +12,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="vcs-api" />
-    <orderEntry type="library" name="trilead-ssh2" level="project" />
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="vcs-impl" />
@@ -43,6 +42,9 @@
     <orderEntry type="module" module-name="util" />
     <orderEntry type="library" exported="" scope="TEST" name="cucumber-testing" level="project" />
     <orderEntry type="module" module-name="testGuiFramework" scope="TEST" />
+    <orderEntry type="library" name="trilead-ssh2" level="project" />
+    <orderEntry type="library" name="eddsa" level="project" />
+    <orderEntry type="library" name="jbcrypt" level="project" />
     <orderEntry type="library" name="ini4j" level="project" />
     <orderEntry type="module" module-name="tasks-platform-impl" />
   </component>
