@@ -101,7 +101,12 @@ class MemoryDiskConflictResolver {
     }
     
     String message = UIBundle.message("file.cache.conflict.message.text", file.getPresentableUrl());
-
+    if (ApplicationManager.getApplication().isOnAir()) {
+      return Messages.showDialog(message,
+                                 UIBundle.message("file.cache.conflict.dialog.title"),
+                                 new String[]{UIBundle.message("file.cache.conflict.load.fs.changes.button"),
+                                              UIBundle.message("file.cache.conflict.keep.memory.changes.button")}, 0, null) == 0;
+    }
     final DialogBuilder builder = new DialogBuilder();
     builder.setCenterPanel(new JLabel(message, Messages.getQuestionIcon(), SwingConstants.CENTER));
     builder.addOkAction().setText(UIBundle.message("file.cache.conflict.load.fs.changes.button"));
