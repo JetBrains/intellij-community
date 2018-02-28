@@ -54,7 +54,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   }
 
   public void testSuccess() {
-    PropertyChecker.forAll(listsOf(integers(-1, 1))).shouldHold(l -> l.stream().allMatch(i -> Math.abs(i) <= 1));
+    PropertyChecker.forAll(listsOf(integers(-1, 1)), l -> l.stream().allMatch(i -> Math.abs(i) <= 1));
   }
 
   public void testSortedDoublesNonDescending() {
@@ -74,11 +74,11 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   }
 
   public void testSuchThat() {
-    PropertyChecker.forAll(integers().suchThat(i -> i < 0)).shouldHold(i -> i < 0);
+    PropertyChecker.forAll(integers().suchThat(i -> i < 0), i -> i < 0);
   }
 
   public void testNestedSometimesVeryRareSuchThat() {
-    forAllStable(frequency(50, constant(0), 1, integers(1, 1000)).suchThat(i -> i > 0)).shouldHold(i -> i > 0);
+    STABLE.forAll(frequency(50, constant(0), 1, integers(1, 1000)).suchThat(i -> i > 0), i -> i > 0);
   }
 
   public void testStringOfStringChecksAllChars() {
@@ -88,28 +88,28 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   }
 
   public void testListNotLongerThanMaxDefaultSize() {
-    PropertyChecker.forAll(listsOf(integers())).withIterationCount(1_000).shouldHold(l -> l.size() <= PropertyChecker.DEFAULT_MAX_SIZE_HINT);
+    PropertyChecker.customized().withIterationCount(1_000).forAll(listsOf(integers()), l -> l.size() <= PropertyChecker.DEFAULT_MAX_SIZE_HINT);
   }
 
   public void testNonEmptyList() {
-    PropertyChecker.forAll(nonEmptyLists(integers())).shouldHold(l -> !l.isEmpty());
+    PropertyChecker.forAll(nonEmptyLists(integers()), l -> !l.isEmpty());
   }
 
   public void testNoDuplicateData() {
     Set<List<Integer>> visited = new HashSet<>();
-    PropertyChecker.forAll(listsOf(integers())).shouldHold(l -> visited.add(l));
+    PropertyChecker.forAll(listsOf(integers()), l -> visited.add(l));
   }
 
   public void testOneOf() {
     List<Integer> values = new ArrayList<>();
-    PropertyChecker.forAll(anyOf(integers(0, 1), integers(10, 1100))).shouldHold(i -> values.add(i));
+    PropertyChecker.forAll(anyOf(integers(0, 1), integers(10, 1100)), i -> values.add(i));
     assertTrue(values.stream().anyMatch(i -> i < 2));
     assertTrue(values.stream().anyMatch(i -> i > 5));
   }
 
   public void testAsciiIdentifier() {
-    PropertyChecker.forAll(asciiIdentifiers())
-      .shouldHold(s -> Character.isJavaIdentifierStart(s.charAt(0)) && s.chars().allMatch(Character::isJavaIdentifierPart));
+    PropertyChecker.forAll(asciiIdentifiers(), 
+                           s -> Character.isJavaIdentifierStart(s.charAt(0)) && s.chars().allMatch(Character::isJavaIdentifierPart));
     checkGeneratesExample(asciiIdentifiers(),
                           s -> s.contains("_"),
                           10);
@@ -127,15 +127,15 @@ public class GeneratorTest extends PropertyCheckerTestCase {
     Generator<List<Integer>> gen = nonEmptyLists(integers(0, 100));
     Predicate<List<Integer>> property = l -> !l.contains(42);
 
-    PropertyFailure<?> failure = checkFails(PropertyChecker.forAll(gen).withSeed(1), property).getFailure();
+    PropertyFailure<?> failure = checkFails(PropertyChecker.customized().withSeed(1), gen, property).getFailure();
     assertTrue(failure.getIterationNumber() > 1);
 
     PropertyFalsified e;
 
-    e = checkFails(PropertyChecker.forAll(gen).recheckingIteration(failure.getIterationSeed(), failure.getSizeHint()), property);
+    e = checkFails(PropertyChecker.customized().recheckingIteration(failure.getIterationSeed(), failure.getSizeHint()), gen, property);
     assertEquals(1, e.getFailure().getIterationNumber());
 
-    e = checkFails(PropertyChecker.forAll(gen).withSeed(failure.getGlobalSeed()), property);
+    e = checkFails(PropertyChecker.customized().withSeed(failure.getGlobalSeed()), gen, property);
     assertEquals(failure.getIterationNumber(), e.getFailure().getIterationNumber());
   }
 
