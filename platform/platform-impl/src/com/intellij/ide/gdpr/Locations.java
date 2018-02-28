@@ -4,7 +4,10 @@
 package com.intellij.ide.gdpr;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -13,15 +16,17 @@ import java.io.File;
  * Date: 06-Dec-17
  */
 class Locations {
-  private static final String RELATIVE_RESOURCE_PATH = "JetBrains";
   private static final File ourDataDir;
 
   static {
+    final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+    final String relativeResourcePath = appInfo.isVendorJetBrains() ? "JetBrains" : normalizePathName(appInfo.getShortCompanyName());
+
     File dataDir = null;
     if (SystemInfo.isWindows) {
       final String appdata = System.getenv("APPDATA");
       if (appdata != null) {
-        dataDir = new File(appdata, RELATIVE_RESOURCE_PATH);
+        dataDir = new File(appdata, relativeResourcePath);
       }
     }
     else {
@@ -30,14 +35,14 @@ class Locations {
         if (SystemInfo.isMac) {
           final File dataRoot = new File(userHome, "/Library/Application Support");
           if (dataRoot.exists()) {
-            dataDir = new File(dataRoot, RELATIVE_RESOURCE_PATH);
+            dataDir = new File(dataRoot, relativeResourcePath);
           }
         }
         else if (SystemInfo.isUnix) {
           final String dataHome = System.getenv("XDG_DATA_HOME");
           final File dataRoot = dataHome == null ? new File(userHome, ".local/share") : new File(dataHome);
           if (dataRoot.exists()) {
-            dataDir = new File(dataRoot, RELATIVE_RESOURCE_PATH);
+            dataDir = new File(dataRoot, relativeResourcePath);
           }
         }
       }
@@ -52,5 +57,11 @@ class Locations {
 
   public static File getDataRoot() {
     return ourDataDir;
+  }
+
+
+  @NotNull
+  private static String normalizePathName(String path) {
+    return path == null? "unknown_vendor" : path.trim().replace(' ', '_');
   }
 }
