@@ -53,7 +53,7 @@ public abstract class YamlScalarType extends YamlMetaType {
         }
       }
     }
-    else {
+    else if (value instanceof YAMLCompoundValue) {
       problemsHolder.registerProblem(value, YAMLBundle.message("YamlScalarType.error.scalar.value"), ProblemHighlightType.ERROR);
     }
   }
