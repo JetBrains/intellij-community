@@ -81,6 +81,6 @@ public class UnnecessaryCallToStringValueOf {
 
     String s1 = "bool: " + <warning descr="Unnecessary 'Boolean.toString()' call">Boolean.toString</warning>(bool);
     String s2 = "long: " + <warning descr="Unnecessary 'Long.toString()' call">Long.toString</warning>(System.nanoTime());
-    String s3 = "float: " + <warning descr="Unnecessary 'Float.toString()' call">Float.toString</warning><error descr="'toString(float)' in 'java.lang.Float' cannot be applied to '(double)'">(1.0+2.0+3.0)</error>;
+    String s3 = "float: " + <warning descr="Unnecessary 'Float.toString()' call">Float.toString</warning>(1.0f+2.0f+3.0f);
   }
 }
