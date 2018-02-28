@@ -124,81 +124,84 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     myUpDownHint.setVisible(flag);
   }
 
-  public static Builder createDialog(@NotNull final Project project) {
-    final CreateFileFromTemplateDialog dialog = new CreateFileFromTemplateDialog(project);
-    return new BuilderImpl(dialog, project);
-  }
-
-  private static class BuilderImpl implements Builder {
-    private final CreateFileFromTemplateDialog myDialog;
-    private final Project myProject;
-
-    public BuilderImpl(CreateFileFromTemplateDialog dialog, Project project) {
-      myDialog = dialog;
-      myProject = project;
-    }
+  public static class FileFromTemplateServiceImpl implements FileFromTemplateService {
 
     @Override
-    public Builder setTitle(String title) {
-      myDialog.setTitle(title);
-      return this;
+    public Builder createDialog(@NotNull Project project) {
+      final CreateFileFromTemplateDialog dialog = new CreateFileFromTemplateDialog(project);
+      return new BuilderImpl(dialog, project);
     }
 
-    @Override
-    public Builder addKind(@NotNull String name, @Nullable Icon icon, @NotNull String templateName) {
-      myDialog.getKindCombo().addItem(name, icon, templateName);
-      if (myDialog.getKindCombo().getComboBox().getItemCount() > 1) {
-        myDialog.setTemplateKindComponentsVisible(true);
+    private static class BuilderImpl implements Builder {
+      private final CreateFileFromTemplateDialog myDialog;
+      private final Project myProject;
+
+      public BuilderImpl(CreateFileFromTemplateDialog dialog, Project project) {
+        myDialog = dialog;
+        myProject = project;
       }
-      return this;
-    }
 
-    @Override
-    public Builder setValidator(InputValidator validator) {
-      myDialog.myInputValidator = validator;
-      return this;
-    }
+      @Override
+      public Builder setTitle(String title) {
+        myDialog.setTitle(title);
+        return this;
+      }
 
-    @Override
-    public <T extends PsiElement> T show(@NotNull String errorTitle, @Nullable String selectedTemplateName,
-                                         @NotNull final FileCreator<T> creator) {
-      final Ref<SmartPsiElementPointer<T>>created = Ref.create(null);
-      myDialog.getKindCombo().setSelectedName(selectedTemplateName);
-      myDialog.myCreator = new ElementCreator(myProject, errorTitle) {
+      @Override
+      public Builder addKind(@NotNull String name, @Nullable Icon icon, @NotNull String templateName) {
+        myDialog.getKindCombo().addItem(name, icon, templateName);
+        if (myDialog.getKindCombo().getComboBox().getItemCount() > 1) {
+          myDialog.setTemplateKindComponentsVisible(true);
+        }
+        return this;
+      }
+
+      @Override
+      public Builder setValidator(InputValidator validator) {
+        myDialog.myInputValidator = validator;
+        return this;
+      }
+
+      @Override
+      public <T extends PsiElement> T show(@NotNull String errorTitle, @Nullable String selectedTemplateName,
+                                           @NotNull final FileCreator<T> creator) {
+        final Ref<SmartPsiElementPointer<T>>created = Ref.create(null);
+        myDialog.getKindCombo().setSelectedName(selectedTemplateName);
+        myDialog.myCreator = new ElementCreator(myProject, errorTitle) {
 
         @Override
-        protected PsiElement[] create(String newName) {
-          T element = creator.createFile(myDialog.getEnteredName(), myDialog.getKindCombo().getSelectedName());
-          if (element != null) {
-            created.set(SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(element));
+        protected PsiElement[] create(String newName)  {
+           T element = creator.createFile(myDialog.getEnteredName(), myDialog.getKindCombo().getSelectedName());
+
+          if (element != null) {created.set(SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(element));
             return new PsiElement[]{element};
           }
           return PsiElement.EMPTY_ARRAY;
         }
 
-        @Override
+          @Override
         public boolean startInWriteAction() {
           return creator.startInWriteAction();
         }
 
         @Override
-        protected String getActionName(String newName) {
-          return creator.getActionName(newName, myDialog.getKindCombo().getSelectedName());
-        }
-      };
+          protected String getActionName(String newName) {
+            return creator.getActionName(newName, myDialog.getKindCombo().getSelectedName());
+          }
+        };
 
       myDialog.show();
       if (myDialog.getExitCode() == OK_EXIT_CODE) {
-        SmartPsiElementPointer<T> pointer = created.get();
-        return pointer == null ? null : pointer.getElement();
+        SmartPsiElementPointer<T> pointer = created.get();return pointer == null ? null : pointer.getElement();
       }
       return null;
     }
 
-    @Nullable
-    @Override
-    public Map<String,String> getCustomProperties() {
-      return null;
+      @Nullable
+      @Override
+      public Map<String,String> getCustomProperties() {
+        return null;
+      }
     }
   }
 

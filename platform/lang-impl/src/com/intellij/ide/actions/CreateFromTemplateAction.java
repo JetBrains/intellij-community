@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -60,7 +61,8 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
     final PsiDirectory dir = view.getOrChooseDirectory();
     if (dir == null || project == null) return;
 
-    final CreateFileFromTemplateDialog.Builder builder = CreateFileFromTemplateDialog.createDialog(project);
+    FileFromTemplateService templateService = ServiceManager.getService(FileFromTemplateService.class);
+    final CreateFileFromTemplateDialog.Builder builder = templateService.createDialog(project);
     buildDialog(project, dir, builder);
 
     final Ref<String> selectedTemplateName = Ref.create(null);
