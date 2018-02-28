@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLBundle;
+import org.jetbrains.yaml.meta.model.YamlScalarType;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLValue;
 
@@ -38,10 +39,16 @@ public abstract class YamlUnknownKeysInspectionBase extends YamlMetaTypeInspecti
 
       YamlMetaTypeProvider.MetaTypeProxy meta = myMetaTypeProvider.getKeyValueMetaType(keyValue);
       if (meta == null) {
-        //only mark the first element as unknown, not its children
         YAMLValue parent = keyValue.getParentMapping();
-        if (parent != null && myMetaTypeProvider.getValueMetaType(parent) == null) {
-          return;
+        if (parent != null) {
+          final YamlMetaTypeProvider.MetaTypeProxy typeProxy = myMetaTypeProvider.getValueMetaType(parent);
+          // Only mark the first element as unknown, not its children
+          //
+          // Also if it's a mapping instead of expected scalar type,
+          // don't report key-specific errors as they're redundant ("scalar value expected" error is already reported)
+          if (typeProxy == null || typeProxy.getMetaType() instanceof YamlScalarType) {
+            return;
+          }
         }
 
         String msg = YAMLBundle.message("YamlUnknownKeysInspectionBase.unknown.key", keyValue.getKeyText());
