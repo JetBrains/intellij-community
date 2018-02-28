@@ -434,4 +434,8 @@ public interface Application extends ComponentManager {
   boolean isInternal();
 
   boolean isEAP();
+
+  default boolean isNoBackgroundMode() {
+    return isUnitTestMode() || isHeadlessEnvironment();
+  }
 }

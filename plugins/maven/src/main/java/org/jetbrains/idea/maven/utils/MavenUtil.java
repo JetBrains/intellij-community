@@ -199,8 +199,7 @@ public class MavenUtil {
   }
 
   public static boolean isNoBackgroundMode() {
-    return (ApplicationManager.getApplication().isUnitTestMode()
-            || ApplicationManager.getApplication().isHeadlessEnvironment());
+    return ApplicationManager.getApplication().isNoBackgroundMode();
   }
 
   public static boolean isInModalContext() {

@@ -240,7 +240,10 @@ public class StartupManagerImpl extends StartupManagerEx {
       ((ProjectRootManagerImpl)ProjectRootManager.getInstance(myProject)).markRootsForRefresh();
 
       Application app = ApplicationManager.getApplication();
-      if (!app.isCommandLine()) {
+      if (app.isNoBackgroundMode()) {
+        VirtualFileManager.getInstance().syncRefresh();
+      }
+      else {
         final long sessionId = VirtualFileManager.getInstance().asyncRefresh(null);
         final MessageBusConnection connection = app.getMessageBus().connect();
         connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
@@ -252,9 +255,6 @@ public class StartupManagerImpl extends StartupManagerEx {
             connection.disconnect();
           }
         });
-      }
-      else {
-        VirtualFileManager.getInstance().syncRefresh();
       }
     }, ModalityState.defaultModalityState());
   }

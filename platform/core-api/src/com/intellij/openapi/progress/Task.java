@@ -149,7 +149,7 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   public boolean isHeadless() {
-    return ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment();
+    return ApplicationManager.getApplication().isNoBackgroundMode();
   }
 
   @NotNull

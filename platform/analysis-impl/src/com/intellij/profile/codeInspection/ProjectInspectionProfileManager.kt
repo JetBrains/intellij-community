@@ -134,7 +134,7 @@ class ProjectInspectionProfileManager(val project: Project,
           fireProfilesShutdown()
         }
 
-        if (app.isUnitTestMode || app.isHeadlessEnvironment) {
+        if (app.isNoBackgroundMode) {
           cleanupInspectionProfilesRunnable.invoke()
         }
         else {

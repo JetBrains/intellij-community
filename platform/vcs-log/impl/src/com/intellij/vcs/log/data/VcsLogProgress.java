@@ -49,7 +49,7 @@ public class VcsLogProgress implements Disposable {
 
   @NotNull
   public ProgressIndicator createProgressIndicator(boolean visible) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (ApplicationManager.getApplication().isNoBackgroundMode()) {
       return new EmptyProgressIndicator();
     }
     return new VcsLogProgressIndicator(visible);

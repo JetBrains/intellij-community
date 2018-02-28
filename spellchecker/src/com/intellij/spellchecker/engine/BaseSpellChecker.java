@@ -47,7 +47,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
 
   @Override
   public void loadDictionary(@NotNull Loader loader) {
-    if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (ApplicationManager.getApplication().isNoBackgroundMode()) {
       addDictionary(CompressedDictionary.create(loader, transform));
     }
     else {

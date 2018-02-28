@@ -128,7 +128,7 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   @Override
   @NotNull
   public Future<?> runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task) {
-    ProgressIndicator progressIndicator = ApplicationManager.getApplication().isHeadlessEnvironment() ?
+    ProgressIndicator progressIndicator = ApplicationManager.getApplication().isNoBackgroundMode() ?
                                           new EmptyProgressIndicator() :
                                           new BackgroundableProcessIndicator(task);
     return runProcessWithProgressAsynchronously(task, progressIndicator, null);

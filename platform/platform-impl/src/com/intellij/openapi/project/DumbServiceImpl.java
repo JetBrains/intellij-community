@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.AppIconScheme;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
@@ -237,7 +236,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     LOG.assertTrue(!myProject.isDefault(), "No indexing tasks should be created for default project: " + task);
     final Application application = ApplicationManager.getApplication();
 
-    if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+    if (application.isNoBackgroundMode()) {
       runTaskSynchronously(task);
     } else {
       queueAsynchronousTask(task);
@@ -375,11 +374,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   @Override
   public void showDumbModeNotification(@NotNull final String message) {
     UIUtil.invokeLaterIfNeeded(() -> {
-      final IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(myProject);
-      if (ideFrame != null) {
-        StatusBarEx statusBar = (StatusBarEx)ideFrame.getStatusBar();
-        statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null, null);
-      }
+      final StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
+      statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null, null);
     });
   }
 
