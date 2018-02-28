@@ -4,11 +4,20 @@ package org.jetbrains.plugins.javaFX.fxml;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -17,6 +26,7 @@ import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxUnresolvedFxIdReferenceInspection;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxInjectPageLanguageIntention;
 
@@ -36,6 +46,29 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return JAVA_FX_WITH_GROOVY_DESCRIPTOR;
+  }
+
+  public void testCreateControllerMethodEmptyName() {
+    String inputName = getTestName(false);
+    String extension = ".java";
+    String actionName = "Create method";
+
+    String path = PlatformTestUtil.lowercaseFirstLetter(inputName, true) + ".fxml";
+    myFixture.configureByFiles(path, inputName + extension);
+    IntentionAction intention = myFixture.findSingleIntention(actionName);
+
+    Editor editor = myFixture.getEditor();
+    PsiFile file = myFixture.getFile();
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      Document document = editor.getDocument();
+
+      PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
+      TextRange range = PsiTreeUtil.getParentOfType(leaf, XmlAttributeValue.class).getValueTextRange();
+      document.deleteString(range.getStartOffset(), range.getEndOffset());
+
+      PsiDocumentManager.getInstance(getProject()).commitDocument(document);
+    });
+    assertFalse(intention.isAvailable(getProject(), editor, file));
   }
 
   public void testCreateControllerMethod() {
@@ -141,13 +174,18 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
     doTest(actionName, getTestName(false), getTestName(false), extension);
   }
 
-  private void doTest(final String actionName, final String inputName, final String outputName, final String extension) {
+  private void doTest(final String actionName, final String inputName, @Nullable final String outputName, final String extension) {
     String path = PlatformTestUtil.lowercaseFirstLetter(inputName, true) + ".fxml";
     myFixture.configureByFiles(path, inputName + extension);
-    final IntentionAction intention = myFixture.findSingleIntention(actionName);
-    assertNotNull(intention);
-    myFixture.launchAction(intention);
-    myFixture.checkResultByFile(inputName + extension, outputName + "_after" + extension, true);
+
+    if (outputName == null) {
+      assertNull(myFixture.getAvailableIntention(actionName));
+    }
+    else {
+      final IntentionAction intention = myFixture.findSingleIntention(actionName);
+      myFixture.launchAction(intention);
+      myFixture.checkResultByFile(inputName + extension, outputName + "_after" + extension, true);
+    }
   }
 
   @Override
