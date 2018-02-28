@@ -51,7 +51,7 @@ public class CodeInsightUtilBase extends CodeInsightUtilCore {
     }
     ApplicationManager.getApplication().invokeLater(() -> {
       final Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file), true);
-      if (editor != null && editor.getComponent().isDisplayable()) {
+      if (editor != null && (ApplicationManager.getApplication().isHeadlessEnvironment() || editor.getComponent().isDisplayable())) {
         HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("error.hint.file.is.readonly", file.getPresentableUrl()));
       }
     }, project.getDisposed());
@@ -97,7 +97,7 @@ public class CodeInsightUtilBase extends CodeInsightUtilCore {
     ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
     return !status.hasReadonlyFiles();
   }
-  
+
   // returns true on success
   @Deprecated
   public static boolean prepareEditorForWrite(@NotNull Editor editor) {

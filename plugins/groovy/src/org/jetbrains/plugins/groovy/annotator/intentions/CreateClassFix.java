@@ -143,7 +143,7 @@ public abstract class CreateClassFix {
 
         if (template == null) {
           ApplicationManager.getApplication().invokeLater(() -> {
-            if (editor != null && editor.getComponent().isDisplayable()) {
+            if (editor != null && (ApplicationManager.getApplication().isHeadlessEnvironment() || editor.getComponent().isDisplayable())) {
               HintManager.getInstance().showErrorHint(editor, GroovyIntentionsBundle.message("cannot.create.class"));
             }
           });
