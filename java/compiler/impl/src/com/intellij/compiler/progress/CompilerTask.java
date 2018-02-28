@@ -7,7 +7,6 @@
  */
 package com.intellij.compiler.progress;
 
-import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.HelpID;
 import com.intellij.compiler.impl.CompilerErrorTreeView;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
@@ -17,15 +16,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -55,73 +50,67 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class CompilerTask extends Task.Backgroundable {
+public class CompilerTask extends CompilerTaskBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.progress.CompilerProgressIndicator");
   private static final Key<Object> CONTENT_ID_KEY = Key.create("CONTENT_ID");
   private static final Key<Object> SESSION_ID_KEY = Key.create("SESSION_ID");
   private static final String APP_ICON_ID = "compiler";
-  @NotNull
-  private final Object myContentId = new IDObject("content_id");
   private final boolean myModal;
-
-  @NotNull
-  private Object mySessionId = myContentId; // by default sessionID should be unique, just as content ID
   private NewErrorTreeViewPanel myErrorTreeView;
   private final Object myMessageViewLock = new Object();
   private final String myContentName;
   private final boolean myHeadlessMode;
   private final boolean myForceAsyncExecution;
-  private final boolean myWaitForPreviousSession;
   private int myErrorCount = 0;
   private int myWarningCount = 0;
   private boolean myMessagesAutoActivated = false;
 
-  private volatile ProgressIndicator myIndicator = new EmptyProgressIndicator();
-  private Runnable myCompileWork;
   private final AtomicBoolean myMessageViewWasPrepared = new AtomicBoolean(false);
-  private Runnable myRestartWork;
+
   private final boolean myCompilationStartedAutomatically;
 
   @Deprecated
   public CompilerTask(@NotNull Project project, String contentName, final boolean headlessMode, boolean forceAsync,
                       boolean waitForPreviousSession) {
-    this(project, contentName, headlessMode, forceAsync, waitForPreviousSession, false);
+    this(project, headlessMode, contentName, forceAsync, waitForPreviousSession, false);
   }
 
-  public CompilerTask(@NotNull Project project, String contentName, final boolean headlessMode, boolean forceAsync,
-                      boolean waitForPreviousSession, boolean compilationStartedAutomatically) {
+
+  /**
+   * @deprecated please use {@link CompilerTaskFactory} instead of direct call to this constructor
+   */
+  @Deprecated
+  public CompilerTask(@NotNull Project project,
+                      String contentName,
+                      final boolean headlessMode,
+                      boolean forceAsync,
+                      boolean waitForPreviousSession,
+                      boolean compilationStartedAutomatically) {
+    this(project, headlessMode, contentName, forceAsync, waitForPreviousSession, compilationStartedAutomatically);
+  }
+
+  protected CompilerTask(@NotNull Project project,
+                         boolean headlessMode,
+                         String contentName,
+                         boolean forceAsync,
+                         boolean waitForPreviousSession,
+                         boolean compilationStartedAutomatically) {
     this(project, contentName, headlessMode, forceAsync, waitForPreviousSession, compilationStartedAutomatically, false);
   }
 
   public CompilerTask(@NotNull Project project, String contentName, final boolean headlessMode, boolean forceAsync,
                        boolean waitForPreviousSession, boolean compilationStartedAutomatically, boolean modal) {
-    super(project, contentName);
+    super(project, contentName, waitForPreviousSession);
     myContentName = contentName;
     myHeadlessMode = headlessMode;
     myForceAsyncExecution = forceAsync;
-    myWaitForPreviousSession = waitForPreviousSession;
     myCompilationStartedAutomatically = compilationStartedAutomatically;
     myModal = modal;
   }
 
-  @NotNull
-  public Object getSessionId() {
-    return mySessionId;
-  }
-
-  public void setSessionId(@NotNull Object sessionId) {
-    mySessionId = sessionId;
-  }
-
-  @NotNull
-  public Object getContentId() {
-    return myContentId;
-  }
-
+  @Override
   public void registerCloseAction(final Runnable onClose) {
     synchronized (myMessageViewLock) {
       if (myErrorTreeView != null) {
@@ -147,10 +136,6 @@ public class CompilerTask extends Task.Backgroundable {
     return myModal;
   }
 
-  public ProgressIndicator getIndicator() {
-    return myIndicator;
-  }
-
   @Override
   @Nullable
   public NotificationInfo getNotificationInfo() {
@@ -160,51 +145,13 @@ public class CompilerTask extends Task.Backgroundable {
   private CloseListener myCloseListener;
 
   @Override
-  public void run(@NotNull final ProgressIndicator indicator) {
-    myIndicator = indicator;
-    myIndicator.setIndeterminate(false);
+  protected void afterRun() {
+    ProjectManager.getInstance().removeProjectManagerListener(myProject, myCloseListener);
+  }
 
-    final ProjectManager projectManager = ProjectManager.getInstance();
-    projectManager.addProjectManagerListener(myProject, myCloseListener = new CloseListener());
-
-    final Semaphore semaphore = ((CompilerManagerImpl)CompilerManager.getInstance(myProject)).getCompilationSemaphore();
-    boolean acquired = false;
-    try {
-
-      try {
-        while (!acquired) {
-          acquired = semaphore.tryAcquire(300, TimeUnit.MILLISECONDS);
-          if (!acquired && !myWaitForPreviousSession) {
-            return;
-          }
-          if (indicator.isCanceled()) {
-            // give up obtaining the semaphore,
-            // let compile work begin in order to stop gracefuly on cancel event
-            break;
-          }
-        }
-      }
-      catch (InterruptedException ignored) {
-      }
-
-      if (!isHeadless()) {
-        addIndicatorDelegate();
-      }
-      myCompileWork.run();
-    }
-    catch (ProcessCanceledException ignored) {
-    }
-    finally {
-      try {
-        indicator.stop();
-        projectManager.removeProjectManagerListener(myProject, myCloseListener);
-      }
-      finally {
-        if (acquired) {
-          semaphore.release();
-        }
-      }
-    }
+  @Override
+  protected void beforeRun() {
+    ProjectManager.getInstance().addProjectManagerListener(myProject, myCloseListener = new CloseListener());
   }
 
   private void prepareMessageView() {
@@ -230,8 +177,9 @@ public class CompilerTask extends Task.Backgroundable {
     });
   }
 
-  private void addIndicatorDelegate() {
-    ProgressIndicator indicator = myIndicator;
+  @Override
+  protected void associateProgress(ProgressIndicator indicator) {
+    if (isHeadless()) return;
     if (!(indicator instanceof ProgressIndicatorEx)) {
       return;
     }
@@ -322,6 +270,7 @@ public class CompilerTask extends Task.Backgroundable {
     }
   }
 
+  @Override
   public void addMessage(final CompilerMessage message) {
     prepareMessageView();
 
@@ -386,7 +335,7 @@ public class CompilerTask extends Task.Backgroundable {
     }
   }
 
-  private static String[] convertMessage(final CompilerMessage message) {
+  public static String[] convertMessage(final CompilerMessage message) {
     String text = message.getMessage();
     if (!text.contains("\n")) {
       return new String[]{text};
@@ -414,12 +363,6 @@ public class CompilerTask extends Task.Backgroundable {
     }
     LOG.error("Unknown message category: " + category);
     return 0;
-  }
-
-  public void start(Runnable compileWork, Runnable restartWork) {
-    myCompileWork = compileWork;
-    myRestartWork = restartWork;
-    queue();
   }
 
   private void updateProgressText() {
@@ -634,16 +577,4 @@ public class CompilerTask extends Task.Backgroundable {
     }
   }
 
-  public static final class IDObject {
-    private final String myDisplayName;
-
-    public IDObject(@NotNull String displayName) {
-      myDisplayName = displayName;
-    }
-
-    @Override
-    public String toString() {
-      return myDisplayName;
-    }
-  }
 }

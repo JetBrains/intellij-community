@@ -188,6 +188,8 @@
 
     <projectService serviceInterface="com.intellij.openapi.compiler.CompilerManager"
                     serviceImplementation="com.intellij.compiler.CompilerManagerImpl"/>
+    <projectService serviceInterface="com.intellij.compiler.progress.CompilerTaskFactory"
+                    serviceImplementation="com.intellij.compiler.progress.CompilerTaskFactoryImpl"/>
     <projectService serviceInterface="com.intellij.compiler.options.ValidationConfiguration"
                     serviceImplementation="com.intellij.compiler.options.ValidationConfiguration"/>
     <projectService serviceInterface="com.intellij.compiler.options.ValidationConfiguration$ExcludedFromValidationConfiguration"

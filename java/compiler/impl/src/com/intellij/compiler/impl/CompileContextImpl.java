@@ -22,7 +22,7 @@ package com.intellij.compiler.impl;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.ProblemsView;
-import com.intellij.compiler.progress.CompilerTask;
+import com.intellij.compiler.progress.CompilerTaskBase;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileScope;
@@ -47,7 +47,7 @@ import java.util.UUID;
 public class CompileContextImpl extends UserDataHolderBase implements CompileContextEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompileContextImpl");
   private final Project myProject;
-  private final CompilerTask myBuildSession;
+  private final CompilerTaskBase myBuildSession;
   private final MessagesContainer myMessages;
   private final boolean myShouldUpdateProblemsView;
   private CompileScope myCompileScope;
@@ -61,8 +61,8 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final long myStartCompilationStamp;
   private final UUID mySessionId = UUID.randomUUID();
 
-  public CompileContextImpl(@NotNull Project project,
-                            @NotNull CompilerTask compilerSession,
+  public CompileContextImpl(@NotNull final Project project,
+                            @NotNull final CompilerTaskBase compilerSession,
                             @NotNull CompileScope compileScope,
                             boolean isMake, boolean isRebuild) {
     myProject = project;
@@ -87,8 +87,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myShouldUpdateProblemsView = workspaceConfig.MAKE_PROJECT_ON_SAVE;
   }
 
-  @NotNull
-  public CompilerTask getBuildSession() {
+  public CompilerTaskBase getBuildSession() {
     return myBuildSession;
   }
 
