@@ -351,7 +351,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     touch("file.txt", "content");
     addCommit(repo, message);
 
-    GitHistoryUtils.loadDetails(myProject, repo.getRoot(), details::add);
+    GitLogUtil.readFullDetails(myProject, repo.getRoot(), details::add);
 
     VcsFullCommitDetails lastCommit = ContainerUtil.getFirstItem(details);
     assertNotNull(lastCommit);
