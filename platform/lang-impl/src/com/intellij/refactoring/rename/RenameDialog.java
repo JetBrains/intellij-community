@@ -54,9 +54,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 
 public class RenameDialog extends RefactoringDialog {
-
   private static final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
-
   private SuggestedNameInfo mySuggestedNameInfo;
   private JLabel myNameLabel;
   private NameSuggestionsField myNameSuggestionsField;
@@ -100,6 +98,7 @@ public class RenameDialog extends RefactoringDialog {
   public static void showRenameDialog(DataContext dataContext, RenameDialog dialog) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       final String name = PsiElementRenameHandler.DEFAULT_NAME.getData(dataContext);
+      assert name != null;
       dialog.performRename(name);
       dialog.close(OK_EXIT_CODE);
     }
@@ -304,7 +303,7 @@ public class RenameDialog extends RefactoringDialog {
     performRename(newName);
   }
 
-  public void performRename(final String newName) {
+  public void performRename(@NotNull final String newName) {
     final RenamePsiElementProcessor elementProcessor = RenamePsiElementProcessor.forElement(myPsiElement);
     elementProcessor.setToSearchInComments(myPsiElement, isSearchInComments());
     if (myCbSearchTextOccurrences.isEnabled()) {
@@ -348,11 +347,15 @@ public class RenameDialog extends RefactoringDialog {
     return RenameUtil.isValidName(myProject, myPsiElement, newName);
   }
 
-  protected NameSuggestionsField getNameSuggestionsField() {
+  public NameSuggestionsField getNameSuggestionsField() {
     return myNameSuggestionsField;
   }
 
   public JCheckBox getCbSearchInComments() {
     return myCbSearchInComments;
+  }
+
+  public JCheckBox getCbSearchTextOccurences() {
+    return myCbSearchTextOccurrences;
   }
 }

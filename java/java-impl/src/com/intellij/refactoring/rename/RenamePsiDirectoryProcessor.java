@@ -1,8 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.HelpID;
@@ -23,18 +21,19 @@ public class RenamePsiDirectoryProcessor extends RenamePsiElementProcessor {
     return element instanceof PsiDirectory;
   }
 
-  @NotNull
   @Override
-  public RenameDialog createRenameDialog(@NotNull Project project, @NotNull PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
-    return new RenameWithOptionalReferencesDialog(project, element, nameSuggestionContext, editor) {
-      protected boolean getSearchForReferences() {
-        return RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_DIRECTORY;
-      }
+  public boolean isToSearchForReferencesEnabled(PsiElement element) {
+    return true;
+  }
 
-      protected void setSearchForReferences(boolean value) {
-        RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_DIRECTORY = value;
-      }
-    };
+  @Override
+  public boolean isToSearchForReferences(PsiElement element) {
+    return RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_DIRECTORY;
+  }
+
+  @Override
+  public void setToSearchForReferences(PsiElement element, boolean value) {
+    RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_DIRECTORY = value;
   }
 
   public String getQualifiedNameAfterRename(@NotNull final PsiElement element, @NotNull final String newName, final boolean nonJava) {

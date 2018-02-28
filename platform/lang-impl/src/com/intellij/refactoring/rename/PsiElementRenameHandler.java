@@ -47,6 +47,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * created at Nov 13, 2001
@@ -173,7 +175,34 @@ public class PsiElementRenameHandler implements RenameHandler {
     RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
     PsiElement substituted = processor.substituteElementToRename(element, editor);
     if (substituted == null || !canRename(project, editor, substituted)) return;
+    RenameDialog2 dialog;
+    try {
+      dialog = processor.createRenameDialog2(project, substituted, nameSuggestionContext, editor);
+    }
+    catch (UnsupportedOperationException e) {
+      showLegacyRenameDialog(project, nameSuggestionContext, editor, defaultName, processor, substituted);
+      return;
+    }
+    if (defaultName == null && ApplicationManager.getApplication().isUnitTestMode()) {
+      List<String> strings = dialog.getSuggestedNames();
+      Collections.sort(strings);
+      defaultName = strings.isEmpty() ? "undefined" : strings.get(0);
+    }
 
+    if (defaultName != null) {
+      dialog.getPerformRename().accept(new PerformRenameRequest(defaultName, false, () -> {
+      }, dialog));
+    }
+    else {
+      RenameDialog2Kt.show(dialog);
+    }
+  }
+
+  private static void showLegacyRenameDialog(Project project,
+                                             PsiElement nameSuggestionContext,
+                                             Editor editor,
+                                             String defaultName,
+                                             RenamePsiElementProcessor processor, PsiElement substituted) {
     RenameDialog dialog = processor.createRenameDialog(project, substituted, nameSuggestionContext, editor);
 
     if (defaultName == null && ApplicationManager.getApplication().isUnitTestMode()) {

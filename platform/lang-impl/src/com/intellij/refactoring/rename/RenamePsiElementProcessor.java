@@ -8,23 +8,23 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author yole
@@ -42,9 +42,46 @@ public abstract class RenamePsiElementProcessor {
     return new RenameDialog(project, element, nameSuggestionContext, editor);
   }
 
-  public void renameElement(@NotNull PsiElement element,
-                            @NotNull String newName,
-                            @NotNull UsageInfo[] usages,
+  public Pair<List<String>, SuggestedNameInfo> getSuggestedNames(PsiElement element, PsiElement nameSuggestionContext) {
+    final LinkedHashSet<String> result = new LinkedHashSet<>();
+    final String initialName = VariableInplaceRenameHandler.getInitialName();
+    if (initialName != null) {
+      result.add(initialName);
+    }
+    result.add(UsageViewUtil.getShortName(element));
+    final NameSuggestionProvider[] providers = Extensions.getExtensions(NameSuggestionProvider.EP_NAME);
+    SuggestedNameInfo suggestedNameInfo = null;
+    for (NameSuggestionProvider provider : providers) {
+      SuggestedNameInfo info = provider.getSuggestedNames(element, nameSuggestionContext, result);
+      if (info != null) {
+        suggestedNameInfo = info;
+        if (provider instanceof PreferrableNameSuggestionProvider && !((PreferrableNameSuggestionProvider)provider).shouldCheckOthers())
+          break;
+      }
+    }
+    return Pair.create(new ArrayList<>(result), suggestedNameInfo);
+  }
+
+  public RenameDialog2 createRenameDialog2(Project project, PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
+    return RenameDialog2Kt.createRenameDialog2(element,
+                                               editor,
+                                               nameSuggestionContext,
+                                               this);
+  }
+
+  public boolean isToSearchForReferencesEnabled(PsiElement element) {
+    return false;
+  }
+
+  public boolean isToSearchForReferences(PsiElement element) {
+    return false;
+  }
+
+  public void setToSearchForReferences(PsiElement element, boolean value) {
+
+  }
+
+  public void renameElement(final PsiElement element, String newName, UsageInfo[] usages,
                             @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     RenameUtil.doRenameGenericNamedElement(element, newName, usages, listener);
   }

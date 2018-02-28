@@ -22,9 +22,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
-import com.intellij.refactoring.rename.RenameDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.references.MavenTargetUtil;
+
+import static com.intellij.refactoring.rename.RenameDialog2Kt.createRenameDialog2;
+import static com.intellij.refactoring.rename.RenameDialog2Kt.showTestAware;
 
 public class MavenPropertyRenameHandler extends PsiElementRenameHandler {
   @Override
@@ -42,7 +44,10 @@ public class MavenPropertyRenameHandler extends PsiElementRenameHandler {
     PsiElement element = elements.length == 1 ? elements[0] : null;
     if (element == null) element = findTarget(dataContext);
 
-    RenameDialog.showRenameDialog(dataContext, new RenameDialog(project, element, null, CommonDataKeys.EDITOR.getData(dataContext)));
+    showTestAware(createRenameDialog2(element,
+                                      CommonDataKeys.EDITOR.getData(dataContext),
+                                      null),
+                  dataContext);
   }
 
   private static PsiElement findTarget(DataContext context) {

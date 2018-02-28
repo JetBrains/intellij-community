@@ -561,5 +561,13 @@
     <experimentalFeature id="inline.browse.button" internalFeature="true" percentOfUsers="0">
       <description>Inlines browse button inside TextFieldWithBrowseButton component</description>
     </experimentalFeature>
+
+    <openapi.ui.noria.BasicUIComponentTypeEP implementation="com.intellij.ui.noria.ButtonComponentType"/>
+    <openapi.ui.noria.BasicUIComponentTypeEP implementation="com.intellij.ui.noria.LabelComponentType"/>
+    <openapi.ui.noria.BasicUIComponentTypeEP implementation="com.intellij.ui.noria.PanelComponentType"/>
+    <openapi.ui.noria.BasicUIComponentTypeEP implementation="com.intellij.ui.noria.CheckboxComponentType"/>
+
+    <applicationService serviceInterface="com.intellij.ui.noria.NoriaDialogs"
+                        serviceImplementation="com.intellij.ui.noria.SwingNoriaDialogs"/>
   </extensions>
 </idea-plugin>

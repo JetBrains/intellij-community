@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -66,7 +65,14 @@ public abstract class BeanPropertyRenameHandler implements RenameHandler {
     }
 
     if (PsiElementRenameHandler.canRename(element.getProject(), editor, element)) {
-      new PropertyRenameDialog(property, editor).show();
+      RenameDialog2 d = RenameDialog2Kt.createRenameDialog2(element,
+                                                            editor,
+                                                            null);
+      d.setPerformRename((request) -> {
+        doRename(property, request.getNewName(), editor, d.getSearchInComments().getValue(), request.isPreview());
+        request.getCallback().run();
+      });
+      RenameDialog2Kt.showTestAware(d, dataContext);
     }
   }
 
@@ -130,23 +136,4 @@ public abstract class BeanPropertyRenameHandler implements RenameHandler {
 
   @Nullable
   protected abstract BeanProperty getProperty(DataContext context);
-
-  private static class PropertyRenameDialog extends RenameDialog {
-
-    private final BeanProperty myProperty;
-    private final Editor myEditor;
-
-    protected PropertyRenameDialog(BeanProperty property, final Editor editor) {
-      super(property.getMethod().getProject(), property.getPsiElement(), null, editor);
-      myEditor = editor;
-      myProperty = property;
-    }
-
-    protected void doAction() {
-      final String newName = getNewName();
-      final boolean searchInComments = isSearchInComments();
-      doRename(myProperty, newName, myEditor, searchInComments, isPreviewUsages());
-      close(DialogWrapper.OK_EXIT_CODE);
-    }
-  }
 }

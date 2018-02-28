@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.rename.RenameDialog;
+import com.intellij.refactoring.rename.RenameDialog2Kt;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.StringLiteralExpression;
@@ -82,7 +82,7 @@ public final class PyMagicLiteralRenameHandler implements RenameHandler {
     if (element == null) {
       return;
     }
-    RenameDialog.showRenameDialog(dataContext, new RenameDialog(project, element, null, editor));
+    RenameDialog2Kt.showTestAware(RenameDialog2Kt.createRenameDialog2(element, editor, null), dataContext);
   }
 
   @Override

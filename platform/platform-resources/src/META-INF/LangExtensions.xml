@@ -1086,6 +1086,7 @@
     <searchEverywhereContributor implementation="com.intellij.ide.util.gotoByName.ClassSearchEverywhereContributor" />
     <searchEverywhereContributor implementation="com.intellij.ide.util.gotoByName.FileSearchEverywhereContributor" />
     <searchEverywhereContributor implementation="com.intellij.ide.util.gotoByName.SymbolSearchEverywhereContributor" />
+    <openapi.ui.noria.BasicUIComponentTypeEP implementation="com.intellij.refactoring.ui.NameSuggesterComponentType"/>
     <applicationService serviceInterface="com.intellij.ide.actions.FileFromTemplateService"
                         serviceImplementation="com.intellij.ide.actions.CreateFileFromTemplateDialog$FileFromTemplateServiceImpl"/>
 

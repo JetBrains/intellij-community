@@ -9,10 +9,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.refactoring.rename.RenameDialog;
-import com.intellij.refactoring.rename.RenameJavaMethodProcessor;
-import com.intellij.refactoring.rename.RenameUtil;
-import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
+import com.intellij.refactoring.rename.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -46,13 +43,10 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
 
   @NotNull
   @Override
-  public RenameDialog createRenameDialog(@NotNull Project project, @NotNull PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
-    return new RenameDialog(project, element, nameSuggestionContext, editor) {
-      @Override
-      protected boolean areButtonsValid() {
-        return true;
-      }
-    };
+  public RenameDialog2 createRenameDialog2(@NotNull Project project, @NotNull PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
+    RenameDialog2 d = super.createRenameDialog2(project, element, nameSuggestionContext, editor);
+    d.setValidate(s -> new ValidationResult(true, null));
+    return d;
   }
 
   @Override

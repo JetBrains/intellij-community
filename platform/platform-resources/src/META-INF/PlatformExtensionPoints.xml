@@ -307,5 +307,6 @@
     <extensionPoint qualifiedName="com.intellij.tree.CustomLanguageASTComparator" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.tree.CustomLanguageASTComparator"/>
     </extensionPoint>
+    <extensionPoint name="openapi.ui.noria.BasicUIComponentTypeEP" interface = "com.intellij.ui.noria.PrimitiveComponentType"/>
   </extensionPoints>
 </idea-plugin>

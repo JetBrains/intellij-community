@@ -1,8 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
@@ -22,12 +20,6 @@ public class RenamePsiFileProcessor extends RenamePsiElementProcessor {
     return element instanceof PsiFileSystemItem;
   }
 
-  @NotNull
-  @Override
-  public RenameDialog createRenameDialog(@NotNull Project project, @NotNull final PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
-    return new PsiFileRenameDialog(project, element, nameSuggestionContext, editor);
-  }
-
   private static boolean getSearchForReferences(PsiElement element) {
     return element instanceof PsiFile
       ? RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_FILE
@@ -43,24 +35,23 @@ public class RenamePsiFileProcessor extends RenamePsiElementProcessor {
     return super.findReferences(element);
   }
 
-  public static class PsiFileRenameDialog extends RenameWithOptionalReferencesDialog {
-    public PsiFileRenameDialog(Project project, PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
-      super(project, element, nameSuggestionContext, editor);
-    }
+  @Override
+  public boolean isToSearchForReferencesEnabled(PsiElement element) {
+    return true;
+  }
 
-    @Override
-    protected boolean getSearchForReferences() {
-      return RenamePsiFileProcessor.getSearchForReferences(getPsiElement());
-    }
+  @Override
+  public boolean isToSearchForReferences(PsiElement element) {
+    return getSearchForReferences(element);
+  }
 
-    @Override
-    protected void setSearchForReferences(boolean value) {
-      if (getPsiElement() instanceof PsiFile) {
-        RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_FILE = value;
-      }
-      else {
-        RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_DIRECTORY = value;
-      }
+  @Override
+  public void setToSearchForReferences(PsiElement element, boolean value) {
+    if (element instanceof PsiFile) {
+      RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_FILE = value;
+    }
+    else {
+      RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_DIRECTORY = value;
     }
   }
 }

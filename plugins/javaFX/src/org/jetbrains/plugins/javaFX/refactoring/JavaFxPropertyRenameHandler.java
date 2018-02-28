@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
@@ -18,7 +17,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.refactoring.openapi.impl.JavaRenameRefactoringImpl;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
-import com.intellij.refactoring.rename.RenameDialog;
+import com.intellij.refactoring.rename.RenameDialog2Kt;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -86,7 +85,8 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
       }
       final PsiElement psiElement = JavaFxPropertyElement.fromReference(propertyReference);
       if (psiElement != null) {
-        new PropertyRenameDialog(propertyReference, psiElement, project, editor).show();
+        RenameDialog2Kt.showRenameDialogSimple(psiElement, editor, null, (request) ->
+          doRename(propertyReference, request.getNewName(), request.getDialog().getSearchInComments().getValue(), request.isPreview()));
       }
     }
     if (reference instanceof JavaFxFieldIdReferenceProvider.JavaFxControllerFieldRef) {
@@ -109,7 +109,11 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
         doRenameFxId(fxIdValueElement, newName, false, false);
       }
       else {
-        new RenameFxIdDialog(fxIdValueElement, editor).show();
+        RenameDialog2Kt.showRenameDialogSimple(fxIdValueElement, editor, null, (request) ->
+          doRenameFxId(fxIdValueElement,
+                       request.getNewName(),
+                       request.getDialog().getSearchInComments().getValue(),
+                       request.isPreview()));
       }
     }
   }
@@ -211,40 +215,5 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
       }
     }
     return null;
-  }
-
-  private static class PropertyRenameDialog extends RenameDialog {
-
-    private final JavaFxPropertyReference myPropertyReference;
-
-    protected PropertyRenameDialog(@NotNull JavaFxPropertyReference propertyReference,
-                                   @NotNull PsiElement psiElement,
-                                   @NotNull Project project,
-                                   Editor editor) {
-      super(project, psiElement, null, editor);
-      myPropertyReference = propertyReference;
-    }
-
-    protected void doAction() {
-      final String newName = getNewName();
-      final boolean searchInComments = isSearchInComments();
-      doRename(myPropertyReference, newName, searchInComments, isPreviewUsages());
-      close(DialogWrapper.OK_EXIT_CODE);
-    }
-  }
-
-  private static class RenameFxIdDialog extends RenameDialog {
-    public RenameFxIdDialog(@NotNull XmlAttributeValue fxIdValueElement, Editor editor) {
-      super(fxIdValueElement.getProject(), fxIdValueElement, null, editor);
-    }
-
-    @Override
-    protected void doAction() {
-      final String newName = getNewName();
-      final PsiElement element = getPsiElement();
-      assert element instanceof XmlAttributeValue;
-      doRenameFxId(((XmlAttributeValue)element), newName, isSearchInComments(), isPreviewUsages());
-      close(DialogWrapper.OK_EXIT_CODE);
-    }
   }
 }

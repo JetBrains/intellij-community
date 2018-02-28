@@ -201,16 +201,17 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
                           final PsiDirectory contextDirectory,
                           final T aPackage,
                           final PsiDirectory... dirsToRename) {
-    final RenameDialog dialog = new RenameDialog(project, contextDirectory, nameSuggestionContext, editor) {
-      @Override
-      protected void doAction() {
-        String newQName = StringUtil.getQualifiedName(StringUtil.getPackageName(getQualifiedName(aPackage)), getNewName());
-        BaseRefactoringProcessor moveProcessor = createProcessor(newQName, project, dirsToRename, isSearchInComments(),
-                                                                 isSearchInNonJavaFiles());
-        invokeRefactoring(moveProcessor);
-      }
-    };
-    dialog.show();
+    RenameDialog2 d = RenameDialog2Kt.createRenameDialog2(contextDirectory, editor, nameSuggestionContext);
+    d.setPerformRename((request) -> {
+      String newQName = StringUtil.getQualifiedName(StringUtil.getPackageName(getQualifiedName(aPackage)), request.getNewName());
+      BaseRefactoringProcessor moveProcessor = createProcessor(newQName,
+                                                               project,
+                                                               dirsToRename,
+                                                               d.getSearchInComments().getValue(),
+                                                               d.getSearchTextOccurrences().getValue());
+      RenameDialog2Kt.invokeRefactoring(moveProcessor, request.isPreview(), request.getCallback());
+    });
+    RenameDialog2Kt.show(d);
   }
 
   public static void buildMultipleDirectoriesInPackageMessage(StringBuffer message,
