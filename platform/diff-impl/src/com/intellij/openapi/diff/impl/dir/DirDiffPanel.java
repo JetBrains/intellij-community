@@ -534,6 +534,8 @@ public class DirDiffPanel implements Disposable, DataProvider {
     public void doLayout() {
       super.doLayout();
 
+      int totalWidth1 = 0;
+      int totalWidth2 = 0;
       for (int i = 0; i < (columnModel.getColumnCount() - 1) / 2; i++) {
         TableColumn column1 = columnModel.getColumn(i);
         TableColumn column2 = columnModel.getColumn(columnModel.getColumnCount() - i - 1);
@@ -542,6 +544,26 @@ public class DirDiffPanel implements Disposable, DataProvider {
           column1.setWidth(column1.getWidth() + delta);
           column2.setWidth(column2.getWidth() - delta);
         }
+
+        totalWidth1 += column1.getWidth();
+        totalWidth2 += column2.getWidth();
+      }
+
+
+      TableColumn column1 = columnModel.getColumn(0);
+      TableColumn column2 = columnModel.getColumn(columnModel.getColumnCount() - 1);
+
+      int delta = (totalWidth2 - totalWidth1) / 2;
+      if (Math.abs(delta) > 0) {
+        column1.setWidth(column1.getWidth() + delta);
+        column2.setWidth(column2.getWidth() - delta);
+        totalWidth1 += delta;
+        totalWidth2 -= delta;
+      }
+
+      if (totalWidth1 != totalWidth2 && totalWidth1 % 2 != 0) {
+        column1.setWidth(column1.getWidth() - 1);
+        column2.setWidth(column2.getWidth() + 1);
       }
     }
   }
