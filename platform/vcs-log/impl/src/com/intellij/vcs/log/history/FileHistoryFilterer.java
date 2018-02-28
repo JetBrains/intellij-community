@@ -23,10 +23,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.history.VcsAppendableHistoryPartnerAdapter;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
-import com.intellij.openapi.vcs.history.VcsHistoryProvider;
+import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -74,6 +71,7 @@ class FileHistoryFilterer extends VcsLogFilterer {
   @Nullable private final Hash myHash;
   @NotNull private final IndexDataGetter myIndexDataGetter;
   @NotNull private final VirtualFile myRoot;
+  @NotNull private final VcsHistoryCache myVcsHistoryCache;
 
   public FileHistoryFilterer(@NotNull VcsLogData logData, @NotNull FilePath filePath, @Nullable Hash hash) {
     super(logData.getLogProviders(), logData.getStorage(), logData.getTopCommitsCache(), logData.getCommitDetailsGetter(),
@@ -83,6 +81,7 @@ class FileHistoryFilterer extends VcsLogFilterer {
     myHash = hash;
     myIndexDataGetter = ObjectUtils.assertNotNull(myIndex.getDataGetter());
     myRoot = ObjectUtils.assertNotNull(VcsUtil.getVcsRootFor(myProject, myFilePath));
+    myVcsHistoryCache = ProjectLevelVcsManager.getInstance(myProject).getVcsHistoryCache();
   }
 
   @NotNull
@@ -111,7 +110,7 @@ class FileHistoryFilterer extends VcsLogFilterer {
       VcsHistoryProvider provider = vcs.getVcsHistoryProvider();
       if (provider != null) {
         try {
-          VisiblePack visiblePack = filterWithProvider(provider, dataPack, sortType, filters);
+          VisiblePack visiblePack = filterWithProvider(vcs, provider, dataPack, sortType, filters);
           LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) +
                     " for computing history for " +
                     myFilePath +
@@ -141,19 +140,31 @@ class FileHistoryFilterer extends VcsLogFilterer {
   }
 
   @NotNull
-  private VisiblePack filterWithProvider(@NotNull VcsHistoryProvider provider,
+  private VisiblePack filterWithProvider(@NotNull AbstractVcs vcs, @NotNull VcsHistoryProvider provider,
                                          @NotNull DataPack dataPack,
                                          @NotNull PermanentGraph.SortType sortType,
                                          @NotNull VcsLogFilterCollection filters) throws VcsException {
-    VcsAppendableHistoryPartnerAdapter partner = new VcsAppendableHistoryPartnerAdapter();
-    if (provider instanceof VcsHistoryProviderEx && myHash != null) {
-      ((VcsHistoryProviderEx)provider).reportAppendableHistory(myFilePath, VcsLogUtil.convertToRevisionNumber(myHash), partner);
-    }
-    else {
-      provider.reportAppendableHistory(myFilePath, partner);
+    VcsAbstractHistorySession session = null;
+    if (provider instanceof VcsCacheableHistorySessionFactory && myHash == null) {
+      session = myVcsHistoryCache.getFull(myFilePath, vcs.getKeyInstanceMethod(), (VcsCacheableHistorySessionFactory)provider);
     }
 
-    List<VcsFileRevision> revisions = partner.getSession().getRevisionList();
+    if (session == null || session.getRevisionList().isEmpty() || session.shouldBeRefreshed()) {
+      VcsAppendableHistoryPartnerAdapter partner = new VcsAppendableHistoryPartnerAdapter();
+      if (provider instanceof VcsHistoryProviderEx && myHash != null) {
+        ((VcsHistoryProviderEx)provider).reportAppendableHistory(myFilePath, VcsLogUtil.convertToRevisionNumber(myHash), partner);
+      }
+      else {
+        provider.reportAppendableHistory(myFilePath, partner);
+      }
+      session = partner.getSession();
+
+      if (provider instanceof VcsCacheableHistorySessionFactory && myHash == null) {
+        myVcsHistoryCache.put(myFilePath, null, vcs.getKeyInstanceMethod(), session, (VcsCacheableHistorySessionFactory)provider, true);
+      }
+    }
+
+    List<VcsFileRevision> revisions = session.getRevisionList();
     Map<Integer, FilePath> pathsMap = ContainerUtil.newHashMap();
     VisibleGraph<Integer> visibleGraph;
 
