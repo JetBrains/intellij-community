@@ -32,17 +32,15 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.*;
 
 /**
@@ -81,18 +79,15 @@ public class CopyAbstractMethodImplementationHandler {
         PsiClass c2 = o2.getContainingClass();
         return Comparing.compare(c1.getName(), c2.getName());
       });
-      final PsiMethod[] methodArray = mySourceMethods.toArray(PsiMethod.EMPTY_ARRAY);
-      final JList list = new JBList(methodArray);
-      list.setCellRenderer(new MethodCellRenderer(true));
-      final Runnable runnable = () -> {
-        int index = list.getSelectedIndex();
-        if (index < 0) return;
-        PsiMethod element = (PsiMethod)list.getSelectedValue();
-        copyImplementation(element);
-      };
-      new PopupChooserBuilder(list)
+      JBPopupFactory.getInstance()
+        .createPopupChooserBuilder(mySourceMethods)
+        .setRenderer(new MethodCellRenderer(true))
+        .setItemChoosenCallback((element) -> {
+          if(element != null) {
+            copyImplementation(element);
+          }
+        })
         .setTitle(CodeInsightBundle.message("copy.abstract.method.popup.title"))
-        .setItemChoosenCallback(runnable)
         .createPopup()
         .showInBestPositionFor(myEditor);
     }

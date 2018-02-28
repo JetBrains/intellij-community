@@ -41,6 +41,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.JBListUpdater;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -267,7 +268,7 @@ public class CodeInsightTestUtil {
       list.setModel(model);
       list.setModel(new NameFilteringListModel(list, Function.ID, Condition.FALSE, String::new));
       JBPopup popup = new ComponentPopupBuilderImpl(list, null).createPopup();
-      data.listUpdaterTask.init((AbstractPopup)popup, list, new Ref<>());
+      data.listUpdaterTask.init(popup, new JBListUpdater(list), new Ref<>());
 
       data.listUpdaterTask.queue();
 

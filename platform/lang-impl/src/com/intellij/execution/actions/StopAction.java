@@ -27,11 +27,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
@@ -119,8 +119,6 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
         return;
       }
 
-      final JBList<HandlerItem> list = new JBList<>(handlerItems.first);
-      if (handlerItems.second != null) list.setSelectedValue(handlerItems.second, true);
       HandlerItem stopAllItem =
         new HandlerItem(ExecutionBundle.message("stop.all", KeymapUtil.getFirstKeyboardShortcutText("Stop")), AllIcons.Actions.Suspend,
                         true) {
@@ -131,43 +129,43 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
             }
           }
         };
-      if (stopCount > 1) {
-        ((DefaultListModel<HandlerItem>)list.getModel()).addElement(stopAllItem);
-      }
       JBPopup activePopup = SoftReference.dereference(myActivePopupRef);
       if (activePopup != null) {
-          stopAllItem.stop();
-          activePopup.cancel();
-          return;
+        stopAllItem.stop();
+        activePopup.cancel();
+        return;
       }
 
-      list.setCellRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<HandlerItem>() {
-        @Nullable
-        @Override
-        public String getTextFor(HandlerItem item) {
-          return item.displayName;
-        }
+      List<HandlerItem> items = handlerItems.first;
+      if (stopCount > 1) {
+        items.add(stopAllItem);
+      }
 
-        @Nullable
-        @Override
-        public Icon getIconFor(HandlerItem item) {
-          return item.icon;
-        }
+      IPopupChooserBuilder<HandlerItem> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(items)
+        .setRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<HandlerItem>() {
+          @Nullable
+          @Override
+          public String getTextFor(HandlerItem item) {
+            return item.displayName;
+          }
 
-        @Override
-        public boolean hasSeparatorAboveOf(HandlerItem item) {
-          return item.hasSeparator;
-        }
-      }));
+          @Nullable
+          @Override
+          public Icon getIconFor(HandlerItem item) {
+            return item.icon;
+          }
 
-      JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
+          @Override
+          public boolean hasSeparatorAboveOf(HandlerItem item) {
+            return item.hasSeparator;
+          }
+        }))
         .setMovable(true)
-        .setTitle(handlerItems.first.size() == 1 ? "Confirm process stop" : "Stop process")
+        .setTitle(items.size() == 1 ? "Confirm process stop" : "Stop process")
         .setFilteringEnabled(o -> ((HandlerItem)o).displayName)
-        .setItemChoosenCallback(() -> {
-          List valuesList = list.getSelectedValuesList();
-          for (Object o : valuesList) {
-            if (o instanceof HandlerItem) ((HandlerItem)o).stop();
+        .setItemsChoosenCallback((valuesList) -> {
+          for (HandlerItem item : valuesList) {
+            item.stop();
           }
         })
         .addListener(new JBPopupAdapter() {
@@ -176,8 +174,13 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
             myActivePopupRef = null;
           }
         })
-        .setRequestFocus(true)
+        .setRequestFocus(true);
+      if (handlerItems.second != null) {
+        builder.setSelectedValue(handlerItems.second, true);
+      }
+      JBPopup popup = builder
         .createPopup();
+
       myActivePopupRef = new WeakReference<>(popup);
       InputEvent inputEvent = e.getInputEvent();
       Component component = inputEvent != null ? inputEvent.getComponent() : null;

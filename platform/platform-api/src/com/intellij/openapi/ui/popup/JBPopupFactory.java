@@ -49,6 +49,19 @@ public abstract class JBPopupFactory {
     return ServiceManager.getService(JBPopupFactory.class);
   }
 
+  public abstract <T> IPopupChooserBuilder<T> createPopupChooserBuilder(List<T> list);
+
+  @NotNull
+  public <T> IPopupChooserBuilder<T> createPopupChooserBuilder(@NotNull JList<T> list) {
+    return new PopupChooserBuilder<>(list);
+  }
+
+  @NotNull
+  public IPopupChooserBuilder createPopupChooserBuilder(@NotNull JTable list) {
+    return new PopupChooserBuilder(list);
+  }
+
+  @Deprecated
   @NotNull
   public PopupChooserBuilder createListPopupBuilder(@NotNull JList list) {
     return new PopupChooserBuilder(list);
@@ -245,7 +258,7 @@ public abstract class JBPopupFactory {
   public abstract ListPopup createActionGroupPopup(@Nls(capitalization = Nls.Capitalization.Title) String title,
                                                    @NotNull ActionGroup actionGroup,
                                                    @NotNull DataContext dataContext,
-                                                   ActionSelectionAid selectionAidMethod,
+                                                   ActionSelectionAid aid,
                                                    boolean showDisabledActions,
                                                    @Nullable Runnable disposeCallback,
                                                    int maxRowCount,

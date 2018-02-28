@@ -37,8 +37,9 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Ref;
@@ -54,8 +55,6 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.Processor;
@@ -114,34 +113,26 @@ public final class NavigationUtil {
                                                                   @NotNull final PsiElementProcessor<T> processor,
                                                                   @Nullable final T selection) {
     assert elements.length > 0 : "Attempted to show a navigation popup with zero elements";
-
-    final JList list = new JBList(elements);
-    HintUpdateSupply.installSimpleHintUpdateSupply(list);
-    list.setCellRenderer(renderer);
-
-    list.setFont(EditorUtil.getEditorFont());
-
+    IPopupChooserBuilder<T> builder = JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(ContainerUtil.newArrayList(elements))
+      .setRenderer(renderer)
+      .setFont(EditorUtil.getEditorFont())
+      .withHintUpdateSupply();
     if (selection != null) {
-      list.setSelectedValue(selection, true);
+      builder.setSelectedValue(selection, true);
     }
-
-    final Runnable runnable = () -> {
-      int[] ids = list.getSelectedIndices();
-      if (ids == null || ids.length == 0) return;
-      for (Object element : list.getSelectedValues()) {
-        if (element != null) {
-          processor.execute((T)element);
-        }
-      }
-    };
-
-    PopupChooserBuilder builder = new PopupChooserBuilder(list);
     if (title != null) {
       builder.setTitle(title);
     }
     renderer.installSpeedSearch(builder, true);
 
-    JBPopup popup = builder.setItemChoosenCallback(runnable).createPopup();
+    JBPopup popup = builder.setItemsChoosenCallback((selectedValues) -> {
+      for (T element : selectedValues) {
+        if (element != null) {
+          processor.execute(element);
+        }
+      }
+    }).createPopup();
 
     builder.getScrollPane().setBorder(null);
     builder.getScrollPane().setViewportBorder(null);

@@ -31,7 +31,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.TextAccessor;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +40,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class CommonProgramParametersPanel extends JPanel implements PanelWithAnchor {
@@ -117,14 +118,22 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     button.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        //noinspection unchecked
-        final JList list = new JBList(myWorkingDirectoryComboBox.getChildComponent().getModel());
-        JBPopupFactory.getInstance().createListPopupBuilder(list).setItemChoosenCallback(() -> {
-          final Object value = list.getSelectedValue();
-          if (value instanceof String) {
-            textAccessor.setText((String)value);
-          }
-        }).setMovable(false).setResizable(false).createPopup().showUnderneathOf(button);
+        List<String> macros = new ArrayList<>();
+        ComboBoxModel<String> model = myWorkingDirectoryComboBox.getChildComponent().getModel();
+        for (int i = 0; i < model.getSize(); ++i) {
+          macros.add(model.getElementAt(i));
+        }
+        JBPopupFactory.getInstance()
+          .createPopupChooserBuilder(macros)
+          .setItemChoosenCallback((value) -> {
+            if (value != null) {
+              textAccessor.setText(value);
+            }
+          })
+          .setMovable(false)
+          .setResizable(false)
+          .createPopup()
+          .showUnderneathOf(button);
       }
     });
 

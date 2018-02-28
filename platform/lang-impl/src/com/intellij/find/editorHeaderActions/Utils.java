@@ -4,9 +4,9 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -36,7 +36,7 @@ public class Utils {
       }
     };
 
-    final PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(list);
+    final IPopupChooserBuilder builder = JBPopupFactory.getInstance().createPopupChooserBuilder(list);
     if (title != null) {
       builder.setTitle(title);
     }

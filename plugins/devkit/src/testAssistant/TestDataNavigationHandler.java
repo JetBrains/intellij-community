@@ -18,7 +18,8 @@ package org.jetbrains.idea.devkit.testAssistant;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.psi.PsiMethod;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -119,8 +120,7 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
         setIcon(element.getIcon());
       }
     });
-
-    PopupChooserBuilder builder = new PopupChooserBuilder(list);
+    IPopupChooserBuilder builder = JBPopupFactory.getInstance().createPopupChooserBuilder(list);
     builder.setItemChoosenCallback(() -> {
       TestDataNavigationElement selectedElement = list.getSelectedValue();
       if (selectedElement != null) {

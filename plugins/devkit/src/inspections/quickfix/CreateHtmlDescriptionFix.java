@@ -28,7 +28,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -112,21 +111,22 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
       ApplicationManager.getApplication().runWriteAction(() -> createDescription(roots[0]));
     }
     else {
+      final Editor editor = FileEditorManager.getInstance(myModule.getProject()).getSelectedTextEditor();
+      if (editor == null) return;
       List<String> options = StreamEx.of(roots).map(this::getPath).toList();
       final JBList files = new JBList(ArrayUtil.toStringArray(options));
       files.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      final JBPopup popup = JBPopupFactory.getInstance()
-        .createListPopupBuilder(files)
+      JBPopupFactory.getInstance()
+        .createPopupChooserBuilder(options)
+        .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
         .setTitle(DevKitBundle.message("select.target.location.of.description", myFilename))
         .setItemChoosenCallback(() -> {
           final int index = files.getSelectedIndex();
           if (0 <= index && index < roots.length) {
             ApplicationManager.getApplication().runWriteAction(() -> createDescription(roots[index]));
           }
-        }).createPopup();
-      final Editor editor = FileEditorManager.getInstance(myModule.getProject()).getSelectedTextEditor();
-      if (editor == null) return;
-      popup.showInBestPositionFor(editor);
+        }).createPopup()
+        .showInBestPositionFor(editor);
     }
   }
 

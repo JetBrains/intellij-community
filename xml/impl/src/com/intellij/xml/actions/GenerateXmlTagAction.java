@@ -48,7 +48,7 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.ui.components.JBList;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
@@ -82,10 +82,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
       assert currentTagDescriptor != null;
       final XmlElementDescriptor[] descriptors = currentTagDescriptor.getElementsDescriptors(contextTag);
       Arrays.sort(descriptors, Comparator.comparing(PsiMetaData::getName));
-      final JBList list = new JBList(descriptors);
-      list.setCellRenderer(new MyListCellRenderer());
-      Runnable runnable = () -> {
-        final XmlElementDescriptor selected = (XmlElementDescriptor)list.getSelectedValue();
+      Consumer<XmlElementDescriptor> consumer = (selected) ->
         new WriteCommandAction.Simple(project, "Generate XML Tag", file) {
           @Override
           protected void run() {
@@ -108,17 +105,18 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
             }
           }
         }.execute();
-      };
+
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         XmlElementDescriptor descriptor = ContainerUtil.find(descriptors,
                                                              xmlElementDescriptor -> xmlElementDescriptor.getName().equals(TEST_THREAD_LOCAL.get()));
-        list.setSelectedValue(descriptor, false);
-        runnable.run();
+        consumer.consume(descriptor);
       }
       else {
-        JBPopupFactory.getInstance().createListPopupBuilder(list)
+        JBPopupFactory.getInstance()
+          .createPopupChooserBuilder(ContainerUtil.newArrayList(descriptors))
+          .setRenderer(new MyListCellRenderer())
           .setTitle("Choose Tag Name")
-          .setItemChoosenCallback(runnable)
+          .setItemChoosenCallback(consumer)
           .setFilteringEnabled(o -> ((XmlElementDescriptor)o).getName())
           .createPopup()
           .showInBestPositionFor(editor);

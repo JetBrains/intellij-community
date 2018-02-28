@@ -21,9 +21,9 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -138,13 +138,12 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
         }
         Collections.sort(toolWindows, (o1, o2) -> StringUtil.naturalCompare(o1.getStripeTitle(), o2.getStripeTitle()));
 
-        final JBList list = new JBList(toolWindows);
-        list.setCellRenderer(new ListCellRenderer() {
+        final JBList<ToolWindow> list = new JBList(toolWindows);
+        list.setCellRenderer(new ListCellRenderer<ToolWindow>() {
           final JBLabel label = new JBLabel();
 
           @Override
-          public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-            final ToolWindow toolWindow = (ToolWindow)value;
+          public Component getListCellRendererComponent(JList<? extends ToolWindow> list, ToolWindow toolWindow, int index, boolean isSelected, boolean cellHasFocus) {
             label.setText(toolWindow.getStripeTitle());
             label.setIcon(toolWindow.getIcon());
             label.setBorder(JBUI.Borders.empty(4, 10));
@@ -167,15 +166,14 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
         }
 
         list.setSelectedIndex(list.getItemsCount() - 1);
-        PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(list);
+        IPopupChooserBuilder<ToolWindow> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(list);
         popup = builder
           .setAutoselectOnMouseMove(true)
           .setRequestFocus(false)
-          .setItemChoosenCallback(() -> {
+          .setItemChoosenCallback((selectedValue) -> {
             if (popup != null) popup.closeOk(null);
-            final Object value = list.getSelectedValue();
-            if (value instanceof ToolWindow) {
-              ((ToolWindow)value).activate(null, true, true);
+            if (selectedValue != null) {
+              selectedValue.activate(null, true, true);
             }
           })
           .createPopup();

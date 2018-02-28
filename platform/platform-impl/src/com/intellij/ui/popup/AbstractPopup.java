@@ -1637,6 +1637,7 @@ public class AbstractPopup implements JBPopup {
     return popupWindow;
   }
 
+  @Override
   public void setCaption(String title) {
     if (myCaption instanceof TitlePanel) {
       ((TitlePanel)myCaption).setText(title);

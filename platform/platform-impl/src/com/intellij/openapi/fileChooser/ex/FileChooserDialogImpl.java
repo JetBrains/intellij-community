@@ -251,7 +251,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       }
     });
     JBPopupFactory.getInstance()
-      .createListPopupBuilder(files)
+      .createPopupChooserBuilder(files)
       .setItemChoosenCallback(
         () -> {
           Object value = files.getSelectedValue();

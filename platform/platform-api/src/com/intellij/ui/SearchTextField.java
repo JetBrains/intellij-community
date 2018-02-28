@@ -534,7 +534,7 @@ public class SearchTextField extends JPanel {
     if (myPopup == null || !myPopup.isVisible()) {
       final JList list = new JBList(myModel);
       final Runnable chooseRunnable = createItemChosenCallback(list);
-      myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list)
+      myPopup = JBPopupFactory.getInstance().createPopupChooserBuilder(list)
         .setMovable(false)
         .setRequestFocus(true)
         .setItemChoosenCallback(chooseRunnable).createPopup();

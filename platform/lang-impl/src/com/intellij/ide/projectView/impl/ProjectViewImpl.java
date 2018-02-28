@@ -47,7 +47,8 @@ import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.SplitterProportionsData;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -65,7 +66,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.GuiUtils;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
@@ -863,30 +863,27 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     views.remove(getCurrentProjectViewPane());
     Collections.sort(views, PANE_WEIGHT_COMPARATOR);
 
-    final JList list = new JBList(ArrayUtil.toObjectArray(views));
-    list.setCellRenderer(new DefaultListCellRenderer() {
-      @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        AbstractProjectViewPane pane = (AbstractProjectViewPane)value;
-        setText(pane.getTitle());
-        return this;
-      }
-    });
-
+    IPopupChooserBuilder<AbstractProjectViewPane> builder = JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(views)
+      .setRenderer(new DefaultListCellRenderer() {
+        @Override
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+          super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          AbstractProjectViewPane pane = (AbstractProjectViewPane)value;
+          setText(pane.getTitle());
+          return this;
+        }
+      })
+      .setTitle(IdeBundle.message("title.popup.views"))
+      .setItemChoosenCallback(pane -> {
+        if (pane != null) changeView(pane.getId());
+      });
     if (!views.isEmpty()) {
-      list.setSelectedValue(views.get(0), true);
+      builder = builder.setSelectedValue(views.get(0), true);
     }
-    Runnable runnable = () -> {
-      if (list.getSelectedIndex() < 0) return;
-      AbstractProjectViewPane pane = (AbstractProjectViewPane)list.getSelectedValue();
-      changeView(pane.getId());
-    };
-
-    new PopupChooserBuilder(list).
-      setTitle(IdeBundle.message("title.popup.views")).
-      setItemChoosenCallback(runnable).
-      createPopup().showInCenterOf(getComponent());
+    builder
+      .createPopup()
+      .showInCenterOf(getComponent());
   }
 
   @Override

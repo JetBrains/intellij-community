@@ -116,11 +116,14 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
     final List<String> fqns = getPossibleFqns(myRef);
     myEditorComponent = editor.getComponent();
     if (fqns.size() > 1) {
-      JBList<String> listOfFqns = new JBList<>(fqns);
       JBPopupFactory.getInstance()
-        .createListPopupBuilder(listOfFqns)
+        .createPopupChooserBuilder(fqns)
         .setTitle("Select Qualified Name")
-        .setItemChoosenCallback(() -> findJarsForFqn(listOfFqns.getSelectedValue(), editor))
+        .setItemChoosenCallback((value) -> {
+          if (value != null) {
+            findJarsForFqn(value, editor);
+          }
+        })
         .createPopup()
         .showInBestPositionFor(editor);
     }
@@ -183,7 +186,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
             initiateDownload(url, jarName);
           } else {
             JBPopupFactory.getInstance()
-            .createListPopupBuilder(libNames)
+            .createPopupChooserBuilder(libNames)
             .setTitle("Select a JAR file")
             .setItemChoosenCallback(() -> {
               String jarName = libNames.getSelectedValue();
@@ -268,10 +271,10 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
   }
 
   protected abstract Collection<String> getFqns(@NotNull T ref);
-  
+
   protected List<String> getPossibleFqns(T ref) {
     Collection<String> fqns = getFqns(ref);
-    
+
     List<String> res = new ArrayList<>(fqns.size());
 
     for (String fqn : fqns) {

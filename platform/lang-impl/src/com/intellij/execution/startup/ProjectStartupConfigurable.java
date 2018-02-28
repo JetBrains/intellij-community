@@ -44,7 +44,6 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Processor;
@@ -285,22 +284,19 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
         }
       }
     }
-    final JBList list = new JBList(wrappers);
-    list.setCellRenderer(new ColoredListCellRenderer() {
-      @Override
-      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        if (value instanceof ChooseRunConfigurationPopup.ItemWrapper) {
-          setIcon(((ChooseRunConfigurationPopup.ItemWrapper)value).getIcon());
-          append(((ChooseRunConfigurationPopup.ItemWrapper)value).getText());
-        }
-      }
-    });
     final JBPopup popup = JBPopupFactory.getInstance()
-      .createListPopupBuilder(list)
-      .setItemChoosenCallback(() -> {
-        final int index = list.getSelectedIndex();
-        if (index < 0) return;
-        final ChooseRunConfigurationPopup.ItemWrapper at = (ChooseRunConfigurationPopup.ItemWrapper)list.getModel().getElementAt(index);
+      .createPopupChooserBuilder(wrappers)
+      .setRenderer(new ColoredListCellRenderer() {
+        @Override
+        protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
+          if (value instanceof ChooseRunConfigurationPopup.ItemWrapper) {
+            setIcon(((ChooseRunConfigurationPopup.ItemWrapper)value).getIcon());
+            append(((ChooseRunConfigurationPopup.ItemWrapper)value).getText());
+          }
+        }
+      })
+      .setItemChoosenCallback((at) -> {
+        if (at == null) return;
         if (at.getValue() instanceof RunnerAndConfigurationSettings) {
           final RunnerAndConfigurationSettings added = (RunnerAndConfigurationSettings)at.getValue();
           addConfiguration(added);

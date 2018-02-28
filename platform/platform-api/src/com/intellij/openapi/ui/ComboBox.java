@@ -118,7 +118,7 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
       if (visible && (myJBPopup == null || myJBPopup.isDisposed())) {
         final JBList<E> list = createJBList(getModel());
         myJBPopup = JBPopupFactory.getInstance()
-          .createListPopupBuilder(list)
+          .createPopupChooserBuilder(list)
           .setItemChoosenCallback(() -> {
             final Object value = list.getSelectedValue();
             if (value != null) {
