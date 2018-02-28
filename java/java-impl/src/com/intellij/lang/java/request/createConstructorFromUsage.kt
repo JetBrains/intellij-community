@@ -11,7 +11,7 @@ import com.intellij.psi.PsiConstructorCall
 import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiNewExpression
 
-fun generateActions(call: PsiConstructorCall): List<IntentionAction> {
+fun generateConstructorActions(call: PsiConstructorCall): List<IntentionAction> {
   val targetClass = findTargetClass(call) ?: return emptyList()
   val request = CreateConstructorFromJavaUsageRequest(call, emptyList())
   return createConstructorActions(targetClass, request)
