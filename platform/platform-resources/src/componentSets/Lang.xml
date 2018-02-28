@@ -133,7 +133,8 @@
       <option name="workspace" value="true"/>
     </component>
     <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.EditorTracker</implementation-class>
+      <interface-class>com.intellij.codeInsight.daemon.impl.EditorTracker</interface-class>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.EditorTrackerImpl</implementation-class>
       <loadForDefaultProject/>
     </component>
     <component>
