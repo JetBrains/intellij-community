@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
@@ -35,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxUnresolvedFxIdReferenceInspection;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxInjectPageLanguageIntention;
 
-import java.util.Calendar;
 import java.util.Set;
 
 public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
@@ -58,9 +42,8 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
     doTest("Create method 'bar'", ".java");
   }
 
-  @Bombed(year = 2017, month = Calendar.SEPTEMBER, day = 1, user = "Daniil Ovchinnikov")
   public void testCreateControllerMethodInGroovy() {
-    doTest("Create method 'void bar(ActionEvent)'", ".groovy");
+    doTest("Create method 'bar'", ".groovy");
   }
 
   public void testCreateControllerMethodGeneric() {
