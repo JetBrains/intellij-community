@@ -317,10 +317,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       List<MySimpleDiffChange> selectedChanges = getSelectedChanges(side);
       if (selectedChanges.isEmpty()) return;
 
-      BitSet selectedLines = new BitSet();
-      for (SimpleDiffChange change : selectedChanges) {
-        selectedLines.set(change.getStartLine(side), change.getEndLine(side));
-      }
+      BitSet selectedLines = getSelectedLines(selectedChanges, side);
 
       if (ContainerUtil.and(selectedChanges, change -> !change.isFromActiveChangelist())) {
         LocalChangeList changeList = ChangeListManager.getInstance(getProject()).getChangeList(myChangelistId);
@@ -384,10 +381,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       List<MySimpleDiffChange> activeChanges = getActiveChanges(side);
       if (activeChanges.isEmpty()) return;
 
-      BitSet selectedLines = new BitSet();
-      for (SimpleDiffChange change : activeChanges) {
-        selectedLines.set(change.getStartLine(side), change.getEndLine(side));
-      }
+      BitSet selectedLines = getSelectedLines(activeChanges, side);
 
       boolean hasExcluded = ContainerUtil.or(activeChanges, MySimpleDiffChange::isExcludedFromCommit);
       myTracker.setExcludedFromCommit(selectedLines, !hasExcluded);
@@ -400,6 +394,17 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       List<MySimpleDiffChange> selectedChanges = ContainerUtil.findAll(getSelectedChanges(side), MySimpleDiffChange.class);
       return ContainerUtil.filter(selectedChanges, MySimpleDiffChange::isFromActiveChangelist);
     }
+  }
+
+  @NotNull
+  private static BitSet getSelectedLines(@NotNull List<MySimpleDiffChange> changes, @NotNull Side side) {
+    BitSet selectedLines = new BitSet();
+    for (SimpleDiffChange change : changes) {
+      int startLine = change.getStartLine(side);
+      int endLine = change.getEndLine(side);
+      selectedLines.set(startLine, startLine == endLine ? startLine + 1 : endLine);
+    }
+    return selectedLines;
   }
 
   private static class TrackerData {
