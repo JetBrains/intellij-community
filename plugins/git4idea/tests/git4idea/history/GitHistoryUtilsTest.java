@@ -25,12 +25,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
-import git4idea.config.GitVersion;
 import git4idea.history.browser.SHAHash;
 import git4idea.test.GitSingleRepoTest;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +42,6 @@ import static com.intellij.openapi.vcs.Executor.*;
 import static git4idea.test.GitExecutor.*;
 import static git4idea.test.GitTestUtil.USER_EMAIL;
 import static git4idea.test.GitTestUtil.USER_NAME;
-import static org.junit.Assume.assumeTrue;
 
 /**
  * Tests for low-level history methods in GitHistoryUtils.
@@ -342,45 +338,6 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
       assertEquals(pair.first.toString(), revision.myHash);
       assertEquals(pair.second, revision.myDate);
     }
-  }
-
-  public void testLoadingDetailsWithU0001Character() throws Exception {
-    List<VcsFullCommitDetails> details = ContainerUtil.newArrayList();
-
-    String message = "subject containing \u0001 symbol in it\n\ncommit body containing \u0001 symbol in it";
-    touch("file.txt", "content");
-    addCommit(repo, message);
-
-    GitLogUtil.readFullDetails(myProject, repo.getRoot(), details::add);
-
-    VcsFullCommitDetails lastCommit = ContainerUtil.getFirstItem(details);
-    assertNotNull(lastCommit);
-    assertEquals(message, lastCommit.getFullMessage());
-  }
-
-  public void testLoadingDetailsWithoutChanges() throws Exception {
-    assumeTrue("Not testing: Git doesn't know --allow-empty-message in " + vcs.getVersion(),
-               vcs.getVersion().isLaterOrEqual(new GitVersion(1, 7, 2, 0)));
-
-    List<String> expected = ContainerUtil.newArrayList();
-
-    String messageFile = "message.txt";
-    touch(messageFile, "");
-
-    int commitCount = 20;
-    for (int i = 0; i < commitCount; i++) {
-      echo("file.txt", "content number " + i);
-      add(repo);
-      git("commit --allow-empty-message -F " + messageFile);
-      expected.add(last(this));
-    }
-    expected = ContainerUtil.reverse(expected);
-
-    List<String> actualHashes = ContainerUtil.map(GitLogUtil.collectFullDetails(myProject, repo.getRoot(),
-                                                                                 "--max-count=" + commitCount),
-                                                  detail -> detail.getId().asString());
-
-    assertEquals(expected, actualHashes);
   }
 
   private void assertHistory(@NotNull List<? extends VcsFileRevision> actualRevisions) throws VcsException {
