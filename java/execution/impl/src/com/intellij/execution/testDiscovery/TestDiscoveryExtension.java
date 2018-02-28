@@ -88,7 +88,6 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     argument.append(agentPath);
     params.getVMParametersList().add(argument.toString());
     params.getClassPath().add(agentPath);
-    params.getClassPath().add(PathUtil.getJarPathForClass(CoveragePremain.class));
     TestDiscoveryDataSocketListener listener = tryInstallSocketListener(configuration);
     if (listener != null) {
       params.getVMParametersList().addProperty(SocketTestDiscoveryProtocolDataListener.PORT_PROP, Integer.toString(listener.getPort()));
