@@ -27,6 +27,24 @@ class AswbProperties extends AndroidStudioProperties {
     super(home)
   }
 
+  List<String> additionalIDEPropertiesFilePaths = []
+
+  // Custom JVM options for ASWB
+  // Older versions of ASWB released from Google3 modified this via
+  //   third_party/corp_installers/jetbrains/android_studio_with_blaze/modify_vmoptions.sh
+  // Also see g3plugins/settings/AndroidSettingsProvider.java if this list is modified
+  // Unfortunately, this lands up in different places in the distribution: studio.sh in Linux, and studio64.vmoptions on Mac
+  String additionalIdeJvmArguments =
+    "-Dstudio.projectview=true " +
+    "-Dandroid.adb.path=/usr/bin/adb " +
+    "-Dandroid.sdk.custom.url=file:///google/data/ro/teams/android-sdk-g3-releng/android_sdk/aswb.xml " +
+    "-Djdk.util.zip.ensureTrailingSlash=false " + // upstream bug IDEA-177278 is fixed in 2017.2
+    "-Dnele.mock.data=false " + // b/70291946
+    "-Dcaches.indexerThreadsCount=24 " +
+    "-Didea.max.image.filesize=0"
+
+  String customJvmMemoryOptionsX64 = "-Xms1g -Xmx5g"
+
   @Override
   @CompileDynamic
   void copyAdditionalFiles(BuildContext buildContext, String targetDirectory) {

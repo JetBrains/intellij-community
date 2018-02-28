@@ -3,6 +3,7 @@ import glob
 import os
 import re
 import sys
+import tarfile
 import unittest
 import zipfile
 
@@ -100,6 +101,26 @@ class StudioTests(unittest.TestCase):
     name = os.path.join(dist_dir, self.artifact_prefix() + build + ".mac.zip")
     files = zipfile.ZipFile(name).namelist()
     self.assertFalse(any("plugins/aswb" in fname for fname in files), name + " contains plugins/aswb")
+
+  def test_custom_vmoptions_mac(self):
+    """Tests that vmoptions specific to ASWB on Mac are only present in the ASWB Mac build"""
+
+    mac_artifact = os.path.join(dist_dir, self.artifact_prefix() + build + ".mac.zip")
+    mac_zip = zipfile.ZipFile(mac_artifact)
+    studio_vmoptions = mac_zip.read(next(i for i in mac_zip.infolist() if i.filename.endswith("studio.vmoptions")))
+
+    vmoption = "-Dandroid.adb.path=/usr/bin/adb"
+    self.assertEqual(vmoption in studio_vmoptions, aswb)
+
+  def test_custom_vmoptions_linux(self):
+    """Tests that vmoptions specific to ASWB on Linux are only present in the ASWB Linux build"""
+
+    linux_artifact = os.path.join(dist_dir, self.artifact_prefix() + build + ".tar.gz")
+    tar = tarfile.open(linux_artifact, "r:gz")
+    studio_sh_contents = tar.extractfile(tar.getmember("android-studio/bin/studio.sh")).read()
+
+    vmoption = "-Dandroid.adb.path=/usr/bin/adb"
+    self.assertEqual(vmoption in studio_sh_contents, aswb)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
