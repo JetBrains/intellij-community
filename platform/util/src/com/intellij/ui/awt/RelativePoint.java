@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.awt;
 
+import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,39 +23,55 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-public class RelativePoint {
-
+public class RelativePoint extends UserDataHolderBase {
   private Component myComponent;
   private Point myPointOnComponent;
 
   private Component myOriginalComponent;
   private Point myOriginalPoint;
 
-  public RelativePoint(@NotNull MouseEvent event) {
-    init(event.getComponent(), event.getPoint());
+  public RelativePoint(MouseEvent event) {
+    boolean headless = Boolean.getBoolean("java.awt.headless");
+    if (!headless) {
+      init(event.getComponent(), event.getPoint());
+    } else {
+      myPointOnComponent = event.getPoint();
+      myOriginalComponent = event.getComponent();
+      myOriginalPoint = event.getPoint();
+    }
   }
 
   public RelativePoint(@NotNull Component aComponent, Point aPointOnComponent) {
-    init(aComponent, aPointOnComponent);
+    boolean headless = Boolean.getBoolean("java.awt.headless");
+    if (!headless) {
+      init(aComponent, aPointOnComponent);
+    } else {
+      myComponent = aComponent;
+      myPointOnComponent = aPointOnComponent;
+      myOriginalPoint = aPointOnComponent;
+    }
   }
 
   public RelativePoint(@NotNull Point screenPoint) {
-    Point p = new Point(screenPoint.x, screenPoint.y);
-    Window[] windows = Window.getWindows();
-    Window targetWindow = null;
-    for (Window each : windows) {
-      if (each.isActive()) {
-        targetWindow = each;
-        break;
+    boolean headless = Boolean.getBoolean("java.awt.headless");
+    if (!headless) {
+      Point p = new Point(screenPoint.x, screenPoint.y);
+      Window[] windows = Window.getWindows();
+      Window targetWindow = null;
+      for (Window each : windows) {
+        if (each.isActive()) {
+          targetWindow = each;
+          break;
+        }
       }
-    }
 
-    if (targetWindow == null) {
-      targetWindow = JOptionPane.getRootFrame();
-    }
+      if (targetWindow == null) {
+        targetWindow = JOptionPane.getRootFrame();
+      }
 
-    SwingUtilities.convertPointFromScreen(p, targetWindow);
-    init(targetWindow, p);
+      SwingUtilities.convertPointFromScreen(p, targetWindow);
+      init(targetWindow, p);
+    }
   }
 
   private void init(@NotNull Component aComponent, Point aPointOnComponent) {
