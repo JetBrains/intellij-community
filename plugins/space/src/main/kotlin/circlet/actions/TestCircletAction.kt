@@ -1,15 +1,12 @@
 package circlet.actions
 
 import circlet.client.*
-import circlet.client.api.*
 import circlet.components.*
 import circlet.utils.*
 import com.intellij.notification.*
-import com.intellij.notification.Notification
 import com.intellij.openapi.actionSystem.*
 import klogging.*
-import runtime.async.*
-import kotlinx.coroutines.experimental.async
+import kotlinx.coroutines.experimental.*
 
 @Suppress("unused")
 private val log = KLoggers.logger("plugin/TestCircletAction.kt")
