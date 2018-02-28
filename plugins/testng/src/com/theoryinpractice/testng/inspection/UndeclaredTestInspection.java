@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.theoryinpractice.testng.inspection;
 
@@ -73,7 +73,7 @@ public class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionToo
       for (final String name : names) {
         final boolean isFullName = qName.equals(name);
         final boolean[] found = new boolean[]{false};
-        PsiSearchHelper.SERVICE.getInstance(project)
+        PsiSearchHelper.getInstance(project)
           .processUsagesInNonJavaFiles(name, (file, startOffset, endOffset) -> {
             if (file.findReferenceAt(startOffset) != null) {
               if (!isFullName) { //special package tag required

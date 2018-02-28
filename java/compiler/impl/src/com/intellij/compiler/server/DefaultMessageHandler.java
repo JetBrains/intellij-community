@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.server;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -255,7 +241,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
 
 
   private boolean performRemovedConstantSearch(@Nullable final PsiClass aClass, String fieldName, int fieldAccessFlags, final Set<String> affectedPaths) {
-    final PsiSearchHelper psiSearchHelper = PsiSearchHelper.SERVICE.getInstance(myProject);
+    final PsiSearchHelper psiSearchHelper = PsiSearchHelper.getInstance(myProject);
 
     final Ref<Boolean> result = new Ref<>(Boolean.TRUE);
     final PsiFile fieldContainingFile = aClass != null? aClass.getContainingFile() : null;
@@ -363,7 +349,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
       return null;
     }
 
-    processIdentifiers(PsiSearchHelper.SERVICE.getInstance(myProject), new PsiElementProcessor<PsiIdentifier>() {
+    processIdentifiers(PsiSearchHelper.getInstance(myProject), new PsiElementProcessor<PsiIdentifier>() {
       @Override
       public boolean execute(@NotNull PsiIdentifier identifier) {
         final PsiElement parent = identifier.getParent();

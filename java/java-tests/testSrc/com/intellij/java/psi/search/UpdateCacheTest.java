@@ -358,7 +358,7 @@ public class UpdateCacheTest extends PsiTestCase {
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    PsiSearchHelper.SERVICE.getInstance(myProject).processAllFilesWithWord("aaa", GlobalSearchScope.allScope(myProject), psiFile -> true, true); // to initialize caches
+    PsiSearchHelper.getInstance(myProject).processAllFilesWithWord("aaa", GlobalSearchScope.allScope(myProject), psiFile -> true, true); // to initialize caches
 
 /*
     rootManager.startChange();
