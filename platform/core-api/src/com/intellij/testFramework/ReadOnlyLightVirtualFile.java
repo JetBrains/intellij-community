@@ -24,8 +24,8 @@ public class ReadOnlyLightVirtualFile extends LightVirtualFile {
   }
 
   @Override
-  public final void setWritable(boolean b) {
-    if (b) throw new UnsupportedOperationException();
+  public final void setWritable(boolean writable) {
+    if (writable) throw new UnsupportedOperationException();
   }
 
   @NotNull
