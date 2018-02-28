@@ -61,6 +61,11 @@ public class RollbackWorker {
   }
 
   public void doRollback(final Collection<Change> changes,
+                         final boolean deleteLocallyAddedFiles) {
+    doRollback(changes, deleteLocallyAddedFiles, null, null);
+  }
+
+  public void doRollback(final Collection<Change> changes,
                          final boolean deleteLocallyAddedFiles,
                          @Nullable final Runnable afterVcsRefreshInAwt,
                          @Nullable final String localHistoryActionName) {
