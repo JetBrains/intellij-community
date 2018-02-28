@@ -608,7 +608,7 @@ public class XDebugSessionImpl implements XDebugSession {
     }
   }
 
-  void activateSession() {
+  public void activateSession() {
     myDebuggerManager.setCurrentSession(this);
     updateExecutionPosition();
   }
