@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.editor.ScrollingModel;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Extends {@link ScrollingModel} with more implementation-specific functionality.
@@ -38,4 +39,7 @@ public interface ScrollingModelEx extends ScrollingModel {
    * Applies remembered viewport location change request to the editor.
    */
   void flushViewportChanges();
+
+  void addScrollingEventsListener(@NotNull ScrollingEventsListener listener);
+  void removeScrollingEventsListener(@NotNull ScrollingEventsListener listener);
 }

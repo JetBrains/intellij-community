@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
+import com.intellij.openapi.editor.ex.ScrollingEventsListener;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
@@ -36,6 +37,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
 
   private final EditorImpl myEditor;
   private final List<VisibleAreaListener> myVisibleAreaListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<ScrollingEventsListener> myScrollingEventsListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private AnimatedScrollingRunnable myCurrentAnimationRequest = null;
   private boolean myAnimationDisabled = false;
@@ -129,6 +131,10 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     assertIsDispatchThread();
     myEditor.validateSize();
     AsyncEditorLoader.performWhenLoaded(myEditor, () -> scrollTo(myEditor.getCaretModel().getVisualPosition(), scrollType));
+
+    for (ScrollingEventsListener listener : myScrollingEventsListeners) {
+      listener.scrollToCaret(scrollType);
+    }
   }
 
   private void scrollTo(@NotNull VisualPosition pos, @NotNull ScrollType scrollType) {
@@ -148,6 +154,10 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     assertIsDispatchThread();
 
     AsyncEditorLoader.performWhenLoaded(myEditor, () -> scrollTo(myEditor.logicalPositionToXY(pos), scrollType));
+
+    for (ScrollingEventsListener listener : myScrollingEventsListeners) {
+      listener.scrollTo(pos, scrollType);
+    }
   }
 
   private static void assertIsDispatchThread() {
@@ -379,6 +389,17 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   @Override
   public void removeVisibleAreaListener(@NotNull VisibleAreaListener listener) {
     boolean success = myVisibleAreaListeners.remove(listener);
+    LOG.assertTrue(success);
+  }
+
+  @Override
+  public void addScrollingEventsListener(@NotNull ScrollingEventsListener listener) {
+    myScrollingEventsListeners.add(listener);
+  }
+
+  @Override
+  public void removeScrollingEventsListener(@NotNull ScrollingEventsListener listener) {
+    boolean success = myScrollingEventsListeners.remove(listener);
     LOG.assertTrue(success);
   }
 
