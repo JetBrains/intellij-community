@@ -18,13 +18,13 @@ package git4idea.history
 import com.intellij.dvcs.DvcsUtil.getShortHash
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.Executor.*
-import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.util.CollectConsumer
 import com.intellij.util.Consumer
 import com.intellij.util.ExceptionUtil
 import com.intellij.vcsUtil.VcsUtil
+import com.intellij.vcsUtil.VcsUtil.getFilePath
 import git4idea.GitFileRevision
 import git4idea.GitRevisionNumber
 import git4idea.test.*
@@ -39,17 +39,18 @@ import java.util.*
  * (see #convertWhitespacesToSpacesAndRemoveDoubles).
  */
 class GitHistoryUtilsTest : GitSingleRepoTest() {
+  private val NAME = "PostHighlightingPass.java"
 
   private var bfile: File? = null
-  private var myRevisions: MutableList<GitTestRevision>? = null
-  private var myRevisionsAfterRename: MutableList<GitTestRevision>? = null
+  private var revisions: MutableList<GitTestRevision>? = null
+  private var revisionsAfterRename: MutableList<GitTestRevision>? = null
 
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
 
-    myRevisions = ArrayList(7)
-    myRevisionsAfterRename = ArrayList(4)
+    revisions = ArrayList(7)
+    revisionsAfterRename = ArrayList(4)
 
     // 1. create a file
     // 2. simple edit with a simple commit message
@@ -96,25 +97,24 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
     }
 
     // Retrieve hashes and timestamps
-    val revisions = repo.log("--pretty=format:%H#%at#%P", "-M").split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-    TestCase.assertEquals("Incorrect number of revisions", commitMessages.size, revisions.size)
+    val revisionStrings = repo.log("--pretty=format:%H#%at#%P", "-M").split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+    TestCase.assertEquals("Incorrect number of revisions", commitMessages.size, revisionStrings.size)
     // newer revisions go first in the log output
-    var i = revisions.size - 1
+    var i = revisionStrings.size - 1
     var j = 0
     while (i >= 0) {
-      val details = revisions[j].trim { it <= ' ' }.split("#".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-      val revision = GitTestRevision(details[0], details[1], commitMessages[i],
-                                     USER_NAME, USER_EMAIL, USER_NAME, USER_EMAIL, null,
-                                     contents[i])
-      myRevisions!!.add(revision)
+      val details = revisionStrings[j].trim { it <= ' ' }.split("#".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+      val revision = GitTestRevision(details[0], timeStampToDate(details[1]), commitMessages[i],
+                                     USER_NAME, USER_EMAIL, USER_NAME, USER_EMAIL, null, contents[i])
+      revisions!!.add(revision)
       if (i > RENAME_COMMIT_INDEX) {
-        myRevisionsAfterRename!!.add(revision)
+        revisionsAfterRename!!.add(revision)
       }
       i--
       j++
     }
 
-    TestCase.assertEquals("setUp failed", 5, myRevisionsAfterRename!!.size)
+    TestCase.assertEquals("setUp failed", 5, revisionsAfterRename!!.size)
     cd(projectPath)
     updateChangeListManager()
   }
@@ -129,7 +129,7 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
     val commits = ArrayList<TestCommit>()
 
     val source = mkdir("source")
-    val initialFile = touch("source/PostHighlightingPass.java", "Initial content")
+    val initialFile = touch("source/" + NAME, "Initial content")
     val initMessage = "Created PostHighlightingPass.java in source"
     repo.addCommit(initMessage)
     val hash = this.last()
@@ -140,61 +140,60 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
     commits.add(modify(filePath))
 
     var commit = move(filePath, mkdir("codeInside-impl"), "Moved from source to codeInside-impl")
-    filePath = commit.myPath
+    filePath = commit.path
     commits.add(commit)
     commits.add(modify(filePath))
 
     commit = move(filePath, mkdir("codeInside"), "Moved from codeInside-impl to codeInside")
-    filePath = commit.myPath
+    filePath = commit.path
     commits.add(commit)
     commits.add(modify(filePath))
 
     commit = move(filePath, mkdir("lang-impl"), "Moved from codeInside to lang-impl")
-    filePath = commit.myPath
+    filePath = commit.path
     commits.add(commit)
     commits.add(modify(filePath))
 
     commit = move(filePath, source, "Moved from lang-impl back to source")
-    filePath = commit.myPath
+    filePath = commit.path
     commits.add(commit)
     commits.add(modify(filePath))
 
     commit = move(filePath, mkdir("java"), "Moved from source to java")
-    filePath = commit.myPath
+    filePath = commit.path
     commits.add(commit)
     commits.add(modify(filePath))
 
-    Collections.reverse(commits)
+    commits.reverse()
+
     val vFile = VcsUtil.getVirtualFileWithRefresh(File(filePath))
     TestCase.assertNotNull(vFile)
-    val history = GitFileHistory.collectHistory(myProject, VcsUtil.getFilePath(vFile!!))
+    val history = GitFileHistory.collectHistory(myProject, getFilePath(vFile!!))
     TestCase.assertEquals("History size doesn't match. Actual history: \n" + toReadable(history), commits.size, history.size)
     TestCase.assertEquals("History is different.", toReadable(commits), toReadable(history))
   }
 
-  private class TestCommit(val hash: String, val commitMessage: String, val myPath: String)
+  private class TestCommit(val hash: String, val commitMessage: String, val path: String)
 
   private fun move(file: String, dir: File, message: String): TestCommit {
-    var file = file
-    val NAME = "PostHighlightingPass.java"
     repo.mv(file, dir.path)
-    file = File(dir, NAME).path
     repo.addCommit(message)
-    val hash = this.last()
-    return TestCommit(hash, message, file)
+
+    return TestCommit(last(), message, File(dir, NAME).path)
   }
 
   @Throws(IOException::class)
   private fun modify(file: String): TestCommit {
     FileUtil.appendToFile(File(file), "Modified")
-    val message = "Modified PostHighlightingPass"
+
+    val message = "Modified " + NAME
     repo.addCommit(message)
-    val hash = this.last()
-    return TestCommit(hash, message, file)
+
+    return TestCommit(last(), message, file)
   }
 
   private fun toReadable(history: Collection<VcsFileRevision>): String {
-    val maxSubjectLength = findMaxLength(history, { revision -> revision.getCommitMessage() ?: "" })
+    val maxSubjectLength = history.map { it.commitMessage?.length ?: 0 }.max() ?: 0
     val sb = StringBuilder()
     for (revision in history) {
       val rev = revision as GitFileRevision
@@ -204,39 +203,28 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
     return sb.toString()
   }
 
-  private fun toReadable(commits: List<TestCommit>): String {
-    val maxSubjectLength = findMaxLength(commits, { revision -> revision.commitMessage })
+  private fun toReadable(history: List<TestCommit>): String {
+    val maxSubjectLength = history.map { it.commitMessage.length }.max() ?: 0
     val sb = StringBuilder()
-    for (commit in commits) {
-      val relPath = FileUtil.getRelativePath(File(projectPath), File(commit.myPath))
+    for (commit in history) {
+      val relPath = FileUtil.getRelativePath(File(projectPath), File(commit.path))
       sb.append(String.format("%s  %-" + maxSubjectLength + "s  %s%n", getShortHash(commit.hash), commit.commitMessage, relPath))
     }
     return sb.toString()
   }
 
-  private fun <T> findMaxLength(list: Collection<T>, convertor: (T) -> String): Int {
-    var max = 0
-    for (element in list) {
-      val length = convertor(element).length
-      if (length > max) {
-        max = length
-      }
-    }
-    return max
-  }
-
   @Throws(Exception::class)
   fun testGetCurrentRevision() {
-    val revisionNumber = GitHistoryUtils.getCurrentRevision(myProject, toFilePath(bfile!!), null) as GitRevisionNumber?
-    TestCase.assertEquals(revisionNumber!!.rev, myRevisions!![0].myHash)
-    TestCase.assertEquals(revisionNumber.timestamp, myRevisions!![0].myDate)
+    val revisionNumber = GitHistoryUtils.getCurrentRevision(myProject, getFilePath(bfile!!), null) as GitRevisionNumber?
+    TestCase.assertEquals(revisionNumber!!.rev, revisions!![0].hash)
+    TestCase.assertEquals(revisionNumber.timestamp, revisions!![0].date)
   }
 
   @Throws(Exception::class)
   fun testGetCurrentRevisionInMasterBranch() {
-    val revisionNumber = GitHistoryUtils.getCurrentRevision(myProject, toFilePath(bfile!!), "master") as GitRevisionNumber?
-    TestCase.assertEquals(revisionNumber!!.rev, myRevisions!![0].myHash)
-    TestCase.assertEquals(revisionNumber.timestamp, myRevisions!![0].myDate)
+    val revisionNumber = GitHistoryUtils.getCurrentRevision(myProject, getFilePath(bfile!!), "master") as GitRevisionNumber?
+    TestCase.assertEquals(revisionNumber!!.rev, revisions!![0].hash)
+    TestCase.assertEquals(revisionNumber.timestamp, revisions!![0].date)
   }
 
   @Throws(Exception::class)
@@ -247,22 +235,18 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
     val output = repo.log("master --pretty=%H#%at", "-n1").trim { it <= ' ' }.split(
       "#".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
 
-    val revisionNumber = GitHistoryUtils.getCurrentRevision(myProject, toFilePath(bfile!!), "master") as GitRevisionNumber?
+    val revisionNumber = GitHistoryUtils.getCurrentRevision(myProject, getFilePath(bfile!!), "master") as GitRevisionNumber?
     TestCase.assertEquals(revisionNumber!!.rev, output[0])
-    TestCase.assertEquals(revisionNumber.timestamp, GitTestRevision.gitTimeStampToDate(output[1]))
-  }
-
-  private fun toFilePath(file: File): FilePath {
-    return VcsUtil.getFilePath(file)
+    TestCase.assertEquals(revisionNumber.timestamp, timeStampToDate(output[1]))
   }
 
   @Throws(Exception::class)
   fun testGetLastRevisionForExistingFile() {
-    val state = GitHistoryUtils.getLastRevision(myProject, toFilePath(bfile!!))
+    val state = GitHistoryUtils.getLastRevision(myProject, getFilePath(bfile!!))
     TestCase.assertTrue(state!!.isItemExists)
     val revisionNumber = state.number as GitRevisionNumber
-    TestCase.assertEquals(revisionNumber.rev, myRevisions!![0].myHash)
-    TestCase.assertEquals(revisionNumber.timestamp, myRevisions!![0].myDate)
+    TestCase.assertEquals(revisionNumber.rev, revisions!![0].hash)
+    TestCase.assertEquals(revisionNumber.timestamp, revisions!![0].date)
   }
 
   @Throws(Exception::class)
@@ -282,16 +266,16 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
     refresh()
     repo.update()
 
-    val state = GitHistoryUtils.getLastRevision(myProject, toFilePath(bfile!!))
+    val state = GitHistoryUtils.getLastRevision(myProject, getFilePath(bfile!!))
     TestCase.assertTrue(!state!!.isItemExists)
     val revisionNumber = state.number as GitRevisionNumber
     TestCase.assertEquals(revisionNumber.rev, hashAndDate[0])
-    TestCase.assertEquals(revisionNumber.timestamp, GitTestRevision.gitTimeStampToDate(hashAndDate[1]))
+    TestCase.assertEquals(revisionNumber.timestamp, timeStampToDate(hashAndDate[1]))
   }
 
   @Throws(Exception::class)
   fun testHistory() {
-    val revisions = GitFileHistory.collectHistory(myProject, toFilePath(bfile!!))
+    val revisions = GitFileHistory.collectHistory(myProject, getFilePath(bfile!!))
     assertHistory(revisions)
   }
 
@@ -299,7 +283,7 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
   fun testAppendableHistory() {
     val revisions = ArrayList<GitFileRevision>(3)
 
-    GitFileHistory.loadHistory(myProject, toFilePath(bfile!!), repo.root, null, CollectConsumer(revisions),
+    GitFileHistory.loadHistory(myProject, getFilePath(bfile!!), repo.root, null, CollectConsumer(revisions),
                                Consumer { exception: VcsException ->
                                  TestCase.fail("No exception expected " + ExceptionUtil.getThrowableText(exception))
                                })
@@ -309,67 +293,62 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
 
   @Throws(Exception::class)
   fun testOnlyHashesHistory() {
-    val history = GitHistoryUtils.onlyHashesHistory(myProject, toFilePath(bfile!!), projectRoot)
-    TestCase.assertEquals(history.size, myRevisionsAfterRename!!.size)
-    val itAfterRename = myRevisionsAfterRename!!.iterator()
+    val history = GitHistoryUtils.onlyHashesHistory(myProject, getFilePath(bfile!!), projectRoot)
+    TestCase.assertEquals(history.size, revisionsAfterRename!!.size)
+    val itAfterRename = revisionsAfterRename!!.iterator()
     for (pair in history) {
       val revision = itAfterRename.next()
-      TestCase.assertEquals(pair.first.toString(), revision.myHash)
-      TestCase.assertEquals(pair.second, revision.myDate)
+      TestCase.assertEquals(pair.first.toString(), revision.hash)
+      TestCase.assertEquals(pair.second, revision.date)
     }
   }
 
   @Throws(VcsException::class)
   private fun assertHistory(actualRevisions: List<VcsFileRevision>) {
-    TestCase.assertEquals("Incorrect number of commits in history", myRevisions!!.size, actualRevisions.size)
+    TestCase.assertEquals("Incorrect number of commits in history", revisions!!.size, actualRevisions.size)
     for (i in actualRevisions.indices) {
-      assertEqualRevisions(actualRevisions[i] as GitFileRevision, myRevisions!![i])
+      assertEqualRevisions(actualRevisions[i] as GitFileRevision, revisions!![i])
     }
   }
 
   @Throws(VcsException::class)
   private fun assertEqualRevisions(actual: GitFileRevision, expected: GitTestRevision) {
     val actualRev = (actual.revisionNumber as GitRevisionNumber).rev
-    TestCase.assertEquals(expected.myHash, actualRev)
-    TestCase.assertEquals(expected.myDate, (actual.revisionNumber as GitRevisionNumber).timestamp)
+    TestCase.assertEquals(expected.hash, actualRev)
+    TestCase.assertEquals(expected.date, (actual.revisionNumber as GitRevisionNumber).timestamp)
     // TODO: whitespaces problem is known, remove convertWhitespaces... when it's fixed
-    TestCase.assertEquals(convertWhitespacesToSpacesAndRemoveDoubles(expected.myCommitMessage),
+    TestCase.assertEquals(convertWhitespacesToSpacesAndRemoveDoubles(expected.commitMessage),
                           convertWhitespacesToSpacesAndRemoveDoubles(actual.commitMessage!!))
-    TestCase.assertEquals(expected.myAuthorName, actual.author)
-    TestCase.assertEquals(expected.myBranchName, actual.branchName)
+    TestCase.assertEquals(expected.authorName, actual.author)
+    TestCase.assertEquals(expected.authorEmail, actual.authorEmail)
+    TestCase.assertEquals(expected.committerName, actual.committerName)
+    TestCase.assertEquals(expected.committerEmail, actual.committerEmail)
+    TestCase.assertEquals(expected.branchName, actual.branchName)
     TestCase.assertNotNull("No content in revision " + actualRev, actual.content)
-    TestCase.assertEquals(String(expected.myContent), String(actual.content!!))
+    TestCase.assertEquals(String(expected.content), String(actual.content!!))
   }
 
   private fun convertWhitespacesToSpacesAndRemoveDoubles(s: String): String {
     return s.replace("[\\s^ ]".toRegex(), " ").replace(" +".toRegex(), " ")
   }
 
-  private class GitTestRevision(internal val myHash: String,
-                                gitTimestamp: String,
-                                internal val myCommitMessage: String,
-                                internal val myAuthorName: String,
-                                internal val myAuthorEmail: String,
-                                internal val myCommitterName: String,
-                                internal val myCommitterEmail: String,
-                                internal val myBranchName: String?,
-                                content: String) {
-    internal val myDate: Date
-    internal val myContent: ByteArray
+  private fun timeStampToDate(timestamp: String): Date {
+    return Date(java.lang.Long.parseLong(timestamp) * 1000)
+  }
 
-    init {
-      myDate = gitTimeStampToDate(gitTimestamp)
-      myContent = content.toByteArray()
-    }
+  private class GitTestRevision(internal val hash: String,
+                                internal val date: Date,
+                                internal val commitMessage: String,
+                                internal val authorName: String,
+                                internal val authorEmail: String,
+                                internal val committerName: String,
+                                internal val committerEmail: String,
+                                internal val branchName: String?,
+                                content: String) {
+    internal val content: ByteArray = content.toByteArray()
 
     override fun toString(): String {
-      return myHash
-    }
-
-    companion object {
-      fun gitTimeStampToDate(gitTimestamp: String): Date {
-        return Date(java.lang.Long.parseLong(gitTimestamp) * 1000)
-      }
+      return hash
     }
   }
 }
