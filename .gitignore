@@ -8,6 +8,7 @@ build/dependencies/build
 .DS_Store
 /test-system
 /test-config
+.jps-build-data
 *.pyc
 .idea/libraries/Gradle__*.xml
 .idea/gradle_extensions.xml
