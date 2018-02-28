@@ -5,7 +5,6 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.*;
@@ -54,7 +53,6 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
   public boolean REPORT_CONSTANT_REFERENCE_VALUES = true;
   public boolean REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER = true;
   public boolean REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = true;
-  public boolean REPORT_UNCHECKED_OPTIONALS = true;
 
   @Override
   public JComponent createOptionsPanel() {
@@ -79,9 +77,6 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     }
     if (!REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL) {
       node.addContent(new Element("option").setAttribute("name", "REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL").setAttribute("value", "false"));
-    }
-    if (!REPORT_UNCHECKED_OPTIONALS) {
-      node.addContent(new Element("option").setAttribute("name", "REPORT_UNCHECKED_OPTIONALS").setAttribute("value", "false"));
     }
   }
 
@@ -262,8 +257,6 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
 
     reportOptionalOfNullableImprovements(holder, reportedAnchors, visitor.getOfNullableCalls());
 
-    reportUncheckedOptionalGet(holder, visitor.getOptionalCalls(), visitor.getOptionalQualifiers());
-
     visitor.getBooleanCalls().forEach((call, state) -> {
       if (state != ThreeState.UNSURE && reportedAnchors.add(call)) {
         reportConstantCondition(holder, call, state.toBoolean());
@@ -398,33 +391,6 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         }
       }
     });
-  }
-
-  private void reportUncheckedOptionalGet(ProblemsHolder holder,
-                                          Map<PsiMethodCallExpression, ThreeState> calls,
-                                          List<PsiExpression> qualifiers) {
-    if (!REPORT_UNCHECKED_OPTIONALS) return;
-    for (Map.Entry<PsiMethodCallExpression, ThreeState> entry : calls.entrySet()) {
-      ThreeState state = entry.getValue();
-      if (state != ThreeState.UNSURE) continue;
-      PsiMethodCallExpression call = entry.getKey();
-      PsiMethod method = call.resolveMethod();
-      if (method == null) continue;
-      PsiClass optionalClass = method.getContainingClass();
-      if (optionalClass == null) continue;
-      PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
-      if (qualifier instanceof PsiMethodCallExpression &&
-          qualifiers.stream().anyMatch(q -> PsiEquivalenceUtil.areElementsEquivalent(q, qualifier))) {
-        // Conservatively do not report methodCall().get() cases if methodCall().isPresent() was found in the same method
-        // without deep correspondence analysis
-        continue;
-      }
-      LocalQuickFix fix = holder.isOnTheFly() ? new SetInspectionOptionFix(this, "REPORT_UNCHECKED_OPTIONALS", InspectionsBundle
-        .message("inspection.data.flow.turn.off.unchecked.optional.get.quickfix"), false) : null;
-      holder.registerProblem(getElementToHighlight(call),
-                             InspectionsBundle.message("dataflow.message.optional.get.without.is.present", optionalClass.getName()),
-                             fix);
-    }
   }
 
   private void reportAlwaysReturnsNotNull(ProblemsHolder holder, PsiElement scope) {

@@ -337,10 +337,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   }
 
   @NotNull
-  private DfaCallArguments popCall(MethodCallInstruction instruction,
-                                   DataFlowRunner runner,
-                                   DfaMemoryState memState,
-                                   boolean contractOnly) {
+  protected DfaCallArguments popCall(MethodCallInstruction instruction,
+                                     DataFlowRunner runner,
+                                     DfaMemoryState memState,
+                                     boolean contractOnly) {
     PsiMethod method = instruction.getTargetMethod();
     MutationSignature sig = MutationSignature.fromMethod(method);
     DfaValue[] argValues = popCallArguments(instruction, runner, memState, contractOnly, sig);

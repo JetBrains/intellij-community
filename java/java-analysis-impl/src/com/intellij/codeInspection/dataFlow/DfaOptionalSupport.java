@@ -81,7 +81,7 @@ public class DfaOptionalSupport {
     return new ReplaceOptionalCallFix("of", false);
   }
 
-  static boolean isOptionalGetMethodName(String name) {
+  public static boolean isOptionalGetMethodName(String name) {
     return "get".equals(name) || "getAsDouble".equals(name) || "getAsInt".equals(name) || "getAsLong".equals(name);
   }
 
