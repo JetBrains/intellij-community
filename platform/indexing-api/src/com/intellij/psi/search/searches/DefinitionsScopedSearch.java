@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.QueryParameters;
@@ -64,7 +65,7 @@ public class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiElement, 
       myElement = element;
       myScope = scope;
       myCheckDeep = checkDeep;
-      myProject = myElement.getProject();
+      myProject = PsiUtilCore.getProjectInReadAction(myElement);
     }
 
     @NotNull

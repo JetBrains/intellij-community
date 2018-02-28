@@ -25,6 +25,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +60,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
       assert checkInheritance;
       myIncludeAnonymous = includeAnonymous;
       myNameCondition = nameCondition;
-      myProject = myClass.getProject();
+      myProject = PsiUtilCore.getProjectInReadAction(myClass);
     }
 
     @NotNull
