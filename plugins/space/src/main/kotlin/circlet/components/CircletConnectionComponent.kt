@@ -18,12 +18,11 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.jetty.*
-import runtime.async.*
+import kotlinx.coroutines.experimental.*
 import runtime.reactive.*
 import java.awt.*
 import java.net.*
 import java.util.concurrent.*
-import kotlinx.coroutines.experimental.async
 
 class CircletConnectionComponent(private val project: Project) :
     AbstractProjectComponent(project),
