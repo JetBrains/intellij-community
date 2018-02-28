@@ -39,7 +39,7 @@ class CircletConnectionComponent(private val project: Project) :
 
             if (url.isNotEmpty()) {
                 loginModel = LoginModel(
-                    IdeaPersistence.substorage("$url-"), url, /*TODO*/ApiScheme(emptyArray()),
+                    IdeaPersistence.substorage("$url-"), url,
                     EmptyLoggedStateWatcher, { authCheckFailedNotification(urlLifetime) }, NotificationKind.Ide
                 ) {
                     // TODO: NOTIFY
