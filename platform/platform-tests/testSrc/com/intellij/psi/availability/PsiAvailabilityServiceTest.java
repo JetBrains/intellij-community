@@ -129,21 +129,21 @@ public class PsiAvailabilityServiceTest extends PlatformTestCase {
     asserter.waitForCallBack();
   }
 
-  public void testCancelDuringLongReparse() throws IOException {
-    Document document = createHugeJavaFile();
-    getDocManager().commitDocument(document);
-    reparse(getDocManager().getPsiFile(document).getVirtualFile());
-    assertCommittedAndParsed(document, true, false);
-
-    CallBackAsserter asserter = new CallBackAsserter(document);
-    EmptyProgressIndicator indicator = new EmptyProgressIndicator();
-    PsiAvailabilityService.getInstance(getProject()).performWhenPsiAvailable(document, asserter, indicator);
-    UIUtil.dispatchAllInvocationEvents();
-    TimeoutUtil.sleep(10);
-    indicator.cancel();
-    PsiAvailabilityService.getInstance(getProject()).performWhenPsiAvailable(document, asserter, null);
-    asserter.waitForCallBack();
-  }
+  //public void testCancelDuringLongReparse() throws IOException {
+  //  Document document = createHugeJavaFile();
+  //  getDocManager().commitDocument(document);
+  //  reparse(getDocManager().getPsiFile(document).getVirtualFile());
+  //  assertCommittedAndParsed(document, true, false);
+  //
+  //  CallBackAsserter asserter = new CallBackAsserter(document);
+  //  EmptyProgressIndicator indicator = new EmptyProgressIndicator();
+  //  PsiAvailabilityService.getInstance(getProject()).performWhenPsiAvailable(document, asserter, indicator);
+  //  UIUtil.dispatchAllInvocationEvents();
+  //  TimeoutUtil.sleep(10);
+  //  indicator.cancel();
+  //  PsiAvailabilityService.getInstance(getProject()).performWhenPsiAvailable(document, asserter, null);
+  //  asserter.waitForCallBack();
+  //}
 
 
   private class CallBackAsserter implements Runnable {
