@@ -184,7 +184,7 @@ public class HotSwapUIImpl extends HotSwapUI {
 
       application.invokeLater(() -> {
         if (shouldAskBeforeHotswap && !DebuggerSettings.RUN_HOTSWAP_ALWAYS.equals(runHotswap)) {
-          final RunHotswapDialog dialog = new RunHotswapDialog(myProject, sessions, shouldDisplayHangWarning);
+          final RunHotswapDialog dialog = RunHotswapDialog.Factory.createDialog(myProject, sessions, shouldDisplayHangWarning);
           if (!dialog.showAndGet()) {
             for (DebuggerSession session : modifiedClasses.keySet()) {
               session.setModifiedClassesScanRequired(true);
