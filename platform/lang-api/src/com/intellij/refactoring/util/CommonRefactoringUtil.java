@@ -50,7 +50,8 @@ public class CommonRefactoringUtil {
 
   public static void showErrorMessage(String title, String message, @Nullable String helpId, @NotNull Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
-    RefactoringMessageDialog dialog = new RefactoringMessageDialog(title, message, helpId, "OptionPane.errorIcon", false, project);
+    RefactoringMessageDialog dialog = RefactoringMessageDialogService.getInstance()
+      .createDialog(title, message, helpId, "OptionPane.errorIcon", false, project);
     dialog.show();
   }
 

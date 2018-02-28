@@ -49,6 +49,8 @@
     <applicationService serviceImplementation="com.intellij.refactoring.RefactoringSettings"/>
     <applicationService serviceInterface="com.intellij.refactoring.RefactoringActionHandlerFactory"
                         serviceImplementation="com.intellij.refactoring.openapi.impl.RefactoringActionHandlerFactoryImpl"/>
+    <applicationService serviceInterface="com.intellij.refactoring.util.RefactoringMessageDialogService"
+                        serviceImplementation="com.intellij.refactoring.util.RefactoringMessageDialogServiceImpl"/>
 
     <applicationService serviceInterface="com.intellij.execution.filters.TextConsoleBuilderFactory"
                         serviceImplementation="com.intellij.execution.filters.TextConsoleBuilderFactoryImpl"/>
