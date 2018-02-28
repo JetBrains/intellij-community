@@ -45,14 +45,13 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   private static final Logger LOG = Logger.getInstance(TemplateBuilderImpl.class);
 
   public TemplateBuilderImpl(@NotNull PsiElement element) {
-    this(element, false);
-  }
-
-  public TemplateBuilderImpl(@NotNull PsiElement element, boolean greedyToRight) {
     myFile = InjectedLanguageManager.getInstance(element.getProject()).getTopLevelFile(element);
     myDocument = myFile.getViewProvider().getDocument();
     myContainerElement = wrapElement(element);
-    myContainerElement.setGreedyToRight(greedyToRight);
+  }
+
+  public void setGreedyToRight(boolean greedy) {
+    myContainerElement.setGreedyToRight(greedy);
   }
 
   public int getElementsCount() {
