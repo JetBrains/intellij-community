@@ -21,9 +21,11 @@
   <macrodef name="bazel">
     <attribute name="action" />
     <attribute name="target" />
+    <attribute name="config" />
     <sequential>
       <echo>${bazel} @{action} @{target}</echo>
       <exec executable="${bazel}" dir="${workspace}" failonerror="true" taskname="bazel">
+        <arg value="--config=@{config}" />
         <arg value="@{action}" />
         <arg value="@{target}" />
       </exec>
@@ -63,7 +65,7 @@
   </macrodef>
 
   <target name="build" depends="init">
-    <bazel if:set="include.aswb" action="build" target="@blaze//java/com/google/devtools/intellij/blaze/plugin/aswb:aswb_blaze_zip" />
+    <bazel if:set="include.aswb" action="build" target="@blaze//java/com/google/devtools/intellij/blaze/plugin/aswb:aswb_blaze_zip" config="release"/>
     <call_gant script="${project.home}/build/scripts/idea_community.gant"/>
   </target>
 
