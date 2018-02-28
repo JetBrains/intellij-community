@@ -437,6 +437,11 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     }
 
     @Override
+    public void removeStateDelegate(@NotNull ProgressIndicatorEx delegate) {
+      throw new RuntimeException();
+    }
+
+    @Override
     public void finish(@NotNull TaskInfo task) {
     }
 
@@ -708,7 +713,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
           ApplicationManager.getApplication().invokeLater(() -> {
             throw new AssertionError(msg);
           });
-          
+
           // ensure previous runnable is executed during progress, not after it
           ApplicationManager.getApplication().invokeAndWait(EmptyRunnable.getInstance());
         }

@@ -21,10 +21,8 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.*;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,8 +58,8 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     myInfo = info;
     setTitle(info.getTitle());
     final Project nonDefaultProject = project == null || project.isDisposed() ? null : project.isDefault() ? null : project;
-    final IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).findFrameFor(nonDefaultProject);
-    myStatusBar = frame != null ? (StatusBarEx)frame.getStatusBar() : null;
+
+    myStatusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(nonDefaultProject);
     myBackgrounded = shouldStartInBackground();
     if (myBackgrounded) {
       doBackground();
@@ -111,7 +109,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   }
 
   @Override
-  protected void showDialog() {
+  public void showDialog() {
     if (myDisposed) return;
 
     if (shouldStartInBackground()) {

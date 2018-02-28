@@ -61,8 +61,8 @@ public class PotemkinProgress extends ProgressWindow implements PingProgress {
 
   @NotNull
   @Override
-  protected ProgressDialog getDialog() {
-    return Objects.requireNonNull(super.getDialog());
+  protected ProgressDialogImpl getDialog() {
+    return (ProgressDialogImpl)Objects.requireNonNull(super.getDialog());
   }
 
   public void interact() {
@@ -99,7 +99,7 @@ public class PotemkinProgress extends ProgressWindow implements PingProgress {
   }
 
   private void dispatchInputEvent(InputEvent e) {
-    if (isCancellationEvent(e)) {
+    if (getDialog().isCancellationEvent(e)) {
       cancel();
       return;
     }
@@ -137,7 +137,7 @@ public class PotemkinProgress extends ProgressWindow implements PingProgress {
   }
 
   private boolean timeToPaint(long now) {
-    if (now - myLastUiUpdate <= ProgressDialog.UPDATE_INTERVAL) {
+    if (now - myLastUiUpdate <= ProgressDialogImpl.UPDATE_INTERVAL) {
       return false;
     }
     myLastUiUpdate = now;
