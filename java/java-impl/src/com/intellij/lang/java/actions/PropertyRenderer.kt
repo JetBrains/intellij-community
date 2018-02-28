@@ -62,7 +62,7 @@ internal abstract class PropertyRenderer(
 
   fun doRender() {
     if (!navigate()) return
-    val builder = TemplateBuilderImpl(target)
+    val builder = TemplateBuilderImpl(target, true)
     val typeExpression = fillTemplate(builder)
     val template = builder.buildInlineTemplate().apply {
       isToShortenLongNames = true
