@@ -88,13 +88,7 @@ public class SaveAndSyncHandlerImpl extends SaveAndSyncHandler implements Dispos
     frameStateManager.addListener(new FrameStateListener() {
       @Override
       public void onFrameDeactivated() {
-        LOG.debug("save(): enter");
-        TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
-          if (canSyncOrSave()) {
-            saveProjectsAndDocuments();
-          }
-          LOG.debug("save(): exit");
-        });
+        saveAll();
       }
 
       @Override
@@ -141,6 +135,16 @@ public class SaveAndSyncHandlerImpl extends SaveAndSyncHandler implements Dispos
     });
   }
 
+  @Override
+  public void saveAll() {
+    LOG.debug("save(): enter");
+    TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
+      if (canSyncOrSave()) {
+        saveProjectsAndDocuments();
+      }
+      LOG.debug("save(): exit");
+    });
+  }
   public void maybeRefresh(@NotNull ModalityState modalityState) {
     if (myBlockSyncOnFrameActivationCount.get() == 0 && mySettings.isSyncOnFrameActivation()) {
       RefreshQueue queue = RefreshQueue.getInstance();

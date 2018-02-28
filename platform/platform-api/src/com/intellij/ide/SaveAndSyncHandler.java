@@ -27,6 +27,9 @@ public abstract class SaveAndSyncHandler {
 
   public abstract void saveProjectsAndDocuments();
   public abstract void scheduleRefresh();
+
+  public abstract void saveAll();
+
   public abstract void refreshOpenFiles();
 
   public abstract void blockSaveOnFrameDeactivation();
