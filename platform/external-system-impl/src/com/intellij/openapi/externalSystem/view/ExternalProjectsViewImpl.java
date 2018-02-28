@@ -40,6 +40,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystem
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerAdapter;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
@@ -371,7 +372,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   }
 
   public static void invokeLater(final Project p, final ModalityState state, final Runnable r) {
-    if (isNoBackgroundMode()) {
+    if (ExternalSystemUtil.isNoBackgroundMode()) {
       r.run();
     }
     else {
@@ -379,12 +380,6 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     }
   }
 
-  public static boolean isNoBackgroundMode() {
-    return (ApplicationManager.getApplication().isUnitTestMode()
-            || ApplicationManager.getApplication().isHeadlessEnvironment());
-  }
-
-  @Override
   public void updateUpTo(ExternalSystemNode node) {
     ExternalProjectsStructure structure = getStructure();
     if (structure != null) {
