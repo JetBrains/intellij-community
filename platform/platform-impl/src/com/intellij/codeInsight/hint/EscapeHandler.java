@@ -30,7 +30,7 @@ public class EscapeHandler extends EditorActionHandler {
 
   @Override
   public void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext) {
-    if (HintManagerImpl.getInstanceImpl().hideHints(HintManager.HIDE_BY_ESCAPE | HintManager.HIDE_BY_ANY_KEY, true, false)) {
+    if (HintManager.getInstance().hideHints(HintManager.HIDE_BY_ESCAPE | HintManager.HIDE_BY_ANY_KEY, true, false)) {
       return;
     }
     myOriginalHandler.execute(editor, caret, dataContext);
@@ -38,7 +38,7 @@ public class EscapeHandler extends EditorActionHandler {
 
   @Override
   public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-    HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
+    HintManager hintManager = HintManager.getInstance();
     return hintManager.isEscapeHandlerEnabled() || myOriginalHandler.isEnabled(editor, caret, dataContext);
   }
 }
