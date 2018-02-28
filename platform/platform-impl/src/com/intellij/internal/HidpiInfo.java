@@ -54,7 +54,7 @@ public class HidpiInfo extends AnAction implements DumbAware {
   private final String USR_SCALE_TEXT = "User (IDE) scale";
   private final String USR_SCALE_DESC =
     "<html><span style='font-size:x-small'>The global IDE scale factor" +
-    (JBUI.DEBUG_USER_SCALE_FACTOR.isSet() ?
+    (JBUI.DEBUG_USER_SCALE_FACTOR.isNotNull() ?
     ", overridden by the debug property." :
     ", derived from the main font size: <code>$LABEL_FONT_SIZE" +
     (ENABLED ? "pt" : "px") + "</code><br>" +
