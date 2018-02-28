@@ -443,7 +443,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     final String operationName = UIUtil.removeMnemonic(RollbackChangesDialog.operationNameByChanges(myProject, changes));
     boolean modalContext = ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext();
     new RollbackWorker(myProject, operationName, modalContext).
-      doRollback(changes, true, null, VcsBundle.message("shelve.changes.action"));
+      doRollback(changes, true, false, null, VcsBundle.message("shelve.changes.action"));
   }
 
   @NotNull
