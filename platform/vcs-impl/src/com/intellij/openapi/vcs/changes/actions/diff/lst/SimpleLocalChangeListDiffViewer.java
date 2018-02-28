@@ -127,7 +127,11 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
           data.affectedChangelist.contains(myChangelistId)) {
         // tracker is waiting for initialisation
         // there are only one changelist, so it's safe to fallback to default logic
-        return super.performRediff(indicator);
+        Runnable callback = super.performRediff(indicator);
+        return () -> {
+          callback.run();
+          getStatusPanel().setBusy(true);
+        };
       }
 
       if (data.ranges == null) {
