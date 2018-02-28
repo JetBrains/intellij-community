@@ -317,7 +317,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       List<MySimpleDiffChange> selectedChanges = getSelectedChanges(side);
       if (selectedChanges.isEmpty()) return;
 
-      BitSet selectedLines = getSelectedLines(selectedChanges, side);
+      BitSet selectedLines = getLocalSelectedLines(selectedChanges);
 
       if (ContainerUtil.and(selectedChanges, change -> !change.isFromActiveChangelist())) {
         LocalChangeList changeList = ChangeListManager.getInstance(getProject()).getChangeList(myChangelistId);
@@ -381,7 +381,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       List<MySimpleDiffChange> activeChanges = getActiveChanges(side);
       if (activeChanges.isEmpty()) return;
 
-      BitSet selectedLines = getSelectedLines(activeChanges, side);
+      BitSet selectedLines = getLocalSelectedLines(activeChanges);
 
       boolean hasExcluded = ContainerUtil.or(activeChanges, MySimpleDiffChange::isExcludedFromCommit);
       myTracker.setExcludedFromCommit(selectedLines, !hasExcluded);
@@ -397,11 +397,11 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   }
 
   @NotNull
-  private static BitSet getSelectedLines(@NotNull List<MySimpleDiffChange> changes, @NotNull Side side) {
+  private static BitSet getLocalSelectedLines(@NotNull List<MySimpleDiffChange> changes) {
     BitSet selectedLines = new BitSet();
     for (SimpleDiffChange change : changes) {
-      int startLine = change.getStartLine(side);
-      int endLine = change.getEndLine(side);
+      int startLine = change.getStartLine(Side.RIGHT);
+      int endLine = change.getEndLine(Side.RIGHT);
       selectedLines.set(startLine, startLine == endLine ? startLine + 1 : endLine);
     }
     return selectedLines;
