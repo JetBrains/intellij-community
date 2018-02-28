@@ -21,7 +21,6 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.lang.Language;
-import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
 import com.intellij.lang.parameterInfo.LanguageParameterInfo;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.openapi.application.ApplicationManager;
@@ -75,12 +74,12 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     invoke(project, editor, file, lbraceOffset, highlightedElement, false);
   }
 
-  public static void invoke(final Project project, final Editor editor, PsiFile file,
+  public static void invoke(final Project project, final Editor editor, PsiFile file, 
                             int lbraceOffset, PsiElement highlightedElement, boolean requestFocus) {
     invoke(project, editor, file, lbraceOffset, highlightedElement, requestFocus, false);
   }
 
-  public static void invoke(final Project project, final Editor editor, PsiFile file,
+  public static void invoke(final Project project, final Editor editor, PsiFile file, 
                             int lbraceOffset, PsiElement highlightedElement, boolean requestFocus, boolean singleParameterHint) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -89,8 +88,15 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     final PsiElement psiElement = findAnyElementAt(file, offset);
     if (psiElement == null) return;
 
-    final CreateParameterInfoContext context = ShowParameterInfoContextFactory
-      .SERVICE.getInstance().createShowParameterInfoContext(project, editor, file, lbraceOffset, offset, requestFocus, singleParameterHint);
+    final ShowParameterInfoContext context = new ShowParameterInfoContext(
+      editor,
+      project,
+      file,
+      offset,
+      lbraceOffset,
+      requestFocus,
+      singleParameterHint
+    );
 
     context.setHighlightedElement(highlightedElement);
     context.setRequestFocus(requestFocus);

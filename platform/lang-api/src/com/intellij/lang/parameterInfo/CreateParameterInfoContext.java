@@ -29,6 +29,4 @@ public interface CreateParameterInfoContext extends ParameterInfoContext {
 
   PsiElement getHighlightedElement();
   void setHighlightedElement(PsiElement elements);
-
-  void setRequestFocus(boolean focus);
 }

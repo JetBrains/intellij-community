@@ -79,8 +79,6 @@
     <applicationService serviceImplementation="com.intellij.codeEditor.printing.PrintSettings"/>
     <applicationService serviceInterface="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings"
                         serviceImplementation="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsImpl"/>
-    <applicationService serviceInterface="com.intellij.codeInsight.hint.ShowParameterInfoContextFactory"
-                        serviceImplementation="com.intellij.codeInsight.hint.ShowParameterInfoContextFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.codeInsight.daemon.LineMarkerSettings"
                         serviceImplementation="com.intellij.codeInsight.daemon.impl.LineMarkerSettingsImpl"/>
 
