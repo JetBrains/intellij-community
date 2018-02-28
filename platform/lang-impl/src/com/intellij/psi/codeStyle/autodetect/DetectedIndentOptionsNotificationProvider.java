@@ -107,7 +107,7 @@ public class DetectedIndentOptionsNotificationProvider extends EditorNotificatio
     VirtualFile vFile = file.getVirtualFile();
     if (vFile == null) return;
 
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()
+    if ((!ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isOnAir())
         || ApplicationManager.getApplication().isUnitTestMode() && myShowNotificationInTest)
     {
       Project project = file.getProject();

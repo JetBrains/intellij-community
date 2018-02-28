@@ -400,7 +400,7 @@ public class EditorModificationUtil {
    */
   public static boolean checkModificationAllowed(Editor editor) {
     if (!editor.isViewer()) return true;
-    if (ApplicationManager.getApplication().isHeadlessEnvironment() || editor instanceof TextComponentEditor) return false;
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isOnAir() || editor instanceof TextComponentEditor) return false;
 
     String data = READ_ONLY_VIEW_MESSAGE_KEY.get(editor);
     HintManager.getInstance().showInformationHint(editor, data == null ? EditorBundle.message("editing.viewer.hint") : data);

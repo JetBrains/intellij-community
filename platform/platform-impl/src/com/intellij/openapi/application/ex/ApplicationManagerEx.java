@@ -35,13 +35,15 @@ public class ApplicationManagerEx extends ApplicationManager {
 
   /**
    * @param appName used to load default configs; if you are not sure, use {@link #IDEA_APPLICATION}.
+   * @param isServer
    */
   public static void createApplication(boolean internal,
                                        boolean isUnitTestMode,
                                        boolean isHeadlessMode,
                                        boolean isCommandline,
                                        @NotNull @NonNls String appName,
-                                       @Nullable Splash splash) {
-    new ApplicationImpl(internal, isUnitTestMode, isHeadlessMode, isCommandline, appName, splash);
+                                       @Nullable Splash splash,
+                                       boolean isServer) {
+    new ApplicationImpl(internal, isUnitTestMode, isHeadlessMode, isCommandline, isServer, appName, splash);
   }
 }

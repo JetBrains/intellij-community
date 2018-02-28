@@ -29,7 +29,7 @@ public class IdeaTestApplication extends CommandLineApplication implements Dispo
   private DataProvider myDataContext;
 
   private IdeaTestApplication() {
-    super(true, true, true);
+    super(true, true, true, false);
   }
 
   public void setDataProvider(@Nullable DataProvider dataContext) {

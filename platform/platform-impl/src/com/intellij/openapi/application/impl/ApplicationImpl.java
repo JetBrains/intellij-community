@@ -88,6 +88,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final boolean myTestModeFlag;
   private final boolean myHeadlessMode;
   private final boolean myCommandLineMode;
+  private final boolean myIsServer;
 
   private final boolean myIsInternal;
   private final String myName;
@@ -118,10 +119,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   public ApplicationImpl(boolean isInternal,
                          boolean isUnitTestMode,
                          boolean isHeadless,
-                         boolean isCommandLine,
-                         @NotNull String appName,
+                         boolean isCommandLine, boolean isServer, @NotNull String appName,
                          @Nullable Splash splash) {
     super(null);
+    myIsServer = isServer;
 
     ApplicationManager.setApplication(this, myLastDisposable); // reset back to null only when all components already disposed
 
@@ -144,7 +145,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myHeadlessMode = isHeadless;
     myCommandLineMode = isCommandLine;
 
-    mySaveAllowed = !(isUnitTestMode || isHeadless);
+    mySaveAllowed = (!isUnitTestMode && !isHeadless) || isOnAir();
 
     if (!isUnitTestMode && !isHeadless) {
       Disposer.register(this, Disposer.newDisposable(), "ui");
@@ -282,6 +283,16 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public boolean isHeadlessEnvironment() {
     return myHeadlessMode;
+  }
+
+  @Override
+  public boolean isOnAir() {
+    return myIsServer;
+  }
+
+  @Override
+  public boolean hasUI() {
+    return !isHeadlessEnvironment() && !isUnitTestMode() && !isOnAir();
   }
 
   @Override
@@ -535,7 +546,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     boolean writeAccessAllowed = isWriteAccessAllowed();
     if (writeAccessAllowed // Disallow running process in separate thread from under write action.
                            // The thread will deadlock trying to get read action otherwise.
-        || isHeadlessEnvironment() && !isUnitTestMode()
+        || isHeadlessEnvironment() && !isUnitTestMode() && !isOnAir()
       ) {
       if (writeAccessAllowed) {
         LOG.debug("Starting process with progress from within write action makes no sense");
@@ -964,15 +975,20 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                                             @Nullable JComponent parentComponent,
                                             @Nullable String cancelText,
                                             @NotNull Consumer<ProgressIndicator> action) {
-    Class<?> clazz = action.getClass();
-    startWrite(clazz);
-    try {
-      PotemkinProgress indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
-      indicator.runInSwingThread(() -> action.consume(indicator));
-      return !indicator.isCanceled();
-    }
-    finally {
-      endWrite(clazz);
+    if (isOnAir()) {
+      runWriteAction( () -> action.consume(new EmptyProgressIndicator()));
+      return true;
+    } else {
+      Class<?> clazz = action.getClass();
+      startWrite(clazz);
+      try {
+        PotemkinProgress indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
+        indicator.runInSwingThread(() -> action.consume(indicator));
+        return !indicator.isCanceled();
+      }
+      finally {
+        endWrite(clazz);
+      }
     }
   }
 
@@ -982,23 +998,29 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
                                                               @Nullable JComponent parentComponent,
                                                               @Nullable String cancelText,
                                                               @NotNull Consumer<ProgressIndicator> action) {
-    Class<?> clazz = action.getClass();
-    startWrite(clazz);
-    try {
-      PotemkinProgress indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
-      indicator.runInBackground(() -> {
-        assert myWriteActionThread == null;
-        myWriteActionThread = Thread.currentThread();
-        try {
-          action.consume(indicator);
-        } finally {
-          myWriteActionThread = null;
-        }
-      });
-      return !indicator.isCanceled();
-    }
-    finally {
-      endWrite(clazz);
+    if (isOnAir()) {
+      runWriteAction(() -> action.consume(new EmptyProgressIndicator()));
+      return true;
+    } else {
+      Class<?> clazz = action.getClass();
+      startWrite(clazz);
+      try {
+        PotemkinProgress indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
+        indicator.runInBackground(() -> {
+          assert myWriteActionThread == null;
+          myWriteActionThread = Thread.currentThread();
+          try {
+            action.consume(indicator);
+          }
+          finally {
+            myWriteActionThread = null;
+          }
+        });
+        return !indicator.isCanceled();
+      }
+      finally {
+        endWrite(clazz);
+      }
     }
   }
 
@@ -1142,7 +1164,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean isActive() {
-    if (isHeadlessEnvironment()) return true;
+    if (isOnAir() || isHeadlessEnvironment()) return true;
 
     Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
 

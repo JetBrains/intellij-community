@@ -34,6 +34,8 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -136,7 +138,7 @@ public class LookupTypedHandler extends TypedActionHandlerBase {
       return true;
     }
 
-    if (result == CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP && lookup.isFocused()) {
+    if (result == CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP && lookup.isFocused() && !ApplicationManager.getApplication().isOnAir()) {
       LookupElement item = lookup.getCurrentItem();
       if (item != null) {
         if (completeTillTypedCharOccurrence(charTyped, lookup, item)) {

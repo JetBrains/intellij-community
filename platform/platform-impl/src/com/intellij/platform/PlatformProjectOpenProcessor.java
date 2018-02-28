@@ -156,35 +156,31 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
         projectToClose = openProjects[openProjects.length - 1];
       }
 
-      if (ProjectAttachProcessor.canAttachToProject() && GeneralSettings.getInstance().getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK) {
+      if (ApplicationManager.getApplication().isOnAir()) {
+        if (!ProjectUtil.closeAndDispose(projectToClose)) return null;
+      } else {if (ProjectAttachProcessor.canAttachToProject() && GeneralSettings.getInstance().getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK) {
         final OpenOrAttachDialog dialog = new OpenOrAttachDialog(projectToClose, isReopen, isReopen ? "Reopen Project" : "Open Project");
+
         if (!dialog.showAndGet()) {
           return null;
         }
         if (dialog.isReplace()) {
-          if (!ProjectUtil.closeAndDispose(projectToClose)) {
-            return null;
-          }
+          if (!ProjectUtil.closeAndDispose(projectToClose)) {return null;
         }
-        else if (dialog.isAttach()) {
-          if (attachToProject(projectToClose, Paths.get(FileUtil.toSystemDependentName(baseDir.getPath())), callback)) {
-            return null;
-          }
+        }else if (dialog.isAttach()) {
+          if (attachToProject(projectToClose, Paths.get(FileUtil.toSystemDependentName(baseDir.getPath())), callback)) {return null;
         }
         // process all pending events that can interrupt focus flow
         // todo this can be removed after taming the focus beast
         IdeEventQueue.getInstance().flushQueue();
       }
-      else {
+      }else {
         int exitCode = ProjectUtil.confirmOpenNewProject(false);
         if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
-          if (!ProjectUtil.closeAndDispose(projectToClose)) {
-            return null;
-          }
+          if (!ProjectUtil.closeAndDispose(projectToClose)) {return null;
         }
-        else if (exitCode != GeneralSettings.OPEN_PROJECT_NEW_WINDOW) {
-          // not in a new window
-          return null;
+        }else if (exitCode != GeneralSettings.OPEN_PROJECT_NEW_WINDOW) { // not in a new window
+          return null;}
         }
       }
     }

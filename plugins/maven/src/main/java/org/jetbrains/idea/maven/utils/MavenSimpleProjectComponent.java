@@ -38,7 +38,7 @@ public abstract class MavenSimpleProjectComponent {
   }
 
   protected boolean isHeadless() {
-    return ApplicationManager.getApplication().isHeadlessEnvironment();
+    return ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isOnAir();
   }
 
   protected boolean isDefault() {

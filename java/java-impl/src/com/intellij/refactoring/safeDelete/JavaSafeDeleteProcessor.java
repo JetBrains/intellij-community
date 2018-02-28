@@ -419,7 +419,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     }
 
     if (!calleesSafeToDelete.isEmpty()) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isOnAir()) {
         result.addAll(calleesSafeToDelete);
       }
       else {

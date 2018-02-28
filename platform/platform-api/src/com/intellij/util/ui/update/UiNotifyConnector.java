@@ -130,6 +130,10 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
   }
 
   public static void doWhenFirstShown(@NotNull Component c, @NotNull final Runnable runnable) {
+    if (ApplicationManager.getApplication().isOnAir()) {
+      runnable.run();
+    }
+
     Activatable activatable = new Activatable() {
       public void showNotify() {
         runnable.run();

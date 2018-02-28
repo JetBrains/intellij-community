@@ -353,6 +353,10 @@ public interface Application extends ComponentManager {
    */
   boolean isHeadlessEnvironment();
 
+  boolean isOnAir();
+
+  boolean hasUI();
+
   /**
    * Checks if IDEA is running as a command line applet or in unit test mode.
    * UI can be shown (e.g. diff frame)
@@ -436,6 +440,6 @@ public interface Application extends ComponentManager {
   boolean isEAP();
 
   default boolean isNoBackgroundMode() {
-    return isUnitTestMode() || isHeadlessEnvironment();
+    return isUnitTestMode() || (isHeadlessEnvironment() && !isOnAir());
   }
 }

@@ -15,14 +15,14 @@
  */
 package com.intellij.testGuiFramework.impl
 
-import com.intellij.idea.IdeaApplication
+import com.intellij.idea.IdeStarter
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.diagnostic.Logger
 
 /**
  * @author Sergey Karashevich
  */
-class GuiTestStarter : IdeaApplication.IdeStarter(), ApplicationStarter {
+class GuiTestStarter : IdeStarter(true), ApplicationStarter {
 
   companion object {
     val COMMAND_NAME = "guitest"

@@ -136,7 +136,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
         chooseRootAndAnnotateExternally(listOwner, annotationFQName, fromFile, project, packageName, roots, value);
       }
       else {
-        if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
+        if (application.isUnitTestMode() || (application.isHeadlessEnvironment() && !application.isOnAir())) {
           notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
           return;
         }

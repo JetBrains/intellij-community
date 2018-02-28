@@ -193,7 +193,10 @@ public class VcsProjectLog implements Disposable {
   public static class InitLogStartupActivity implements StartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
-      if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) return;
+      if (ApplicationManager.getApplication().isUnitTestMode() ||
+          (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isOnAir())) {
+        return;
+      }
 
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         VcsProjectLog projectLog = getInstance(project);

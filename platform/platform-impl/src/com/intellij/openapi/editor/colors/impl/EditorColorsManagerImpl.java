@@ -244,7 +244,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   }
 
   private static boolean isUnitTestOrHeadlessMode() {
-    return ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment();
+    return (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) && !ApplicationManager.getApplication().isOnAir();
   }
 
   public TextAttributes getDefaultAttributes(TextAttributesKey key) {
