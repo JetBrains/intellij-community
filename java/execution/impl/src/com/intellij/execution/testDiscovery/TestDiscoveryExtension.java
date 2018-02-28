@@ -84,11 +84,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     if (runnerSettings != null || !isApplicableFor(configuration)) {
       return;
     }
-    StringBuilder argument = new StringBuilder("-javaagent:");
-    final String agentPath = ObjectUtils.notNull(DEBUG_AGENT_PATH, PathUtil.getJarPathForClass(TestDiscoveryProjectData.class));//todo spaces
-    argument.append(agentPath);
-    params.getVMParametersList().add(argument.toString());
-    params.getClassPath().add(agentPath);
+    params.getVMParametersList().add("-javaagent:" + ObjectUtils.notNull(DEBUG_AGENT_PATH, PathUtil.getJarPathForClass(TestDiscoveryProjectData.class)));
     TestDiscoveryDataSocketListener listener = tryInstallSocketListener(configuration);
     if (listener != null) {
       params.getVMParametersList().addProperty(SocketTestDiscoveryProtocolDataListener.PORT_PROP, Integer.toString(listener.getPort()));
