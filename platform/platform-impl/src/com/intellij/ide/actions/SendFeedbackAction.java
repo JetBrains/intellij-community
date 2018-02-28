@@ -19,17 +19,36 @@ package com.intellij.ide.actions;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.VersionDetailsProvider;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Map;
 
 public class SendFeedbackAction extends AnAction implements DumbAware {
+  private static final Logger LOG = Logger.getInstance(SendFeedbackAction.class);
+
+  // This format string should be conscious of the fact that a concatenation of such key-value pairs
+  // is passed along as a GET parameter in the URL when opening browser, so its length is not unlimited.
+  // Hence each of these key-value pairs should be truncated if it exceeds a certain predefined length.
+  private static final String VERSION_KEY_VALUE_FORMAT = "%3.8s: %3.32s";
+  private static final String VERSION_KEY_VALUE_PAIRS_SEPARATOR = "; ";
+  // This may vary between browsers, but it's safe to assume 2048 bytes is an acceptable maximal length of a URL.
+  // Setting aside some 256 bytes for the platform, system and JDK information, let's leave 1792 bytes for description
+  // provided by the extensions.
+  // All of these numbers are largely provisional - the only browser where it may matter indeed is IE, and its usage
+  // is declining. So the considerations are not so much around browsers compatibility but around common sense
+  // and how large we want the bug metadata to be.
+  private static final int MAX_DESCRIPTION_LENGTH_BYTES = 1792;
+
   @Override
   public void actionPerformed(AnActionEvent e) {
     launchBrowser(e.getProject());
@@ -43,11 +62,11 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
       .replace("$BUILD", eap ? appInfo.getBuild().asStringWithoutProductCode() : appInfo.getBuild().asString())
       .replace("$TIMEZONE", System.getProperty("user.timezone"))
       .replace("$EVAL", isEvaluationLicense() ? "true" : "false")
-      .replace("$DESCR", getDescription());
+      .replace("$DESCR", getDescription(project));
     BrowserUtil.browse(urlTemplate, project);
   }
 
-  public static String getDescription() {
+  public static String getDescription(@Nullable Project project) {
     StringBuilder sb = new StringBuilder("\n\n");
     sb.append(ApplicationInfoEx.getInstanceEx().getBuild().asString()).append(", ");
     String javaVersion = System.getProperty("java.runtime.version", System.getProperty("java.version", "unknown"));
@@ -86,7 +105,33 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
       }
       if (UIUtil.isRetina()) sb.append(SystemInfo.isMac ? "; Retina" : "; HiDPI");
     }
+
+    sb.append("\n\n");
+    sb.append(getVersionDetailsFromExtensions(project));
+
     return sb.toString();
+  }
+
+  @NotNull
+  private static String getVersionDetailsFromExtensions(@Nullable Project project) {
+    StringBuilder sb = new StringBuilder(MAX_DESCRIPTION_LENGTH_BYTES);
+    for (VersionDetailsProvider versionDetailsProvider : VersionDetailsProvider.EP_NAME.getExtensions()) {
+      if (sb.length() > MAX_DESCRIPTION_LENGTH_BYTES) {
+        break;
+      }
+      try {
+        Map<String, String> versionDetails = versionDetailsProvider.getVersionDetails(project);
+        for (Map.Entry<String, String> entry : versionDetails.entrySet()) {
+          sb.append(String.format(VERSION_KEY_VALUE_FORMAT, entry.getKey(), entry.getValue()));
+          sb.append(VERSION_KEY_VALUE_PAIRS_SEPARATOR);
+        }
+      }
+      catch (Throwable e) {
+        LOG.info("Exception while calling one of the version details providers", e);
+      }
+    }
+
+    return sb.substring(0, Math.min(MAX_DESCRIPTION_LENGTH_BYTES, sb.length()));
   }
 
   @Override

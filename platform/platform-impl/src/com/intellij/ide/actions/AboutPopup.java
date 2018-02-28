@@ -3,16 +3,21 @@ package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.VersionDetailsProvider;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -49,6 +54,8 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class AboutPopup {
+  private static final Logger LOG = Logger.getInstance(AboutPopup.class);
+
   private static JBPopup ourPopup;
 
   public static void show(@Nullable Window window, boolean showDebugInfo) {
@@ -106,6 +113,9 @@ public class AboutPopup {
   }
 
   private static class InfoSurface extends JPanel {
+    private static final String VERSION_KEY_VALUE_FORMAT = "%3.8s: %3.32s";
+    private static final String VERSION_KEY_VALUE_PAIRS_SEPARATOR = "; ";
+
     private final Color myColor;
     private final Color myLinkColor;
     private final Icon myImage;
@@ -376,7 +386,27 @@ public class AboutPopup {
     }
 
     public String getText() {
-      return myInfo.toString() + SystemInfo.getOsNameAndVersion();
+      Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContextFromFocus().getResultSync());
+      return myInfo.toString() + SystemInfo.getOsNameAndVersion() + "\n\n" + getVersionDetailsFromExtensions(project) + "\n\n";
+    }
+
+    @NotNull
+    private static String getVersionDetailsFromExtensions(@Nullable Project project) {
+      StringBuilder sb = new StringBuilder();
+      for (VersionDetailsProvider versionDetailsProvider : VersionDetailsProvider.EP_NAME.getExtensions()) {
+        try {
+          Map<String, String> versionDetails = versionDetailsProvider.getVersionDetails(project);
+          for (Map.Entry<String, String> entry : versionDetails.entrySet()) {
+            sb.append(String.format(VERSION_KEY_VALUE_FORMAT, entry.getKey(), entry.getValue()));
+            sb.append(VERSION_KEY_VALUE_PAIRS_SEPARATOR);
+          }
+        }
+        catch (Throwable e) {
+          LOG.info("Exception while calling one of the version details providers", e);
+        }
+      }
+
+      return sb.toString();
     }
 
     private class TextRenderer {
