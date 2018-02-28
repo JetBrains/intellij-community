@@ -105,7 +105,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     mySelectionListener = new SelectionListener() {
       @Override
       public void selectionChanged(SelectionEvent e) {
-        hideHints(HIDE_BY_ANY_KEY | HIDE_BY_CARET_MOVE, false, false);
+        hideHints(HIDE_BY_CARET_MOVE, false, false);
       }
     };
 
