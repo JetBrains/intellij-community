@@ -123,7 +123,7 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor> {
   }
 
   private boolean isFoldersAlwaysOnTop() {
-    return myProjectView != null && myProjectView.isFoldersAlwaysOnTop(myPaneId);
+    return myProjectView == null || myProjectView.isFoldersAlwaysOnTop(myPaneId);
   }
 
   private static int compare(Comparable key1, Comparable key2) {
