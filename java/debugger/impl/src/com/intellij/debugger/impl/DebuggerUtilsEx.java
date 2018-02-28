@@ -544,11 +544,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static String methodNameWithArguments(Method m) {
-    return m.name() + "(" + StringUtil.join(m.argumentTypeNames(), DebuggerUtilsEx::getSimpleName, ", ") + ")";
-  }
-
-  public static String getSimpleName(String fqn) {
-    return fqn.substring(fqn.lastIndexOf('.') + 1);
+    return m.name() + "(" + StringUtil.join(m.argumentTypeNames(), StringUtil::getShortName, ", ") + ")";
   }
 
   public static String methodName(final Method m) {
