@@ -625,11 +625,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   // saveApp is ignored if saveProject is false
   @SuppressWarnings("TestOnlyProblems")
-  private boolean closeProject(@NotNull final Project project,
-                               final boolean saveProject,
-                               final boolean saveApp,
-                               final boolean dispose,
-                               boolean checkCanClose) {
+  public boolean closeProject(@NotNull final Project project,
+                              final boolean saveProject,
+                              final boolean saveApp,
+                              final boolean dispose,
+                              boolean checkCanClose) {
     Application app = ApplicationManager.getApplication();
     if (app.isWriteAccessAllowed()) {
       throw new IllegalStateException("Must not call closeProject() from under write action because fireProjectClosing() listeners must have a chance to do something useful");
