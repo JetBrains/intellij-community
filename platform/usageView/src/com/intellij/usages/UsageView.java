@@ -5,6 +5,7 @@ package com.intellij.usages;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +40,16 @@ public interface UsageView extends Disposable {
 
   DataKey<List<UsageInfo>> USAGE_INFO_LIST_KEY = DataKey.create("UsageInfo.List");
 
+  boolean searchHasBeenCancelled();
+  void cancelCurrentSearch();
+  void associateProgress(@NotNull ProgressIndicator indicator);
+
   void appendUsage(@NotNull Usage usage);
+
+  void waitForUpdateRequestsCompletion();
+
+  void appendUsagesInBulk(@NotNull Collection<Usage> usages);
+
   void removeUsage(@NotNull Usage usage);
   void includeUsages(@NotNull Usage[] usages);
   void excludeUsages(@NotNull Usage[] usages);
@@ -54,6 +64,9 @@ public interface UsageView extends Disposable {
   void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull String text, char mnemonic);
   void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull String text);
   void addButtonToLowerPane(@NotNull Action action);
+
+  void setSearchInProgress(boolean searchInProgress);
+
   void setReRunActivity(@NotNull Runnable runnable);
 
   void setAdditionalComponent(@Nullable JComponent component);
@@ -97,4 +110,6 @@ public interface UsageView extends Disposable {
    * Useful for processing huge number of usages faster, e.g. during "find in path/replace all".
    */
   void removeUsagesBulk(@NotNull Collection<Usage> usages);
+
+  void searchFinished();
 }

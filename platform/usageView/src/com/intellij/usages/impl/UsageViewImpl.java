@@ -458,14 +458,20 @@ public class UsageViewImpl implements UsageView {
       indicesToFire.clear();
     }
   }
+  @Override
+  public void searchFinished() {
+    drainQueuedUsageNodes();
+    setSearchInProgress(false);
+  }
 
-
-  boolean searchHasBeenCancelled() {
+  @Override
+  public boolean searchHasBeenCancelled() {
     ProgressIndicator progress = associatedProgress;
     return progress != null && progress.isCanceled();
   }
 
-  void cancelCurrentSearch() {
+  @Override
+  public void cancelCurrentSearch() {
     ProgressIndicator progress = associatedProgress;
     if (progress != null) {
       ProgressWrapper.unwrap(progress).cancel();
@@ -1042,7 +1048,8 @@ public class UsageViewImpl implements UsageView {
     return configurableTarget == null ? getShowUsagesWithSettingsShortcut() : configurableTarget.getShortcut();
   }
 
-  void associateProgress(@NotNull ProgressIndicator indicator) {
+  @Override
+  public void associateProgress(@NotNull ProgressIndicator indicator) {
     associatedProgress = indicator;
   }
 
@@ -1135,7 +1142,8 @@ public class UsageViewImpl implements UsageView {
     }
   }
 
-  void waitForUpdateRequestsCompletion() {
+  @Override
+  public void waitForUpdateRequestsCompletion() {
     assert !ApplicationManager.getApplication().isDispatchThread();
     while (true) {
       Future<?> request;
@@ -1152,7 +1160,7 @@ public class UsageViewImpl implements UsageView {
     }
   }
 
-  @SuppressWarnings("WeakerAccess")
+  @Override
   public void appendUsagesInBulk(@NotNull Collection<Usage> usages) {
     addUpdateRequest(ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
       for (Usage usage : usages) {
@@ -1200,7 +1208,7 @@ public class UsageViewImpl implements UsageView {
                      .collect(Collectors.toSet());
       }
     };
-    myUsageNodes.keySet().removeIf(usage -> usages.contains(usage) || 
+    myUsageNodes.keySet().removeIf(usage -> usages.contains(usage) ||
                                             usage instanceof UsageInfo2UsageAdapter && mergedInfos.getValue().contains(((UsageInfo2UsageAdapter)usage).getUsageInfo()));
 
     if (!nodes.isEmpty() && !myPresentation.isDetachedMode()) {
@@ -1414,6 +1422,7 @@ public class UsageViewImpl implements UsageView {
     return mySearchInProgress;
   }
 
+  @Override
   public void setSearchInProgress(boolean searchInProgress) {
     mySearchInProgress = searchInProgress;
     if (!myPresentation.isDetachedMode()) {

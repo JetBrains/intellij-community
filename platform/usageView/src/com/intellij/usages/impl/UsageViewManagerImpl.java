@@ -61,13 +61,22 @@ public class UsageViewManagerImpl extends UsageViewManager {
     myProject = project;
   }
 
+
+  @NotNull
+  @Override
+  public UsageView createEmptyUsageView(@NotNull UsageTarget[] targets,
+                                        @NotNull UsageViewPresentation presentation,
+                                        Factory<UsageSearcher> usageSearcherFactory) {
+    return new UsageViewImpl(myProject, presentation, targets, usageSearcherFactory);
+  }
+
   @Override
   @NotNull
   public UsageView createUsageView(@NotNull UsageTarget[] targets,
                                    @NotNull Usage[] usages,
                                    @NotNull UsageViewPresentation presentation,
                                    Factory<UsageSearcher> usageSearcherFactory) {
-    UsageViewImpl usageView = new UsageViewImpl(myProject, presentation, targets, usageSearcherFactory);
+    UsageView usageView = createEmptyUsageView(targets, presentation, usageSearcherFactory);
     usageView.appendUsagesInBulk(Arrays.asList(usages));
     ProgressManager.getInstance().run(new Task.Modal(myProject, "Waiting For Usages", false) {
       @Override
@@ -87,13 +96,15 @@ public class UsageViewManagerImpl extends UsageViewManager {
                               @NotNull UsageViewPresentation presentation,
                               Factory<UsageSearcher> factory) {
     UsageView usageView = createUsageView(searchedFor, foundUsages, presentation, factory);
-    addContent((UsageViewImpl)usageView, presentation);
-    showToolWindow(true);
-    UIUtil.invokeLaterIfNeeded(() -> {
-      if (!((UsageViewImpl)usageView).isDisposed()) {
-        ((UsageViewImpl)usageView).expandRoot();
-      }
-    });
+    if (usageView instanceof UsageViewImpl) {
+      showToolWindow(true);
+      UIUtil.invokeLaterIfNeeded(() -> {
+        if (!((UsageViewImpl)usageView).isDisposed()) {
+          ((UsageViewImpl)usageView).expandRoot();
+        }
+      });
+    }
+    showUsageView(usageView, presentation);
     return usageView;
   }
 
@@ -103,7 +114,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     return showUsages(searchedFor, foundUsages, presentation, null);
   }
 
-  void addContent(@NotNull UsageViewImpl usageView, @NotNull UsageViewPresentation presentation) {
+  void showUsageView(@NotNull UsageView usageView, @NotNull UsageViewPresentation presentation) {
     Content content = com.intellij.usageView.UsageViewManager.getInstance(myProject).addContent(
       presentation.getTabText(),
       presentation.getTabName(),
@@ -113,7 +124,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
       presentation.isOpenInNewTab(),
       true
     );
-    usageView.setContent(content);
+    ((UsageViewImpl)usageView).setContent(content);
     content.putUserData(USAGE_VIEW_KEY, usageView);
   }
 
@@ -140,7 +151,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
       throw new IllegalStateException("Can't start find usages from under write action. Please consider Application.invokeLater() it instead.");
     }
     final SearchScope searchScopeToWarnOfFallingOutOf = getMaxSearchScopeToWarnOfFallingOutOf(searchFor);
-    final AtomicReference<UsageViewImpl> usageViewRef = new AtomicReference<>();
+    final AtomicReference<UsageView> usageViewRef = new AtomicReference<>();
     long start = System.currentTimeMillis();
     Task.Backgroundable task = new Task.Backgroundable(myProject, getProgressTitle(presentation), true, new SearchInBackgroundOption()) {
       @Override
@@ -152,7 +163,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
       @NotNull
       @Override
       public NotificationInfo getNotificationInfo() {
-        UsageViewImpl usageView = usageViewRef.get();
+        UsageView usageView = usageViewRef.get();
         int count = usageView == null ? 0 : usageView.getUsagesCount();
         String notification = StringUtil.capitalizeWords(UsageViewBundle.message("usages.n", count), true);
         LOG.debug(notification +" in "+(System.currentTimeMillis()-start) +"ms.");
@@ -219,10 +230,10 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                                    @NotNull final ProgressIndicator indicator,
                                                    @NotNull final UsageViewPresentation presentation,
                                                    final int usageCount,
-                                                   @Nullable final UsageViewImpl usageView) {
+                                                   @Nullable final UsageView usageView) {
     UIUtil.invokeLaterIfNeeded(() -> {
       if (usageView != null && usageView.searchHasBeenCancelled() || indicator.isCanceled()) return;
-      int shownUsageCount = usageView == null ? usageCount : usageView.getRoot().getRecursiveUsageCount();
+      int shownUsageCount = usageView instanceof  UsageViewImpl ? ((UsageViewImpl)usageView).getRoot().getRecursiveUsageCount() : usageCount;
       String message = UsageViewBundle.message("find.excessive.usage.count.prompt", shownUsageCount, StringUtil.pluralize(presentation.getUsagesWord()));
       UsageLimitUtil.Result ret = UsageLimitUtil.showTooManyUsagesWarning(project, message, presentation);
       if (ret == UsageLimitUtil.Result.ABORT) {
