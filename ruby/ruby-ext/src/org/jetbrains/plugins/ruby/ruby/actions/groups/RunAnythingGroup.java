@@ -16,6 +16,9 @@ import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingSearchListModel;
 import javax.swing.*;
 import java.util.Arrays;
 
+/**
+ * Represents 'run anything' list group. See {@link RunAnythingCommandGroup} and {@link RunAnythingRunConfigurationGroup} as examples.
+ */
 public abstract class RunAnythingGroup {
   public static final ExtensionPointName<RunAnythingGroup> EP_NAME =
     ExtensionPointName.create("org.jetbrains.plugins.ruby.runAnythingGroup");
@@ -24,14 +27,26 @@ public abstract class RunAnythingGroup {
   private volatile int moreIndex = -1;
   private volatile int titleIndex = -1;
 
+  /**
+   * @return Current group title in the main list.
+   */
   @NotNull
   public abstract String getTitle();
 
+  /**
+   * @return Unique settings key to store current group visibility property.
+   */
   @NotNull
   protected abstract String getSettingsKey();
 
+  /**
+   * @return Current group maximum number of items to be shown.
+   */
   protected abstract int getMaxItemsToShow();
 
+  /**
+   * Gets current group items to add into the main list.
+   */
   protected abstract SearchResult getItems(@NotNull Project project,
                                            @Nullable Module module,
                                            @NotNull RunAnythingSearchListModel listModel,
@@ -39,16 +54,22 @@ public abstract class RunAnythingGroup {
                                            boolean isMore,
                                            @NotNull Runnable check);
 
+  /**
+   * Defines whether this group should be shown with empty input or not.
+   */
   public boolean isRecent() {
     return false;
   }
 
+  /**
+   * Adds current group matched items into the list.
+   */
   public final synchronized void buildToList(@NotNull Project project,
-                                       @Nullable Module module,
-                                       @NotNull RunAnythingSearchListModel listModel,
-                                       @NotNull String pattern,
-                                       @NotNull Runnable check,
-                                       @NotNull Computable<Boolean> isCanceled) {
+                                             @Nullable Module module,
+                                             @NotNull RunAnythingSearchListModel listModel,
+                                             @NotNull String pattern,
+                                             @NotNull Runnable check,
+                                             @NotNull Computable<Boolean> isCanceled) {
     SearchResult result = getAllItems(project, module, listModel, pattern, false, check);
 
     check.run();
@@ -87,6 +108,9 @@ public abstract class RunAnythingGroup {
     return false;
   }
 
+  /**
+   * Gets all current group matched items if its visibility turned on and empty collection otherwise
+   */
   public SearchResult getAllItems(@NotNull Project project,
                                   @Nullable Module module,
                                   @NotNull RunAnythingSearchListModel listModel,
@@ -117,7 +141,7 @@ public abstract class RunAnythingGroup {
   }
 
   public static void clearMoreIndex() {
-      Arrays.stream(EP_NAME.getExtensions()).forEach(runAnythingGroup -> runAnythingGroup.moreIndex = -1);
+    Arrays.stream(EP_NAME.getExtensions()).forEach(runAnythingGroup -> runAnythingGroup.moreIndex = -1);
   }
 
   private static void clearTitleIndex() {
