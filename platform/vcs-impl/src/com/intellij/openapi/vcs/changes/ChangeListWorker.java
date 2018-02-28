@@ -330,7 +330,14 @@ public class ChangeListWorker {
       ListData list = myChangeMappings.get(change);
       if (list != null) {
         Set<Change> listChanges = map.computeIfAbsent(list, key -> new HashSet<>());
-        listChanges.add(change);
+
+        AbstractVcs vcs = myIdx.getVcsFor(change);
+        if (vcs != null && vcs.arePartialChangelistsSupported()) {
+          listChanges.add(toChangeListChange(change, list));
+        }
+        else {
+          listChanges.add(change);
+        }
       }
       else {
         PartialChangeTracker tracker = getChangeTrackerFor(change);
