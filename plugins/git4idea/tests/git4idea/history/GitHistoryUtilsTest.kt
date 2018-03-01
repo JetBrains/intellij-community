@@ -58,15 +58,15 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
     // 4. make 4 edits with commit messages of different complexity
     // (note: after rename, because some GitHistoryUtils methods don't follow renames).
 
-    val commitMessages = arrayOf("initial commit",
-                                 "simple commit",
-                                 "moved a.txt to dir/b.txt",
-                                 "simple commit after rename",
-                                 "commit with {%n} some [%ct] special <format:%H%at> characters including --pretty=tformat:%x00%x01%x00%H%x00%ct%x00%an%x20%x3C%ae%x3E%x00%cn%x20%x3C%ce%x3E%x00%x02%x00%s%x00%b%x00%x02%x01",
-                                 "commit subject\n\ncommit body which is \n multilined.",
-                                 "first line\nsecond line\nthird line\n\nfifth line\n\nseventh line & the end.")
-    val contents = arrayOf("initial content", "second content", "second content", // content is the same after rename
-                           "fourth content", "fifth content", "sixth content", "seventh content")
+    val commitMessages = listOf("initial commit",
+                                "simple commit",
+                                "moved a.txt to dir/b.txt",
+                                "simple commit after rename",
+                                "commit with {%n} some [%ct] special <format:%H%at> characters including --pretty=tformat:%x00%x01%x00%H%x00%ct%x00%an%x20%x3C%ae%x3E%x00%cn%x20%x3C%ce%x3E%x00%x02%x00%s%x00%b%x00%x02%x01",
+                                "commit subject\n\ncommit body which is \n multilined.",
+                                "first line\nsecond line\nthird line\n\nfifth line\n\nseventh line & the end.")
+    val contents = listOf("initial content", "second content", "second content", // content is the same after rename
+                          "fourth content", "fifth content", "sixth content", "seventh content")
 
     // initial
     var commitIndex = 0
@@ -77,7 +77,7 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
     // modify
     overwrite(afile, contents[commitIndex])
     repo.addCommit(commitMessages[commitIndex])
-    val RENAME_COMMIT_INDEX = commitIndex
+    val renameIndex = commitIndex
     commitIndex++
 
     // mv to dir
@@ -99,19 +99,16 @@ class GitHistoryUtilsTest : GitSingleRepoTest() {
     // Retrieve hashes and timestamps
     val revisionStrings = repo.log("--pretty=format:%H#%at#%P", "-M").split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
     TestCase.assertEquals("Incorrect number of revisions", commitMessages.size, revisionStrings.size)
+
     // newer revisions go first in the log output
-    var i = revisionStrings.size - 1
-    var j = 0
-    while (i >= 0) {
-      val details = revisionStrings[j].trim { it <= ' ' }.split("#".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-      val revision = GitTestRevision(details[0], timeStampToDate(details[1]), commitMessages[i],
-                                     USER_NAME, USER_EMAIL, USER_NAME, USER_EMAIL, null, contents[i])
+    for (i in 0 until revisionStrings.size) {
+      val details = revisionStrings[i].trim { it <= ' ' }.split("#".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+      val revision = GitTestRevision(details[0], timeStampToDate(details[1]), commitMessages.asReversed()[i],
+                                     USER_NAME, USER_EMAIL, USER_NAME, USER_EMAIL, null, contents.asReversed()[i])
       revisions!!.add(revision)
-      if (i > RENAME_COMMIT_INDEX) {
+      if (i < revisionStrings.size - 1 - renameIndex) {
         revisionsAfterRename!!.add(revision)
       }
-      i--
-      j++
     }
 
     TestCase.assertEquals("setUp failed", 5, revisionsAfterRename!!.size)
