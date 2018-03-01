@@ -73,7 +73,7 @@ public class PyDocReference extends PyReferenceImpl {
 
             PyResolveUtil.scopeCrawlUp(processor, (ScopeOwner)pair.getFirst(), referencedName, pair.getFirst());
             final List<RatedResolveResult> resultList = getResultsFromProcessor(referencedName, processor, pair.getFirst(),
-                                                                                pair.getFirst());
+                                                                                (ScopeOwner)pair.getFirst());
             if (resultList.size() > 0) {
               List<RatedResolveResult> ret = RatedResolveResult.sorted(resultList);
               return ret.toArray(RatedResolveResult.EMPTY_ARRAY);
@@ -83,7 +83,7 @@ public class PyDocReference extends PyReferenceImpl {
         final PyResolveProcessor processor = new PyResolveProcessor(referencedName);
         final ScopeOwner scopeOwner = getHostScopeOwner();
         if (scopeOwner != null) {
-          final PsiFile topLevel = scopeOwner.getContainingFile();
+          final PyFile topLevel = (PyFile)scopeOwner.getContainingFile();
           PyResolveUtil.scopeCrawlUp(processor, scopeOwner, referencedName, topLevel);
           final PsiElement referenceAnchor = getScopeControlFlowAnchor(host);
           final List<RatedResolveResult> resultList = getResultsFromProcessor(referencedName, processor, referenceAnchor, topLevel);
