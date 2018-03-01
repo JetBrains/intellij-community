@@ -57,7 +57,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   private static final Set<Class> ourArgumentListAllowedParentClassesSet = ContainerUtil.newHashSet(
     PsiMethodCallExpression.class, PsiNewExpression.class, PsiAnonymousClass.class, PsiEnumConstant.class);
   private static final Set<Class> ourStopSearch = Collections.singleton(PsiMethod.class);
-  private static final String WHITESPACE = " \t";
+  private static final String WHITESPACE_OR_LINE_BREAKS = " \t\n";
   private static final Key<Inlay> CURRENT_HINT = Key.create("current.hint");
   private static final Key<List<Inlay>> HIGHLIGHTED_HINTS = Key.create("highlighted.hints");
 
@@ -398,7 +398,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           if (prevDelimiter != null && nextDelimiter != null) {
             CharSequence text = editor.getDocument().getImmutableCharSequence();
             int firstRangeStartOffset = prevDelimiter.getTextRange().getEndOffset();
-            int firstRangeEndOffset = CharArrayUtil.shiftForward(text, firstRangeStartOffset, WHITESPACE);
+            int firstRangeEndOffset = CharArrayUtil.shiftForward(text, firstRangeStartOffset, WHITESPACE_OR_LINE_BREAKS);
             for (Inlay inlay : editor.getInlayModel().getInlineElementsInRange(firstRangeStartOffset, firstRangeEndOffset)) {
               if (presentationManager.isParameterHint(inlay)) {
                 highlightedHints.add(inlay);
@@ -407,7 +407,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
             }
             int secondRangeEndOffset = nextDelimiter.getTextRange().getStartOffset();
             if (secondRangeEndOffset > firstRangeEndOffset) {
-              int secondRangeStartOffset = CharArrayUtil.shiftBackward(text, secondRangeEndOffset - 1, WHITESPACE) + 1;
+              int secondRangeStartOffset = CharArrayUtil.shiftBackward(text, secondRangeEndOffset - 1, WHITESPACE_OR_LINE_BREAKS) + 1;
               for (Inlay inlay : editor.getInlayModel().getInlineElementsInRange(secondRangeStartOffset, secondRangeEndOffset)) {
                 if (presentationManager.isParameterHint(inlay)) {
                   highlightedHints.add(inlay);
