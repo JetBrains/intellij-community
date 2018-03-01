@@ -264,7 +264,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
                                                              @Nullable PsiElement realContext,
                                                              @Nullable PsiElement resolveRoof) {
     boolean unreachableLocalDeclaration = false;
-    boolean resolveInParentScope = false;
     final ResolveResultList resultList = new ResolveResultList();
     final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
 
@@ -292,9 +291,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
             }
 
             return latestDefs;
-          }
-          else if (resolvedOwner instanceof PyClass || instructions.isEmpty() && allInOwnScopeComprehensions(resolvedElements)) {
-            resolveInParentScope = true;
           }
           else if (PyiUtil.isInsideStubAnnotation(myElement)) {
             for (PsiElement element : resolvedElements) {
@@ -326,80 +322,80 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       }
     }
 
-    // TODO: Try resolve to latest defs for outer scopes starting from the last element in CFG (=> no need for a special rate for globals)
-
     if (!unreachableLocalDeclaration) {
-      if (resolveInParentScope) {
-        processor = new PyResolveProcessor(referencedName);
-        resolvedOwner = ScopeUtil.getScopeOwner(resolvedOwner);
-        if (resolvedOwner != null) {
-          PyResolveUtil.scopeCrawlUp(processor, resolvedOwner, referencedName, resolveRoof);
+
+      if (referenceOwner != null && resolvedOwner != null) {
+        ResolveResultList outerScopeResults = resolveInOuterScopes(referencedName, referenceOwner, resolvedOwner, typeEvalContext);
+        if (!outerScopeResults.isEmpty()) {
+          return outerScopeResults;
         }
       }
 
-      ResolveResultList scopeResultList = resolveInAvailableScopes(referencedName, referenceOwner, resolvedOwner, realContext, typeEvalContext);
-      if (!scopeResultList.isEmpty()) {
-        return scopeResultList;
-      }
-
-      for (Map.Entry<PsiElement, PyImportedNameDefiner> entry : processor.getResults().entrySet()) {
-        final PsiElement resolved = entry.getKey();
-        final PyImportedNameDefiner definer = entry.getValue();
-        if (resolved != null) {
-          if (typeEvalContext.maySwitchToAST(resolved) && isInnerComprehension(realContext, resolved)) {
-            continue;
-          }
-          if (skipClassForwardReferences(referenceOwner, resolved)) {
-            continue;
-          }
-          if (definer == null) {
-            resultList.poke(resolved, getRate(resolved, typeEvalContext));
-          }
-          else {
-            resultList.poke(definer, getRate(definer, typeEvalContext));
-            resultList.add(new ImportedResolveResult(resolved, getRate(resolved, typeEvalContext), definer));
-          }
-        }
-        else if (definer != null) {
-          resultList.add(new ImportedResolveResult(null, RatedResolveResult.RATE_LOW, definer));
-        }
-      }
-
-      if (!resultList.isEmpty()) {
-        return resultList;
+      ResolveResultList localScopeResults = getLocalDeclarationResults(processor, realContext, typeEvalContext,
+                                                                       referenceOwner);
+      if (!localScopeResults.isEmpty()) {
+        return localScopeResults;
       }
     }
 
     return resolveByReferenceResolveProviders();
   }
 
-  private ResolveResultList resolveInAvailableScopes(@NotNull String name,
-                                                            ScopeOwner nameOwner,
-                                                            ScopeOwner outerScopeOwner,
-                                                            PsiElement realContext,
-                                                            TypeEvalContext typeEvalContext) {
-    while (true) {
-      if (nameOwner == null) {
-        break;
+  @NotNull
+  private ResolveResultList getLocalDeclarationResults(@NotNull PyResolveProcessor processor,
+                                                       @Nullable PsiElement realContext,
+                                                       TypeEvalContext typeEvalContext,
+                                                       ScopeOwner referenceOwner) {
+    ResolveResultList resultList = new ResolveResultList();
+
+    for (Map.Entry<PsiElement, PyImportedNameDefiner> entry : processor.getResults().entrySet()) {
+      final PsiElement resolved = entry.getKey();
+      final PyImportedNameDefiner definer = entry.getValue();
+      if (resolved != null) {
+        if (typeEvalContext.maySwitchToAST(resolved) && isInnerComprehension(realContext, resolved)) {
+          continue;
+        }
+        if (skipClassForwardReferences(referenceOwner, resolved)) {
+          continue;
+        }
+        if (definer == null) {
+          resultList.poke(resolved, getRate(resolved, typeEvalContext));
+        }
+        else {
+          resultList.poke(definer, getRate(definer, typeEvalContext));
+          resultList.add(new ImportedResolveResult(resolved, getRate(resolved, typeEvalContext), definer));
+        }
       }
-      Scope scope = ControlFlowCache.getScope(nameOwner);
+      else if (definer != null) {
+        resultList.add(new ImportedResolveResult(null, RatedResolveResult.RATE_LOW, definer));
+      }
+    }
+    return resultList;
+  }
+
+  @NotNull
+  private ResolveResultList resolveInOuterScopes(@NotNull String name,
+                                                 @NotNull ScopeOwner nameOwner,
+                                                 @NotNull ScopeOwner outerScopeOwner,
+                                                 @NotNull TypeEvalContext typeEvalContext) {
+    while (nameOwner != null /*&& nameOwner != outerScopeOwner*/) {
+      final Scope scope = ControlFlowCache.getScope(nameOwner);
+      final PsiElement anchor = nameOwner;
+      nameOwner = ScopeUtil.getScopeOwner(nameOwner);
       if (nameOwner instanceof PyClass || scope.isGlobal(name)) {
         nameOwner = ScopeUtil.getScopeOwner(nameOwner);
         continue;
       }
 
-      final List<Instruction> instructions = getLatestDefinitions(name, nameOwner, realContext);
-      final ResolveResultList scopeDefinitions = resolveToLatestDefs(instructions, nameOwner, name, typeEvalContext);
+      if (nameOwner == null) {
+        break;
+      }
 
+      final List<Instruction> instructions = getLatestDefinitions(name, nameOwner, anchor);
+      final ResolveResultList scopeDefinitions = resolveToLatestDefs(instructions, nameOwner, name, typeEvalContext);
       if (!scopeDefinitions.isEmpty()) {
         return scopeDefinitions;
       }
-
-      if (nameOwner == outerScopeOwner) {
-        break;
-      }
-      realContext = nameOwner;
-      nameOwner = ScopeUtil.getScopeOwner(nameOwner);
     }
 
     return new ResolveResultList();
