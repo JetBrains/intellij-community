@@ -100,7 +100,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
   public void testExistingImportsAlwaysSuggestedFirstEvenIfLonger() {
     doMultiFileAutoImportTest("Import", quickfix -> {
       final List<String> candidates = ContainerUtil.map(quickfix.getCandidates(), c -> c.getPresentableText("ClassB"));
-      assertOrderedEquals(candidates, "ClassB from path", "short.ClassB");
+      assertOrderedEquals(candidates, "ClassB from long.pkg.path", "short.ClassB");
       return false;
     });
   }
@@ -112,6 +112,11 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
       assertOrderedEquals(candidates, "datetime from datetime", "mod.datetime");
       return false;
     });
+  }
+
+  // PY-28752
+  public void testFullFromImportSourceNameInSuggestion() {
+    doMultiFileAutoImportTest("Import 'ClassB from foo.bar.baz'");
   }
 
   private void doMultiFileAutoImportTest(@NotNull String hintPrefix) {
