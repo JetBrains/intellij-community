@@ -46,7 +46,7 @@ public class ExtractMethodObject4DebuggerTest extends LightRefactoringTestCase {
     final JavaCodeFragmentFactory fragmentFactory = JavaCodeFragmentFactory.getInstance(getProject());
     final JavaCodeFragment fragment = codeBlock ? fragmentFactory.createCodeBlockCodeFragment(evaluatedText, context, false) : fragmentFactory.createExpressionCodeFragment(evaluatedText, context, null, false);
     final ExtractLightMethodObjectHandler.ExtractedData extractedData =
-      ExtractLightMethodObjectHandler.extractLightMethodObject(getProject(), context, fragment, "test");
+      ExtractLightMethodObjectHandler.extractLightMethodObject(getProject(), context, fragment, "test", false);
     assertNotNull(extractedData);
     assertEquals(expectedCallSite, extractedData.getGeneratedCallText());
     final PsiClass innerClass = extractedData.getGeneratedInnerClass();

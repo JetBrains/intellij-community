@@ -72,14 +72,6 @@ public class ExtractLightMethodObjectHandler {
   public static ExtractedData extractLightMethodObject(final Project project,
                                                        @Nullable PsiElement originalContext,
                                                        @NotNull final PsiCodeFragment fragment,
-                                                       final String methodName) throws PrepareFailedException {
-    return extractLightMethodObject(project, originalContext, fragment, methodName, false);
-  }
-
-  @Nullable
-  public static ExtractedData extractLightMethodObject(final Project project,
-                                                       @Nullable PsiElement originalContext,
-                                                       @NotNull final PsiCodeFragment fragment,
                                                        final String methodName,
                                                        boolean useReflection) throws PrepareFailedException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
