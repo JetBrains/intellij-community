@@ -342,4 +342,12 @@ class Test88 {
   private checkResultByFileName() {
     checkResultByFile(getTestName(false) + "_after.java")
   }
+
+  void "test intersection type members"() {
+    myFixture.configureByText 'a.java',
+                              'import java.util.*; class F { { (true ? new LinkedList<>() : new ArrayList<>()).<caret> }}'
+    myFixture.completeBasic()
+    assert !('finalize' in myFixture.lookupElementStrings)
+  }
+
 }
