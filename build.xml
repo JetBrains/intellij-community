@@ -23,11 +23,11 @@
     <attribute name="target" />
     <attribute name="config" />
     <sequential>
-      <echo>${bazel} @{action} @{target}</echo>
+      <echo>${bazel} @{action} @{target} --config=@{config}</echo>
       <exec executable="${bazel}" dir="${workspace}" failonerror="true" taskname="bazel">
-        <arg value="--config=@{config}" />
         <arg value="@{action}" />
         <arg value="@{target}" />
+        <arg value="--config=@{config}" />
       </exec>
     </sequential>
   </macrodef>
