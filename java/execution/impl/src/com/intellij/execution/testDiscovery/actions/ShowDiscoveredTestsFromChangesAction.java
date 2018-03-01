@@ -2,12 +2,14 @@
 package com.intellij.execution.testDiscovery.actions;
 
 import com.intellij.codeInsight.actions.FormatChangedTextUtil;
+import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.psi.PsiDocumentManager;
@@ -30,7 +32,7 @@ import java.util.stream.Collectors;
 public class ShowDiscoveredTestsFromChangesAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(e.getProject() != null && e.getData(VcsDataKeys.CHANGES) != null);
+    e.getPresentation().setEnabledAndVisible(Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY) && e.getProject() != null && e.getData(VcsDataKeys.CHANGES) != null);
   }
 
   @Override
