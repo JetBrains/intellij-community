@@ -1084,11 +1084,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-
-  public boolean isContextMenuVisible() {
-    return !myPopups.isEmpty();
-  }
-
   public boolean isToolWindowContextMenuVisible() {
     for (ActionPopupMenuImpl popup : myPopups) {
       if (popup.isToolWindowContextMenu()) {
@@ -1097,13 +1092,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
     return false;
   }
-
-  //@Override
-  //public AnAction replaceAction(String actionId, @NotNull AnAction newAction) {
-  //  synchronized (myLock) {
-  //    return replaceAction(actionId, newAction, null);
-  //  }
-  //}
 
   @Override
   public boolean isActionPopupStackEmpty() {
