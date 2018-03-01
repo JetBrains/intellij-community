@@ -17,8 +17,6 @@ package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.RunResult;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -295,37 +293,32 @@ public class PsiTestUtil {
                                            List<VirtualFile> classesRoots,
                                            List<VirtualFile> sourceRoots) {
     LibraryTable libraryTable = ProjectLibraryTable.getInstance(model.getProject());
-    RunResult<Library> result = new WriteAction<Library>() {
-      @Override
-      protected void run(@NotNull Result<Library> result) {
-        Library library = libraryTable.createLibrary(libName);
-        Library.ModifiableModel libraryModel = library.getModifiableModel();
-        try {
-          for (VirtualFile root : classesRoots) {
-            libraryModel.addRoot(root, OrderRootType.CLASSES);
-          }
-          for (VirtualFile root : sourceRoots) {
-            libraryModel.addRoot(root, OrderRootType.SOURCES);
-          }
-          libraryModel.commit();
+    return WriteAction.computeAndWait(() -> {
+      Library library = libraryTable.createLibrary(libName);
+      Library.ModifiableModel libraryModel = library.getModifiableModel();
+      try {
+        for (VirtualFile root : classesRoots) {
+          libraryModel.addRoot(root, OrderRootType.CLASSES);
         }
-        catch (Throwable t) {
-          //noinspection SSBasedInspection
-          libraryModel.dispose();
-          throw t;
+        for (VirtualFile root : sourceRoots) {
+          libraryModel.addRoot(root, OrderRootType.SOURCES);
         }
-
-        model.addLibraryEntry(library);
-        OrderEntry[] orderEntries = model.getOrderEntries();
-        OrderEntry last = orderEntries[orderEntries.length - 1];
-        System.arraycopy(orderEntries, 0, orderEntries, 1, orderEntries.length - 1);
-        orderEntries[0] = last;
-        model.rearrangeOrderEntries(orderEntries);
-        result.setResult(library);
+        libraryModel.commit();
       }
-    }.execute();
-    result.throwException();
-    return result.getResultObject();
+      catch (Throwable t) {
+        //noinspection SSBasedInspection
+        libraryModel.dispose();
+        throw t;
+      }
+
+      model.addLibraryEntry(library);
+      OrderEntry[] orderEntries = model.getOrderEntries();
+      OrderEntry last = orderEntries[orderEntries.length - 1];
+      System.arraycopy(orderEntries, 0, orderEntries, 1, orderEntries.length - 1);
+      orderEntries[0] = last;
+      model.rearrangeOrderEntries(orderEntries);
+      return library;
+    });
   }
 
   @NotNull
@@ -371,36 +364,33 @@ public class PsiTestUtil {
   }
 
   public static Module addModule(Project project, ModuleType type, String name, VirtualFile root) {
-    return new WriteCommandAction<Module>(project) {
-      @Override
-      protected void run(@NotNull Result<Module> result) {
-        String moduleName;
-        ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
-        try {
-          moduleName = moduleModel.newModule(root.getPath() + "/" + name + ".iml", type.getId()).getName();
-          moduleModel.commit();
-        }
-        catch (Throwable t) {
-          moduleModel.dispose();
-          throw t;
-        }
-
-        Module dep = ModuleManager.getInstance(project).findModuleByName(moduleName);
-        assert dep != null : moduleName;
-
-        ModifiableRootModel model = ModuleRootManager.getInstance(dep).getModifiableModel();
-        try {
-          model.addContentEntry(root).addSourceFolder(root, false);
-          model.commit();
-        }
-        catch (Throwable t) {
-          model.dispose();
-          throw t;
-        }
-
-        result.setResult(dep);
+    return WriteCommandAction.writeCommandAction(project).compute(() -> {
+      String moduleName;
+      ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
+      try {
+        moduleName = moduleModel.newModule(root.getPath() + "/" + name + ".iml", type.getId()).getName();
+        moduleModel.commit();
       }
-    }.execute().getResultObject();
+      catch (Throwable t) {
+        moduleModel.dispose();
+        throw t;
+      }
+
+      Module dep = ModuleManager.getInstance(project).findModuleByName(moduleName);
+      assert dep != null : moduleName;
+
+      ModifiableRootModel model = ModuleRootManager.getInstance(dep).getModifiableModel();
+      try {
+        model.addContentEntry(root).addSourceFolder(root, false);
+        model.commit();
+      }
+      catch (Throwable t) {
+        model.dispose();
+        throw t;
+      }
+      ;
+      return dep;
+    });
   }
 
   public static void setCompilerOutputPath(Module module, String url, boolean forTests) {

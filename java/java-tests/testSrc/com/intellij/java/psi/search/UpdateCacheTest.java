@@ -5,7 +5,6 @@ import com.intellij.JavaTestUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.todo.TodoConfiguration;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
@@ -35,7 +34,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -83,13 +81,7 @@ public class UpdateCacheTest extends PsiTestCase {
 
     PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText("New.java", JavaFileType.INSTANCE, "class A{ Object o;}");
     final PsiFile finalFile = file;
-    file = new WriteAction<PsiFile>() {
-      @Override
-      protected void run(@NotNull Result<PsiFile> result) {
-        PsiFile res = (PsiFile)root.add(finalFile);
-        result.setResult(res);
-      }
-    }.execute().throwException().getResultObject();
+    file = WriteAction.compute(()->(PsiFile)root.add(finalFile));
     assertNotNull(file);
 
     PsiClass objectClass = myJavaFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(getProject()));

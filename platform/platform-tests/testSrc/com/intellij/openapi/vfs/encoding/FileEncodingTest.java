@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
@@ -749,21 +748,18 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
 
     assert vDir != null : dir;
-    return new WriteAction<PsiFile>() {
-      @Override
-      protected void run(@NotNull Result<PsiFile> result) throws Throwable {
-        if (!ModuleRootManager.getInstance(getModule()).getFileIndex().isInSourceContent(vDir)) {
-          PsiTestUtil.addSourceContentToRoots(getModule(), vDir);
-        }
-
-        final VirtualFile vFile = vDir.createChildData(vDir, fileName);
-        VfsUtil.saveText(vFile, text);
-        assertNotNull(vFile);
-        final PsiFile file = getPsiManager().findFile(vFile);
-        assertNotNull(file);
-        result.setResult(file);
+    return WriteAction.compute(() -> {
+      if (!ModuleRootManager.getInstance(getModule()).getFileIndex().isInSourceContent(vDir)) {
+        PsiTestUtil.addSourceContentToRoots(getModule(), vDir);
       }
-    }.execute().getResultObject();
+
+      final VirtualFile vFile = vDir.createChildData(vDir, fileName);
+      VfsUtil.saveText(vFile, text);
+      assertNotNull(vFile);
+      final PsiFile file = getPsiManager().findFile(vFile);
+      assertNotNull(file);
+      return file;
+    });
   }
 
   public void testTheDefaultProjectEncodingIfNotSpecifiedShouldBeIDEEncoding() throws Exception {

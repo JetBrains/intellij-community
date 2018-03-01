@@ -8,7 +8,6 @@ import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -191,15 +190,13 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
               myChangedDocuments.clear();
             }
 
-            ExternalSystemUtil.invokeLater(myProject, () -> new WriteAction() {
-              @Override
-              protected void run(@NotNull Result result) {
+            ExternalSystemUtil.invokeLater(myProject, () -> WriteAction.run(()-> {
                 for (Document each : copy) {
                   PsiDocumentManager.getInstance(myProject).commitDocument(each);
                   ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).saveDocument(each, false);
                 }
               }
-            }.execute());
+            ));
           }
         });
       }

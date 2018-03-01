@@ -30,7 +30,6 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModelListener;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.JavaModuleType;
@@ -68,7 +67,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -199,26 +199,24 @@ public class AppEngineSupportProvider extends FrameworkSupportInModuleProvider {
   }
 
   private static Library addProjectLibrary(final Module module, final String name, final List<String> jarDirectories, final VirtualFile[] sources) {
-    return new WriteAction<Library>() {
-      protected void run(@NotNull final Result<Library> result) {
-        final LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(module.getProject());
-        Library library = libraryTable.getLibraryByName(name);
-        if (library == null) {
-          library = libraryTable.createLibrary(name);
-          final Library.ModifiableModel model = library.getModifiableModel();
-          for (String path : jarDirectories) {
-            String url = VfsUtilCore.pathToUrl(path);
-            VirtualFileManager.getInstance().refreshAndFindFileByUrl(url);
-            model.addJarDirectory(url, false);
-          }
-          for (VirtualFile sourceRoot : sources) {
-            model.addRoot(sourceRoot, OrderRootType.SOURCES);
-          }
-          model.commit();
+    return WriteAction.computeAndWait(() -> {
+      final LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(module.getProject());
+      Library library = libraryTable.getLibraryByName(name);
+      if (library == null) {
+        library = libraryTable.createLibrary(name);
+        final Library.ModifiableModel model = library.getModifiableModel();
+        for (String path : jarDirectories) {
+          String url = VfsUtilCore.pathToUrl(path);
+          VirtualFileManager.getInstance().refreshAndFindFileByUrl(url);
+          model.addJarDirectory(url, false);
         }
-        result.setResult(library);
+        for (VirtualFile sourceRoot : sources) {
+          model.addRoot(sourceRoot, OrderRootType.SOURCES);
+        }
+        model.commit();
       }
-    }.execute().getResultObject();
+      return library;
+    });
   }
 
   private VirtualFile findOrCreateChildDirectory(VirtualFile parent, final String name) throws IOException {

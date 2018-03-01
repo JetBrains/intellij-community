@@ -294,12 +294,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @Override
   public void removeBreakpoint(final Project project, final XBreakpoint<?> breakpoint) {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull final Result result) {
-        XDebuggerManager.getInstance(project).getBreakpointManager().removeBreakpoint(breakpoint);
-      }
-    }.execute();
+    WriteAction.run(() -> XDebuggerManager.getInstance(project).getBreakpointManager().removeBreakpoint(breakpoint));
   }
 
   @Override

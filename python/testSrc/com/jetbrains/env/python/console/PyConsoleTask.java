@@ -171,13 +171,10 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     }
 
     if (myConsoleView != null) {
-      new WriteAction() {
-        @Override
-        protected void run(@NotNull Result result) {
-          Disposer.dispose(myConsoleView);
-          myConsoleView = null;
-        }
-      }.execute();
+      WriteAction.run(() -> {
+        Disposer.dispose(myConsoleView);
+        myConsoleView = null;
+      });
     }
 
     return shutdownFuture;

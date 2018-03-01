@@ -97,7 +97,7 @@ public class CompilerTester {
   }
 
   public void deleteClassFile(final String className) throws IOException {
-    WriteAction.run(() -> {
+    WriteAction.runAndWait(() -> {
       //noinspection ConstantConditions
       touch(JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.allScope(getProject())).getContainingFile().getVirtualFile());
     });
@@ -113,25 +113,19 @@ public class CompilerTester {
   }
 
   public void touch(final VirtualFile file) throws IOException {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        file.setBinaryContent(file.contentsToByteArray(), -1, file.getTimeStamp() + 1);
-        File ioFile = VfsUtilCore.virtualToIoFile(file);
-        assert ioFile.setLastModified(ioFile.lastModified() - 100000);
-        file.refresh(false, false);
-      }
-    }.execute().throwException();
+    WriteAction.runAndWait(() -> {
+      file.setBinaryContent(file.contentsToByteArray(), -1, file.getTimeStamp() + 1);
+      File ioFile = VfsUtilCore.virtualToIoFile(file);
+      assert ioFile.setLastModified(ioFile.lastModified() - 100000);
+      file.refresh(false, false);
+    });
   }
 
   public void setFileText(final PsiFile file, final String text) throws IOException {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        final VirtualFile virtualFile = file.getVirtualFile();
-        VfsUtil.saveText(ObjectUtils.assertNotNull(virtualFile), text);
-      }
-    }.execute().throwException();
+    WriteAction.runAndWait(() -> {
+      final VirtualFile virtualFile = file.getVirtualFile();
+      VfsUtil.saveText(ObjectUtils.assertNotNull(virtualFile), text);
+    });
     touch(file.getVirtualFile());
   }
 

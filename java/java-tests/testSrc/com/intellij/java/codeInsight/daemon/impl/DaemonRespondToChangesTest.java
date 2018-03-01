@@ -1529,15 +1529,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     try {
       Module alienModule = doCreateRealModuleIn("x", alienProject, getModuleType());
       final VirtualFile alienRoot = PsiTestUtil.createTestProjectStructure(alienProject, alienModule, myFilesToDelete);
-      OpenFileDescriptor alienDescriptor = new WriteAction<OpenFileDescriptor>() {
-        @Override
-        protected void run(@NotNull Result<OpenFileDescriptor> result) throws Throwable {
-          VirtualFile alienFile = alienRoot.createChildData(this, "X.java");
-          setFileText(alienFile, "class Alien { }");
-          OpenFileDescriptor alienDescriptor = new OpenFileDescriptor(alienProject, alienFile);
-          result.setResult(alienDescriptor);
-        }
-      }.execute().throwException().getResultObject();
+      OpenFileDescriptor alienDescriptor = WriteAction.compute(() -> {
+        VirtualFile alienFile = alienRoot.createChildData(this, "X.java");
+        setFileText(alienFile, "class Alien { }");
+        return new OpenFileDescriptor(alienProject, alienFile);
+      });
 
       FileEditorManager fe = FileEditorManager.getInstance(alienProject);
       final Editor alienEditor = ObjectUtils.assertNotNull(fe.openTextEditor(alienDescriptor, false));
