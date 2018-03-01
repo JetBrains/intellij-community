@@ -38,6 +38,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.Alarm;
 import com.intellij.util.BitUtil;
 import com.intellij.util.messages.MessageBus;
@@ -206,6 +207,10 @@ public class LookupManagerImpl extends LookupManager {
 
     myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, null, myActiveLookup);
     return lookup;
+  }
+
+  protected LookupUi createLookupUi(@NotNull LookupImpl lookup, @NotNull Advertiser advertiser, @NotNull JBList list, @NotNull Project project) {
+    return new LookupUiImpl(lookup, advertiser, list, project);
   }
 
   protected boolean isAutoPopupJavadocSupportedBy(LookupElement lookupItem) {

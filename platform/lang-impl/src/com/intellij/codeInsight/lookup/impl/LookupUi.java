@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.lookup.impl;
 
-public interface LookupUi {
+interface LookupUi {
   void setCalculating(boolean calculating);
 
   void refreshUi(boolean selectionVisible, boolean itemsChanged, boolean reused, boolean onExplicitAction);

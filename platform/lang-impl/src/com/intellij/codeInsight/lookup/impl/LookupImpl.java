@@ -670,7 +670,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     if (Boolean.TRUE.equals(myEditor.getUserData(AutoPopupController.NO_ADS))) {
       myAdComponent.clearAdvertisements();
     }
-    myUi = LookupUiFactory.getInstance().createLookupUi(this, myAdComponent, myList, myProject);
+    myUi = ((LookupManagerImpl)LookupManager.getInstance(myProject)).createLookupUi(this, myAdComponent, myList, myProject);
     myUi.setCalculating(myCalculating);
     myUi.show();
 
