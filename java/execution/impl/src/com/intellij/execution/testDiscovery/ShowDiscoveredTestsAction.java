@@ -13,8 +13,8 @@ import com.intellij.find.FindUtil;
 import com.intellij.find.actions.CompositeActiveComponent;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -35,7 +35,9 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.uast.UastMetaLanguage;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.JBList;
@@ -49,11 +51,13 @@ import com.intellij.util.ui.JBDimension;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UMethod;
-import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.*;
+import org.jetbrains.uast.visitor.AbstractUastVisitor;
+import org.jetbrains.uast.visitor.UastVisitor;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -110,19 +114,38 @@ public class ShowDiscoveredTestsAction extends AnAction {
       Change[] changes = e.getRequiredData(VcsDataKeys.CHANGES);
       Project project = e.getProject();
       assert project != null;
+      UastMetaLanguage jvmLanguage = Language.findInstance(UastMetaLanguage.class);
 
-      List<PsiMethod> methods = FormatChangedTextUtil.getInstance().getChangedElements(project, changes, file -> {
-        if (file.getFileType() != JavaFileType.INSTANCE) return null;
+
+      List<PsiElement> methods = FormatChangedTextUtil.getInstance().getChangedElements(project, changes, file -> {
         PsiFile psiFile = PsiUtilCore.getPsiFile(project, file);
-
+        if (!jvmLanguage.matchesLanguage(psiFile.getLanguage())) {
+          return null;
+        }
         Document document = FileDocumentManager.getInstance().getDocument(file);
         if (document == null) return null;
-        PsiDocumentManager.getInstance(project).commitDocument(document);
+        UFile uFile = UastContextKt.toUElement(psiFile, UFile.class);
+        if (uFile == null) return null;
 
-        return SyntaxTraverser.psiTraverser(psiFile).filter(PsiMethod.class).toList();
+
+        PsiDocumentManager.getInstance(project).commitDocument(document);
+        List<PsiElement> physicalMethods = new ArrayList<>();
+        uFile.accept(new AbstractUastVisitor() {
+          @Override
+          public boolean visitMethod(@NotNull UMethod node) {
+            physicalMethods.add(node.getSourcePsi());
+            return true;
+          }
+        });
+
+        return physicalMethods;
       });
 
-      showDiscoveredTests(project, e.getDataContext(), "Selected Changes", methods);
+      List<PsiMethod> asJavaMethods = methods
+        .stream()
+        .map(m -> (PsiMethod)Objects.requireNonNull(UastContextKt.toUElement(m)).getJavaPsi())
+        .collect(Collectors.toList());
+      showDiscoveredTests(project, e.getDataContext(), "Selected Changes", asJavaMethods);
     }
   }
 
@@ -228,7 +251,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
             ((JavaTestConfigurationBase)producer.getConfigurationFactory().createTemplateConfiguration(project)).getTestFrameworkId();
           TestDiscoveryProducer.consumeDiscoveredTests(project, fqn, methodName, frameworkId, (testClass, testMethod) -> {
             PsiMethod psiMethod = ReadAction.compute(() -> {
-              PsiClass cc = testClass == null ? null : javaFacade.findClass(testClass, scope);
+              PsiClass cc = testClass == null ? null : ClassUtil.findPsiClass(PsiManager.getInstance(project), testClass, null, true, scope);
               return cc == null ? null : ArrayUtil.getFirstElement(cc.findMethodsByName(testMethod, false));
             });
             if (psiMethod != null) {
