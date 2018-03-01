@@ -263,7 +263,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   public void processClassPrepare(DebugProcess debugProcess, ReferenceType classType) {
     DebugProcessImpl process = (DebugProcessImpl)debugProcess;
     if (shouldCreateRequest(process, true)) {
-      ReadAction.run(() -> createRequestForPreparedClass(process, classType));
+      createRequestForPreparedClass(process, classType);
       updateUI();
     }
   }
