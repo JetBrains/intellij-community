@@ -296,7 +296,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
               int index = value.indexOf(' ');
               if (index != -1) {
                 previousRevision = value.substring(0, index);
-                previousFilePath = VcsUtil.getFilePath(root, value.substring(index + 1, value.length()));
+                previousFilePath = VcsUtil.getFilePath(root, value.substring(index + 1));
               }
             }
           }

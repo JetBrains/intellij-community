@@ -35,7 +35,7 @@ public class DecapitalizeMacro extends MacroBase {
   protected Result calculateResult(@NotNull Expression[] params, ExpressionContext context, boolean quick) {
     String text = getTextResult(params, context);
     if (text != null && text.length() > 0) {
-      text = text.substring(0, 1).toLowerCase() + text.substring(1, text.length());
+      text = text.substring(0, 1).toLowerCase() + text.substring(1);
       return new TextResult(text);
     }
     return null;

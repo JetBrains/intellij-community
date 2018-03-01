@@ -86,7 +86,7 @@ public class DirectoryUtil {
       return directory;
     }
 
-    String postfix = path.substring(existingPath.length() + 1, path.length());
+    String postfix = path.substring(existingPath.length() + 1);
     StringTokenizer tokenizer = new StringTokenizer(postfix, "/");
     while (tokenizer.hasMoreTokens()) {
       directory = directory.createSubdirectory(tokenizer.nextToken());

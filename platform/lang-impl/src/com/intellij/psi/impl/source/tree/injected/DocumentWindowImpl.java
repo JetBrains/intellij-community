@@ -828,7 +828,7 @@ class DocumentWindowImpl extends com.intellij.injected.editor.DocumentWindowImpl
           int sep = newText.indexOf(separator);
           assert sep != -1;
           result[i] = newText.substring(0, sep + suffix.length());
-          result[j] = newText.substring(sep + suffix.length() + prefix.length(), newText.length());
+          result[j] = newText.substring(sep + suffix.length() + prefix.length());
           return;
         }
         String commonPrefix = StringUtil.commonPrefix(rangeText1, newText);
@@ -841,7 +841,7 @@ class DocumentWindowImpl extends com.intellij.injected.editor.DocumentWindowImpl
       if (m != -1) {
         result[i] = newText.substring(0, m);
         result[i+1] = null;
-        calculateMinEditSequence(hostText, newText.substring(m+middleText.length(), newText.length()), result, i+2, j);
+        calculateMinEditSequence(hostText, newText.substring(m+middleText.length()), result, i + 2, j);
         return;
       }
       middleText = getRangeText(hostText, j - 1);

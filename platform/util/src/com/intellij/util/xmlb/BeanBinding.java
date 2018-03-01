@@ -430,13 +430,13 @@ public class BeanBinding extends NotNullDeserializeBinding {
     String part = "";
     boolean isSetter = false;
     if (methodName.startsWith("get")) {
-      part = methodName.substring(3, methodName.length());
+      part = methodName.substring(3);
     }
     else if (methodName.startsWith("is")) {
-      part = methodName.substring(2, methodName.length());
+      part = methodName.substring(2);
     }
     else if (methodName.startsWith("set")) {
-      part = methodName.substring(3, methodName.length());
+      part = methodName.substring(3);
       isSetter = true;
     }
 

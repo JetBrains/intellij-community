@@ -992,7 +992,7 @@ public abstract class UsefulTestCase extends TestCase {
         wasThrown = true;
 
         //noinspection UseOfSystemOutOrSystemErr
-        System.out.println("");
+        System.out.println();
         //noinspection UseOfSystemOutOrSystemErr
         e.printStackTrace(System.out);
 

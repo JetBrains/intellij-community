@@ -33,7 +33,7 @@ public class CommitParser {
     int separatorIndex = nextSeparatorIndex(line, 0);
     String commitHashStr = line.substring(0, separatorIndex);
 
-    String parentHashStr = line.substring(separatorIndex + 2, line.length());
+    String parentHashStr = line.substring(separatorIndex + 2);
     String[] parentsHashes = parentHashStr.split("\\s");
     return Pair.create(commitHashStr, parentsHashes);
   }

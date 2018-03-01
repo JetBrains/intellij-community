@@ -154,7 +154,7 @@ public class JavaExecutionUtil {
     }
 
     int lastDot = rtClassName.lastIndexOf('.');
-    return lastDot == -1 || lastDot == rtClassName.length() - 1 ? rtClassName : rtClassName.substring(lastDot + 1, rtClassName.length());
+    return lastDot == -1 || lastDot == rtClassName.length() - 1 ? rtClassName : rtClassName.substring(lastDot + 1);
   }
 
   public static Module findModule(@NotNull final PsiClass psiClass) {
