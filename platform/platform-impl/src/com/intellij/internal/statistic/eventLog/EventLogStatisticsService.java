@@ -10,6 +10,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -53,7 +54,8 @@ public class EventLogStatisticsService implements StatisticsService {
       final List<File> toRemove = new ArrayList<>(logs.size());
       for (File file : logs) {
         final LogEventContent session = LogEventContent.Companion.create(file);
-        if (session != null) {
+        final String error = validate(session, file);
+        if (session != null && StringUtil.isEmpty(error)) {
           final HttpClient httpClient = HttpClientBuilder.create().build();
           final HttpPost post = createPostRequest(serviceUrl, LogEventSerializer.INSTANCE.toString(session));
           final HttpResponse response = httpClient.execute(post);
@@ -72,8 +74,8 @@ public class EventLogStatisticsService implements StatisticsService {
           }
         }
         else {
-          if (LOG.isTraceEnabled()) {
-            LOG.trace("File is empty or has invalid format: " + file.getName());
+          if (LOG.isTraceEnabled() && StringUtil.isNotEmpty(error)) {
+            LOG.trace(error);
           }
           toRemove.add(file);
         }
@@ -94,6 +96,20 @@ public class EventLogStatisticsService implements StatisticsService {
       LOG.info(e);
       throw new StatServiceException("Error during data sending.", e);
     }
+  }
+
+  @Nullable
+  private static String validate(@Nullable LogEventContent content, @NotNull File file) {
+    if (content == null) {
+      return "File is empty or has invalid format: " + file.getName();
+    }
+    else if (StringUtil.isEmpty(content.getUser())) {
+      return "Cannot upload event log, user ID is empty";
+    }
+    else if (StringUtil.isEmpty(content.getProduct())) {
+      return "Cannot upload event log, product code is empty";
+    }
+    return null;
   }
 
   public void cleanupSentFiles(@NotNull List<File> toRemove) {
